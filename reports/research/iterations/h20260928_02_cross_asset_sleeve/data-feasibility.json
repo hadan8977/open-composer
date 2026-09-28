@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_02_cross_asset_sleeve_historical_evaluation_authorization",
+  "iter_id": "h20260928_02_cross_asset_sleeve",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 2,
+    "evaluation_authorized_count": 2,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 2,
+    "rows": [
+      {
+        "candidate_id": "D1",
+        "path": "cross_asset_sleeve_vs_delevered_s3_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "89169e2ad08fb0cb9b05c735c9292d3b9e38ed6c8760f60de0fd54ff2ce9b965"
+      },
+      {
+        "candidate_id": "D2",
+        "path": "cross_asset_sleeve_vs_delevered_s3_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "f4fce879ccd8e6b8a25400a8afa5b4a6f3a49471441239556975a5e9eda8ec59"
+      }
+    ]
+  },
+  "path_gates": {
+    "cross_asset_sleeve_vs_delevered_s3_control": {
+      "action": "evaluate",
+      "candidate_ids": ["D1", "D2"],
+      "historical_evaluation_go": true,
+      "reason": "TLT, GLD, DBC, UUP, SPY, SHY, BIL and the S3 menu (TQQQ, SOXL, UPRO, USD, TECL, QQQ) are all present in the local SIP daily archive (confirmed via duckdb against data/sip/daily/*/*.parquet: DBC and UUP both 2016-01-04..2026-09-25, 2698 bars each, matching TLT/GLD/SHY), covering the stress period, the frozen select and anchor windows, and next-session fills through 2026-09-17. No new capability or vendor is required; the screen_lane batch harness, S3 engine and combination math are reused unchanged from scripts/screen_lane.py, scripts/run_h20260922_05_salvage.py and scripts/run_h20260927_01_sleeve_combination.py."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260928_02_cross_asset_sleeve.yaml",
+      "sha256": "60dad600ee3a3ca43229e3eda5a4da8dbfea42c24528506f5dae74164aedf3be"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_02_cross_asset_sleeve/cost-contract.json",
+      "sha256": "28f9711f6b3c59a6b98c32a292856d3035ebf15448d875658f9c67b1a494b11b"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_02_cross_asset_sleeve.jsonl",
+      "sha256": "d0e310f4d07c509fd4c30b2d73003e481c0ee4e9ab4c2a570c9914bfd3413a53"
+    }
+  }
+}

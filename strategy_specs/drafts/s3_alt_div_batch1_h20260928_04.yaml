@@ -1,0 +1,217 @@
+name: s3_alt_div_batch1_h20260928_04
+description: Preregistered H-20260928-04 batch-screening candidate family. Tests
+  19 published, long-only, US-listed-ETF rules for whether each clears K1 (its
+  date-neutral Sharpe, median over rebalance-day offsets, is at least 80% of S3's
+  in both the anchor window 2024-01-08..2026-09-17 and the stress window
+  2016-05-02..2023-09-15, with positive CAGR at 20bp) or K2 (a 63-session
+  trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3 + (1-k)*SHY
+  by >=0.05 Sharpe in both windows). Families -- F1 managed-futures ETFs held
+  outright (DBMF, KMLM, CTA, WTMF, FMF); F2 Keller/Antonacci/Faber published
+  tactical-allocation rules computed over public ETF universes (VAA-G4, DAA-G12,
+  PAA-CPR, HAA, GPM, GEM, GTAA5, ADM, BAA-balanced); F3 other long-only ETFs held
+  outright with a plausible low-bear-correlation-to-levered-semis mechanism
+  (RPAR, UPAR, NTSX, QAI, TRTY). Every candidate is a pure function of the
+  public rule and public price history only; no parameter in this file was
+  fit to any window's return. Research only, deterministic, next-session
+  execution; no broker writes are authorized. No backtest is run under this
+  spec by this round -- screening happens in scripts/screen_batches/h20260928_04_batch1.py
+  under a separate screening lane; this draft exists only to bind the
+  preregistered candidate manifest to a StrategySpec content hash.
+timeframe: daily
+universe:
+- AGG
+- BIL
+- BND
+- CTA
+- DBC
+- DBMF
+- EEM
+- EFA
+- EWJ
+- FMF
+- GLD
+- GSG
+- HYG
+- IEF
+- IWM
+- KMLM
+- LQD
+- NTSX
+- PDBC
+- QAI
+- QQQ
+- RPAR
+- SCZ
+- SHY
+- SPY
+- TIP
+- TLT
+- TRTY
+- UPAR
+- VEU
+- VGK
+- VNQ
+- VWO
+- WTMF
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 12
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_04:F:s3_alt_div_batch1
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  batch1_target_weight:
+    source: expression
+    expression: close / lag(close, 21) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-candidate target
+      weight vector is computed by scripts/screen_batches/h20260928_04_batch1.py's
+      per-candidate w_<id>(close, asof) function from each source's published
+      rule (13612W or 1/3/6/12-month momentum, canary/breadth crash protection,
+      or the fund's own NAV for hold-only candidates), evaluated using only
+      rows with index <= asof, not by the generic per-symbol factor engine --
+      several rules blend a multi-asset ranking and canary gate outside the
+      single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_04_s3_alt_div_batch1
+  candidate_manifest_path: reports/research/iterations/h20260928_04_s3_alt_div_batch1/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_04_s3_alt_div_batch1/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl
+  source_card_claim_ids:
+  - imgp_dbmf_product_page_cta_replication_2026
+  - kfa_kmlm_factsheet_mlm_index_2024
+  - simplify_cta_fund_page_sg_cta_index_2026
+  - wisdomtree_wtmf_form10_dti_index_2011
+  - ftportfolios_fmf_summary_2026
+  - keller_keuning_vaa_ssrn_2017_allocatesmartly_replication
+  - keller_keuning_daa_g12_turingtrader_code_replication_2019
+  - keller_keuning_paa_cpr_ssrn_2016_allocatesmartly_replication
+  - keuning_haa_trendxplorer_primary_2023
+  - keller_keuning_gpm_allocatesmartly_replication
+  - antonacci_gem_risk_premia_harvesting_2013_primary
+  - faber_gtaa_ssrn_2007_primary
+  - engineeredportfolio_adm_primary_2018
+  - giants_sweep_baa_prior_result_2026_09_22
+  - tidal_rpar_sec_485apos_2019
+  - tidal_upar_product_page_2026
+  - wisdomtree_ntsx_sec_497_2018
+  - nyli_qai_product_page_2026
+  - cambria_trty_sec_ncsr_2019
+  parameter_space:
+    candidate_id:
+    - F1_DBMF
+    - F1_KMLM
+    - F1_CTA
+    - F1_WTMF
+    - F1_FMF
+    - F2_VAA_G4
+    - F2_DAA_G12
+    - F2_PAA
+    - F2_HAA
+    - F2_GPM
+    - F2_GEM
+    - F2_GTAA
+    - F2_ADM
+    - F2_BAA_BAL
+    - F3_RPAR
+    - F3_UPAR
+    - F3_NTSX
+    - F3_QAI
+    - F3_TRTY
+  candidate_budget: 19
+  selection_objective: No ranking among the 19 candidates. Each is judged only
+    against the two fixed preregistered gates K1 (own date-neutral Sharpe vs
+    80% of S3's, both windows, plus positive 20bp CAGR) and K2 (63-session
+    trailing-inverse-vol monthly blend with S3 vs a vol-matched k*S3+(1-k)*SHY
+    control, +0.05 Sharpe in both windows). A candidate is kept if it clears
+    K1 or K2; DSR is reported with n_trials = 19 (this batch's size) because
+    that is the correct multiple-comparisons denominator for whichever
+    candidates pass.
+  anti_overfit_notes:
+  - Every candidate implements its source's published rule with the source's
+    published parameters (lookback windows, top-N, canary universe, breadth
+    denominator); none of these parameters was chosen by looking at this
+    batch's own return data.
+  - F1 and F3 candidates ("hold the fund") have no free parameter at all --
+    the fund's own live NAV since inception is the candidate.
+  - F2_BAA_BAL and F2_ADM were previously screened in
+    reports/research/iterations/giants_sweep_20260922/ under the frozen G1-G5
+    gate contract and did not pass; they are re-included here only because
+    the acceptance criterion changed to K1/K2 relative to S3, not because any
+    parameter was retuned. Their prior result is carried in
+    candidate-manifest.json and direction-review.json.
+  - This dossier stage is preregistration only -- no backtest, no Sharpe, no
+    return number for any of the 19 candidates is computed under this round
+    before pre-backtest validation passes.
+  validation_plan:
+  - s3_stress_window_2016_05_02_to_2023_09_15
+  - s3_anchor_window_2024_01_08_to_2026_09_17
+  - holdout_2026_01_02_to_2026_09_17_contaminated_reference_only
+  - date_neutral_median_over_rebalance_offsets_monthly_0_20_weekly_0_4
+  - k1_vs_80pct_of_s3_sharpe_both_windows_plus_20bp_positive_cagr
+  - k2_inverse_vol_blend_with_s3_vs_vol_matched_k_s3_plus_1_minus_k_shy
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+  - dsr_reported_with_n_trials_equal_19
+notes:
+  intent: Hand a batch-screening lane (built by another agent) 19 well-researched,
+    preregistered, long-only public-ETF-rule candidates that could plausibly
+    clear the owner's relaxed K1/K2 keep rule for a strategy that only has S3
+    passing all frozen gates, without duplicating S1/S2/S3, Defense First, the
+    TLT/GLD/DBC/UUP-vs-SHY queue task, or Step 10's cross-asset TSMOM.
+  hypothesis_id: H-20260928-04
+  previous_link: H-20260928-01
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

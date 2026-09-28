@@ -1,0 +1,194 @@
+name: registry_etf_batch2_h20260928_05
+description: Preregistered batch-2 registry triage candidates for the owner's
+  2026-09-28 relaxed keep rule (K1 median-offset Sharpe >=80% of S3's in both
+  anchor and stress with positive 20bp CAGR, or K2 an S3+candidate 63-day
+  inverse-vol blend beating a vol-matched k*S3+(1-k)*SHY control by >=0.05
+  Sharpe in both windows). Seven long-only published-rule replications judged
+  through scripts/screen_lane.py / scripts/screen_batches/h20260928_05_batch2.py --
+  HFEA_UPRO_TMF (fixed 55/45 UPRO/TMF, monthly-approximated rebalance of the
+  published quarterly rule), TOM_SPY (turn-of-month SPY, buy last trading day
+  of month close through the 4th trading day of the next month), EOM_REVERSAL_SPY
+  (contrarian -- long SPY next month only if this month's 4th-Friday-to-month-end
+  return was negative), FRONT_RUN_SECTOR_TOP2 (Quantpedia front-running sector
+  seasonality -- rank the 9 original Select Sector SPDRs by their return in
+  calendar month target_month+1 one year ago, hold the top 2 equal-weight),
+  FOMC_DRIFT_SPY and FOMC_DRIFT_TQQQ (pre-FOMC announcement drift -- long from
+  the close before a scheduled FOMC meeting through the close of its final
+  day, else cash, on a hard-coded Federal Reserve meeting-date list), and
+  XYLD_COVERED_CALL_PROXY (buy-and-hold XYLD, an honest live proxy for the
+  registry's defunct BEP S&P 500 covered-call closed-end fund, which
+  liquidated in Feb 2010). No backtest has been run against these candidates
+  yet; this spec exists only to bind the preregistration. Research only,
+  deterministic, next-session execution; no broker writes are authorized.
+timeframe: daily
+universe:
+- BIL
+- SHY
+- SPY
+- TMF
+- TQQQ
+- UPRO
+- XLB
+- XLE
+- XLF
+- XLI
+- XLK
+- XLP
+- XLU
+- XLV
+- XLY
+- XYLD
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_05:screen:registry_etf_batch2_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  fixed_weight_rule:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. HFEA_UPRO_TMF and
+      XYLD_COVERED_CALL_PROXY are fixed target weights (0.55/0.45 UPRO/TMF;
+      1.0 XYLD) returned unconditionally once the underlying ticker(s) have
+      any price history, computed by scripts/screen_batches/h20260928_05_batch2.py's
+      w_hfea_upro_tmf / w_xyld_covered_call_proxy, not by the generic
+      per-symbol factor engine.
+    params:
+      decision_lag_sessions: 1
+  calendar_anomaly_rule:
+    source: expression
+    expression: close / lag(close, 21) - 1
+    default: 0.0
+    description: Documentation-only stand-in. TOM_SPY, EOM_REVERSAL_SPY,
+      FRONT_RUN_SECTOR_TOP2, FOMC_DRIFT_SPY and FOMC_DRIFT_TQQQ are
+      calendar-conditioned rules (turn-of-month window, sign of the prior
+      month's 4th-Friday-to-month-end return, a one-year-lagged
+      shifted-one-month seasonal ranking across the 9 original Select Sector
+      SPDRs, and a hard-coded scheduled-FOMC-meeting date list respectively)
+      computed entirely by scripts/screen_batches/h20260928_05_batch2.py's
+      w_tom_spy / w_eom_reversal_spy / w_front_run_sector_top2 /
+      w_fomc_drift_spy / w_fomc_drift_tqqq, not by the generic per-symbol
+      factor engine.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_05_registry_etf_batch2
+  candidate_manifest_path: reports/research/iterations/h20260928_05_registry_etf_batch2/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_05_registry_etf_batch2/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl
+  source_card_claim_ids:
+  - hfea_bogleheads_upro_tmf_55_45_quarterly
+  - hulltactical2024_turn_of_month_spy_captures_44pct
+  - quantseeker2025_pre_fomc_drift_alive_leveraged_etfs
+  - graziani2024_end_of_month_reversal_ssrn
+  - quantpedia_archive_front_running_sector_seasonality
+  - federalreserve_fomc_calendar_2021_2026
+  - sec_edgar_bep_ncsr_liquidation_2010
+  parameter_space:
+    candidate_id:
+    - HFEA_UPRO_TMF
+    - TOM_SPY
+    - EOM_REVERSAL_SPY
+    - FRONT_RUN_SECTOR_TOP2
+    - FOMC_DRIFT_SPY
+    - FOMC_DRIFT_TQQQ
+    - XYLD_COVERED_CALL_PROXY
+  candidate_budget: 7
+  selection_objective: No ranking among the 7 candidates. Each is judged
+    independently against the owner's 2026-09-28 K1 (median-offset anchor and
+    stress Sharpe >=80% of S3's, positive 20bp CAGR) and K2 (S3+candidate
+    63-day inverse-vol blend beats a vol-matched k*S3+(1-k)*SHY control by
+    >=0.05 Sharpe in both windows) keep rule, computed by
+    scripts/screen_batch.py once the batch is actually run (not part of this
+    preregistration round).
+  anti_overfit_notes:
+  - All 7 candidates are frozen in candidate-manifest.json before any return
+    is computed; every parameter (55/45 HFEA split, 4-trading-day turn-of-month
+    hold, 4th-Friday end-of-month reversal cutoff, top-2 front-running sector
+    pick, the FOMC meeting-date list) is copied from the cited primary source,
+    not fit to any window's return.
+  - The FOMC meeting dates are a hard-coded list copied from
+    federalreserve.gov's current and historical FOMC calendar pages (cited in
+    scripts/screen_batches/h20260928_05_batch2.py), never inferred from price
+    action.
+  - HFEA's published rebalance is quarterly; this batch approximates it as
+    monthly because scripts/screen_lane.py only supports M/W/D frequencies.
+    This is a documented deviation from the source's exact cadence, not a
+    fitted choice, and is more conservative (more turnover/cost) than the
+    original.
+  - XYLD is an explicit, honestly labeled proxy for the registry's covered-call
+    CEF direction -- the specific fund studied in the cited 2008 paper (ticker
+    BEP, S&P 500 Covered Call Fund Inc.) liquidated in February 2010 and no
+    longer exists; XYLD (Global X S&P 500 Covered Call ETF, inception 2013-06-21)
+    replicates the same monthly at-the-money S&P 500 covered-call mechanism
+    on a currently tradable ticker.
+  validation_plan:
+  - screen_lane_frozen_windows_select_anchor_holdout2026_stress
+  - median_offset_across_21_monthly_or_5_weekly_signal_day_offsets_per_owner_date_neutral_rule
+  - k1_median_offset_sharpe_vs_80pct_of_s3_both_windows_positive_20bp_cagr
+  - k2_inverse_vol_combo_vs_vol_matched_k_s3_plus_shy_control_edge_gte_0_05_both_windows
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Judge every remaining untested ETF-level batch-2 registry direction
+    against the owner's relaxed 2026-09-28 keep rule using the now-verified
+    screen_lane/screen_batch harness, so routine registry triage does not
+    stall on a per-idea 13-file dossier. No backtest is run in this round;
+    scripts/screen_batch.py --batch h20260928_05_batch2 --iteration
+    h20260928_05_registry_etf_batch2 is the next, separate step.
+  hypothesis_id: H-20260928-05
+  previous_link: H-20260928-04-registry-screen-lane
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

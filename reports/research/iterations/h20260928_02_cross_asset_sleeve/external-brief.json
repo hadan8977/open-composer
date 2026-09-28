@@ -1,0 +1,123 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_02_cross_asset_sleeve",
+  "strategy_name": "h20260928_02_cross_asset_sleeve",
+  "source_spec_path": "strategy_specs/drafts/h20260928_02_cross_asset_sleeve.yaml",
+  "spec_hash": "396ddd01765c741b320a2ddc8453bafed324265e7af6955e454a504846267952",
+  "objective": "Test whether adding one cross-asset defensive-trend sleeve (D1 Carlson Defense First TAA rotation, D2 12-month-vs-SHY absolute momentum with inverse-63-session-vol sizing) to the live S3 leveraged-momentum sleeve, combined by trailing-63-session inverse-volatility monthly weighting, beats delevering S3 alone to the same realized volatility (K2, owner-widened >=0.05 bar) in both the anchor and stress windows, or, failing that, whether either sleeve is standalone-competitive with S3 (K1).",
+  "topic_coverage": [
+    "defense_first_taa_published_rules",
+    "time_series_momentum_academic_evidence",
+    "century_scale_trend_following_evidence",
+    "cross_asset_defensive_basket_precedent",
+    "volatility_matched_combination_methodology_reuse",
+    "inverse_volatility_sizing_precedent"
+  ],
+  "sources": [
+    {
+      "url": "https://doi.org/10.2139/ssrn.5334772",
+      "published_or_updated_at": "2025-01-01",
+      "source_type": "paper",
+      "credibility": "preprint_not_yet_peer_reviewed",
+      "core_claim": "Carlson (2025) 'Defense First: A Multi-Asset Tactical Model for Adaptive Downside Protection' is a 2025 SSRN preprint; primary text not retrievable, rules pinned from independent replications.",
+      "project_applicability": "Confirms D1's mechanism is a real, dated, citable published model rather than an unattributed rule.",
+      "reflection": "Reused unchanged from H-20260923-12 (dir:defense_first_taa_carlson_concretum); snapshot copied into this dossier's sources/, not re-fetched."
+    },
+    {
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "source_type": "industry_standard",
+      "credibility": "established_taa_strategy_tracking_site",
+      "core_claim": "Defense First: rank TLT/GLD/DBC(or PDBC)/UUP by the average of 1/3/6/12-month returns at month-end close; weight 40/30/20/10 by rank; any asset below T-bill (BIL) momentum has its tier weight redirected to SPY; rebalance monthly regardless of change.",
+      "project_applicability": "Pins D1's exact momentum definition, rank-weight table, hurdle/fallback rule and rebalance cadence, reused unedited from run_h20260923_12_s3_defense_first.py's defense_weights().",
+      "reflection": "Reused unchanged from H-20260923-12; independent replication of the SSRN preprint."
+    },
+    {
+      "url": "https://www.linkedin.com/posts/thomasdcarlson_defense-first-a-multi-asset-tactical-model-activity-7349155637907333120-INqK",
+      "published_or_updated_at": "2025-07-10",
+      "source_type": "industry_standard",
+      "credibility": "primary_author_self_report",
+      "core_claim": "The author's own announcement confirms the four-ETF menu (TLT, GLD, DBC, UUP) with SPY fallback, using DBC (not AllocateSmartly's PDBC substitute).",
+      "project_applicability": "Deciding source for D1's use of DBC, which is present in the local SIP daily archive.",
+      "reflection": "Reused unchanged from H-20260923-12."
+    },
+    {
+      "url": "https://www.quantitativo.com/p/from-defense-to-offense-a-tactical",
+      "published_or_updated_at": "2025-07-26",
+      "source_type": "industry_standard",
+      "credibility": "established_quant_research_newsletter",
+      "core_claim": "A second independent replication of Defense First reports materially higher CAGR than SPY at matched volatility (3x-leveraged-fallback variant: 16.2% vs 10.6%) with a better Sharpe and much smaller drawdowns.",
+      "project_applicability": "Triangulates that the mechanism is real (three independent replications: Quantitativo, AllocateSmartly, and BestFolio per the registry), not a single blogger's artifact.",
+      "reflection": "Reused unchanged from H-20260923-12; not used for D1's exact rule text (AllocateSmartly is used for that)."
+    },
+    {
+      "url": "https://www.aqr.com/Insights/Research/Journal-Article/Time-Series-Momentum",
+      "published_or_updated_at": "2012-05-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_financial_economics",
+      "core_claim": "Moskowitz, Ooi and Pedersen (2012) document time-series momentum: an asset's own trailing 12-month excess return positively predicts its own future return across 58 diverse futures/forward contracts over 25+ years, positive for every single instrument examined.",
+      "project_applicability": "Grounds D2's own-asset absolute-momentum mechanism (hold when trailing 12-month return beats the SHY cash proxy) as a peer-reviewed, independently documented anomaly, not a home-grown rule.",
+      "reflection": "Freshly fetched this pass (curl snapshot); quote binding recorded in direction-review.json and the source_cards jsonl."
+    },
+    {
+      "url": "https://www.aqr.com/Insights/Research/Journal-Article/A-Century-of-Evidence-on-Trend-Following-Investing",
+      "published_or_updated_at": "2017-10-31",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_portfolio_management",
+      "core_claim": "Hurst, Ooi and Pedersen (2017) extend trend-following evidence back to 1880, finding the strategy consistently profitable across the following ~110 years and performing well in 8 of the 10 largest historical crisis periods, with low correlation to traditional benchmarks -- while flagging rising cross-market correlation since the credit crisis as a headwind.",
+      "project_applicability": "Motivates evaluating D1/D2 across the full stress period (2018Q4, 2020, 2022 drawdowns included) and reporting 2022-specific correlation with S3, and grounds the caution that trend-following's edge can compress as correlations rise -- exactly what the K2 diversifier test checks for locally.",
+      "reflection": "Freshly fetched this pass (curl snapshot); quote binding recorded in direction-review.json and the source_cards jsonl."
+    },
+    {
+      "url": "https://alphaarchitect.com/digging-deeper-into-adaptive-asset-allocation/",
+      "published_or_updated_at": "2015-01-01",
+      "source_type": "industry_standard",
+      "credibility": "established_quant_research_shop",
+      "core_claim": "Inverse-volatility weighting -- weighting return streams by the reciprocal of their trailing realized volatility -- is a standard, simple way to combine multiple return streams when their expected Sharpe ratios and pairwise correlations are similar.",
+      "project_applicability": "Direct precedent for D2's inverse-63-session-volatility sizing rule and for the S3+D combination weight (screen_lane.combine_two_sleeves, ported unedited from H-20260927-01's combine_portfolio).",
+      "reflection": "Already catalogued and used identically in H-20260927-01's external-brief.json; not re-fetched this pass, cited for descriptive precedent only."
+    },
+    {
+      "url": "https://blog.thinknewfound.com/2017/12/portable-beta-making-returns-youre-already-getting/",
+      "published_or_updated_at": "2017-12-04",
+      "source_type": "industry_standard",
+      "credibility": "established_practitioner_research_shop",
+      "core_claim": "A levered/diversified portfolio scaled to match a concentrated alternative's own volatility level can outperform that alternative, illustrating that diversification's value must be judged against a volatility-matched comparison, not against the concentrated portfolio at its own natural risk.",
+      "project_applicability": "Grounds this round's reused K2 combination methodology (screen_lane's vol-matched k*S3+(1-k)*SHY control, ported from H-20260927-01), which this round applies unchanged to D1/D2.",
+      "reflection": "Already catalogued and verified in H-20260927-01's source cards; not re-fetched this pass, cited for the comparison-methodology precedent this round reuses."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_02_cross_asset_sleeve.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "carlson_defense_first_rank_weights_allocatesmartly",
+      "source_card_path": "reports/harness/source_cards/h20260928_02_cross_asset_sleeve.jsonl",
+      "used_for": "d1_weights_fn_rank_weight_table"
+    },
+    {
+      "claim_id": "moskowitz_ooi_pedersen_2012_time_series_momentum",
+      "source_card_path": "reports/harness/source_cards/h20260928_02_cross_asset_sleeve.jsonl",
+      "used_for": "d2_absolute_momentum_mechanism"
+    },
+    {
+      "claim_id": "hurst_ooi_pedersen_2017_century_trend_following",
+      "source_card_path": "reports/harness/source_cards/h20260928_02_cross_asset_sleeve.jsonl",
+      "used_for": "stress_window_and_2022_correlation_reporting_rationale"
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "carlson_defense_first_rank_weights_allocatesmartly",
+      "effect": "D1 uses Carlson's published rank weights (40/30/20/10), momentum blend (1/3/6/12-month), BIL hurdle and SPY fallback unchanged -- reused directly from run_h20260923_12_s3_defense_first.defense_weights, generalized to evaluate at any signal date so the batch harness's 21 rebalance-day offsets can each be swept without look-ahead."
+    },
+    {
+      "driver": "moskowitz_ooi_pedersen_2012_time_series_momentum",
+      "effect": "D2's rule (hold TLT/GLD/DBC/UUP only when its own trailing 12-month return beats SHY's) is set as the queue task's stated round numbers, not tuned to this paper's own parameters -- the paper only grounds the mechanism (own-asset absolute momentum) as peer-reviewed, not the specific 12-month/63-session thresholds."
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260928-02"
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "iter_id": "h20260928_02_cross_asset_sleeve",
+  "generated_at": "2026-09-28T03:34:48.157010+00:00",
+  "git_commit": "992ed8f38fd4affe16ecd3e5de00f2d61be7b280",
+  "source": "reports/research/screens/h20260928_02_cross_asset/leaderboard.json",
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ]
+  },
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "n_trials": 2,
+  "s3_reference": {
+    "anchor_median_sharpe_net10": 1.4852809357428147,
+    "stress_median_sharpe_net10": 0.8059331108129246,
+    "k1_bar_anchor_80pct": 1.1882247485942519,
+    "k1_bar_stress_80pct": 0.6447464886503398,
+    "source": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json offset_distribution_net10"
+  },
+  "candidates": {
+    "D1": {
+      "name": "Defense First TAA (Carlson 2025): TLT/GLD/DBC/UUP rank 40/30/20/10, BIL hurdle, SPY fallback",
+      "judged_anchor_sharpe_net10": 1.4819223632211846,
+      "judged_stress_sharpe_net10": 0.7291800212680069,
+      "judged_select_sharpe_net10": 1.4792081843537748,
+      "judged_holdout_sharpe_net10_contaminated": 1.2184068051415864,
+      "judged_anchor_cagr_net10": 0.23403439805073756,
+      "judged_stress_cagr_net10": 0.08244838900829232,
+      "judged_anchor_maxdd_net10": -0.08685830457431787,
+      "judged_stress_maxdd_net10": -0.13189900074120653,
+      "judged_anchor_cagr_net20": 0.2279880474799041,
+      "judged_stress_cagr_net20": 0.07683593052486049,
+      "judged_anchor_sharpe_net20": 1.4408748250995913,
+      "judged_stress_sharpe_net20": 0.6746009636170873,
+      "diversifier_edge_anchor": 0.5750695822719525,
+      "diversifier_edge_stress": 0.03719461247944045,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.2724762258127631,
+        "anchor": 0.3011343878750547,
+        "2022": 0.18916152583108234
+      },
+      "dsr_anchor": 0.9675063016284778,
+      "first_valid_signal_date": "2017-01-31"
+    },
+    "D2": {
+      "name": "Absolute momentum vs SHY, inverse-63d-vol sized: TLT/GLD/DBC/UUP",
+      "judged_anchor_sharpe_net10": 1.12939963439665,
+      "judged_stress_sharpe_net10": 0.2335668132474022,
+      "judged_select_sharpe_net10": 0.7555827561396121,
+      "judged_holdout_sharpe_net10_contaminated": 1.9015928027087596,
+      "judged_anchor_cagr_net10": 0.18743138111552882,
+      "judged_stress_cagr_net10": 0.03220329036119551,
+      "judged_anchor_maxdd_net10": -0.07257069242266911,
+      "judged_stress_maxdd_net10": -0.17024372483153238,
+      "judged_anchor_cagr_net20": 0.18012630842249955,
+      "judged_stress_cagr_net20": 0.026329189502161565,
+      "judged_anchor_sharpe_net20": 1.078331496222612,
+      "judged_stress_sharpe_net20": 0.17295606797224167,
+      "diversifier_edge_anchor": 0.6374575756172218,
+      "diversifier_edge_stress": -0.22659936427891014,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.05155516609990304,
+        "anchor": 0.03493143037502551,
+        "2022": 0.03831113433756894
+      },
+      "dsr_anchor": 0.9048724399153627,
+      "first_valid_signal_date": "2017-01-31"
+    }
+  },
+  "adoption": {
+    "D1": {
+      "k2_pass": false,
+      "k2_strong": false,
+      "k1_pass": true,
+      "k1_strong": false,
+      "tier": "kept",
+      "pass_path": "K1"
+    },
+    "D2": {
+      "k2_pass": false,
+      "k2_strong": false,
+      "k1_pass": false,
+      "k1_strong": false,
+      "tier": "refuted",
+      "pass_path": "none"
+    }
+  },
+  "overall_verdict": "D1 kept via K1 (standalone, 10bp median offset Sharpe clears 80% of S3's own median in both anchor (1.4819 >= 1.1882) and stress (0.7292 >= 0.6447), 20bp CAGR positive both windows); D1 fails K2 (combination edge stress 0.0372 < 0.05 despite anchor edge 0.5751). D2 refuted: fails K1 (anchor median Sharpe 1.1294 < 1.1882 bar) and fails K2 (stress combination edge -0.2266 is negative). 0/2 cleared K2; 1/2 (D1) cleared K1; neither reaches strong-kept."
+}

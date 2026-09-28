@@ -1,0 +1,173 @@
+name: h20260928_16_8k_sentiment_accel
+description: >-
+  T-20260928-16 / dir:llm_8k_gdelt_sentiment_acceleration cheapest
+  falsification pilot. Reproduces only the LLM_Alpha repo's (github.com/
+  quangkhaidataka/LLM_Alpha) sent_accel feature construction -- rank of
+  short-MA(5) minus long-MA(20) of DeepSeek-scored polarity*magnitude on our
+  own 8-K text (h20260922_01_earnings_text pipeline) plus Alpaca/Benzinga
+  news (data/features/news_packets) -- for one recent complete quarter
+  (2026 Q2) on the tickers with an 8-K filing that quarter. Computes daily
+  cross-sectional rank IC against forward 5-trading-day returns and a
+  shuffled-news-across-tickers-within-date placebo. No backtest, no
+  portfolio, no CV harness, no cost model in this pass -- the IC/placebo
+  comparison is the decisive test, per direction-review.json's
+  cheapest_decisive_test and stop_condition.
+timeframe: daily
+universe:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+lifecycle: draft
+position_direction: long_only
+
+entry:
+  all:
+    - close > 0
+  any: []
+
+exit:
+  all: []
+  any:
+    - close <= 0
+
+risk:
+  max_trades_per_day: 30
+  max_position_weight: 0.033
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 30
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.033
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_16:SENT01:sentiment_acceleration_ic_screen
+
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+  caveat: >
+    The feature is built from three sources this single `data.path` cannot
+    express: data/features/earnings_events + data/raw/earnings_text (8-K
+    text, from h20260922_01_earnings_text), data/features/news_packets
+    (Alpaca/Benzinga news, visible_at already computed), and
+    data/sip/daily (forward 5-day returns for the IC calculation).
+    `adjusted: true` reflects the SIP daily archive; the text sources have
+    no adjustment concept. See data-feasibility.json for coverage numbers.
+
+factors:
+  sent_accel_score:
+    source: expression
+    expression: sma(close, 1)
+    default: 0.0
+    description: Documentation-only stand-in. The real sent_accel score is a
+      cross-symbol, cross-source computation (DeepSeek {polarity, magnitude}
+      per 8-K/news item, aggregated per ticker-day at each item's visible_at,
+      5-day and 20-day rolling means, cross-sectional rank of the
+      difference) computed entirely by scripts/score_h20260928_16_sentiment_accel.py
+      and scripts/build_h20260928_16_sentiment_accel_feature.py, not by this
+      per-symbol expression grammar -- same pattern as
+      strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml's
+      news_hf_reaction_daily stand-in.
+    params:
+      decision_lag_sessions: 1
+
+llm_review:
+  enabled: false
+  model: null
+
+required_capabilities:
+  - market.alpaca_bars
+  - news.alpaca
+
+research_design:
+  iter_id: h20260928_16_8k_sentiment_accel
+  candidate_manifest_path: reports/research/iterations/h20260928_16_8k_sentiment_accel/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_16_8k_sentiment_accel/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl
+  source_card_claim_ids:
+    - llm_alpha_repo_construction_and_results
+    - engelberg_mclean_pontiff_2018_abstract_and_finding
+    - tetlock_2007_media_pessimism_reversion
+    - kakushadze_2016_101_formulaic_alphas_construction
+  parameter_space:
+    candidate_id:
+      - SENT01
+  candidate_budget: 1
+  selection_objective: >-
+    Single preregistered candidate (SENT01): compute the daily
+    cross-sectional rank IC of sent_accel vs forward 5-trading-day returns
+    on 2026 Q2, plus the shuffled-news-within-date placebo. No search, no
+    ranking between variants -- the window lengths (5, 20), horizon (5
+    trading days), and both sign conventions (accel and its negation
+    sent_accel) are fixed from the source before any DeepSeek score exists.
+  anti_overfit_notes:
+    - One candidate, frozen construction, no parameter search.
+    - The stop rule (direction-review.json stop_condition) is written and
+      preregistered before any IC number exists.
+    - Both sign conventions are reported (not just whichever sign looks
+      better after computing the IC), because independent verification this
+      pass found the source repo's own attribution of the negation to
+      Engelberg-McLean-Pontiff (2018) does not match what that paper
+      actually finds (see direction-review.json remaining_evidence_gap).
+  validation_plan:
+    - point_in_time_join_test_score_visible_at_after_t_excluded_from_feature_at_t
+    - daily_cross_sectional_rank_ic_vs_forward_5_day_return
+    - shuffled_news_across_tickers_within_date_placebo
+    - stop_before_any_cv_harness_or_backtest_per_stop_condition
+
+notes:
+  intent: Cheapest possible falsification test for dir:llm_8k_gdelt_sentiment_acceleration
+    -- check whether the LLM_Alpha repo's sent_accel construction carries any
+    daily cross-sectional information on our own (much sparser) 2026 8-K +
+    news data before committing to a purge/embargo CV harness the source's
+    own validation gate failed and overrode.
+  hypothesis_id: H-20260928-16
+  previous_link: null
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready
+  design_constraints:
+    long_only: true
+    no_backtest_this_pass: true
+    ic_and_placebo_only: true
+  research_notes: >
+    scripts/score_h20260928_16_sentiment_accel.py (DeepSeek scoring, reusing
+    scripts/score_earnings_text.py's client/rate-limit machinery) and
+    scripts/build_h20260928_16_sentiment_accel_feature.py (feature build +
+    IC + placebo) carry the full construction detail and are the
+    authoritative reference; this spec exists only to satisfy the project's
+    candidate-manifest/research-design preregistration convention for an
+    IC-only (no-backtest) research round.

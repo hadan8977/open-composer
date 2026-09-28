@@ -1,0 +1,297 @@
+{
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "generated_at": "2026-09-28T03:30:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "registry_etf_batch2_h20260928_05",
+  "objective": "Preregister 7 long-only published-rule replications (HFEA_UPRO_TMF, TOM_SPY, EOM_REVERSAL_SPY, FRONT_RUN_SECTOR_TOP2, FOMC_DRIFT_SPY, FOMC_DRIFT_TQQQ, XYLD_COVERED_CALL_PROXY) drawn from the batch-2 registry triage assignment, each judged independently against the owner's 2026-09-28 relaxed keep rule (K1: median-offset Sharpe >=80% of S3's in both anchor and stress windows with positive 20bp CAGR; K2: an S3+candidate 63-day inverse-vol blend beating a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows) via scripts/screen_batch.py --batch h20260928_05_batch2. No candidate return is computed by this manifest; that is a separate, later step.",
+  "candidates": [
+    {
+      "candidate_id": "HFEA_UPRO_TMF",
+      "path": "registry_etf_batch2_screen",
+      "role": "fixed_weight_replication",
+      "method": "upro_tmf_55_45_monthly_approx_of_quarterly",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "M",
+        "universe": [
+          "UPRO",
+          "TMF"
+        ],
+        "weights": {
+          "UPRO": 0.55,
+          "TMF": 0.45
+        },
+        "source_cadence": "quarterly",
+        "lane_cadence": "monthly_approximation_conservative_more_turnover",
+        "source": "Hedgefundie's Excellent Adventure (HFEA), Bogleheads forum thread, since 2019"
+      }
+    },
+    {
+      "candidate_id": "TOM_SPY",
+      "path": "registry_etf_batch2_screen",
+      "role": "calendar_anomaly_replication",
+      "method": "turn_of_month_spy_4th_trading_day_hold",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "entry_signal": "close of the last trading day of the month",
+        "exit_signal": "close of the 4th trading day of the next month",
+        "source": "etftrends.com / hulltactical.com turn-of-month replication"
+      }
+    },
+    {
+      "candidate_id": "EOM_REVERSAL_SPY",
+      "path": "registry_etf_batch2_screen",
+      "role": "calendar_anomaly_replication",
+      "method": "end_of_month_reversal_4th_friday_sign",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "signal": "sign of SPY's return from the 4th Friday's close to the month-end close",
+        "rule": "long next month iff that return was negative, else cash",
+        "source": "Graziani (2024, SSRN) via harbourfrontquant.substack.com summary",
+        "signal_dates": "last trading day of each month (calendar-anchored, single version)",
+        "freq_correction": "2026-09-28 interactive session, before any valid result: the rule only decides at the month's last session, so declaring it 'M' made offsets 1-20 never fire and the median version pure SHY. Re-declared as single-version 'D' on month-end dates."
+      }
+    },
+    {
+      "candidate_id": "FRONT_RUN_SECTOR_TOP2",
+      "path": "registry_etf_batch2_screen",
+      "role": "calendar_anomaly_replication",
+      "method": "front_running_sector_seasonality_top2_of_9",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "score_window": "calendar month (holding_month + 1) one year before the holding year",
+        "hold": "top 2 by score, equal-weight 0.5/0.5",
+        "source": "Quantpedia front-running seasonality, archived 2025-02-15 snapshot",
+        "signal_dates": "last trading day of each month (calendar-anchored, single version)",
+        "freq_correction": "2026-09-28 interactive session, before any valid result: the rule only decides at the month's last session, so declaring it 'M' made offsets 1-20 never fire and the median version pure SHY. Re-declared as single-version 'D' on month-end dates."
+      }
+    },
+    {
+      "candidate_id": "FOMC_DRIFT_SPY",
+      "path": "registry_etf_batch2_screen",
+      "role": "calendar_anomaly_replication",
+      "method": "pre_fomc_drift_spy_scheduled_meetings",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "entry_signal": "close of the last trading day strictly before a scheduled FOMC meeting",
+        "exit_signal": "close of the meeting's final scheduled day",
+        "meeting_dates_source": "federalreserve.gov FOMC calendar pages, hard-coded in scripts/screen_batches/h20260928_05_batch2.py",
+        "source": "Lucca & Moench (2015, Journal of Finance) via quantseeker.com replication"
+      }
+    },
+    {
+      "candidate_id": "FOMC_DRIFT_TQQQ",
+      "path": "registry_etf_batch2_screen",
+      "role": "calendar_anomaly_replication",
+      "method": "pre_fomc_drift_tqqq_scheduled_meetings",
+      "ablation": "leveraged_leg",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "TQQQ"
+        ],
+        "entry_signal": "close of the last trading day strictly before a scheduled FOMC meeting",
+        "exit_signal": "close of the meeting's final scheduled day",
+        "meeting_dates_source": "federalreserve.gov FOMC calendar pages, hard-coded in scripts/screen_batches/h20260928_05_batch2.py",
+        "source": "quantseeker.com's leveraged-ETF variant of the same pre-FOMC drift"
+      }
+    },
+    {
+      "candidate_id": "XYLD_COVERED_CALL_PROXY",
+      "path": "registry_etf_batch2_screen",
+      "role": "fixed_weight_replication",
+      "method": "xyld_buy_and_hold_covered_call_proxy",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_registry_batch2_panel",
+      "feature_contract": "feature_v1_registry_batch2_calendar_and_fixed_weight_rules",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_registry_batch2_vs_s3_k1_k2",
+      "parameters": {
+        "freq": "M",
+        "universe": [
+          "XYLD"
+        ],
+        "weights": {
+          "XYLD": 1.0
+        },
+        "proxy_for": "dir:covered_call_cef_income_pwb (ticker BEP, liquidated 2010-02-02)",
+        "proxy_ticker": "XYLD",
+        "proxy_inception": "2013-06-21",
+        "source": "Global X S&P 500 Covered Call ETF (XYLD); underlying mechanism per Simon (2008)"
+      }
+    }
+  ],
+  "candidate_count": 7,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_registry_batch2_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "BIL",
+          "SHY",
+          "SPY",
+          "TMF",
+          "TQQQ",
+          "UPRO",
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY",
+          "XYLD"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_registry_batch2_calendar_and_fixed_weight_rules": {
+        "decision_lag_sessions": 1,
+        "fixed_weight_rules": "HFEA_UPRO_TMF (0.55/0.45 UPRO/TMF, monthly) and XYLD_COVERED_CALL_PROXY (1.0 XYLD, monthly) return an unconditional fixed weight once the underlying ticker(s) have any price history.",
+        "calendar_rules": "TOM_SPY, EOM_REVERSAL_SPY, FRONT_RUN_SECTOR_TOP2, FOMC_DRIFT_SPY and FOMC_DRIFT_TQQQ compute their weights entirely from calendar-boundary logic (month-end/4th-trading-day detection, 4th-Friday lookup, a one-year-lagged one-month-shifted sector score window, and a hard-coded FOMC meeting-date list respectively), implemented in scripts/screen_batches/h20260928_05_batch2.py's w_tom_spy / w_eom_reversal_spy / w_front_run_sector_top2 / w_fomc_drift_spy / w_fomc_drift_tqqq, not by the generic per-symbol factor engine.",
+        "no_lookahead": "Every function reads only close.loc[:asof] for price values; calendar-boundary helpers may read the full close.index for exchange trading-day structure only (never future prices), verified by tests/test_screen_batch2_rules.py's no-lookahead cases."
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close where applicable, per scripts/run_h20260918_05_recent_menu.py's convention"
+      }
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": {
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "reference only"
+        ],
+        "stress": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "offsets": "21 monthly signal-day offsets (0-20) or 5 weekly offsets (0-4) per candidate freq; 'D' candidates have exactly one version (no offset sweep). Judged value is the median across offsets -- date-neutral, no hand-picked live date.",
+        "panel_start": "2015-01-02 (warmup, matches scripts/screen_lane.py's PANEL_START)"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_screen_lane": {
+        "contract_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_registry_batch2_vs_s3_k1_k2": {
+        "members": [
+          "S3_incumbent_median_offset_reference",
+          "vol_matched_k_s3_plus_shy_control_K2",
+          "SPY_buy_and_hold",
+          "QQQ_buy_and_hold",
+          "SHY_buy_and_hold"
+        ],
+        "keep_rule": "K1: median-offset Sharpe >= 0.80 * S3's median-offset Sharpe in both anchor (S3=1.49) and stress (S3=0.81) windows, with positive 20bp CAGR. K2: S3+candidate 63-day trailing inverse-vol blend beats its vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in both windows (scripts/screen_lane.py's diversifier_edge_for_offset, DIVERSIFIER_SHARPE_EDGE_MIN=0.10 is the lane's own stricter default; this manifest's K2 threshold of 0.05 is the owner's explicit 2026-09-28 relaxation for this batch and is read directly off the leaderboard's edge_anchor/edge_stress columns, not off the lane's own diversifier_pass boolean)."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml": "a7ff2d473f46eec78c9bafcf94147950a4f6266b8d6210a7ca201754a3e4e1d1"
+  },
+  "source_spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+  "spec_hash": "a7ff2d473f46eec78c9bafcf94147950a4f6266b8d6210a7ca201754a3e4e1d1",
+  "single_mechanism_no_campaign_attestation": true,
+  "g3_not_applicable_reason": "These are published calendar/fixed-weight rules copied verbatim from cited primary sources, not a parameter search over our own indicator; there is no in-sample-fit parameter to placebo-shift. The FOMC and turn-of-month calendar dates are themselves the closest thing to a placebo target and are exact, cited, external facts (Federal Reserve meeting dates; the last trading day of the month), not tunable.",
+  "adoption_rule": {
+    "per_candidate": [
+      "K1: median-offset Sharpe >= 0.80 * S3's median-offset Sharpe in both the anchor and stress windows, with positive CAGR at 20bp cost in both windows",
+      "K2: S3+candidate 63-day trailing inverse-vol blend (monthly rebalance) beats its vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in both the anchor and stress windows"
+    ],
+    "pass_requires": "K1 or K2 (either is sufficient, per the owner's 2026-09-28 relaxed keep rule)",
+    "multiple_comparisons": "7 candidates; report all regardless of outcome; DSR computed per candidate on the judged anchor-window excess return with trial_count=7",
+    "fallback_if_none_pass": "each non-passing candidate returns to the registry as refuted-in-this-form (status queued -> a later not_kept verdict), no live pilot on this evidence"
+  }
+}

@@ -1,0 +1,297 @@
+{
+  "iter_id": "h20260928_04_s3_alt_div_batch1",
+  "objective": "Bind 19 preregistered, published, long-only US-listed-ETF rules (managed futures held outright, Keller/Antonacci/Faber tactical allocation, and other alt-diversifier ETFs held outright) to verified source cards before handing the batch to a screening lane for K1/K2 testing against S3.",
+  "schema_version": 3,
+  "strategy_name": "s3_alt_div_batch1_h20260928_04",
+  "source_spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+  "spec_hash": "935e9a2e0fbb972e6809fe3ca27f8d03be07ca56a216afdd9f374c5c51f4af8b",
+  "sources": [
+    {
+      "url": "https://www.imgp.com/us/dbmf/",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "iMGP DBi Managed Futures Strategy ETF (DBMF) launched 2019-05-08 and uses a systematic process to replicate the exposures driving performance across leading managed-futures (CTA) hedge funds, through liquid futures, without those funds' lockups, complexity or fee drag.",
+      "project_applicability": "Fixes candidate imgp_dbmf_product_page_cta_replication_2026's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "imgp_dbmf_product_page_cta_replication_2026"
+    },
+    {
+      "url": "https://pictureperfectportfolios.com/strategy-behind-kfa-mount-lucas-managed-futures-etf-kmlm/",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "industry_standard",
+      "credibility": "medium-high",
+      "core_claim": "KMLM tracks the KFA Mount Lucas MLM Index, a passive trend-following managed-futures index (created 1988, Mount Lucas replicating it since 1993); managed futures are used as a 'Crisis Risk Offset' expected to generate returns during equity market declines and recessions, since prices trending down is as tradeable (via short positions) as prices trending up.",
+      "project_applicability": "Fixes candidate kfa_kmlm_factsheet_mlm_index_2024's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "kfa_kmlm_factsheet_mlm_index_2024"
+    },
+    {
+      "url": "https://www.simplify.us/etfs/cta-simplify-managed-futures-strategy-etf",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "Simplify Managed Futures Strategy ETF (CTA) seeks long-term capital appreciation via a systematic long/short strategy on commodity and interest-rate futures (excluding equities and currencies), going long positively-trending contracts and short negatively-trending ones, for absolute returns with little to no correlation with stocks or bonds; inception 2022-03-07.",
+      "project_applicability": "Fixes candidate simplify_cta_fund_page_sg_cta_index_2026's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "simplify_cta_fund_page_sg_cta_index_2026"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/0000880631/000119312511084915/d1012b.htm",
+      "published_or_updated_at": "2011-01-05",
+      "source_type": "regulatory_docs",
+      "credibility": "high",
+      "core_claim": "WisdomTree Managed Futures Strategy Fund (WTMF) is managed using a quantitative, rules-based strategy designed to provide returns that correspond to the Diversified Trends Indicator (DTI), a long/short rules-based managed-futures indicator developed by Victor Sperandeo of Alpha Financial Technologies, LLC, designed to capture the economic benefit of rising or declining price trends in commodity, currency and rates futures; inception 2011-01-05, the first managed-futures-strategy ETF.",
+      "project_applicability": "Fixes candidate wisdomtree_wtmf_form10_dti_index_2011's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "wisdomtree_wtmf_form10_dti_index_2011"
+    },
+    {
+      "url": "https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FMF",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "First Trust Managed Futures Strategy Fund (FMF) is an actively managed ETF that seeks to achieve positive returns not directly correlated to broad market equity or fixed-income returns, by investing under normal market conditions in a portfolio of exchange-listed futures; inception 2013-08-01.",
+      "project_applicability": "Fixes candidate ftportfolios_fmf_summary_2026's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "ftportfolios_fmf_summary_2026"
+    },
+    {
+      "url": "https://allocatesmartly.com/vigilant-asset-allocation-dr-wouter-keller-jw-keuning/",
+      "published_or_updated_at": "2017-07-14",
+      "source_type": "ssrn",
+      "credibility": "high",
+      "core_claim": "VAA-G4 (T=1/B=1), the variant the authors recommend, allocates 100% of the portfolio monthly to a single asset from an offensive universe (SPY, EFA, EEM, AGG) if all four have positive 13612W momentum, ranked by that score; if any offensive asset has negative momentum, the portfolio instead goes 100% into whichever of the defensive universe (LQD, IEF, SHY) has the highest 13612W score.",
+      "project_applicability": "Fixes candidate keller_keuning_vaa_ssrn_2017_allocatesmartly_replication's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "keller_keuning_vaa_ssrn_2017_allocatesmartly_replication"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fbertram/TuringTrader/master/BooksAndPubs/Keller_DAA.cs",
+      "published_or_updated_at": "2019-02-18",
+      "source_type": "ssrn",
+      "credibility": "high",
+      "core_claim": "DAA-G12 (T=6, B=2) trades a 12-asset risky universe (SPY, IWM, QQQ, VGK, EWJ, VWO, VNQ, GSG, GLD, TLT, HYG, LQD) with a cash universe (SHY, IEF, LQD) and a 2-asset canary universe (VWO, BND); cash fraction CF = min(1, b/B) where b is the count of canary assets with negative 13612W momentum, and the remaining (1-CF) is split equally across the top-6 risky assets by 13612W momentum. This is TuringTrader's open-source implementation of Keller & Keuning's paper.",
+      "project_applicability": "Fixes candidate keller_keuning_daa_g12_turingtrader_code_replication_2019's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "keller_keuning_daa_g12_turingtrader_code_replication_2019"
+    },
+    {
+      "url": "https://allocatesmartly.com/protective-asset-allocation/",
+      "published_or_updated_at": "2016-12-19",
+      "source_type": "ssrn",
+      "credibility": "high",
+      "core_claim": "PAA-CPR ranks 12 global asset classes monthly by MOM=close/SMA(13 month-end closes)-1; if fewer than 7 of 12 have MOM>0, allocates the shortfall proportionally (CP%=(12-n)/6, or 100% if n<=6) to whichever of IEF/SHY has the higher MOM, holding the top-6-by-MOM equally in the remainder.",
+      "project_applicability": "Fixes candidate keller_keuning_paa_cpr_ssrn_2016_allocatesmartly_replication's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "keller_keuning_paa_cpr_ssrn_2016_allocatesmartly_replication"
+    },
+    {
+      "url": "https://indexswingtrader.blogspot.com/2023/02/introducing-hybrid-asset-allocation-haa.html",
+      "published_or_updated_at": "2023-02-01",
+      "source_type": "industry_standard",
+      "credibility": "medium-high",
+      "core_claim": "HAA uses a single canary asset (TIP); when TIP's momentum is non-positive, the whole portfolio moves to defensive bonds/cash; otherwise the offensive universe (SPY, IWM, EFA, EEM, VNQ, PDBC, IEF, TLT) is ranked by relative momentum, the top-4 are each considered for a 25% slot, and any of those 4 with non-positive own (absolute) momentum has its 25% redirected to IEF or cash.",
+      "project_applicability": "Fixes candidate keuning_haa_trendxplorer_primary_2023's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "keuning_haa_trendxplorer_primary_2023"
+    },
+    {
+      "url": "https://allocatesmartly.com/keuning-kellers-generalized-protective-momentum/",
+      "published_or_updated_at": "2019-01-01",
+      "source_type": "industry_standard",
+      "credibility": "medium-high",
+      "core_claim": "GPM scores the same 12-asset universe as PAA using a correlation-hedged momentum (an asset's blended 1/3/6/12-month return discounted by its trailing correlation to the equal-weight universe return), holds the top-3 by that score equally weighted, and uses the same n<=6-triggers-100%-crash-protection breadth rule as PAA, choosing more diversified (less correlated) assets than PAA in most months.",
+      "project_applicability": "Fixes candidate keller_keuning_gpm_allocatesmartly_replication's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "keller_keuning_gpm_allocatesmartly_replication"
+    },
+    {
+      "url": "https://bestfolio.app/strategies/gem",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "industry_standard",
+      "credibility": "medium-high",
+      "core_claim": "Antonacci's GEM rule: compute 12-month returns for SPY, VEU, AGG and BIL; absolute momentum test is SPY's 12-month return vs BIL's; if SPY's return is higher, hold whichever of SPY/VEU has the higher 12-month return, 100%; otherwise hold 100% AGG (bonds).",
+      "project_applicability": "Fixes candidate antonacci_gem_risk_premia_harvesting_2013_primary's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "antonacci_gem_risk_premia_harvesting_2013_primary"
+    },
+    {
+      "url": "https://mebfaber.com/2017/12/13/episode-86-quantitative-approach-tactical-asset-allocation/",
+      "published_or_updated_at": "2007-01-01",
+      "source_type": "ssrn",
+      "credibility": "high",
+      "core_claim": "Faber's GTAA-5 rule, in the author's own words: a monthly 10-month simple moving average timing signal applied to 5 equally-weighted asset-class sleeves (SPY, EFA, TIP, GSG/commodities, VNQ), chosen to be simple, purely mechanical and free of subjective decision-making, using monthly (not daily) data because reliable daily history did not extend far enough back for some asset classes.",
+      "project_applicability": "Fixes candidate faber_gtaa_ssrn_2007_primary's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "faber_gtaa_ssrn_2007_primary"
+    },
+    {
+      "url": "https://engineeredportfolio.com/2018/05/02/accelerating-dual-momentum-investing/",
+      "published_or_updated_at": "2018-05-02",
+      "source_type": "industry_standard",
+      "credibility": "medium-high",
+      "core_claim": "Accelerating Dual Momentum (ADM): momentum score = sum of trailing 1, 3 and 6-month returns for each of two equity candidates (originally VFINX/VINEX, ETF proxy SPY/SCZ); if the higher score is positive, hold that equity 100%; if both are negative, hold whichever of TLT/TIP has the higher trailing 1-month return.",
+      "project_applicability": "Fixes candidate engineeredportfolio_adm_primary_2018's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "engineeredportfolio_adm_primary_2018"
+    },
+    {
+      "url": "https://allocatesmartly.com/bold-asset-allocation/",
+      "published_or_updated_at": "2019-01-01",
+      "source_type": "industry_standard",
+      "credibility": "medium-high",
+      "core_claim": "BAA-Balanced: if all 4 canary assets (SPY, EFA, EEM, AGG) have positive 13612W momentum, hold the top-6 of a 12-asset offensive universe by relative momentum equally weighted; else hold the top-3 of a 7-asset defensive universe (TIP, DBC, BIL, IEF, TLT, LQD, AGG) by momentum equally weighted. This exact mechanism was already screened locally in reports/research/iterations/giants_sweep_20260922/ (candidate f5_baa_balanced) under the frozen G1-G5 gate contract: anchor CAGR 9.7%, anchor Sharpe 0.49, 20bp anchor CAGR 8.5%, passing only G2 and G5, well below S3's anchor Sharpe of 1.49.",
+      "project_applicability": "Fixes candidate giants_sweep_baa_prior_result_2026_09_22's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "giants_sweep_baa_prior_result_2026_09_22"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/1742912/000089418919005208/rparriskparityetfdoc.htm",
+      "published_or_updated_at": "2019-01-01",
+      "source_type": "regulatory_docs",
+      "credibility": "high",
+      "core_claim": "RPAR Risk Parity ETF invests across global equity securities, US Treasury securities and commodities, seeking exposures similar to the Advanced Research Risk Parity Index (RPAR Index), a rules-based risk-parity index; inception 2019-12-13.",
+      "project_applicability": "Fixes candidate tidal_rpar_sec_485apos_2019's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "tidal_rpar_sec_485apos_2019"
+    },
+    {
+      "url": "https://www.rparetf.com/upar",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "UPAR Ultra Risk Parity ETF accesses the same risk-parity strategy as RPAR but with a higher target return and risk, diversifying across four asset classes (equities, commodities, Treasury bonds, TIPS), structured to target a risk comparable to equities; inception 2022-01-03.",
+      "project_applicability": "Fixes candidate tidal_upar_product_page_2026's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "tidal_upar_product_page_2026"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/1350487/000119312518211141/d532009d497.htm",
+      "published_or_updated_at": "2018-07-02",
+      "source_type": "regulatory_docs",
+      "credibility": "high",
+      "core_claim": "WisdomTree 90/60 U.S. Balanced Fund (later renamed WisdomTree U.S. Efficient Core Fund, ticker NTSX) invests approximately 90% of net assets in US equity securities, with the remainder serving as collateral for US Treasury futures positions of 2-30 year maturities; inception 2018-08-02.",
+      "project_applicability": "Fixes candidate wisdomtree_ntsx_sec_497_2018's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "wisdomtree_ntsx_sec_497_2018"
+    },
+    {
+      "url": "https://www.newyorklifeinvestments.com/etf/nyli-hedge-multi-strategy-tracker-etf-qai",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "NYLI Hedge Multi-Strategy Tracker ETF (QAI) is a fund-of-funds using a rules-based, quant methodology to replicate the beta (non-idiosyncratic) portion of the broad hedge-fund universe's risk/return characteristics over longer periods (not daily), without holding actual hedge funds; inception 2009-03-25.",
+      "project_applicability": "Fixes candidate nyli_qai_product_page_2026's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "nyli_qai_product_page_2026"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/1529390/000143774919013699/cambria20190702_ncsr.htm",
+      "published_or_updated_at": "2019-07-02",
+      "source_type": "regulatory_docs",
+      "credibility": "high",
+      "core_claim": "Cambria Trinity ETF (TRTY) is a fund-of-funds that, per its FY2019 annual report, invested a substantial share of assets (32.4% as of 2019-04-30) in the Cambria Global Momentum ETF (a trend-following fund) alongside other Cambria sleeves (e.g. Emerging/Foreign Shareholder Yield ETFs), rather than trading its own securities directly; inception 2018-09-10.",
+      "project_applicability": "Fixes candidate cambria_trty_sec_ncsr_2019's rule, universe and parameters exactly as published, before any Sharpe or return number is computed for it in this batch's screening pass.",
+      "reflection": "Rule and parameters are the source's own published/registered choice, not fit to this batch's return data; overfit risk is limited to universe substitution (e.g. ETF proxy for a mutual fund named in an older paper) and to short live records for younger funds (CTA since 2022, UPAR since 2022, KMLM since 2020) which this batch flags per-candidate rather than treating as full-cycle evidence.",
+      "claim_id": "cambria_trty_sec_ncsr_2019"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "imgp_dbmf_product_page_cta_replication_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "kfa_kmlm_factsheet_mlm_index_2024",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "simplify_cta_fund_page_sg_cta_index_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "wisdomtree_wtmf_form10_dti_index_2011",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "ftportfolios_fmf_summary_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "keller_keuning_vaa_ssrn_2017_allocatesmartly_replication",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "keller_keuning_daa_g12_turingtrader_code_replication_2019",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "keller_keuning_paa_cpr_ssrn_2016_allocatesmartly_replication",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "keuning_haa_trendxplorer_primary_2023",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "keller_keuning_gpm_allocatesmartly_replication",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "antonacci_gem_risk_premia_harvesting_2013_primary",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "faber_gtaa_ssrn_2007_primary",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "engineeredportfolio_adm_primary_2018",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "giants_sweep_baa_prior_result_2026_09_22",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "tidal_rpar_sec_485apos_2019",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "tidal_upar_product_page_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "wisdomtree_ntsx_sec_497_2018",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "nyli_qai_product_page_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    },
+    {
+      "claim_id": "cambria_trty_sec_ncsr_2019",
+      "source_card_path": "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260928-04"
+  ],
+  "candidate_matrix_revisions": [
+    "Initial preregistration: 19 candidates across F1 (5 managed-futures ETFs held outright), F2 (9 Keller/Antonacci/Faber published tactical-allocation rules), F3 (5 other alt-diversifier ETFs held outright). No revision yet; this is the first and only candidate list for this batch -- the screening lane (built separately) must not add, remove or retune any candidate after seeing a result."
+  ],
+  "topic_coverage": [
+    "managed_futures_etf_replication_of_cta_hedge_funds",
+    "keller_keuning_canary_breadth_tactical_asset_allocation",
+    "antonacci_dual_momentum_absolute_and_relative",
+    "faber_global_tactical_asset_allocation_10_month_sma",
+    "accelerating_dual_momentum_1_3_6_month_score",
+    "risk_parity_and_capital_efficient_multi_asset_etfs",
+    "hedge_fund_beta_replication_etf",
+    "prior_local_giants_sweep_result_reuse_under_changed_criterion"
+  ]
+}

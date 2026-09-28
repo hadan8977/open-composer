@@ -1,0 +1,172 @@
+name: stock_batch3_h20260928_06
+description: Preregistered H-20260928-06 candidate family. Judges ten testable-now
+  registry directions (batch 3, stock-level) against the owner's 2026-09-28 keep
+  rule (K1 Sharpe vs S3, K2 diversifier edge vs S3). momentum_concentrated_k37
+  (12-1 month momentum, top 37, monthly), skew_52wk_high_k95 (distance from the
+  52-week high, top 95, monthly), vam_momentum_k50 (volatility-adjusted momentum
+  = momentum/vol, top 50, monthly, a disclosed partial proxy of the AEGIS paper's
+  step 1 only), a13d_item4_h6/h12/h24 (Schedule 13D activist Item-4 filings,
+  calendar-time hold 126/252/504 sessions), monday_afternoon_spy/qqq (single-index
+  weekly timing adaptation of a cross-sectional Monday-afternoon-reversal factor,
+  using the day's own close-vs-open as the observable proxy), overnight_only_spy/qqq
+  (static long-overnight/flat-intraday daily round trip). All long-only, next-session
+  execution. Research only, deterministic; no broker writes are authorized.
+timeframe: daily
+universe:
+- SPY
+- QQQ
+- SHY
+- BIL
+- SMH
+- SOXL
+- TQQQ
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 100
+  max_position_weight: 0.1
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 100
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.1
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_06:stock_batch3_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  cross_sectional_score:
+    source: expression
+    expression: close / lag(close, 252) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-candidate cross-sectional
+      score (momentum_252_21 for momentum_concentrated_k37; dist_from_252d_high
+      for skew_52wk_high_k95; momentum_252_21 divided by trailing 63-session
+      volatility for vam_momentum_k50) is produced by
+      open_composer.research.signal_card's load_market/load_signal/topk_cohorts/hold
+      over the top-500-ADV broad universe, not by the single-symbol expression
+      grammar.
+    params:
+      decision_lag_sessions: 1
+  event_13d_item4:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual signal is a binary event
+      (item4_present=true, is_new_13d=true rows from
+      data/features/sec_13d/filings.parquet, keyed on visible_session), entered
+      at the next session's open and held via signal_card.hold(..., normalize=True)
+      for 126/252/504 sessions (calendar-time book).
+    params:
+      decision_lag_sessions: 1
+  single_index_timing:
+    source: expression
+    expression: close / open - 1
+    default: 0.0
+    description: Documentation-only stand-in. monday_afternoon_spy/qqq holds the
+      asset from Tuesday's open through Friday's close only in weeks where the
+      preceding Monday's own close-vs-open return was positive (a disclosed
+      proxy for the paper's intraday 12:00-vs-open split, which daily bars
+      cannot observe); overnight_only_spy/qqq is a static policy (long from
+      close to next open every session, flat intraday), charged 2x the per-side
+      cost as an explicit daily round trip.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_06_registry_stock_batch3
+  candidate_manifest_path: reports/research/iterations/h20260928_06_registry_stock_batch3/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_06_registry_stock_batch3/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl
+  source_card_claim_ids:
+  - pwb_concentrated_momentum_37pos_2020
+  - pwb_skewness_52wk_high_2017
+  - pwb_intraday_reversal_first_half_hour_2025
+  - alphactor_overnight_edge_spy_1993_2024
+  - aegis_arxiv_2604_09060_abstract_2026
+  parameter_space:
+    candidate_id:
+    - momentum_concentrated_k37
+    - skew_52wk_high_k95
+    - vam_momentum_k50
+    - a13d_item4_h6
+    - a13d_item4_h12
+    - a13d_item4_h24
+    - monday_afternoon_spy
+    - monday_afternoon_qqq
+    - overnight_only_spy
+    - overnight_only_qqq
+  candidate_budget: 10
+  selection_objective: No selection or ranking among the ten candidates -- each is
+    judged independently against the owner's absolute K1 (Sharpe vs S3) and K2
+    (diversifier edge vs a vol-matched k*S3+(1-k)*SHY control) bars, not against
+    siblings. k and holding length come from each candidate's own primary source
+    (or T1's k=30/h=20 default where the source discloses neither); none are tuned.
+  anti_overfit_notes:
+  - Ten candidates are frozen in candidate-manifest.json before any return is
+    computed; k/h come from each primary source, never fit to any window's return.
+  - Overlapping daily cohorts (momentum/skewness/VAM candidates) are date-neutral
+    by construction (n_offsets=1); the ETF-timing and 13D-event candidates use
+    the frozen engine's own window/cost conventions with no per-candidate tuning.
+  - K1/K2 thresholds (1.19/0.65 Sharpe, 0.05 edge) are the owner's own 2026-09-28
+    numbers, not chosen after seeing results.
+  - Three near-duplicate mechanisms (deep-learning residual stat-arb, ML-implied
+    risk premia, 8-K item-402 avoidance gate) are not retested; they inherit an
+    existing local refutation/blocker, recorded in direction-review.json.
+  validation_plan:
+  - select_2023_09_18_to_2025_12_31_anchor_2024_01_08_to_2026_09_17_stress_2016_05_02_to_2023_09_15_holdout2026_contaminated
+  - k1_sharpe_vs_s3_80pct_bar_10bp_cagr_positive_20bp
+  - k2_diversifier_edge_vs_vol_matched_k_s3_plus_1_minus_k_shy_control_ge_0.05_sharpe
+  - correlation_with_s3_stress_anchor_2022
+  - deflated_sharpe_probability_trial_count_10_hac_lag_21
+notes:
+  intent: Judge every harvested-but-unjudged stock-level registry direction in
+    batch 3 against the owner's relaxed keep rule (K1/K2 vs S3), so nothing
+    stays in "harvested" limbo, and record exact blockers/needs_modal estimates
+    for the rest.
+  hypothesis_id: H-20260928-06
+  previous_link: H-20260928-05
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

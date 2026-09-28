@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_06_registry_stock_batch3",
+  "reviewed_at": "2026-09-28T03:45:00+00:00",
+  "decision": "proceed",
+  "objective": "Judge and, where testable now, backtest 25+5 harvested-but-unjudged registry directions (the +5 forwarded mid-round from the ETF-batch2 agent, which triaged them as stock-level and handed them to this lane before this dossier's manifest was frozen or any result computed, so they are folded into the same preregistration rather than a later, results-contaminating addition) (batch 3: factor, sizing, hf_factor, intraday, event, model and alt_data categories) against the owner's 2026-09-28 keep rule: a candidate is kept if it clears K1 (Sharpe >= 80% of S3's in both the anchor window [2024-01-08..2026-09-17, target >=1.19] and the stress window [2016-05-02..2023-09-15, target >=0.65] at 10bp, CAGR>0 at 20bp) or K2 (S3 + candidate at 63-day inverse-vol monthly beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows). Every row must be opened at its primary source, checked against local prior art, classified testable-now/not-testable, and (if testable and long-only and locally computable on this 4GB box) backtested with the frozen signal_card/screen_lane engine; rows needing a panel or minute-bar history too large for this box are marked needs_modal for a separate Modal cloud lane, not shrunk into a different, easier test.",
+  "target_regime_and_horizon": "Same regime/horizon convention as the rest of the giants-sweep family: select 2023-09-18..2025-12-31 (not used to rank single candidates here, since each one is judged against absolute K1/K2 bars, not against siblings), anchor 2024-01-08..2026-09-17 (the frozen keep-rule window), stress 2016-05-02..2023-09-15 (pre-select, includes 2018/2020/2022 drawdowns), holdout 2026-01-02..2026-09-17 reported but contaminated (S3 and several sibling sleeves already evaluated on it). Individual signals (skewness/momentum/13D/index-timing/overnight) are not held to G1's 50%/yr strategy bar by themselves -- signal_card's own convention is that a single signal is judged on IC, decile spread and a long-only book against the universe, and the K1/K2 comparison against S3 is this round's additional, owner-specified bar for whether a candidate is worth combining with the live paper sleeve.",
+  "existing_solution_comparison": "Every _pwb row's number was already produced by paperswithbacktest.com re-running the cited paper 1990-2026 (harvested 2026-09-23, `reports/research/harvest/directions.jsonl`); this round re-opens the paperswithbacktest page and, where the exact long-only rule was not disclosed on that page, an independent industry source, before building anything (see sources[] and queries[] below: four fresh, quote-verified snapshots this pass, plus two more pages opened -- Brav/Jiang/Partnoy/Thomas's 2008 hedge-fund-activism review PDF and the Pigorsch/Schafer 2024 ScienceDirect page -- whose content is used in prose below but could not be quote-bound into sources[] because both snapshots are a bot-walled/paywalled shell with no extractable body text, disclosed here rather than silently dropped). Local prior art was checked two ways for every id: `grep -ril <keyword> reports/research/control reports/research/iterations reports/research/ledger` (no exact-keyword hits for any of the 25 ids -- expected, since these are freshly harvested, never-tested rows) and `uv run oc research directions check <phrase>` (every id's own registry row is its own top hit at score 1.0; the next-highest scores point to genuinely adjacent but distinct prior work, listed in negative_experiments_checked). Three rows are near-duplicates of an already-decided mechanism and are not retested: dir:deep_learning_stat_arb_residual (PCA/FF-residual mean reversion, needs a short leg) matches the already-refuted dir:sector_residual_reversal_statarb_decay (not_executable: breakeven cost 4.2bp, decayed out-of-sample, short-side-concentrated, no borrow); dir:ml_implied_risk_premia_pwb (96-position long+short characteristic-panel ranking) inherits the same permno-to-ticker-crosswalk blocker already logged against dir:osap_ml_ranking (parked, ceiling below the bar); dir:event_8k_item402_restatement_drift (a long-only avoidance/exit gate) is the same gate shape as the already-refuted dir:short_interest_avoidance_gate and dir:insider_form4_confirmation_gate, both of which failed on top of the momentum book, so a naive port is not assumed to work and is deferred pending the 8-K item-type parse it also needs. Of the five forwarded rows: dir:volatility_gated_momentum_aegis's cited paper (arXiv:2604.09060, Chakraborty & Singh, Apr 2026) was independently located and its abstract matches the secondary blog's mechanism description, so this round tests its step-1 volatility-adjusted-momentum ranking (a disclosed formula, momentum/volatility) as vam_momentum_k50, dropping steps 2-3 (minimax-correlation diversification, SLSQP Sortino allocation) as out-of-scope portfolio-construction/optimization work, the same mismatch class as dir:risk_based_portfolio_construction_pwb. dir:tactical_mean_reversion_multi_asset_pwb and dir:trend_filtered_mean_variance_pwb both disclose only a summary CAGR/Sharpe/drawdown on the paperswithbacktest page (re-checked directly: the mean-reversion page's own abstract text gives no formula, only 'improving the estimation of expected returns from simple historical moments to the use of predictable variables, mean reversion or both') with the actual signal formula behind a paywalled paper (Caporin/de Roon/Pelizzon 2009; Santos & Torrent 2022) not opened in this pass; the mean-variance one is additionally a portfolio-optimization mechanism, not a top-k score. dir:moving_average_volume_heuristic_pwb is thematically adjacent to the owner's already-refuted dir:giants_sweep_published_etf_rules (0/24 published SMA/trend rules cleared G1-G5) and barely clears Sharpe 1.0 with a 35% drawdown even in the source's own favorable replication. dir:ema_crossover_atr_paper_track has a fully disclosed rule but its exit is an ATR trailing/breakeven stop-loss on individually triggered trades, not a fixed-holding-period cross-sectional book -- faithfully testing it needs a new per-symbol trigger-and-stop simulator, which this batch's brief restricts against building (reuse signal_card/screen_lane only).",
+  "remaining_evidence_gap": "Whether any of the five testable-now candidate families (concentrated momentum k=37, 52-week-high skewness-truncation k=95, three 13D activist Item-4 long-horizon holds at 6/12/24 months, a single-index Monday-afternoon-reversal weekly timing adaptation, and a static long-overnight/flat-intraday SPY/QQQ policy) clears K1 or K2 against the live S3 sleeve once run through the frozen engine at 10/20bp; none of these five has been backtested locally before under any keep rule. Three intraday-microstructure rows (signed jump variation, end-of-day reversal, and -- newly discovered this pass by opening the actual paperswithbacktest source, not just the harvest claim -- intraday time-series reversal, whose real mechanism is 'yesterday's overnight return predicts the first half-hour return', not a same-day open/close reversal) all need first-half-hour or higher-frequency intraday bars across a broad multi-year stock universe; the local minute archive (`data/features/minute_panel`) only has SPY, and building this from the raw 29G `data/sip/minute` archive is the kind of very-long-minute-bar-panel job the owner's Modal-lane addendum names explicitly -- these three are marked needs_modal with universe/date-range/memory estimates rather than shrunk into a same-day-close-only proxy that would test a different, weaker mechanism.",
+  "negative_experiments_checked": "dir:sector_residual_reversal_statarb_decay (not_executable): rigorous leak-safe PCA(k=15) sector-residual reversal decays from in-sample net Sharpe 0.34 to out-of-sample -0.15 at 7bp, breakeven 4.2bp, and the surviving alpha is short-side/low-price concentrated -- directly informs the deep-learning-residual row's disposition. dir:osap_ml_ranking (parked): blocked on the same permno-to-ticker crosswalk the ML-implied-risk-premia row would also need. dir:short_interest_avoidance_gate and dir:insider_form4_confirmation_gate (both refuted): long-only avoidance/exit gates layered on the momentum book both failed their own adoption rule against an exposure-matched control -- the template the 8-K item-402 row would have to beat. dir:event_13d_drift (refuted): next-open entry after a new Schedule 13D, 20/40/60-session hold, failed because the money is priced in before the earliest entry point; this round's 13D candidate differs materially (filtered to item4_present=true, i.e. disclosed activist intent, not every new 13D filer, and 126/252/504-session holds instead of 20/40/60) so it is tested fresh, not skipped, but the prior refutation is the reason expectations are modest.",
+  "cost_and_execution_assumptions": "Frozen conventions, unchanged from the rest of the giants-sweep family: 10bp primary / 20bp stress cost per side on sum|delta weight|, next-session-open fill for a close-observed signal, RF = BIL daily return subtracted before Sharpe (base.metrics), S3's own daily net return series from scripts/screen_lane.py's `s3_incumbent` (unchanged live month-end S3, offset 0). The Monday-afternoon-reversal candidate is the project's own disclosed (2026-09-18 intel note) adaptation of a cross-sectional factor into a single-index timing signal -- the literature's own test used an intraday 12:00-vs-open split we cannot observe with only daily bars for both SPY and QQQ consistently, so this round substitutes the day's own close-vs-open (Monday's full session) as the observable proxy for 'the afternoon direction', explicitly disclosed as a deviation, and keeps the frozen close-signal-to-next-open-fill convention rather than inventing a new intraday fill assumption. The overnight-only candidate is scored as a literal daily round trip (buy at the open, flat during the day; hold from close to next open) and is charged 2x the per-side cost every session for that round trip, which is the harsh but honest execution cost of trying to hold only the overnight session in cash equities.",
+  "stop_condition": "If none of the nine testable-now candidates clears K1 or K2, the verdict for this batch is: no registry direction judged this round adds Sharpe over S3 either on its own or as a diversifier, and the three needs_modal rows remain queued for the Modal lane with their data/memory requirements recorded rather than answered here.",
+  "queries": [
+    {
+      "query": "paperswithbacktest concentrated portfolios of momentum stocks exact rule",
+      "opened_urls": ["https://paperswithbacktest.com/strategies/concentrated-portfolios-of-momentum-stocks"],
+      "searched_at": "2026-09-28T03:31:00+00:00"
+    },
+    {
+      "query": "paperswithbacktest does probability weighting drive skewness preferences long leg",
+      "opened_urls": ["https://paperswithbacktest.com/strategies/does-probability-weighting-drive-skewness-preferences"],
+      "searched_at": "2026-09-28T03:31:00+00:00"
+    },
+    {
+      "query": "paperswithbacktest intraday time series reversal REIT exact rule",
+      "opened_urls": ["https://paperswithbacktest.com/strategies/intraday-time-series-reversal"],
+      "searched_at": "2026-09-28T03:31:00+00:00"
+    },
+    {
+      "query": "alphactor overnight edge SPY overnight intraday decomposition",
+      "opened_urls": ["https://alphactor.ai/blog/overnight-edge"],
+      "searched_at": "2026-09-28T03:31:00+00:00"
+    },
+    {
+      "query": "Brav Jiang Partnoy Thomas 2008 hedge fund activism 13D long-term holding period abnormal returns",
+      "opened_urls": ["https://business.columbia.edu/sites/default/files-efs/pubfiles/4126/Hedge%20Fund%20Activism%20A%20Review.pdf"],
+      "searched_at": "2026-09-28T03:31:00+00:00"
+    },
+    {
+      "query": "Pigorsch Schafer reversal of Monday returns it is the afternoon that matters Finance Research Letters 2024",
+      "opened_urls": ["https://www.sciencedirect.com/science/article/pii/S1544612324005555"],
+      "searched_at": "2026-09-28T03:31:00+00:00"
+    },
+    {
+      "query": "arXiv 2604.09060 Chakraborty Singh volatility-adjusted momentum AEGIS minimax correlation Sortino",
+      "opened_urls": ["https://arxiv.org/abs/2604.09060"],
+      "searched_at": "2026-09-28T03:39:00+00:00"
+    },
+    {
+      "query": "paperswithbacktest any role for mean reversion in short term asset allocation exact formula",
+      "opened_urls": ["https://paperswithbacktest.com/strategies/any-role-for-mean-reversion-in-short-term-asset"],
+      "searched_at": "2026-09-28T03:39:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://paperswithbacktest.com/strategies/concentrated-portfolios-of-momentum-stocks",
+      "claim_id": "pwb_concentrated_momentum_37pos_2020",
+      "claim": "paperswithbacktest re-run of Piras (2020): past-return momentum ranking, monthly rebalance, current implementation holds 37 long positions, US equity universe. 1990-2026 backtest: Annual return 24.27%, Sharpe ratio 1.09, Volatility 22.07%, Max drawdown 54.58%.",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2020-02-02",
+      "market_and_period": "US equities, 1990-2026 (paperswithbacktest full-period re-run).",
+      "applicability": "Gives the exact long-only rule (past-return momentum, monthly, N=37) this round's momentum_concentrated_k37 candidate reuses verbatim with the project's own existing momentum_252_21 (12-1 month) score.",
+      "limitations": "Platform re-implementation of a thesis, not a peer-reviewed journal paper; -54.58% full-period drawdown; no independent third-party replication found in this pass.",
+      "independent_replication": "None found this pass; the concentration-improves-momentum-returns mechanism is broadly consistent with the wider momentum literature's finding that narrower, higher-conviction momentum books earn more but draw down more.",
+      "fetched_at": "2026-09-28T03:31:00+00:00",
+      "sha256": "07c84b4ab4c9580a7d9e18aacf41eadf3782ca6cb354f91c7e0735f4f795cc56",
+      "snapshot_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/sources/pwb-concentrated-momentum.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl"
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/does-probability-weighting-drive-skewness-preferences",
+      "claim_id": "pwb_skewness_52wk_high_2017",
+      "claim": "negative return premia associated with positive skewness are driven almost entirely by stocks that are farther away from the their 52-week high",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2017-01-01",
+      "market_and_period": "US equities, 1990-2026 (paperswithbacktest full-period re-run).",
+      "applicability": "Establishes the long leg's direction: since the mispricing (and hence the bad subsequent returns) sits in stocks far from their 52-week high, the long leg is stocks NEAR their 52-week high -- exactly what the project's existing dist_from_252d_high column measures (range [-1, 0], 0 = at the high). This round's skew_52wk_high_k95 candidate takes the top 95 stocks by that column (least negative, closest to 0; 95 long positions is the page's own disclosed long-leg count out of 195 total).",
+      "limitations": "Page does not disclose the exact decile/quantile cutoffs; long-only subset return is not separately disclosed (only the combined 195-position long+short book, 14.22% CAGR / Sharpe 1.11 / -29.33% max drawdown).",
+      "independent_replication": "The underlying 52-week-high continuation effect (George & Hwang 2004) is one of the most replicated anomalies in the cross-sectional return literature.",
+      "fetched_at": "2026-09-28T03:31:00+00:00",
+      "sha256": "c49d8f5cec6f4515203100c4778708f33217f65623a4c8e3eba53f78da6238a7",
+      "snapshot_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/sources/pwb-skewness-preference.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl"
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/intraday-time-series-reversal",
+      "claim_id": "pwb_intraday_reversal_first_half_hour_2025",
+      "claim": "This study investigates intraday time series reversal that the overnight return predicts the first half-hour return for U.S. market indices.",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2025-11-26",
+      "market_and_period": "US equity index ETFs (and, per the platform page, Equities+REITs), 1990-2026 (paperswithbacktest full-period re-run).",
+      "applicability": "Opening this page (rather than relying only on the 2026-09-23 harvest claim) surfaced that the real mechanism is 'overnight return negatively predicts the first half-hour return', not a same-day open/close reversal; this changes this round's classification of dir:intraday_reversal_reit_pwb from testable-with-daily-bars to needs_modal, since the signal needs first-half-hour intraday bars across the broad universe.",
+      "limitations": "-78.90% max drawdown over the full 1990-2026 period is disqualifying on its face for anything beyond a curiosity read; very recent paper (Nov 2025), essentially no time for independent replication.",
+      "independent_replication": "None found this pass.",
+      "fetched_at": "2026-09-28T03:31:00+00:00",
+      "sha256": "adfbc605f131c434ee60c3af08c6e4ac0dc7366a302d088618d57cc51850d3d0",
+      "snapshot_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/sources/pwb-intraday-reversal-reit.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl"
+    },
+    {
+      "url": "https://alphactor.ai/blog/overnight-edge",
+      "claim_id": "alphactor_overnight_edge_spy_1993_2024",
+      "claim": "Total SPY CAGR: ~10.1% Overnight component CAGR: ~8.9% Intraday component CAGR: ~1.1% Overnight Sharpe ratio: 0.71 Intraday Sharpe ratio: 0.09",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2024-01-01",
+      "market_and_period": "SPY, 1993-2024, US.",
+      "applicability": "Backs this round's overnight_only_spy/overnight_only_qqq candidate: a static long-overnight/flat-intraday policy, scored here as a literal daily round trip at the project's own 10/20bp-per-side convention (harsher than the source's own bid-ask-only cost note).",
+      "limitations": "Practitioner blog, not peer reviewed; unadjusted (no explicit turnover-cost) headline numbers for the specific overnight/intraday SPY decomposition quoted in this round's claim; does not model round-trip turnover cost the way this round's own contract does.",
+      "independent_replication": "The overnight/intraday return-gap decomposition is well documented in the academic literature (e.g. the paperswithbacktest 'Overnight-Intraday Return Gap and the Retail Ebb and Flow' page already in the harvest registry), which corroborates the direction though not this exact number.",
+      "fetched_at": "2026-09-28T03:31:00+00:00",
+      "sha256": "439ed77ed80c3973b99620cbf8080e2dad598463286479ace2c2216bd9f700cf",
+      "snapshot_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/sources/alphactor-overnight-edge.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/2604.09060",
+      "claim_id": "aegis_arxiv_2604_09060_abstract_2026",
+      "claim": "By leveraging a volatility-adjusted momentum filter to identify trend strength and employing a minimax correlation algorithm to enforce structural diversification, the model utilises sequential least squares programming (SLSQP) to optimise capital allocation for the sortino ratio.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-04-10",
+      "market_and_period": "S&P 500 (per the secondary blog summary that prompted this check; the abstract itself does not name the universe/period), 20-year walk-forward per the blog.",
+      "applicability": "Confirms dir:volatility_gated_momentum_aegis's cited paper (Chakraborty & Singh, AEGIS) is real and matches the secondary blog's mechanism description (volatility-adjusted momentum filter, minimax correlation diversification, SLSQP Sortino allocation), resolving the row's own flagged verification gap. This round tests only step 1 (volatility-adjusted momentum ranking = momentum_252_21 / vol_63) as a disclosed partial proxy -- steps 2-3 (minimax-correlation basket construction and SLSQP Sortino-optimized allocation) are portfolio-construction/optimization mechanisms outside this batch's reuse-only score-and-top-k engine, the same class of mismatch as dir:risk_based_portfolio_construction_pwb.",
+      "limitations": "Abstract only (full text not read in this pass); very recent (Apr 2026), no independent replication exists yet; the blog's specific backtest numbers (15.41% CAGR, -28.89% dd, 2006-2025) are from a secondary, unverified source and are not relied on for this round's own test.",
+      "independent_replication": "None found this pass; paper is 5 months old as of this review.",
+      "fetched_at": "2026-09-28T03:39:00+00:00",
+      "sha256": "66607c0b9f9c19a6c8b25eb0c86dc09a81c5512473a13243e3485c028f77f56b",
+      "snapshot_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/sources/arxiv-aegis-abstract.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all ten testable-now candidates (momentum_concentrated_k37, skew_52wk_high_k95, vam_momentum_k50, a13d_item4_h6/h12/h24, monday_afternoon_spy/qqq, overnight_only_spy/qqq) through the frozen signal_card/screen_lane engine at 10bp and 20bp in the select/anchor/stress/holdout windows in one run, then check each against K1 (Sharpe >=1.19 anchor / >=0.65 stress at 10bp, CAGR>0 at 20bp) and K2 (diversifier edge vs a vol-matched k*S3+(1-k)*SHY control >=0.05 Sharpe in both anchor and stress).",
+    "pass_condition": "At least one candidate clears K1 or K2.",
+    "falsification_condition": "No candidate clears K1 or K2 -- this batch adds nothing to the kept-candidate set, and the three needs_modal rows plus the fourteen not-testable rows are recorded with their exact blockers for later reopening.",
+    "max_compute_minutes": 30
+  }
+}

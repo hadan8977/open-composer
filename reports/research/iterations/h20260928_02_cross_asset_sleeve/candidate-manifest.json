@@ -1,0 +1,138 @@
+{
+  "iter_id": "h20260928_02_cross_asset_sleeve",
+  "generated_at": "2026-09-28T03:30:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_02_cross_asset_sleeve",
+  "objective": "Screen two cross-asset defensive-trend sleeves (D1 Carlson Defense First TAA, D2 12-month-vs-SHY absolute momentum with inverse-63-session-vol sizing) via scripts/screen_batch.py, each judged by K2 (combination Sharpe edge over vol-matched S3 >=0.05 in anchor and stress) or K1 (standalone offset-median Sharpe >=80% of S3's own median in both windows, positive 20bp CAGR), with all 21 monthly rebalance-day offsets swept and judged by the median.",
+  "candidates": [
+    {
+      "candidate_id": "D1",
+      "path": "cross_asset_sleeve_vs_delevered_s3_control",
+      "role": "combination_and_standalone_candidate",
+      "method": "defense_first_taa_carlson_rank_weighted",
+      "ablation": "cross_asset_sleeve_choice",
+      "spec_path": "strategy_specs/drafts/h20260928_02_cross_asset_sleeve.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_screen_lane_sip_daily_panel",
+      "feature_contract": "feature_v1_defense_first_generalized_signal_date",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_cross_asset_sleeve_diagnostics",
+      "parameters": {
+        "universe": ["TLT", "GLD", "DBC", "UUP", "SPY"],
+        "hurdle_symbol": "BIL",
+        "momentum_lookbacks_calendar_months": [1, 3, 6, 12],
+        "rank_weights": [0.40, 0.30, 0.20, 0.10],
+        "fallback_symbol": "SPY",
+        "freq": "M",
+        "offsets_swept": 21,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "source": "run_h20260923_12_s3_defense_first.defense_weights, generalized to an arbitrary asof date (calendar_return helper) so offsets != 0 can be evaluated without look-ahead; rank weights, hurdle and fallback unedited from the published rule",
+        "combination_weighting": "trailing_63_session_inverse_vol_with_s3_via_screen_lane.combine_two_sleeves",
+        "combo_cost_bps_primary": 10.0,
+        "combo_cost_bps_stress": 20.0
+      }
+    },
+    {
+      "candidate_id": "D2",
+      "path": "cross_asset_sleeve_vs_delevered_s3_control",
+      "role": "combination_and_standalone_candidate",
+      "method": "absolute_momentum_12m_vs_shy_inverse_vol_63d",
+      "ablation": "cross_asset_sleeve_choice",
+      "spec_path": "strategy_specs/drafts/h20260928_02_cross_asset_sleeve.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_screen_lane_sip_daily_panel",
+      "feature_contract": "feature_v1_absolute_momentum_inverse_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_cross_asset_sleeve_diagnostics",
+      "parameters": {
+        "universe": ["TLT", "GLD", "DBC", "UUP"],
+        "hurdle_symbol": "SHY",
+        "hurdle_lookback_calendar_months": 12,
+        "sizing_lookback_sessions": 63,
+        "sizing_rule": "inverse_trailing_daily_return_stdev_ddof1",
+        "fallback_symbol": "SHY",
+        "freq": "M",
+        "offsets_swept": 21,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "source": "queue task T-20260928-02 round-number thresholds (12-month absolute momentum vs SHY, 63-session inverse vol sizing), not tuned; mechanism grounded in Moskowitz-Ooi-Pedersen 2012 time-series momentum",
+        "combination_weighting": "trailing_63_session_inverse_vol_with_s3_via_screen_lane.combine_two_sleeves",
+        "combo_cost_bps_primary": 10.0,
+        "combo_cost_bps_stress": 20.0
+      }
+    }
+  ],
+  "candidate_count": 2,
+  "contracts": {
+    "data": {
+      "data_v1_screen_lane_sip_daily_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count (screen_lane.load_batch_panel via base.load_panel)",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": ["BIL", "DBC", "GLD", "QQQ", "SHY", "SOXL", "SPY", "TECL", "TLT", "TQQQ", "UPRO", "USD", "UUP"],
+        "panel_start": "2015-01-02 (screen_lane.PANEL_START); first local daily bar for TLT/GLD/DBC/UUP/SHY confirmed 2016-01-04"
+      }
+    },
+    "features": {
+      "feature_v1_defense_first_generalized_signal_date": {
+        "decision_lag_sessions": 1,
+        "definition": "For a signal date asof, calendar_return(close, sym, asof, months) = close.at[asof, sym] / close.at[nearest trading day <= asof - months calendar months, sym] - 1, using close.loc[:asof] only. D1's score per symbol is the mean of this over months in [1,3,6,12]; rank TLT/GLD/DBC/UUP by score, weight 0.40/0.30/0.20/0.10 by rank, any symbol whose score < BIL's score has its tier weight redirected to SPY. At offset 0, asof is the true month-end and this reproduces H-20260923-12's DF01 reading exactly; at offset>0, asof is a later trading day in the same rebalance cycle."
+      },
+      "feature_v1_absolute_momentum_inverse_vol": {
+        "decision_lag_sessions": 1,
+        "definition": "For a signal date asof: eligible = {sym in TLT,GLD,DBC,UUP : calendar_return(close, sym, asof, 12) > calendar_return(close, SHY, asof, 12)}; if eligible is empty, 100% SHY; else weight each eligible symbol by 1/std(daily returns over the trailing 63 sessions ending at asof, ddof=1), normalized to sum 1."
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights decided at signal-date close, effective at the next session open (screen_lane.weights_frame); combination and control apply the same next-open convention"
+      }
+    },
+    "validation": {
+      "validation_v1_screen_lane_select_anchor_stress_holdout2026": {
+        "select": ["2023-09-18", "2025-12-31"],
+        "anchor": ["2024-01-08", "2026-09-17"],
+        "stress": ["2016-05-02", "2023-09-15"],
+        "holdout_2026_contaminated": ["2026-01-02", "2026-09-17", "already seen for S3 and for D1's SPY-fallback sibling in H-20260923-12; reported for reference only"],
+        "offsets": "21 monthly rebalance-day offsets (0-20 trading sessions after month-end), judged by the median (screen_lane.judged_offset)"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_plus_combo_rebalance": {
+        "contract_path": "reports/research/iterations/h20260928_02_cross_asset_sleeve/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_cross_asset_sleeve_diagnostics": {
+        "members": [
+          "S3_incumbent_reference",
+          "vol_matched_delevered_s3_control_ci",
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_02_cross_asset_sleeve.yaml": "396ddd01765c741b320a2ddc8453bafed324265e7af6955e454a504846267952"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_02_cross_asset_sleeve.yaml",
+  "spec_hash": "396ddd01765c741b320a2ddc8453bafed324265e7af6955e454a504846267952",
+  "g3_not_applicable_reason": "G3 (random-menu/random-calendar placebo) does not apply to this cross-asset trend/combination question, the same reasoning H-20260927-01 documented: there is no discretionary asset pick or gate-timing signal to randomize (D1's ranking is fully determined by published momentum scores; D2's eligibility is a deterministic threshold). The volatility-matched delevered-S3 control (via screen_lane.diversifier_edge_for_offset) is the placebo-equivalent check here -- it isolates 'same risk, no diversification' so any D1/D2 combination advantage must come from genuine cross-sleeve diversification, not from running at higher average risk.",
+  "adoption_rule": {
+    "per_candidate": [
+      "K2 (primary): judged (median-offset) combination Sharpe (S3+D, inverse-63-session-vol weighted) minus vol-matched delevered-S3 control Sharpe >= 0.05 in BOTH the anchor window and the stress period (screen_lane.diversifier_edge_for_offset judged_edge, per window)",
+      "K1 (fallback if K2 fails): standalone judged (median-offset) Sharpe at 10bp >= 80% of S3's own median Sharpe in BOTH the anchor window (bar 1.19, 80% of S3's 1.49) and the stress period (bar 0.65, 80% of S3's 0.81), AND 20bp CAGR positive in both windows"
+    ],
+    "strong_reserve": "K2 edge >= 0.10 in both windows, or K1's Sharpe not below S3's own in either window",
+    "pass_requires": "D1 or D2 clears K2, or clears K1",
+    "multiple_comparisons": "two candidates (D1, D2); report both regardless of outcome; DSR reported at n_trials=2",
+    "also_reported": "D1/D2 standalone judged Sharpe (select/anchor/stress/holdout2026), correlation with S3 in stress/anchor/2022, DSR at anchor",
+    "fallback_if_none_pass": "no cross-asset sleeve added to the live pilot on this evidence; S3 alone remains the reference"
+  }
+}

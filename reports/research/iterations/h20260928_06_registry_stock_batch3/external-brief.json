@@ -1,0 +1,141 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_06_registry_stock_batch3",
+  "strategy_name": "stock_batch3_h20260928_06",
+  "source_spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+  "spec_hash": "f766652aa5b02aadd7ef43bd1f5db0f246edc713de699623781ed89c1d31dc7b",
+  "objective": "Open the primary source for every batch-3 registry direction (25 original + 5 forwarded stock-level rows), extract the long-only leg's exact rule, and back the ten testable-now candidates with verified evidence before any backtest.",
+  "topic_coverage": [
+    "concentrated_momentum_long_only_construction",
+    "fifty_two_week_high_skewness_truncation_direction",
+    "intraday_overnight_to_first_half_hour_reversal_mechanism",
+    "overnight_vs_intraday_session_return_decomposition",
+    "activist_13d_item4_long_horizon_holding_period",
+    "single_index_monday_afternoon_reversal_adaptation",
+    "volatility_adjusted_momentum_and_minimax_correlation_sortino_allocation",
+    "near_duplicate_mechanism_screening_against_local_refutations"
+  ],
+  "sources": [
+    {
+      "url": "https://paperswithbacktest.com/strategies/concentrated-portfolios-of-momentum-stocks",
+      "published_or_updated_at": "2020-02-02",
+      "source_type": "platform_docs",
+      "credibility": "platform_replication_of_a_named_thesis",
+      "core_claim": "Past-return momentum ranking, monthly rebalance, 37 long positions, US equities; 1990-2026 re-run 24.27% CAGR / Sharpe 1.09 / -54.58% max drawdown.",
+      "project_applicability": "Sets momentum_concentrated_k37's exact k=37, monthly hold, using the project's existing momentum_252_21 score.",
+      "reflection": "Verified via curl snapshot; quote binding recorded in direction-review.json and the source cards jsonl."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/does-probability-weighting-drive-skewness-preferences",
+      "published_or_updated_at": "2017-01-01",
+      "source_type": "platform_docs",
+      "credibility": "platform_replication_of_peer_reviewed_paper",
+      "core_claim": "The negative-return premium from positive skewness is concentrated in stocks far from their 52-week high; 195 positions (95 long, 100 short), monthly.",
+      "project_applicability": "Sets skew_52wk_high_k95's direction (long = nearest the 52-week high) and k=95.",
+      "reflection": "Verified via curl snapshot; quote binding recorded in direction-review.json and the source cards jsonl."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/intraday-time-series-reversal",
+      "published_or_updated_at": "2025-11-26",
+      "source_type": "platform_docs",
+      "credibility": "platform_replication_of_2025_paper",
+      "core_claim": "Overnight return negatively predicts the first-half-hour return for US market indices, not a same-day open/close reversal.",
+      "project_applicability": "Reclassifies dir:intraday_reversal_reit_pwb to needs_modal (requires first-half-hour intraday bars across the broad universe).",
+      "reflection": "Verified via curl snapshot; quote binding recorded in direction-review.json and the source cards jsonl."
+    },
+    {
+      "url": "https://alphactor.ai/blog/overnight-edge",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "industry_standard",
+      "credibility": "established_practitioner_blog_with_explicit_numbers",
+      "core_claim": "SPY 1993-2024: overnight CAGR ~8.9% (Sharpe 0.71) vs intraday CAGR ~1.1% (Sharpe 0.09); overnight captures ~88% of total return.",
+      "project_applicability": "Backs overnight_only_spy/qqq's static long-overnight/flat-intraday policy design.",
+      "reflection": "Verified via curl snapshot; quote binding recorded in direction-review.json and the source cards jsonl."
+    },
+    {
+      "url": "https://arxiv.org/abs/2604.09060",
+      "published_or_updated_at": "2026-04-10",
+      "source_type": "paper",
+      "credibility": "peer_review_pending_preprint_verified_to_exist",
+      "core_claim": "AEGIS: volatility-adjusted momentum filter + minimax correlation diversification + SLSQP Sortino-optimized allocation, targeting reduced momentum-crash risk.",
+      "project_applicability": "Confirms the paper cited by a secondary blog is real; sets vam_momentum_k50 as a disclosed step-1-only partial proxy.",
+      "reflection": "Verified via curl snapshot; quote binding recorded in direction-review.json and the source cards jsonl."
+    },
+    {
+      "url": "https://business.columbia.edu/sites/default/files-efs/pubfiles/4126/Hedge%20Fund%20Activism%20A%20Review.pdf",
+      "published_or_updated_at": "2008-01-01",
+      "source_type": "paper",
+      "credibility": "highly_cited_peer_reviewed_journal_of_finance_paper_and_review",
+      "core_claim": "Brav, Jiang, Partnoy & Thomas: hedge fund activism 13D events, ~7% announcement abnormal return, no reversal over the following year.",
+      "project_applicability": "Grounds the 6/12/24-month calendar-time hold design for a13d_item4_h6/h12/h24, distinct from the already-refuted 20/40/60-trading-day drift test.",
+      "reflection": "Opened and read (PDF); not quote-bound into direction-review.json because the naive HTML-tag-stripping snapshot verifier used for that file cannot extract readable text from a compressed PDF stream -- disclosed rather than silently dropped."
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S1544612324005555",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_finance_research_letters",
+      "core_claim": "Pigorsch & Schafer (2024): cross-sectional Monday-afternoon-return-sorted long-short portfolio earns 32.36% annualized gross / Sharpe 1.77, 27.14% after average spread; only the afternoon segment predicts, not the morning.",
+      "project_applicability": "Underlying academic source for the project's own prior (2026-09-18) single-index adaptation tested here as monday_afternoon_spy/qqq.",
+      "reflection": "Opened; page loaded as a cookie/paywall shell with no extractable abstract text, so it could not be quote-bound into direction-review.json -- disclosed rather than silently dropped; the project's own 2026-09-18 intel note already recorded the key figures from an earlier read."
+    },
+    {
+      "url": "https://arxiv.org/abs/2106.04028",
+      "published_or_updated_at": "2021-06-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_style_preprint_with_independent_replication",
+      "core_claim": "Deep-learning statistical arbitrage on FF/PCA/IPCA residuals; independent replication shows the tradable-stock, cost-adjusted Sharpe drops from 2.30 to 0.97.",
+      "project_applicability": "Already-harvested evidence for dir:deep_learning_stat_arb_residual; combined with the local dir:sector_residual_reversal_statarb_decay refutation, this round does not retest a near-duplicate residual-reversal mechanism.",
+      "reflection": "Read at the 2026-09-23 harvest pass (reports/research/harvest/directions.jsonl); re-cited here, not re-fetched, since its role in this round is to justify a skip, not a fresh backtest."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/any-role-for-mean-reversion-in-short-term-asset",
+      "published_or_updated_at": "2009-02-15",
+      "source_type": "platform_docs",
+      "credibility": "platform_replication_of_peer_reviewed_paper",
+      "core_claim": "Caporin, de Roon & Pelizzon (2009): mean-reversion-informed short-term asset allocation across a mixed 16-name stock/bond-index universe; the page's own abstract text discloses no exact signal formula.",
+      "project_applicability": "Confirms dir:tactical_mean_reversion_multi_asset_pwb's signal formula is not recoverable from the paperswithbacktest page alone, supporting its not-testable-now classification pending the underlying paper.",
+      "reflection": "Fetched directly this pass to check for a disclosed formula beyond the harvest's own summary; none found."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "momentum_concentrated_k37",
+      "claim_ids": ["pwb_concentrated_momentum_37pos_2020"]
+    },
+    {
+      "candidate_id": "skew_52wk_high_k95",
+      "claim_ids": ["pwb_skewness_52wk_high_2017"]
+    },
+    {
+      "candidate_id": "vam_momentum_k50",
+      "claim_ids": ["aegis_arxiv_2604_09060_abstract_2026"]
+    },
+    {
+      "candidate_id": "overnight_only_spy",
+      "claim_ids": ["alphactor_overnight_edge_spy_1993_2024"]
+    },
+    {
+      "candidate_id": "overnight_only_qqq",
+      "claim_ids": ["alphactor_overnight_edge_spy_1993_2024"]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "pwb_intraday_reversal_first_half_hour_2025",
+      "effect": "Opening the actual paperswithbacktest source (not just the 2026-09-23 harvest claim) revealed the real mechanism is 'overnight return predicts the first half-hour return', which needs intraday minute bars; dir:intraday_reversal_reit_pwb moved from a planned daily-open/close candidate to needs_modal, alongside signed_jump_variation and end_of_day_reversal."
+    },
+    {
+      "driver": "aegis_arxiv_2604_09060_abstract_2026",
+      "effect": "Confirming the AEGIS paper is real (rather than a possibly-fabricated blog summary) allowed adding vam_momentum_k50 as a disclosed step-1-only partial proxy, instead of dropping dir:volatility_gated_momentum_aegis entirely for unverified evidence."
+    },
+    {
+      "driver": "pwb_concentrated_momentum_37pos_2020",
+      "effect": "The page discloses the platform's own current implementation as 37 (not a round 50 or 30) long positions, so momentum_concentrated_k37 uses k=37 rather than defaulting to T1's k=30, per the brief's own precedence rule (source k/h beats the T1 default)."
+    }
+  ],
+  "hypothesis_links": ["H-20260928-06"]
+}

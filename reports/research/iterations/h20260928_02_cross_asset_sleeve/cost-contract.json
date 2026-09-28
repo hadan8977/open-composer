@@ -1,0 +1,16 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+  "iter_id": "h20260928_02_cross_asset_sleeve",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot ETFs and SHY; LETF financing inside S3's own menu is inside the fund NAV, unchanged from the frozen S3 engine)",
+  "candidate_cost_model": "salvage.simulate(weights, leg_open, leg_close, scale=1, cost_bps): sum(abs(delta_weight)) * cost_bps charged on the execution session, reused unedited from run_h20260922_05_salvage.py via screen_lane.candidate_returns_for_offset",
+  "candidate_slippage_bps_per_side_primary": 10.0,
+  "candidate_slippage_bps_per_side_stress": 20.0,
+  "combo_rebalance_cost_model": "combo_cost_bps * sum(abs(delta sleeve weight)), charged on the session after each month-end rebalance signal, via screen_lane.combine_two_sleeves (ported unedited from run_h20260927_01_sleeve_combination.combine_portfolio)",
+  "combo_slippage_bps_per_side_primary": 10.0,
+  "combo_slippage_bps_per_side_stress": 20.0,
+  "control_cost_model": "the paired vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, adverse to the candidate combination), via screen_lane.diversifier_edge_for_offset / combo.control_series"
+}

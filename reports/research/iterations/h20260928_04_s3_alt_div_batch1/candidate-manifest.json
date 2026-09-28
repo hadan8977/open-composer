@@ -1,0 +1,826 @@
+{
+  "iter_id": "h20260928_04_s3_alt_div_batch1",
+  "generated_at": "2026-09-28T04:00:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "s3_alt_div_batch1_h20260928_04",
+  "objective": "Preregister 19 published long-only US-listed-ETF rules (F1 managed-futures ETFs held outright; F2 Keller/Antonacci/Faber tactical-allocation rules; F3 other alt/diversifier ETFs held outright) for a batch screening lane to test against K1 (own date-neutral Sharpe >= 80% of S3's in both the anchor and stress windows, with positive CAGR at 20bp) or K2 (a 63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows). No backtest is run in this round; this manifest is the preregistration handed to the screening lane.",
+  "candidates": [
+    {
+      "candidate_id": "F1_DBMF",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F1_managed_futures_hold",
+        "name": "iMGP DBi Managed Futures Strategy ETF",
+        "source_card": "imgp_dbmf_product_page_cta_replication_2026",
+        "universe": [
+          "DBMF"
+        ],
+        "freq": "M",
+        "source_note": "Actively managed CTA-replication ETF; inception 2019-05-08 (live record confirmed in local SIP panel and product page).",
+        "inception": "2019-05-08",
+        "rule": "hold 100% DBMF, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F1_KMLM",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F1_managed_futures_hold",
+        "name": "KFA Mount Lucas Managed Futures Index Strategy ETF",
+        "source_card": "kfa_kmlm_factsheet_mlm_index_2024",
+        "universe": [
+          "KMLM"
+        ],
+        "freq": "M",
+        "source_note": "Tracks the KFA MLM Index (22 futures across commodities/currencies/global bonds, vol-weighted baskets); inception 2020-12-01.",
+        "inception": "2020-12-01",
+        "rule": "hold 100% KMLM, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F1_CTA",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F1_managed_futures_hold",
+        "name": "Simplify Managed Futures Strategy ETF",
+        "source_card": "simplify_cta_fund_page_sg_cta_index_2026",
+        "universe": [
+          "CTA"
+        ],
+        "freq": "M",
+        "source_note": "Systematic long/short trend on commodity and rate futures, benchmarked to the SG CTA Index; inception 2022-03-07.",
+        "inception": "2022-03-07",
+        "rule": "hold 100% CTA, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F1_WTMF",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F1_managed_futures_hold",
+        "name": "WisdomTree Managed Futures Strategy Fund",
+        "source_card": "wisdomtree_wtmf_form10_dti_index_2011",
+        "universe": [
+          "WTMF"
+        ],
+        "freq": "M",
+        "source_note": "Tracks the Diversified Trends Indicator (DTI), a long/short rules-based commodity/currency/rates trend indicator; inception 2011-01-05, first managed-futures strategy ETF.",
+        "inception": "2011-01-05",
+        "rule": "hold 100% WTMF, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F1_FMF",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F1_managed_futures_hold",
+        "name": "First Trust Managed Futures Strategy Fund",
+        "source_card": "ftportfolios_fmf_summary_2026",
+        "universe": [
+          "FMF"
+        ],
+        "freq": "M",
+        "source_note": "Actively managed absolute-return managed-futures ETF; inception 2013-08-01.",
+        "inception": "2013-08-01",
+        "rule": "hold 100% FMF, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F2_VAA_G4",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "vaa_g4_13612w_breadth",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_keller_taa",
+        "name": "Vigilant Asset Allocation (VAA-G4, T=1/B=1)",
+        "source_card": "keller_keuning_vaa_ssrn_2017_allocatesmartly_replication",
+        "universe": [
+          "SPY",
+          "EFA",
+          "EEM",
+          "AGG",
+          "LQD",
+          "IEF",
+          "SHY"
+        ],
+        "freq": "M",
+        "source_note": "Keller & Keuning (2017), SSRN 3002624; author-recommended default variant per AllocateSmartly's replication.",
+        "offensive_universe": [
+          "SPY",
+          "EFA",
+          "EEM",
+          "AGG"
+        ],
+        "defensive_universe": [
+          "LQD",
+          "IEF",
+          "SHY"
+        ],
+        "momentum_formula": "12*(p0/p1-1) + 4*(p0/p3-1) + 2*(p0/p6-1) + (p0/p12-1)",
+        "rule": "If all 4 offensive assets have momentum>0, hold the single highest-scoring offensive asset 100%; else hold the single highest-scoring defensive asset 100% (score can be negative).",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "independent_replication_allocatesmartly_near_real_time_tracking"
+      }
+    },
+    {
+      "candidate_id": "F2_DAA_G12",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "daa_g12_13612w_canary_breadth",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_keller_taa",
+        "name": "Defensive Asset Allocation (DAA-G12, T=6/B=2)",
+        "source_card": "keller_keuning_daa_g12_turingtrader_code_replication_2019",
+        "universe": [
+          "SPY",
+          "IWM",
+          "QQQ",
+          "VGK",
+          "EWJ",
+          "VWO",
+          "VNQ",
+          "GSG",
+          "GLD",
+          "TLT",
+          "HYG",
+          "LQD",
+          "SHY",
+          "IEF",
+          "BND"
+        ],
+        "freq": "M",
+        "source_note": "Keller & Keuning (2018), SSRN 3212862; exact T/B parameters and universe confirmed in TuringTrader's open-source Keller_DAA.cs replication.",
+        "risky_universe": [
+          "SPY",
+          "IWM",
+          "QQQ",
+          "VGK",
+          "EWJ",
+          "VWO",
+          "VNQ",
+          "GSG",
+          "GLD",
+          "TLT",
+          "HYG",
+          "LQD"
+        ],
+        "cash_universe": [
+          "SHY",
+          "IEF",
+          "LQD"
+        ],
+        "canary_universe": [
+          "VWO",
+          "BND"
+        ],
+        "T": 6,
+        "B": 2,
+        "momentum_formula": "12*(p0/p1-1) + 4*(p0/p3-1) + 2*(p0/p6-1) + (p0/p12-1)",
+        "rule": "b = count of canary assets with momentum<0; CF = min(1, b/B); hold top-T risky assets by momentum equal-weighted at (1-CF)/T each, plus CF in whichever cash-universe asset has the highest momentum.",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "independent_replication_open_source_code_plus_allocatesmartly"
+      }
+    },
+    {
+      "candidate_id": "F2_PAA",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "paa_cpr_sma_breadth",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_keller_taa",
+        "name": "Protective Asset Allocation (PAA-CPR, T=6, denom=6)",
+        "source_card": "keller_keuning_paa_cpr_ssrn_2016_allocatesmartly_replication",
+        "universe": [
+          "SPY",
+          "QQQ",
+          "IWM",
+          "VGK",
+          "EWJ",
+          "EEM",
+          "VNQ",
+          "DBC",
+          "GLD",
+          "HYG",
+          "LQD",
+          "TLT"
+        ],
+        "freq": "M",
+        "source_note": "Keller & Keuning (2016), SSRN 2759734; PAA-CPR variant (crash-protection asset rotates between IEF and SHY by momentum) is the paper's own original definition, per AllocateSmartly's replication notes.",
+        "cp_choice": [
+          "IEF",
+          "SHY"
+        ],
+        "top_n": 6,
+        "breadth_denominator": 6,
+        "momentum_formula": "MOM = close / SMA(13 most recent month-end closes incl. today) - 1",
+        "rule": "n = count of universe assets with MOM>0; if n<=6, CP%=100%; else CP%=(12-n)/6, and hold top-6-by-MOM equal-weighted in the remainder; CP% goes to whichever of IEF/SHY has the higher MOM.",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "independent_replication_allocatesmartly_near_real_time_tracking"
+      }
+    },
+    {
+      "candidate_id": "F2_HAA",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "haa_canary_dual_momentum",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_keller_taa",
+        "name": "Hybrid Asset Allocation (HAA)",
+        "source_card": "keuning_haa_trendxplorer_primary_2023",
+        "universe": [
+          "SPY",
+          "IWM",
+          "EFA",
+          "EEM",
+          "VNQ",
+          "PDBC",
+          "IEF",
+          "TLT",
+          "TIP"
+        ],
+        "freq": "M",
+        "source_note": "Keller & Keuning (2023), SSRN 4346906; primary description from co-author JW Keuning's own TrendXplorer blog post announcing HAA.",
+        "canary": "TIP",
+        "offensive_universe": [
+          "SPY",
+          "IWM",
+          "EFA",
+          "EEM",
+          "VNQ",
+          "PDBC",
+          "IEF",
+          "TLT"
+        ],
+        "defensive_choice": "IEF (or unallocated, i.e. SHY by the batch's remainder convention)",
+        "momentum_formula": "unweighted average of 1, 3, 6 and 12-month returns",
+        "rule": "If TIP momentum<=0, hold 100% in whichever of IEF/cash has higher momentum (IEF if positive, else unallocated=SHY). Else, take the top-4 offensive assets by relative momentum; for each, if its own momentum>0 hold 25%, else redirect that 25% to IEF if IEF momentum>0 (else unallocated=SHY).",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "primary_author_blog"
+      }
+    },
+    {
+      "candidate_id": "F2_GPM",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "gpm_correlation_hedged_momentum",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_keller_taa",
+        "name": "Generalized Protective Momentum (GPM)",
+        "source_card": "keller_keuning_gpm_allocatesmartly_replication",
+        "universe": [
+          "SPY",
+          "QQQ",
+          "IWM",
+          "VGK",
+          "EWJ",
+          "EEM",
+          "VNQ",
+          "DBC",
+          "GLD",
+          "HYG",
+          "LQD",
+          "TLT"
+        ],
+        "freq": "M",
+        "source_note": "Keller, Butler & Kipnis (2016), SSRN 2606884 ('Momentum and Markowitz'); AllocateSmartly's replication of the correlation-hedged scoring rule.",
+        "cp_choice": [
+          "IEF",
+          "SHY"
+        ],
+        "top_n": 3,
+        "breadth_denominator": 6,
+        "score_formula": "z_i = r_i * (1 - c_i); r_i = average(1,3,6,12-month returns); c_i = trailing 12-month correlation of asset i to the equal-weight return of the 12-asset universe",
+        "rule": "n = count of universe assets with z_i>0; if n<=6, CP%=100%; else CP%=(12-n)/6, and hold top-3-by-z_i equal-weighted in the remainder; CP% goes to whichever of IEF/SHY has the higher z_i.",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "independent_replication_allocatesmartly_near_real_time_tracking"
+      }
+    },
+    {
+      "candidate_id": "F2_GEM",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "gem_absolute_relative_momentum",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_dual_momentum",
+        "name": "Global Equities Momentum (GEM)",
+        "source_card": "antonacci_gem_risk_premia_harvesting_2013_primary",
+        "universe": [
+          "SPY",
+          "VEU",
+          "AGG",
+          "BIL"
+        ],
+        "freq": "M",
+        "source_note": "Antonacci, 'Risk Premia Harvesting Through Dual Momentum' (2012/2013, first-place 2012 NAAIM Wagner Award; later 'Dual Momentum Investing', McGraw-Hill 2014); rule confirmed via BestFolio's practitioner replication (VEU used for the international leg).",
+        "rule": "Absolute momentum: if SPY's trailing 12-month total return > BIL's trailing 12-month total return, hold whichever of SPY/VEU has the higher trailing 12-month return, 100%. Else hold 100% AGG.",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "primary_paper_plus_authors_own_optimalmomentum_live_tracking_claim"
+      }
+    },
+    {
+      "candidate_id": "F2_GTAA",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "gtaa5_10month_sma_timing",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_faber_gtaa",
+        "name": "Faber Global Tactical Asset Allocation (GTAA-5, 10-month SMA)",
+        "source_card": "faber_gtaa_ssrn_2007_primary",
+        "universe": [
+          "SPY",
+          "EFA",
+          "TIP",
+          "GSG",
+          "VNQ"
+        ],
+        "freq": "M",
+        "source_note": "Faber, 'A Quantitative Approach to Tactical Asset Allocation' (2007), Journal of Wealth Management, SSRN 962461 -- the single most-downloaded SSRN paper of all time; PDF opened directly from the author's own site.",
+        "rule": "Each of the 5 assets gets a fixed 20% sleeve. At each month end, if that asset's price > its 10-month SMA of month-end closes, hold that 20% in the asset; else move that 20% to cash (unallocated=SHY by the batch's remainder convention).",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "primary_paper_top_downloaded_ssrn_paper_of_all_time"
+      }
+    },
+    {
+      "candidate_id": "F2_ADM",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "adm_accelerating_score_dual_momentum",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_dual_momentum",
+        "name": "Accelerating Dual Momentum (ADM)",
+        "source_card": "engineeredportfolio_adm_primary_2018",
+        "universe": [
+          "SPY",
+          "SCZ",
+          "TLT",
+          "TIP"
+        ],
+        "freq": "M",
+        "source_note": "Engineered Portfolio blog (2018-05-02), the strategy's originating source, popularized via AllocateSmartly; ETF proxies SPY/SCZ for the original VFINX/VINEX mutual funds.",
+        "equity_candidates": [
+          "SPY",
+          "SCZ"
+        ],
+        "defensive_candidates": [
+          "TLT",
+          "TIP"
+        ],
+        "score_formula": "sum of trailing 1, 3 and 6-month returns",
+        "rule": "If max(score_SPY, score_SCZ) > 0, hold whichever of SPY/SCZ has the higher score, 100%. Else hold whichever of TLT/TIP has the higher trailing 1-month return, 100%.",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "primary_author_blog_plus_allocatesmartly_independent_replication"
+      }
+    },
+    {
+      "candidate_id": "F2_BAA_BAL",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "baa_balanced_canary_gate",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F2_keller_taa",
+        "name": "Bold Asset Allocation (BAA-Balanced)",
+        "source_card": "giants_sweep_baa_prior_result_2026_09_22",
+        "universe": [
+          "SPY",
+          "EFA",
+          "EEM",
+          "AGG",
+          "QQQ",
+          "IWM",
+          "VGK",
+          "EWJ",
+          "VNQ",
+          "DBC",
+          "GLD",
+          "TLT",
+          "HYG",
+          "LQD",
+          "TIP",
+          "BIL",
+          "IEF"
+        ],
+        "freq": "M",
+        "source_note": "Keller & Keuning (2019), SSRN 3592671; re-included in this batch because the acceptance criterion changed to K1/K2 relative to S3 (see direction-review.json for the required justification).",
+        "canary_universe": [
+          "SPY",
+          "EFA",
+          "EEM",
+          "AGG"
+        ],
+        "offensive_universe": [
+          "SPY",
+          "QQQ",
+          "IWM",
+          "VGK",
+          "EWJ",
+          "EEM",
+          "VNQ",
+          "DBC",
+          "GLD",
+          "TLT",
+          "HYG",
+          "LQD"
+        ],
+        "defensive_universe": [
+          "TIP",
+          "DBC",
+          "BIL",
+          "IEF",
+          "TLT",
+          "LQD",
+          "AGG"
+        ],
+        "momentum_formula": "12*(p0/p1-1) + 4*(p0/p3-1) + 2*(p0/p6-1) + (p0/p12-1); relative momentum = p0/average(p0..p12)",
+        "rule": "If all 4 canary assets have momentum>0, hold top-6 offensive assets by relative momentum equal-weighted (1/6 each). Else hold top-3 defensive assets by momentum equal-weighted (1/3 each).",
+        "rebalance": "month_end_close_next_open",
+        "evidence": "independent_replication_allocatesmartly_plus_prior_local_giants_sweep_run",
+        "prior_giants_sweep_result": "giants_sweep_20260922 candidate f5_baa_balanced: anchor CAGR 9.7%, anchor Sharpe 0.49, 20bp anchor CAGR 8.5%, placebo-beat 100%; passed G2/G5 only, failed G1/G1'/G3/G4 under the old frozen-gate criterion (reports/research/iterations/giants_sweep_20260922/report.md). Far below S3's anchor Sharpe 1.49 and the K1 bar of 1.19, so K1 is expected to fail again here; included only for a fresh K2 (combination-with-S3) test, which the old criterion never checked."
+      }
+    },
+    {
+      "candidate_id": "F3_RPAR",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F3_alt_div_hold",
+        "name": "RPAR Risk Parity ETF",
+        "source_card": "tidal_rpar_sec_485apos_2019",
+        "universe": [
+          "RPAR"
+        ],
+        "freq": "M",
+        "source_note": "Rules-based 4-asset-class (global equities, commodities, US Treasuries, TIPS) risk-parity index fund, ~25% target risk contribution each, quarterly-rebalanced by the fund itself; inception 2019-12-13.",
+        "inception": "2019-12-13",
+        "rule": "hold 100% RPAR, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F3_UPAR",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F3_alt_div_hold",
+        "name": "UPAR Ultra Risk Parity ETF",
+        "source_card": "tidal_upar_product_page_2026",
+        "universe": [
+          "UPAR"
+        ],
+        "freq": "M",
+        "source_note": "1.4x-levered version of the RPAR Index via an implied financing rate, rebalanced quarterly; inception 2022-01-03.",
+        "inception": "2022-01-03",
+        "rule": "hold 100% UPAR, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F3_NTSX",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F3_alt_div_hold",
+        "name": "WisdomTree U.S. Efficient Core Fund (NTSX, 90/60)",
+        "source_card": "wisdomtree_ntsx_sec_497_2018",
+        "universe": [
+          "NTSX"
+        ],
+        "freq": "M",
+        "source_note": "90% S&P 500 stocks plus Treasury futures overlay targeting 60% notional bond exposure (~1.5x accounting leverage on a 60/40); inception 2018-08-02.",
+        "inception": "2018-08-02",
+        "rule": "hold 100% NTSX, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F3_QAI",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F3_alt_div_hold",
+        "name": "NYLI Hedge Multi-Strategy Tracker ETF (QAI)",
+        "source_card": "nyli_qai_product_page_2026",
+        "universe": [
+          "QAI"
+        ],
+        "freq": "M",
+        "source_note": "Fund-of-funds replicating the beta component of the broad hedge-fund universe's risk/return characteristics (long/short equity, global macro, event-driven, fixed-income arb styles); inception 2009-03-25.",
+        "inception": "2009-03-25",
+        "rule": "hold 100% QAI, no timing",
+        "evidence": "live_fund_nav"
+      }
+    },
+    {
+      "candidate_id": "F3_TRTY",
+      "path": "s3_alt_div_batch1_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "hold_the_fund",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_batch1_panel",
+      "feature_contract": "feature_v1_batch1_public_rule_weights",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_s3_stress_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_batch1_diagnostics",
+      "parameters": {
+        "family": "F3_alt_div_hold",
+        "name": "Cambria Trinity ETF (TRTY)",
+        "source_card": "cambria_trty_sec_ncsr_2019",
+        "universe": [
+          "TRTY"
+        ],
+        "freq": "M",
+        "source_note": "Actively managed fund-of-funds combining trend-following, carry and global risk-parity sleeves across equity, fixed income, real estate, commodity and currency exposures; inception 2018-09-10.",
+        "inception": "2018-09-10",
+        "rule": "hold 100% TRTY, no timing",
+        "evidence": "live_fund_nav"
+      }
+    }
+  ],
+  "candidate_count": 19,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_batch1_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "AGG",
+          "BIL",
+          "BND",
+          "CTA",
+          "DBC",
+          "DBMF",
+          "EEM",
+          "EFA",
+          "EWJ",
+          "FMF",
+          "GLD",
+          "GSG",
+          "HYG",
+          "IEF",
+          "IWM",
+          "KMLM",
+          "LQD",
+          "NTSX",
+          "PDBC",
+          "QAI",
+          "QQQ",
+          "RPAR",
+          "SCZ",
+          "SHY",
+          "SPY",
+          "TIP",
+          "TLT",
+          "TRTY",
+          "UPAR",
+          "VEU",
+          "VGK",
+          "VNQ",
+          "VWO",
+          "WTMF"
+        ],
+        "confirmed_coverage": "all 33 symbols present via duckdb query against data/sip/daily/*/*.parquet on 2026-09-28, each from either 2016-01-04 (archive floor) or its own later inception through 2026-09-25; see data-feasibility.json path_gates."
+      }
+    },
+    "features": {
+      "feature_v1_batch1_public_rule_weights": {
+        "decision_lag_sessions": 1,
+        "definition": "Each candidate's weight vector is produced by its own w_<id>(close, asof) function in scripts/screen_batches/h20260928_04_batch1.py, implementing the exact published rule (13612W or 1/3/6/12-month momentum, canary/breadth crash protection, or SMA timing) using only rows with index <= asof. F1 and F3 candidates are the degenerate case: 100% in the named fund, no computation."
+      }
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": {
+        "definition": "signal computed at session close; weights effective at the next session open (next_bar_open fill), matching the frozen S1/S2/S3 convention."
+      }
+    },
+    "validation": {
+      "validation_v1_s3_stress_anchor_holdout2026": {
+        "stress": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "S3's own anchor window already covers part of this range and S3 has already been evaluated on it; reported for reference only, no fresh out-of-sample claim."
+        ],
+        "rebalance_offset_robustness": "Metrics are the median over rebalance-day offsets: monthly candidates use offsets 0-20 trading days after month end; weekly candidates (none in this batch; all 19 are monthly) would use offsets 0-4 trading days. This matches H-20260928-01's date-neutral protocol.",
+        "s3_reference_numbers": "S3's own date-neutral Sharpe (median over 21 monthly offsets) is 1.49 in the anchor window and 0.81 in the stress window (owner-cited 2026-09-28); K1's bars are 1.19 and 0.65 respectively."
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "contract_path": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_batch1_diagnostics": {
+        "members": [
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold",
+          "BIL_buy_and_hold",
+          "S3_reference_for_K1_K2"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml": "935e9a2e0fbb972e6809fe3ca27f8d03be07ca56a216afdd9f374c5c51f4af8b"
+  },
+  "source_spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+  "spec_hash": "935e9a2e0fbb972e6809fe3ca27f8d03be07ca56a216afdd9f374c5c51f4af8b",
+  "trial_count_and_dsr_note": "This batch has 19 preregistered candidates. Whichever candidates pass K1 or K2 must report deflated Sharpe (DSR) with n_trials=19, the size of this batch, not the count of whatever subset happened to pass.",
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (median over rebalance offsets) >= 0.80 * S3's date-neutral Sharpe in BOTH the anchor window (>=1.19) and the stress window (>=0.65), at 10bp per side, with positive CAGR at 20bp per side.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control (k solved so realized volatility matches) by >=0.05 Sharpe in BOTH the anchor and stress windows.",
+    "pass_requires": "K1 OR K2",
+    "multiple_comparisons": "19 candidates; report all regardless of outcome; DSR with n_trials=19 for any that pass."
+  }
+}

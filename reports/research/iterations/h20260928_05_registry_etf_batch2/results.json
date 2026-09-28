@@ -1,0 +1,459 @@
+{
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "generated_at": "2026-09-28T06:00:00+00:00",
+  "source": "reports/research/screens/h20260928_05_batch2/leaderboard.json",
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ]
+  },
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "n_trials": 7,
+  "s3_reference": {
+    "anchor_median_sharpe_net10": 1.4852809357428147,
+    "stress_median_sharpe_net10": 0.8059331108129246,
+    "k1_bar_anchor_80pct": 1.1882247485942519,
+    "k1_bar_stress_80pct": 0.6447464886503398,
+    "source": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json offset_distribution_net10 (same reference values as h20260928_02_cross_asset_sleeve/results.json s3_reference)"
+  },
+  "candidates": {
+    "HFEA_UPRO_TMF": {
+      "name": "HFEA: 55% UPRO / 45% TMF, monthly-approximated quarterly rebalance",
+      "freq": "M",
+      "universe": [
+        "UPRO",
+        "TMF"
+      ],
+      "first_valid_signal_date": "2016-01-29",
+      "judged_select_sharpe_net10": 0.664659134867968,
+      "judged_anchor_sharpe_net10": 0.5386788224164929,
+      "judged_stress_sharpe_net10": 0.4548998423717876,
+      "judged_holdout_sharpe_net10_contaminated": 0.30814430564284795,
+      "judged_anchor_cagr_net10": 0.17638834802194325,
+      "judged_stress_cagr_net10": 0.11332860232388331,
+      "judged_anchor_maxdd_net10": -0.34850932608051644,
+      "judged_stress_maxdd_net10": -0.6606919314872626,
+      "judged_anchor_cagr_net20": 0.17638834802194325,
+      "judged_stress_cagr_net20": 0.11332860232388331,
+      "judged_anchor_sharpe_net20": 0.5386788224164929,
+      "judged_stress_sharpe_net20": 0.4548998423717876,
+      "diversifier_edge_anchor": -0.4169439801156958,
+      "diversifier_edge_stress": 0.0151309656567985,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.4389023791530702,
+        "anchor": 0.48382371123662815,
+        "2022": 0.2429209025864819
+      },
+      "dsr_anchor": 0.3060295988733328,
+      "stress_actual_start": "2016-05-02",
+      "stress_coverage_years": 7.37,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "full stress window coverage",
+      "k1_sharpe_anchor_pass": false,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": true,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": false,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none",
+      "strong": false,
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5387 < bar 1.1882",
+        "K1 stress Sharpe 0.4549 < bar 0.6447",
+        "K2 anchor edge -0.4169 < 0.05",
+        "K2 stress edge 0.0151 < 0.05"
+      ]
+    },
+    "TOM_SPY": {
+      "name": "Turn-of-month SPY: month-end close through 4th trading day next month",
+      "freq": "D",
+      "universe": [
+        "SPY"
+      ],
+      "first_valid_signal_date": "2016-01-29",
+      "judged_select_sharpe_net10": -0.7905240878509698,
+      "judged_anchor_sharpe_net10": -0.6875794424622463,
+      "judged_stress_sharpe_net10": -0.10361515255582354,
+      "judged_holdout_sharpe_net10_contaminated": 0.23141529265523275,
+      "judged_anchor_cagr_net10": -0.018140667801334276,
+      "judged_stress_cagr_net10": 0.0006955061258604456,
+      "judged_anchor_maxdd_net10": -0.18261966448477784,
+      "judged_stress_maxdd_net10": -0.15292441365378906,
+      "judged_anchor_cagr_net20": -0.06470661746777018,
+      "judged_stress_cagr_net20": -0.046632350592621274,
+      "judged_anchor_sharpe_net20": -1.2531067110966272,
+      "judged_stress_sharpe_net20": -0.6695024185670397,
+      "diversifier_edge_anchor": -0.7067716603683016,
+      "diversifier_edge_stress": -0.36020874105346157,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.24380877614441585,
+        "anchor": 0.23570318844331178,
+        "2022": 0.1252666717327605
+      },
+      "dsr_anchor": 0.0030712279872205372,
+      "stress_actual_start": "2016-05-02",
+      "stress_coverage_years": 7.37,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "full stress window coverage",
+      "k1_sharpe_anchor_pass": false,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": false,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": false,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none",
+      "strong": false,
+      "failing_criteria": [
+        "K1 anchor Sharpe -0.6876 < bar 1.1882",
+        "K1 stress Sharpe -0.1036 < bar 0.6447",
+        "K2 anchor edge -0.7068 < 0.05",
+        "K2 stress edge -0.3602 < 0.05"
+      ]
+    },
+    "EOM_REVERSAL_SPY": {
+      "name": "End-of-month reversal SPY: long next month iff 4th-Friday-to-EOM return < 0",
+      "freq": "D",
+      "universe": [
+        "SPY"
+      ],
+      "first_valid_signal_date": "2016-02-29",
+      "judged_select_sharpe_net10": 1.339010883078297,
+      "judged_anchor_sharpe_net10": 1.2406218923666408,
+      "judged_stress_sharpe_net10": 0.5844812031941062,
+      "judged_holdout_sharpe_net10_contaminated": -0.5739795636291108,
+      "judged_anchor_cagr_net10": 0.12097610772069789,
+      "judged_stress_cagr_net10": 0.07665088299003586,
+      "judged_anchor_maxdd_net10": -0.04539015617645514,
+      "judged_stress_maxdd_net10": -0.20719171548642923,
+      "judged_anchor_cagr_net20": 0.11012946197083906,
+      "judged_stress_cagr_net20": 0.06384165193108515,
+      "judged_anchor_sharpe_net20": 1.0675870957258076,
+      "judged_stress_sharpe_net20": 0.48041547857628875,
+      "diversifier_edge_anchor": 0.20687238431248733,
+      "diversifier_edge_stress": -0.1731638009373191,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.4102610773884452,
+        "anchor": 0.3716782794071332,
+        "2022": 0.03113698676884806
+      },
+      "dsr_anchor": 0.743589813672484,
+      "stress_actual_start": "2016-05-02",
+      "stress_coverage_years": 7.37,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "full stress window coverage",
+      "k1_sharpe_anchor_pass": true,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": true,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": true,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "watch_recent",
+      "pass_path": "none (watch_recent: anchor-only)",
+      "strong": false,
+      "failing_criteria": [
+        "K1 stress Sharpe 0.5845 < bar 0.6447",
+        "K2 stress edge -0.1732 < 0.05"
+      ]
+    },
+    "FRONT_RUN_SECTOR_TOP2": {
+      "name": "Front-running sector seasonality: top-2 of 9 sector SPDRs, lagged shifted score",
+      "freq": "D",
+      "universe": [
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "first_valid_signal_date": "2016-12-30",
+      "judged_select_sharpe_net10": 0.7503894046351511,
+      "judged_anchor_sharpe_net10": 1.4022015780845363,
+      "judged_stress_sharpe_net10": 0.45168415506303394,
+      "judged_holdout_sharpe_net10_contaminated": 3.007978368355178,
+      "judged_anchor_cagr_net10": 0.29998795815459434,
+      "judged_stress_cagr_net10": 0.0924856904899023,
+      "judged_anchor_maxdd_net10": -0.11367294025910091,
+      "judged_stress_maxdd_net10": -0.35831101229244733,
+      "judged_anchor_cagr_net20": 0.2778150249849416,
+      "judged_stress_cagr_net20": 0.07275281076102491,
+      "judged_anchor_sharpe_net20": 1.2962788736756619,
+      "judged_stress_sharpe_net20": 0.36785336464027946,
+      "diversifier_edge_anchor": 0.2501663692510381,
+      "diversifier_edge_stress": -0.16804022282638775,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.33977028617435634,
+        "anchor": 0.379120927417352,
+        "2022": 0.18275885197334496
+      },
+      "dsr_anchor": 0.8199824824786567,
+      "stress_actual_start": "2016-12-30",
+      "stress_coverage_years": 6.71,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "stress sample short (partial coverage, >=2yr): 6.71yr of 7.37yr",
+      "k1_sharpe_anchor_pass": true,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": true,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": true,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "watch_recent",
+      "pass_path": "none (watch_recent: anchor-only)",
+      "strong": false,
+      "failing_criteria": [
+        "K1 stress Sharpe 0.4517 < bar 0.6447",
+        "K2 stress edge -0.1680 < 0.05"
+      ]
+    },
+    "FOMC_DRIFT_SPY": {
+      "name": "Pre-FOMC announcement drift, SPY",
+      "freq": "D",
+      "universe": [
+        "SPY"
+      ],
+      "first_valid_signal_date": "2016-01-25",
+      "judged_select_sharpe_net10": -0.1418002115264068,
+      "judged_anchor_sharpe_net10": -0.8449152065210657,
+      "judged_stress_sharpe_net10": -1.0921538392410488,
+      "judged_holdout_sharpe_net10_contaminated": -2.171836406509145,
+      "judged_anchor_cagr_net10": 0.005829571883610329,
+      "judged_stress_cagr_net10": -0.035624182999386744,
+      "judged_anchor_maxdd_net10": -0.05525728013036024,
+      "judged_stress_maxdd_net10": -0.24649642796954163,
+      "judged_anchor_cagr_net20": -0.026676326601935973,
+      "judged_stress_cagr_net20": -0.06511979320357031,
+      "judged_anchor_sharpe_net20": -1.5921302096010626,
+      "judged_stress_sharpe_net20": -1.6970307986928979,
+      "diversifier_edge_anchor": -0.5997909764766141,
+      "diversifier_edge_stress": -0.7082865996987912,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.08465737130434747,
+        "anchor": 0.2275827767298198,
+        "2022": 0.03394774647897295
+      },
+      "dsr_anchor": 0.0016156251437197677,
+      "stress_actual_start": "2016-05-02",
+      "stress_coverage_years": 7.37,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "full stress window coverage",
+      "k1_sharpe_anchor_pass": false,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": false,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": false,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none",
+      "strong": false,
+      "failing_criteria": [
+        "K1 anchor Sharpe -0.8449 < bar 1.1882",
+        "K1 stress Sharpe -1.0922 < bar 0.6447",
+        "K2 anchor edge -0.5998 < 0.05",
+        "K2 stress edge -0.7083 < 0.05"
+      ]
+    },
+    "FOMC_DRIFT_TQQQ": {
+      "name": "Pre-FOMC announcement drift, TQQQ (leveraged leg)",
+      "freq": "D",
+      "universe": [
+        "TQQQ"
+      ],
+      "first_valid_signal_date": "2016-01-25",
+      "judged_select_sharpe_net10": 0.7433677282192167,
+      "judged_anchor_sharpe_net10": 0.31246966028069895,
+      "judged_stress_sharpe_net10": -0.0338848246260777,
+      "judged_holdout_sharpe_net10_contaminated": -0.4484351300654335,
+      "judged_anchor_cagr_net10": 0.08311368706998135,
+      "judged_stress_cagr_net10": -0.006150248006241532,
+      "judged_anchor_maxdd_net10": -0.12741987948910438,
+      "judged_stress_maxdd_net10": -0.3636607119465758,
+      "judged_anchor_cagr_net20": 0.04826209986504826,
+      "judged_stress_cagr_net20": -0.036604604721547696,
+      "judged_anchor_sharpe_net20": 0.1149582869363721,
+      "judged_stress_sharpe_net20": -0.2208461184769861,
+      "diversifier_edge_anchor": -0.4218396706004326,
+      "diversifier_edge_stress": -0.15583485866848834,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.1109401107145392,
+        "anchor": 0.28065252617623904,
+        "2022": 0.018218085415026983
+      },
+      "dsr_anchor": 0.1927032428506496,
+      "stress_actual_start": "2016-05-02",
+      "stress_coverage_years": 7.37,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "full stress window coverage",
+      "k1_sharpe_anchor_pass": false,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": false,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": false,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none",
+      "strong": false,
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.3125 < bar 1.1882",
+        "K1 stress Sharpe -0.0339 < bar 0.6447",
+        "K2 anchor edge -0.4218 < 0.05",
+        "K2 stress edge -0.1558 < 0.05"
+      ]
+    },
+    "XYLD_COVERED_CALL_PROXY": {
+      "name": "Buy-and-hold XYLD: honest live proxy for the defunct BEP S&P 500 covered-call CEF",
+      "freq": "M",
+      "universe": [
+        "XYLD"
+      ],
+      "first_valid_signal_date": "2016-01-29",
+      "judged_select_sharpe_net10": 0.7142153779807824,
+      "judged_anchor_sharpe_net10": 0.8902725305022064,
+      "judged_stress_sharpe_net10": 0.4704470556321842,
+      "judged_holdout_sharpe_net10_contaminated": 1.2895008657456961,
+      "judged_anchor_cagr_net10": 0.13981383474508569,
+      "judged_stress_cagr_net10": 0.07605323560358435,
+      "judged_anchor_maxdd_net10": -0.1540890819009274,
+      "judged_stress_maxdd_net10": -0.3360865936113486,
+      "judged_anchor_cagr_net20": 0.13981383474508569,
+      "judged_stress_cagr_net20": 0.07605323560358435,
+      "judged_anchor_sharpe_net20": 0.8902725305022064,
+      "judged_stress_sharpe_net20": 0.4704470556321842,
+      "diversifier_edge_anchor": 0.12368596816717359,
+      "diversifier_edge_stress": -0.08346716782055985,
+      "diversifier_pass_k2_ge_0_05": false,
+      "correlation_with_s3": {
+        "stress": 0.4389971729637032,
+        "anchor": 0.39704613930374805,
+        "2022": 0.24112754798062822
+      },
+      "dsr_anchor": 0.5289734967966722,
+      "stress_actual_start": "2016-05-02",
+      "stress_coverage_years": 7.37,
+      "stress_full_years": 7.37,
+      "stress_data_caveat": "full stress window coverage",
+      "k1_sharpe_anchor_pass": false,
+      "k1_sharpe_stress_pass": false,
+      "k1_cagr_pass_both": true,
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_anchor_pass": true,
+      "k2_stress_pass": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none",
+      "strong": false,
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.8903 < bar 1.1882",
+        "K1 stress Sharpe 0.4704 < bar 0.6447",
+        "K2 stress edge -0.0835 < 0.05"
+      ]
+    }
+  },
+  "adoption": {
+    "HFEA_UPRO_TMF": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none"
+    },
+    "TOM_SPY": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none"
+    },
+    "EOM_REVERSAL_SPY": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "watch_recent",
+      "pass_path": "none (watch_recent: anchor-only)"
+    },
+    "FRONT_RUN_SECTOR_TOP2": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "watch_recent",
+      "pass_path": "none (watch_recent: anchor-only)"
+    },
+    "FOMC_DRIFT_SPY": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none"
+    },
+    "FOMC_DRIFT_TQQQ": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none"
+    },
+    "XYLD_COVERED_CALL_PROXY": {
+      "k1_pass": false,
+      "k1_strong": false,
+      "k2_pass": false,
+      "k2_strong": false,
+      "tier": "refuted",
+      "pass_path": "none"
+    }
+  },
+  "tier_counts": {
+    "refuted": 5,
+    "watch_recent": 2
+  },
+  "overall_verdict": "2/7 watch_recent, 5/7 refuted; 0/7 K1, 0/7 K2. EOM_REVERSAL_SPY (anchor Sharpe 1.2406 >= 1.1882 bar, stress 0.5845 < 0.6447 bar) and FRONT_RUN_SECTOR_TOP2 (anchor 1.4022 >= 1.1882 bar, stress 0.4517 < 0.6447 bar) both clear the K1 anchor-window Sharpe bar but fail the stress-window bar, and both fail K2 (stress combination edge -0.173 and -0.168, below the 0.05 bar) -> watch_recent per the runbook 5th-section forward-only tier, not kept, not promoted. EOM_REVERSAL_SPY and FRONT_RUN_SECTOR_TOP2 were both corrected from a monthly (\"M\") declaration to a single-version (\"D\") declaration on month-end/ calendar-anchored dates before any valid result was computed (candidate-manifest.json parameters.freq_correction): declaring them monthly-offset-swept made offsets 1-20 never fire since the signal is only defined at the calendar-anchored date, so the offset-median silently degenerated to pure SHY. The other 5 (HFEA_UPRO_TMF, TOM_SPY, FOMC_DRIFT_SPY, FOMC_DRIFT_TQQQ, XYLD_COVERED_CALL_PROXY) fail K1 on anchor Sharpe alone (all below 1.1882) and fail K2 in at least one window."
+}

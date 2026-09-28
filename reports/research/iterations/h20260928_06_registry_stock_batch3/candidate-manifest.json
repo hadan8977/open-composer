@@ -1,0 +1,354 @@
+{
+  "iter_id": "h20260928_06_registry_stock_batch3",
+  "generated_at": "2026-09-28T03:50:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "stock_batch3_h20260928_06",
+  "objective": "Ten testable-now stock-level registry directions (batch 3), each judged against the owner's absolute K1 (Sharpe >=80% of S3's in anchor and stress at 10bp, CAGR>0 at 20bp) and K2 (diversifier edge vs a vol-matched k*S3+(1-k)*SHY control >=0.05 Sharpe in both windows) bars -- no ranking among candidates.",
+  "candidate_count": 10,
+  "candidates": [
+    {
+      "candidate_id": "momentum_concentrated_k37",
+      "path": "stock_batch3_screen",
+      "role": "cross_sectional_topk_signal",
+      "method": "momentum_252_21_topk37_h21",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_stock_broad_panel",
+      "feature_contract": "feature_v1_momentum_252_21_topk",
+      "label_contract": "label_v1_next_open_to_open_topk",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:equity_momentum_concentrated_pwb",
+        "score_column": "momentum_252_21",
+        "direction": 1,
+        "top_k": 37,
+        "hold_sessions": 21,
+        "universe_top_n": 500,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "skew_52wk_high_k95",
+      "path": "stock_batch3_screen",
+      "role": "cross_sectional_topk_signal",
+      "method": "dist_from_252d_high_topk95_h21",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_stock_broad_panel",
+      "feature_contract": "feature_v1_dist_from_252d_high_topk",
+      "label_contract": "label_v1_next_open_to_open_topk",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:skewness_preference_52wk_high_pwb",
+        "score_column": "dist_from_252d_high",
+        "direction": 1,
+        "top_k": 95,
+        "hold_sessions": 21,
+        "universe_top_n": 500,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "vam_momentum_k50",
+      "path": "stock_batch3_screen",
+      "role": "cross_sectional_topk_signal",
+      "method": "momentum_252_21_over_vol_63_topk50_h21",
+      "ablation": "aegis_step1_only_no_minimax_no_sortino",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_stock_broad_panel",
+      "feature_contract": "feature_v1_vam_momentum_vol63_topk",
+      "label_contract": "label_v1_next_open_to_open_topk",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:volatility_gated_momentum_aegis",
+        "score_expression": "momentum_252_21 / vol_63",
+        "direction": 1,
+        "top_k": 50,
+        "hold_sessions": 21,
+        "universe_top_n": 500,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true,
+        "disclosed_deviation": "tests only AEGIS step 1 (volatility-adjusted momentum ranking); steps 2 (minimax-correlation basket diversification) and 3 (SLSQP Sortino-optimized allocation) are dropped as portfolio-construction/optimization mechanisms outside this batch's score-and-top-k engine, and equal-weight top-k is used instead of Sortino-optimized weights."
+      }
+    },
+    {
+      "candidate_id": "a13d_item4_h6",
+      "path": "stock_batch3_screen",
+      "role": "calendar_time_event_signal",
+      "method": "sec_13d_item4_new_filing_hold126",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_13d_filings",
+      "feature_contract": "feature_v1_13d_item4_event",
+      "label_contract": "label_v1_calendar_time_event_hold",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:activist_13d_long_horizon_hold",
+        "event_filter": "item4_present=true AND is_new_13d=true",
+        "event_date_field": "visible_session",
+        "hold_sessions": 126,
+        "universe_top_n": 500,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "a13d_item4_h12",
+      "path": "stock_batch3_screen",
+      "role": "calendar_time_event_signal",
+      "method": "sec_13d_item4_new_filing_hold252",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_13d_filings",
+      "feature_contract": "feature_v1_13d_item4_event",
+      "label_contract": "label_v1_calendar_time_event_hold",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:activist_13d_long_horizon_hold",
+        "event_filter": "item4_present=true AND is_new_13d=true",
+        "event_date_field": "visible_session",
+        "hold_sessions": 252,
+        "universe_top_n": 500,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "a13d_item4_h24",
+      "path": "stock_batch3_screen",
+      "role": "calendar_time_event_signal",
+      "method": "sec_13d_item4_new_filing_hold504",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_13d_filings",
+      "feature_contract": "feature_v1_13d_item4_event",
+      "label_contract": "label_v1_calendar_time_event_hold",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:activist_13d_long_horizon_hold",
+        "event_filter": "item4_present=true AND is_new_13d=true",
+        "event_date_field": "visible_session",
+        "hold_sessions": 504,
+        "universe_top_n": 500,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "monday_afternoon_spy",
+      "path": "stock_batch3_screen",
+      "role": "single_index_weekly_timing",
+      "method": "monday_close_vs_open_direction_hold_week",
+      "ablation": "disclosed_proxy_close_vs_open_for_intraday_noon_vs_open",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_etf_daily_panel",
+      "feature_contract": "feature_v1_monday_close_vs_open",
+      "label_contract": "label_v1_weekly_next_open_piecewise",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:monday_afternoon_reversal_index_timing",
+        "asset": "SPY",
+        "signal": "sign(close[Monday] - open[Monday])",
+        "hold": "Tuesday open through Friday close, next-open fill",
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "monday_afternoon_qqq",
+      "path": "stock_batch3_screen",
+      "role": "single_index_weekly_timing",
+      "method": "monday_close_vs_open_direction_hold_week",
+      "ablation": "disclosed_proxy_close_vs_open_for_intraday_noon_vs_open",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_etf_daily_panel",
+      "feature_contract": "feature_v1_monday_close_vs_open",
+      "label_contract": "label_v1_weekly_next_open_piecewise",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_per_side",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:monday_afternoon_reversal_index_timing",
+        "asset": "QQQ",
+        "signal": "sign(close[Monday] - open[Monday])",
+        "hold": "Tuesday open through Friday close, next-open fill",
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "overnight_only_spy",
+      "path": "stock_batch3_screen",
+      "role": "static_session_policy",
+      "method": "long_overnight_flat_intraday_daily_round_trip",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_etf_daily_panel",
+      "feature_contract": "feature_v1_overnight_static_policy",
+      "label_contract": "label_v1_daily_overnight_round_trip",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_overnight_round_trip_2x",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:overnight_intraday_gap_retail_pwb",
+        "asset": "SPY",
+        "signal": "always long from close(t-1) to open(t); flat open(t) to close(t)",
+        "turnover_per_day": 2.0,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    },
+    {
+      "candidate_id": "overnight_only_qqq",
+      "path": "stock_batch3_screen",
+      "role": "static_session_policy",
+      "method": "long_overnight_flat_intraday_daily_round_trip",
+      "ablation": "none_frozen_source_rule",
+      "spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_etf_daily_panel",
+      "feature_contract": "feature_v1_overnight_static_policy",
+      "label_contract": "label_v1_daily_overnight_round_trip",
+      "validation_contract": "validation_v1_select_anchor_stress_holdout2026",
+      "cost_contract": "cost_v1_overnight_round_trip_2x",
+      "benchmark_contract": "benchmark_v1_s3_and_universe",
+      "parameters": {
+        "source_row": "dir:overnight_intraday_gap_retail_pwb",
+        "asset": "QQQ",
+        "signal": "always long from close(t-1) to open(t); flat open(t) to close(t)",
+        "turnover_per_day": 2.0,
+        "n_offsets": 1,
+        "date_neutral_by_construction": true
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_stock_broad_panel": {
+        "source": "open_composer.research.signal_card.load_market(top_n=500, memory_limit='1200MB')",
+        "universe": "data/features/universe_broad PIT top-500 by dollar ADV, close>=$5",
+        "prices": "data/features/daily_broad"
+      },
+      "data_v1_sec_13d_filings": {
+        "path": "data/features/sec_13d/filings.parquet",
+        "fields_used": ["issuer_symbol", "visible_session", "entry_session", "item4_present", "is_new_13d"]
+      },
+      "data_v1_etf_daily_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "symbols": ["SPY", "QQQ", "SHY", "BIL"]
+      }
+    },
+    "features": {
+      "feature_v1_momentum_252_21_topk": {
+        "signal": "load_signal(market, source='data/features/daily_broad', column='momentum_252_21', lag=0)",
+        "direction": 1
+      },
+      "feature_v1_dist_from_252d_high_topk": {
+        "signal": "load_signal(market, source='data/features/daily_broad', column='dist_from_252d_high', lag=0)",
+        "direction": 1,
+        "note": "column range is [-1, 0]; 0 = at the 52-week high; direction=1 (no negation) already selects the top-k closest to 0"
+      },
+      "feature_v1_vam_momentum_vol63_topk": {
+        "signal": "momentum_252_21 / vol_63, both from data/features/daily_broad, elementwise, lag=0",
+        "direction": 1
+      },
+      "feature_v1_13d_item4_event": {
+        "signal": "SELECT issuer_symbol AS symbol, visible_session AS trade_date, 1.0 AS value FROM read_parquet('data/features/sec_13d/filings.parquet') WHERE item4_present=true AND is_new_13d=true",
+        "note": "visible_session (not entry_session) is used as trade_date so signal_card's own next-open entry convention (in at open of t+1) reproduces entry_session exactly"
+      },
+      "feature_v1_monday_close_vs_open": {
+        "signal": "sign(close[Monday] - open[Monday]); 1.0 -> hold the asset; else cash",
+        "decision_lag_sessions": 0,
+        "disclosed_deviation": "the source paper's own signal is Monday-12:00-vs-open (intraday); daily bars for both SPY and QQQ do not carry a consistent intraday print, so this round substitutes Monday's own close-vs-open as the observable proxy, explicitly disclosed"
+      },
+      "feature_v1_overnight_static_policy": {
+        "signal": "constant: always hold the asset from close(t-1) to open(t); flat open(t) to close(t)",
+        "decision_lag_sessions": 0
+      }
+    },
+    "labels": {
+      "label_v1_next_open_to_open_topk": {
+        "definition": "signal_card.topk_cohorts(signal, eligible, k) -> signal_card.hold(cohorts, h) -> signal_card.book_returns(held, market.next_open_returns(), cost_bps)"
+      },
+      "label_v1_calendar_time_event_hold": {
+        "definition": "signal_card.hold(events.astype(float32), h, normalize=True) -> signal_card.book_returns(held, market.next_open_returns(), cost_bps); every event stock held with equal weight for h sessions from its next-open entry"
+      },
+      "label_v1_weekly_next_open_piecewise": {
+        "definition": "base.weights_from_selection(index, monday_signal_dates, picks, columns) -> base.portfolio_returns(weights, close, open_, cost_bps); piecewise-constant weight, effective at the open of the session after each Monday"
+      },
+      "label_v1_daily_overnight_round_trip": {
+        "definition": "ret = open[t]/close[t-1] - 1 - 2*cost_bps/1e4 every session (2x cost for the explicit daily buy-then-flatten round trip)"
+      }
+    },
+    "validation": {
+      "validation_v1_select_anchor_stress_holdout2026": {
+        "windows": {
+          "select": ["2023-09-18", "2025-12-31"],
+          "anchor": ["2024-01-08", "2026-09-17"],
+          "stress": ["2016-05-02", "2023-09-15"],
+          "holdout_2026_contaminated": ["2026-01-02", "2026-09-17"]
+        },
+        "source": "scripts/screen_lane.py WINDOWS, unchanged"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_per_side": {
+        "primary_bps": 10.0,
+        "stress_bps": 20.0,
+        "basis": "sum(abs(delta weight)) per rebalance session"
+      },
+      "cost_v1_overnight_round_trip_2x": {
+        "primary_bps": 20.0,
+        "stress_bps": 40.0,
+        "basis": "2x the per-side cost_v1_10_20bps_per_side rate, charged every session (buy at close, sell at open is a full round trip)"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_s3_and_universe": {
+        "members": [
+          "s3_incumbent_offset0_via_screen_lane",
+          "vol_matched_k_s3_plus_1_minus_k_shy_control",
+          "SPY_buy_and_hold",
+          "universe_equal_weight_where_applicable"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/stock_batch3_h20260928_06.yaml": "f766652aa5b02aadd7ef43bd1f5db0f246edc713de699623781ed89c1d31dc7b"
+  },
+  "source_spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+  "spec_hash": "f766652aa5b02aadd7ef43bd1f5db0f246edc713de699623781ed89c1d31dc7b",
+  "keep_rule": {
+    "k1": "Sharpe(candidate, 10bp) >= 1.19 in anchor AND >= 0.65 in stress, AND CAGR(candidate, 20bp) > 0 in both anchor and stress",
+    "k2": "diversifier_edge_for_offset(s3_ret10, candidate_ret10, shy_ret, rf, window) >= 0.05 in BOTH anchor and stress windows",
+    "pass_requires": "K1 OR K2",
+    "source": "owner's 2026-09-28 relaxed keep rule, verbatim from the task brief"
+  }
+}

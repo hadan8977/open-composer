@@ -1,0 +1,129 @@
+{
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "schema_version": 3,
+  "strategy_name": "registry_etf_batch2_h20260928_05",
+  "source_spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+  "spec_hash": "a7ff2d473f46eec78c9bafcf94147950a4f6266b8d6210a7ca201754a3e4e1d1",
+  "objective": "Judge 24 batch-2 registry directions (ETF-level, per the owner's 2026-09-28 assignment) into lane-testable candidates, stock-level handoffs, or documented not-executable/evidence-too-weak verdicts.",
+  "topic_coverage": [
+    "hfea_fixed_leverage_rebalance",
+    "turn_of_month_seasonality",
+    "end_of_month_reversal",
+    "front_running_sector_seasonality",
+    "pre_fomc_drift",
+    "covered_call_cef_proxy_xyld",
+    "stock_level_handoffs_pwb_papers",
+    "undisclosed_rule_triage",
+    "options_data_gap_triage",
+    "vix_data_gap_triage"
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl"
+  ],
+  "hypothesis_links": ["H-20260928-05"],
+  "sources": [
+    {
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1295428",
+      "published_or_updated_at": "2008-11-04",
+      "source_type": "paper",
+      "credibility": "author (David P. Simon, Bentley University) published on SSRN, later in Journal of Derivatives & Hedge Funds (2011); studies BEP's own NAV premium anomaly, not a trading rule",
+      "core_claim": "S&P 500 Covered Call Fund Inc. (BEP) traded at premiums to NAV up to 23% in 2007 despite a transparent, easy-to-replicate one-month at-the-money SPX covered-call strategy; the premium is linked to return-overreaction and a VIX spike.",
+      "project_applicability": "Grounds dir:covered_call_cef_income_pwb; BEP itself liquidated 2010-02-02 (SEC EDGAR N-CSR), so this round substitutes XYLD as an honest, cited buy-and-hold proxy for the same monthly covered-call mechanism.",
+      "reflection": "Overfit risk low (it is a documented historical anomaly, not a fitted rule); decay risk is moot since the exact fund is gone; cost sensitivity untested here since XYLD_COVERED_CALL_PROXY is buy-and-hold with no signal-driven turnover beyond drift."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/any-role-for-mean-reversion-in-short-term-asset",
+      "published_or_updated_at": "2009-02-15",
+      "source_type": "paper",
+      "credibility": "paperswithbacktest replication of Caporin, de Roon & Pelizzon (2009); page does not disclose the exact mean-reversion formula, only a 1990-2026 replication summary",
+      "core_claim": "A mean-variance-optimal, mean-reversion-exploiting tactical allocation across 16 positions (mostly individual stocks plus a bond index, not a pure ETF universe) reports 9.82% CAGR / Sharpe 1.22 / -25.98% max drawdown in the paperswithbacktest re-run.",
+      "project_applicability": "16-position universe is mixed individual-stock/index, not ETF-level, and the exact signal formula is not published on the page -- handed to the stock-level agent rather than tested in this ETF-only batch.",
+      "reflection": "Cannot assess overfit/decay without the exact rule; paperswithbacktest's own replication methodology re-fits parameters to 1990-2026, a known source of look-ahead risk this batch does not resolve."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/markowitz-meets-technical-analysis-building-optimal-portfolios-by-exploiting-information-in-trend-following-signals",
+      "published_or_updated_at": "2022-06-13",
+      "source_type": "paper",
+      "credibility": "paperswithbacktest replication of Santos & Torrent (2022); 208-position universe confirmed to be individual S&P 500 constituents",
+      "core_claim": "Combining mean-variance optimization with four trend-following signals across 208 S&P 500 stocks, daily rebalance, reports 19.87% CAGR / Sharpe 1.09 / -51.32% max drawdown.",
+      "project_applicability": "Stock-level (208 individual names), handed to the stock-level agent; the -51% drawdown at only 1.09 Sharpe is a weak risk-adjusted shape regardless.",
+      "reflection": "Daily rebalance across 208 names implies high turnover/cost sensitivity not evaluated on the page; decay risk unassessed since replication window includes 2026 (post-hoc)."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/when-passive-funds-affect-prices-evidence-from-volatility-and-commodity-etfs",
+      "published_or_updated_at": "2021-01-01",
+      "source_type": "paper",
+      "credibility": "paperswithbacktest replication of Todorov (2021); page does not disclose which of leverage/calendar/flow rebalancing effect drives the replicated rule",
+      "core_claim": "ETF rebalancing (leverage, calendar, or flow-driven) measurably distorts VIX and commodity ETF prices; paperswithbacktest's own replication reports only 2.79% CAGR at Sharpe 1.00.",
+      "project_applicability": "Exact replicable rule undisclosed and the mechanism may need flow/creation-redemption data we do not have; marked not_executable pending the primary paper.",
+      "reflection": "Low absolute return (2.79%/yr) even in the source's own replication suggests limited near-term profit potential even if the exact rule were obtained."
+    },
+    {
+      "url": "https://paperswithbacktest.com/strategies/trading-volume-effects-of-moving-average-heuristics",
+      "published_or_updated_at": "2014-10-30",
+      "source_type": "paper",
+      "credibility": "paperswithbacktest replication of Etheber (2014); 26-position universe confirmed to be individual stocks",
+      "core_claim": "Simple moving-average trading rules generate abnormal trading volume (25-55% higher on buy signals, 15-25% on sell signals) around signal days; paperswithbacktest's own replication reports 11.27% CAGR / Sharpe 1.01 / -34.92% drawdown.",
+      "project_applicability": "Stock-level (26 individual names), handed to the stock-level agent; thematically adjacent to the already-refuted local giants_sweep_20260922 (0/24 published SMA/trend ETF rules) and lightgbm_price_volume_recipe_v1 findings that price-volume features on this kind of universe are exhausted.",
+      "reflection": "Barely clears a 1.0 Sharpe bar with a 35% drawdown even in the source's favorable replication; low expected marginal value."
+    },
+    {
+      "url": "https://harbourfrontquant.substack.com/p/do-calendar-anomalies-still-work",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "blog_summary_of_paper",
+      "credibility": "secondary blog summarizing Graziani (2024, SSRN, 'Time Series Reversal: An End-of-the-Month Perspective') and a 2022 NTNU thesis; primary SSRN paper not independently opened this pass",
+      "core_claim": "S&P 500 end-of-month returns (4th Friday to month-end) are negatively correlated with the following month's return, both in-sample and out-of-sample, over a 45-year period; does not require shorting.",
+      "project_applicability": "Grounds EOM_REVERSAL_SPY's exact rule (long next month iff this month's 4th-Friday-to-month-end return was negative); no quantified CAGR/Sharpe/drawdown given in the secondary source, so this round supplies its own via scripts/screen_batch.py.",
+      "reflection": "Secondary source risk: no independent verification of Graziani's own numbers in this pass; decay risk unassessed beyond the source's own out-of-sample claim."
+    },
+    {
+      "url": "https://www.quantseeker.com/p/trading-the-fed-the-pre-fomc-drift",
+      "published_or_updated_at": "2025-02-25",
+      "source_type": "blog_replication",
+      "credibility": "practitioner replication built on a peer-reviewed citation chain (Lucca & Moench 2015 JoF; Savor & Wilson 2013 JFQA; Cieslak, Morse & Vissing-Jorgensen 2019 JoF; Liu, Tang & Zhou 2022 JFE); own backtest, not third-party verified",
+      "core_claim": "Pre-FOMC announcement drift (long from the close before a scheduled FOMC meeting through the close of its final day) remains persistent through Dec 2024; leveraged-ETF variant delivers after-cost CAGR 8-9%, Sharpe ~0.6, trading only 5% of days.",
+      "project_applicability": "Grounds FOMC_DRIFT_SPY and FOMC_DRIFT_TQQQ's exact entry/exit rule; this round's own FOMC meeting dates come from federalreserve.gov, not from this blog.",
+      "reflection": "Sharpe ~0.6 in the source's own SPY-level numbers is below the K1 bar (80% of S3's 1.49/0.81) on priors alone; a clean refutation is the likely, still-useful outcome."
+    },
+    {
+      "url": "https://www.hulltactical.com/2024/05/17/the-turn-of-the-month-effect/",
+      "published_or_updated_at": "2024-05-17",
+      "source_type": "blog_replication",
+      "credibility": "practitioner replication (Hull Tactical), cross-checked against etftrends.com's independent S&P 500 futures replication and a 2022 NTNU academic thesis summarized by harbourfrontquant.substack.com",
+      "core_claim": "Turn-of-month (buy SPY close of last trading day of month, sell close of 4th trading day of next month) captures 44% of total return (before dividends) while invested ~20% of trading days.",
+      "project_applicability": "Grounds TOM_SPY's exact hold window (4th trading day, not 3rd or 5th).",
+      "reflection": "Before-dividends-only number likely overstates net edge; this round's own 10/20bp cost view will show whether the edge survives realistic costs."
+    },
+    {
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "published_or_updated_at": "unknown",
+      "source_type": "regulatory_docs",
+      "credibility": "primary official source, the U.S. central bank's own published meeting calendar",
+      "core_claim": "The FOMC holds eight regularly scheduled meetings per year; exact 2021-2027 dates are published, with historical archive pages for 2015-2020.",
+      "project_applicability": "Directly used as the hard-coded FOMC_MEETINGS date list in scripts/screen_batches/h20260928_05_batch2.py -- exactly what the brief requires (dates copied from the Fed's calendar, never inferred from price).",
+      "reflection": "No overfit/decay risk: this is a public calendar fact, not a fitted parameter."
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/1307155/000119312510050322/dncsr.htm",
+      "published_or_updated_at": "2010-03-01",
+      "source_type": "regulatory_docs",
+      "credibility": "primary official source, the fund's own SEC-filed N-CSR annual report",
+      "core_claim": "S&P 500 Covered Call Fund Inc. (BEP) liquidated on 2010-01-29 and distributed all proceeds on 2010-02-02.",
+      "project_applicability": "Confirms BEP is not tradable today, justifying the XYLD_COVERED_CALL_PROXY substitution (an honest, cited, currently-tradable proxy) rather than silently building a candidate around a dead ticker.",
+      "reflection": "No overfit/decay risk: this is a historical corporate-action fact, not a fitted parameter."
+    }
+  ],
+  "current_source_card_paths_note": "candidate_matrix_revisions below record why this batch adds 7 new lane candidates to the manifest that did not exist before scripts/screen_lane.py's self-check passed on 2026-09-28.",
+  "candidate_matrix_revisions": [
+    {
+      "revision": "added_7_registry_batch2_lane_candidates",
+      "reason": "scripts/screen_lane.py / scripts/screen_batch.py passed its self-check on 2026-09-28 (reports/research/screens/SELF_CHECK_OK) and now supports calendar-anchored 'D' frequency rules via signal_dates_fn, letting turn-of-month, end-of-month reversal, front-running seasonality and pre-FOMC drift be screened against S3 without a bespoke 13-file dossier per idea; HFEA and an XYLD covered-call proxy round out the batch to 7 candidates from the owner's 24-row batch-2 assignment."
+    }
+  ],
+  "source_evidence_bindings": [
+    {"source_url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm", "claim_id": "federalreserve_fomc_calendar_2021_2026"},
+    {"source_url": "https://www.sec.gov/Archives/edgar/data/1307155/000119312510050322/dncsr.htm", "claim_id": "sec_edgar_bep_ncsr_liquidation_2010"},
+    {"source_url": "https://www.quantseeker.com/p/trading-the-fed-the-pre-fomc-drift", "claim_id": "quantseeker2025_pre_fomc_drift_alive_leveraged_etfs"},
+    {"source_url": "https://www.hulltactical.com/2024/05/17/the-turn-of-the-month-effect/", "claim_id": "hulltactical2024_turn_of_month_spy_captures_44pct"}
+  ]
+}

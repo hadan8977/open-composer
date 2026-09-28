@@ -1,0 +1,88 @@
+{
+  "iter_id": "h20260928_04_s3_alt_div_batch1",
+  "strategy_name": "s3_alt_div_batch1_h20260928_04",
+  "source_spec_path": "strategy_specs/drafts/s3_alt_div_batch1_h20260928_04.yaml",
+  "spec_hash": "935e9a2e0fbb972e6809fe3ca27f8d03be07ca56a216afdd9f374c5c51f4af8b",
+  "schema_version": 3,
+  "created_at": "2026-09-28T04:00:00+00:00",
+  "objective": "Preregister 19 published long-only US-listed-ETF rules (F1 managed-futures ETFs held outright; F2 Keller/Antonacci/Faber tactical-allocation rules computed over public ETF universes; F3 other alt-diversifier ETFs held outright) for a batch screening lane (built separately) to test against K1 (own date-neutral Sharpe >= 80% of S3's in both the anchor and stress windows, positive CAGR at 20bp) or K2 (a 63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows). No backtest is run in this round.",
+  "paths": [
+    {
+      "name": "s3_alt_div_batch1_screen",
+      "candidate_count": 19,
+      "hypothesis_refs": [
+        "H-20260928-04"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "F1_DBMF",
+          "F1_KMLM",
+          "F1_CTA",
+          "F1_WTMF",
+          "F1_FMF",
+          "F2_VAA_G4",
+          "F2_DAA_G12",
+          "F2_PAA",
+          "F2_HAA",
+          "F2_GPM",
+          "F2_GEM",
+          "F2_GTAA",
+          "F2_ADM",
+          "F2_BAA_BAL",
+          "F3_RPAR",
+          "F3_UPAR",
+          "F3_NTSX",
+          "F3_QAI",
+          "F3_TRTY"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold",
+        "BIL_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 19,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/candidate-manifest.json",
+  "candidate_manifest_sha256": "93001650d4c43dbd5f95e2dc5f757b71b805fb7418626e44016127fdd2a60078",
+  "data_feasibility_path": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/data-feasibility.json",
+  "data_feasibility_sha256": "5ec8f2ca1ff04a3c02638041ef2fc5026808af182b82dfb4f2051a9cb3180d50",
+  "cost_table_path": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_04_s3_alt_div_batch1/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_04_s3_alt_div_batch1/report.md",
+    "reports/research/iterations/h20260928_04_s3_alt_div_batch1/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (median over rebalance offsets) >= 0.80 * S3's date-neutral Sharpe in BOTH windows (anchor >=1.19, stress >=0.65), 10bp per side, positive CAGR at 20bp.",
+    "K2": "63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows.",
+    "pass_requires": "K1 OR K2",
+    "multiple_comparisons": "19 candidates; report all regardless of outcome; DSR with n_trials=19 for any that pass.",
+    "g3_placebo": "not applicable to hold-only or fixed-rule candidates with no discretionary pick or gate-timing parameter fit locally; see candidate-manifest.json."
+  }
+}

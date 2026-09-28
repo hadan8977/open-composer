@@ -1,0 +1,73 @@
+{
+  "iter_id": "h20260928_06_registry_stock_batch3",
+  "strategy_name": "stock_batch3_h20260928_06",
+  "source_spec_path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+  "spec_hash": "f766652aa5b02aadd7ef43bd1f5db0f246edc713de699623781ed89c1d31dc7b",
+  "schema_version": 3,
+  "created_at": "2026-09-28T03:50:00Z",
+  "objective": "Screen ten testable-now stock-level registry directions (batch 3: momentum_concentrated_k37, skew_52wk_high_k95, vam_momentum_k50, a13d_item4_h6/h12/h24, monday_afternoon_spy/qqq, overnight_only_spy/qqq), each judged independently against the owner's 2026-09-28 keep rule (K1: Sharpe vs S3; K2: diversifier edge vs a vol-matched k*S3+(1-k)*SHY control), using the frozen signal_card/screen_lane engine at 10bp and 20bp per side.",
+  "paths": [
+    {
+      "name": "stock_batch3_screen",
+      "candidate_count": 10,
+      "hypothesis_refs": ["H-20260928-06"],
+      "parameters": {
+        "candidate_id": [
+          "momentum_concentrated_k37",
+          "skew_52wk_high_k95",
+          "vam_momentum_k50",
+          "a13d_item4_h6",
+          "a13d_item4_h12",
+          "a13d_item4_h24",
+          "monday_afternoon_spy",
+          "monday_afternoon_qqq",
+          "overnight_only_spy",
+          "overnight_only_qqq"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "s3_incumbent_offset0_via_screen_lane",
+        "vol_matched_k_s3_plus_1_minus_k_shy_control",
+        "SPY_buy_and_hold",
+        "universe_equal_weight_where_applicable"
+      ]
+    }
+  ],
+  "total_candidate_budget": 10,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/candidate-manifest.json",
+  "candidate_manifest_sha256": "ec6a9fc0ebc60ef98ddf1c6b3f13add7a1e39c8bf59feafd0f908a32313c360d",
+  "data_feasibility_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/data-feasibility.json",
+  "data_feasibility_sha256": "419d2f6a32cc344c15f04f72d331c7fc48d55824d4a2fe962cdc65a307b9d117",
+  "cost_table_path": "reports/research/iterations/h20260928_06_registry_stock_batch3/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_06_registry_stock_batch3/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_06_registry_stock_batch3/report.md",
+    "reports/research/iterations/h20260928_06_registry_stock_batch3/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": ["2023-09-18", "2025-12-31"],
+    "anchor": ["2024-01-08", "2026-09-17"],
+    "stress": ["2016-05-02", "2023-09-15"],
+    "holdout_2026_contaminated": ["2026-01-02", "2026-09-17"]
+  },
+  "controls": {
+    "vol_matched_delevered_control": {
+      "description": "k*S3 + (1-k)*SHY, k solved per window to match S3+candidate (63-day inverse-vol, monthly) realized volatility, via scripts/screen_lane.py diversifier_edge_for_offset/combine_two_sleeves, unchanged.",
+      "count": 10
+    }
+  },
+  "keep_rule": {
+    "k1": "Sharpe(candidate, 10bp) >= 1.19 anchor AND >= 0.65 stress, AND CAGR(candidate, 20bp) > 0 in both anchor and stress",
+    "k2": "diversifier edge (S3+candidate vs vol-matched k*S3+(1-k)*SHY) >= 0.05 Sharpe in both anchor and stress",
+    "pass_requires": "K1 OR K2",
+    "multiple_comparisons": "ten independent candidates; report all regardless of outcome; DSR uses trial_count=10",
+    "fallback_if_none_pass": "no candidate added to reports/research/screens/kept.jsonl this round"
+  }
+}

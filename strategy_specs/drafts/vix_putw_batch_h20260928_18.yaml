@@ -1,0 +1,138 @@
+name: vix_putw_batch_h20260928_18
+description: >-
+  Preregistered candidate for T-20260928-18 (add VIX and PUTW data,
+  screen the two ETF rules batch 2 could not test for lack of data). Mid-task
+  scope change (owner, 2026-09-28) -- no cross-asset strategies -- drops
+  VIX_REGIME_SPY_SSO_TLT (its bear leg holds TLT); that direction is parked in
+  the registry, not evaluated here. This spec's sole candidate is PUTW_HOLD
+  (buy-and-hold PUTW, monthly), an honest proxy for dir:put_credit_spread_income's
+  weekly SPY cash-secured put-writing claim. PUTW_HOLD is preregistered here for
+  the record but is not_executable -- Alpaca (this project's only market-data and
+  paper-broker vendor) does not carry PUTW at all -- TradingClient.get_asset('PUTW')
+  returns 'asset not found' and StockHistoricalDataClient.get_stock_bars(feed=sip)
+  returns 0 rows, both confirmed 2026-09-28 against known-tradable control ETFs
+  (XYLD/QYLD/JEPI/JEPQ/DIVO), which all resolved correctly with the identical
+  call. No local ingestion script -- existing or newly written -- can fetch what
+  the vendor does not serve. No scripts/screen_batch.py run occurs against this
+  spec. Research only, deterministic; no broker writes are authorized.
+timeframe: daily
+universe:
+- PUTW
+- SHY
+- BIL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_18:screen:vix_putw_batch
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: PUTW
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  fixed_weight_rule:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. PUTW_HOLD is a fixed target
+      weight (1.0 PUTW) returned unconditionally once PUTW has any price
+      history, matching HFEA_UPRO_TMF/XYLD_COVERED_CALL_PROXY's pattern in
+      scripts/screen_batches/h20260928_05_batch2.py. Not implemented as a
+      batch module in this round because PUTW data cannot be fetched (see
+      description); documented here only to bind the preregistration.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_18_vix_putw_batch
+  candidate_manifest_path: reports/research/iterations/h20260928_18_vix_putw_batch/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_18_vix_putw_batch/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_18_vix_putw_batch.jsonl
+  source_card_claim_ids:
+  - wisdomtree_putw_launch_2016
+  - cboe_put_index_factsheet_2026
+  parameter_space:
+    candidate_id:
+    - PUTW_HOLD
+  candidate_budget: 1
+  selection_objective: Single candidate, judged against the owner's 2026-09-28
+    relaxed K1/K2 keep rule if and only if the data blocker below is ever
+    resolved by a separate data-ingestion decision; not computed in this
+    round.
+  anti_overfit_notes:
+  - PUTW_HOLD's only parameter (weight 1.0, freq M) is fixed by the fund's
+    own published monthly option-roll cadence (wisdomtree_putw_launch_2016),
+    not fit to any window's return.
+  - PUTW_HOLD is an explicit, honestly labeled proxy for
+    dir:put_credit_spread_income's original weekly SPY cash-secured
+    put-writing claim -- PUTW writes monthly, at-the-money, index-level (SPX)
+    puts, a different cadence and structure, not a literal replication.
+  - No return has been computed for this candidate; it cannot be computed
+    without PUTW price data, which Alpaca does not serve.
+  validation_plan:
+  - blocked_pending_data_vendor_decision
+  data_gap:
+    symbol: PUTW
+    checked_2026-09-28:
+    - "TradingClient(paper=True).get_asset('PUTW') -> APIError 40410000 'asset not found for PUTW'"
+    - "StockHistoricalDataClient.get_stock_bars(symbol='PUTW', feed='sip', last 10 sessions) -> 0 rows"
+    - "Control check (same calls): XYLD/QYLD/JEPI/JEPQ/DIVO all resolved tradable=True with rows returned"
+    conclusion: PUTW is not served by Alpaca (trading or market data); not a
+      local shard/ingestion-script limitation.
+notes:
+  intent: Preregister PUTW_HOLD for the record per T-20260928-18's brief and
+    document why it is not_executable at the data-vendor level. No batch
+    module or backtest run occurs; VIX_REGIME_SPY_SSO_TLT is out of scope per
+    the owner's 2026-09-28 cross-asset decision, tracked separately in the
+    registry as dir:spy_sso_tlt_vix_regime_rotation (status parked).
+  hypothesis_id: T-20260928-18
+  previous_link: h20260928_05_registry_etf_batch2
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: blocked

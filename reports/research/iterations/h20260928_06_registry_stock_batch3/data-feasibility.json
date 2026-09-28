@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_06_registry_stock_batch3_historical_evaluation_authorization",
+  "iter_id": "h20260928_06_registry_stock_batch3",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 10,
+    "evaluation_authorized_count": 10,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 10,
+    "rows": [
+      {
+        "candidate_id": "momentum_concentrated_k37",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_daily_broad_panel_available",
+        "candidate_binding_sha256": "eb94f29c45fa1b3b84a011d4c310a5b185bb548e43182db0bb059e3788f55562"
+      },
+      {
+        "candidate_id": "skew_52wk_high_k95",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_daily_broad_panel_available",
+        "candidate_binding_sha256": "f35147e5695537f02fbd51bdace090fd82f53d09144c586353bbbe64ab1374cf"
+      },
+      {
+        "candidate_id": "vam_momentum_k50",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_daily_broad_panel_available",
+        "candidate_binding_sha256": "77195dac365f897e314c101198b8e183f77a63594769d50d1f00776a45650e8a"
+      },
+      {
+        "candidate_id": "a13d_item4_h6",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_13d_filings_parquet_available",
+        "candidate_binding_sha256": "897f390cf73b1ccd87f94c1957db2e31d8481b078297c055231c5e79a70e37cc"
+      },
+      {
+        "candidate_id": "a13d_item4_h12",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_13d_filings_parquet_available",
+        "candidate_binding_sha256": "81618073dc5129bfef14086fd82484413016f12bbe1babef1dcc3ec8f8b90c7e"
+      },
+      {
+        "candidate_id": "a13d_item4_h24",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_13d_filings_parquet_available",
+        "candidate_binding_sha256": "a8f8b6a208c858ee9b856176ea7d19fc2310d81a82d4d99fc76619a197d2cd22"
+      },
+      {
+        "candidate_id": "monday_afternoon_spy",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "e833ce9a70edc082f00433edf957423bf73ff21603e38bcc438cc2edb444bc89"
+      },
+      {
+        "candidate_id": "monday_afternoon_qqq",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "e03b8441688407706cd44a603b0d9e5f29c0d21d86c87480efa52adb6af78aba"
+      },
+      {
+        "candidate_id": "overnight_only_spy",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "fee5f21feb4ec2dbfb43d720a86b2220969d6e11e301d0ab8ddf156a0894e031"
+      },
+      {
+        "candidate_id": "overnight_only_qqq",
+        "path": "stock_batch3_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "142fd947249f580a2e11a0c4fda0e74d9ca442d61afc34d686eb6923d651721e"
+      }
+    ]
+  },
+  "path_gates": {
+    "stock_batch3_screen": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "momentum_concentrated_k37",
+        "skew_52wk_high_k95",
+        "vam_momentum_k50",
+        "a13d_item4_h6",
+        "a13d_item4_h12",
+        "a13d_item4_h24",
+        "monday_afternoon_spy",
+        "monday_afternoon_qqq",
+        "overnight_only_spy",
+        "overnight_only_qqq"
+      ],
+      "reason": "All ten candidates use data already present locally (data/features/daily_broad, data/features/universe_broad, data/features/sec_13d/filings.parquet, SIP daily ETF bars); none needs a panel or minute-bar history beyond this 4GB box's capacity, unlike the three needs_modal rows (signed_jump_variation, end_of_day_reversal, intraday_reversal_reit_pwb) recorded in direction-review.json and the report, which are not in this manifest at all."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/stock_batch3_h20260928_06.yaml",
+      "sha256": "ff1fc60fdfc96bac3d30c62236f3ffd0cdcba767399307ab58bc261c13fab02b"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_06_registry_stock_batch3/cost-contract.json",
+      "sha256": "578b7cc74ede81178e9ca0e3f63d3da0f8747fbc4815aafcf1317bdd51988b3c"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_06_registry_stock_batch3.jsonl",
+      "sha256": "2e669a8fbf7175a84a076cd2075cf49a02b5835cef83ee0131f9e9a4d89d93e3"
+    }
+  }
+}

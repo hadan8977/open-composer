@@ -1,0 +1,101 @@
+{
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "strategy_name": "registry_etf_batch2_h20260928_05",
+  "source_spec_path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+  "spec_hash": "a7ff2d473f46eec78c9bafcf94147950a4f6266b8d6210a7ca201754a3e4e1d1",
+  "schema_version": 3,
+  "created_at": "2026-09-28T03:07:07.411487+00:00",
+  "objective": "Preregister 7 long-only published-rule replications from the batch-2 registry triage assignment (HFEA, turn-of-month, end-of-month reversal, front-running sector seasonality, pre-FOMC drift x2, and a covered-call CEF proxy), each judged against the owner's 2026-09-28 relaxed keep rule (K1 median-offset Sharpe vs S3, K2 inverse-vol blend edge vs a vol-matched control), no backtest run yet.",
+  "paths": [
+    {
+      "name": "registry_etf_batch2_screen",
+      "candidate_count": 7,
+      "hypothesis_refs": [
+        "H-20260928-05"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "HFEA_UPRO_TMF",
+          "TOM_SPY",
+          "EOM_REVERSAL_SPY",
+          "FRONT_RUN_SECTOR_TOP2",
+          "FOMC_DRIFT_SPY",
+          "FOMC_DRIFT_TQQQ",
+          "XYLD_COVERED_CALL_PROXY"
+        ],
+        "freq": {
+          "HFEA_UPRO_TMF": "M",
+          "TOM_SPY": "D",
+          "EOM_REVERSAL_SPY": "M",
+          "FRONT_RUN_SECTOR_TOP2": "M",
+          "FOMC_DRIFT_SPY": "D",
+          "FOMC_DRIFT_TQQQ": "D",
+          "XYLD_COVERED_CALL_PROXY": "M"
+        },
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "S3_incumbent_median_offset_reference",
+        "vol_matched_k_s3_plus_shy_control_K2",
+        "SPY_buy_and_hold",
+        "QQQ_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 7,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/candidate-manifest.json",
+  "candidate_manifest_sha256": "bfcd3c5b874d90f5eea1e4284ed23ef42e0ade06150a08b61273ac37e8534726",
+  "data_feasibility_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/data-feasibility.json",
+  "data_feasibility_sha256": "3bf27cb2dab034cdcbbc260d89c55a5364fd9de960ad50d717a21a8e1c38edf4",
+  "cost_table_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_05_registry_etf_batch2/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_05_registry_etf_batch2/report.md",
+    "reports/research/iterations/h20260928_05_registry_etf_batch2/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ]
+  },
+  "controls": {
+    "s3_incumbent": {
+      "description": "The live month-end S3 (offset 0) via scripts/run_h20260928_01_s3_rebalance_tranching.py's offset_effective/simulate_effective, date-neutral median-offset Sharpe 1.49 anchor / 0.81 stress (owner's frozen reference figures, 2026-09-28).",
+      "count": 1
+    },
+    "vol_matched_k_s3_plus_shy_control_k2": {
+      "description": "k*S3 + (1-k)*SHY, k solved per window (scripts/screen_lane.py's diversifier_edge_for_offset / combo.solve_k) so std(control) matches the S3+candidate 63-day inverse-vol blend's realized volatility in that window.",
+      "count": 7
+    }
+  },
+  "adoption_rule": {
+    "per_candidate": [
+      "K1: median-offset Sharpe >= 0.80 * S3's median-offset Sharpe in both anchor (S3=1.49) and stress (S3=0.81) windows, with positive CAGR at 20bp in both windows",
+      "K2: S3+candidate 63-day inverse-vol blend beats its vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in both anchor and stress windows"
+    ],
+    "pass_requires": "K1 or K2 (owner's 2026-09-28 relaxed keep rule -- either condition is sufficient)",
+    "multiple_comparisons": "7 candidates; report all regardless of outcome",
+    "fallback_if_none_pass": "each non-passing candidate returns to the registry as refuted-in-this-form; no live pilot on this evidence",
+    "g3_placebo": "not applicable; see candidate-manifest.json's g3_not_applicable_reason"
+  }
+}

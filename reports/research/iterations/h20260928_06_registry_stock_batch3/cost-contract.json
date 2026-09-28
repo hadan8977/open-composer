@@ -1,0 +1,18 @@
+{
+  "contract_id": "cost_v1_10_20bps_per_side_stock_batch3",
+  "iter_id": "h20260928_06_registry_stock_batch3",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only stocks and long-only spot ETFs; no shorting, no margin)",
+  "topk_and_event_cost_model": "signal_card.book_returns: sum(abs(delta held weight)) * cost_bps / 1e4, charged every session (frozen open_composer.research.signal_card convention, unchanged)",
+  "topk_and_event_slippage_bps_per_side_primary": 10.0,
+  "topk_and_event_slippage_bps_per_side_stress": 20.0,
+  "weekly_timing_cost_model": "base.portfolio_returns: sum(abs(delta weight)) * cost_bps / 1e4 on the rebalance session (frozen run_h20260918_05_recent_menu convention, unchanged)",
+  "weekly_timing_slippage_bps_per_side_primary": 10.0,
+  "weekly_timing_slippage_bps_per_side_stress": 20.0,
+  "overnight_round_trip_cost_model": "2 * cost_bps / 1e4 charged every session (buy at the open then flatten before the close is a full round trip, not a single-side turnover)",
+  "overnight_round_trip_bps_per_side_primary": 20.0,
+  "overnight_round_trip_bps_per_side_stress": 40.0
+}

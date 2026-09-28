@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open_screen_lane",
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot ETFs and SHY; UPRO/TMF/TQQQ/XYLD financing is inside each fund's own NAV)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session -- the frozen scripts/screen_lane.py / scripts/run_h20260918_05_recent_menu.py convention, unchanged",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "hfea_cadence_note": "HFEA's published rebalance is quarterly; this batch approximates it as monthly (scripts/screen_lane.py only supports M/W/D). Monthly rebalance means MORE turnover and cost than the original quarterly rule, never less -- a conservative deviation against the candidate, not a fitted choice.",
+  "diversifier_control_cost_model": "K2's vol-matched k*S3+(1-k)*SHY control rebalances daily at the fixed per-window k with zero cost (conservative in the control's favor, per scripts/screen_lane.py's diversifier_edge_for_offset)."
+}

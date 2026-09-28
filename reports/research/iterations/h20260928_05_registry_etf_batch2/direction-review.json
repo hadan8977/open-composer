@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "reviewed_at": "2026-09-28T03:25:00+00:00",
+  "decision": "proceed",
+  "objective": "Judge every remaining untested ETF-level direction in the batch-2 assignment (24 registry ids) against the owner's 2026-09-28 relaxed keep rule (K1: median-offset Sharpe >=80% of S3's in both anchor 2024-01-08..2026-09-17 and stress 2016-05-02..2023-09-15, with positive 20bp CAGR; K2: an S3+candidate 63-day inverse-vol blend beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows), using the now-verified scripts/screen_lane.py / scripts/screen_batch.py harness, so this batch of routine registry triage does not stall waiting on a 13-file dossier per idea. No backtest is run in this round: the deliverable is a preregistered candidate manifest (7 lane-testable candidates) plus documented not-executable/stock-level verdicts for the rest, ready for a separate scripts/screen_batch.py run.",
+  "target_regime_and_horizon": "Same frozen windows as every other screen_lane round: select 2023-09-18..2025-12-31, anchor 2024-01-08..2026-09-17 (the frozen gate check), holdout 2026-01-02..2026-09-17 (contaminated, reference only), stress 2016-05-02..2023-09-15. Validity of any surviving candidate is limited to whatever regime those windows cover; this round makes no claim about the calendar effects' validity before 2016 or after 2026-09-17. HFEA/turn-of-month/end-of-month/front-running/pre-FOMC-drift are calendar- or fixed-weight rules with decades of claimed history in their primary sources (Bogleheads HFEA thread since 2019, TOM literature since Lakonishok & Smidt 1988, pre-FOMC drift since Lucca & Moench 2015); this round tests only whether they still clear the owner's relaxed bar in the frozen recent windows, not whether they are new.",
+  "existing_solution_comparison": "Searched reports/research/control, reports/research/iterations and reports/research/ledger for each of the 7 lane-testable mechanisms before building anything: (1) giants_sweep_20260922 (reports/research/iterations/giants_sweep_20260922/) tested a broad sweep of published SMA/trend/volume ETF rules and found 0/24 cleared G1-G5 -- none of that sweep's rules are HFEA, turn-of-month, end-of-month reversal, front-running seasonality, pre-FOMC drift, or a covered-call buy-and-hold, so there is no overlap to dedupe, but it is the right precedent for how skeptically a 'published rule, recent window' claim should be treated. (2) h20260924_01_etf_dip_reversion tested short-term mean-reversion dip-buying on ETFs, a different mechanism (reactive to a price drop, not calendar- or fixed-weight-anchored) from all 7 candidates here. (3) h20260922_04_rsi_branch tested RSI-based mean reversion, again a different (indicator-based) mechanism. `oc research directions check hfea turn of month front running fomc drift covered call` (run before this dossier) returned no local prior test of any of these 7 specific mechanisms. The genuinely new element enabling this round is procedural, not a new claim: scripts/screen_lane.py (built and self-checked 2026-09-28, reports/research/screens/SELF_CHECK_OK) now lets a calendar-anchored daily rule (turn-of-month, pre-FOMC drift) or a monthly fixed-weight/calendar rule be screened against the S3 incumbent with the median-offset, date-neutral discipline in a few hours instead of a bespoke 13-file dossier, and the owner's 2026-09-28 K1/K2 keep rule is itself new (replacing the earlier campaign-era 20bp-Sharpe-excess-over-BIL gate for this batch of routine triage).",
+  "remaining_evidence_gap": "Whether any of these 7 well-documented calendar/fixed-weight anomalies, after the batch's 10/20bp per-side cost and next-open fill convention, still clears K1 or K2 against S3 specifically in the 2024-2026 anchor window and the 2016-2023 stress window -- none of the primary sources report Sharpe against a levered-semis-rotation benchmark, and several (HFEA, TOM, pre-FOMC drift) are widely believed to be small-edge/low-Sharpe by construction (quantseeker.com's own SPY-only Sharpe is 0.5-0.6), so this round's most likely outcome is a clean K1/K2 refutation, which is itself the useful, cheap answer the owner asked for.",
+  "negative_experiments_checked": "giants_sweep_20260922 (0/24 published rules passed G1-G5); dir:letf_multi_signal_regime_vote's own harvested notes (LRS Sentinel's 49.9% headline CAGR is a post-2013-tech-bull artifact per the strategy's own author-supplied start-year table); dir:levered_single_asset_sma_trend_gate (refuted locally via calendar-shift placebo) -- this is why LRS (SSO/BIL 200dma gate, inside dir:letf_published_rules_live_tracked) is NOT reopened here: same mechanism, no new data or method since the refutation. dir:meta_strategy_trailing_return_rotation's external evidence (r/AllocateSmartly ranked-14 post) already shows naive trailing-return rotation among strategies loses to equal-weight, and h20260927_01_sleeve_combination independently refuted (0/3) combining our own S1/S2/S3 sleeves beyond delevering S3 alone -- both are cited as the reason that direction is marked evidence_too_weak rather than re-tested with a third method.",
+  "cost_and_execution_assumptions": "Unchanged from every prior screen_lane round: signal at bar close, fill at next bar open, sum(|delta weight|) * slippage_bps charged on the execution session, 10bp primary / 20bp stress per side, remainder of any weight vector goes to SHY. HFEA's published rebalance is quarterly; scripts/screen_lane.py only supports M/W/D, so this batch approximates HFEA as monthly -- strictly MORE turnover and cost than the original, a conservative (unfavorable to the candidate) deviation, documented in the candidate manifest and the strategy spec, not a fitted choice.",
+  "stop_condition": "If a candidate's median-offset Sharpe is below 80% of S3's in either the anchor or stress window (K1 fails) AND its S3-blend inverse-vol edge is below 0.05 Sharpe in either window (K2 fails) once scripts/screen_batch.py is actually run (a separate, later step -- not part of this preregistration), the verdict is: that published calendar/fixed-weight rule does not clear the owner's relaxed keep bar against the S3 incumbent in the frozen recent windows, and it returns to the registry as refuted-in-this-form rather than being retried with new parameters inside this same manifest.",
+  "queries": [
+    {
+      "query": "oc research directions check hfea turn of month front running fomc drift covered call",
+      "opened_urls": [
+        "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+      ],
+      "searched_at": "2026-09-28T03:05:00+00:00"
+    },
+    {
+      "query": "Federal Reserve FOMC meeting calendar historical 2015 2016 2017 2018 2019 2020",
+      "opened_urls": [
+        "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+        "https://www.federalreserve.gov/monetarypolicy/fomchistorical2015.htm",
+        "https://www.federalreserve.gov/monetarypolicy/fomchistorical2016.htm",
+        "https://www.federalreserve.gov/monetarypolicy/fomchistorical2017.htm",
+        "https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm",
+        "https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm",
+        "https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm"
+      ],
+      "searched_at": "2026-09-28T03:08:00+00:00"
+    },
+    {
+      "query": "S&P 500 Covered Call Fund BEP ticker liquidated history",
+      "opened_urls": [
+        "https://www.sec.gov/Archives/edgar/data/1307155/000119312510050322/dncsr.htm",
+        "https://quantinvestor.wordpress.com/2009/12/16/sp-500-covered-call-fund-bep-is-liquidating/"
+      ],
+      "searched_at": "2026-09-28T03:12:00+00:00"
+    },
+    {
+      "query": "pre-FOMC announcement drift 2025 leveraged ETF TQQQ SPXL Lucca Moench replication",
+      "opened_urls": [
+        "https://www.quantseeker.com/p/trading-the-fed-the-pre-fomc-drift"
+      ],
+      "searched_at": "2026-09-28T03:14:00+00:00"
+    },
+    {
+      "query": "turn of the month effect SPY 4th trading day hulltactical",
+      "opened_urls": [
+        "https://www.hulltactical.com/2024/05/17/the-turn-of-the-month-effect/"
+      ],
+      "searched_at": "2026-09-28T03:16:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "claim_id": "federalreserve_fomc_calendar_2021_2026",
+      "claim": "The Federal Reserve's official FOMC calendar page states the Committee holds eight regularly scheduled meetings during the year, and lists the exact 2021-2026 meeting dates (plus a 2027 preview) used verbatim, together with the historical archive pages for 2015-2020, as the hard-coded meeting-date list for the pre-FOMC drift candidates.",
+      "source_type": "regulatory_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "US, official Federal Reserve FOMC meeting calendar, 2021-2027 (current page); historical archive pages fomchistorical2015.htm through fomchistorical2020.htm supply 2015-2020 dates.",
+      "applicability": "Grounds the exact, hard-coded FOMC_MEETINGS date list in scripts/screen_batches/h20260928_05_batch2.py, satisfying the brief's requirement that FOMC dates come from the Federal Reserve's own calendar pages, never inferred from price action.",
+      "limitations": "The live page only shows 2021-2027; 2015-2020 dates were read from six separate historical archive pages (cited in the batch script's docstring), not re-snapshotted individually in this source-card set.",
+      "independent_replication": "Federal Reserve historical archive pages (fomchistorical2015.htm..fomchistorical2020.htm) corroborate the same 8-meetings-per-year cadence for earlier years.",
+      "fetched_at": "2026-09-28T03:18:00+00:00",
+      "sha256": "ed77186a014d04e59f1daf8b7f22a5023e4745cac8672328e1c072159eb8de63",
+      "snapshot_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/sources/federalreserve-fomccalendars.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/1307155/000119312510050322/dncsr.htm",
+      "claim_id": "sec_edgar_bep_ncsr_liquidation_2010",
+      "claim": "S&P 500 Covered Call Fund Inc. (ticker BEP), the closed-end fund studied by Simon (2008)'s 'The Anomalous Behavior of the S&P Covered Call Closed End Fund,' liquidated on January 29, 2010 and distributed all proceeds to shareholders on February 2, 2010, per its own N-CSR annual report; the ticker is not tradable today, so XYLD is used as an honest live proxy for the same S&P 500 at-the-money monthly covered-call mechanism.",
+      "source_type": "regulatory_docs",
+      "published_or_updated_at": "2010-03-01",
+      "market_and_period": "S&P 500 Covered Call Fund Inc. (BEP), closed-end fund, FY2009 N-CSR annual report, SEC EDGAR CIK 0001307155.",
+      "applicability": "Confirms the registry's dir:covered_call_cef_income_pwb direction cannot be executed by literally holding BEP today; grounds the decision to substitute XYLD as an honest, cited proxy rather than silently inventing a ticker.",
+      "limitations": "SEC filing confirms the fund's own liquidation, not the paper's replicated backtest numbers (paperswithbacktest's 26.60% CAGR / Sharpe 1.36 / -31.62% max drawdown are for a synthetic replication of the covered-call mechanism using SPX options over 1990-2026, not for holding BEP shares themselves).",
+      "independent_replication": "Cross-checked against a public web search (quantinvestor.wordpress.com, 2009-12-16 post) reporting the same Feb 2010 liquidation date before the filing was opened.",
+      "fetched_at": "2026-09-28T03:18:00+00:00",
+      "sha256": "5142e66040c3a670e03e89653afaef27d9f3bd8c3365fc83ecc6d637dd542890",
+      "snapshot_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/sources/sec-edgar-bep-ncsr-2009.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl"
+    },
+    {
+      "url": "https://www.quantseeker.com/p/trading-the-fed-the-pre-fomc-drift",
+      "claim_id": "quantseeker2025_pre_fomc_drift_alive_leveraged_etfs",
+      "claim": "quantseeker.com's replication of the pre-FOMC announcement drift (Lucca & Moench 2015 Journal of Finance), tested on SPY through Dec 2024 plus leveraged ETFs, finds the drift remains persistent despite being published over a decade ago; the leveraged-ETF variant delivers an after-cost CAGR of 8-9% and a Sharpe ratio of about 0.6 while trading only 5% of the time (long from the close before a scheduled FOMC meeting through the close of its final day, cash otherwise).",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2025-02-25",
+      "market_and_period": "SPY EOD Jan 1993-Dec 2024, plus 1-min SPY Jan 2014-Dec 2024; QQQ/TQQQ/SPXL also tested, after 5bp one-way cost.",
+      "applicability": "Grounds the FOMC_DRIFT_SPY / FOMC_DRIFT_TQQQ candidates' exact rule (entry at the close before a scheduled meeting, exit at the close of the final meeting day, cash otherwise) and its claimed after-cost performance.",
+      "limitations": "Practitioner blog replication, not the original peer-reviewed paper; author's own backtest, not independently re-run by a third party in this pass; cost model (5bp) differs from this batch's 10/20bp screen_lane convention.",
+      "independent_replication": "Builds on a peer-reviewed citation chain (Lucca & Moench 2015 JoF; Savor & Wilson 2013 JFQA; Cieslak, Morse & Vissing-Jorgensen 2019 JoF; Liu, Tang & Zhou 2022 JFE), per the registry's dir:pre_fomc_announcement_drift row.",
+      "fetched_at": "2026-09-28T03:18:00+00:00",
+      "sha256": "c5fce92145a9d8363c04c31e1eaadda8917198e9be8c640efab6216bafe84200",
+      "snapshot_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/sources/quantseeker-pre-fomc-drift.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl"
+    },
+    {
+      "url": "https://www.hulltactical.com/2024/05/17/the-turn-of-the-month-effect/",
+      "claim_id": "hulltactical2024_turn_of_month_spy_captures_44pct",
+      "claim": "Hull Tactical's replication of the turn-of-month effect (buy SPY at the close of the last trading day of the month, sell at the close of the 4th trading day of the next month, using Yahoo Finance SPY data) finds turn of the month captures 44% of the total return (before dividends) while invested roughly 20% of trading days.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2024-05-17",
+      "market_and_period": "SPY (Yahoo Finance), turn-of-month window (last trading day of month through 4th trading day of the next month).",
+      "applicability": "Grounds TOM_SPY's exact rule and holding-period definition (4th trading day, not 3rd or 5th) used by tom_signal_dates/w_tom_spy in the batch script.",
+      "limitations": "Practitioner replication, before-dividends only; does not net out the batch's 10/20bp per-side cost convention; independent of but consistent with the registry's other four TOM sources (etftrends.com, alphainacademia.com x2, harbourfrontquant.substack.com).",
+      "independent_replication": "etftrends.com's independent S&P 500 futures replication (1980-Q3 2024) reports the same qualitative underperformance-while-invested-fewer-days pattern; harbourfrontquant.substack.com's summary of a 2022 NTNU thesis reports the same turn-of-month effect persisting on individual-stock panels 1986-2021.",
+      "fetched_at": "2026-09-28T03:18:00+00:00",
+      "sha256": "e09800c9f2e90914b1c35b4217720b722dfe3af2c878afbcfb38292654aa5d17",
+      "snapshot_path": "reports/research/iterations/h20260928_05_registry_etf_batch2/sources/hulltactical-turn-of-month.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Preregister the 7 lane-testable candidates in candidate-manifest.json with the owner's K1/K2 rule, then (as a separate, later step, not part of this dossier) run scripts/run_capped.sh --mem 1.8G -- uv run python scripts/screen_batch.py --batch h20260928_05_batch2 --iteration h20260928_05_registry_etf_batch2 and read reports/research/screens/h20260928_05_batch2/leaderboard.md.",
+    "pass_condition": "At least one of the 7 candidates clears K1 (median-offset anchor and stress Sharpe >=80% of S3's, positive 20bp CAGR) or K2 (S3+candidate inverse-vol blend beats its vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows) once the batch is actually run.",
+    "falsification_condition": "None of the 7 candidates clears K1 or K2 in either window -- these well-documented calendar/fixed-weight anomalies do not add value over the S3 incumbent in the frozen recent regime, and each returns to the registry as refuted-in-this-form.",
+    "max_compute_minutes": 20
+  }
+}

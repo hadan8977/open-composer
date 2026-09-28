@@ -1,0 +1,175 @@
+name: h20260928_02_cross_asset_sleeve
+description: Preregistered H-20260928-02 candidate family. Tests whether adding
+  one cross-asset defensive-trend sleeve (D1 Carlson Defense First TAA rotation
+  over TLT/GLD/DBC/UUP with SPY fallback, published rank weights 40/30/20/10; D2
+  same four assets held only when trailing-12-month return beats SHY, weighted
+  by inverse 63-session volatility, otherwise SHY) to the live S3 leveraged-
+  momentum sleeve, combined by trailing-63-session inverse-volatility monthly
+  weighting (screen_lane.combine_two_sleeves, ported from
+  run_h20260927_01_sleeve_combination.combine_portfolio), beats a volatility-
+  matched delevered-S3 control (k*S3 + (1-k)*SHY) on Sharpe in both the anchor
+  and stress windows (K2, >=0.05 owner-widened bar), or, failing that, whether
+  either sleeve is standalone-competitive with S3 (K1). All 21 monthly
+  rebalance-day offsets are swept and judged by the median (no cherry-picked
+  rebalance date). Research only, deterministic, next-session execution; no
+  broker writes are authorized.
+timeframe: daily
+universe:
+- BIL
+- DBC
+- GLD
+- QQQ
+- SHY
+- SOXL
+- SPY
+- TECL
+- TLT
+- TQQQ
+- UPRO
+- USD
+- UUP
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 5
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_02_cross_asset_sleeve:D:cross_asset_sleeve_vs_delevered_s3_control
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  d1_defense_first_target_weight:
+    source: expression
+    expression: close / lag(close, 21) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual D1 target-weight vector
+      (rank TLT/GLD/DBC/UUP by the mean of 1/3/6/12 calendar-month returns as of
+      the signal date, weight 40/30/20/10 by rank, redirect any tier below BIL's
+      own score to SPY) is computed by scripts/screen_batches/h20260928_02_cross_asset.py's
+      d1_weights_fn, generalizing run_h20260923_12_s3_defense_first.defense_weights
+      to an arbitrary signal date (not only the true month-end) so the batch
+      harness's 21 rebalance-day offsets can each be evaluated without look-ahead.
+    params:
+      decision_lag_sessions: 1
+  d2_absolute_momentum_inverse_vol_weight:
+    source: expression
+    expression: close / lag(close, 252) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual D2 target-weight vector
+      (TLT/GLD/DBC/UUP each held only when trailing 12-month return beats SHY's,
+      sized by inverse 63-session trailing daily-return volatility across the
+      eligible names, otherwise 100% SHY) is computed by
+      scripts/screen_batches/h20260928_02_cross_asset.py's d2_weights_fn.
+    params:
+      decision_lag_sessions: 1
+  combo_and_control_vol_match:
+    source: expression
+    expression: stdev(close / lag(close, 1) - 1, 63)
+    default: 0.0
+    description: Documentation-only stand-in. The S3+D combination weight
+      (trailing-63-session inverse-volatility, monthly) and the paired
+      vol-matched control k*S3+(1-k)*SHY (k solved by bisection per window) are
+      computed unchanged by scripts/screen_lane.py's combine_two_sleeves and
+      diversifier_edge_for_offset, reused from run_h20260927_01_sleeve_combination.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_02_cross_asset_sleeve
+  candidate_manifest_path: reports/research/iterations/h20260928_02_cross_asset_sleeve/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_02_cross_asset_sleeve/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_02_cross_asset_sleeve.jsonl
+  source_card_claim_ids:
+  - carlson_defense_first_rank_weights_allocatesmartly
+  - moskowitz_ooi_pedersen_2012_time_series_momentum
+  parameter_space:
+    candidate_id:
+    - D1
+    - D2
+  candidate_budget: 2
+  selection_objective: No selection or ranking between D1 and D2. Each is judged
+    independently against the frozen K1/K2 tiers in candidate-manifest.json
+    adoption_rule -- K2 (combination Sharpe edge over vol-matched S3 >=0.05 in
+    both anchor and stress) or K1 (standalone offset-median Sharpe >=80% of S3's
+    own median in both windows, positive 20bp CAGR).
+  candidate_budget_source: scripts/screen_batch.py (screen_lane batch harness)
+  anti_overfit_notes:
+  - Two candidates (D1, D2) are frozen in candidate-manifest.json before any
+    return is computed; D1's rules (momentum blend, rank weights, hurdle,
+    fallback) are Carlson's published, unedited parameters; D2's thresholds
+    (12-month lookback, 63-session vol, SHY hurdle) are the round numbers the
+    queue task specifies, not searched or tuned.
+  - All 21 monthly rebalance-day offsets are swept and judged by the median
+    (screen_lane.judged_offset), not the live month-end date alone, per the
+    owner's 2026-09-28 no-cherry-picked-rebalance-date rule.
+  - The S3+D combination weight (inverse-63-session-volatility) and its paired
+    vol-matched control use only trailing (already realized) daily-return
+    statistics, no lookahead; the control pays no rebalancing cost (conservative
+    in the control's favor, adverse to the combination).
+  - G3 (placebo) does not apply to this trend-rotation/combination question in
+    the same way H-20260927-01 documented; the vol-matched delevered-S3 control
+    is itself the placebo-equivalent check, see candidate-manifest.json
+    g3_not_applicable_reason.
+  validation_plan:
+  - select_2023_09_18_to_2025_12_31_anchor_2024_01_08_to_2026_09_17_stress_2016_05_02_to_2023_09_15_holdout2026_contaminated
+  - vol_matched_control_per_candidate_bisected_per_window_ported_from_h20260927_01
+  - offset_median_across_21_monthly_rebalance_days_per_owner_rule
+  - correlation_with_s3_reported_per_window_stress_anchor_2022
+  - deflated_sharpe_probability_reported_at_n_trials_equal_to_batch_size
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Ask whether one cross-asset defensive-trend sleeve, added to S3, raises
+    combined Sharpe over delevering S3 alone at the same risk, so a live-pilot
+    decision can be judged against "just delever S3" rather than S3's own
+    full-risk numbers.
+  hypothesis_id: H-20260928-02
+  previous_link: H-20260927-01
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

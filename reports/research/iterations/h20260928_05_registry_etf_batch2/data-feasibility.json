@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_05_registry_etf_batch2_historical_evaluation_authorization",
+  "iter_id": "h20260928_05_registry_etf_batch2",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 7,
+    "evaluation_authorized_count": 7,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 7,
+    "rows": [
+      {
+        "candidate_id": "HFEA_UPRO_TMF",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "61971a2d91b7232adc69947eae49a1f93ab5ce2d3706482165f82d96cd933e35"
+      },
+      {
+        "candidate_id": "TOM_SPY",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "0f4cf321a1b4ea4a8cd6ca854cceb49ef8b3a885f2eca3b61cf46d493443b6fa"
+      },
+      {
+        "candidate_id": "EOM_REVERSAL_SPY",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "283eb95efbfb88c61a317a51a7a78bd1f893faa1d305586990c42ea658db9176"
+      },
+      {
+        "candidate_id": "FRONT_RUN_SECTOR_TOP2",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "80eb2425ebd857ec570482e0694bc75547741c82f7a0f44fa54c2a85911e7f4d"
+      },
+      {
+        "candidate_id": "FOMC_DRIFT_SPY",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "e582da526751aa9748a450903798d75463941180e112828aba5a39c302d77c64"
+      },
+      {
+        "candidate_id": "FOMC_DRIFT_TQQQ",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "fdf9bf903964b80e989ec99d06a03967317523d0202b0c53c43a24b47848bd4e"
+      },
+      {
+        "candidate_id": "XYLD_COVERED_CALL_PROXY",
+        "path": "registry_etf_batch2_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "b8b6114d5bf93af20624f41875c1431a2895fbb3eb579e279bfb440334fcce4c"
+      }
+    ]
+  },
+  "path_gates": {
+    "registry_etf_batch2_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "HFEA_UPRO_TMF",
+        "TOM_SPY",
+        "EOM_REVERSAL_SPY",
+        "FRONT_RUN_SECTOR_TOP2",
+        "FOMC_DRIFT_SPY",
+        "FOMC_DRIFT_TQQQ",
+        "XYLD_COVERED_CALL_PROXY"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "UPRO, TMF, SPY, TQQQ, XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY, SHY and BIL are all present in the local SIP daily archive from 2016-01-04 through 2026-09-25 (confirmed via duckdb against data/sip/daily/*/*.parquet). XYLD is also present locally (2016-01-04 through 2026-09-25), confirmed the same way, so no fetch was needed for the XYLD_COVERED_CALL_PROXY candidate. No new capability or vendor is required; the panel loader, cost/fill convention and S3 incumbent are reused unchanged from scripts/screen_lane.py, scripts/run_h20260918_05_recent_menu.py, scripts/run_h20260922_05_salvage.py and scripts/run_h20260928_01_s3_rebalance_tranching.py."
+    }
+  },
+  "data_gaps_noted_not_fetched": {
+    "PUTW": "dir:put_credit_spread_income's proxy ticker is absent from data/sip/daily (checked via duckdb, 2026-09-28) and is not part of this manifest's candidates. Not fetched: scripts/fetch_symbol_list.py writes to the separate data/sip-delisted/daily tree (by design, to avoid mixing an arbitrary symbol into the live-universe shard-managed data/sip/daily layout that scripts/fetch_sip_universe.py's assert_resumable_layout depends on), which scripts/screen_lane.py's loader does not read. Marked data_missing in the registry rather than risking the shared shard layout.",
+    "VIX_or_caret_VIX": "dir:spy_sso_tlt_vix_regime_rotation's rule depends on VIX<25/>=25 thresholds; neither 'VIX' nor '^VIX' is present in data/sip/daily (checked via duckdb, 2026-09-28). Per the iteration brief's explicit rule, VIX is only usable if already in the local panel; absent, so this direction is data_missing and not part of this manifest's candidates."
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/registry_etf_batch2_h20260928_05.yaml",
+      "sha256": "bcdf26bb49334bc114678e0a7e75c68103ca2ab6520c658be1d9aed62e324153"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_05_registry_etf_batch2/cost-contract.json",
+      "sha256": "19f38a0b84a594fb6636e46147f5b55b3cf465df49bd20d12962c544975c102f"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_05_registry_etf_batch2.jsonl",
+      "sha256": "11bbd42f96544cc09fa7ca47bf204e641f271c086f594c55a8b414c77446d474"
+    }
+  }
+}
