@@ -1,0 +1,152 @@
+name: s3_rebalance_tranching_h20260928_01
+description: 'Preregistered H-20260928-01 candidate family. S3 (A4_levered menu, 63-session momentum,
+  top 2, SHY absolute-momentum filter, vt40 down-only vol target, QQQ oversold dip boost to 0.60 for 10
+  sessions) run with its monthly signal close moved 0..20 sessions after month end (O00..O20, O00 = live
+  rule, descriptive distribution only), plus T4: one account split into four equal tranches at offsets
+  0/5/10/15, netted. Tests whether T4 lowers max drawdown vs O00 without giving up Sharpe or the frozen
+  anchor bar. Research only, deterministic, next-session execution; no broker writes.'
+timeframe: daily
+universe:
+- BIL
+- QQQ
+- SHY
+- SOXL
+- SPY
+- TECL
+- TQQQ
+- UPRO
+- USD
+- MTUM
+- SPMO
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_01:T4:s3_rebalance_timing
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  s3_offset_momentum_pick:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual picks and vt40/dip-boost exposure are produced
+      by scripts/run_h20260922_05_salvage.py (sleeve s3) unchanged, with the monthly signal session moved
+      o sessions after month end by scripts/run_h20260928_01_s3_rebalance_tranching.py; O00 is asserted
+      equal to salvage.run_cell.
+    params:
+      decision_lag_sessions: 1
+  t4_tranche_average:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. T4 holds the average of the effective weight vectors of
+      O00, O05, O10 and O15; cost is charged on the netted account turnover.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_01_s3_rebalance_tranching
+  candidate_manifest_path: reports/research/iterations/h20260928_01_s3_rebalance_tranching/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_01_s3_rebalance_tranching/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl
+  source_card_claim_ids:
+  - concretum2025_momentum_rtl_348bp_tranching_mean_unchanged
+  - hoffstein_faber_braun_rtl_factor_indices_gt_100bp
+  - hoffstein_sibears_faber_staggered_suppress_rtl_1_over_n
+  - allocatesmartly_taa_tranching_return_unchanged_dispersion_down
+  parameter_space:
+    candidate_id:
+    - O00
+    - O01
+    - O02
+    - O03
+    - O04
+    - O05
+    - O06
+    - O07
+    - O08
+    - O09
+    - O10
+    - O11
+    - O12
+    - O13
+    - O14
+    - O15
+    - O16
+    - O17
+    - O18
+    - O19
+    - O20
+    - T4
+  candidate_budget: 22
+  selection_objective: No selection among offsets. O01..O20 are a descriptive timing-luck distribution
+    and cannot be adopted. T4 is the single adoption candidate, judged against O00 on the four preregistered
+    conditions in candidate-manifest.json.
+  anti_overfit_notes:
+  - All 22 candidates frozen before any return is computed; S3 rules inherited unchanged.
+  - Tranche offsets 0/5/10/15 fixed by construction (even spacing over a month), not fit to returns.
+  - No single offset may be adopted from this run, so the best-offset result cannot be cherry-picked.
+  - G3 placebo not applicable (no pick or gate changes); the 21-offset distribution is the luck reference.
+  validation_plan:
+  - stress_2016_05_02_to_2023_08_31_select_anchor_holdout2026_contaminated
+  - o00_bit_equal_to_live_engine_assertion
+  - offset_distribution_reported_in_full
+  - single_adoption_candidate_t4_vs_o00
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Ask whether four-tranche execution lowers S3 drawdown at unchanged Sharpe, for the renewal after
+    2026-11-01 and a future live pilot execution plan.
+  hypothesis_id: H-20260928-01
+  previous_link: H-20260927-01
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

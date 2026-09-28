@@ -1,0 +1,12 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open_netted_tranches",
+  "iter_id": "h20260928_01_s3_rebalance_tranching",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only ETFs and SHY; LETF financing inside NAV)",
+  "cost_model": "sum(abs(delta effective weight)) * slippage_bps on the execution session; for T4 the delta is taken on the averaged account weights",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0
+}
