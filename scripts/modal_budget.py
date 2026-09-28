@@ -14,7 +14,11 @@ CLI), so this is the second, local guard:
 Usage:
     python scripts/modal_budget.py status
     python scripts/modal_budget.py check --job NAME --cpu 8 --memory-gib 32 \
-        --timeout-min 120 [--gpu T4]
+        --timeout-min 120 [--gpu T4] [--count 3]
+
+`--count` (default 1) multiplies the worst case, for launches that fan out to
+that many parallel containers (e.g. `scripts/modal_run.py --shards N`) -- each
+shard is billed independently, so N shards cost N times one shard's worst case.
 
 `check` exits 0 and appends a ledger row when allowed, exits 2 when refused.
 Every Modal function must set `timeout=` equal to the `--timeout-min` it was checked with.
@@ -49,11 +53,13 @@ GPU_PER_HOUR = {
 }
 
 
-def worst_case_usd(cpu: float, memory_gib: float, timeout_min: float, gpu: str | None) -> float:
+def worst_case_usd(
+    cpu: float, memory_gib: float, timeout_min: float, gpu: str | None, count: int = 1
+) -> float:
     hourly = cpu * CPU_PER_CORE_HOUR + memory_gib * MEMORY_PER_GIB_HOUR
     if gpu:
         hourly += GPU_PER_HOUR[gpu]
-    return round(hourly * timeout_min / 60.0, 4)
+    return round(hourly * timeout_min / 60.0 * count, 4)
 
 
 def _cost(value: Any) -> float:
@@ -129,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     check.add_argument("--memory-gib", type=float, required=True)
     check.add_argument("--timeout-min", type=float, required=True)
     check.add_argument("--gpu", choices=sorted(GPU_PER_HOUR))
+    check.add_argument("--count", type=int, default=1)
     args = parser.parse_args(argv)
 
     now = datetime.now(UTC)
@@ -139,9 +146,9 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(decide(billed, unbilled, 0.0), indent=2))
         return 0
 
-    cost = worst_case_usd(args.cpu, args.memory_gib, args.timeout_min, args.gpu)
+    cost = worst_case_usd(args.cpu, args.memory_gib, args.timeout_min, args.gpu, args.count)
     verdict = decide(billed, unbilled, cost)
-    print(json.dumps({"job": args.job, **verdict}, indent=2))
+    print(json.dumps({"job": args.job, "count": args.count, **verdict}, indent=2))
     if not verdict["allowed"]:
         return 2
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
@@ -152,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         "memory_gib": args.memory_gib,
         "gpu": args.gpu,
         "timeout_min": args.timeout_min,
+        "count": args.count,
         "worst_case_usd": cost,
         "billed_before_usd": billed,
     }

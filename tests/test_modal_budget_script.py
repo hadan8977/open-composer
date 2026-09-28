@@ -18,6 +18,13 @@ def test_worst_case_prices_cpu_memory_and_gpu() -> None:
     assert mb.worst_case_usd(2, 8, 60, "T4") == round(2 * 0.0473 + 8 * 0.008 + 0.59, 4)
 
 
+def test_worst_case_count_multiplies_for_parallel_shards() -> None:
+    one = mb.worst_case_usd(2, 4, 30, None, count=1)
+    three = mb.worst_case_usd(2, 4, 30, None, count=3)
+    assert three == round(one * 3, 4)
+    assert mb.worst_case_usd(2, 4, 30, None) == one, "count defaults to 1"
+
+
 def test_recent_jobs_count_until_billing_catches_up() -> None:
     rows = [
         {"at": (NOW - timedelta(hours=1)).isoformat(), "timeout_min": 60, "worst_case_usd": 1.5},
