@@ -252,3 +252,25 @@ def test_daily_candidate_signal_dates_fn_restricts_evaluation() -> None:
     frame, dates = lane.weights_frame(close, candidate, 0)
     assert dates == chosen
     assert calls == chosen
+
+
+def test_calendar_anchor_check_flags_month_end_rule_declared_monthly() -> None:
+    import screen_batch as sb
+
+    idx = pd.bdate_range("2020-01-01", "2021-12-31")
+    close = pd.DataFrame({"SPY": np.linspace(100, 120, len(idx)), "SHY": 80.0}, index=idx)
+
+    def month_end_only(frame: pd.DataFrame, asof: pd.Timestamp) -> dict[str, float]:
+        month = frame.index[(frame.index.year == asof.year) & (frame.index.month == asof.month)]
+        return {"SPY": 1.0} if month[-1] == asof else {}
+
+    def trailing(frame: pd.DataFrame, asof: pd.Timestamp) -> dict[str, float]:
+        return {"SPY": 1.0}
+
+    bad = lane.ScreenCandidate("BAD", "bad", "x", ("SPY",), "M", month_end_only)
+    good = lane.ScreenCandidate("GOOD", "good", "x", ("SPY",), "M", trailing)
+    daily = lane.ScreenCandidate("DAILY", "d", "x", ("SPY",), "D", month_end_only)
+
+    problems = sb.calendar_anchor_problems(close, [bad, good, daily])
+
+    assert len(problems) == 1 and problems[0].startswith("BAD:")

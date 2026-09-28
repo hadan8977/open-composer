@@ -128,9 +128,61 @@ def render_leaderboard_md(leaderboard: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def candidates_from_module(module: object) -> list[lane.ScreenCandidate]:
+    """`CANDIDATES` (ScreenCandidate objects) or `SPECS` (plain dicts with the
+    rule under `fn`, as written by batch-preparation agents that must not
+    import this lane)."""
+    if hasattr(module, "CANDIDATES"):
+        return list(module.CANDIDATES)
+    return [
+        lane.ScreenCandidate(
+            id=str(spec["id"]),
+            name=str(spec["name"]),
+            source_card=str(spec["source_card"]),
+            universe=tuple(spec["universe"]),
+            freq=str(spec["freq"]),
+            weights_fn=spec["fn"],
+            signal_dates_fn=spec.get("signal_dates_fn"),
+        )
+        for spec in module.SPECS
+    ]
+
+
+def calendar_anchor_problems(close, candidates: list[lane.ScreenCandidate]) -> list[str]:
+    """Offset-able ("M"/"W") rules must keep firing when the rebalance day
+    moves. A rule that only decides on a calendar date (month-end, turn of
+    month, ...) returns no position at other offsets, so its "median over
+    offsets" silently becomes pure SHY (2026-09-28: two batch-2 rules). Such
+    rules must be declared "D" with their own `signal_dates_fn`. Checked
+    before any result is computed."""
+    problems: list[str] = []
+    for c in candidates:
+        if c.freq not in ("M", "W"):
+            continue
+        universe = [s for s in c.universe if s in close.columns]
+        probe = lane.offsets_for_freq(c.freq)[len(lane.offsets_for_freq(c.freq)) // 2]
+
+        def active(offset: int, c: lane.ScreenCandidate = c, universe: list[str] = universe) -> int:
+            n = 0
+            for d in lane.candidate_signal_dates(close.index, c, offset):
+                raw = c.weights_fn(close, d) or {}
+                n += any(k in universe and v > 0 for k, v in raw.items())
+            return n
+
+        base_n = active(0)
+        probe_n = active(probe)
+        if base_n > 0 and probe_n < 0.2 * base_n:
+            problems.append(
+                f"{c.id}: fires on {base_n} signal dates at offset 0 but {probe_n}"
+                f" at offset {probe} -- calendar-anchored rule declared as offset-able;"
+                " declare freq 'D' with signal_dates_fn"
+            )
+    return problems
+
+
 def run_batch(batch_name: str, *, iteration: str | None, smoke: bool) -> Path:
     module = load_batch_module(batch_name)
-    candidates: list[lane.ScreenCandidate] = module.CANDIDATES
+    candidates = candidates_from_module(module)
     ids = [c.id for c in candidates]
     if len(ids) != len(set(ids)):
         raise SystemExit(f"duplicate candidate ids in batch {batch_name}: {ids}")
@@ -145,6 +197,9 @@ def run_batch(batch_name: str, *, iteration: str | None, smoke: bool) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     close, _open, leg_open, leg_close, rf = lane.load_batch_panel(candidates)
+    problems = calendar_anchor_problems(close, candidates)
+    if problems:
+        raise SystemExit("calendar-anchor check failed:\n" + "\n".join(problems))
     shy_ret = (close[lane.CASH] / close[lane.CASH].shift(1) - 1.0).fillna(0.0)
     s3_ret10, _s3_turn10 = lane.s3_incumbent(close, leg_open, leg_close, lane.COST_BPS_PRIMARY)
 
