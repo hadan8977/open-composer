@@ -70,5 +70,6 @@
 
 ## Implementation
 - Keep the first product surface as CLI plus files.
+- Cloud compute: work that does not fit this box (3.9 GB RAM, 6 old cores, no GPU) -- large stock/factor panels, model training, wide parallel backtests, anything needing a GPU -- runs on Modal first (owner-approved 2026-09-28, free $30/month credit only; token in `~/.modal.toml`). Every launch must first pass `python3 scripts/modal_budget.py check --job <name> --cpu <cores> --memory-gib <GiB> --timeout-min <min> [--gpu T4]` (month cap $25; exit 2 means do not launch) and the function `timeout=` must equal the checked minutes. Never upload `.env`, broker/API keys or Drive credentials. Paying beyond the free credit or adding another provider is an owner decision. Details: `docs/runbook-autonomous-round.zh.md` section 5.
 - Keep sample-data workflows runnable without external credentials.
 - Run `uv run ruff format .`, `uv run ruff check .`, and `uv run pytest` after changes.
