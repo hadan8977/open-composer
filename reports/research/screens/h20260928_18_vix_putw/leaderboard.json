@@ -1,0 +1,55 @@
+{
+  "batch": "h20260928_18_vix_putw",
+  "generated_at": "2026-09-28T06:26:49.336056+00:00",
+  "git_commit": "9de6a692c491003572286c2b01946345d3b41449",
+  "engine_source_files": [
+    "scripts/run_h20260918_05_recent_menu.py",
+    "scripts/run_h20260922_05_salvage.py",
+    "scripts/run_h20260927_01_sleeve_combination.py",
+    "scripts/run_h20260928_01_s3_rebalance_tranching.py",
+    "scripts/screen_lane.py"
+  ],
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ]
+  },
+  "contaminated_windows": [
+    "holdout"
+  ],
+  "n_trials": 1,
+  "smoke": false,
+  "iteration": "h20260928_18_vix_putw_batch",
+  "candidates": [
+    {
+      "id": "PUTW_HOLD",
+      "name": "Buy-and-hold PUTW (WisdomTree CBOE S&P 500 PutWrite Strategy Fund)",
+      "source_card": "wisdomtree_putw_launch_2016",
+      "universe": [
+        "PUTW"
+      ],
+      "freq": "M",
+      "missing_symbols": [
+        "PUTW"
+      ],
+      "n_trials": 1,
+      "skipped": true,
+      "skip_reason": "missing from local panel: ['PUTW']"
+    }
+  ]
+}

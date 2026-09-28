@@ -1,0 +1,88 @@
+{
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "strategy_name": "vix_putw_batch_h20260928_18",
+  "source_spec_path": "strategy_specs/drafts/vix_putw_batch_h20260928_18.yaml",
+  "spec_hash": "2213d7ff46e05231bf80969d96d2f3568050a8748dd9cbe6926dc59b57334c94",
+  "schema_version": 3,
+  "created_at": "2026-09-28T06:22:24.646865+00:00",
+  "objective": "Preregister PUTW_HOLD (buy-and-hold PUTW, monthly), an honest proxy for dir:put_credit_spread_income's weekly SPY cash-secured put-writing claim, per T-20260928-18. No backtest run: PUTW is confirmed absent from Alpaca (our only market-data/broker vendor) entirely, not just from the local data/sip/daily archive.",
+  "paths": [
+    {
+      "name": "vix_putw_batch_screen",
+      "candidate_count": 1,
+      "hypothesis_refs": [
+        "T-20260928-18"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "PUTW_HOLD"
+        ],
+        "freq": {
+          "PUTW_HOLD": "M"
+        },
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "S3_incumbent_median_offset_reference",
+        "vol_matched_k_s3_plus_shy_control_K2",
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 1,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_18_vix_putw_batch/candidate-manifest.json",
+  "candidate_manifest_sha256": "c30f2f9d88e55369fee680169de6246b27d6330dac3f9f33add69f73313a41c4",
+  "data_feasibility_path": "reports/research/iterations/h20260928_18_vix_putw_batch/data-feasibility.json",
+  "data_feasibility_sha256": "a253b36f17a76d0273d7a57ef28fd1785cba20f3129f504679ecc05689b939e2",
+  "cost_table_path": "reports/research/iterations/h20260928_18_vix_putw_batch/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_18_vix_putw_batch/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_18_vix_putw_batch/report.md",
+    "reports/research/iterations/h20260928_18_vix_putw_batch/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ]
+  },
+  "controls": {
+    "s3_incumbent": {
+      "description": "The live month-end S3 (offset 0) via scripts/run_h20260928_01_s3_rebalance_tranching.py's offset_effective/simulate_effective, date-neutral median-offset Sharpe 1.49 anchor / 0.81 stress (owner's frozen reference figures, 2026-09-28). Not exercised in this round.",
+      "count": 1
+    },
+    "vol_matched_k_s3_plus_shy_control_k2": {
+      "description": "k*S3 + (1-k)*SHY, vol-matched per window. Not exercised in this round.",
+      "count": 1
+    }
+  },
+  "adoption_rule": {
+    "per_candidate": [
+      "K1: median-offset Sharpe >= 0.80 * S3's median-offset Sharpe in both anchor (S3=1.49) and stress (S3=0.81) windows, with positive CAGR at 20bp in both windows",
+      "K2: S3+candidate 63-day inverse-vol blend beats its vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in both anchor and stress windows"
+    ],
+    "pass_requires": "K1 or K2 (owner's 2026-09-28 relaxed keep rule) -- not judged in this round: scripts/screen_batch.py is run, but PUTW_HOLD is expected back skipped=True (missing panel data, not a computed return) via screen_lane's own missing_symbols() check.",
+    "multiple_comparisons": "1 candidate; run, expected skipped",
+    "fallback_if_none_pass": "N/A -- PUTW_HOLD is expected skipped at the vendor-data level, not tested-and-failed",
+    "g3_placebo": "not applicable; see candidate-manifest.json's g3_not_applicable_reason"
+  }
+}

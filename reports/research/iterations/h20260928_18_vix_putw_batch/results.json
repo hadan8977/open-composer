@@ -1,0 +1,46 @@
+{
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "generated_at": "2026-09-28T06:27:00+00:00",
+  "source": "reports/research/screens/h20260928_18_vix_putw/leaderboard.json",
+  "windows": {
+    "select": ["2023-09-18", "2025-12-31"],
+    "anchor": ["2024-01-08", "2026-09-17"],
+    "holdout": ["2026-01-02", "2026-09-17"],
+    "stress": ["2016-05-02", "2023-09-15"]
+  },
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "n_trials": 1,
+  "candidates": {
+    "PUTW_HOLD": {
+      "name": "Buy-and-hold PUTW (WisdomTree CBOE S&P 500 PutWrite Strategy Fund)",
+      "freq": "M",
+      "universe": ["PUTW"],
+      "skipped": true,
+      "skip_reason": "missing from local panel: ['PUTW']",
+      "verified_from": "reports/research/screens/h20260928_18_vix_putw/leaderboard.json candidates[0]",
+      "no_result_computed": true,
+      "k1_pass": null,
+      "k2_pass": null,
+      "tier": "not_executable"
+    }
+  },
+  "adoption": {
+    "PUTW_HOLD": {
+      "k1_pass": null,
+      "k2_pass": null,
+      "decision": "not_executable",
+      "reason": "PUTW is not served by Alpaca (this project's only market-data and paper-broker vendor). scripts/screen_batch.py --batch h20260928_18_vix_putw --iteration h20260928_18_vix_putw_batch was run for real (not skipped preemptively); the leaderboard's own PUTW_HOLD row confirms skipped=true, skip_reason='missing from local panel: [\\'PUTW\\']', matching data-feasibility.json's expected_skip_reason exactly. No K1/K2 judgment is possible: there is no return series to evaluate. This is a data-vendor-availability blocker, not a refutation of the underlying CBOE PUT-index mechanism (see external-brief.json's Bondarenko/Ennis Knupp/Cboe sources for that mechanism's own, unrelated evidence)."
+    }
+  },
+  "vix_data": {
+    "status": "added_successfully",
+    "path": "data/research/vix/VIXCLS.csv",
+    "meta_path": "data/research/vix/VIXCLS.meta.json",
+    "source": "FRED VIXCLS, https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS",
+    "row_count": 9581,
+    "date_range": ["1990-01-02", "2026-09-22"],
+    "used_by_a_candidate_in_this_iteration": false,
+    "note": "VIX_REGIME_SPY_SSO_TLT (the only candidate that would have used this VIX series) was dropped from this iteration's manifest by the owner's 2026-09-28 cross-asset scope decision, mid-task, before any candidate manifest referencing VIX was preregistered. VIX data is kept for a possible future equity-only VIX-timing rule."
+  }
+}

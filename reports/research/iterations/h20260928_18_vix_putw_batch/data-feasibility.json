@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_18_vix_putw_batch_historical_evaluation_authorization",
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 1,
+    "evaluation_authorized_count": 1,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 1,
+    "rows": [
+      {
+        "candidate_id": "PUTW_HOLD",
+        "path": "vix_putw_batch_screen",
+        "action": "evaluate",
+        "reason_code": "expected_missing_panel_skip_run_harness_anyway",
+        "candidate_binding_sha256": "8c77c91fbf04e0bdc3599fd390cf07b82ba684da150b281044e6f0adac81a811"
+      }
+    ]
+  },
+  "path_gates": {
+    "vix_putw_batch_screen": {
+      "action": "evaluate",
+      "candidate_ids": ["PUTW_HOLD"],
+      "historical_evaluation_go": true,
+      "reason": "PUTW is confirmed absent from Alpaca entirely, not merely from our local data/sip/daily archive. Two direct, read-only Alpaca API checks were run 2026-09-28 via scripts/run_capped.sh --mem 0.5G: (1) TradingClient(paper=True).get_asset('PUTW') raised alpaca.common.exceptions.APIError with body {\"code\":40410000,\"message\":\"asset not found for PUTW\"}; (2) StockHistoricalDataClient.get_stock_bars(StockBarsRequest(symbol_or_symbols=['PUTW'], timeframe=TimeFrame.Day, start=now-10d, end=now-20min, feed='sip', adjustment='all')).df returned an empty DataFrame (0 rows). Methodology sanity check: the identical two calls, run against XYLD, QYLD, JEPI, JEPQ and DIVO (five other covered-call/options-overlay-style ETFs already known to be locally cached and tradable), all returned tradable=True / status=ACTIVE and non-empty bar data, confirming the check itself is valid and PUTW specifically is the outlier. Authorized to proceed to an actual scripts/screen_batch.py run anyway: screen_lane.py's own missing_symbols() check (scripts/screen_lane.py lines ~175-176, exercised inside evaluate_candidate) is the harness's normal, already-tested mechanism for a candidate whose universe is not in the local panel -- it reports skipped=True with an explicit skip_reason rather than erroring, so running the batch produces a real, honest leaderboard entry instead of no result at all."
+    }
+  },
+  "data_gaps_confirmed": {
+    "PUTW": "Not served by Alpaca at all (neither the trading-asset list nor the SIP market-data API), confirmed 2026-09-28 by direct API probe (see path_gates.vix_putw_batch_screen.reason). This supersedes and sharpens batch 2's earlier finding (reports/research/iterations/h20260928_05_registry_etf_batch2/data-feasibility.json), which only established that PUTW was absent from the local data/sip/daily archive and that scripts/fetch_symbol_list.py's separate-tree design meant it wasn't read by the screening harness even if fetched. This round shows the deeper cause: there was nothing to fetch. scripts/fetch_sip_universe.py's load_universe() and scripts/update_sip_archive.py's append_new_symbols() both source their symbol lists from the same Alpaca trading-asset endpoint that returned 'asset not found' for PUTW, so neither the original bulk backfill nor the incremental updater could ever have picked it up, regardless of when either was run. No existing or newly-written local ingestion script can fetch data a vendor does not serve; per the brief's explicit rule, the shard layout was not modified or restructured to work around this.",
+    "VIX_or_caret_VIX": "Not applicable to this iteration's candidate manifest (VIX_REGIME_SPY_SSO_TLT is out of scope per the owner's 2026-09-28 cross-asset decision). For the record: VIX itself WAS successfully added this round via FRED's public VIXCLS series (data/research/vix/VIXCLS.csv, 1990-01-02 through 2026-09-22, metadata in data/research/vix/VIXCLS.meta.json) -- a non-Alpaca, non-tradable-asset data source, so the Alpaca-tradable-asset constraint above does not apply to it."
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/vix_putw_batch_h20260928_18.yaml",
+      "sha256": "ec5562f69a09fc246e186822482ddc90e733f093d0754cb6fb4003a02f2894e5"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_18_vix_putw_batch/cost-contract.json",
+      "sha256": "b322f5534e617b4092515ae17c75e2cf80ed268aca5f932cbf31bad1481a5316"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_18_vix_putw_batch.jsonl",
+      "sha256": "7a347f107bca0cf832261306aac3e1ba37715d35063c41b0ee1ef35cc09ebdbc"
+    }
+  }
+}

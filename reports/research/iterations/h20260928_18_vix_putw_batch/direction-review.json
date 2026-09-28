@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "reviewed_at": "2026-09-28T06:15:00+00:00",
+  "decision": "proceed",
+  "objective": "T-20260928-18: add the missing VIX and PUTW data so the two ETF rules blocked only by missing data in batch 2 (dir:spy_sso_tlt_vix_regime_rotation and dir:put_credit_spread_income) can actually be screened. Mid-task scope change (interactive session, 2026-09-28): the owner decided not to pursue cross-asset strategies (bonds/gold/commodities/dollar), which drops VIX_REGIME_SPY_SSO_TLT (its bear leg holds TLT). VIX (FRED VIXCLS) was still fetched into data/research/vix/ for later equity-only VIX-timing use. This dossier's remaining, sole objective is to check whether PUTW data can be added and, if so, preregister and screen PUTW_HOLD (buy-and-hold PUTW, monthly) as the honest proxy for dir:put_credit_spread_income's weekly SPY put-writing claim.",
+  "target_regime_and_horizon": "Same frozen screen_lane windows as every other batch: select 2023-09-18..2025-12-31, anchor 2024-01-08..2026-09-17, holdout 2026-01-02..2026-09-17 (contaminated, reference only), stress 2016-05-02..2023-09-15. PUTW itself only exists since 2016-02-24 (see wisdomtree_putw_launch_2016), so the stress window would start at first_valid_signal_date, not at the stated window start -- same convention screen_lane already applies via window_actual_start for any candidate whose universe postdates a window.",
+  "existing_solution_comparison": "`oc research directions check vix regime spy sso tlt putw put write income` (run before any new work) returned the exact two existing registry rows verbatim: dir:spy_sso_tlt_vix_regime_rotation (not_executable, VIX missing) and dir:put_credit_spread_income (not_executable, PUTW missing, with the exact same fetch_symbol_list.py/data/sip-delisted/daily blocker cited in reports/research/iterations/h20260928_05_registry_etf_batch2/data-feasibility.json). No third mechanism or new claim is introduced here; this round only tries to clear the data blocker batch 2 already diagnosed, and goes one step further by checking Alpaca itself (both the trading-asset list and the SIP market-data API) rather than only the local shard-layout question batch 2 stopped at.",
+  "remaining_evidence_gap": "Batch 2 established that fetch_symbol_list.py (the repo's existing arbitrary-symbol ingestion path) writes to a separate tree (data/sip-delisted/daily/) that the screen_lane/screen_batch harness does not read, and that editing screen_lane.py/screen_batch.py to read a second tree is out of scope. What batch 2 did not check is whether Alpaca -- our only market-data and paper-broker vendor -- carries PUTW at all, independent of the local shard question. That is the decisive test this round runs.",
+  "negative_experiments_checked": "reports/research/iterations/h20260928_05_registry_etf_batch2/data-feasibility.json's data_gaps_noted_not_fetched.PUTW entry (2026-09-28): PUTW absent from data/sip/daily, not fetched because of the shard-layout/loader-tree mismatch. This round does not repeat that check; it extends it with a direct Alpaca API probe (see cheapest_decisive_test) that was not run in batch 2.",
+  "cost_and_execution_assumptions": "Unchanged from every prior screen_lane round: signal at bar close, fill at next bar open, 10bp primary / 20bp stress per side, remainder of any weight vector to SHY. PUTW_HOLD would be declared freq M (matching the fund's own monthly option-roll cadence per wisdomtree_putw_launch_2016/cboe_put_index_factsheet_2026), weight 1.0 PUTW, evaluated against the owner's 2026-09-28 relaxed K1 (median-offset Sharpe >=80% of S3's anchor and stress, positive 20bp CAGR) / K2 (S3+candidate inverse-vol blend beats vol-matched control by >=0.05 Sharpe) rule -- contingent on the data blocker below being resolved, which it was not.",
+  "stop_condition": "Decisive test result (see cheapest_decisive_test): Alpaca's trading API returns 'asset not found for PUTW' (TradingClient.get_asset, paper account, 2026-09-28) and Alpaca's SIP market-data API returns 0 rows for PUTW over the most recent 10 trading days (StockHistoricalDataClient.get_stock_bars, feed=sip, 2026-09-28), confirmed against XYLD/QYLD/JEPI/JEPQ/DIVO all resolving correctly with the identical call as a methodology sanity check. PUTW is not merely missing from our local archive (the batch-2 finding) -- it is not served by Alpaca at all, for either trading or market data. No existing or newly-written ingestion script can fetch what the vendor does not have. This is a harder, vendor-level blocker than the shard-layout question in the brief's 'if impossible without restructuring shards, stop and report' clause: no amount of local data engineering (shard-safe or otherwise) fixes it. PUTW_HOLD is preregistered below for the record and marked not_executable; no scripts/screen_batch.py run occurs in this iteration because there is no runnable candidate (VIX_REGIME_SPY_SSO_TLT dropped by owner scope decision, PUTW_HOLD blocked at the vendor level).",
+  "queries": [
+    {
+      "query": "oc research directions check vix regime spy sso tlt putw put write income",
+      "opened_urls": [
+        "https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS"
+      ],
+      "searched_at": "2026-09-28T06:00:00+00:00"
+    },
+    {
+      "query": "CBOE S&P 500 PutWrite Index PUT methodology WisdomTree PUTW ETF fact sheet",
+      "opened_urls": [
+        "https://www.wisdomtree.com/us/insights/blog/introducing-the-wisdomtree-cboe-sp-500-putwrite-strategy-fund"
+      ],
+      "searched_at": "2026-09-28T06:05:00+00:00"
+    },
+    {
+      "query": "PUTW WisdomTree PutWrite Strategy Fund inception date 2016",
+      "opened_urls": [
+        "https://www.wisdomtree.com/-/media/us-media-files/documents/about/pdf/2016/wisdomtree-wisdomtree-launches-cboe-sp500-putwrite-strategy-fund-putw-final-2054.pdf"
+      ],
+      "searched_at": "2026-09-28T06:07:00+00:00"
+    },
+    {
+      "query": "fetch https://cdn.cboe.com/resources/indices/factsheet/CboeGlobalIndices_PUT-Index.pdf",
+      "opened_urls": [
+        "https://cdn.cboe.com/resources/indices/factsheet/CboeGlobalIndices_PUT-Index.pdf"
+      ],
+      "searched_at": "2026-09-28T06:09:00+00:00"
+    },
+    {
+      "query": "fetch https://alvarezquanttrading.com/blog/spy-sso-and-tlt-strategy/ (dropped candidate, kept for record: VIX regime rule text, now out of scope per owner 2026-09-28 cross-asset decision)",
+      "opened_urls": [
+        "https://alvarezquanttrading.com/blog/spy-sso-and-tlt-strategy/"
+      ],
+      "searched_at": "2026-09-28T06:02:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.wisdomtree.com/-/media/us-media-files/documents/about/pdf/2016/wisdomtree-wisdomtree-launches-cboe-sp500-putwrite-strategy-fund-putw-final-2054.pdf",
+      "claim_id": "wisdomtree_putw_launch_2016",
+      "claim": "WisdomTree launched the CBOE S&P 500 PutWrite Strategy Fund (PUTW) on NYSE Arca on 2016-02-24, tracking the Cboe S&P 500 PutWrite Index (PUT) before fees; the fund sells at-the-money, European-style, one-month S&P 500 Index puts against a fully collateralized T-bill account and rebalances (rolls the options) monthly.",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "2016-02-24",
+      "market_and_period": "US, WisdomTree CBOE S&P 500 PutWrite Strategy Fund (PUTW), NYSE Arca, launch press release.",
+      "applicability": "Grounds PUTW_HOLD's proxy inception date (2016-02-24) and monthly-rebalance mechanism in candidate-manifest.json.",
+      "limitations": "Marketing press release, not the fund's prospectus or NAV history.",
+      "independent_replication": "Cross-checked against the CBOE PUT index's own official fact sheet (cboe_put_index_factsheet_2026).",
+      "fetched_at": "2026-09-28T06:08:00+00:00",
+      "sha256": "7914932ecbec4fa66d68e9cda83f7cd5f50509e073e87f80fadfa1b7e7c4df56",
+      "snapshot_path": "reports/research/iterations/h20260928_18_vix_putw_batch/sources/wisdomtree-putw-launch-press-release-2016.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_18_vix_putw_batch.jsonl"
+    },
+    {
+      "url": "https://cdn.cboe.com/resources/indices/factsheet/CboeGlobalIndices_PUT-Index.pdf",
+      "claim_id": "cboe_put_index_factsheet_2026",
+      "claim": "Cboe's own official strategy-index fact sheet (data as of 2026-08-31) states the Cboe S&P 500 PutWrite Index (PUT) has an index launch date of 2007-06-20 (first value date 2007-01-03) and reports, from 2007-01-03 through the fact-sheet date, an annualized return of 7.1%, annualized volatility 10.7%, maximum drawdown -32.7%, beta 0.6, Sharpe ratio 0.52 and Sortino ratio 0.69 (vs. 11.0%/15.4%/-50.9%/1.0/0.61/0.92 for the S&P 500 Total Return Index over the same window); SPX puts are struck at-the-money and sold monthly, usually on the 3rd Friday.",
+      "source_type": "exchange_official_docs",
+      "published_or_updated_at": "2026-08-31",
+      "market_and_period": "Cboe S&P 500 PutWrite Index (PUT), 2007-01-03 through 2026-08-31, monthly SPX at-the-money put writing vs. T-bill collateral.",
+      "applicability": "Independent, official-exchange confirmation of the PUT index mechanism PUTW tracks; long-run index Sharpe used as context only.",
+      "limitations": "Index-level statistics, not net of PUTW's own 0.38% expense ratio or tracking error.",
+      "independent_replication": "Matches the WisdomTree launch press release's own citation of the same mechanism.",
+      "fetched_at": "2026-09-28T06:10:00+00:00",
+      "sha256": "483a71454d49af7e30640bd67c60d67e1c49461894e7f83366678c37e0ad1dd9",
+      "snapshot_path": "reports/research/iterations/h20260928_18_vix_putw_batch/sources/cboe-put-index-factsheet-2026-08.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_18_vix_putw_batch.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Before writing any batch module, probe Alpaca directly for PUTW: (1) TradingClient(paper=True).get_asset('PUTW') to check it exists in Alpaca's tradable US-equity asset list (the same list scripts/fetch_sip_universe.py's load_universe() and scripts/update_sip_archive.py's append_new_symbols() both depend on); (2) StockHistoricalDataClient.get_stock_bars(symbol='PUTW', feed='sip') for the most recent 10 trading days, to check whether Alpaca's market-data side serves it even if the trading side does not. Sanity-checked the exact same two calls against XYLD/QYLD/JEPI/JEPQ/DIVO, all already known-tradable ETFs.",
+    "pass_condition": "get_asset('PUTW') returns a tradable asset, or get_stock_bars returns >=1 row -- either would mean PUTW is fetchable through an existing Alpaca-backed ingestion path (fetch_symbol_list.py at minimum), and the remaining question becomes the batch-2 shard-layout/loader-tree question, not vendor availability.",
+    "falsification_condition": "Both calls return nothing for PUTW while the five known-tradable control ETFs all resolve correctly -- confirms Alpaca (our only data/broker vendor) does not carry PUTW at all, a vendor-level blocker no local script can work around.",
+    "max_compute_minutes": 5
+  }
+}

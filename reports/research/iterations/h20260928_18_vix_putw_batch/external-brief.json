@@ -1,0 +1,117 @@
+{
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "schema_version": 3,
+  "strategy_name": "vix_putw_batch_h20260928_18",
+  "source_spec_path": "strategy_specs/drafts/vix_putw_batch_h20260928_18.yaml",
+  "spec_hash": "2213d7ff46e05231bf80969d96d2f3568050a8748dd9cbe6926dc59b57334c94",
+  "objective": "T-20260928-18: add VIX and PUTW data, then screen the two ETF rules batch 2 could only preregister and not run for lack of data (dir:spy_sso_tlt_vix_regime_rotation, dir:put_credit_spread_income). VIX (FRED VIXCLS) was fetched successfully. Mid-task owner scope change drops VIX_REGIME_SPY_SSO_TLT (cross-asset, TLT leg). PUTW was checked directly against Alpaca (our only data/broker vendor) and found not served at all -- a harder blocker than the batch-2 shard-layout finding.",
+  "topic_coverage": [
+    "putw_etf_mechanism_and_inception",
+    "cboe_put_index_official_methodology",
+    "put_writing_historical_performance_academic",
+    "put_writing_position_sizing_recent_literature",
+    "alpaca_data_vendor_availability_check",
+    "vix_regime_rotation_out_of_scope_owner_decision",
+    "shard_layout_ingestion_constraints_from_batch2"
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_18_vix_putw_batch.jsonl"
+  ],
+  "hypothesis_links": [
+    "T-20260928-18"
+  ],
+  "sources": [
+    {
+      "url": "https://www.wisdomtree.com/-/media/us-media-files/documents/about/pdf/2016/wisdomtree-wisdomtree-launches-cboe-sp500-putwrite-strategy-fund-putw-final-2054.pdf",
+      "published_or_updated_at": "2016-02-24",
+      "source_type": "provider_official_docs",
+      "credibility": "official WisdomTree launch press release (issuer of PUTW), primary source for inception date and mechanism",
+      "core_claim": "WisdomTree launched PUTW on NYSE Arca on 2016-02-24 to track the CBOE S&P 500 PutWrite Index (PUT); the fund sells at-the-money, European-style, one-month SPX puts against a fully collateralized T-bill account, rolled monthly.",
+      "project_applicability": "Grounds PUTW_HOLD's proxy inception date (2016-02-24) and monthly rebalance frequency in candidate-manifest.json.",
+      "reflection": "Marketing release, not the prospectus; no live NAV performance is claimed here, only the mechanism and launch date, which are not the kind of fact that decays."
+    },
+    {
+      "url": "https://cdn.cboe.com/resources/indices/factsheet/CboeGlobalIndices_PUT-Index.pdf",
+      "published_or_updated_at": "2026-08-31",
+      "source_type": "exchange_official_docs",
+      "credibility": "Cboe's own official strategy-index fact sheet, primary exchange source",
+      "core_claim": "PUT index launched 2007-06-20 (first value 2007-01-03); annualized return 7.1%, volatility 10.7%, max drawdown -32.7%, Sharpe 0.52 (vs S&P 500 TR 11.0%/15.4%/-50.9%/0.61) from 2007-01-03 through 2026-08-31; SPX puts sold monthly, usually 3rd Friday, at-the-money.",
+      "project_applicability": "Independent confirmation of the mechanism PUTW tracks and a long-run index-level Sharpe used only as outside context, not as a substitute for our own K1/K2 test.",
+      "reflection": "Index-level, not net of PUTW's ~0.38% expense ratio or tracking error; would need our own backtest for a real, cost-adjusted number -- moot here since PUTW data is unobtainable through our vendor."
+    },
+    {
+      "url": "https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID3393940_code246693.pdf?abstractid=3393940&mirid=1",
+      "published_or_updated_at": "2019-06-14",
+      "source_type": "ssrn",
+      "credibility": "Oleg Bondarenko, University of Illinois at Chicago; CBOE-commissioned academic study, SSRN working paper, updates a 2016 predecessor study",
+      "core_claim": "Over 32 years (1986-2018), PUT index annual compound return 9.54% vs S&P 500 9.80% (comparable) but PUT's annualized Sharpe 0.65 vs S&P 500's 0.49 (substantially better risk-adjusted); PUT's standard deviation 9.95% vs S&P 500's 14.93%; over 2006-2018 PUT's Sharpe was 0.50 vs S&P 500's 0.51 (roughly tied) with PUT max drawdown -32.7% vs S&P 500 -50.9%.",
+      "project_applicability": "Independent, peer-reviewable evidence on the PUT index mechanism PUTW tracks; used only as background -- this round never reaches a backtest of PUTW_HOLD itself because the underlying data is unobtainable.",
+      "reflection": "Index-level historical study using bid-quote-based historical option pricing for pre-2007 data (disclosed by the author), not audited trade data; recent-period (2006-2018) Sharpe roughly ties the S&P 500, a much weaker edge than the full 32-year number, consistent with the registry's general skepticism of cherry-picked long windows."
+    },
+    {
+      "url": "https://cdn.cboe.com/resources/education/research_publications/PUTIndexEnnisKnupp.pdf",
+      "published_or_updated_at": "2008-12-01",
+      "source_type": "industry_standard",
+      "credibility": "Ennis Knupp + Associates, independent institutional investment consultant, commissioned study hosted on Cboe's own site",
+      "core_claim": "June 1986-October 1998: PUT index annualized return 10.32% (before fees), volatility 9.91%, Sharpe 0.63 vs S&P 500's 8.77%/15.39%/0.30; PUT underperforms in strongly rising months (48.7% of months) and outperforms in flat/declining months (51.3% of months).",
+      "project_applicability": "Independent third-party (not CBOE, not WisdomTree) confirmation of the same regime-dependent return profile; reinforces that PUTW_HOLD's expected value is state-dependent, relevant context if the data blocker is ever resolved.",
+      "reflection": "2008 report, pre-financial-crisis final data point (Oct 2008), so it does not capture the 2008 crash's effect on the index; superseded in coverage by the more recent Bondarenko (2019) and Cboe (2026) fact sheet above."
+    },
+    {
+      "url": "https://arxiv.org/abs/2508.16598",
+      "published_or_updated_at": "2025-08-01",
+      "source_type": "arxiv",
+      "credibility": "arXiv preprint, not yet peer-reviewed; quantitative finance methods paper on short-dated index-option put-writing",
+      "core_claim": "Studies Kelly-criterion, VIX-based and hybrid position sizing for very short-dated (0-5 DTE) SPXW put-writing; finds a hybrid sizing method balances return generation with drawdown control, especially in low-volatility regimes (2024), and that far out-of-the-money, ultra-short-dated options have better risk-adjusted returns than longer-dated/closer-to-money alternatives.",
+      "project_applicability": "Confirms active academic interest in put-writing sizing is recent (2025) and orthogonal to PUTW_HOLD (monthly, at-the-money, buy-and-hold) -- a genuinely different, more sophisticated mechanism than this round's simple proxy; not preregistered here since it requires 0-5 DTE options data we do not have.",
+      "reflection": "Not opened in full (abstract/summary only); flags a possible future direction (short-dated put-writing with position sizing) distinct from and more promising than the static PUTW proxy, worth a separate direction entry rather than folding into this blocked one."
+    },
+    {
+      "url": "https://jod.iijournals.com/content/10/2/35",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "official Journal of Derivatives (Institutional Investor Journals / Portfolio Management Research) publisher page for the peer-reviewed article; full text is paywalled and was not opened in this pass -- existence, authorship, journal and issue confirmed via the publisher's own page plus corroborating listings (whaley.info author page, ResearchGate)",
+      "core_claim": "Robert Whaley (Vanderbilt University), commissioned by Cboe, published 'Return and Risk of CBOE Buy-Write Monthly Index' in The Journal of Derivatives, vol. 10 no. 2 (Winter 2002), pp. 35-42 -- the peer-reviewed methodology paper underlying the CBOE BuyWrite index family that the PutWrite index (PUT), and PUTW's tracked index, descend from.",
+      "project_applicability": "Establishes that the PUT index's collateralized-options-overlay design descends from a peer-reviewed academic methodology (Whaley 2002), not an ad hoc index-provider construction; background only.",
+      "reflection": "Abstract/existence-level citation only -- the paywalled full text was not opened, so no specific number from this paper is used in any gate; included for provenance, not as quantitative evidence."
+    },
+    {
+      "url": "https://cdn.cboe.com/api/global/us_indices/governance/Cboe_SP_500_PutWrite_Indices_Methodology.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "exchange_official_docs",
+      "credibility": "Cboe's own official methodology document for the PutWrite index family (PUT, WPUT)",
+      "core_claim": "Official Cboe Global Indices methodology document covering the S&P 500 PutWrite index family; cover page confirmed opened, full text not machine-extractable from the fetched PDF in this pass (binary/compressed stream), so no further quantitative claim is drawn from it here.",
+      "project_applicability": "Confirms Cboe maintains a distinct, versioned methodology document for this index family (beyond the marketing fact sheet already cited); not used for any specific number.",
+      "reflection": "Honest limitation: opened but not text-extractable this pass; the two other Cboe/WisdomTree documents above already supply the mechanism details actually used."
+    },
+    {
+      "url": "https://alvarezquanttrading.com/blog/spy-sso-and-tlt-strategy/",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "practitioner blog (Cesar Alvarez, Alvarez Quant Trading), kept for the record only -- the candidate it grounds (VIX_REGIME_SPY_SSO_TLT) is out of scope per the owner's 2026-09-28 cross-asset decision",
+      "core_claim": "At the close on the last trading day of the month: if SPY > 200dma and VIX < 25, buy SSO; if SPY > 200dma and VIX >= 25, buy SPY; if SPY < 200dma, buy TLT if TLT > its own 200dma, else cash. Backtest 2007-2024, equity curves only (no exact CAGR/Sharpe/MDD in page text).",
+      "project_applicability": "Not preregistered as a candidate in this round (dropped by the owner's cross-asset scope decision, since its bear leg holds TLT). VIX data (FRED VIXCLS) was still fetched and kept in data/research/vix/ for a possible future equity-only VIX-timing rule.",
+      "reflection": "No new evidence beyond what the registry already recorded on 2026-09-23; re-opened here only to confirm the exact rule text directly (live page, not the archived snapshot), not to reopen the direction."
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "revision": "putw_hold_preregistered_not_executable",
+      "reason": "PUTW_HOLD (buy-and-hold PUTW, monthly) is added to this iteration's candidate manifest for the record, per T-20260928-18's brief, but is marked not_executable: a direct Alpaca API probe (TradingClient.get_asset and StockHistoricalDataClient.get_stock_bars, both 2026-09-28) confirms PUTW is not served by Alpaca at all, independent of the local shard-layout question batch 2 stopped at. No scripts/screen_batch.py run occurs for this candidate."
+    },
+    {
+      "revision": "vix_regime_spy_sso_tlt_dropped_owner_scope",
+      "reason": "Mid-task correction from the interactive session (2026-09-28): the owner decided not to pursue cross-asset strategies (bonds/gold/commodities/dollar). VIX_REGIME_SPY_SSO_TLT's bear leg holds TLT, so it is dropped from this iteration's candidate manifest and parked in the registry (dir:spy_sso_tlt_vix_regime_rotation, status parked, reopen_if owner reopens cross-asset) rather than screened, even though the VIX data blocker that previously stopped it (data/research/vix/VIXCLS.csv) was successfully resolved in this same round."
+    }
+  ],
+  "source_evidence_bindings": [
+    {
+      "source_url": "https://www.wisdomtree.com/-/media/us-media-files/documents/about/pdf/2016/wisdomtree-wisdomtree-launches-cboe-sp500-putwrite-strategy-fund-putw-final-2054.pdf",
+      "claim_id": "wisdomtree_putw_launch_2016"
+    },
+    {
+      "source_url": "https://cdn.cboe.com/resources/indices/factsheet/CboeGlobalIndices_PUT-Index.pdf",
+      "claim_id": "cboe_put_index_factsheet_2026"
+    }
+  ]
+}

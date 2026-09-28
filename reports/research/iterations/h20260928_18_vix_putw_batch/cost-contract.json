@@ -1,0 +1,13 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open_screen_lane",
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only PUTW and SHY; PUTW's own options overlay is inside the fund's NAV)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session -- the frozen scripts/screen_lane.py / scripts/run_h20260918_05_recent_menu.py convention, unchanged",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "not_exercised_note": "This contract is documented for consistency with the rest of the screen_lane family but is not exercised in this iteration: PUTW_HOLD is not_executable (PUTW not served by Alpaca), so no return is ever computed against this cost model."
+}

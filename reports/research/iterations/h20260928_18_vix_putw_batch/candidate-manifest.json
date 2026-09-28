@@ -1,0 +1,129 @@
+{
+  "iter_id": "h20260928_18_vix_putw_batch",
+  "generated_at": "2026-09-28T06:30:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "vix_putw_batch_h20260928_18",
+  "objective": "T-20260928-18: preregister PUTW_HOLD (buy-and-hold PUTW, monthly), an honest proxy for dir:put_credit_spread_income's weekly SPY cash-secured put-writing claim, against the owner's 2026-09-28 relaxed keep rule (K1: median-offset Sharpe >=80% of S3's in both anchor and stress windows with positive 20bp CAGR; K2: an S3+candidate 63-day inverse-vol blend beating a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows). scripts/screen_batch.py --batch h20260928_18_vix_putw --iteration h20260928_18_vix_putw_batch IS run against this manifest (unlike a normal preregistration-only round): PUTW is not served by Alpaca (see data-feasibility.json), so PUTW_HOLD is expected to come back skipped=True via screen_lane's own missing_symbols() check, not via a special case coded for this task. VIX_REGIME_SPY_SSO_TLT is intentionally NOT a candidate in this manifest (dropped by the owner's 2026-09-28 cross-asset scope decision; tracked in the registry as dir:spy_sso_tlt_vix_regime_rotation, status parked).",
+  "candidates": [
+    {
+      "candidate_id": "PUTW_HOLD",
+      "path": "vix_putw_batch_screen",
+      "role": "fixed_weight_replication_proxy",
+      "method": "putw_buy_and_hold_monthly_proxy_for_weekly_spy_put_write",
+      "ablation": "none_frozen_source_parameters",
+      "spec_path": "strategy_specs/drafts/vix_putw_batch_h20260928_18.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_alpaca_sip_daily_putw_not_available",
+      "feature_contract": "feature_v1_vix_putw_batch_fixed_weight_rule",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_vix_putw_batch_vs_s3_k1_k2",
+      "status": "expected_skip_missing_panel_data",
+      "parameters": {
+        "freq": "M",
+        "universe": [
+          "PUTW"
+        ],
+        "weights": {
+          "PUTW": 1.0
+        },
+        "proxy_for": "dir:put_credit_spread_income (weekly SPY cash-secured/credit-spread put selling, ~20-30 delta, 3-5 weeks to expiry, ERN structure -- unsupported by Alpaca at any options level)",
+        "proxy_ticker": "PUTW",
+        "proxy_inception": "2016-02-24",
+        "proxy_caveats": [
+          "PUTW writes MONTHLY at-the-money SPX (index-level) puts on a fixed 3rd-Friday roll, not weekly ~20-30 delta SPY puts -- different cadence, moneyness and underlying (index vs ETF) from the original ERN-style claim.",
+          "PUTW is a fully collateralized long-only fund position (buy-and-hold the ETF), not a synthetic replication of selling puts directly -- it removes ALL of the registry direction's original execution-feasibility concerns (Alpaca does not support naked/cash-secured put selling) at the cost of being a coarser proxy for the same volatility-risk-premium mechanism.",
+          "Even if the data blocker were resolved, PUTW_HOLD would only be evidence about the coarse monthly-ATM proxy, not about the weekly higher-delta structure the original ERN track record actually describes."
+        ],
+        "source": "WisdomTree CBOE S&P 500 PutWrite Strategy Fund (PUTW) launch press release, 2016-02-24; CBOE S&P 500 PutWrite Index (PUT) official fact sheet, as of 2026-08-31"
+      },
+      "expected_skip_reason": "PUTW is not served by Alpaca (this project's only market-data and paper-broker vendor): TradingClient(paper=True).get_asset('PUTW') raised APIError 40410000 'asset not found for PUTW', and StockHistoricalDataClient.get_stock_bars(symbol='PUTW', feed='sip') returned 0 rows for the most recent 10 trading days (both checked 2026-09-28). Control check with the identical calls: XYLD, QYLD, JEPI, JEPQ, DIVO all resolved tradable=True with bars returned. PUTW therefore cannot appear as a column in the panel scripts/screen_lane.py's load_batch_panel loads from data/sip/daily/*/*.parquet, so screen_lane.evaluate_candidate() is expected to mark this candidate skipped=True via its own missing_symbols() check when scripts/screen_batch.py is actually run -- not a special case coded for this task, the harness's normal, already-tested handling."
+    }
+  ],
+  "candidate_count": 1,
+  "contracts": {
+    "data": {
+      "data_v1_alpaca_sip_daily_putw_not_available": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols_available": [
+          "SHY",
+          "BIL"
+        ],
+        "symbols_unavailable": [
+          "PUTW"
+        ],
+        "unavailable_reason": "Not served by Alpaca at all (trading asset list or SIP market data); see PUTW_HOLD's expected_skip_reason above and data-feasibility.json."
+      }
+    },
+    "features": {
+      "feature_v1_vix_putw_batch_fixed_weight_rule": {
+        "decision_lag_sessions": 1,
+        "fixed_weight_rule": "PUTW_HOLD returns an unconditional fixed weight (1.0 PUTW) once PUTW has any price history, matching HFEA_UPRO_TMF/XYLD_COVERED_CALL_PROXY's pattern in scripts/screen_batches/h20260928_05_batch2.py. Implemented in scripts/screen_batches/h20260928_18_vix_putw.py's w_putw_hold, tested on synthetic data in tests/test_screen_batch_vix_putw.py. PUTW never appears as a real panel column (see data-feasibility.json), so this function is never actually called with real prices during scripts/screen_batch.py's run -- screen_lane's missing_symbols() check short-circuits evaluate_candidate() before weights_frame() would call it.",
+        "no_lookahead": "w_putw_hold reads only close.loc[:asof]; tests/test_screen_batch_vix_putw.py's test_putw_hold_no_lookahead_on_future_price_history asserts appending future rows never changes an already-decided asof's weights."
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close where applicable, per scripts/run_h20260918_05_recent_menu.py's convention (documented for consistency; not exercised in this round)."
+      }
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": {
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "reference only"
+        ],
+        "stress": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "offsets": "21 monthly signal-day offsets (0-20) per PUTW_HOLD's declared 'M' freq -- documented for consistency with the rest of the screen_lane family; not exercised in this round.",
+        "panel_start": "2015-01-02 (warmup, matches scripts/screen_lane.py's PANEL_START; PUTW itself only exists from 2016-02-24)"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_screen_lane": {
+        "contract_path": "reports/research/iterations/h20260928_18_vix_putw_batch/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_vix_putw_batch_vs_s3_k1_k2": {
+        "members": [
+          "S3_incumbent_median_offset_reference",
+          "vol_matched_k_s3_plus_shy_control_K2",
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold"
+        ],
+        "keep_rule": "K1: median-offset Sharpe >= 0.80 * S3's median-offset Sharpe in both anchor (S3=1.49) and stress (S3=0.81) windows, with positive 20bp CAGR. K2: S3+candidate 63-day trailing inverse-vol blend beats its vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in both windows -- the owner's 2026-09-28 relaxed rule, unchanged from batch 2. Not applied in this round: no result exists to judge."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/vix_putw_batch_h20260928_18.yaml": "2213d7ff46e05231bf80969d96d2f3568050a8748dd9cbe6926dc59b57334c94"
+  },
+  "source_spec_path": "strategy_specs/drafts/vix_putw_batch_h20260928_18.yaml",
+  "spec_hash": "2213d7ff46e05231bf80969d96d2f3568050a8748dd9cbe6926dc59b57334c94",
+  "single_mechanism_no_campaign_attestation": true,
+  "g3_not_applicable_reason": "PUTW_HOLD's only parameter (weight 1.0, freq M) is copied verbatim from PUTW's own published mechanism, not fit to any window's return; no in-sample parameter exists to placebo-shift. Moot regardless: no backtest is run in this iteration.",
+  "adoption_rule": {
+    "per_candidate": [
+      "K1: median-offset Sharpe >= 0.80 * S3's median-offset Sharpe in both the anchor and stress windows, with positive CAGR at 20bp cost in both windows",
+      "K2: S3+candidate 63-day trailing inverse-vol blend (monthly rebalance) beats its vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in both the anchor and stress windows"
+    ],
+    "pass_requires": "K1 or K2 (either is sufficient, per the owner's 2026-09-28 relaxed keep rule)",
+    "multiple_comparisons": "1 candidate; not evaluated in this round",
+    "fallback_if_none_pass": "PUTW_HOLD returns to the registry as not_executable (vendor data unavailable), not refuted-in-this-form -- the underlying claim about the CBOE PUT index mechanism is untested, not tested-and-failed"
+  }
+}
