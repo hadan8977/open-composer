@@ -119,3 +119,14 @@ Owner asked for this ranking explicitly. Judged on the **kill-test stage only** 
 | **Net read** | Lower confidence the effect exists at all; if it does, immediately fights the cost model | Higher confidence the effect exists somewhere; unknown whether it survives our liquidity/cost constraints, but that is a real open question rather than a first-run bet |
 
 **Plain statement**: on priors alone, Direction B has the stronger claim to a real, replicated, not-yet-U.S.-2019+-tested effect, and would arguably be the higher-EV kill test to spend the first $1 on. Direction A's kill test is *not* a low-EV bet either — it targets the one specific gap (non-linear, all-layers-combined, on the widened illiquid-inclusive universe) that no local or literature evidence directly refutes — but it inherits five adjacent local failures and one unverified cost-caution citation, so it should be read as "worth the cheap test, not obviously going to work." **Direction A is GO per owner instruction regardless of this ranking** (illiquid-tail trading is now in-mandate and this is the cheapest test of it); Direction B's kill test is fully specified and ready in `I-20260923-09` if the owner reprioritizes it later — it is not being recommended against, only deferred.
+
+## Addendum (2026-09-28, interactive session): primary numbers opened after the brief was finalized
+
+The Direction-A evidence subagent extracted the two main papers with `pdftotext` (so the "PDF undecodable" note in rows 1 and 12 no longer holds). Verified-live numbers, all gross of costs:
+
+- Gu-Kelly-Xiu (NBER w25398), OOS 1987–2016, NN4 decile 10-1: Sharpe **2.45 equal-weighted**, **1.35 value-weighted**; equal-weighted excluding the bottom 20% NYSE-cap microcaps **1.69** (Table A.10). Monthly turnover 112–152%; no net-of-cost Sharpe anywhere in the paper.
+- Chen-Pelger-Zhu (arXiv 1904.00745), footnote 44: GKX-style extreme-decile Sharpe replicates equal-weighted, but "for value weighted portfolios the Sharpe ratio drops by around 50%". Their own GAN SDF portfolio (long-short, no costs): Sharpe **1.4** on the largest ~1,500 stocks, **0.9** on the largest ~550.
+- Both samples end in 2016; no post-2018 evidence either way. No source combines large-cap, long-only and after-cost in one number, and none combines price-volume with insider/short-interest/filing features in one model.
+- Avramov-Cheng-Metzker (Mgmt Sci 2023): abstract only (full text 403). Excluding microcaps/distressed firms "considerably attenuates" ML profitability and it "deteriorates in the presence of reasonable trading costs", while remaining "profitable in long positions and recent years".
+
+Reading: the edge sits in small and less liquid names, which the owner's widened universe now includes; per-stock spread costs and the ADV cap in A.4 are therefore the load-bearing part of the test, and the liquidity-tercile split is the key diagnostic.
