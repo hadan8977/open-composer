@@ -191,7 +191,7 @@
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
 
 ### T-20260929-33 加密货币趋势（Alpaca 现货，只做多）批量筛选
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 机主 2026-09-29 放开范围后，加密货币是模拟盘支持、但从没按趋势规则系统测过的品种（以前只看过高频加密模型，判为不可行）。看已发表的趋势/动量规则能否达到 K1，或给 S3 加分（K2）。
@@ -200,8 +200,9 @@
 - notes:
   - 2026-09-29 07:07 UTC 自动轮开始，派 sonnet-high 子代理执行（批量通道新增 `extend_panel` 钩子，提交 4a0775a）。
 
+  - 2026-09-29 07:07 轮结果（协调者已对照 leaderboard.json 核对 13 条）：否定，0/13 保留、无近期观察。行情用 Binance/Coinbase 公共 K 线取美东 09:30/16:00 价（无密钥，10 个 Alpaca 可交易币，BTC/ETH 从 2016-05）。最好 BTC_DONCHIAN_ENSEMBLE_VT40：对标窗夏普 0.91（门槛 1.19）、压力期 0.71；K2 对标窗 +0.16 但压力期 −0.06。BTC 买入持有对标窗 0.62、压力期 1.13；K2 恰好相反（对标窗 −0.26、压力期 +0.53）——加密在 2016–2023 能给 S3 分散，2024 以后反而拖累。截面动量对标窗 0.02–0.12（压力期 1.39–1.48，典型的只在旧样本有效）。随机择时安慰剂 0.00，规则都有真信号但不够。DSR ≤0.35。30bp 费用检查未触发。登记簿 `dir:crypto_trend_btc`、`dir:crypto_xs_momentum` 更新；覆盖地图新格 `trend_momentum.crypto_trend`。产物：`reports/research/iterations/h20260929_33_crypto_trend/`、`scripts/fetch_crypto_session_prices.py`。
 ### T-20260929-34 单只股票加杠杆趋势（S3 的个股版）
-- status: running
+- status: done
 - priority: 2
 - not_before:
 - goal: S3 用杠杆板块 ETF 抓领涨赛道。个股版：在大盘龙头股里按动量选前 1–3 只，用 2 倍（合成的 2 倍日重置收益，2022 年后可用真实的 2 倍单股 ETF，如 NVDL；或保证金 2 倍）。检验能否达到 K1，或和 S3 组合后夏普更高。
@@ -211,6 +212,7 @@
   - 数据清洗（2026-09-29，另一会话在 T-20 踩到）：`data/sip/daily` 有破产后重新上市沿用旧代码（WOLF）、单日错误成交价（KIDZ、IXHL）、漏调的拆股（APH 2026-08-27）。个股回测必须先过 `open_composer.research.features.price_hygiene.sanitize_price_matrices(close_wide, open_wide)`（默认参数），并剔除触发日像拆股的信号；不要按持有期结果过滤。
   - 2026-09-29 07:07 UTC 自动轮开始，派 sonnet-high 子代理执行（批量通道新增 `extend_panel` 钩子，提交 4a0775a）。
 
+  - 2026-09-29 07:07 轮结果（协调者已对照 leaderboard.json 核对 14 条）：0 保留、5 条近期观察（watch_recent，已写 kept.jsonl，commit ee2b972）：LSS_N50_K1_1X/K2_1X/K2_2X/K3_1X/K3_2X 对标窗 1.23–1.44 过 1.19，压力期 0.42–0.64 都没过 0.645（K3_2X 0.643 差 0.002）。K2 对标窗全负。选股有真增量：最好 1.44 vs 菜单等权 0.98 vs 随机 0.72。2 倍杠杆在 vt40 下不提高夏普（1x≈2x）。DSR 最高 0.73。菜单 = 时间点 S&P 500 里 63 日成交额前 20/50（`menu.parquet` 冻结到 2026-09；前向跟踪需每月末重跑 `scripts/build_h20260929_34_menu.py`）。登记簿 `dir:levered_single_stock_momentum_top_k`（partial）。产物：`reports/research/iterations/h20260929_34_levered_single_stock/`。
 ### T-20260929-35 日内截面规律（分钟数据，Modal）：日内周期性、隔夜/日内拉锯
 - status: blocked（等机主决定日内成本口径）
 - priority: 2
@@ -526,7 +528,7 @@
   - 2026-09-29 04:07 轮结果（协调者已对照两个 leaderboard.json 逐条核对 27 条）：否定，0/27，无近期观察。因迭代校验器单条路径最多 24 个候选，拆成两个迭代：`h20260929_01_letf_flow_reversal`（12+3 安慰剂）和 `h20260929_01_dip_rejudge`（12）。LETF 最好 LETF_SMH_D2_H1 对标窗 0.80、压力期 −0.26；大跌日进场在三个标的上都好于同频随机日安慰剂（SMH 0.80 对 −0.24），方向成立但幅度远不够；K2 两窗全负。抄底重判最好 DIP_D1_SPY 对标窗 1.13（门槛 1.19）、压力期 0.53，K2 对标窗 +0.15 但压力期 −0.13。27 条合并 DSR 最高 0.39。登记簿 `dir:letf_close_rebalancing_flow_reversal` refuted，`dir:etf_dip_reversion_ibs_connors` 追加 K1/K2 重判。产物：`reports/research/iterations/h20260929_01_{letf_flow_reversal,dip_rejudge}/`、`reports/research/screens/h20260929_01_*`。
 
 ### T-20260929-02 节前效应在小盘/低流动性股票层面的复现（signal_card 事件模式，不需要新数据）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 缺口搜索覆盖地图 `flows_structural.calendar_and_fomc` 格子表面写"harvested, not tested"，但逐条查过登记簿后发现月末反转、板块季节性、pre-FOMC drift、turn-of-month 都已经测过并有结论（不要重复）。本任务找到一个该格子确实没测过的子方向：Ariel (1990) 的经典"节前溢价"效应，被后续复现研究发现在样本外（1983-2019）"只在小盘股里还存在，大盘股的溢价已基本消失"。机主 2026-09-28 明确说小盘/低流动性股票可以做（按价差建成本），这个候选正好落在这个偏好里，且能直接复用已有的股票层面信号评估工具（`open_composer/research/signal_card.py` 的 event 模式），不需要新数据管线。
@@ -548,6 +550,8 @@
   - 2026-09-29 05:0x UTC 自动轮开始，派 sonnet-high 子代理执行（先做 T-41，再做本任务）。
   - 2026-09-29 04:07 轮断点（子代理先做 T-41 超时，停在这里）：已完成 `scripts/screen_batches/h20260929_02_pre_holiday_etf.py`（18 候选）和 `tests/test_h20260929_02_pre_holiday_etf.py`（11 个非 manifest 测试通过、lint 干净）；原文 Ko & Yang 2021 已读（`reports/research/iterations/h20260929_02_pre_holiday_etf/sources/`，确认"节前效应现在只在小盘股"）。**还没做**：candidate-manifest.json、direction-review.json 的正式内容、cost-contract、data-feasibility、pre-backtest 校验、跑批、登记簿 `dir:pre_holiday_effect_small_cap_tier`、coverage。下一步：补齐档案 → `uv run oc research direction-check …` → `iteration validate h20260929_02_pre_holiday_etf --stage pre-backtest` → `scripts/run_capped.sh --mem 1.8G -- uv run python scripts/screen_batch.py --batch h20260929_02_pre_holiday_etf --iteration h20260929_02_pre_holiday_etf`。模块在预注册前已写好但未跑任何结果，manifest 必须在跑批前写。
 
+  - 2026-09-29 08:0x UTC 自动轮（07:07 轮）从断点续做，派 sonnet-high 子代理。
+  - 2026-09-29 07:07 轮结果（协调者已对照 leaderboard.json 核对 18 条）：否定，0/12。12 个节前持有候选对标窗夏普全为负（最好 IWC_H1 −0.81），压力期全负；K2 全负。每年约 9 次、每次进出 4 笔 × 10bp ≈ 年 4% 成本，吃掉了节前溢价；同标的随机日安慰剂 10/12 反而更好。小盘组比大盘组对标窗中位数夏普高 0.32（方向与 Ko & Yang 2021 一致，但都亏）。登记簿 `dir:pre_holiday_effect_small_cap_tier` → refuted。产物：`reports/research/iterations/h20260929_02_pre_holiday_etf/`。
 ### T-20260929-10 VIX 双信号波动率风险溢价（Zarattini/Mele/Aziz，SSRN 5316487；只做多的 ETP 版本）
 - status: done
 - priority: 2

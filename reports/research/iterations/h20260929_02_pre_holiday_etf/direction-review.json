@@ -1,21 +1,67 @@
 {
-  "cheapest_decisive_test": {
-    "action": "",
-    "falsification_condition": "",
-    "max_compute_minutes": null,
-    "pass_condition": ""
-  },
-  "cost_and_execution_assumptions": "",
-  "decision": "pending",
-  "existing_solution_comparison": "",
-  "iter_id": "h20260929_02_pre_holiday_etf",
-  "negative_experiments_checked": "",
-  "objective": "",
-  "queries": [],
-  "remaining_evidence_gap": "",
-  "reviewed_at": null,
   "schema_version": 1,
-  "sources": [],
-  "stop_condition": "",
-  "target_regime_and_horizon": ""
+  "iter_id": "h20260929_02_pre_holiday_etf",
+  "reviewed_at": "2026-09-29T02:30:00+00:00",
+  "decision": "proceed",
+  "objective": "T-20260929-02: test Ariel (1990)'s classic pre-holiday return premium, per an out-of-sample replication (Ko & Yang 2021, full text read locally) reporting the premium now surviving 'only among small firms' (1983-2019), with the large-firm premium 'essentially disappeared, particularly after 1990'. Long a single ETF only around the last trading day before a federal-market-holiday closure (entry signal at the prior close, buy next open, hold {1,2} sessions, exit to SHY cash otherwise), on 4 small/micro-cap ETFs (IWM, IJR, IWC, VB, expected by the source to retain the premium) and 2 large-cap/index ETFs (SPY, QQQ, expected by the source to have lost it) = 12 primary candidates, plus 6 per-ticker frequency-matched random-day placebos (internal falsification only) = 18 total. Per the 2026-09-29 02:1x UTC coordinator revision to the queue task, this replaces the originally planned signal_card event-mode approach (which cannot answer 'does holding pay off' for a same-day, all-stocks calendar event, since signal_card's excess return is computed relative to the whole-market average and a market-wide calendar event cancels out in that relative framing) with a direct D-frequency screen_lane calendar-rule batch, judged K1/K2/watch_recent like every other batch this round.",
+  "target_regime_and_horizon": "Frozen screen_lane windows unchanged: select 2023-09-18..2025-12-31, anchor 2024-01-08..2026-09-17, stress 2016-05-02..2023-09-15, holdout 2026-01-02..2026-09-17 (contaminated, reference only). Explicitly expected before any result is computed: the pre-holiday premium is a single-day (or two-day) effect around only ~9-10 events/year (8 federal holidays, occasionally a 9th/10th ad hoc closure such as a national day of mourning) -- Ko & Yang (2021)'s own 1983-2019 magnitude (mean pre-holiday return 0.37% EW / 0.14% VW per single pre-holiday session) implies an annualized contribution on the order of only a few percentage points even before costs, so a candidate's judged Sharpe is expected to run low simply from being out of the market >95% of the time (most of the return-generating days are excluded, but so is essentially all of the risk-free-equivalent SHY carry); this is recorded here, before any backtest, so a low Sharpe is not later rationalized as a surprise.",
+  "existing_solution_comparison": "`oc research directions check pre-holiday` and `check holiday` (run before any new work) return dir:pre_holiday_effect_small_cap_tier status=queued (added 2026-09-29 by gap-search-2026-09-29-01, no local prior test) -- this is a genuinely new local test, not a reopening. The adjacent local prior, dir:turn_of_month_equity_seasonality (status=refuted, H-20260928-05 batch2: TOM_SPY fails both K1 and K2 with strongly negative Sharpe/edge in both windows), is a different calendar anchor (month-end, not pre-holiday) and different economic mechanism (liquidity/flow-driven turn-of-month vs. limits-of-arbitrage/small-firm pre-holiday), so it does not preregister an expectation of failure here, only a realistic prior that single-ETF calendar-anchor rules have not cleared this project's bar recently under this exact frozen contract. Sector seasonality and pre-FOMC drift (also cited in the queue task's plan as already-tested adjacent calendar effects) were checked via the same directions-check pass and are separately refuted/evidence_too_weak registry rows, neither testing this specific pre-holiday/small-firm mechanism.",
+  "remaining_evidence_gap": "Ko & Yang (2021)'s full text (read locally, reports/research/iterations/h20260929_02_pre_holiday_etf/sources/ko-yang-2021-pre-holiday-premium-small-firm.txt) is CRSP-index-level and individual-stock-decile-level, not ETF-level -- there is no direct prior test of IWM/IJR/IWC/VB or SPY/QQQ specifically as pre-holiday vehicles; this iteration's ETF choice is a project-side proxy for 'small-cap tier' vs 'large-cap tier', not itself validated by the source. A 2026 paper (Apergis, Review of Financial Economics) was found but WebFetch returned 403 -- not read, not used as evidence, logged in the source card only to avoid a redundant future search.",
+  "negative_experiments_checked": "dir:turn_of_month_equity_seasonality (refuted, cited above, adjacent not identical), dir:option_expiration_week_calendar_effect (queued, different calendar anchor -- 3rd Friday, not checked further here), sector seasonality and pre-FOMC drift rows (both already tested per the queue task's own plan text, neither is this mechanism). No local iteration has previously tested the pre-holiday/small-firm-vs-large-firm claim specifically (grep of reports/research/control, reports/research/iterations, reports/research/ledger for 'pre-holiday', 'holiday effect', 'Ariel' returns nothing before this iteration).",
+  "cost_and_execution_assumptions": "Unchanged screen_lane contract: signal at bar close, fill at next bar open, 10bp primary / 20bp stress per side, weights_fn reads only close.columns and close.index (never a price value) for both the real pre-holiday rule and the RAND placebo -- verified by tests/test_h20260929_02_pre_holiday_etf.py's no-look-ahead tests. Remainder capital (all non-signal days) goes to SHY via the harness's own automatic cash remainder -- SHY is a cash substitute here, not a cross-asset return source, per this project's established convention.",
+  "stop_condition": "K1: net-10bp judged Sharpe (D freq, single version -- no offset sweep, since a calendar-event rule has no rebalance-day choice to sweep) >=1.1882 in the anchor window AND >=0.6447 in the stress window, and net-20bp CAGR positive in both windows, for at least one of the 12 primary (PREHOL_*) candidates. K2: 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows. watch_recent: anchor Sharpe >=1.1882 but stress unmet. Falsification: any primary candidate that clears a gate must beat its own ticker's PREHOL_*_RAND placebo on judged anchor Sharpe; if it does not, demote to 'not kept (placebo replication)'. Additionally report (not a gate, per the brief): the small-cap group's (IWM/IJR/IWC/VB) median judged Sharpe minus the large-cap group's (SPY/QQQ) median judged Sharpe, in both windows -- this tests whether the source's own 'small-firm-only' out-of-sample pattern reproduces locally, independent of whether either group clears K1/K2.",
+  "queries": [
+    {
+      "query": "oc research directions check pre-holiday",
+      "opened_urls": [
+        "https://internal/oc-research-directions-check"
+      ],
+      "searched_at": "2026-09-29T02:10:00+00:00"
+    },
+    {
+      "query": "oc research directions check holiday",
+      "opened_urls": [
+        "https://internal/oc-research-directions-check"
+      ],
+      "searched_at": "2026-09-29T02:11:00+00:00"
+    },
+    {
+      "query": "Ko Yang 2021 pre-holiday premium small firm effect out of sample",
+      "opened_urls": [
+        "https://exa.ai/library/publication/k47n5zm6fft",
+        "https://www.nowpublishers.com/article/Details/CFR-0111"
+      ],
+      "searched_at": "2026-09-29T02:12:00+00:00"
+    },
+    {
+      "query": "Apergis abnormal returns stock performance prior after federal holidays Review of Financial Economics",
+      "opened_urls": [
+        "https://onlinelibrary.wiley.com/journal/2769646x"
+      ],
+      "searched_at": "2026-09-29T02:13:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://exa.ai/library/publication/k47n5zm6fft",
+      "claim_id": "ko_yang_2021_pre_holiday_small_firm_replication",
+      "claim": "Ko & Yang (2021), full text read locally (reports/research/iterations/h20260929_02_pre_holiday_etf/sources/ko-yang-2021-pre-holiday-premium-small-firm.txt). Replicate Ariel (1990) on CRSP EW/VW indices 1963-1982, then extend to 1983-2019 (296 pre-holidays, 9032 non-pre-holidays over 8 federal holidays). 1983-2019: mean pre-holiday return 0.37% (EW) / 0.14% (VW) vs a much smaller non-pre-holiday mean; VW t-stat for the difference falls from 7.03 (1963-1982) to 1.92 (1983-2019) and to 1.19/1.23 in the 1990-2019/1995-2019 subperiods -- 'the pre-holiday premium of the CRSP VW index completely vanished after 1990'. DJIA and S&P 500 (large-firm-only indices) 1983-2019 pre-holiday-vs-non t-stats are 0.64 and 0.93 (insignificant). EW-VW (small-minus-large) difference on pre-holidays is 0.07pp with t=2.32 in 1983-2019 -- 'small firms had higher pre-holiday premium than large firms after controlling for other calendar effects'.",
+      "source_type": "paper",
+      "published_or_updated_at": "2021-01-01",
+      "market_and_period": "US, CRSP EW/VW/DJIA/S&P 500 indices, 1963-2019 daily.",
+      "applicability": "Primary source for this iteration's small-cap-vs-large-cap ETF split and pre-registered low-Sharpe magnitude expectation.",
+      "limitations": "Index/decile-level, not ETF-level; no direct test of IWM/IJR/IWC/VB/SPY/QQQ specifically.",
+      "independent_replication": "The paper is itself the independent out-of-sample replication of Ariel (1990); no third-party replication of Ko & Yang specifically was found this round.",
+      "fetched_at": "2026-09-29T02:15:00+00:00",
+      "sha256": "a58c579a71fa975f705385305deb7946443bd5a2b6472e9a79216be94b41d00f",
+      "snapshot_path": "reports/research/iterations/h20260929_02_pre_holiday_etf/sources/ko-yang-2021-pre-holiday-premium-small-firm.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Preregister 18 candidates (candidate-manifest.json): 12 primary PREHOL_{IWM,IJR,IWC,VB,SPY,QQQ}_H{1,2} (buy at the pre-holiday day's open, hold 1 or 2 sessions, else cash) plus 6 PREHOL_{ticker}_RAND deterministic pseudo-random-day placebos (frequency-matched, never keep-eligible); run scripts/screen_batch.py under the frozen screen_lane contract (10bp/20bp, close-signal/next-open-fill, WINDOWS unchanged).",
+    "pass_condition": "At least one of the 12 primary candidates clears K1 (anchor Sharpe>=1.1882, stress>=0.6447, positive 20bp CAGR both windows) or K2 (diversifier judged_edge>=0.05 both windows) AND beats its own ticker's RAND placebo on judged anchor Sharpe.",
+    "falsification_condition": "No primary candidate clears K1 or K2, or every apparent pass is matched or beaten by its own ticker's RAND placebo on judged anchor Sharpe.",
+    "max_compute_minutes": 20
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260929_02_pre_holiday_etf",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only IWM/IJR/IWC/VB/SPY/QQQ/SHY, no leverage, no shorting)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal)",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)",
+  "note_vs_source": "Ko & Yang (2021) is an index-level academic study with no cost model or tradable-ETF fill assumption at all -- this project's frozen contract (close-signal -> next-session-open fill, 10bp/20bp per side) is applied unedited, identical to every other screen_lane batch. Given the low trade frequency (~9-10 entries/year per candidate), the cost drag is small in absolute terms but so is the expected gross premium (Ko & Yang's own 1983-2019 magnitude is 0.14-0.37pp per single pre-holiday session), so cost sensitivity is reported explicitly (10bp vs 20bp CAGR) in report.md rather than assumed negligible."
+}

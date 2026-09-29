@@ -1,14 +1,137 @@
 {
-  "candidate_matrix_revisions": [],
-  "current_source_card_paths": [],
-  "hypothesis_links": [],
   "iter_id": "h20260929_02_pre_holiday_etf",
-  "objective": "US minute momentum round 1",
+  "strategy_name": "h20260929_02_pre_holiday_etf",
+  "source_spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+  "spec_hash": "56d8068eefdba4d03a9c5c44da282fe9841395a75bcd735827653a32ff8fe0db",
   "schema_version": 3,
-  "source_evidence_bindings": [],
-  "source_spec_path": null,
-  "sources": [],
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "topic_coverage": []
+  "created_at": "2026-09-29T02:35:00+00:00",
+  "decision": "proceed",
+  "objective": "Preregister and batch-screen a pre-holiday return premium mechanism (Ariel 1990 lineage, per Ko & Yang 2021's out-of-sample small-firm-only replication) for T-20260929-02 (dir:pre_holiday_effect_small_cap_tier). For scripts/screen_batch.py --batch h20260929_02_pre_holiday_etf --iteration h20260929_02_pre_holiday_etf. No return, Sharpe or backtest number is computed in this dossier.",
+  "existing_solution_comparison": "`oc research directions check pre-holiday` and `check holiday` (run before any new work) return dir:pre_holiday_effect_small_cap_tier status=queued, added 2026-09-29 with no local prior test -- a genuinely new test, not a reopening. The closest adjacent local prior, dir:turn_of_month_equity_seasonality (refuted, different calendar anchor and mechanism), is cited as context on single-ETF calendar-rule base rates under this frozen contract, not a repeat of this mechanism.",
+  "negative_experiments_checked": "dir:turn_of_month_equity_seasonality (refuted, month-end anchor, adjacent not identical); sector seasonality and pre-FOMC drift (already separately tested per the queue task's own plan text, neither is this mechanism). No local iteration previously tested the pre-holiday/small-firm claim (grep of reports/research/control, reports/research/iterations, reports/research/ledger for 'pre-holiday', 'holiday effect', 'Ariel' returns nothing before this iteration).",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {"claim_id": "ko_yang_2021_pre_holiday_small_firm_replication", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "ariel_1990_pre_holiday_premium_original", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "kim_park_1994_multi_market_replication", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "mclean_pontiff_2016_anomaly_decay", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "apergis_2026_federal_holidays_blocked_403", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "dir_pre_holiday_effect_registry_own_row", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "dir_turn_of_month_seasonality_refuted_adjacent", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "h20260928_42_opex_week_calendar_anchor_convention", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"},
+    {"claim_id": "pre_holiday_effect_internal_placebo_random_non_holiday_day", "source_card_path": "reports/harness/source_cards/h20260929_02_pre_holiday_etf.jsonl"}
+  ],
+  "hypothesis_links": ["H1", "H2", "H3"],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "coordinator_2026_09_29_02_1x_utc_revision",
+      "effect": "The originally planned signal_card event-mode approach was replaced with a direct D-frequency screen_lane calendar-rule batch, because signal_card's excess return is relative-to-market-average and a same-day, all-stocks calendar event (every stock gets the same pre-holiday signal on the same day) cancels out in that relative framing -- it cannot answer 'does holding pay off'.",
+      "revision": "pre_holiday_etf_12_primary_plus_6_rand_placebo"
+    }
+  ],
+  "topic_coverage": [
+    "pre_holiday_premium_original_ariel_1990_claim",
+    "small_firm_out_of_sample_concentration_ko_yang_2021",
+    "cross_market_historical_robustness_kim_park_1994",
+    "anomaly_decay_after_publication_mclean_pontiff_2016",
+    "calendar_anchor_no_lookahead_convention_reuse",
+    "internal_placebo_construction",
+    "adjacent_local_calendar_effect_refutation_turn_of_month",
+    "blocked_2026_paper_not_used_as_evidence"
+  ],
+  "sources": [
+    {
+      "claim_id": "ko_yang_2021_pre_holiday_small_firm_replication",
+      "url": "https://exa.ai/library/publication/k47n5zm6fft",
+      "published_or_updated_at": "2021-01-01",
+      "source_type": "paper",
+      "credibility": "full_text_read_locally_out_of_sample_replication",
+      "core_claim": "Extending Ariel (1990) to 1983-2019, the pre-holiday premium now exists only among small firms; the large-firm premium has essentially disappeared, especially after 1990 (VW t-stat falls from 7.03 to 1.92, DJIA/S&P 500 1983-2019 t-stats 0.64/0.93 insignificant; EW-VW pre-holiday difference 0.07pp, t=2.32).",
+      "project_applicability": "Primary source for this iteration's small-cap-vs-large-cap ETF split, the pre-holiday day definition, and the pre-registered low-Sharpe magnitude expectation.",
+      "reflection": "Index/decile-level, not ETF-level -- no direct test of IWM/IJR/IWC/VB/SPY/QQQ. Cost/decay risk: ~9-10 trades/year and a per-session premium of only 0.14-0.37pp means costs (10-20bp per side) could plausibly consume a large fraction of the gross premium; this is reported explicitly in report.md, not assumed away."
+    },
+    {
+      "claim_id": "ariel_1990_pre_holiday_premium_original",
+      "url": "https://doi.org/10.2307/2328758",
+      "published_or_updated_at": "1990-12-01",
+      "source_type": "paper",
+      "credibility": "primary_source_cited_via_secondary_not_independently_fetched",
+      "core_claim": "CRSP EW/VW index returns on pre-holiday sessions (1963-1982) were 8.6x/14.4x the average non-pre-holiday return, independent of the small-firm effect in that original sample.",
+      "project_applicability": "Establishes the pre-holiday-day definition (last trading day before one of 8 federal holidays) this batch's calendar rule reproduces.",
+      "reflection": "Not independently re-fetched -- read only via Ko & Yang (2021)'s own quotation; original article behind a DOI paywall not accessed this round."
+    },
+    {
+      "claim_id": "kim_park_1994_multi_market_replication",
+      "url": "https://doi.org/10.1111/j.1540-6288.1994.tb01329.x",
+      "published_or_updated_at": "1994-01-01",
+      "source_type": "paper",
+      "credibility": "cited_via_secondary_source_not_independently_fetched",
+      "core_claim": "Extended Ariel (1990) to NYSE/AMEX/NASDAQ/UK/Japan and found the pre-holiday effect present in all, with no small-firm concentration at that (pre-1994) time.",
+      "project_applicability": "Corroborates that the small-firm concentration found by Ko & Yang is a later, decay-driven development, not present from the start -- background only.",
+      "reflection": "Not independently re-fetched; cited only via Ko & Yang's literature review."
+    },
+    {
+      "claim_id": "mclean_pontiff_2016_anomaly_decay",
+      "url": "https://doi.org/10.1111/jofi.12365",
+      "published_or_updated_at": "2016-01-01",
+      "source_type": "paper",
+      "credibility": "cited_via_secondary_source_not_independently_fetched",
+      "core_claim": "Published anomalies' return predictability declines substantially after publication.",
+      "project_applicability": "General mechanism grounding for large-cap decay vs small-cap persistence (limits of arbitrage) -- background only.",
+      "reflection": "General anomaly-decay literature, not specific to pre-holiday or ETF-level arbitrage; not independently re-fetched."
+    },
+    {
+      "claim_id": "apergis_2026_federal_holidays_blocked_403",
+      "url": "https://onlinelibrary.wiley.com/journal/2769646x",
+      "published_or_updated_at": "2026-01-01",
+      "source_type": "paper",
+      "credibility": "unread_fetch_blocked",
+      "core_claim": "A 2026 paper on abnormal returns around federal holidays was found by search but WebFetch returned HTTP 403; not read, not used as evidence.",
+      "project_applicability": "None used -- logged only to avoid a redundant future search hitting the same paywall.",
+      "reflection": "Title alone is not evidence; explicitly excluded from this iteration's evidence base."
+    },
+    {
+      "claim_id": "dir_pre_holiday_effect_registry_own_row",
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_direction_registry_row",
+      "core_claim": "dir:pre_holiday_effect_small_cap_tier status=queued before this iteration, no local prior test found.",
+      "project_applicability": "Confirms this is a new test, not a repeat; records the coordinator's 2026-09-29 revision replacing the signal_card plan with the current batch design.",
+      "reflection": "Self-referential; not external evidence."
+    },
+    {
+      "claim_id": "dir_turn_of_month_seasonality_refuted_adjacent",
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_evaluation_result",
+      "core_claim": "dir:turn_of_month_equity_seasonality refuted -- TOM_SPY fails both K1 and K2 with strongly negative Sharpe/edge.",
+      "project_applicability": "Adjacent local prior on single-ETF calendar-anchor rules under this exact frozen contract -- sets a realistic base-rate expectation, not a repeat of this mechanism.",
+      "reflection": "Different calendar anchor and economic mechanism; cited as context only."
+    },
+    {
+      "claim_id": "h20260928_42_opex_week_calendar_anchor_convention",
+      "url": "scripts/screen_batches/h20260928_42_opex_week.py",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "internal_code_reuse",
+      "core_claim": "Establishes the project convention that a public, well-known calendar anchor derived purely from the trading-day index (never a price) is not a look-ahead.",
+      "project_applicability": "Directly reused for this iteration's pre-holiday-day detection and its no-look-ahead guarantee, verified by tests/test_h20260929_02_pre_holiday_etf.py.",
+      "reflection": "Direct code reuse, not an external claim."
+    },
+    {
+      "claim_id": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+      "url": "scripts/screen_batches/h20260929_02_pre_holiday_etf.py",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "internal_evidence",
+      "credibility": "internal_construction",
+      "core_claim": "Deterministic pseudo-random non-pre-holiday entry day, frequency-matched, as an internal falsification control.",
+      "project_applicability": "Defines the 6 PREHOL_*_RAND candidates.",
+      "reflection": "Internal construction, not an external claim."
+    }
+  ],
+  "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml"
 }

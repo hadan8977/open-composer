@@ -1,0 +1,460 @@
+{
+  "iter_id": "h20260929_02_pre_holiday_etf",
+  "generated_at": "2026-09-29T02:40:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_02_pre_holiday_etf",
+  "objective": "Preregister 18 candidates for T-20260929-02: pre-holiday return premium (Ariel 1990 lineage, Ko & Yang 2021 small-firm-only out-of-sample replication). 12 primary PREHOL_{IWM,IJR,IWC,VB,SPY,QQQ}_H{1,2} candidates (4 small/micro-cap target tickers, 2 large-cap control tickers, hold 1 or 2 sessions) plus 6 PREHOL_{ticker}_RAND per-ticker frequency-matched random-day placebos, for scripts/screen_batch.py --batch h20260929_02_pre_holiday_etf --iteration h20260929_02_pre_holiday_etf. No return, Sharpe or backtest number is computed in this dossier.",
+  "candidates": [
+    {
+      "candidate_id": "PREHOL_IWM_H1",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_1_session",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "IWM",
+        "hold_sessions": 1,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy IWM at the pre-holiday day's open; hold 1 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_IWM_H2",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_2_sessions",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "IWM",
+        "hold_sessions": 2,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy IWM at the pre-holiday day's open; hold 2 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_IJR_H1",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_1_session",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "IJR",
+        "hold_sessions": 1,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy IJR at the pre-holiday day's open; hold 1 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_IJR_H2",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_2_sessions",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "IJR",
+        "hold_sessions": 2,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy IJR at the pre-holiday day's open; hold 2 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_IWC_H1",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_1_session",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "IWC",
+        "hold_sessions": 1,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy IWC at the pre-holiday day's open; hold 1 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_IWC_H2",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_2_sessions",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "IWC",
+        "hold_sessions": 2,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy IWC at the pre-holiday day's open; hold 2 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_VB_H1",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_1_session",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "VB",
+        "hold_sessions": 1,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy VB at the pre-holiday day's open; hold 1 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_VB_H2",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_small_cap_target_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_2_sessions",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "VB",
+        "hold_sessions": 2,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy VB at the pre-holiday day's open; hold 2 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_SPY_H1",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_large_cap_control_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_1_session",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "SPY",
+        "hold_sessions": 1,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy SPY at the pre-holiday day's open; hold 1 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_SPY_H2",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_large_cap_control_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_2_sessions",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "SPY",
+        "hold_sessions": 2,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy SPY at the pre-holiday day's open; hold 2 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_QQQ_H1",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_large_cap_control_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_1_session",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "QQQ",
+        "hold_sessions": 1,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy QQQ at the pre-holiday day's open; hold 1 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_QQQ_H2",
+      "path": "pre_holiday_etf_screen",
+      "role": "primary_large_cap_control_group",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "hold_2_sessions",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_primary",
+        "source_card": "ko_yang_2021_pre_holiday_small_firm_replication",
+        "ticker": "QQQ",
+        "hold_sessions": 2,
+        "rule": "Entry signal at the close of the session before a pre-holiday day (last trading day before a federal-market-holiday closure); buy QQQ at the pre-holiday day's open; hold 2 session(s); exit to SHY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PREHOL_IWM_RAND",
+      "path": "pre_holiday_etf_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_placebo",
+        "source_card": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+        "ticker": "IWM",
+        "hold_sessions": 1,
+        "rule": "Deterministic pseudo-random non-pre-holiday entry day for IWM (SHA-256 hash of ticker+date, frequency-matched to the real rule's own trigger rate), hold 1 session; exit to SHY. Internal falsification control only."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PREHOL_IJR_RAND",
+      "path": "pre_holiday_etf_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_placebo",
+        "source_card": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+        "ticker": "IJR",
+        "hold_sessions": 1,
+        "rule": "Deterministic pseudo-random non-pre-holiday entry day for IJR (SHA-256 hash of ticker+date, frequency-matched to the real rule's own trigger rate), hold 1 session; exit to SHY. Internal falsification control only."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PREHOL_IWC_RAND",
+      "path": "pre_holiday_etf_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_placebo",
+        "source_card": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+        "ticker": "IWC",
+        "hold_sessions": 1,
+        "rule": "Deterministic pseudo-random non-pre-holiday entry day for IWC (SHA-256 hash of ticker+date, frequency-matched to the real rule's own trigger rate), hold 1 session; exit to SHY. Internal falsification control only."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PREHOL_VB_RAND",
+      "path": "pre_holiday_etf_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_placebo",
+        "source_card": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+        "ticker": "VB",
+        "hold_sessions": 1,
+        "rule": "Deterministic pseudo-random non-pre-holiday entry day for VB (SHA-256 hash of ticker+date, frequency-matched to the real rule's own trigger rate), hold 1 session; exit to SHY. Internal falsification control only."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PREHOL_SPY_RAND",
+      "path": "pre_holiday_etf_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_placebo",
+        "source_card": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+        "ticker": "SPY",
+        "hold_sessions": 1,
+        "rule": "Deterministic pseudo-random non-pre-holiday entry day for SPY (SHA-256 hash of ticker+date, frequency-matched to the real rule's own trigger rate), hold 1 session; exit to SHY. Internal falsification control only."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PREHOL_QQQ_RAND",
+      "path": "pre_holiday_etf_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "pre_holiday_calendar_anchor_last_session_before_exchange_closure",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily",
+      "feature_contract": "feature_v1_trading_calendar_gap_only",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_prehol_vs_s3_k1_k2",
+      "parameters": {
+        "family": "pre_holiday_placebo",
+        "source_card": "pre_holiday_effect_internal_placebo_random_non_holiday_day",
+        "ticker": "QQQ",
+        "hold_sessions": 1,
+        "rule": "Deterministic pseudo-random non-pre-holiday entry day for QQQ (SHA-256 hash of ticker+date, frequency-matched to the real rule's own trigger rate), hold 1 session; exit to SHY. Internal falsification control only."
+      },
+      "eligible_for_keep_tiers": false
+    }
+  ],
+  "candidate_count": 18,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily": "IWM/IJR/IWC/VB/SPY/QQQ/SHY daily bars, data/sip/daily/*/*.parquet (local SIP archive, no new fetch)."
+    },
+    "features": {
+      "feature_v1_trading_calendar_gap_only": "A session d0 is a pre-holiday day iff the calendar-day gap to the next trading session d1 exceeds the weekend-only gap implied by d0's weekday (3 days after a Friday, 1 day otherwise); this reads only close.index, never a price value (see h20260928_42_opex_week.py's identical convention and justification for its own 3rd-Friday calendar anchor). The RAND placebo reads only close.columns/close.index plus a SHA-256 hash of ticker+date -- also never a price value."
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": "Entry signal fires at the close of the session immediately before the pre-holiday day -> buy at the pre-holiday day's open. Exit signal fires at the close of the hold-th held session -> sell at the next session's open, back to SHY. Frozen project contract."
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": "screen_lane.py frozen select 2023-09-18..2025-12-31 / anchor 2024-01-08..2026-09-17 / holdout 2026-01-02..2026-09-17 (contaminated) / stress 2016-05-02..2023-09-15 windows, D freq (single version, no offset sweep -- a calendar-event rule has no rebalance-day choice) for all 18 candidates."
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": "10bp per side primary, 20bp per side stress, screen_lane.py COST_BPS_PRIMARY/STRESS."
+    },
+    "benchmarks": {
+      "benchmark_v1_prehol_vs_s3_k1_k2": "K1 (net-10bp anchor Sharpe>=1.1882 and stress Sharpe>=0.6447, positive 20bp CAGR both windows) / K2 (63-session inverse-vol blend with S3 beats a vol-matched S3+SHY control by >=0.05 Sharpe both windows) / strong_keep (K2 edge>=0.10, or K1 Sharpe in both windows >= S3's own 1.4853/0.8059) / watch_recent (anchor Sharpe>=1.1882, stress unmet), per this manifest's keep_rule. Only the 12 primary candidates are keep-eligible. Small-cap-vs-large-cap median judged Sharpe difference is reported, not a gate."
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml": "56d8068eefdba4d03a9c5c44da282fe9841395a75bcd735827653a32ff8fe0db"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+  "spec_hash": "56d8068eefdba4d03a9c5c44da282fe9841395a75bcd735827653a32ff8fe0db",
+  "trial_count_and_dsr_note": "18 candidates total (12 primary + 6 RAND placebos) in this iteration's own screen_batch.py run; n_trials=18 is what leaderboard.json/results.json report automatically (screen_lane.py's own convention, same as h20260929_01's 15=12+3 and h20260929_10's 12=10+2). report.md additionally reports a manual 12-candidate-only DSR (excluding the 6 placebos) using open_composer.research.campaign_statistics.deflated_sharpe_probability directly, for comparison.",
+  "keep_rule": {
+    "K1": "net-10bp Sharpe (D freq, single version -- no offset sweep) >= 1.1882 in the anchor window AND >= 0.6447 in the stress window, with positive CAGR at 20bp per side in both windows. Only the 12 primary (PREHOL_*_H1/H2) candidates are eligible.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH the anchor and stress windows. Only the 12 primary candidates are eligible.",
+    "watch_recent": "anchor-window Sharpe >= 1.1882 (K1's anchor bar) but the stress window does not clear its bar -- forward-tracked only, not a keep. Only primary candidates are eligible.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress, exact figures from h20260928_01_s3_rebalance_tranching/results.json).",
+    "pass_requires": "K1 OR K2, for a primary (PREHOL_*) candidate only.",
+    "placebo_internal_falsification": "If a primary candidate would otherwise be kept (K1, K2, strong_keep, or watch_recent), but its own ticker's PREHOL_{ticker}_RAND placebo has a judged anchor-window Sharpe >= that primary candidate's own judged anchor Sharpe, the primary candidate is demoted to 'not kept (placebo replication)'. PREHOL_*_RAND candidates are NEVER eligible for K1/K2/strong_keep/watch_recent regardless of their own Sharpe.",
+    "small_cap_vs_large_cap_report_only": "median judged Sharpe across {PREHOL_IWM_H1, PREHOL_IWM_H2, PREHOL_IJR_H1, PREHOL_IJR_H2, PREHOL_IWC_H1, PREHOL_IWC_H2, PREHOL_VB_H1, PREHOL_VB_H2} minus median judged Sharpe across {PREHOL_SPY_H1, PREHOL_SPY_H2, PREHOL_QQQ_H1, PREHOL_QQQ_H2}, both windows, reported in report.md -- not a keep/not-keep gate, tests whether Ko & Yang (2021)'s own small-firm-only out-of-sample pattern reproduces locally.",
+    "multiple_comparisons": "This iteration's own leaderboard.json/results.json report n_trials=18 (12 primary + 6 placebos), computed automatically by scripts/screen_batch.py. A manual 12-candidate-only DSR is additionally computed and reported in report.md for comparison."
+  }
+}

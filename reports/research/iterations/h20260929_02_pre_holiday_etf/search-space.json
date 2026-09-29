@@ -1,14 +1,91 @@
 {
-  "cost_table_path": "",
-  "created_at": "2026-09-29T05:03:00.500084+00:00",
-  "data_feasibility_path": "",
-  "evaluation_report_paths": [],
   "iter_id": "h20260929_02_pre_holiday_etf",
-  "paths": [],
+  "strategy_name": "h20260929_02_pre_holiday_etf",
+  "source_spec_path": "strategy_specs/drafts/h20260929_02_pre_holiday_etf.yaml",
+  "spec_hash": "56d8068eefdba4d03a9c5c44da282fe9841395a75bcd735827653a32ff8fe0db",
   "schema_version": 3,
-  "source_spec_path": null,
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "total_candidate_budget": 80,
-  "trial_ledger_paths": []
+  "created_at": "2026-09-29T02:38:00+00:00",
+  "objective": "Preregister 18 candidates for T-20260929-02 (dir:pre_holiday_effect_small_cap_tier): 12 primary PREHOL_{IWM,IJR,IWC,VB,SPY,QQQ}_H{1,2} candidates plus 6 PREHOL_{ticker}_RAND per-ticker frequency-matched placebos, for scripts/screen_batch.py --batch h20260929_02_pre_holiday_etf --iteration h20260929_02_pre_holiday_etf. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "pre_holiday_etf_screen",
+      "candidate_count": 18,
+      "hypothesis_refs": [
+        "H1",
+        "H2",
+        "H3"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "PREHOL_IWM_H1",
+          "PREHOL_IWM_H2",
+          "PREHOL_IJR_H1",
+          "PREHOL_IJR_H2",
+          "PREHOL_IWC_H1",
+          "PREHOL_IWC_H2",
+          "PREHOL_VB_H1",
+          "PREHOL_VB_H2",
+          "PREHOL_SPY_H1",
+          "PREHOL_SPY_H2",
+          "PREHOL_QQQ_H1",
+          "PREHOL_QQQ_H2",
+          "PREHOL_IWM_RAND",
+          "PREHOL_IJR_RAND",
+          "PREHOL_IWC_RAND",
+          "PREHOL_VB_RAND",
+          "PREHOL_SPY_RAND",
+          "PREHOL_QQQ_RAND"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 18,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_02_pre_holiday_etf/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_02_pre_holiday_etf/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_02_pre_holiday_etf/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_02_pre_holiday_etf/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_02_pre_holiday_etf/report.md",
+    "reports/research/iterations/h20260929_02_pre_holiday_etf/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "net-10bp Sharpe (D freq, single version -- no offset sweep) >= 1.1882 anchor AND >= 0.6447 stress, positive 20bp CAGR both windows. 12 primary (PREHOL_*_H1/H2) candidates only.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows. Primary candidates only.",
+    "watch_recent": "anchor-window Sharpe >= 1.1882 but stress does not clear its bar -- forward-tracked only. Primary candidates only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress).",
+    "placebo_internal_falsification": "a primary candidate otherwise kept is demoted to not_kept if its own ticker's PREHOL_{ticker}_RAND placebo's judged anchor Sharpe >= its own anchor Sharpe.",
+    "pass_requires": "K1 OR K2, primary candidates only, subject to placebo demotion.",
+    "small_cap_vs_large_cap_report_only": "median judged Sharpe {IWM,IJR,IWC,VB} minus median judged Sharpe {SPY,QQQ}, both windows -- report only, not a gate.",
+    "multiple_comparisons": "This iteration's own n_trials=18 (12 primary + 6 placebos). A manual 12-candidate-only DSR is additionally reported in report.md."
+  },
+  "candidate_manifest_sha256": "ad026d7b342b3609db7f9bd394322016ec4ebac5d96e5bd3b2486d12e5074767",
+  "data_feasibility_sha256": "9eef7f6616ae17c7c4ba8a11fb93aaa0caefb09c4c52fff540c8aa816fb762ea"
 }
