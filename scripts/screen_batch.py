@@ -196,7 +196,9 @@ def run_batch(batch_name: str, *, iteration: str | None, smoke: bool) -> Path:
         out_dir = SCREENS_DIR / batch_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    close, _open, leg_open, leg_close, rf = lane.load_batch_panel(candidates)
+    close, _open, leg_open, leg_close, rf = lane.load_batch_panel(
+        candidates, getattr(module, "extend_panel", None)
+    )
     problems = calendar_anchor_problems(close, candidates)
     if problems:
         raise SystemExit("calendar-anchor check failed:\n" + "\n".join(problems))

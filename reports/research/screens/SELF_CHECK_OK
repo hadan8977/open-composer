@@ -2,3 +2,4 @@ Batch screening lane verified by the interactive session, 2026-09-28 02:58 UTC.
 - `scripts/screen_batch.py --self-check`: H-20260928-01 S3 offset-0 anchor Sharpe 1.821085 (expected 1.821085), median over 21 offsets 1.485281 (expected 1.485281); H-20260927-01 M3 edges anchor 0.294305 / stress -0.046785 (both exact). Runtime 14 s.
 - Generic engine spot check: smoke SPY_BH anchor CAGR 21.3% / max DD -18.6% vs independent SPY open-to-open 21.1% / close-to-close DD -18.8%. The lane's Sharpe (1.04) is excess over the risk-free rate, the same `base.Metrics` used for S3.
 Delete this file if the lane's engine or metrics change without re-running the self-check.
+- 2026-09-29 07:2x UTC autonomous round: added the opt-in `extend_panel` hook (`screen_lane.apply_panel_extension`, used only when a batch module exports `extend_panel`); `--self-check` re-run, all four numbers exact (1.821085 / 1.485281 / 0.294305 / -0.046785).

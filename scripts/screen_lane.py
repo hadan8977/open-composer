@@ -119,13 +119,39 @@ def batch_symbols(candidates: list[ScreenCandidate]) -> list[str]:
     return sorted(out)
 
 
+PanelExtender = Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+
+
+def apply_panel_extension(
+    close: pd.DataFrame, open_: pd.DataFrame, extend_panel: PanelExtender
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Append instruments that are not in the SIP daily panel (crypto sampled
+    at the US session, synthetic leveraged series, ...). `extend_panel(close,
+    open_)` returns (extra_close, extra_open) with new columns only; they are
+    reindexed to the equity calendar with no fill, so the extender must supply
+    session-aligned prices itself."""
+    extra_close, extra_open = extend_panel(close, open_)
+    if list(extra_close.columns) != list(extra_open.columns):
+        raise ValueError("extend_panel: close and open columns differ")
+    clash = sorted(set(extra_close.columns) & set(close.columns))
+    if clash:
+        raise ValueError(f"extend_panel: columns already in the panel: {clash}")
+    extra_close = extra_close.reindex(close.index)
+    extra_open = extra_open.reindex(open_.index)
+    return pd.concat([close, extra_close], axis=1), pd.concat([open_, extra_open], axis=1)
+
+
 def load_batch_panel(
     candidates: list[ScreenCandidate],
+    extend_panel: PanelExtender | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Series]:
     """(close, open_, leg_open, leg_close, rf). Sets `base.WARMUP_START` the
-    same way the tranching/combination scripts do before loading."""
+    same way the tranching/combination scripts do before loading. A batch
+    module may export `extend_panel` (see `apply_panel_extension`)."""
     base.WARMUP_START = PANEL_START
     close, open_ = base.load_panel(batch_symbols(candidates))
+    if extend_panel is not None:
+        close, open_ = apply_panel_extension(close, open_, extend_panel)
     leg_open, leg_close = salvage.legs(close, open_)
     rf = (close[RF] / close[RF].shift(1) - 1.0).fillna(0.0)
     return close, open_, leg_open, leg_close, rf

@@ -289,3 +289,28 @@ def test_convention_guard_rejects_a_series_one_session_off_s3() -> None:
         lane.assert_same_session_convention(shifted, s3, window)
     neutral = pd.Series(rng.normal(0, 0.01, len(idx)), index=idx)
     lane.assert_same_session_convention(neutral, s3, window)
+
+
+def test_panel_extension_appends_session_aligned_columns_without_fill() -> None:
+    index = _synthetic_index(5)
+    close, open_ = _synthetic_panel(index)
+
+    def extend(c: pd.DataFrame, o: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+        extra_index = c.index[1:].append(pd.DatetimeIndex([pd.Timestamp("2030-01-01")]))
+        extra = pd.DataFrame({"BTCX": np.arange(1.0, len(extra_index) + 1)}, index=extra_index)
+        return extra, extra * 0.99
+
+    out_close, out_open = lane.apply_panel_extension(close, open_, extend)
+    assert list(out_close.columns) == [*close.columns, "BTCX"]
+    assert out_close.index.equals(close.index)
+    assert np.isnan(out_close["BTCX"].iloc[0])  # no back- or forward-fill
+    assert out_close["BTCX"].iloc[1] == 1.0
+    assert out_open["BTCX"].iloc[1] == pytest.approx(0.99)
+
+
+def test_panel_extension_rejects_existing_columns() -> None:
+    index = _synthetic_index(5)
+    close, open_ = _synthetic_panel(index)
+    col = close.columns[0]
+    with pytest.raises(ValueError, match="already in the panel"):
+        lane.apply_panel_extension(close, open_, lambda c, o: (c[[col]], o[[col]]))
