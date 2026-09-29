@@ -344,7 +344,7 @@
   - 2026-09-28 结果（协调者已对照 results.json 逐条核对 24 条）：0 保留、0 强保留、5 条近期观察（全是 FACTOR 菜单，最好 FACTOR_L252_N1_WK 对标窗偏移中位数夏普 1.44、压力期 0.18，DSR 0.64），19 条否定。K2 全部不过：压力期组合增量 −0.08 到 −0.31，对标窗与 S3 相关 0.45–0.81。INDUSTRY 菜单最好的对标窗只有 0.99。两条方向登记为 refuted。产物：`reports/research/iterations/h20260928_40_equity_etf_menus/`、`reports/research/screens/h20260928_40_equity_etf_menus/`，5 条 watch_recent 已进 kept.jsonl（周一刷新前向跟踪）。
 
 ### T-20260928-41 小批量：单一国家股票指数 ETF 动量轮动（边界任务，机主先确认范围）
-- status: blocked
+- status: ready
 - priority: 3
 - not_before:
 - goal: 同一套机制（见 T-20260928-40）应用到单一国家股票 ETF（EWJ 日本、EWG 德国、EWU 英国、EWA 澳大利亚、EWC 加拿大、EWZ 巴西、INDA 印度、EWY 韩国、EWT 台湾）。这些都是美股交易所上市的股票类 ETF（不是债券/黄金/商品/美元），严格符合"只用美股股票类 ETF"的范围，但和机主否决的跨资产方向相邻——本任务的第一步就是让机主确认是否在范围内，避免白测。来源：Quantpedia "Momentum Factor Effect in Country Equity Indexes"（https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes，18 个国家 MSCI 指数 1975-2014 动量+低波动择时的已发表设计，本任务只借用机制，不借用其样本期数字）。
@@ -354,6 +354,7 @@
 - notes:
   - 2026-09-28 19:xx UTC 自动轮缺口搜索添加。
   - 2026-09-28 20:1x UTC 自动轮：改为 blocked，等机主确认单一国家股票 ETF 是否在"不做跨资产"之外；未确认前不要花算力。
+  - 2026-09-29 机主确认："etf是可以的，是美股里能买到的就算"。单一国家股票 ETF 在范围内，可以测。
 
 ### T-20260928-42 批量筛选：期权到期周日历效应（大盘/指数 ETF，只做多）
 - status: done
@@ -422,7 +423,7 @@
   - 2026-09-29 结果（协调者已对照 leaderboard.json 核对 18 条）：否定，0/12。只有 PAIR_SMHQQQ_L63_MO 自身过 K1（对标窗 1.28、压力期 0.77），但预注册对照否证触发：静态 50/50 SMH+QQQ 压力期 0.89 更高，切换没有增量；其余 10 条对标窗 −0.05 到 0.58；K2 对标窗全负。DSR 最高 0.60。登记簿 refuted。产物：`reports/research/iterations/h20260928_44_etf_pair_switch/`。
 
 ### T-20260929-01 批量筛选：杠杆 ETF 收盘再平衡流引发的次日均值回归（SPY/QQQ/SMH，只做多）
-- status: ready
+- status: running
 - priority: 2
 - not_before:
 - goal: 缺口搜索（`gap-search-2026-09-29-01`）覆盖地图 `flows_structural.rebalance_and_hedging_flows` 格子明确标记"LETF close-rebalancing flow ... 从未搜索"。机制：2x/3x 杠杆和反向 ETF 每天收盘前必须再平衡以维持目标杠杆比例，标的当日出现大幅波动时会产生方向已知、规模可估的收盘买卖盘，文献认为这会造成尾盘动量和次日均值回归。这是纯收盘价规则（不需要期权、AUM 或流量数据），只需要已在本地面板里的 SPY/QQQ/SMH 及其杠杆对，是这个格子最便宜能测的候选。
@@ -442,6 +443,7 @@
 - notes:
   - 2026-09-29 gap search (`gap-search-2026-09-29-01`) 添加。
   - 2026-09-29 02:1x UTC 协调者合并入队并修订（执行时以本条为准，覆盖上面 plan 中冲突的部分）：(1) 只做多的"次日回归"只在**下跌**日成立（大跌日杠杆 ETF 收盘卖出，次日反弹），所以信号改为"当日收益 ≤ −阈值"，不用绝对值；(2) 3x 产品当日收益 ≈ 3 × 标的收益，两种信号来源是重复维度，删掉，只用标的自身收益；网格改为 {SPY,QQQ,SMH} × 阈值 {2%,3%} × 持有 {1,3} 天 = 12 个 `LETF_{T}_D{2,3}_H{1,3}`，另加 3 个同频率随机日安慰剂（按日期哈希的确定性伪随机，每个标的一个，频率取 D2_H1 的历史触发率）；(3) 和 `reports/research/iterations/h20260924_01_etf_dip_reversion/` 重叠（6 条已发表的 ETF 抄底规则，当时只按旧 G1/G1' 判，最好对标窗夏普 1.50、同收盘成交），先读它的 decision-record，在 direction-review 写清差异；同一批里把它的 6 条规则在 SPY、QQQ 1x 上按本合同（次日开盘成交）重判 K1/K2，12 个 `DIP_{rule}_{SPY,QQQ}`，全批 27 个，DSR 按 27 报。
+  - 2026-09-29 04:1x UTC 自动轮开始，派 sonnet-high 子代理执行（按上面 02:1x 修订的 27 候选网格）。
 
 ### T-20260929-02 节前效应在小盘/低流动性股票层面的复现（signal_card 事件模式，不需要新数据）
 - status: ready
@@ -463,3 +465,23 @@
 - notes:
   - 2026-09-29 gap search (`gap-search-2026-09-29-01`) 添加。
   - 2026-09-29 02:1x UTC 协调者合并入队并修订（执行时以本条为准）：signal_card 的超额收益是相对"全体股票等权"算的，节前这种全市场同一天的日历事件在 event 模式里会被抵消，只剩"小盘减全市场"的相对差，回答不了"节前持有能不能赚钱"。改为批量通道的 D 频率日历规则（照抄 `scripts/screen_batches/h20260928_42_opex_week.py` 的日历写法）：节前最后一个交易日前一天收盘发信号、次日开盘买入，持有 {1, 2} 个交易日后清仓；标的 {IWM, IJR, IWC, VB}（小盘/微盘，本地面板已有）+ {SPY, QQQ}（大盘对照，来源预期"已消失"）= 12 个 `PREHOL_{T}_H{1,2}`；安慰剂：每个标的一个"同样次数、随机非节前日"的确定性伪随机版本（6 个）。判定 K1/K2；另报告小盘组与大盘组对标窗夏普差是否为正（来源的"只在小盘"模式）。signal_card 的 t1/t3 对比只在批量结果为正时再做。
+
+### T-20260929-10 VIX 双信号波动率风险溢价（Zarattini/Mele/Aziz，SSRN 5316487；只做多的 ETP 版本）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 机主 2026-09-29 放开"美股能买到的 ETF 都算"，`dir:vix_term_structure_short_vol` 的不可执行理由（没有 VX 期货）有了新信息：信号只要 VIX 和 VIX3M 两个指数（CBOE 免费、FRED 有 VIXCLS），QuantConnect 的独立复现用的是 ETP。检验只做多的版本，在对标窗和压力期能否过 K1，或者作为 S3 的搭配过 K2。
+- plan: 先打开 SSRN 5316487 原文和 QuantConnect 复现页（2016-01 至 2026-07 夏普 0.729，SPY 0.582；25 组参数 0.713–0.773），记下信号定义和仓位规则。批量通道候选：信号一是 VIX 减 10 日已实现波动率；信号二是 VIX/VIX3M 的期限结构。空波动率时持有 SVXY（2018-02-27 起是 −0.5 倍），否则持有 SPY 或 SHY；仓位按 VIX/100 缩放，照原文。候选不超过 12 个，包含原文参数和 2–3 个邻近参数，加一个随机日期安慰剂。按运行手册第 5 节判定。另外报告和"一半 SMH、一半 QQQ 静态持有"的对比。2018-02 之前 SVXY 是 −1 倍，压力期要分段报告，或从 2018-03 起算并写明。
+- done_when: 迭代 `--stage final` 通过；登记簿 `dir:vix_term_structure_short_vol` 追加新一行，写明重开理由和结论。
+- notes:
+  - 2026-09-29 交互会话添加（机主给的研究清单第 3 项）。
+
+### T-20260929-11 多季度盈余意外历史的线性模型（Kaczmarek & Zaremba 2025 FRL；ML 复活 PEAD）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 机主研究清单第 1 项。单季 SUE 在我们的数据上已否定（`dir:pead_xbrl_sue_filing_date`、`dir:pead_xbrl_8k_llm`），原文的新意是用过去多个季度的 SUE 序列训练 elastic net，并且说增益在大盘股里最强。检验它在我们的 SEC XBRL 数据上，是否比单季 SUE 和动量有增量。
+- plan: 先打开原文（Finance Research Letters 2025）和 Wang 等（OR Spectrum 2025），记下特征、标签和样本外设计。特征用 `data/features/sec_fundamentals_daily` 的 sue_eps/sue_rev，按申报可见日取过去 8 个季度，加连续超预期次数。选择窗 2016-06→2023-12 训练 elastic net（时间序列交叉验证选正则），测试窗 2024-01→2026-09 只跑一次。报告测试 IC、前 50 只月度组合在 10/20bp 下的夏普、和单季 SUE 及 12-1 动量的对比，以及和 S3 的相关性。按运行手册第 5 节判定，另外报告扣掉 SPY/QQQ 贝塔之后的超额。
+- done_when: 迭代 `--stage final` 通过；登记簿新增 `dir:ml_multiquarter_sue_history`。
+- notes:
+  - 2026-09-29 交互会话添加（机主给的研究清单第 1 项）。
