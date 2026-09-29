@@ -274,3 +274,18 @@ def test_calendar_anchor_check_flags_month_end_rule_declared_monthly() -> None:
     problems = sb.calendar_anchor_problems(close, [bad, good, daily])
 
     assert len(problems) == 1 and problems[0].startswith("BAD:")
+
+
+def test_convention_guard_rejects_a_series_one_session_off_s3() -> None:
+    idx = pd.bdate_range("2024-01-02", periods=400)
+    rng = np.random.default_rng(7)
+    market = pd.Series(rng.normal(0, 0.01, len(idx)), index=idx)
+    s3 = 2.0 * market + pd.Series(rng.normal(0, 0.004, len(idx)), index=idx)
+    window = ("2024-01-02", str(idx[-1].date()))
+    aligned = market + pd.Series(rng.normal(0, 0.004, len(idx)), index=idx)
+    lane.assert_same_session_convention(aligned, s3, window)
+    shifted = aligned.shift(-1).fillna(0.0)
+    with pytest.raises(ValueError, match="one session off"):
+        lane.assert_same_session_convention(shifted, s3, window)
+    neutral = pd.Series(rng.normal(0, 0.01, len(idx)), index=idx)
+    lane.assert_same_session_convention(neutral, s3, window)

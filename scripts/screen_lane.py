@@ -340,6 +340,7 @@ def diversifier_edge_for_offset(
     """edge = Sharpe(S3 + candidate, inverse-vol) - Sharpe(k*S3 + (1-k)*SHY),
     k solved (`combo.solve_k`) so the control matches the combo's realized
     vol in this window."""
+    assert_same_session_convention(candidate_ret10, s3_ret10, window)
     index = candidate_ret10.index.intersection(s3_ret10.index)
     combo_ret, combo_turn = combine_two_sleeves(
         {"s3": s3_ret10, "candidate": candidate_ret10}, index, COST_BPS_PRIMARY
@@ -357,6 +358,39 @@ def diversifier_edge_for_offset(
     return combo_met.sharpe - ctrl_met.sharpe
 
 
+def assert_same_session_convention(
+    candidate_ret: pd.Series, s3_ret: pd.Series, window: tuple[str, str]
+) -> None:
+    """Refuse a candidate whose daily returns sit one session off S3's.
+
+    S3 (salvage engine) is close-to-close with next-open fills on rebalance
+    days. A series built on another engine's convention (e.g. signal_card's
+    open-to-open ``next_open_returns``, labelled at the start of the
+    interval) correlates with S3 more at lag +/-1 than at lag 0; mixing them
+    understates the correlation and overstates every combination edge
+    (2026-09-29, h20260929_12 first run). Near-zero correlations at every lag
+    (hedged or market-neutral books) pass.
+    """
+    a, b = window
+    idx = candidate_ret.index.intersection(s3_ret.index)
+    idx = idx[(idx >= a) & (idx <= b)]
+    if len(idx) < 30:
+        return
+    c = candidate_ret.reindex(s3_ret.index)
+    s = s3_ret
+    lag0 = abs(float(c.loc[idx].corr(s.loc[idx])))
+    lagged = max(
+        abs(float(c.shift(1).loc[idx].corr(s.loc[idx]))),
+        abs(float(c.shift(-1).loc[idx].corr(s.loc[idx]))),
+    )
+    if lagged > 0.2 and lagged > lag0 + 0.1:
+        raise ValueError(
+            "candidate returns look one session off S3's convention "
+            f"(|corr| lag0 {lag0:.2f} vs lag+/-1 {lagged:.2f} in {a}..{b}); "
+            "rebuild the candidate on S3's close-to-close, next-open-fill convention"
+        )
+
+
 def correlation_with_s3(
     candidate_ret: pd.Series, s3_ret: pd.Series, window: tuple[str, str]
 ) -> float:
@@ -365,6 +399,7 @@ def correlation_with_s3(
     idx = idx[(idx >= a) & (idx <= b)]
     if len(idx) < 2:
         return float("nan")
+    assert_same_session_convention(candidate_ret, s3_ret, window)
     sub = pd.DataFrame({"c": candidate_ret.loc[idx], "s3": s3_ret.loc[idx]})
     if sub["c"].std(ddof=1) == 0 or sub["s3"].std(ddof=1) == 0:
         return float("nan")
