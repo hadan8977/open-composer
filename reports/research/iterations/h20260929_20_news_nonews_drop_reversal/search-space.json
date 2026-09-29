@@ -1,0 +1,81 @@
+{
+  "iter_id": "h20260929_20_news_nonews_drop_reversal",
+  "strategy_name": "h20260929_20_news_nonews_drop_reversal",
+  "source_spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+  "spec_hash": "11e205f8fed8bebf89b9240da8a602484fca303ad7703e64af5f1d53dfd45d30",
+  "schema_version": 3,
+  "created_at": "2026-09-29T07:19:46+00:00",
+  "single_mechanism_no_campaign_attestation": true,
+  "objective": "Preregister 12 candidates (2 drop thresholds x 3 hold horizons x 2 legs: long no-news reversal, short news-drift) to test dir:no_news_price_shock_reversal_chan for the first time locally. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "P1_news_vs_nonews_drop",
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "DROP_NN_D5_H1",
+          "DROP_NN_D5_H3",
+          "DROP_NN_D5_H5",
+          "DROP_NN_D8_H1",
+          "DROP_NN_D8_H3",
+          "DROP_NN_D8_H5",
+          "DRIFT_NEWS_D5_H1",
+          "DRIFT_NEWS_D5_H3",
+          "DRIFT_NEWS_D5_H5",
+          "DRIFT_NEWS_D8_H1",
+          "DRIFT_NEWS_D8_H3",
+          "DRIFT_NEWS_D8_H5"
+        ],
+        "D_pct": [
+          5,
+          8
+        ],
+        "hold_sessions": [
+          1,
+          3,
+          5
+        ],
+        "leg": [
+          "no_news_long",
+          "news_short"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top_500": 3.0,
+          "tier_500_1000": 6.0,
+          "tier_1000_1500": 12.0
+        },
+        "cost_multiplier_report": [
+          1,
+          2
+        ],
+        "borrow_fee_annual_pct_short_leg": 1.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "BIL_buy_and_hold",
+        "S3_reference_for_correlation_and_diversifier_edge"
+      ]
+    }
+  ],
+  "total_candidate_budget": 12,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/candidate-manifest.json",
+  "candidate_manifest_sha256": "9f7f8c4c66125b1cae3513c121672ef4ddb0d0ba8f37529ef571fef03844b432",
+  "data_feasibility_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/data-feasibility.json",
+  "data_feasibility_sha256": "7ba35c994efda3672ebc4afe2c5845535999aea1cff9d9d1f9450f1b4a883cfa",
+  "cost_table_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/results.json",
+    "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/report.md"
+  ]
+}

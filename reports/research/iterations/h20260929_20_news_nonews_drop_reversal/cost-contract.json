@@ -1,0 +1,24 @@
+{
+  "iter_id": "h20260929_20_news_nonews_drop_reversal",
+  "frozen_at": "2026-09-29T07:19:46+00:00",
+  "spread_cost_bps_per_side_by_adv_tier": {
+    "top_500": 3.0,
+    "tier_500_1000": 6.0,
+    "tier_1000_1500": 12.0
+  },
+  "spread_cost_tier_assignment": "Fixed at the trade's entry-day (t-1) ADV tier for the life of the trade (both entry and exit legs charged at the same rate); charged on turnover (sum |weight change| that day) per symbol, not on notional held.",
+  "cost_multiplier_variants_reported": [1, 2],
+  "short_borrow_fee_annual_pct": 1.0,
+  "short_borrow_fee_accrual": "Accrued daily on the held short notional (|weight| * 0.01 / 252 per session while the position is open), applies only to DRIFT_NEWS_* candidates (top-1000-ADV tier, easy-to-borrow proxy).",
+  "fill_convention": "Signal at session close of day t; fill at the open of session t+1; daily returns close-to-close with next-open fills via the same P&L formula as the frozen S3 engine (scripts/run_h20260922_05_salvage.py legs()/simulate()), reused unedited for the leg-return formulas and extended (in this iteration's own script) to support a per-symbol cost-bps vector and the borrow-fee term, which the frozen engine does not support.",
+  "cash_sleeve": "BIL (risk-free proxy, consistent with screen_lane.py's RF constant).",
+  "position_sizing": "Equal-weight open positions, min(1/n_open, 0.10) per position, <=20 concurrent, remainder in BIL. For the short leg, negative weights are applied directly to the same P&L formula (w_i * r_i); no separate margin/collateral model beyond the borrow fee -- a simplification consistent with the frozen engine's own cash-remainder convention (1 - sum(weights) to BIL, which exceeds 100% notional in BIL when net short, approximating full cash collateralization of short proceeds).",
+  "plausibility_sources": [
+    "reports/harness/source_cards/h20260929_20_news_nonews_drop_reversal.jsonl (referenced in external-brief.json: IBKR short-sale-cost schedule, QuantRocket borrow-fee context, a liquidity/spread explainer) -- used only to confirm the brief's preregistered cost numbers are directionally plausible, not to tune them."
+  ],
+  "not_modeled": [
+    "Market impact beyond the fixed spread-bps assumption (no size-dependent impact model).",
+    "Locate/hard-to-borrow fee spikes beyond the flat 1%/year (the top-1000-ADV eligibility restriction is the only easy-to-borrow control).",
+    "Financing/margin interest on the long leg beyond the BIL cash-sleeve return."
+  ]
+}

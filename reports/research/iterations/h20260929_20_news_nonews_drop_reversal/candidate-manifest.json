@@ -1,0 +1,348 @@
+{
+  "iter_id": "h20260929_20_news_nonews_drop_reversal",
+  "generated_at": "2026-09-29T07:19:46+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_20_news_nonews_drop_reversal",
+  "objective": "Preregister the exact 12 candidates for the news-vs-no-news drop reversal/drift test (dir:no_news_price_shock_reversal_chan) before any return, Sharpe or trade statistic is computed, for scripts/run_h20260929_20_drop_reversal.py. No candidate is added, removed or retuned after seeing a result.",
+  "candidate_count": 12,
+  "source_spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+  "spec_hash": "11e205f8fed8bebf89b9240da8a602484fca303ad7703e64af5f1d53dfd45d30",
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml": "11e205f8fed8bebf89b9240da8a602484fca303ad7703e64af5f1d53dfd45d30"
+  },
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_plus_universe_broad_news_nonews": {
+        "price_glob": "data/sip/daily/*/*.parquet",
+        "adv_tier_source": "data/features/universe_broad/*.parquet (month_end, symbol, adv_rank; 60-trading-day trailing dollar-ADV, PIT-snapped at each completed month-end)",
+        "news_source": "data/features/news_packets/{2024,2025,2026}.parquet (symbols, visible_at)",
+        "earnings_8k_source": "data/features/earnings_events/{2024,2025,2026}.parquet (ticker, acceptance_utc, items -- item-2.02 earnings 8-K)",
+        "symbols": "SPY, BIL, SHY plus every symbol ever ranked <=1500 in data/features/universe_broad since 2023-10-01 (1,869 distinct tickers)",
+        "confirmed_coverage": "see data-feasibility.json for exact row counts and the documented STRESS-window infeasibility finding"
+      }
+    },
+    "features": {
+      "feature_v1_market_adjusted_drop_news_classification": {
+        "decision_lag_sessions": 1,
+        "definition": "Event trigger: (stock close-to-close return - SPY close-to-close return) on day t <= -D, D in {0.05,0.08}, with the stock's ADV tier (data/features/universe_broad, as of t-1) <=1500 (long leg) or <=1000 (short leg). News classification: 'news' if a data/features/news_packets row (symbol in its symbols array) has visible_at in (session_close(t-1), session_close(t)], OR a data/features/earnings_events row for that ticker has acceptance_utc in the same window; session_close = 16:00 America/New_York (DST-aware), bucketed via searchsorted against the trading-day close-timestamp array so every timestamp maps to exactly one session with no look-ahead."
+      }
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill_h_session_hold": {
+        "definition": "Signal at session close of day t; entry at the open of t+1; hold h in {1,3,5} sessions (weights effective for rows t+1..t+h under the close-to-close/next-open-fill convention, same P&L formula as scripts/run_h20260922_05_salvage.py legs()/simulate()); exit at the close of t+h. No pyramiding per symbol."
+      }
+    },
+    "validation": {
+      "validation_v1_test_decisive_stress_infeasible_2026_09_29": {
+        "TEST_decisive": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "STRESS_data_infeasible": [
+          "2016-05-02",
+          "2023-09-15",
+          "not computed: PIT news/8-K coverage starts only in 2024, see data-feasibility.json"
+        ],
+        "decision_bar": "best DROP_NN_* cell in TEST at base cost: calendar Sharpe >=1.19 OR S3 combo edge >=+0.05, AND trade-level average return per trade above the shuffled-label placebo (t>=2, clustered by date), AND survives 2x costs. DRIFT_NEWS_* cells reported the same way, not gating/gated by DROP_NN_*. DSR with the full 12-candidate trial count."
+      }
+    },
+    "costs": {
+      "cost_v1_adv_tiered_spread_plus_borrow": {
+        "contract_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_news_nonews_vs_s3_and_spy": {
+        "members": [
+          "SPY_buy_and_hold",
+          "BIL_buy_and_hold",
+          "S3_reference_for_correlation_and_diversifier_edge"
+        ]
+      }
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "DROP_NN_D5_H1",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_long",
+      "method": "no_news_drop_reversal_long",
+      "ablation": "d5pct_h1session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "no_news_long",
+        "D_pct": 5,
+        "hold_sessions": 1,
+        "eligible_tier": "top_1500",
+        "source_card": "chan_2003_jfe_news_nonews_drift_reversal"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DROP_NN_D5_H3",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_long",
+      "method": "no_news_drop_reversal_long",
+      "ablation": "d5pct_h3session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "no_news_long",
+        "D_pct": 5,
+        "hold_sessions": 3,
+        "eligible_tier": "top_1500",
+        "source_card": "chan_2003_jfe_news_nonews_drift_reversal"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DROP_NN_D5_H5",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_long",
+      "method": "no_news_drop_reversal_long",
+      "ablation": "d5pct_h5session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "no_news_long",
+        "D_pct": 5,
+        "hold_sessions": 5,
+        "eligible_tier": "top_1500",
+        "source_card": "chan_2003_jfe_news_nonews_drift_reversal"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DROP_NN_D8_H1",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_long",
+      "method": "no_news_drop_reversal_long",
+      "ablation": "d8pct_h1session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "no_news_long",
+        "D_pct": 8,
+        "hold_sessions": 1,
+        "eligible_tier": "top_1500",
+        "source_card": "chan_2003_jfe_news_nonews_drift_reversal"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DROP_NN_D8_H3",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_long",
+      "method": "no_news_drop_reversal_long",
+      "ablation": "d8pct_h3session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "no_news_long",
+        "D_pct": 8,
+        "hold_sessions": 3,
+        "eligible_tier": "top_1500",
+        "source_card": "chan_2003_jfe_news_nonews_drift_reversal"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DROP_NN_D8_H5",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_long",
+      "method": "no_news_drop_reversal_long",
+      "ablation": "d8pct_h5session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "no_news_long",
+        "D_pct": 8,
+        "hold_sessions": 5,
+        "eligible_tier": "top_1500",
+        "source_card": "chan_2003_jfe_news_nonews_drift_reversal"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DRIFT_NEWS_D5_H1",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_short",
+      "method": "news_drop_drift_short",
+      "ablation": "d5pct_h1session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "news_short",
+        "D_pct": 5,
+        "hold_sessions": 1,
+        "eligible_tier": "top_1000",
+        "source_card": "savor_2012_jfe_price_shocks_information"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DRIFT_NEWS_D5_H3",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_short",
+      "method": "news_drop_drift_short",
+      "ablation": "d5pct_h3session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "news_short",
+        "D_pct": 5,
+        "hold_sessions": 3,
+        "eligible_tier": "top_1000",
+        "source_card": "savor_2012_jfe_price_shocks_information"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DRIFT_NEWS_D5_H5",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_short",
+      "method": "news_drop_drift_short",
+      "ablation": "d5pct_h5session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "news_short",
+        "D_pct": 5,
+        "hold_sessions": 5,
+        "eligible_tier": "top_1000",
+        "source_card": "savor_2012_jfe_price_shocks_information"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DRIFT_NEWS_D8_H1",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_short",
+      "method": "news_drop_drift_short",
+      "ablation": "d8pct_h1session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "news_short",
+        "D_pct": 8,
+        "hold_sessions": 1,
+        "eligible_tier": "top_1000",
+        "source_card": "savor_2012_jfe_price_shocks_information"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DRIFT_NEWS_D8_H3",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_short",
+      "method": "news_drop_drift_short",
+      "ablation": "d8pct_h3session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "news_short",
+        "D_pct": 8,
+        "hold_sessions": 3,
+        "eligible_tier": "top_1000",
+        "source_card": "savor_2012_jfe_price_shocks_information"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "DRIFT_NEWS_D8_H5",
+      "path": "P1_news_vs_nonews_drop",
+      "role": "primary_deterministic_event_candidate_short",
+      "method": "news_drop_drift_short",
+      "ablation": "d8pct_h5session",
+      "spec_path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "fallback": "BIL",
+      "data_contract": "data_v1_sip_daily_plus_universe_broad_news_nonews",
+      "feature_contract": "feature_v1_market_adjusted_drop_news_classification",
+      "label_contract": "label_v1_close_signal_next_open_fill_h_session_hold",
+      "validation_contract": "validation_v1_test_decisive_stress_infeasible_2026_09_29",
+      "cost_contract": "cost_v1_adv_tiered_spread_plus_borrow",
+      "benchmark_contract": "benchmark_v1_news_nonews_vs_s3_and_spy",
+      "parameters": {
+        "leg": "news_short",
+        "D_pct": 8,
+        "hold_sessions": 5,
+        "eligible_tier": "top_1000",
+        "source_card": "savor_2012_jfe_price_shocks_information"
+      },
+      "eligible_for_keep_tiers": true
+    }
+  ],
+  "placebos": {
+    "shuffled_label": "For each cell's event set, shuffle the news/no-news label across that day's qualifying drop events (preserving the day's count of news vs. no-news events), recompute the average return per trade for the reassigned group; compared at the trade level (t-stat clustered by event date), not as a separate portfolio candidate or counted in candidate_count.",
+    "redated": "For each cell's event set, move each event to a random non-event trading date for the same stock within the sample; recompute average return per trade the same way. Both placebos are computed for every candidate as internal falsification checks, not additional decision cells."
+  },
+  "trial_count_and_dsr_note": "DSR computed with the full preregistered trial count of 12 (candidate_count), per the brief's decision rule.",
+  "keep_rule": "Continue only if, in TEST at base cost, the best DROP_NN_* cell reaches calendar Sharpe >=1.19 OR S3 combo edge >=+0.05, with trade-level average return per trade above the shuffled-label placebo (t>=2, clustered by date), surviving 2x costs. DRIFT_NEWS_* cells reported the same way, independently of the DROP_NN_* verdict."
+}

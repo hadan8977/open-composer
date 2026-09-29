@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_20_news_nonews_drop_reversal",
+  "reviewed_at": "2026-09-29T07:19:46+00:00",
+  "decision": "proceed",
+  "objective": "First local test of dir:no_news_price_shock_reversal_chan (registry status: harvested, never backtested locally). Preregister 12 candidates (2 drop thresholds D in {5%,8%} x 3 hold horizons h in {1,3,5} sessions x 2 legs: long no-news drops (reversal) and short news-accompanied drops (drift, top-1000-ADV tier only, easy-to-borrow proxy, borrow cost modeled), all on close-to-close/next-open-fill calendar-time books comparable to S3) to resolve whether the Chan (2003)/Savor (2012) news-vs-no-news mechanism survives 2024-2026 costs and clears the owner's short-horizon-selective bar (high hit rate, high return per trade, few trades).",
+  "target_regime_and_horizon": "TEST 2024-01-08..2026-09-17 is the anchor/decisive window per the brief. STRESS 2016-05-02..2023-09-15 is DATA-INFEASIBLE for this specific mechanism and is not computed as a decision window: the two PIT news sources used for classification (data/features/news_packets headline coverage, data/features/earnings_events 8-K item-2.02 filings) both have dense coverage starting only in 2024 (news_packets: 261/248/174 thousand rows in 2024/2025/2026 vs a combined 195 rows for all of 2011-2023; earnings_events/8-K: acceptance_utc range 2024-01-02..2026-09-17, zero rows before 2024). Classifying 2016-2023 drops as 'no-news' would mostly reflect missing data coverage, not an absence of news, and would bias the STRESS-window no-news leg upward (many real news days would be mislabeled no-news). This is checked and documented before any return is computed, per the data section's 'check coverage first, restrict windows to coverage' instruction; the brief's own 'TEST ... (anchor, decisive)' language makes this workable since TEST alone gates the decision.",
+  "existing_solution_comparison": "`uv run oc research directions check` (both this session, and the 2026-09-29 intel pass I-20260929-01 section 2.2) confirms dir:no_news_price_shock_reversal_chan is registered with status=harvested and has never been locally backtested -- this iteration is the first local test, not a repeat. No local engine currently builds a dynamic-membership, event-triggered, capacity-capped (<=20 concurrent) calendar-time book on a rotating top-1500-ADV universe; the closest reusable infrastructure is scripts/screen_lane.py's frozen close-to-close/next-open-fill simulator (salvage.legs/salvage.simulate) and S3-comparison helpers (correlation_with_s3, diversifier_edge_for_offset, assert_same_session_convention, s3_incumbent), all reused unedited by this iteration's own scripts rather than reimplemented; screen_lane's own weights_fn/offset abstraction is built for a small fixed-universe periodic-rebalance rule and does not fit a rotating-universe event book, so this iteration writes its own weights-frame builder (scripts/run_h20260929_20_drop_reversal.py) that calls the same frozen salvage.simulate-equivalent P&L formula, extended (in this iteration's own code, not by editing salvage.py) to support per-symbol ADV-tier spread costs and a short-borrow carry cost, neither of which the frozen engine supports.",
+  "remaining_evidence_gap": "Whether the no-news reversal leg or the news-drift (short) leg actually clears the brief's decision bar (calendar Sharpe >=1.19 OR S3 combo edge >=+0.05, trade-level edge over the shuffled-label placebo with t>=2, survives 2x costs) in the 2024-2026 US top-1500-ADV universe, given (a) Chan (2003)'s own robustness finding that the effect concentrates in small/illiquid names -- our cost tiering and ADV eligibility partly controls for this but does not guarantee survival, and (b) Dyl/Yuksel/Zaynutdinova (2019)'s decay finding that reversal/continuation magnitude shrank as liquidity improved post-decimalization, in a sample ending a decade before our window, with no post-2020 replication located -- meaning the current-era magnitude is genuinely unmeasured going in. This is exactly what the backtest computes, not assumed.",
+  "negative_experiments_checked": "dir:end_of_day_reversal (already registered, a different mechanism: intraday last-30-minutes cross-sectional reversal, not headline-conditioned) and dir:letf_close_rebalancing_flow_reversal (refuted 2026-09-29, leveraged-ETF-flow mechanism, unrelated) are both distinct from this direction per the registry entry's own notes and are not reopened or duplicated here. dir:pead_xbrl_sue_filing_date and dir:pead_xbrl_8k_llm (post-earnings-announcement drift on SUE) are a related-but-distinct mechanism (drift conditioned on earnings surprise sign/magnitude, not on news-vs-no-news classification of a price drop) and were both evidence_too_weak locally; this iteration's short-news-drift leg is conceptually adjacent but conditions on the presence of any identifiable news/earnings event on a large-drop day, not on the sign or size of an earnings surprise, so it is not a rerun of the PEAD result.",
+  "cost_and_execution_assumptions": "Signal at the close of day t (drop detected on a close-to-close, market[SPY]-adjusted basis); entry at the open of t+1; exit at the close of t+h for h in {1,3,5}; daily returns built close-to-close with next-open fills via the same P&L formula as the frozen S3 engine (salvage.legs/salvage.simulate), so correlation_with_s3/diversifier_edge_for_offset/assert_same_session_convention (screen_lane.py, reused unedited) are computed on a like-for-like convention, not the signal_card open-to-open convention the 2026-09-29 h20260929_12 session found understates correlation when mixed with S3's convention. Spread cost per side by ADV tier: top-500 3bp, 500-1000 6bp, 1000-1500 12bp, charged on turnover; 2x-cost variant also reported. Short leg (news-drift, top-1000-ADV tier only as an easy-to-borrow proxy) adds a 1%/year borrow fee accrued daily on the held short notional, on top of the tiered spread cost. Portfolio: equal-weight open positions capped at 20 concurrent and 10% of capital each, remainder in BIL; when more qualifying signals fire on one day than remaining capacity, the largest-drop-first, no-pyramiding-per-symbol tie-break is used (documented in candidate-manifest.json) -- a preregistered deterministic rule, not chosen after seeing results.",
+  "stop_condition": "If, in TEST at base costs, no preregistered long no-news cell reaches calendar Sharpe >=1.19 or S3 combo edge >=+0.05 with a trade-level edge over the shuffled-label placebo (t>=2) surviving 2x costs, dir:no_news_price_shock_reversal_chan is refuted for this scope (US top-1500-ADV, 2024-2026, D in {5%,8%}, h in {1,3,5}) and not re-tuned on the same universe/window without a genuinely new signal (e.g. an intraday or options-flow feature this repo's daily-only data does not yet support). The short news-drift cells are reported the same way as separate candidates and do not gate the no-news leg's verdict or vice versa.",
+  "queries": [
+    {
+      "query": "Chan 2003 \"no news\" price shock reversal replication 2020 2021 2022 2023 stock returns",
+      "opened_urls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S0304405X03001466"
+      ],
+      "searched_at": "2026-09-29T07:05:00+00:00"
+    },
+    {
+      "query": "Savor 2012 \"stock returns after major price shocks\" news no news replication",
+      "opened_urls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S0304405X12001377",
+        "https://faculty.wharton.upenn.edu/stock-returns-after-major-price-shocks-the-impact-of-information-publishedpaper-file/"
+      ],
+      "searched_at": "2026-09-29T07:06:00+00:00"
+    },
+    {
+      "query": "\"large price movements\" reversal continuation news no news 2015 2016 2017 2018 2019 individual stocks paper",
+      "opened_urls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S014829631830420X",
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3468645",
+        "https://ideas.repec.org/a/eee/jbrese/v95y2019icp1-12.html"
+      ],
+      "searched_at": "2026-09-29T07:10:00+00:00"
+    },
+    {
+      "query": "no news price shock reversal strategy 2023 2024 2025 out of sample quant",
+      "opened_urls": [
+        "https://quantpedia.com/strategy-tags/reversal/"
+      ],
+      "searched_at": "2026-09-29T07:12:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X03001466",
+      "claim_id": "chan_2003_jfe_news_nonews_drift_reversal",
+      "claim": "Using a headline database to classify large individual-stock price moves as accompanied by identifiable public news or not: stocks with bad public news show significant negative drift for up to 12 months (slow reaction/underreaction); stocks with a large move and NO identifiable news tend to reverse the following month (overreaction to a non-fundamental move); both hold controlling for size/book-to-market; the no-news reversal is concentrated in smaller, more illiquid stocks and weakens (does not vanish) once low-priced stocks are excluded.",
+      "source_type": "paper",
+      "published_or_updated_at": "2003-01-01",
+      "market_and_period": "US equities, headline-database sample predating 2000",
+      "applicability": "Grounds the event definition and the expectation of an ADV-tier-concentrated effect.",
+      "limitations": "Abstract-level only, full text paywalled.",
+      "independent_replication": "Corroborated by Savor (2012, different proxy) and Dyl/Yuksel/Zaynutdinova (2019, sample to 2015); no post-2020 replication found.",
+      "fetched_at": "2026-09-29T00:00:00+00:00",
+      "sha256": "e6c15df04d0edefbaefeb1050d888de9b5f6eff9ff7d23723d2cbe01f6657c92",
+      "snapshot_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/sources/chan-2003-jfe-abstract.md",
+      "source_card_path": "reports/harness/source_cards/h20260929_20_news_nonews_drop_reversal.jsonl"
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X12001377",
+      "claim_id": "savor_2012_jfe_price_shocks_information",
+      "claim": "Using analyst-report activity as an information proxy around major one-day price shocks: shocks accompanied by information are followed by drift (continuation); shocks without information are followed by reversal; investors underreact to fundamental news and overreact to non-fundamental shocks; information-based changes correlate more with future earnings surprises; drift requires the price move and analyst-recommendation change to share sign.",
+      "source_type": "paper",
+      "published_or_updated_at": "2012-01-01",
+      "market_and_period": "US equities, analyst-report proxy",
+      "applicability": "Second, methodologically distinct source behind the same mechanism; supports both the long no-news and short news-drift legs.",
+      "limitations": "Abstract-level only, SSRN/ScienceDirect both 403 on WebFetch.",
+      "independent_replication": "Same qualitative conclusion as Chan (2003) via a different identification method.",
+      "fetched_at": "2026-09-29T00:00:00+00:00",
+      "sha256": "0b5a848fbf57c4b139c2c840830c378591219aa8c61045258f6a9b73f6688d42",
+      "snapshot_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/sources/savor-2012-jfe-abstract.md",
+      "source_card_path": "reports/harness/source_cards/h20260929_20_news_nonews_drop_reversal.jsonl"
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S014829631830420X",
+      "claim_id": "dyl_yuksel_zaynutdinova_2019_jbr_2015_replication",
+      "claim": "Independent replication of the Chan/Savor mechanism on extreme one-day price changes, sample 1986-2015: investors overreact to non-information-based price movements (reversal) and underreact to firm-specific public announcements (continuation/drift); effects concentrated in smaller firms and firms with lower institutional ownership, where the magnitude is also larger; liquidity improvement following the post-decimalization period reduced the magnitude of BOTH reversals and continuations -- a documented decay in effect size as market microstructure improved, over a sample ending a decade before this iteration's TEST window.",
+      "source_type": "paper",
+      "published_or_updated_at": "2019-02-01",
+      "market_and_period": "US equities, 1986-2015",
+      "applicability": "The newest (2015-sample) independent replication located; its decay finding sets an honest prior against assuming Chan-era magnitudes hold in 2024-2026.",
+      "limitations": "Abstract-level synthesis via WebSearch only; ScienceDirect/SSRN both 403 on WebFetch; no post-2020 replication exists in located evidence.",
+      "independent_replication": "This IS the independent replication of Chan (2003)/Savor (2012).",
+      "fetched_at": "2026-09-29T00:00:00+00:00",
+      "sha256": "b543f6bdeb7614ae625c4968439e03a5d92fb1a9fcbae970a1907df75ac663c3",
+      "snapshot_path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/sources/dyl-yuksel-zaynutdinova-2019-jbr-abstract.md",
+      "source_card_path": "reports/harness/source_cards/h20260929_20_news_nonews_drop_reversal.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Build the event table from existing data only (data/features/universe_broad PIT ADV ranks, data/sip/daily prices, data/features/news_packets, data/features/earnings_events) and run all 12 preregistered candidates through a custom calendar-time book that reuses the frozen S3 close-to-close/next-open-fill P&L formula; check K1/K2/placebo/2x-cost survival directly -- no new data acquisition, no parameter search beyond the preregistered 2x3x2 grid.",
+    "pass_condition": "At least one long no-news cell reaches calendar Sharpe >=1.19 or S3 combo edge >=+0.05 in TEST at base cost, with trade-level average return per trade above the shuffled-label placebo (t>=2, clustered by date), surviving 2x costs.",
+    "falsification_condition": "No long no-news cell clears the bar above, or every apparent pass is beaten by its own shuffled-label or redated placebo.",
+    "max_compute_minutes": 30
+  }
+}

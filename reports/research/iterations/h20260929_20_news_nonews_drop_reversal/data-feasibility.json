@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "report_type": "generic_candidate_family_v1",
+  "iter_id": "h20260929_20_news_nonews_drop_reversal",
+  "checked_at": "2026-09-29T07:19:46+00:00",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "sources_checked": [
+    {
+      "path": "data/features/news_packets/{2024,2025,2026}.parquet",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at",
+        "symbols",
+        "headline",
+        "summary",
+        "source",
+        "url",
+        "author",
+        "fetched_at",
+        "visible_at"
+      ],
+      "coverage_finding": "684,876 total rows across the 3 files (261,904 / 248,578 / 174,394). visible_at row counts by year: 2011-2023 combined = 195 rows (essentially test/backfill noise); 2024 = 261,735; 2025 = 248,564; 2026 (through 09-09) = 174,381. Dense, usable PIT coverage starts only in 2024.",
+      "verdict": "usable for TEST (2024-2026); not usable for STRESS (2016-2023)"
+    },
+    {
+      "path": "data/features/earnings_events/{2024,2025,2026}.parquet",
+      "fields": [
+        "cik",
+        "ticker",
+        "company_name",
+        "accession",
+        "acceptance_utc",
+        "form",
+        "items",
+        "ex99_url",
+        "text_path",
+        "text_sha256",
+        "text_chars",
+        "fetch_status"
+      ],
+      "coverage_finding": "16,015 rows, form=8-K in every row, items field contains '2.02' (earnings) in effectively all rows. acceptance_utc range 2024-01-02T18:00:35Z .. 2026-09-17T01:05:56Z, zero rows before 2024. This is an item-2.02-specific (earnings) 8-K feed, not a general all-item-type 8-K feed; a broader 8-K feed was not found readily available locally, so per the brief's 'if easily available' qualifier, only the item-2.02 earnings feed is used.",
+      "verdict": "usable for TEST (2024-2026) as the earnings-8-K news component; not usable for STRESS; general 8-K coverage not available locally, documented as a gap rather than built"
+    },
+    {
+      "path": "data/features/universe_broad/*.parquet",
+      "fields": [
+        "month_end",
+        "symbol",
+        "adv_rank",
+        "close"
+      ],
+      "coverage_finding": "month_end range 2016-01-29 .. 2026-08-31; 1,869 distinct symbols ranked <=1500 since 2023-10-01. adv_rank is PIT: 60-trading-day trailing dollar-ADV, ranked and snapped at each completed month-end (verified via code read of open_composer/research/features/universe.py's build_pit_universe_panel, DEFAULT_ADV_LOOKBACK_DAYS=60), held constant until the next month-end.",
+      "verdict": "usable for both TEST and STRESS as the liquidity-tiering source. DEVIATION FROM BRIEF: the brief specifies 'Liquidity tiers by 21-day ADV rank at t-1'; this iteration reuses the existing project-wide 60-day, month-end-snapped PIT ADV rank instead of building a new literal 21-day-at-t-1 rolling ranker, for reuse-first reasons (same convention as signal_card.py's TIER_EDGES and other 2026-09-29 iterations). Documented here rather than silently substituted."
+    },
+    {
+      "path": "data/sip/daily/*/*.parquet",
+      "fields": [
+        "symbol",
+        "timestamp",
+        "open",
+        "close",
+        "volume",
+        "trade_count"
+      ],
+      "coverage_finding": "The canonical SIP daily price source used by the frozen S1-S3 engine (scripts/run_h20260918_05_recent_menu.py's load_panel); confirmed to cover SPY/BIL/SHY plus the full stock universe needed.",
+      "verdict": "usable; used for both event detection (adj_ret) and the execution engine (leg_open/leg_close), so the same source drives both signal and fill"
+    }
+  ],
+  "stress_window_decision": {
+    "brief_language": "STRESS 2016-05-02 -> 2023-09-15 (or from news-data start) for K1 information.",
+    "finding": "News-data start (dense coverage) is 2024-01, i.e. AFTER the STRESS window ends (2023-09-15). Per the brief's own '(or from news-data start)' clause, the STRESS window as literally specified collapses to zero usable days for this specific mechanism.",
+    "decision": "STRESS is documented as data-infeasible for this mechanism and is NOT computed as a decision window. TEST (2024-01-08..2026-09-17) is used as the sole decisive window, consistent with the brief's own 'TEST ... (anchor, decisive)' language."
+  },
+  "no_new_data_acquired": true,
+  "path_gates": {
+    "P1_news_vs_nonews_drop": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "DROP_NN_D5_H1",
+        "DROP_NN_D5_H3",
+        "DROP_NN_D5_H5",
+        "DROP_NN_D8_H1",
+        "DROP_NN_D8_H3",
+        "DROP_NN_D8_H5",
+        "DRIFT_NEWS_D5_H1",
+        "DRIFT_NEWS_D5_H3",
+        "DRIFT_NEWS_D5_H5",
+        "DRIFT_NEWS_D8_H1",
+        "DRIFT_NEWS_D8_H3",
+        "DRIFT_NEWS_D8_H5"
+      ],
+      "reason": "All required data (SIP daily prices, PIT universe_broad ADV ranks, news_packets headlines, earnings_events 8-K item-2.02 filings) is confirmed present locally for the TEST window; see data source coverage findings below. No new data acquisition needed."
+    }
+  },
+  "candidate_accounting": {
+    "frozen_candidate_count": 12,
+    "evaluation_authorized_count": 12,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 12,
+    "rows": [
+      {
+        "candidate_id": "DROP_NN_D5_H1",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "7e0c76126c10e7ca371268445e6af9bbed89aa66ba239c8e5b7ea7b03a49fab1"
+      },
+      {
+        "candidate_id": "DROP_NN_D5_H3",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "2c29db16f495d743ded9ce90f7239bd2c78aab86fb44bef2893394fe858f956a"
+      },
+      {
+        "candidate_id": "DROP_NN_D5_H5",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "6a91ee80f130fea6e01e5ca69462c25fd0fade6c1cc98b8734091752cf5ed561"
+      },
+      {
+        "candidate_id": "DROP_NN_D8_H1",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "df576c6a08cdb8a32d70bba1994f8d72588a82b036c34c93d526f10099f9430c"
+      },
+      {
+        "candidate_id": "DROP_NN_D8_H3",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "a01a895dfc0963139683ba026b3c077a2440a2081fa0889638e5f093876e273c"
+      },
+      {
+        "candidate_id": "DROP_NN_D8_H5",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "39c3a6c226fa725e23faca5a10a4ebbb6d53fe58d295f13def92629b27cbfff6"
+      },
+      {
+        "candidate_id": "DRIFT_NEWS_D5_H1",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "d287e438526db7fa012bc71714d12b19460c5c89292eec9ebc68c72779d36648"
+      },
+      {
+        "candidate_id": "DRIFT_NEWS_D5_H3",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "0d3f08b0bf5480dc54603380c78abbddddc5aaaa76c74ed3dbd94990f6ff6064"
+      },
+      {
+        "candidate_id": "DRIFT_NEWS_D5_H5",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "e763bca402eac2e172922b67074b4bfedfb8832531b9f3744a8e306a39a2f200"
+      },
+      {
+        "candidate_id": "DRIFT_NEWS_D8_H1",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "3fba22191be3c93569a25a090e21fc0752bcfec5734262e5f7ae1221a7ad7b39"
+      },
+      {
+        "candidate_id": "DRIFT_NEWS_D8_H3",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "fe21c4611c33ef89fca8335d93ebc81ebc76ab79bdb9ebeafdfd5e8f2c708be1"
+      },
+      {
+        "candidate_id": "DRIFT_NEWS_D8_H5",
+        "path": "P1_news_vs_nonews_drop",
+        "action": "evaluate",
+        "reason_code": "data_confirmed_present_test_window_2024_2026",
+        "candidate_binding_sha256": "62d7b8a909254518e636229bb010cefbb6dc860f3edfc34922b0b1928faf35a5"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "strategy_spec_draft"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/cost-contract.json",
+      "sha256": "b02845de06e1f452ec9e0a2bff4a133be9e00b75f5a2e7229788edd6a4ebf5a5"
+    },
+    "strategy_spec_draft": {
+      "path": "strategy_specs/drafts/h20260929_20_news_nonews_drop_reversal.yaml",
+      "sha256": "80f0a468c38bae2081c9d5ca53a646ebb02aa283a410da63367924d82af1d845"
+    }
+  }
+}

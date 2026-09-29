@@ -1,0 +1,114 @@
+{
+  "iter_id": "h20260929_20_news_nonews_drop_reversal",
+  "objective": "Bind the news-vs-no-news drop reversal/drift candidate family (12 preregistered candidates: 2 drop thresholds x 3 hold horizons x 2 legs) to verified source cards and cost-assumption context before the backtest, resolving reports/research/harvest/directions.jsonl's dir:no_news_price_shock_reversal_chan (harvested, never locally tested).",
+  "schema_version": 3,
+  "strategy_name": "h20260929_20_news_nonews_drop_reversal",
+  "source_spec_path": null,
+  "spec_hash": null,
+  "sources": [
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X03001466",
+      "published_or_updated_at": "2003-01-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Chan (2003), JFE 70(2):223-260: bad-news stocks drift negatively up to 12 months; no-identifiable-news large moves reverse next month; concentrated in small/illiquid stocks, weakens but survives excluding low-priced stocks.",
+      "project_applicability": "Grounds the event definition (large market-adjusted close-to-close drop) and the news-vs-no-news PIT classification design.",
+      "reflection": "Abstract-level only (paywalled full text); pre-2000 sample -- the local 2024-2026 backtest is the decisive test of current magnitude, not an assumption that Chan-era numbers transfer.",
+      "claim_id": "chan_2003_jfe_news_nonews_drift_reversal"
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X12001377",
+      "published_or_updated_at": "2012-01-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Savor (2012), JFE 106(3):635-659: price shocks with analyst-report coverage drift; shocks without coverage reverse; underreaction to fundamentals, overreaction to non-fundamental shocks.",
+      "project_applicability": "Second, methodologically distinct source (analyst reports vs. headlines) behind the same mechanism; supports both the long no-news leg and the short news-drift leg.",
+      "reflection": "Abstract-level only; SSRN/ScienceDirect both 403 on WebFetch this pass.",
+      "claim_id": "savor_2012_jfe_price_shocks_information"
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S014829631830420X",
+      "published_or_updated_at": "2019-02-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Dyl, Yuksel & Zaynutdinova (2019), Journal of Business Research 95:1-12: independent replication through 2015 of the same overreaction/underreaction pattern; effect larger in small/low-institutional-ownership firms; magnitude of BOTH reversals and continuations declined after post-decimalization liquidity improvements.",
+      "project_applicability": "Newest (2015-sample) independent replication located; its decay finding sets an honest prior against assuming Chan-era magnitudes hold in the far more liquid, more algorithmic 2024-2026 window.",
+      "reflection": "Abstract-level synthesis via WebSearch only (ScienceDirect/SSRN 403); no post-2020 independent replication of this mechanism was found in 4 targeted WebSearch queries this pass.",
+      "claim_id": "dyl_yuksel_zaynutdinova_2019_jbr_2015_replication"
+    },
+    {
+      "url": "https://www.interactivebrokers.com/en/pricing/short-sale-cost.php",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "platform_docs",
+      "credibility": "medium",
+      "core_claim": "Broker-published stock borrow fee schedule: easy-to-borrow US equities commonly carry annualized borrow fees from roughly 0.25% up to a few percent, materially below hard-to-borrow names (which can exceed 30-100%/yr).",
+      "project_applicability": "Supports the brief's preregistered 1%/year borrow-fee assumption for the short news-drift leg (restricted to the top-1000-ADV, easy-to-borrow-proxy tier) as a plausible, slightly conservative (not favorable) rate, not a number invented for this iteration.",
+      "reflection": "Current broker fee schedule, not a historical time series over the TEST window; used only for plausibility context, the brief's 1%/yr figure is used as-is (a frozen, preregistered assumption, not tuned to this source).",
+      "claim_id": "ibkr_2026_short_sale_borrow_fee_schedule"
+    },
+    {
+      "url": "https://www.quantrocket.com/blog/borrow-fees-alpha/",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "post",
+      "credibility": "medium",
+      "core_claim": "Borrow fees are quoted as annualized rates but assessed daily; for the large majority of liquid, easy-to-borrow US equities, fees cluster well under 1%/yr, with sharp increases only for names that become hard-to-borrow (float scarcity, high short demand).",
+      "project_applicability": "Further corroborates the plausibility of the brief's 1%/yr borrow-cost assumption and the top-1000-ADV easy-to-borrow-proxy restriction on the short leg.",
+      "reflection": "Practitioner blog, not peer-reviewed; used for cost-plausibility context only, does not change the preregistered contract.",
+      "claim_id": "quantrocket_2026_borrow_fee_alpha_context"
+    },
+    {
+      "url": "https://equicurious.com/learn/investing-basics/market-mechanics/bid-ask-spreads-and-liquidity-in-us-equities",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "Bid-ask spread costs rise sharply with declining liquidity: large-cap S&P 500 names trade near single-digit basis points round-trip, while small-cap/illiquid names can cost 50+ bp round trip or 1-2%/yr in aggregate spread cost for a small-cap strategy.",
+      "project_applicability": "Supports the plausibility of the brief's preregistered ADV-tiered spread schedule (top-500 3bp, 500-1000 6bp, 1000-1500 12bp per side) as directionally consistent with published liquidity-cost gradients, not a number invented for this iteration.",
+      "reflection": "General-audience explainer, not a primary transaction-cost study; used for plausibility context only -- the brief's own tiered cost table is applied as-is, a frozen preregistered assumption.",
+      "claim_id": "equicurious_2026_bid_ask_spread_liquidity_tiers"
+    },
+    {
+      "url": "n/a (internal design)",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "internal",
+      "credibility": "n/a",
+      "core_claim": "Two placebos preregistered per the brief: (i) news/no-news labels shuffled across that day's qualifying events (trade-level, same drop set, relabeled); (ii) the same stocks redated to random non-event trading dates within the sample. Both are computed at the trade level (average return per trade, t-stat clustered by date), not as separate full portfolio books.",
+      "project_applicability": "Falsification design for all 12 candidates; establishes whether the news/no-news label itself (not just 'a large drop happened') carries the return difference.",
+      "reflection": "Not an external source; required by the brief's own preregistered decision rule (trade-level edge over the shuffled-label placebo, t>=2).",
+      "claim_id": "h20260929_20_internal_placebo_design"
+    },
+    {
+      "url": "n/a (internal data-feasibility note)",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "internal",
+      "credibility": "n/a",
+      "core_claim": "Liquidity tiering reuses the existing project-wide PIT ADV rank (data/features/universe_broad: 60-trading-day trailing dollar-ADV window, ranked and snapped at each completed month-end, held constant until the next month-end) rather than building a new literal 21-day-at-t-1 rolling ranker -- the same tiering convention already used by signal_card.py's TIER_EDGES and other 2026-09-29 iterations (e.g. T-20260929-01). Both PIT news classification sources (data/features/news_packets headlines, data/features/earnings_events 8-K item-2.02 filings) have dense coverage starting only in 2024, which is why the brief's STRESS window (2016-2023) is documented as data-infeasible for this mechanism and TEST (2024-2026) is used as the sole decisive window.",
+      "project_applicability": "Documents two deliberate, disclosed deviations from the brief's literal data spec (ADV window length, STRESS-window infeasibility) made for reuse-first and PIT-correctness reasons, not to help any candidate pass.",
+      "reflection": "Internal engineering/data-coverage note, not an external claim; the underlying coverage counts were measured directly from the local parquet files this session (see data-feasibility.json).",
+      "claim_id": "h20260929_20_internal_adv_tiering_and_news_coverage_note"
+    }
+  ],
+  "topic_coverage": [
+    "original academic mechanism, headline-based (Chan 2003)",
+    "original academic mechanism, analyst-report-based (Savor 2012)",
+    "independent 2015-sample replication with a documented decay finding (Dyl/Yuksel/Zaynutdinova 2019)",
+    "short-borrow cost plausibility (IBKR fee schedule, QuantRocket context)",
+    "spread cost plausibility by liquidity tier (equicurious explainer)",
+    "internal placebo falsification design (shuffled-label, redated)",
+    "internal ADV-tiering and PIT news/earnings coverage data-feasibility note"
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_20_news_nonews_drop_reversal.jsonl"
+  ],
+  "hypothesis_links": ["H1", "H2"],
+  "source_evidence_bindings": [
+    {"candidate_family": "DROP_NN_*", "claim_id": "chan_2003_jfe_news_nonews_drift_reversal"},
+    {"candidate_family": "DRIFT_NEWS_*", "claim_id": "savor_2012_jfe_price_shocks_information"},
+    {"candidate_family": "DROP_NN_*", "claim_id": "dyl_yuksel_zaynutdinova_2019_jbr_2015_replication"},
+    {"candidate_family": "DRIFT_NEWS_*", "claim_id": "ibkr_2026_short_sale_borrow_fee_schedule"},
+    {"candidate_family": "ALL", "claim_id": "h20260929_20_internal_placebo_design"},
+    {"candidate_family": "ALL", "claim_id": "h20260929_20_internal_adv_tiering_and_news_coverage_note"}
+  ],
+  "candidate_matrix_revisions": [
+    "Initial preregistration: 12 candidates, DROP_NN_D{5,8}_H{1,3,5} (long no-news reversal, 6 cells) and DRIFT_NEWS_D{5,8}_H{1,3,5} (short news-drift, top-1000-ADV tier only, 6 cells). No revision after this preregistration; the backtest must not add, remove or retune any candidate after seeing a result."
+  ]
+}
