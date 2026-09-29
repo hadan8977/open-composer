@@ -1,0 +1,129 @@
+{
+  "task": "I-20260929-01: short-horizon (minutes to ~5 trading days), selective-entry, high-hit-rate/high-per-trade-return strategies -- web-research-only intel pass, no backtests",
+  "method": "scripts/harvest_search.py run (channels exa/web/github, logs every query to reports/research/harvest/search-log.jsonl and raw results to reports/research/harvest/raw/2026-09-29/) followed by scripts/harvest_search.py fetch (jina/exa_fetch readers) to read primary sources in full where reachable. Chinese-language sources (zhihu.com, xueqiu.com, weixin) were attempted via --site and generic queries but returned mostly blocked pages (camoufox/trafilatura not installed) or irrelevant results (one query returned Domino's Pizza); usable Chinese-language material came back only via the exa channel's general web index (fxbaogao.com sell-side research reports, vcai.cn, 10jqka.com.cn), not the site-restricted searches.",
+  "sources": [
+    {
+      "title": "Out-of-Sample Evaluation of an Intraday Momentum Strategy for the S&P 500 ETF (SPY)",
+      "author": "Sheimy Paz, University of South Florida",
+      "venue": "SSRN",
+      "year": 2026,
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7290621",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (exa_fetch, abstract page)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "SPY Intraday Momentum Strategy (Beat the Market with Intraday Momentum)",
+      "author": "Concretum Research (Zarattini/Aziz/Barbon)",
+      "venue": "Substack",
+      "year": 2024,
+      "url": "https://concretumgroup.substack.com/p/beat-the-market-with-intraday-momentum",
+      "kind": "post",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Hedging demand and market intraday momentum",
+      "author": "Guido Baltussen, Zhi Da, Sten Lammers, Martin Martens",
+      "venue": "Journal of Financial Economics 142 (2021) 377-403",
+      "url": "https://academicweb.nd.edu/~zda/intramom.pdf",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text, 27pp)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "End-of-Day Reversal",
+      "author": "Guido Baltussen, Zhi Da, Amar Soebhag",
+      "venue": "working paper, April 2025",
+      "url": "https://academicweb.nd.edu/~zda/EOD.pdf",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text, 55pp); same paper already cited by existing dir:end_of_day_reversal, read here to verify the cited magnitude (3.78-6.86bp/day, t>10) -- no new element found, not re-added",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "How Biotech Stocks Move Around FDA Decisions: Data on 60+ PDUFA Events",
+      "author": "BioRadar",
+      "venue": "bioradar.io blog",
+      "year": 2026,
+      "url": "https://bioradar.io/how-biotech-stocks-move-around-fda-decisions/",
+      "kind": "post",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Decomposing Short-Term Return Reversal",
+      "author": "Zhi Da, Qianqiu Liu, Ernst Schaumburg",
+      "venue": "Federal Reserve Bank of New York Staff Report no. 513",
+      "year": 2011,
+      "url": "https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr513.html",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text, 45pp)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "The Disappearing Index Effect",
+      "author": "Robin Greenwood, Marco Sammon",
+      "venue": "The Journal of Finance, Vol 80, Issue 2, pp 657-698",
+      "year": 2025,
+      "url": "https://onlinelibrary.wiley.com/doi/abs/10.1111/jofi.13410",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (exa_fetch, abstract + metadata)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Selling options on S&P500 - Backtest from 1990: An insight into Black-Scholes, the Volatility Smile, VIX and IVR",
+      "author": "r/options user",
+      "venue": "Reddit",
+      "url": "https://www.reddit.com/r/options/comments/1gr7kwj/selling_options_on_sp500_backtest_from_1990_an/",
+      "kind": "post",
+      "fetch_method": "harvest_search.py fetch (arctic_shift reader, full text)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Retail Traders Love 0DTE Options... But Should They?",
+      "author": "Heiner Beckmeyer, Nicole Branger, Leander Gayda",
+      "venue": "FoFI 2024 working paper (Univ. Munster)",
+      "year": 2024,
+      "url": "https://wp.lancs.ac.uk/fofi2024/files/2024/04/FoFI-2024-146-Leander-Gayda.pdf",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text, 32pp)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Carlo Zarattini's Post -- latest update on the Intraday Momentum Model (April 2025: +10.7% YTD vs SPX -5%, avg PnL/share $1.60)",
+      "author": "Carlo Zarattini",
+      "venue": "LinkedIn",
+      "url": "https://www.linkedin.com/posts/carlozarattini_heres-the-latest-update-on-the-intraday-activity-7325909248368939008-i3CU",
+      "kind": "post",
+      "fetch_method": "harvest_search.py fetch (jina reader, partial -- LinkedIn login wall truncates after the visible post text, but the numeric claims were captured)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "The Expiration of IPO Share Lockups",
+      "author": "Laura Casares Field, Gordon R. Hanka",
+      "venue": "SSRN (2000)",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=205011",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (exa_fetch, abstract page)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Stock price reaction to news and no-news: drift and reversal after headlines",
+      "author": "Wesley S. Chan",
+      "venue": "Journal of Financial Economics 70(2), 2003, pp 223-260",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X03001466",
+      "kind": "paper",
+      "fetch_method": "harvest_search.py fetch (exa_fetch, abstract + introduction)",
+      "accessed_at": "2026-09-29"
+    },
+    {
+      "title": "Connors RSI: Statistics, Facts, Backtests (75% Win Rate)",
+      "author": "QuantifiedStrategies.com",
+      "venue": "blog",
+      "url": "https://www.quantifiedstrategies.com/connors-rsi/",
+      "kind": "post",
+      "fetch_method": "harvest_search.py fetch (jina reader, full text); SPY-only backtest, no individual-stock evidence found despite the search brief asking specifically for non-index-ETF evidence",
+      "accessed_at": "2026-09-29"
+    }
+  ]
+}
