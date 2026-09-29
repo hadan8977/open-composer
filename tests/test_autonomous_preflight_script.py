@@ -17,6 +17,18 @@ import autonomous_preflight as ap  # noqa: E402
 NOW = datetime(2026, 9, 28, 1, 7, tzinfo=UTC)
 
 
+@pytest.fixture(autouse=True)
+def _quota_api_enabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """This file exercises the pre-2026-09-29 quota-gated `decide()`/`quota_state()`
+    paths (T-20260927-04 budget plan A). The owner's 2026-09-29 decision
+    ("额度查询先不做了，你自己有数了就行") turned `QUOTA_API_ENABLED` off by
+    default (see its docstring in `scripts/autonomous_preflight.py`); tests
+    for that disabled path opt out explicitly with their own
+    `monkeypatch.setattr(ap, "QUOTA_API_ENABLED", False)`.
+    """
+    monkeypatch.setattr(ap, "QUOTA_API_ENABLED", True)
+
+
 def _transcript(path: Path, started: datetime, last_write: datetime, lines: list[dict]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     rows = [{"type": "user", "timestamp": started.isoformat(), "sessionId": path.stem}, *lines]
@@ -524,3 +536,100 @@ def test_log_writes_header_once_and_escapes_cells(
     assert text.count("# 自动研究轮日志") == 1
     assert "| 2026-09-28T01:07 | 2026-09-28T02:10 | done | T-1 | a / b | 123,456 / 7 |" in text
     assert out["logged"] and len(text.strip().splitlines()) == 8
+
+
+# --------------------------------------------------------------------------
+# Owner decision 2026-09-29: QUOTA_API_ENABLED = False by default
+# --------------------------------------------------------------------------
+
+
+def test_decide_with_quota_api_disabled_goes_unless_locked_or_rate_limited(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ap, "QUOTA_API_ENABLED", False)
+    fresh_lock = {"started_at": (NOW - timedelta(hours=1)).isoformat(), "agent_id": "a"}
+    stale_lock = {"started_at": (NOW - timedelta(hours=9)).isoformat(), "agent_id": "b"}
+    busy = [ap.SessionActivity("x", None, NOW.isoformat())]
+    limited = {"retry_after": (NOW + timedelta(hours=1)).isoformat()}
+    bad_quota = {"five_hour_percent": 99.0, "seven_day_percent": 99.0}
+
+    # a fresh lock still wins over everything, including a pending session limit.
+    verdict, _ = ap.decide(
+        now=NOW, lock=fresh_lock, lock_max_hours=4.0, usage=limited, activity=busy
+    )
+    assert verdict == "skip_round_running"
+
+    # a future retry_after (from usage_state()'s local, no-network, no-credential
+    # transcript scan) still skips the round even with the flag off -- launching
+    # straight into an exhausted session limit is not what "go by default" means.
+    verdict, reasons = ap.decide(now=NOW, lock=None, lock_max_hours=4.0, usage=limited, activity=[])
+    assert verdict == "skip_rate_limited"
+    assert "usage limit resets at" in reasons[0]
+
+    # a *past* retry_after (already reset) does not gate the round.
+    past_limited = {"retry_after": (NOW - timedelta(hours=1)).isoformat()}
+    verdict, reasons = ap.decide(
+        now=NOW, lock=None, lock_max_hours=4.0, usage=past_limited, activity=[]
+    )
+    assert verdict == "go", reasons
+
+    # the remaining old gates no longer fire: an unrecorded throttle reset,
+    # owner activity, or an over-threshold quota reading no longer skip or wait.
+    cases = (
+        {"usage": {"unknown_throttle_reset": True}, "activity": []},
+        {"usage": {}, "activity": busy},
+        {
+            "usage": {},
+            "activity": busy,
+            "quota": bad_quota,
+            "background_week_percent_est": 99.0,
+        },
+    )
+    for kwargs in cases:
+        verdict, reasons = ap.decide(now=NOW, lock=None, lock_max_hours=4.0, **kwargs)
+        assert verdict == "go", (kwargs, reasons)
+
+    # a stale lock is ignored (and reported) rather than blocking the round.
+    verdict, reasons = ap.decide(
+        now=NOW, lock=stale_lock, lock_max_hours=4.0, usage={}, activity=[]
+    )
+    assert verdict == "go" and "stale lock" in reasons[0]
+
+
+def test_quota_state_never_calls_the_live_reader_when_disabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(ap, "QUOTA_API_ENABLED", False)
+
+    def _must_not_be_called() -> dict:
+        raise AssertionError("the live quota endpoint must not be reached while disabled")
+
+    monkeypatch.setattr(ap, "_read_quota_live", _must_not_be_called)
+    cache_path = tmp_path / "quota-cache.json"
+    cache_path.write_text(
+        json.dumps({**_CACHED_QUOTA_FIELDS, "fetched_at": NOW.isoformat(), "source": "live"}),
+        encoding="utf-8",
+    )
+
+    quota = ap.quota_state(now=NOW, cache_path=cache_path)
+
+    assert quota == {"status": "disabled_by_owner_2026-09-29"}
+
+
+def test_check_report_with_quota_disabled_reports_status_and_goes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(ap, "QUOTA_API_ENABLED", False)
+    monkeypatch.setattr(ap, "PROJECTS_DIR", tmp_path / "projects")
+    monkeypatch.setattr(ap, "LOCK_PATH", tmp_path / "logs" / "round.lock")
+
+    def _must_not_be_called() -> dict:
+        raise AssertionError("the live quota endpoint must not be reached while disabled")
+
+    monkeypatch.setattr(ap, "_read_quota_live", _must_not_be_called)
+
+    args = ap.build_parser().parse_args(["check"])
+    report = ap.check_report(args)
+
+    assert report["decision"] == "go"
+    assert report["quota"] == {"status": "disabled_by_owner_2026-09-29"}

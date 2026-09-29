@@ -2,16 +2,26 @@
 """Preflight, lock and round log for the twice-daily autonomous research round.
 
 A Paseo schedule starts a fresh agent (latest Opus at high effort) at 01:07 and
-13:07 UTC, and that agent follows ``docs/runbook-autonomous-round.zh.md``. It
-shares the owner's 5-hour quota, so a round only goes ahead when:
+13:07 UTC, and that agent follows ``docs/runbook-autonomous-round.zh.md``.
+
+Owner decision 2026-09-29 ("额度查询先不做了，你自己有数了就行"): querying the
+Claude usage/quota API is switched off (:data:`QUOTA_API_ENABLED` = ``False``).
+While it is off, ``decide()`` goes ahead unless another round holds a fresh
+lock, or a session-limit message already recorded in local transcripts has
+not reset yet -- a round must not skip or wait just because a quota reading
+is missing or because the owner happens to be chatting, but it also must not
+launch straight into an exhausted session limit that
+``usage_state()`` (transcript-based, no network, no credential) already
+shows. The pre-2026-09-29 behaviour (T-20260927-04 budget plan A,
+owner-approved 2026-09-28) is kept intact below, gated on the same flag, so
+flipping it back to ``True`` is a one-line change:
 
 * no other round holds the lock (a crashed round's lock goes stale after
   ``--lock-max-hours``);
 * no usage-limit reset is pending in the local transcripts;
-* once the real Claude subscription quota can be read (T-20260927-04 budget
-  plan A, owner-approved 2026-09-28): the 5h window is under 50%, and under
-  30% if the owner is active, and the estimated background share of the
-  rolling 7-day window is under 40%;
+* once the real Claude subscription quota can be read: the 5h window is under
+  50%, and under 30% if the owner is active, and the estimated background
+  share of the rolling 7-day window is under 40%;
 * only when that quota reading is unavailable does this fall back to the
   older owner-quiet gate: no Claude session that started before the grace
   window wrote a transcript line inside the quiet window.
@@ -53,7 +63,19 @@ PROJECTS_DIR = Path.home() / ".claude" / "projects"
 CAPPED_SLICE = Path("/sys/fs/cgroup/research.slice/research-capped.slice")
 MARKER_SCAN_BYTES = 2_000_000
 
-# Quota-gating thresholds (T-20260927-04 budget plan A, owner-approved 2026-09-28).
+#: Owner decision 2026-09-29 ("额度查询先不做了，你自己有数了就行"): do not call
+#: the live Claude usage endpoint, and do not read or refresh any OAuth
+#: credential, while this is False. `decide()` then goes ahead unless another
+#: round holds a fresh lock; the quota-gate and owner-active code paths below
+#: stay intact and are skipped, not removed -- flipping this back to True
+#: restores them unchanged.
+QUOTA_API_ENABLED: Final[bool] = False
+#: `quota_state()`'s fixed return value while the flag above is off.
+_QUOTA_DISABLED_STATUS: Final[str] = "disabled_by_owner_2026-09-29"
+
+# Quota-gating thresholds (T-20260927-04 budget plan A, owner-approved
+# 2026-09-28; superseded by QUOTA_API_ENABLED = False on 2026-09-29, kept for
+# when the flag is switched back on).
 _FIVE_HOUR_MAX: Final[float] = 50.0
 _FIVE_HOUR_OWNER_ACTIVE_MAX: Final[float] = 30.0
 _BACKGROUND_WEEK_MAX: Final[float] = 40.0
@@ -253,7 +275,14 @@ def quota_state(
     module -- never reads credentials or probes the network itself; the
     cache file it maintains holds only the four numeric/ISO fields plus
     `fetched_at`/`source`, never tokens or a response body.
+
+    Owner decision 2026-09-29: while `QUOTA_API_ENABLED` is False, this never
+    calls `_read_quota_live` (so never touches the network or a credential)
+    and never reads `cache_path` -- it returns a fixed disabled marker at
+    once.
     """
+    if not QUOTA_API_ENABLED:
+        return {"status": _QUOTA_DISABLED_STATUS}
     moment = now or _now()
     cached = _read_quota_cache_file(cache_path)
     cached_fetched_at = _parse_ts(cached.get("fetched_at")) if cached else None
@@ -404,7 +433,22 @@ def decide(
     quota: dict[str, Any] | None = None,
     background_week_percent_est: float | None = None,
 ) -> tuple[str, list[str]]:
-    """Go/skip verdict. Precedence (T-20260927-04 budget plan A, owner-approved 2026-09-28):
+    """Go/skip verdict.
+
+    Owner decision 2026-09-29 (`QUOTA_API_ENABLED` = False): go unless
+    another round holds a fresh lock, or a recent session-limit message
+    recorded in local transcripts (`usage["retry_after"]`, from the
+    transcript-based, no-network, no-credential `usage_state()`) has not
+    reset yet. No quota-percent or owner-active gating runs while the flag is
+    off -- a round must not skip or wait just because a quota reading is
+    missing or the owner is chatting, but it also must not launch straight
+    into an exhausted session limit that a local transcript already shows.
+    Precedence: fresh lock -> `skip_round_running`; then a future
+    `retry_after` -> `skip_rate_limited`; then, if the flag is off, `go`.
+
+    Precedence when `QUOTA_API_ENABLED` is True (T-20260927-04 budget plan A,
+    owner-approved 2026-09-28, kept intact below for when the flag is
+    switched back on):
 
     1. a fresh lock always wins (`skip_round_running`);
     2. an active or unrecorded throttle event always wins (`skip_rate_limited`);
@@ -419,9 +463,17 @@ def decide(
         return "skip_round_running", [
             f"lock held since {lock.get('started_at')} by {lock.get('agent_id')}"
         ]
+
     retry_after = _parse_ts(usage.get("retry_after"))
     if retry_after is not None and retry_after > now:
         return "skip_rate_limited", [f"usage limit resets at {retry_after.isoformat()}"]
+
+    if not QUOTA_API_ENABLED:
+        reasons = []
+        if lock is not None:
+            reasons.append(f"stale lock from {lock.get('started_at')} ignored")
+        return "go", reasons
+
     if usage.get("unknown_throttle_reset"):
         return "skip_rate_limited", [
             "a usage limit was hit in the last 5 hours and no reset time was recorded"

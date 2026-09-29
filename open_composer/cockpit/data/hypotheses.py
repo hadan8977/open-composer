@@ -83,7 +83,7 @@ _PROPOSED_WORDS = ("proposed", "提出")
 _APPROVED_WORDS = ("approved", "已批准")
 _RUNNING_WORDS = ("在跑", "运行中", "评估在跑", "running")
 _HOLD_WORDS = ("搁置", "暂停")
-_DONE_WORDS = ("已执行", "done")
+_DONE_WORDS = ("已执行", "done", "executed")
 _NEGATIVE_WORDS = ("否定", "被否定", "refuted")
 _POSITIVE_WORDS = ("通过", "上线", "上模拟盘")
 

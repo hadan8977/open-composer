@@ -1,3 +1,9 @@
+---
+card_id: H-20260928-15
+status: executed, refuted for this scope (round 1, 2026-09-28) -- batch select-chosen F10 beat the zoo's select-chosen CORD60 on test rank IC but lost on 20bp book Sharpe (0.64 vs 0.88)
+iteration: h20260928_15_claude_factor_batch
+direction_id: dir:llm_hypothesis_code_backtest_loop
+---
 # H-20260928-15: Claude-authored factor batch vs the existing factor zoo
 
 Queue task T-20260928-15 (`reports/research/control/autonomous-queue.md`).

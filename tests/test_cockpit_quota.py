@@ -40,6 +40,19 @@ def _client_for(handler) -> httpx.Client:
     return httpx.Client(transport=httpx.MockTransport(handler))
 
 
+@pytest.fixture(autouse=True)
+def _quota_api_enabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """This file exercises the live-probe pipeline (`QUOTA_API_ENABLED = True`).
+
+    The flag defaults to `False` as of the owner's 2026-09-29 decision (see
+    `QUOTA_API_ENABLED`'s docstring in `open_composer/cockpit/data/quota.py`)
+    so that every other caller of this module never reaches the network or a
+    credential; the tests exercising the disabled path opt out explicitly
+    with their own `monkeypatch.setattr(Q, "QUOTA_API_ENABLED", False)`.
+    """
+    monkeypatch.setattr(Q, "QUOTA_API_ENABLED", True)
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(create_app(warm=False))
@@ -1778,3 +1791,74 @@ def test_success_clears_the_rate_limit_backoff(tmp_path: Path) -> None:
     report = cache.get(now=after, credentials_path=creds, client=_client_for(handler))
     assert report.snapshot.available is True
     assert answers == []
+
+
+# --------------------------------------------------------------------------
+# Owner decision 2026-09-29: QUOTA_API_ENABLED = False by default
+# --------------------------------------------------------------------------
+
+
+def test_quota_api_disabled_never_touches_the_network_or_a_credential(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(Q, "QUOTA_API_ENABLED", False)
+
+    def _must_not_be_called(*_args, **_kwargs):
+        raise AssertionError("the live usage endpoint must not be reached while disabled")
+
+    monkeypatch.setattr(Q, "_build_http_client", _must_not_be_called)
+
+    def _reading_a_credential_must_not_happen(_path):
+        raise AssertionError("no OAuth credential may be read while disabled")
+
+    monkeypatch.setattr(Q, "_load_oauth_token", _reading_a_credential_must_not_happen)
+    monkeypatch.setattr(Q, "_load_oauth_token_from_paseo", _reading_a_credential_must_not_happen)
+
+    creds = _write_credentials(tmp_path)
+    cache = Q.ClaudeQuotaCache()
+    report = cache.get(credentials_path=creds)
+
+    assert report.snapshot.available is False
+    assert report.snapshot.unavailable_reason == Q.QUOTA_DISABLED_REASON
+    assert report.snapshot.credential_probes == ()
+    assert report.breaker_open is False
+    assert report.served_from_cache is False
+
+
+def test_quota_api_disabled_ignores_the_ttl_cache_and_stays_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The disabled path bypasses `ClaudeQuotaCache`'s own TTL/breaker state,
+    so two calls close together both report the fixed disabled snapshot
+    rather than one looking like a "cache hit" of a real reading.
+    """
+    monkeypatch.setattr(Q, "QUOTA_API_ENABLED", False)
+    cache = Q.ClaudeQuotaCache()
+    base = datetime(2026, 9, 29, tzinfo=UTC)
+
+    first = cache.get(now=base)
+    second = cache.get(now=base + timedelta(seconds=1))
+
+    assert first.snapshot.unavailable_reason == Q.QUOTA_DISABLED_REASON
+    assert second.snapshot.unavailable_reason == Q.QUOTA_DISABLED_REASON
+    assert second.served_from_cache is False
+
+
+def test_quota_api_disabled_route_shows_the_owner_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(Q, "QUOTA_API_ENABLED", False)
+    response = TestClient(create_app(warm=False)).get("/quota")
+
+    assert response.status_code == 200
+    assert Q.QUOTA_DISABLED_REASON in response.text
+
+
+def test_quota_api_disabled_topbar_shows_the_owner_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(Q, "QUOTA_API_ENABLED", False)
+    response = TestClient(create_app(warm=False)).get("/")
+
+    assert response.status_code == 200
+    assert Q.QUOTA_DISABLED_REASON in response.text

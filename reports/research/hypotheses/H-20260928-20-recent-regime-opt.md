@@ -1,6 +1,6 @@
 ---
 card_id: H-20260928-20
-status: executed, no replacement (round 1, 2026-09-28) -- E0 and S0 both stand unchanged
+status: executed, refuted -- no variant met the preregistered replacement rule (round 1, 2026-09-28); E0 and S0 both stand unchanged
 lane: preregistered, batch screen, optimization round
 previous: H-20260928-05
 direction_id: dir:end_of_month_reversal_effect, dir:front_running_sector_seasonality

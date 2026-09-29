@@ -13,6 +13,18 @@ circuit breaker, and the burn-rate ring buffer across requests in this
 long-running process. That state lives in exactly one place; every other
 function in this module remains a pure transform.
 
+Owner decision 2026-09-29 (:data:`QUOTA_API_ENABLED`)
+-------------------------------------------------------
+"额度查询先不做了，你自己有数了就行": while :data:`QUOTA_API_ENABLED` is
+``False`` (the default), :meth:`ClaudeQuotaCache.get` returns a fixed
+disabled snapshot (:data:`QUOTA_DISABLED_REASON`) at once -- no HTTP request
+to the live endpoint below, no credential read from any of the three
+sources, no change to the cache/breaker/verdict state. The topbar and
+``/quota`` render this the same way they already render any other
+``unavailable_reason`` (see ``base.html``/``quota.html``), so no template
+change was needed. Everything below this note describes the pipeline that
+runs only when the flag is switched back to ``True``.
+
 Three data sources, three honesty levels
 -----------------------------------------
 1. **Claude, live**: ``GET https://api.anthropic.com/api/oauth/usage``. This
@@ -287,6 +299,24 @@ CLAUDE_CREDENTIALS_PATH: Final[Path] = Path.home() / ".claude" / ".credentials.j
 PASEO_CONFIG_PATH: Final[Path] = Path.home() / ".paseo" / "config.json"
 CODEX_AUTH_PATH: Final[Path] = Path.home() / ".codex" / "auth.json"
 CLAUDE_PROJECTS_DIR: Final[Path] = Path.home() / ".claude" / "projects"
+
+#: Owner decision 2026-09-29 ("额度查询先不做了，你自己有数了就行"): the cockpit
+#: must not call the live usage endpoint or read/refresh any OAuth credential
+#: while this is False -- every `ClaudeQuotaCache.get()` degrades at once to
+#: a fixed disabled snapshot (`QUOTA_DISABLED_REASON`), with no network
+#: attempt, no credential read, and no change to the cache/breaker state.
+#: The three-source live-probe pipeline below is kept intact, not deleted,
+#: so flipping this back to True is a one-line change.
+QUOTA_API_ENABLED: Final[bool] = False
+#: Rendered verbatim by both the topbar and `/quota` (both already render
+#: `unavailable_reason` as-is -- see `base.html`/`quota.html`), matching how
+#: every other `unavailable_reason` in this module is a short, human-readable
+#: sentence rather than a machine code. English, like every other
+#: `unavailable_reason` string here: the cockpit's UI chrome is English-only
+#: outside card titles/bodies (see `tests/test_cockpit_app.py`'s
+#: `test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies`),
+#: even though the owner's own decision was phrased in Chinese.
+QUOTA_DISABLED_REASON: Final[str] = "quota checks disabled by owner (2026-09-29)"
 
 DEFAULT_TIMEOUT_SECONDS: Final[float] = 5.0
 CACHE_TTL_SECONDS: Final[float] = 60.0
@@ -970,6 +1000,8 @@ class ClaudeQuotaCache:
         timeout: float = DEFAULT_TIMEOUT_SECONDS,
     ) -> ClaudeQuotaReport:
         moment = now or datetime.now(UTC)
+        if not QUOTA_API_ENABLED:
+            return self._disabled_report(moment)
         if self._snapshot is not None and self._snapshot_at is not None:
             age = (moment - self._snapshot_at).total_seconds()
             if 0 <= age < CACHE_TTL_SECONDS:
@@ -1252,6 +1284,25 @@ class ClaudeQuotaCache:
         if five_hour is None or five_hour.percent_used is None:
             return
         self._samples.append(BurnRateSample(at=moment, five_hour_percent=five_hour.percent_used))
+
+    def _disabled_report(self, moment: datetime) -> ClaudeQuotaReport:
+        """Owner decision 2026-09-29: a fixed answer, no network, no credential read.
+
+        Deliberately bypasses this instance's cache/breaker/verdict state
+        entirely -- there is nothing to cache, and re-enabling
+        `QUOTA_API_ENABLED` must not have to account for state a disabled
+        round might have left behind.
+        """
+        snapshot = _unavailable_snapshot(moment, QUOTA_DISABLED_REASON)
+        return ClaudeQuotaReport(
+            snapshot=snapshot,
+            served_from_cache=False,
+            cache_age_seconds=0.0,
+            breaker_open=False,
+            breaker_open_until=None,
+            consecutive_failures=0,
+            projection=compute_burn_rate_projection((), now=moment),
+        )
 
     def _make_report(
         self, moment: datetime, *, served_from_cache: bool, cache_age: float
@@ -2743,6 +2794,8 @@ __all__ = [
     "CREDENTIAL_SOURCE_ORDER",
     "DEFAULT_TIMEOUT_SECONDS",
     "PASEO_CONFIG_PATH",
+    "QUOTA_API_ENABLED",
+    "QUOTA_DISABLED_REASON",
     "SUBAGENT_TASKS_ROOT",
     "THROTTLE_CALIBRATION_CACHE_TTL_SECONDS",
     "USAGE_ESTIMATE_CACHE_TTL_SECONDS",
