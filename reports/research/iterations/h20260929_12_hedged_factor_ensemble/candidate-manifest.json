@@ -1,0 +1,897 @@
+{
+  "iter_id": "h20260929_12_hedged_factor_ensemble",
+  "generated_at": "2026-09-29T04:35:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_12_hedged_factor_ensemble",
+  "objective": "5 static factor ensembles (E10/E20/E40/E20D/R40, selected from T-15's select-window-only ICIR scan) x 4 portfolio forms (long-only, SH-hedged, PSQ-hedged, info-only long/short spread) = 20 candidate cells. Judged: hedged forms (b/bp) by screen_lane's diversifier edge vs vol-matched S3 in 2024-01-02..2026-09-08 (pass >= +0.05, standalone Sharpe > 0, correlation with S3 < 0.3); long-only forms (a) reported for K1 info context; (c) is info-only, no decision weight.",
+  "candidate_count": 20,
+  "candidates": [
+    {
+      "candidate_id": "E10_a",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E10 ensemble, form a",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e10",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E10",
+        "ensemble_definition": "top-10 by |select-window 21d rank ICIR| (sign_from_select applied), equal-weight average of daily cross-sectional percentile ranks",
+        "form": "a",
+        "form_definition": "long-only top-50 equal-weight monthly book from the ensemble score, no hedge",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E10_b",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E10 ensemble, form b",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e10",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E10",
+        "ensemble_definition": "top-10 by |select-window 21d rank ICIR| (sign_from_select applied), equal-weight average of daily cross-sectional percentile ranks",
+        "form": "b",
+        "form_definition": "form (a) plus a long SH position sized beta/(1+beta) (stocks 1/(1+beta)), beta = trailing 63-session beta of book (a) to SPY, capped [0,1.5], set at each monthly rebalance from past returns only; actual SH prices",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E10_bp",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E10 ensemble, form bp",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e10",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E10",
+        "ensemble_definition": "top-10 by |select-window 21d rank ICIR| (sign_from_select applied), equal-weight average of daily cross-sectional percentile ranks",
+        "form": "bp",
+        "form_definition": "same as (b) with PSQ/QQQ instead of SH/SPY",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E10_c",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_info_spread",
+      "method": "E10 ensemble, form c",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e10",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E10",
+        "ensemble_definition": "top-10 by |select-window 21d rank ICIR| (sign_from_select applied), equal-weight average of daily cross-sectional percentile ranks",
+        "form": "c",
+        "form_definition": "INFO ONLY, no decision weight: top-decile minus bottom-decile equal-weight spread of the ensemble score, costs charged on both legs, borrow costs not modeled; requires short permission not yet granted",
+        "decision_eligible": false,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20_a",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E20 ensemble, form a",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20",
+        "ensemble_definition": "top-20 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "a",
+        "form_definition": "long-only top-50 equal-weight monthly book from the ensemble score, no hedge",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20_b",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E20 ensemble, form b",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20",
+        "ensemble_definition": "top-20 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "b",
+        "form_definition": "form (a) plus a long SH position sized beta/(1+beta) (stocks 1/(1+beta)), beta = trailing 63-session beta of book (a) to SPY, capped [0,1.5], set at each monthly rebalance from past returns only; actual SH prices",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20_bp",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E20 ensemble, form bp",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20",
+        "ensemble_definition": "top-20 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "bp",
+        "form_definition": "same as (b) with PSQ/QQQ instead of SH/SPY",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20_c",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_info_spread",
+      "method": "E20 ensemble, form c",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20",
+        "ensemble_definition": "top-20 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "c",
+        "form_definition": "INFO ONLY, no decision weight: top-decile minus bottom-decile equal-weight spread of the ensemble score, costs charged on both legs, borrow costs not modeled; requires short permission not yet granted",
+        "decision_eligible": false,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E40_a",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E40 ensemble, form a",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E40",
+        "ensemble_definition": "top-40 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "a",
+        "form_definition": "long-only top-50 equal-weight monthly book from the ensemble score, no hedge",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E40_b",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E40 ensemble, form b",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E40",
+        "ensemble_definition": "top-40 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "b",
+        "form_definition": "form (a) plus a long SH position sized beta/(1+beta) (stocks 1/(1+beta)), beta = trailing 63-session beta of book (a) to SPY, capped [0,1.5], set at each monthly rebalance from past returns only; actual SH prices",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E40_bp",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E40 ensemble, form bp",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E40",
+        "ensemble_definition": "top-40 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "bp",
+        "form_definition": "same as (b) with PSQ/QQQ instead of SH/SPY",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E40_c",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_info_spread",
+      "method": "E40 ensemble, form c",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E40",
+        "ensemble_definition": "top-40 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "form": "c",
+        "form_definition": "INFO ONLY, no decision weight: top-decile minus bottom-decile equal-weight spread of the ensemble score, costs charged on both legs, borrow costs not modeled; requires short permission not yet granted",
+        "decision_eligible": false,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20D_a",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E20D ensemble, form a",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20d",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20D",
+        "ensemble_definition": "greedy top-20 by |select-window 21d rank ICIR|, skipping any factor whose select-window daily rank correlation (sign-adjusted) with an already-chosen factor exceeds 0.70",
+        "form": "a",
+        "form_definition": "long-only top-50 equal-weight monthly book from the ensemble score, no hedge",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20D_b",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E20D ensemble, form b",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20d",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20D",
+        "ensemble_definition": "greedy top-20 by |select-window 21d rank ICIR|, skipping any factor whose select-window daily rank correlation (sign-adjusted) with an already-chosen factor exceeds 0.70",
+        "form": "b",
+        "form_definition": "form (a) plus a long SH position sized beta/(1+beta) (stocks 1/(1+beta)), beta = trailing 63-session beta of book (a) to SPY, capped [0,1.5], set at each monthly rebalance from past returns only; actual SH prices",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20D_bp",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "E20D ensemble, form bp",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20d",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20D",
+        "ensemble_definition": "greedy top-20 by |select-window 21d rank ICIR|, skipping any factor whose select-window daily rank correlation (sign-adjusted) with an already-chosen factor exceeds 0.70",
+        "form": "bp",
+        "form_definition": "same as (b) with PSQ/QQQ instead of SH/SPY",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "E20D_c",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_info_spread",
+      "method": "E20D ensemble, form c",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_e20d",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "E20D",
+        "ensemble_definition": "greedy top-20 by |select-window 21d rank ICIR|, skipping any factor whose select-window daily rank correlation (sign-adjusted) with an already-chosen factor exceeds 0.70",
+        "form": "c",
+        "form_definition": "INFO ONLY, no decision weight: top-decile minus bottom-decile equal-weight spread of the ensemble score, costs charged on both legs, borrow costs not modeled; requires short permission not yet granted",
+        "decision_eligible": false,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "R40_a",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "R40 ensemble, form a",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_r40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "R40",
+        "ensemble_definition": "ridge regression on percentile-rank features of the top-40 by |select-window 21d rank ICIR|, alpha chosen by 5-fold blocked time-series CV with a 21-session purge on the select window only, refit on the full select window at the chosen alpha, applied out-of-sample",
+        "form": "a",
+        "form_definition": "long-only top-50 equal-weight monthly book from the ensemble score, no hedge",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "R40_b",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "R40 ensemble, form b",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_r40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "R40",
+        "ensemble_definition": "ridge regression on percentile-rank features of the top-40 by |select-window 21d rank ICIR|, alpha chosen by 5-fold blocked time-series CV with a 21-session purge on the select window only, refit on the full select window at the chosen alpha, applied out-of-sample",
+        "form": "b",
+        "form_definition": "form (a) plus a long SH position sized beta/(1+beta) (stocks 1/(1+beta)), beta = trailing 63-session beta of book (a) to SPY, capped [0,1.5], set at each monthly rebalance from past returns only; actual SH prices",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "R40_bp",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_hedged_book",
+      "method": "R40 ensemble, form bp",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_r40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "R40",
+        "ensemble_definition": "ridge regression on percentile-rank features of the top-40 by |select-window 21d rank ICIR|, alpha chosen by 5-fold blocked time-series CV with a 21-session purge on the select window only, refit on the full select window at the chosen alpha, applied out-of-sample",
+        "form": "bp",
+        "form_definition": "same as (b) with PSQ/QQQ instead of SH/SPY",
+        "decision_eligible": true,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "candidate_id": "R40_c",
+      "path": "hedged_factor_ensemble_screen",
+      "role": "cross_sectional_ensemble_info_spread",
+      "method": "R40 ensemble, form c",
+      "ablation": "frozen_select_window_static_selection",
+      "spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+      "fallback": "skip_month_if_fewer_than_50_eligible_names_or_missing_hedge_etf_price",
+      "data_contract": "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq",
+      "feature_contract": "feature_v1_h20260929_12_r40",
+      "label_contract": "label_v1_h20260929_12_next_open_fill_monthly_topk50",
+      "validation_contract": "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023",
+      "cost_contract": "cost_v1_h20260929_12_10_20bp_lane_convention",
+      "benchmark_contract": "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge",
+      "parameters": {
+        "ensemble": "R40",
+        "ensemble_definition": "ridge regression on percentile-rank features of the top-40 by |select-window 21d rank ICIR|, alpha chosen by 5-fold blocked time-series CV with a 21-session purge on the select window only, refit on the full select window at the chosen alpha, applied out-of-sample",
+        "form": "c",
+        "form_definition": "INFO ONLY, no decision weight: top-decile minus bottom-decile equal-weight spread of the ensemble score, costs charged on both legs, borrow costs not modeled; requires short permission not yet granted",
+        "decision_eligible": false,
+        "rebalance": "monthly, offsets {0,5,10,15} sessions after month-end, median reported",
+        "select_window": [
+          "2016-06-01",
+          "2023-12-29"
+        ],
+        "stage1_test_window": [
+          "2024-01-02",
+          "2026-09-08"
+        ],
+        "stage2_walkforward_window": [
+          "2018-01-02",
+          "2023-09-15"
+        ],
+        "top_k": 50,
+        "cost_bps": [
+          10.0,
+          20.0
+        ]
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20260929_12_top1000_broad_plus_sh_psq_spy_qqq": {
+        "sources": [
+          "open_composer.research.signal_card.load_market(top_n=1000)",
+          "data/features/{alpha101_broad,alpha191_broad,osap_price_broad,alpha158,h20260928_15_claude_factors}",
+          "data/sip/daily (SH, PSQ, SPY, QQQ)"
+        ],
+        "join": "signal_card Market matrices for stocks; duckdb read_parquet for SH/PSQ/SPY/QQQ via screen_lane's base.load_panel"
+      }
+    },
+    "features": {
+      "feature_v1_h20260929_12_e10": {
+        "module": "scripts/build_h20260929_12_ensembles.py",
+        "function": "build_e10",
+        "definition": "top-10 by |select-window 21d rank ICIR| (sign_from_select applied), equal-weight average of daily cross-sectional percentile ranks",
+        "source_scan": "reports/research/iterations/h20260928_15_claude_factor_batch/select-results.json (select_21d.icir, sign_from_select; no new IC computation)"
+      },
+      "feature_v1_h20260929_12_e20": {
+        "module": "scripts/build_h20260929_12_ensembles.py",
+        "function": "build_e20",
+        "definition": "top-20 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "source_scan": "reports/research/iterations/h20260928_15_claude_factor_batch/select-results.json (select_21d.icir, sign_from_select; no new IC computation)"
+      },
+      "feature_v1_h20260929_12_e40": {
+        "module": "scripts/build_h20260929_12_ensembles.py",
+        "function": "build_e40",
+        "definition": "top-40 by |select-window 21d rank ICIR|, equal-weight average of daily cross-sectional percentile ranks",
+        "source_scan": "reports/research/iterations/h20260928_15_claude_factor_batch/select-results.json (select_21d.icir, sign_from_select; no new IC computation)"
+      },
+      "feature_v1_h20260929_12_e20d": {
+        "module": "scripts/build_h20260929_12_ensembles.py",
+        "function": "build_e20d",
+        "definition": "greedy top-20 by |select-window 21d rank ICIR|, skipping any factor whose select-window daily rank correlation (sign-adjusted) with an already-chosen factor exceeds 0.70",
+        "source_scan": "reports/research/iterations/h20260928_15_claude_factor_batch/select-results.json (select_21d.icir, sign_from_select; no new IC computation)"
+      },
+      "feature_v1_h20260929_12_r40": {
+        "module": "scripts/build_h20260929_12_ensembles.py",
+        "function": "build_r40",
+        "definition": "ridge regression on percentile-rank features of the top-40 by |select-window 21d rank ICIR|, alpha chosen by 5-fold blocked time-series CV with a 21-session purge on the select window only, refit on the full select window at the chosen alpha, applied out-of-sample",
+        "source_scan": "reports/research/iterations/h20260928_15_claude_factor_batch/select-results.json (select_21d.icir, sign_from_select; no new IC computation)"
+      }
+    },
+    "labels": {
+      "label_v1_h20260929_12_next_open_fill_monthly_topk50": {
+        "definition": "Monthly top-50 equal-weight book from the ensemble score, signal at month-end close (tranche.shifted_signal_dates, reused), fill at next session open (salvage.simulate / custom stock-leg simulator using Market.open_), forms (b)/(bp) add a trailing-63-session-beta-sized SH/PSQ position computed from past returns only."
+      }
+    },
+    "validation": {
+      "validation_v1_h20260929_12_select_2016_2023_test_2024_2026_stage2_walkforward_2018_2023": {
+        "windows": {
+          "select": [
+            "2016-06-01",
+            "2023-12-29"
+          ],
+          "stage1_test": [
+            "2024-01-02",
+            "2026-09-08"
+          ],
+          "stage2_walkforward": [
+            "2018-01-02",
+            "2023-09-15"
+          ]
+        },
+        "universe": "open_composer.research.signal_card.load_market(top_n=1000, memory_limit='1200MB')",
+        "rule": "Stage 1 computed once after ensembles are frozen from the select window; Stage 2 only run if Stage 1's pass condition is met (edge>=+0.05, standalone Sharpe>0, correlation with S3<0.3 for a hedged form)."
+      }
+    },
+    "costs": {
+      "cost_v1_h20260929_12_10_20bp_lane_convention": {
+        "book_primary_bps": 10.0,
+        "book_stress_bps": 20.0,
+        "basis": "screen_lane.py COST_BPS_PRIMARY/COST_BPS_STRESS, sum(|delta weight|)*bps/1e4 turnover cost, reused unmodified"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260929_12_vol_matched_s3_diversifier_edge": {
+        "definition": "screen_lane.s3_incumbent (vol-matched control via combo.solve_k/combine_two_sleeves) for the hedged forms' diversifier edge (screen_lane.diversifier_edge_for_offset, reused unmodified); SHY cash proxy and the ensemble's own long-only form (a) reported as additional context; DSR (open_composer.research.campaign_statistics.deflated_sharpe_probability) with trial_count=20."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml": "fe0d808f07459a048a859662ff27a61fd9c4751e998b4a770a57531812da4345"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+  "spec_hash": "fe0d808f07459a048a859662ff27a61fd9c4751e998b4a770a57531812da4345",
+  "keep_rule": "A hedged form (b or bp) is decision-eligible only if Stage 1 (2024-01-02..2026-09-08) shows diversifier edge vs vol-matched S3 >= +0.05 (median over offsets), standalone Sharpe > 0, and correlation with S3 < 0.3; otherwise the direction is refuted without running Stage 2. Form (a) and (c) are never decision-eligible (a) is context, (c) is info-only/no short authorization)."
+}

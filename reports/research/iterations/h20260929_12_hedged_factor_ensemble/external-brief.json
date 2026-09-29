@@ -1,0 +1,157 @@
+{
+  "schema_version": 2,
+  "iter_id": "h20260929_12_hedged_factor_ensemble",
+  "strategy_name": "h20260929_12_hedged_factor_ensemble",
+  "source_spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+  "spec_hash": "fe0d808f07459a048a859662ff27a61fd9c4751e998b4a770a57531812da4345",
+  "objective": "Can a stock-level ensemble of existing factors, hedged with a long inverse-ETF position, raise the Sharpe of S3 when combined with it -- turning a mechanism that has repeatedly failed long-only/beta-neutral into a genuine diversifier via real decorrelation.",
+  "topic_coverage": [
+    "static_factor_ensemble_construction_top_k_rank_average_and_ridge",
+    "long_only_factor_ensemble_vs_momentum_rule_prior_refutation",
+    "beta_hedged_market_neutral_construction_prior_refutation",
+    "inverse_etf_hedge_decay_and_tactical_use_caveat",
+    "diversifier_edge_metric_and_vol_matched_s3_control_reuse",
+    "correlation_with_s3_as_precondition_for_diversification_value",
+    "llm_driven_factor_ensemble_post_2023_us_equity_ic_benchmark"
+  ],
+  "sources": [
+    {
+      "url": "https://arxiv.org/html/2502.16789v2",
+      "published_or_updated_at": "2025-06-09",
+      "source_type": "paper",
+      "credibility": "kdd_2025_peer_reviewed",
+      "core_claim": "AlphaAgent's LLM-driven formulaic-alpha loop achieves S&P 500 test-window (2021-2025) IC 0.0056 / ICIR 0.0552, about a quarter of its own China CSI 500 IC (0.0212) for the identical method -- U.S. cross-sectional factor edges from a combined/mined factor set are small in absolute IC terms.",
+      "project_applicability": "Sets a realistic ceiling for how much standalone predictive power any of E10/E20/E40/E20D/R40 should be expected to show on U.S. data; already read in full for T-15 and re-cited here rather than re-fetched.",
+      "reflection": "Already verified (sha256 snapshot) under T-15's dossier; low absolute IC is consistent with why this task's hypothesis rests on decorrelation via hedging, not on the ensemble itself becoming a strong signal."
+    },
+    {
+      "url": "https://arxiv.org/html/2505.15155v2",
+      "published_or_updated_at": "2025-09-25",
+      "source_type": "paper",
+      "credibility": "neurips_2025_poster",
+      "core_claim": "R&D-Agent(Q)'s LLM factor/model loop beats classical factor libraries (Alpha158/360/AutoAlpha) by roughly 3.5-4x on NASDAQ100 IC in a genuine post-2023 U.S. OOS window, but the absolute IC (0.0162) is still small and the loop is a much heavier multi-agent search than this task's static top-K selection.",
+      "project_applicability": "Confirms combined/curated factor sets can beat individual factor-library baselines on IC in the U.S., supporting the choice to test ensembles (E10-R40) rather than any single factor, while flagging that this task's static select-window selection is a lighter-weight version of the same idea.",
+      "reflection": "Already verified (sha256 snapshot) under T-15's dossier; re-cited for its direct relevance to 'does combining factors beat a single factor', the mechanism this task's ensembles also rely on."
+    },
+    {
+      "url": "https://link.springer.com/article/10.1007/s11156-022-01099-z",
+      "published_or_updated_at": "2023-01-01",
+      "source_type": "paper",
+      "credibility": "rqfa_2023_peer_reviewed",
+      "core_claim": "299 US anomalies x 30 ML approaches, 1979-2019, long-short: ML models (GLM/GBM/DRF/XGBoost) OOS Sharpe 1.05-1.39 vs a linear baseline 0.92-1.05 -- but this project's own local replication of the same mechanism (screen a factor library, train a ranker) on 2018-2026 US data lost to a momentum baseline in every configuration (dir:ml_ranking_liquid500_recent_vs_momentum_rule, dir:baseline_chain_b0_b1_b2_market_neutral_vs_long).",
+      "project_applicability": "Directly on point for this task's prior-art requirement: an academically-reported factor-combination Sharpe edge does not survive this project's own long-only or beta-hedged implementation, which is why this task's design differs materially (real SH/PSQ hedge, not synthetic beta-neutral) rather than re-running the same refuted mechanism.",
+      "reflection": "Already opened in full and registered (reports/research/harvest/directions.jsonl dir:owner_azevedo_hoegner_ml_anomalies_2023, refuted status); the gap between paper-reported long-short Sharpe and this project's own long-only/hedged realized result is the central caution this task must not repeat without a genuinely different construction (hence: hedge for decorrelation, not for risk reduction)."
+    },
+    {
+      "url": "reports/research/control/step13-recent-high-return-2026-09.md",
+      "published_or_updated_at": "2026-09-09",
+      "source_type": "internal_report",
+      "credibility": "internal_frozen_iteration_report",
+      "core_claim": "A top-40-by-recent-ICIR screened public-factor-library portfolio scored the best validation IC of any Step-13 configuration (0.035) but only reached 17.5-19.4% annualized long-only, roughly half a simple momentum rule's 33.7% and below SPMO's 37.4%; every individual-library ML cell lost to its own rule twin on realized CAGR.",
+      "project_applicability": "Required prior art (dir:ml_ranking_liquid500_recent_vs_momentum_rule): establishes that this exact class of factor ensemble already failed as a standalone long-only strategy on this project's own data -- this task does not re-run that test, it tests whether hedging changes the verdict for S3-combination purposes.",
+      "reflection": "Read in full (not summary) before writing direction-review.json; the 'ML ranker loses to momentum long-only' finding is treated as settled and not re-tested here."
+    },
+    {
+      "url": "reports/research/control/step11-2026-09-06-progress.md",
+      "published_or_updated_at": "2026-09-06",
+      "source_type": "internal_report",
+      "credibility": "internal_frozen_iteration_report",
+      "core_claim": "SPY-beta-hedged market-neutral variants of a momentum/ridge/LightGBM chain were uniformly worse than their long-only counterparts (1/8 gates each vs long-only's 3-4/8), one config's hedged capture ratio even negative -- 'the hedge leg is a systematic drag, not a risk reducer, at weekly rebalance.'",
+      "project_applicability": "Required prior art (dir:baseline_chain_b0_b1_b2_market_neutral_vs_long): the most directly relevant negative result -- a prior beta-hedge attempt failed. This task's hedge differs in three ways from that one (actual SH/PSQ shares not a synthetic short, capped beta/(1+beta) sizing not full beta-neutral, monthly not weekly rebalance) specifically to test whether the prior drag finding was an artifact of that construction.",
+      "reflection": "Read in full; used to design a materially different hedge construction rather than repeat the refuted one."
+    },
+    {
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_report",
+      "credibility": "internal_registry_frozen_rows",
+      "core_claim": "dir:equity_momentum_concentrated_pwb (K2 diversifier edge -0.143 anchor / -0.071 stress) and dir:factor_style_etf_momentum_rotation (K2 edge -0.15 to -0.31 despite only 0.66-0.72 correlation with S3) both show a long-only, moderately-correlated sleeve fails the diversifier-edge test even without extreme correlation with S3.",
+      "project_applicability": "Confirms the brief's stated mechanism (every long-only candidate tried so far is correlated 0.5-0.8 with S3 and none add Sharpe) with two additional, more recent local data points; motivates testing decorrelation via hedging as the one lever not yet tried.",
+      "reflection": "Read the exact rows (grep, not summary) before writing direction-review.json."
+    },
+    {
+      "url": "https://www.proshares.com/browse-all-insights/insights/part-iii-the-efficacy-of-hedging-with-inverse-etfs",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "provider_official_docs",
+      "credibility": "issuer_published_fund_guidance",
+      "core_claim": "ProShares inverse ETFs (SH included) have a one-day investment objective; multi-day returns diverge from the simple inverse due to daily-rebalancing compounding, and the issuer's own guidance is to monitor holdings 'as frequently as daily' -- these are built for tactical, not static multi-year, hedging.",
+      "project_applicability": "Grounds the choice to use actual SH/PSQ prices (decay/fees priced in) rather than a synthetic -1x return series for the hedged forms (b)/(bp); a positive edge, if found, must be read net of this known drag.",
+      "reflection": "Fetched and snapshotted directly (sha256 18460117...), verified via source-card binding in direction-review.json; this is the one genuinely new external source opened for this task (the other papers/internal reports are re-cited prior art already verified under earlier iterations)."
+    },
+    {
+      "url": "reports/research/iterations/h20260928_15_claude_factor_batch/select-results.json",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_report",
+      "credibility": "internal_frozen_select_window_scan",
+      "core_claim": "T-15 already computed select-window (2016-06-01..2023-12-29) 21-day rank ICIR and sign for 259 zoo factors (Alpha101/158/191/OSAP-price/rank-cards) plus 12 batch factors, 268 with a valid ICIR -- this is the exact, already-existing scan this task's ensembles are built from, with no new IC computation required.",
+      "project_applicability": "The direct data input for E10/E20/E40/E20D/R40's factor selection; reusing it (rather than re-scanning) is the 'reuse existing implementations before allocating compute' mission rule in practice.",
+      "reflection": "Inspected the actual JSON structure and a sample of values before designing the ensemble-building script, not just the summary in T-15's report."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_12_hedged_factor_ensemble.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "E10",
+      "claim_ids": [
+        "internal_step13_report",
+        "internal_step11_report",
+        "internal_directions_jsonl_k2_rows",
+        "proshares_inverse_etf_daily_target_decay_tactical_use"
+      ]
+    },
+    {
+      "candidate_id": "E20",
+      "claim_ids": [
+        "internal_step13_report",
+        "internal_step11_report",
+        "internal_directions_jsonl_k2_rows",
+        "proshares_inverse_etf_daily_target_decay_tactical_use"
+      ]
+    },
+    {
+      "candidate_id": "E40",
+      "claim_ids": [
+        "internal_step13_report",
+        "internal_step11_report",
+        "internal_directions_jsonl_k2_rows",
+        "proshares_inverse_etf_daily_target_decay_tactical_use"
+      ]
+    },
+    {
+      "candidate_id": "E20D",
+      "claim_ids": [
+        "internal_step13_report",
+        "internal_step11_report",
+        "internal_directions_jsonl_k2_rows",
+        "proshares_inverse_etf_daily_target_decay_tactical_use"
+      ]
+    },
+    {
+      "candidate_id": "R40",
+      "claim_ids": [
+        "internal_step13_report",
+        "internal_step11_report",
+        "internal_directions_jsonl_k2_rows",
+        "proshares_inverse_etf_daily_target_decay_tactical_use",
+        "alphaagent_sp500_csi500_table2_results",
+        "rdagentq_nasdaq100_oos_window_and_results"
+      ]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "signal_card_composite_signal_primitive_components_only",
+      "effect": "Dropped the 5 nested composite zoo cards (card_comp_c1..c5) from the candidate pool before ranking by |ICIR|: signal_card.composite_signal only accepts primitive loadable components (source/column/sql), not a composite-of-composites, and each comp_c*'s sub-factors (momentum_252_21, roe, idio_vol_63, insider flag) already compete individually in the same 268-candidate pool -- including both would double-count them in an equal-weight ensemble average."
+    },
+    {
+      "driver": "baseline_chain_b0_b1_b2_market_neutral_vs_long_hedge_drag_finding",
+      "effect": "Because the prior beta-neutral hedge was a systematic drag at weekly rebalance, this task's hedge uses actual SH/PSQ shares (not a synthetic short), a capped beta/(1+beta) partial-hedge ratio (not full beta-neutral 1.0), and monthly (not weekly) rebalance, so a failure here cannot be attributed to the same three design choices that sank the prior attempt."
+    },
+    {
+      "driver": "equity_momentum_concentrated_pwb_and_factor_style_etf_momentum_rotation_k2_failures",
+      "effect": "Set the Stage-1 correlation-with-S3 bar at < 0.3 (materially tighter than the 0.66-0.72 that still failed K2 for factor_style_etf_momentum_rotation), rather than assuming any positive hedge would be sufficient -- the hedge must achieve genuine decorrelation, not just a smaller long-only correlation."
+    }
+  ]
+}

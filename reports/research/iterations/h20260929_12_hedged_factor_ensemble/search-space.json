@@ -1,0 +1,76 @@
+{
+  "iter_id": "h20260929_12_hedged_factor_ensemble",
+  "strategy_name": "h20260929_12_hedged_factor_ensemble",
+  "source_spec_path": "strategy_specs/drafts/h20260929_12_hedged_factor_ensemble.yaml",
+  "spec_hash": "fe0d808f07459a048a859662ff27a61fd9c4751e998b4a770a57531812da4345",
+  "schema_version": 3,
+  "created_at": "2026-09-29T04:35:00Z",
+  "objective": "T-20260929-12: does a stock-level ensemble of existing factors, hedged with a long inverse-ETF position, raise the Sharpe of S3 when combined with it, by decorrelating a mechanism that has repeatedly failed to add Sharpe long-only. 5 static ensembles x 4 portfolio forms.",
+  "paths": [
+    {
+      "name": "hedged_factor_ensemble_screen",
+      "candidate_count": 20,
+      "hypothesis_refs": [
+        "T-20260929-12"
+      ],
+      "parameters": {
+        "ensemble_id": [
+          "E10",
+          "E20",
+          "E40",
+          "E20D",
+          "R40"
+        ],
+        "form_id": [
+          "a",
+          "b",
+          "bp",
+          "c"
+        ],
+        "universe_top_n": 1000,
+        "top_k": 50,
+        "rebalance_offsets": [
+          0,
+          5,
+          10,
+          15
+        ],
+        "cost_bps": [
+          10.0,
+          20.0
+        ],
+        "hedge_beta_lookback_sessions": 63,
+        "hedge_beta_cap": [
+          0.0,
+          1.5
+        ],
+        "e20d_corr_dedup_threshold": 0.7,
+        "r40_cv_folds": 5,
+        "r40_purge_sessions": 21,
+        "model_training": true,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "s3_incumbent_vol_matched_control",
+        "same_symbol_shy_cash_proxy",
+        "form_a_long_only_vs_form_b_bp_hedged_within_ensemble"
+      ]
+    }
+  ],
+  "total_candidate_budget": 20,
+  "cost_assumptions": "10bp primary / 20bp stress per side, sum(|delta w|) turnover, next-session-open fill (screen_lane convention, reused unmodified).",
+  "go_no_go_band": "Stage 1 pass requires a hedged form (b or bp) with diversifier edge >= +0.05 (median over offsets), standalone Sharpe > 0, and correlation with S3 < 0.3 in 2024-01-02..2026-09-08; otherwise refuted without Stage 2.",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_12_hedged_factor_ensemble/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_12_hedged_factor_ensemble/results.json",
+    "reports/research/iterations/h20260929_12_hedged_factor_ensemble/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_12_hedged_factor_ensemble/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_12_hedged_factor_ensemble/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_12_hedged_factor_ensemble/cost-contract.json",
+  "candidate_manifest_sha256": "38d3349ef5765ed9927ff193d9bdcb1ceb98c1b69899893e19a047882911cb2d",
+  "data_feasibility_sha256": "8032451ed93c8e718e0cce145e863b1baf4e78b79d2fd355416a858cfbd6b5dc"
+}

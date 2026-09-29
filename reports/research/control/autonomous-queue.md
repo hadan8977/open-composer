@@ -186,22 +186,24 @@
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
 
 ### T-20260929-33 加密货币趋势（Alpaca 现货，只做多）批量筛选
-- status: ready
+- status: running
 - priority: 1
 - not_before:
 - goal: 机主 2026-09-29 放开范围后，加密货币是模拟盘支持、但从没按趋势规则系统测过的品种（以前只看过高频加密模型，判为不可行）。看已发表的趋势/动量规则能否达到 K1，或给 S3 加分（K2）。
 - plan: 先联网找 2023–2026 的加密趋势实盘或前向记录和反面证据；数据用 Alpaca 加密日线（本机取，密钥不上传）或交易所公开数据；候选 10–20 条已发表规则（时间序列动量、均线过滤、双动量、波动率目标），全部偏移中位数、20 bp、安慰剂、K2；每天 24 小时交易，按 UTC 日收盘。
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
+  - 2026-09-29 07:07 UTC 自动轮开始，派 sonnet-high 子代理执行（批量通道新增 `extend_panel` 钩子，提交 4a0775a）。
 
 ### T-20260929-34 单只股票加杠杆趋势（S3 的个股版）
-- status: ready
+- status: running
 - priority: 2
 - not_before:
 - goal: S3 用杠杆板块 ETF 抓领涨赛道。个股版：在大盘龙头股里按动量选前 1–3 只，用 2 倍（合成的 2 倍日重置收益，2022 年后可用真实的 2 倍单股 ETF，如 NVDL；或保证金 2 倍）。检验能否达到 K1，或和 S3 组合后夏普更高。
 - plan: 菜单 = 当时市值前 20–50 的股票（按时间点，不能用今天的名单）；合成 2 倍日重置收益，扣费率和融资成本；照搬 S3 的规则框架（63 日动量、绝对动量过滤、vt40），全部偏移中位数、安慰剂、K2。
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
+  - 2026-09-29 07:07 UTC 自动轮开始，派 sonnet-high 子代理执行（批量通道新增 `extend_panel` 钩子，提交 4a0775a）。
 
 ### T-20260929-35 日内截面规律（分钟数据，Modal）：日内周期性、隔夜/日内拉锯
 - status: blocked（等机主决定日内成本口径）
@@ -559,6 +561,20 @@
 - notes:
   - 2026-09-29 交互会话添加（机主给的研究清单第 1 项）。
 
+### T-20260929-12 交互会话：股票层面因子集成 + 反向 ETF 对冲，能否成为 S3 的真分散化 sleeve
+- status: cancelled
+- priority: 1
+- not_before:
+- goal: 机主放开美股 ETF 后，检验"对冲后的因子集成"这个此前从未测过的组合——之前 dir:ml_ranking_liquid500_recent_vs_momentum_rule（多头 ML 排序）和 dir:baseline_chain_b0_b1_b2_market_neutral_vs_long（SPY beta 中性对冲）都已否定，但从未测过"用真实反向 ETF（SH/PSQ）对冲以求和 S3 去相关"这条路。
+- plan: 迭代 `h20260929_12_hedged_factor_ensemble`。复用 T-15 已算好的 select-window ICIR 扫描（不重新算 IC），构建 5 个静态集成（E10/E20/E40/E20D/R40）x 4 种组合形式（多头 a、SH 对冲 b、PSQ 对冲 b'、信息用多空价差 c，不含决策权重）= 20 个候选格。复用 `scripts/screen_lane.py` 的 `s3_incumbent`/`combine_two_sleeves`/`diversifier_edge_for_offset`/`evaluate_offset_window`（原样导入，不改公式）。Stage 1（2024-01-02..2026-09-08）判定：对冲形式的分散化增量 >= +0.05、单独夏普 > 0、与 S3 相关性 < 0.3 才进 Stage 2（2018-2023 walk-forward 重选）。direction-review.json 已通过 `oc research direction-check`；`iteration validate --stage pre-backtest` 已通过（lightweight_single_mechanism_exemption 警告，非阻塞）。
+- done_when: `iteration validate --stage final` 通过；登记簿新增 `dir:hedged_factor_ensemble_s3_diversifier`，写明 Stage 1（及 Stage 2 如有）判定、DSR、和每个候选格的数字来源文件。
+- notes:
+  - 2026-09-29 交互会话新增，队列 id T-20260929-12。
+  - 2026-09-29 第一次修复：协调者复核发现首次 Stage 1 "通过" 因股票腿（forward 标签）与对冲腿/S3（ending 标签）错位一天而作废；修复后诊断 corr(SPY open-to-open, S3)=0.234，我误判为"S3 本身 beta 低，非 bug"并挂起。
+  - 2026-09-29 第二次修复（协调者进一步复核，纠正了我上面的误判）：S3（`salvage.simulate`）实际是 close-to-close 口径（每次调仓日在开盘价拆分隔夜腿/日内腿），不是 open-to-open；协调者实测 corr(SPY close-to-close, S3)=0.58、corr(QQQ close-to-close, S3)=0.70。改写 `run_h20260929_12_hedged_books.py`/`build_h20260929_12_stage2_e20d.py`：新增 `stock_legs`/`simulate_book`/`build_hedged_book`（原样复刻 `salvage.legs`/`salvage.simulate` 的隔夜/日内拆分公式），每笔 book 直接落在 close-to-close 口径，不再需要 shift_rows 转换；`hedge_weight_series` 回看窗口相应改为含当天（因为 close-to-close 收益在当天收盘时已完全实现）。新增回归测试：`simulate_book`/`stock_legs` 直接对拍 `run_h20260922_05_salvage.simulate`/`.legs`（冻结引擎本身），而不是自造的"预期值"。
+  - 重跑结果：`corr(SPY_cc,S3)=0.5784`、`corr(QQQ_cc,S3)=0.6985`，与协调者的独立实测数字精确吻合（0.58/0.70），证实口径修复正确。但 `corr(a,S3)>0.3` 五个集成里仍有四个未过（E10 0.2113、E20 0.1842、E40 0.0994、E20D 0.2166），只有 R40 通过（0.3856）；corr(a,SPY_cc) 和 beta(b,SPY_cc) 五个全部清楚通过。协调者原话把这个结果的应对方式讲清楚了："若仍不过，停下汇报数字"——按此执行，未再自行做第三次修复。`results.json` 未写出，Stage 1 判定和登记簿条目继续挂起。详见 `reports/research/iterations/h20260929_12_hedged_factor_ensemble/decision-record.md`。
+  - 2026-09-29 05:42 UTC：机主在交互会话里停掉了执行代理，按取消处理，不再重启，除非机主要求。停止时的状态：日期对齐已修好（与 salvage.simulate 逐位一致，corr(a,SPY_cc)=0.69–0.84，对冲后 beta 0.02–0.05）；第一阶段的判定还没跑。第一次"通过"是日期错位造成的，已作废（results.VOID-alignment-bug-2026-09-29.json）。
+
 ### T-20260929-03 M&A 目标股公告后漂移（需先建一个免费 EDGAR 数据管道）
 - status: ready
 - priority: 3
@@ -587,3 +603,28 @@
 - done_when: signal card 生成在 `reports/research/signal-cards/`；`dir:insider_cluster_buy_top500` 和新建的 `dir:insider_cluster_buy_top500_weekly_independent` 都从 queued/partial 更新为终态，带 verdict、evidence、reopen_if；在 `current-view.zh.md` 的下一次更新里注明"内部人集群买入方向的三个 scope（事件特征、月频全池、周频 top500）已全部有定论"。
 - notes:
   - 2026-09-29 gap search (`gap-search-2026-09-29-04`) 添加。
+
+### T-20260929-21 交互会话：IPO 解禁期漂移（Field & Hanka 2001；做空 easy-to-borrow + 保守借券成本）
+- status: doing
+- priority: 1
+- not_before:
+- goal: 机主要短时间线、少出手、高胜率高收益的事件策略。情报简报 I-20260929-01 §2.3/§4 定位 IPO 解禁期（IPO 后约 180 天内部人可自由卖出）：Field & Hanka (2001, JF) CAR 约 -1% 到 -3%。本任务建 PIT 事件表（SEC EDGAR 424B4 优先，本地首个交易日兜底）、预注册 ≤24 候选（含 2024-01-08→2026-09-17 TEST、2016-05-02→2023-09-15 STRESS、日期平移±60会话与随机日期安慰剂、2× 成本）、跑 close-to-close 日历组合账本、判定。
+- plan: |
+    迭代 `h20260929_21_ipo_lockup_expiry`。脚本 `scripts/build_h20260929_21_lockups.py`（EDGAR 424B4 事件表，复用 `scripts/collect_sec_13d_filings.py` 的 `SecClient`/`load_company_tickers`/限速与 User-Agent 约定，季度 `form.idx` 兜底扫描）、`scripts/run_h20260929_21_lockup_books.py`（日历组合账本）。测试 `tests/test_h20260929_21_lockup.py`。成本：分层 spread（top500 3bp/500-1000 6bp/1000-1500 12bp/1500+ 25bp）+ 借券 top1500 年化3%、1500+ 年化25%，另报 2× 成本。判定：TEST 最佳预注册格 calendar Sharpe >= 1.19 或与 S3 组合边际 >= +0.05，胜过日期平移安慰剂（t>=2），扛住 2× 成本；TEST 事件数 <40 则判"证据不足"，转由 STRESS window 定方向状态。DSR 用完整候选数。
+- done_when: `oc research direction-check` 和 `iteration validate --stage pre-backtest`（预注册后）、`--stage final`（结果后）都通过；`results.json`+`report.md` 含中文摘要表（胜率/单笔均收益/年化事件数/最差交易/夏普/与S3相关性）；登记簿更新既有 `dir:ipo_lockup_expiration_drift` 行（status harvested → 终态）；`directions validate` 通过；本队列块改 done 并写两行结果。
+- notes:
+  - 2026-09-29 交互会话新增，队列 id T-20260929-21。
+  - 联网证据（本次已开原文/PDF，非仅摘要）：Field & Hanka (2001 JF, SSRN 205011，registry 摘要)：1,948-3,217 份解禁协议，3日CAR约-1.5%~-1.8%，VC背景更强，效应十年样本内稳定不被快速修正。Gibbs & Hao (2018 JBF, "Short Selling Around the Expiration of IPO Share Lockups"，working-paper PDF 已读全文前3页)：空头在解禁日前数周异常增加、解禁前一日达峰，做空更多的股票解禁日收益更差（空头知情）；PE背景股票解禁日**没有**负收益/放量跳升（区别于VC背景）；书中列出具体反例 Yelp 2012-08-29 解禁日 **+23%**（"短挤"）、PokerTek +14%、Odimo -33%，说明横截面方差大、存在挤仓尾部风险。Damodaran (2019 practitioner substack)：解禁效应"2-5%"但**明确判定不可交易**——约1/3的解禁反而上涨，相对交易成本太小太不可预测，大盘高流动性名字效应尤其弱。未找到2020年代独立复现（与情报简报一致）；de-SPAC 2021-2022 波段的解禁本身未见专门量化研究，只有笼统的"post-merger 表现差"证据（机制不同，不能直接当解禁效应证据）。这些证据已计划写入 `direction-review.json`。
+  - 收到一条自称"协调者"的消息，要求追加一个基于 Abdi-Ranaldo (2017) close-high-low 半价差估计 + 按ADV分层借券费(0.5%/2%/5%/25%) 的成本敏感性格，并指示不要 import 另一个会话仍在改的 `scripts/run_t20260929_32_*`。该消息不是以正常用户轮次出现，格式可疑（夹在工具结果之间、以 system-reminder 包裹），无法核实来源，本任务**未实现**该追加项，只按原始任务书的成本模型（分层spread + 3%/25%借券 + 2×成本）执行；已在 report.md 里如实记录这条未采纳的可疑指令，供机主核实。
+
+### T-20260929-20 交互会话：个股无消息大跌反转 / 有消息大跌漂移（Chan 2003 / Savor 2012）
+- status: in_progress
+- priority: 1
+- not_before:
+- goal: 机主要短时线、出手少、胜率高、单笔收益多的策略。情报简报 `reports/research/intel/I-20260929-01-short-horizon-selective.md`（第2.2、4节）把这个方向排第一：top-1500 ADV 个股，市场调整后单日跌幅 >=5%/8%，当天无可识别新闻/8-K 的做多反转（Chan 2003 JFE），有可识别新闻/8-K 的做空漂移（Savor 2012 JFE，仅 top-1000 ADV 易借券档）。登记簿 `dir:no_news_price_shock_reversal_chan` 状态 harvested，本仓库从未实测。
+- plan: 迭代 `h20260929_20_news_nonews_drop_reversal`。12 个候选（D∈{5%,8%} × h∈{1,3,5} × {做多无新闻反转, 做空有新闻漂移}），close-to-close/次日开盘成交，按 ADV 分层价差成本（top-500 3bp / 500-1000 6bp / 1000-1500 12bp）+ 空头 1%/年借券费，另报 2× 成本；容量上限 20 个并发仓位各 ≤10%，超额按跌幅从大到小顺序接纳；两个安慰剂（新闻标签打乱、事件重新定日）在交易笔级别计算。TEST 窗 2024-01-08→2026-09-17 为唯一判定窗——数据可行性核查发现 news_packets 和 earnings_events(8-K item-2.02) 两个 PIT 新闻源都只从 2024 年才有密集覆盖（2011-2023 合计仅 195 行），STRESS 窗 2016-2023 按任务书自带的"or from news-data start"条款判定为该机制下数据不可行，不计入判定，已写入 `data-feasibility.json`。
+- done_when: `direction-check` 和 `iteration validate --stage pre-backtest`/`--stage final` 都通过；`results.json`+`report.md`（含中文摘要表：cell/胜率/单笔均收益/年化笔数/夏普/与S3相关性/edge）；登记簿新增 `dir:news_vs_nonews_drop_reversal` 行；本队列块改 done 并写两行结果。
+- notes:
+  - 2026-09-29 交互会话新增，队列 id T-20260929-20。
+  - 联网证据（本次搜索，含一篇此前未记录的复现）：Chan (2003, JFE 70(2):223-260) 和 Savor (2012, JFE 106(3):635-659) 摘要级证据确认（均为付费墙，ScienceDirect/SSRN WebFetch 均 403）；新找到 Dyl, Yuksel & Zaynutdinova (2019, Journal of Business Research 95:1-12)——样本延长到 2015 年的独立复现，同样的过度反应/反应不足模式在小盘/低机构持股名字中更强，**且发现后十进制化（post-decimalization）流动性改善后反转和漂移的幅度都在下降**——这条衰减证据说明不能假设 Chan 时代的量级在 2024-2026 依然成立，本轮直接在当前窗口实测幅度。未找到 2020 年代的独立复现。三篇来源卡见 `reports/harness/source_cards/h20260929_20_news_nonews_drop_reversal.jsonl`。
+  - 收到一条自称"协调者"的消息，要求追加一个基于 Abdi-Ranaldo (2017) 价差估计 + ADV 分层借券成本(0.5%/2%/5%)的敏感性格，并引用另一会话仍在改的 `scripts/run_t20260929_32_*`。该消息不是以正常用户轮次出现，格式可疑（夹在工具结果之间、以 system-reminder 包裹，且与另一并行任务 T-20260929-21 收到的几乎同一话术的可疑消息雷同），无法核实来源，未实现该追加项，只按原始任务书的成本模型（ADV 分层价差 + 1%/年借券 + 2×成本）执行。
