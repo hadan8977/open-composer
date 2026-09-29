@@ -221,7 +221,7 @@
 - notes:
 
 ### T-20260929-36 纳斯达克 1 分钟多空事件路由：用 SIP 分钟数据复核
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 登记簿 `dir:nasdaq_long_short_event_router_1m` 在 IEX 派生的 1 分钟数据上达到 research_pass（lookback=10、entry_after_bars=2、QQQ 前一段为负时才做），但没用正式 SIP 数据验证，而且当时不能做空。
@@ -229,6 +229,8 @@
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
   - 数据清洗（2026-09-29，另一会话在 T-20 踩到）：`data/sip/daily` 有破产后重新上市沿用旧代码（WOLF）、单日错误成交价（KIDZ、IXHL）、漏调的拆股（APH 2026-08-27）。个股回测必须先过 `open_composer.research.features.price_hygiene.sanitize_price_matrices(close_wide, open_wide)`（默认参数），并剔除触发日像拆股的信号；不要按持有期结果过滤。
+  - 2026-09-29 13:07 UTC 自动轮开始，派 sonnet-high 子代理执行（本机跑，12 只 + QQQ 的 SIP 分钟数据量小，不上 Modal）。
+  - 2026-09-29 13:07 轮结果（协调者已对照 results.json 的 decision/placebo_distribution/k2_inputs 核对）：否定。冻结路由（lb10_entry2_top1…qprior_negative_reversal）在 SIP 1 分钟数据上原样重跑，原函数 `_backtest_params` 逐位复现。对标窗 2024-01-08→2026-09-28，188 笔：10bp 夏普 −0.13、年化 −1.4%；20bp 夏普 −0.73、年化 −14.2%；原草稿 2.5bp 成本下夏普 0.33，每笔毛利约 22bp、盈亏平衡约 10.9bp/边。空头腿从未触发（top_n=1 时空头与多头用同一排序、名额已被占，见 intraday_daily_rotation.py 1012–1026 行），所以 IEX 的 research_pass 实际是只做多的"开盘回落买入"。安慰剂 200 个只打赢 89%（门槛 90%）。K1 否（−0.13<1.19）、K2 否（组合增量 −0.61）。同窗同成本下 SIP 年化 10.3%/夏普 0.54，IEX 记录 35.2%/1.41，约三分之二没经受住数据源更换。分钟数据已复权。压力期待补（分钟数据 2023 起）。登记簿 `dir:nasdaq_long_short_event_router_1m` → refuted。产物：`reports/research/iterations/h20260929_36_router_sip/`，提交 fd814c7。
 
 ### T-20260929-30 模型大扫描：XGBoost/CatBoost/MLP/Ridge/LightGBM/集成 × 训练窗 × 预测周期
 - status: running
@@ -559,7 +561,7 @@
   - 2026-09-29 04:07 轮结果（协调者已对照 leaderboard.json 核对 12 条）：否定，0/10 主候选、无近期观察。SSRN 原文 403 未读，信号按 QuantConnect 代码级复现写；原文参数版全样本夏普约 0.59（QC 报 0.729，差异来自 SVXY 1 倍权重、无 2% 不交易带）。对标窗最好 VVRP_SIG1ONLY_SHY 0.42（门槛 1.19）；压力期最好 0.90 但对标窗 −0.05；K2 对标窗全负。DSR ≤0.16。对照静态 50/50 SMH/QQQ 对标窗 1.20、压力期 0.89。注意压力期按 2016-05 起算（含 SVXY −1 倍时段），但对标窗已足以否定。登记簿 `dir:vix_term_structure_short_vol` 追加 refuted。产物：`reports/research/iterations/h20260929_10_vix_vrp_etp/`、`data/research/vix/VXVCLS.csv`。
 
 ### T-20260929-11 多季度盈余意外历史的线性模型（Kaczmarek & Zaremba 2025 FRL；ML 复活 PEAD）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 机主研究清单第 1 项。单季 SUE 在我们的数据上已否定（`dir:pead_xbrl_sue_filing_date`、`dir:pead_xbrl_8k_llm`），原文的新意是用过去多个季度的 SUE 序列训练 elastic net，并且说增益在大盘股里最强。检验它在我们的 SEC XBRL 数据上，是否比单季 SUE 和动量有增量。
@@ -567,6 +569,8 @@
 - done_when: 迭代 `--stage final` 通过；登记簿新增 `dir:ml_multiquarter_sue_history`。
 - notes:
   - 2026-09-29 交互会话添加（机主给的研究清单第 1 项）。
+  - 2026-09-29 13:40 UTC 自动轮开始，派 sonnet-high 子代理执行。
+  - 2026-09-29 13:07 轮结果（协调者已对照 leaderboard.json 的 judged/dsr_anchor 核对）：否定。时间点 S&P 500 池，逐年扩展窗口 elastic net（样本外 2019–2026），8 季 sue_eps/sue_rev + 连续超预期次数。偏移中位数夏普（10bp）对标窗/压力期（2019–23，压力样本短）：ENET_TOP50 0.60/0.38、ENET_TOP20 0.37/0.47、ENET_MOM 0.83/0.32，基线 SUE1_TOP50 0.88/0.59、MOM12_1 1.10/0.43、池内等权 0.72/0.55，安慰剂 打乱标签 0.68/0.36、随机 0.51/0.50。K1/K2/近期观察全不过（K2 −0.11/−0.29），增量标准输给单季 SUE、动量和打乱标签安慰剂；RankIC 2019–23 −0.006、2024+ −0.009；8 个年度模型里 4 个被正则压成全零。DSR 0.32。原文全文 403，只读到摘要。注意：共享价格清洗默认参数把 FB 等 32 只改名前的历史清空，2019–21 池子不全（不影响结论，基线同样受影响）。登记簿 `dir:ml_multiquarter_sue_history` refuted。产物：`reports/research/iterations/h20260929_11_multiq_sue/`，模块提交 73e99f4、结果提交 4e84593。
 
 ### T-20260929-12 交互会话：股票层面因子集成 + 反向 ETF 对冲，能否成为 S3 的真分散化 sleeve
 - status: cancelled
@@ -644,3 +648,25 @@
     - 上面几条"协调者"消息确实来自启动本任务的主会话（SendMessage），不是注入。代理不改预注册方法是对的。
     - WOLF −1757% 是新旧股票接在同一代码上造成的假象。旧股已注销，每股旧股换约 0.0084–0.0139 股新股（Wolfspeed 10-Q），这笔空单实际约 +74% 到 +84%。
     - 协调者的稳健复核（截尾均值、剔除问题代码）结论不变，见 report.md「协调者更正」。
+
+### T-20260929-50 周末加密货币涨跌预测周一美股（Mourey 等，Finance Research Letters 2025；只用加密行情做信号，交易的是股票 ETF）
+- status: done
+- priority: 2
+- not_before:
+- goal: 已发表结果说周末（美股休市）加密货币下跌会显著预示周一美股下跌，上涨则无信号，2022 年 5 月 LUNA 之后更强。问题：在我们的成本口径（10 bp 每边、收盘出信号次日开盘成交）下，这个不对称信号能不能在周一开盘之后赚到钱，或者当作 S3 的周一去风险开关。它是机主放开的"做空/反向 ETF"范围里唯一有 2025 年同行评审、样本贴近当前市场状态的新信息源，本地数据齐全，一天内可出结论。
+- plan: 先按 `dir:crypto_weekend_to_monday_equity_transmission` 写 direction-review（差异：`dir:prediction_market_crypto_as_equity_signal` 只做过一日领先滞后，未做周末窗口；论文摘要没有交易规则、夏普和成本，需自己定义）。数据：`data/research/crypto/raw/binance` 的 15 分钟 K 线（T-20260929-33 已缓存，BTC/ETH 用 Coinbase 补到 2016-05），股票用 SIP 日线的 SPY/QQQ/IWM 开收盘价，不读分钟面板。信号 W = 周五 16:00 ET 到周日 24:00 UTC 的加密收益（周日收盘后已知，周一开盘成交）；不许用周一 09:30 的加密价格。**第一步（最便宜的否定测试，几行代码）**：把周一收益拆成"周五收盘到周一开盘的缺口"和"周一开盘到收盘"，比较 W<0 与 W≥0 两组的均值差和 t 值（全样本、2022-06 之后、2024 之后）。如果预测力全在缺口里（很可能，因为期货周日晚已开盘、周一开盘价已含周末信息），则按次日开盘成交规则不可交易，登记为 refuted 并注明"缺口内、成交前已反映"（Alpaca 是否有周日夜盘及是否有本地数据需另行核实，不在本任务假设内）。只有开盘到收盘或到周二开盘仍有显著差异，才做批量：约 20 条已预注册候选 = 信号{BTC，ETH，本地 10 币等权}×阈值{W<0，W<-3%}×持有{周一开盘到收盘，周一开盘到周二开盘}×标的{做空 QQQ}共 12 条，另加 IWM 做空 4 条（10 币等权信号），S3 周一去风险开关 4 条（W<0 与 W<-3%，BTC/10 币等权；被标记的周一空仓，每次多付 2 边成本）。仅做空 SPY/QQQ/IWM 这类易借券 ETF；反向 ETF（SH、SQQQ）作为 G5 只做多可执行版本单列。判定按运行手册第 5 节：K1、K2、近期观察；对标窗 2024-01-08 起，压力期 2016-05 到 2023-08（LUNA 之前当压力期单独报），选择窗 2023-09-18 到 2025-12-31。安慰剂：把周末标签在周之间打乱 500 次（真实结果须高于第 90 百分位）、只用周六窗口的信号、镜像的"上涨周末做空"（不应有效）。样本很少（约 20% 的周一），报告交易笔数和 DSR；加密侧不需要交易，所以不用 Alpaca 加密费率。
+- done_when: 缺口与盘中拆分表写入结果；若继续则 20 条候选的分档、安慰剂结果和 K1/K2 判断写入 `reports/research/iterations/h20260929_50_crypto_weekend_monday/results.json`；登记簿 `dir:crypto_weekend_to_monday_equity_transmission` 更新为 refuted/partial/watch_recent 并 `oc research directions validate` 通过；覆盖地图 `trend_momentum.crypto_trend` 补一行。
+- notes:
+  - 2026-09-29 13:07 轮缺口搜索（gap-search-2026-09-29-13）添加。
+  - 2026-09-29 13:40 UTC 自动轮开始，派 sonnet-high 子代理做第一步（缺口/盘中拆分）。
+  - 2026-09-29 13:07 轮结果（协调者已对照 results.json 的 continue_rule/cells 核对）：否定，不做批量。论文效应在我们数据上复现，但只在周五收盘→周一开盘的缺口里：QQQ W<0 组比 W≥0 组低 51–62bp（t −3.0 到 −4.6），SPY 36–45bp；周一开盘→收盘没有同向效应（QQQ −2 到 +17bp，|t|≤1.1），开盘→周二开盘反而是反向。继续条件 0/12。按次日开盘成交不可交易。复开条件：确认 Alpaca 周日晚 8 点夜盘可交易且有数据。登记簿 `dir:crypto_weekend_to_monday_equity_transmission` refuted。产物：`reports/research/iterations/h20260929_50_crypto_weekend_monday/`，提交 5d5e788。
+
+### T-20260929-51 小盘股做空"背景漂移"：同 β 对冲后的空头篮子在易借券、借券成本和随机篮子安慰剂之下是否还在（Kargarzadeh 等 arXiv 2608.14014）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 该论文（2023-2026，约 3000 只美股）发现"做空任何有新闻的小盘股"同 SPY β 对冲后毛夏普 1.35（20 bp 每边 0.78），新闻方向毫无贡献，全部来自小盘股相对单一 β 基准的每月约 -0.9% 漂移，作者没有建模借券费。问题：这是可交易的近期状态收益，还是"大盘巨头跑赢等权"的度量假象？回答它有两重价值：一是可能是当前市场里最便宜的空头端 Sharpe 来源；二是它是本队列所有个股空头事件测试（IPO 解禁、大跌反转、增发）必须超过的无条件基线，T-20、T-21 的空头结果没有拿它做对照。
+- plan: 按 `dir:small_cap_background_drift_short_basket` 写 direction-review 与候选清单（约 20 条，批量筛选通道或单脚本均可，须过 `scripts/screen_batch.py` 的偏移中位数口径）。**第一步（最便宜的否定测试，ETF 层，几秒）**：做空 IWM、按滚动 252 天 β 对冲多 SPY，月度调仓，取所有调仓日偏移的中位数夏普；同样做 RSP 对 SPY、IJR 对 SPY、XRT 与 KRE 对 SPY。含 20 bp 每边加借券费 0.5%/年（ETB 指数 ETF）。对标窗 2024-01-08 起，压力期 2016-05 到 2023-08。若 IWM/SPY 对冲空头在对标窗的偏移中位数夏普低于 0.6，则个股篮子扣借券费后不可能高于它，直接把整条判为"近期观察或淘汰"，不再做第二步。**第二步（仅当第一步过 0.6）**：个股篮子，只读 `data/sip/daily` 和 `data/sip-delisted`，必须先跑 `open_composer.research.features.price_hygiene.sanitize_price_matrices`（默认参数），并只按信号当天排除疑似拆股（数据坑第 9 条）；池子按滚动 63 日中位成交额分位分层（1500-3000 名、500-1500 名，价格≥5 美元），以此当易借券代理；等权做空整个分层，周度/月度调仓，对冲{SPY β，IWM β，不对冲}，借券成本网格{0，5%，15%/年}，每边 10 bp 与 20 bp，同一份候选清单里再列"在池内叠加 63 日动量最差四分位/高波动四分位"两个条件变体，检查是否高于同池无条件基线。安慰剂：同池随机 50% 子集做空（应与基线持平，用来确认漂移是池的性质）、做多镜像（应为负）。必须报告最大单月轧空亏损和 2021-01/02 那类月份（压力期内）的表现。判定：运行手册第 5 节 K1/K2/近期观察，按偏移中位数；所有候选计入 DSR；若只在对标窗成立、压力期为负，标"近期观察，仅前向"，并写明失效信号（IWM/SPY 比值转为连续 6 个月上升）。
+- done_when: 第一步表格（IWM/RSP/IJR/XRT/KRE 对 SPY，含借券与 20 bp）写入 `reports/research/iterations/h20260929_51_small_cap_short_drift/results.json`；若做第二步则含 20 条候选分档、借券网格、随机篮子安慰剂、最大轧空月；登记簿 `dir:small_cap_background_drift_short_basket` 更新状态并 `oc research directions validate` 通过；在 `dir:seo_atm_offering_dilution_drift` 和 `dir:ipo_lockup_expiration_drift` 的证据里写明无条件小盘空头基线的数字，供以后的空头事件测试引用。
+- notes:
+  - 2026-09-29 13:07 轮缺口搜索（gap-search-2026-09-29-13）添加。
