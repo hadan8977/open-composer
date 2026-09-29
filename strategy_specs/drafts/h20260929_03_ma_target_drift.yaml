@@ -1,0 +1,107 @@
+name: h20260929_03_ma_target_drift
+description: 'Preregistered T-20260929-03 signal-card admission test: after a US-listed company announces it is being acquired (8-K Item 1.01 merger agreement, target identified by code rule from EDGAR full text), does buying the target at the next session open and holding 20 (primary) or 60 sessions beat the universe after 10/20 bp per side and beat re-dated placebos? 2 variants (all targets, t3 small/illiquid tier) x 2 horizons = 4 signal cards. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- BIL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 15
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 15
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_03:ma_target_drift
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  ma_target_indicator:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is the event indicator built by scripts/collect_sec_ma_target_announcements.py (data/features/sec_8k_ma_announcements) and evaluated by open_composer.research.signal_card in event mode.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_03_ma_target_drift
+  candidate_manifest_path: reports/research/iterations/h20260929_03_ma_target_drift/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_03_ma_target_drift/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl
+  source_card_claim_ids:
+  - bessembinder_zhang_2015_itp_overreaction
+  - jetley_ji_2010_shrinking_spread
+  - mitchell_pulvino_2001_risk_return
+  - big_moves_small_gains_2025
+  - baker_savasoglu_2002_limited_arbitrage
+  - keown_pinkerton_runup
+  parameter_space:
+    variant:
+    - all
+    - t3
+    primary_horizon:
+    - 20
+    - 60
+  candidate_budget: 4
+  selection_objective: Admit only if all four signal_card flags (car_t_ge_3, beats_redated, book_positive_20bp, book_positive_20bp_recent) are true at the primary horizon; otherwise the card's own admit/reject logic. Both horizons count as trials.
+  candidate_budget_note: 2 variants x 2 horizons = 4 signal cards, the whole trial count.
+  anti_overfit_notes:
+  - Event rule (Item 1.01, not completion 8-K, filer is the acquired party by code rule, first per CIK per 365 days) is frozen before any return is computed; sample-check driven rule fixes were made before returns and are documented in SAMPLE_CHECK.md.
+  - No completion/DEFM14A information is used to select events (survivorship).
+  - Horizons, tiers and flags are fixed in candidate-manifest.json before the card is run.
+  validation_plan:
+  - signal_card event mode over the point-in-time broad universe (top 3000 by ADV, close >= 5), next-open entry, 10/20 bp per side
+  - built-in re-dated placebo (20 seeds, +-126 sessions)
+  - pre-announcement CAR [-5,-1] leakage diagnostic reported separately
+notes:
+  intent: Test whether US merger-target announcements leave a fixed-horizon drift that survives costs at the next open.
+  hypothesis_id: T-20260929-03
+  previous_link: dir:merger_arbitrage_target_announcement_drift
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

@@ -1,0 +1,73 @@
+{
+ "schema_version": 1,
+ "report_type": "h20260929_21_ipo_lockup_expiry_historical_evaluation_authorization",
+ "iter_id": "h20260929_03_ma_target_drift",
+ "workflow_pass": true,
+ "research_pass": false,
+ "llm_contribution_pass": false,
+ "paper_ready_pass": false,
+ "historical_evaluation_authorized": true,
+ "candidate_accounting": {
+  "frozen_candidate_count": 4,
+  "evaluation_authorized_count": 4,
+  "dependency_skipped_count": 0,
+  "unresolved_count": 0,
+  "balanced": true
+ },
+ "path_gates": {
+  "ma_target_drift_signal_card": {
+   "action": "evaluate",
+   "historical_evaluation_go": true,
+   "candidate_ids": [
+    "ma_target_all",
+    "ma_target_t3",
+    "ma_target_all_h60",
+    "ma_target_t3_h60"
+   ],
+   "reason_code": "edgar_event_table_and_daily_broad_available"
+  }
+ },
+ "notes": "Event table built from free EDGAR full-text search + submission heads (scripts/collect_sec_ma_target_announcements.py); prices from data/features/daily_broad via signal_card. No completion status is used.",
+ "candidate_authorization": {
+  "candidate_count": 4,
+  "rows": [
+   {
+    "candidate_id": "ma_target_all",
+    "path": "ma_target_drift_signal_card",
+    "action": "evaluate",
+    "reason_code": "edgar_event_table_and_daily_broad_available",
+    "candidate_binding_sha256": "d1c22cc1421da478546b8852b1b5c36c27492a59860f9457fbce06f3881fae9a"
+   },
+   {
+    "candidate_id": "ma_target_t3",
+    "path": "ma_target_drift_signal_card",
+    "action": "evaluate",
+    "reason_code": "edgar_event_table_and_daily_broad_available",
+    "candidate_binding_sha256": "8b300aec633dbe8445210acbb4f5487ddc08f5c8ed160542c20139c19339e5e9"
+   },
+   {
+    "candidate_id": "ma_target_all_h60",
+    "path": "ma_target_drift_signal_card",
+    "action": "evaluate",
+    "reason_code": "edgar_event_table_and_daily_broad_available",
+    "candidate_binding_sha256": "a33d0d0f85d31b336c045cc115ab785f6ca8261997f68e8631ad5188cc214f1f"
+   },
+   {
+    "candidate_id": "ma_target_t3_h60",
+    "path": "ma_target_drift_signal_card",
+    "action": "evaluate",
+    "reason_code": "edgar_event_table_and_daily_broad_available",
+    "candidate_binding_sha256": "c2e940d440b86ded58cb4751cba0e0f2acc570a6900460a4f308a9c9a1f04d92"
+   }
+  ]
+ },
+ "required_reference_names": [
+  "daily_broad_layout"
+ ],
+ "required_references": {
+  "daily_broad_layout": {
+   "path": "reports/research/iterations/h20260929_03_ma_target_drift/build_summary.json",
+   "sha256": "58f4fb02d94ef3bf02d55a74db7b47b27d0fd70be3931960b37313f3ab89fddb"
+  }
+ }
+}

@@ -1,0 +1,407 @@
+{
+  "candidate_count": 16,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DC_M252_ALWAYS",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dual_class_pair_zscore",
+      "parameters": {
+        "borrow": "0.5%/yr if 21d dv>=50M else 2%/yr",
+        "direction": "A_dual_class",
+        "entry": "always",
+        "freq": "M",
+        "rule": "per pair r=log(Pa/Pb), z vs trailing 252d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry always (sign of z); monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+        "z_window": 252
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DC_M63_ALWAYS",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dual_class_pair_zscore",
+      "parameters": {
+        "borrow": "0.5%/yr if 21d dv>=50M else 2%/yr",
+        "direction": "A_dual_class",
+        "entry": "always",
+        "freq": "M",
+        "rule": "per pair r=log(Pa/Pb), z vs trailing 63d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry always (sign of z); monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+        "z_window": 63
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DC_M252_THR1",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dual_class_pair_zscore",
+      "parameters": {
+        "borrow": "0.5%/yr if 21d dv>=50M else 2%/yr",
+        "direction": "A_dual_class",
+        "entry": "thr1",
+        "freq": "M",
+        "rule": "per pair r=log(Pa/Pb), z vs trailing 252d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry only |z|>=1; monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+        "z_window": 252
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DC_M63_THR1",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dual_class_pair_zscore",
+      "parameters": {
+        "borrow": "0.5%/yr if 21d dv>=50M else 2%/yr",
+        "direction": "A_dual_class",
+        "entry": "thr1",
+        "freq": "M",
+        "rule": "per pair r=log(Pa/Pb), z vs trailing 63d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry only |z|>=1; monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+        "z_window": 63
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DC_W252_ALWAYS",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dual_class_pair_zscore",
+      "parameters": {
+        "borrow": "0.5%/yr if 21d dv>=50M else 2%/yr",
+        "direction": "A_dual_class",
+        "entry": "always",
+        "freq": "W",
+        "rule": "per pair r=log(Pa/Pb), z vs trailing 252d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry always (sign of z); weekly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+        "z_window": 252
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DC_W63_THR1",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dual_class_pair_zscore",
+      "parameters": {
+        "borrow": "0.5%/yr if 21d dv>=50M else 2%/yr",
+        "direction": "A_dual_class",
+        "entry": "thr1",
+        "freq": "W",
+        "rule": "per pair r=log(Pa/Pb), z vs trailing 63d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry only |z|>=1; weekly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+        "z_window": 63
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "LL_XLK_K3_H5",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "etf_crash_constituent_laggards",
+      "parameters": {
+        "borrow": "0.5%/yr on the ETF short",
+        "direction": "B_etf_lead_lag",
+        "etf": "XLK",
+        "hold": 5,
+        "k": 3,
+        "rule": "trigger: XLK close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short XLK 1.0; hold 5 sessions; no overlapping entries"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "LL_XLK_K5_H5",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "etf_crash_constituent_laggards",
+      "parameters": {
+        "borrow": "0.5%/yr on the ETF short",
+        "direction": "B_etf_lead_lag",
+        "etf": "XLK",
+        "hold": 5,
+        "k": 5,
+        "rule": "trigger: XLK close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short XLK 1.0; hold 5 sessions; no overlapping entries"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "LL_XLK_K3_H10",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "etf_crash_constituent_laggards",
+      "parameters": {
+        "borrow": "0.5%/yr on the ETF short",
+        "direction": "B_etf_lead_lag",
+        "etf": "XLK",
+        "hold": 10,
+        "k": 3,
+        "rule": "trigger: XLK close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short XLK 1.0; hold 10 sessions; no overlapping entries"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "LL_XLK_K5_H10",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "etf_crash_constituent_laggards",
+      "parameters": {
+        "borrow": "0.5%/yr on the ETF short",
+        "direction": "B_etf_lead_lag",
+        "etf": "XLK",
+        "hold": 10,
+        "k": 5,
+        "rule": "trigger: XLK close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short XLK 1.0; hold 10 sessions; no overlapping entries"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "LL_SOXX_K3_H5",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "etf_crash_constituent_laggards",
+      "parameters": {
+        "borrow": "0.5%/yr on the ETF short",
+        "direction": "B_etf_lead_lag",
+        "etf": "SOXX",
+        "hold": 5,
+        "k": 3,
+        "rule": "trigger: SOXX close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short SOXX 1.0; hold 5 sessions; no overlapping entries"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "SIM_LS_K3",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "sector_intramonth_momentum",
+      "parameters": {
+        "borrow": "0.5%/yr on ETF shorts",
+        "direction": "C_sector_intramonth",
+        "k": 3,
+        "kind": "LS",
+        "rule": "Quantpedia composite: month-end 252d return rank; D+1 long top-3/short bottom-3; D+2,D+3 reversed; D-10..D-5 momentum book with prior month-end ranking; one version (calendar-anchored)"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "SIM_LS_K2",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "sector_intramonth_momentum",
+      "parameters": {
+        "borrow": "0.5%/yr on ETF shorts",
+        "direction": "C_sector_intramonth",
+        "k": 2,
+        "kind": "LS",
+        "rule": "Quantpedia composite: month-end 252d return rank; D+1 long top-2/short bottom-2; D+2,D+3 reversed; D-10..D-5 momentum book with prior month-end ranking; one version (calendar-anchored)"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "SIM_MN_K3",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "sector_intramonth_momentum",
+      "parameters": {
+        "borrow": "0.5%/yr on ETF shorts",
+        "direction": "C_sector_intramonth",
+        "k": 3,
+        "kind": "MN",
+        "rule": "same schedule with the short leg replaced by short SPY 1.0 and long top-3"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "SIM_MN_K2",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "sector_intramonth_momentum",
+      "parameters": {
+        "borrow": "0.5%/yr on ETF shorts",
+        "direction": "C_sector_intramonth",
+        "k": 2,
+        "kind": "MN",
+        "rule": "same schedule with the short leg replaced by short SPY 1.0 and long top-2"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "SIM_ABL_LS_K3_MONTHLY",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "SHY",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "sector_intramonth_momentum",
+      "parameters": {
+        "borrow": "0.5%/yr on ETF shorts",
+        "direction": "C_sector_intramonth",
+        "k": 3,
+        "kind": "ABL",
+        "rule": "ablation without calendar windows: long top-3/short bottom-3 by 252d return held the whole month, 21 offsets"
+      },
+      "path": "low_turnover_long_short_batch",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-09-29T19:16:30.170238+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "h20260929_37_ls_short_unlocked",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml": "64ed791c9351929fa3198fb0f336f4de030bbb22f44c69396e3def9fffa3b04c"
+  }
+}

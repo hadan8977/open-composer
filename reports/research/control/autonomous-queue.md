@@ -191,13 +191,15 @@
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
 
 ### T-20260929-37 放开做空后的多空批量：双重股权套利、ETF 与成分股领先滞后回归、板块月内动量
-- status: ready
+- status: done
 - priority: 1
 - not_before:
 - goal: T-20260929-32 重新分级后排进队列的三个多空方向（`reports/research/control/short-unlocked-retriage-2026-09-29.md`）。跳空回补的教训：每天全换仓的策略，扣掉价差和借券费后必亏（扣成本前每天 +11.5 bp，扣后 −38.5 bp）。所以每个方向先测换手低的版本（周度/月度调仓、持仓缓冲）。
 - plan: 先读原文和登记簿证据；空头只用容易借的股票（收盘价 ≥ $5、21 日成交额 ≥ $500 万，排除空头天数最高的一成），借券费按成交额分档 0.5%/2%/5% 每年（Alpaca 模拟盘不扣借券费，回测必须自己扣）；成本 5 bp + 半个 Abdi-Ranaldo 价差，压力情形翻倍，并报告冻结的 10/20 bp；价格必须先过 `price_hygiene.sanitize_price_matrices`，剔除触发日像拆股的信号；全部调仓日偏移取中位数；安慰剂；K1/K2。
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
+  - 2026-09-29 19:07 UTC 自动轮（d1ed2d06）开始，派 sonnet-high 子代理执行。
+  - 2026-09-29 19:07 轮结果（协调者已按 results.json 逐条复算分档）：0/16 保留、0 近期观察，三条方向全部 refuted。双重股权最好 DC_M252_ALWAYS 对标窗/压力期偏移中位数夏普（10bp+借券）−0.02/−0.07，毛夏普 0.5–1.05 被两腿成本吃掉；ETF→成分股最好 LL_SOXX_K3_H5 0.76/−0.22（安慰剂最高 0.20，但压力期为负），XLK 版毛收益为负；板块月内动量原版 SIM_LS_K2 −1.04/−0.71，年换手 142 倍。K2 压力期增量全为负；DSR ≤0.24。注意：纯短债 sleeve 在这套 K2 机制里也有 +2.30/+0.76 的增量，低波动候选的 K2 不能单独当证据。登记簿里双重股权"5.20%/夏普 1.68"在 paperswithbacktest 页面上找不到（页面写 No backtest）。产物 `reports/research/iterations/h20260929_37_ls_short_unlocked/`、`scripts/run_h20260929_37_ls_short_unlocked.py`。
 
 ### T-20260929-33 加密货币趋势（Alpaca 现货，只做多）批量筛选
 - status: done
@@ -600,7 +602,7 @@
   - 2026-09-29 05:42 UTC：机主在交互会话里停掉了执行代理，按取消处理，不再重启，除非机主要求。停止时的状态：日期对齐已修好（与 salvage.simulate 逐位一致，corr(a,SPY_cc)=0.69–0.84，对冲后 beta 0.02–0.05）；第一阶段的判定还没跑。第一次"通过"是日期错位造成的，已作废（results.VOID-alignment-bug-2026-09-29.json）。
 
 ### T-20260929-03 M&A 目标股公告后漂移（需先建一个免费 EDGAR 数据管道）
-- status: ready
+- status: done
 - priority: 3
 - not_before:
 - goal: 缺口搜索（`gap-search-2026-09-29-04`）核实 `event.8k_item_events` 格子自己的 gap 字段写的"offerings, spin-offs, M&A never searched"是准确的（不是像日历格子那样的陈旧记录）——同一个 8-K 事件格子里其它子方向（回购公告、Item 4.02 财务重述、SEO/ATM 增发、分拆）都已判定 evidence_too_weak/not_executable，唯独并购目标股公告后漂移从未搜索过、也从未在本仓库测过。搜到一篇 2025-10-13 的工作论文（`https://exa.ai/library/publication/k3grbvwxkr8`，只读到摘要，Exa 库全文在付费墙后，判定为 claim_only 未独立核实）：用新闻覆盖度、公告前成交量、交易类型（现金/换股）预测并购目标股公告后 30 天的收益，作者声称扣成本后夏普可超过 2.1（方法、样本、具体窗口都没读到，只能当方向性线索，不能当预注册的目标数字）。另一篇 1992-2021 年美国样本（51,780 个并购/公司行动事件，`https://ideas.repec.org/p/usi/wpaper/920.html`，同样只读到摘要）发现小盘并购目标股的超额收益主要在公告**之前**（信息提前泄露/分析师覆盖不足所致），提醒我们能交易的公告**之后**窗口可能比论文摘要暗示的要小。机制和已测过的所有 8-K 子方向（回购、Item 4.02、SEO/ATM、分拆）都不同，且是长仓可执行（买目标股，不需要卖空收购方或裸卖空）。
@@ -615,6 +617,8 @@
   - not_before 设到 2026-10-01：这是一个新数据管道任务，不需要 DeepSeek 打分，但涉及新脚本和抽样核对，按惯例给协调者一天余量排期；也避免和当前排队中的其它数据管道任务（如 T-20260928-16/-17 的打分通道）抢注意力。
   - **待机主决定**：如果最终发现交易完成/交割状态无法免费获取，"持有到交割"版本的并购套利（更接近论文摘要里 Sharpe>2.1 的那种设计）就做不了，只能做"固定期限持有"这个更弱的版本——这不需要机主现在决定，只在测完第一步再报告。
   - 2026-09-29 04:07 轮协调者合并入队：改为 ready、priority 3、去掉 not_before——免费 EDGAR 数据管道不需要机主决定，不算 blocked；摘要里 Sharpe>2.1 未读全文，只当弱先验。
+  - 2026-09-29 19:07 UTC 自动轮（d1ed2d06）开始，派 sonnet-high 子代理执行（先建 EDGAR 管道，重计算步骤与 T-37 用 flock 串行）。
+  - 2026-09-29 19:07 轮结果（协调者已核对四张卡的 flags）：refuted。免费 EDGAR 全文检索管道：11,415 条 Item 1.01 候选 8-K，1,484 个首次目标公告（2016–2026，每年 88–176 个），映射到代码 94.5%，25 条抽样误判 8%；可交易池内 576 个。四张卡（all/t3 × 20/60 日）flags 相同：car_t_ge_3 否、book_positive_20bp 否、2024 起否（beats_redated 为真只因真实 CAR 低于全部安慰剂）。ma_target_all 次日开盘入场后 20 日 CAR −0.75%（t −2.36），20bp 账本 −16.2%/年。溢价在入场前就兑现：公告前 5 日 +5.69%、公告日 +16.95%。持有到交割/按报价差的版本需要交割状态和报价，免费拿不到，未做。产物 `data/features/sec_8k_ma_announcements/`、`reports/research/iterations/h20260929_03_ma_target_drift/`、`reports/research/signal-cards/ma_target_*.json`。
 
 ### T-20260929-04 内部人集群买入：补测 H-20260916-08 唯一还空着的精确设计（top-500 池、周频）
 - status: done
@@ -748,3 +752,33 @@
 - notes:
   - 2026-09-29 16:07 轮缺口搜索（gap-search-2026-09-29-16）添加。当前不需要机主动作：等 T-60 结论。
   - 2026-09-29 16:07 轮：T-60 已判"不通过"，本轮汇报已通知机主。付费数据属机主决定，自动轮不改 ready。
+
+### T-20260929-70 净股份发行（股本变化）因子：低发行/回购者做多，高发行者回避或对冲做空（Pontiff-Woodgate 方向，用本地 XBRL 股本，2024 起近期口径）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 净股份发行是发表最稳的截面异象之一（Pontiff-Woodgate JF 2008：1970-2003 最低发行十分位约 17%/年、最高约 9%/年，差约 8 个百分点，FF3 后约 6%/年），换手低（月频或季频），10 bp 和借券费相对这个量级很小，是"做空放开后新可测"里成本最友好的一类。但近期证据薄且偏负面：QuanterLab 2026-08 的 S&P 500 低股本增长 30 只等权做多（2006-2025，10 bp，作者自跑未复现）Sharpe 0.58 对等权指数 0.54，等于打平。本仓库 `dir:sec_xbrl_accounting_signals_v1` 只测了 ROE、毛利率、资产增长、应计，`dir:buyback_announcement_effect`、`dir:buyback_execution_vs_announcement` 都是 evidence_too_weak 且从未在本地计算，股本变化没有信号卡。问题：在 2024 起、扣成本和借券费之后，股本变化排序能否给出 K1/K2 级别的增量（做多低发行者、或空头腿在易借券大票里对冲做空高发行者）。
+- plan: 数据本地已有：`data/features/sec_fundamentals_daily/*.parquet`（列 `shares_outstanding`，2016 起，按 8-K/10-Q/10-K 披露日的 PIT 展开，来源是 dei 封面股数 `EntityCommonStockSharesOutstanding`，facts 表里 164,083 行）；行情用 `data/features/daily_broad` 与 SIP 日线（复权价）。**不需要新数据**。注意：封面股数**没有拆股调整**，且双重股权公司可能只报一类，所以 (a) 只用 252 个交易日前后两个 PIT 值的对数变化；(b) 丢弃 |Δlog| ≥ ln(1.5) 的配对，以及区间内有疑似拆股交易日（`sanitize_price_matrices` 默认参数触发的 session）的配对；(c) 丢弃封面股数在区间内出现过 >30% 单季跳变后回摆的股票。本地没有回购金额（facts 表没有 PaymentsForRepurchase），不做美元回购版本，登记簿里注明。**先预注册再算**：写 `direction-review.json`（引用 `dir:net_share_issuance_pontiff_woodgate_recent`）和候选清单。信号（符号预注册：股本变化越低越做多）NSI252 = log(shares_t / shares_{t-252})；对照 NSI126（半年，不算候选，看信号是否只是最近一次增发）。候选 8 条 = 信号 NSI252 × 组合 {最低五分位只做多，最低五分位做多 + 最高五分位空头并用 SPY 252 日 β 对冲} × 调仓 {月频，季频} × 池 {ADV 前 500，ADV 前 1,500 且价格 ≥ 5 美元}；空头腿只在 ADV 前 500 内做（易借券代理），借券费 0.5%/年 与 3%/年 两档（费用档是敏感性，不额外增加候选数）；另有一个不算候选的对照：top-1500 等权中"剔除最高发行五分位"（只回避），用来判断收益来自多头还是空头。**最便宜的否定测试（几分钟，先于任何回测）**：`open_composer.research.signal_card` rank 模式，`--sql` 生成 NSI252（方向 -1，即低者好），池 ADV 前 1,500，`--primary-horizon 20` 和 60，报全样本（2017-2026）与 2024 起 RankIC、t、`flags`（predictive、stable_years、beats_shuffle、timely、tradable_tiers_20bp、distinct_from_controls）。继续的条件：2024 起 IC 符号与预注册相同（低发行→高收益），|t| ≥ 2.0（周/月重叠样本用 Newey-West），全样本同号，且 `distinct_from_controls` 真（不是市值/动量的替身；把 NSI 对 log 市值、12-1 动量做截面残差后 IC 至少保留 50%）。全不满足就停，写否定，不建账本。通过后走 `scripts/screen_batch.py`（价格面板先过 `sanitize_price_matrices` 默认参数，读行情一律 `scripts/run_capped.sh --mem 1.8G --`），判定按运行手册第 5 节 K1/K2/近期观察，调仓日偏移取中位数（月频 21 个、季频取 63 个的每第 3 个），DSR，20 bp 复核，压力期 2017-2023 只能标"压力样本短：2017 起"，对 S3 看 K2（相关性与压力期增量）。
+- done_when: 信号卡 `reports/research/signal-cards/net_share_issuance_252.{json,md}` 和 IC 表（全样本 / 2024 起 / 残差版 / NSI126 对照）；若过关则 8 条候选分档、DSR、20 bp 与借券费两档结果写入 `reports/research/iterations/h20260929_70_net_share_issuance/results.json`；登记簿 `dir:net_share_issuance_pontiff_woodgate_recent` 更新为 refuted/partial/watch_recent 并 `oc research directions validate` 通过；`dir:buyback_announcement_effect`、`dir:buyback_execution_vs_announcement` 证据里注明"股本变化版本已本地测过"。
+- notes:
+  - 2026-09-29 19:07 轮缺口搜索（gap-search-2026-09-29-19）添加。简报 `reports/research/intel/gap-search-2026-09-29-19.md`。原文核对：QuantDecoded（Pontiff-Woodgate 的二手总结，已打开）、QuanterLab 2026-08（已打开）；FAJ 2020 只有检索结果页（claim_only）。已检查 `data/features/sec_fundamentals_daily` 有 `shares_outstanding` 列（2016 起）。
+
+### T-20260929-71 维基百科页面浏览量变化作为关注度信号（S&P 500，周频；Pyun 2025 长短组合，2024 起自己测）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 机主的信息源分层把"社交/关注度"放在 OHLCV 因子之上，本仓库测过新闻条数关注度（`dir:news_attention_features`，IC -0.003）但没测过维基页面浏览量。新信息：Pyun（SSRN 5172055，2025-03，2016-2023，Quiver 数据）报告页面浏览量上升的公司收益更高，周频多空组合有 FF 多因子无法解释的 alpha，月频调仓就变弱；经典的 Moat 等 2013 只有 DJIA 2004-2012。二手摘要没有夏普、成本、分时期数字，所以需要自己测。数据免费且时间点干净（Wikimedia REST 每日浏览量，已在 2026-09-29 直接调用验证：Apple_Inc. 2024-01-01 至 05 返回逐日 views），标的是易借券的 S&P 500 成分股，周频换手。它的否定成本极低（几百次 API 请求 + 一个 IC 表）。
+- plan: 数据：本地**没有**维基浏览量（已检查 `data/` 目录树，无此项）；免费 API `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/<title>/daily/<start>/<end>`，无需密钥，必须带描述性 User-Agent，单线程、遇 429/5xx 指数退避、断点续跑；写 `scripts/fetch_wikipedia_pageviews.py`（分页/退避/断点用假响应单测）。落 `data/wikipedia_pageviews/*.parquet`（先确认 `.gitignore` 覆盖 `data/wikipedia_pageviews/`，没有就只加这一行）。标的→文章标题映射：Wikipedia "List of S&P 500 companies" 的 wikitext（有 ticker 与公司文章链接，约 500 个）；只保留和 SIP 日线 symbol 对上的；**幸存者偏差是已知缺陷**（只有当前成分股），所以最终结论以 2024 起为主并要求 2016-2023 同号，任何时候都不把全样本夏普当证据。改名/合并的文章（如更名后标题）会造成历史断裂，丢弃 90 天内浏览量下降 >90% 的序列并记录丢弃名单。**先预注册再算**：`direction-review.json` 引用 `dir:wikipedia_pageview_attention_signal`，候选清单 = 信号 {VC7_28 = log(近 7 日总浏览量 ÷（前 28 日日均×7）)，VC28_90（对照，月度慢信号，不算候选）}中的 VC7_28 × 组合 {最高十分位做多，最高十分位做多 + 最低十分位空头并用 SPY β 对冲} × 滞后 {0：信号用截至 UTC 当日的浏览量、次日开盘成交，1：再滞后一个交易日} × 调仓日偏移 5 个 = 4 条候选（偏移取中位数判）；镜像（做多下降者）只作对照不算候选。时间点：UTC 日 d 的浏览量在 ET 20:00 才完整，所以信号只能在 d 收盘后用、d+1 开盘成交，不许用 d 收盘价成交。**最便宜的否定测试（先于账本，约 10 分钟）**：周频 RankIC（VC7_28 对下一周 SPY 超额收益），Newey-West t，分 2016-07→2023-12 与 2024-01-08 起两段，另做把标题打乱到别的股票的安慰剂 500 次。继续的条件：2024 起 IC 符号为正、|t| ≥ 2.5，且 2016-2023 同号，且真实 IC 高于安慰剂第 95 百分位。任一不满足就停，登记为 refuted。通过后再走 `scripts/screen_batch.py` 和运行手册第 5 节 K1/K2/近期观察（价格面板先过 `sanitize_price_matrices`，读行情用 `scripts/run_capped.sh --mem 1.8G --`），DSR，20 bp 复核，压力期 2016-07→2023-08 按可得样本判。
+- done_when: 抓取脚本 + 单测通过 ruff/pytest；IC 表（两段、安慰剂、丢弃名单、覆盖标的数）写入 `reports/research/iterations/h20260929_71_wikipedia_pageviews/results.json`；若过关则 4 条候选分档和 DSR；登记簿 `dir:wikipedia_pageview_attention_signal` 更新终态并 validate ok。
+- notes:
+  - 2026-09-29 19:07 轮缺口搜索（gap-search-2026-09-29-19）添加。原文核对：Pyun 论文本身没打开（SSRN 被挡），只读到 mlquants 的摘要转述，所以论文的数字一律不引用，只当作方向线索；Economics Letters 2024《The Wikipedia effect》被验证码挡住（claim_only）。API 只探测了一个标题的 5 天，没有测过限流。
+
+### T-20260929-72 SEC 卖空交割失败（FTD）余额作为回避/做空信号（免费数据，最便宜的否定测试，收口"卖空信息"格子）
+- status: ready
+- priority: 3
+- not_before:
+- goal: 覆盖地图 `alt_data.short_selling` 写着"fails-to-deliver never searched"，登记簿 `dir:sec_fails_to_deliver_signal` 仍是 evidence_too_weak 且从未在本地计算。SEC 每半个月发布一份全市场 FTD 余额（NSCC CNS，管道分隔，从 2009-07 起，数据到 2026-09；已直接打开数据页并对 `cnsfails202606a.zip` 做了 HEAD，200、1.3 MB）。文献把 FTD 高企与知情卖空、之后的负收益联系起来，但只在摘要层面读过，没有效应量；发布滞后约 15-16 个自然日会吃掉大部分短期信号；SEC 自己说 FTD 也来自多头卖出，且高 FTD 的股票偏难借券。先验低，排优先级 3，价值是用几分钟把这个从未测过的格子关掉；机主放开了易借券做空，所以只在 ADV 前 1,500 且价格 ≥ 5 美元的池里判。
+- plan: 数据：本地**没有** FTD（已检查 `data/raw` 与 `data/features`，只有 `finra_short_interest`、`finra_short_volume`，那是别的序列，已否定）。下载 2019-01→最新的半月文件（约 170 个 × ~1.3 MB，`https://www.sec.gov/files/data/fails-deliver-data/cnsfails<YYYYMM><a|b>.zip`，a=上半月，b=下半月；SEC 要求描述性 User-Agent，单线程 ≤ 5 请求/秒，遇 429 退避）写 `scripts/fetch_sec_ftd.py`（分页/退避/断点用假响应单测），落 `data/sec_ftd/*.parquet`，先确认 `.gitignore` 覆盖 `data/sec_ftd/`（没有就只加这一行；`data/sec/` 是别的会话在用的目录，**不要往里写**，另建 `data/sec_ftd/`）。PIT 规则（写死）：上半月文件（结算日 1-15 日）最早可用日 = 当月最后一个自然日之后的下一个交易日；下半月文件最早可用日 = 次月 16 日之后的下一个交易日（SEC 说"约 15 日"，多留一天）。FTD 字段是余额，不是日流量，每个文件内取该文件最后一个结算日的余额。符号是 ticker，按 SIP 日线的 symbol 对齐，对不上的丢弃并报告占比（复用 ticker 要小心：只信价格字段与 SIP 收盘价偏差 <20% 的行）。**先预注册再算**：`direction-review.json` 引用 `dir:sec_fails_to_deliver_signal`；信号（符号预注册：FTD 高 → 之后收益低）FTDSH = FTD 股数 ÷ `shares_outstanding`；FTDADV = FTD 股数 × 价格 ÷ 20 日成交额；对照 FTD>0 的哑变量（不算候选）。候选最多 4 条：{FTDSH，FTDADV} × {回避闸门（top-1500 等权中剔除最高十分位），ADV 前 500 内最高十分位空头 + SPY β 对冲}，月频，借券费 3%/年（高 FTD 偏难借券，保守）。**最便宜的否定测试（约 10 分钟，先于任何账本）**：`signal_card` rank 模式，`--sql` 生成 FTDSH（方向 -1）和 FTDADV，池 ADV 前 1,500，`--primary-horizon 20`、60，`--lag` 用上述 PIT 可用日，报全样本（2019-2026）与 2024 起 RankIC、t、flags。继续的条件：2024 起符号与预注册相同、|t| ≥ 2.5、全样本同号。否则直接写"卖空信息格子收口：FTD 无信号"，不建账本，不加变体。
+- done_when: 抓取脚本 + 单测通过 ruff/pytest；信号卡 `reports/research/signal-cards/ftd_*.{json,md}` 与 IC 表（含符号匹配率、丢弃比例）；若过关则最多 4 条候选的分档；登记簿 `dir:sec_fails_to_deliver_signal` 更新终态并 validate ok；覆盖地图 `alt_data.short_selling` 补一行由协调者更新（本任务不改 coverage.json）。
+- notes:
+  - 2026-09-29 19:07 轮缺口搜索（gap-search-2026-09-29-19）添加。原文核对：SEC 数据页已打开（口径、字段、发布节奏来自该页）；文献效应量本轮没有读到原文（检索命中的 "Short-Sale Strategies and Return Predictability" 只读到片段，不引用数字），所以是 claim_only。

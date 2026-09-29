@@ -1,0 +1,32 @@
+{
+ "signals": [
+  {
+   "name": "ma_target_all",
+   "mode": "event",
+   "sql": "SELECT symbol, trade_date, 1.0 AS value FROM (SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date FROM read_parquet('/root/codex-test/open-composer/data/features/sec_8k_ma_announcements/*.parquet') WHERE is_target_rule AND is_first_for_cik_365d)",
+   "primary_horizon": 20,
+   "rationale": "T-20260929-03 preregistered (h20260929_03_ma_target_drift): all target events, primary 20d"
+  },
+  {
+   "name": "ma_target_t3",
+   "mode": "event",
+   "sql": "WITH ev AS (SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date FROM read_parquet('/root/codex-test/open-composer/data/features/sec_8k_ma_announcements/*.parquet') WHERE is_target_rule AND is_first_for_cik_365d), u AS (SELECT symbol, CAST(month_end AS TIMESTAMP) AS month_end, adv_rank FROM read_parquet('/root/codex-test/open-composer/data/features/universe_broad/*.parquet')) SELECT ev.symbol, ev.trade_date, 1.0 AS value FROM ev ASOF JOIN u ON ev.symbol = u.symbol AND ev.trade_date >= u.month_end WHERE u.adv_rank BETWEEN 1501 AND 3000",
+   "primary_horizon": 20,
+   "rationale": "T-20260929-03 preregistered (h20260929_03_ma_target_drift): t3 (ADV rank 1501-3000) target events, primary 20d"
+  },
+  {
+   "name": "ma_target_all_h60",
+   "mode": "event",
+   "sql": "SELECT symbol, trade_date, 1.0 AS value FROM (SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date FROM read_parquet('/root/codex-test/open-composer/data/features/sec_8k_ma_announcements/*.parquet') WHERE is_target_rule AND is_first_for_cik_365d)",
+   "primary_horizon": 60,
+   "rationale": "T-20260929-03 preregistered (h20260929_03_ma_target_drift): all target events, primary 60d comparison"
+  },
+  {
+   "name": "ma_target_t3_h60",
+   "mode": "event",
+   "sql": "WITH ev AS (SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date FROM read_parquet('/root/codex-test/open-composer/data/features/sec_8k_ma_announcements/*.parquet') WHERE is_target_rule AND is_first_for_cik_365d), u AS (SELECT symbol, CAST(month_end AS TIMESTAMP) AS month_end, adv_rank FROM read_parquet('/root/codex-test/open-composer/data/features/universe_broad/*.parquet')) SELECT ev.symbol, ev.trade_date, 1.0 AS value FROM ev ASOF JOIN u ON ev.symbol = u.symbol AND ev.trade_date >= u.month_end WHERE u.adv_rank BETWEEN 1501 AND 3000",
+   "primary_horizon": 60,
+   "rationale": "T-20260929-03 preregistered (h20260929_03_ma_target_drift): t3 target events, primary 60d comparison"
+  }
+ ]
+}

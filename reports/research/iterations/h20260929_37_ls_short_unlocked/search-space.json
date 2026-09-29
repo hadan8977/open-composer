@@ -1,0 +1,97 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260929_37_ls_short_unlocked/candidate-manifest.json",
+  "candidate_manifest_sha256": "ac0d2cecaa62f3b2e2e7bd00c7c3e37e747b056b45912d1317e7e34578e226e0",
+  "cost_table_path": "reports/research/iterations/h20260929_37_ls_short_unlocked/cost-table.json",
+  "created_at": "2026-09-29T19:16:30.172656+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260929_37_ls_short_unlocked/data-feasibility.json",
+  "data_feasibility_sha256": "4a5c18b6e78c176d78ee4d47fe0535e051614b35e037b1ed35b777c452502946",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_37_ls_short_unlocked/report.md",
+    "reports/research/iterations/h20260929_37_ls_short_unlocked/results.json"
+  ],
+  "iter_id": "h20260929_37_ls_short_unlocked",
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_symbol_buy_and_hold_legs",
+        "equal_weight_universe",
+        "market_proxy_spy",
+        "cash_proxy_bil",
+        "ex_post_best_symbol_not_applicable_spread",
+        "s3_incumbent_k2"
+      ],
+      "candidate_count": 16,
+      "hypothesis_refs": [
+        "H1"
+      ],
+      "name": "low_turnover_long_short_batch",
+      "parameters": {
+        "borrow": [
+          "0.5%/yr if 21d dv>=50M else 2%/yr",
+          "0.5%/yr on the ETF short",
+          "0.5%/yr on ETF shorts"
+        ],
+        "direction": [
+          "A_dual_class",
+          "B_etf_lead_lag",
+          "C_sector_intramonth"
+        ],
+        "entry": [
+          "always",
+          "thr1"
+        ],
+        "etf": [
+          "XLK",
+          "SOXX"
+        ],
+        "freq": [
+          "M",
+          "W"
+        ],
+        "hold": [
+          5,
+          10
+        ],
+        "k": [
+          3,
+          5,
+          2
+        ],
+        "kind": [
+          "LS",
+          "MN",
+          "ABL"
+        ],
+        "rule": [
+          "per pair r=log(Pa/Pb), z vs trailing 252d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry always (sign of z); monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+          "per pair r=log(Pa/Pb), z vs trailing 63d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry always (sign of z); monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+          "per pair r=log(Pa/Pb), z vs trailing 252d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry only |z|>=1; monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+          "per pair r=log(Pa/Pb), z vs trailing 63d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry only |z|>=1; monthly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+          "per pair r=log(Pa/Pb), z vs trailing 252d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry always (sign of z); weekly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+          "per pair r=log(Pa/Pb), z vs trailing 63d mean/std; long cheaper class, short richer class, dollar-neutral per pair, equal pair weight 1/10; entry only |z|>=1; weekly rebalance; pair flat if the short leg has close<5 or 21d dollar volume<5M",
+          "trigger: XLK close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short XLK 1.0; hold 5 sessions; no overlapping entries",
+          "trigger: XLK close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short XLK 1.0; hold 10 sessions; no overlapping entries",
+          "trigger: SOXX close-to-close return <= trailing-252d (prior days) 10th percentile; next-open entry (+delay 0/1/2); long the k of 10 fixed 2016 top holdings with the lowest same-day return minus ETF return (equal weight, total 1.0), short SOXX 1.0; hold 5 sessions; no overlapping entries",
+          "Quantpedia composite: month-end 252d return rank; D+1 long top-3/short bottom-3; D+2,D+3 reversed; D-10..D-5 momentum book with prior month-end ranking; one version (calendar-anchored)",
+          "Quantpedia composite: month-end 252d return rank; D+1 long top-2/short bottom-2; D+2,D+3 reversed; D-10..D-5 momentum book with prior month-end ranking; one version (calendar-anchored)",
+          "same schedule with the short leg replaced by short SPY 1.0 and long top-3",
+          "same schedule with the short leg replaced by short SPY 1.0 and long top-2",
+          "ablation without calendar windows: long top-3/short bottom-3 by 252d return held the whole month, 21 offsets"
+        ],
+        "z_window": [
+          252,
+          63
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/h20260929_37_ls_short_unlocked.yaml",
+  "spec_hash": "64ed791c9351929fa3198fb0f336f4de030bbb22f44c69396e3def9fffa3b04c",
+  "strategy_name": "h20260929_37_ls_short_unlocked",
+  "total_candidate_budget": 16,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_37_ls_short_unlocked/trial-ledger.jsonl"
+  ]
+}

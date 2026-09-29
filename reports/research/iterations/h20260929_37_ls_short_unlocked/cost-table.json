@@ -1,0 +1,56 @@
+{
+  "base_cost_bps": 10.0,
+  "borrow_annual_by_21d_dollar_volume": {
+    "5M_to_50M": 0.02,
+    "ge_50M": 0.005,
+    "lt_5M": "not shortable (pair or trade skipped)"
+  },
+  "borrow_charge": "sum(|short weight| x annual_rate / 252) per session held; dollar-volume tier from the prior session's 21d median",
+  "borrow_etf_annual": 0.005,
+  "days_to_cover_top_decile_exclusion": "not applied: the eligible short names are ETFs and a fixed list of large/mid-cap dual-class shares and mega-cap constituents; the cross-sectional DTC percentile is defined on the 3,000-name gap universe and is meaningless on a 10-pair or 10-stock list; illiquid classes are already excluded by the 5M dollar-volume rule",
+  "fill": "next_open_after_close_signal",
+  "frozen_flat_cost_bps": [
+    10.0,
+    20.0
+  ],
+  "judged_cost": "frozen flat 10 bp per side per leg, borrow deducted (main and stress models reported alongside, not judged)",
+  "judgment_tiers": {
+    "K1": "anchor >= 1.1882 and stress >= 0.6447 and median 20 bp after-borrow CAGR > 0 in both windows",
+    "K2": "S3 inverse-63d-vol monthly blend Sharpe minus vol-matched S3+SHY control >= 0.05 in both windows (sleeve = overlay + T-bill)",
+    "dsr_trials": 22,
+    "dsr_trials_note": "16 candidates + 3 direction mirrors + 3 direction random placebos",
+    "frozen_before_results": true,
+    "judged_value": "median over rebalance offsets (21 monthly, 5 weekly) or entry delays 0/1/2 (direction B) or the single calendar version (direction C composite) of the after-borrow 10 bp Sharpe",
+    "placebo_condition": "keep/watch tiers require the candidate anchor Sharpe > the maximum anchor Sharpe of its 20 random-ranking/random-sign placebo seeds; otherwise tier = reject_placebo",
+    "reject": "otherwise",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1 with anchor >= 1.4853 and stress >= 0.8059 (S3 median-offset values)",
+    "watch_recent": "anchor >= 1.1882 and K1 not met"
+  },
+  "main_cost_model": "per side per leg: 5 bp flat + 0.5 x trailing-21d Abdi-Ranaldo spread (ml30.spread_estimate_from_ohlc, lagged one session)",
+  "price_hygiene": "sanitize_price_matrices defaults on all stock/ETF close and open; signal-date exclusion of split-like close/close or open/close ratios (t32 is_split_like_ratio) for stock legs; pairs also excluded when either class has a split-like one-day ratio inside the z window; outcomes never used for filtering",
+  "short_eligibility": {
+    "dv21": "median of close x volume over the prior 21 sessions",
+    "min_close": 5.0,
+    "min_dv21_usd": 5000000.0
+  },
+  "stress_cost_bps": 20.0,
+  "stress_cost_model": "per side per leg: 10 bp flat + 1.0 x the same spread (doubling)",
+  "windows": {
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_reference_only": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ]
+  }
+}

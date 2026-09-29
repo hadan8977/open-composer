@@ -1,0 +1,161 @@
+{
+ "schema_version": 2,
+ "iter_id": "h20260929_03_ma_target_drift",
+ "strategy_name": "h20260929_03_ma_target_drift",
+ "source_spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+ "spec_hash": "0413312a59b420bb2b1b20267470aaa3c460d8d87fa0e868952e5f59118516bd",
+ "objective": "T-20260929-03: does buying US merger targets at the next open after the 8-K announcement and holding a fixed 20/60 sessions survive 10/20 bp costs and re-dated placebos?",
+ "topic_coverage": [
+  "merger_arbitrage_post_announcement_returns_literature",
+  "target_run_up_pre_announcement_leakage",
+  "arbitrage_spread_compression_and_limited_arbitrage",
+  "deal_break_risk_and_survivorship_of_completion_conditioning",
+  "size_effect_small_target_information_timing",
+  "edgar_full_text_search_data_source_and_fair_access",
+  "target_vs_acquirer_identification_error_rate"
+ ],
+ "sources": [
+  {
+   "url": "https://english.ckgsb.edu.cn/sites/default/files/files/Merger_Anomaly_20150417.pdf",
+   "published_or_updated_at": "2015-04-01",
+   "source_type": "paper",
+   "credibility": "working_paper_full_text_read",
+   "core_claim": "High initial target price (day-1 close over offer price) ratios are associated with significant negative abnormal returns of 3.5% over the two months following the announcement; consistent with investor overreaction.",
+   "project_applicability": "Direct evidence on the post-announcement window this iteration trades: a subset of targets (high price-to-offer) subsequently under-perform, so an unconditional 20/60 day hold can be diluted or negative. Motivates reporting drift by 1-20 day CAR rather than assuming positive drift.",
+   "reflection": "Full PDF text saved as snapshot; abstract quoted verbatim. Limitations: Working paper draft April 2015; conditions on offer price which we do not have in the 8-K pipeline; sample and cost treatment not audited here."
+  },
+  {
+   "url": "https://www.analysisgroup.com/globalassets/uploadedfiles/content/insights/ag_features/merger_arbitrage_spread_-_still_shrinking/jetley_and_ji_shrinking_merger_arbitrage_spread.pdf",
+   "published_or_updated_at": "2010-03-01",
+   "source_type": "paper",
+   "credibility": "financial_analysts_journal_peer_reviewed_full_text_read",
+   "core_claim": "The merger arbitrage spread has declined by more than 400 bps since 2002; the decline is economically and statistically significant and part of it is likely permanent (increased arbitrage capital, reduced transaction costs).",
+   "project_applicability": "Explains why a plain post-announcement long in targets should earn little after our 10-20 bp per side costs: the day-1 spread already compresses most of the deal premium; only the small residual is available at next-open entry.",
+   "reflection": "Full text saved as snapshot; abstract quoted verbatim. Limitations: Sample ends around 2008-2009; does not cover 2020s; hedge-fund index returns, not stock-level next-open entries."
+  },
+  {
+   "url": "https://www.aqr.com/Insights/Research/Journal-Article/Characteristics-of-Risk-and-Return-in-Risk-Arbitrage",
+   "published_or_updated_at": "2001-12-01",
+   "source_type": "paper",
+   "credibility": "journal_of_finance_peer_reviewed_abstract_page_read",
+   "core_claim": "4,750 mergers 1963-1998: risk-arbitrage excess return about 4% per year after transaction costs and the non-linear (put-like) payoff; returns correlate with the market in downturns.",
+   "project_applicability": "Classic upper bound for hold-to-close arbitrage: single-digit percent annual excess return with put-like tail, which is far below this workbench's admission bars once 10-20 bp per side is charged on fixed-horizon trades.",
+   "reflection": "Page summary snapshot; 4% figure corroborated in the same-session search summary. Limitations: 1963-1998 sample, hold to resolution, hedged long-short; only the publisher page summary was read, not the full paper."
+  },
+  {
+   "url": "https://ideas.repec.org/p/usi/wpaper/920.html",
+   "published_or_updated_at": "2025-01-01",
+   "source_type": "paper",
+   "credibility": "working_paper_abstract_only_claim_only",
+   "core_claim": "Across 51,000+ US takeover-type events 1992-2021 small stocks earn disproportionately large gains BEFORE deals are announced because of less analyst coverage.",
+   "project_applicability": "Warns that in the small-cap tier the bulk of the target premium may already be in the price at the 8-K; hence pre-announcement CAR must be reported and the t3 variant is a real test, not a favored bet.",
+   "reflection": "Abstract summary snapshot. Limitations: Abstract only, claim_only; full text paywalled."
+  },
+  {
+   "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=315639",
+   "published_or_updated_at": "2002-04-01",
+   "source_type": "paper",
+   "credibility": "jfe_peer_reviewed_search_summary_only_claim_only",
+   "core_claim": "Merger-arbitrage excess returns are negatively related to arbitrage capital (limited arbitrage) and are economically and statistically significant in 1981-1996.",
+   "project_applicability": "Supports the premise that fixed-horizon target holds can earn a premium only when arbitrage capital is scarce; recent decades have more capital, so the recent window is the fair test.",
+   "reflection": "claim_only; not used to set any threshold. Limitations: SSRN returned 403; only search-engine summary and the Wikipedia/Jetley-Ji citations were read."
+  },
+  {
+   "url": "https://eprints.gla.ac.uk/218020/1/218020.pdf",
+   "published_or_updated_at": "2019-01-01",
+   "source_type": "paper",
+   "credibility": "search_summary_only_claim_only",
+   "core_claim": "Target CARs of 14-32% accrue up to and including the announcement date and start days to weeks before it (Keown-Pinkerton 7 days, Jarrell-Poulsen 15 days, Schwert 42 days).",
+   "project_applicability": "Defines the leakage check: report the [-5,-1] CAR before the 8-K; if the premium is already earned pre-8-K there is nothing left to trade at next open.",
+   "reflection": "claim_only. Limitations: Search-result summary of a survey paper; the PDF (Glasgow eprint) was not opened as text."
+  },
+  {
+   "url": "https://en.wikipedia.org/wiki/Merger_arbitrage",
+   "published_or_updated_at": "2026-09-29",
+   "source_type": "industry_standard",
+   "credibility": "encyclopedia_secondary",
+   "core_claim": "Deal break rates 8% (2,182 mergers 1990-2007) to 22.7% (1901 mergers 1981-1996); friendly deals close 82%, hostile 38%; transaction costs significantly erode arbitrage returns.",
+   "project_applicability": "Break risk is why we do not condition on completion: DEFM14A/closing data would select survivors, so only fixed-horizon holds are tested.",
+   "reflection": "Page summary snapshot. Limitations: Secondary summary of academic studies."
+  },
+  {
+   "url": "https://github.com/timmKal01/sec-filing-full-text-search",
+   "published_or_updated_at": "2026-09-29",
+   "source_type": "industry_standard",
+   "credibility": "open_source_tool_readme_plus_local_probe",
+   "core_claim": "The SEC efts.sec.gov full-text search endpoint is free, key-less, covers 2001 onward, returns form/items/CIK/accession per hit.",
+   "project_applicability": "Data source for the free EDGAR merger-agreement 8-K pipeline; confirmed locally that hits are per file with items lists.",
+   "reflection": "Endpoint probed locally the same day. Limitations: README of a third-party wrapper; fair-access User-Agent and <=10 req/s still apply."
+  },
+  {
+   "url": "reports/research/harvest/directions.jsonl#dir:merger_arbitrage_target_announcement_drift",
+   "published_or_updated_at": "2026-09-29",
+   "source_type": "industry_standard",
+   "credibility": "own_registry_row_gap_search_2026_09_29",
+   "core_claim": "Registry row (queued): 2025-10 working paper abstract claims Sharpe >2.1 after costs for 30-day post-announcement target returns (claim_only, full text paywalled); 1992-2021 study says small-cap target gains arrive before announcement.",
+   "project_applicability": "The row this iteration resolves; the >2.1 Sharpe is a weak prior only and no threshold is copied from it.",
+   "reflection": "Read from the registry, not independently verified."
+  }
+ ],
+ "current_source_card_paths": [
+  "reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl"
+ ],
+ "source_evidence_bindings": [
+  {
+   "candidate_id": "ma_target_all",
+   "claim_ids": [
+    "bessembinder_zhang_2015_itp_overreaction",
+    "jetley_ji_2010_shrinking_spread",
+    "mitchell_pulvino_2001_risk_return",
+    "big_moves_small_gains_2025",
+    "baker_savasoglu_2002_limited_arbitrage",
+    "keown_pinkerton_runup"
+   ]
+  },
+  {
+   "candidate_id": "ma_target_t3",
+   "claim_ids": [
+    "bessembinder_zhang_2015_itp_overreaction",
+    "jetley_ji_2010_shrinking_spread",
+    "mitchell_pulvino_2001_risk_return",
+    "big_moves_small_gains_2025",
+    "baker_savasoglu_2002_limited_arbitrage",
+    "keown_pinkerton_runup"
+   ]
+  },
+  {
+   "candidate_id": "ma_target_all_h60",
+   "claim_ids": [
+    "bessembinder_zhang_2015_itp_overreaction",
+    "jetley_ji_2010_shrinking_spread",
+    "mitchell_pulvino_2001_risk_return",
+    "big_moves_small_gains_2025",
+    "baker_savasoglu_2002_limited_arbitrage",
+    "keown_pinkerton_runup"
+   ]
+  },
+  {
+   "candidate_id": "ma_target_t3_h60",
+   "claim_ids": [
+    "bessembinder_zhang_2015_itp_overreaction",
+    "jetley_ji_2010_shrinking_spread",
+    "mitchell_pulvino_2001_risk_return",
+    "big_moves_small_gains_2025",
+    "baker_savasoglu_2002_limited_arbitrage",
+    "keown_pinkerton_runup"
+   ]
+  }
+ ],
+ "candidate_matrix_revisions": [
+  {
+   "driver": "jetley_ji_and_bessembinder_zhang",
+   "revision": "fixed_horizon_hold_20_and_60_only",
+   "effect": "No hold-to-close variant: spreads have compressed and completion status would select surviving deals; only fixed-horizon holds are tested."
+  },
+  {
+   "driver": "big_moves_small_gains_2025",
+   "revision": "added_t3_small_illiquid_variant_and_pre_announcement_car_diagnostic",
+   "effect": "Small targets may have gained before the 8-K; the t3 card tests it and the [-5,-1] CAR is reported."
+  }
+ ]
+}

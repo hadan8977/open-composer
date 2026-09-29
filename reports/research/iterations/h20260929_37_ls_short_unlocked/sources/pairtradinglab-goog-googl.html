@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<!--[if IE 8]> 				 <html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+
+    <link rel="icon" href="/images/icon16.png" sizes="16x16">
+    <link rel="icon" href="/images/icon32.png" sizes="32x32">
+    <link rel="icon" href="/images/icon48.png" sizes="48x48">
+    <link rel="icon" href="/images/icon64.png" sizes="64x64">
+    <link rel="icon" href="/images/icon128.png" sizes="128x128">
+
+    <link rel="stylesheet" href="/css/foundation-icons.css">
+    <link rel="stylesheet" href="/fcss/ptl_master.css">
+    
+    
+    
+    <link rel="stylesheet" href="/css/selectize.css">
+
+    
+    
+        <script src="/js/jquery.min.js"></script>
+        <script src="/js/modernizr.js"></script>
+    
+    <script src="/js/jquery.raty.min.js"></script>
+    <script src="/js/selectize.min.js"></script>
+
+    
+    <script type="text/javascript">
+        var chw = 600;
+
+        function scatterClick(ix, mode, invmode, index) {
+            //console.log(ix+' '+mode+' '+invmode+' '+index);
+            var url = '/index.php?command=analyzer&subcmd=backtest&uid=aH6S_4EbvJTHADfd&ix='+ix+'&mode='+mode+'&invmode='+invmode+'&mix='+index;
+            window.open(url, '_blank');
+        }
+
+        function loadTabContent(ctab, subcmd) {
+            var ctid = ctab.slice(1);
+            var tix = ctab.slice(-1);
+            var tinv = ctab.slice(-2, -1);
+            //console.log('tab load '+ctab+' '+ctid+' ix '+tix+' inv '+tinv);
+            var obj = $('#'+ctid);
+            if (!obj.hasClass('loaded')) {
+                obj.html('<img src="/images/busy.gif" style="vertical-align: text-top;">&nbsp;Loading, please wait...');
+                obj.load('/index.php?command=analyzer&subcmd='+subcmd+'&uid=aH6S_4EbvJTHADfd&ix=' + tix + '&xs=' + chw + '&inv=' + tinv, function(responseText, textStatus, jqXHR) {
+                    obj.addClass('loaded');
+                    //console.log(ctid+' loaded ok');
+                });
+            }
+
+        }
+
+        $(function() {
+            // Handler for .ready() called.
+            var chart = $('#priceCorrelChart');
+            chw = chart.width();
+            chart.height(chw*0.45);
+            chart.load('/index.php?command=analyzer&subcmd=renderPriceChart&uid=aH6S_4EbvJTHADfd&xs='+chw+'&ys='+chw*0.45);
+
+                        var ochart = $('#orthoChart');
+            ochart.height(chw*0.4);
+            ochart.load('/index.php?command=analyzer&subcmd=renderOrthoChart&uid=aH6S_4EbvJTHADfd&xs='+chw+'&ys='+chw*0.4);
+            
+
+            loadTabContent('TcointTabContent0', 'subviewCointegration');
+                        loadTabContent('TprofitTabContentN0', 'subviewProfit');
+            loadTabContent('TprofitLongTabContentN0', 'subviewProfitLong');
+            loadTabContent('TprofitShortTabContentN0', 'subviewProfitShort');
+                        loadTabContent('TprofitTabInvertedContentE0', 'subviewProfit');
+            loadTabContent('TprofitLongTabInvertedContentE0', 'subviewProfitLong');
+            loadTabContent('TprofitShortTabInvertedContentE0', 'subviewProfitShort');
+                        
+            $('#cointTabs').on('toggled', function (event, tab) {
+                loadTabContent(tab.context.id, 'subviewCointegration');
+            });
+                        $('#profitTabs').on('toggled', function (event, tab) {
+                loadTabContent(tab.context.id, 'subviewProfit');
+            });
+            $('#profitLongTabs').on('toggled', function (event, tab) {
+                loadTabContent(tab.context.id, 'subviewProfitLong');
+            });
+            $('#profitShortTabs').on('toggled', function (event, tab) {
+                loadTabContent(tab.context.id, 'subviewProfitShort');
+            });
+                                $('#profitTabsInverted').on('toggled', function (event, tab) {
+                    loadTabContent(tab.context.id, 'subviewProfit');
+                });
+                $('#profitLongTabsInverted').on('toggled', function (event, tab) {
+                    loadTabContent(tab.context.id, 'subviewProfitLong');
+                });
+                $('#profitShortTabsInverted').on('toggled', function (event, tab) {
+                    loadTabContent(tab.context.id, 'subviewProfitShort');
+                });
+
+                                    });
+
+
+    </script>
+
+    
+    
+    <title>Pair Trading Lab: Analysis GOOG vs GOOGL</title>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-26916963-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+  
+$(document).ready(function() {
+    $('.noEnterSubmit').keypress(function(e){
+        if ( e.which == 13 ) e.preventDefault();
+    });
+});
+
+</script>
+</head>
+<body>
+
+    <script type="text/javascript">
+    function performLogin() {
+        $('#loginButton').attr('disabled', true);
+        $('#login-text').html('Checking credentials...');
+        $.post('/index.php?command=login', $('#formLogin').serialize(),
+                function(data){
+
+                    if (data.status=='ERROR') {
+                        $('#loginButton').attr('disabled', false);
+                        $('#login-text').html(data.errorDescription);
+                    } else {
+                        // redirect to homepage
+                        $('#login-text').html('Logging in...');
+                        window.location='/';
+                    }
+                },
+                "json");
+    }
+
+    function forgottenUsernameSubmit() {
+        $('#fuSubmitButton').attr('disabled', true);
+        $('#fu-text').html('Checking your e-mail address...');
+        $.post('/index.php?command=fgusername', $('#formForgottenUsername').serialize(),
+                function(data){
+
+                    if (data.status=='ERROR') {
+                        $('#fuSubmitButton').attr('disabled', false);
+                        $('#fu-text').html(data.errorDescription);
+                    } else {
+                        // done
+                        $('#fu-text').html('Operation completed, check your mailbox');
+                        setTimeout(function() {
+                            $('#forgottenUsernameDialog').foundation('reveal', 'close');
+                            $('#fuSubmitButton').attr('disabled', false);
+                            $('#fu-text').html('');
+                        }, 2000);
+                    }
+                },
+                "json");
+    }
+
+    function forgottenPasswordSubmit() {
+        $('#fpSubmitButton').attr('disabled', true);
+        $('#fp-text').html('Checking your credentials...');
+        $.post('/index.php?command=fgpassword', $('#formForgottenPassword').serialize(),
+            function(data){
+
+                if (data.status=='ERROR') {
+                    $('#fpSubmitButton').attr('disabled', false);
+                    $('#fp-text').html(data.errorDescription);
+                } else {
+                    // done
+                    $('#fp-text').html('Operation completed, check your mailbox');
+                    setTimeout(function() {
+                        $('#forgottenPasswordDialog').foundation('reveal', 'close');
+                        $('#fpSubmitButton').attr('disabled', false);
+                        $('#fp-text').html('');
+                    }, 2000);
+                }
+            },
+            "json");
+    }
+
+
+    function performLogout() {
+        $('#logoutConfirmButton').attr('disabled', true);
+        $('#logoutCancelButton').attr('disabled', true);
+        window.location='/index.php?command=logout';
+
+
+    }
+
+    $(document).ready(function() {
+        $(document).on('open.fndtn.reveal', '#loginDialog', function () {
+            $('#login-text').html('Please enter your credentials to log in.');
+
+        });
+        $(document).on('opened.fndtn.reveal', '#loginDialog', function () {
+            $('#inputUsername').focus();
+
+        });
+    });
+
+
+
+</script>
+<div class="row">
+    <div class="large-12 columns">
+        <div class="ptlLogo"><a href="/"><img src="/images/logo2013.png" width="300" height="72" alt="pairtradinglab"></a></div>
+        <div class="ptlSignUp">
+                            <p class="signUp1"><i class="fi-x"></i> Not logged in.</p>
+                <p class="signUp2">Please log in or sign up to get more functionality and access your account.</p>
+                <button class="tiny radius" data-reveal-id="loginDialog"><i class="fi-lock"></i>&nbsp;Log In</button>
+                <button class="tiny radius" onclick="window.location='/index.php?command=register'"><i class="fi-torsos"></i>&nbsp;Sign Up</button>
+
+                    </div>
+    </div>
+</div>
+<div class="contain-to-grid homeNav">
+    <nav class="top-bar homeNav" data-topbar>
+        <ul class="title-area">
+            <li class="name"></li>
+            <li class="toggle-topbar"><a href="#"><i class="fi-list menuicon"></i></a></li>
+        </ul>
+        <section class="top-bar-section">
+            <!-- Left Nav Section -->
+            <ul class="left">
+                <li><a class="fNiv" href="/"><i class="fi-home" title="Home"></i></a></li>
+                <li class="divider"></li>
+                <li><a class="fNiv" href="/database">Pair Database</a></li>
+                <li class="divider"></li>
+                <li><a class="fNiv" href="/ptltrader">Automated Trading</a></li>
+                <li class="divider"></li>
+                <li class="has-dropdown"><a href="#">Online Tools</a>
+                    <ul class="dropdown submenu" style="min-width: 150px;">
+                        <li><a class="fNiv" href="/index.php?command=newBacktest">Backtest Pair</a></li>
+                        <li><a class="fNiv" href="/analyze">Analyze Pair</a></li>
+                    </ul>
+                </li>
+                
+            </ul>
+
+
+        </section>
+
+        <section class="top-bar-section">
+            <!-- Right Nav Section -->
+            <ul class="right">
+                <li><a class="fNiv" href="/faq">FAQ</a></li>
+                <li class="divider"></li>
+                <li><a class="fNiv" href="https://wiki.pairtradinglab.com/wiki/Main_Page">Wiki</a></li>
+                <li class="divider"></li>
+                <li><a class="fNiv" href="https://forum.pairtradinglab.com">Forum &amp; Helpdesk</a></li>
+
+            </ul>
+
+
+        </section>
+    </nav>
+</div>
+
+<div id="loginDialog" class="reveal-modal small" data-reveal>
+    <form id="formLogin" class="noEnterSubmit" name="form_login" method="post">
+        <h4 class="informTitle"><i class="fi-lock onleft2"></i>User Log In</h4>
+        <div class="row">
+            <div class="large-3 columns"><label for="inputUsername" class="right inline">Username:</label></div>
+            <div class="large-9 columns"><input id="inputUsername" type="text" name="login_username"></div>
+
+        </div>
+        <div class="row">
+            <div class="large-3 columns"><label for="inputPassword" class="right inline">Password:</label></div>
+            <div class="large-9 columns"><input id="inputPassword" type="password" name="login_password"></div>
+
+        </div>
+        <div class="row">
+            <div class="large-12 text-center">
+                <p id="login-text"></p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="large-3 small-centered columns text-center">
+                <button class="radius" onclick="performLogin(); return false;" id="loginButton">Submit</button>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="small-6 columns text-left">
+                <a href="#" data-reveal-id="forgottenUsernameDialog">Forgot Username?</a>
+            </div>
+            <div class="small-6 columns text-right">
+                <a href="#" data-reveal-id="forgottenPasswordDialog">Forgot Password?</a>
+            </div>
+        </div>
+
+    </form>
+
+    <a class="close-reveal-modal">&#215;</a>
+</div>
+
+<div id="forgottenUsernameDialog" class="reveal-modal tiny" data-reveal>
+    <form id="formForgottenUsername" class="noEnterSubmit" name="form_forgotten_username" method="post">
+        <h4 class="informTitle"><i class="fi-mail onleft2"></i>Forgotten Username</h4>
+        <div class="row">
+            <div class="small-12">
+                <p>Please provide your e-mail address and we will send the list of all your registered usernames to you...</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="large-3 columns"><label for="fuInputEmail" class="right inline">Your e-mail:</label></div>
+            <div class="large-9 columns"><input id="fuInputEmail" type="email" name="email" placeholder="my.email@domain.com"></div>
+
+        </div>
+        <div class="row">
+            <div class="large-12 text-center">
+                <p id="fu-text"></p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="small-12 small-centered columns text-center">
+                <button class="radius" onclick="forgottenUsernameSubmit(); return false;" id="fuSubmitButton"><i class="fi-mail onleft3"></i>Submit</button>
+            </div>
+        </div>
+    </form>
+    <a class="close-reveal-modal">&#215;</a>
+</div>
+
+<div id="forgottenPasswordDialog" class="reveal-modal tiny" data-reveal>
+    <form id="formForgottenPassword" class="noEnterSubmit" name="form_forgotten_password" method="post">
+        <h4 class="informTitle"><i class="fi-mail onleft2"></i>Forgotten Password</h4>
+        <div class="row">
+            <div class="small-12">
+                <p>Please provide your username and e-mail address and we will send a link to reset your password to your mailbox...</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="large-3 columns"><label for="fpInputUsername" class="right inline">Username:</label></div>
+            <div class="large-9 columns"><input id="fpInputUsername" type="text" name="username" placeholder="my username"></div>
+        </div>
+        <div class="row">
+            <div class="large-3 columns"><label for="fpInputEmail" class="right inline">E-mail:</label></div>
+            <div class="large-9 columns"><input id="fpInputEmail" type="email" name="email" placeholder="my.email@domain.com"></div>
+        </div>
+        <div class="row">
+            <div class="large-12 text-center">
+                <p id="fp-text"></p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="small-12 small-centered columns text-center">
+                <button class="radius" onclick="forgottenPasswordSubmit(); return false;" id="fpSubmitButton"><i class="fi-mail onleft3"></i>Submit</button>
+            </div>
+        </div>
+    </form>
+    <a class="close-reveal-modal">&#215;</a>
+</div>
+
+<div id="logoutDialog" class="reveal-modal small" data-reveal>
+
+    <h4 class="informTitle"><i class="fi-unlock onleft2"></i>User Log Out</h4>
+
+    <div class="row">
+        <div class="large-8 small-centered columns text-center">
+            <p>Are you sure to log out now?</p>
+        </div>
+
+
+    </div>
+
+
+    <div class="row">
+        <div class="large-8 small-centered columns text-center">
+            <button class="radius" onclick="performLogout()" id="logoutConfirmButton">Confirm</button>
+            <button class="radius" onclick="$('#logoutDialog').foundation('reveal', 'close')" id="logoutCancelButton">Cancel</button>
+        </div>
+    </div>
+
+
+
+    <a class="close-reveal-modal">&#215;</a>
+</div>
+    <div class="row masterSection">
+        <div class="large-12 columns">
+            
+            <div class="backtestMainHeader">
+                <table class="cpad3b bResultModel">
+                    <tr>
+                        <td class="bResultLabel">From:</td>
+                        <td class="bResultData">2023-01-02</td>
+                        <td class="bResultLabel">To:</td>
+                        <td class="bResultData">2025-07-01</td>
+
+                    </tr>
+                </table>
+
+                <span class="hq hqActive" title="data^HQ used">HQ</span>                <span class="backtestTitle">Analysis of GOOG / GOOGL</span>
+            </div>
+                                        <table class="stockInfo cpad3">
+    <tr>
+        <td class="stockInfoHeader">Symbol</td>
+        <td class="stockInfoHeader">Title</td>
+        <td class="stockInfoHeader">Sector</td>
+        <td class="stockInfoHeader">Industry</td>
+        <td class="stockInfoHeader" title="Market capitalization in millions of USD">M.Cap.[M]</td>
+        <td class="stockInfoHeader" title="Dividend yield">Div Yield</td>
+        <td class="stockInfoHeader" title="Last close price (adjusted for splits)">Last Close</td>
+        <td class="stockInfoHeader" title="Average volume over 200 day floating window">AvgVol 200d</td>
+    </tr>
+        <tr>
+        <td>GOOG</td>
+        <td>Alphabet Inc Class C</td>
+        <td>Communication Services</td>
+        <td>Internet Content &amp; Information</td>
+        <td class="stockInfoDataNumber">4147905</td>
+        <td class="stockInfoDataNumber">0.0025</td>
+        <td class="stockInfoDataNumber">339.16</td>
+        <td class="stockInfoDataNumber">20491684</td>
+    </tr>
+            <tr>
+        <td>GOOGL</td>
+        <td>Alphabet Inc Class A</td>
+        <td>Communication Services</td>
+        <td>Internet Content &amp; Information</td>
+        <td class="stockInfoDataNumber">4191810</td>
+        <td class="stockInfoDataNumber">0.0025</td>
+        <td class="stockInfoDataNumber">342.75</td>
+        <td class="stockInfoDataNumber">30848805</td>
+    </tr>
+    </table>
+                        
+        </div>
+    </div>
+    <div class="row">
+        <div class="large-12 columns">
+            <div class="chartContainer" id="priceCorrelChart" style="margin-bottom: 20px;">
+                <img src="/images/busy1.gif" alt="loading" class="centeredBusy">
+            </div>
+        </div>
+    </div>
+            <div class="row">
+            <div class="large-12 columns">
+                <h4>Orthogonal Spread Analysis</h4>
+                <p>Here we apply an orthogonal regression (also known as <a href="http://en.wikipedia.org/wiki/Total_least_squares" target="_blank">total least squares</a>) to both price series. We are interested in some key statistical properties (like &beta;, ...) and in analysing orthogonal residuals:</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="small-6 columns">
+                <div class="summaryTable">
+                    <div class="row">
+                        <div class="small-12 columns text-center">
+                            <strong>TLS: <i>GOOG<sup>*</sup>(t) = &beta; * GOOGL<sup>*</sup>(t) + &alpha;</i></strong>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Regression coefficient &alpha;:
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            -0.574356
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Regression coefficient &beta;:
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            <span class="">1.012320</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Standard Deviation (&sigma;):
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            0.257719
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns hasHelp spaceBefore" title="Augmented Dickey–Fuller test result for orthogonal residuals. If the null hypothesis is rejected, orthogonal residuals do not have unit root, they are stationary and the pair is easier to be traded using mean-reversion methods.">
+                            ADF test of residuals (p-value):
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            0.0002                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-12 columns spaceBeforeHalf">
+                                                            <i class="fi-checkbox mediumicon success"></i> 95% confidence: residuals don't contain a unit root
+                                                    </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-12 columns spaceBeforeHalf">
+                                                            <i class="fi-checkbox mediumicon success"></i> 99% confidence: residuals don't contain a unit root
+                                                    </div>
+                    </div>
+                </div>
+            </div>
+            <div class="small-6 columns">
+                <div class="summaryTable">
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Mean Reversion Coefficient (MRC):
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            -0.145579
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Half-life:
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            4.76
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Skewness:
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            0.2473
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Kurtosis:
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            1.2436
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            Doornik-Hansen normality test (p-value):
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            (&lt;&lt; 0.0001)                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-12 columns spaceBeforeHalf">
+                                                            <i class="fi-x-circle mediumicon softfail"></i> Normality test failed at 95% confidence
+                                                    </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-8 columns spaceBefore">
+                            <a href="http://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test" target="_blank">Shapiro-Wilk normality test</a> (p-value):
+                        </div>
+                        <div class="small-4 columns summaryTableData rbdata spaceBefore">
+                            (&lt;&lt; 0.0001)                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-12 columns spaceBeforeHalf">
+                                                            <i class="fi-x-circle mediumicon softfail"></i> Normality test failed at 95% confidence
+                                                    </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="large-12 columns">
+                <div class="chartContainer pregap" id="orthoChart" style="margin-bottom: 20px;">
+                    <img src="/images/busy1.gif" alt="loading" class="centeredBusy">
+                </div>
+            </div>
+        </div>
+        
+
+        <div class="row">
+        <div class="large-12 columns">
+            <h4>Cointegration Analysis</h4>
+            <p>In this section, <a href="http://en.wikipedia.org/wiki/Cointegration#Engle.E2.80.93Granger_two-step_method" target="_blank">Engle-Granger cointegration test</a> is performed using OLS regression method in both directions. Residuals of the regression are plotted and analyzed further:</p>
+            <dl class="tabs" id="cointTabs" data-tab>
+                <dd class="active"><a href="#cointTabContent0" id="TcointTabContent0">GOOG / GOOGL</a></dd>
+                <dd><a href="#cointTabContent1" id="TcointTabContent1">GOOGL / GOOG</a></dd>
+            </dl>
+            <div class="tabs-content">
+                <div class="content active" id="cointTabContent0"></div>
+                <div class="content" id="cointTabContent1"></div>
+
+            </div>
+        </div>
+    </div>
+        <div class="row">
+        <div class="large-12 columns">
+            <h4>Profit Analysis</h4>
+            <p>Profit analysis is a set of backtests performed using multiple pair trading models over significant portion of parameter space. Backtest results are displayed in a form of scatter plot. In addition, you can see aggregated statistics in the left panel. All backtests are performed using 100% margin (leverage 1:1). This is the profit analysis where backtested strategies are allowed to open both <strong>long and short</strong> positions:</p>
+            <dl class="tabs" id="profitTabs" data-tab>
+                <dd class="active"><a href="#profitTabContentN0" id="TprofitTabContentN0">GOOG / GOOGL</a></dd>
+                <dd><a href="#profitTabContentN1" id="TprofitTabContentN1">GOOGL / GOOG</a></dd>
+            </dl>
+            <div class="tabs-content">
+                <div class="content active" id="profitTabContentN0"></div>
+                <div class="content" id="profitTabContentN1"></div>
+            </div>
+            <p>This is the profit analysis where backtested strategies are allowed to open <strong>long positions</strong> only:</p>
+            <dl class="tabs" id="profitLongTabs" data-tab>
+                <dd class="active"><a href="#profitLongTabContentN0" id="TprofitLongTabContentN0">GOOG / GOOGL</a></dd>
+                <dd><a href="#profitLongTabContentN1" id="TprofitLongTabContentN1">GOOGL / GOOG</a></dd>
+            </dl>
+            <div class="tabs-content">
+                <div class="content active" id="profitLongTabContentN0"></div>
+                <div class="content" id="profitLongTabContentN1"></div>
+            </div>
+            <p>This is the profit analysis where backtested strategies are allowed to open <strong>short positions</strong> only:</p>
+            <dl class="tabs" id="profitShortTabs" data-tab>
+                <dd class="active"><a href="#profitShortTabContentN0" id="TprofitShortTabContentN0">GOOG / GOOGL</a></dd>
+                <dd><a href="#profitShortTabContentN1" id="TprofitShortTabContentN1">GOOGL / GOOG</a></dd>
+            </dl>
+            <div class="tabs-content">
+                <div class="content active" id="profitShortTabContentN0"></div>
+                <div class="content" id="profitShortTabContentN1"></div>
+            </div>
+        </div>
+    </div>
+                    <div class="row">
+                <div class="large-12 columns">
+                    <h4>Profit Analysis (Inverted!)</h4>
+                    <p>This profit analysis has been performed using strategies with inverted signals and transformed prices. Mostly useful for trading pairs composed of an inverse ETF in order to stay market-neutral <a href="https://wiki.pairtradinglab.com/wiki/Trading_Pairs_Based_on_Inverse_ETFs" target="_blank">(more info)</a>.
+                        <strong>&quot;even&quot;</strong> means that the first leg is both inverted and transformed, <strong>&quot;odd&quot;</strong> means that the first leg is transformed but the second leg is inverted.</p>
+                    <p>Backtested strategies have been allowed to open both <strong>long and short</strong> positions:</p>
+                    <dl class="tabs" id="profitTabsInverted" data-tab>
+                        <dd class="active"><a href="#profitTabInvertedContentE0" id="TprofitTabInvertedContentE0">GOOG / GOOGL (even)</a></dd>
+                        <dd><a href="#profitTabInvertedContentO0" id="TprofitTabInvertedContentO0">GOOG / GOOGL (odd)</a></dd>
+                        <dd><a href="#profitTabInvertedContentE1" id="TprofitTabInvertedContentE1">GOOGL / GOOG (even)</a></dd>
+                        <dd><a href="#profitTabInvertedContentO1" id="TprofitTabInvertedContentO1">GOOGL / GOOG (odd)</a></dd>
+                    </dl>
+                    <div class="tabs-content">
+                        <div class="content active" id="profitTabInvertedContentE0"></div>
+                        <div class="content" id="profitTabInvertedContentO0"></div>
+                        <div class="content" id="profitTabInvertedContentE1"></div>
+                        <div class="content" id="profitTabInvertedContentO1"></div>
+                    </div>
+                    <p>This is the profit analysis where backtested strategies are allowed to open <strong>long positions</strong> only:</p>
+                    <dl class="tabs" id="profitLongTabsInverted" data-tab>
+                        <dd class="active"><a href="#profitLongTabInvertedContentE0" id="TprofitLongTabInvertedContentE0">GOOG / GOOGL (even)</a></dd>
+                        <dd><a href="#profitLongTabInvertedContentO0" id="TprofitLongTabInvertedContentO0">GOOG / GOOGL (odd)</a></dd>
+                        <dd><a href="#profitLongTabInvertedContentE1" id="TprofitLongTabInvertedContentE1">GOOGL / GOOG (even)</a></dd>
+                        <dd><a href="#profitLongTabInvertedContentO1" id="TprofitLongTabInvertedContentO1">GOOGL / GOOG (odd)</a></dd>
+                    </dl>
+                    <div class="tabs-content">
+                        <div class="content active" id="profitLongTabInvertedContentE0"></div>
+                        <div class="content" id="profitLongTabInvertedContentO0"></div>
+                        <div class="content" id="profitLongTabInvertedContentE1"></div>
+                        <div class="content" id="profitLongTabInvertedContentO1"></div>
+                    </div>
+
+                    <p>This is the profit analysis where backtested strategies are allowed to open <strong>short positions</strong> only:</p>
+                    <dl class="tabs" id="profitShortTabsInverted" data-tab>
+                        <dd class="active"><a href="#profitShortTabInvertedContentE0" id="TprofitShortTabInvertedContentE0">GOOG / GOOGL (even)</a></dd>
+                        <dd><a href="#profitShortTabInvertedContentO0" id="TprofitShortTabInvertedContentO0">GOOG / GOOGL (odd)</a></dd>
+                        <dd><a href="#profitShortTabInvertedContentE1" id="TprofitShortTabInvertedContentE1">GOOGL / GOOG (even)</a></dd>
+                        <dd><a href="#profitShortTabInvertedContentO1" id="TprofitShortTabInvertedContentO1">GOOGL / GOOG (odd)</a></dd>
+                    </dl>
+                    <div class="tabs-content">
+                        <div class="content active" id="profitShortTabInvertedContentE0"></div>
+                        <div class="content" id="profitShortTabInvertedContentO0"></div>
+                        <div class="content" id="profitShortTabInvertedContentE1"></div>
+                        <div class="content" id="profitShortTabInvertedContentO1"></div>
+                    </div>
+
+                </div>
+            </div>
+            
+    <div class="row ptlBottomPanel">
+    <div class="large-12 columns">
+        <div class="ptlSocials">
+            <div class="ptlSocials2" style="padding-left: 1rem;">
+                <a href="https://www.facebook.com/pairtradinglab" title="Facebook"><img src="/images/social-fb.png" alt="FB" width="35" height="34"></a>
+                <a href="http://www.linkedin.com/company/pair-trading-lab" title="LinkedIn"><img src="/images/social-ln.png" alt="LN" width="34" height="34"></a>
+                <a href="https://twitter.com/PTLTrader" title="Twitter" target="_blank"><img src="/images/social-tw.png" alt="TW" width="34" height="34"></a>
+            </div>
+        </div>
+        <ul class="inline-list bottomNavigation">
+            <li><a href="/">Home</a></li>
+            <li><a href="/faq">FAQ</a></li>
+            <li><a href="https://wiki.pairtradinglab.com/wiki/Main_Page">Wiki</a></li>
+            <li><a href="/go-premium">Pricing</a></li>
+            <li><a href="https://forum.pairtradinglab.com">Forum &amp; Helpdesk</a></li>
+            <li><a href="/tos">Terms &amp; Conditions</a></li>
+            <li><a href="/privacy-policy">Privacy Policy</a></li>
+            <li><a href="/refund-policy">Refund Policy</a></li>
+            <li><a href="/legal">Legal</a></li>
+        </ul>
+        <p class="copyright clear">© 2011 - 2026 Quantverse OÜ. All Rights Reserved.</p>
+    </div>
+</div>
+<div class="row ptlFooter">
+    <div class="large-12 columns">
+		<p class="ptlDisclaimer text-justify">
+Disclaimer: Backtested, simulated or hypothetical performance results have certain inherent limitations. Unlike the results shown in an actual performance record, these results do not represent actual trading. There are numerous factors related to the stock market in general and to the implementation of any stock market timing program, which cannot be fully accounted for in the preparation of hypothetical performance results. The backtested results listed here do not take into consideration slippage, fees, taxes, or dividends and interest earned on cash positions. These factors would affect actual trading results.
+Simulated, backtested or hypothetical stock trading systems in general are also subject to the fact that they are designed with the benefit of hindsight. Backtested performance does not represent actual performance and should not be interpreted as an indication of such performance. No representation is being made that you will or is likely to achieve profits or losses similar to these being shown.
+This site provides impersonal educational stock trading information, and therefore, no consideration can or is made toward your financial circumstances. All material presented within is not to be regarded as investment advice, but for general informational purposes only.
+		</p>
+	</div>
+</div>
+
+
+
+
+
+
+<script src="/js/foundation.min.js"></script>
+
+
+<script>
+    $(document).foundation();
+</script>
+
+</body>
+</html>

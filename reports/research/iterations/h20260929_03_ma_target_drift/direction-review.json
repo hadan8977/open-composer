@@ -1,0 +1,134 @@
+{
+ "schema_version": 1,
+ "iter_id": "h20260929_03_ma_target_drift",
+ "reviewed_at": "2026-09-29T19:29:02Z",
+ "decision": "proceed",
+ "objective": "T-20260929-03: build a free EDGAR merger-target announcement table and test with signal_card (event mode) whether buying US target stocks at the next open after the 8-K and holding 20 (primary) or 60 sessions beats the universe after 10/20 bp per side and beats re-dated placebos, in all targets and in the small/illiquid t3 tier.",
+ "target_regime_and_horizon": "Event-driven, single-stock, 20 and 60 session holds after the announcement; full sample 2016-2026 with the recent window from 2024-01-01 reported by signal_card. Not a market-regime bet; validity window is the period in which arbitrage capital is high and spreads are compressed (post-2002).",
+ "existing_solution_comparison": "`oc research directions check merger` returned only dir:merger_arbitrage_target_announcement_drift (queued, likely repeat 1.00 = this task; no prior local test). Published record: hedged hold-to-close merger arbitrage earns about 4% (Mitchell-Pulvino) to 9.6% (Baker-Savasoglu) per year before the post-2002 spread compression of more than 400 bps (Jetley-Ji); IQ Merger Arbitrage ETF (MNA) shows Sharpe about 0.30 per a search summary (not opened). Existing products exist for hold-to-close arbitrage, but they need completion status and hedges; nothing existing tests the unhedged fixed-horizon next-open long that this workbench can trade. The local step is the missing evidence: data adaptation (free EDGAR), point-in-time timing, 10/20 bp costs and current-window validity. The 2025-10 paper claiming Sharpe above 2.1 is abstract-only (claim_only) and no number is taken from it.",
+ "remaining_evidence_gap": "Only abstracts were read for Big Moves Small Gains, Baker-Savasoglu and the 2025 working paper; no offer price is in the 8-K pipeline so the price-to-offer conditioning of Bessembinder-Zhang cannot be replicated; completion status is not used (survivorship), so hold-to-close is untested. Recall of the rule (phrase search on Agreement and Plan of Merger/Reorganization) is not measured; precision is measured by hand sample.",
+ "negative_experiments_checked": "Directions registry grep for merger/arbitrage/target/takeover: only the queued row. Sibling 8-K event directions (buyback, Item 4.02, SEO/ATM, spin-off) are all evidence_too_weak/not_executable and are different mechanisms. 13G filer-detection false-positive rate of 14% (earlier lesson) is why a 25-row hand check is required before any return is computed.",
+ "cost_and_execution_assumptions": "signal_card: signal known by close of trade_date, entry at next session open, 10 and 20 bp per side on sum|dw| of a calendar-time equal-weight book; missing open earns zero; universe close >= 5, top 3000 by ADV; long only, no borrow. Prices pass sanitize_price_matrices defaults inside load_market. Small-cap tier costs are stressed by the 20 bp column.",
+ "stop_condition": "Admit only if all four flags are true at the primary horizon (car_t_ge_3, beats_redated, book_positive_20bp, book_positive_20bp_recent); if the hand-check false-positive rate stays above 15% after rule fixes, mark the direction blocked_data and do not run the cards. No threshold or candidate is changed after seeing results.",
+ "queries": [
+  {
+   "query": "merger arbitrage target stock announcement drift after announcement returns abnormal returns study",
+   "opened_urls": [
+    "https://english.ckgsb.edu.cn/sites/default/files/files/Merger_Anomaly_20150417.pdf"
+   ],
+   "searched_at": "2026-09-29T19:29:02Z"
+  },
+  {
+   "query": "Mitchell Pulvino characteristics of risk and return in risk arbitrage",
+   "opened_urls": [
+    "https://www.aqr.com/Insights/Research/Journal-Article/Characteristics-of-Risk-and-Return-in-Risk-Arbitrage"
+   ],
+   "searched_at": "2026-09-29T19:29:02Z"
+  },
+  {
+   "query": "Baker Savasoglu limited arbitrage in mergers and acquisitions Journal of Financial Economics",
+   "opened_urls": [
+    "https://ideas.repec.org/p/usi/wpaper/920.html",
+    "https://en.wikipedia.org/wiki/Merger_arbitrage"
+   ],
+   "searched_at": "2026-09-29T19:29:02Z"
+  },
+  {
+   "query": "takeover target run-up pre-announcement leakage Keown Pinkerton Schwert",
+   "opened_urls": [
+    "https://www.analysisgroup.com/globalassets/uploadedfiles/content/insights/ag_features/merger_arbitrage_spread_-_still_shrinking/jetley_and_ji_shrinking_merger_arbitrage_spread.pdf"
+   ],
+   "searched_at": "2026-09-29T19:29:02Z"
+  },
+  {
+   "query": "EDGAR full-text search API efts 8-K Item 1.01 merger agreement target company identification tool GitHub",
+   "opened_urls": [
+    "https://github.com/timmKal01/sec-filing-full-text-search"
+   ],
+   "searched_at": "2026-09-29T19:29:02Z"
+  }
+ ],
+ "sources": [
+  {
+   "url": "https://english.ckgsb.edu.cn/sites/default/files/files/Merger_Anomaly_20150417.pdf",
+   "claim_id": "bessembinder_zhang_2015_itp_overreaction",
+   "claim": "High initial target price (day-1 close over offer price) ratios are associated with significant negative abnormal returns of 3.5% over the two months following the announcement; consistent with investor overreaction.",
+   "source_type": "paper",
+   "published_or_updated_at": "2015-04-01",
+   "market_and_period": "US mergers; see claim",
+   "applicability": "Direct evidence on the post-announcement window this iteration trades: a subset of targets (high price-to-offer) subsequently under-perform, so an unconditional 20/60 day hold can be diluted or negative. Motivates reporting drift by 1-20 day CAR rather than assuming positive drift.",
+   "limitations": "Working paper draft April 2015; conditions on offer price which we do not have in the 8-K pipeline; sample and cost treatment not audited here.",
+   "independent_replication": "Not independently replicated here.",
+   "fetched_at": "2026-09-29T19:29:02Z",
+   "sha256": "6e673809f780f6bbdbb76fd65289599d12f0aec247537d34349c8efb2e92f885",
+   "snapshot_path": "reports/research/iterations/h20260929_03_ma_target_drift/sources/bessembinder_zhang_2015_overreaction_ma.txt",
+   "source_card_path": "reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl"
+  },
+  {
+   "url": "https://www.analysisgroup.com/globalassets/uploadedfiles/content/insights/ag_features/merger_arbitrage_spread_-_still_shrinking/jetley_and_ji_shrinking_merger_arbitrage_spread.pdf",
+   "claim_id": "jetley_ji_2010_shrinking_spread",
+   "claim": "The merger arbitrage spread has declined by more than 400 bps since 2002; the decline is economically and statistically significant and part of it is likely permanent (increased arbitrage capital, reduced transaction costs).",
+   "source_type": "paper",
+   "published_or_updated_at": "2010-03-01",
+   "market_and_period": "US mergers; see claim",
+   "applicability": "Explains why a plain post-announcement long in targets should earn little after our 10-20 bp per side costs: the day-1 spread already compresses most of the deal premium; only the small residual is available at next-open entry.",
+   "limitations": "Sample ends around 2008-2009; does not cover 2020s; hedge-fund index returns, not stock-level next-open entries.",
+   "independent_replication": "Not independently replicated here.",
+   "fetched_at": "2026-09-29T19:29:02Z",
+   "sha256": "99b3f35cc20f7f4c4cd2d756ab640e4355c4c53addda512fb5f2720aaf1694d5",
+   "snapshot_path": "reports/research/iterations/h20260929_03_ma_target_drift/sources/jetley_ji_2010_shrinking_merger_arb_spread.txt",
+   "source_card_path": "reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl"
+  },
+  {
+   "url": "https://www.aqr.com/Insights/Research/Journal-Article/Characteristics-of-Risk-and-Return-in-Risk-Arbitrage",
+   "claim_id": "mitchell_pulvino_2001_risk_return",
+   "claim": "4,750 mergers 1963-1998: risk-arbitrage excess return about 4% per year after transaction costs and the non-linear (put-like) payoff; returns correlate with the market in downturns.",
+   "source_type": "paper",
+   "published_or_updated_at": "2001-12-01",
+   "market_and_period": "US mergers; see claim",
+   "applicability": "Classic upper bound for hold-to-close arbitrage: single-digit percent annual excess return with put-like tail, which is far below this workbench's admission bars once 10-20 bp per side is charged on fixed-horizon trades.",
+   "limitations": "1963-1998 sample, hold to resolution, hedged long-short; only the publisher page summary was read, not the full paper.",
+   "independent_replication": "Not independently replicated here.",
+   "fetched_at": "2026-09-29T19:29:02Z",
+   "sha256": "2c145e5d91c197d34eb508090c83ce618cd6d3217aedb702e92c92d6fda7ac3a",
+   "snapshot_path": "reports/research/iterations/h20260929_03_ma_target_drift/sources/mitchell_pulvino_2001_aqr_page.txt",
+   "source_card_path": "reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl"
+  },
+  {
+   "url": "https://en.wikipedia.org/wiki/Merger_arbitrage",
+   "claim_id": "wikipedia_merger_arbitrage",
+   "claim": "Deal break rates 8% (2,182 mergers 1990-2007) to 22.7% (1901 mergers 1981-1996); friendly deals close 82%, hostile 38%; transaction costs significantly erode arbitrage returns.",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "2026-09-29",
+   "market_and_period": "US mergers; see claim",
+   "applicability": "Break risk is why we do not condition on completion: DEFM14A/closing data would select survivors, so only fixed-horizon holds are tested.",
+   "limitations": "Secondary summary of academic studies.",
+   "independent_replication": "Not independently replicated here.",
+   "fetched_at": "2026-09-29T19:29:02Z",
+   "sha256": "6a613ea462d3624a028f5a6dd9bd354eb84b05efdd2a5c553f4ca8c953fb82fe",
+   "snapshot_path": "reports/research/iterations/h20260929_03_ma_target_drift/sources/wikipedia_merger_arbitrage.txt",
+   "source_card_path": "reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl"
+  },
+  {
+   "url": "https://github.com/timmKal01/sec-filing-full-text-search",
+   "claim_id": "edgar_efts_fulltext_api",
+   "claim": "The SEC efts.sec.gov full-text search endpoint is free, key-less, covers 2001 onward, returns form/items/CIK/accession per hit.",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "2026-09-29",
+   "market_and_period": "US mergers; see claim",
+   "applicability": "Data source for the free EDGAR merger-agreement 8-K pipeline; confirmed locally that hits are per file with items lists.",
+   "limitations": "README of a third-party wrapper; fair-access User-Agent and <=10 req/s still apply.",
+   "independent_replication": "Not independently replicated here.",
+   "fetched_at": "2026-09-29T19:29:02Z",
+   "sha256": "214500c85a633da7d275869cf5ccfb3f21b5426c3dd328e9035a8513b4d5e7aa",
+   "snapshot_path": "reports/research/iterations/h20260929_03_ma_target_drift/sources/edgar_efts_readme_timmKal01.txt",
+   "source_card_path": "reports/harness/source_cards/h20260929_03_ma_target_drift.jsonl"
+  }
+ ],
+ "cheapest_decisive_test": {
+  "action": "Build the EDGAR 8-K merger-target table (free), hand-check 25 random rule-positive rows, then run the four preregistered signal cards (all/t3 x 20/60) with next-open entry, 10/20 bp costs and the built-in redated placebo.",
+  "pass_condition": "All four flags true at the primary horizon: date-averaged CAR t >= 3, beats every re-dated placebo, book positive at 20 bp full sample and from 2024.",
+  "falsification_condition": "Any flag false at the primary horizon for both variants, or the hand-check false-positive rate above 15% after rule fixes (then blocked_data).",
+  "max_compute_minutes": 60
+ }
+}

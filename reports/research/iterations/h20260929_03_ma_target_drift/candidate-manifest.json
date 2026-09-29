@@ -1,0 +1,153 @@
+{
+ "iter_id": "h20260929_03_ma_target_drift",
+ "generated_at": "2026-09-29T19:29:02Z",
+ "generated_before_backtest": true,
+ "strategy_name": "h20260929_03_ma_target_drift",
+ "objective": "4 signal cards (all/t3 targets x 20/60 session horizons) testing whether buying US merger targets at the next open after the 8-K announcement and holding a fixed horizon survives 10/20 bp per side and re-dated placebos.",
+ "candidate_count": 4,
+ "candidates": [
+  {
+   "candidate_id": "ma_target_all",
+   "role": "signal_library_admission_test",
+   "method": "signal_card event mode, all target events, primary horizon 20d",
+   "parameters": {
+    "tier": "all",
+    "primary_horizon": 20,
+    "entry": "next session open after trade_date",
+    "event_rule": "is_target_rule & is_first_for_cik_365d",
+    "top_n": 3000
+   },
+   "path": "ma_target_drift_signal_card",
+   "ablation": "frozen_event_table_no_reselection",
+   "spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+   "fallback": "event_dropped_if_symbol_not_in_universe_broad",
+   "data_contract": "data_v1_sec_8k_ma_announcements_daily_broad",
+   "feature_contract": "feature_v1_target_8k_indicator",
+   "label_contract": "label_v1_open_to_open_forward_return_next_open_entry",
+   "validation_contract": "validation_v1_signal_card_event_mode",
+   "cost_contract": "cost_v1_10_20bp_per_side",
+   "benchmark_contract": "benchmark_v1_universe_equal_weight_and_redated_placebo"
+  },
+  {
+   "candidate_id": "ma_target_t3",
+   "role": "signal_library_admission_test",
+   "method": "signal_card event mode, t3_adv_rank_1501_3000 target events, primary horizon 20d",
+   "parameters": {
+    "tier": "t3_adv_rank_1501_3000",
+    "primary_horizon": 20,
+    "entry": "next session open after trade_date",
+    "event_rule": "is_target_rule & is_first_for_cik_365d",
+    "top_n": 3000
+   },
+   "path": "ma_target_drift_signal_card",
+   "ablation": "frozen_event_table_no_reselection",
+   "spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+   "fallback": "event_dropped_if_symbol_not_in_universe_broad",
+   "data_contract": "data_v1_sec_8k_ma_announcements_daily_broad",
+   "feature_contract": "feature_v1_target_8k_indicator",
+   "label_contract": "label_v1_open_to_open_forward_return_next_open_entry",
+   "validation_contract": "validation_v1_signal_card_event_mode",
+   "cost_contract": "cost_v1_10_20bp_per_side",
+   "benchmark_contract": "benchmark_v1_universe_equal_weight_and_redated_placebo"
+  },
+  {
+   "candidate_id": "ma_target_all_h60",
+   "role": "signal_library_admission_test",
+   "method": "signal_card event mode, all target events, primary horizon 60d",
+   "parameters": {
+    "tier": "all",
+    "primary_horizon": 60,
+    "entry": "next session open after trade_date",
+    "event_rule": "is_target_rule & is_first_for_cik_365d",
+    "top_n": 3000
+   },
+   "path": "ma_target_drift_signal_card",
+   "ablation": "frozen_event_table_no_reselection",
+   "spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+   "fallback": "event_dropped_if_symbol_not_in_universe_broad",
+   "data_contract": "data_v1_sec_8k_ma_announcements_daily_broad",
+   "feature_contract": "feature_v1_target_8k_indicator",
+   "label_contract": "label_v1_open_to_open_forward_return_next_open_entry",
+   "validation_contract": "validation_v1_signal_card_event_mode",
+   "cost_contract": "cost_v1_10_20bp_per_side",
+   "benchmark_contract": "benchmark_v1_universe_equal_weight_and_redated_placebo"
+  },
+  {
+   "candidate_id": "ma_target_t3_h60",
+   "role": "signal_library_admission_test",
+   "method": "signal_card event mode, t3_adv_rank_1501_3000 target events, primary horizon 60d",
+   "parameters": {
+    "tier": "t3_adv_rank_1501_3000",
+    "primary_horizon": 60,
+    "entry": "next session open after trade_date",
+    "event_rule": "is_target_rule & is_first_for_cik_365d",
+    "top_n": 3000
+   },
+   "path": "ma_target_drift_signal_card",
+   "ablation": "frozen_event_table_no_reselection",
+   "spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+   "fallback": "event_dropped_if_symbol_not_in_universe_broad",
+   "data_contract": "data_v1_sec_8k_ma_announcements_daily_broad",
+   "feature_contract": "feature_v1_target_8k_indicator",
+   "label_contract": "label_v1_open_to_open_forward_return_next_open_entry",
+   "validation_contract": "validation_v1_signal_card_event_mode",
+   "cost_contract": "cost_v1_10_20bp_per_side",
+   "benchmark_contract": "benchmark_v1_universe_equal_weight_and_redated_placebo"
+  }
+ ],
+ "contracts": {
+  "data": {
+   "data_v1_sec_8k_ma_announcements_daily_broad": {
+    "sources": [
+     "data/features/sec_8k_ma_announcements (built by scripts/collect_sec_ma_target_announcements.py from EDGAR full-text search + submission heads)",
+     "data/features/daily_broad and data/features/universe_broad (via signal_card.load_market)"
+    ],
+    "join": "symbol, trade_date (last session on or before the Eastern acceptance date)"
+   }
+  },
+  "features": {
+   "feature_v1_target_8k_indicator": {
+    "module": "scripts/collect_sec_ma_target_announcements.py",
+    "definition": "value=1 on trade_date for rows with is_target_rule and is_first_for_cik_365d; t3 adds adv_rank 1501-3000 at the latest month-end on or before trade_date"
+   }
+  },
+  "labels": {
+   "label_v1_open_to_open_forward_return_next_open_entry": {
+    "definition": "signal_card forward return from the next session open, horizon 20 or 60 sessions, excess over universe equal weight"
+   }
+  },
+  "validation": {
+   "validation_v1_signal_card_event_mode": {
+    "recent_start": "2024-01-01",
+    "placebo": "redate_events +-126 sessions, 20 seeds",
+    "flags": [
+     "car_t_ge_3",
+     "beats_redated",
+     "book_positive_20bp",
+     "book_positive_20bp_recent"
+    ]
+   }
+  },
+  "costs": {
+   "cost_v1_10_20bp_per_side": {
+    "bps_per_side": [
+     10,
+     20
+    ],
+    "note": "signal_card book cost on sum|dw|; no separate borrow (long-only)"
+   }
+  },
+  "benchmarks": {
+   "benchmark_v1_universe_equal_weight_and_redated_placebo": {
+    "primary": "universe equal weight (excess), re-dated placebo",
+    "info_only": "pre-announcement CAR [-5,-1] and post 1-20 day CAR path"
+   }
+  }
+ },
+ "spec_hashes": {
+  "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml": "0413312a59b420bb2b1b20267470aaa3c460d8d87fa0e868952e5f59118516bd"
+ },
+ "source_spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+ "spec_hash": "0413312a59b420bb2b1b20267470aaa3c460d8d87fa0e868952e5f59118516bd",
+ "keep_rule": "Adopt a variant only if all four card flags are true at its primary horizon (car_t_ge_3, beats_redated, book_positive_20bp, book_positive_20bp_recent); otherwise signal_card.admission() decides admit/reject/evidence_too_weak. No candidate is changed after seeing results."
+}

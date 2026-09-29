@@ -1,0 +1,51 @@
+{
+ "iter_id": "h20260929_03_ma_target_drift",
+ "strategy_name": "h20260929_03_ma_target_drift",
+ "source_spec_path": "strategy_specs/drafts/h20260929_03_ma_target_drift.yaml",
+ "spec_hash": "0413312a59b420bb2b1b20267470aaa3c460d8d87fa0e868952e5f59118516bd",
+ "schema_version": 3,
+ "created_at": "2026-09-29T19:29:02Z",
+ "objective": "T-20260929-03: does buying US merger-agreement targets at the next open after the 8-K and holding 20/60 sessions survive costs and placebos.",
+ "paths": [
+  {
+   "name": "ma_target_drift_signal_card",
+   "candidate_count": 4,
+   "hypothesis_refs": [
+    "T-20260929-03"
+   ],
+   "parameters": {
+    "variant": [
+     "all",
+     "t3"
+    ],
+    "primary_horizon": [
+     20,
+     60
+    ],
+    "model_training": false,
+    "mutation": "none"
+   },
+   "benchmark_family": [
+    "universe_equal_weight",
+    "redated_placebo_20_seeds",
+    "pre_announcement_car_diagnostic"
+   ]
+  }
+ ],
+ "total_candidate_budget": 4,
+ "cost_assumptions": "10/20 bp per side on sum|dw|, next-open entry, long only.",
+ "go_no_go_band": "All four signal_card flags true at the primary horizon (t>=3 on date-averaged CAR, beats every re-dated placebo, book positive at 20 bp full sample and from 2024).",
+ "trial_ledger_paths": [
+  "reports/research/iterations/h20260929_03_ma_target_drift/trial-ledger.jsonl"
+ ],
+ "evaluation_report_paths": [
+  "reports/research/iterations/h20260929_03_ma_target_drift/results.json",
+  "reports/research/iterations/h20260929_03_ma_target_drift/report.md"
+ ],
+ "single_mechanism_no_campaign_attestation": true,
+ "candidate_manifest_path": "reports/research/iterations/h20260929_03_ma_target_drift/candidate-manifest.json",
+ "data_feasibility_path": "reports/research/iterations/h20260929_03_ma_target_drift/data-feasibility.json",
+ "cost_table_path": "reports/research/iterations/h20260929_03_ma_target_drift/cost-contract.json",
+ "candidate_manifest_sha256": "e9425073cd438698833f56eb9ee7ac2075faafb7c394c2190233c84eaa5617ef",
+ "data_feasibility_sha256": "b4f604038b379242ab7f02cf3b4f90e5936a393dc03f5a0ab1df3321010b479c"
+}

@@ -1,0 +1,9 @@
+Source: https://quantpedia.com/sectoral-intramonth-momentum-cycle/ (fetched 2026-09-29 via WebFetch; raw HTTP fetch returned 466, so this file is the fetch tool's extraction, not raw HTML).
+Universe: nine Select Sector SPDR ETFs (XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY) plus SPY benchmark. Sample Dec 1998 - Jun 2026.
+Signal: at the close of each month's final trading day (D), trailing 252-trading-day total return of each sector ETF.
+Leg 1 (D+1): long top-3 sectors, hold one day. Strat2 (long-short): 2.83% ann, 0.42 Sharpe.
+Leg 2 (D+2, D+3): reverse position (flip signal). Strat2 reversed: 3.26% ann, 0.46 Sharpe.
+Leg 3 (D-10 to D-5): enter the momentum position using the trailing 252-day ranking computed at the most recent month-end. Strat2: 1.35% ann, 0.32 Sharpe.
+Variants: Strat1-SPY (market-neutral): long top-3 + short SPY equal notional. Strat2 (long-short): long top-3 + short bottom-3 equal notional.
+Composite: Strat2 5.99% ann / 0.55 Sharpe; Strat1-SPY 3.77% ann / 0.54 Sharpe; invested ~40% of trading days.
+Cost assumptions: none stated; article says results 'survive realistic transaction costs for liquid ETFs'.
