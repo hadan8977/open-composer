@@ -1,0 +1,100 @@
+{
+  "iter_id": "h20260928_43_political_etf_rotation",
+  "strategy_name": "h20260928_43_political_etf_rotation",
+  "source_spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+  "spec_hash": "c2faafa3bfaf3be884bfccd6f8db1bb1084a5da4c077011551a1a063b6e18721",
+  "schema_version": 3,
+  "created_at": "2026-09-29T02:20:00+00:00",
+  "objective": "Preregister 24 candidates (12 POLITICAL + 12 PLACEBO_BIGTECH) -- rotation_cell's unedited cross-sectional momentum rotation mechanism -- applied to the political/congressional-trade-replica ETF menu (NANC, GOP, MAGA, DEMZ) and a non-political big-tech placebo menu (QQQ, XLK, SPY, DIA), grid = lookback {63,126,252} x top_n {1,2} x rebalance {monthly,weekly} per menu, judged on select+anchor windows only (stress window not computed -- NANC/GOP have zero coverage). No backtest is run in this round.",
+  "paths": [
+    {
+      "name": "political_etf_rotation_screen",
+      "candidate_count": 24,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "POLITICAL_L63_N1_MO",
+          "POLITICAL_L63_N1_WK",
+          "POLITICAL_L63_N2_MO",
+          "POLITICAL_L63_N2_WK",
+          "POLITICAL_L126_N1_MO",
+          "POLITICAL_L126_N1_WK",
+          "POLITICAL_L126_N2_MO",
+          "POLITICAL_L126_N2_WK",
+          "POLITICAL_L252_N1_MO",
+          "POLITICAL_L252_N1_WK",
+          "POLITICAL_L252_N2_MO",
+          "POLITICAL_L252_N2_WK",
+          "PLACEBO_BIGTECH_L63_N1_MO",
+          "PLACEBO_BIGTECH_L63_N1_WK",
+          "PLACEBO_BIGTECH_L63_N2_MO",
+          "PLACEBO_BIGTECH_L63_N2_WK",
+          "PLACEBO_BIGTECH_L126_N1_MO",
+          "PLACEBO_BIGTECH_L126_N1_WK",
+          "PLACEBO_BIGTECH_L126_N2_MO",
+          "PLACEBO_BIGTECH_L126_N2_WK",
+          "PLACEBO_BIGTECH_L252_N1_MO",
+          "PLACEBO_BIGTECH_L252_N1_WK",
+          "PLACEBO_BIGTECH_L252_N2_MO",
+          "PLACEBO_BIGTECH_L252_N2_WK"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "wide_spread_bps": 40.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold",
+        "BIL_buy_and_hold",
+        "S3_reference_for_K1_K2",
+        "same_grid_cell_PLACEBO_BIGTECH_dominance_check"
+      ]
+    }
+  ],
+  "total_candidate_budget": 24,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_43_political_etf_rotation/candidate-manifest.json",
+  "candidate_manifest_sha256": "881473e13ab6017a4bc1de08eb98337945b7153c5e26f17bb256885327c5ee6e",
+  "data_feasibility_path": "reports/research/iterations/h20260928_43_political_etf_rotation/data-feasibility.json",
+  "data_feasibility_sha256": "58049380a3d21749d280f24a60ff9c32edddebb8c9d4fc83c851373b09270cfe",
+  "cost_table_path": "reports/research/iterations/h20260928_43_political_etf_rotation/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_43_political_etf_rotation/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_43_political_etf_rotation/report.md",
+    "reports/research/iterations/h20260928_43_political_etf_rotation/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "stress_not_computed_reason": "NANC/GOP launched 2023-02-07, zero coverage of 2016-05-02..2023-09-15; per the runbook's short-sample rule, judged on select+anchor only, tier capped at watch_recent."
+  },
+  "keep_rule": {
+    "K1_select_anchor_only": "date-neutral Sharpe (median over rebalance offsets) >= 0.80 * S3's date-neutral anchor Sharpe (>=1.19) in BOTH the select and anchor windows, 10bp per side, positive CAGR at 20bp both windows. Because the stress window is not computed, K1 alone caps at watch_recent, never a full keep (matches the runbook: 'stress period pending' candidates cannot clear K1 fully).",
+    "K2": "63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both select and anchor windows -- also reference-only pending stress coverage, same watch_recent cap.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.19 (select window also computed and reported) -- forward-tracked only, not a keep, explicitly labeled stress-pending.",
+    "placebo_dominance_disqualifier": "For any POLITICAL candidate reaching watch_recent or better: if the same-grid-cell (same L, N, freq) PLACEBO_BIGTECH candidate's anchor-window judged Sharpe is >= the POLITICAL candidate's, downgrade to 'not_kept (reproducible by plain big-tech momentum)' regardless of the K1/K2 numeric result. Fixed before any return is computed.",
+    "wide_spread_sensitivity": "For any POLITICAL candidate reaching watch_recent or better (and surviving the placebo-dominance check): recompute anchor-window annualized return and Sharpe at 40bp per side; require positive annualized return. Computed separately by scripts/analyze_h20260928_43_wide_spread.py.",
+    "pass_requires": "K1 OR K2 (both capped at watch_recent for POLITICAL given stress-pending status) AND not disqualified by placebo dominance AND positive at 40bp",
+    "multiple_comparisons": "24 candidates; report all regardless of outcome; DSR with n_trials=24 for any that pass.",
+    "g3_placebo": "not applicable in the frozen-gate sense (no discretionary pick or gate-timing parameter fit locally); the PLACEBO_BIGTECH menu itself serves as this batch's placebo/disqualifier test, per the queue task's extra requirement."
+  }
+}

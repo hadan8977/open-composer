@@ -1,0 +1,163 @@
+name: h20260928_42_opex_week
+description: >-
+  Preregistered candidate family for T-20260928-42 (batch-screen the option-
+  expiration-week calendar effect). Long-only large-cap/index ETF (SPY, QQQ,
+  DIA, IWM) during the week containing the month's 3rd Friday (standard
+  monthly option expiration), cash (SHY) otherwise. 8 primary candidates
+  (OPEX_{TICKER}_{WEEK,WEEKMON}); 12 internal placebo controls
+  (PLACEBO_W{1,2,4}_{TICKER}) anchored to non-expiration Friday weeks, used
+  only to falsify whether the 3rd Friday specifically is special, not
+  eligible for any keep tier. Mechanism: Stivers & Sun (2013, J. Banking &
+  Finance; Quantpedia summary) attribute the effect to option market-maker
+  delta-hedge rebalancing; Garcia-Ares & Muravyev (2025, FMA working paper)
+  find order-imbalance price pressure concentrated on the 3rd Friday and the
+  following Monday specifically, from covered-call-writer position rollover
+  -- grounds the WEEKMON variant's deferred exit. Evaluated via
+  scripts/screen_batch.py --batch h20260928_42_opex_week --iteration
+  h20260928_42_opex_week against the frozen S1-S3 screening-lane contract
+  (10bp/20bp per side, close signal -> next open fill, K1/K2 keep rule).
+  Research only, deterministic; no broker writes are authorized.
+timeframe: daily
+universe:
+- SPY
+- QQQ
+- DIA
+- IWM
+- SHY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_42:screen:opex_week
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  opex_week_calendar_rule:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is a pure
+      calendar rule (month's nth Friday's week, computed from the exchange
+      trading-day calendar only, never a price value) implemented in
+      scripts/screen_batches/h20260928_42_opex_week.py's
+      entry_dates_for_friday/exit_dates_same_week/exit_dates_following_week
+      and tested on synthetic data in tests/test_h20260928_42_opex_week.py.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_42_opex_week
+  candidate_manifest_path: reports/research/iterations/h20260928_42_opex_week/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_42_opex_week/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_42_opex_week.jsonl
+  source_card_claim_ids:
+  - stivers_sun_2013_option_expiration_week_effect
+  - garcia_ares_muravyev_2025_rollover_day
+  - opex_week_internal_placebo_non_expiration_weeks
+  - quantifiedstrategies_opex_week_recent_decay_2026
+  - cxo_advisory_opex_week_large_cap_1983_2008
+  parameter_space:
+    candidate_id:
+    - OPEX_SPY_WEEK
+    - OPEX_SPY_WEEKMON
+    - OPEX_QQQ_WEEK
+    - OPEX_QQQ_WEEKMON
+    - OPEX_DIA_WEEK
+    - OPEX_DIA_WEEKMON
+    - OPEX_IWM_WEEK
+    - OPEX_IWM_WEEKMON
+    - PLACEBO_W1_SPY
+    - PLACEBO_W1_QQQ
+    - PLACEBO_W1_DIA
+    - PLACEBO_W1_IWM
+    - PLACEBO_W2_SPY
+    - PLACEBO_W2_QQQ
+    - PLACEBO_W2_DIA
+    - PLACEBO_W2_IWM
+    - PLACEBO_W4_SPY
+    - PLACEBO_W4_QQQ
+    - PLACEBO_W4_DIA
+    - PLACEBO_W4_IWM
+  candidate_budget: 20
+  selection_objective: Judge each of the 8 primary candidates against the
+    owner's 2026-09-28 relaxed K1/K2/strong_keep/watch_recent keep rule
+    (screen_lane frozen windows and cost contract); the 12 placebos are
+    internal falsification controls only (a primary candidate whose same-
+    ticker placebo beats its own WEEK-anchor Sharpe demotes to "not kept
+    (placebo replication)"), never themselves eligible for a keep tier.
+  anti_overfit_notes:
+  - Every candidate's only free choice (ticker, WEEK vs WEEKMON exit timing,
+    or which Friday-of-month a placebo anchors to) is fixed before any return
+    is computed; no parameter is tuned to this batch's own outcome.
+  - The close-signal/next-open-fill, 10bp/20bp cost convention differs from
+    Quantpedia's own Friday-close-to-Friday-close holding period -- a frozen
+    contract constraint applied uniformly, not a rule change made to help any
+    candidate pass.
+  - DSR is reported for the full 20-candidate family (conservative), not just
+    the 8 primary candidates, per the queue task's own instruction.
+  validation_plan:
+  - scripts/screen_batch.py --batch h20260928_42_opex_week --iteration h20260928_42_opex_week
+  - K1/K2/strong_keep/watch_recent against screen_lane's frozen S3 reference,
+    both the anchor (2024-01-08..2026-09-17) and stress (2016-05-02..
+    2023-09-15) windows
+  - placebo internal falsification -- any primary candidate whose same-ticker
+    W1/W2/W4 placebo has anchor Sharpe >= that primary's own WEEK-variant
+    anchor Sharpe is demoted to not_kept regardless of K1/K2
+notes:
+  intent: Batch-screen the option-expiration-week calendar effect (gap-search
+    2026-09-28-22, flows_structural.rebalance_and_hedging_flows) against the
+    frozen K1/K2 keep rule, with an internal non-expiration-week placebo
+    control to test whether the 3rd Friday specifically is special.
+  hypothesis_id: T-20260928-42
+  previous_link: h20260928_05_registry_etf_batch2
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

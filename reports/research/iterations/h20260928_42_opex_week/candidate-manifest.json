@@ -1,0 +1,591 @@
+{
+  "iter_id": "h20260928_42_opex_week",
+  "generated_at": "2026-09-29T01:25:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_42_opex_week",
+  "objective": "Preregister 20 candidates for T-20260928-42 (gap-search 2026-09-28-22, flows_structural.rebalance_and_hedging_flows): 8 primary option-expiration-week calendar candidates (OPEX_{SPY,QQQ,DIA,IWM}_{WEEK,WEEKMON}, long-only during the week containing the month's 3rd Friday, cash otherwise) plus 12 internal placebo controls (PLACEBO_W{1,2,4}_{SPY,QQQ,DIA,IWM}, identical construction anchored to non-expiration Friday weeks) for scripts/screen_batch.py --batch h20260928_42_opex_week --iteration h20260928_42_opex_week. No return, Sharpe or backtest number is computed in this dossier.",
+  "candidates": [
+    {
+      "candidate_id": "OPEX_SPY_WEEK",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "SPY",
+        "variant": "WEEK",
+        "source_card": "stivers_sun_2013_option_expiration_week_effect",
+        "friday_n": 3,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Entry: last known trading day (from close.index, the exchange trading-day calendar -- never a price value) before the Monday of the week containing the month's 3rd Friday (standard monthly option expiration), at that day's close -> next trading day's open buy 1.0 SPY. Exit: last known trading day within that same expiration week, at close -> next trading day's open sell (all weight to SHY via the lane's own remainder rule)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_SPY_WEEKMON",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only_deferred_exit",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "SPY",
+        "variant": "WEEKMON",
+        "source_card": "garcia_ares_muravyev_2025_rollover_day",
+        "friday_n": 3,
+        "exit_timing": "following_week_first_trading_day",
+        "rule": "Entry: identical to OPEX_SPY_WEEK. Exit deferred: first known trading day of the week AFTER the expiration week, at that day's close -> next trading day's open sell (all to SHY). Captures Garcia-Ares & Muravyev (2025)'s finding that rollover order-imbalance price pressure concentrates on the 3rd Friday AND the following Monday."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_QQQ_WEEK",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "QQQ",
+        "variant": "WEEK",
+        "source_card": "stivers_sun_2013_option_expiration_week_effect",
+        "friday_n": 3,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Entry: last known trading day (from close.index, the exchange trading-day calendar -- never a price value) before the Monday of the week containing the month's 3rd Friday (standard monthly option expiration), at that day's close -> next trading day's open buy 1.0 QQQ. Exit: last known trading day within that same expiration week, at close -> next trading day's open sell (all weight to SHY via the lane's own remainder rule)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_QQQ_WEEKMON",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only_deferred_exit",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "QQQ",
+        "variant": "WEEKMON",
+        "source_card": "garcia_ares_muravyev_2025_rollover_day",
+        "friday_n": 3,
+        "exit_timing": "following_week_first_trading_day",
+        "rule": "Entry: identical to OPEX_QQQ_WEEK. Exit deferred: first known trading day of the week AFTER the expiration week, at that day's close -> next trading day's open sell (all to SHY). Captures Garcia-Ares & Muravyev (2025)'s finding that rollover order-imbalance price pressure concentrates on the 3rd Friday AND the following Monday."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_DIA_WEEK",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "DIA",
+        "variant": "WEEK",
+        "source_card": "stivers_sun_2013_option_expiration_week_effect",
+        "friday_n": 3,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Entry: last known trading day (from close.index, the exchange trading-day calendar -- never a price value) before the Monday of the week containing the month's 3rd Friday (standard monthly option expiration), at that day's close -> next trading day's open buy 1.0 DIA. Exit: last known trading day within that same expiration week, at close -> next trading day's open sell (all weight to SHY via the lane's own remainder rule)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_DIA_WEEKMON",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only_deferred_exit",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "DIA",
+        "variant": "WEEKMON",
+        "source_card": "garcia_ares_muravyev_2025_rollover_day",
+        "friday_n": 3,
+        "exit_timing": "following_week_first_trading_day",
+        "rule": "Entry: identical to OPEX_DIA_WEEK. Exit deferred: first known trading day of the week AFTER the expiration week, at that day's close -> next trading day's open sell (all to SHY). Captures Garcia-Ares & Muravyev (2025)'s finding that rollover order-imbalance price pressure concentrates on the 3rd Friday AND the following Monday."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_IWM_WEEK",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "IWM",
+        "variant": "WEEK",
+        "source_card": "stivers_sun_2013_option_expiration_week_effect",
+        "friday_n": 3,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Entry: last known trading day (from close.index, the exchange trading-day calendar -- never a price value) before the Monday of the week containing the month's 3rd Friday (standard monthly option expiration), at that day's close -> next trading day's open buy 1.0 IWM. Exit: last known trading day within that same expiration week, at close -> next trading day's open sell (all weight to SHY via the lane's own remainder rule)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "OPEX_IWM_WEEKMON",
+      "path": "opex_week_screen",
+      "role": "primary_deterministic_calendar_candidate",
+      "method": "option_expiration_week_calendar_long_only_deferred_exit",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_primary",
+        "ticker": "IWM",
+        "variant": "WEEKMON",
+        "source_card": "garcia_ares_muravyev_2025_rollover_day",
+        "friday_n": 3,
+        "exit_timing": "following_week_first_trading_day",
+        "rule": "Entry: identical to OPEX_IWM_WEEK. Exit deferred: first known trading day of the week AFTER the expiration week, at that day's close -> next trading day's open sell (all to SHY). Captures Garcia-Ares & Muravyev (2025)'s finding that rollover order-imbalance price pressure concentrates on the 3rd Friday AND the following Monday."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "PLACEBO_W1_SPY",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "SPY",
+        "variant": "W1",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 1,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 SPY; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 1st Friday's week instead of the 3rd (expiration) Friday's week. Months with no 1st Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W1_QQQ",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "QQQ",
+        "variant": "W1",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 1,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 QQQ; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 1st Friday's week instead of the 3rd (expiration) Friday's week. Months with no 1st Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W1_DIA",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "DIA",
+        "variant": "W1",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 1,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 DIA; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 1st Friday's week instead of the 3rd (expiration) Friday's week. Months with no 1st Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W1_IWM",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "IWM",
+        "variant": "W1",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 1,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 IWM; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 1st Friday's week instead of the 3rd (expiration) Friday's week. Months with no 1st Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W2_SPY",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "SPY",
+        "variant": "W2",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 2,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 SPY; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 2nd Friday's week instead of the 3rd (expiration) Friday's week. Months with no 2nd Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W2_QQQ",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "QQQ",
+        "variant": "W2",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 2,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 QQQ; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 2nd Friday's week instead of the 3rd (expiration) Friday's week. Months with no 2nd Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W2_DIA",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "DIA",
+        "variant": "W2",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 2,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 DIA; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 2nd Friday's week instead of the 3rd (expiration) Friday's week. Months with no 2nd Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W2_IWM",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "IWM",
+        "variant": "W2",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 2,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 IWM; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 2nd Friday's week instead of the 3rd (expiration) Friday's week. Months with no 2nd Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W4_SPY",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "SPY",
+        "variant": "W4",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 4,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 SPY; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 4th Friday's week instead of the 3rd (expiration) Friday's week. Months with no 4th Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W4_QQQ",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "QQQ",
+        "variant": "W4",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 4,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 QQQ; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 4th Friday's week instead of the 3rd (expiration) Friday's week. Months with no 4th Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W4_DIA",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "DIA",
+        "variant": "W4",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 4,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 DIA; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 4th Friday's week instead of the 3rd (expiration) Friday's week. Months with no 4th Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "PLACEBO_W4_IWM",
+      "path": "opex_week_screen",
+      "role": "internal_placebo_falsification_control",
+      "method": "non_expiration_friday_week_calendar_long_only",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_opex_week_panel",
+      "feature_contract": "feature_v1_opex_week_calendar_rule",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_opex_week_vs_s3_k1_k2",
+      "parameters": {
+        "family": "opex_week_placebo",
+        "ticker": "IWM",
+        "variant": "W4",
+        "source_card": "opex_week_internal_placebo_non_expiration_weeks",
+        "friday_n": 4,
+        "exit_timing": "same_week_last_trading_day",
+        "rule": "Internal falsification control, not eligible for any keep tier: identical WEEK construction (entry = last known trading day before the target week's Monday, close -> next open buy 1.0 IWM; exit = last known trading day within that same week, close -> next open sell to SHY), anchored to the month's 4th Friday's week instead of the 3rd (expiration) Friday's week. Months with no 4th Friday are skipped."
+      },
+      "eligible_for_keep_tiers": false
+    }
+  ],
+  "candidate_count": 20,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_opex_week_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "DIA",
+          "IWM",
+          "QQQ",
+          "SHY",
+          "SPY"
+        ],
+        "confirmed_coverage": "SPY, QQQ, DIA, IWM and SHY are already used by S1-S3 and every prior batch-screening round and are present in data/sip/daily/*/*.parquet well before the 2016-05-02 stress-window start; no new data fetch is needed."
+      }
+    },
+    "features": {
+      "feature_v1_opex_week_calendar_rule": {
+        "decision_lag_sessions": 1,
+        "definition": "Each candidate's weight vector is produced by scripts/screen_batches/h20260928_42_opex_week.py's entry_dates_for_friday/exit_dates_same_week/exit_dates_following_week helpers plus _make_entry_only_weights_fn, using only close.columns (ticker presence) and close.index (the exchange trading-day calendar) -- no price value is read at all, so there is no look-ahead by construction, stronger than the usual close.loc[:asof] convention."
+      }
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": {
+        "definition": "signal computed at session close; weights effective at the next session open (next_bar_open fill), matching the frozen S1/S2/S3 convention."
+      }
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": {
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "S3's own anchor window already covers part of this range; reference only."
+        ],
+        "stress": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "offsets": "D frequency with signal_dates_fn: exactly one version, no rebalance-day offset sweep (per screen_lane.py's own docstring).",
+        "s3_reference_numbers": "S3's own date-neutral Sharpe (median over 21 monthly offsets) is 1.49 in the anchor window and 0.81 in the stress window (owner-cited 2026-09-28); K1's bars are 1.19 and 0.65 respectively."
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "contract_path": "reports/research/iterations/h20260928_42_opex_week/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_opex_week_vs_s3_k1_k2": {
+        "members": [
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold",
+          "BIL_buy_and_hold",
+          "S3_reference_for_K1_K2"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_42_opex_week.yaml": "99941132a69311d033c4f21fe7a2f16040f4835e4fd3cef991c57bda49f15fa8"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+  "spec_hash": "99941132a69311d033c4f21fe7a2f16040f4835e4fd3cef991c57bda49f15fa8",
+  "trial_count_and_dsr_note": "This batch has 20 preregistered candidates (8 primary + 12 placebo). Per the queue task's own instruction, DSR is reported for the full 20-candidate family (conservative), not just the 8 primary candidates.",
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (D freq, single version -- no offset sweep) >= 0.80 * S3's date-neutral Sharpe in BOTH the anchor window (>=1.19) and the stress window (>=0.65), at 10bp per side, with positive CAGR at 20bp per side in both windows. Only the 8 primary (OPEX_*) candidates are eligible.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH the anchor and stress windows. Only the 8 primary (OPEX_*) candidates are eligible.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.19 (K1's anchor bar) but the stress window does not clear its bar -- forward-tracked only, not a keep. Only primary candidates are eligible.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.49 anchor / 0.81 stress).",
+    "pass_requires": "K1 OR K2, for a primary (OPEX_*) candidate only.",
+    "placebo_internal_falsification": "If a primary candidate (OPEX_{TICKER}_WEEK or _WEEKMON) would otherwise be kept (K1, K2, strong_keep, or watch_recent), but ANY of its same-ticker placebo (PLACEBO_W1/W2/W4_{TICKER}) has an anchor-window date-neutral Sharpe >= that primary candidate's OWN WEEK-variant anchor Sharpe, the primary candidate is demoted to 'not kept (placebo replication)' -- the 3rd Friday is not shown to be special relative to an arbitrary week of the month under this cost/fill contract. Placebo candidates themselves are NEVER eligible for K1/K2/strong_keep/watch_recent regardless of their own Sharpe.",
+    "multiple_comparisons": "20 candidates total (8 primary + 12 placebo); report all regardless of outcome; DSR computed with n_trials=20 (the full family) for any primary candidate that passes, per the queue task's instruction to report DSR conservatively across the whole batch."
+  }
+}

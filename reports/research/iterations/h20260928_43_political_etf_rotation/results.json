@@ -1,0 +1,778 @@
+{
+  "iter_id": "h20260928_43_political_etf_rotation",
+  "generated_at": "2026-09-29T02:05:00+00:00",
+  "source": "reports/research/screens/h20260928_43_political_etf_rotation/leaderboard.json",
+  "windows_judged": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ]
+  },
+  "stress_window_not_computed_for_judgment": {
+    "reason": "NANC/GOP (launched 2023-02-07) have zero coverage of 2016-05-02..2023-09-15; per the runbook's short-sample rule, POLITICAL/PLACEBO_BIGTECH candidates are judged on select+anchor only, capped at watch_recent tier.",
+    "note": "The generic screening engine still computed a 'stress' diversifier edge and per_window block using whatever data exists from each candidate's own first_valid_signal_date onward (mostly MAGA/DEMZ-driven for L63/L126, since MAGA has data since 2017); these numbers are NOT used for any K1/K2 pass/fail decision in this iteration and are reported only as k2_edge_stress_reference_only."
+  },
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "n_trials": 24,
+  "s3_reference": {
+    "anchor_median_sharpe_net10": 1.4852809357428147,
+    "stress_median_sharpe_net10": 0.8059331108129246,
+    "k1_bar_anchor_80pct": 1.1882247485942519,
+    "source": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json offset_distribution_net10 (same reference values used by every prior batch-screening round)"
+  },
+  "candidates": {
+    "POLITICAL_L63_N1_MO": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=63d, top_n=1, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2017-12-29",
+      "judged_select_sharpe_net10": 0.24076184105828588,
+      "judged_anchor_sharpe_net10": 0.4991475531462125,
+      "judged_anchor_cagr_net10": 0.10766642435734486,
+      "judged_anchor_maxdd_net10": -0.163383554385779,
+      "k2_edge_anchor": -0.4149984273833305,
+      "k2_edge_stress_reference_only": -0.47264639277331844,
+      "dsr_anchor": 0.12342585519745464,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.4991 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.4150 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L63_N1_WK": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=63d, top_n=1, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2017-12-08",
+      "judged_select_sharpe_net10": 0.2912525982620345,
+      "judged_anchor_sharpe_net10": 0.4728286682620965,
+      "judged_anchor_cagr_net10": 0.1065782189927682,
+      "judged_anchor_maxdd_net10": -0.15616535826132294,
+      "k2_edge_anchor": -0.44945924249947367,
+      "k2_edge_stress_reference_only": -0.4302115158725338,
+      "dsr_anchor": 0.11415175115205395,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.4728 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.4495 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L63_N2_MO": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=63d, top_n=2, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2017-12-29",
+      "judged_select_sharpe_net10": 0.4506948828911948,
+      "judged_anchor_sharpe_net10": 0.6397199354705848,
+      "judged_anchor_cagr_net10": 0.13359309030566502,
+      "judged_anchor_maxdd_net10": -0.17827422325046482,
+      "k2_edge_anchor": -0.31570769892035844,
+      "k2_edge_stress_reference_only": -0.5139770615015131,
+      "dsr_anchor": 0.17565577663454812,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.6397 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.3157 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L63_N2_WK": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=63d, top_n=2, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2017-12-08",
+      "judged_select_sharpe_net10": 0.34750889441891064,
+      "judged_anchor_sharpe_net10": 0.5155548940948128,
+      "judged_anchor_cagr_net10": 0.11044821299255547,
+      "judged_anchor_maxdd_net10": -0.15211299379668008,
+      "k2_edge_anchor": -0.3650685758494969,
+      "k2_edge_stress_reference_only": -0.4422340534071301,
+      "dsr_anchor": 0.12814847654603118,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5156 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.3651 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L126_N1_MO": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=126d, top_n=1, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-03-29",
+      "judged_select_sharpe_net10": 0.439987114209043,
+      "judged_anchor_sharpe_net10": 0.5532626593357615,
+      "judged_anchor_cagr_net10": 0.12883885710614762,
+      "judged_anchor_maxdd_net10": -0.22984862539944484,
+      "k2_edge_anchor": -0.3009243716262935,
+      "k2_edge_stress_reference_only": -0.46695303035425867,
+      "dsr_anchor": 0.14062186525314024,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5533 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.3009 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L126_N1_WK": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=126d, top_n=1, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-03-09",
+      "judged_select_sharpe_net10": 0.2449331889592238,
+      "judged_anchor_sharpe_net10": 0.3937120736165825,
+      "judged_anchor_cagr_net10": 0.09277468451921589,
+      "judged_anchor_maxdd_net10": -0.16920383088092983,
+      "k2_edge_anchor": -0.4248245728787863,
+      "k2_edge_stress_reference_only": -0.43076670194923805,
+      "dsr_anchor": 0.09213712892653153,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.3937 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.4248 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L126_N2_MO": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=126d, top_n=2, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-03-29",
+      "judged_select_sharpe_net10": 0.5814376259433427,
+      "judged_anchor_sharpe_net10": 0.5380746366557286,
+      "judged_anchor_cagr_net10": 0.11798120949540025,
+      "judged_anchor_maxdd_net10": -0.18450854476745904,
+      "k2_edge_anchor": -0.27286598622307046,
+      "k2_edge_stress_reference_only": -0.43379425710606806,
+      "dsr_anchor": 0.13621101492975785,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5381 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.2729 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L126_N2_WK": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=126d, top_n=2, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-03-09",
+      "judged_select_sharpe_net10": 0.716484877219112,
+      "judged_anchor_sharpe_net10": 0.6355058820066619,
+      "judged_anchor_cagr_net10": 0.12410539200608728,
+      "judged_anchor_maxdd_net10": -0.10671003952433977,
+      "k2_edge_anchor": -0.2917036822868413,
+      "k2_edge_stress_reference_only": -0.4143677430726824,
+      "dsr_anchor": 0.17588609103236902,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.6355 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.2917 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L252_N1_MO": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=252d, top_n=1, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-09-28",
+      "judged_select_sharpe_net10": 0.8863164817955768,
+      "judged_anchor_sharpe_net10": 0.9015142699438127,
+      "judged_anchor_cagr_net10": 0.19927936345166009,
+      "judged_anchor_maxdd_net10": -0.23270296449539407,
+      "k2_edge_anchor": -0.17966769478093259,
+      "k2_edge_stress_reference_only": -0.5227040009333794,
+      "dsr_anchor": 0.30781898473880553,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.9015 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.1797 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L252_N1_WK": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=252d, top_n=1, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-09-07",
+      "judged_select_sharpe_net10": 0.7764828118894299,
+      "judged_anchor_sharpe_net10": 0.816963836649126,
+      "judged_anchor_cagr_net10": 0.17125084354401965,
+      "judged_anchor_maxdd_net10": -0.16336616747716504,
+      "k2_edge_anchor": -0.23922920802745917,
+      "k2_edge_stress_reference_only": -0.4322623711615683,
+      "dsr_anchor": 0.26287714029913445,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.8170 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.2392 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L252_N2_MO": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=252d, top_n=2, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-09-28",
+      "judged_select_sharpe_net10": 0.7220793993282874,
+      "judged_anchor_sharpe_net10": 0.7943071428729098,
+      "judged_anchor_cagr_net10": 0.16978757613519901,
+      "judged_anchor_maxdd_net10": -0.2107293158036082,
+      "k2_edge_anchor": -0.21179773554527426,
+      "k2_edge_stress_reference_only": -0.5373623272897776,
+      "dsr_anchor": 0.2484162870290762,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.7943 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.2118 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "POLITICAL_L252_N2_WK": {
+      "name": "POLITICAL menu cross-sectional momentum rotation, lookback=252d, top_n=2, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "NANC",
+        "GOP",
+        "MAGA",
+        "DEMZ"
+      ],
+      "first_valid_signal_date": "2018-09-07",
+      "judged_select_sharpe_net10": 0.8209900972461623,
+      "judged_anchor_sharpe_net10": 0.846461125271713,
+      "judged_anchor_cagr_net10": 0.16964702817277222,
+      "judged_anchor_maxdd_net10": -0.19751183394044314,
+      "k2_edge_anchor": -0.21007137657256414,
+      "k2_edge_stress_reference_only": -0.4581166510727589,
+      "dsr_anchor": 0.2798135362382752,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.8465 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.2101 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L63_N1_MO": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=63d, top_n=1, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-04-29",
+      "judged_select_sharpe_net10": 0.4950830753656227,
+      "judged_anchor_sharpe_net10": 0.5499201229226183,
+      "judged_anchor_cagr_net10": 0.1345852774516847,
+      "judged_anchor_maxdd_net10": -0.16806812211288158,
+      "k2_edge_anchor": -0.5275288707250341,
+      "k2_edge_stress_reference_only": -0.08922877220399372,
+      "dsr_anchor": 0.1422137659684487,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5499 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.5275 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L63_N1_WK": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=63d, top_n=1, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-04-08",
+      "judged_select_sharpe_net10": 0.42792899040496946,
+      "judged_anchor_sharpe_net10": 0.63691087123693,
+      "judged_anchor_cagr_net10": 0.15474446535080566,
+      "judged_anchor_maxdd_net10": -0.17905375228166875,
+      "k2_edge_anchor": -0.5696096277580933,
+      "k2_edge_stress_reference_only": -0.1807757522154826,
+      "dsr_anchor": 0.17615269258073346,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.6369 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.5696 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L63_N2_MO": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=63d, top_n=2, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-04-29",
+      "judged_select_sharpe_net10": 0.6157354604907987,
+      "judged_anchor_sharpe_net10": 0.5602687117233079,
+      "judged_anchor_cagr_net10": 0.13269149551654458,
+      "judged_anchor_maxdd_net10": -0.15137125499982662,
+      "k2_edge_anchor": -0.5412136839217281,
+      "k2_edge_stress_reference_only": -0.06132870342231811,
+      "dsr_anchor": 0.14560174754994715,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5603 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.5412 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L63_N2_WK": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=63d, top_n=2, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-04-08",
+      "judged_select_sharpe_net10": 0.4944565240228662,
+      "judged_anchor_sharpe_net10": 0.5973363265865672,
+      "judged_anchor_cagr_net10": 0.13702468578138527,
+      "judged_anchor_maxdd_net10": -0.15984015982578414,
+      "k2_edge_anchor": -0.5817075553254287,
+      "k2_edge_stress_reference_only": -0.11767958808499779,
+      "dsr_anchor": 0.1607830567680078,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5973 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.5817 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L126_N1_MO": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=126d, top_n=1, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-07-29",
+      "judged_select_sharpe_net10": 0.39576969554501523,
+      "judged_anchor_sharpe_net10": 0.49224287359644814,
+      "judged_anchor_cagr_net10": 0.12518210751157133,
+      "judged_anchor_maxdd_net10": -0.16919352027186263,
+      "k2_edge_anchor": -0.46945795853583827,
+      "k2_edge_stress_reference_only": -0.12176300435642817,
+      "dsr_anchor": 0.12139258563301875,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.4922 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.4695 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L126_N1_WK": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=126d, top_n=1, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-07-08",
+      "judged_select_sharpe_net10": 0.3377350895596317,
+      "judged_anchor_sharpe_net10": 0.39401530156416475,
+      "judged_anchor_cagr_net10": 0.10518336321123445,
+      "judged_anchor_maxdd_net10": -0.16542555333023123,
+      "k2_edge_anchor": -0.5252122995420461,
+      "k2_edge_stress_reference_only": -0.10886524201457415,
+      "dsr_anchor": 0.09189039447912745,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.3940 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.5252 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L126_N2_MO": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=126d, top_n=2, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-07-29",
+      "judged_select_sharpe_net10": 0.5741914905480682,
+      "judged_anchor_sharpe_net10": 0.5196389316055131,
+      "judged_anchor_cagr_net10": 0.13401842025776367,
+      "judged_anchor_maxdd_net10": -0.19851240863701336,
+      "k2_edge_anchor": -0.43036538468074403,
+      "k2_edge_stress_reference_only": -0.09332215315557568,
+      "dsr_anchor": 0.1286897595916247,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.5196 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.4304 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L126_N2_WK": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=126d, top_n=2, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2016-07-08",
+      "judged_select_sharpe_net10": 0.6419410044553194,
+      "judged_anchor_sharpe_net10": 0.4789546151365939,
+      "judged_anchor_cagr_net10": 0.11799236957880543,
+      "judged_anchor_maxdd_net10": -0.1629024463732548,
+      "k2_edge_anchor": -0.47344863340023435,
+      "k2_edge_stress_reference_only": -0.06576757298833802,
+      "dsr_anchor": 0.1171443545983395,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.4790 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.4734 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L252_N1_MO": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=252d, top_n=1, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2017-01-31",
+      "judged_select_sharpe_net10": 0.7484775243497408,
+      "judged_anchor_sharpe_net10": 0.8728295871968976,
+      "judged_anchor_cagr_net10": 0.2503715574959948,
+      "judged_anchor_maxdd_net10": -0.21413966004648988,
+      "k2_edge_anchor": -0.33029691031873254,
+      "k2_edge_stress_reference_only": -0.12099858345254777,
+      "dsr_anchor": 0.29069985380354213,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.8728 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.3303 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L252_N1_WK": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=252d, top_n=1, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2017-01-06",
+      "judged_select_sharpe_net10": 0.5873647564248679,
+      "judged_anchor_sharpe_net10": 0.7589349767965963,
+      "judged_anchor_cagr_net10": 0.20480633407208781,
+      "judged_anchor_maxdd_net10": -0.22590631930424332,
+      "k2_edge_anchor": -0.3964456159278953,
+      "k2_edge_stress_reference_only": -0.22225263265493345,
+      "dsr_anchor": 0.23250226209072627,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.7589 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.3964 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L252_N2_MO": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=252d, top_n=2, rebal=MO",
+      "freq": "M",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2017-01-31",
+      "judged_select_sharpe_net10": 0.8665311605185859,
+      "judged_anchor_sharpe_net10": 0.906541418368481,
+      "judged_anchor_cagr_net10": 0.24091401168440685,
+      "judged_anchor_maxdd_net10": -0.20655735912253792,
+      "k2_edge_anchor": -0.28575198613733455,
+      "k2_edge_stress_reference_only": -0.1083754506048259,
+      "dsr_anchor": 0.3089767816747832,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.9065 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.2858 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    },
+    "PLACEBO_BIGTECH_L252_N2_WK": {
+      "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation, lookback=252d, top_n=2, rebal=WK",
+      "freq": "W",
+      "universe": [
+        "QQQ",
+        "XLK",
+        "SPY",
+        "DIA"
+      ],
+      "first_valid_signal_date": "2017-01-06",
+      "judged_select_sharpe_net10": 0.7155487570896286,
+      "judged_anchor_sharpe_net10": 0.8017877055449263,
+      "judged_anchor_cagr_net10": 0.2013648832594659,
+      "judged_anchor_maxdd_net10": -0.24621708838448741,
+      "k2_edge_anchor": -0.34902984499695,
+      "k2_edge_stress_reference_only": -0.16307399056824923,
+      "dsr_anchor": 0.25476693257352057,
+      "k1_anchor_pass_bar_1_1882": false,
+      "k2_pass": false,
+      "tier": "refuted",
+      "failing_criteria": [
+        "K1 anchor Sharpe 0.8018 < watch_recent bar 1.1882",
+        "K2 anchor edge -0.3490 < 0.05",
+        "stress window not computed for this batch (NANC/GOP zero coverage) -- K1 full keep is structurally unreachable, capped at watch_recent"
+      ]
+    }
+  },
+  "placebo_dominance_comparison_by_grid_cell": {
+    "L63_N1_MO": {
+      "political_id": "POLITICAL_L63_N1_MO",
+      "placebo_id": "PLACEBO_BIGTECH_L63_N1_MO",
+      "political_anchor_sharpe": 0.4991475531462125,
+      "placebo_anchor_sharpe": 0.5499201229226183,
+      "placebo_dominates": true,
+      "applies_disqualifier": false
+    },
+    "L63_N1_WK": {
+      "political_id": "POLITICAL_L63_N1_WK",
+      "placebo_id": "PLACEBO_BIGTECH_L63_N1_WK",
+      "political_anchor_sharpe": 0.4728286682620965,
+      "placebo_anchor_sharpe": 0.63691087123693,
+      "placebo_dominates": true,
+      "applies_disqualifier": false
+    },
+    "L63_N2_MO": {
+      "political_id": "POLITICAL_L63_N2_MO",
+      "placebo_id": "PLACEBO_BIGTECH_L63_N2_MO",
+      "political_anchor_sharpe": 0.6397199354705848,
+      "placebo_anchor_sharpe": 0.5602687117233079,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    },
+    "L63_N2_WK": {
+      "political_id": "POLITICAL_L63_N2_WK",
+      "placebo_id": "PLACEBO_BIGTECH_L63_N2_WK",
+      "political_anchor_sharpe": 0.5155548940948128,
+      "placebo_anchor_sharpe": 0.5973363265865672,
+      "placebo_dominates": true,
+      "applies_disqualifier": false
+    },
+    "L126_N1_MO": {
+      "political_id": "POLITICAL_L126_N1_MO",
+      "placebo_id": "PLACEBO_BIGTECH_L126_N1_MO",
+      "political_anchor_sharpe": 0.5532626593357615,
+      "placebo_anchor_sharpe": 0.49224287359644814,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    },
+    "L126_N1_WK": {
+      "political_id": "POLITICAL_L126_N1_WK",
+      "placebo_id": "PLACEBO_BIGTECH_L126_N1_WK",
+      "political_anchor_sharpe": 0.3937120736165825,
+      "placebo_anchor_sharpe": 0.39401530156416475,
+      "placebo_dominates": true,
+      "applies_disqualifier": false
+    },
+    "L126_N2_MO": {
+      "political_id": "POLITICAL_L126_N2_MO",
+      "placebo_id": "PLACEBO_BIGTECH_L126_N2_MO",
+      "political_anchor_sharpe": 0.5380746366557286,
+      "placebo_anchor_sharpe": 0.5196389316055131,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    },
+    "L126_N2_WK": {
+      "political_id": "POLITICAL_L126_N2_WK",
+      "placebo_id": "PLACEBO_BIGTECH_L126_N2_WK",
+      "political_anchor_sharpe": 0.6355058820066619,
+      "placebo_anchor_sharpe": 0.4789546151365939,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    },
+    "L252_N1_MO": {
+      "political_id": "POLITICAL_L252_N1_MO",
+      "placebo_id": "PLACEBO_BIGTECH_L252_N1_MO",
+      "political_anchor_sharpe": 0.9015142699438127,
+      "placebo_anchor_sharpe": 0.8728295871968976,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    },
+    "L252_N1_WK": {
+      "political_id": "POLITICAL_L252_N1_WK",
+      "placebo_id": "PLACEBO_BIGTECH_L252_N1_WK",
+      "political_anchor_sharpe": 0.816963836649126,
+      "placebo_anchor_sharpe": 0.7589349767965963,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    },
+    "L252_N2_MO": {
+      "political_id": "POLITICAL_L252_N2_MO",
+      "placebo_id": "PLACEBO_BIGTECH_L252_N2_MO",
+      "political_anchor_sharpe": 0.7943071428729098,
+      "placebo_anchor_sharpe": 0.906541418368481,
+      "placebo_dominates": true,
+      "applies_disqualifier": false
+    },
+    "L252_N2_WK": {
+      "political_id": "POLITICAL_L252_N2_WK",
+      "placebo_id": "PLACEBO_BIGTECH_L252_N2_WK",
+      "political_anchor_sharpe": 0.846461125271713,
+      "placebo_anchor_sharpe": 0.8017877055449263,
+      "placebo_dominates": false,
+      "applies_disqualifier": false
+    }
+  },
+  "wide_spread_40bp_sensitivity": {
+    "computed": false,
+    "reason": "No POLITICAL candidate reached watch_recent or better (best: POLITICAL_L252_N1_MO, anchor Sharpe 0.9015 < 1.1882 bar), so the preregistered trigger condition for the 40bp wide-spread sensitivity check (candidate-manifest.json keep_rule.wide_spread_sensitivity) was never met. Per the queue task's acceptance criteria, this is stated explicitly rather than computed."
+  },
+  "summary": {
+    "kept": 0,
+    "strong_keep": 0,
+    "watch_recent": 0,
+    "refuted": 24,
+    "best_political_anchor_sharpe": {
+      "id": "POLITICAL_L252_N1_MO",
+      "value": 0.9015142699438127
+    },
+    "best_political_dsr": {
+      "id": "POLITICAL_L252_N1_MO",
+      "value": 0.30781898473880553
+    },
+    "best_placebo_anchor_sharpe": {
+      "id": "PLACEBO_BIGTECH_L252_N2_MO",
+      "value": 0.906541418368481
+    },
+    "best_overall_dsr": {
+      "id": "PLACEBO_BIGTECH_L252_N2_MO",
+      "value": 0.3089767816747832
+    }
+  }
+}

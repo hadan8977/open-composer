@@ -1,0 +1,909 @@
+{
+  "iter_id": "h20260928_43_political_etf_rotation",
+  "generated_at": "2026-09-29T02:15:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_43_political_etf_rotation",
+  "objective": "Preregister 24 candidates -- the exact rotation_cell cross-sectional momentum rotation mechanism already live on S1-S3, unedited -- applied to (a) a menu of 4 publicly-disclosed political/congressional-trade-replica ETFs (NANC, GOP, MAGA, DEMZ) and (b) a placebo menu of 4 non-political large-cap/tech ETFs (QQQ, XLK, SPY, DIA) built to match NANC's own disclosed tech-concentration profile, grid = lookback {63,126,252} x top_n {1,2} x rebalance {monthly,weekly} per menu, for a batch screening lane to test against K1/K2 (select+anchor windows only -- local panel does not cover the 2016-2023 stress period for these tickers) and a placebo-dominance disqualifier. No backtest is run in this manifest; this is the preregistration handed to the screening lane.",
+  "candidates": [
+    {
+      "candidate_id": "POLITICAL_L63_N1_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 63,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L63_N1_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 63,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L63_N2_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 63,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L63_N2_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 63,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L126_N1_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 126,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L126_N1_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 126,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L126_N2_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 126,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L126_N2_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 126,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L252_N1_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 252,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L252_N1_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 252,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L252_N2_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 252,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "POLITICAL_L252_N2_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "deterministic_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "political_trade_replica_etf_rotation",
+        "name": "POLITICAL menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "NANC",
+          "GOP",
+          "MAGA",
+          "DEMZ"
+        ],
+        "lookback_days": 252,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "congressional_stock_act_disclosure_replica_etf_live_record_2023_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L63_N1_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 63,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L63_N1_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 63,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L63_N2_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 63,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L63_N2_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 63,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L126_N1_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 126,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L126_N1_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 126,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L126_N2_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 126,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L126_N2_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 126,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L252_N1_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 252,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L252_N1_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 252,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L252_N2_MO",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 252,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "freq": "M",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    },
+    {
+      "candidate_id": "PLACEBO_BIGTECH_L252_N2_WK",
+      "path": "political_etf_rotation_screen",
+      "role": "placebo_mechanism_candidate",
+      "method": "cross_sectional_topn_momentum_rotation_abs_filter",
+      "ablation": "menu_swap_to_nonpolitical_bigtech_placebo",
+      "spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_political_etf_rotation_panel",
+      "feature_contract": "feature_v1_rotation_cell_reuse",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_select_anchor_only_stress_pending",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_political_etf_rotation_diagnostics",
+      "parameters": {
+        "family": "placebo_bigtech_menu_rotation",
+        "name": "PLACEBO_BIGTECH menu cross-sectional momentum rotation",
+        "source_card": "bit_com_247wallst_congressional_trade_etf_2026",
+        "menu": [
+          "QQQ",
+          "XLK",
+          "SPY",
+          "DIA"
+        ],
+        "lookback_days": 252,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "freq": "W",
+        "rule": "Rank menu tickers by momentum_score(close, str(lookback)) (close.pct_change(lookback), imported unedited from run_h20260918_05_recent_menu.py); take the top top_n; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter, identical to rotation_cell); equal-weight the survivors; any unallocated weight goes to SHY via the screening lane's own remainder convention.",
+        "rebalance_convention": "close_signal_next_open_fill",
+        "engine_reuse": "run_h20260918_05_recent_menu.py:rotation_cell (unedited momentum_score import)",
+        "evidence": "247wallst_nanc_tech_concentration_skeptical_evidence_2026"
+      }
+    }
+  ],
+  "candidate_count": 24,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_political_etf_rotation_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "DEMZ",
+          "DIA",
+          "GOP",
+          "MAGA",
+          "NANC",
+          "QQQ",
+          "SHY",
+          "SPY",
+          "XLK"
+        ],
+        "confirmed_coverage": "All 8 new tickers (4 POLITICAL + 4 PLACEBO_BIGTECH) plus SHY are present in data/sip/daily/*/*.parquet. Actual first bar per symbol (DuckDB scan, 2026-09-29): NANC/GOP 2023-02-07, MAGA 2017-09-07, DEMZ 2020-11-03, QQQ/XLK/SPY/DIA/SHY 2016-01-04, all through 2026-09-28. See data-feasibility.json for the full per-symbol table and the stress-period coverage verdict."
+      }
+    },
+    "features": {
+      "feature_v1_rotation_cell_reuse": {
+        "decision_lag_sessions": 1,
+        "definition": "Each candidate's weight vector is produced by scripts/screen_batches/h20260928_43_political_etf_rotation.py's make_rotation_fn(menu, lookback, top_n) closure, which imports run_h20260918_05_recent_menu.momentum_score unedited (close.pct_change(lookback, fill_method=None)) and reproduces rotation_cell's top-N rank plus absolute-momentum-vs-SHY filter, using only rows with index <= asof."
+      }
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": {
+        "definition": "signal computed at session close; weights effective at the next session open (next_bar_open fill), matching the frozen S1/S2/S3 convention."
+      }
+    },
+    "validation": {
+      "validation_v1_select_anchor_only_stress_pending": {
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "S3's own anchor window already covers part of this range; reported for reference only."
+        ],
+        "stress_2016_05_02_to_2023_09_15": "NOT computed -- NANC/GOP (launched 2023-02-07) have zero coverage; POLITICAL/PLACEBO_BIGTECH candidates are judged on select+anchor only and capped at watch_recent tier, per the runbook's short-sample rule.",
+        "rebalance_offset_robustness": "Metrics are the median over rebalance-day offsets: monthly candidates use offsets 0-20 trading days, weekly candidates use offsets 0-4 trading days.",
+        "s3_reference_numbers": "S3's own date-neutral Sharpe (median over 21 monthly offsets) is 1.49 in the anchor window and 0.81 in the stress window (owner-cited 2026-09-28); K1's anchor bar is 1.19."
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "contract_path": "reports/research/iterations/h20260928_43_political_etf_rotation/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_political_etf_rotation_diagnostics": {
+        "members": [
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold",
+          "BIL_buy_and_hold",
+          "S3_reference_for_K1_K2",
+          "same_grid_cell_PLACEBO_BIGTECH_dominance_check"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml": "c2faafa3bfaf3be884bfccd6f8db1bb1084a5da4c077011551a1a063b6e18721"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+  "spec_hash": "c2faafa3bfaf3be884bfccd6f8db1bb1084a5da4c077011551a1a063b6e18721",
+  "trial_count_and_dsr_note": "This batch has 24 preregistered candidates. Whichever candidates pass watch_recent or better must report deflated Sharpe (DSR) with n_trials=24, the size of this batch.",
+  "keep_rule": {
+    "K1_select_anchor_only": "date-neutral Sharpe (median over rebalance offsets) >= 0.80 * S3's date-neutral anchor Sharpe (>=1.19) in BOTH the select and anchor windows, at 10bp per side, with positive CAGR at 20bp per side. Stress window not computed for this batch (see validation contract), so K1 alone never reaches a full keep -- capped at watch_recent.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control (k solved so realized volatility matches) by >=0.05 Sharpe in both the select and anchor windows. Also stress-pending, same watch_recent cap.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.19 (K1's anchor bar); select window also computed and reported -- forward-tracked only, not a keep, explicitly labeled stress-pending.",
+    "placebo_dominance_disqualifier": "For any POLITICAL candidate reaching watch_recent or better: if the same-grid-cell (same L, N, freq) PLACEBO_BIGTECH candidate's anchor-window judged Sharpe is >= the POLITICAL candidate's, downgrade to 'not_kept (reproducible by plain big-tech momentum)' regardless of the K1/K2 numeric result.",
+    "wide_spread_sensitivity": "For any POLITICAL candidate reaching watch_recent or better (and surviving the placebo-dominance check): recompute anchor-window annualized return and Sharpe at 40bp per side; require positive annualized return.",
+    "pass_requires": "K1 OR K2 (both capped at watch_recent for POLITICAL given stress-pending status) AND not disqualified by placebo dominance AND positive at 40bp",
+    "multiple_comparisons": "24 candidates; report all regardless of outcome; DSR with n_trials=24 for any that pass."
+  }
+}

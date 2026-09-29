@@ -1,0 +1,15 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260928_43_political_etf_rotation",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot equity ETFs and SHY, no leverage, no shorting)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal)",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "wide_spread_sensitivity_bps_per_side": 40.0,
+  "wide_spread_sensitivity_scope": "Computed only for POLITICAL candidates that reach watch_recent or better in the primary 10bp/20bp screen (per the queue task's illiquidity extra requirement -- NANC/GOP/MAGA/DEMZ median daily volume is 1.2k-27k shares). Run separately by scripts/analyze_h20260928_43_wide_spread.py, reusing screen_lane.py's own cost_bps-parameterized simulation functions unedited (no new simulator). If no candidate reaches watch_recent, this is not computed and the report states so explicitly.",
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "dir:etf_pair_relative_strength_switch",
+  "status": "refuted",
+  "verdict": "Refuted for this scope. 18 candidates tested (12 PAIR_* relative-strength switches across QQQ/SPY, SMH/QQQ, XLE/XOP, KRE/XLF, IWM/SPY, ARKK/QQQ x lookback {63,126}, monthly rebalance, reusing rotation_cell unedited at menu size 2, plus 6 STATIC5050_* static-50/50-blend placebo controls). Exactly one candidate, PAIR_SMHQQQ_L63_MO, clears full K1 on its own numbers (anchor Sharpe 1.2848 >= 1.1882 bar, stress Sharpe 0.7679 >= 0.6447 bar, positive 20bp CAGR both windows) but is downgraded to 'not kept (no switching increment)' by the preregistered counter-evidence rule: its paired STATIC5050_SMHQQQ_MO control has a higher judged stress-window Sharpe (0.8882 vs 0.7679), so the rule (must beat the static control in every window K1 was passed on) fires. No other PAIR candidate reaches K1 in both windows or K2 in both windows (every diversifier_edge_anchor is negative for the PAIR family); PAIR_SMHQQQ_L126_MO misses the K1 anchor bar narrowly (1.1722 vs 1.1882) and does not reach watch_recent. Across most pairs the static 50/50 blend's stress-window Sharpe exceeds the switching version's, consistent with the whipsaw/turnover-cost failure mode named in the preregistered negative-evidence check (Robot Wealth's dual-momentum review).",
+  "evidence": [
+    "reports/research/iterations/h20260928_44_etf_pair_switch/results.json",
+    "reports/research/screens/h20260928_44_etf_pair_switch/leaderboard.json",
+    "reports/research/iterations/h20260928_44_etf_pair_switch/report.md",
+    "reports/research/iterations/h20260928_44_etf_pair_switch/decision-record.md"
+  ],
+  "reopen_if": "A new mechanism variant is proposed that is not a re-tune of this same 6-pair x {63,126}-lookback x monthly-rebalance grid -- e.g. a volatility- or correlation-adaptive switch threshold that only switches on high-conviction relative-momentum signals instead of unconditionally every month, or a pair family with materially lower pairwise correlation than the six tested here (all had anchor-window correlation with S3 of 0.20-0.87, and the underperformance vs the static blend tracks the tight coupling between each pair's two legs)."
+}

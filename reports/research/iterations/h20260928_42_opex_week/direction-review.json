@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_42_opex_week",
+  "reviewed_at": "2026-09-29T01:21:09+00:00",
+  "decision": "proceed",
+  "objective": "Preregister 20 candidates -- 8 primary option-expiration-week calendar candidates (OPEX_{SPY,QQQ,DIA,IWM}_{WEEK,WEEKMON}, long-only during the week containing the month's 3rd Friday, cash otherwise) plus 12 internal placebo controls (PLACEBO_W{1,2,4}_{SPY,QQQ,DIA,IWM} anchored to non-expiration Friday weeks) -- to resolve reports/research/harvest/coverage.json's flows_structural.rebalance_and_hedging_flows gap and reports/research/harvest/directions.jsonl's dir:option_expiration_week_calendar_effect (queued) via the owner's 2026-09-28 K1/K2 keep rule, without computing any Sharpe, return or backtest number in this dossier.",
+  "target_regime_and_horizon": "Same frozen windows as every batch-screening round in this repo: stress 2016-05-02..2023-09-15 and anchor 2024-01-08..2026-09-17, judged on date-neutral Sharpe. D frequency with signal_dates_fn: exactly one version, no rebalance-day offset sweep (per screen_lane.py's docstring). The 2026-01-02..2026-09-17 holdout is reference-only and contaminated. Validity is limited to the local SIP daily archive's own coverage for SPY/QQQ/DIA/IWM/SHY, all long-lived and already used by S1-S3 -- no new data fetch is needed.",
+  "existing_solution_comparison": "grep -ril \"opex|option.expiration|third friday\" reports/research/iterations reports/research/ledger found only incidental keyword hits in unrelated source snapshots (Graziani EOM-reversal, First Trust product page, a rebalance-timing-luck blog post) -- no prior local implementation or backtest of the option-expiration-week rule. `oc research directions check option expiration week` returned exactly one hit: the registry's own queued dir:option_expiration_week_calendar_effect entry added by the 2026-09-28-22 gap-search round -- a likely_repeat match against itself, not a prior distinct test. This round is therefore the first local test of this direction; no engine code is reused from a prior rotation/momentum candidate (the rule is a pure calendar-anchored long/cash switch, closest in construction to h20260928_05_batch2.py's TOM_SPY and FOMC_DRIFT_SPY calendar-anchored D-frequency candidates, whose pattern this module's signal_dates_fn/weights_fn split follows).",
+  "remaining_evidence_gap": "Whether any of the 8 primary lookback-free calendar candidates actually clears K1, K2, strong_keep or watch_recent against S3's frozen reference numbers when run through the batch-screening lane under this project's 10bp/20bp next-open-fill cost contract, and whether any apparent edge survives the internal non-expiration-week placebo falsification test -- this is exactly what has not been tested locally and is what this round's screening pass computes, with no further parameter choice available to it once the manifest is frozen.",
+  "negative_experiments_checked": "reports/research/control/step10-w1-cross-asset-trend-2026-09.md and multiple batch-screening rounds (e.g. h20260928_04_s3_alt_div_batch1: 19/19 refuted, closest K1 anchor Sharpe 0.96; h20260928_40_equity_etf_menus: 0/24 K1/K2, 5 watch_recent) show that many published calendar/tactical rules fail K1 under this project's frozen windows and cost contract even when the underlying academic finding is real -- a documented pattern, not assumed away here. The queue task's own precedent citation (batch2's TOM_SPY month-of-effect anchor Sharpe -0.69, FOMC_DRIFT_SPY -0.84) is the closest prior analog (another calendar-anchored D-frequency long/cash switch on SPY under the identical contract) and sets the expectation that this candidate family is also likely to fail K1/K2 -- this round exists to check, not to assume, that outcome, and the result is not to be second-guessed or the rule loosened if it repeats the pattern.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress, signal at the session close, fill at the next session's open -- identical to the frozen S1/S2/S3 convention and every prior batch-screening round (cost-contract.json). This differs from Quantpedia's own Friday-close-to-Friday-close holding period (entry is one session later, at the next trading day's open after the pre-week signal day); this is a fixed contract constraint applied identically to every candidate in this batch and every prior screen_lane round, not a change made to help any candidate pass.",
+  "stop_condition": "If none of the 8 primary candidates clears K1, K2, or reaches watch_recent (or every apparent pass is demoted by the placebo falsification rule), dir:option_expiration_week_calendar_effect is refuted for this scope and the flows_structural.rebalance_and_hedging_flows gap-search entry is closed for this specific mechanism; the next round should not re-tune this same calendar rule on this same universe without a new, distinct signal (e.g. an options-flow or dealer-gamma-positioning feature this repo's data does not yet support).",
+  "queries": [
+    {
+      "query": "Quantpedia Option-Expiration Week Effect (WebFetch primary source, this session)",
+      "opened_urls": [
+        "https://quantpedia.com/strategies/option-expiration-week-effect"
+      ],
+      "searched_at": "2026-09-29T01:05:00+00:00"
+    },
+    {
+      "query": "Garcia-Ares & Muravyev 2025 FMA working paper (curl download + pdftotext full-text extraction, this session)",
+      "opened_urls": [
+        "https://www.fma.org/assets/docs/Derivatives2025/GarciaAres.pdf"
+      ],
+      "searched_at": "2026-09-29T01:10:00+00:00"
+    },
+    {
+      "query": "Stivers Sun option expiration week effect stock returns delta hedging paper (WebSearch, alternative primary-source location)",
+      "opened_urls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S0378426613003051"
+      ],
+      "searched_at": "2026-09-29T01:08:00+00:00"
+    },
+    {
+      "query": "option expiration week effect anomaly disappeared recent years stock returns (WebSearch, counter-evidence)",
+      "opened_urls": [
+        "https://www.quantifiedstrategies.com/the-option-expiration-week-effect/",
+        "https://www.cxoadvisory.com/calendar-effects/option-expiration-week-stock-return-drill-down/"
+      ],
+      "searched_at": "2026-09-29T01:18:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://quantpedia.com/strategies/option-expiration-week-effect",
+      "claim_id": "stivers_sun_2013_option_expiration_week_effect",
+      "claim": "Long-only: go long S&P 100 stocks during the option-expiration week (the week containing the month's 3rd Friday), cash otherwise. Quantpedia summary of Stivers & Sun (2013, J. Banking & Finance) backtest 1988-2010: annualized return 9.3%, Sharpe 0.61, volatility ~8.7%, max drawdown -15.14%. Mechanism: option market-maker delta-hedge rebalancing reduces short-stock hedge positions during the expiration week.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-09-29",
+      "market_and_period": "S&P 100, weekly, 1988-2010 (old sample, long-only)",
+      "applicability": "Grounds the OPEX_*_WEEK primary candidates' mechanism and calendar construction; the menu (SPY/QQQ/DIA/IWM index ETFs, not individual S&P 100 stocks) and the WEEK/WEEKMON/placebo grid are this batch's own preregistered choice.",
+      "limitations": "Practitioner summary, not the original paper; sample ends 2010, no recent-window figure.",
+      "independent_replication": "Original academic paper (Stivers & Sun 2013, J. Banking & Finance) independently located via WebSearch and cross-checked against the ScienceDirect abstract.",
+      "fetched_at": "2026-09-29T01:05:00+00:00",
+      "sha256": "1385d6d40600d8aa043ba2948679c737b99e46e53023a7ec3af5340b48d09d11",
+      "snapshot_path": "reports/research/iterations/h20260928_42_opex_week/sources/quantpedia-option-expiration-week-effect.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_42_opex_week.jsonl"
+    },
+    {
+      "url": "https://www.fma.org/assets/docs/Derivatives2025/GarciaAres.pdf",
+      "claim_id": "garcia_ares_muravyev_2025_rollover_day",
+      "claim": "Garcia-Ares & Muravyev (2025, FMA working paper, 'Option returns: a tale of the expiration rollover day'): option-return-anomaly predictability concentrates on the 3rd-Friday expiration and ESPECIALLY the following Monday, driven by covered-call-writer rollover order imbalance overwhelming market-maker inventory capacity. Sample May 2005-Dec 2021; patterns 'remain largely robust over the entire sample period.' Studies delta-hedged OPTION returns, not raw stock/ETF returns; no long-only stock Sharpe/CAGR is reported by this paper.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-06-20",
+      "market_and_period": "US listed equity options, May 2005-Dec 2021",
+      "applicability": "Grounds the OPEX_*_WEEKMON candidates' deferred exit (first trading day of the week after expiration week).",
+      "limitations": "Studies delta-hedged option returns, not stock/ETF direction; WebFetch could not parse the raw PDF, full text was extracted via curl+pdftotext instead.",
+      "independent_replication": "n/a -- used for mechanism support (recent sample) only; this batch's own backtest is the decisive test on stock/ETF returns.",
+      "fetched_at": "2026-09-29T01:10:00+00:00",
+      "sha256": "32c85027bf5be06df41dd3e41a6ebc36610e37dd792efa96dec85be66228413f",
+      "snapshot_path": "reports/research/iterations/h20260928_42_opex_week/sources/garcia-ares-muravyev-2025-fma.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_42_opex_week.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 20 candidates through the batch-screening lane (scripts/screen_batch.py --batch h20260928_42_opex_week --iteration h20260928_42_opex_week) against S3's frozen stress/anchor windows and check K1/K2/placebo-falsification directly; the engine and cost/fill convention are already frozen and reused unedited, so this is the cheapest possible resolution.",
+    "pass_condition": "At least one of the 8 primary candidates clears K1 or K2 in candidate-manifest.json's keep_rule AND is not demoted by the placebo internal falsification rule.",
+    "falsification_condition": "None of the 8 primary candidates has a date-neutral Sharpe >=80% of S3's in both windows with positive 20bp CAGR (K1), none of their 63-session inverse-vol blends with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows (K2), none reaches watch_recent (anchor-only >=1.19), or every apparent pass is beaten by its own same-ticker placebo's anchor Sharpe.",
+    "max_compute_minutes": 20
+  }
+}

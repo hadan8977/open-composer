@@ -1,0 +1,16 @@
+{
+  "id": "dir:option_expiration_week_calendar_effect",
+  "status": "refuted",
+  "verdict": "Batch-screened 8 primary option-expiration-week candidates (OPEX_{SPY,QQQ,DIA,IWM}_{WEEK,WEEKMON}) plus 12 internal non-expiration-week placebo controls via scripts/screen_batch.py --batch h20260928_42_opex_week --iteration h20260928_42_opex_week. All 8 primary candidates have NEGATIVE anchor-window date-neutral Sharpe (best OPEX_IWM_WEEKMON -0.176, vs the K1/watch_recent bar of 1.1882) and negative stress-window Sharpe (best OPEX_QQQ_WEEKMON 0.038, vs the K1 bar 0.6447); none reaches even the weakest (watch_recent) tier. K2 fails identically for all 8: every diversifier edge vs S3 is negative in both windows (anchor -0.18 to -0.77, stress -0.26 to -0.75). 20bp CAGR is negative in the stress window for all 8 and in the anchor window for 6/8. The preregistered placebo internal-falsification rule did not need to fire (nothing was kept), but independently corroborates the refutation: for all 4 tickers, the 2nd-Friday-week placebo has a materially HIGHER anchor Sharpe than the actual expiration week (e.g. SPY -0.632 vs PLACEBO_W2_SPY +0.860; QQQ -0.643 vs PLACEBO_W2_QQQ +1.152) -- the 3rd Friday is not shown to be special in a positive direction on this universe/window/cost contract. DSR (n_trials=20, full family): max overall 0.4926 (a placebo, never keep-eligible); max among the 8 primary candidates only 0.0142. Two independent academic sources (Stivers & Sun 2013; Garcia-Ares & Muravyev 2025, sample through 2021) and the official Cboe expiration-date rule (confirming this iteration's calendar/holiday-shift construction is faithful to the exchange definition) ground the mechanism, but it does not clear this project's frozen 2024-2026 anchor / 2016-2023 stress windows or 10bp/20bp next-open-fill cost contract on SPY/QQQ/DIA/IWM.",
+  "evidence": [
+    "reports/research/screens/h20260928_42_opex_week/leaderboard.json",
+    "reports/research/screens/h20260928_42_opex_week/leaderboard.md",
+    "reports/research/iterations/h20260928_42_opex_week/results.json",
+    "reports/research/iterations/h20260928_42_opex_week/report.md",
+    "reports/research/iterations/h20260928_42_opex_week/decision-record.md",
+    "reports/research/iterations/h20260928_42_opex_week/candidate-manifest.json",
+    "reports/research/iterations/h20260928_42_opex_week/external-brief.json",
+    "reports/harness/source_cards/h20260928_42_opex_week.jsonl"
+  ],
+  "reopen_if": "A new, distinct signal becomes available for the same coverage cell (flows_structural.rebalance_and_hedging_flows) -- e.g. actual options open-interest/rollover order-imbalance data, dealer-gamma-positioning estimates, or SPX-level (not ETF-proxy) execution -- rather than a re-tune of this same price-only calendar rule on the same SPY/QQQ/DIA/IWM universe. Also reopen if the frozen cost/fill contract itself changes (this test used close-signal/next-open-fill, 10bp/20bp per side, one session later than the sources' own Friday-close-to-Friday-close convention)."
+}

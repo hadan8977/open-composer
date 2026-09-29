@@ -1,0 +1,13 @@
+{
+  "id": "dir:congressional_political_trade_replica_etf_rotation",
+  "status": "refuted",
+  "verdict": "0/24 candidates kept or watch_recent (12 POLITICAL + 12 PLACEBO_BIGTECH). Judged on select (2023-09-18..2025-12-31) and anchor (2024-01-08..2026-09-17) windows only -- NANC/GOP launched 2023-02-07 and have zero coverage of the 2016-2023 stress window, so this batch could structurally reach watch_recent at best, never a full keep. No POLITICAL candidate reaches even the anchor-only watch_recent bar (median-offset anchor Sharpe >= 1.1882 at 10bp): best is POLITICAL_L252_N1_MO at anchor Sharpe 0.9015 (76% of the bar), select Sharpe 0.886, DSR 0.308. Every candidate's K2 diversifier edge with S3 is negative in the anchor window (-0.18 to -0.45 for POLITICAL). The preregistered PLACEBO_BIGTECH (QQQ/XLK/SPY/DIA) placebo-dominance disqualifier never triggered because no POLITICAL candidate cleared the bar in the first place; the placebo comparison itself is mixed (POLITICAL beats its same-grid-cell placebo in 7/12 cells, including the best cell), so this is not simply 'reproducible by big-tech momentum' -- the rotation_cell mechanism itself does not clear the bar on either menu. The 40bp illiquidity-adjusted wide-spread sensitivity check was not run (its trigger condition, a watch_recent-or-better POLITICAL candidate, was never met).",
+  "evidence": [
+    "reports/research/iterations/h20260928_43_political_etf_rotation/results.json",
+    "reports/research/screens/h20260928_43_political_etf_rotation/leaderboard.json",
+    "reports/research/iterations/h20260928_43_political_etf_rotation/report.md",
+    "reports/research/iterations/h20260928_43_political_etf_rotation/decision-record.md",
+    "reports/research/iterations/h20260928_43_political_etf_rotation/data-feasibility.json"
+  ],
+  "reopen_if": "A new, distinct signal is found (not a re-tune of this same lookback/top_n/rebalance grid on the same 4-ETF menu) -- e.g. a shorter-lag STOCK Act disclosure feed that lets the strategy trade individual disclosed positions directly rather than rotating among the 4 already-diversified replica funds, or once NANC/GOP accumulate enough history (they launched 2023-02-07) to cover a genuine stress period and the anchor-window Sharpe by then still clears the bar on a fresh, not-yet-seen forward window."
+}

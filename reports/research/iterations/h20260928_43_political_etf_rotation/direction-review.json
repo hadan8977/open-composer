@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_43_political_etf_rotation",
+  "reviewed_at": "2026-09-29T01:54:06+00:00",
+  "decision": "proceed",
+  "objective": "Preregister 24 candidates (12 POLITICAL + 12 PLACEBO_BIGTECH) -- the exact same cross-sectional momentum rotation mechanism already validated live on S1-S3 (scripts/run_h20260918_05_recent_menu.py:rotation_cell: momentum_score by lookback, top-N rank, absolute-momentum-vs-SHY filter, monthly/weekly rebalance), applied to (a) a menu of 4 publicly-disclosed political/congressional-trade-replica ETFs (NANC, GOP, MAGA, DEMZ) and (b) a placebo menu of 4 non-political large-cap/tech ETFs (QQQ, XLK, SPY, DIA) matching NANC's own disclosed tech concentration -- to test whether the political-copy-trade framing adds anything over plain big-tech momentum, and whether any edge survives a wider illiquidity-adjusted spread. Resolves reports/research/harvest/directions.jsonl's dir:congressional_political_trade_replica_etf_rotation (fills the public_records.copy_verified_live coverage gap) without computing any Sharpe, return or backtest number in this dossier.",
+  "target_regime_and_horizon": "Select window 2023-09-18..2025-12-31 and anchor window 2024-01-08..2026-09-17 (same frozen dates as every other batch-screening round). The 2016-05-02..2023-09-15 stress window is NOT computed for this batch: NANC and GOP (the two tickers the source evidence is actually about) launched 2023-02-07 and have zero coverage of the stress period; MAGA (since 2017-09) and DEMZ (since 2020-11) alone would not represent the 4-ticker menu the source evidence describes. Per the runbook's short-sample rule ('data not covering the stress period uses what it has, at least 2 years; under 2 years judge on select+anchor only, marked stress-pending'), POLITICAL candidates are judged on select+anchor windows only, tier capped at watch_recent (never a full keep/strong_keep, since K1 requires both windows). The 2026-01-02..2026-09-17 holdout is reference-only and contaminated. Validity is limited to whatever regime NANC/GOP have actually lived through since 2023-02 (a broad, mostly-bullish equity/tech period) -- the source evidence itself (24/7 Wall St) is entirely about this same short, live, already-realized track record, so this round adds a cost/mechanism/placebo test on top of it, not an independent forward sample.",
+  "existing_solution_comparison": "This batch reuses rotation_cell's already-live mechanism unedited on two new menus; no new signal or engine is introduced. `uv run oc research directions check \"congressional political trade\"` returned no exact-match executable prior test. `grep -rn NANC / STOCK Act / congressional trad / Unusual Whales` across reports/research/iterations, reports/research/ledger, reports/research/control, reports/research/harvest found only the harvest-side registry entry for dir:congressional_political_trade_replica_etf_rotation itself (added by the 2026-09-28 gap-search round, status queued) and its own raw search artifact (reports/research/harvest/raw/2026-09-28/web_congressional_stock_trading_abnormal_666d04.jsonl) -- no prior local backtest of this menu/mechanism exists. The registry entry's own notes already state this: 'No local prior test found... Distinct mechanism from every already-tested/queued ETF-menu direction (dir:factor_style_etf_momentum_rotation, dir:narrow_industry_etf_momentum_rotation, dir:international_country_etf_momentum_rotation)'.",
+  "remaining_evidence_gap": "Whether any of the 12 lookback/top_n/rebalance combinations on the POLITICAL menu clears the select+anchor-only K1 bar (or K2) when run through the batch-screening lane at 10bp, whether that edge (if any) survives a 40bp-per-side illiquidity-adjusted spread, and whether it is distinguishable from the PLACEBO_BIGTECH menu's own tech-momentum return under the identical mechanism -- none of this has been tested locally and is exactly what this round's screening pass computes, with no further parameter choice available once the manifest is frozen.",
+  "negative_experiments_checked": "Eggers & Hainmueller 2013 ('Capitol Losses: The Mediocre Performance of Congressional Stock Portfolios', Journal of Politics) reconstructed actual member portfolios from disclosure forms and found NO evidence of informed trading or above-market returns for Congress as a whole or any subset 2004-2008; members' trades under-performed a passive index by 2-3%/yr. This is a direct academic refutation of the underlying 'congressional information edge' story, though on 2004-2008 raw-portfolio data, not on these disclosure-replica ETFs (2023-2026) or this batch's cross-sectional rotation mechanism -- carried forward as the reason a placebo test against plain tech momentum is required, not skipped. The 24/7 Wall St source itself (opened directly) supplies its own skeptical finding: NANC's since-launch outperformance 'was accidental, a byproduct of tech concentration [NVDA 9.0%, MSFT 7.6%, AMZN 5.2%] rather than any genuine informational edge from tracking lawmakers' -- this is the direct motivation for the PLACEBO_BIGTECH menu (QQQ/XLK/SPY/DIA) preregistered alongside POLITICAL in candidate-manifest.json, with a placebo-dominance disqualifier written into the keep rule before any return is computed. dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation (h20260928_40, same engine, different equity-ETF menus) both refuted under the same K1/K2 protocol (0/24 kept, 5 watch_recent on FACTOR only) -- evidence that this rotation_cell mechanism does not transfer cheaply to every new ETF menu, so a pass here is not assumed.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress (both windows computed at both cost levels), signal at the session close, fill at the next session's open -- identical to the frozen S1/S2/S3 convention. An additional 40bp-per-side wide-spread sensitivity check (per the queue task's illiquidity requirement) is computed separately, only for POLITICAL candidates reaching watch_recent or better, reusing screen_lane.py's cost_bps-parameterized simulation functions unedited. No candidate's cost assumption was loosened to make any result more likely to pass.",
+  "stop_condition": "If none of the 12 POLITICAL candidates clears the select+anchor-only K1 bar (or reaches watch_recent), dir:congressional_political_trade_replica_etf_rotation is refuted for this scope and the registry/coverage map are updated accordingly. If a POLITICAL candidate reaches watch_recent or better but the same-grid-cell PLACEBO_BIGTECH candidate's anchor Sharpe is >= the POLITICAL candidate's, the direction is downgraded to 'not_kept (reproducible by plain big-tech momentum)' regardless of the K1/K2 result -- this placebo-dominance rule is fixed before any return is computed and cannot be waived after seeing results.",
+  "queries": [
+    {
+      "query": "bit.com knowledge hub Congressional Trade Tracking (queue URL 1, WebFetch)",
+      "opened_urls": [
+        "https://www.bit.com/knowledge-hub/congressional-trade-tracking"
+      ],
+      "searched_at": "2026-09-29T01:54:06+00:00"
+    },
+    {
+      "query": "24/7 Wall St congressional trading ETFs since launch performance (queue URL 2, WebFetch)",
+      "opened_urls": [
+        "https://247wallst.com/investing/2026/04/20/if-you-invested-in-these-congressional-trading-etfs-at-launch-heres-what-youd-have-today/"
+      ],
+      "searched_at": "2026-09-29T01:54:06+00:00"
+    },
+    {
+      "query": "NANC ETF Unusual Whales Subversive Democratic Trading Fund index methodology holdings (primary source, WebSearch after direct WebFetch to subversivetrading.com/subversiveetfs.com failed DNS)",
+      "opened_urls": [
+        "https://subversiveetfs.com/nanc/",
+        "https://www.etf.com/NANC"
+      ],
+      "searched_at": "2026-09-29T01:54:06+00:00"
+    },
+    {
+      "query": "congressional trading no abnormal returns Eggers Hainmueller 2013 study (negative-evidence check, WebSearch)",
+      "opened_urls": [
+        "https://andy.egge.rs/papers/EggMueller_capitol_losses_jop_2013.pdf"
+      ],
+      "searched_at": "2026-09-29T01:54:06+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.bit.com/knowledge-hub/congressional-trade-tracking",
+      "claim_id": "bit_com_congressional_trade_tracking_2026",
+      "claim": "STOCK Act (2012) requires members of Congress to disclose transactions over $1,000 within 30-45 days. Retail copy-trading platforms (Quiver Quantitative, Capitol Trades) aggregate these filings; Pelosi's disclosed portfolio returned 71% in 2024 vs the S&P 500's 25%. NANC (Unusual Whales Subversive Democratic ETF, Tidal Financial Group) is described as a regulated, exchange-listed fund mirroring Democratic members' disclosed trades.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-09-28",
+      "market_and_period": "General STOCK Act disclosure regime, no specific backtest window",
+      "applicability": "Grounds the POLITICAL menu's disclosure-replica-ETF story and the disclosure-lag caveat used in the stop condition; does not supply any rule parameter used by this batch (menu, grid and mechanism are this batch's own choice, reusing rotation_cell).",
+      "limitations": "Knowledge-hub summary, not a primary regulatory or academic source; no risk-adjusted performance figures.",
+      "independent_replication": "No independent third-party backtest of a rotation mechanism across these 4 ETFs found in this or the prior gap-search round.",
+      "fetched_at": "2026-09-29T01:54:06+00:00",
+      "sha256": "dfaf2a8863aaefee519b005f7dbba8c19c166eb17335eebc06681f814c49efad",
+      "snapshot_path": "reports/research/iterations/h20260928_43_political_etf_rotation/sources/bit-com-congressional-trade-tracking.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_43_political_etf_rotation.jsonl"
+    },
+    {
+      "url": "https://247wallst.com/investing/2026/04/20/if-you-invested-in-these-congressional-trading-etfs-at-launch-heres-what-youd-have-today/",
+      "claim_id": "247wallst_nanc_gop_since_launch_2026",
+      "claim": "Since the 2023-02-07 launch through 2026-04: NANC total return 88.49% (vs S&P 500's 74.70%, outperformed); GOP 64.31% (underperformed). NANC's top holdings are mega-cap tech (NVDA 9.0%, MSFT 7.6%, AMZN 5.2%, CRM 4.2%, GOOGL 3.9%). Explicit skeptical claim: outperformance was accidental, a byproduct of tech concentration rather than any genuine informational edge from tracking lawmakers; 45-day disclosure lag means holdings reflect past congressional decisions rather than real-time positioning; 0.74% expense ratio; regulatory risk from a proposed 2026-01 congressional stock-trading ban.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-04-20",
+      "market_and_period": "NANC/GOP, 2023-02-07 through 2026-04-20 (since-inception, fund-level, not risk-adjusted)",
+      "applicability": "Directly motivates the PLACEBO_BIGTECH menu (QQQ/XLK/SPY/DIA) preregistered in candidate-manifest.json as the placebo-dominance disqualifier; the since-inception return numbers are NOT used as a target or backtest input by this batch (this batch computes its own return series from the local SIP panel independently).",
+      "limitations": "Simple since-inception total return, not annualized/risk-adjusted, not cost-adjusted beyond the fund's own expense ratio, single article's holdings snapshot (not point-in-time across the full period).",
+      "independent_replication": "None found for a rotation-across-the-4-ETF-menu strategy specifically; the article covers each fund's own buy-and-hold-since-launch record only.",
+      "fetched_at": "2026-09-29T01:54:06+00:00",
+      "sha256": "dfa5176c19c2c7734283bbf656a8498857c843bc8b95aa6bac4477cf3c864dbb",
+      "snapshot_path": "reports/research/iterations/h20260928_43_political_etf_rotation/sources/247wallst-congressional-etfs-2026-04-20.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_43_political_etf_rotation.jsonl"
+    },
+    {
+      "url": "https://subversiveetfs.com/nanc/",
+      "claim_id": "nanc_fund_methodology_2026",
+      "claim": "NANC is actively managed, not index-tracking: invests in securities that sitting Democratic members of Congress (or family) disclosed via STOCK Act Periodic Transaction Reports. Holdings weighted by reported trading intensity (recurring/large/multi-member purchases overweighted; small/stale/one-off trades excluded or underweighted). Typically holds 100-200 positions; TER 0.72%, non-diversified.",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "2026-09-29",
+      "market_and_period": "NANC fund methodology, current as of 2026",
+      "applicability": "Primary-source confirmation of the fund's actual construction rule (disclosure-weighted active management, not price momentum) -- underscores that this batch's rotation_cell mechanism (price-trend cross-sectional momentum ACROSS the 4 political ETFs) is a different, second-order mechanism layered on top of each fund's own first-order disclosure-replica construction, not a replication of the congressional-copy-trading edge itself.",
+      "limitations": "Reached via WebSearch synthesis after a direct WebFetch to subversivetrading.com and subversiveetfs.com failed (DNS/network error in this sandboxed session); content corroborated by the same description on etf.com/NANC and mutualfunds.com in the same search result set.",
+      "independent_replication": "Corroborated by TipRanks, Trackinsight and ETF.com fund pages surfaced in the same search.",
+      "fetched_at": "2026-09-29T01:54:06+00:00",
+      "sha256": "4d23b026db6909fae31a10bbfc19cbadc2785a1f9b87488b7b00c21720a05094",
+      "snapshot_path": "reports/research/iterations/h20260928_43_political_etf_rotation/sources/nanc-fund-methodology.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_43_political_etf_rotation.jsonl"
+    },
+    {
+      "url": "https://andy.egge.rs/papers/EggMueller_capitol_losses_jop_2013.pdf",
+      "claim_id": "eggers_hainmueller_capitol_losses_2013",
+      "claim": "Capitol Losses: The Mediocre Performance of Congressional Stock Portfolios (Eggers and Hainmueller, Journal of Politics 2013): reconstructed actual member portfolios from financial disclosure forms (2004-2008), Fama-French 3-factor and Carhart 4-factor panel regressions. Finding: no evidence of informed trading or above-market returns for Congress as a whole or any identifiable subset of members; congressional portfolios under-performed a passive index fund by 2-3% per year over the sample.",
+      "source_type": "paper",
+      "published_or_updated_at": "2013-01-01",
+      "market_and_period": "US Congress member equity portfolios, 2004-2008",
+      "applicability": "Direct negative-evidence check on the congressional information edge story that motivates the POLITICAL menu; not on these specific ETFs (which launched 2017-2023) or this batch's rotation mechanism, so it does not by itself refute this candidate set, but grounds the requirement that any POLITICAL-menu edge found here be checked against the PLACEBO_BIGTECH menu before being attributed to the political-copy-trade framing.",
+      "limitations": "Old sample (2004-2008), raw member portfolios (not these replica ETFs), no cross-sectional-momentum-rotation mechanism tested.",
+      "independent_replication": "Cited widely in later congressional-trading literature (e.g. arXiv 2602.05514, Detecting Information Channels in Congressional Trading via Temporal Graph Learning) as the standard null-result reference; not independently re-run here.",
+      "fetched_at": "2026-09-29T01:54:06+00:00",
+      "sha256": "f351cd71acfadd0754c159e4d90e7cf7ed4255209d3c7a2093bc715568ea10a8",
+      "snapshot_path": "reports/research/iterations/h20260928_43_political_etf_rotation/sources/eggers-hainmueller-capitol-losses-2013.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_43_political_etf_rotation.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 24 candidates (12 POLITICAL + 12 PLACEBO_BIGTECH) through the batch-screening lane (scripts/screen_batch.py --batch h20260928_43_political_etf_rotation --iteration h20260928_43_political_etf_rotation) against the select+anchor windows only, check K1/K2/watch_recent, then apply the preregistered placebo-dominance disqualifier and (for any POLITICAL candidate reaching watch_recent+) the 40bp wide-spread sensitivity check; the engine and cost/fill convention are already frozen and reused unedited.",
+    "pass_condition": "At least one POLITICAL candidate clears K1 (select+anchor only) or K2, AND the same-grid-cell PLACEBO_BIGTECH candidate does not dominate it, AND 40bp-per-side annualized return stays positive.",
+    "falsification_condition": "No POLITICAL candidate reaches watch_recent (anchor-only Sharpe >=1.19), or every POLITICAL candidate that does is matched or beaten by its PLACEBO_BIGTECH counterpart, or the edge turns negative at 40bp.",
+    "max_compute_minutes": 30
+  }
+}

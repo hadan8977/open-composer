@@ -1,0 +1,180 @@
+name: h20260928_44_etf_pair_switch
+description: Preregistered H-20260928-44 batch-screening candidate family. Tests
+  18 candidates for T-20260928-44, covering coverage-map cell
+  relative_value.pairs_stat_arb's long-only gap -- 12 PAIR_* candidates -- a
+  binary relative-strength switch between the two legs of a highly correlated
+  ETF pair (rank the pair by momentum_score(close, lookback) reusing
+  scripts/run_h20260918_05_recent_menu.py's momentum_score unedited, hold the
+  stronger leg only if it beats SHY's own score over the same lookback, else
+  hold SHY -- rotation_cell's own mechanism at menu size 2, top_n=1), 6 pairs
+  (QQQ/SPY, SMH/QQQ, XLE/XOP, KRE/XLF, IWM/SPY, ARKK/QQQ) x lookback in
+  {63,126}, monthly rebalance -- plus 6 STATIC5050_* placebo candidates (one
+  per pair), a fixed monthly-rebalanced 50/50 blend of the same two legs with
+  no ranking and no cash filter, testing whether the *switching* mechanism
+  itself adds value over simply holding both legs. Candidates are judged
+  against K1 (own date-neutral Sharpe >= 80% of S3's in both the anchor and
+  stress windows, positive CAGR at 20bp) or K2 (a 63-session inverse-vol
+  blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in
+  both windows); a PAIR candidate that would otherwise be kept is downgraded
+  to "not kept" if its judged Sharpe in either window does not exceed its own
+  paired STATIC5050 control's judged Sharpe in that window (preregistered
+  counter-evidence rule). No parameter in this file was fit to any window's
+  return -- the grid itself is the full preregistered candidate set. Research
+  only, deterministic, next-session execution; no broker writes are
+  authorized. No backtest is run under this spec by this round -- screening
+  happens in scripts/screen_batches/h20260928_44_etf_pair_switch.py under a
+  separate screening lane; this draft exists only to bind the preregistered
+  candidate manifest to a StrategySpec content hash.
+timeframe: daily
+universe:
+- ARKK
+- IWM
+- KRE
+- QQQ
+- SHY
+- SMH
+- SPY
+- XLE
+- XLF
+- XOP
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 2
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_44:etf_pair_switch
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  pair_target_weight:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-candidate target
+      weight vector is computed by
+      scripts/screen_batches/h20260928_44_etf_pair_switch.py's
+      make_pair_switch_fn(leg_a, leg_b, lookback) / make_static5050_fn(leg_a,
+      leg_b) closures, which import and reuse
+      run_h20260918_05_recent_menu.momentum_score unedited, evaluated using
+      only rows with index <= asof, not by this single-symbol expression --
+      the real rule is a two-name relative-strength switch plus an
+      absolute-momentum filter against SHY (or a fixed 50/50 blend for the
+      placebo), outside the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_44_etf_pair_switch
+  candidate_manifest_path: reports/research/iterations/h20260928_44_etf_pair_switch/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_44_etf_pair_switch/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_44_etf_pair_switch.jsonl
+  source_card_claim_ids:
+  - quantconnect_qqq_spy_momentum_rotation_2026
+  - robotwealth_dual_momentum_review_whipsaw_2026
+  parameter_space:
+    pair:
+    - QQQSPY
+    - SMHQQQ
+    - XLEXOP
+    - KREXLF
+    - IWMSPY
+    - ARKKQQQ
+    lookback:
+    - 63
+    - 126
+    family:
+    - PAIR
+    - STATIC5050
+  candidate_budget: 18
+  selection_objective: No ranking among the 18 candidates. Each of the 12 PAIR_*
+    candidates is judged against the two fixed preregistered gates K1 (own
+    date-neutral Sharpe vs 80% of S3's, both windows, plus positive 20bp
+    CAGR) and K2 (63-session trailing-inverse-vol monthly blend with S3 vs a
+    vol-matched k*S3+(1-k)*SHY control, +0.05 Sharpe in both windows), then a
+    kept/strong/watch_recent result is downgraded to "not kept (no switching
+    increment)" if it does not beat its own paired STATIC5050 control's
+    judged Sharpe in every window it passed on. The 6 STATIC5050_* candidates
+    are controls only, not eligible for keep/strong/watch_recent. DSR is
+    reported with n_trials = 18 (this batch's size, conservative for both
+    families).
+  anti_overfit_notes:
+  - Every PAIR candidate reuses run_h20260918_05_recent_menu.momentum_score and
+    rotation_cell's absolute-momentum-filter/top-N=1/equal-weight logic
+    unedited at menu size 2; only the pair (two-ticker menu) and the grid's
+    own lookback value (63 or 126, a pre-published bounded pair, not fit to
+    this batch's own return data) change.
+  - No candidate's rule, universe or cost assumption was chosen by looking at
+    this batch's own return data; the grid was fixed before any backtest ran.
+  - This dossier stage is preregistration only -- no backtest, no Sharpe, no
+    return number for any of the 18 candidates is computed under this round
+    before pre-backtest validation passes.
+  validation_plan:
+  - s3_stress_window_2016_05_02_to_2023_09_15
+  - s3_anchor_window_2024_01_08_to_2026_09_17
+  - holdout_2026_01_02_to_2026_09_17_contaminated_reference_only
+  - date_neutral_median_over_rebalance_offsets_monthly_0_20
+  - k1_vs_80pct_of_s3_sharpe_both_windows_plus_20bp_positive_cagr
+  - k2_inverse_vol_blend_with_s3_vs_vol_matched_k_s3_plus_1_minus_k_shy
+  - static5050_counter_evidence_downgrade_if_no_switching_increment
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+  - dsr_reported_with_n_trials_equal_18
+notes:
+  intent: Hand a batch-screening lane 18 preregistered, long-only,
+    Alpaca-tradable candidates (12 pairwise relative-strength switches plus 6
+    static 50/50 placebo controls) that reuse S1-S3's already-live rotation
+    mechanism at menu size 2, to resolve
+    reports/research/harvest/directions.jsonl's
+    dir:etf_pair_relative_strength_switch and cover the
+    relative_value.pairs_stat_arb coverage-map gap's long-only leg.
+  hypothesis_id: H-20260928-44
+  previous_link: H-20260928-40
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

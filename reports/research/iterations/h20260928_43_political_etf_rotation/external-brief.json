@@ -1,0 +1,129 @@
+{
+  "iter_id": "h20260928_43_political_etf_rotation",
+  "objective": "Bind the POLITICAL and PLACEBO_BIGTECH candidate families to verified source cards before handing the 24-candidate batch to the screening lane for select+anchor-only K1/K2 testing and a placebo-dominance disqualifier, resolving reports/research/harvest/directions.jsonl's dir:congressional_political_trade_replica_etf_rotation.",
+  "schema_version": 3,
+  "strategy_name": "h20260928_43_political_etf_rotation",
+  "source_spec_path": "strategy_specs/drafts/h20260928_43_political_etf_rotation.yaml",
+  "spec_hash": "c2faafa3bfaf3be884bfccd6f8db1bb1084a5da4c077011551a1a063b6e18721",
+  "sources": [
+    {
+      "url": "https://andy.egge.rs/papers/EggMueller_capitol_losses_jop_2013.pdf",
+      "published_or_updated_at": "2013-01-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "No informed-trading or above-market-return effect in actual congressional member portfolios 2004-2008 (Fama-French/Carhart panel regressions); under-performance of 2-3%/yr vs a passive index.",
+      "project_applicability": "Negative-evidence check on the congressional-information-edge story; motivates the PLACEBO_BIGTECH disqualifier.",
+      "reflection": "Old sample, raw portfolios not these replica ETFs; grid/menu are this batch's own preregistered choice, not fit to this paper's data.",
+      "claim_id": "eggers_hainmueller_capitol_losses_2013"
+    },
+    {
+      "url": "https://bestfolio.app/strategies/gem",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "medium-high",
+      "core_claim": "Antonacci's dual-momentum rule (absolute momentum vs. a cash/bond proxy, relative momentum ranking): the same mechanism family as rotation_cell's absolute-momentum-vs-SHY filter, reused unedited in this batch. Reused from a prior verified round (h20260928_04_s3_alt_div_batch1), not re-fetched this session.",
+      "project_applicability": "Grounds the absolute-momentum-filter mechanism family underlying every candidate in this batch.",
+      "reflection": "Rule and parameters are rotation_cell's own already-live, unedited mechanism, not fit to this batch's return data; only the menu (ticker list) is new.",
+      "claim_id": "antonacci_gem_dual_momentum_reuse_2026"
+    },
+    {
+      "url": "https://www.jstor.org/stable/2328882",
+      "published_or_updated_at": "1993-03-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Jegadeesh & Titman (1993), 'Returns to Buying Winners and Selling Losers': foundational cross-sectional momentum evidence (3-12 month formation/holding periods, US equities 1965-1989); the general mechanism family (rank by trailing return, hold winners) that rotation_cell implements.",
+      "project_applicability": "Grounds the general cross-sectional-momentum mechanism family reused unedited by rotation_cell for every candidate in this batch (both POLITICAL and PLACEBO_BIGTECH).",
+      "reflection": "Classic large-cap-stock momentum result, not on ETFs or this 4-fund menu; only the general mechanism (rank-and-hold) is reused, not this paper's specific universe or parameters.",
+      "claim_id": "jegadeesh_titman_1993_momentum"
+    },
+    {
+      "url": "https://www.bit.com/knowledge-hub/congressional-trade-tracking",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "industry_standard",
+      "credibility": "medium",
+      "core_claim": "STOCK Act 30-45 day disclosure rule; NANC is a regulated ETF replicating Democratic members' disclosed trades; disclosure lag may already partly price in the information edge.",
+      "project_applicability": "Grounds the POLITICAL menu's disclosure-replica story and the disclosure-lag caveat in the stop condition.",
+      "reflection": "Knowledge-hub summary; grid/menu are this batch's own preregistered choice, reusing rotation_cell unedited.",
+      "claim_id": "bit_com_congressional_trade_tracking_2026"
+    },
+    {
+      "url": "https://247wallst.com/investing/2026/04/20/if-you-invested-in-these-congressional-trading-etfs-at-launch-heres-what-youd-have-today/",
+      "published_or_updated_at": "2026-04-20",
+      "source_type": "industry_standard",
+      "credibility": "medium",
+      "core_claim": "NANC 88.49% / GOP 64.31% since-launch total return; explicit skeptical claim that NANC's outperformance is tech-concentration-driven, not a genuine congressional information edge.",
+      "project_applicability": "Directly motivates the PLACEBO_BIGTECH menu (QQQ/XLK/SPY/DIA) and its placebo-dominance disqualifier.",
+      "reflection": "Since-inception numbers are not used as a backtest target; this batch computes its own return series independently.",
+      "claim_id": "247wallst_nanc_gop_since_launch_2026"
+    },
+    {
+      "url": "https://subversiveetfs.com/nanc/",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "NANC is actively managed and disclosure-weighted (not price-momentum-based); 100-200 holdings, TER 0.72%.",
+      "project_applicability": "Confirms this batch's rotation_cell mechanism is a second-order price-trend overlay across the 4 funds, not a test of each fund's own underlying congressional-copy-trade construction.",
+      "reflection": "Primary-source-level fund description reached via WebSearch synthesis after a direct WebFetch DNS failure; corroborated by 3 independent fund-data aggregators in the same search.",
+      "claim_id": "nanc_fund_methodology_2026"
+    },
+    {
+      "url": "https://quantpedia.com/strategies/momentum-factor-and-style-rotation-effect",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "medium",
+      "core_claim": "Quantpedia's cross-sectional momentum rotation across Russell style ETFs (reused claim from h20260928_40_equity_etf_menus, same engine family, different menu). Backtest 1972-2005: 9.25%/yr, Sharpe 0.33.",
+      "project_applicability": "Further grounds the cross-sectional-momentum-rotation-across-an-ETF-menu mechanism family that this batch also applies, on a different (political/placebo) menu.",
+      "reflection": "Reused from a prior verified round, not independently re-fetched this session; not specific to political-trade-replica ETFs.",
+      "claim_id": "quantpedia_momentum_factor_style_rotation_2026"
+    },
+    {
+      "url": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "industry_standard",
+      "credibility": "high",
+      "core_claim": "S1-S3's own live/backtested rotation_cell reference numbers (anchor median Sharpe 1.4853, stress median Sharpe 0.8059) used as this batch's K1/K2 comparison baseline.",
+      "project_applicability": "Direct numeric baseline for the K1 80%-of-S3 bar (anchor >=1.19) applied to every POLITICAL and PLACEBO_BIGTECH candidate.",
+      "reflection": "Internal repo artifact, not an external web source, but load-bearing for the keep-rule threshold; reused unedited from the frozen contract.",
+      "claim_id": "s3_reference_sharpe_2026"
+    }
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_family": "POLITICAL",
+      "claim_ids": [
+        "bit_com_congressional_trade_tracking_2026",
+        "247wallst_nanc_gop_since_launch_2026",
+        "nanc_fund_methodology_2026",
+        "eggers_hainmueller_capitol_losses_2013",
+        "s3_reference_sharpe_2026"
+      ]
+    },
+    {
+      "candidate_family": "PLACEBO_BIGTECH",
+      "claim_ids": [
+        "247wallst_nanc_gop_since_launch_2026",
+        "eggers_hainmueller_capitol_losses_2013",
+        "jegadeesh_titman_1993_momentum",
+        "s3_reference_sharpe_2026"
+      ]
+    }
+  ],
+  "hypothesis_links": [
+    "H1",
+    "H2"
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_43_political_etf_rotation.jsonl"
+  ],
+  "candidate_matrix_revisions": [
+    "Initial preregistration (2026-09-29): 12 POLITICAL_L{63,126,252}_N{1,2}_{MO,WK} + 12 PLACEBO_BIGTECH_L{63,126,252}_N{1,2}_{MO,WK}, no revisions after this point -- grid frozen before any backtest."
+  ],
+  "topic_coverage": [
+    "congressional_political_trade_replica_etf_rotation",
+    "stock_act_disclosure_lag",
+    "placebo_bigtech_momentum",
+    "thin_liquidity_wide_spread_sensitivity",
+    "cross_sectional_momentum_mechanism_family",
+    "negative_evidence_congressional_information_edge"
+  ]
+}

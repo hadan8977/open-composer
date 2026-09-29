@@ -1,0 +1,89 @@
+{
+  "iter_id": "h20260928_44_etf_pair_switch",
+  "strategy_name": "h20260928_44_etf_pair_switch",
+  "source_spec_path": "strategy_specs/drafts/h20260928_44_etf_pair_switch.yaml",
+  "spec_hash": "b02fe05762e34508aa65d50e948c2af415de2113c523f9884063eb7e41518759",
+  "schema_version": 3,
+  "created_at": "2026-09-29T00:20:00+00:00",
+  "objective": "Preregister 18 candidates (12 PAIR_* + 6 STATIC5050_* placebo controls) -- rotation_cell's cross-sectional momentum rotation mechanism reused unedited at menu size 2 / top_n=1, applied to six highly correlated ETF pairs, for a batch screening lane (built separately) to test against K1/K2 and the STATIC5050 counter-evidence downgrade rule. No backtest is run in this round.",
+  "paths": [
+    {
+      "name": "etf_pair_switch_screen",
+      "candidate_count": 18,
+      "hypothesis_refs": [
+        "H-20260928-44"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "PAIR_QQQSPY_L63_MO",
+          "PAIR_QQQSPY_L126_MO",
+          "STATIC5050_QQQSPY_MO",
+          "PAIR_SMHQQQ_L63_MO",
+          "PAIR_SMHQQQ_L126_MO",
+          "STATIC5050_SMHQQQ_MO",
+          "PAIR_XLEXOP_L63_MO",
+          "PAIR_XLEXOP_L126_MO",
+          "STATIC5050_XLEXOP_MO",
+          "PAIR_KREXLF_L63_MO",
+          "PAIR_KREXLF_L126_MO",
+          "STATIC5050_KREXLF_MO",
+          "PAIR_IWMSPY_L63_MO",
+          "PAIR_IWMSPY_L126_MO",
+          "STATIC5050_IWMSPY_MO",
+          "PAIR_ARKKQQQ_L63_MO",
+          "PAIR_ARKKQQQ_L126_MO",
+          "STATIC5050_ARKKQQQ_MO"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold",
+        "BIL_buy_and_hold",
+        "S3_reference_for_K1_K2",
+        "paired_STATIC5050_control"
+      ]
+    }
+  ],
+  "total_candidate_budget": 18,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_44_etf_pair_switch/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260928_44_etf_pair_switch/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260928_44_etf_pair_switch/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_44_etf_pair_switch/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_44_etf_pair_switch/report.md",
+    "reports/research/iterations/h20260928_44_etf_pair_switch/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (median over monthly rebalance offsets) >= 0.80 * S3's date-neutral Sharpe in BOTH windows (anchor >=1.19, stress >=0.65), 10bp per side, positive CAGR at 20bp.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows.",
+    "watch_recent": "anchor-window Sharpe >= 1.19 but stress window does not clear its bar -- forward-tracked only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows >= S3's own (1.49 anchor / 0.81 stress).",
+    "counter_evidence_downgrade": "A PAIR pass is downgraded to 'not kept (no switching increment)' if it does not beat its paired STATIC5050 candidate's judged Sharpe in every window it passed on.",
+    "multiple_comparisons": "18 candidates; DSR with n_trials=18 for any PAIR candidate that passes K1 or K2."
+  },
+  "candidate_manifest_sha256": "27ae65c935862b861380fa3effeff35f4848385cbd42dde7f8498d37c1d423d3",
+  "data_feasibility_sha256": "5b81bba14fd9953ceb0fbc301807a3f0fd70becbcd1f428149db3059c6e1b16f"
+}

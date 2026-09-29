@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260928_42_opex_week",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot index ETFs and SHY, no leverage, no shorting)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal)",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)",
+  "note_vs_source_holding_period": "Quantpedia's own construction is Friday close to Friday close; this project's frozen contract is close-signal -> next-session-open fill, so the effective entry is one session later (the next trading day's open after the pre-week signal day) and WEEK's exit is one session later than the expiration week's own close. This is a fixed contract constraint applied identically to every screen_lane batch, not a change made for this candidate."
+}

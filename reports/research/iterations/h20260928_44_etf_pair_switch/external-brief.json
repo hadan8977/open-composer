@@ -1,0 +1,123 @@
+{
+  "iter_id": "h20260928_44_etf_pair_switch",
+  "objective": "Bind the ETF pair relative-strength switch candidate family to verified source cards before handing the 18-candidate batch (12 PAIR + 6 STATIC5050 placebo) to the screening lane for K1/K2 testing against S3, resolving reports/research/harvest/directions.jsonl's dir:etf_pair_relative_strength_switch and the relative_value.pairs_stat_arb coverage-map gap's long-only leg.",
+  "schema_version": 3,
+  "strategy_name": "h20260928_44_etf_pair_switch",
+  "source_spec_path": "strategy_specs/drafts/h20260928_44_etf_pair_switch.yaml",
+  "spec_hash": "b02fe05762e34508aa65d50e948c2af415de2113c523f9884063eb7e41518759",
+  "sources": [
+    {
+      "url": "https://www.quantconnect.com/forum/discussion/19216/qqq-spy-momentum-rotation-system/",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "QuantConnect forum rule: 20-day relative momentum switch between QQQ and SPY, +1.0% QQQ bias, 0.5% switch threshold, 5-day rebalance. Reported 2010-2024 backtest: CAGR 19.02%, Sharpe ~0.8, MDD ~30%. Platform staff flagged real code bugs in the same thread; no post-fix numbers, no independent replication, no OOS/live record.",
+      "project_applicability": "Grounds the binary relative-strength-switch mechanism and the QQQ/SPY pair specifically; this batch tests the mechanism fresh via rotation_cell (63/126-day lookback, monthly rebalance) plus five extension pairs, not this source's own parameters or numbers.",
+      "reflection": "Rule and parameters are rotation_cell's own already-live, unedited mechanism at menu size 2, not fit to this batch's return data; the only new degrees of freedom are the pair (ticker pair) and the lookback (63 or 126, a small preregistered bounded sweep within the 24-candidate lightweight-exemption budget), not tuned to any window's outcome.",
+      "claim_id": "quantconnect_qqq_spy_momentum_rotation_2026"
+    },
+    {
+      "url": "https://robotwealth.com/dual-momentum-review/",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "post",
+      "credibility": "medium",
+      "core_claim": "Dual-momentum/relative-strength rotation strategies suffer whipsaw losses in choppy markets (2015 example: -6.2% despite flat global equities) and lag V-shaped recoveries (2009 example: 11.8% vs 32.7% buy-and-hold).",
+      "project_applicability": "Negative-evidence check for the pair-switch mechanism family; names the exact failure mode (whipsaw, recovery lag) the stress window and the STATIC5050 placebo are designed to catch.",
+      "reflection": "General commentary retrieved via WebSearch snippet, not specific to any of the six pairs; used to motivate the preregistered STATIC5050 counter-evidence check, not to set any parameter.",
+      "claim_id": "robotwealth_dual_momentum_review_whipsaw_2026"
+    },
+    {
+      "url": "https://quantpedia.com/strategies/momentum-factor-and-style-rotation-effect",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "medium",
+      "core_claim": "Reused from the T-40 round (not re-fetched this session): cross-sectional momentum across style ETFs is an established mechanism family (Quantpedia, 1972-2005, long-short Sharpe 0.33).",
+      "project_applicability": "Background grounding for the general cross-sectional-momentum-rotation mechanism family that rotation_cell already implements and this batch reuses at menu size 2.",
+      "reflection": "Reused claim; not relied on for any parameter in this batch.",
+      "claim_id": "quantpedia_momentum_factor_style_rotation_2026"
+    },
+    {
+      "url": "https://bestfolio.app/strategies/gem",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "medium-high",
+      "core_claim": "Reused from the T-40 round (not re-fetched this session): Antonacci's dual-momentum rule (absolute momentum vs. a cash/bond proxy) is the same mechanism family as rotation_cell's absolute-momentum-vs-SHY filter reused unedited in this batch.",
+      "project_applicability": "Grounds the absolute-momentum-filter mechanism family underlying every PAIR candidate in this batch (both legs weaker than SHY -> hold SHY).",
+      "reflection": "Reused claim; not relied on for any parameter in this batch.",
+      "claim_id": "antonacci_gem_dual_momentum_reuse_2026"
+    },
+    {
+      "url": "https://www.jstor.org/stable/2328882",
+      "published_or_updated_at": "1993-03-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Jegadeesh & Titman (1993), 'Returns to Buying Winners and Selling Losers': the foundational academic paper documenting cross-sectional relative-strength/momentum -- ranking assets by trailing 3-12 month returns and holding the winners predicts continued outperformance over the following 3-12 months, the academic basis for the relative-strength-switch mechanism this batch's PAIR candidates implement between two names instead of a broad cross-section.",
+      "project_applicability": "Foundational academic grounding for the relative-strength ranking mechanism (rank by trailing return, hold the stronger performer) that both `rotation_cell` generally and this batch's 2-name pair switch specifically implement; not re-fetched this session (background knowledge, well-established finance literature), no parameter is copied from its specific US-stock 1965-1989 sample.",
+      "reflection": "Long-established, heavily replicated finding; not used for any specific numeric parameter, only for the mechanism's academic basis. This batch's own lookback grid (63/126 trading days ~= 3/6 months) and pair selection are its own choices, tested fresh against K1/K2 rather than assumed from the 1993 sample.",
+      "claim_id": "jegadeesh_titman_1993_momentum_foundational"
+    },
+    {
+      "url": "https://www.ishares.com/us/insights/dynamic-factor-rotation-investing",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "Reused from the T-40 round (not re-fetched this session): iShares practitioner note arguing for tactical/dynamic factor tilts in fast-moving markets; discloses no backtested Sharpe.",
+      "project_applicability": "Background context for the general practice of dynamic rotation between related exposures; not relied on for any rule parameter in this batch.",
+      "reflection": "Marketing piece; registry-carried, not independently re-verified this session.",
+      "claim_id": "ishares_dynamic_factor_rotation_2026"
+    },
+    {
+      "url": "https://drksci.com/algorithmic-trading-ai-sector-rotation-momentum",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "Reused from the T-40 round (not re-fetched this session): d/rksci blog post on algorithmic/AI sector-rotation momentum, no disclosed live/OOS numbers.",
+      "project_applicability": "Background context for the general rotation/momentum mechanism family; not relied on for any rule parameter in this batch.",
+      "reflection": "Personal blog, no disclosed OOS numbers; registry-carried, not independently re-verified this session.",
+      "claim_id": "drksci_sector_rotation_momentum_2026"
+    },
+    {
+      "url": "https://github.com/segobooking-finanz/momentum-sector-rotation/blob/main/README.md",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "Reused from the T-40 round (not re-fetched this session): GitHub replication repo for sector-rotation momentum, no disclosed live/OOS numbers.",
+      "project_applicability": "Background context confirming public interest in and replicability of the general rotation-momentum mechanism family; not relied on for any rule parameter in this batch.",
+      "reflection": "Personal repo, no disclosed OOS numbers; registry-carried, not independently re-verified this session.",
+      "claim_id": "github_momentum_sector_rotation_repo_2026"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_44_etf_pair_switch.jsonl",
+    "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl",
+    "reports/harness/source_cards/h20260928_04_s3_alt_div_batch1.jsonl"
+  ],
+  "hypothesis_links": ["H-20260928-44"],
+  "candidate_matrix_revisions": [
+    {
+      "revision": "none",
+      "note": "The 18-candidate grid (6 pairs x {63,126}-day lookback PAIR candidates plus 6 STATIC5050 controls) preregistered in candidate-manifest.json was not revised after this external-brief review; no candidate was added, removed, or retuned based on any source read during this dossier stage."
+    }
+  ],
+  "topic_coverage": [
+    "pair_relative_strength_switch",
+    "dual_momentum_whipsaw_negative_evidence",
+    "cross_sectional_momentum_rotation_mechanism_reuse",
+    "academic_momentum_foundation",
+    "static_blend_placebo_control_design",
+    "correlated_etf_pair_liquidity_and_tradability"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_family": "PAIR_*",
+      "claim_ids": [
+        "quantconnect_qqq_spy_momentum_rotation_2026",
+        "antonacci_gem_dual_momentum_reuse_2026"
+      ]
+    },
+    {
+      "candidate_family": "STATIC5050_*",
+      "claim_ids": ["robotwealth_dual_momentum_review_whipsaw_2026"]
+    }
+  ]
+}

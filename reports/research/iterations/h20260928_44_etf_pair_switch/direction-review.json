@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_44_etf_pair_switch",
+  "reviewed_at": "2026-09-29T00:15:00+00:00",
+  "decision": "proceed",
+  "objective": "Preregister 18 candidates for T-20260928-44 to answer the coverage-map gap `relative_value.pairs_stat_arb`'s long-only cell: is a long-only binary relative-strength switch between two highly correlated ETFs (hold whichever leg has stronger trailing momentum, hold SHY if both are weaker than SHY) worth keeping under the frozen K1/K2 contract, and does the switching mechanism itself add value over a static 50/50 blend of the same two legs? 12 PAIR_* candidates (6 pairs x lookback {63,126}, monthly rebalance, rotation_cell's own top_n=1/menu-size-2 mechanism, unedited) plus 6 STATIC5050_* placebo controls (fixed 50/50 blend, no ranking, no cash filter). Resolves `dir:etf_pair_relative_strength_switch`.",
+  "target_regime_and_horizon": "Same frozen windows as S1-S3 and every prior batch-screening round: stress 2016-05-02..2023-09-15 and anchor 2024-01-08..2026-09-17, judged on date-neutral Sharpe (median over monthly rebalance-day offsets 0-20 trading days). The 2026-01-02..2026-09-17 holdout is reference-only and contaminated. All 11 tickers needed (QQQ, SPY, SMH, XLE, XOP, KRE, XLF, IWM, ARKK, SHY, BIL) are confirmed present in the local SIP daily panel from 2016-01-04 through 2026-09-28 (verified this session via a direct DuckDB query against data/sip/daily/*/*.parquet), so both windows have full coverage -- no short-sample caveat applies to this batch, unlike T-43's political ETFs.",
+  "existing_solution_comparison": "This batch reuses `rotation_cell`'s already-live mechanism unedited (imported from run_h20260918_05_recent_menu.py, not reimplemented) at menu size 2 / top_n=1, the same engine T-40 and every other batch-screening round in this repo already use; it introduces no new signal or weighting rule, only a new (2-ticker) menu shape per candidate and a new placebo family (fixed 50/50 blend) not used by T-40. `grep -ril \"pair_switch|relative.strength\" reports/research/iterations reports/research/ledger` found no prior local test of any of these six specific pairs through this engine (hits were background mentions: cross-asset/defense-first sleeve notes, factor-batch source HTML, dip-reversion source HTML, and unrelated hypothesis cards). `oc research directions check \"pair relative strength switch\"` returned `dir:etf_pair_relative_strength_switch` itself (likely_repeat 1.00 -- this is the target direction this round resolves, added by the 2026-09-28 22:21 UTC gap-search round, not a prior *test*) plus three genuinely different prior experiments: H-20260918-06 (pooled ETF relative strength with **no curated menu** -- refuted, a different mechanism: pooling the whole fund universe rather than a hand-picked correlated pair), `dir:pooled_etf_relative_strength_no_menu` (same distinction, refuted for the opposite reason: removing the menu degenerates into either a T-bill pick or a leveraged-product pick), and `dir:collective2_etf_timer_17yr_live` (a proprietary, non-copyable third-party style label, not_executable). None of these three tested a curated 2-ticker correlated-pair switch, so this batch is not a repeat.",
+  "remaining_evidence_gap": "Whether any of the 12 lookback/pair combinations clears K1 or K2 against S3's frozen reference numbers when run through the batch-screening lane, and separately -- the new question this batch's placebo design adds -- whether any K1/K2 pass survives the counter-evidence check against its own paired STATIC5050 control (i.e. whether *switching* has any value over simply holding both legs). Neither has been tested locally; this round computes both in one pass.",
+  "negative_experiments_checked": "H-20260918-06 (pooled ETF relative strength, no curated menu -- refuted) and dir:pooled_etf_relative_strength_no_menu (refuted for the opposite degeneration: T-bill pick or leveraged-product pick) both removed the curated-menu structure this batch relies on, so their refutation does not transfer -- this batch keeps a hand-picked, highly correlated 2-ticker menu per candidate, the structural element H-20260918-06 removed. dir:collective2_etf_timer_17yr_live (not_executable, proprietary style label) is unrelated. Robot Wealth's dual-momentum review (fetched this session) documents the standard whipsaw/recovery-lag failure mode for this mechanism family in choppy and V-shaped-recovery regimes -- both are present in the 2016-2023 stress window -- which motivated adding the STATIC5050 placebo family to this batch's own design rather than assuming switching adds value.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress, signal at the session close, fill at the next session's open -- identical to the frozen S1/S2/S3 convention and every prior batch-screening round (cost-contract.json). The STATIC5050 controls use the identical cost model (monthly rebalance turnover is charged the same way); no cost assumption was loosened or tightened for either family to make any result more likely to pass.",
+  "stop_condition": "If none of the 12 PAIR candidates clears K1 or K2 (or reaches watch_recent), `dir:etf_pair_relative_strength_switch` is refuted for this scope and the coverage map's `relative_value.pairs_stat_arb` gap is updated to record that the long-only leg has now been tested and found wanting (separately from the still-untested short leg / cointegration-residual modeling, which needs owner permission for shorting). If a PAIR candidate clears K1 or K2 but fails the STATIC5050 counter-evidence check in every window it passed on, it is downgraded to 'not kept (no switching increment)' and reported as such rather than as a keep. The next round should not re-tune this same 6-pair x {63,126} grid without a new, distinct signal (e.g. a volatility- or correlation-adaptive switch threshold, or a genuinely different pair family) per this dossier's own framing.",
+  "queries": [
+    {
+      "query": "QuantConnect forum QQQ/SPY Momentum Rotation System (WebFetch primary source re-verification, independent re-open for T-44)",
+      "opened_urls": [
+        "https://www.quantconnect.com/forum/discussion/19216/qqq-spy-momentum-rotation-system/"
+      ],
+      "searched_at": "2026-09-29T00:00:00+00:00"
+    },
+    {
+      "query": "QQQ SPY switching strategy out of sample fails momentum rotation",
+      "opened_urls": [
+        "https://arxiv.org/pdf/2607.06117",
+        "https://www.quantconnect.com/forum/discussion/19216/qqq-spy-momentum-rotation-system/"
+      ],
+      "searched_at": "2026-09-29T00:02:00+00:00"
+    },
+    {
+      "query": "dual momentum relative strength ETF rotation strategy whipsaw criticism live underperformance",
+      "opened_urls": [
+        "https://robotwealth.com/dual-momentum-review/"
+      ],
+      "searched_at": "2026-09-29T00:05:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.quantconnect.com/forum/discussion/19216/qqq-spy-momentum-rotation-system/",
+      "claim_id": "quantconnect_qqq_spy_momentum_rotation_2026",
+      "claim": "20-day relative momentum switch between QQQ and SPY, +1.0% QQQ bias, 0.5% switch threshold, 5-day rebalance, 100% allocated. Reported 2010-2024: CAGR 19.02%, Sharpe ~0.8, MDD ~30%. Platform staff flagged real code bugs in the same thread; no post-fix numbers, no independent replication, no OOS/live record.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-09-28",
+      "market_and_period": "QQQ vs SPY, 5-day rebalance, 2010-2024",
+      "applicability": "Grounds the mechanism (binary relative-strength switch between two correlated ETFs with an absolute-momentum-vs-cash style filter) and the QQQ/SPY pair itself; this batch's own 63/126-day lookback, monthly rebalance and 5 additional pairs are this iteration's own bounded grid, not copied from the source's parameters or numbers.",
+      "limitations": "Single-author, unreplicated, platform-flagged bugs, no post-fix numbers, no OOS/live record.",
+      "independent_replication": "None found.",
+      "fetched_at": "2026-09-29T00:00:00+00:00",
+      "sha256": "12412c95f6f6385bfd065d1ab7985be624861f9b24f17022cc3cb0d31cdc736c",
+      "snapshot_path": "reports/research/iterations/h20260928_44_etf_pair_switch/sources/quantconnect-qqq-spy-momentum-rotation.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_44_etf_pair_switch.jsonl"
+    },
+    {
+      "url": "https://robotwealth.com/dual-momentum-review/",
+      "claim_id": "robotwealth_dual_momentum_review_whipsaw_2026",
+      "claim": "Negative-evidence check: dual-momentum/relative-strength rotation strategies suffer whipsaw losses in choppy markets and lag V-shaped recoveries (2015 -6.2% example; 2009 recovery-lag example).",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-09-29",
+      "market_and_period": "Global multi-asset dual momentum, general commentary",
+      "applicability": "Names the exact failure mode (whipsaw, recovery lag) this batch's stress window and STATIC5050 placebo are designed to catch.",
+      "limitations": "Retrieved via WebSearch snippet, not a full independent WebFetch in this session; general commentary, not specific to any of the six pairs tested here.",
+      "independent_replication": "n/a -- general practitioner commentary.",
+      "fetched_at": "2026-09-29T00:05:00+00:00",
+      "sha256": "773aa847a8a8b27df17fb0bd454278f496acc2da2d23c632e821b98ce82bd7e3",
+      "snapshot_path": "reports/research/iterations/h20260928_44_etf_pair_switch/sources/robotwealth-dual-momentum-review.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_44_etf_pair_switch.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 18 candidates through the batch-screening lane (scripts/screen_batch.py --batch h20260928_44_etf_pair_switch --iteration h20260928_44_etf_pair_switch) against S3's frozen stress/anchor windows, check K1/K2 directly, and check every PAIR pass against its own paired STATIC5050 control; the engine and cost/fill convention are already frozen and reused unedited (menu size 2, top_n=1, a special case already exercised by the same rotation_cell code path T-40 used), so this is the cheapest possible resolution.",
+    "pass_condition": "At least one of the 12 PAIR candidates clears K1 or K2 in both required windows and also beats its paired STATIC5050 control's judged Sharpe in every window it passed on.",
+    "falsification_condition": "None of the 12 PAIR candidates clears full K1 or K2, or every candidate that does clear K1/K2 fails to beat its own STATIC5050 control in at least one window it passed on (i.e. switching adds no increment over the static blend).",
+    "max_compute_minutes": 20
+  }
+}

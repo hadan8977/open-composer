@@ -1,0 +1,182 @@
+name: h20260928_43_political_etf_rotation
+description: Preregistered T-20260928-43 batch-screening candidate family. Tests
+  24 candidates -- the same cross-sectional momentum rotation mechanism already
+  live on S1-S3 (scripts/run_h20260918_05_recent_menu.py rotation_cell --
+  momentum_score by lookback, top-N rank, absolute-momentum-vs-SHY filter,
+  monthly/weekly rebalance), applied unedited to two new menus -- for whether
+  each clears K1 (its date-neutral Sharpe, median over rebalance-day offsets,
+  is at least 80% of S3's, judged on select 2023-09-18..2025-12-31 and anchor
+  2024-01-08..2026-09-17 windows only -- the stress window 2016-05-02..
+  2023-09-15 is not computed because NANC/GOP launched 2023-02-07 and have
+  zero coverage of it) or K2 (a 63-session trailing-inverse-vol monthly blend
+  with S3 beats a vol-matched k*S3 + (1-k)*SHY control by >=0.05 Sharpe).
+  POLITICAL menu (12 candidates) -- NANC, GOP, MAGA, DEMZ (publicly-disclosed
+  congressional/political-trade-replica ETFs), lookback in {63,126,252},
+  top_n in {1,2}, rebalance in {monthly, weekly}. PLACEBO_BIGTECH menu (12
+  candidates) -- QQQ, XLK, SPY, DIA (non-political large-cap/tech ETFs
+  matching NANC's own disclosed tech concentration), same grid, used as a
+  preregistered placebo-dominance disqualifier. Every candidate is a pure
+  function of the already-validated engine's rule and public price history
+  only; no parameter in this file was fit to any window's return -- the grid
+  itself is the full preregistered candidate set. Research only,
+  deterministic, next-session execution; no broker writes are authorized. No
+  backtest is run under this spec by this round -- screening happens in
+  scripts/screen_batches/h20260928_43_political_etf_rotation.py under a
+  separate screening lane; this draft exists only to bind the preregistered
+  candidate manifest to a StrategySpec content hash.
+timeframe: daily
+universe:
+- DEMZ
+- DIA
+- GOP
+- MAGA
+- NANC
+- QQQ
+- SHY
+- SPY
+- XLK
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 4
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_43:political_etf_rotation
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  political_menu_target_weight:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-candidate target
+      weight vector is computed by
+      scripts/screen_batches/h20260928_43_political_etf_rotation.py's
+      make_rotation_fn(menu, lookback, top_n) closures, which import and reuse
+      run_h20260918_05_recent_menu.momentum_score unedited, evaluated using
+      only rows with index <= asof, not by this single-symbol expression --
+      the real rule is a cross-sectional top-N rank plus an absolute-momentum
+      filter against SHY, outside the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_43_political_etf_rotation
+  candidate_manifest_path: reports/research/iterations/h20260928_43_political_etf_rotation/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_43_political_etf_rotation/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_43_political_etf_rotation.jsonl
+  source_card_claim_ids:
+  - bit_com_congressional_trade_tracking_2026
+  - 247wallst_nanc_gop_since_launch_2026
+  - nanc_fund_methodology_2026
+  - eggers_hainmueller_capitol_losses_2013
+  parameter_space:
+    menu:
+    - POLITICAL
+    - PLACEBO_BIGTECH
+    lookback:
+    - 63
+    - 126
+    - 252
+    top_n:
+    - 1
+    - 2
+    rebalance:
+    - MO
+    - WK
+  candidate_budget: 24
+  selection_objective: No ranking among the 24 candidates. Each is judged only
+    against the two fixed preregistered gates K1 (own date-neutral Sharpe vs
+    80% of S3's, select+anchor windows only, plus positive 20bp CAGR) and K2
+    (63-session trailing-inverse-vol monthly blend with S3 vs a vol-matched
+    k*S3+(1-k)*SHY control, +0.05 Sharpe). A POLITICAL candidate is capped at
+    watch_recent (never a full keep) because the stress window is not
+    computed, and is further downgraded if its same-grid-cell
+    PLACEBO_BIGTECH counterpart's anchor Sharpe is equal or higher. DSR is
+    reported with n_trials = 24 (this batch's size).
+  anti_overfit_notes:
+  - Every candidate reuses run_h20260918_05_recent_menu.momentum_score and
+    rotation_cell's absolute-momentum-filter/top-N/equal-weight logic
+    unedited; only the menu (ticker list) and the grid's own lookback/top_n/
+    rebalance values (a pre-published bounded grid, not fit to this batch's
+    own return data) change.
+  - No candidate's rule, universe or cost assumption was chosen by looking at
+    this batch's own return data; the grid was fixed before any backtest ran.
+  - PLACEBO_BIGTECH is a preregistered disqualifier, not a tuning target -- it
+    exists to catch a POLITICAL-menu result that is really just big-tech
+    momentum, per the 24/7 Wall St source's own skeptical claim about NANC.
+  - This dossier stage is preregistration only -- no backtest, no Sharpe, no
+    return number for any of the 24 candidates is computed under this round
+    before pre-backtest validation passes.
+  validation_plan:
+  - select_window_2023_09_18_to_2025_12_31
+  - s3_anchor_window_2024_01_08_to_2026_09_17
+  - stress_window_not_computed_nanc_gop_zero_coverage
+  - holdout_2026_01_02_to_2026_09_17_contaminated_reference_only
+  - date_neutral_median_over_rebalance_offsets_monthly_0_20_weekly_0_4
+  - k1_vs_80pct_of_s3_sharpe_select_and_anchor_plus_20bp_positive_cagr
+  - k2_inverse_vol_blend_with_s3_vs_vol_matched_k_s3_plus_1_minus_k_shy
+  - placebo_bigtech_dominance_disqualifier
+  - wide_spread_40bp_sensitivity_for_watch_recent_or_better
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+  - dsr_reported_with_n_trials_equal_24
+notes:
+  intent: Hand a batch-screening lane 24 preregistered, long-only,
+    Alpaca-tradable candidates (4 publicly-disclosed political-trade-replica
+    ETFs and a matched big-tech placebo) that reuse S1-S3's already-live
+    rotation mechanism, to resolve
+    reports/research/harvest/directions.jsonl's
+    dir:congressional_political_trade_replica_etf_rotation, and to test
+    whether any edge is distinguishable from plain big-tech momentum and
+    survives a wider illiquidity-adjusted spread.
+  hypothesis_id: T-20260928-43
+  previous_link: H-20260928-40
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

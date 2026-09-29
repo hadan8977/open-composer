@@ -1,0 +1,92 @@
+{
+  "iter_id": "h20260928_42_opex_week",
+  "strategy_name": "h20260928_42_opex_week",
+  "source_spec_path": "strategy_specs/drafts/h20260928_42_opex_week.yaml",
+  "spec_hash": "99941132a69311d033c4f21fe7a2f16040f4835e4fd3cef991c57bda49f15fa8",
+  "schema_version": 3,
+  "created_at": "2026-09-29T01:35:00+00:00",
+  "objective": "Preregister 20 candidates (8 primary option-expiration-week calendar candidates + 12 internal placebo controls) for a batch screening lane to test against K1/K2 (primary only) plus a placebo internal-falsification rule. No backtest is run in this round.",
+  "paths": [
+    {
+      "name": "opex_week_screen",
+      "candidate_count": 20,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "OPEX_SPY_WEEK",
+          "OPEX_SPY_WEEKMON",
+          "OPEX_QQQ_WEEK",
+          "OPEX_QQQ_WEEKMON",
+          "OPEX_DIA_WEEK",
+          "OPEX_DIA_WEEKMON",
+          "OPEX_IWM_WEEK",
+          "OPEX_IWM_WEEKMON",
+          "PLACEBO_W1_SPY",
+          "PLACEBO_W1_QQQ",
+          "PLACEBO_W1_DIA",
+          "PLACEBO_W1_IWM",
+          "PLACEBO_W2_SPY",
+          "PLACEBO_W2_QQQ",
+          "PLACEBO_W2_DIA",
+          "PLACEBO_W2_IWM",
+          "PLACEBO_W4_SPY",
+          "PLACEBO_W4_QQQ",
+          "PLACEBO_W4_DIA",
+          "PLACEBO_W4_IWM"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold",
+        "BIL_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 20,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_42_opex_week/candidate-manifest.json",
+  "candidate_manifest_sha256": "66c35e8d4c104c0f6170fec8c4ff9b0f94aa1d288c602fb2e90834c991f4873d",
+  "data_feasibility_path": "reports/research/iterations/h20260928_42_opex_week/data-feasibility.json",
+  "data_feasibility_sha256": "e9fef6776c1485c9c8252f2b388b3f2303b32ed64863bbd70d633d3cb6e10540",
+  "cost_table_path": "reports/research/iterations/h20260928_42_opex_week/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_42_opex_week/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_42_opex_week/report.md",
+    "reports/research/iterations/h20260928_42_opex_week/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (D freq, single version) >= 0.80 * S3's date-neutral Sharpe in BOTH windows (anchor >=1.19, stress >=0.65), 10bp per side, positive CAGR at 20bp. Primary candidates only.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows. Primary candidates only.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.19 but stress does not clear its bar -- forward-tracked only. Primary candidates only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.49 anchor / 0.81 stress).",
+    "placebo_internal_falsification": "a primary candidate otherwise kept/strong/watch_recent is demoted to not_kept if any same-ticker placebo's anchor Sharpe >= that primary's own WEEK-variant anchor Sharpe.",
+    "pass_requires": "K1 OR K2, primary candidates only, subject to placebo demotion.",
+    "multiple_comparisons": "20 candidates (8 primary + 12 placebo); report all regardless of outcome; DSR with n_trials=20 for any that pass."
+  }
+}
