@@ -1,0 +1,64 @@
+{
+  "iter_id": "h20260929_34_levered_single_stock",
+  "strategy_name": "h20260929_34_levered_single_stock",
+  "source_spec_path": "strategy_specs/drafts/h20260929_34_levered_single_stock.yaml",
+  "spec_hash": "c432c04a676c5e31bf4a707726dbc866710b8b702fcb0629e29b54fcf412a592",
+  "schema_version": 3,
+  "created_at": "2026-09-29T08:10:00+00:00",
+  "objective": "Preregister 14 candidates for T-20260929-34 (individual-stock, synthetic-2x-leveraged, point-in-time-megacap-menu, concentrated top-1/2/3 version of S3's 63-day-momentum/vt40 mechanism): 12 mechanism cells (N in {20,50} x k in {1,2,3} x leverage in {1x,2x}) plus 1 equal-weight-no-picking control and 1 deterministic random-pick placebo, for scripts/screen_batch.py --batch h20260929_34_levered_single_stock --iteration h20260929_34_levered_single_stock. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "levered_single_stock_screen",
+      "candidate_count": 14,
+      "hypothesis_refs": ["H1", "H2"],
+      "parameters": {
+        "candidate_id": [
+          "LSS_N20_K1_1X", "LSS_N20_K1_2X", "LSS_N20_K2_1X", "LSS_N20_K2_2X",
+          "LSS_N20_K3_1X", "LSS_N20_K3_2X", "LSS_N50_K1_1X", "LSS_N50_K1_2X",
+          "LSS_N50_K2_1X", "LSS_N50_K2_2X", "LSS_N50_K3_1X", "LSS_N50_K3_2X",
+          "LSS_N20_EW_2X", "LSS_RAND_K2_2X"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "S3_reference_for_K1_K2",
+        "LSS_N20_EW_2X_no_stock_picking_control",
+        "LSS_RAND_K2_2X_random_pick_placebo",
+        "SHY_cash_remainder"
+      ]
+    }
+  ],
+  "total_candidate_budget": 14,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_34_levered_single_stock/candidate-manifest.json",
+  "candidate_manifest_sha256": "760398b2b6be3b66f6466bbf7bf0859d9b572c049e07aedd1c7203eb6a12a1ba",
+  "data_feasibility_path": "reports/research/iterations/h20260929_34_levered_single_stock/data-feasibility.json",
+  "data_feasibility_sha256": "0f5e6435985805905a5a07630876d78726d4fa4e56c9da2ebb5a2fcbe5bc08aa",
+  "cost_table_path": "reports/research/iterations/h20260929_34_levered_single_stock/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_34_levered_single_stock/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_34_levered_single_stock/report.md",
+    "reports/research/iterations/h20260929_34_levered_single_stock/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": ["2016-05-02", "2023-09-15"],
+    "anchor": ["2024-01-08", "2026-09-17"],
+    "holdout_2026_contaminated": ["2026-01-02", "2026-09-17"]
+  },
+  "keep_rule": {
+    "K1": "net-10bp median-offset (21 monthly offsets) Sharpe >= 1.1882 anchor AND >= 0.6447 stress, positive 20bp CAGR both windows. 12 mechanism candidates only.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows. 12 mechanism candidates only.",
+    "watch_recent": "anchor-window Sharpe >= 1.1882 but stress does not clear its bar -- forward-tracked only. 12 mechanism candidates only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress).",
+    "placebo_and_control_internal_falsification": "a mechanism candidate otherwise clearing K1 or K2 is demoted to not_kept if LSS_N20_EW_2X or LSS_RAND_K2_2X's judged anchor Sharpe >= its own judged anchor Sharpe.",
+    "pass_requires": "K1 OR K2, mechanism candidates only, subject to placebo/control demotion.",
+    "multiple_comparisons": "This iteration's own n_trials=14 (12 mechanism + 1 equal-weight control + 1 random placebo). A manual 12-candidate-only DSR is additionally reported in report.md."
+  }
+}

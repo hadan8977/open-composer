@@ -1,0 +1,134 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "driver": "brief_preregistered_session_alignment_and_long_only_scope",
+      "effect": "Crypto is sampled only at the US equity session (09:30/16:00 ET), not continuously, and no candidate ever shorts a coin (Liu-Tsyvinski-Wu's own long-short design is dropped in favor of an absolute-momentum-filtered long-only top-3 rotation).",
+      "revision": "crypto_trend_12_primary_plus_1_rand_placebo"
+    },
+    {
+      "driver": "ssrn_5209907_403_blocked_exact_windows_unrecoverable",
+      "effect": "BTC_DONCHIAN_ENSEMBLE / BTC_DONCHIAN_ENSEMBLE_VT40 / CRYPTO_DONCHIAN_TOP3 use a self-constructed geometric lookback ladder (7/14/21/31/45/66/97/138/200 sessions) as a labeled approximation of the paper's own 'nine different lookback periods', not the literal published windows.",
+      "revision": "donchian_ensemble_approximate_window_ladder"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_33_crypto_trend.jsonl"
+  ],
+  "decision": "proceed",
+  "existing_solution_comparison": "dir:crypto_trend_btc (evidence_too_weak under the pre-2026-09-28 keep bar) and dir:crypto_xs_momentum (evidence_too_weak, long-short design + stale sample) are reopened under the owner's 2026-09-28 relaxed keep bar and 2026-09-29 full-Alpaca-scope ruling -- see direction-review.json existing_solution_comparison for the full reasoning; this is a new judgment standard on the same published numbers, not new market data.",
+  "hypothesis_links": [
+    "H1"
+  ],
+  "iter_id": "h20260929_33_crypto_trend",
+  "negative_experiments_checked": "dir:crypto_trend_btc, dir:crypto_xs_momentum (both cited above); Bitwise BTOP live record (adjacent cautionary evidence, similar EMA-trend mechanism on CME futures discontinued 2026-05-29 despite a positive reported return).",
+  "objective": "Preregister 13 candidates for T-20260929-33: published crypto trend/momentum rules (Alpaca spot, long-only) under the K1/K2/watch_recent keep rule, using scripts/screen_batch.py --batch h20260929_33_crypto_trend --iteration h20260929_33_crypto_trend. No return, Sharpe or backtest number is computed in this dossier.",
+  "schema_version": 3,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "zarattini_pagani_barbon_2025_crypto_trend",
+      "source_card_path": "reports/harness/source_cards/h20260929_33_crypto_trend.jsonl"
+    },
+    {
+      "claim_id": "quantpedia_btc_trend_revisit_2024",
+      "source_card_path": "reports/harness/source_cards/h20260929_33_crypto_trend.jsonl"
+    },
+    {
+      "claim_id": "bitwise_btop_liquidation",
+      "source_card_path": "reports/harness/source_cards/h20260929_33_crypto_trend.jsonl"
+    },
+    {
+      "claim_id": "alpaca_crypto_fee_schedule",
+      "source_card_path": "reports/harness/source_cards/h20260929_33_crypto_trend.jsonl"
+    },
+    {
+      "claim_id": "alpaca_crypto_supported_coins",
+      "source_card_path": "reports/harness/source_cards/h20260929_33_crypto_trend.jsonl"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+  "sources": [
+    {
+      "core_claim": "BTC Donchian-channel-ensemble trend strategy + volatility-based sizing: Sharpe ratio above 1.5, annualized alpha 10.8% vs Bitcoin, net of fees.",
+      "credibility": "author-affiliated secondary page for SSRN 5209907 (full text 403-blocked); cross-checked in a prior round against two further author-affiliated mirrors (Substack, personal academic page) which agreed",
+      "project_applicability": "Primary basis for BTC_DONCHIAN_ENSEMBLE and CRYPTO_DONCHIAN_TOP3; exact lookback windows not recoverable, so implementation is a labeled approximation.",
+      "published_or_updated_at": "2025-05-06",
+      "reflection": "Single-author-family source; no independent replication of the exact numbers found. Cost/fee assumption in the paper is unconfirmed vs this project's frozen 10bp/20bp contract -- reported as a methodology difference, not reconciled.",
+      "source_type": "paper",
+      "url": "https://concretumgroup.com/catching-crypto-trends-a-tactical-approach-for-bitcoin-and-altcoins/"
+    },
+    {
+      "core_claim": "SSRN listing for 'Catching Crypto Trends; A Tactical Approach for Bitcoin and Altcoins' by Zarattini, Pagani, Barbon, Swiss Finance Institute working paper series.",
+      "credibility": "primary source page (403/Cloudflare-blocked on direct fetch both this round and 2026-09-23; existence and metadata only, full text unread)",
+      "project_applicability": "Confirms the paper's existence, authorship and posting date independent of the Concretum mirror.",
+      "published_or_updated_at": "2025-05-06",
+      "reflection": "Full text still unread; a genuine evidence gap, not resolved this round.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5209907"
+    },
+    {
+      "core_claim": "Liu-Tsyvinski-Wu cross-sectional crypto momentum: weekly VW long-short quintile returns 2.5-4.1% over 1-4 week horizons, sample 2014-2018.",
+      "credibility": "primary NBER working paper, fully read in the prior 2026-09-23 intel round (reports/research/intel/I-20260923-02-hf-crypto-model-verification.md)",
+      "project_applicability": "Academic backing that crypto momentum exists; motivates CRYPTO_XS_TOP3_EW/IVOL as a long-only-compatible reinterpretation (the paper's own design is long-short and its sample ends 2018, both disqualifying for a literal replication).",
+      "published_or_updated_at": "2019-05-01",
+      "reflection": "Stale sample (pre-2019) and a long-short design we cannot replicate (no crypto shorting) -- this round tests a different, long-only construction, not this paper's own rule.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w25882/w25882.pdf"
+    },
+    {
+      "core_claim": "BTC MAX (trend-following) strategy 'remains alive and well' out-of-sample Feb 2022-Aug 2024, while MIN (mean-reversion) decayed -- tested Oct 2015-Aug 2024.",
+      "credibility": "independent (non-author-affiliated) quant research blog, WebFetch summary only (not a raw snapshot)",
+      "project_applicability": "Independent qualitative corroboration that BTC trend-following specifically did not decay through the most recent tested window, supporting BTC_SMA200/BTC_TSMOM_* inclusion.",
+      "published_or_updated_at": "2024-06-01",
+      "reflection": "No exact Sharpe/CAGR/cost figures surfaced -- qualitative direction only, not a quantified benchmark.",
+      "source_type": "platform_docs",
+      "url": "https://quantpedia.com/revisiting-trend-following-and-mean-reversion-strategies-in-bitcoin/"
+    },
+    {
+      "core_claim": "Bitwise BTOP (10/20-day BTC EMA trend rotation, BTC/ETH CME futures vs T-bills), launched 2023-09-29, liquidated 2026-05-29 despite a reported positive since-inception return.",
+      "credibility": "issuer official site, WebSearch summary (liquidation notice)",
+      "project_applicability": "Adjacent cautionary evidence: a similar mechanism on a different venue did not survive as a live product -- cited as a caution in negative_experiments_checked, not a direct test of this iteration's rules.",
+      "published_or_updated_at": "2026-05-29",
+      "reflection": "Reason for closure undisclosed; return figure's cumulative-vs-annualized basis undisclosed. Does not by itself falsify the spot Donchian-ensemble mechanism (different signal, different venue).",
+      "source_type": "platform_docs",
+      "url": "https://btopetf.com/"
+    },
+    {
+      "core_claim": "Alpaca crypto maker/taker fee tiers: 0.15%/0.25% lowest tier ($0-100K 30d volume) down to 0.00%/0.10% highest tier ($100M+).",
+      "credibility": "broker official documentation",
+      "project_applicability": "Basis for this iteration's preregistered 30bp crypto-fee stress check (25bp taker + ~5bp assumed spread).",
+      "published_or_updated_at": "2025-09-24",
+      "reflection": "Real-money fee tier depends on the account's own 30-day volume, unknown for a hypothetical paper/live account -- lowest (worst-case) tier used conservatively.",
+      "source_type": "platform_docs",
+      "url": "https://docs.alpaca.markets/docs/crypto-fees"
+    },
+    {
+      "core_claim": "Alpaca USD-pair coin list: AAVE, AVAX, BAT, BCH, BTC, CRV, DOGE, DOT, ETH, GRT, LINK, LTC, MKR, SHIB, SUSHI, UNI, XTZ, YFI. SOL and XRP not listed.",
+      "credibility": "broker official support page",
+      "project_applicability": "Defines this iteration's 10-coin universe (BTC, ETH, LTC, BCH, LINK, DOGE, AVAX, UNI, AAVE, DOT -- the subset with Binance USDT history).",
+      "published_or_updated_at": "2024-06-01",
+      "reflection": "Page dated June 2024; not re-verified against a live API (no keys used per task rules) -- best available unauthenticated confirmation.",
+      "source_type": "platform_docs",
+      "url": "https://alpaca.markets/support/what-are-the-supported-coins-pairs"
+    },
+    {
+      "core_claim": "Binance publishes monthly historical kline (candlestick) archives per symbol/interval as public, keyless-downloadable zip files, used as this iteration's primary crypto price source.",
+      "credibility": "exchange official public data archive (used directly by scripts/fetch_crypto_session_prices.py)",
+      "project_applicability": "Data source for all 10 coins' 15-minute bars, from which session (09:30/16:00 ET) open/close prices are extracted.",
+      "published_or_updated_at": "unknown",
+      "reflection": "No SLA/support guarantee on archive continuity; a coin's archive starts at its own Binance listing date, not necessarily its Alpaca listing date or true market inception -- reported per-candidate as a stress-window depth limitation.",
+      "source_type": "platform_docs",
+      "url": "https://data.binance.vision/"
+    }
+  ],
+  "spec_hash": "ca29f6f8b7de3bf4cd7ccc2e7ca56f4850561386c9043213a35ba2b922f38ea6",
+  "strategy_name": "h20260929_33_crypto_trend",
+  "topic_coverage": [
+    "crypto_trend_mechanism_donchian_ensemble",
+    "crypto_cross_sectional_momentum",
+    "crypto_fee_schedule",
+    "crypto_universe_definition",
+    "volatility_targeting",
+    "negative_evidence_btop_liquidation",
+    "data_source_binance_coinbase_session_alignment"
+  ]
+}

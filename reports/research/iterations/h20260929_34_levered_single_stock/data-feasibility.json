@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_34_levered_single_stock_historical_evaluation_authorization",
+  "iter_id": "h20260929_34_levered_single_stock",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 14,
+    "evaluation_authorized_count": 14,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "levered_single_stock_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "LSS_N20_K1_1X",
+        "LSS_N20_K1_2X",
+        "LSS_N20_K2_1X",
+        "LSS_N20_K2_2X",
+        "LSS_N20_K3_1X",
+        "LSS_N20_K3_2X",
+        "LSS_N50_K1_1X",
+        "LSS_N50_K1_2X",
+        "LSS_N50_K2_1X",
+        "LSS_N50_K2_2X",
+        "LSS_N50_K3_1X",
+        "LSS_N50_K3_2X",
+        "LSS_N20_EW_2X",
+        "LSS_RAND_K2_2X"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "All required data is local: (1) the point-in-time megacap-liquidity menu (reports/research/iterations/h20260929_34_levered_single_stock/menu.parquet, built by scripts/build_h20260929_34_menu.py from data/sip/daily plus data/sip-delisted/daily plus data/sip-delisted/sp500_ticker_start_end_fja05680.csv, 6300 rows, 126 months 2016-04..2026-09, 134 unique symbols ever in the top 50); (2) BIL and SHY are already part of every screen_lane batch's base symbol set; (3) the synthetic L2_<SYM> series and any menu symbol missing from the currently-listed sip/daily archive (delisted since 2016) are constructed by this batch's own extend_panel hook from the same two local archives -- no external data dependency, no Alpaca live-trading-asset dependency for the historical evaluation itself."
+    }
+  },
+  "data_gaps_confirmed": {
+    "none": "No data gap blocks any of the 14 candidates. Menu build and panel extension both run entirely off the local SIP daily archive (2016-01 onward) and the local delisted-membership CSV; no new external download was required this round."
+  },
+  "required_reference_names": [
+    "candidate_spec",
+    "cost_contract",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260929_34_levered_single_stock.yaml",
+      "sha256": "2aa5ece78c70e49dc8d7ebb7f8e9cf0f5aa0bf7ba40c998ed44e259b7afb04f2"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260929_34_levered_single_stock/cost-contract.json",
+      "sha256": "749ffd9ee144d90f107df3b72ba338342c163a8dbb8a2e0b4dd97da88fea97f1"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl",
+      "sha256": "dce0b3f6dde72973d087d7ca09a46931a9881ae73159868a9c34b94086f8a64e"
+    }
+  },
+  "panel_source": "data/sip/daily/<year>/*.parquet (currently-listed) + data/sip-delisted/daily/*.parquet (delisted since 2016), loaded via screen_lane.load_batch_panel and this batch module's extend_panel hook (scripts/screen_batches/h20260929_34_levered_single_stock.py).",
+  "menu_source": "reports/research/iterations/h20260929_34_levered_single_stock/menu.parquet, built by scripts/build_h20260929_34_menu.py: for each month-end trading day, the top 50 S&P 500 constituents (per data/sip-delisted/sp500_ticker_start_end_fja05680.csv point-in-time membership) ranked by trailing-63-session median dollar volume (close*volume), computed using only data up to and including that month-end date.",
+  "coverage_vs_windows": {
+    "select_2023_09_18_to_2025_12_31": "fully covered",
+    "anchor_2024_01_08_to_2026_09_17": "fully covered",
+    "stress_2016_05_02_to_2023_09_15": "covered from 2016-05-02 with the exception of ~4 weeks at the very start (menu's first month-end with a full 63-session trailing dollar-volume window is 2016-04-29); handled the same way `window_actual_start`/`first_valid_signal_date` handle any candidate whose data starts partway through a nominal window -- not a data gap requiring a caveat beyond what screen_lane already reports per candidate."
+  },
+  "known_caveats": {
+    "liquidity_proxy_not_market_cap": "No local market-cap data exists; trailing 63-session median dollar volume is used as the size/liquidity proxy for 'megacap' menu construction. This is economically relevant to Alpaca executability but can diverge from a true market-cap ranking.",
+    "ticker_reuse_risk": "A ticker symbol present in the currently-listed sip/daily archive is assumed to be the same company throughout its S&P 500 membership interval(s) in the point-in-time CSV; ticker reuse by an unrelated company after a 2016+ delisting is a known but unmitigated data-quality risk, consistent with prior iterations that use the same local archives.",
+    "vt40_single_pass_proxy": "The vt40 volatility overlay is a single-pass proxy computed inside each candidate's own weights_fn (trailing 21-session realized vol of the current month's picks' historical returns, close-only, capped at 1.0x) rather than salvage.vol_scale's two-pass exact-simulated-book method, because screen_lane.ScreenCandidate.weights_fn receives only close, not open_. See cost-contract.json's vol_target_note."
+  },
+  "candidate_authorization": {
+    "candidate_count": 14,
+    "rows": [
+      {
+        "candidate_id": "LSS_N20_K1_1X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "6e20cb6e84d328577e69bafd13a40e5cb54665e11a8dbbef0753b3577c01f35a"
+      },
+      {
+        "candidate_id": "LSS_N20_K1_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "492ce89d104a4681e149de1c4875d91e35b43f08f8863e467704b69ffa0ff683"
+      },
+      {
+        "candidate_id": "LSS_N20_K2_1X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "9a958cdf9c4e79730aa5ead4e8c0345d06217c930fc93aa9d43803f6e09bcf4b"
+      },
+      {
+        "candidate_id": "LSS_N20_K2_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "0486b2022ec06f32276905dbbc208cfb780c0e6dfeb66b6df47c503e386cba96"
+      },
+      {
+        "candidate_id": "LSS_N20_K3_1X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "5ef3de4e9eb5b3b4c3a6efa6773d3fd0936897cc7c76e1232fae9ae453458803"
+      },
+      {
+        "candidate_id": "LSS_N20_K3_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "f4cfca2c951934d906c60b385357c88468cd880b25177cb2a50afe500e1e5860"
+      },
+      {
+        "candidate_id": "LSS_N50_K1_1X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "4c5ddb67df355bebeccb8dc23a6e0d882a61a47875cffb1f5e81a56fc4b0bafd"
+      },
+      {
+        "candidate_id": "LSS_N50_K1_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "ba794b19caca7493eb58c50dc1b42ef88ba9130166e6200562bbc3a24bbfd39d"
+      },
+      {
+        "candidate_id": "LSS_N50_K2_1X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "79c38c3207172831bdbdf0bcfc35d4d3eed83fe19386904584d5e287af3d54f2"
+      },
+      {
+        "candidate_id": "LSS_N50_K2_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "1f9971283427140db2b21c2cea1151950f0d1c51cf1ab34452135cd6dadd97c3"
+      },
+      {
+        "candidate_id": "LSS_N50_K3_1X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "d77a890c11e45bd921eb2b69ecbd69fe0da8d7fef047fe3999d9b986ecfd6cc1"
+      },
+      {
+        "candidate_id": "LSS_N50_K3_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "111cae9756f02be17d6e721d8bc9fa5430f33bc6157773e79d90e6b543c5ca66"
+      },
+      {
+        "candidate_id": "LSS_N20_EW_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "e1637bde634e2de2e771cb8edd1894831660fae46afa478d066e4fb0adc96140"
+      },
+      {
+        "candidate_id": "LSS_RAND_K2_2X",
+        "path": "levered_single_stock_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_symbols_locally_present",
+        "candidate_binding_sha256": "7ccc60d408b40a2bc545769d3b3ea185c3e343f0a1c73d1c1cdbe2c3742cfaae"
+      }
+    ]
+  }
+}

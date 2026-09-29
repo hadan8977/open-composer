@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_34_levered_single_stock",
+  "reviewed_at": "2026-09-29T07:35:00+00:00",
+  "decision": "proceed",
+  "objective": "T-20260929-34: does an individual-stock version of S3 (us_etf_levered_rotation_63_top2_monthly) -- top 1-3 names by 63-day momentum out of a point-in-time megacap-by-liquidity menu (top 20 or top 50 S&P 500 constituents by trailing 63-session median dollar volume), absolute-momentum filtered, on a synthetic daily-reset 2x series, with the same vt40 (40% target) volatility overlay S3 uses -- clear K1 (anchor+stress Sharpe both >= 80% of S3's own) on its own, or add K2 value (>=0.05 Sharpe edge both windows) when blended with S3? Run as one screen_batch pass (14 preregistered candidates: 12 mechanism cells + 1 equal-weight-no-picking control + 1 random-pick placebo), per the queue's full-Alpaca-scope task list (commit 75e4ab1).",
+  "existing_solution_comparison": "`oc research directions check single stock leverage`, `check momentum top stocks`, and `check concentrated momentum` (all run before any new work) surface two directly relevant prior local results, no exact repeat: (1) dir:equity_momentum_concentrated_pwb, tested as momentum_concentrated_k37 -- unlevered top-37 concentrated momentum on the broad top-500 universe -- failed both K1 (anchor 1.03 vs 1.19 bar, stress 0.51 vs 0.65 bar) and K2 (-0.143/-0.071 edge, need >=0.05). This is the closest prior local test of the core stock-picking mechanism, but it is not this design: k there is 37 (not 1-3, the brief's specific ask), the universe is the broad top-500 by an unspecified liquidity/size proxy (not a megacap-by-dollar-volume menu), and there is no leverage or vt40 overlay. (2) dir:levered_single_asset_sma_trend_gate -- a different mechanism (SMA trend gate, not momentum ranking) on existing leveraged index ETFs (TQQQ/SOXL/UPRO/USD/TECL, not single stocks) -- refuted by a calendar-shift placebo beating the real gate in 100% of seeds; the whole 40-cell leveraged-trend family was voided. Neither result directly tests 'concentrated top-1/2/3 megacap momentum on a synthetic 2x single-stock series with vt40', so this is treated as a new, narrower design point on the direction-registry's own reopen convention (a materially different mechanism/parameterization, not the same untested claim), not a re-run of an already-refuted route. `grep -ril -E \"single.stock|levered|NVDL|megacap\" reports/research/control reports/research/iterations reports/research/ledger` returned no iteration testing this specific combination (individual-stock + leverage + concentrated top-1/2/3 + vt40); the closest hits are the two registry rows above, already reconciled. Given k37 (unlevered) already failed K1/K2 by a real margin, and the local + web evidence below is uniformly cautionary about leverage and concentration compounding each other's risk, the base rate for this design clearing the bar is treated as low going in -- this iteration is the cheapest way to find out rather than assume, since it reuses S3's entire frozen engine and adds only the menu, the L2 synthesis and the weights_fn logic (no new simulator).",
+  "target_regime_and_horizon": "Frozen screen_lane windows unchanged: select 2023-09-18..2025-12-31, anchor 2024-01-08..2026-09-17, holdout 2026-01-02..2026-09-17 (contaminated, reference only), stress 2016-05-02..2023-09-15. Menu coverage starts ~2016-04 (first month with a full 63-session trailing dollar-volume window on the local SIP archive, which begins 2016-01), so the stress window is fully covered except its first ~2 months; `window_actual_start` in screen_lane handles this the same way it handles any candidate whose `first_valid_signal_date` is later than a window's nominal start.",
+  "remaining_evidence_gap": "No market-cap data is available locally (only price/volume), so trailing 63-session median dollar volume is used as the size/liquidity proxy for 'megacap' -- this can diverge from an actual market-cap ranking (e.g. a high-float, high-turnover mid-cap could occasionally outrank a lower-turnover megacap); noted in data-feasibility.json and the candidate manifest, not treated as a blocker since dollar volume is itself economically relevant (it is what determines actual executability/impact at size on Alpaca). The vt40 overlay is a single-pass close-only proxy (see cost-contract.json), not the exact two-pass method S3 itself uses; expected to be close but not numerically identical for a low-turnover monthly book -- if a candidate is close to a keep-tier bar, this is flagged as a follow-up item rather than silently accepted. Piras's SSRN full text and the MDPI LETF paper's full text are both paywalled/blocked (WebFetch 403 on both); both claims rest on WebSearch snippet summaries only, same convention as the h20260929_10 iteration's own SSRN handling.",
+  "negative_experiments_checked": "dir:equity_momentum_concentrated_pwb (momentum_concentrated_k37, refuted -- K1 and K2 both fail by a real margin, unlevered top-37/top-500) and dir:levered_single_asset_sma_trend_gate (refuted -- calendar-shift placebo beats the real signal 100% of seeds, different mechanism/instruments). Neither is a repeat of this iteration's specific design (see existing_solution_comparison); both are the closest, most relevant local negative evidence and materially inform the preregistered controls (equal-weight-no-picking control + random-pick placebo, not just a calendar-shift placebo, since the trend-gate family's failure mode was specifically a placebo-beats-signal pattern).",
+  "cost_and_execution_assumptions": "See cost-contract.json: 10bp/20bp per side, close-signal -> next-open fill (unchanged screen_lane contract); 2x leverage expressed via a synthetic daily-reset series with a conservative 2.5%/year financing spread (below Alpaca's own documented 5.00-6.50% margin rate, source-carded, not adjusted after any result); vt40 volatility overlay as a preregistered single-pass proxy.",
+  "queries": [
+    {
+      "query": "FINRA SEC warning single-stock leveraged ETF volatility decay daily reset",
+      "opened_urls": [
+        "https://www.finra.org/rules-guidance/notices/09-31",
+        "https://www.sec.gov/newsroom/speeches-statements/crenshaw-single-stock-etfs-20220711"
+      ],
+      "searched_at": "2026-09-29T07:20:00+00:00"
+    },
+    {
+      "query": "concentrated momentum portfolio top 5 stocks academic study Sharpe drawdown",
+      "opened_urls": [
+        "https://quantpedia.com/strategies/momentum-effect-in-stocks-in-small-portfolios",
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3695892"
+      ],
+      "searched_at": "2026-09-29T07:21:00+00:00"
+    },
+    {
+      "query": "Alpaca margin interest rate Reg T overnight leverage",
+      "opened_urls": [
+        "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+      ],
+      "searched_at": "2026-09-29T07:22:00+00:00"
+    },
+    {
+      "query": "Daniel Moskowitz Momentum crashes Journal of Financial Economics abstract",
+      "opened_urls": [
+        "https://www.nber.org/papers/w20439"
+      ],
+      "searched_at": "2026-09-29T07:24:00+00:00"
+    },
+    {
+      "query": "Beyond Volatility Decay leveraged ETF expected return MDPI abstract findings",
+      "opened_urls": [
+        "https://www.mdpi.com/1911-8074/19/1/20"
+      ],
+      "searched_at": "2026-09-29T07:25:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.finra.org/rules-guidance/notices/09-31",
+      "claim_id": "finra_notice_09_31_leveraged_reset_unsuitable",
+      "claim": "Daily-reset leveraged/inverse ETFs typically unsuitable for retail investors holding beyond one session; compounding can sharply diverge long-run performance from the stated daily objective, magnified by higher volatility.",
+      "source_type": "regulatory_docs",
+      "published_or_updated_at": "2009-06-01",
+      "market_and_period": "US, general daily-reset leveraged/inverse ETFs.",
+      "applicability": "Direct motivation for the vt40 overlay and monthly (not daily) rebalance on the synthetic L2_ series.",
+      "limitations": "Pre-dates single-stock LETFs; general, not single-stock-specific.",
+      "independent_replication": "Consistent with dir:levered_single_asset_sma_trend_gate's own leveraged-instrument decay findings.",
+      "fetched_at": "2026-09-29T07:30:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_34_levered_single_stock/sources/finra-notice-09-31.html",
+      "sha256": "2fbc46fb06c0d8302f36a0a3dca49f8dc8bc66817884b12abeacb2ccd615019f",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    }
+  ],
+  "stop_condition": "K1: median-offset (21 monthly offsets) net-10bp anchor Sharpe >= 1.1882 (80% of S3's 1.4853) and stress Sharpe >= 0.6447 (80% of S3's 0.8059), and net-20bp CAGR positive in both windows, for at least one of the 12 non-control, non-placebo candidates. K2: a 63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH anchor and stress windows. strong_keep: K2 edge >=0.10 both windows, or K1's Sharpe in both windows is >= S3's own (1.4853/0.8059). watch_recent: anchor-window Sharpe >=1.1882 but stress does not clear its bar (or has <2 years of stress-window data, flagged 'stress sample short'). Falsification: any of the 12 candidates that appears to clear K1 or K2 must beat LSS_N20_EW_2X (equal-weight-no-picking control) and LSS_RAND_K2_2X (random-pick placebo) on judged anchor Sharpe -- if not, demoted to 'not kept (no stock-picking increment / placebo replication)', same convention as h20260929_01_letf_flow_reversal's keep rule.",
+  "cheapest_decisive_test": {
+    "action": "Preregister 14 candidates (12 mechanism cells: N in {20,50} x k in {1,2,3} x leverage in {1x,2x}, all 63-day momentum + absolute-momentum filter + vt40; 1 equal-weight-no-picking control top-20/2x/vt40; 1 deterministic random-pick placebo top-20-menu/k=2/2x/vt40) and run scripts/screen_batch.py --batch h20260929_34_levered_single_stock --iteration h20260929_34_levered_single_stock, reusing S3's entire frozen engine (salvage.simulate/legs, screen_lane's windows/cost/K1-K2/DSR machinery) unedited -- the only new code is the point-in-time menu build, the synthetic L2 series (extend_panel hook) and the weights_fn selection/vt40-proxy logic.",
+    "pass_condition": "At least one of the 12 non-control, non-placebo candidates clears K1 or K2 AND beats both LSS_N20_EW_2X and LSS_RAND_K2_2X on judged anchor Sharpe.",
+    "falsification_condition": "No candidate clears K1 or K2, or every apparent-clearing candidate is matched or beaten by LSS_N20_EW_2X or LSS_RAND_K2_2X on judged anchor Sharpe.",
+    "max_compute_minutes": 30
+  }
+}

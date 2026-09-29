@@ -1,0 +1,15 @@
+{
+  "borrow_or_financing": "none (long-only crypto spot + SHY, no leverage, no shorting)",
+  "commission_pct": 0.0,
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal)",
+  "crypto_fee_check_bps_per_side": 30.0,
+  "crypto_fee_check_note": "Preregistered secondary check (brief-mandated): 25bp Alpaca lowest-tier crypto taker (docs.alpaca.markets/docs/crypto-fees, confirmed 2026-09-29) + ~5bp assumed spread = 30bp per side, applied to every candidate's full return series (crypto legs and SHY remainder alike, for simplicity -- SHY's own cost is negligible since SHY rarely turns over) via the same screen_lane cost-application code path with COST_BPS_PRIMARY/STRESS overridden to 30.0, computed only for candidates that clear K1 or K2 at 10bp. Reported in report.md, not in screen_batch.py's own leaderboard.json (frozen contract unedited there).",
+  "fill_assumption": "next_bar_open",
+  "iter_id": "h20260929_33_crypto_trend",
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0
+}

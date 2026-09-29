@@ -1,0 +1,450 @@
+{
+  "candidate_count": 13,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_BUYHOLD",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_buy_and_hold",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "D",
+        "rule": "weight BTCUSD=1.0 always",
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "benchmark_and_k2_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "sma_window_138_session_equiv_200cd",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_SMA200",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_sma_filter",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "D",
+        "rule": "hold BTCUSD=1.0 if close>SMA(138) else SHY",
+        "sma_window_sessions": 138,
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "lookback_21_session_equiv_1cm",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_TSMOM_1M",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_time_series_momentum",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 21,
+        "rule": "hold BTCUSD=1.0 if ret(21)>0 else SHY, monthly rebalance",
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "lookback_62_session_equiv_3cm",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_TSMOM_3M",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_time_series_momentum",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 62,
+        "rule": "hold BTCUSD=1.0 if ret(62)>0 else SHY, monthly rebalance",
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "lookback_124_session_equiv_6cm",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_TSMOM_6M",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_time_series_momentum",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 124,
+        "rule": "hold BTCUSD=1.0 if ret(124)>0 else SHY, monthly rebalance",
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_DONCHIAN_ENSEMBLE",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_donchian_ensemble_zarattini_pagani_barbon_2025_approx",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "D",
+        "lookback_windows_sessions": [
+          7,
+          14,
+          21,
+          31,
+          45,
+          66,
+          97,
+          138,
+          200
+        ],
+        "rule": "fraction of 9 Donchian channels in breakout-up state, weight=that fraction",
+        "source_card": "zarattini_pagani_barbon_2025_crypto_trend",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "primary_deterministic_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "vt40_21_session_realized_vol",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_DONCHIAN_ENSEMBLE_VT40",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_donchian_ensemble_zarattini_pagani_barbon_2025_approx",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "D",
+        "lookback_windows_sessions": [
+          7,
+          14,
+          21,
+          31,
+          45,
+          66,
+          97,
+          138,
+          200
+        ],
+        "rule": "BTC_DONCHIAN_ENSEMBLE weight * min(1, 0.40/realized_annualized_vol(21))",
+        "source_card": "zarattini_pagani_barbon_2025_crypto_trend",
+        "universe": [
+          "BTCUSD"
+        ],
+        "vol_target_annual": 0.4,
+        "vol_window_sessions": 21
+      },
+      "path": "crypto_trend_screen",
+      "role": "vol_target_variant",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "CRYPTO_DONCHIAN_TOP3",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "crypto_donchian_top3_rotation",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_windows_sessions": [
+          7,
+          14,
+          21,
+          31,
+          45,
+          66,
+          97,
+          138,
+          200
+        ],
+        "rule": "rank coins by Donchian-ensemble breakout fraction, equal-weight top 3 with positive score, else SHY, monthly",
+        "source_card": "zarattini_pagani_barbon_2025_crypto_trend",
+        "top_n": 3,
+        "universe": [
+          "BTCUSD",
+          "ETHUSD",
+          "LTCUSD",
+          "BCHUSD",
+          "LINKUSD",
+          "DOGEUSD",
+          "AVAXUSD",
+          "UNIUSD",
+          "AAVEUSD",
+          "DOTUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "multi_coin_variant",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_ETH_DUAL_MOM",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "btc_eth_dual_momentum",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 62,
+        "rule": "relative momentum picks higher-62-session-return of BTC/ETH, absolute momentum filter (positive) gates to SHY",
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD",
+          "ETHUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "equal_weight",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "CRYPTO_XS_TOP3_EW",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "crypto_cross_sectional_momentum_top3",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 63,
+        "rule": "top-3 by 63-session return among coins with positive 63-session return, equal-weight, else SHY, monthly",
+        "source_card": "n/a",
+        "top_n": 3,
+        "universe": [
+          "BTCUSD",
+          "ETHUSD",
+          "LTCUSD",
+          "BCHUSD",
+          "LINKUSD",
+          "DOGEUSD",
+          "AVAXUSD",
+          "UNIUSD",
+          "AAVEUSD",
+          "DOTUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "cross_sectional_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "inverse_vol_weight",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "CRYPTO_XS_TOP3_IVOL",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "crypto_cross_sectional_momentum_top3",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 63,
+        "rule": "same top-3 selection as CRYPTO_XS_TOP3_EW, weighted by inverse 21-session realized vol (normalized to sum<=1), else SHY, monthly",
+        "source_card": "n/a",
+        "top_n": 3,
+        "universe": [
+          "BTCUSD",
+          "ETHUSD",
+          "LTCUSD",
+          "BCHUSD",
+          "LINKUSD",
+          "DOGEUSD",
+          "AVAXUSD",
+          "UNIUSD",
+          "AAVEUSD",
+          "DOTUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "cross_sectional_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "equal_weight_vt40_21_session_realized_vol",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "CRYPTO_XS_TOP3_EW_VT40",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": true,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "crypto_cross_sectional_momentum_top3",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "M",
+        "lookback_sessions": 63,
+        "rule": "CRYPTO_XS_TOP3_EW weights * min(1, 0.40/realized_annualized_vol(book,21))",
+        "source_card": "n/a",
+        "top_n": 3,
+        "universe": [
+          "BTCUSD",
+          "ETHUSD",
+          "LTCUSD",
+          "BCHUSD",
+          "LINKUSD",
+          "DOGEUSD",
+          "AVAXUSD",
+          "UNIUSD",
+          "AAVEUSD",
+          "DOTUSD"
+        ],
+        "vol_target_annual": 0.4,
+        "vol_window_sessions": 21
+      },
+      "path": "crypto_trend_screen",
+      "role": "vol_target_variant",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "benchmark_v1_crypto_trend_vs_s3_k1_k2",
+      "candidate_id": "BTC_RAND_PLACEBO",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_plus_crypto_session_panel",
+      "eligible_for_keep_tiers": false,
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_trend_momentum_signals",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "method": "deterministic_pseudo_random_timing",
+      "parameters": {
+        "family": "crypto_trend",
+        "freq": "D",
+        "rule": "deterministic PRNG (seed 20260929) holds BTCUSD=1.0 on a random subset of sessions, matched in rate to BTC_SMA200's own live-fraction, else SHY",
+        "seed": 20260929,
+        "source_card": "n/a",
+        "universe": [
+          "BTCUSD"
+        ]
+      },
+      "path": "crypto_trend_screen",
+      "role": "internal_falsification_control",
+      "spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "benchmark_v1_crypto_trend_vs_s3_k1_k2": "K1 (judged Sharpe >=1.19 anchor / >=0.65 stress at 10bp, positive 20bp CAGR both windows) / K2 (63-session inverse-vol blend with S3 beats vol-matched S3+SHY control by >=0.05 Sharpe both windows) / strong_keep (K2 edge>=0.10, or K1 Sharpe in both windows >= S3's own 1.49/0.81) / watch_recent (anchor Sharpe>=1.19, stress unmet or unavailable), all also required to hold at the 30bp crypto-fee check. Only the 12 non-placebo candidates are keep-eligible."
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": "10bp per side primary, 20bp per side stress, screen_lane.py COST_BPS_PRIMARY/STRESS (unedited).",
+      "cost_v2_30bps_crypto_fee_check": "Preregistered secondary check: 30bp per side (25bp Alpaca lowest-tier crypto taker + ~5bp assumed spread) applied via the same screen_lane evaluation functions with COST_BPS_PRIMARY/STRESS overridden, for any candidate that clears K1/K2 at 10bp -- report.md only, not screen_batch.py's own leaderboard."
+    },
+    "data": {
+      "data_v1_sip_daily_plus_crypto_session_panel": "SHY daily bars, data/sip/daily/*/*.parquet (local SIP archive, no new fetch); 10-coin crypto session-aligned open/close, data/research/crypto/session_prices.parquet (built this iteration by scripts/fetch_crypto_session_prices.py from Binance monthly klines and, for BTC/ETH, a Coinbase Exchange public-candles backfill to 2016-05, no API keys), supplied to the panel via screen_lane.apply_panel_extension."
+    },
+    "features": {
+      "feature_v1_trend_momentum_signals": "SMA filter, time-series momentum, Donchian-ensemble breakout fraction, cross-sectional 63-session momentum rank, and 21-session realized-vol vt40 scaling, all computed from close.loc[:asof] only inside scripts/screen_batches/h20260929_33_crypto_trend.py -- no look-ahead."
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": "Signal at session close -> fill at next session's open, both entry and exit; frozen project contract, unedited."
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": "screen_lane.py frozen select 2023-09-18..2025-12-31 / anchor 2024-01-08..2026-09-17 / holdout 2026-01-02..2026-09-17 (contaminated) / stress 2016-05-02..2023-09-15 windows; D freq for daily-evaluated rules, M freq (21-offset sweep, judged by median) for monthly-rebalanced rules."
+    }
+  },
+  "generated_at": "2026-09-29T07:23:56.717148+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "h20260929_33_crypto_trend",
+  "keep_rule": "K1: judged (freq=D) or median-offset (freq=M) net-10bp anchor Sharpe>=1.19 and stress Sharpe>=0.65 (or, for <2yr stress coverage, computed on the available subsample and labeled 'stress sample short'; <2yr labeled 'stress period pending'), positive 20bp CAGR both windows, AND the same tier still holds at the 30bp crypto-fee check. K2: diversifier judged_edge>=0.05 both anchor and stress, also holding at 30bp. strong_keep: K2 edge>=0.10, or K1 Sharpe in both windows >= S3's own 1.49/0.81. watch_recent: anchor Sharpe>=1.19 (10bp) but stress unmet -- not required to hold at 30bp (not a keep tier). Any apparent K1/K2 clearer beaten or matched by BTC_RAND_PLACEBO on judged anchor Sharpe demotes to not_kept.",
+  "objective": "Preregister 13 candidates for T-20260929-33: published crypto trend/momentum rules (Alpaca spot, long-only) under the K1/K2/watch_recent keep rule, using scripts/screen_batch.py --batch h20260929_33_crypto_trend --iteration h20260929_33_crypto_trend. No return, Sharpe or backtest number is computed in this dossier.",
+  "source_spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+  "spec_hash": "ca29f6f8b7de3bf4cd7ccc2e7ca56f4850561386c9043213a35ba2b922f38ea6",
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_33_crypto_trend.yaml": "ca29f6f8b7de3bf4cd7ccc2e7ca56f4850561386c9043213a35ba2b922f38ea6"
+  },
+  "strategy_name": "h20260929_33_crypto_trend",
+  "trial_count_and_dsr_note": "n_trials=13 as computed automatically by scripts/screen_batch.py (includes the placebo); report.md also states a manual 12-candidate (non-placebo) DSR."
+}

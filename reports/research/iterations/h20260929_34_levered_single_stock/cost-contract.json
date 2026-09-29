@@ -1,0 +1,15 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260929_34_levered_single_stock",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "1x candidates: none (long-only real stock or cash). 2x candidates: synthetic daily-reset leverage embedded in the L2_<SYM> price series itself -- close_L(t) = close_L(t-1) * (1 + 2*r_cc(t) - rf_d(t) - fin_d), rf_d = BIL daily return (proxy for the risk-free/borrow reference rate on the incremental 1x notional), fin_d = 2.5%/year / 252 (fixed margin-spread assumption per the brief). This is deliberately conservative relative to Alpaca's own documented 5.00-6.50% margin interest rate (alpaca_margin_docs_reg_t_2x_overnight, reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl) -- not adjusted after seeing any result.",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal), same as every other screen_lane batch -- turnover on a 2x candidate is computed on the weight of the L2_<SYM> position itself (not doubled again), matching how any other instrument's weight is costed in this harness.",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)",
+  "vol_target_note": "vt40 (target=0.40 annualized) is a single-pass proxy computed inside each candidate's weights_fn from the trailing 21-session close-to-close realized volatility of the CURRENT month's picks' own historical return series (capped at 1.0x, down-only) -- not `salvage.vol_scale`'s two-pass exact-simulated-book calculation, because `screen_lane.ScreenCandidate.weights_fn` receives only `close`, not `open_`, so the harness cannot re-simulate the actual executed book inside the signal function. This simplification is preregistered in direction-review.json before any return was computed, not chosen after seeing a result.",
+  "note_vs_s3": "S3's own live vt40 (H-20260922-02) uses the two-pass exact method (salvage.vol_scale on the actually-simulated, cost-inclusive book). This iteration's proxy is expected to track it closely for a monthly-rebalanced, low-turnover-between-rebalances book, but is not numerically identical; reported as a methodology difference, not adjusted for."
+}

@@ -1,0 +1,158 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260929_34_levered_single_stock",
+  "strategy_name": "h20260929_34_levered_single_stock",
+  "objective": "T-20260929-34: individual-stock, synthetic-2x-leveraged, concentrated (top 1-3), point-in-time-megacap-menu version of S3's 63-day-momentum/vt40 mechanism -- K1/K2 keep-tier screen plus a stock-picking increment test against an equal-weight control and a random-pick placebo.",
+  "source_spec_path": "strategy_specs/drafts/h20260929_34_levered_single_stock.yaml",
+  "spec_hash": "c432c04a676c5e31bf4a707726dbc866710b8b702fcb0629e29b54fcf412a592",
+  "sources": [
+    {
+      "claim_id": "finra_notice_09_31_leveraged_reset_unsuitable",
+      "url": "https://www.finra.org/rules-guidance/notices/09-31",
+      "published_or_updated_at": "2009-06-01",
+      "source_type": "regulatory_notice",
+      "credibility": "primary_regulator_notice",
+      "core_claim": "Daily-reset leveraged/inverse ETFs typically unsuitable beyond one session; compounding can sharply diverge long-run performance from the stated daily objective, magnified by volatility.",
+      "project_applicability": "Direct motivation for the vt40 overlay and monthly rebalance on the synthetic L2_ series.",
+      "reflection": "Pre-dates single-stock LETFs (2022); general, not single-stock-specific -- read as a mechanism warning, not a single-stock-specific finding."
+    },
+    {
+      "claim_id": "alpaca_margin_docs_reg_t_2x_overnight",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling",
+      "published_or_updated_at": "2026-09-01",
+      "source_type": "platform_docs",
+      "credibility": "primary_broker_own_documentation",
+      "core_claim": "Reg T gives 2x overnight leverage; Alpaca margin interest 5.00-6.50%/year on end-of-day debit balance; >=70%-concentrated single-security positions face a 50% maintenance margin rate above $100k balance.",
+      "project_applicability": "Grounds fin_d=2.5%/year as conservative vs Alpaca's real rate; flags the k=1 concentration-margin rule as an execution-feasibility caveat for a promotion-stage review.",
+      "reflection": "Single source, not cross-checked against a second Alpaca page this session; rates can change."
+    },
+    {
+      "claim_id": "quantpedia_momentum_small_portfolios_88pct_drawdown",
+      "url": "https://quantpedia.com/strategies/momentum-effect-in-stocks-in-small-portfolios",
+      "published_or_updated_at": "2026-01-01",
+      "source_type": "strategy_database_writeup",
+      "credibility": "third_party_backtest_writeup_with_stated_oos_cut",
+      "core_claim": "A 10-long/10-short concentrated momentum book: CAGR 32%, max drawdown -88.09%, OOS performance slightly negative.",
+      "project_applicability": "Quantitative evidence concentration inflates tail risk beyond this project's drawdown gate; motivates reporting max_dd for every candidate.",
+      "reflection": "Long-short 10/10, unlevered, no explicit cost model -- not this iteration's exact design; still the closest quantitative concentration-risk data point found."
+    },
+    {
+      "claim_id": "daniel_moskowitz_momentum_crashes_2016",
+      "url": "https://www.nber.org/papers/w20439",
+      "published_or_updated_at": "2016-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_financial_economics",
+      "core_claim": "Momentum strategies experience infrequent, forecastable crash clusters in panic states following market declines and high volatility.",
+      "project_applicability": "Academic grounding for the tail-risk mechanism a concentrated+leveraged momentum book magnifies; motivates explicit stress-window and max-drawdown reporting.",
+      "reflection": "Broad long-short factor construction, not this iteration's long-only top-k megacap-menu design; read for the mechanism, not a direct backtest analog."
+    },
+    {
+      "claim_id": "piras_concentrated_momentum_ssrn_via_search_snippet",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3695892",
+      "published_or_updated_at": "2020-08-01",
+      "source_type": "paper",
+      "credibility": "ssrn_working_paper_abstract_via_search_snippet_full_text_blocked",
+      "core_claim": "10-stock sector-neutral momentum: Sharpe 0.59 vs 0.38 equal-weighted; sub-10-name concentration statistically monotonic-positive on average but universe-dependent/noisy per realization.",
+      "project_applicability": "Closest on-topic academic evidence for the k=1..3 question; direct motivation for the equal-weight control and random-pick placebo.",
+      "reflection": "SSRN full text blocked (403 curl and WebFetch); claim rests on a WebSearch snippet, not the read primary text -- same handling as the h20260929_10 iteration's own blocked-SSRN precedent."
+    },
+    {
+      "claim_id": "mdpi_beyond_volatility_decay_letf_via_search_snippet",
+      "url": "https://www.mdpi.com/1911-8074/19/1/20",
+      "published_or_updated_at": "2025-12-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_risk_and_financial_management_via_search_snippet_full_text_blocked",
+      "core_claim": "Standard LETF expected-return disclosure methods materially mis-state true long-run expected return once realized-vol regime is accounted for; error magnified at higher leverage.",
+      "project_applicability": "Grounds reporting actual simulated backtest output rather than a formula-projected 2x scaling; supports relying on the vt40 overlay as the risk control.",
+      "reflection": "WebFetch returned 403; claim rests on a WebSearch snippet, not the read full text."
+    },
+    {
+      "claim_id": "sec_statement_single_stock_etfs",
+      "url": "https://www.sec.gov/newsroom/speeches-statements/crenshaw-single-stock-etfs-20220711",
+      "published_or_updated_at": "2022-07-11",
+      "source_type": "regulatory_statement_and_secondary_summary",
+      "credibility": "primary_regulator_statement_with_secondary_summary",
+      "core_claim": "Single-stock leveraged/inverse ETFs flagged as materially more volatility-drag-prone than index-level leveraged ETFs.",
+      "project_applicability": "Regulator-level caution specific to the single-stock-leverage mechanism this iteration synthesizes; supports restricting the universe to the liquid megacap menu.",
+      "reflection": "Policy statement, not an empirical study; the volatility-drag claim in the summary is asserted rather than independently derived from a dataset in the statement."
+    },
+    {
+      "claim_id": "dir_equity_momentum_concentrated_pwb_registry",
+      "url": "reports/research/iterations/h20260928_06_registry_stock_batch3/results.json",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_evaluation_result",
+      "core_claim": "Unlevered top-37 concentrated momentum, broad top-500: K1 fails (anchor 1.03 vs 1.19, stress 0.51 vs 0.65); K2 fails (-0.143/-0.071 vs >=0.05).",
+      "project_applicability": "Closest prior local test of the stock-picking mechanism; sets a cautious prior for this narrower/leveraged design, and directly informs the falsification controls preregistered here.",
+      "reflection": "Different k (37 vs 1-3), universe construction and no leverage/vt40 -- treated as adjacent evidence, not a direct repeat, per direction-review.json's existing_solution_comparison."
+    },
+    {
+      "claim_id": "dir_levered_single_asset_sma_trend_gate_registry",
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-23",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_evaluation_result",
+      "core_claim": "Leveraged single-asset SMA trend-gate family refuted; calendar-shift placebo beat the real signal in 100% of holdout seeds.",
+      "project_applicability": "Adjacent negative evidence that leveraged single-instrument exposure has repeatedly failed this project's own placebo tests; direct motivation for the random-pick placebo and equal-weight control.",
+      "reflection": "Different mechanism (SMA trend gate, not momentum ranking) and instruments (existing leveraged index ETFs, not synthetic single-stock)."
+    }
+  ],
+  "topic_coverage": [
+    "concentrated_momentum_academic_evidence",
+    "single_stock_leveraged_etf_regulatory_warnings",
+    "leveraged_etf_volatility_decay_mechanism",
+    "alpaca_margin_rules_and_financing_cost",
+    "momentum_crash_tail_risk",
+    "local_prior_art_concentrated_momentum_top37_refuted",
+    "local_prior_art_leveraged_single_asset_placebo_failure"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "web_and_local_evidence_uniformly_cautions_leverage_and_concentration_compound_each_others_risk",
+      "effect": "Kept the brief's own preregistered controls (equal-weight-no-picking top-20/2x/vt40, and a deterministic random-pick top-20/k=2/2x/vt40 placebo) as hard falsification gates -- any of the 12 mechanism cells that appears to clear K1/K2 must still beat both controls on judged anchor Sharpe, so a leverage-and-vol-target-driven Sharpe bump cannot be mistaken for a stock-picking edge.",
+      "revision": "h20260929_34_levered_single_stock_14_candidates_12_mechanism_plus_equal_weight_control_plus_random_placebo"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "finra_notice_09_31_leveraged_reset_unsuitable",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "alpaca_margin_docs_reg_t_2x_overnight",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "quantpedia_momentum_small_portfolios_88pct_drawdown",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "daniel_moskowitz_momentum_crashes_2016",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "piras_concentrated_momentum_ssrn_via_search_snippet",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "mdpi_beyond_volatility_decay_letf_via_search_snippet",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "sec_statement_single_stock_etfs",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "dir_equity_momentum_concentrated_pwb_registry",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    },
+    {
+      "claim_id": "dir_levered_single_asset_sma_trend_gate_registry",
+      "source_card_path": "reports/harness/source_cards/h20260929_34_levered_single_stock.jsonl"
+    }
+  ],
+  "hypothesis_links": ["H1", "H2"]
+}

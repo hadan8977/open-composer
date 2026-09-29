@@ -1,0 +1,60 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260929_33_crypto_trend/candidate-manifest.json",
+  "candidate_manifest_sha256": "6d866e1b0a21770c57c4ef5713ffb638e91efe463d2238278915890691abc625",
+  "cost_table_path": "reports/research/iterations/h20260929_33_crypto_trend/cost-contract.json",
+  "created_at": "2026-09-29T07:23:56.717148+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260929_33_crypto_trend/data-feasibility.json",
+  "data_feasibility_sha256": "500bc032dca8d36ad519f566804c84f84340bb67aa0930e5db01aa8f348380ff",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_33_crypto_trend/report.md",
+    "reports/research/iterations/h20260929_33_crypto_trend/results.json"
+  ],
+  "iter_id": "h20260929_33_crypto_trend",
+  "objective": "Preregister 13 candidates for T-20260929-33: published crypto trend/momentum rules (Alpaca spot, long-only) under the K1/K2/watch_recent keep rule, using scripts/screen_batch.py --batch h20260929_33_crypto_trend --iteration h20260929_33_crypto_trend. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "benchmark_family": [
+        "BTC_buy_and_hold",
+        "SHY_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ],
+      "candidate_count": 13,
+      "hypothesis_refs": [
+        "H1"
+      ],
+      "name": "crypto_trend_screen",
+      "parameters": {
+        "candidate_id": [
+          "BTC_BUYHOLD",
+          "BTC_SMA200",
+          "BTC_TSMOM_1M",
+          "BTC_TSMOM_3M",
+          "BTC_TSMOM_6M",
+          "BTC_DONCHIAN_ENSEMBLE",
+          "BTC_DONCHIAN_ENSEMBLE_VT40",
+          "CRYPTO_DONCHIAN_TOP3",
+          "BTC_ETH_DUAL_MOM",
+          "CRYPTO_XS_TOP3_EW",
+          "CRYPTO_XS_TOP3_IVOL",
+          "CRYPTO_XS_TOP3_EW_VT40",
+          "BTC_RAND_PLACEBO"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none",
+        "signal_on": "bar_close"
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/h20260929_33_crypto_trend.yaml",
+  "spec_hash": "ca29f6f8b7de3bf4cd7ccc2e7ca56f4850561386c9043213a35ba2b922f38ea6",
+  "strategy_name": "h20260929_33_crypto_trend",
+  "total_candidate_budget": 13,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_33_crypto_trend/trial-ledger.jsonl"
+  ]
+}
