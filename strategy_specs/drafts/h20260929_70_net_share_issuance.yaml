@@ -1,0 +1,105 @@
+name: h20260929_70_net_share_issuance
+description: 'Preregistered T-20260929-70 net share issuance test: NSI252 = ln(shares_t / shares_{t-252}) from PIT cover-page shares, low issuance long, ADV top-1500 pool; cheap IC gate first, then 8 long-only / long-short books. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- BIL
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 15
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 15
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_03:ma_target_drift
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  nsi252:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is ln(shares_t/shares_{t-252}) built by scripts/build_nsi_signal.py (data/features/nsi/nsi.parquet) and evaluated by open_composer.research.signal_card in rank mode.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_70_net_share_issuance
+  candidate_manifest_path: reports/research/iterations/h20260929_70_net_share_issuance/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_70_net_share_issuance/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_70_net_share_issuance.jsonl
+  source_card_claim_ids:
+  - quanterlab_2026_08_low_net_issuance_tie
+  parameter_space:
+    portfolio:
+    - long_bottom_quintile
+    - long_bottom_quintile_short_top_quintile_spy_hedged
+    rebalance:
+    - monthly
+    - quarterly
+    pool:
+    - adv_top_500
+    - adv_top_1500_price_ge_5
+  candidate_budget: 8
+  selection_objective: Continue past the IC gate only under the preregistered stop_condition; then runbook K1/K2/watch_recent tiers on median rebalance-offset Sharpe at 10 bp with 20 bp and borrow 0.5/3 percent sensitivities.
+  candidate_budget_note: 2 portfolios x 2 rebalance x 2 pools = 8 books, the whole trial count.
+  anti_overfit_notes:
+  - Cleaning rules (b)-(d) in scripts/build_nsi_signal.py and the IC continue conditions are frozen before any return is computed.
+  - Sign is preregistered (low issuance is long); no mirrored variant is a candidate.
+  - The 8 books are only built if the IC gate passes.
+  validation_plan:
+  - signal_card rank mode, top 1500 by ADV, next-open entry, 10/20 bp, shuffle placebo
+  - Newey-West t on 2024+ IC and IC after cross-sectional residualization on log dollar ADV and 12-1 momentum
+  - stage 2 via scripts/screen_batch.py with all rebalance offsets and DSR over 8 candidates
+notes:
+  intent: Test whether net share issuance ranks next-open returns in the top-1500 pool since 2024 after costs.
+  hypothesis_id: T-20260929-70
+  previous_link: dir:net_share_issuance_pontiff_woodgate_recent
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

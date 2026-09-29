@@ -1,0 +1,395 @@
+
+Data Platform/Data Lake/Traffic/Pageviews - Wikitech
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+		Navigation
+Main page
+Server admin log: Prod
+Admin log: RelEng
+Incident status
+Deployments
+SRE Team Help
+		Cloud VPS & Toolforge
+Cloud VPS portal
+Toolforge portal
+Request VPS project
+Admin log: Cloud VPS
+		wikitech.wikimedia.org
+Recent changes
+Special pages
+Village pump
+Search
+Search
+English
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+Beginning
+1
+Contained data
+Toggle Contained data subsection
+1.1
+Disambiguating abbreviations ending in “.m”
+1.2
+Differences to the pagecounts-raw dataset
+1.3
+Requests to the mobile site and requests from mobile devices or apps
+1.4
+Requests to the zero site and Wikipedia Zero requests
+2
+Availability
+Toggle Availability subsection
+2.1
+dumps.wikimedia.org
+2.2
+stat1007.eqiad.wmnet
+2.3
+Analytics cluster
+3
+Events and known problems since 2015-05-01
+4
+Idiosyncrasies
+Toggle Idiosyncrasies subsection
+4.1
+Capitalization is split up
+5
+See also
+6
+Notes
+Toggle the table of contents
+Data Platform/Data Lake/Traffic/Pageviews
+Page
+Discussion
+English
+Read
+View source
+View history
+Tools
+Tools
+move to sidebar
+hide
+		Actions
+Read
+View source
+View history
+		General
+What links here
+Related changes
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+		Print/export
+Create a book
+Download as PDF
+Printable version
+Appearance
+move to sidebar
+hide
+From Wikitech
+&lt; 
+Data Platform
+ | 
+Data Lake
+ | 
+Traffic
+See also the 
+pageviews API in AQS
+, available since the end of 2015
+.
+The public 
+pageviews
+ dataset has per-article and per-project view counts for all Wikimedia Foundation projects since May 2015.  It filters out as many spiders and bots as we can detect. In its domain_code column, explained below, it separates access through the desktop and mobile sites. The 
+Pageview definition
+ explains how we filter and count pageviews.
+This stream is owned by the 
+Analytics Team
+.
+Contained data
+(If you are familiar with the 
+pagecounts-raw
+ dataset, you might want to look at the 
+differences between those two datasets
+ right away.)
+The 
+pagecounts
+ or 
+pageviews
+ are gzipped text files holding hourly 
+per page
+ aggregates of pageviews, and 
+projectcounts
+ or 
+projectviews
+ are plain text files holding hourly 
+per domain-name
+[
+1
+]
+ aggregates at the project level.  The pagecounts and projectcounts files also include total response byte sizes at their respective aggregation level, but this was dropped from the pageviews and projectviews files because it wasn't very accurate.
+The time used in the filename is in UTC timezone refers to the end of the aggregation period, not the beginning.
+Both page and project files are made up of lines having 4 space-separated fields:
+domain_code page_title count_views total_response_size
+Field name
+Description
+domain_code
+Domain name of the request, abbreviated.
+The domain coding scheme in 
+pageviews
+, 
+pagecounts-all-sites
+, and 
+pagecounts-raw
+ is kept compatible on purpose, thus retaining quirks and inconsistencies in the coding scheme
+ (and perhaps adding to the confusion with new added complexity). Our apologies if the scheme looks a bit complex (it is), but codes are unambiguous, and are primarily for machine-reading. 
+Common trailing parts in the domain name have been abbreviated. The main inconsistency is: project 'wikipedia.org' doesn't add a suffix for project name, where 'wikibooks.org' adds .b., 'wiktionary.org' adds .k', etc. (the original scheme predates Wikimedia's mobile site). 
+Domain_code now can also be an abbreviation for mobile and zero domain names, in which case .m or .zero is inserted as second part of the domain name (just like with full domain name). E.g. 'en.m.v' stands for "en.m.wikiversity.org". (Again, as project Wikipedia is not coded in the abbreviation: 'en' stands for "en.wikipedia.org", and 'en.m' stands for "en.m.wikipedia.org".  
+Domain trailing part
+Coded as
+Database name
+.wikipedia.org
+*wiki
+(be careful about the other non-
+wikipedia sites using this however)
+.wikibooks.org
+.b
+*wikibooks
+.wiktionary.org
+.d
+*wiktionary
+.wikimediafoundation.org
+.f
+foundationwiki
+.wikimedia.org
+.m
+Only the following domains are considered
+commons.wikimedia.org
+meta.wikimedia.org
+incubator.wikimedia.org
+species.wikimedia.org
+strategy.wikimedia.org
+outreach.wikimedia.org
+usability.wikimedia.org
+quality.wikimedia.org
+commonswiki
+metawiki
+incubatorwiki
+specieswiki
+strategywiki
+outreachwiki
+usabilitywiki
+qualitywiki
+.m.${WHITELISTED_PROJECT}.org
+.mw
+ (See 
+explanation below
+)
+.wikinews.org
+.n
+*wikinews
+.wikiquote.org
+.q
+*wikiquote
+.wikisource.org
+.s
+*wikisource
+.wikiversity.org
+.v
+*wikiversity
+.wikivoyage.org
+.voy
+*wikivoyage
+.mediawiki.org
+.w
+mediawikiwiki
+.wikidata.org
+.wd
+wikidatawiki
+page_title
+For page-level files, it holds the title of the unnormalized part after 
+/wiki/
+ in the request URL (E.g.: 
+Main_Page
+, 
+Berlin
+).  The page title may also be extracted from the 
+title
+ or 
+page
+ query parameters, e.g. 
+/w/index.php?title=Main+Page
+.  The title will be URL-decoded and will formatted as a 
+canonical DBkey
+ with spaces replaced by underscores.
+For project-level files or when the title cannot be extracted, it is 
+-
+.
+count_views
+The number of times this page has been viewed in the respective hour.
+total_response_size
+The total response size caused by the requests for this page in the respective hour. This is a sum over field #7 of 
+ Cache log format fields
+.
+So for example a line
+en Main_Page 42 50043
+means 42 requests to "en.wikipedia.org/wiki/Main_Page", which
+accounted in total for 50043 response bytes. And
+de.m.voy Berlin 176 314159
+would stand for 176 requests to "de.m.wikivoyage.org/wiki/Berlin",
+which accounted in total for 314159 response bytes.
+Each 
+domain_code
+ and 
+page_title
+ pair occurs at most once.
+The file is sorted by 
+domain_code
+ and 
+page_title
+.
+Disambiguating abbreviations ending in “.m”
+The are two ways for an abbreviation to end in 
+.m
+. Either because the domain is a whitelisted project on 
+wikimedia.org
+ (like 
+commons.wikimedia.org
+ being abbreviated to 
+commons.m
+), or the domain is the mobile site of wikipedia (like 
+en.m.wikipedia.org
+ being abbreviated to 
+en.m
+).
+Since the whitelisted 
+wikimedia.org
+ projects (see abbreviation table above) never match a language code on wikipedia, the mapping between domain name and abbreviation is bijective.
+While this solution requires an 
+if
+ for the edge case of "Summing up pageviews across all mobile sites", it allows to stay compatible with 
+pagecounts-raw
+'s abbreviations while at the same time also keeping the concept and semantics of abbreviating domain names. Also it makes it easier to automate comparisons between this dataset and TSVs (like 
+sampled-1000
+) or Hive data.
+Differences to the pagecounts-raw dataset
+The format of this dataset and the 
+pagecounts-raw
+ dataset is the same.  But this dataset also filters out traffic that is very likely spider or bot traffic. This dataset also includes mobile traffic. For example, having a line like
+ de.m.voy Berlin 176 314159
+for the mobile site page de.m.wikivoyage.org/wiki/Berlin
+Requests to the mobile site and requests from mobile devices or apps
+“mobile site” refers to the mobile site (so URLs having 
+.m.
+ before the 
+wikipedia.org
+, … in the URL), not to device identification. Note however that mobile phones and tablets are by default redirected to the mobile sites.
+Also, traffic from mobile apps is not singled out.
+Requests to the zero site and Wikipedia Zero requests
+This information is historical. Wikipedia Zero was discontinued in 2018.
+Wikipedia Zero requests can (depending on the setup for the Wikipedia Zero partner) hit either
+mobile site (having “.m.” in the unabbreviated domain name), or
+zero site (having “.zero.” in the unabbreviated domain name).
+Hence, aggregating all lines that have “.zero” in the domain abbreviation (like
+ ms.zero Cinta_Elysa 4 32944
+) does 
+not
+ allow to obtain the total volume of Wikipedia Zero traffic, but 
+only gives the total volume of traffic to the zero site
+.
+The bigger part of Wikipedia Zero traffic goes to the mobile site. Note however, that the mobile site sees both Wikipedia Zero and non-Wikipedia Zero traffic.
+So there is no way to compute the “total volume of Wikipedia Zero traffic”.
+Availability
+dumps.wikimedia.org
+The stream is available as hourly files at 
+http://dumps.wikimedia.org/other/pageviews/
+.
+To maintain compatibility with 
+pagecounts-raw
+, the date in the file name refers to the 
+end
+ of the capturing period, not the beginning.
+stat1007.eqiad.wmnet
+The stream is available as hourly files at 
+/mnt/hdfs/wmf/data/archive/pageviews
+ on stat1007.
+To maintain compatibility with 
+pagecounts-raw
+, the date in the file name refers to the 
+end
+ of the capturing period, not the beginning.
+Analytics cluster
+The stream is available as hourly files at 
+/wmf/data/archive/pageviews
+ in the Analytics cluster.
+To maintain compatibility with 
+pagecounts-raw
+, the date in the file name refers to the 
+end
+ of the capturing period, not the beginning.
+Events and known problems since 2015-05-01
+You can 
+Data_Platform/Data_Lake/Traffic/Pageviews
+&amp;feed=atom&amp;action=history"}]]}"&gt;follow the RSS feed of edits to this page
+ to be notified of these incident updates.
+Date from
+Date until
+Bug
+Details
+2016-07-20
+today
+task T141506
+An update to Windows caused Chrome 41 user agents to appear to be erroneously requesting the Main page of a few wikis.  This caused a large spike in overall traffic.
+Idiosyncrasies
+Capitalization is split up
+Some requests look as though they were made to EN.WIKIPEDIA.ORG...  We normalize these requests to look like they hit en.wikipedia.org
+See also
+m:Learning patterns/Tips for reading project codes from pageviews data files
+Pageview_hourly
+ (private table that underlies this data, includes some additional information like geolocation data that is not being made public due to privacy reasons)
+Notes
+↑
+Hence, the “project” in projectcounts is somewhat a misnomer, but kept for historical compatibility.
+Retrieved from "
+https://wikitech.wikimedia.org/w/index.php?title=Data_Platform/Data_Lake/Traffic/Pageviews&oldid=2202540
+"
+Categories
+: 
+Data stream
+Pageviews
+Data platform
+ This page was last edited on 2 July 2024, at 20:46.
+Page was rendered with 
+Parsoid
+.
+Text is available under the 
+Creative Commons Attribution-ShareAlike License
+;
+additional terms may apply.
+See 
+Terms of Use
+ for details.
+Privacy policy
+About Wikitech
+Disclaimers
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+Data Platform/Data Lake/Traffic/Pageviews
+Add topic

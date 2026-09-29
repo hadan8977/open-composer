@@ -1,0 +1,109 @@
+name: h20260929_71_wikipedia_pageviews
+description: 'Preregistered T-20260929-71 weekly RankIC negation test: does a short-term rise in English Wikipedia daily page views of current S&P 500 constituents (VC7_28 = log of 7-day views over 7x the prior 28-day mean) predict the next week SPY-excess return? Only if the IC gate passes are 4 long / long-short screen candidates (2 portfolios x 2 signal lags) evaluated. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- BIL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 15
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 15
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_71:wikipedia_pageviews
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  wiki_vc7_28:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is log((views d-6..d) / (7 x mean views d-34..d-7)) from data/wikipedia_pageviews (scripts/fetch_wikipedia_pageviews.py), known after UTC day d ends, filled at the next session open (lag 0) or one session later (lag 1).
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_71_wikipedia_pageviews
+  candidate_manifest_path: reports/research/iterations/h20260929_71_wikipedia_pageviews/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_71_wikipedia_pageviews/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl
+  source_card_claim_ids:
+  - moat_2013_wikipedia_dow_jones
+  - da_engelberg_gao_2011_search_attention
+  - wei_wang_2016_wikipedia_and_stock_return
+  - zhu_2019_investor_demand_contextual_info
+  - challet_2014_google_trends_predictability
+  - pyun_2025_wikipedia_effect_secondary
+  - wikitech_pageviews_dataset_definition
+  - wikipedia_list_of_sp500_companies_wikitext
+  parameter_space:
+    portfolio:
+    - long_top_decile
+    - long_top_short_bottom_decile_spy_beta_hedged
+    signal_lag_sessions:
+    - 0
+    - 1
+  candidate_budget: 4
+  selection_objective: Continue to the candidate screen only if the weekly RankIC gate passes (2024-01-08 onward IC positive with Newey-West |t| >= 2.5, 2016-07 to 2023-12 IC same sign, real IC above the 95th percentile of 500 title-shuffle placebos); then tier each candidate by the K1/K2/recent-watch rules of the autonomous-round runbook at 20 bp with DSR.
+  candidate_budget_note: 2 portfolios x 2 signal lags = 4 candidates, the whole trial count; rebalance offsets 0-4 are one candidate judged by their median.
+  anti_overfit_notes:
+  - Signal formula, titles, drop rule, universe, IC gate and placebo count are frozen before any return is computed.
+  - Current constituents only (survivorship); the 2024-onward segment is primary and 2016-2023 must have the same sign.
+  - The mirror (long decliners) and the slow VC28_90 signal are controls, not candidates.
+  validation_plan:
+  - weekly RankIC vs next-week SPY-excess open-to-open return, Newey-West t, two segments
+  - 500 title-shuffle placebos
+  - prices through sanitize_price_matrices defaults
+notes:
+  intent: Test whether weekly Wikipedia page-view increases on S&P 500 names predict next-week excess return after the next-open fill.
+  hypothesis_id: T-20260929-71
+  previous_link: dir:wikipedia_pageview_attention_signal
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

@@ -1,0 +1,31 @@
+{
+  "signals": [
+    {
+      "name": "net_share_issuance_252",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, nsi252 AS value FROM read_parquet('/root/codex-test/open-composer/data/features/nsi/nsi.parquet') WHERE nsi252 IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 20,
+      "rationale": "T-20260929-70 preregistered (h20260929_70_net_share_issuance): NSI252 low-is-long, primary horizon 20d, ADV top 1500"
+    },
+    {
+      "name": "net_share_issuance_252_h60",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, nsi252 AS value FROM read_parquet('/root/codex-test/open-composer/data/features/nsi/nsi.parquet') WHERE nsi252 IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 60,
+      "rationale": "T-20260929-70 preregistered (h20260929_70_net_share_issuance): NSI252, primary horizon 60d"
+    },
+    {
+      "name": "net_share_issuance_126_control",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, nsi126 AS value FROM read_parquet('/root/codex-test/open-composer/data/features/nsi/nsi.parquet') WHERE nsi126 IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 20,
+      "rationale": "T-20260929-70 preregistered (h20260929_70_net_share_issuance): NSI126 control (not a candidate)"
+    }
+  ]
+}

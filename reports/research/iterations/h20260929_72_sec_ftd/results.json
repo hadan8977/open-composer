@@ -1,0 +1,235 @@
+{
+  "iter_id": "h20260929_72_sec_ftd",
+  "stage": "ic_gate_only",
+  "verdict": "refuted",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "stop_rule": "for a signal, continue only if at 20d or 60d BOTH: 2024+ RankIC of -signal positive with Newey-West |t|>=2.5; full-sample (2019+) same sign (direction-review.json)",
+  "ic_gate": {
+    "ftdsh_h20": {
+      "values": {
+        "mean_ic_2024": 0.00025391161550318613,
+        "t_nw_2024": 0.053163302485681276,
+        "mean_ic_full": -0.0022384259511413784,
+        "t_nw_full": -0.690623231358566,
+        "pre_2024_mean_ic": -0.003608164412137635,
+        "pre_2024_t_nw": -0.848322225989383,
+        "by_year": {
+          "2019": -0.019024307861305895,
+          "2020": -0.018311710458213743,
+          "2021": 0.004527156709362708,
+          "2022": -0.003338995507174077,
+          "2023": 0.01428142480580479,
+          "2024": 0.003132388278985823,
+          "2025": -0.00404372029049474,
+          "2026": 0.002550173834594349
+        }
+      },
+      "conditions": {
+        "c1_2024_sign_positive": true,
+        "c1_2024_nw_abs_t_ge_2_5": false,
+        "c2_full_sample_same_sign": false
+      },
+      "all_pass": false,
+      "card": "reports/research/signal-cards/ftd_ftdsh.json",
+      "card_flags": {
+        "predictive": false,
+        "stable_years": false,
+        "beats_shuffle": false,
+        "timely": true,
+        "tradable_tiers_20bp": [],
+        "distinct_from_controls": true
+      }
+    },
+    "ftdsh_h60": {
+      "values": {
+        "mean_ic_2024": 0.00497766677213658,
+        "t_nw_2024": 0.5089320161790929,
+        "mean_ic_full": 0.0011342308994507315,
+        "t_nw_full": 0.19095184032590096,
+        "pre_2024_mean_ic": -0.0008650017099547645,
+        "pre_2024_t_nw": -0.11985161273796315,
+        "by_year": {
+          "2019": -0.015970757187942344,
+          "2020": -0.048130157494676605,
+          "2021": 0.013565549248145691,
+          "2022": 0.0031650164794137167,
+          "2023": 0.03344707109042534,
+          "2024": 0.02257198716771454,
+          "2025": -0.020159425341672345,
+          "2026": 0.020793942744500565
+        }
+      },
+      "conditions": {
+        "c1_2024_sign_positive": true,
+        "c1_2024_nw_abs_t_ge_2_5": false,
+        "c2_full_sample_same_sign": true
+      },
+      "all_pass": false,
+      "card": "reports/research/signal-cards/ftd_ftdsh_h60.json",
+      "card_flags": {
+        "predictive": false,
+        "stable_years": false,
+        "beats_shuffle": true,
+        "timely": false,
+        "tradable_tiers_20bp": [],
+        "distinct_from_controls": true
+      }
+    },
+    "ftdadv_h20": {
+      "values": {
+        "mean_ic_2024": 0.0013437035974829278,
+        "t_nw_2024": 0.24671106832495215,
+        "mean_ic_full": 0.005410531428650668,
+        "t_nw_full": 1.3917055540008545,
+        "pre_2024_mean_ic": 0.0076455779846033595,
+        "pre_2024_t_nw": 1.4749659673568682,
+        "by_year": {
+          "2019": -0.00918953871418409,
+          "2020": -0.015973711838516393,
+          "2021": 0.03219281459641626,
+          "2022": 0.011664264575221798,
+          "2023": 0.013885144786845332,
+          "2024": -0.0024694850952244963,
+          "2025": 0.001283870969852762,
+          "2026": 0.0077639779887316894
+        }
+      },
+      "conditions": {
+        "c1_2024_sign_positive": true,
+        "c1_2024_nw_abs_t_ge_2_5": false,
+        "c2_full_sample_same_sign": true
+      },
+      "all_pass": false,
+      "card": "reports/research/signal-cards/ftd_ftdadv.json",
+      "card_flags": {
+        "predictive": false,
+        "stable_years": false,
+        "beats_shuffle": true,
+        "timely": false,
+        "tradable_tiers_20bp": [],
+        "distinct_from_controls": true
+      }
+    },
+    "ftdadv_h60": {
+      "values": {
+        "mean_ic_2024": 0.005660345425503831,
+        "t_nw_2024": 0.628490978832816,
+        "mean_ic_full": 0.013064141365169014,
+        "t_nw_full": 1.7419220671964084,
+        "pre_2024_mean_ic": 0.01691535958924695,
+        "pre_2024_t_nw": 1.6680518352456826,
+        "by_year": {
+          "2019": 0.003090325062552298,
+          "2020": -0.05264395346003411,
+          "2021": 0.06285150011309353,
+          "2022": 0.02777508756035071,
+          "2023": 0.029799768913494902,
+          "2024": 0.011470981974256387,
+          "2025": -0.007505641018880983,
+          "2026": 0.021277577911064167
+        }
+      },
+      "conditions": {
+        "c1_2024_sign_positive": true,
+        "c1_2024_nw_abs_t_ge_2_5": false,
+        "c2_full_sample_same_sign": true
+      },
+      "all_pass": false,
+      "card": "reports/research/signal-cards/ftd_ftdadv_h60.json",
+      "card_flags": {
+        "predictive": false,
+        "stable_years": true,
+        "beats_shuffle": true,
+        "timely": true,
+        "tradable_tiers_20bp": [],
+        "distinct_from_controls": true
+      }
+    }
+  },
+  "gate_all_pass_any": false,
+  "ftd_dummy_control": {
+    "h20": {
+      "mean_ic_2024": -0.00010297875057107411,
+      "t_nw_2024": -0.01933901634017926,
+      "mean_ic_full": 0.0029199573329214013,
+      "t_nw_full": 0.838910091791766
+    },
+    "h60": {
+      "mean_ic_2024": 0.006767071098885144,
+      "t_nw_2024": 0.8082471202020262,
+      "mean_ic_full": 0.010456924949662215,
+      "t_nw_full": 1.5895743844767583
+    }
+  },
+  "books_built": false,
+  "candidates_evaluated": 0,
+  "candidates_preregistered": 4,
+  "data": {
+    "files_downloaded": 176,
+    "files_expected_2019_01_to_2026_09": 186,
+    "files_404_not_served": [
+      "cnsfails201910a",
+      "cnsfails202002a",
+      "cnsfails202002b",
+      "cnsfails202003a",
+      "cnsfails202003b",
+      "cnsfails202004a",
+      "cnsfails202004b",
+      "cnsfails202605a",
+      "cnsfails202605b",
+      "cnsfails202609b"
+    ],
+    "files_used_in_signal": 175,
+    "first_available": "2019-02-01",
+    "last_available": "2026-09-17",
+    "ticker_match": {
+      "rows_in_last_settlement_date_of_files": 932390,
+      "rate_matched_any_sip_symbol": 0.37792661868960414,
+      "rate_matched_universe_adv3000_close_ge_5": 0.296894003582192,
+      "rate_price_consistent_of_universe_matched": 0.739777690276388,
+      "dropped_share_of_universe_matched_by_price_rule": 0.26022230972361204,
+      "ftdsh_valid_of_price_ok": 0.6665836531794166,
+      "ftdadv_valid_of_price_ok": 0.9931294131434766
+    },
+    "drop_counts": {
+      "rows": 932390,
+      "matched_any_sip_symbol": 352375,
+      "matched_universe": 276821,
+      "price_ok": 204786,
+      "no_price": 152,
+      "no_sip_close": 4441,
+      "price_deviation": 67442,
+      "ftdsh_valid": 136507,
+      "ftdsh_drop_shares": 64486,
+      "ftdsh_drop_ratio": 294,
+      "ftdsh_drop_cap": 3499,
+      "ftdadv_valid": 203379,
+      "ftdadv_drop_adv": 1407
+    },
+    "pool_coverage_mean_names_per_day": {
+      "ftdsh": 1420.4710252600298,
+      "ftdadv": 1582.6077265973254,
+      "ftd_dummy": 1585.394130757801
+    },
+    "build_summary": "data/features/ftd/build_summary.json (not committed)",
+    "fetch_summary": "reports/research/iterations/h20260929_72_sec_ftd/fetch-summary.json"
+  },
+  "sources": {
+    "ic_table": "reports/research/iterations/h20260929_72_sec_ftd/ic_table.json",
+    "cards": [
+      "reports/research/signal-cards/ftd_ftdsh.json",
+      "reports/research/signal-cards/ftd_ftdsh_h60.json",
+      "reports/research/signal-cards/ftd_ftdadv.json",
+      "reports/research/signal-cards/ftd_ftdadv_h60.json",
+      "reports/research/signal-cards/ftd_dummy_control.json"
+    ]
+  },
+  "notes": [
+    "No (signal, horizon) pair reaches |t|>=2.5 in 2024+; the largest 2024+ NW t is 0.63 (FTDADV 60d). Full-sample IC of FTDSH is -0.002 at 20d (wrong sign) and +0.001 at 60d.",
+    "The 2024+ sign is positive for all four pairs (preregistered direction) but indistinguishable from zero (IC 0.0003-0.0057).",
+    "Books, K1/K2/watch_recent tiers, DSR and borrow not run: the gate failed, nothing relaxed."
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "iter_id": "h20260929_70_net_share_issuance",
+  "generated_at": "2026-09-29T22:16:31Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_70_net_share_issuance",
+  "objective": "Cheap IC gate for NSI252 then, only if passed, 8 preregistered books (2 portfolios x 2 rebalance x 2 pools).",
+  "candidate_count": 8,
+  "candidates": [
+    {
+      "candidate_id": "NSI_LO_M_500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile, monthly rebalance, pool adv_top_500; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile",
+        "rebalance": "monthly",
+        "pool": "adv_top_500",
+        "short_pool": null,
+        "hedge": null,
+        "borrow_pct_per_year_sensitivity": null,
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LO_M_1500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile, monthly rebalance, pool adv_top_1500_price_ge_5; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile",
+        "rebalance": "monthly",
+        "pool": "adv_top_1500_price_ge_5",
+        "short_pool": null,
+        "hedge": null,
+        "borrow_pct_per_year_sensitivity": null,
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LO_Q_500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile, quarterly rebalance, pool adv_top_500; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile",
+        "rebalance": "quarterly",
+        "pool": "adv_top_500",
+        "short_pool": null,
+        "hedge": null,
+        "borrow_pct_per_year_sensitivity": null,
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LO_Q_1500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile, quarterly rebalance, pool adv_top_1500_price_ge_5; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile",
+        "rebalance": "quarterly",
+        "pool": "adv_top_1500_price_ge_5",
+        "short_pool": null,
+        "hedge": null,
+        "borrow_pct_per_year_sensitivity": null,
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LS_M_500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile_short_top_quintile_spy_hedged, monthly rebalance, pool adv_top_500; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile_short_top_quintile_spy_hedged",
+        "rebalance": "monthly",
+        "pool": "adv_top_500",
+        "short_pool": "adv_top_500",
+        "hedge": "spy_252d_beta",
+        "borrow_pct_per_year_sensitivity": [
+          0.5,
+          3.0
+        ],
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LS_M_1500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile_short_top_quintile_spy_hedged, monthly rebalance, pool adv_top_1500_price_ge_5; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile_short_top_quintile_spy_hedged",
+        "rebalance": "monthly",
+        "pool": "adv_top_1500_price_ge_5",
+        "short_pool": "adv_top_500",
+        "hedge": "spy_252d_beta",
+        "borrow_pct_per_year_sensitivity": [
+          0.5,
+          3.0
+        ],
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LS_Q_500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile_short_top_quintile_spy_hedged, quarterly rebalance, pool adv_top_500; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile_short_top_quintile_spy_hedged",
+        "rebalance": "quarterly",
+        "pool": "adv_top_500",
+        "short_pool": "adv_top_500",
+        "hedge": "spy_252d_beta",
+        "borrow_pct_per_year_sensitivity": [
+          0.5,
+          3.0
+        ],
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "NSI_LS_Q_1500",
+      "role": "book_screen_after_ic_gate",
+      "method": "NSI252 quintile book, long_bottom_quintile_short_top_quintile_spy_hedged, quarterly rebalance, pool adv_top_1500_price_ge_5; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "NSI252",
+        "direction": "low_issuance_long",
+        "portfolio": "long_bottom_quintile_short_top_quintile_spy_hedged",
+        "rebalance": "quarterly",
+        "pool": "adv_top_1500_price_ge_5",
+        "short_pool": "adv_top_500",
+        "hedge": "spy_252d_beta",
+        "borrow_pct_per_year_sensitivity": [
+          0.5,
+          3.0
+        ],
+        "offsets": 21
+      },
+      "path": "nsi_book_screen",
+      "ablation": "avoid_top_issuance_quintile_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+      "fallback": "pair_dropped_if_cleaning_rule_fires",
+      "data_contract": "data_v1_nsi_sec_cover_shares_daily_broad",
+      "feature_contract": "feature_v1_nsi252",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_nsi_sec_cover_shares_daily_broad": {
+        "sources": [
+          "data/features/sec_fundamentals_daily (shares_outstanding, PIT filing-date expansion)",
+          "data/features/daily_broad and universe_broad (signal_card.load_market)"
+        ],
+        "join": "symbol, trade_date"
+      }
+    },
+    "features": {
+      "feature_v1_nsi252": {
+        "module": "scripts/build_nsi_signal.py",
+        "definition": "ln(shares_t / shares_{t-252 sessions}); pairs dropped by (a) missing/non-positive, (b) |dlog|>=ln1.5, (c) split-like price break session in the window, (d) excursion>=ln1.3 that returned below ln1.3. NSI126 is the non-candidate control."
+      }
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill_open_to_open": {
+        "definition": "signal at close of t, fill at open of t+1, hold to the open of t+1+h (IC gate h=20,60); books hold until the next rebalance"
+      }
+    },
+    "validation": {
+      "validation_v1_ic_gate_then_screen_batch": {
+        "recent_start": "2024-01-01",
+        "ic_gate_continue": "at 20d or 60d: 2024+ RankIC positive after direction -1 with Newey-West |t|>=2.0 (lag=h), full-sample IC same sign, distinct_from_controls true, IC residualized on log dollar ADV and 12-1 momentum >= 50% of raw 2024+ IC",
+        "screen_tiers": "runbook section 5: K1 (median-offset Sharpe 10 bp >= 1.19 anchor and >= 0.65 stress, 20 bp annual return positive both), K2 (>= +0.05 vs vol-matched S3 both windows), watch_recent (anchor >= 1.19, stress not); DSR over 8 candidates"
+      }
+    },
+    "costs": {
+      "cost_v1_10bp_20bp_borrow": {
+        "bps_per_side": [
+          10,
+          20
+        ],
+        "borrow_pct_per_year_short_leg": [
+          0.5,
+          3.0
+        ],
+        "note": "borrow tiers are sensitivity, not extra candidates; short only within ADV top 500"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_universe_equal_weight_and_s3_k1_k2": {
+        "primary": "universe equal weight; S3 K1/K2 thresholds",
+        "info_only": "avoid-top-issuance-quintile control on top-1500 equal weight (not a candidate); NSI126"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml": "69a8b8b0920bd228696afd0134d067722a2d0b0a7c3adfe1936fbbe82604fe2d"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+  "spec_hash": "69a8b8b0920bd228696afd0134d067722a2d0b0a7c3adfe1936fbbe82604fe2d",
+  "keep_rule": "Books exist only if the stage-1 IC gate passes; then runbook K1/K2/watch_recent unchanged. No sign, threshold, horizon, pool or candidate is changed after seeing results."
+}

@@ -1,0 +1,49 @@
+{
+  "signals": [
+    {
+      "name": "ftd_ftdsh",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, ftdsh AS value FROM read_parquet('/root/codex-test/open-composer/data/features/ftd/ftd.parquet') WHERE ftdsh IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 20,
+      "rationale": "T-20260929-72 preregistered (h20260929_72_sec_ftd): ftdsh high -> lower return, primary horizon 20d, ADV top 1500, PIT already in trade_date (lag 0)"
+    },
+    {
+      "name": "ftd_ftdsh_h60",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, ftdsh AS value FROM read_parquet('/root/codex-test/open-composer/data/features/ftd/ftd.parquet') WHERE ftdsh IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 60,
+      "rationale": "T-20260929-72 preregistered (h20260929_72_sec_ftd): ftdsh high -> lower return, primary horizon 60d, ADV top 1500, PIT already in trade_date (lag 0)"
+    },
+    {
+      "name": "ftd_ftdadv",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, ftdadv AS value FROM read_parquet('/root/codex-test/open-composer/data/features/ftd/ftd.parquet') WHERE ftdadv IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 20,
+      "rationale": "T-20260929-72 preregistered (h20260929_72_sec_ftd): ftdadv high -> lower return, primary horizon 20d, ADV top 1500, PIT already in trade_date (lag 0)"
+    },
+    {
+      "name": "ftd_ftdadv_h60",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, ftdadv AS value FROM read_parquet('/root/codex-test/open-composer/data/features/ftd/ftd.parquet') WHERE ftdadv IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 60,
+      "rationale": "T-20260929-72 preregistered (h20260929_72_sec_ftd): ftdadv high -> lower return, primary horizon 60d, ADV top 1500, PIT already in trade_date (lag 0)"
+    },
+    {
+      "name": "ftd_dummy_control",
+      "mode": "rank",
+      "sql": "SELECT symbol, CAST(trade_date AS TIMESTAMP) AS trade_date, ftd_dummy AS value FROM read_parquet('/root/codex-test/open-composer/data/features/ftd/ftd.parquet') WHERE ftd_dummy IS NOT NULL",
+      "direction": -1,
+      "top_n": 1500,
+      "primary_horizon": 20,
+      "rationale": "T-20260929-72 preregistered (h20260929_72_sec_ftd): ftd_dummy high -> lower return, primary horizon 20d, ADV top 1500, PIT already in trade_date (lag 0) (control, not a candidate)"
+    }
+  ]
+}

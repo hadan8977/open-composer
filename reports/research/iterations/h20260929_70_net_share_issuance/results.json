@@ -1,0 +1,145 @@
+{
+  "iter_id": "h20260929_70_net_share_issuance",
+  "stage": "ic_gate_only",
+  "verdict": "refuted",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "stop_rule": "continue only if at 20d or 60d ALL of: 2024+ IC positive with NW |t|>=2.0; full-sample same sign; distinct_from_controls; residual retention >=50% (direction-review.json)",
+  "ic_gate": {
+    "20": {
+      "values": {
+        "mean_ic_2024": 0.010567734254948564,
+        "t_nw_2024": 0.808177049085274,
+        "mean_ic_full": 0.019015152706702603,
+        "t_nw_full": 2.057507726255049,
+        "card_t_nonoverlap_full": 1.6946067076254678,
+        "residual_ic_2024": 0.010619852530881654,
+        "residual_retention_2024": 1.0049318306720936,
+        "nsi126_ic_2024": 0.008299140324417503,
+        "nsi126_t_nw_2024": 0.579245186744319
+      },
+      "conditions": {
+        "c1_2024_sign_positive": true,
+        "c1_2024_nw_abs_t_ge_2": false,
+        "c2_full_sample_same_sign": true,
+        "c3_distinct_from_controls_flag": true,
+        "c4_residual_retention_2024_ge_0_5": true
+      },
+      "all_pass": false
+    },
+    "60": {
+      "values": {
+        "mean_ic_2024": 0.004757333404076476,
+        "t_nw_2024": 0.2512286698663108,
+        "mean_ic_full": 0.032930440583532006,
+        "t_nw_full": 2.1348403841106047,
+        "card_t_nonoverlap_full": 1.7558626589475654,
+        "residual_ic_2024": 0.006169603368297867,
+        "residual_retention_2024": 1.2968616752845705,
+        "nsi126_ic_2024": 0.0022410975765424575,
+        "nsi126_t_nw_2024": 0.11879518551375963
+      },
+      "conditions": {
+        "c1_2024_sign_positive": true,
+        "c1_2024_nw_abs_t_ge_2": false,
+        "c2_full_sample_same_sign": true,
+        "c3_distinct_from_controls_flag": true,
+        "c4_residual_retention_2024_ge_0_5": true
+      },
+      "all_pass": false
+    }
+  },
+  "books_built": false,
+  "candidates_evaluated": 0,
+  "candidates_preregistered": 8,
+  "signal_build": {
+    "rules": "a missing/non-positive; b |dlog|>=ln1.5; c split-like price break in (t-L,t]; d excursion>=ln1.3 that returned below ln1.3",
+    "symbols": 6186,
+    "sessions": 2692,
+    "price_breaks_detected": 5416,
+    "symbols_masked_by_hygiene": 484,
+    "L252": {
+      "valid_pairs": 6105261,
+      "b_scale": 564807,
+      "c_price_break": 22667,
+      "d_swing_back": 19809,
+      "kept": 5497978
+    },
+    "L126": {
+      "valid_pairs": 6525150,
+      "b_scale": 336525,
+      "c_price_break": 20495,
+      "d_swing_back": 6896,
+      "kept": 6161234
+    },
+    "rows": 6167022,
+    "nonnull_nsi252": 5497978,
+    "nonnull_nsi126": 6161234
+  },
+  "sources": {
+    "ic_table": "reports/research/iterations/h20260929_70_net_share_issuance/ic_table.json",
+    "cards": [
+      "reports/research/signal-cards/net_share_issuance_252.json",
+      "reports/research/signal-cards/net_share_issuance_252_h60.json",
+      "reports/research/signal-cards/net_share_issuance_126_control.json"
+    ]
+  },
+  "card_flags": {
+    "net_share_issuance_252": {
+      "predictive": false,
+      "stable_years": false,
+      "beats_shuffle": true,
+      "timely": false,
+      "tradable_tiers_20bp": [
+        "t2"
+      ],
+      "distinct_from_controls": true
+    },
+    "net_share_issuance_252_h60": {
+      "predictive": false,
+      "stable_years": false,
+      "beats_shuffle": true,
+      "timely": false,
+      "tradable_tiers_20bp": [
+        "t1",
+        "t2"
+      ],
+      "distinct_from_controls": true
+    },
+    "net_share_issuance_126_control": {
+      "predictive": false,
+      "stable_years": false,
+      "beats_shuffle": true,
+      "timely": false,
+      "tradable_tiers_20bp": [
+        "t2"
+      ],
+      "distinct_from_controls": true
+    }
+  },
+  "by_year_ic_20d": {
+    "2017": 0.012215322653147682,
+    "2018": -0.016683483569159514,
+    "2019": -0.0027395254191833773,
+    "2020": -0.033392573856670944,
+    "2021": 0.10900964331754116,
+    "2022": 0.052116353317666654,
+    "2023": 0.03496829082415489,
+    "2024": 0.009275218464253242,
+    "2025": -0.011739057123487153,
+    "2026": 0.04816271402478392
+  },
+  "mean_rank_corr_with_controls": {
+    "size_logadv": 0.10602637548797329,
+    "mom_12_1": -0.10167616105043728,
+    "nsi126": 0.8567527227214237
+  },
+  "notes": [
+    "Full-sample IC (0.019 at 20d, NW t 2.06) sits in 2020-2023 (2021: 0.109, 2022: 0.052); 2024: 0.009, 2025: -0.012, 2026: 0.048; 2024+ NW t 0.81 (20d) and 0.25 (60d).",
+    "NSI126 control behaves the same (2024+ NW t 0.58 at 20d, 0.12 at 60d), so the signal is not just the latest issuance.",
+    "Size proxy is log dollar ADV 63d (cover-page shares are not split adjusted; price x shares is not a clean market cap).",
+    "Books, K1/K2/watch_recent tiers, DSR, borrow tiers not run: gate failed, nothing relaxed."
+  ]
+}

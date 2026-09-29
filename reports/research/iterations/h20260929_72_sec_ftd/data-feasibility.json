@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_72_ftd_historical_evaluation_authorization",
+  "iter_id": "h20260929_72_sec_ftd",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 4,
+    "evaluation_authorized_count": 4,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "ftd_book_screen": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "FTDSH_AVOID_M_1500",
+        "FTDSH_SHORT_M_500",
+        "FTDADV_AVOID_M_1500",
+        "FTDADV_SHORT_M_500"
+      ],
+      "reason_code": "sec_ftd_files_downloaded_and_daily_broad_available"
+    }
+  },
+  "notes": "Books are only evaluated if the stage-1 IC gate (signal_card rank cards + scripts/ftd_ic_test.py) passes; otherwise the iteration ends refuted with no ledger.",
+  "candidate_authorization": {
+    "candidate_count": 4,
+    "rows": [
+      {
+        "candidate_id": "FTDSH_AVOID_M_1500",
+        "path": "ftd_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_ftd_files_downloaded_and_daily_broad_available",
+        "candidate_binding_sha256": "09457e8a1ccdded5f7f63d3b2f954ae6374fdc3adb73a913e8864c73c232aa87"
+      },
+      {
+        "candidate_id": "FTDSH_SHORT_M_500",
+        "path": "ftd_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_ftd_files_downloaded_and_daily_broad_available",
+        "candidate_binding_sha256": "283bbebae81ffb58cda625ddf5382155b5e1043d62eb802a4ea840d21dcf143a"
+      },
+      {
+        "candidate_id": "FTDADV_AVOID_M_1500",
+        "path": "ftd_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_ftd_files_downloaded_and_daily_broad_available",
+        "candidate_binding_sha256": "6e331c2e7d281dbe683c620816ac8d14bedfe47e7748e8e87347e3c860480762"
+      },
+      {
+        "candidate_id": "FTDADV_SHORT_M_500",
+        "path": "ftd_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_ftd_files_downloaded_and_daily_broad_available",
+        "candidate_binding_sha256": "6cf4eae2c85dce0367172ae9082177f0e06731c5bdee0f80f46613b09bc4ac76"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "daily_broad_layout"
+  ],
+  "required_references": {
+    "daily_broad_layout": {
+      "path": "reports/research/iterations/h20260929_72_sec_ftd/fetch-summary.json",
+      "sha256": "2dbc9cdb188f235ca9f6f3674458407f99df4e0ffdf0546f9f45bb308298a279"
+    }
+  }
+}

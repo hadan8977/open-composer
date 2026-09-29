@@ -1,0 +1,131 @@
+{
+  "schema_version": 2,
+  "iter_id": "h20260929_72_sec_ftd",
+  "strategy_name": "h20260929_72_sec_ftd",
+  "source_spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+  "spec_hash": "705088650a398f8b8bcfc0aa889b953b8de54bcccda8411e512daf186a39ac56",
+  "objective": "T-20260929-72: does the SEC fails-to-deliver balance (FTDSH = fails/shares, FTDADV = fails x price / 21d dollar ADV, high = lower return) rank next-open returns in the ADV top-1500 pool (price >= 5) in 2024+ and 2019+, PIT-lagged by SEC publication? Only if the cheap IC gate passes are 4 preregistered avoid / short books screened.",
+  "topic_coverage": [
+    "fails_to_deliver_return_literature",
+    "sec_ftd_file_format_and_publication_schedule",
+    "reg_sho_threshold_definition",
+    "short_sale_constraint_shortability",
+    "publication_lag_pit",
+    "ticker_reuse_and_price_check"
+  ],
+  "sources": [
+    {
+      "url": "https://www.sec.gov/data-research/sec-markets-data/fails-deliver-data",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "industry_standard",
+      "credibility": "official_page_extract_read",
+      "core_claim": "SEC FTD files are pipe-delimited half-month files (a: first half posted at month end; b: about the 15th of the next month) listing every security with a non-zero balance since 2008-09-16; the price field is the previous day close; the SEC says fails arise on long and short sales and are not evidence of naked shorting.",
+      "project_applicability": "Defines the files, the fields, the publication schedule and the SEC's own caveat; drives the PIT rule and the absent-means-zero rule.",
+      "reflection": "Page extract via WebFetch summariser (raw curl was rate-limited with HTTP 403); the extract preserves the field list and the quoted caveat."
+    },
+    {
+      "url": "https://www.finra.org/finra-data/browse-catalog/otc-threshold",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "industry_standard",
+      "credibility": "official_page_opened",
+      "core_claim": "Reg SHO threshold security: aggregate fail-to-deliver position at NSCC for five consecutive settlement days of 10,000 shares or more equal to at least 0.5% of shares outstanding; the FTDSH signal (fails / shares outstanding) is a continuous version of that ratio.",
+      "project_applicability": "Justifies the fails/shares ratio (FTDSH) as the continuous form of the threshold rule.",
+      "reflection": "Definition page; says nothing about returns."
+    },
+    {
+      "url": "https://econpapers.repec.org/RePEc:eee:empfin:v:38:y:2016:i:pa:p:81-102",
+      "published_or_updated_at": "2016-01-01",
+      "source_type": "paper",
+      "credibility": "abstract_page_opened",
+      "core_claim": "Stratmann and Welborn (J. Empirical Finance 2016): stocks with fails-to-deliver experience negative abnormal returns proportional to their FTD levels (event study and Fama-French portfolio analysis); short sellers of low and high FTD stocks obtain positive estimated profits net of proprietary borrow costs; FTDs reflect nonbinding short sale constraints.",
+      "project_applicability": "Origin of the preregistered sign; no effect size taken.",
+      "reflection": "Abstract page only (full text paywalled); sample period, horizon and effect size not read; period of the study predates 2019 and uses proprietary borrow-cost data we do not have."
+    },
+    {
+      "url": "https://ideas.repec.org/a/bla/finrev/v50y2015i2p143-172.html",
+      "published_or_updated_at": "2015-05-01",
+      "source_type": "paper",
+      "credibility": "abstract_page_opened",
+      "core_claim": "Autore, Boulton and Braga-Alves (Financial Review 2015): stocks reaching threshold levels of failures become significantly overvalued, with reversals where short-sale constraints bind, but the mispricing is likely difficult to arbitrage because of extreme shorting costs.",
+      "project_applicability": "Second published support for high FTD -> later reversal, with the warning that the mispricing is costly to short; motivates the ADV top-1500 / price >= 5 pool and the 3%/yr borrow.",
+      "reflection": "Abstract page only; threshold-list stocks (a tail of FTD), pre-2015 sample; effect size not read. Supports the sign (high FTD -> lower later return) and the shortability warning."
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S1386418105000388",
+      "published_or_updated_at": "2006-01-01",
+      "source_type": "paper",
+      "credibility": "search_summary_only_claim_only",
+      "core_claim": "Boni (J. Financial Markets 2006): using the cross-section of US equities, evidence consistent with market makers strategically failing to deliver when borrowing costs are high.",
+      "project_applicability": "Explains why high FTD skews to hard-to-borrow names (search summary only).",
+      "reflection": "Publisher page not opened (403); search-result abstract only, claim_only, no number used."
+    },
+    {
+      "url": "https://www.sec.gov/files/rules/petitions/2025/petn4-848.pdf",
+      "published_or_updated_at": "2025-03-12",
+      "source_type": "working_paper",
+      "credibility": "search_summary_only_claim_only",
+      "core_claim": "A 2025 SEC petition file cites a draft Welborn (2025) analysis of Reg SHO threshold lists and NSCC FTD data 2005-2024; the search summary says exchange threshold lists are incomplete while NSCC FTD data are complete.",
+      "project_applicability": "Most recent lead on FTD data quality; no numbers used.",
+      "reflection": "PDF fetched but not readable through the tool; claim_only."
+    },
+    {
+      "url": "https://www.sec.gov/files/threshholdfailsmemo.pdf",
+      "published_or_updated_at": "2008-03-03",
+      "source_type": "working_paper",
+      "credibility": "search_summary_only_claim_only",
+      "core_claim": "SEC Office of Economic Analysis memo (2008) on fails to deliver in threshold securities.",
+      "project_applicability": "Background only.",
+      "reflection": "PDF binary not extractable; claim_only, no number used."
+    },
+    {
+      "url": "https://www.sec.gov/spotlight/failstodeliver082106.pdf",
+      "published_or_updated_at": "2006-08-21",
+      "source_type": "working_paper",
+      "credibility": "search_summary_only_claim_only",
+      "core_claim": "SEC Office of Economic Analysis study of fails to deliver pre- and post-Regulation SHO (2006).",
+      "project_applicability": "Background only.",
+      "reflection": "PDF binary not extractable; claim_only, no number used."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_72_sec_ftd.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "FTDSH_AVOID_M_1500",
+      "claim_ids": [
+        "stratmann_welborn_2016_negative_abnormal_returns",
+        "autore_boulton_braga_alves_2015_overvaluation_reversal"
+      ]
+    },
+    {
+      "candidate_id": "FTDSH_SHORT_M_500",
+      "claim_ids": [
+        "stratmann_welborn_2016_negative_abnormal_returns",
+        "autore_boulton_braga_alves_2015_overvaluation_reversal"
+      ]
+    },
+    {
+      "candidate_id": "FTDADV_AVOID_M_1500",
+      "claim_ids": [
+        "stratmann_welborn_2016_negative_abnormal_returns",
+        "autore_boulton_braga_alves_2015_overvaluation_reversal"
+      ]
+    },
+    {
+      "candidate_id": "FTDADV_SHORT_M_500",
+      "claim_ids": [
+        "stratmann_welborn_2016_negative_abnormal_returns",
+        "autore_boulton_braga_alves_2015_overvaluation_reversal"
+      ]
+    }
+  ],
+  "hypothesis_links": [],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "autore_2015_shorting_cost_warning",
+      "revision": "ic_gate_before_any_book_pool_limited_to_adv_top_1500_and_short_leg_only_in_adv_top_500_with_3pct_borrow",
+      "effect": "Literature says high-FTD mispricing is hard to arbitrage because of shorting costs, so books exist only if a cross-sectional IC survives on 2024+ and the short leg is confined to liquid names."
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "wikipedia_pageview_weekly_attention",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20260929-71",
+      "source_urls": [
+        "https://www.nature.com/articles/srep01801"
+      ]
+    }
+  ],
+  "iter_id": "h20260929_71_wikipedia_pageviews",
+  "objective": "T-20260929-71: does a short-term rise in English Wikipedia daily page views of current S&P 500 constituents (VC7_28) predict the next week's excess return over SPY, at signal-after-UTC-day-close and next-open fills, in 2024 onward and 2016-2023, beyond a title-shuffle placebo?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "moat_2013_wikipedia_dow_jones",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://www.nature.com/articles/srep01801"
+    },
+    {
+      "claim_id": "da_engelberg_gao_2011_search_attention",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://academicweb.nd.edu/~zda/Google.pdf"
+    },
+    {
+      "claim_id": "wei_wang_2016_wikipedia_and_stock_return",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://ora.ox.ac.uk/objects/uuid:84b1a5d5-0a9b-4081-b2a1-20a01cb4580c/files/mc6147ee48de5d5d6aa9a29fe9a8aad46"
+    },
+    {
+      "claim_id": "zhu_2019_investor_demand_contextual_info",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://www.anderson.ucla.edu/documents/areas/fac/accounting/working-papers/workshop%20papers/ChenqiZhu_JMP_2019Jan.pdf"
+    },
+    {
+      "claim_id": "challet_2014_google_trends_predictability",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://arxiv.org/pdf/1403.1715"
+    },
+    {
+      "claim_id": "pyun_2025_wikipedia_effect_secondary",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://mlquants.substack.com/p/the-wikipedia-effect-analyzing-investor"
+    },
+    {
+      "claim_id": "wikitech_pageviews_dataset_definition",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://wikitech.wikimedia.org/wiki/Data_Platform/Data_Lake/Traffic/Pageviews"
+    },
+    {
+      "claim_id": "wikipedia_list_of_sp500_companies_wikitext",
+      "source_card_path": "reports/harness/source_cards/h20260929_71_wikipedia_pageviews.jsonl",
+      "source_url": "https://en.wikipedia.org/w/index.php?title=List_of_S%26P_500_companies&action=raw"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/h20260929_71_wikipedia_pageviews.yaml",
+  "sources": [
+    {
+      "claim_id": "moat_2013_wikipedia_dow_jones",
+      "core_claim": "Data on changes in how often financially related Wikipedia pages were viewed may have contained early signs of stock market moves.",
+      "credibility": "peer_reviewed_full_text_snapshot",
+      "project_applicability": "Foundational weekly-pageview-change design (Moat, Preis et al.) that the VC7_28 signal descends from; establishes that weekly changes, not levels, are the object.",
+      "published_or_updated_at": "2013-05-08",
+      "reflection": "Snapshot saved; quote verified. Limitations: Small DJIA universe, pre-2013, no realistic costs or shorting frictions in the abstract; the trading rule is tested on the index, not on constituents cross-sectionally.",
+      "source_type": "paper",
+      "url": "https://www.nature.com/articles/srep01801"
+    },
+    {
+      "claim_id": "da_engelberg_gao_2011_search_attention",
+      "core_claim": "An increase in SVI predicts higher stock prices in the next 2 weeks and an eventual price reversal within the year.",
+      "credibility": "journal_of_finance_peer_reviewed_full_text_snapshot",
+      "project_applicability": "Closest peer-reviewed cross-sectional attention result: a positive 1-2 week drift then reversal. Motivates a weekly horizon and warns that a longer holding period would give the sign back.",
+      "published_or_updated_at": "2011-10-01",
+      "reflection": "Snapshot saved; quote verified. Limitations: Google SVI, not Wikipedia; 2004-2008 sample; retail-attention channel that may have weakened after 2010; no transaction costs in the abstract.",
+      "source_type": "paper",
+      "url": "https://academicweb.nd.edu/~zda/Google.pdf"
+    },
+    {
+      "claim_id": "wei_wang_2016_wikipedia_and_stock_return",
+      "core_claim": "If we exclude Wikipedia data from the classifiers, the return of the long position shrinks to 54.18% per annum, both economically and statistically significant.",
+      "credibility": "conference_paper_full_text_snapshot",
+      "project_applicability": "Cross-sectional Wikipedia page-view evidence on individual stocks. The same passage shows the classifier earns 54.18% without Wikipedia data, so the Wikipedia increment is small; the headline 57.46% and 65.27% figures are not used as targets.",
+      "published_or_updated_at": "2016-04-01",
+      "reflection": "Snapshot saved; quote verified. Limitations: Machine-learned classifiers, 2011-2014 only, unrealistic returns (over 50% per annum) that suggest look-ahead or no costs; the increment attributable to Wikipedia is about 3 percentage points.",
+      "source_type": "paper",
+      "url": "https://ora.ox.ac.uk/objects/uuid:84b1a5d5-0a9b-4081-b2a1-20a01cb4580c/files/mc6147ee48de5d5d6aa9a29fe9a8aad46"
+    },
+    {
+      "claim_id": "zhu_2019_investor_demand_contextual_info",
+      "core_claim": "Wiki-visits spike at key informational events such as earnings announcements.",
+      "credibility": "job_market_paper_full_text_snapshot",
+      "project_applicability": "Shows page views on S&P 500 company articles are event-driven (earnings) and reflect information acquisition, so VC7_28 mostly re-encodes earnings weeks; the test must be read next to the earnings-drift family already run.",
+      "published_or_updated_at": "2019-01-01",
+      "reflection": "Snapshot saved; quote verified. Limitations: Studies determinants and price discovery at earnings announcements, not return prediction across weeks; no trading rule or costs.",
+      "source_type": "paper",
+      "url": "https://www.anderson.ucla.edu/documents/areas/fac/accounting/working-papers/workshop%20papers/ChenqiZhu_JMP_2019Jan.pdf"
+    },
+    {
+      "claim_id": "challet_2014_google_trends_predictability",
+      "core_claim": "Our backtest yields a performance of about 17bps per week which only weakly depends on the kind of data on which predictors are based, i.e. either past price returns or Google Trends data, or both.",
+      "credibility": "arxiv_preprint_full_text_snapshot",
+      "project_applicability": "Negative-evidence source: shows that search-attention predictability is mostly the price-return predictability and that keyword selection is the main bias. This is why our test fixes titles before looking at any return and adds a title-shuffle placebo.",
+      "published_or_updated_at": "2014-03-07",
+      "reflection": "Snapshot saved; quote verified. Limitations: Google Trends not Wikipedia; keyword-selected indices, not S&P 500 constituents; 2014 preprint.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/pdf/1403.1715"
+    },
+    {
+      "claim_id": "pyun_2025_wikipedia_effect_secondary",
+      "core_claim": "A long-short trading strategy based on Wikipedia page view changes outperforms the market and delivers positive abnormal returns.",
+      "credibility": "secondary_blog_summary_claim_only",
+      "project_applicability": "The only source motivating a weekly long-short on page-view changes in 2016-2023. Read only through a blog summary (SSRN blocked), so no number from the paper is used in any threshold.",
+      "published_or_updated_at": "2025-03-17",
+      "reflection": "Snapshot saved; quote verified. Limitations: Secondary summary; no Sharpe, cost, or sub-period figures; the paper itself was not opened (claim_only).",
+      "source_type": "industry_standard",
+      "url": "https://mlquants.substack.com/p/the-wikipedia-effect-analyzing-investor"
+    },
+    {
+      "claim_id": "wikitech_pageviews_dataset_definition",
+      "core_claim": "The public pageviews dataset has per-article and per-project view counts for all Wikimedia Foundation projects since May 2015 and filters out as many spiders and bots as can be detected.",
+      "credibility": "official_wikimedia_documentation",
+      "project_applicability": "Defines the data: per-article daily counts from 2015-05 on, so 2016-07 onward is fully available; the fetch uses the agent type user to exclude detected spiders.",
+      "published_or_updated_at": "2026-09-29",
+      "reflection": "Snapshot saved; quote verified. Limitations: Bot filtering is heuristic ('as many spiders and bots as we can detect'); automated traffic can still contaminate individual articles.",
+      "source_type": "platform_docs",
+      "url": "https://wikitech.wikimedia.org/wiki/Data_Platform/Data_Lake/Traffic/Pageviews"
+    },
+    {
+      "claim_id": "wikipedia_list_of_sp500_companies_wikitext",
+      "core_claim": "The constituents table of the List of S&P 500 companies carries the ticker symbol, the company article link, GICS sector and date added for each current member.",
+      "credibility": "wikipedia_current_revision_wikitext",
+      "project_applicability": "Source of the ticker to article-title map; because only current members are listed, 2016-2023 results carry survivorship bias and the 2024-onward segment is the primary evidence.",
+      "published_or_updated_at": "2026-09-29",
+      "reflection": "Snapshot saved; quote verified. Limitations: Current constituents only; article titles for renamed companies can break history; redirects are resolved by the API but ambiguous titles (e.g. FDXF, KEY) are kept and reported.",
+      "source_type": "industry_standard",
+      "url": "https://en.wikipedia.org/w/index.php?title=List_of_S%26P_500_companies&action=raw"
+    }
+  ],
+  "spec_hash": "5a7e399e0166f1e407b6d5749942f57ae7c836f87ffaf64edab133a884404e41",
+  "strategy_name": "h20260929_71_wikipedia_pageviews",
+  "topic_coverage": [
+    "wikipedia_pageviews_stock_return_literature",
+    "search_volume_attention_and_reversal",
+    "earnings_event_driven_pageviews",
+    "selection_bias_and_placebo_for_alt_data_signals",
+    "wikimedia_pageviews_data_definition_and_bot_filtering",
+    "sp500_constituent_title_mapping_and_survivorship"
+  ]
+}

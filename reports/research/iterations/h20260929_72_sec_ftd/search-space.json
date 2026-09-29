@@ -1,0 +1,54 @@
+{
+  "iter_id": "h20260929_72_sec_ftd",
+  "strategy_name": "h20260929_72_sec_ftd",
+  "source_spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+  "spec_hash": "705088650a398f8b8bcfc0aa889b953b8de54bcccda8411e512daf186a39ac56",
+  "schema_version": 3,
+  "created_at": "2026-09-29T23:20:00Z",
+  "objective": "T-20260929-72: do high SEC fails-to-deliver balances (FTDSH, FTDADV) rank lower next-open returns in the ADV top-1500 pool, full 2019+ and 2024+, before any book?",
+  "paths": [
+    {
+      "name": "ftd_book_screen",
+      "candidate_count": 4,
+      "hypothesis_refs": [
+        "T-20260929-72"
+      ],
+      "parameters": {
+        "signal": [
+          "ftdsh",
+          "ftdadv"
+        ],
+        "portfolio": [
+          "avoid_top_decile_top1500_equal_weight",
+          "short_top_decile_adv500_spy_hedged"
+        ],
+        "rebalance": [
+          "monthly"
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "universe_equal_weight",
+        "ftd_gt_0_dummy_control",
+        "s3_k1_k2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 4,
+  "cost_assumptions": "10/20 bp per side, next-open fill; short leg borrow 3%/yr; SPY 252d beta hedge.",
+  "go_no_go_band": "Stage 1 IC gate (2024+ NW |t|>=2.5, same sign as preregistered, full-sample same sign) then runbook K1/K2/watch_recent.",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_72_sec_ftd/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_72_sec_ftd/results.json",
+    "reports/research/iterations/h20260929_72_sec_ftd/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_72_sec_ftd/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_72_sec_ftd/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_72_sec_ftd/cost-contract.json",
+  "candidate_manifest_sha256": "e2de968470adb0f2714152803d33dbcdeb452f3620ea001c6f1f7ed4dae3260d",
+  "data_feasibility_sha256": "c12bdfa8beba75f0e4fc168e9091a0061beaa5ac92693c6bf5b75a8871b2b85f"
+}

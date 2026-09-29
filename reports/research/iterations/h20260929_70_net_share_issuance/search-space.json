@@ -1,0 +1,56 @@
+{
+  "iter_id": "h20260929_70_net_share_issuance",
+  "strategy_name": "h20260929_70_net_share_issuance",
+  "source_spec_path": "strategy_specs/drafts/h20260929_70_net_share_issuance.yaml",
+  "spec_hash": "69a8b8b0920bd228696afd0134d067722a2d0b0a7c3adfe1936fbbe82604fe2d",
+  "schema_version": 3,
+  "created_at": "2026-09-29T22:16:31Z",
+  "objective": "T-20260929-70: does NSI252 (low issuance long) rank returns in the ADV top-1500 pool since 2024 after costs, distinct from size and momentum?",
+  "paths": [
+    {
+      "name": "nsi_book_screen",
+      "candidate_count": 8,
+      "hypothesis_refs": [
+        "T-20260929-70"
+      ],
+      "parameters": {
+        "portfolio": [
+          "long_bottom_quintile",
+          "long_bottom_quintile_short_top_quintile_spy_hedged"
+        ],
+        "rebalance": [
+          "monthly",
+          "quarterly"
+        ],
+        "pool": [
+          "adv_top_500",
+          "adv_top_1500_price_ge_5"
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "universe_equal_weight",
+        "avoid_top_issuance_quintile_control",
+        "nsi126_control",
+        "s3_k1_k2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 8,
+  "cost_assumptions": "10/20 bp per side, next-open fill; short leg borrow 0.5%/3% per year sensitivity; SPY 252d beta hedge.",
+  "go_no_go_band": "Stage 1 IC gate (2024+ NW |t|>=2.0 same sign as full sample, distinct_from_controls, residual retention >= 50%) then runbook K1/K2/watch_recent.",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_70_net_share_issuance/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_70_net_share_issuance/results.json",
+    "reports/research/iterations/h20260929_70_net_share_issuance/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_70_net_share_issuance/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_70_net_share_issuance/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_70_net_share_issuance/cost-contract.json",
+  "candidate_manifest_sha256": "e1ae6b470dd329688262eeedc909a4e6be30b0eb366de7b5b736457c91ee4969",
+  "data_feasibility_sha256": "d8d4e840afef4cf74783885b861b878a741e7c643b7e99358c9f13116dda3f3f"
+}

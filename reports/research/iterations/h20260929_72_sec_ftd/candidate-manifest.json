@@ -1,0 +1,168 @@
+{
+  "iter_id": "h20260929_72_sec_ftd",
+  "generated_at": "2026-09-29T23:20:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_72_sec_ftd",
+  "objective": "Cheap IC gate for FTDSH and FTDADV then, only if passed, 4 preregistered books (2 signals x {avoid top decile in top-1500 equal weight, short top decile in ADV top 500 with SPY beta hedge}), monthly.",
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "candidate_id": "FTDSH_AVOID_M_1500",
+      "role": "book_screen_after_ic_gate",
+      "method": "FTDSH avoid_top_decile_top1500_equal_weight, monthly rebalance; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "ftdsh",
+        "direction": "high_ftd_lower_return",
+        "portfolio": "avoid_top_decile_top1500_equal_weight",
+        "rebalance": "monthly",
+        "pool": "adv_top_1500_price_ge_5",
+        "short_pool": null,
+        "hedge": null,
+        "borrow_pct_per_year": null,
+        "offsets": 21
+      },
+      "path": "ftd_book_screen",
+      "ablation": "ftd_gt_0_dummy_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+      "fallback": "candidate_dropped_if_signal_cleaning_leaves_too_few_names",
+      "data_contract": "data_v1_sec_ftd_halfmonth_daily_broad",
+      "feature_contract": "feature_v1_ftdsh_ftdadv",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow3",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "FTDSH_SHORT_M_500",
+      "role": "book_screen_after_ic_gate",
+      "method": "FTDSH short_top_decile_adv500_spy_hedged, monthly rebalance; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "ftdsh",
+        "direction": "high_ftd_lower_return",
+        "portfolio": "short_top_decile_adv500_spy_hedged",
+        "rebalance": "monthly",
+        "pool": "adv_top_500",
+        "short_pool": "adv_top_500",
+        "hedge": "spy_252d_beta",
+        "borrow_pct_per_year": 3.0,
+        "offsets": 21
+      },
+      "path": "ftd_book_screen",
+      "ablation": "ftd_gt_0_dummy_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+      "fallback": "candidate_dropped_if_signal_cleaning_leaves_too_few_names",
+      "data_contract": "data_v1_sec_ftd_halfmonth_daily_broad",
+      "feature_contract": "feature_v1_ftdsh_ftdadv",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow3",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "FTDADV_AVOID_M_1500",
+      "role": "book_screen_after_ic_gate",
+      "method": "FTDADV avoid_top_decile_top1500_equal_weight, monthly rebalance; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "ftdadv",
+        "direction": "high_ftd_lower_return",
+        "portfolio": "avoid_top_decile_top1500_equal_weight",
+        "rebalance": "monthly",
+        "pool": "adv_top_1500_price_ge_5",
+        "short_pool": null,
+        "hedge": null,
+        "borrow_pct_per_year": null,
+        "offsets": 21
+      },
+      "path": "ftd_book_screen",
+      "ablation": "ftd_gt_0_dummy_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+      "fallback": "candidate_dropped_if_signal_cleaning_leaves_too_few_names",
+      "data_contract": "data_v1_sec_ftd_halfmonth_daily_broad",
+      "feature_contract": "feature_v1_ftdsh_ftdadv",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow3",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    },
+    {
+      "candidate_id": "FTDADV_SHORT_M_500",
+      "role": "book_screen_after_ic_gate",
+      "method": "FTDADV short_top_decile_adv500_spy_hedged, monthly rebalance; built only if the stage-1 IC gate passes",
+      "parameters": {
+        "signal": "ftdadv",
+        "direction": "high_ftd_lower_return",
+        "portfolio": "short_top_decile_adv500_spy_hedged",
+        "rebalance": "monthly",
+        "pool": "adv_top_500",
+        "short_pool": "adv_top_500",
+        "hedge": "spy_252d_beta",
+        "borrow_pct_per_year": 3.0,
+        "offsets": 21
+      },
+      "path": "ftd_book_screen",
+      "ablation": "ftd_gt_0_dummy_control_not_a_candidate",
+      "spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+      "fallback": "candidate_dropped_if_signal_cleaning_leaves_too_few_names",
+      "data_contract": "data_v1_sec_ftd_halfmonth_daily_broad",
+      "feature_contract": "feature_v1_ftdsh_ftdadv",
+      "label_contract": "label_v1_close_signal_next_open_fill_open_to_open",
+      "validation_contract": "validation_v1_ic_gate_then_screen_batch",
+      "cost_contract": "cost_v1_10bp_20bp_borrow3",
+      "benchmark_contract": "benchmark_v1_universe_equal_weight_and_s3_k1_k2"
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_sec_ftd_halfmonth_daily_broad": {
+        "sources": [
+          "data/sec_ftd/cnsfails<YYYYMM><a|b>.parquet (scripts/fetch_sec_ftd.py, 2019-01 onward, SEC 404 gaps listed in fetch-summary.json)",
+          "data/features/daily_broad and universe_broad",
+          "data/features/sec_fundamentals_daily (shares_outstanding)"
+        ],
+        "join": "symbol, trade_date"
+      }
+    },
+    "features": {
+      "feature_v1_ftdsh_ftdadv": {
+        "module": "scripts/build_ftd_signal.py",
+        "definition": "balance of the file's last settlement date; absent = 0; PIT usable from the first trading day after the file cutoff (a: after the last day of the month, b: after the 16th of the next month), held <= 25 sessions; FTDSH = fails / latest PIT cover-page shares (dropped if shares missing/<=0, fails/shares>0.5, shares x close outside [2e7, 5e12]); FTDADV = fails x SIP close / dollar_adv_21 (both at the session before settlement); a row is kept only if the FTD price is within 20% of that SIP close; ticker matched exactly to SIP universe symbols; ftd_dummy = 1 if kept fails > 0 (control, not a candidate)."
+      }
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill_open_to_open": {
+        "definition": "signal at close of t, fill at open of t+1, hold to the open of t+1+h (IC gate h=20,60); books hold until the next monthly rebalance"
+      }
+    },
+    "validation": {
+      "validation_v1_ic_gate_then_screen_batch": {
+        "recent_start": "2024-01-01",
+        "ic_gate_continue": "for a (signal, horizon) pair with h in {20,60}: 2024+ mean RankIC of -signal is positive (high FTD -> lower return) with Newey-West |t|>=2.5 (lag=h) AND full-sample 2019+ mean RankIC has the same sign. Books are built only for signals with at least one passing pair; otherwise stop, refuted, no ledger.",
+        "screen_tiers": "runbook section 5: K1 (median-offset Sharpe 10 bp >= 1.19 anchor and >= 0.65 stress, 20 bp annual return positive both), K2 (>= +0.05 vs vol-matched S3 both windows), watch_recent; DSR over 4 candidates; stress window from 2019 only"
+      }
+    },
+    "costs": {
+      "cost_v1_10bp_20bp_borrow3": {
+        "bps_per_side": [
+          10,
+          20
+        ],
+        "borrow_pct_per_year_short_leg": [
+          3.0
+        ],
+        "note": "borrow 3%/yr is the conservative frozen level (high-FTD names skew hard to borrow); shorts only in ADV top 500"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_universe_equal_weight_and_s3_k1_k2": {
+        "primary": "universe equal weight; S3 K1/K2 thresholds",
+        "info_only": "FTD>0 dummy control"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_72_sec_ftd.yaml": "705088650a398f8b8bcfc0aa889b953b8de54bcccda8411e512daf186a39ac56"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_72_sec_ftd.yaml",
+  "spec_hash": "705088650a398f8b8bcfc0aa889b953b8de54bcccda8411e512daf186a39ac56",
+  "keep_rule": "Books exist only if the stage-1 IC gate passes; then runbook K1/K2/watch_recent unchanged. No sign, threshold, horizon, pool or candidate is changed after seeing results."
+}

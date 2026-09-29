@@ -1,0 +1,103 @@
+name: h20260929_72_sec_ftd
+description: 'Preregistered T-20260929-72 SEC fails-to-deliver test: FTDSH and FTDADV (high balance -> lower return), PIT by SEC publication date, ADV top-1500 pool; cheap IC gate first, then 4 avoid-gate / short books. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- BIL
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 15
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 15
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_03:ma_target_drift
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  ftdsh:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signals are FTD shares / shares_outstanding (FTDSH) and FTD dollars / 21d dollar ADV (FTDADV) built by scripts/build_ftd_signal.py from data/sec_ftd and evaluated by open_composer.research.signal_card in rank mode.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_72_sec_ftd
+  candidate_manifest_path: reports/research/iterations/h20260929_72_sec_ftd/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_72_sec_ftd/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_72_sec_ftd.jsonl
+  source_card_claim_ids:
+  - stratmann_welborn_2016_negative_abnormal_returns
+  - autore_boulton_braga_alves_2015_overvaluation_reversal
+  parameter_space:
+    signal:
+    - ftdsh
+    - ftdadv
+    portfolio:
+    - avoid_top_decile_top1500_equal_weight
+    - short_top_decile_adv500_spy_hedged
+  candidate_budget: 4
+  selection_objective: Continue past the IC gate only under the preregistered stop_condition; then runbook K1/K2/watch_recent tiers on median rebalance-offset Sharpe at 10 bp with 20 bp and borrow 0.5/3 percent sensitivities.
+  candidate_budget_note: 2 signals x 2 portfolios = 4 books (monthly), the whole trial count.
+  anti_overfit_notes:
+  - Cleaning rules in scripts/build_ftd_signal.py and the IC continue conditions are frozen before any return is computed.
+  - Sign is preregistered (high FTD -> lower return); no mirrored variant is a candidate.
+  - The 4 books are only built if the IC gate passes.
+  validation_plan:
+  - signal_card rank mode, top 1500 by ADV, next-open entry, 10/20 bp, shuffle placebo
+  - Newey-West t on 2024+ IC and the FTD>0 dummy control
+  - stage 2 via scripts/screen_batch.py with all rebalance offsets and DSR over 4 candidates
+notes:
+  intent: Test whether high SEC fails-to-deliver balances rank lower next-open returns in the top-1500 pool since 2024 after costs.
+  hypothesis_id: T-20260929-72
+  previous_link: dir:sec_fails_to_deliver_signal
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

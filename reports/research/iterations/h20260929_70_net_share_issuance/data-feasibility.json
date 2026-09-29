@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_70_nsi_historical_evaluation_authorization",
+  "iter_id": "h20260929_70_net_share_issuance",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 8,
+    "evaluation_authorized_count": 8,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "nsi_book_screen": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "NSI_LO_M_500",
+        "NSI_LO_M_1500",
+        "NSI_LO_Q_500",
+        "NSI_LO_Q_1500",
+        "NSI_LS_M_500",
+        "NSI_LS_M_1500",
+        "NSI_LS_Q_500",
+        "NSI_LS_Q_1500"
+      ],
+      "reason_code": "sec_cover_shares_and_daily_broad_available"
+    }
+  },
+  "notes": "Books are only evaluated if the stage-1 IC gate (scripts/nsi_ic_test.py + signal_card) passes; otherwise the iteration ends refuted with no ledger.",
+  "candidate_authorization": {
+    "candidate_count": 8,
+    "rows": [
+      {
+        "candidate_id": "NSI_LO_M_500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "4a85e9f8243330dc17e6d92674aab868389c7971584d35571df55e3d2cc5c087"
+      },
+      {
+        "candidate_id": "NSI_LO_M_1500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "2d1c4ec1af4357c6e8ec9383748cfa0d09f2ccc8823e93764ad3fadb85e28e28"
+      },
+      {
+        "candidate_id": "NSI_LO_Q_500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "4bb991947c842d64a778f2fc189442f5e14db3ea247e86e877ffd936e0dfc8be"
+      },
+      {
+        "candidate_id": "NSI_LO_Q_1500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "c4a8955ffcff36a3c5d2ac2305038cc953ba319ab327b7ae731ed3f00da8bbfd"
+      },
+      {
+        "candidate_id": "NSI_LS_M_500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "56cf148043dc3393b66df884132609de5875164e870b6667401f961b71f7443e"
+      },
+      {
+        "candidate_id": "NSI_LS_M_1500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "076c9dbbe58b60c99bd7143e8560cbfd97cdf1e757616642d3b1f0eacf55c629"
+      },
+      {
+        "candidate_id": "NSI_LS_Q_500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "d6472a7c510507f74f22e0b28a1c22d50c4608806489e64b22ef097b9217cc3d"
+      },
+      {
+        "candidate_id": "NSI_LS_Q_1500",
+        "path": "nsi_book_screen",
+        "action": "evaluate",
+        "reason_code": "sec_cover_shares_and_daily_broad_available",
+        "candidate_binding_sha256": "7887f9fc3ca869c94f5a2735befc6dddf2e71d6e6927a488e2e9032ad02eda41"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "daily_broad_layout"
+  ],
+  "required_references": {
+    "daily_broad_layout": {
+      "path": "reports/research/iterations/h20260929_70_net_share_issuance/build_summary.json",
+      "sha256": "5a7fa5c35aaca03411711238c9fc60c7ac9ae6fcd06af7038edfd04fec063022"
+    }
+  }
+}

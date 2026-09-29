@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_70_net_share_issuance",
+  "reviewed_at": "2026-09-29T22:16:31Z",
+  "decision": "proceed",
+  "objective": "T-20260929-70: does net share issuance NSI252 = ln(shares_t / shares_{t-252}) (low issuance is long) predict the cross-section of returns in the ADV top-1500 pool (price >= 5) after next-open entry, in the 2024+ window and the full 2017-2026 sample, and is it distinct from size and 12-1 momentum? Only if the cheap IC test passes are 8 preregistered long-only / long-short books screened at 10/20 bp with borrow.",
+  "target_regime_and_horizon": "US common stocks, cross-sectional 20 and 60 session horizons, monthly or quarterly rebalance; recent window 2024-01-01 onward, full sample 2017-2026. Validity is not assumed for any regime: a pass would be labeled recent-window evidence with the stress sample starting 2017 only.",
+  "existing_solution_comparison": "Published: Pontiff-Woodgate (JF 2008), Fama-French 2008 (both known only via secondary summaries, claim_only; QuantDecoded blocked on 2026-09-29). Newest opened source: QuanterLab 2026-08-19 (snapshot in sources/), S&P 500 30 lowest-share-growth long-only 2006-2025 at 10 bp: 10.58%/yr, Sharpe 0.58 vs index 0.54, a statistical tie (35 of 100 bootstrap paths). Existing products: quality/net-buyback ETFs (PKW, SPYD-like buyback screens) hold large caps long-only; none reports a 2024+ short leg. Why not enough: it tests a large-cap long-only annual book, not the broad top-1500 cross-section, the short leg with borrow, or the 2024+ window. Local repo never computed a share-count-change signal: dir:sec_xbrl_accounting_signals_v1 tested ROE, gross profitability, asset growth (2024+ IC -0.006 at 20d, flags failed) and accruals only.",
+  "remaining_evidence_gap": "Pontiff-Woodgate and Fama-French numbers were not read in primary text (only a blocked secondary summary), so no effect size from them is used as a target. Cover-page shares are not split adjusted and double-class firms may report one class, so the signal is cleaned by frozen rules and its measurement error is a risk the IC test absorbs. No dollar buyback amounts locally: the repurchase-dollar version is not tested.",
+  "negative_experiments_checked": "oc research directions check net share issuance buyback (2026-09-29): dir:net_share_issuance_pontiff_woodgate_recent queued (this task); dir:buyback_announcement_effect and dir:buyback_execution_vs_announcement both evidence_too_weak, never computed locally; dir:sec_xbrl_accounting_signals_v1 asset growth card (reports/research/signal-cards/asset_growth.md) is the nearest accounting anomaly and failed the predictive flag. grep of reports/research/control, iterations and ledger for share count or issuance found no local test of share-count change.",
+  "cost_and_execution_assumptions": "Signal known at the close of trade_date, entry at the next open; 10 bp per side (20 bp check); short leg only among ADV top-500 (easy-to-borrow proxy) with borrow 0.5%/yr and 3%/yr sensitivity tiers and a 252-day SPY beta hedge; monthly (21 offsets) or quarterly (every third of 63 offsets) rebalance, median across offsets decides. Prices pass sanitize_price_matrices defaults. Stress period 2017-2023 is short (data from 2016).",
+  "stop_condition": "Stage 1 (IC, signal_card rank mode, ADV top 1500, horizons 20 and 60): continue only if at one horizon ALL hold: 2024+ mean RankIC has the preregistered sign (low issuance -> high return, i.e. direction -1 IC positive after the sign flip in the card) with Newey-West |t| >= 2.0; full-sample IC has the same sign; distinct_from_controls flag true; IC of NSI residualized on log dollar ADV and 12-1 momentum keeps >= 50% of the raw 2024+ IC. Otherwise stop, registry row refuted, no ledger. Stage 2 verdicts use the runbook K1/K2/watch_recent tiers unchanged. No threshold, sign, horizon or candidate changes after results.",
+  "queries": [
+    {
+      "query": "net share issuance factor 2023 2024 2025 performance recent years Sharpe",
+      "opened_urls": [
+        "https://quanterlab.com/research/paid-in-fewer-shares-net-issuance-against-earnings-yield-in-total-returns-twenty"
+      ],
+      "searched_at": "2026-09-29T22:10:52Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://quanterlab.com/research/paid-in-fewer-shares-net-issuance-against-earnings-yield-in-total-returns-twenty",
+      "claim_id": "quanterlab_2026_08_low_net_issuance_tie",
+      "claim": "QuanterLab 2026-08-19 (author-run, S&P 500 point-in-time, 20 sealed windows 2006-2025, net of costs): the low-net-issuance book earns 10.58%/yr, Sharpe 0.58, versus the reference index 9.51%/yr, Sharpe 0.54, and beats the earnings-yield book in only 35 of 100 bootstrap paths, which the author calls a statistical tie.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-08-19",
+      "market_and_period": "S&P 500 point-in-time constituents, 2006-2025, 20 sealed windows, 10 bp",
+      "applicability": "Only recent published test of a net-issuance long book: a tie with the index, so the plain long-only large-cap version adds nothing; the local question is the cross-section in a broad top-1500 pool since 2024 and the short leg.",
+      "limitations": "Author-run platform study of a 30-name low-share-growth long-only S&P 500 book with annual reselection; no borrow or short leg, no 2024+ split, cover-page share counts are not used (weighted shares from filings); second source QuantDecoded (Pontiff-Woodgate 2008 summary) was blocked by a Vercel checkpoint on 2026-09-29 (HTTP 429), so it is claim_only and no number from it is used.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-29T22:09:30Z",
+      "sha256": "6751124d5a5fa894958243cc09cfea5c367b7f8bd22f587870559776e39a7faa",
+      "snapshot_path": "reports/research/iterations/h20260929_70_net_share_issuance/sources/quanterlab_2026_08_net_issuance_vs_earnings_yield.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_70_net_share_issuance.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Build NSI252/NSI126 with frozen cleaning rules (scripts/build_nsi_signal.py), run signal_card rank mode (ADV top 1500, direction -1, primary horizon 20 and 60) and a residual/Newey-West companion (scripts/nsi_ic_test.py); no book before this passes.",
+    "pass_condition": "At 20d or 60d: 2024+ RankIC sign as preregistered with Newey-West |t| >= 2.0, full-sample same sign, distinct_from_controls true, residual IC >= 50% of raw.",
+    "falsification_condition": "Any of the four conditions fails at both horizons.",
+    "max_compute_minutes": 20
+  }
+}
