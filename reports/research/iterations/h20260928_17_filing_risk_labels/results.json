@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_17_filing_risk_labels",
+  "task_id": "T-20260928-17",
+  "direction": "dir:text_to_pit_feature_extraction",
+  "generated_at": "2026-09-28T06:52:57Z",
+  "scope": {
+    "universe_size": 50,
+    "quarters": 8,
+    "n_items_scored": 436,
+    "n_ticker_quarters_reduced": 400,
+    "n_ticker_quarters_with_forward_return": 400,
+    "horizon_trading_days": 20,
+    "feature": "risk_score (DeepSeek-extracted, 0-1, 8-K text only, not 10-K)",
+    "model": "Deepseek-v4-flash"
+  },
+  "ic_standalone": {
+    "real": {
+      "mean_ic": -0.05653415040894262,
+      "n_quarters": 8,
+      "per_quarter": {
+        "2024Q3": -0.06755552974043748,
+        "2024Q4": -0.20453246605625586,
+        "2025Q1": 0.05414086535948646,
+        "2025Q2": -0.05659873518814082,
+        "2025Q3": -0.10700094486446911,
+        "2025Q4": -0.10037726776989027,
+        "2026Q1": -0.07179941293033675,
+        "2026Q2": 0.10145028791850284
+      },
+      "positive_share": 0.25,
+      "std_ic": 0.0955698419252896,
+      "t_stat": -1.673150454890738
+    },
+    "placebo": {
+      "mean_ic": 0.04232192368115603,
+      "n_quarters": 8,
+      "per_quarter": {
+        "2024Q3": -0.2707557329407423,
+        "2024Q4": 0.1557776340312181,
+        "2025Q1": 0.06887835019946127,
+        "2025Q2": 0.240621945226085,
+        "2025Q3": -0.061825073329349084,
+        "2025Q4": 0.12167408071697844,
+        "2026Q1": 0.03418756661836803,
+        "2026Q2": 0.05001661892722876
+      },
+      "positive_share": 0.75,
+      "std_ic": 0.155005390474625,
+      "t_stat": 0.7722600907277218
+    },
+    "placebo_over_real_abs_ratio": 0.7486081134149584,
+    "placebo_same_sign_as_real": false
+  },
+  "ic_zoo_lift": {
+    "attempted": false,
+    "reason": "scripts/run_h20260917_02_ml_ranking.py (the existing liquid-500 factor-zoo ranking pipeline referenced by dir:ml_ranking_liquid500_recent_vs_momentum_rule) is a 1953-line, staged panel/target/fold/model pipeline keyed to its own top-500-liquid-ADV universe and feature-root layout; this pilot's fixed 50-ticker sample is not a subset of, or compatible with, that panel without a nontrivial adapter (rebuilding the panel binding for a disjoint 50-name universe). Per the brief's own escape hatch ('report the standalone IC and say so' if integration is not quick), that adapter work was judged not quick within this pilot's ~90-minute budget and was not attempted. Reported: standalone IC only."
+  },
+  "preregistered_gate_evaluation": {
+    "stable_sign_check": {
+      "rule": ">=60% of quarters share the mean IC's sign",
+      "share_matching_mean_sign": 0.75,
+      "pass": true
+    },
+    "placebo_check_keep_rule_literal": {
+      "rule": "placebo mean |IC| < 50% of real mean |IC| AND same sign as real (candidate-manifest.json keep_rule)",
+      "placebo_over_real_abs_ratio": 0.7486081134149584,
+      "same_sign": false,
+      "pass": false
+    },
+    "note_on_wording_tension": "direction-review.json's prose stop_condition is OR-phrased ('stop if unstable sign, OR placebo reproduces >=50% WITH THE SAME SIGN') and, read in isolation, would not fire here because the placebo has the OPPOSITE sign from the real result, not the same sign. candidate-manifest.json's keep_rule is the more precisely operationalized AND-structured pass/fail gate ('pass' requires BOTH stable sign AND a small-and-same-signed placebo); since the placebo's magnitude is 74.9% of the real IC's magnitude (not <50%) and has the opposite sign, the keep_rule's placebo_check clause fails either way. This pilot applies the manifest's literal AND/fail_condition as the controlling gate -- the stricter of the two readings, not a relaxation -- and reports the tension rather than silently picking whichever reading passes.",
+    "overall_pass": false
+  },
+  "decision": "stop",
+  "decision_reason": "Real standalone IC is negative (mean -0.0565, t=-1.67 on n=8 quarters, not significant at conventional 95% for df=7) and its sign is directionally consistent across 6/8 quarters (75%, clears the 60% stability bar on its own). But the placebo (filings shuffled across tickers within the same quarter) has mean IC +0.0423 -- opposite sign, and its magnitude (74.9% of the real IC's) is far too close to the real result's to call the real result clearly distinct from noise on only 8 quarters. The keep_rule's placebo condition (<50% AND same sign) fails. Per the preregistered stop rule, this pilot does not scale beyond the 400-filing-quarter sample; the 8-K risk_score feature (this construction, this prompt, this 50-ticker sample) is not advanced further without a larger sample or a materially different construction."
+}

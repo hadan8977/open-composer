@@ -1,0 +1,153 @@
+{
+  "iter_id": "h20260928_17_filing_risk_labels",
+  "generated_at": "2026-09-28T06:35:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_17_filing_risk_labels_pilot",
+  "objective": "Preregister the single risk_score feature-IC candidate (RISK01) for dir:text_to_pit_feature_extraction's cheapest falsification pilot, before any DeepSeek score or IC number is computed. Universe capped to a fixed-seed 50-ticker x 8-quarter (400 filing-quarter) panel per the brief.",
+  "candidates": [
+    {
+      "candidate_id": "RISK01",
+      "path": "filing_risk_label_ic_screen",
+      "role": "single_mechanism_feature_ic_pilot",
+      "method": "deepseek_structured_risk_score_extraction",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_17_filing_risk_labels.yaml",
+      "fallback": "no_row_emitted_on_ticker_quarters_with_no_fetchable_8k_text",
+      "data_contract": "data_v1_h20260928_17_8k_sip",
+      "feature_contract": "feature_v1_h20260928_17_risk_score",
+      "label_contract": "label_v1_h20260928_17_forward_20d_return",
+      "validation_contract": "validation_v1_h20260928_17_ic_and_placebo",
+      "cost_contract": "cost_v1_h20260928_17_no_cost_ic_only",
+      "benchmark_contract": "benchmark_v1_h20260928_17_placebo_comparison",
+      "parameters": {
+        "candidate_id": "RISK01",
+        "horizon_trading_days": 20,
+        "quarters": [
+          "2024Q3",
+          "2024Q4",
+          "2025Q1",
+          "2025Q2",
+          "2025Q3",
+          "2025Q4",
+          "2026Q1",
+          "2026Q2"
+        ],
+        "universe_size": 50,
+        "universe_tickers": [
+          "AAON",
+          "ABBV",
+          "ADMA",
+          "AGX",
+          "ALSN",
+          "AMD",
+          "AMR",
+          "ASTC",
+          "BA",
+          "CB",
+          "CCK",
+          "CF",
+          "CGON",
+          "EHC",
+          "ELS",
+          "ENSG",
+          "ES",
+          "EXR",
+          "FICO",
+          "FSLR",
+          "GDDY",
+          "GOOG",
+          "HEI",
+          "HOOD",
+          "HSIC",
+          "HUBB",
+          "IEX",
+          "IR",
+          "JPM",
+          "KRC",
+          "LHX",
+          "MOH",
+          "MTSI",
+          "NOW",
+          "NTRS",
+          "NWSA",
+          "OLED",
+          "PSX",
+          "RKLB",
+          "RNR",
+          "RPM",
+          "SG",
+          "SSNC",
+          "TEL",
+          "TFX",
+          "ULS",
+          "UWMC",
+          "VVV",
+          "WVE",
+          "XYL"
+        ],
+        "universe_sampling": "Fixed-seed random.Random(20260928).sample(...) of 50 tickers from the 1146 tickers with an 'ok'-fetch-status 8-K in ALL 8 of the preregistered quarters, chosen before any DeepSeek call. 50*8=400 filing-quarters exactly, matching the brief's target.",
+        "rationale": "Structured risk-label extraction on an 8-K panel, added as one feature; source: Dolphin et al. arxiv 2601.15247 (methodology), Choi et al. arxiv 2510.03195 (evidence LLM-structured disclosure features beat a baseline), see direction-review.json."
+      }
+    }
+  ],
+  "candidate_count": 1,
+  "contracts": {
+    "data": {
+      "data_v1_h20260928_17_8k_sip": {
+        "sources": [
+          "data/features/earnings_events/{2024,2025,2026}.parquet (8-K filing index, acceptance_utc)",
+          "data/raw/earnings_text/<cik>/<accession>.txt (raw 8-K EX-99.1 text, from h20260922_01_earnings_text)",
+          "data/sip/daily/*/*.parquet (daily close, for forward 20-trading-day returns)"
+        ],
+        "universe": "fixed-seed random.Random(20260928).sample of 50 tickers from the 1146 tickers with a fetchable 8-K in all 8 of 2024Q3..2026Q2",
+        "window": [
+          "2024-07-01",
+          "2026-06-30"
+        ],
+        "confirmed_coverage": "1146 tickers confirmed present in all 8 quarters via pandas groupby on 2026-09-28; 50*8=400 filing-quarters by construction."
+      }
+    },
+    "features": {
+      "feature_v1_h20260928_17_risk_score": {
+        "decision_lag_sessions": 1,
+        "definition": "Per (ticker, filing-quarter): DeepSeek reads the neutralised 8-K EX-99.1 text and returns risk_score in [0,1] (0=no material risk/uncertainty language, 1=major disclosed risk/uncertainty) plus risk_direction (up/same/down vs a general sense of typical disclosure, best-effort, not used in the primary feature). The feature value for a (ticker, quarter) is that quarter's single 8-K's risk_score (one filing per ticker per quarter, matching the quarterly 2.02 earnings cadence); visible_at = acceptance_utc + scoring latency, used for the PIT join, see tests/test_h20260928_17_filing_risk_labels.py."
+      }
+    },
+    "labels": {
+      "label_v1_h20260928_17_forward_20d_return": {
+        "definition": "close-to-close forward 20-trading-day return from the day after the 8-K's acceptance date's open to 20 trading days later (close signal at filing acceptance, next_bar_open fill, matching the frozen project convention)."
+      }
+    },
+    "validation": {
+      "validation_v1_h20260928_17_ic_and_placebo": {
+        "window": [
+          "2024-07-01",
+          "2026-06-30"
+        ],
+        "placebo": "shuffle each filing's ticker assignment across tickers within the same filing quarter, recompute the identical feature pipeline, recompute IC",
+        "zoo_lift_check": "attempted if the existing factor-zoo ranking pipeline is quick to reuse; standalone-only reported otherwise, disclosed either way",
+        "no_cv_harness_this_pass": true
+      }
+    },
+    "costs": {
+      "cost_v1_h20260928_17_no_cost_ic_only": {
+        "definition": "No cost model -- this pilot computes a feature and its IC only, no positions, no trades, no backtest."
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260928_17_placebo_comparison": {
+        "definition": "Real feature's rank IC vs the mismatched-filings placebo's rank IC, both vs forward 20-day returns; standalone IC and (if computed) zoo-added IC lift."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_17_filing_risk_labels.yaml": "e0b2349d94d94eca31187275fbdb6b708f692c9200f2dd7b248b074740dbe44c"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_17_filing_risk_labels.yaml",
+  "spec_hash": "e0b2349d94d94eca31187275fbdb6b708f692c9200f2dd7b248b074740dbe44c",
+  "trial_count_and_dsr_note": "Single candidate; no multiple-comparisons correction applicable (n_trials=1). This pilot does not compute or report a Sharpe/DSR -- it is an IC-only feature check.",
+  "keep_rule": {
+    "pass_condition": "Mean rank IC across the panel has a stable sign (>=60% of quarters/observations share the mean's sign) AND the placebo's mean |IC| is <50% of the real mean |IC| (same sign).",
+    "fail_condition": "Either condition fails -> stop before scaling (direction-review.json stop_condition)."
+  }
+}

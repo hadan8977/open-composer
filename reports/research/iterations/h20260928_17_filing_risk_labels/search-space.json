@@ -1,0 +1,48 @@
+{
+  "schema_version": 3,
+  "created_at": "2026-09-28T06:35:00Z",
+  "iter_id": "h20260928_17_filing_risk_labels",
+  "strategy_name": "h20260928_17_filing_risk_labels_pilot",
+  "source_spec_path": "strategy_specs/drafts/h20260928_17_filing_risk_labels.yaml",
+  "spec_hash": "e0b2349d94d94eca31187275fbdb6b708f692c9200f2dd7b248b074740dbe44c",
+  "objective": "Cheapest falsification pilot for dir:text_to_pit_feature_extraction: compute a DeepSeek-extracted 8-K risk_score feature's rank IC vs forward 20-day returns on a 50-ticker x 8-quarter (400 filing-quarter) panel, plus a mismatched-filings placebo and (if quick) an IC-lift check against the existing factor zoo. No CV harness, no backtest, no cost model.",
+  "paths": [
+    {
+      "name": "filing_risk_label_ic_screen",
+      "candidate_count": 1,
+      "hypothesis_refs": [
+        "H-20260928-17"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "RISK01"
+        ],
+        "horizon_trading_days": 20,
+        "universe_size": 50,
+        "quarters": 8,
+        "cost_bps": null,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "mismatched_filings_within_quarter_placebo"
+      ]
+    }
+  ],
+  "total_candidate_budget": 1,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_17_filing_risk_labels/candidate-manifest.json",
+  "candidate_manifest_sha256": "3b31230d92840a385c77af06d331c0bd7a1ebc8b516bde6866b9f23c5714547b",
+  "data_feasibility_path": "reports/research/iterations/h20260928_17_filing_risk_labels/data-feasibility.json",
+  "data_feasibility_sha256": "c9198986ddaed770d7554f0feccc3b7855a5c914a0665bb25e24cfd8429ede87",
+  "cost_table_path": "reports/research/iterations/h20260928_17_filing_risk_labels/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_17_filing_risk_labels/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_17_filing_risk_labels/report.md",
+    "reports/research/iterations/h20260928_17_filing_risk_labels/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true
+}

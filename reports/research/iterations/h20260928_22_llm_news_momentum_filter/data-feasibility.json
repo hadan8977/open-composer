@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_22_llm_news_momentum_filter_historical_evaluation_authorization",
+  "iter_id": "h20260928_22_llm_news_momentum_filter",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 4,
+    "evaluation_authorized_count": 4,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 4,
+    "rows": [
+      {
+        "candidate_id": "B",
+        "path": "llm_news_momentum_filter_vs_baseline",
+        "action": "evaluate",
+        "reason_code": "local_signal_card_panel_and_news_packets_available",
+        "candidate_binding_sha256": "b783b94ce3c80a89b3024df45ee1a2f3a28d115340a7cd5da82e071dc8196c78"
+      },
+      {
+        "candidate_id": "L",
+        "path": "llm_news_momentum_filter_vs_baseline",
+        "action": "evaluate",
+        "reason_code": "local_signal_card_panel_and_news_packets_available",
+        "candidate_binding_sha256": "0e7c9d1bb255f42315ca05952c6608420dc4d15843009d7ae6874503452ea83e"
+      },
+      {
+        "candidate_id": "P",
+        "path": "llm_news_momentum_filter_vs_baseline",
+        "action": "evaluate",
+        "reason_code": "local_signal_card_panel_and_news_packets_available",
+        "candidate_binding_sha256": "322664349e653ad6681fb9173ea81c4f9acef1c5f07bb8ea714c4b2a2035d03a"
+      },
+      {
+        "candidate_id": "R",
+        "path": "llm_news_momentum_filter_vs_baseline",
+        "action": "evaluate",
+        "reason_code": "local_signal_card_panel_and_news_packets_available",
+        "candidate_binding_sha256": "f6db6dedec333cde377cd99fef44e1e549c8e4746405f2eaad04cc3affcad99b"
+      }
+    ]
+  },
+  "path_gates": {
+    "llm_news_momentum_filter_vs_baseline": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "B",
+        "L",
+        "P",
+        "R"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "data/features/universe_broad, data/features/daily_broad (momentum_252_21) and data/features/news_packets/*.parquet (visible_at field) are all present locally and cover 2024-01-02..2026-09-17. The owner-configured DeepSeek endpoint (scripts/score_earnings_text.py client, reused by scripts/score_h20260928_16_sentiment_accel.py and scripts/score_h20260928_17_filing_risk_labels.py) is already wired and credentialed. No new capability or vendor is required."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+      "sha256": "f8fc9921f2ca3262b2a99b0e4f1ed2e174a2d4302b416c5983c308f353869e64"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/cost-contract.json",
+      "sha256": "a7db525e59dd3ce8dd075d9f0012b8590d935a96d9164b6c5662ffacb50e4c37"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl",
+      "sha256": "c35c4b39a67d71feffac1d31e9eba3d0793811c7789e2574247372a87f85b763"
+    }
+  }
+}

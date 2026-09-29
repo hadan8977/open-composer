@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_17_filing_risk_labels_historical_evaluation_authorization",
+  "iter_id": "h20260928_17_filing_risk_labels",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 1,
+    "evaluation_authorized_count": 1,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 1,
+    "rows": [
+      {
+        "candidate_id": "RISK01",
+        "path": "filing_risk_label_ic_screen",
+        "action": "evaluate",
+        "reason_code": "local_8k_sip_data_available_deepseek_endpoint_existing_client",
+        "candidate_binding_sha256": "28f645f3c0aad517264bb17e5f12b45044006e254d59e1d8d2bea3bd6234dcb3"
+      }
+    ]
+  },
+  "path_gates": {
+    "filing_risk_label_ic_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "RISK01"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "All required local data is present and confirmed on 2026-09-28: data/features/earnings_events/{2024,2025,2026}.parquet (1146 tickers with a fetchable 8-K in all 8 preregistered quarters), data/raw/earnings_text (raw 8-K text from h20260922_01_earnings_text), and data/sip/daily/*/*.parquet (forward-return prices). No new capability or vendor is required; only a new DeepSeek prompt (risk_score) is added, reusing scripts/score_earnings_text.py's existing client/rate-limit machinery."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260928_17_filing_risk_labels.yaml",
+      "sha256": "746031d0fab3fb26629c55b2e29249b3daaae812b71220a5faa9481d770dbdeb"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_17_filing_risk_labels/cost-contract.json",
+      "sha256": "08b697ba6b051f3670e83ef175b0f73261aef47100e23204f0eb40418a3682a9"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "sha256": "6db92eed4aa85af95a384fd56e4225969887f24fbbf38a43d61ce4d7157d7f54"
+    }
+  }
+}

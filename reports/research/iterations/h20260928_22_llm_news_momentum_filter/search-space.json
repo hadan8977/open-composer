@@ -1,0 +1,75 @@
+{
+  "iter_id": "h20260928_22_llm_news_momentum_filter",
+  "strategy_name": "h20260928_22_llm_news_momentum_filter",
+  "source_spec_path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+  "spec_hash": "65937371be53defc3e06488d06d35e0ccbcc738b2a8b356edfd4bdab7178d480",
+  "schema_version": 3,
+  "created_at": "2026-09-28T07:00:00Z",
+  "objective": "Replicate Anic et al. (2025, arXiv:2510.26228) LLM news-conditioned momentum re-ranking on Open Composer data: B (rule momentum baseline) vs L (DeepSeek-scored re-rank/re-weight of the top-2 deciles) vs P (headline-shuffle placebo) vs R (random selection, 5 seeds), judged in the CLEAN post-cutoff window.",
+  "paths": [
+    {
+      "name": "llm_news_momentum_filter_vs_baseline",
+      "candidate_count": 4,
+      "hypothesis_refs": [
+        "H-20260928-22"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "B",
+          "L",
+          "P",
+          "R"
+        ],
+        "freq": "M",
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "B_rule_momentum_baseline",
+        "P_placebo_shuffled_headlines",
+        "R_random_selection_median_of_5_seeds",
+        "S3_date_neutral_informational_only",
+        "K1_bar_informational_only"
+      ]
+    }
+  ],
+  "total_candidate_budget": 4,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/candidate-manifest.json",
+  "candidate_manifest_sha256": "fee6dfe1238a7ace7ba42dd06bfcc98dfbff78c491ff5baa1e60e7676d077478",
+  "data_feasibility_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/data-feasibility.json",
+  "data_feasibility_sha256": "ec2d084b8c2382f8ca25abd7d1e1b2c343d719a863ca6a394ed6a7e558fe6b0a",
+  "cost_table_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_22_llm_news_momentum_filter/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_22_llm_news_momentum_filter/report.md",
+    "reports/research/iterations/h20260928_22_llm_news_momentum_filter/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "full_period": [
+      "2024-01-02",
+      "panel_end"
+    ],
+    "clean_window_formations": [
+      "2026-05-29",
+      "2026-06-30",
+      "2026-07-31",
+      "2026-08-31"
+    ],
+    "contaminated_window": [
+      "2024-01-02",
+      "2026-04-30"
+    ]
+  },
+  "adoption_rule": {
+    "continue_condition": "In the CLEAN window at 10bp: Sharpe(L) >= Sharpe(B) + 0.10, AND P's Sharpe improvement over B is < 50% of L's, AND L's Sharpe beats R's median.",
+    "pass_requires": "all three continue conditions",
+    "multiple_comparisons": "four candidates (B, L, P, R); report all regardless of outcome",
+    "fallback_if_refuted": "no LLM news-conditioned re-ranking added to any live or forward-tracked book on this evidence",
+    "g3_placebo": "subsumed by P (headline-shuffle) and R (random selection); see candidate-manifest.json g3_not_applicable_reason"
+  }
+}

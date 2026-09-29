@@ -1,0 +1,225 @@
+{
+  "iter_id": "h20260928_22_llm_news_momentum_filter",
+  "generated_at": "2026-09-28T07:00:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_22_llm_news_momentum_filter",
+  "objective": "Replicate Anic, Barbon, Seiz and Zarattini (2025, arXiv:2510.26228) on Open Composer data: B (12-1 momentum top decile, monthly, equal weight) vs L (top-2 deciles re-ranked/re-weighted by a DeepSeek news score using the paper's own prompt, m=50, eta=5, 15% cap) vs P (headline-shuffle placebo) vs R (random selection, 5 seeds), judged in the CLEAN post-cutoff window only.",
+  "candidates": [
+    {
+      "candidate_id": "B",
+      "path": "llm_news_momentum_filter_vs_baseline",
+      "role": "baseline_control",
+      "method": "momentum_252_21_top_decile_equal_weight",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+      "fallback": "equal_weight_universe_if_fewer_than_min_names",
+      "data_contract": "data_v1_signal_card_top500_daily_plus_news_packets",
+      "feature_contract": "feature_v1_momentum_top_decile_rule",
+      "label_contract": "label_v1_month_end_close_next_open_monthly_hold",
+      "validation_contract": "validation_v1_clean_window_and_full_period_informational",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_b_vs_l_vs_p_vs_r_vs_s3_k1",
+      "parameters": {
+        "top_n_universe": 500,
+        "decile": 1,
+        "freq": "M",
+        "weighting": "equal_weight"
+      }
+    },
+    {
+      "candidate_id": "L",
+      "path": "llm_news_momentum_filter_vs_baseline",
+      "role": "primary_candidate",
+      "method": "deepseek_news_score_rerank_reweight",
+      "ablation": "anonymized_real_headlines",
+      "spec_path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+      "fallback": "no_news_normalized_score_zero_raw_0.5_per_paper_rule",
+      "data_contract": "data_v1_signal_card_top500_daily_plus_news_packets",
+      "feature_contract": "feature_v1_llm_score_anonymized_news_rerank",
+      "label_contract": "label_v1_month_end_close_next_open_monthly_hold",
+      "validation_contract": "validation_v1_clean_window_and_full_period_informational",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_b_vs_l_vs_p_vs_r_vs_s3_k1",
+      "parameters": {
+        "top_n_universe": 500,
+        "candidate_deciles": [
+          1,
+          2
+        ],
+        "lookback_days": 30,
+        "headline_cap": 20,
+        "m": 50,
+        "eta": 5.0,
+        "per_stock_weight_cap": 0.15,
+        "prompt": "paper_basic_prompt_anic_et_al_2025",
+        "freq": "M"
+      }
+    },
+    {
+      "candidate_id": "P",
+      "path": "llm_news_momentum_filter_vs_baseline",
+      "role": "placebo_control",
+      "method": "deepseek_news_score_rerank_reweight",
+      "ablation": "shuffled_mismatched_headlines_seeded",
+      "spec_path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+      "fallback": "no_news_normalized_score_zero_raw_0.5_per_paper_rule",
+      "data_contract": "data_v1_signal_card_top500_daily_plus_news_packets",
+      "feature_contract": "feature_v1_llm_score_placebo_mismatched_news_rerank",
+      "label_contract": "label_v1_month_end_close_next_open_monthly_hold",
+      "validation_contract": "validation_v1_clean_window_and_full_period_informational",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_b_vs_l_vs_p_vs_r_vs_s3_k1",
+      "parameters": {
+        "top_n_universe": 500,
+        "candidate_deciles": [
+          1,
+          2
+        ],
+        "lookback_days": 30,
+        "headline_cap": 20,
+        "m": 50,
+        "eta": 5.0,
+        "per_stock_weight_cap": 0.15,
+        "shuffle_seed": 20260928,
+        "freq": "M",
+        "scope": "clean_window_only",
+        "derived_from_L_no_network_calls": true,
+        "derivation": "score_norm[A] = L.score_norm[derangement_map(pool, seed)[A]]"
+      }
+    },
+    {
+      "candidate_id": "R",
+      "path": "llm_news_momentum_filter_vs_baseline",
+      "role": "random_control",
+      "method": "uniform_random_selection_top2_decile",
+      "ablation": "five_seeds_median_reported",
+      "spec_path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+      "fallback": "equal_weight_universe_if_fewer_than_min_names",
+      "data_contract": "data_v1_signal_card_top500_daily_plus_news_packets",
+      "feature_contract": "feature_v1_random_uniform_from_top2_decile",
+      "label_contract": "label_v1_month_end_close_next_open_monthly_hold",
+      "validation_contract": "validation_v1_clean_window_and_full_period_informational",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_b_vs_l_vs_p_vs_r_vs_s3_k1",
+      "parameters": {
+        "top_n_universe": 500,
+        "candidate_deciles": [
+          1,
+          2
+        ],
+        "m": 50,
+        "seeds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "freq": "M",
+        "weighting": "equal_weight"
+      }
+    }
+  ],
+  "candidate_count": 4,
+  "contracts": {
+    "data": {
+      "data_v1_signal_card_top500_daily_plus_news_packets": {
+        "market": "open_composer.research.signal_card.load_market(top_n=500, memory_limit='1200MB')",
+        "news": "data/features/news_packets/*.parquet (visible_at field; Alpaca/Benzinga)",
+        "source": "PIT largest-500-by-dollar-ADV universe (data/features/universe_broad), daily_broad OHLC panel"
+      }
+    },
+    "features": {
+      "feature_v1_momentum_top_decile_rule": {
+        "definition": "momentum_252_21 column (close[t-21]/close[t-252]-1) ranked within the top-500 PIT member set at each month-end close; B = top decile (~50 names), equal weight."
+      },
+      "feature_v1_llm_score_anonymized_news_rerank": {
+        "definition": "L candidate pool = top-2 deciles (~100 names) by momentum_252_21. Each candidate scored by DeepSeek from anonymized headlines (company name + ticker replaced with 'the company') published in the 30 days before the signal close (cap 20 most recent); no qualifying headlines -> normalized score 0 (paper's own no-news rule). Re-rank by score (momentum rank breaks ties); take top m=50; weight Wi = E * eta^score_i (E = 1/50 equal baseline weight, eta=5), 15% per-stock cap then renormalize to sum 1."
+      },
+      "feature_v1_llm_score_placebo_mismatched_news_rerank": {
+        "definition": "Identical to feature_v1_llm_score_anonymized_news_rerank except each candidate is scored using the anonymized headlines of a different, randomly chosen (seeded) candidate from the same month's top-2-decile pool, never its own headlines."
+      },
+      "feature_v1_random_uniform_from_top2_decile": {
+        "definition": "50 names drawn uniformly at random (5 fixed seeds) from the same month's top-2-decile candidate pool, equal weight; no DeepSeek call."
+      }
+    },
+    "labels": {
+      "label_v1_month_end_close_next_open_monthly_hold": {
+        "definition": "Signal decided at the month-end session close; position effective at the next session's open; held one month (to the following month-end signal), via open_composer.research.signal_card.hold / book_returns on monthly-formed cohorts."
+      }
+    },
+    "validation": {
+      "validation_v1_clean_window_and_full_period_informational": {
+        "full_period": "2024-01-02 through the last panel date (data/features/daily_broad, news_packets)",
+        "clean_window": "first month-end formation strictly after the DeepSeek model's disclosed knowledge cutoff (April 2026) through the last panel date -- formations 2026-05-29, 2026-06-30, 2026-07-31, 2026-08-31 (last hold partial, through 2026-09-17)",
+        "contaminated_window": "all formations before the clean window start; reported separately, never counts toward the verdict"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "cost_model": "sum(abs(delta weight)) * cost_bps, 10bp and 20bp per side"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_b_vs_l_vs_p_vs_r_vs_s3_k1": {
+        "members": [
+          "B_rule_momentum_baseline",
+          "P_placebo_shuffled_headlines",
+          "R_random_selection_median_of_5_seeds",
+          "S3_date_neutral_informational_only",
+          "K1_bar_informational_only"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml": "65937371be53defc3e06488d06d35e0ccbcc738b2a8b356edfd4bdab7178d480"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_22_llm_news_momentum_filter.yaml",
+  "spec_hash": "65937371be53defc3e06488d06d35e0ccbcc738b2a8b356edfd4bdab7178d480",
+  "g3_not_applicable_reason": "G3 (random-menu/random-calendar placebo) is subsumed here by the preregistered R candidate (random selection from the same top-2-decile pool, 5 seeds) and by P (headline-shuffle placebo), which together isolate whether any apparent L edge comes from genuine news content versus from broadening the candidate pool or from LLM scoring noise alone.",
+  "adoption_rule": {
+    "continue_condition": "In the CLEAN window at 10bp: Sharpe(L) >= Sharpe(B) + 0.10, AND P's Sharpe improvement over B is < 50% of L's Sharpe improvement over B, AND L's Sharpe beats R's median Sharpe (across 5 seeds).",
+    "refute_condition": "Any one of the three continue conditions fails.",
+    "also_reported_informational": "L's Sharpe vs S3 (date-neutral 1.49, 2024-01->2026-09) and vs K1 (bar 1.19); t-stat of the L-B monthly return difference; contaminated (pre-cutoff) months reported separately, never counted toward the verdict.",
+    "multiple_comparisons": "four candidates (B, L, P, R); report all regardless of outcome",
+    "fallback_if_refuted": "no LLM news-conditioned re-ranking added to any live or forward-tracked book on this evidence; H-20260916-04's forward-shadow design is informed but not displaced by this result."
+  },
+  "amendments": [
+    {
+      "amended_at": "2026-09-28T07:15:00Z",
+      "amended_by": "coordinator mid-task correction, reconciled by the executor against this repo's own logs before applying",
+      "pre_amendment_state_note": "One real DeepSeek score had already been retrieved before this amendment (pipeline smoke-test, variant L, ticker IMGN, month 2024-01-31 -- a look-ahead-contaminated month, never analyzed or used to influence any design choice in this amendment or elsewhere). No CLEAN-window score, and no aggregate statistic of any kind, had been computed or seen.",
+      "changes": [
+        {
+          "id": "AMEND-1-ordering",
+          "change": "L is scored newest-clean-month-first (CLEAN window, 2026-05-29 onward, descending), then contaminated months afterward only if the DeepSeek endpoint's shared 5-hour rolling budget allows (scripts/score_h20260928_22_news_momentum.py --scope clean|full, default clean). This does not change any candidate definition, weight, or the stop/continue rule -- it only reprioritizes which months get scored first under a tight shared rate budget, and keeps the CLEAN-window verdict (the only thing that gates continue/refute) as the first thing secured. The brief's informational full-period L-vs-S3/K1 comparison and full-period t-stat are attempted best-effort afterward; if the budget does not allow completing the full period, those informational figures are reported over whatever period was actually scored, disclosed exactly as such -- they are not silently dropped."
+        },
+        {
+          "id": "AMEND-2-placebo-no-extra-calls",
+          "change": "P (headline-shuffle placebo) requires zero additional DeepSeek calls. Verified against this round's actual prompt template (scripts/score_h20260928_22_news_momentum.py USER_TEMPLATE): it contains no stock-specific numeric content, only anonymized headlines plus a per-month asof/horizon date shared by every candidate scored that month. Therefore scoring ticker A with ticker B's headlines produces a prompt byte-identical to L's own call for ticker B in the same month, and (temperature=0, per scripts/score_earnings_text.CHAT_TEMPERATURE) yields the same score. P is computed downstream in scripts/run_h20260928_22_news_momentum.py as a seeded within-month derangement of L's already-scored values (scorer.derangement_map, same seed formula as originally preregistered), not via a separate scoring pass. This changes only how P's score values are obtained (computed vs. queried) -- the values themselves, and the placebo's statistical definition, are unchanged: still 'this candidate scored on a different, randomly chosen candidate's own headlines, never its own'."
+        },
+        {
+          "id": "AMEND-3-operational",
+          "change": "Checkpoint every 50 items (was 25). Scoring launched detached (setsid nohup) with a background PID wait, not interactive polling. After 2 consecutive HTTP 429s the retry wrapper schedules the next attempt +2h out rather than retrying every 30 minutes, given the endpoint's ~5-hour rolling rate window shared with other concurrent scorers."
+        }
+      ]
+    },
+    {
+      "amended_at": "2026-09-28T20:30:00Z",
+      "amended_by": "coordinator mid-task correction (~16:45 UTC message), reconciled by the executor before applying",
+      "pre_amendment_state_note": "Still only 1 real DeepSeek score cached at the time of this amendment (the same single 2024-01-31/IMGN smoke-test call recorded in the first amendment); zero CLEAN-window scores existed. This amendment is therefore still pre-data for the hypothesis test itself.",
+      "changes": [
+        {
+          "id": "AMEND-4-underpowered-clean-window",
+          "problem": "The CLEAN window (formations >= 2026-05-29) has only 5 month-end formations (2026-05-29, 06-30, 07-31, 08-31, and a partial 2026-09-17 panel-end formation) -- 5 monthly return observations. A single Sharpe comparison at n=5 is dominated by noise; the original Sharpe(L)>=Sharpe(B)+0.10 threshold on that sample alone is not a meaningful test.",
+          "resolution": "First checked whether an older DeepSeek model with an earlier documented training cutoff is available through the configured text-scoring endpoint, which would give a longer clean window. The endpoint has no /models or /v1/models listing route (both return HTTP 400 'missing required parameter: model', i.e. no discovery endpoint, only per-request model dispatch). Direct chat/completions probes (max_tokens=5, trivial 'Say OK' prompt, no scoring content) against 9 plausible older-generation model-id spellings (Deepseek-v3, Deepseek-v3.1, Deepseek-v3.2, Deepseek-v3.2-exp, Deepseek-v3.2-flash, deepseek-chat, deepseek-reasoner, Deepseek-v4, deepseek-v4-flash [lowercase]) all returned HTTP 400 'invalid model: model name not found'; only the exact configured id 'Deepseek-v4-flash' works. No older model is reachable through this endpoint -- confirmed by direct probe, not assumed.",
+          "fallback_design": "Score L with Deepseek-v4-flash for (a) the 5 CLEAN-window formations (390 candidate-items, scored first) and (b) the 14 most recent CONTAMINATED (pre-cutoff) formations, newest-first (~1100 candidate-items), as a REFUTATION-ONLY asymmetric check: look-ahead exposure (the model may have partial knowledge of 2024-2026 US equity news/outcomes from its own training data) can only ever flatter L's apparent edge over B, never understate it. So if L does not beat B even in the contaminated window (where look-ahead bias, if it exists, would help L), that is decisive evidence against the mechanism (refutation). A positive contaminated-window gain is NOT confirmatory on its own -- it is exactly what look-ahead leakage alone would also produce -- and only raises the finding to 'promising, needs forward-shadow confirmation' if the independent CLEAN window also shows a gain (over B) AND the R random-selection control (preserved from the original preregistration; not dropped by this amendment) AND the P headline-shuffle placebo both fail to reproduce it.",
+          "verdict_rule": "refuted: contaminated-14 gain (L-B) <= 0, OR clean-5 Sharpe(L) <= Sharpe(B). promising_forward_shadow: BOTH clean-5 and contaminated-14 show a positive L-B gain, AND P's clean-window gain reproduces < 50% of L's, AND L's clean-window Sharpe beats R's clean-window median Sharpe. inconclusive_forward_shadow: any other combination (e.g. both windows positive but P or R is not cleanly beaten). This replaces the original single Sharpe(L)>=Sharpe(B)+0.10 magnitude threshold (underpowered at n=5) with a sign-based, asymmetric-bound test plus the original P/R controls; R is kept in the decision rule -- the coordinator's message did not mention it, and dropping a preregistered negative control was judged an unintentional omission rather than a deliberate relaxation, so the executor preserved it rather than silently dropping it."
+        }
+      ]
+    }
+  ]
+}

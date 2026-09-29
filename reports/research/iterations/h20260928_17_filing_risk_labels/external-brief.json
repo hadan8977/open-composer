@@ -1,0 +1,146 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_17_filing_risk_labels",
+  "strategy_name": "h20260928_17_filing_risk_labels_pilot",
+  "source_spec_path": "strategy_specs/drafts/h20260928_17_filing_risk_labels.yaml",
+  "spec_hash": "e0b2349d94d94eca31187275fbdb6b708f692c9200f2dd7b248b074740dbe44c",
+  "objective": "DeepSeek-extract a single structured risk_score feature from 8-K text on a 50-ticker x 8-quarter (400 filing-quarter) panel, check its standalone rank IC vs forward 20-day returns plus IC lift over the existing factor zoo if quick, and a mismatched-filing placebo -- the cheapest falsification test named in the registry for dir:text_to_pit_feature_extraction.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "dolphin_2601_15247_risk_taxonomy_extraction",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://arxiv.org/abs/2601.15247"
+    },
+    {
+      "claim_id": "choi_2510_03195_text_to_alpha_moving_targets",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://arxiv.org/html/2510.03195v5"
+    },
+    {
+      "claim_id": "campbell_2014_risk_factor_disclosure_information_content",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://ideas.repec.org/a/spr/reaccs/v19y2014i1d10.1007_s11142-013-9258-3.html"
+    },
+    {
+      "claim_id": "loughran_mcdonald_dictionary_free_academic_use",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://sraf.nd.edu/loughranmcdonald-master-dictionary/"
+    },
+    {
+      "claim_id": "sec_edgar_free_public_access_t17",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://www.sec.gov/edgar/search-and-access"
+    },
+    {
+      "claim_id": "deepseek_api_openai_compatible_endpoint_t17",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://api-docs.deepseek.com/"
+    },
+    {
+      "claim_id": "purged_embargo_cv_definition_t17",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://blog.quantinsti.com/cross-validation-embargo-purging-combinatorial/"
+    },
+    {
+      "claim_id": "kakushadze_2016_101_formulaic_alphas_construction_t17",
+      "source_card_path": "reports/harness/source_cards/h20260928_17_filing_risk_labels.jsonl",
+      "url": "https://arxiv.org/pdf/1601.00991"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://arxiv.org/abs/2601.15247",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "A three-stage pipeline (LLM extraction with supporting quotes, embedding-based semantic mapping to a taxonomy, and LLM-as-a-judge validation) extracts 10,688 structured risk factors from S&P 500 10-K filings; external validation shows same-industry companies exhibit 63% higher risk profile similarity than cross-industry pairs (Cohen's d=1.06, AUC 0.82, p<0.001), confirming the taxonomy captures economically meaningful structure.",
+      "project_applicability": "Direct methodological precedent for T-17's construction: a three-stage LLM pipeline (extraction with supporting quotes, embedding-based taxonomy mapping, LLM-as-judge validation) that turns unstructured 10-K risk-factor text into structured, taxonomy-aligned labels, and independently confirms those labels carry real economic structure (same-industry firms 63% more similar than cross-industry, Cohen's d=1.06, AUC 0.82). T-17 uses a single-DeepSeek-call simplification of this (no taxonomy mapping/judge stage), a scoped-down version, not the full pipeline.",
+      "reflection": "Validates that the extracted risk labels correlate with industry structure, not that they predict FORWARD RETURNS -- this paper does not itself run a trading/IC test, so it supports the feature's construction validity, not its predictive power (that is exactly what T-17's own IC pilot checks). Abstract/landing page read only, not the full paper PDF, this pass. Independent replication: Original paper (5 authors); not independently replicated by a third party this pass."
+    },
+    {
+      "url": "https://arxiv.org/html/2510.03195v5",
+      "published_or_updated_at": "2026-03-15",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "A framework ('LLM as extractor, embedding as ruler') extracts context-aware metric-focused spans from corporate disclosures and quantifies semantic change across consecutive periods via embedding similarity; in portfolio and cross-sectional regression tests against a recent NER-based baseline, this LLM-based method achieves more than twice the risk-adjusted alpha and shows significantly stronger predictive power.",
+      "project_applicability": "The closest direct evidence for T-17's core question -- does an LLM-extracted structured semantic feature from corporate disclosures ADD predictive power (not just descriptive structure) beyond a simpler baseline: this paper's 'LLM as extractor, embedding as ruler' method achieves more than 2x the risk-adjusted alpha of an NER-based baseline and stronger cross-sectional-regression predictive power -- i.e. an LLM-structured text feature CAN beat a simpler baseline in a comparable setting, supporting the direction's premise that this is worth a cheap pilot rather than dismissing it outright.",
+      "reflection": "Uses earnings-CALL transcripts (metric-tracking across consecutive periods), not 10-K risk factors or 8-K press releases -- a different document type and a different LLM extraction task (metric shift, not risk-label classification) than T-17's actual construction; cited as supporting evidence that LLM-structured disclosure features can add alpha over a baseline, not as a direct replication target. Also, we do not have call-transcript data locally (see negative_experiments_checked) -- this pilot only uses 8-K text. Independent replication: Original paper; 11-author, multi-institution industry+academia collaboration, not itself a third-party replication of a prior result."
+    },
+    {
+      "url": "https://ideas.repec.org/a/spr/reaccs/v19y2014i1d10.1007_s11142-013-9258-3.html",
+      "published_or_updated_at": "2014",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "Beginning in 2005 the SEC mandated a 10-K 'risk factor' section; firms facing greater risk disclose more risk factors and allocate disclosure toward the risk types they actually face, and the information conveyed by risk-factor disclosures is reflected in systematic risk, idiosyncratic risk, information asymmetry, and firm value.",
+      "project_applicability": "Establishes the baseline finding this pilot's feature tries to sharpen with an LLM: the raw Item 1A risk-factor SECTION already carries real information (correlates with systematic risk, idiosyncratic risk, information asymmetry, and firm value) even without any LLM processing -- i.e. risk-factor text is a legitimate, previously-validated PIT information source, not a speculative one; T-17 asks whether an LLM-structured label adds INCREMENTAL cross-sectional return information beyond this known baseline content.",
+      "reflection": "This is about the 10-K annual Item 1A risk-factor section specifically; T-17's actual local data is 8-K quarterly press releases (EX-99.1), not 10-K Item 1A text -- a different document (see negative_experiments_checked/remaining_evidence_gap for the resulting scope narrowing). Abstract only read (repec.org listing), not the full published article. Independent replication: Original paper (Review of Accounting Studies 2014); widely cited in accounting/finance literature, not independently re-verified this pass."
+    },
+    {
+      "url": "https://sraf.nd.edu/loughranmcdonald-master-dictionary/",
+      "published_or_updated_at": "2026-03",
+      "source_type": "industry_standard",
+      "credibility": "reference_summary",
+      "core_claim": "The Loughran-McDonald Master Dictionary with sentiment word lists (most recent update March 2026, covering 1993-2025) is maintained by the University of Notre Dame's Software Repository for Accounting and Finance and is free for use in academic research.",
+      "project_applicability": "Documents the established, most widely used non-LLM baseline for financial-text tone scoring (Loughran-McDonald word lists), the natural comparison point T-17's DeepSeek risk-label feature should eventually be checked against if it clears this pilot's bar -- consistent with this project's rule to compare any new text feature to a simple baseline on the same data/costs, not just report it in isolation.",
+      "reflection": "This is the resource's own official landing page (word-list download + licensing terms), not the original 2011 Journal of Finance paper's full text -- used here to confirm the dictionary is a real, current, freely available academic resource, not to re-derive its original empirical results. Independent replication: Official maintainer page (Notre Dame SRAF); the underlying 2011 paper is one of the most widely cited and replicated in financial textual analysis."
+    },
+    {
+      "url": "https://www.sec.gov/edgar/search-and-access",
+      "published_or_updated_at": "unknown",
+      "source_type": "regulatory_docs",
+      "credibility": "official_first_party_docs",
+      "core_claim": "The SEC's EDGAR system provides free public access to millions of informational documents filed by publicly traded companies and others.",
+      "project_applicability": "Confirms 8-K filings (T-17's actual local text source, already held from h20260922_01_earnings_text) are free public SEC data.",
+      "reflection": "SEC's own search-portal landing page, not a bulk/programmatic-access license statement; local 8-K cache already built by a prior iteration, not re-fetched here. Independent replication: Official first-party regulator page; independently confirmed by this project's own prior 8-K collection work."
+    },
+    {
+      "url": "https://api-docs.deepseek.com/",
+      "published_or_updated_at": "unknown",
+      "source_type": "provider_official_docs",
+      "credibility": "official_first_party_docs",
+      "core_claim": "The DeepSeek API uses an API format compatible with OpenAI and Anthropic; by modifying the configuration (base_url https://api.deepseek.com for the OpenAI format) with an API key, the OpenAI or Anthropic SDK can be used to access the DeepSeek API.",
+      "project_applicability": "Confirms DeepSeek's OpenAI-compatible API contract, matching the existing scripts/score_earnings_text.py client reused (with a new prompt) for this pilot's scoring.",
+      "reflection": "Only the 'Your First API Call' static HTML fragment was captured (client-rendered Docusaurus site), not the full rate-limit/pricing pages. Independent replication: Official first-party vendor documentation."
+    },
+    {
+      "url": "https://blog.quantinsti.com/cross-validation-embargo-purging-combinatorial/",
+      "published_or_updated_at": "2020-10-07",
+      "source_type": "industry_standard",
+      "credibility": "reference_summary",
+      "core_claim": "Purging and embargoing (Lopez de Prado's terminology) both involve removing some of the data points near the boundaries of affected cross-validation folds in financial time series to prevent training/test label overlap.",
+      "project_applicability": "T-17's mismatched-filing-across-tickers-within-quarter placebo is this pilot's own leakage-avoidance analog to purging/embargoing: both exist to test whether an apparent predictive signal survives a deliberate break of the true label-to-feature correspondence. This source documents the standard concept; T-17 does not build a full purge/embargo CV harness, only the cheaper placebo check, consistent with this being a pilot.",
+      "reflection": "Third-party (QuantInsti) blog explainer of Lopez de Prado's method, not the primary book text (not freely accessible, not quoted here). Independent replication: Third-party educational provider; underlying method has multiple independent open-source implementations, not individually re-verified this pass."
+    },
+    {
+      "url": "https://arxiv.org/pdf/1601.00991",
+      "published_or_updated_at": "2015-12-09",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "Presents explicit formulas for 101 real-life quantitative trading alphas built from cross-sectional rank, time-series, and decay operators; average holding period 0.6-6.4 days; average pairwise alpha correlation 15.9%.",
+      "project_applicability": "Source of the cross-sectional-rank IC evaluation grammar reused for T-17's own rank-IC computation (same operator convention as T-16's pilot, for consistency across this round's two pilots).",
+      "reflection": "Contains no LLM, news, or filing-text signal; cited only for the rank/IC evaluation convention. Independent replication: Widely reused operator library in the public quant-finance literature; not independently re-verified line-by-line this pass."
+    }
+  ],
+  "topic_coverage": [
+    "llm_structured_risk_label_extraction_methodology",
+    "llm_disclosure_feature_vs_ner_baseline_evidence",
+    "raw_10k_risk_section_information_content_baseline",
+    "non_llm_financial_text_dictionary_baseline",
+    "free_data_provenance_8k_edgar",
+    "llm_endpoint_substitution_deepseek_for_claude",
+    "deferred_purge_embargo_cv_standard",
+    "prior_local_negative_text_results"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "revision": "single_candidate_pilot_8k_not_10k",
+      "reason": "Scoped down from the plan's '10-K risk classification' to 8-K text because that is the only filing text locally available (no 10-K Item 1A text in inventory); a single preregistered candidate (risk_score IC only), no parameter search, matching the direction's own 'small-sample pilot' framing."
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260928-17-filing-risk-labels"
+  ]
+}

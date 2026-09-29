@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_22_llm_news_momentum_filter",
+  "reviewed_at": "2026-09-28T07:02:30Z",
+  "decision": "proceed",
+  "objective": "Replicate Anic, Barbon, Seiz and Zarattini (2025, arXiv:2510.26228) 'ChatGPT in Systematic Investing' on Open Composer's own PIT largest-500 universe: does DeepSeek-scored, news-conditioned re-ranking/re-weighting of a top-2-decile 12-1 momentum pool (the paper's own basic prompt, m=50, eta=5, 15% cap) raise Sharpe over a plain rule baseline B, after 10/20bp costs, in a CLEAN evaluation window that starts strictly after the scoring model's own disclosed knowledge cutoff -- versus a headline-shuffle placebo P and a random-selection control R?",
+  "target_regime_and_horizon": "US large/liquid equities (PIT largest-500 by dollar ADV), monthly rebalance, long-only, m=50 concentrated book. Validity is limited to this specific mechanism (LLM re-ranks/re-weights an already-passing rule-based momentum book using recent firm-specific news) and to the CLEAN window: formations 2026-05-29, 2026-06-30, 2026-07-31, 2026-08-31 (first month-end after DeepSeek V4 Flash's disclosed April-2026 knowledge cutoff through the last panel date, 2026-09-17). No claim is made this generalizes to other universes, other LLMs, other news sources, or a longer sample; the CLEAN window is thin (4 formations) by construction, mirroring the target paper's own thin (15-month) OOS window.",
+  "existing_solution_comparison": "The mechanism (LLM reads pre-supplied, timestamped firm-specific news to filter/re-weight an already-passing rule-based momentum book) is not new to this repo: dir:llm_acceptance_judge_forward_shadow / H-20260916-04 already designs a weekly DeepSeek keep/half/skip judge on the T1 momentum top-50 using news + insider filings + 8-K dates, forward-shadow evaluated (status: proposed, budget 2 variants, used 0), per I-20260928-03's ranked recommendation #1 (2026-09-28). This round is the SAME mechanism family but a DISTINCT, narrower, backtest-first test: it replicates the target paper's own specific published design (continuous 0-1 score -> rank -> re-weight by Wi=E*eta^score, not a 3-way keep/half/skip judge; top-2-decile pool not top-50; monthly not weekly; no insider/8-K features, news only) with a placebo and random control this repo can run cheaply on 2024-2026 data before committing to H-20260916-04's slower forward-only protocol. A positive result here would be independent, backtest-based evidence the news-conditioned-momentum-filter mechanism can work locally; it does not replace H-20260916-04's forward-shadow test (different scoring scheme, different pool size, different data layers) but would raise the prior for running it. dir:news_attention_features (H-20260916-02, refuted: simple count/novelty news features have no signal) is a different, much simpler mechanism (mechanical counting, not LLM-read content) and is distinguished, not re-run, here. The T1 momentum book (open_composer.research.signal_card, as used by scripts/run_h20260924_02_momentum_crash_guard.py) supplies B's construction unchanged (12-1 momentum, top decile, monthly).",
+  "remaining_evidence_gap": "Whether DeepSeek (not the paper's ChatGPT-4o-mini), scoring anonymized headlines from Open Composer's own Alpaca/Benzinga news_packets store (not the paper's Stock News API), on the PIT largest-500 universe (not literal S&P 500 membership), produces a re-ranking that beats the plain momentum rule after 10/20bp costs in a genuinely post-cutoff window -- and, critically, whether any apparent lift survives a headline-shuffle placebo (rules out 'broadening the pool to 100 names plus re-weighting noise helps regardless of news content') and beats random selection from the same pool (rules out 'any re-weighting away from flat top-50 helps'). None of this has been tested locally; only the paper's own (different model, different data, different universe) result exists.",
+  "negative_experiments_checked": "dir:news_attention_features / H-20260916-02 (refuted): mechanical news count/novelty features carry no signal on this repo's data -- distinguished above; this round tests LLM-read content, not counts. reports/research/iterations/h20260923_14_news_hf_reaction (H-20260923-14, refuted): SUE re-dated to 8-K acceptance time loses to a redated placebo (t=1.06<3); a different signal (earnings surprise timing) and a different placebo design (calendar redate, not headline shuffle), not the same claim as this round's news-conditioned momentum re-ranking. No prior local test of LLM-scored news re-ranking a momentum book has been run to completion; H-20260916-04 is proposed but not yet executed (budget 2, used 0).",
+  "cost_and_execution_assumptions": "Signal decided at the month-end session close; fill at the next session's open; 10bp and 20bp per side on sum|delta weight| (open_composer.research.signal_card. book_returns), matching this repo's frozen G1-G5 cost contract. DeepSeek scoring cost is borne by the owner-configured endpoint (not Claude Code subscription tokens), reusing scripts/score_earnings_text.py's client, credential loading, rate-limit backoff and disk cache, per scripts/score_h20260928_16_sentiment_accel.py and scripts/score_h20260928_17_filing_risk_labels.py's established pattern. Concurrency kept low (sequential calls, checkpointed, resumable) because another agent is using the same endpoint concurrently; a 429 or any 'limit'/'quota' response pauses the batch and writes next_try_at.json rather than retrying aggressively.",
+  "stop_condition": "Continue (to a forward-shadow follow-on, e.g. informing H-20260916-04's design) only if, in the CLEAN window at 10bp: Sharpe(L) >= Sharpe(B) + 0.10, AND P's Sharpe improvement over B is < 50% of L's improvement over B, AND L's Sharpe beats R's median Sharpe (5 seeds). If any one of these three fails, the verdict is refuted: no LLM news-conditioned re-ranking is added to any live or forward-tracked book on this evidence, and the queue is not touched. Reopen only with a new disclosed data source, a new LLM, or new local news coverage -- not by re-tuning the paper's own hyperparameters (m, eta, cap) or by cherry-picking the CLEAN window boundary after seeing results.",
+  "queries": [
+    {
+      "query": "DeepSeek V4 flash model knowledge cutoff release date",
+      "opened_urls": [
+        "https://developer.puter.com/ai/deepseek/deepseek-v4-flash/",
+        "https://api-docs.deepseek.com/news/news260424/"
+      ],
+      "searched_at": "2026-09-28T06:52:00Z"
+    },
+    {
+      "query": "DeepSeek-V4-Flash knowledge cutoff training data cutoff site:api-docs.deepseek.com",
+      "opened_urls": [
+        "https://api-docs.deepseek.com/updates/"
+      ],
+      "searched_at": "2026-09-28T06:53:00Z"
+    },
+    {
+      "query": "Glasserman Lin 2023 look-ahead bias GPT stock return predictions anonymize company name",
+      "opened_urls": [
+        "https://arxiv.org/abs/2309.17322"
+      ],
+      "searched_at": "2026-09-28T06:52:30Z"
+    },
+    {
+      "query": "ChatGPT in Systematic Investing Anic Barbon Seiz Zarattini review critique newsletter momentum LLM",
+      "opened_urls": [
+        "https://arxiv.org/abs/2510.26228",
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5680782"
+      ],
+      "searched_at": "2026-09-28T06:56:00Z"
+    },
+    {
+      "query": "He Lv Manela Wu 2025 chronologically consistent large language models arXiv 2502.21206",
+      "opened_urls": [
+        "https://arxiv.org/abs/2502.21206"
+      ],
+      "searched_at": "2026-09-28T06:57:00Z"
+    },
+    {
+      "query": "Alpaca historical news data API Benzinga coverage",
+      "opened_urls": [
+        "https://docs.alpaca.markets/docs/historical-news-data"
+      ],
+      "searched_at": "2026-09-28T06:58:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "anic2025_oos_sharpe_table3",
+      "url": "https://arxiv.org/abs/2510.26228",
+      "claim": "Anic, Barbon, Seiz and Zarattini (2025, arXiv:2510.26228) report that in the out-of-sample period (Jan 2024-Mar 2025, after ChatGPT 4.0 mini's Oct 2023 pre-training cutoff), the LLM-enhanced momentum strategy's Sharpe ratio is 1.06 versus 0.79 for the baseline momentum strategy, net of 2bps costs.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-10-30",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "Sets the informational comparison target for L's OOS Sharpe and grounds the look-ahead-control design (clean window must start after the scoring model's own cutoff, mirroring the paper's Oct-2023-cutoff logic).",
+      "limitations": "OOS window is only 15 months and contains no crisis/drawdown period; the paper's own LLM-vs-baseline alpha regression is significant only at the 10% level.",
+      "independent_replication": "Not yet independently replicated (posted 2025-10-30); this round is itself an independent replication attempt on a different (US PIT largest-500, DeepSeek-scored) data and model setup.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "a04954ca289d06bd771e1d8cc373a57da212b73f27c4e47eea4446105e88ac73",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/arxiv-2510.26228-fulltext-extract.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "anic2025_weighting_formula",
+      "url": "https://arxiv.org/abs/2510.26228",
+      "claim": "The paper's re-weighting rule for the LLM-enhanced portfolio is Wi = E * eta^LLM_Score_i, where E is the baseline (equal- or value-weight) share, LLM_Score_i is the score normalized to [-1, 1], and eta is a scaling parameter optimized to 5 on the validation set; weights are then renormalized to sum to one, with an optional 15% per-stock cap.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-10-30",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "L's per-stock weight is computed as Wi = E * eta^score_i (eta=5), 15% cap, renormalized to sum 1; E is fixed to equal weight (1/m) rather than the paper's own optimal value-weighted E, disclosed as a deviation because this repo has no reliable point-in-time market-cap feature and because using the same equal-weight E as baseline B isolates the LLM re-ranking/tilt effect.",
+      "limitations": "The PDF text extraction renders the exponent as plain text (\"eta LLM_Scorei\") with the superscript lost; read as an exponential tilt (Wi = E * eta^score_i) because (a) eta is described as a 'scaling parameter' and 'weight multiplier', (b) scores range over [-1, 1] so a linear eta*score would make some baseline-positive weights negative for a long-only book, which the paper never discusses, and (c) an exponential form keeps every weight positive across the full score range (eta^-1=0.2x to eta^1=5x at eta=5), matching the paper's own description of eta=5 as indicating a 'meaningful' and 'confidently exploited' dynamic range. No appendix with a clearer typeset formula was found in the 26-page PDF.",
+      "independent_replication": "Not independently replicated; this is this round's own reading of the primary source.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "a04954ca289d06bd771e1d8cc373a57da212b73f27c4e47eea4446105e88ac73",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/arxiv-2510.26228-fulltext-extract.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "anic2025_optimal_hyperparameters_m50",
+      "url": "https://arxiv.org/abs/2510.26228",
+      "claim": "The paper's validation-set-optimal hyperparameter configuration selects monthly rebalancing, a 1-day news lookback, a 21-day lookahead, the 'basic' prompt, m=50 selected stocks, a 15% per-stock weight cap, value-weighted initial allocation, and eta=5.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-10-30",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "L uses m=50 unchanged from the paper. This round's own lookback (30 days, cap 20 headlines) and rebalance (monthly) deviate from the paper's optimal 1-day lookback -- disclosed deviation, since a 1-day news lookback would leave most candidate-months with zero qualifying headlines given this repo's lower news density outside mega-caps.",
+      "limitations": "Optimal on the paper's own S&P 500 / ChatGPT-4o-mini validation set (Oct 2019-Dec 2023); not re-optimized for our universe, DeepSeek model, or cost assumptions -- used as preregistered, not tuned, per this round's anti-overfitting rule.",
+      "independent_replication": "Not independently replicated.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "a04954ca289d06bd771e1d8cc373a57da212b73f27c4e47eea4446105e88ac73",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/arxiv-2510.26228-fulltext-extract.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "anic2025_no_news_zero_rule",
+      "url": "https://arxiv.org/abs/2510.26228",
+      "claim": "When a stock-day has no relevant news, the paper treats the missing LLM score as zero (on the normalized [-1, 1] scale), representing a neutral stance.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-10-30",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "A candidate with zero qualifying anonymized headlines in the 30-day lookback gets a normalized score of 0 (raw 0.5) without a DeepSeek call, per the brief's own preregistered fallback and the paper's rule.",
+      "limitations": "Described for the daily-score panel used in the paper's summary statistics, not stated separately for the monthly-rebalance production rule, but is the only no-news rule the paper states.",
+      "independent_replication": "Not independently replicated.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "a04954ca289d06bd771e1d8cc373a57da212b73f27c4e47eea4446105e88ac73",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/arxiv-2510.26228-fulltext-extract.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "glasserman_lin_2023_anonymization_distraction_effect",
+      "url": "https://arxiv.org/abs/2309.17322",
+      "claim": "Glasserman & Lin (2023, arXiv:2309.17322) find that removing a company's identifiers from news text before LLM sentiment scoring (anonymization) improves in-sample trading performance versus using the original headlines, indicating the 'distraction effect' (general knowledge about the named company interfering with sentiment measurement) has a larger impact than look-ahead bias for their sample.",
+      "source_type": "paper",
+      "published_or_updated_at": "2023-09-28",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "scripts/score_h20260928_22_news_momentum.py anonymizes every headline (company name and ticker replaced with 'the company') for both L and P, following this paper's method, before sending text to DeepSeek.",
+      "limitations": "Findings are for GPT sentiment scoring of news headlines on a different (older GPT, different universe) setup; motivates our anonymization design, not a direct performance transfer.",
+      "independent_replication": "Also referenced by arXiv:2601.13770 (Look-Ahead-Bench) and arXiv:2512.23847 as a standard anonymization-bias baseline, per this round's web search.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "59b5e64086cfd739a3fa9c01faf89d2aaf0594aa5e7b8e7449b49e8f83743e67",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/arxiv-2309.17322-glasserman-lin-abstract.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "he_et_al_2025_chronological_consistency_lookahead",
+      "url": "https://arxiv.org/abs/2502.21206",
+      "claim": "He, Lv, Manela and Wu (2025, arXiv:2502.21206) show that LLM training data can introduce lookahead bias and training leakage in social-science and financial applications, and that lookahead bias is model- and application-specific -- motivating chronologically consistent (only-past-data) training and, by extension, evaluation windows that start strictly after a model's own disclosed knowledge cutoff.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-02-28",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "Grounds the CLEAN-vs-contaminated window split and the requirement to report contaminated months separately, never counting them toward the verdict.",
+      "limitations": "Proposes training chronologically consistent models (ChronoBERT/ChronoGPT) rather than post-hoc cutoff-based evaluation of an off-the-shelf model; we use the weaker (but only locally feasible) control of restricting the verdict window to after the model's disclosed cutoff, disclosed as a limitation relative to their approach.",
+      "independent_replication": "Cited directly by Anic et al. (2025, our target paper, reference list) as grounding for the same OOS-cutoff logic.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "2f6bc0c09e33c43825f8b31eb227e708ac0e8e76508cccf0238a2ce4437eff5a",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/arxiv-2502.21206-he-et-al-abstract.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "deepseek_v4_flash_knowledge_cutoff_puter",
+      "url": "https://developer.puter.com/ai/deepseek/deepseek-v4-flash/",
+      "claim": "Third-party model-catalog aggregator Puter states DeepSeek V4 Flash has a knowledge cutoff of April 2026 and a release date of April 24, 2026.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-04-24",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "Sets the CLEAN window start: first month-end after April 2026, i.e. formation 2026-05-29 onward.",
+      "limitations": "Third-party aggregator, not DeepSeek's own documentation; DeepSeek's own API docs (news260424 announcement, updates changelog -- both fetched below) confirm the April 24, 2026 release date and parameter counts but do not themselves state an explicit knowledge-cutoff date, so this is currently the best available disclosed cutoff and is treated conservatively (the CLEAN window starts at the first month-end AFTER, not including, this date).",
+      "independent_replication": "Release date corroborated independently by DeepSeek's own official changelog/announcement pages (deepseek_v4_announce, deepseek_v4_updates cards below).",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "c46f7bef19b754c56d2638057afdc1881372630963738613cd306e59a21a279b",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/puter-deepseek-v4-flash.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "deepseek_v4_announce_official_release",
+      "url": "https://api-docs.deepseek.com/news/news260424/",
+      "claim": "DeepSeek's official API docs changelog lists DeepSeek-V4 Preview Release with DeepSeek-V4-Pro (1.6T total / 49B active params) and DeepSeek-V4-Flash (284B total / 13B active params), dated 2026/04/24.",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "2026-04-24",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "Confirms the exact model identity behind OC_TEXT_SCORER_MODEL=Deepseek-v4-flash (the base V4-Flash, not a later Vision/1.1 variant).",
+      "limitations": "Confirms model identity, size and release date but not an explicit knowledge-cutoff date (see deepseek_v4_flash_knowledge_cutoff_puter card for the cutoff figure used).",
+      "independent_replication": "Official DeepSeek documentation; primary source for the model's existence and release date.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "6e426025f6a3087c861857708be5ad22fa7266822d8aee7c5219d1fc56d799f1",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/deepseek-api-docs-news260424.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "deepseek_v4_1_flash_naming_disambiguation",
+      "url": "https://api-docs.deepseek.com/updates/",
+      "claim": "DeepSeek's official changelog shows DeepSeek-V4.1-Flash was released 2026-09-10 (newer than the base V4-Flash, released 2026-04-24) and DeepSeek-V4-Flash-Vision-Exp on 2026-08-21 -- distinct, later model versions from the base 'DeepSeek-V4-Flash' this repo's endpoint is configured to (per the model id 'Deepseek-v4-flash', with no '.1' or 'vision' suffix).",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "2026-09-10",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "Supports using the more conservative April 2026 cutoff (base V4-Flash) rather than the newer September 2026 V4.1-Flash cutoff for the CLEAN window boundary.",
+      "limitations": "Does not itself state whether the account's configured endpoint has since been silently upgraded from base V4-Flash to V4.1-Flash server-side; treated as a disclosed uncertainty, the more conservative (earlier, April 2026) cutoff is used for the CLEAN window either way.",
+      "independent_replication": "Consistent with the release-date table on the deepseek_v4_announce card (same document family).",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "2922113bc4e0e970fa6d3c4065c3cff3ec661a4db03d671cc2310545c5b5bb71",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/deepseek-api-docs-updates.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    },
+    {
+      "claim_id": "alpaca_historical_news_data_coverage",
+      "url": "https://docs.alpaca.markets/docs/historical-news-data",
+      "claim": "Alpaca's historical news API provides news data dating back to 2015, averaging 130+ articles per day, currently supplied by Benzinga.",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "US S&P 500 constituents (paper) / US PIT largest-500 (this round), 2019-2026",
+      "applicability": "Confirms the news_packets data source (Alpaca/Benzinga) used to build L and P's headline inputs, with visible_at as the point-in-time cutoff field.",
+      "limitations": "Does not itself establish immutable first-seen timestamps or revision history; this repo's local data/features/news_packets carries its own fetched_at/visible_at fields used for the actual PIT cutoff, not this page's claim alone.",
+      "independent_replication": "Same claim already verified and reused in this repo's mom_pit_semantic_theme_r11 source cards (dynamic_theme_alpaca_news_history, r11_alpaca_news_api_contract); re-fetched fresh here for this iteration's own freshness window.",
+      "fetched_at": "2026-09-28T06:50:00Z",
+      "sha256": "692564d4b41874e0b712bede8299f54a75c5b85b2f2b02d2c0a3e97e340c6d6b",
+      "snapshot_path": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/sources/alpaca-historical-news-data.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_22_llm_news_momentum_filter.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Compute B (rule-only, no DeepSeek calls) and R (random selection, no DeepSeek calls) first for the full panel -- both are free. Then score L for the 4 CLEAN-window formations only (~100 candidates x 4 months = ~400 DeepSeek calls, before no-news skips) and check the stop/continue rule before spending any further budget on the full 2024-2026 informational period or on P.",
+    "pass_condition": "L's CLEAN-window Sharpe at 10bp clears Sharpe(B)+0.10 -- if it doesn't, the full informational-period L scoring and the P placebo scoring are moot for the verdict (P and R are only needed to confirm a real CLEAN-window lift, not to produce one).",
+    "falsification_condition": "L's CLEAN-window Sharpe at 10bp does not clear Sharpe(B)+0.10.",
+    "max_compute_minutes": 180
+  }
+}
