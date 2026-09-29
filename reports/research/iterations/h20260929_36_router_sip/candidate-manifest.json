@@ -1,0 +1,291 @@
+{
+  "iter_id": "h20260929_36_router_sip",
+  "generated_at": "2026-09-29T13:21:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_36_router_sip",
+  "objective": "Recheck the frozen router route on SIP minute data with no parameter change: does it earn net of 10bp/side costs in 2024-01-08..data end, pass K1/K2/G3, and how much of the IEX result was a data artifact.",
+  "candidate_count": 7,
+  "candidates": [
+    {
+      "candidate_id": "R0",
+      "path": "router_sip_recheck",
+      "role": "decision_route",
+      "method": "frozen router, long and short legs as coded (_selected_positions)",
+      "ablation": "frozen_route_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "route": {
+          "lookback_days": 10,
+          "entry_after_bars": 2,
+          "top_n": 1,
+          "min_opening_return_pct": 0.0,
+          "min_prior_momentum_pct": 0.0,
+          "min_relative_volume": 1.0,
+          "market_gate": "qqq_prior_negative",
+          "selection_style": "opening_reversal",
+          "max_opening_return_pct": 0.0,
+          "max_prior_momentum_pct": null
+        },
+        "decision_eligible": true,
+        "note": "By code reading (intraday_daily_rotation.py lines 1012-1026) the short leg of an opening_reversal router with top_n=1 is always empty because the short ranking equals the long ranking and the symbol is already in `used`; R0 is therefore expected to equal R0_long and R0_short to have zero trades. This prediction is preregistered before any return exists."
+      }
+    },
+    {
+      "candidate_id": "R0_long",
+      "path": "router_sip_recheck",
+      "role": "executability_control",
+      "method": "R0 keeping only long selections",
+      "ablation": "long_leg_only",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "route": {
+          "lookback_days": 10,
+          "entry_after_bars": 2,
+          "top_n": 1,
+          "min_opening_return_pct": 0.0,
+          "min_prior_momentum_pct": 0.0,
+          "min_relative_volume": 1.0,
+          "market_gate": "qqq_prior_negative",
+          "selection_style": "opening_reversal",
+          "max_opening_return_pct": 0.0,
+          "max_prior_momentum_pct": null
+        },
+        "decision_eligible": false
+      }
+    },
+    {
+      "candidate_id": "R0_short",
+      "path": "router_sip_recheck",
+      "role": "short_leg_probe",
+      "method": "R0 keeping only short selections",
+      "ablation": "short_leg_only",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "route": {
+          "lookback_days": 10,
+          "entry_after_bars": 2,
+          "top_n": 1,
+          "min_opening_return_pct": 0.0,
+          "min_prior_momentum_pct": 0.0,
+          "min_relative_volume": 1.0,
+          "market_gate": "qqq_prior_negative",
+          "selection_style": "opening_reversal",
+          "max_opening_return_pct": 0.0,
+          "max_prior_momentum_pct": null
+        },
+        "decision_eligible": false,
+        "expected_trades": 0
+      }
+    },
+    {
+      "candidate_id": "P1",
+      "path": "router_sip_recheck",
+      "role": "placebo",
+      "method": "random-pick placebo seed 20260929",
+      "ablation": "random_symbol_random_side",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "seed": 20260929,
+        "gate": "qqq_prior_negative",
+        "universe": "12 names",
+        "entry_after_bars": 2,
+        "exit": "last regular close",
+        "decision_eligible": false,
+        "draw_rule": "for each session index >= lookback draw symbol=rng.integers(12) then side=rng.integers(2) (0 long, 1 short) with numpy default_rng(seed), trade only if the QQQ gate passes"
+      }
+    },
+    {
+      "candidate_id": "P2",
+      "path": "router_sip_recheck",
+      "role": "placebo",
+      "method": "random-pick placebo seed 20260930",
+      "ablation": "random_symbol_random_side",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "seed": 20260930,
+        "gate": "qqq_prior_negative",
+        "universe": "12 names",
+        "entry_after_bars": 2,
+        "exit": "last regular close",
+        "decision_eligible": false
+      }
+    },
+    {
+      "candidate_id": "P3",
+      "path": "router_sip_recheck",
+      "role": "placebo",
+      "method": "random-pick placebo seed 20261001",
+      "ablation": "random_symbol_random_side",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "seed": 20261001,
+        "gate": "qqq_prior_negative",
+        "universe": "12 names",
+        "entry_after_bars": 2,
+        "exit": "last regular close",
+        "decision_eligible": false
+      }
+    },
+    {
+      "candidate_id": "B_ew",
+      "path": "router_sip_recheck",
+      "role": "benchmark",
+      "method": "equal-weight long of the 12 names, buy at the same entry bar, sell at the close, every day",
+      "ablation": "equal_weight_intraday_long",
+      "spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+      "fallback": "none_if_data_missing_report_missing_days",
+      "data_contract": "data_v1_h20260929_36_sip_minute_13",
+      "feature_contract": "feature_v1_h20260929_36_router_selection",
+      "label_contract": "label_v1_h20260929_36_intraday_open_to_close",
+      "validation_contract": "validation_v1_h20260929_36_windows",
+      "cost_contract": "cost_v1_h20260929_36_symmetric_per_side",
+      "benchmark_contract": "benchmark_v1_h20260929_36_s3_edge_and_placebos",
+      "parameters": {
+        "entry_after_bars": 2,
+        "decision_eligible": false
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20260929_36_sip_minute_13": {
+        "sources": [
+          "data/sip/minute (consolidated SIP 1-minute bars, adjustment=all) via open_composer.adapters.data.sip_parquet.load_sip_bars",
+          "data/features/t20260929_36_router_minute (regular-session extract of 12 names plus QQQ, built by scripts/build_t20260929_36_router_minute.py)",
+          "data/sip/daily for split and close cross-checks and S3/SHY/BIL panels through scripts/screen_lane.py"
+        ],
+        "join": "symbol/timestamp; common dates across 12 names plus QQQ (benchmark symbol set to QQQ, not TQQQ, because it only feeds reporting fields)"
+      }
+    },
+    "features": {
+      "feature_v1_h20260929_36_router_selection": {
+        "module": "open_composer/research/intraday_daily_rotation.py",
+        "definition": "_symbol_selection_stats opening return (open of bar 0 to close of bar entry_after_bars-1), prior momentum (previous close over close lookback_days sessions earlier), relative volume of first entry_after_bars bars vs the prior lookback_days sessions; reversal score -0.55*open -0.20*mom + 20*(rv-1)"
+      }
+    },
+    "labels": {
+      "label_v1_h20260929_36_intraday_open_to_close": {
+        "definition": "same-day return from open of bar entry_after_bars to last regular-session close, net of per-side cost, one position with weight 100 percent of capital, zero on no-trade days"
+      }
+    },
+    "validation": {
+      "validation_v1_h20260929_36_windows": {
+        "windows": {
+          "anchor": [
+            "2024-01-08",
+            "data_end"
+          ],
+          "select": [
+            "2023-09-18",
+            "2025-12-31"
+          ],
+          "holdout_contaminated": [
+            "2026-01-02",
+            "2026-09-17"
+          ],
+          "new_holdout": [
+            "2026-09-18",
+            "data_end"
+          ],
+          "partial_stress_2023_01_08": [
+            "2023-01-01",
+            "2023-08-31"
+          ],
+          "iex_comparison": [
+            "2024-05-31",
+            "2026-05-29"
+          ]
+        },
+        "stress_period": "2016-05-02..2023-08 needs minute data before 2023-01, unavailable: marked pending (\u5f85\u8865\u538b\u529b\u671f); 2023-01..2023-08 is reported as partial_stress",
+        "min_days_note": "windows shorter than 2 years are reported only; iex_comparison is the window of the recorded IEX result and is report-only, not a decision window"
+      }
+    },
+    "costs": {
+      "cost_v1_h20260929_36_symmetric_per_side": {
+        "primary_bps": 10.0,
+        "stress_bps": 20.0,
+        "original_draft_bps": 2.5,
+        "borrow_annual": 0.005,
+        "contract_file": "reports/research/iterations/h20260929_36_router_sip/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260929_36_s3_edge_and_placebos": {
+        "primary": "K1 and K2 and G3 as written in keep_rule",
+        "s3": "screen_lane.s3_incumbent offset 0 at 10bp, screen_lane.diversifier_edge_for_offset on the anchor window",
+        "placebos": "P1-P3 seeds 20260929, 20260930, 20261001; distribution seeds 100000..100199"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_36_router_sip.yaml": "d7d67416c787da7cff773e6bf36e7e1270207c5864ab322bc9ff2f7c46eb4bc2"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+  "spec_hash": "d7d67416c787da7cff773e6bf36e7e1270207c5864ab322bc9ff2f7c46eb4bc2",
+  "frozen_route": {
+    "lookback_days": 10,
+    "entry_after_bars": 2,
+    "top_n": 1,
+    "min_opening_return_pct": 0.0,
+    "min_prior_momentum_pct": 0.0,
+    "min_relative_volume": 1.0,
+    "market_gate": "qqq_prior_negative",
+    "selection_style": "opening_reversal",
+    "max_opening_return_pct": 0.0,
+    "max_prior_momentum_pct": null
+  },
+  "extra_placebo_distribution": {
+    "seeds": "range(100000, 100200)",
+    "statistic": "share of placebo Sharpe values below R0 Sharpe (anchor, 10bp)"
+  },
+  "keep_rule": {
+    "K1": "R0 anchor Sharpe at 10bp per side >= 1.19 (rf-excess, screen_lane base.metrics convention) AND R0 anchor CAGR at 20bp per side > 0",
+    "K2": "screen_lane.diversifier_edge_for_offset(S3 offset 0 at 10bp, R0 10bp, SHY, BIL, anchor window) >= 0.05; the lane's own 0.10 threshold reported alongside",
+    "G3": "R0 anchor Sharpe at 10bp exceeds the Sharpe of >= 90 percent of the 200 distribution placebos",
+    "stress": "pending (\u5f85\u8865\u538b\u529b\u671f): no minute data before 2023-01; 2023-01..2023-08 reported as partial stress only",
+    "status_rule": "kept = K1 and K2 and G3; partial = K1 true and (K2 false or G3 false); refuted = K1 false",
+    "sharpe_convention": "primary = rf-excess (BIL) daily Sharpe x sqrt(252), ddof=1 (scripts/run_h20260918_05_recent_menu.metrics); plain Sharpe without rf (pstdev, as the original _daily_sharpe) also reported for the IEX comparison"
+  }
+}

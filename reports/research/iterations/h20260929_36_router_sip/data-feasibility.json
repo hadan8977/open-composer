@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_36_router_sip_historical_evaluation_authorization",
+  "iter_id": "h20260929_36_router_sip",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 7,
+    "evaluation_authorized_count": 7,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "router_sip_recheck": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "R0",
+        "R0_long",
+        "R0_short",
+        "P1",
+        "P2",
+        "P3",
+        "B_ew"
+      ],
+      "reason_code": "sip_minute_archive_present_2023_01_onward"
+    }
+  },
+  "candidate_authorization": {
+    "candidate_count": 7,
+    "rows": [
+      {
+        "candidate_id": "R0",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "ee9b7ed659ee25479f1227f6bc4e0a9595f78e78524acea186212a12b2a7a89e"
+      },
+      {
+        "candidate_id": "R0_long",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "3844bae82bd028a0412b042fb2d2983f6c24086b7ef42e04b624ca05427e1e5f"
+      },
+      {
+        "candidate_id": "R0_short",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "e8ca54abf595ed5a1d5b3ac07851c40e779a859a957766c088ee1e3a524ed00b"
+      },
+      {
+        "candidate_id": "P1",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "fa01b5a599c765bac49aa0de4655d8016dafb8c0d847e10b7bf7d59073632fd8"
+      },
+      {
+        "candidate_id": "P2",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "f327a2b1823d6b8862bebe11abb514f3c17ec2be84a0ccd2ab9ddf9aa574da5d"
+      },
+      {
+        "candidate_id": "P3",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "21b36aa7175eaefa95ae7dea7d1be50da4931bb29a963a4f2176d5708cc767bf"
+      },
+      {
+        "candidate_id": "B_ew",
+        "path": "router_sip_recheck",
+        "action": "evaluate",
+        "reason_code": "sip_minute_archive_present_2023_01_onward",
+        "candidate_binding_sha256": "9d51463d60eb770fc189283bdc28781fcaea8235c14006774ba02c057b0698e4"
+      }
+    ]
+  },
+  "notes": "data/sip/minute holds consolidated SIP 1-minute bars from 2023-01 (13405 symbols, per data/sip/minute/_COMPLETE_2023_2026.json). The 12 router names plus QQQ are extracted into data/features/t20260929_36_router_minute by scripts/build_t20260929_36_router_minute.py. Stress period 2016-05..2023-08 cannot be evaluated (no minute data before 2023-01); 2023-01..2023-08 is partial.",
+  "required_reference_names": [
+    "cost_contract"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260929_36_router_sip/cost-contract.json",
+      "sha256": "b0b13376bd6b3ba17d629f2a9979e411cfe5dc0dd4bc00a535468ea3e47ad9e5"
+    }
+  }
+}

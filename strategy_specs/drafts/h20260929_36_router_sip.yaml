@@ -1,0 +1,114 @@
+name: h20260929_36_router_sip
+description: 'Preregistered T-20260929-36 SIP recheck of the frozen NASDAQ long/short intraday event router route lb10_entry2_top1_open0_mom0_rv1_qprior_negative_reversal_maxopen0_maxmomnone (registry dir:nasdaq_long_short_event_router_1m). Parameters are frozen, no variants. Same code as open_composer/research/intraday_daily_rotation.py (_selected_positions, _symbol_intraday_return, _market_gate_passes) fed by a SIP 1-minute loader. Research only, no broker writes.'
+timeframe: 1m
+universe:
+- AAPL
+- MSFT
+- NVDA
+- AMZN
+- META
+- GOOGL
+- AVGO
+- AMD
+- QCOM
+- AMAT
+- NFLX
+- TSLA
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > ema(close, 8)
+  - volume > sma(volume, 4)
+exit:
+  any:
+  - close < ema(close, 8)
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 0.08
+  stop_loss_pct: 0.9
+  take_profit_pct: 1.4
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 4
+  gross_exposure_limit: 0.32
+  max_symbol_weight: 0.08
+  same_day_flatten: true
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: lb10_entry2_top1_open0_mom0_rv1_qprior_negative_reversal_maxopen0_maxmomnone
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/minute
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  opening_return:
+    source: expression
+    expression: close / sma(close, 4) - 1
+    default: 0.0
+    description: Documentation-only stand-in; the router computes opening return, prior momentum and relative volume in open_composer/research/intraday_daily_rotation.py _symbol_selection_stats.
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_36_router_sip
+  candidate_manifest_path: reports/research/iterations/h20260929_36_router_sip/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_36_router_sip/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_36_router_sip.jsonl
+  source_card_claim_ids:
+  - heston_reversal_liquidity_2010
+  - baltussen_da_soebhag_eod_reversal_2025
+  - mesfin_ohlcv_intraday_falsification_2026
+  - kang_lin_xiong_intraday_reversal_2022
+  - leung_kang_overnight_intraday_split_2016
+  - alpaca_iex_share_of_volume
+  - alpaca_bars_adjustment_all
+  - alpaca_etb_borrow_fee_zero
+  parameter_space:
+    candidate:
+    - R0
+    - R0_long
+    - R0_short
+    - P1
+    - P2
+    - P3
+    - B_ew
+  candidate_budget: 7
+  selection_objective: Recheck one frozen route on SIP minute data; no parameter search. K1 anchor Sharpe(10bp) >= 1.19 and 20bp anchor CAGR > 0; K2 combo edge vs vol-matched S3 >= +0.05; G3 beats >= 90 percent of 200 random-pick placebos.
+  anti_overfit_notes:
+  - All eight route parameters are frozen from the IEX-era label and checked against IntradayDailyParams.label and code line numbers in decision-record.md.
+  - Cost tiers, windows, placebo seeds (20260929, 20260930, 20261001 and 100000-100199) and K1/K2/G3 are fixed in candidate-manifest.json before any return is computed.
+  - No trading day or symbol is removed after results are seen.
+  validation_plan:
+  - anchor_2024_01_08_to_data_end
+  - select_2023_09_18_to_2025_12_31
+  - contaminated_holdout_2026_01_02_to_2026_09_17
+  - new_holdout_2026_09_18_to_data_end
+  - partial_stress_2023_01_to_2023_08
+  - iex_comparison_2024_05_31_to_2026_05_29_report_only
+  - random_pick_placebos_seeded

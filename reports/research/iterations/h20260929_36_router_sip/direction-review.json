@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_36_router_sip",
+  "reviewed_at": "2026-09-29T13:21:00Z",
+  "decision": "proceed",
+  "objective": "T-20260929-36 (autonomous-queue.md): recheck registry direction dir:nasdaq_long_short_event_router_1m. Its best route (lookback 10, entry after 2 bars, top 1, min relative volume 1, QQQ-prior-negative gate, opening_reversal, max opening return 0) reached research_pass on Alpaca IEX cache (sweep_002: full window 2024-05-31..2026-05-29 Sharpe 1.41, annualized 35.24 percent) but was never checked on consolidated SIP data. Run the identical route, no parameter change, on SIP 1-minute bars 2023-01..data end, with 10/20 bp per side costs, placebos and the S3 combination test, and decide kept / partial / refuted.",
+  "target_regime_and_horizon": "Same-day intraday (enter 09:32 bar open, flatten at the close), 12 mega-cap NASDAQ names, days when QQQ's 10-session prior momentum is negative. Recent regime only: anchor 2024-01-08..data end, select 2023-09-18..2025-12-31, contaminated holdout 2026-01-02..2026-09-17, new holdout 2026-09-18 onward (report only). Stress period 2016-05..2023-08 cannot be tested (SIP minute data starts 2023-01): marked pending. Validity window and exit rule for any paper use: none granted; this is a historical recheck.",
+  "existing_solution_comparison": "Read the registry row dir:nasdaq_long_short_event_router_1m directly: status partial, blocker = strict SIP data (short authorization is no longer a blocker since 2026-09-29). Reused, not rebuilt: open_composer/research/intraday_daily_rotation.py (_selected_positions, _symbol_intraday_return, _market_gate_passes, _backtest_params imported unchanged), scripts/screen_lane.py (s3_incumbent, diversifier_edge_for_offset, correlation_with_s3). Only new code is a SIP data loader and a placebo generator. Public literature offers the mechanism (Heston-Korajczyk-Sadka 2010; Baltussen-Da-Soebhag 2025) but no published live record for this exact route; Mesfin (2026) is the closest independent negative prior for Nasdaq-100 OHLCV intraday rules.",
+  "remaining_evidence_gap": "(1) No local IEX minute cache exists any more, so an apples-to-apples IEX-vs-SIP replay of the same days is not possible; the comparison uses the recorded IEX numbers in reports/research/nasdaq_long_short_event_router_1m_sweep_002-intraday-daily-rotation.md and the Longbridge cross-check in sweep_003. (2) SIP minute data start 2023-01, so the stress period is pending. (3) Only 12 names and one route: multiple-testing of the original 540-candidate IEX sweep cannot be undone here; this is a single frozen candidate, not a search. (4) The new holdout (2026-09-18 onward) is a few sessions long and is reported, not judged.",
+  "negative_experiments_checked": "reports/research/control/nasdaq_long_short_event_router_1m_sweep_002-memory.md and _001-memory.md: 'Alpaca stayed negative across lookback 5/10/15 on the same gate' in a recent-regime sweep (the memory files do not keep that sweep's numbers; the same memory keeps lookback 10 as best on the 2024-2026 full-window sweep, so the two statements refer to different windows). reports/research/nasdaq_long_short_event_router_1m_sweep_003-fixed-route-longbridge-crosscheck.md: the same fixed route on Longbridge nasdaq_basic 1-minute data has train Sharpe 1.46 but out-of-sample Sharpe -0.19 and fails the gate. reports/research/control/short-unlocked-retriage-2026-09-29.md: keeps the row partial and names SIP minute revalidation as the only remaining blocker. This iteration is that revalidation, not a re-opening of a refuted direction.",
+  "cost_and_execution_assumptions": "Signal from bars strictly before the entry bar: opening return uses bars 0-1 (09:30-09:31), entry at the open of bar 2 (09:32), exit at the last regular-session bar close, same day. Cost per side 10 bp (primary), 20 bp (stress), and the original draft's 0.5 bp commission + 2 bp slippage as a reference, applied as entry*(1+c) and exit*(1-c) exactly as _symbol_intraday_return does. Short trades also pay 0.5 percent a year borrow (about 0.2 bp per day; Alpaca charges $0 on easy-to-borrow names, the charge is conservative). One position per day at 100 percent of capital, zero on no-signal days, no leverage, no overnight.",
+  "stop_condition": "Stop (refuted) if R0 anchor Sharpe at 10 bp < 1.19 or 20 bp anchor CAGR <= 0 (K1). Partial if K1 passes but K2 (combo edge with S3 >= +0.05) or G3 (beats >= 90 percent of 200 random placebos) fails. Kept only if K1, K2 and G3 all pass. Thresholds are frozen here and in candidate-manifest.json; nothing is relaxed after results.",
+  "queries": [
+    {
+      "query": "intraday short-term reversal liquidity provision opening loser Heston Korajczyk Sadka end-of-day reversal 2025",
+      "opened_urls": [
+        "https://arxiv.org/abs/1005.3535",
+        "https://www3.nd.edu/~zda/EOD.pdf",
+        "https://ideas.repec.org/a/eee/dyncon/v136y2022ics0165188922000185.html",
+        "https://docs.alpaca.markets/docs/historical-stock-data-1",
+        "https://docs.alpaca.markets/docs/margin-and-short-selling"
+      ],
+      "searched_at": "2026-09-29T13:14:10Z"
+    },
+    {
+      "query": "arXiv opening gap reversal intraday overnight return stocks trading strategy transaction costs Nasdaq mega-cap",
+      "opened_urls": [
+        "https://arxiv.org/abs/2605.04004",
+        "https://arxiv.org/abs/1611.03110",
+        "https://docs.alpaca.markets/reference/stockbars"
+      ],
+      "searched_at": "2026-09-29T13:15:40Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://arxiv.org/abs/1005.3535",
+      "claim_id": "heston_reversal_liquidity_2010",
+      "claim": "We also show that short-term return reversal is driven by temporary liquidity imbalances lasting less than an hour and bid-ask bounce.",
+      "source_type": "paper",
+      "published_or_updated_at": "2010-05-19",
+      "market_and_period": "2010-2010 J. Finance 65(4); U.S. stocks 1993-2003 (TAQ), 30-minute cross-section",
+      "applicability": "Mechanism prior for buying an opening loser: reversal from transient liquidity imbalance that decays within about an hour; the route enters 2 minutes after the open and holds to the close, so the effect window and the holding window differ.",
+      "limitations": "arXiv abstract page snapshot (tag-stripped text), not full paper; TAQ sample ends 2003, pre-decimal-penny and pre-Reg-NMS-era microstructure.",
+      "independent_replication": "Short-term reversal as liquidity-provision compensation is corroborated by Kang, Lin, Xiong (JEDC 2022) and the intraday-loser buying pressure in Baltussen, Da, Soebhag (2025); not re-derived locally.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "3a1bfb896b8d18faa73da2dfd107b5c03df748d2cecc770b82cbb7f15deec6c4",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/heston-korajczyk-sadka-arxiv-abstract.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://www3.nd.edu/~zda/EOD.pdf",
+      "claim_id": "baltussen_da_soebhag_eod_reversal_2025",
+      "claim": "Individual stocks experience sharp intraday return reversals in the cross-section during the last 30 minutes of the trading day.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-04-01",
+      "market_and_period": "U.S. individual stocks, intraday, last 30 minutes of the session (sample per paper)",
+      "applicability": "Recent (2025) evidence that intraday losers get positive price pressure in the cross-section of U.S. stocks; our route holds the opening loser through that late-day window.",
+      "limitations": "Working paper (April 2025); documents reversal in the last 30 minutes, not the first minutes after the open; effect attributed to retail attention and short-seller risk management.",
+      "independent_replication": "Single working paper; the intraday reversal literature (Heston et al. 2010; Kang et al. 2022) is consistent but covers different windows.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "1d895c5032316abb4177a2043033433df9ccada6971e4470188e5b6bf19f4112",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/baltussen-da-soebhag-end-of-day-reversal.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.04004",
+      "claim_id": "mesfin_ohlcv_intraday_falsification_2026",
+      "claim": "Eleven families fail because gross return before friction is 0.07-1.50 points, below the 2.0-point friction floor.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-05-05",
+      "market_and_period": "Micro E-mini Nasdaq-100 futures, 947 sessions of 5-minute data 2021-2025, expanding-window walk-forward, 14 OHLCV intraday signal families",
+      "applicability": "Negative prior: opening-window OHLCV rules on Nasdaq-100 products usually fail the friction and year-stability tests, so a pass here needs to survive both explicitly.",
+      "limitations": "Futures, not single stocks; single-author arXiv preprint (v3 2026-09-15); OHLCV signals only. Its gap-continuation short and VVG reversal both failed year stability.",
+      "independent_replication": "Independent negative evidence that most OHLCV-only intraday rules do not survive friction and year-stability; no replication found yet.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "e6e4f32ca00cb7687fb3c1fb8155534ba64406b8925a834fc431284f1bb14b8b",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/mesfin-ohlcv-intraday-falsification-mnq.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://ideas.repec.org/a/eee/dyncon/v136y2022ics0165188922000185.html",
+      "claim_id": "kang_lin_xiong_intraday_reversal_2022",
+      "claim": "Previous studies of the U.S. market regard short-term reversal as compensation for liquidity provision.",
+      "source_type": "paper",
+      "published_or_updated_at": "2022-03-01",
+      "market_and_period": "Chinese A-share intraday reversal (paper's own sample); the sentence quoted summarizes U.S. literature",
+      "applicability": "Frames why a reversal premium can be earned by liquidity providers and is expected to shrink with spread and with tape coverage.",
+      "limitations": "Chinese-market evidence; abstract-level snapshot; proposes liquidity oversupply by uninformed providers, not a U.S. result.",
+      "independent_replication": "Consistent with Heston et al. (2010) for the U.S. liquidity-provision reading; the Chinese-market mechanism differs.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "e6346ff724ded7531a9e0c84d373cfb55aedd9b4a3f0e7a084f6db1b75996d18",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/kang-lin-xiong-jedc-2022-intraday-reversal.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/1611.03110",
+      "claim_id": "leung_kang_overnight_intraday_split_2016",
+      "claim": "we dissect their returns into intraday and overnight com- ponents with respect to the U.S. market hours",
+      "source_type": "paper",
+      "published_or_updated_at": "2016-10-29",
+      "market_and_period": "Asian ADRs vs SPY, intraday vs overnight return decomposition",
+      "applicability": "Supports evaluating the route as a pure intraday (open-to-close) return stream separate from overnight gaps, as the router does.",
+      "limitations": "ADR pairs setting, not a single-stock reversal test; used only for the overnight/intraday return decomposition convention.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "f91e39bd94d3294b913b759a75d0a8845bdabbc67a8b204acd5c66d0b6f4531c",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/leung-kang-overnight-intraday-adr.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://docs.alpaca.markets/docs/historical-stock-data-1",
+      "claim_id": "alpaca_iex_share_of_volume",
+      "claim": "accounts for approximately ~2.5% of the market volume",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "Alpaca Market Data API, IEX feed vs SIP feed, U.S. equities",
+      "applicability": "The router's original research_pass used the IEX feed cache, which sees about 2.5% of volume; SIP is the consolidated tape (100% of volume).",
+      "limitations": "Vendor documentation snapshot (tag-stripped); the 2.5% figure is a vendor estimate that varies over time.",
+      "independent_replication": "Not independently measured here; a local SIP-vs-IEX bar count on QQQ is noted in open_composer/adapters/data/sip_parquet.py.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "9f564a7eed68102b59b518a896b19dd2b34faeb88bf5ead621e700adb8ada503",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/alpaca-historical-stock-data-feeds.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://docs.alpaca.markets/reference/stockbars",
+      "claim_id": "alpaca_bars_adjustment_all",
+      "claim": "split : adjust price and volume for forward and reverse stock splits dividend : adjust price for cash dividends spin-off : adjust price for spin-offs all : apply all above adjustments",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "Alpaca stock bars endpoint, adjustment parameter",
+      "applicability": "Defines split-adjusted and dividend-adjusted prices, which matter for the 10-day prior-momentum and previous-close terms across the NVDA 2024-06-10, AVGO 2024-07-15 and NFLX 2025-11-17 splits.",
+      "limitations": "Documents the API parameter only; which adjustment the local SIP archive used is verified separately against data/sip/daily in this iteration.",
+      "independent_replication": "Local check: adjustment recorded as 'all' in open_composer/adapters/data/sip_parquet.py load_sip_bars attrs; verified on NVDA/AVGO/NFLX split dates in results.json.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "48193bb7ce8662c944fff18ef656f182e9800d3d7b544b0dff60f97609edcc43",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/alpaca-stock-bars-adjustment.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    },
+    {
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling",
+      "claim_id": "alpaca_etb_borrow_fee_zero",
+      "claim": "$0 locate and borrow fees on all ETB shares for Trading API users.",
+      "source_type": "broker_official_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "Alpaca Trading API, easy-to-borrow (ETB) securities, short sale fees",
+      "applicability": "Short borrow cost for easy-to-borrow mega-caps is $0 from the broker; the task still charges 0.5% a year (about 0.2 bp per short day) as a conservative modeled cost.",
+      "limitations": "Fee schedule can change; per-symbol ETB status varies over time (Alpaca marks symbols easy_to_borrow or hard_to_borrow).",
+      "independent_replication": "Reused from short-unlocked-retriage-2026-09-29.md, which cites the same page.",
+      "fetched_at": "2026-09-29T13:15:10Z",
+      "sha256": "d19fb60f5bbf16f3dcfd542bbda45d0b02c800e6094e592ea5abc7035dcb605f",
+      "snapshot_path": "reports/research/iterations/h20260929_36_router_sip/sources/alpaca-margin-and-short-selling.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Extract the 12 names plus QQQ from data/sip/minute into a regular-session cache, feed it through the unchanged router functions, and compute anchor-window Sharpe/CAGR at 10 and 20 bp, 200 random-pick placebos and the S3 combination edge (about 20 CPU minutes).",
+    "pass_condition": "K1 and K2 and G3 as frozen in candidate-manifest.json keep_rule.",
+    "falsification_condition": "R0 anchor Sharpe at 10 bp < 1.19 or 20 bp anchor CAGR <= 0, or fewer than 90 percent of placebos beaten.",
+    "max_compute_minutes": 60
+  }
+}

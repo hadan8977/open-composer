@@ -1,0 +1,94 @@
+{
+  "iter_id": "h20260929_36_router_sip",
+  "strategy_name": "h20260929_36_router_sip",
+  "source_spec_path": "strategy_specs/drafts/h20260929_36_router_sip.yaml",
+  "spec_hash": "d7d67416c787da7cff773e6bf36e7e1270207c5864ab322bc9ff2f7c46eb4bc2",
+  "schema_version": 3,
+  "created_at": "2026-09-29T13:21:00Z",
+  "objective": "T-20260929-36: SIP recheck of the frozen router route, no parameter change.",
+  "total_candidate_budget": 7,
+  "cost_assumptions": "10 bp per side primary, 20 bp stress, original draft 2.5 bp per side; borrow 0.5 percent a year on short trade days; signal from bars before the entry bar, entry at bar-2 open, exit at close",
+  "go_no_go_band": "K1 anchor Sharpe(10bp) >= 1.19 and 20bp anchor CAGR > 0; K2 combo edge vs S3 >= +0.05; G3 beat >= 90 percent of 200 placebos; stress pending",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_36_router_sip/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_36_router_sip/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_36_router_sip/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_36_router_sip/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_36_router_sip/cost-contract.json",
+  "candidate_manifest_sha256": "cc37164252db7991c80a77c8fca8371d9f2bdd179962a65734ea63323a5120ea",
+  "data_feasibility_sha256": "b020c6a256740faf5ea530833d6f40ad8593caa0ff57f9a866f8849082482cfe",
+  "paths": [
+    {
+      "name": "router_sip_recheck",
+      "candidate_count": 7,
+      "hypothesis_refs": [
+        "H1",
+        "H2",
+        "H3"
+      ],
+      "parameters": {
+        "route": {
+          "lookback_days": 10,
+          "entry_after_bars": 2,
+          "top_n": 1,
+          "min_opening_return_pct": 0.0,
+          "min_prior_momentum_pct": 0.0,
+          "min_relative_volume": 1.0,
+          "market_gate": "qqq_prior_negative",
+          "selection_style": "opening_reversal",
+          "max_opening_return_pct": 0.0,
+          "max_prior_momentum_pct": null
+        },
+        "cost_bps_per_side": [
+          10.0,
+          20.0,
+          2.5
+        ],
+        "windows": {
+          "anchor": [
+            "2024-01-08",
+            "data_end"
+          ],
+          "select": [
+            "2023-09-18",
+            "2025-12-31"
+          ],
+          "holdout_contaminated": [
+            "2026-01-02",
+            "2026-09-17"
+          ],
+          "new_holdout": [
+            "2026-09-18",
+            "data_end"
+          ],
+          "partial_stress_2023_01_08": [
+            "2023-01-01",
+            "2023-08-31"
+          ],
+          "iex_comparison": [
+            "2024-05-31",
+            "2026-05-29"
+          ]
+        },
+        "placebo_seeds": [
+          20260929,
+          20260930,
+          20261001
+        ],
+        "distribution_seeds": "100000..100199",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "B_ew_equal_weight_intraday",
+        "s3_incumbent_vol_matched_control",
+        "random_pick_placebos",
+        "iex_recorded_result_comparison"
+      ]
+    }
+  ]
+}

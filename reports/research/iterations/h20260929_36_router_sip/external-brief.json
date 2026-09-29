@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "iter_id": "h20260929_36_router_sip",
+  "strategy_name": "h20260929_36_router_sip",
+  "source_spec_path": null,
+  "spec_hash": null,
+  "objective": "T-20260929-36 (autonomous-queue.md): recheck registry direction dir:nasdaq_long_short_event_router_1m. Its best route (lookback 10, entry after 2 bars, top 1, min relative volume 1, QQQ-prior-negative gate, opening_reversal, max opening return 0) reached research_pass on Alpaca IEX cache (sweep_002: full window 2024-05-31..2026-05-29 Sharpe 1.41, annualized 35.24 percent) but was never checked on consolidated SIP data. Run the identical route, no parameter change, on SIP 1-minute bars 2023-01..data end, with 10/20 bp per side costs, placebos and the S3 combination test, and decide kept / partial / refuted.",
+  "topic_coverage": [
+    "intraday_reversal_liquidity_provision_heston_2010",
+    "end_of_day_reversal_baltussen_da_soebhag_2025",
+    "chinese_intraday_reversal_liquidity_oversupply_kang_2022",
+    "ohlcv_intraday_signals_fail_friction_mesfin_2026",
+    "overnight_vs_intraday_return_decomposition_leung_kang_2016",
+    "iex_two_point_five_percent_volume_vs_sip_alpaca",
+    "split_dividend_adjustment_alpaca_bars",
+    "easy_to_borrow_zero_fee_alpaca"
+  ],
+  "sources": [
+    {
+      "url": "https://arxiv.org/abs/1005.3535",
+      "published_or_updated_at": "2010-05-19",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_public_preprint",
+      "core_claim": "We also show that short-term return reversal is driven by temporary liquidity imbalances lasting less than an hour and bid-ask bounce.",
+      "project_applicability": "Mechanism prior for buying an opening loser: reversal from transient liquidity imbalance that decays within about an hour; the route enters 2 minutes after the open and holds to the close, so the effect window and the holding window differ.",
+      "reflection": "Motivates the router's opening-reversal selection and warns the edge is a liquidity-provision premium that is large in wide-spread illiquid tapes (IEX-only prints) and small at SIP quotes."
+    },
+    {
+      "url": "https://www3.nd.edu/~zda/EOD.pdf",
+      "published_or_updated_at": "2025-04-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_public_preprint",
+      "core_claim": "Individual stocks experience sharp intraday return reversals in the cross-section during the last 30 minutes of the trading day.",
+      "project_applicability": "Recent (2025) evidence that intraday losers get positive price pressure in the cross-section of U.S. stocks; our route holds the opening loser through that late-day window.",
+      "reflection": "Supports the sign of the route's exposure (long intraday losers) while showing the payoff is concentrated late in the day, not at the 09:32 entry."
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.04004",
+      "published_or_updated_at": "2026-05-05",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_public_preprint",
+      "core_claim": "Eleven families fail because gross return before friction is 0.07-1.50 points, below the 2.0-point friction floor.",
+      "project_applicability": "Negative prior: opening-window OHLCV rules on Nasdaq-100 products usually fail the friction and year-stability tests, so a pass here needs to survive both explicitly.",
+      "reflection": "Sets the bar for the router recheck: net-of-cost, out-of-window, year-stable, placebo-beating; it is the direct counter-prior for the IEX-derived research_pass."
+    },
+    {
+      "url": "https://ideas.repec.org/a/eee/dyncon/v136y2022ics0165188922000185.html",
+      "published_or_updated_at": "2022-03-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_public_preprint",
+      "core_claim": "Previous studies of the U.S. market regard short-term reversal as compensation for liquidity provision.",
+      "project_applicability": "Frames why a reversal premium can be earned by liquidity providers and is expected to shrink with spread and with tape coverage.",
+      "reflection": "Reversal returns are tied to liquidity provision, so they depend on how prints and fills are measured (IEX-only vs consolidated tape)."
+    },
+    {
+      "url": "https://arxiv.org/abs/1611.03110",
+      "published_or_updated_at": "2016-10-29",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_public_preprint",
+      "core_claim": "we dissect their returns into intraday and overnight com- ponents with respect to the U.S. market hours",
+      "project_applicability": "Supports evaluating the route as a pure intraday (open-to-close) return stream separate from overnight gaps, as the router does.",
+      "reflection": "Same-day flatten means the router earns no overnight return; its series must be compared with S3 on a same-session close-to-close convention."
+    },
+    {
+      "url": "https://docs.alpaca.markets/docs/historical-stock-data-1",
+      "published_or_updated_at": "unknown",
+      "source_type": "provider_official_docs",
+      "credibility": "vendor_official_documentation",
+      "core_claim": "accounts for approximately ~2.5% of the market volume",
+      "project_applicability": "The router's original research_pass used the IEX feed cache, which sees about 2.5% of volume; SIP is the consolidated tape (100% of volume).",
+      "reflection": "Explains why an opening-window rule (first two 1-minute bars, relative volume) can differ sharply between IEX-only and SIP tapes."
+    },
+    {
+      "url": "https://docs.alpaca.markets/reference/stockbars",
+      "published_or_updated_at": "unknown",
+      "source_type": "provider_official_docs",
+      "credibility": "vendor_official_documentation",
+      "core_claim": "split : adjust price and volume for forward and reverse stock splits dividend : adjust price for cash dividends spin-off : adjust price for spin-offs all : apply all above adjustments",
+      "project_applicability": "Defines split-adjusted and dividend-adjusted prices, which matter for the 10-day prior-momentum and previous-close terms across the NVDA 2024-06-10, AVGO 2024-07-15 and NFLX 2025-11-17 splits.",
+      "reflection": "Adjusted-for-dividends prices change lookback returns by the dividend yield at most; splits must be adjusted or lookback returns break."
+    },
+    {
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling",
+      "published_or_updated_at": "unknown",
+      "source_type": "broker_official_docs",
+      "credibility": "broker_official_documentation",
+      "core_claim": "$0 locate and borrow fees on all ETB shares for Trading API users.",
+      "project_applicability": "Short borrow cost for easy-to-borrow mega-caps is $0 from the broker; the task still charges 0.5% a year (about 0.2 bp per short day) as a conservative modeled cost.",
+      "reflection": "Borrow cost is immaterial for a same-day-flatten intraday book; the binding shorting constraints are locates, Reg SHO and spreads."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_36_router_sip.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "R0",
+      "claim_ids": [
+        "heston_reversal_liquidity_2010",
+        "baltussen_da_soebhag_eod_reversal_2025",
+        "mesfin_ohlcv_intraday_falsification_2026",
+        "kang_lin_xiong_intraday_reversal_2022",
+        "alpaca_iex_share_of_volume",
+        "alpaca_bars_adjustment_all"
+      ]
+    },
+    {
+      "candidate_id": "R0_long",
+      "claim_ids": [
+        "heston_reversal_liquidity_2010",
+        "baltussen_da_soebhag_eod_reversal_2025",
+        "mesfin_ohlcv_intraday_falsification_2026",
+        "kang_lin_xiong_intraday_reversal_2022",
+        "alpaca_iex_share_of_volume",
+        "alpaca_bars_adjustment_all"
+      ]
+    },
+    {
+      "candidate_id": "B_ew",
+      "claim_ids": [
+        "heston_reversal_liquidity_2010",
+        "baltussen_da_soebhag_eod_reversal_2025",
+        "mesfin_ohlcv_intraday_falsification_2026",
+        "kang_lin_xiong_intraday_reversal_2022",
+        "alpaca_iex_share_of_volume",
+        "alpaca_bars_adjustment_all"
+      ]
+    },
+    {
+      "candidate_id": "R0_short",
+      "claim_ids": [
+        "alpaca_etb_borrow_fee_zero",
+        "kang_lin_xiong_intraday_reversal_2022"
+      ]
+    },
+    {
+      "candidate_id": "P1",
+      "claim_ids": [
+        "mesfin_ohlcv_intraday_falsification_2026",
+        "alpaca_etb_borrow_fee_zero"
+      ]
+    },
+    {
+      "candidate_id": "P2",
+      "claim_ids": [
+        "mesfin_ohlcv_intraday_falsification_2026",
+        "alpaca_etb_borrow_fee_zero"
+      ]
+    },
+    {
+      "candidate_id": "P3",
+      "claim_ids": [
+        "mesfin_ohlcv_intraday_falsification_2026",
+        "alpaca_etb_borrow_fee_zero"
+      ]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "mesfin_ohlcv_intraday_falsification_2026",
+      "effect": "Added random-pick placebos (3 preregistered seeds plus 200 distribution seeds) and a year-by-window report to the candidate set, because the closest independent evidence says most OHLCV intraday rules fail friction and year stability."
+    },
+    {
+      "driver": "alpaca_iex_share_of_volume",
+      "effect": "Kept every parameter frozen and changed only the data tape (IEX cache to SIP consolidated), so any difference is attributable to the data; no local IEX minute cache exists to replay."
+    },
+    {
+      "driver": "alpaca_bars_adjustment_all",
+      "effect": "Added a split and dividend adjustment audit against data/sip/daily for NVDA (2024-06-10), AVGO (2024-07-15) and NFLX (2025-11-17) before trusting the 10-session prior momentum."
+    },
+    {
+      "driver": "alpaca_etb_borrow_fee_zero",
+      "effect": "Modeled borrow at 0.5 percent a year on short trade days although the broker fee for easy-to-borrow names is $0, so the short leg is not flattered."
+    }
+  ]
+}

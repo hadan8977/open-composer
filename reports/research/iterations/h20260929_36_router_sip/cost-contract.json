@@ -1,0 +1,17 @@
+{
+  "iter_id": "h20260929_36_router_sip",
+  "cost_v1_h20260929_36_symmetric_per_side": {
+    "primary_bps_per_side": 10.0,
+    "stress_bps_per_side": 20.0,
+    "original_draft_bps_per_side": 2.5,
+    "original_draft_breakdown": "commission_pct 0.005 (=0.5 bp) + slippage_bps 2.0 from strategy_specs/archived/curation-20260525/nasdaq_long_short_event_router_1m_sweep_001.yaml",
+    "application": "entry price multiplied by (1+c) and exit price by (1-c) for longs, mirrored for shorts, exactly as _symbol_intraday_return does with cost_rate = commission_pct/100 + slippage_bps/10000",
+    "borrow": {
+      "annual_rate": 0.005,
+      "daycount": 252,
+      "charged_bp_per_short_trade_day": 0.1984126984126984,
+      "note": "same-day-flatten shorts do not carry overnight borrow at Alpaca (ETB fee $0); the modeled charge is conservative and only matters for placebo short picks because the frozen route never opens a short"
+    },
+    "fill": "entry at the open of bar index entry_after_bars (third regular-session bar), exit at the last regular-session bar close, signal uses only bars before the entry bar"
+  }
+}
