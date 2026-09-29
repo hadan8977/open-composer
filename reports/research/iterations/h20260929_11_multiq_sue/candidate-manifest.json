@@ -1,0 +1,236 @@
+{
+  "iter_id": "h20260929_11_multiq_sue",
+  "generated_at": "2026-09-29T13:46:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_11_multiq_sue",
+  "objective": "Preregister 8 batch candidates plus 1 information-only long-short variant for T-20260929-11 (multi-quarter SUE history elastic net, Kaczmarek & Zaremba 2025). No return, Sharpe or backtest number is computed in this dossier.",
+  "candidates": [
+    {
+      "candidate_id": "ENET_TOP50",
+      "path": "multiq_sue_screen",
+      "role": "primary",
+      "method": "enet_score_top50_equal_weight_monthly",
+      "ablation": "ENET_TOP50",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v1_sue_history_20",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": "model_v1_elastic_net_yearly_expanding",
+      "parameters": {
+        "top_n": 50,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "ENET_TOP20",
+      "path": "multiq_sue_screen",
+      "role": "concentration_variant",
+      "method": "enet_score_top20_equal_weight_monthly",
+      "ablation": "ENET_TOP20",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v1_sue_history_20",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": "model_v1_elastic_net_yearly_expanding",
+      "parameters": {
+        "top_n": 20,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "ENET_MOM_TOP50",
+      "path": "multiq_sue_screen",
+      "role": "combination",
+      "method": "rank_sum_enet_score_and_mom12_1_top50",
+      "ablation": "ENET_MOM_TOP50",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v1_sue_history_20",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": "model_v1_elastic_net_yearly_expanding",
+      "parameters": {
+        "top_n": 50,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "SUE1_TOP50",
+      "path": "multiq_sue_screen",
+      "role": "single_quarter_baseline",
+      "method": "latest_quarter_sue_eps_top50",
+      "ablation": "SUE1_TOP50",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v3_sue1",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": null,
+      "parameters": {
+        "top_n": 50,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "MOM12_1_TOP50",
+      "path": "multiq_sue_screen",
+      "role": "momentum_baseline",
+      "method": "mom12_1_top50",
+      "ablation": "MOM12_1_TOP50",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v2_mom12_1",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": null,
+      "parameters": {
+        "top_n": 50,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "EW_POOL",
+      "path": "multiq_sue_screen",
+      "role": "pool_benchmark",
+      "method": "equal_weight_all_eligible_pool_members",
+      "ablation": "EW_POOL",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v2_mom12_1",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": null,
+      "parameters": {
+        "top_n": 0,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "RAND_TOP50",
+      "path": "multiq_sue_screen",
+      "role": "random_pick_placebo",
+      "method": "random_50_of_eligible_seed_20260929",
+      "ablation": "RAND_TOP50",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v2_mom12_1",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": null,
+      "parameters": {
+        "top_n": 50,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "ENET_SHUF_TOP50",
+      "path": "multiq_sue_screen",
+      "role": "label_shuffle_placebo",
+      "method": "label_shuffled_within_month_then_same_enet_pipeline_top50",
+      "ablation": "ENET_SHUF_TOP50",
+      "spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted",
+      "feature_contract": "feature_v1_sue_history_20",
+      "label_contract": "label_v1_open_to_open_21d_rank",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos",
+      "model_contract": "model_v1_elastic_net_yearly_expanding",
+      "parameters": {
+        "top_n": 50,
+        "rebalance": "monthly",
+        "start_date": "2019-01-02"
+      },
+      "eligible_for_keep_tiers": false
+    }
+  ],
+  "candidate_count": 8,
+  "source_spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+  "spec_hash": "35f41c6153b4a07410886fb2cb345fd0cda7b821b6020a54404d98659fd16f51",
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_11_multiq_sue.yaml": "35f41c6153b4a07410886fb2cb345fd0cda7b821b6020a54404d98659fd16f51"
+  },
+  "contracts": {
+    "data": {
+      "data_v1_sec_xbrl_daily_plus_sip_daily_plus_delisted": "Events = rows of data/features/sec_fundamentals_daily/{2016..2026}.parquet with days_since_report == 0 (first usable session after filing), values sue_eps and sue_rev at that row. Prices: data/sip/daily plus data/sip-delisted/daily for every ticker in data/sip-delisted/sp500_ticker_start_end_fja05680.csv with end_date >= 2016-01-01, ghost bars dropped, then open_composer.research.features.price_hygiene.sanitize_price_matrices (defaults). Pool on a date = tickers whose membership interval contains that date."
+    },
+    "features": {
+      "feature_v1_sue_history_20": "F01-F08 sue_eps of the last 8 visible events (lag1 = most recent event visible on or before the date), F09-F16 sue_rev lag1..8, F17 consecutive positive sue_eps streak ending at lag1 (over the full event history), F18 consecutive negative streak, F19 count of missing among the 8 sue_eps lags, F20 count of missing among the 8 sue_rev lags. Missing filled with 0 BEFORE ranking. Each feature rank-standardized cross-sectionally per date among eligible pool members: (average percentile rank) - 0.5. Eligible = pool member on that date, latest visible event <= 200 calendar days old, close valid on that date, and asof-day close ratio not within 2% of a split ratio {2,3,4,5,10,1/2,1/3,1/4,1/5,1/10} (signal-day rule).",
+      "feature_v2_mom12_1": "close[t-21]/close[t-252]-1 in panel sessions (12-1 momentum), NaN if either price missing.",
+      "feature_v3_sue1": "sue_eps lag1 (single most recent event), NaN excluded."
+    },
+    "labels": {
+      "label_v1_open_to_open_21d_rank": "For month-end session t: open[t+22]/open[t+1]-1 (open prices forward-filled once after the last valid print so delisting is not dropped), cross-sectionally rank-standardized ((pct rank) - 0.5) among training-eligible names that month-end. Trading labels for portfolios use the frozen screen_lane contract (close signal, next-open fill)."
+    },
+    "models": {
+      "model_v1_elastic_net_yearly_expanding": "sklearn ElasticNetCV(alphas=[1e-4,3e-4,1e-3,3e-3,1e-2,3e-2,1e-1], l1_ratio=[0.1,0.5,0.9], cv=TimeSeriesSplit(n_splits=4, gap=1) applied to the sorted unique training months mapped to rows, max_iter=10000, fit_intercept=True, random_state=0) selects the pair by validation MSE; the final ElasticNet is refit on all training rows with the chosen pair. For test year Y (2019..2026) training = month-end samples from 2016-06 whose label end session (open[t+22]) is strictly before the first trading session of Y. Every trading day of Y is scored with the model of year Y. No test-year data is used anywhere in selection."
+    },
+    "placebos": {
+      "placebo_v1_label_shuffle": "Same pipeline as model_v1 but before CV/fit each training month's labels are permuted within the cross-section using numpy default_rng([20260929, Y]) in month order; scored as score_shuf.",
+      "placebo_v2_random_pick": "RAND_TOP50 draws 50 names from the sorted eligible pool with default_rng([20260929, yyyymm])."
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": "screen_lane frozen windows: select 2023-09-18..2025-12-31, anchor 2024-01-08..2026-09-17 (contaminated holdout 2026-01-02..09-17 reference only), stress 2016-05-02..2023-09-15; monthly, 21 offsets, median. All stock candidates only hold positions from 2019-01-02 (first out-of-sample score), so the stress window is short (2019-01..2023-09) and comparisons across candidates use identical windows."
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": "10bp primary / 20bp stress per side, close signal -> next open fill, frozen screen_lane contract. No borrow because the batch is long-only."
+    },
+    "benchmarks": {
+      "benchmark_v1_s3_k1_k2_vs_baselines_and_placebos": "K1/K2 against S3 (frozen); increment criterion against SUE1_TOP50, MOM12_1_TOP50, ENET_SHUF_TOP50, RAND_TOP50."
+    }
+  },
+  "information_only_not_in_batch": [
+    {
+      "candidate_id": "ENET_LS",
+      "method": "top 50 equal-weight long / bottom 50 equal-weight short by model score, monthly, borrow 0.5%/yr on the short leg, 10bp per side, net exposure about 0; computed by scripts/run_h20260929_11_multiq_sue_extras.py, reported only, not part of K1/K2/n_trials because the screen_lane harness is long-only",
+      "eligible_for_keep_tiers": false
+    }
+  ],
+  "trial_count_and_dsr_note": "n_trials=8 as computed automatically by scripts/screen_batch.py (all 8 batch candidates); ENET_LS (information-only, outside the harness) makes the honest family size 9 and the DSR is additionally reported with n_trials=9 by the extras script if time allows.",
+  "keep_rule": {
+    "K1": "net-10bp median-offset (21 monthly offsets) Sharpe >= 1.1882 anchor AND >= 0.6447 stress (stress = 2019-01..2023-09 only, 'stress sample short'), and net-20bp CAGR positive in both windows. Keep-eligible candidates only.",
+    "K2": "63-session inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in BOTH anchor and stress windows (screen_lane diversifier edge). Keep-eligible only.",
+    "watch_recent": "anchor median Sharpe >= 1.1882 but stress bar not met.",
+    "strong_keep": "K2 edge >= 0.10 both windows, or K1 Sharpe both windows >= S3's (1.4853 / 0.8059).",
+    "increment_criterion": "A keep-eligible candidate that would otherwise clear a tier is judged 'model adds nothing' unless its anchor median-offset net-10bp Sharpe is strictly greater than SUE1_TOP50's AND MOM12_1_TOP50's AND ENET_SHUF_TOP50's AND RAND_TOP50's. Reported as booleans with the numbers for ENET_TOP50 whether or not a tier is cleared.",
+    "pass_requires": "(K1 or K2 or watch_recent) and increment_criterion"
+  }
+}

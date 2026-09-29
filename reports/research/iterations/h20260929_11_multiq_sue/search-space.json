@@ -1,0 +1,98 @@
+{
+  "iter_id": "h20260929_11_multiq_sue",
+  "strategy_name": "h20260929_11_multiq_sue",
+  "source_spec_path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+  "spec_hash": "35f41c6153b4a07410886fb2cb345fd0cda7b821b6020a54404d98659fd16f51",
+  "schema_version": 3,
+  "created_at": "2026-09-29T13:46:00+00:00",
+  "objective": "Preregister 8 batch candidates for T-20260929-11 (multi-quarter SUE elastic net vs single-quarter SUE and 12-1 momentum, S&P 500 pool). No backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "multiq_sue_screen",
+      "candidate_count": 8,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "ENET_TOP50",
+          "ENET_TOP20",
+          "ENET_MOM_TOP50",
+          "SUE1_TOP50",
+          "MOM12_1_TOP50",
+          "EW_POOL",
+          "RAND_TOP50",
+          "ENET_SHUF_TOP50"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": true,
+        "model_family": "elastic_net_yearly_expanding",
+        "alpha_grid": [
+          0.0001,
+          0.0003,
+          0.001,
+          0.003,
+          0.01,
+          0.03,
+          0.1
+        ],
+        "l1_ratio_grid": [
+          0.1,
+          0.5,
+          0.9
+        ],
+        "cv": "TimeSeriesSplit(n_splits=4,gap=1) on months",
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "S3_reference_for_K1_K2",
+        "SUE1_TOP50_single_quarter_baseline",
+        "MOM12_1_TOP50_momentum_baseline",
+        "EW_POOL",
+        "RAND_TOP50_placebo",
+        "ENET_SHUF_TOP50_placebo",
+        "SHY_cash_remainder"
+      ]
+    }
+  ],
+  "total_candidate_budget": 8,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_11_multiq_sue/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_11_multiq_sue/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_11_multiq_sue/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_11_multiq_sue/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_11_multiq_sue/report.md",
+    "reports/research/iterations/h20260929_11_multiq_sue/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "net-10bp median-offset (21 monthly offsets) Sharpe >= 1.1882 anchor AND >= 0.6447 stress (stress = 2019-01..2023-09 only, 'stress sample short'), and net-20bp CAGR positive in both windows. Keep-eligible candidates only.",
+    "K2": "63-session inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >= 0.05 Sharpe in BOTH anchor and stress windows (screen_lane diversifier edge). Keep-eligible only.",
+    "watch_recent": "anchor median Sharpe >= 1.1882 but stress bar not met.",
+    "strong_keep": "K2 edge >= 0.10 both windows, or K1 Sharpe both windows >= S3's (1.4853 / 0.8059).",
+    "increment_criterion": "A keep-eligible candidate that would otherwise clear a tier is judged 'model adds nothing' unless its anchor median-offset net-10bp Sharpe is strictly greater than SUE1_TOP50's AND MOM12_1_TOP50's AND ENET_SHUF_TOP50's AND RAND_TOP50's. Reported as booleans with the numbers for ENET_TOP50 whether or not a tier is cleared.",
+    "pass_requires": "(K1 or K2 or watch_recent) and increment_criterion"
+  },
+  "candidate_manifest_sha256": "924a1c133fd451aea22ee99c79f87401703638986ff827591d5c10616bc05522",
+  "data_feasibility_sha256": "2de6358ef64ffc479a6c197399f6ca5b121fcb470edc03f80e7b2b323e43a94c"
+}

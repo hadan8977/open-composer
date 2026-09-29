@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260929_11_multiq_sue",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "Long-only batch: none. ENET_LS (information only) short leg pays 0.5%/yr borrow on the short notional.",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps on the execution session, frozen screen_lane contract.",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "k2_control_cost_model": "vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (frozen convention).",
+  "note": "S&P 500 constituents are the most liquid US stocks; 10bp/side is conservative for them."
+}

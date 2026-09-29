@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_11_multiq_sue_historical_evaluation_authorization",
+  "iter_id": "h20260929_11_multiq_sue",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 8,
+    "evaluation_authorized_count": 8,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "multiq_sue_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "ENET_TOP50",
+        "ENET_TOP20",
+        "ENET_MOM_TOP50",
+        "SUE1_TOP50",
+        "MOM12_1_TOP50",
+        "EW_POOL",
+        "RAND_TOP50",
+        "ENET_SHUF_TOP50"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "All data local: SEC XBRL daily panel data/features/sec_fundamentals_daily (2016-2026), prices data/sip/daily and data/sip-delisted/daily, membership csv data/sip-delisted/sp500_ticker_start_end_fja05680.csv. Caveats: SUE is visible only from the filing usable session (after the earnings press release), SUE history starts 2016 so early lags are missing, stress window has out-of-sample scores only from 2019."
+    }
+  },
+  "data_sources": [
+    "data/features/sec_fundamentals_daily",
+    "data/sip/daily",
+    "data/sip-delisted/daily",
+    "data/sip-delisted/sp500_ticker_start_end_fja05680.csv"
+  ],
+  "data_gaps_confirmed": {
+    "none": "No data gap blocks any of the 8 candidates; all inputs are local."
+  },
+  "candidate_authorization": {
+    "candidate_count": 8,
+    "rows": [
+      {
+        "candidate_id": "ENET_TOP50",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "b0535a374962ec71af21443a3f0746d16c7685033c011f4b29dc4921967e4605"
+      },
+      {
+        "candidate_id": "ENET_TOP20",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "1e6c82a2df2b47b976189e3be1cafea4a99af3a1f063c17b3981ed1003a0150d"
+      },
+      {
+        "candidate_id": "ENET_MOM_TOP50",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "56e807902a88e4b0b6a9a68d32c3adab717234595fdc44c4a34f0ae2d1310248"
+      },
+      {
+        "candidate_id": "SUE1_TOP50",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "1af0b8d9908aa0a4fe49096479cdf894b2635ce9789e99559c55340320158b8d"
+      },
+      {
+        "candidate_id": "MOM12_1_TOP50",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "b427e178cdebcb9c9e043d0d5ed45f9269fc133c327ecc40ddf1a6a68a40bd1e"
+      },
+      {
+        "candidate_id": "EW_POOL",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "a0441c49807f4e9b34489595607b50fc30736b4567009a07d9f770281ea10533"
+      },
+      {
+        "candidate_id": "RAND_TOP50",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "79aa66317c99773dc18c06bda2ac0c5278428852ba1e4db9299e472e836090b0"
+      },
+      {
+        "candidate_id": "ENET_SHUF_TOP50",
+        "path": "multiq_sue_screen",
+        "action": "evaluate",
+        "reason_code": "preregistered_screen_lane_batch_all_inputs_locally_present",
+        "candidate_binding_sha256": "38ef6916a3c4f41080eb738f106af9b85a92ce79748a360821711571201b86ce"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "candidate_spec",
+    "cost_contract",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260929_11_multiq_sue.yaml",
+      "sha256": "e4ce0fa09cd957de4b2ce478ed4206b23b5be3652418880fe740cc26cad63489"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260929_11_multiq_sue/cost-contract.json",
+      "sha256": "a1f51bb42845adf8622036df8c7404b193fa5605c4fc1bfc5e2d1c25495c937e"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl",
+      "sha256": "0063113ae333b37ab12ee081ac7d43d004c3fe62153f53d3376238344fe71400"
+    }
+  }
+}

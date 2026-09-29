@@ -1,0 +1,122 @@
+name: h20260929_11_multiq_sue
+description: 'Preregistered candidate family for T-20260929-11: elastic net on 8 quarters of SUE (eps
+  and revenue) history plus positive/negative streak counts, expanding-window yearly refit (train from
+  2016-06, label fully realized before the test year), scoring the point-in-time S&P 500 pool; top-50/top-20
+  equal weight monthly, with a single-quarter SUE baseline, a 12-1 momentum baseline, their rank-sum with
+  the model, an equal-weight pool benchmark, a random-pick placebo and a label-shuffle placebo. Evaluated
+  via scripts/screen_batch.py --batch h20260929_11_multiq_sue against the frozen screen_lane contract
+  (10bp/20bp per side, close signal -> next open fill, K1/K2/watch_recent). Research only; no broker writes.'
+timeframe: daily
+universe:
+- SPY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 50
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_11:screen:multiq_sue
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  multiq_sue_enet:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is an ElasticNet score from 20 rank-standardized
+      SUE-history features (scripts/build_h20260929_11_multiq_sue_scores.py) read by scripts/screen_batches/h20260929_11_multiq_sue.py.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_11_multiq_sue
+  candidate_manifest_path: reports/research/iterations/h20260929_11_multiq_sue/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_11_multiq_sue/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_11_multiq_sue.jsonl
+  source_card_claim_ids:
+  - kaczmarek_zaremba_2025_frl_multiq_sue
+  - martineau_2021_rip_pead
+  - chordia_shivakumar_2006_earnings_momentum
+  - hansen_siggaard_2024_dml_pead
+  - yu_2026_fast_numbers_slow_language
+  - sklearn_timeseriessplit_gap
+  parameter_space:
+    candidate_id:
+    - ENET_TOP50
+    - ENET_TOP20
+    - ENET_MOM_TOP50
+    - SUE1_TOP50
+    - MOM12_1_TOP50
+    - EW_POOL
+    - RAND_TOP50
+    - ENET_SHUF_TOP50
+  candidate_budget: 8
+  selection_objective: Judge ENET_TOP50/ENET_TOP20/ENET_MOM_TOP50 against K1/K2/watch_recent plus the
+    increment criterion (beat SUE1_TOP50, MOM12_1_TOP50, ENET_SHUF_TOP50, RAND_TOP50 on anchor median
+    Sharpe).
+  candidate_budget_note: 8 batch candidates (3 model-based keep-eligible, 2 baselines, 1 pool benchmark,
+    2 placebos); ENET_LS is information-only outside the long-only batch.
+  anti_overfit_notes:
+  - Features, label, model family, hyperparameter grid, CV scheme, seeds and candidate set are fixed in
+    candidate-manifest.json before any score or return is computed.
+  - Hyperparameters are chosen only by time-series CV inside each training set; no test-year data is used.
+  - Split-like price prints are excluded by the signal-day rule only, never by holding-period outcome.
+  validation_plan:
+  - scripts/build_h20260929_11_multiq_sue_scores.py (yearly expanding-window elastic net, scores.parquet,
+    model-fits.json, RankIC)
+  - scripts/screen_batch.py --batch h20260929_11_multiq_sue --iteration h20260929_11_multiq_sue
+  - K1/K2/watch_recent + increment criterion against SUE1/MOM baselines and two placebos
+notes:
+  intent: Test whether multi-quarter SUE history with a regularised linear model adds net-of-cost value
+    over single-quarter SUE and 12-1 momentum on the S&P 500 pool.
+  hypothesis_id: T-20260929-11
+  previous_link: dir:pead_xbrl_sue_filing_date
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

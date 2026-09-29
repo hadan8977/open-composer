@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_11_multiq_sue",
+  "reviewed_at": "2026-09-29T13:46:00+00:00",
+  "decision": "proceed",
+  "objective": "T-20260929-11: does an elastic net trained on the last 8 quarters of SUE (eps and revenue) plus streak counts, refit yearly on an expanding window (out-of-sample scores 2019-2026), rank S&P 500 stocks well enough that the monthly top-50 book, net of 10/20bp costs, clears the runbook section 5 K1/K2/watch_recent tiers and beats single-quarter SUE, 12-1 momentum, a label-shuffle placebo and a random-pick placebo?",
+  "existing_solution_comparison": "`oc research directions check sue` returned dir:pead_xbrl_sue_filing_date (refuted: single-quarter SUE CAR does not beat the redated placebo, book -3.9%/yr full and +1.5% 2024+ at 20bp, SUE rank IC 0.016 t 1.2) and dir:pead_xbrl_8k_llm (refuted). grep for multi.quarter/sue_hist/elastic in control/iterations/ledger found no earlier multi-quarter SUE test (hits were mom_multiasset_ml_r1 and unrelated). This task is not a repeat: it changes the information set (8 quarters of history instead of the last surprise), the estimator (regularised linear model with time-series CV instead of a raw SUE rank) and the universe (point-in-time S&P 500 instead of all stocks). The primary paper (Kaczmarek & Zaremba 2025) is only readable at abstract level, so no public replication or live track was available to reuse; the local test is the missing evidence on our data and cost contract.",
+  "target_regime_and_horizon": "Monthly rebalance, 21-session horizon, out-of-sample 2019-01..2026-09-17; frozen windows unchanged (anchor 2024-01-08..2026-09-17, stress 2016-05-02..2023-09-15 of which only 2019-01..2023-09 is out-of-sample, so stress sample short). The 2026-01..09 slice is contaminated holdout, reference only.",
+  "remaining_evidence_gap": "Primary paper full text unreadable (403), so label horizon, cost treatment, out-of-sample design and post-2020 results of the original are unverified; the Wang et al. OR Spectrum 2025 paper named in the queue could not be found by search. Our SUE is visible only from the filing usable session (after the press release), SUE history starts 2016 (early quarters missing, the model trains on at most about 7 years), and residual unadjusted 2:1 splits in prices are only excluded on the signal day, not in holding windows.",
+  "negative_experiments_checked": "dir:pead_xbrl_sue_filing_date and dir:pead_xbrl_8k_llm (both refuted; single-quarter SUE, all-stock universe; see existing_solution_comparison). fundamentals-v1-summary.md rows sue_eps_rank_recent (IC 0.016) and sue_rev_rank_recent (IC 0.010) reject the single-quarter rank.",
+  "cost_and_execution_assumptions": "Frozen: 10bp/20bp per side, close signal -> next open fill, long-only batch (ENET_LS information-only with 0.5%/yr borrow). Prices pass sanitize_price_matrices defaults; split-like signal days excluded. See cost-contract.json.",
+  "queries": [
+    {
+      "query": "Kaczmarek Zaremba 2025 Finance Research Letters machine learning post-earnings announcement drift elastic net standardized unexpected earnings",
+      "opened_urls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S1544612325020057",
+        "https://ideas.repec.org/a/eee/finlet/v86y2025ipes1544612325020057.html"
+      ],
+      "searched_at": "2026-09-29T13:40:00+00:00"
+    },
+    {
+      "query": "Wang OR Spectrum 2025 post-earnings announcement drift machine learning earnings surprise history",
+      "opened_urls": [
+        "https://arxiv.org/pdf/2606.29734"
+      ],
+      "searched_at": "2026-09-29T13:41:00+00:00"
+    },
+    {
+      "query": "Chordia Shivakumar 2006 earnings momentum SUE price momentum large firms",
+      "opened_urls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S0304405X05002175"
+      ],
+      "searched_at": "2026-09-29T13:42:00+00:00"
+    },
+    {
+      "query": "post-earnings announcement drift disappeared large caps microcap 2025 replication",
+      "opened_urls": [
+        "https://ideas.repec.org/p/osf/socarx/z7k3p.html",
+        "https://anderson-review.ucla.edu/is-post-earnings-announcement-drift-a-thing-again/",
+        "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/abs/double-machine-learning-explaining-the-postearnings-announcement-drift/F949B8E46EA14FCCD56F30212712B2DA"
+      ],
+      "searched_at": "2026-09-29T13:43:00+00:00"
+    },
+    {
+      "query": "scikit-learn TimeSeriesSplit gap parameter",
+      "opened_urls": [
+        "https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html"
+      ],
+      "searched_at": "2026-09-29T13:43:30+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S1544612325020057",
+      "claim_id": "kaczmarek_zaremba_2025_frl_multiq_sue",
+      "claim": "Elastic net models that use several quarters of standardized unexpected earnings (SUE) history forecast returns better than one-quarter SUE or streak features: models with up to 12 quarters beat shorter-horizon and streak-based approaches in returns, Sharpe ratio and alpha; Sharpe ratios nearly double, alphas stay significant after controlling for one-quarter SUE and streak effects; gains are strongest among large caps, where the latest surprise is priced quickly but older surprises are overlooked.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-01-01",
+      "market_and_period": "US equities, sample period, universe, label, cost treatment and post-2020 results NOT readable (full text blocked).",
+      "applicability": "Defines the tested design: multi-quarter SUE history -> elastic net -> long-short/long portfolio; large-cap emphasis motivates the S&P 500 pool.",
+      "limitations": "Only the abstract could be read: features beyond 'up to 12 quarters of SUE' (revenue surprise? streak count definition?), label horizon, out-of-sample design, costs and reported Sharpe are unknown. Paper's SUE is built from announcement-date data (Compustat/IBES style); ours is visible only at the 10-Q/10-K filing date, which lags the earnings press release, so the announcement-day reaction is missed and PEAD measured here is post-filing drift.",
+      "independent_replication": "No independent replication found. Subrahmanyam (2025, see UCLA Anderson Review item) contests 2025 PEAD-revival papers on microcap grounds (different papers).",
+      "fetched_at": "2026-09-29T13:44:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_11_multiq_sue/sources/k_z_2025_abstract.txt",
+      "sha256": "c7c657a4817bd8af4295419d7420fb697f73e9d1a6b74bf419d31b09914e8c4e",
+      "source_card_path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl"
+    },
+    {
+      "url": "https://ideas.repec.org/p/osf/socarx/z7k3p.html",
+      "claim_id": "martineau_2021_rip_pead",
+      "claim": "Stock prices fully reflect earnings surprises on the announcement date; large-cap PEAD vanished by about 2006 and microcap PEAD disappeared later.",
+      "source_type": "paper",
+      "published_or_updated_at": "2021-01-01",
+      "market_and_period": "US, announcement-day vs post-announcement returns, decades to ~2020.",
+      "applicability": "Prior against any PEAD signal in the S&P 500 pool; the multi-quarter idea must beat this by using older, not latest, surprises.",
+      "limitations": "Abstract only; tests the last-quarter surprise, not multi-quarter history.",
+      "independent_replication": "Contradicted in part by two 2025 papers (Dickerson-Julliard-Mueller JFE forthcoming; Hirshleifer-Peng-Wang RFS 2025) per the UCLA Anderson Review item.",
+      "fetched_at": "2026-09-29T13:44:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_11_multiq_sue/sources/martineau_2021_abstract.txt",
+      "sha256": "583bfaea7c40d7554f5efdf8ff87b73373293958a8e25362daf07641d5b7ca6e",
+      "source_card_path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl"
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X05002175",
+      "claim_id": "chordia_shivakumar_2006_earnings_momentum",
+      "claim": "Earnings momentum (SUE-sorted deciles) earns about 0.9% per month over 1972-1999 in the US; price momentum is largely a manifestation of the systematic component of earnings momentum, though both carry independent information.",
+      "source_type": "paper",
+      "published_or_updated_at": "2006-01-01",
+      "market_and_period": "US CRSP/Compustat 1972-1999, tests identified mostly off small caps.",
+      "applicability": "Justifies the 12-1 momentum baseline and the ENET_MOM combination candidate.",
+      "limitations": "Search summary only; small-cap identified; pre-decay sample.",
+      "independent_replication": "Later work reports the result also holds in large caps (per the same summary).",
+      "fetched_at": "2026-09-29T13:44:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_11_multiq_sue/sources/chordia_shivakumar_2006_summary.txt",
+      "sha256": "e91474cba3b3136472a39b1ac97dee8f4f950e2bcdbaeb53b58a850c83c2709d",
+      "source_card_path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl"
+    },
+    {
+      "url": "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/abs/double-machine-learning-explaining-the-postearnings-announcement-drift/F949B8E46EA14FCCD56F30212712B2DA",
+      "claim_id": "hansen_siggaard_2024_dml_pead",
+      "claim": "A small set of variables tied to momentum, liquidity and limited arbitrage explains PEAD directly and consistently, found with double machine learning over a high-dimensional set.",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-05-01",
+      "market_and_period": "US equities, abstract only.",
+      "applicability": "Supports adding a momentum baseline and warns the SUE-history signal may be a proxy for momentum/liquidity; large-cap S&P pool removes most limits-to-arbitrage variation.",
+      "limitations": "Explains PEAD, not a trading strategy; abstract only.",
+      "independent_replication": "n/a",
+      "fetched_at": "2026-09-29T13:44:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_11_multiq_sue/sources/hansen_siggaard_2024_abstract.txt",
+      "sha256": "5b7b1ccf35105e8d38b30ab4a2d2fa2273dfce02f3f3f93f2bf670b012f01dca",
+      "source_card_path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/pdf/2606.29734",
+      "claim_id": "yu_2026_fast_numbers_slow_language",
+      "claim": "Combines SUE-style quantitative earnings surprises with LLM-extracted earnings-call language; reports improved out-of-sample prediction over either signal alone; uses EODHD prices and OpenAI models.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-06-30",
+      "market_and_period": "US, SPY/QQQ-related sample; details not extracted.",
+      "applicability": "Recent (2026) evidence that SUE numbers still carry signal but adds text; text/LLM route is out of this task (no bulk LLM labeling).",
+      "limitations": "Summary-level read; no Kaczmarek-Zaremba replication in it; different data.",
+      "independent_replication": "none",
+      "fetched_at": "2026-09-29T13:44:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_11_multiq_sue/sources/yu_2026_arxiv_summary.txt",
+      "sha256": "5de19c5fbcf6cc476bc9972a98ba20b6f96b2f0ebcd6b5fc0177144cbf641ec1",
+      "source_card_path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl"
+    },
+    {
+      "url": "https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html",
+      "claim_id": "sklearn_timeseriessplit_gap",
+      "claim": "TimeSeriesSplit(n_splits, gap) yields expanding training sets and a validation block after each, dropping `gap` samples between train end and validation start to reduce leakage.",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2026-09-29",
+      "market_and_period": "n/a",
+      "applicability": "Hyperparameter selection uses TimeSeriesSplit(n_splits=4, gap=1) on unique training months (one-month gap between label periods).",
+      "limitations": "Gap counts samples; we apply it to month groups, then map back to rows.",
+      "independent_replication": "n/a",
+      "fetched_at": "2026-09-29T13:44:00Z",
+      "snapshot_path": "reports/research/iterations/h20260929_11_multiq_sue/sources/sklearn_tss.txt",
+      "sha256": "e07b30e8cd277c7d859cc35aebb9bedc40a589ffadbd752f1aa575f8d49fcba1",
+      "source_card_path": "reports/harness/source_cards/h20260929_11_multiq_sue.jsonl"
+    }
+  ],
+  "stop_condition": "K1: median-offset net-10bp anchor Sharpe >= 1.1882 and stress (2019-2023, short) >= 0.6447, and net-20bp CAGR positive in both windows, for a keep-eligible candidate. K2: blend edge vs vol-matched S3 >= 0.05 in both windows. watch_recent: anchor >= 1.1882, stress not met. Increment criterion: a tier only counts if the candidate's anchor median Sharpe strictly exceeds SUE1_TOP50, MOM12_1_TOP50, ENET_SHUF_TOP50 and RAND_TOP50. Falsification: no tier cleared, or increment criterion fails.",
+  "cheapest_decisive_test": {
+    "action": "Train the yearly elastic net (one script, minutes on CPU), write scores.parquet, then run scripts/screen_batch.py once on the 8 preregistered candidates; compute yearly monthly RankIC from model-fits.json.",
+    "pass_condition": "At least one keep-eligible candidate clears K1, K2 or watch_recent AND beats SUE1_TOP50, MOM12_1_TOP50, ENET_SHUF_TOP50 and RAND_TOP50 on anchor median Sharpe.",
+    "falsification_condition": "No keep-eligible candidate clears a tier, or the increment criterion fails for every one that does.",
+    "max_compute_minutes": 30
+  }
+}
