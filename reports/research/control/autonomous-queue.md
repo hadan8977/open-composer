@@ -203,6 +203,7 @@
 - plan: 菜单 = 当时市值前 20–50 的股票（按时间点，不能用今天的名单）；合成 2 倍日重置收益，扣费率和融资成本；照搬 S3 的规则框架（63 日动量、绝对动量过滤、vt40），全部偏移中位数、安慰剂、K2。
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
+  - 数据清洗（2026-09-29，另一会话在 T-20 踩到）：`data/sip/daily` 有破产后重新上市沿用旧代码（WOLF）、单日错误成交价（KIDZ、IXHL）、漏调的拆股（APH 2026-08-27）。个股回测必须先过 `open_composer.research.features.price_hygiene.sanitize_price_matrices(close_wide, open_wide)`（默认参数），并剔除触发日像拆股的信号；不要按持有期结果过滤。
   - 2026-09-29 07:07 UTC 自动轮开始，派 sonnet-high 子代理执行（批量通道新增 `extend_panel` 钩子，提交 4a0775a）。
 
 ### T-20260929-35 日内截面规律（分钟数据，Modal）：日内周期性、隔夜/日内拉锯
@@ -222,6 +223,7 @@
 - plan: 读原档案，用 `data/sip/minute`（Modal）按原规则重跑，不改参数；同时报告冻结 10/20 bp 和实测价差两种成本；安慰剂。
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
+  - 数据清洗（2026-09-29，另一会话在 T-20 踩到）：`data/sip/daily` 有破产后重新上市沿用旧代码（WOLF）、单日错误成交价（KIDZ、IXHL）、漏调的拆股（APH 2026-08-27）。个股回测必须先过 `open_composer.research.features.price_hygiene.sanitize_price_matrices(close_wide, open_wide)`（默认参数），并剔除触发日像拆股的信号；不要按持有期结果过滤。
 
 ### T-20260929-30 模型大扫描：XGBoost/CatBoost/MLP/Ridge/LightGBM/集成 × 训练窗 × 预测周期
 - status: running
