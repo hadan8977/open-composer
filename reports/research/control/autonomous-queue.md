@@ -175,6 +175,72 @@
     脚本 `scripts/run_t20260928_10_ml_killtest.py`；登记簿 `dir:ml_ranking_broad_universe_custom`
     改 `refuted`。不进 Stage 2（$2.85 未花）。
 
+### T-20260929-32 放开做空：十几个"空头腿不可执行"方向重新分级 + 跳空回补多空重测
+- status: running
+- priority: 1
+- not_before:
+- goal: 机主 2026-09-29 把研究范围放到 Alpaca 模拟盘能交易的全部品种（含做空）。跳空回补 2016–2021 扣成本前年化 99%、夏普 3.0，收益在空头腿，当时只因不能做空而停。
+- plan: 核对 Alpaca 做空/借券/保证金规则；重新分级所有因做空被判不可执行的方向；跳空回补做多空和"只做空 + 买 SPY 对冲"两种，空头只用容易借的股票，按价差和借券费扣成本，按成交额分档报告。
+- done_when: `reports/research/control/short-unlocked-retriage-2026-09-29.md`、`reports/research/iterations/t20260929_32_gap_fade_ls/`；登记簿更新；提交。
+- notes:
+  - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
+
+### T-20260929-33 加密货币趋势（Alpaca 现货，只做多）批量筛选
+- status: ready
+- priority: 1
+- not_before:
+- goal: 机主 2026-09-29 放开范围后，加密货币是模拟盘支持、但从没按趋势规则系统测过的品种（以前只看过高频加密模型，判为不可行）。看已发表的趋势/动量规则能否达到 K1，或给 S3 加分（K2）。
+- plan: 先联网找 2023–2026 的加密趋势实盘或前向记录和反面证据；数据用 Alpaca 加密日线（本机取，密钥不上传）或交易所公开数据；候选 10–20 条已发表规则（时间序列动量、均线过滤、双动量、波动率目标），全部偏移中位数、20 bp、安慰剂、K2；每天 24 小时交易，按 UTC 日收盘。
+- done_when: 迭代档案 + 登记簿 + 提交。
+- notes:
+
+### T-20260929-34 单只股票加杠杆趋势（S3 的个股版）
+- status: ready
+- priority: 2
+- not_before:
+- goal: S3 用杠杆板块 ETF 抓领涨赛道。个股版：在大盘龙头股里按动量选前 1–3 只，用 2 倍（合成的 2 倍日重置收益，2022 年后可用真实的 2 倍单股 ETF，如 NVDL；或保证金 2 倍）。检验能否达到 K1，或和 S3 组合后夏普更高。
+- plan: 菜单 = 当时市值前 20–50 的股票（按时间点，不能用今天的名单）；合成 2 倍日重置收益，扣费率和融资成本；照搬 S3 的规则框架（63 日动量、绝对动量过滤、vt40），全部偏移中位数、安慰剂、K2。
+- done_when: 迭代档案 + 登记簿 + 提交。
+- notes:
+
+### T-20260929-35 日内截面规律（分钟数据，Modal）：日内周期性、隔夜/日内拉锯
+- status: blocked（等机主决定日内成本口径）
+- priority: 2
+- not_before:
+- goal: 已发表的截面日内规律，例如 Heston-Korajczyk-Sadka 2010 的同一时段收益延续，以及 Lou-Polk-Skouras 2019 的"动量赚在隔夜、反转赚在日内"，在流动性最好的股票上能否扣掉实际成本后赚钱。
+- plan: 先联网找 2020 年以后的复现；成本按分钟数据估计的价差另建日内合同，同时报告冻结的 10/20 bp。
+- done_when: 迭代档案 + 登记簿 + 提交。
+- notes:
+
+### T-20260929-36 纳斯达克 1 分钟多空事件路由：用 SIP 分钟数据复核
+- status: ready
+- priority: 2
+- not_before:
+- goal: 登记簿 `dir:nasdaq_long_short_event_router_1m` 在 IEX 派生的 1 分钟数据上达到 research_pass（lookback=10、entry_after_bars=2、QQQ 前一段为负时才做），但没用正式 SIP 数据验证，而且当时不能做空。
+- plan: 读原档案，用 `data/sip/minute`（Modal）按原规则重跑，不改参数；同时报告冻结 10/20 bp 和实测价差两种成本；安慰剂。
+- done_when: 迭代档案 + 登记簿 + 提交。
+- notes:
+
+### T-20260929-30 模型大扫描：XGBoost/CatBoost/MLP/Ridge/LightGBM/集成 × 训练窗 × 预测周期
+- status: running
+- priority: 1
+- not_before:
+- goal: 机主 2026-09-29："XGBoost 等其他模型不行吗，多试一些，用最大的努力"。用证据回答：同一批数据上换模型族、训练窗（3 年/1 年滚动）、预测周期（5/21/63 天）能否得到可交易的排序。
+- plan: 36 个组合，只按压力期 RankIC t 值选前 3（2024 年以后的数字只报告不参与挑选），前 3 做成扣价差成本的只做多组合，按 K1/K2 判；DSR 试验次数 42。Modal ≤ $3。
+- done_when: `reports/research/iterations/t20260929_30_model_zoo/`；登记簿行 `dir:ml_model_zoo_stock_ranking_2026`；提交。
+- notes:
+  - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
+
+### T-20260929-31 强化学习与"大模型 + 强化学习"（Qwen/GRPO 等）交易证据
+- status: running
+- priority: 1
+- not_before:
+- goal: 机主问"RL 的 Qwen 之类的不行吗"。先读 2025–2026 原文和实盘记录（nof1 Alpha Arena、LiveTradeBench、Trading-R1、FLAG-Trader、FinRL 比赛），只有证据支持才定一个 ≤ $3 的试点。
+- plan: 只调研；简报 + 登记簿。
+- done_when: 简报在 `reports/research/intel/`；登记簿 validate ok；提交。
+- notes:
+  - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
+
 ### T-20260928-30 纯量价 LightGBM 小盘排序：只做多组合 + 逐只价差成本
 - status: done
 - priority: 1
