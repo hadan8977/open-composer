@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "iter_id": "h20260929_21_ipo_lockup_expiry",
+  "strategy_name": "h20260929_21_ipo_lockup_expiry",
+  "source_spec_path": null,
+  "spec_hash": null,
+  "objective": "Test whether shorting (or avoiding-long) U.S. recent-IPO common stock around its ~180-day share-lockup expiration date, net of ADV-tiered spread and borrow costs, clears the frozen Sharpe/edge, placebo and 2x-cost gates in the 2024-2026 TEST window.",
+  "topic_coverage": [
+    "ipo_lockup_expiration_car_field_hanka_2001",
+    "informed_short_selling_around_lockup_gibbs_hao_2018",
+    "pe_vs_vc_backed_ipo_lockup_heterogeneity",
+    "practitioner_skeptical_verdict_on_tradeability_damodaran_2019",
+    "short_squeeze_tail_risk_named_examples_yelp_pokertek_odimo",
+    "sec_424b4_final_prospectus_as_pit_ipo_date_proxy",
+    "despac_lockup_mechanism_difference_and_data_gap",
+    "easy_to_borrow_cost_modeling_post_2026_09_29_scope_widening"
+  ],
+  "sources": [
+    {
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=205011",
+      "published_or_updated_at": "2001-01-01",
+      "source_type": "paper",
+      "credibility": "journal_of_finance_peer_reviewed",
+      "core_claim": "Field & Hanka (2001, JF): 1,948-3,217 IPO share-lockup agreements; in the expiration week, trading volume permanently rises +40% and there is a statistically significant 3-day cumulative abnormal return of approximately -1.5% to -1.8%, stable across their roughly 1988-1997 ten-year sample and not quickly reversed; effect much larger for VC-backed firms; ~6% of lockups are broken early by large insider sales before the scheduled date.",
+      "project_applicability": "The founding, quantified mechanism this iteration tests locally on 2016-2026 U.S. data with a real PIT event list and real costs -- direct primary source for the whole iteration.",
+      "reflection": "Direct fetch 403'd (SSRN blocks scripted access); abstract-level numbers already verified and quoted verbatim in the existing directions.jsonl registry row (dir:ipo_lockup_expiration_drift) from the prior intel pass (I-20260929-01), reused here rather than re-fetched; not included in direction-review.json's stricter snapshot-verified `sources` array for that reason, cited here and in prose instead."
+    },
+    {
+      "url": "https://mediacast.blob.core.windows.net/production/Faculty/StoweConf/submissions/swfa2014_submission_184.pdf",
+      "published_or_updated_at": "2013-11-15",
+      "source_type": "paper",
+      "credibility": "later_published_journal_of_banking_finance_2018",
+      "core_claim": "Gibbs & Hao: short selling is abnormally high in the weeks before lockup expiration, peaks one day before, and more abnormal pre-expiration short selling predicts poorer expiration-date returns (informed shorts); PE-backed IPOs show NO negative return/volume effect (unlike VC-backed); named tail-risk examples: Yelp +23% (2012-08-29, a documented short squeeze), PokerTek +14%, Odimo -33%.",
+      "project_applicability": "Directly informs the cross-sectional heterogeneity this iteration expects (ADV/momentum filters as a cheap segmentation proxy) and the tail-risk discipline (10%-per-position cap, 2x-cost check).",
+      "reflection": "Fetched and snapshotted in full this iteration (pdftotext extraction, sha256 c5d542ae...); two claim cards bound in direction-review.json/source_cards."
+    },
+    {
+      "url": "https://aswathdamodaran.substack.com/p/much-ado-about-liquidity-lockup-expirations-12-11-19",
+      "published_or_updated_at": "2019-12-11",
+      "source_type": "industry_standard",
+      "credibility": "named_academic_practitioner_post",
+      "core_claim": "Declines of 2-5% around lockup expiration exist but are explicitly judged NOT tradeable/exploitable: about one-third of lockup expirations see the price rise, not fall; effect is 'too small (relative to transaction costs) and too unpredictable... to build a profitable investment strategy around'; weakest for large, liquid, heavily-covered names (Facebook 2012 example: mixed sign, -5%/-3%/+13% across its staggered lockups).",
+      "project_applicability": "The load-bearing negative/skeptical source for this whole iteration -- a domain expert's explicit 'not tradeable' verdict on the exact mechanism being re-tested here with real costs and placebos.",
+      "reflection": "Fetched and snapshotted in full this iteration (sha256 efef7227...), quote verified present in the snapshot before binding into direction-review.json."
+    },
+    {
+      "url": "reports/research/intel/I-20260929-01-short-horizon-selective.md",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "paper",
+      "credibility": "internal_intel_pass_with_verified_source_cards",
+      "core_claim": "Section 2.3/4 of this intel pass located and quantified the IPO-lockup-expiration mechanism, checked `oc research directions check` (no prior match), and queued it as a new testable direction rather than a re-run of an already-graded one; also records that no 2020s independent quantitative replication was found.",
+      "project_applicability": "The direct upstream trigger for this iteration; the queue task (T-20260929-21) and the registry row (dir:ipo_lockup_expiration_drift) both descend from this pass.",
+      "reflection": "Read the relevant sections before designing this iteration's candidate grid; not re-derived from scratch."
+    },
+    {
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "paper",
+      "credibility": "internal_registry_frozen_row",
+      "core_claim": "dir:ipo_lockup_expiration_drift, status=harvested: the Field & Hanka claim plus the note that the abnormal return is negative so capturing it needs either a short leg or a long-only avoid/underweight version, with the short-leg version flagged as needing an owner short-selling decision (now stale per the 2026-09-29 scope widening).",
+      "project_applicability": "The exact registry row this iteration is required to update (same id, not a new one) once results are in.",
+      "reflection": "Read the exact existing line via grep before writing this brief, not from summary."
+    },
+    {
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "broker_official_docs",
+      "credibility": "broker_official_docs",
+      "core_claim": "Alpaca's own HTB borrow-fee convention is `daily_fee = short_market_value x HTB_rate / 360`; Easy-to-Borrow (ETB) names carry $0 locate/borrow fee for Trading API users; margin/short minimum equity $2,000.",
+      "project_applicability": "This iteration's 360-day borrow convention (BORROW_DAYCOUNT=360.0) matches Alpaca's own live formula rather than an arbitrary choice, and the ADV-tiered cost model is a deliberately MORE conservative local approximation than Alpaca's real $0-for-ETB rate, since Alpaca's paper account does not simulate borrow fees at all (see next source).",
+      "reflection": "Already opened and quoted in `reports/research/control/short-unlocked-retriage-2026-09-29.md` (T-20260929-32, read in full this iteration for the negative-experiment check); re-cited here rather than re-fetched."
+    },
+    {
+      "url": "https://docs.alpaca.markets/docs/paper-trading",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "broker_official_docs",
+      "credibility": "broker_official_docs",
+      "core_claim": "Alpaca's paper account supports short selling and margin, but does NOT simulate borrow fees ('Coming Soon!') -- paper P&L is therefore optimistic relative to this iteration's own modeled ADV-tiered borrow costs.",
+      "project_applicability": "Justifies reporting this iteration's own (more conservative, borrow-costed) numbers as the primary evidence rather than deferring to what a live paper-account run would show.",
+      "reflection": "Already opened and quoted in the T-20260929-32 retriage; re-cited here."
+    },
+    {
+      "url": "reports/research/control/short-unlocked-retriage-2026-09-29.md",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "paper",
+      "credibility": "internal_frozen_iteration_report",
+      "core_claim": "The owner's short-selling-scope-widening retriage of ~15-17 directions; confirms IPO lockup expiration is a distinct mechanism from the ones retriaged there (insider-unlock Form-4-driven), so this is new work, not duplicate.",
+      "project_applicability": "Required negative-experiment check: confirms no overlap/duplication with the concurrently-running T-20260929-32 session's work.",
+      "reflection": "Read in full before writing direction-review.json's negative_experiments_checked field."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_21_ipo_lockup_expiry.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "L5L1_adv1500_all",
+      "claim_ids": ["damodaran_lockup_not_tradeable_2019", "gibbs_hao_field_hanka_baseline_and_variance"]
+    },
+    {
+      "candidate_id": "L1L5_adv1500_all",
+      "claim_ids": ["damodaran_lockup_not_tradeable_2019", "gibbs_hao_field_hanka_baseline_and_variance"]
+    },
+    {
+      "candidate_id": "avoid_long_info",
+      "claim_ids": ["gibbs_hao_pe_backed_no_effect", "damodaran_lockup_not_tradeable_2019"]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "gibbs_hao_pe_backed_no_effect_heterogeneity",
+      "effect": "Added the IPO-to-L momentum filter (positive vs non-positive cumulative return from first trade to L-10) as a cheap local proxy for cross-sectional heterogeneity, since sponsor-type (VC/PE) classification is not available in this iteration's local data."
+    },
+    {
+      "driver": "gibbs_hao_named_squeeze_examples_yelp_pokertek",
+      "effect": "Capped every position at 10% of capital and 15 concurrent names, and required a 2x-cost robustness pass on the frozen decision rule, specifically because individual-event tail risk (a documented short squeeze) is real, not merely a theoretical caveat."
+    },
+    {
+      "driver": "damodaran_not_tradeable_verdict",
+      "effect": "Kept the ADV-tiered spread/borrow cost model and both placebo families (date-shift and random-date) as hard, non-negotiable parts of the preregistered decision rule rather than reporting a raw average CAR as sufficient evidence -- directly answering the skeptical source's own stated reason (transaction costs) for judging the effect untradeable."
+    }
+  ]
+}

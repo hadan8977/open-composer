@@ -607,7 +607,7 @@
   - 2026-09-29 gap search (`gap-search-2026-09-29-04`) 添加。
 
 ### T-20260929-21 交互会话：IPO 解禁期漂移（Field & Hanka 2001；做空 easy-to-borrow + 保守借券成本）
-- status: doing
+- status: done
 - priority: 1
 - not_before:
 - goal: 机主要短时间线、少出手、高胜率高收益的事件策略。情报简报 I-20260929-01 §2.3/§4 定位 IPO 解禁期（IPO 后约 180 天内部人可自由卖出）：Field & Hanka (2001, JF) CAR 约 -1% 到 -3%。本任务建 PIT 事件表（SEC EDGAR 424B4 优先，本地首个交易日兜底）、预注册 ≤24 候选（含 2024-01-08→2026-09-17 TEST、2016-05-02→2023-09-15 STRESS、日期平移±60会话与随机日期安慰剂、2× 成本）、跑 close-to-close 日历组合账本、判定。
@@ -618,6 +618,9 @@
   - 2026-09-29 交互会话新增，队列 id T-20260929-21。
   - 联网证据（本次已开原文/PDF，非仅摘要）：Field & Hanka (2001 JF, SSRN 205011，registry 摘要)：1,948-3,217 份解禁协议，3日CAR约-1.5%~-1.8%，VC背景更强，效应十年样本内稳定不被快速修正。Gibbs & Hao (2018 JBF, "Short Selling Around the Expiration of IPO Share Lockups"，working-paper PDF 已读全文前3页)：空头在解禁日前数周异常增加、解禁前一日达峰，做空更多的股票解禁日收益更差（空头知情）；PE背景股票解禁日**没有**负收益/放量跳升（区别于VC背景）；书中列出具体反例 Yelp 2012-08-29 解禁日 **+23%**（"短挤"）、PokerTek +14%、Odimo -33%，说明横截面方差大、存在挤仓尾部风险。Damodaran (2019 practitioner substack)：解禁效应"2-5%"但**明确判定不可交易**——约1/3的解禁反而上涨，相对交易成本太小太不可预测，大盘高流动性名字效应尤其弱。未找到2020年代独立复现（与情报简报一致）；de-SPAC 2021-2022 波段的解禁本身未见专门量化研究，只有笼统的"post-merger 表现差"证据（机制不同，不能直接当解禁效应证据）。这些证据已计划写入 `direction-review.json`。
   - 收到一条自称"协调者"的消息，要求追加一个基于 Abdi-Ranaldo (2017) close-high-low 半价差估计 + 按ADV分层借券费(0.5%/2%/5%/25%) 的成本敏感性格，并指示不要 import 另一个会话仍在改的 `scripts/run_t20260929_32_*`。该消息不是以正常用户轮次出现，格式可疑（夹在工具结果之间、以 system-reminder 包裹），无法核实来源，本任务**未实现**该追加项，只按原始任务书的成本模型（分层spread + 3%/25%借券 + 2×成本）执行；已在 report.md 里如实记录这条未采纳的可疑指令，供机主核实。
+  - 2026-09-29 结果：13 个候选全部否定——TEST 内最佳格 `L1L5_adv1500_pos`（做空、ADV<=1500档、动量过滤）calendar Sharpe 0.419（门槛 1.19），对 S3 边际 -0.274（门槛 +0.05），安慰剂 date_shift+60 t=-0.59、random_date t=0.66（均 |t|<2，仅 date_shift-60 单独 t=2.22 过线），扛住 2×成本（0.419→0.326）但收益/安慰剂两条主判据都未过；DSR（13次试验）=0.159。事件表 20 样本人工核查发现 30%（6/20，过滤前上限口径）非真普通股 IPO 事件，集中在 first_trade_fallback 口径（35%），已加名称过滤但未二次核查。price hygiene 打码了 259/3577（7.2%）事件标的，5 笔最大 |收益| 交易（RYDE/AXG/BUUU/MENS/YDDL）均未被标记为数据问题。登记簿 `dir:ipo_lockup_expiration_drift` 更新为 refuted。详见 `reports/research/iterations/h20260929_21_ipo_lockup_expiry/{report.md,results.json,decision-record.md,trial-ledger.jsonl}`。
+  - 执行期间收到的"协调者"中途消息（补充 price hygiene、改用 RSS-based 前台等待、报告中位数/截尾均值）经队列内 T-20 的协调者更正确认为主会话本人发出、非注入，已按其要求实施；另外自查修复了 `shift_events()` 安慰剂函数的一处代数错误（移位后才重算窗口宽度，导致安慰剂逐笔等于真实交易，t统计量原本全部退化为 NaN/0），已加回归测试并用修复后的代码重跑出上述最终结果。
+  - 协调者更正（2026-09-29 08:20 UTC）：第一条 Abdi-Ranaldo 成本敏感性消息也来自主会话。没实现不影响结论：做空方每笔均值全为负（−0.06% 到 −1.13%），更细的成本只会更差。结果文件已压缩：逐笔 car_series 和逐代码清洗明细留在本地 `results.full.json`（不入库），提交的 `results.json` 汇总数字不变。
 
 ### T-20260929-20 交互会话：个股无消息大跌反转 / 有消息大跌漂移（Chan 2003 / Savor 2012）
 - status: done

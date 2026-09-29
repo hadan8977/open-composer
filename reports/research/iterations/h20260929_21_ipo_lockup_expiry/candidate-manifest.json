@@ -1,0 +1,651 @@
+{
+  "iter_id": "h20260929_21_ipo_lockup_expiry",
+  "generated_at": "2026-09-29T07:35:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_21_ipo_lockup_expiry",
+  "objective": "13 candidates (2 event windows x 2 ADV filters x 3 momentum filters = 12 tradeable + 1 info-only avoid-long row) testing whether shorting recent IPOs around their ~180-day lockup expiration, net of ADV-tiered spread+borrow costs, clears the frozen Sharpe/edge, placebo and 2x-cost gates in TEST (2024-01-08..2026-09-17).",
+  "candidate_count": 13,
+  "candidates": [
+    {
+      "candidate_id": "L5L1_adv1500_all",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L5L1 window, adv1500 filter, all momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l5l1",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "adv1500",
+        "adv_filter_definition": "ADV rank at L-10 <= 1500 (easy-to-borrow proxy)",
+        "momentum_filter": "all",
+        "momentum_filter_definition": "no momentum filter",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L5L1_adv1500_pos",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L5L1 window, adv1500 filter, pos momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l5l1",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "adv1500",
+        "adv_filter_definition": "ADV rank at L-10 <= 1500 (easy-to-borrow proxy)",
+        "momentum_filter": "pos",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return > 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L5L1_adv1500_neg",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L5L1 window, adv1500 filter, neg momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l5l1",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "adv1500",
+        "adv_filter_definition": "ADV rank at L-10 <= 1500 (easy-to-borrow proxy)",
+        "momentum_filter": "neg",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return <= 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L5L1_unrestricted_all",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L5L1 window, unrestricted filter, all momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l5l1",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "unrestricted",
+        "adv_filter_definition": "no ADV filter (all confirmed/fallback events)",
+        "momentum_filter": "all",
+        "momentum_filter_definition": "no momentum filter",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L5L1_unrestricted_pos",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L5L1 window, unrestricted filter, pos momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l5l1",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "unrestricted",
+        "adv_filter_definition": "no ADV filter (all confirmed/fallback events)",
+        "momentum_filter": "pos",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return > 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L5L1_unrestricted_neg",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L5L1 window, unrestricted filter, neg momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l5l1",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "unrestricted",
+        "adv_filter_definition": "no ADV filter (all confirmed/fallback events)",
+        "momentum_filter": "neg",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return <= 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L1L5_adv1500_all",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L1L5 window, adv1500 filter, all momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l1l5",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L1L5",
+        "window_definition": "short from close of L-1 (trading sessions) to close of L+5",
+        "adv_filter": "adv1500",
+        "adv_filter_definition": "ADV rank at L-10 <= 1500 (easy-to-borrow proxy)",
+        "momentum_filter": "all",
+        "momentum_filter_definition": "no momentum filter",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L1L5_adv1500_pos",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L1L5 window, adv1500 filter, pos momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l1l5",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L1L5",
+        "window_definition": "short from close of L-1 (trading sessions) to close of L+5",
+        "adv_filter": "adv1500",
+        "adv_filter_definition": "ADV rank at L-10 <= 1500 (easy-to-borrow proxy)",
+        "momentum_filter": "pos",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return > 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L1L5_adv1500_neg",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L1L5 window, adv1500 filter, neg momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l1l5",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L1L5",
+        "window_definition": "short from close of L-1 (trading sessions) to close of L+5",
+        "adv_filter": "adv1500",
+        "adv_filter_definition": "ADV rank at L-10 <= 1500 (easy-to-borrow proxy)",
+        "momentum_filter": "neg",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return <= 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L1L5_unrestricted_all",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L1L5 window, unrestricted filter, all momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l1l5",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L1L5",
+        "window_definition": "short from close of L-1 (trading sessions) to close of L+5",
+        "adv_filter": "unrestricted",
+        "adv_filter_definition": "no ADV filter (all confirmed/fallback events)",
+        "momentum_filter": "all",
+        "momentum_filter_definition": "no momentum filter",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L1L5_unrestricted_pos",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L1L5 window, unrestricted filter, pos momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l1l5",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L1L5",
+        "window_definition": "short from close of L-1 (trading sessions) to close of L+5",
+        "adv_filter": "unrestricted",
+        "adv_filter_definition": "no ADV filter (all confirmed/fallback events)",
+        "momentum_filter": "pos",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return > 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "L1L5_unrestricted_neg",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "event_driven_short_book",
+      "method": "L1L5 window, unrestricted filter, neg momentum filter",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_l1l5",
+      "label_contract": "label_v1_h20260929_21_calendar_short_book_next_open_fill",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L1L5",
+        "window_definition": "short from close of L-1 (trading sessions) to close of L+5",
+        "adv_filter": "unrestricted",
+        "adv_filter_definition": "no ADV filter (all confirmed/fallback events)",
+        "momentum_filter": "neg",
+        "momentum_filter_definition": "IPO-to-(L-10) cumulative return <= 0",
+        "decision_eligible": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "cost_bps_by_adv_tier": {
+          "top500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500": 25.0
+        },
+        "borrow_annual_by_adv_tier": {
+          "top1500": 0.03,
+          "beyond_1500": 0.25
+        }
+      }
+    },
+    {
+      "candidate_id": "avoid_long_info",
+      "path": "ipo_lockup_expiry_screen",
+      "role": "info_only_long_avoid_diagnostic",
+      "method": "equal-weight long over short_L5_L1 window, no decision weight",
+      "ablation": "frozen_pit_event_list_no_reselection",
+      "spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+      "fallback": "skip_event_if_missing_price_data_around_L",
+      "data_contract": "data_v1_h20260929_21_events_daily_broad_bil",
+      "feature_contract": "feature_v1_h20260929_21_avoidlong",
+      "label_contract": "label_v1_h20260929_21_calendar_long_book_info_only",
+      "validation_contract": "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023",
+      "cost_contract": "cost_v1_h20260929_21_adv_tiered_spread_borrow",
+      "benchmark_contract": "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe",
+      "parameters": {
+        "window": "L5L1",
+        "window_definition": "short from close of L-5 (trading sessions) to close of L+1",
+        "adv_filter": "unrestricted",
+        "momentum_filter": "all",
+        "decision_eligible": false,
+        "info_only": true,
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ]
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20260929_21_events_daily_broad_bil": {
+        "sources": [
+          "reports/research/iterations/h20260929_21_ipo_lockup_expiry/events.parquet (built by scripts/build_h20260929_21_lockups.py)",
+          "data/features/daily_broad (event-stock open/close, dollar_adv_21 for ADV rank)",
+          "data/sip/daily (BIL cash-proxy leg, via scripts/screen_lane.py's own base.load_panel/duckdb path, reused)"
+        ],
+        "join": "event symbol/date joined to data/features/daily_broad by (symbol, trade_date); BIL joined by trade_date only"
+      }
+    },
+    "features": {
+      "feature_v1_h20260929_21_l5l1": {
+        "module": "scripts/run_h20260929_21_lockup_books.py",
+        "definition": "entry signal at close(L-5 trading sessions), next-open fill; exit signal at close(L+1), next-open fill"
+      },
+      "feature_v1_h20260929_21_l1l5": {
+        "module": "scripts/run_h20260929_21_lockup_books.py",
+        "definition": "entry signal at close(L-1 trading sessions), next-open fill; exit signal at close(L+5), next-open fill"
+      },
+      "feature_v1_h20260929_21_avoidlong": {
+        "module": "scripts/run_h20260929_21_lockup_books.py",
+        "definition": "same window as L5L1, long (not short) exposure, info-only diagnostic"
+      }
+    },
+    "labels": {
+      "label_v1_h20260929_21_calendar_short_book_next_open_fill": {
+        "definition": "Calendar-time equal-weight short book, <=15 concurrent positions, <=10% capital each, remainder in BIL; close-to-close realized via simulate_book/stock_legs (verified against run_h20260922_05_salvage's own engine)."
+      },
+      "label_v1_h20260929_21_calendar_long_book_info_only": {
+        "definition": "Same portfolio construction, long instead of short, no decision weight."
+      }
+    },
+    "validation": {
+      "validation_v1_h20260929_21_test_2024_2026_stress_2016_2023": {
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "min_test_events_for_decision": 40,
+        "placebos": [
+          "date_shift_pm60_sessions",
+          "random_date_seeded"
+        ]
+      }
+    },
+    "costs": {
+      "cost_v1_h20260929_21_adv_tiered_spread_borrow": {
+        "spread_bps_by_adv_tier_at_L_minus_10": {
+          "top_500": 3.0,
+          "500_1000": 6.0,
+          "1000_1500": 12.0,
+          "beyond_1500_or_unranked": 25.0
+        },
+        "borrow_annual_rate": {
+          "top_1500_adv_tier": 0.03,
+          "beyond_1500": 0.25
+        },
+        "borrow_daycount": 360.0,
+        "two_x_variant": "both spread bps and borrow rates doubled, computed for every kept candidate"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260929_21_s3_diversifier_edge_and_calendar_sharpe": {
+        "primary": "screen_lane.diversifier_edge_for_offset vs vol-matched S3 control (edge >= +0.05) OR raw calendar Sharpe >= 1.19",
+        "placebo": "date-shift (+/-60 session) and random-date, event-date-clustered t-stat, both required",
+        "info_only": "avoid_long_info candidate (same-symbol-set long-only benchmark)"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml": "af2b478de30a418e7383cfa6bcf900087931d286f83b2ea50f47bf47baf646bb"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+  "spec_hash": "af2b478de30a418e7383cfa6bcf900087931d286f83b2ea50f47bf47baf646bb",
+  "keep_rule": "A cell is 'kept' (decisive) only if: TEST calendar Sharpe >= 1.19 OR combo edge with S3 >= +0.05; beats the date-shift placebo at t>=2 (event-date-clustered); survives a 2x-costs rerun without sign-flipping the primary metric; and the judged TEST event count is >= 40 (else 'insufficient events' and STRESS decides status instead). avoid_long_info is never a decision candidate."
+}

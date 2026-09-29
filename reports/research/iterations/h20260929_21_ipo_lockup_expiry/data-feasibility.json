@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_21_ipo_lockup_expiry_historical_evaluation_authorization",
+  "iter_id": "h20260929_21_ipo_lockup_expiry",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 13,
+    "evaluation_authorized_count": 13,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "ipo_lockup_expiry_screen": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "L5L1_adv1500_all",
+        "L5L1_adv1500_pos",
+        "L5L1_adv1500_neg",
+        "L5L1_unrestricted_all",
+        "L5L1_unrestricted_pos",
+        "L5L1_unrestricted_neg",
+        "L1L5_adv1500_all",
+        "L1L5_adv1500_pos",
+        "L1L5_adv1500_neg",
+        "L1L5_unrestricted_all",
+        "L1L5_unrestricted_pos",
+        "L1L5_unrestricted_neg",
+        "avoid_long_info"
+      ],
+      "reason_code": "local_pit_event_list_daily_broad_and_bil_available"
+    }
+  },
+  "notes": "Event list built from SEC EDGAR 424B4 (2015Q1-2026Q3, 47 quarters) cross-checked against data/features/daily_broad first-trade dates, plus a first-trade-date fallback; BIL cash-proxy leg confirmed present via scripts/screen_lane.py's own base.load_panel/duckdb path (reused unmodified, same path run_h20260929_12_hedged_books.py uses for its CASH/RF legs). No dependency_skipped rows: every candidate cell uses only already-available local data (the event table this iteration builds plus data/features/daily_broad and data/sip/daily).",
+  "candidate_authorization": {
+    "candidate_count": 13,
+    "rows": [
+      {
+        "candidate_id": "L5L1_adv1500_all",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "8a99e6697877caa61f988cd8412763704f96628f00ebe9b8a93f6032154b8cd5"
+      },
+      {
+        "candidate_id": "L5L1_adv1500_pos",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "eb63060c9e296c147c2689c71cccbc2d79a7f0702e27c8f75655a4e4915ee45d"
+      },
+      {
+        "candidate_id": "L5L1_adv1500_neg",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "b5d9c16561d75713729d7593b2127a80c596730448623beb3ededf2cb76ef229"
+      },
+      {
+        "candidate_id": "L5L1_unrestricted_all",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "679e4a79aebe0ae8ef6f2852ad67598b5b877345a454aff7003b07fa568c9499"
+      },
+      {
+        "candidate_id": "L5L1_unrestricted_pos",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "0c007e6166a88eefd0085890c202271a47425b1b66fd2a177a34fb862f349f4c"
+      },
+      {
+        "candidate_id": "L5L1_unrestricted_neg",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "aecd4dc52501312e4b95f21e4ca782d4697fc537da6fb9e87ed3a4d8e8988869"
+      },
+      {
+        "candidate_id": "L1L5_adv1500_all",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "50488c0ded518412f7f6b56e37ee415d9d5e4609b789b60ecd2370b80e0a43fc"
+      },
+      {
+        "candidate_id": "L1L5_adv1500_pos",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "ce76c629eedd5733f202ade77666b9f8a6aa84b23c66cde36cfe396e6e61d572"
+      },
+      {
+        "candidate_id": "L1L5_adv1500_neg",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "238c674b64d9e596d8a9e2f83f749d03c11ecd9024e4a9f77669dd6e251782ef"
+      },
+      {
+        "candidate_id": "L1L5_unrestricted_all",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "0307b6970a71755e8b8dd10f8471a19dd4fc492fa11ff58120d4a04ea1a33d0e"
+      },
+      {
+        "candidate_id": "L1L5_unrestricted_pos",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "30f7a4a3bcfe3f2aab3ca7c893cbb6f35962c18575ed2e6af7c0af3ba39b1942"
+      },
+      {
+        "candidate_id": "L1L5_unrestricted_neg",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "e27d3b0557b2466c5787502b1ffca06dfbc4fce2686c7701f362bf63259bd569"
+      },
+      {
+        "candidate_id": "avoid_long_info",
+        "path": "ipo_lockup_expiry_screen",
+        "action": "evaluate",
+        "reason_code": "local_pit_event_list_daily_broad_and_bil_available",
+        "candidate_binding_sha256": "5cd46126a90b6aa71b0785562494d7a0ebcbbf7adb155d5b3989d0c19b01e532"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "daily_broad_layout"
+  ],
+  "required_references": {
+    "daily_broad_layout": {
+      "path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/build_summary.json",
+      "sha256": "3f0b9b3862a59dd842ce953700540ce809502fac7eb477db147d7808d55ad9b9"
+    }
+  }
+}

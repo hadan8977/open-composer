@@ -1,0 +1,19 @@
+{
+  "iter_id": "h20260929_21_ipo_lockup_expiry",
+  "cost_v1_h20260929_21_adv_tiered_spread_borrow": {
+    "spread_bps_by_adv_tier_at_L_minus_10": {
+      "top_500": 3.0,
+      "500_1000": 6.0,
+      "1000_1500": 12.0,
+      "beyond_1500_or_unranked": 25.0
+    },
+    "borrow_annual_rate": {
+      "top_1500_adv_tier": 0.03,
+      "beyond_1500": 0.25
+    },
+    "borrow_daycount": 360.0,
+    "basis": "ADV rank computed cross-sectionally from data/features/daily_broad's dollar_adv_21 at L-10; borrow convention matches Alpaca's own live HTB fee formula (daily_fee = short_notional * annual_rate / 360, docs.alpaca.markets/docs/margin-and-short-selling, fetched 2026-09-29 per short-unlocked-retriage-2026-09-29.md).",
+    "fill": "signal at close, fill at next session's open (simulate_book/stock_legs, verified against run_h20260922_05_salvage.simulate/.legs)",
+    "two_x_variant": "both spread bps and borrow rates doubled, computed for every kept candidate as part of the frozen decision rule"
+  }
+}

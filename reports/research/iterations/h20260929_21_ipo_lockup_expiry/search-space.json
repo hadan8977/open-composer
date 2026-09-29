@@ -1,0 +1,69 @@
+{
+  "iter_id": "h20260929_21_ipo_lockup_expiry",
+  "strategy_name": "h20260929_21_ipo_lockup_expiry",
+  "source_spec_path": "strategy_specs/drafts/h20260929_21_ipo_lockup_expiry.yaml",
+  "spec_hash": "af2b478de30a418e7383cfa6bcf900087931d286f83b2ea50f47bf47baf646bb",
+  "schema_version": 3,
+  "created_at": "2026-09-29T07:35:00Z",
+  "objective": "T-20260929-21: does shorting recent-IPO stock around its lockup expiration date, net of ADV-tiered spread+borrow costs, clear the frozen Sharpe/edge, placebo and 2x-cost gates in 2024-2026 TEST.",
+  "paths": [
+    {
+      "name": "ipo_lockup_expiry_screen",
+      "candidate_count": 13,
+      "hypothesis_refs": [
+        "T-20260929-21"
+      ],
+      "parameters": {
+        "window": [
+          "L5L1",
+          "L1L5"
+        ],
+        "adv_filter": [
+          "adv1500",
+          "unrestricted"
+        ],
+        "momentum_filter": [
+          "all",
+          "pos",
+          "neg"
+        ],
+        "max_concurrent": 15,
+        "max_weight_per_position": 0.1,
+        "test_window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "stress_window": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "date_shift_placebo_sessions": 60,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "s3_incumbent_vol_matched_control",
+        "calendar_sharpe_raw",
+        "avoid_long_info_same_symbol_long_only",
+        "date_shift_placebo",
+        "random_date_placebo"
+      ]
+    }
+  ],
+  "total_candidate_budget": 13,
+  "cost_assumptions": "ADV-tiered spread (3/6/12/25 bps/side by rank at L-10) + borrow (3%/25% annualized, 360-day convention) on short notional, signal-at-close/next-open-fill; 2x variant for kept candidates.",
+  "go_no_go_band": "TEST best tradeable cell: calendar Sharpe >= 1.19 OR combo edge with S3 >= +0.05, beats date-shift placebo t>=2, survives 2x costs, >=40 counted TEST events; else STRESS decides status.",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_21_ipo_lockup_expiry/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_21_ipo_lockup_expiry/results.json",
+    "reports/research/iterations/h20260929_21_ipo_lockup_expiry/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/cost-contract.json",
+  "candidate_manifest_sha256": "ff89fc276373875b0b07d28336ebceaa6fc8050214fe793b86c80d5b22528274",
+  "data_feasibility_sha256": "a2eee3cbaf5d814994db54ff2d921438e3db20a617200df909a8fd10d30d7f1f"
+}

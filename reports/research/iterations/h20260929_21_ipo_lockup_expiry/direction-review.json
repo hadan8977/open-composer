@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_21_ipo_lockup_expiry",
+  "reviewed_at": "2026-09-29T07:35:00Z",
+  "decision": "proceed",
+  "objective": "T-20260929-21 (autonomous-queue.md): build a point-in-time IPO share-lockup-expiration event list (SEC EDGAR 424B4 primary, first-trade-date fallback), preregister <=24 short/avoid-long candidates around the lockup date L, and test whether a calendar-time short-book (ADV-tiered spread + borrow costs, capped at 15 concurrent positions / 10% each) clears TEST-window (2024-01-08..2026-09-17) calendar Sharpe >= 1.19 or combo edge with S3 >= +0.05, beats a date-shift placebo at t>=2, and survives 2x costs. Mechanism: Field & Hanka (2001 JF, SSRN 205011): insiders become free to sell ~180 days after IPO, average 3-day CAR approx -1.5% to -1.8% at the lockup date, volume permanently +40%.",
+  "target_regime_and_horizon": "Event-driven, short-horizon (single-digit trading days around each firm's own lockup date L, not calendar-time regime-dependent), U.S. recent-IPO common stock, easy-to-borrow tiers costed via ADV rank at L-10 (short-selling now in scope per the owner's 2026-09-29 research-scope widening, AGENTS.md 'Implementation'; borrow cost is modeled, not assumed free). TEST window 2024-01-08..2026-09-17 (decisive, includes the 2024-2025 IPO reopening after the 2022-2023 IPO drought); STRESS window 2016-05-02..2023-09-15 (informational, decides status only if TEST has <40 events). Applicable regime: the effect is a firm-specific insider-supply event, not a market-regime bet, so 'recent market' here means recent enough IPO activity to generate testable event counts, not a directional market call.",
+  "existing_solution_comparison": "Checked `oc research directions check \"IPO lockup\"` (this session, before any new work): exactly one existing row, dir:ipo_lockup_expiration_drift, status=harvested (intel pass I-20260929-01, not yet backtested locally) -- this iteration is the first local backtest of that direction and correctly reuses/updates that exact id rather than creating a new one, per the task brief's explicit instruction. No other registry row, source card, or frozen iteration covers IPO lockup expiration; `dir:short_unlocked_retriage` / the T-20260929-32 short-unlocked-retriage pass (reports/research/control/short-unlocked-retriage-2026-09-29.md) is a DIFFERENT mechanism (insider Form 4 sales after any unlock, not the lockup-expiration calendar event) and was read to confirm no overlap -- its table does not include this direction. Existing product-level evidence: paperswithbacktest.com and similar retail-strategy sites were not found to host a specific IPO-lockup-expiration systematic strategy in this pass's searches (per the orchestrating agent's already-completed web research, reused here); this is a smaller, more academic-literature-driven mechanism than the ETF-rotation or dual-class-arbitrage strategies already queued from that retriage. The two required prior-art checks for this task are: (1) Field & Hanka (2001, SSRN 205011) -- the founding quantified result (-1.5% to -1.8% 3-day CAR, +40% permanent volume, effect concentrated in VC-backed names, stable across their 1988-1997ish decade, ~6% of lockups broken early); (2) Gibbs & Hao (2018 JBF, working-paper text fetched and snapshotted this iteration, sha256 c5d542ae...) -- extends (1) with informed short-selling evidence AND the critical caveat that PE-backed IPOs show NO effect (heterogeneity), plus three named individual-event counter-examples showing real short-squeeze tail risk (Yelp +23%, PokerTek +14%, Odimo -33%). A third, explicitly skeptical/negative source (Damodaran 2019 substack, fetched and snapshotted, sha256 efef7227...) judges the effect NOT tradeable net of transaction costs precisely because about a third of individual lockup events go the wrong way -- this is the single most load-bearing piece of prior art for this iteration's design, because it is a domain expert's negative verdict on the exact question this iteration re-tests with better cost/placebo discipline than a blog post can apply. No independent 2020s (post-2015, including the 2020-2022 IPO/de-SPAC wave) quantitative replication was found in the orchestrating agent's search pass, despite targeted queries -- recorded honestly as a gap below rather than assumed to still hold.",
+  "remaining_evidence_gap": "(1) No independent post-2015 quantitative replication of the Field & Hanka CAR exists in the literature found so far -- this iteration's own 2024-2026 TEST window is, as far as this search found, the first quantified 2020s-era test of the mechanism, so it is simultaneously the decisive test AND the first replication attempt; a pass here is weaker evidence than it would be if it merely confirmed an existing recent external replication, and this iteration's report must say so plainly rather than implying independent confirmation exists. (2) De-SPAC 2021-2022 lockup-specific CAR is NOT separately quantified anywhere found (only generic 'post-merger performance is very negative' commentary exists, a different, longer-horizon mechanism) -- de-SPAC events are tagged `is_despac` in the event table as a caveat, not modeled with a merger-close-date lockup, and this is a known, disclosed weak point of the 180-day-from-IPO-date convention for that subgroup. (3) Damodaran's 'about a third go up' figure and 'too small relative to costs' verdict have no disclosed sample or methodology behind them (practitioner post, not a paper) -- this iteration's own placebo and cost-sensitivity tests are the way to check whether that skepticism holds locally rather than taking the post's word for it either way.",
+  "negative_experiments_checked": "reports/research/control/short-unlocked-retriage-2026-09-29.md (T-20260929-32, read in full): the owner's short-selling-scope-widening retriage of ~15-17 previously-not_executable directions; IPO lockup expiration is NOT among the retriaged rows (a different mechanism, insider-unlock-driven, was retriaged as part of that pass) -- confirms this is genuinely new local work, not a re-run of an already-graded direction. reports/research/harvest/directions.jsonl grepped directly for 'lockup', 'IPO', 'insider' aliases before writing this review: only the one dir:ipo_lockup_expiration_drift row exists; no refuted sibling mechanism found that would require a 'what's different this time' justification. The Damodaran source (above) functions as the closest thing to a prior negative result on this exact mechanism and is treated as such throughout the design (real cost tiers by ADV/borrow, 2x-cost robustness check, two independent placebo families, a >=40-event minimum before trusting TEST, and DSR at the full preregistered trial count) rather than being dismissed.",
+  "cost_and_execution_assumptions": "Signal at close, fill at next session's open (frozen repo convention, implemented via the same old-weight-earns-overnight / new-weight-earns-intraday leg-mixing formula as `scripts/screen_lane.py`'s `s3_incumbent`/`run_h20260922_05_salvage.simulate` -- replicated locally in `scripts/run_h20260929_21_lockup_books.py` as `simulate_book`/`stock_legs`, verified against the actual frozen S3 engine in `tests/test_h20260929_21_lockup.py` rather than assumed to match). Costs: spread-based by ADV rank at L-10 (dollar_adv_21 computed on `data/features/daily_broad`, cross-sectional rank that day) -- top-500: 3bp/side, 500-1000: 6bp/side, 1000-1500: 12bp/side, beyond-1500/unranked: 25bp/side; borrow 3%/year (360-day convention) for top-1500 ADV tier, 25%/year beyond, charged on every trading day the short is held. A 2x-costs variant (both spread and borrow doubled) is computed for every kept candidate as part of the frozen decision rule, not as a separate preregistered path. Portfolio: calendar-time, equal-weight open shorts capped at 15 concurrent and 10% of capital each (first-come priority when more than 15 events are simultaneously signal-active, documented in the runner), remainder in BIL (actual daily BIL prices from the SIP daily archive via the same `base.load_panel`/duckdb path `scripts/screen_lane.py` and `run_h20260929_12_hedged_books.py` already use for CASH/RF legs, reused not reimplemented). This departs from the general repo default of a flat 10bp/side because the brief for this specific iteration preregisters a more realistic ADV/borrow-tiered model up front, before any return is computed -- not a post-hoc relaxation of the flat-cost gate.",
+  "stop_condition": "Continue only if the TEST-window (2024-01-08..2026-09-17) best preregistered tradeable cell (short_L5_L1 or short_L1_L5, crossed with the ADV and IPO-to-L momentum filters, 12 tradeable cells total) has calendar Sharpe >= 1.19 OR a combo edge with S3 >= +0.05 (screen_lane.diversifier_edge_for_offset machinery, vol-matched control), beats the date-shift (+/-60 session) placebo with t>=2 (event-date-clustered), AND survives a 2x-costs rerun without flipping sign on the primary pass metric. If the counted TEST-window event total (across the judged cell) is <40, that cell's verdict is 'insufficient events' and the STRESS window (2016-05-02..2023-09-15) decides the direction's registry status instead, per the frozen queue-task rule -- this is decided by the event count alone, never relaxed after seeing the Sharpe/edge number. DSR (open_composer.research.campaign_statistics.deflated_sharpe_probability, hac_lag=21) is computed on the judged best candidate's return series using trial_count = the FULL preregistered candidate count (13), not just the tradeable subset.",
+  "queries": [
+    {
+      "query": "Field Hanka expiration of IPO share lockups SSRN 205011",
+      "opened_urls": ["https://papers.ssrn.com/sol3/papers.cfm?abstract_id=205011"],
+      "searched_at": "2026-09-29T07:10:00Z"
+    },
+    {
+      "query": "Gibbs Hao short selling around expiration of IPO share lockups PDF",
+      "opened_urls": ["https://mediacast.blob.core.windows.net/production/Faculty/StoweConf/submissions/swfa2014_submission_184.pdf"],
+      "searched_at": "2026-09-29T07:15:00Z"
+    },
+    {
+      "query": "Damodaran lockup expiration stock price drop tradeable",
+      "opened_urls": ["https://aswathdamodaran.substack.com/p/much-ado-about-liquidity-lockup-expirations-12-11-19"],
+      "searched_at": "2026-09-29T07:20:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://aswathdamodaran.substack.com/p/much-ado-about-liquidity-lockup-expirations-12-11-19",
+      "claim_id": "damodaran_lockup_not_tradeable_2019",
+      "claim": "it is too small (relative to transactions costs) and too unpredictable (about a third of lockups end with increases in stock prices) to build a profitable investment strategy around",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2019-12-11",
+      "market_and_period": "U.S. IPOs, general/practitioner observation, no disclosed specific sample window.",
+      "applicability": "Direct, central skeptical prior art for this exact mechanism -- a domain-expert negative verdict this iteration must either confirm or overturn with better cost/placebo discipline than a blog post can apply, not ignore.",
+      "limitations": "Practitioner substack post, not peer-reviewed; no disclosed methodology/sample behind the '2-5%' and 'about a third' figures.",
+      "independent_replication": "Corroborated qualitatively (not independently re-derived) by Gibbs & Hao's three named counter-examples (Yelp +23%, PokerTek +14%, Odimo -33%) showing the same cross-sectional non-uniformity.",
+      "fetched_at": "2026-09-29T07:26:00Z",
+      "sha256": "efef72270c7d99e7b7ec9fc97d1dbe6a9de9145f76d15c5ec6ddb3f232a3e805",
+      "snapshot_path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/sources/damodaran-lockup-expirations.html",
+      "source_card_path": "reports/harness/source_cards/h20260929_21_ipo_lockup_expiry.jsonl"
+    },
+    {
+      "url": "https://mediacast.blob.core.windows.net/production/Faculty/StoweConf/submissions/swfa2014_submission_184.pdf",
+      "claim_id": "gibbs_hao_field_hanka_baseline_and_variance",
+      "claim": "the literature documents an average abnormal return of -1.5% on the lockup expiration date (Field and Hanka, 2001), returns vary significantly from firm to firm on this widely-watched date",
+      "source_type": "paper",
+      "published_or_updated_at": "2013-11-15",
+      "market_and_period": "U.S. IPOs, buyout/VC/non-backed, sample referenced spans roughly 2001-2012 per the paper's own text.",
+      "applicability": "Direct: restates and extends the Field & Hanka baseline this iteration's TEST-window result is compared against qualitatively, and grounds the cross-sectional-variance design choice (ADV/momentum filters, 10%-per-position cap).",
+      "limitations": "SWFA 2014 conference working-paper text (later published as Gibbs & Hao 2018 JBF); snapshot is a pdftotext extraction of the working-paper PDF, not the final published version.",
+      "independent_replication": "Restates Field & Hanka (2001) rather than independently re-deriving it; the paper's own novel claims (informed short-selling, PE-backed non-effect) are single-study, not independently replicated in this pass.",
+      "fetched_at": "2026-09-29T07:26:30Z",
+      "sha256": "c5d542ae6e304ecafa42bdd77588f3489a1b204352922ccbb22d4c26107e4d92",
+      "snapshot_path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/sources/gibbs-hao-2018-short-selling-lockup.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_21_ipo_lockup_expiry.jsonl"
+    },
+    {
+      "url": "https://mediacast.blob.core.windows.net/production/Faculty/StoweConf/submissions/swfa2014_submission_184.pdf",
+      "claim_id": "gibbs_hao_pe_backed_no_effect",
+      "claim": "Unlike VC-backed IPO stocks, PE-backed IPO stocks do not experience a negative return or trading volume jump on the lockup expiration date",
+      "source_type": "paper",
+      "published_or_updated_at": "2013-11-15",
+      "market_and_period": "U.S. IPOs, buyout/VC/non-backed, sample referenced spans roughly 2001-2012 per the paper's own text.",
+      "applicability": "Direct caveat: this iteration does not classify events by sponsor type, so a uniform effect should not be expected across all 424B4-confirmed IPOs; used as qualitative context for why the ADV/momentum filters matter, not implemented as a sponsor-type filter.",
+      "limitations": "Same working-paper caveat as the sibling card; sponsor-type classification (VC vs PE vs non-backed) is not available in this iteration's own local data, so this claim cannot be directly tested here, only cited as a reason not to expect uniformity.",
+      "independent_replication": "Not independently re-derived; single working paper.",
+      "fetched_at": "2026-09-29T07:26:30Z",
+      "sha256": "c5d542ae6e304ecafa42bdd77588f3489a1b204352922ccbb22d4c26107e4d92",
+      "snapshot_path": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/sources/gibbs-hao-2018-short-selling-lockup.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_21_ipo_lockup_expiry.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Build the PIT 424B4/fallback event list, preregister 13 candidates (2 tradeable event windows x 2 ADV filters x 3 momentum filters + 1 info-only avoid-long row), run the calendar-time short book with ADV-tiered spread + borrow costs in TEST (2024-01-08..2026-09-17), and read off Sharpe/edge, the date-shift and random-date placebos, and the 2x-cost rerun for the best tradeable cell.",
+    "pass_condition": "Best tradeable TEST cell has calendar Sharpe >= 1.19 or combo edge with S3 >= +0.05, beats the date-shift placebo at t>=2, and survives 2x costs, with >=40 counted TEST events.",
+    "falsification_condition": "No tradeable cell clears both the Sharpe/edge bar and the placebo/2x-cost bars in TEST with >=40 events (in which case STRESS decides status instead) -- direction moves to refuted or evidence_too_weak for this scope.",
+    "max_compute_minutes": 180
+  }
+}
