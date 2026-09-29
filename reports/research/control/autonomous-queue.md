@@ -344,7 +344,7 @@
   - 2026-09-28 结果（协调者已对照 results.json 逐条核对 24 条）：0 保留、0 强保留、5 条近期观察（全是 FACTOR 菜单，最好 FACTOR_L252_N1_WK 对标窗偏移中位数夏普 1.44、压力期 0.18，DSR 0.64），19 条否定。K2 全部不过：压力期组合增量 −0.08 到 −0.31，对标窗与 S3 相关 0.45–0.81。INDUSTRY 菜单最好的对标窗只有 0.99。两条方向登记为 refuted。产物：`reports/research/iterations/h20260928_40_equity_etf_menus/`、`reports/research/screens/h20260928_40_equity_etf_menus/`，5 条 watch_recent 已进 kept.jsonl（周一刷新前向跟踪）。
 
 ### T-20260928-41 小批量：单一国家股票指数 ETF 动量轮动（边界任务，机主先确认范围）
-- status: ready
+- status: done
 - priority: 3
 - not_before:
 - goal: 同一套机制（见 T-20260928-40）应用到单一国家股票 ETF（EWJ 日本、EWG 德国、EWU 英国、EWA 澳大利亚、EWC 加拿大、EWZ 巴西、INDA 印度、EWY 韩国、EWT 台湾）。这些都是美股交易所上市的股票类 ETF（不是债券/黄金/商品/美元），严格符合"只用美股股票类 ETF"的范围，但和机主否决的跨资产方向相邻——本任务的第一步就是让机主确认是否在范围内，避免白测。来源：Quantpedia "Momentum Factor Effect in Country Equity Indexes"（https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes，18 个国家 MSCI 指数 1975-2014 动量+低波动择时的已发表设计，本任务只借用机制，不借用其样本期数字）。
@@ -355,6 +355,8 @@
   - 2026-09-28 19:xx UTC 自动轮缺口搜索添加。
   - 2026-09-28 20:1x UTC 自动轮：改为 blocked，等机主确认单一国家股票 ETF 是否在"不做跨资产"之外；未确认前不要花算力。
   - 2026-09-29 机主确认："etf是可以的，是美股里能买到的就算"。单一国家股票 ETF 在范围内，可以测。
+  - 2026-09-29 05:0x UTC 自动轮开始，派 sonnet-high 子代理执行（与 T-20260929-02 同一子代理顺序做）。
+  - 2026-09-29 04:07 轮结果（协调者已对照 leaderboard.json 核对 8 条）：0/8 保留，3 条近期观察（watch_recent，已写入 kept.jsonl）：COUNTRY_L63_N1_MO 对标窗 1.21 / 压力期 0.04，COUNTRY_L252_N2_MO 1.21 / −0.14，COUNTRY_L252_N2_WK 1.22 / −0.18；DSR 最高 0.70；K2 压力期全负（−0.18 到 −0.46）。登记簿 `dir:international_country_etf_momentum_rotation` partial。产物：`reports/research/iterations/h20260928_41_country_etf_rotation/`。
 
 ### T-20260928-42 批量筛选：期权到期周日历效应（大盘/指数 ETF，只做多）
 - status: done
@@ -423,7 +425,7 @@
   - 2026-09-29 结果（协调者已对照 leaderboard.json 核对 18 条）：否定，0/12。只有 PAIR_SMHQQQ_L63_MO 自身过 K1（对标窗 1.28、压力期 0.77），但预注册对照否证触发：静态 50/50 SMH+QQQ 压力期 0.89 更高，切换没有增量；其余 10 条对标窗 −0.05 到 0.58；K2 对标窗全负。DSR 最高 0.60。登记簿 refuted。产物：`reports/research/iterations/h20260928_44_etf_pair_switch/`。
 
 ### T-20260929-01 批量筛选：杠杆 ETF 收盘再平衡流引发的次日均值回归（SPY/QQQ/SMH，只做多）
-- status: running
+- status: done
 - priority: 2
 - not_before:
 - goal: 缺口搜索（`gap-search-2026-09-29-01`）覆盖地图 `flows_structural.rebalance_and_hedging_flows` 格子明确标记"LETF close-rebalancing flow ... 从未搜索"。机制：2x/3x 杠杆和反向 ETF 每天收盘前必须再平衡以维持目标杠杆比例，标的当日出现大幅波动时会产生方向已知、规模可估的收盘买卖盘，文献认为这会造成尾盘动量和次日均值回归。这是纯收盘价规则（不需要期权、AUM 或流量数据），只需要已在本地面板里的 SPY/QQQ/SMH 及其杠杆对，是这个格子最便宜能测的候选。
@@ -444,6 +446,7 @@
   - 2026-09-29 gap search (`gap-search-2026-09-29-01`) 添加。
   - 2026-09-29 02:1x UTC 协调者合并入队并修订（执行时以本条为准，覆盖上面 plan 中冲突的部分）：(1) 只做多的"次日回归"只在**下跌**日成立（大跌日杠杆 ETF 收盘卖出，次日反弹），所以信号改为"当日收益 ≤ −阈值"，不用绝对值；(2) 3x 产品当日收益 ≈ 3 × 标的收益，两种信号来源是重复维度，删掉，只用标的自身收益；网格改为 {SPY,QQQ,SMH} × 阈值 {2%,3%} × 持有 {1,3} 天 = 12 个 `LETF_{T}_D{2,3}_H{1,3}`，另加 3 个同频率随机日安慰剂（按日期哈希的确定性伪随机，每个标的一个，频率取 D2_H1 的历史触发率）；(3) 和 `reports/research/iterations/h20260924_01_etf_dip_reversion/` 重叠（6 条已发表的 ETF 抄底规则，当时只按旧 G1/G1' 判，最好对标窗夏普 1.50、同收盘成交），先读它的 decision-record，在 direction-review 写清差异；同一批里把它的 6 条规则在 SPY、QQQ 1x 上按本合同（次日开盘成交）重判 K1/K2，12 个 `DIP_{rule}_{SPY,QQQ}`，全批 27 个，DSR 按 27 报。
   - 2026-09-29 04:1x UTC 自动轮开始，派 sonnet-high 子代理执行（按上面 02:1x 修订的 27 候选网格）。
+  - 2026-09-29 04:07 轮结果（协调者已对照两个 leaderboard.json 逐条核对 27 条）：否定，0/27，无近期观察。因迭代校验器单条路径最多 24 个候选，拆成两个迭代：`h20260929_01_letf_flow_reversal`（12+3 安慰剂）和 `h20260929_01_dip_rejudge`（12）。LETF 最好 LETF_SMH_D2_H1 对标窗 0.80、压力期 −0.26；大跌日进场在三个标的上都好于同频随机日安慰剂（SMH 0.80 对 −0.24），方向成立但幅度远不够；K2 两窗全负。抄底重判最好 DIP_D1_SPY 对标窗 1.13（门槛 1.19）、压力期 0.53，K2 对标窗 +0.15 但压力期 −0.13。27 条合并 DSR 最高 0.39。登记簿 `dir:letf_close_rebalancing_flow_reversal` refuted，`dir:etf_dip_reversion_ibs_connors` 追加 K1/K2 重判。产物：`reports/research/iterations/h20260929_01_{letf_flow_reversal,dip_rejudge}/`、`reports/research/screens/h20260929_01_*`。
 
 ### T-20260929-02 节前效应在小盘/低流动性股票层面的复现（signal_card 事件模式，不需要新数据）
 - status: ready
@@ -465,9 +468,11 @@
 - notes:
   - 2026-09-29 gap search (`gap-search-2026-09-29-01`) 添加。
   - 2026-09-29 02:1x UTC 协调者合并入队并修订（执行时以本条为准）：signal_card 的超额收益是相对"全体股票等权"算的，节前这种全市场同一天的日历事件在 event 模式里会被抵消，只剩"小盘减全市场"的相对差，回答不了"节前持有能不能赚钱"。改为批量通道的 D 频率日历规则（照抄 `scripts/screen_batches/h20260928_42_opex_week.py` 的日历写法）：节前最后一个交易日前一天收盘发信号、次日开盘买入，持有 {1, 2} 个交易日后清仓；标的 {IWM, IJR, IWC, VB}（小盘/微盘，本地面板已有）+ {SPY, QQQ}（大盘对照，来源预期"已消失"）= 12 个 `PREHOL_{T}_H{1,2}`；安慰剂：每个标的一个"同样次数、随机非节前日"的确定性伪随机版本（6 个）。判定 K1/K2；另报告小盘组与大盘组对标窗夏普差是否为正（来源的"只在小盘"模式）。signal_card 的 t1/t3 对比只在批量结果为正时再做。
+  - 2026-09-29 05:0x UTC 自动轮开始，派 sonnet-high 子代理执行（先做 T-41，再做本任务）。
+  - 2026-09-29 04:07 轮断点（子代理先做 T-41 超时，停在这里）：已完成 `scripts/screen_batches/h20260929_02_pre_holiday_etf.py`（18 候选）和 `tests/test_h20260929_02_pre_holiday_etf.py`（11 个非 manifest 测试通过、lint 干净）；原文 Ko & Yang 2021 已读（`reports/research/iterations/h20260929_02_pre_holiday_etf/sources/`，确认"节前效应现在只在小盘股"）。**还没做**：candidate-manifest.json、direction-review.json 的正式内容、cost-contract、data-feasibility、pre-backtest 校验、跑批、登记簿 `dir:pre_holiday_effect_small_cap_tier`、coverage。下一步：补齐档案 → `uv run oc research direction-check …` → `iteration validate h20260929_02_pre_holiday_etf --stage pre-backtest` → `scripts/run_capped.sh --mem 1.8G -- uv run python scripts/screen_batch.py --batch h20260929_02_pre_holiday_etf --iteration h20260929_02_pre_holiday_etf`。模块在预注册前已写好但未跑任何结果，manifest 必须在跑批前写。
 
 ### T-20260929-10 VIX 双信号波动率风险溢价（Zarattini/Mele/Aziz，SSRN 5316487；只做多的 ETP 版本）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 机主 2026-09-29 放开"美股能买到的 ETF 都算"，`dir:vix_term_structure_short_vol` 的不可执行理由（没有 VX 期货）有了新信息：信号只要 VIX 和 VIX3M 两个指数（CBOE 免费、FRED 有 VIXCLS），QuantConnect 的独立复现用的是 ETP。检验只做多的版本，在对标窗和压力期能否过 K1，或者作为 S3 的搭配过 K2。
@@ -475,6 +480,8 @@
 - done_when: 迭代 `--stage final` 通过；登记簿 `dir:vix_term_structure_short_vol` 追加新一行，写明重开理由和结论。
 - notes:
   - 2026-09-29 交互会话添加（机主给的研究清单第 3 项）。
+  - 2026-09-29 05:0x UTC 自动轮开始，派 sonnet-high 子代理执行。
+  - 2026-09-29 04:07 轮结果（协调者已对照 leaderboard.json 核对 12 条）：否定，0/10 主候选、无近期观察。SSRN 原文 403 未读，信号按 QuantConnect 代码级复现写；原文参数版全样本夏普约 0.59（QC 报 0.729，差异来自 SVXY 1 倍权重、无 2% 不交易带）。对标窗最好 VVRP_SIG1ONLY_SHY 0.42（门槛 1.19）；压力期最好 0.90 但对标窗 −0.05；K2 对标窗全负。DSR ≤0.16。对照静态 50/50 SMH/QQQ 对标窗 1.20、压力期 0.89。注意压力期按 2016-05 起算（含 SVXY −1 倍时段），但对标窗已足以否定。登记簿 `dir:vix_term_structure_short_vol` 追加 refuted。产物：`reports/research/iterations/h20260929_10_vix_vrp_etp/`、`data/research/vix/VXVCLS.csv`。
 
 ### T-20260929-11 多季度盈余意外历史的线性模型（Kaczmarek & Zaremba 2025 FRL；ML 复活 PEAD）
 - status: ready
@@ -485,3 +492,32 @@
 - done_when: 迭代 `--stage final` 通过；登记簿新增 `dir:ml_multiquarter_sue_history`。
 - notes:
   - 2026-09-29 交互会话添加（机主给的研究清单第 1 项）。
+
+### T-20260929-03 M&A 目标股公告后漂移（需先建一个免费 EDGAR 数据管道）
+- status: ready
+- priority: 3
+- not_before:
+- goal: 缺口搜索（`gap-search-2026-09-29-04`）核实 `event.8k_item_events` 格子自己的 gap 字段写的"offerings, spin-offs, M&A never searched"是准确的（不是像日历格子那样的陈旧记录）——同一个 8-K 事件格子里其它子方向（回购公告、Item 4.02 财务重述、SEO/ATM 增发、分拆）都已判定 evidence_too_weak/not_executable，唯独并购目标股公告后漂移从未搜索过、也从未在本仓库测过。搜到一篇 2025-10-13 的工作论文（`https://exa.ai/library/publication/k3grbvwxkr8`，只读到摘要，Exa 库全文在付费墙后，判定为 claim_only 未独立核实）：用新闻覆盖度、公告前成交量、交易类型（现金/换股）预测并购目标股公告后 30 天的收益，作者声称扣成本后夏普可超过 2.1（方法、样本、具体窗口都没读到，只能当方向性线索，不能当预注册的目标数字）。另一篇 1992-2021 年美国样本（51,780 个并购/公司行动事件，`https://ideas.repec.org/p/usi/wpaper/920.html`，同样只读到摘要）发现小盘并购目标股的超额收益主要在公告**之前**（信息提前泄露/分析师覆盖不足所致），提醒我们能交易的公告**之后**窗口可能比论文摘要暗示的要小。机制和已测过的所有 8-K 子方向（回购、Item 4.02、SEO/ATM、分拆）都不同，且是长仓可执行（买目标股，不需要卖空收购方或裸卖空）。
+- plan: |
+    **第一步（数据管道，免费，一次性）**：本地没有任何并购交易列表数据源（`capabilities/registry.yaml` 里没有 M&A 相关 capability；`data/features/` 下没有并购数据）。用 SEC EDGAR 全文检索 API（免费，无需密钥）：`https://efts.sec.gov/LATEST/search-index?q=%22Agreement+and+Plan+of+Merger%22&forms=8-K&dateRange=custom&startdt=2016-01-01&enddt=2026-09-29`（按年分页，每页最多 10 条需翻页；也可以退到季度全文索引 `https://www.sec.gov/Archives/edgar/full-index/{yyyy}/QTR{n}/form.idx` 过滤 `form=8-K` 后按关键词扫正文，作为交叉核对）。写 `scripts/collect_sec_ma_target_announcements.py`（照抄 `scripts/collect_sec_insider_transactions.py` 的结构和限速处理），产出 `data/features/sec_8k_ma_announcements/`：字段至少 `symbol, filing_date(visible_at), cik, item_codes, deal_type(cash/stock/mixed，若能从正文关键词判断; 否则留空)`。**不确认交易完成状态（是否成功交割）是否能免费拿到**——若拿不到，本任务只测"公告后固定期限持有"（不依赖完成状态），不测"持有到交割"版本，在 direction 的 notes 里如实记录。
+    抽样核对：抓取后随机读 20-30 条正文，确认关键词"Agreement and Plan of Merger"命中的确实是标的公司自己被收购（不是标的公司作为收购方，需要用 8-K 正文里"Company"和交易对手的主谓关系粗判，或者用现成的"Subject Company"字段）；如果误判率明显高（类似 13G 那次 14% 的教训），如实记录并按比例打折信号强度或转 `blocked_data`。
+    **第二步（信号检验，数据管道跑通后再做）**：新建迭代 `h20260929_03_ma_target_drift`，`direction-review.json` 引用 `dir:merger_arbitrage_target_announcement_drift`。用 `open_composer.research.signal_card` `--mode event`：`--sql` 从新建的 `data/features/sec_8k_ma_announcements` 取 `symbol, trade_date=filing_date, value=1`（entry 在 filing_date 后下一个交易日开盘，`signal_card` 自带的 next-open 对齐已经处理），`--primary-horizon 20`（对应论文摘要的"30 天"里最接近的内置选项；另跑一次不带 `--primary-horizon`（用默认 20）对照 60 日持有），跑两个变体：`ma_target_all`（全部标的）和 `ma_target_t3`（限定 t3 小盘/低流动性档，呼应机主"小盘可以做"的偏好，也是size-effect 论文提示信息滞后可能更小的那一档——但也要小心公告前已经涨了一截，用 redate 安慰剂能部分控制这个）。用 `run_capped.sh --mem 1.8G --` 跑（signal_card 读整张 universe_broad 面板）。
+    判定：读 `card["flags"]` 的四项（`car_t_ge_3`、`beats_redated`（内置把事件在同一只股票上随机移动 ±126 交易日的安慰剂）、`book_positive_20bp`、`book_positive_20bp_recent`）。四项全真才算"信号采纳"；否则按 signal_card 自己的 admit/reject/evidence_too_weak 逻辑走。这一步只是股票层面信号库准入检验，不是策略级 K1/K2（`open_composer/research/signal_card.py` docstring 明确单个信号不适用策略门槛）；若信号被采纳，再决定是否值得单独建一个策略级批量任务。
+- done_when: `data/features/sec_8k_ma_announcements` 建好并有抽样核对记录（误判率数字）；`ma_target_all`、`ma_target_t3` 两张 signal card 都生成在 `reports/research/signal-cards/`；`dir:merger_arbitrage_target_announcement_drift` 从 queued 更新为终态（admitted/refuted/evidence_too_weak/blocked_data）并带 verdict、evidence（signal card 路径 + 数据管道抽样核对结果）、reopen_if；若数据管道本身建不成（EDGAR 限速或 Item 1.01 无法可靠识别），直接标 `blocked_data`，不勉强跑后半段。
+- notes:
+  - 2026-09-29 gap search (`gap-search-2026-09-29-04`) 添加。
+  - not_before 设到 2026-10-01：这是一个新数据管道任务，不需要 DeepSeek 打分，但涉及新脚本和抽样核对，按惯例给协调者一天余量排期；也避免和当前排队中的其它数据管道任务（如 T-20260928-16/-17 的打分通道）抢注意力。
+  - **待机主决定**：如果最终发现交易完成/交割状态无法免费获取，"持有到交割"版本的并购套利（更接近论文摘要里 Sharpe>2.1 的那种设计）就做不了，只能做"固定期限持有"这个更弱的版本——这不需要机主现在决定，只在测完第一步再报告。
+  - 2026-09-29 04:07 轮协调者合并入队：改为 ready、priority 3、去掉 not_before——免费 EDGAR 数据管道不需要机主决定，不算 blocked；摘要里 Sharpe>2.1 未读全文，只当弱先验。
+
+### T-20260929-04 内部人集群买入：补测 H-20260916-08 唯一还空着的精确设计（top-500 池、周频）
+- status: ready
+- priority: 3
+- not_before:
+- goal: 登记簿里 `dir:insider_cluster_buy_top500` 明确写着"top-500/周频这个精确设计仍未测试"（`H-20260916-08`，2026-09-16 立项后一直排在其它卡片后面、预算 3 用了 0）。这是内部人集群买入方向里唯一还留白的精确 scope；两头都已经关闭：作为事件特征已采纳但很小（CAR +0.78%/20 日，t=5.0；`reports/research/signal-cards/insider_cluster_buy.md`），作为全池月频独立策略在 1501+ 档已被否定（跑输同波动 SPY，`dir:insider_buy_independent_broad_universe`）。**预期不高**——两头都已经不理想，周频换手只会加成本——排这个任务主要是花几分钟把登记簿这最后一条空白关掉，不是一个有前景的新线索。不需要新数据，直接复用已有 Form 4 特征和 `signal_card.py`。
+- plan: |
+    直接用 `open_composer.research.signal_card` `--mode event`：`--source` 指向 `data/features/insider`（或 `insider_broad`，两者都已确认存在且覆盖到 2026），`--column` 用 `buyers_60d`（或等价的集群买入计数列，跑之前先 `python3 -c "import pandas as pd; print(pd.read_parquet(...).columns)"` 核对实际列名），`--where`/`--sql` 限定 `top_n=500`（H-20260916-08 原始设计的 top-500 池）、事件定义为 `buyers_60d>=2`，信号日期为每周五（周频，照抄 H-20260916-08 卡片里"weekly, top-500 pool, equal-weight up to 30 names"的设计，不要改成月频或改变阈值）。`--primary-horizon 20`（约等于原设计的持有期，若原卡片写的是不同持有期，以卡片为准并在结果里注明与卡片一致）。数据量小（只是 top-500 池的事件表 + 已有 insider 特征），本机内存放得下，不需要 `run_capped.sh`。
+    判定：同 T-20260929-03，读 `card["flags"]` 四项；因为已有两个非常接近的变体都失败，这次结果无论真假都应该直接写成对整个 `insider_cluster_buy_independent` 家族的收尾判断（不要因为"万一这次不一样"而放宽判定标准或加做变体）。
+- done_when: signal card 生成在 `reports/research/signal-cards/`；`dir:insider_cluster_buy_top500` 和新建的 `dir:insider_cluster_buy_top500_weekly_independent` 都从 queued/partial 更新为终态，带 verdict、evidence、reopen_if；在 `current-view.zh.md` 的下一次更新里注明"内部人集群买入方向的三个 scope（事件特征、月频全池、周频 top500）已全部有定论"。
+- notes:
+  - 2026-09-29 gap search (`gap-search-2026-09-29-04`) 添加。

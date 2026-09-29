@@ -1,0 +1,130 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_41_country_etf_rotation",
+  "objective": "Preregister and batch-screen single-country developed/emerging-market equity ETF cross-sectional momentum rotation (dir:international_country_etf_momentum_rotation) on EWJ/EWG/EWU/EWA/EWC/EWZ/INDA/EWY/EWT: rank by lookback return, top N, absolute-momentum filter vs SHY, equal-weight, monthly or weekly rebalance, reusing h20260928_40_equity_etf_menus.make_rotation_fn unedited. For scripts/screen_batch.py --batch h20260928_41_country_etf_rotation --iteration h20260928_41_country_etf_rotation. No return, Sharpe or backtest number is computed in this dossier.",
+  "strategy_name": "h20260928_41_country_etf_rotation",
+  "source_spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+  "spec_hash": "92fede4069348f13d25b1fe02678775019d16f5ef2f4a4de995a4381a1dc9c76",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_41_country_etf_rotation.jsonl"
+  ],
+  "hypothesis_links": [
+    "H1"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "quantpedia_country_etf_momentum_rotation_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_41_country_etf_rotation.jsonl"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "quantpedia_country_etf_momentum_rotation_2026",
+      "url": "https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes",
+      "published_or_updated_at": "2026-01-01",
+      "source_type": "industry_standard",
+      "credibility": "strategy_database_public_summary",
+      "core_claim": "Quantpedia's 'Momentum Factor Effect in Country Equity Indexes' (source paper Muller & Ward 2010, Studies in Economics and Econometrics 34(1)): rank ~70 MSCI World country equity indexes by 10-12 month momentum, hold the top 4-5 for one month, monthly rebalance. Reported backtest 1970-2009 (Muller & Ward's own sample): the 4-best-of-70 portfolio outperformed an equal-weighted benchmark by ~10%/yr; Quantpedia's own figure-13 readout at Quantpedia's chosen parameters: 17.7%/yr, max drawdown -65.39%, Sharpe not disclosed. Quantpedia's page cites a 2024 update (Du & Jiang) noting the efficacy of ETF momentum strategies 'while robust until around 2010, began to show signs of waning in subsequent years.'",
+      "project_applicability": "Mechanism grounding only for all 8 COUNTRY_* candidates -- the rotation mechanism itself, not this paper's own 1970-2009 sample return/Sharpe numbers.",
+      "reflection": "Independently re-fetched via WebFetch this session (2026-09-29T05:20 UTC), full extraction saved to sources/quantpedia-country-momentum.md."
+    },
+    {
+      "claim_id": "muller_ward_2010_country_momentum_primary_paper",
+      "url": "https://www.tandfonline.com/doi/abs/10.1080/03796205.2010.12129444",
+      "published_or_updated_at": "2010-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_studies_in_economics_and_econometrics",
+      "core_claim": "Muller & Ward (2010), 'Momentum Effects in Country Equity Indices,' Studies in Economics and Econometrics 34(1): a portfolio of the 4 best-performing MSCI country indexes over the trailing 11 months, held 1 month, persistently outperformed an equal-weighted benchmark by ~10%/yr over 1970-2009.",
+      "project_applicability": "The primary academic source underlying Quantpedia's own summary; grounds the cross-sectional-country-momentum mechanism, not this batch's own long-only, absolute-momentum-filtered, US-ETF, 2016-2026 implementation.",
+      "reflection": "Abstract/citation-level only (WebSearch this session); the original journal paper's full text was not independently opened -- Quantpedia's own page (fetched in full this session) already summarizes its key figures, so a second full-text read was judged low-value given the mechanism, not this paper's own numbers, is what this batch reuses."
+    },
+    {
+      "claim_id": "du_jiang_2024_etf_momentum_decay_note",
+      "url": "https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "paper",
+      "credibility": "cited_within_industry_standard_strategy_database_page",
+      "core_claim": "Du & Jiang (2024, cited within the Quantpedia page): 'The efficacy of ETF momentum strategies, while robust until around 2010, began to show signs of waning in subsequent years.'",
+      "project_applicability": "Directly relevant negative/decay evidence for the country-momentum mechanism's recency -- the exact reason K1/K2 are tested fresh on the 2016-2026 local window rather than assuming the 1970-2009 sample's own numbers persist.",
+      "reflection": "Read only as quoted within the Quantpedia page fetched this session; the original Du & Jiang paper itself was not independently located or opened."
+    },
+    {
+      "claim_id": "h20260928_40_equity_etf_menus_reference",
+      "url": "reports/research/iterations/h20260928_40_equity_etf_menus/decision-record.md",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_batch_screening_result",
+      "core_claim": "Sibling batch applying the identical rotation-with-absolute-momentum-filter mechanism to FACTOR (5-ticker) and INDUSTRY (8-ticker) equity ETF menus, under the identical K1/K2 screen_lane contract this batch reuses.",
+      "project_applicability": "Sets the nearest directly comparable base rate for this exact mechanism under this project's contract, on a different but adjacent equity-ETF menu.",
+      "reflection": "Directly comparable prior round (same contract, same harness, same mechanism), not the same menu."
+    },
+    {
+      "claim_id": "h20260928_01_s3_rebalance_tranching_k1_k2_reference",
+      "url": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_frozen_reference_computation",
+      "core_claim": "S3's own median-offset Sharpe: anchor 1.4853, stress 0.8059 (net10) -- the exact reference figures K1/K2/strong_keep are computed against in this batch's keep_rule.",
+      "project_applicability": "Defines the exact numeric K1 (0.8x each window) and strong_keep bars used to judge every COUNTRY_* candidate.",
+      "reflection": "Methodology reference, not a claim about the country-momentum mechanism itself."
+    },
+    {
+      "claim_id": "queue_task_owner_scope_ruling_2026_09_29",
+      "url": "reports/research/control/autonomous-queue.md",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "internal_evidence",
+      "credibility": "owner_ruling_recorded_in_queue_task_notes",
+      "core_claim": "Owner ruling, T-20260928-41 notes, 2026-09-29: \"etf\u662f\u53ef\u4ee5\u7684\uff0c\u662f\u7f8e\u80a1\u91cc\u80fd\u4e70\u5230\u7684\u5c31\u7b97\" -- single-country equity ETFs are equity, not the cross-asset bond/gold/commodity/dollar sleeves the owner separately dropped, so they are in scope.",
+      "project_applicability": "Authorizes this batch to proceed (the task's own queue entry required this confirmation before any compute was spent).",
+      "reflection": "Owner's own recorded ruling, not independently re-verified further."
+    },
+    {
+      "claim_id": "opex_week_calendar_anchor_mechanism_reference",
+      "url": "scripts/screen_batches/h20260928_42_opex_week.py",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_reused_engine_convention",
+      "core_claim": "screen_lane.py's frozen K1/K2/strong_keep/watch_recent keep rule and cost/fill convention (10bp/20bp per side, close signal -> next open fill) applies identically to every batch-screening iteration, including this one.",
+      "project_applicability": "Defines the exact judged mechanism/contract this batch's 8 candidates are evaluated under.",
+      "reflection": "Engine/contract reference, not a claim about the country-momentum mechanism."
+    },
+    {
+      "claim_id": "giants_sweep_published_etf_rules_refuted",
+      "url": "reports/research/iterations/giants_sweep_20260922/decision-record.md",
+      "published_or_updated_at": "2026-09-22",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_batch_result",
+      "core_claim": "0/24 published technical ETF rules (RSI(10) trend/hedge family) passed G1 under this project's cost/fill contract.",
+      "project_applicability": "Base-rate evidence that published technical/momentum ETF rules broadly face a high bar under this project's specific contract, independent of mechanism family.",
+      "reflection": "Different rule family (trend/hedge, not cross-sectional country momentum); cited only for the base-rate pattern."
+    },
+    {
+      "claim_id": "zaremba_umutlu_karathanasopoulos_alpha_momentum_country_industry",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3235350",
+      "published_or_updated_at": "2018-01-01",
+      "source_type": "ssrn",
+      "credibility": "ssrn_working_paper",
+      "core_claim": "Zaremba, Umutlu & Karathanasopoulos, \"Alpha Momentum and Alpha Reversal in Country and Industry Equity Indexes\" (SSRN): examines momentum/reversal effects measured on risk-adjusted (alpha) returns across country and industry equity indexes, a variant of the plain price-momentum mechanism this batch uses.",
+      "project_applicability": "Adjacent academic evidence that country-level momentum/reversal effects are an active, still-studied research area (alpha-based variant); not itself the mechanism this batch tests (plain price momentum, not risk-adjusted alpha).",
+      "reflection": "Title/abstract-level only (WebSearch this session, SSRN abstract page not independently opened); cited as background showing the mechanism family remains academically active, not as a numeric expectation for this batch."
+    }
+  ],
+  "topic_coverage": [
+    "country_etf_cross_sectional_momentum_rotation_mechanism",
+    "muller_ward_2010_primary_academic_source_grounding",
+    "etf_momentum_decay_after_2010_negative_evidence",
+    "adjacent_factor_industry_menu_base_rate_this_project",
+    "k1_k2_screening_lane_numeric_reference_s3",
+    "owner_scope_ruling_single_country_equity_etf"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "queue_task_arithmetic_inconsistency_resolution",
+      "effect": "The queue task's own plan text states the grid as '{63,252}x{1,2}x monthly = 8 candidates,' which is arithmetically 4, not 8. Resolved by adding T-40's own monthly/weekly rebalance split to reach the stated count of 8, matching this execution round's explicit '8 \u4e2a\u5019\u9009' brief.",
+      "revision": "country_menu_lookback_63_252_x_top_n_1_2_x_rebal_mo_wk_8_candidates"
+    }
+  ],
+  "decision": "proceed",
+  "existing_solution_comparison": "See direction-review.json's existing_solution_comparison field (identical content).",
+  "negative_experiments_checked": "See direction-review.json's negative_experiments_checked field (identical content)."
+}

@@ -1,0 +1,174 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "driver": "coordinator_2026_09_29_0210_utc_revision",
+      "effect": "T-20260929-01's queue task asks for a re-judgment of H-20260924-01's 6 rules under K1/K2 (next-open fill, S3-relative bar) instead of a repeat of G1-G5.",
+      "revision": "12_candidates_dip_rule_x_spy_qqq_1x_only_no_3x_no_t0_t1_diagnostic_timings"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+  ],
+  "hypothesis_links": [],
+  "iter_id": "h20260929_01_dip_rejudge",
+  "objective": "Re-judge H-20260924-01's 6 published ETF dip-reversion rules (registry dir:etf_dip_reversion_ibs_connors) on SPY/QQQ 1x under this project's frozen K1/K2 screening-lane contract (10bp/20bp, close signal -> next open fill), for scripts/screen_batch.py --batch h20260929_01_dip_rejudge --iteration h20260929_01_dip_rejudge. No return, Sharpe or backtest number is computed in this dossier.",
+  "schema_version": 3,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "pagonidis2014_ibs_mechanism_and_threshold",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "pagonidis2014_ibs_filter_on_rsi_combination",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "stockcharts_connors_rsi2_entry_rule",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "stockcharts_connors_rsi2_exit_rule",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "lehmann1990_short_horizon_reversal_mechanism",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "klossner2012_intraday_overreaction",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "pandey_joshi2023_ibs_country_etfs",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "fmz_484915_ibs_algotradekit_pine_source",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "fmz_439643_r3_pine_source",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "fmz_429146_3day_pine_source",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    }
+  ],
+  "source_spec_path": null,
+  "sources": [
+    {
+      "claim_id": "pagonidis2014_ibs_mechanism_and_threshold",
+      "url": "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+      "published_or_updated_at": "2014-04-01",
+      "source_type": "paper",
+      "credibility": "practitioner_research_naaim_competition_paper",
+      "core_claim": "IBS (close position within the day's own high-low range) forecasts next-day close-to-close ETF returns: 0.35% mean return after IBS<0.20 vs -0.13% after IBS>0.80, attributed to intraday overreaction corrected the next day.",
+      "project_applicability": "Primary source and formula for D2 and the IBS component of D1/D6; grounds the family's mechanism per the owner's requirement to justify pure technical rules by mechanism.",
+      "reflection": "Sample ends 2013-05-12, entirely pre-dating this iteration's windows; author states IBS alone is cost-eroded, hence the filter/trend-filter variants D1/D3/D4/D5/D6. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "pagonidis2014_ibs_filter_on_rsi_combination",
+      "url": "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+      "published_or_updated_at": "2014-04-01",
+      "source_type": "paper",
+      "credibility": "practitioner_research_naaim_competition_paper",
+      "core_claim": "Filtering a Cutler's RSI(3) mean-reversion strategy to require IBS<=0.5 removes ~43% of days in market while raising total return 9.6% on average across the ETF sample.",
+      "project_applicability": "Direct precedent for D6 (IBS-filtered RSI(2)), the combination this iteration's engine actually implements with tighter, disclosed thresholds.",
+      "reflection": "Uses RSI(3)/IBS<=0.5, not this iteration's RSI(2)<=5/IBS<0.20; the improvement size for the exact D4/D6 parameterization is untested by the paper. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "stockcharts_connors_rsi2_entry_rule",
+      "url": "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/rsi-2",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "widely_cited_technical_analysis_reference",
+      "core_claim": "Connors' RSI(2) strategy: 200-day SMA trend filter, buy when 2-period RSI moves below 10 (deeply oversold).",
+      "project_applicability": "Exact entry rule for D4 (RSI(2)<=5 used here) and, with the IBS filter, D6.",
+      "reflection": "Secondary educational reference; StockCharts explicitly disclaims it as an out-of-the-box standalone system. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "stockcharts_connors_rsi2_exit_rule",
+      "url": "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/rsi-2",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "widely_cited_technical_analysis_reference",
+      "core_claim": "Connors exits long positions on a move above the 5-day SMA.",
+      "project_applicability": "Exact exit rule for D4 and D6.",
+      "reflection": "Same secondary-source caveat as the entry-rule claim. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "lehmann1990_short_horizon_reversal_mechanism",
+      "url": "https://www.nber.org/papers/w2533",
+      "published_or_updated_at": "1990-02-01",
+      "source_type": "paper",
+      "credibility": "top_journal_qje_nber_working_paper",
+      "core_claim": "Weekly 'winners'/'losers' show sizeable return reversals the next week that persist as apparent arbitrage profits after thin-trading, bid-ask and cost adjustments.",
+      "project_applicability": "Independent, pre-Pagonidis academic grounding for the short-horizon overreaction/reversal mechanism this whole family relies on.",
+      "reflection": "Weekly horizon, equities not ETFs, 1988/1990 vintage; does not test IBS, RSI(2) or any ETF rule directly. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "klossner2012_intraday_overreaction",
+      "url": "https://ideas.repec.org/a/eee/jbfina/v36y2012i4p1152-1163.html",
+      "published_or_updated_at": "2012-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_banking_finance",
+      "core_claim": "Klo\u00dfner, Becker & Friedmann model stock prices with a fundamental process plus a news-impact curve, deriving OHLC-based statistics that separately measure upside/downside intraday overreaction, with a 'buy on bad news' strategy illustrating the economic significance.",
+      "project_applicability": "Directly cited by Pagonidis (2014) as the closest academic treatment of intraday overreaction, the mechanism this family's IBS and RSI(2) rules exploit.",
+      "reflection": "ScienceDirect full text returned 403 this session; only the IDEAS/RePEc abstract page was opened, not the paper itself. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "pandey_joshi2023_ibs_country_etfs",
+      "url": "https://arxiv.org/abs/2306.12434",
+      "published_or_updated_at": "2023-06-14",
+      "source_type": "arxiv",
+      "credibility": "preprint_not_peer_reviewed",
+      "core_claim": "Pandey & Joshi investigate IBS as a key indicator for trading a bucket of country ETFs over a 10-year period, a post-2013 continuation of academic interest in the IBS effect.",
+      "project_applicability": "Shows the IBS effect remains an active research topic after Pagonidis's 2013-05 sample cutoff, though on foreign country ETFs rather than the US index ETFs this iteration tests.",
+      "reflection": "Tests country ETFs, the case Pagonidis himself found much weaker or absent outside the US; not a direct confirmation of the US-only effect this iteration relies on. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "fmz_484915_ibs_algotradekit_pine_source",
+      "url": "https://www.fmz.com/strategy/484915",
+      "published_or_updated_at": "2025-03-05",
+      "source_type": "platform_docs",
+      "credibility": "community_platform_mirror_of_tradingview_port_read_from_local_git_clone",
+      "core_claim": "Algotradekit's Pine source for QQQ/SPY: IBS<=0.09/0.11 with EMA(220)/EMA(200) trend filter, exit IBS>=0.985/0.995 or a max trade duration (14 days for QQQ, 12 for SPY in the source's own comment).",
+      "project_applicability": "Primary implementation source for D1, read directly from the local fmzquant/strategies git clone (commit 7853bb2, per I-20260923-10) rather than paraphrased from the marketing description.",
+      "reflection": "IBS is computed from the prior completed bar with process_orders_on_close=false, an extra-lag idiom this iteration's engine deliberately does not reproduce (see decision-record.md); SPY's published max-hold is 12, not the 14 this iteration uses per the frozen task brief. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "fmz_439643_r3_pine_source",
+      "url": "https://www.fmz.com/strategy/439643",
+      "published_or_updated_at": "2024-01-22",
+      "source_type": "platform_docs",
+      "credibility": "community_platform_mirror_of_tradingview_port_read_from_local_git_clone",
+      "core_claim": "R3 ETF Strategy Pine source: close>EMA(200), RSI(2) three sessions ago <60, RSI(2) falling three sessions in a row, RSI(2) today <10; exit on RSI(2) crossing above 70.",
+      "project_applicability": "Primary implementation source for D3 (Connors & Alvarez 2009 'R3'), read directly from the local git clone; uses today's own OHLC (no prior-bar lag issue), next-open fill.",
+      "reflection": "No stated performance numbers on the page; a bare Pine port with no backtest evidence attached. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    },
+    {
+      "claim_id": "fmz_429146_3day_pine_source",
+      "url": "https://www.fmz.com/strategy/429146",
+      "published_or_updated_at": "2023-10-13",
+      "source_type": "platform_docs",
+      "credibility": "community_platform_mirror_of_tradingview_port_read_from_local_git_clone",
+      "core_claim": "ETF 3-Day Reversion Strategy Pine source: close>EMA(200), close<EMA(5), three consecutive lower highs and lower lows; exit on close crossing above EMA(5); process_orders_on_close=true (same-close fill).",
+      "project_applicability": "Primary implementation source for D5 (Connors & Alvarez 2009 '3-Day High/Low'), read directly from the local git clone; its own backtest convention is the same-close fill this iteration's T0 diagnostic reproduces and flags as unexecutable.",
+      "reflection": "No stated performance numbers on the page; same-close fill is optimistic versus any realistic execution. [Reused verbatim for h20260929_01_dip_rejudge, 2026-09-29: same rule family, evidence not re-fetched -- only the keep bar and fill-timing framing changed, see decision above.]"
+    }
+  ],
+  "spec_hash": null,
+  "strategy_name": "us_minute_momentum",
+  "topic_coverage": [
+    "ibs_mechanism_and_post_publication_persistence",
+    "ibs_cost_erosion_and_rsi_filter_combination",
+    "connors_rsi2_classic_entry_and_exit_rule",
+    "short_horizon_reversal_academic_grounding_pre_pagonidis",
+    "intraday_overreaction_ohlc_based_academic_measurement",
+    "k1_k2_screening_lane_keep_bar_vs_giants_sweep_g1_g5_bar_comparison"
+  ],
+  "decision": "proceed",
+  "existing_solution_comparison": "H-20260924-01 (2026-09-24) already tested these exact 6 rules (D1-D6) on QQQ/SPY 1x/3x under the giants-sweep G1-G5 protocol at T0 (same-close, unexecutable upper bound) and T2 (next-open, the same fill timing this batch uses) -- 0/24 candidates passed G1/G1' at either timing; D1 additionally failed its own preregistered random-entry-timing placebo (real percentile 58-92 across cells, needs >=95). This iteration reuses that same rule set and evidence base verbatim (no new source is opened); the only change is the KEEP BAR (K1/K2 vs S3, this project's 2026-09-28 owner-set bar) and the addition of the 2016-2023 stress window, which H-20260924-01 never tested (its own WARMUP_START was 2022-06-01). Per the mission's reuse-before-repeat rule, this is a re-judgment under a different bar, not a repeat of an already-answered question -- the queue task (T-20260929-01, 2026-09-29 02:1x coordinator revision) explicitly asks for this re-judgment because K1/K2 is a materially different (softer on CAGR, relative-to-S3) bar than G1/G1', so the prior refutation does not automatically resolve this question.",
+  "negative_experiments_checked": "H-20260924-01's own sleeve-level refutation (0/24 at G1/G1', deflated Sharpe 0.92 for the best T0 cell given 24 trials) and D1's placebo failure are the direct prior; this iteration checks whether the softer, S3-relative K1/K2 bar changes that verdict, not whether the rules are 'good' in absolute terms. h20260928_42_opex_week's refutation (another calendar/flow-adjacent mechanism, 0/8 primary, negative anchor Sharpe on all 8) sets the recent-round base rate for this kind of re-judgment: most published rules fail K1/K2 under this project's specific 10bp/20bp next-open-fill contract even when an academic mechanism is real."
+}

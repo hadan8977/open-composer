@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_01_dip_rejudge",
+  "reviewed_at": "2026-09-29T04:05:00+00:00",
+  "decision": "proceed",
+  "objective": "Preregister and batch-screen 12 candidates (DIP_{D1..D6}_{SPY,QQQ}, H-20260924-01's six published ETF dip-reversion rules on SPY/QQQ 1x, next-open fill) for T-20260929-01 part B via scripts/screen_batch.py --batch h20260929_01_dip_rejudge --iteration h20260929_01_dip_rejudge against the owner's K1/K2 keep rule -- a re-judgment of registry dir:etf_dip_reversion_ibs_connors (refuted 2026-09-24 under the older giants-sweep G1-G5 protocol) under a materially different, S3-relative bar. No return, Sharpe or backtest number is computed in this dossier.",
+  "target_regime_and_horizon": "Same frozen windows as every batch-screening round: stress 2016-05-02..2023-09-15 and anchor 2024-01-08..2026-09-17, judged on date-neutral Sharpe. D frequency, one version per candidate (event-driven entry/exit, not a calendar anchor). H-20260924-01 never tested a window before 2022-06-01 (its own WARMUP_START), so the stress window here is new evidence even for an old rule set. Validity is limited to the local SIP daily archive's coverage for SPY/QQQ/SHY (2016-01-04 onward, sufficient warmup for the EMA200/220/SMA200 lookbacks by the time the stress window itself starts on 2016-05-02) -- no new data fetch is needed.",
+  "existing_solution_comparison": "H-20260924-01 (2026-09-24, dir:etf_dip_reversion_ibs_connors) already tested these exact 6 rules on QQQ/SPY 1x/3x under the giants-sweep G1-G5 protocol at T0 (same-close, unexecutable upper bound) and T2 (next-open, the fill timing this batch reuses in substance) -- 0/24 candidates passed G1/G1' at either timing (best anchor CAGR 47.1%, best anchor Sharpe 1.50, deflated Sharpe 0.92 given 24 trials); D1 additionally failed its own preregistered random-entry-timing placebo (real percentile 58-92 across cells, needs >=95). This iteration reuses that rule set and evidence base verbatim -- no new external source is opened. The change is the KEEP BAR: K1/K2 (S3-relative, per the owner's 2026-09-28 'Sharpe first, not sizing' rule) is a materially different test than G1/G1' (absolute CAGR/Sharpe/drawdown thresholds) -- a rule can fail G1's 50% CAGR bar while still beating 80% of S3's own Sharpe, or vice versa. The queue task (T-20260929-01, 2026-09-29 02:1x coordinator revision) explicitly asks for this re-judgment because the two bars are not nested, so H-20260924-01's refutation does not automatically resolve this question -- this is a reuse-consistent re-test under a genuinely different criterion, not a repeat of an already-answered question.",
+  "remaining_evidence_gap": "Whether any of the 6 rules, run on SPY/QQQ 1x with next-open fill, clears K1 or K2 against S3's frozen reference numbers in both the anchor and (new, previously untested) stress windows -- this is what this round's screening pass computes.",
+  "negative_experiments_checked": "H-20260924-01's own sleeve-level refutation (0/24 at G1/G1', deflated Sharpe 0.92 for the best T0 cell given 24 trials) and D1's placebo failure are the direct prior and are NOT re-litigated here -- this iteration checks a different bar, not whether the rules are 'good' in absolute historical terms. h20260928_42_opex_week's refutation (0/8 primary under the identical K1/K2 contract) sets the recent-round base rate for this kind of re-judgment: most published rules fail K1/K2 under this project's specific 10bp/20bp next-open-fill contract even when an academic mechanism is real, so a positive result here should not be assumed.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress, signal at the session close, fill at the next session's open (both entry and exit) -- identical to H-20260924-01's own 'T2' timing in substance, and to every other screen_lane batch. One documented deviation from H-20260924-01's own trade simulator: an unbounded-hold trade that never finds an exit before the data window ends is NOT retroactively dropped here (the daily-weights representation has no such mechanism) -- see h20260929_01_dip_rejudge.py's module docstring.",
+  "stop_condition": "If none of the 12 candidates clears K1, K2, or reaches watch_recent, dir:etf_dip_reversion_ibs_connors's refutation is reaffirmed under the K1/K2 bar too (registry updated to note both bars agree); the next round should not re-tune this same 6-rule family on SPY/QQQ without a new, distinct signal (e.g. closing-auction imbalance data, per H-20260924-01's own reopen_if).",
+  "queries": [
+    {
+      "query": "Pagonidis 2014 Internal Bar Strength IBS effect mean reversion equity ETFs NAAIM (reused verbatim from H-20260924-01's own search receipt, not re-fetched this session)",
+      "opened_urls": [
+        "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+        "https://tradinginvestingstrategies.substack.com/p/ibs-mean-reversion-strategy-backtest",
+        "https://www.wealth-lab.com/blog/build-a-profitable-mean-reversion-strategy-using-the-ibs-indicator",
+        "https://www.quantifiedstrategies.com/ibs-internal-bar-strength-indicator-strategies/",
+        "https://www.quantifiedstrategies.com/sp-500-mean-reversion-using-ibs-and-rsi/"
+      ],
+      "searched_at": "2026-09-24T01:00:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+      "claim_id": "pagonidis2014_ibs_mechanism_and_threshold",
+      "claim": "Pagonidis (2014) finds that Internal Bar Strength (IBS), the position of the day's close within its own high-low range, forecasts next-day close-to-close equity ETF returns: average returns are 0.35% following a day with IBS below 0.20 versus -0.13% following a day with IBS above 0.80, an effect the paper attributes to intraday overreactions that are corrected the next day; the sample runs from each ETF's inception through 2013-05-12.",
+      "source_type": "paper",
+      "published_or_updated_at": "2014-04-01",
+      "market_and_period": "Daily OHLC equity index ETFs (US and foreign-market), CSI data, from each ETF's inception through 2013-05-12 (5/12/2013 in the paper's M/D/Y notation).",
+      "applicability": "Primary source for D2 (raw IBS<0.20, one-session hold, no trend filter) and the IBS formula/thresholds used by D1's and D6's IBS gates, reused verbatim from H-20260924-01 -- this iteration re-judges the same rules under a different (K1/K2) bar, not a new mechanism.",
+      "limitations": "Sample ends 2013-05-12, entirely before this iteration's every window; not independently re-fetched this session (reused from H-20260924-01's own verified source card).",
+      "independent_replication": "Extended to country ETFs by Pandey & Joshi (arXiv 2306.12434, 2023); no contrary academic finding was found for the US index-ETF case in H-20260924-01's own search.",
+      "fetched_at": "2026-09-24T01:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/sources/pagonidis-2014-naaim-ibs-effect.txt",
+      "sha256": "7f44154a326764cc36bf2636c9d1b131ab0954ba5d8481b16b3e135ff06eb288",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 12 candidates through the batch-screening lane (scripts/screen_batch.py --batch h20260929_01_dip_rejudge --iteration h20260929_01_dip_rejudge) against S3's frozen stress/anchor windows and check K1/K2 directly; the engine, rule formulas and cost/fill convention are already frozen and reused unedited, so this is the cheapest possible resolution.",
+    "pass_condition": "At least one of the 12 candidates clears K1 or K2 in candidate-manifest.json's keep_rule.",
+    "falsification_condition": "None of the 12 candidates has a date-neutral Sharpe >=80% of S3's in both windows with positive 20bp CAGR (K1), none of their 63-session inverse-vol blends with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows (K2), and none reaches watch_recent.",
+    "max_compute_minutes": 15
+  }
+}

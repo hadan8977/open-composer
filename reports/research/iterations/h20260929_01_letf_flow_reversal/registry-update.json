@@ -1,0 +1,13 @@
+{
+  "id": "dir:letf_close_rebalancing_flow_reversal",
+  "status": "refuted",
+  "verdict": "Refuted for this scope. 15 candidates tested (12 primary LETF_{SPY,QQQ,SMH}_D{2,3}_H{1,3} magnitude-conditioned down-day-then-reversal candidates + 3 internal LETF_{SPY,QQQ,SMH}_RAND placebo controls). 0/12 primary candidates clear K1 (best anchor Sharpe 0.796, LETF_SMH_D2_H1, vs the 1.1882 bar; every stress-window Sharpe also below its 0.6447 bar) or K2 (every diversifier edge vs S3 negative in both windows for all 12). No candidate reaches watch_recent. The real drop-conditioned entries do beat their own frequency-matched random-day placebo on all three tickers (e.g. SMH anchor Sharpe 0.796 vs RAND's -0.237), so the mechanism is directionally real, just economically too small to clear this project's K1/K2 bar -- consistent with the Lenkey (2024) survey's own 'statistically significant, economically insignificant' reading. DSR: max local-batch (n=15) 0.31; max joint 24-candidate family (with the sibling h20260929_01_dip_rejudge iteration) 0.232; max joint 27-candidate family (main report, per the queue task's instruction) 0.216 -- all LETF_SMH_D2_H1, all far short of any significance bar.",
+  "evidence": [
+    "reports/research/iterations/h20260929_01_letf_flow_reversal/results.json",
+    "reports/research/screens/h20260929_01_letf_flow_reversal/leaderboard.json",
+    "reports/research/iterations/h20260929_01_letf_flow_reversal/report.md",
+    "reports/research/iterations/h20260929_01_letf_flow_reversal/decision-record.md",
+    "reports/research/iterations/h20260929_01_letf_flow_reversal/combined-dsr.json"
+  ],
+  "reopen_if": "A genuinely new signal replaces the fixed 2%/3% price-drop threshold -- e.g. an actual AUM/flow-magnitude proxy (options open interest, leveraged-fund creation/redemption data, or the leveraged product's own end-of-day volume/notional) that more directly measures the rebalancing flow's size, rather than a re-tune of this same fixed-threshold x hold-length grid on the same universe. LETF_SMH_D2_H1 (SMH, -2% threshold, 1-day hold) is the specific cell to start from if revisited -- it leads on anchor Sharpe, DSR, and K2 shortfall margin among all 12 primary candidates."
+}

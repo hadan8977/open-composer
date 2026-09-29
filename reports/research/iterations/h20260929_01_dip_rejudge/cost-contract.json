@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260929_01_dip_rejudge",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot index ETFs SPY/QQQ and SHY, no leverage, no shorting)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal)",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)",
+  "note_vs_source": "run_h20260924_01_etf_dip_reversion.py's own 'T2' timing (decide from day i's official close, fill at day i+1's official open, both entry and exit) is fill-convention-identical to this project's frozen close-signal/next-open contract; this batch reuses that same fill timing, just judged against K1/K2 instead of G1-G5 and reported through screen_lane's daily-weights representation instead of a trade-level simulator."
+}

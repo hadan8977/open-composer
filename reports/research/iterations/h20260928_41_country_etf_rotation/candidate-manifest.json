@@ -1,0 +1,244 @@
+{
+  "iter_id": "h20260928_41_country_etf_rotation",
+  "generated_at": "2026-09-29T05:10:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_41_country_etf_rotation",
+  "objective": "Preregister 8 candidates for T-20260928-41 (single-country developed/emerging equity ETF cross-sectional momentum rotation, owner-confirmed in scope 2026-09-29): COUNTRY_L{63,252}_N{1,2}_{MO,WK}, reusing h20260928_40_equity_etf_menus.make_rotation_fn unedited (identical mechanism to S1-S3's rotation_cell), for scripts/screen_batch.py --batch h20260928_41_country_etf_rotation --iteration h20260928_41_country_etf_rotation. No return, Sharpe or backtest number is computed in this dossier.",
+  "candidate_count": 8,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_country_etf_panel": "EWJ/EWG/EWU/EWA/EWC/EWZ/INDA/EWY/EWT + SHY daily bars, data/sip/daily/*/*.parquet, local SIP archive, no new fetch."
+    },
+    "features": {
+      "feature_v1_country_menu_momentum_score": "run_h20260918_05_recent_menu.momentum_score (lookback pct_change), reused unedited via h20260928_40_equity_etf_menus.make_rotation_fn."
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": "Signal at rebalance-date close -> fill at next session's open; frozen project contract."
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": "screen_lane.py frozen anchor 2024-01-08..2026-09-17 / stress 2016-05-02..2023-09-15 windows, monthly (21 offsets) or weekly (5 offsets)."
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": "10bp per side primary, 20bp per side stress, screen_lane.py COST_BPS_PRIMARY/STRESS."
+    },
+    "benchmarks": {
+      "benchmark_v1_country_etf_vs_s3_k1_k2": "K1 (>=80% of S3 median-offset Sharpe both windows, positive 20bp CAGR both windows) / K2 (63-session inverse-vol blend with S3 beats vol-matched S3+SHY control by >=0.05 Sharpe both windows), per this manifest's keep_rule."
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml": "92fede4069348f13d25b1fe02678775019d16f5ef2f4a4de995a4381a1dc9c76"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+  "spec_hash": "92fede4069348f13d25b1fe02678775019d16f5ef2f4a4de995a4381a1dc9c76",
+  "trial_count_and_dsr_note": "8 candidates total (all primary, no placebo family for this batch) in this iteration's own screen_batch.py run; n_trials=8 is what leaderboard.json/results.json report and what dsr_anchor is computed against.",
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (median across monthly/weekly offsets) >= 0.80 * S3's date-neutral Sharpe in BOTH the anchor window (>=1.1882) and the stress window (>=0.6447), at 10bp per side, with positive CAGR at 20bp per side in both windows. All 8 candidates are eligible.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH the anchor and stress windows. All 8 candidates are eligible.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.1882 (K1's anchor bar) but the stress window does not clear its bar -- forward-tracked only, not a keep.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress, exact figures from h20260928_01_s3_rebalance_tranching/results.json).",
+    "pass_requires": "K1 OR K2.",
+    "multiple_comparisons": "This iteration's own leaderboard.json/results.json report n_trials=8, computed automatically by scripts/screen_batch.py."
+  },
+  "candidates": [
+    {
+      "candidate_id": "COUNTRY_L63_N1_MO",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 63,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "rule": "At each monthly rebalance date, rank the 9 COUNTRY menu ETFs by 63-day lookback return; take the top 1; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L63_N1_WK",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 63,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "rule": "At each weekly rebalance date, rank the 9 COUNTRY menu ETFs by 63-day lookback return; take the top 1; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L63_N2_MO",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 63,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "rule": "At each monthly rebalance date, rank the 9 COUNTRY menu ETFs by 63-day lookback return; take the top 2; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L63_N2_WK",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 63,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "rule": "At each weekly rebalance date, rank the 9 COUNTRY menu ETFs by 63-day lookback return; take the top 2; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L252_N1_MO",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 252,
+        "top_n": 1,
+        "rebalance": "monthly",
+        "rule": "At each monthly rebalance date, rank the 9 COUNTRY menu ETFs by 252-day lookback return; take the top 1; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L252_N1_WK",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 252,
+        "top_n": 1,
+        "rebalance": "weekly",
+        "rule": "At each weekly rebalance date, rank the 9 COUNTRY menu ETFs by 252-day lookback return; take the top 1; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L252_N2_MO",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 252,
+        "top_n": 2,
+        "rebalance": "monthly",
+        "rule": "At each monthly rebalance date, rank the 9 COUNTRY menu ETFs by 252-day lookback return; take the top 2; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "COUNTRY_L252_N2_WK",
+      "path": "country_etf_rotation_screen",
+      "role": "primary_deterministic_rotation_candidate",
+      "method": "cross_sectional_momentum_rotation_absolute_filter_vs_shy",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_country_etf_panel",
+      "feature_contract": "feature_v1_country_menu_momentum_score",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_country_etf_vs_s3_k1_k2",
+      "parameters": {
+        "family": "country_etf_rotation",
+        "source_card": "quantpedia_country_etf_momentum_rotation_2026",
+        "menu": "COUNTRY",
+        "lookback_days": 252,
+        "top_n": 2,
+        "rebalance": "weekly",
+        "rule": "At each weekly rebalance date, rank the 9 COUNTRY menu ETFs by 252-day lookback return; take the top 2; keep only picks whose score beats SHY's own score over the same lookback (absolute-momentum filter); equal-weight the survivors, else cash (SHY)."
+      },
+      "eligible_for_keep_tiers": true
+    }
+  ]
+}

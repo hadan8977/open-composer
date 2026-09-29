@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_41_country_etf_rotation_historical_evaluation_authorization",
+  "iter_id": "h20260928_41_country_etf_rotation",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 8,
+    "evaluation_authorized_count": 8,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 8,
+    "rows": [
+      {
+        "candidate_id": "COUNTRY_L63_N1_MO",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "adbd2dcdc4a03e84dd6afe2f26d009b78555982d2d51884ea5751ac85e2509c1"
+      },
+      {
+        "candidate_id": "COUNTRY_L63_N1_WK",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "3e2cd189efc908d3c0ebec25d4a45f5dc5ae759976808c08642cd7f3be2bbc0a"
+      },
+      {
+        "candidate_id": "COUNTRY_L63_N2_MO",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "5265a70435028e30a7ad0dccb52b91678c7c4a90b5294e484e8f56595c92a3af"
+      },
+      {
+        "candidate_id": "COUNTRY_L63_N2_WK",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "3ffa2d5bac262f1a9de2542fa0f6ac8971b4f48c8979f131ec3df04384cd5360"
+      },
+      {
+        "candidate_id": "COUNTRY_L252_N1_MO",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "838bd0a7d5f8b2eca4226d19a2691663f7e88842702ed6872c0b916ee818cda5"
+      },
+      {
+        "candidate_id": "COUNTRY_L252_N1_WK",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "048403de04b4d97295b5816ee63a023e9fa5ffd2512cf4e1f408f711e91a11ec"
+      },
+      {
+        "candidate_id": "COUNTRY_L252_N2_MO",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "3bdefb47a0f3172a6d2ca38197bc248214f042d821242e31fe50f6fbd4a03f82"
+      },
+      {
+        "candidate_id": "COUNTRY_L252_N2_WK",
+        "path": "country_etf_rotation_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "3e0ecd9c972a485be4e2353dcfe29cf3122237a1cfdcdc347b2d9b220c842f6a"
+      }
+    ]
+  },
+  "path_gates": {
+    "country_etf_rotation_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "COUNTRY_L63_N1_MO",
+        "COUNTRY_L63_N1_WK",
+        "COUNTRY_L63_N2_MO",
+        "COUNTRY_L63_N2_WK",
+        "COUNTRY_L252_N1_MO",
+        "COUNTRY_L252_N1_WK",
+        "COUNTRY_L252_N2_MO",
+        "COUNTRY_L252_N2_WK"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "EWJ/EWG/EWU/EWA/EWC/EWZ/INDA/EWY/EWT and SHY are all present in the local SIP daily archive (data/sip/daily/*/*.parquet) from 2016-01-04 onward, checked before writing this dossier (min/max date query, no missing symbols). No new capability, vendor or data fetch is required."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+      "sha256": "b0e6d429346ea03f9f1cbced452c5927ec53a79d58095233a202f5cb70e1985d"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_41_country_etf_rotation/cost-contract.json",
+      "sha256": "ceffd4275526a2dacef26742d02697f9543da058aceaf569845b48ddad3b4e76"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_41_country_etf_rotation.jsonl",
+      "sha256": "dd601258c2d64360f42ba653a7dc9354c9ad2587dd0dfe7c0bb5ace5af30d940"
+    }
+  }
+}

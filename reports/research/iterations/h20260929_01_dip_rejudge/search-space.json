@@ -1,0 +1,84 @@
+{
+  "iter_id": "h20260929_01_dip_rejudge",
+  "strategy_name": "h20260929_01_dip_rejudge",
+  "source_spec_path": "strategy_specs/drafts/h20260929_01_dip_rejudge.yaml",
+  "spec_hash": "6f4de76d8a567048c3d869fdd957088d8f83fecf54684752c4e06b383f534ece",
+  "schema_version": 3,
+  "created_at": "2026-09-29T04:10:00+00:00",
+  "objective": "Preregister 12 candidates for T-20260929-01 part B (re-judge H-20260924-01's 6 published ETF dip-reversion rules, registry dir:etf_dip_reversion_ibs_connors, on SPY/QQQ 1x under this project's frozen K1/K2 screening-lane contract with next-open fill), for scripts/screen_batch.py --batch h20260929_01_dip_rejudge --iteration h20260929_01_dip_rejudge. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "dip_rejudge_screen",
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "DIP_D1_SPY",
+          "DIP_D1_QQQ",
+          "DIP_D2_SPY",
+          "DIP_D2_QQQ",
+          "DIP_D3_SPY",
+          "DIP_D3_QQQ",
+          "DIP_D4_SPY",
+          "DIP_D4_QQQ",
+          "DIP_D5_SPY",
+          "DIP_D5_QQQ",
+          "DIP_D6_SPY",
+          "DIP_D6_QQQ"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "QQQ_buy_and_hold",
+        "SHY_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 12,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_01_dip_rejudge/candidate-manifest.json",
+  "candidate_manifest_sha256": "53d38b6184432487440103a6056810c59156122d260a41c86ef80779a27c0b32",
+  "data_feasibility_path": "reports/research/iterations/h20260929_01_dip_rejudge/data-feasibility.json",
+  "data_feasibility_sha256": "5e5744724a4079e0ee98ed91c7be6942b901dc19a6903c243c0ae4664d543358",
+  "cost_table_path": "reports/research/iterations/h20260929_01_dip_rejudge/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_01_dip_rejudge/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_01_dip_rejudge/report.md",
+    "reports/research/iterations/h20260929_01_dip_rejudge/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (D freq, single version) >= 0.80 * S3's date-neutral Sharpe in BOTH windows (anchor >=1.1882, stress >=0.6447), 10bp per side, positive CAGR at 20bp.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.1882 but stress does not clear its bar -- forward-tracked only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress).",
+    "placebo_internal_falsification": "not applicable in this iteration (no placebo candidates); H-20260924-01's own D1 placebo failure is carried forward as prior evidence in decision-record.md.",
+    "pass_requires": "K1 OR K2.",
+    "multiple_comparisons": "This iteration's own n_trials=12. Full 27-candidate family (joint with sibling h20260929_01_letf_flow_reversal) DSR computed manually in report.md."
+  }
+}

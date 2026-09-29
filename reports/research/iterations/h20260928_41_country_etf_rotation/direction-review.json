@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_41_country_etf_rotation",
+  "reviewed_at": "2026-09-29T05:07:00+00:00",
+  "decision": "proceed",
+  "objective": "Preregister and batch-screen 8 candidates (COUNTRY_L{63,252}_N{1,2}_{MO,WK}) for T-20260928-41: single-country developed/emerging-market equity ETF cross-sectional momentum rotation (registry dir:international_country_etf_momentum_rotation, queued) via scripts/screen_batch.py --batch h20260928_41_country_etf_rotation --iteration h20260928_41_country_etf_rotation against the owner's K1/K2 keep rule. No return, Sharpe or backtest number is computed in this dossier.",
+  "target_regime_and_horizon": "Same frozen windows as every batch-screening round in this repo: stress 2016-05-02..2023-09-15 and anchor 2024-01-08..2026-09-17, judged on date-neutral Sharpe (median across monthly (21) or weekly (5) rebalance-day offsets). The 2026-01-02..2026-09-17 holdout is reference-only and contaminated. Local SIP daily coverage for all 9 country ETFs + SHY runs 2016-01-04..2026-09-28 (checked via a min/max-date duckdb query before writing this dossier) -- no new data fetch needed, full stress-window coverage.",
+  "existing_solution_comparison": "`oc research directions check country` (run this session) found dir:international_country_etf_momentum_rotation already registered as 'queued' -- this task's own registry entry, added as a boundary case pending owner confirmation, not a distinct prior test. The owner confirmed 2026-09-29 in autonomous-queue.md's T-20260928-41 notes: \"etf\u662f\u53ef\u4ee5\u7684\uff0c\u662f\u7f8e\u80a1\u91cc\u80fd\u4e70\u5230\u7684\u5c31\u7b97\" -- single-country equity ETFs are equity, not the cross-asset bond/gold/commodity/dollar sleeves the owner separately dropped, so they are in scope. No prior local iteration tests this 9-ticker country-ETF menu; the closest prior work is the sibling h20260928_40_equity_etf_menus batch (FACTOR/INDUSTRY menus, same mechanism, same engine), whose own `make_rotation_fn` this batch reuses unedited rather than reimplementing the momentum-rotation-with-absolute-filter mechanism a second time. This is the first local test of the country-ETF menu specifically.",
+  "remaining_evidence_gap": "Whether any of the 8 lookback x top_n x rebalance-frequency candidates clears K1, K2, strong_keep or watch_recent against S3's frozen reference numbers when run through the batch-screening lane under this project's 10bp/20bp next-open-fill cost contract -- this is exactly what has not been tested locally and is what this round's screening pass computes, with no further parameter choice available once the manifest is frozen.",
+  "negative_experiments_checked": "h20260928_40_equity_etf_menus (sibling batch, same mechanism, FACTOR/INDUSTRY menus instead of country ETFs) sets the direct base rate for this exact rotation mechanism under this project's contract -- see that iteration's own report.md/decision-record.md for its own K1/K2 outcome, referenced here as the most directly comparable prior local result rather than re-derived. Quantpedia's own country-momentum design description (1975-2014, long-short, 18 MSCI indexes) is a different implementation (long-short vs this batch's long-only absolute-momentum-filtered version, monthly-only vs this batch's monthly-or-weekly, a different, older sample) so its own historical Sharpe numbers are not reused as an expectation here.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress, signal at the rebalance date's close, fill at the next session's open -- identical to the frozen S1/S2/S3 convention and every prior batch-screening round (cost-contract.json).",
+  "stop_condition": "If none of the 8 candidates clears K1, K2, or reaches watch_recent, dir:international_country_etf_momentum_rotation is refuted for this scope; the next round should not re-tune this same lookback/top_n/rebalance grid on this same menu without a new, distinct signal (e.g. a country-specific macro or flow proxy this repo's data does not yet support).",
+  "queries": [
+    {
+      "query": "Momentum Factor Effect in Country Equity Indexes (Quantpedia, WebFetch primary source re-verification)",
+      "opened_urls": [
+        "https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes"
+      ],
+      "searched_at": "2026-09-29T05:06:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes",
+      "claim_id": "quantpedia_country_etf_momentum_rotation_2026",
+      "claim": "Quantpedia's 'Momentum Factor Effect in Country Equity Indexes' (source paper Muller & Ward 2010, Studies in Economics and Econometrics 34(1)): rank ~70 MSCI World country equity indexes by 10-12 month momentum, hold the top 4-5 for one month, monthly rebalance. Reported backtest 1970-2009 (Muller & Ward's own sample): the 4-best-of-70 portfolio outperformed an equal-weighted benchmark by ~10%/yr; Quantpedia's own figure-13 readout at Quantpedia's chosen parameters: 17.7%/yr, max drawdown -65.39%, Sharpe not disclosed. Quantpedia's page cites a 2024 update (Du & Jiang) noting the efficacy of ETF momentum strategies 'while robust until around 2010, began to show signs of waning in subsequent years.'",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-01-01",
+      "market_and_period": "~70 MSCI World country equity indexes, 1970-2009 (Muller & Ward's own sample; Quantpedia page itself dated 2026, cites a 2024 update note)",
+      "applicability": "Grounds the COUNTRY menu's mechanism (cross-sectional momentum across country equities); the menu itself (EWJ/EWG/EWU/EWA/EWC/EWZ/INDA/EWY/EWT) and grid parameters are this batch's own choice, reusing the already-live make_rotation_fn engine, not copied from this source's exact parameters.",
+      "limitations": "Practitioner summary, not the original 2010 journal paper; sample ends 2009, page itself discloses a 2024 update noting waning efficacy after ~2010; no long-only US-ETF or 2016-2026 figure disclosed.",
+      "independent_replication": "No independent third-party live/forward record of a long-only rotation across single-country US-listed ETFs found in this or a prior gap-search round.",
+      "fetched_at": "2026-09-29T05:05:00+00:00",
+      "sha256": "7a4109e4b97f9b0143abc64315cde2fd327599166c10346ef76ac7dec1f1f430",
+      "snapshot_path": "reports/research/iterations/h20260928_41_country_etf_rotation/sources/quantpedia-country-momentum.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_41_country_etf_rotation.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 8 candidates through the batch-screening lane (scripts/screen_batch.py --batch h20260928_41_country_etf_rotation --iteration h20260928_41_country_etf_rotation) against S3's frozen stress/anchor windows and check K1/K2 directly; the engine, mechanism and cost/fill convention are already frozen and reused unedited from the sibling h20260928_40 batch, so this is the cheapest possible resolution.",
+    "pass_condition": "At least one of the 8 candidates clears K1 or K2 in candidate-manifest.json's keep_rule.",
+    "falsification_condition": "None of the 8 candidates has a date-neutral Sharpe >=80% of S3's in both windows with positive 20bp CAGR (K1), none of their 63-session inverse-vol blends with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows (K2), and none reaches watch_recent.",
+    "max_compute_minutes": 10
+  }
+}

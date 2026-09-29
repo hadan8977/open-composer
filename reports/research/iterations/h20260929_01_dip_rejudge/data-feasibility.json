@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_01_dip_rejudge_historical_evaluation_authorization",
+  "iter_id": "h20260929_01_dip_rejudge",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 12,
+    "evaluation_authorized_count": 12,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 12,
+    "rows": [
+      {
+        "candidate_id": "DIP_D1_SPY",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "225aba728cba5e9e841dfb02b13813379f842ae90bda7d0ff72b0d4029a3eacb"
+      },
+      {
+        "candidate_id": "DIP_D1_QQQ",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "79ccb84e0265ec0d650de421d3be6d7a0873ec99905c4fabd0188bc1d2d0962c"
+      },
+      {
+        "candidate_id": "DIP_D2_SPY",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "bd31b3b081209de67563414c04be34de4f5a6c93fd0a9837a6dae141007b4347"
+      },
+      {
+        "candidate_id": "DIP_D2_QQQ",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "aa66acb3abeeba68cc33fc5e51fd951df759f258bc4e95a82ac0393e3a627f95"
+      },
+      {
+        "candidate_id": "DIP_D3_SPY",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "6357bb6cc405879748a241b23f3e9ef66c3b3c72950938d0042a7856133339d6"
+      },
+      {
+        "candidate_id": "DIP_D3_QQQ",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "8f75c4587314a3784e22138c5558902e072b61efae1b05a67fa6a7cce9a6f3ef"
+      },
+      {
+        "candidate_id": "DIP_D4_SPY",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "60f22314e4c00372bbe50daee6a58b4b3ad92dc607ebe55e706ee9856776046d"
+      },
+      {
+        "candidate_id": "DIP_D4_QQQ",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "fc1ab86bc263f6bc8bd1bc90eebfbe70f40f2ac14d9204e1baf42b13e23333a1"
+      },
+      {
+        "candidate_id": "DIP_D5_SPY",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "0bc996c4968acc81bc51da47f7222db6d0cc989bca56fe16578df0b1b7279bbd"
+      },
+      {
+        "candidate_id": "DIP_D5_QQQ",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "c0a2218671b50750703bab8585584f28de4463140ba2f72ce7ec75559a717155"
+      },
+      {
+        "candidate_id": "DIP_D6_SPY",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "93a70e988cde2a5ef36e82294b6fdd98b92289a7ae703b5bb21f10ceb28794eb"
+      },
+      {
+        "candidate_id": "DIP_D6_QQQ",
+        "path": "dip_rejudge_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "b7ba075474ce2a8c70fd35f9fc8de800dccc5dff0b6989397442a12630a37199"
+      }
+    ]
+  },
+  "path_gates": {
+    "dip_rejudge_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "DIP_D1_SPY",
+        "DIP_D1_QQQ",
+        "DIP_D2_SPY",
+        "DIP_D2_QQQ",
+        "DIP_D3_SPY",
+        "DIP_D3_QQQ",
+        "DIP_D4_SPY",
+        "DIP_D4_QQQ",
+        "DIP_D5_SPY",
+        "DIP_D5_QQQ",
+        "DIP_D6_SPY",
+        "DIP_D6_QQQ"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "SPY/QQQ/SMH and SHY are already present in the local SIP daily archive (data/sip/daily/*/*.parquet) well before the 2016-05-02 stress-window start (all long-lived, liquid, Alpaca-tradable ETFs already used by S1-S3 and every prior batch-screening round). No new capability, vendor or data fetch is required; this candidate reuses the frozen SIP daily loader."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260929_01_dip_rejudge.yaml",
+      "sha256": "377db38d6e383fd525e1ab40206cfd00869abd77ae8f12ed079d0fbb2ffe9ad0"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260929_01_dip_rejudge/cost-contract.json",
+      "sha256": "39d0ed22740152df6aee68d06fec78aba5c7d75b864aa29c5b64a64df71b8604"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260929_01_dip_rejudge.jsonl",
+      "sha256": "f8787d5d49ace2a7b69f371ccfe67750911893031d3e7760223dba9af2493589"
+    }
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "driver": "coordinator_2026_09_29_0210_utc_revision",
+      "effect": "Signal restricted to a DOWN day only (not abs(return)); 3x-product-return signal source dropped as redundant; grid reduced from the original 36 to 12 primary + 3 RAND placebo.",
+      "revision": "letf_ticker_x_threshold_2_3_pct_x_hold_1_3_days_12_primary_plus_3_rand_placebo"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_01_letf_flow_reversal.jsonl"
+  ],
+  "hypothesis_links": [],
+  "iter_id": "h20260929_01_letf_flow_reversal",
+  "objective": "Preregister and batch-screen the leveraged-ETF close-rebalancing flow reversal mechanism (dir:letf_close_rebalancing_flow_reversal) on SPY/QQQ/SMH: a large one-day down move forces daily leverage-ratio rebalancing that the literature associates with next-day mean reversion in the underlying. For scripts/screen_batch.py --batch h20260929_01_letf_flow_reversal --iteration h20260929_01_letf_flow_reversal. No return, Sharpe or backtest number is computed in this dossier.",
+  "schema_version": 3,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "lenkey_2024_aimspress_letf_rebalancing_survey",
+      "source_card_path": "reports/harness/source_cards/h20260929_01_letf_flow_reversal.jsonl"
+    },
+    {
+      "claim_id": "lehmann1990_short_horizon_reversal_mechanism",
+      "source_card_path": "reports/harness/source_cards/h20260929_01_letf_flow_reversal.jsonl"
+    },
+    {
+      "claim_id": "klossner2012_intraday_overreaction",
+      "source_card_path": "reports/harness/source_cards/h20260929_01_letf_flow_reversal.jsonl"
+    },
+    {
+      "claim_id": "pandey_joshi2023_ibs_country_etfs",
+      "source_card_path": "reports/harness/source_cards/h20260929_01_letf_flow_reversal.jsonl"
+    }
+  ],
+  "source_spec_path": null,
+  "sources": [
+    {
+      "claim_id": "lenkey_2024_aimspress_letf_rebalancing_survey",
+      "url": "http://www.aimspress.com/article/doi/10.3934/QFE.2024031",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_open_access_journal_survey_aimspress_qfe",
+      "core_claim": "Survey of the leveraged/inverse-ETF rebalancing-flow literature: 'the literature consistently reports statistically significant associations between ETF rebalancing demand and late-day returns and volatility' but 'most of the available papers suffer from potentially serious methodological errors, and the economic associations appear to be insignificant'; overall 'concerns raised by policymakers and others are not supported by the overall empirical evidence.'",
+      "project_applicability": "Primary source and sole mechanism grounding for all 12 LETF_* primary candidates -- the rule's existence (large-move-conditioned rebalancing flow), the reason a long-only reversal rule is the executable subset, and the honest prior (survey itself expects economic insignificance).",
+      "reflection": "Read in full via WebFetch by the coordinator (queue task T-20260929-01, gap-search 2026-09-29-01), not independently re-fetched in this execution session -- reused verbatim per the mission's reuse-before-repeat rule (the queue task text already quotes the exact passages above). The survey synthesizes, but this iteration does not separately open, the underlying papers it reviews (Ivanov & Lenkey, Cheng & Madhavan, a 2022 SFI working paper) -- those remain unverified primary sources, not cited independently here."
+    },
+    {
+      "claim_id": "lehmann1990_short_horizon_reversal_mechanism",
+      "url": "https://www.nber.org/papers/w2533",
+      "published_or_updated_at": "1990-02-01",
+      "source_type": "paper",
+      "credibility": "top_journal_qje_nber_working_paper",
+      "core_claim": "Weekly 'winners'/'losers' show sizeable return reversals the next week that persist as apparent arbitrage profits after thin-trading, bid-ask and cost adjustments.",
+      "project_applicability": "General short-horizon-reversal / intraday-overreaction background motivating why a magnitude-conditioned reversal signal is mechanistically plausible -- NOT specific to leveraged-ETF rebalancing flow, reused as class-level background evidence, not as direct support for the LETF mechanism itself.",
+      "reflection": "Weekly horizon, equities not ETFs, 1988/1990 vintage; does not test IBS, RSI(2) or any ETF rule directly. [Reused for h20260929_01_letf_flow_reversal, 2026-09-29, as general reversal-literature background only -- not re-fetched, and not a source about leveraged-ETF rebalancing specifically.]"
+    },
+    {
+      "claim_id": "klossner2012_intraday_overreaction",
+      "url": "https://ideas.repec.org/a/eee/jbfina/v36y2012i4p1152-1163.html",
+      "published_or_updated_at": "2012-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_banking_finance",
+      "core_claim": "Klo\u00dfner, Becker & Friedmann model stock prices with a fundamental process plus a news-impact curve, deriving OHLC-based statistics that separately measure upside/downside intraday overreaction, with a 'buy on bad news' strategy illustrating the economic significance.",
+      "project_applicability": "General short-horizon-reversal / intraday-overreaction background motivating why a magnitude-conditioned reversal signal is mechanistically plausible -- NOT specific to leveraged-ETF rebalancing flow, reused as class-level background evidence, not as direct support for the LETF mechanism itself.",
+      "reflection": "ScienceDirect full text returned 403 this session; only the IDEAS/RePEc abstract page was opened, not the paper itself. [Reused for h20260929_01_letf_flow_reversal, 2026-09-29, as general reversal-literature background only -- not re-fetched, and not a source about leveraged-ETF rebalancing specifically.]"
+    },
+    {
+      "claim_id": "pandey_joshi2023_ibs_country_etfs",
+      "url": "https://arxiv.org/abs/2306.12434",
+      "published_or_updated_at": "2023-06-14",
+      "source_type": "arxiv",
+      "credibility": "preprint_not_peer_reviewed",
+      "core_claim": "Pandey & Joshi investigate IBS as a key indicator for trading a bucket of country ETFs over a 10-year period, a post-2013 continuation of academic interest in the IBS effect.",
+      "project_applicability": "General short-horizon-reversal / intraday-overreaction background motivating why a magnitude-conditioned reversal signal is mechanistically plausible -- NOT specific to leveraged-ETF rebalancing flow, reused as class-level background evidence, not as direct support for the LETF mechanism itself.",
+      "reflection": "Tests country ETFs, the case Pagonidis himself found much weaker or absent outside the US; not a direct confirmation of the US-only effect this iteration relies on. [Reused for h20260929_01_letf_flow_reversal, 2026-09-29, as general reversal-literature background only -- not re-fetched, and not a source about leveraged-ETF rebalancing specifically.]"
+    },
+    {
+      "claim_id": "h20260928_42_opex_week_refutation",
+      "url": "reports/research/iterations/h20260928_42_opex_week/decision-record.md",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_batch_screening_result",
+      "core_claim": "0/8 primary option-expiration-week candidates refuted (negative anchor Sharpe on all 8, corroborated by an internal non-expiration-week placebo) under the identical K1/K2 screen_lane contract this batch reuses.",
+      "project_applicability": "Sets the recent-round base rate for mechanical dealer/hedging-flow mechanisms under this project's specific cost/fill contract.",
+      "reflection": "Directly comparable prior round (same contract, same harness, adjacent flow-mechanism family), not the same mechanism."
+    },
+    {
+      "claim_id": "h20260924_01_etf_dip_reversion_refutation",
+      "url": "reports/research/iterations/h20260924_01_etf_dip_reversion/decision-record.md",
+      "published_or_updated_at": "2026-09-24",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_batch_result",
+      "core_claim": "0/24 published ETF dip-reversion candidates passed G1/G1' at T0 or T2; D1 failed its own preregistered random-entry placebo in every cell.",
+      "project_applicability": "Base rate for published technical ETF rules under this project's cost contract; also the direct subject of the companion h20260929_01_dip_rejudge iteration.",
+      "reflection": "Different signal (RSI2/IBS dip pattern, not magnitude-conditioned drop-and-hold), same general lesson about published-rule attrition under real cost/fill assumptions."
+    },
+    {
+      "claim_id": "h20260928_01_s3_rebalance_tranching_k1_k2_reference",
+      "url": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_frozen_reference_computation",
+      "core_claim": "S3's own median-offset Sharpe: anchor 1.4853, stress 0.8059 (net10) -- the exact reference figures K1/K2/strong_keep are computed against in this batch's keep_rule.",
+      "project_applicability": "Defines the exact numeric K1 (0.8x each window) and strong_keep bars used to judge every LETF_* candidate.",
+      "reflection": "Methodology reference, not a claim about the LETF mechanism itself."
+    },
+    {
+      "claim_id": "giants_sweep_published_etf_rules_refuted",
+      "url": "reports/research/iterations/giants_sweep_20260922/decision-record.md",
+      "published_or_updated_at": "2026-09-22",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_batch_result",
+      "core_claim": "0/24 published technical ETF rules (RSI(10) trend/hedge family) passed G1 under this project's cost/fill contract.",
+      "project_applicability": "Further base-rate evidence that published technical ETF rules broadly fail this project's specific contract, independent of mechanism family.",
+      "reflection": "Different rule family (trend/hedge, not magnitude-conditioned reversal); cited only for the base-rate pattern, not as direct mechanism evidence."
+    }
+  ],
+  "spec_hash": null,
+  "strategy_name": "us_minute_momentum",
+  "topic_coverage": [
+    "letf_close_rebalancing_flow_mechanism_and_economic_magnitude",
+    "short_horizon_reversal_academic_grounding",
+    "intraday_overreaction_ohlc_based_academic_measurement",
+    "adjacent_calendar_hedging_flow_mechanism_base_rate_this_project",
+    "adjacent_dip_reversion_mechanism_base_rate_this_project",
+    "k1_k2_screening_lane_numeric_reference_s3"
+  ],
+  "decision": "proceed",
+  "existing_solution_comparison": "`oc research directions check letf` and `check dip` (run this session) found no prior local test of this specific magnitude-conditioned-reversal mechanism -- the registry's dir:letf_close_rebalancing_flow_reversal entry itself is 'queued' (added by the 2026-09-29 gap search, this task's own source), and the only related prior local iterations are dir:etf_dip_reversion_ibs_connors (a different, RSI(2)/IBS-based dip signal, refuted 2026-09-24 -- companion iteration h20260929_01_dip_rejudge re-judges it) and dir:option_expiration_week_calendar_effect (a different, calendar-anchored dealer-hedging-flow mechanism, refuted 2026-09-29, 0/8 primary, negative anchor Sharpe on all 8). Neither prior iteration tested a same-ticker magnitude-conditioned drop-then-reversal rule; this is the first local test of that specific mechanism. The Lenkey (2024) survey itself is the primary and only genuinely new source opened this round (its own literature review already surveys Ivanov & Lenkey, Cheng & Madhavan, and other prior LETF-flow papers, so a second independent read of those underlying papers was judged low-value given the survey's own synthesis already states the class-level conclusion); the remaining sources below are reused, already-verified local evidence (short-horizon-reversal academic grounding, and this project's own prior refutations of adjacent flow/calendar mechanisms) rather than newly-fetched sources, per the mission's reuse-before-repeat rule.",
+  "negative_experiments_checked": "h20260928_42_opex_week (another mechanical dealer/hedging-flow mechanism, refuted: 0/8 primary, all negative anchor Sharpe, corroborated by an internal placebo) and h20260924_01_etf_dip_reversion (0/24 at G1/G1', D1's placebo failure) both set the recent-round base rate: published flow/reversal mechanisms have repeatedly failed this project's specific 10bp/20bp next-open-fill K1/K2 contract even where the underlying academic mechanism is judged real. Lenkey (2024)'s own synthesis already reads the LETF-rebalancing-flow literature as 'economically insignificant' despite statistically significant associations in individual papers -- this batch is a direct, cheap test of whether that holds under this project's specific contract, not an assumption that it does."
+}

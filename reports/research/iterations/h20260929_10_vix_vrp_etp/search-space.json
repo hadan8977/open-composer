@@ -1,0 +1,85 @@
+{
+  "iter_id": "h20260929_10_vix_vrp_etp",
+  "strategy_name": "h20260929_10_vix_vrp_etp",
+  "source_spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+  "spec_hash": "7ffc01e43d494e032826681ab26f1c52d2b708ee745e152e2f092a4549ff1d42",
+  "schema_version": 3,
+  "created_at": "2026-09-29T05:20:00+00:00",
+  "objective": "Preregister 12 candidates for T-20260929-10 (owner research-list item 3, reopened dir:vix_term_structure_short_vol): long-only-ETP dual-VIX-signal volatility risk premium (Zarattini/Aziz/Mele 2025, SSRN 5316487, per the QuantConnect replication). 10 mechanism candidates (3 RV-window variants of the full 2-signal combo, signal-1-only, signal-2-only, each in SPY-remainder and SHY-remainder versions) plus 1 internal RAND placebo and 1 static 50/50 SMH/QQQ external control, for scripts/screen_batch.py --batch h20260929_10_vix_vrp_etp --iteration h20260929_10_vix_vrp_etp. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "vix_vrp_etp_screen",
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "VVRP_COMBO_RV5_SPY",
+          "VVRP_COMBO_RV5_SHY",
+          "VVRP_COMBO_RV10_SPY",
+          "VVRP_COMBO_RV10_SHY",
+          "VVRP_COMBO_RV20_SPY",
+          "VVRP_COMBO_RV20_SHY",
+          "VVRP_SIG1ONLY_SPY",
+          "VVRP_SIG1ONLY_SHY",
+          "VVRP_SIG2ONLY_SPY",
+          "VVRP_SIG2ONLY_SHY",
+          "VVRP_RAND_PLACEBO",
+          "STATIC5050_SMH_QQQ"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SVXY_implicit_via_candidate_legs",
+        "SHY_buy_and_hold",
+        "SMH_QQQ_static_5050",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 12,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_10_vix_vrp_etp/candidate-manifest.json",
+  "candidate_manifest_sha256": "89ab9c4b40feb88d6757750c4470ad5b0db65dc422e8f27f0af896a36835faa4",
+  "data_feasibility_path": "reports/research/iterations/h20260929_10_vix_vrp_etp/data-feasibility.json",
+  "data_feasibility_sha256": "61f178be2f42415ff8623fa9cf482d2138707795f44964fe0a2729ba080b12a8",
+  "cost_table_path": "reports/research/iterations/h20260929_10_vix_vrp_etp/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_10_vix_vrp_etp/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_10_vix_vrp_etp/report.md",
+    "reports/research/iterations/h20260929_10_vix_vrp_etp/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "net-10bp Sharpe (D freq, single version -- no offset sweep) >= 1.1882 anchor AND >= 0.6447 stress, positive 20bp CAGR both windows. 10 primary (VVRP_*) candidates only.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows. Primary candidates only.",
+    "watch_recent": "anchor-window Sharpe >= 1.1882 but stress does not clear its bar -- forward-tracked only. Primary candidates only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress).",
+    "placebo_and_benchmark_internal_falsification": "a primary candidate otherwise kept is demoted to not_kept if VVRP_RAND_PLACEBO or STATIC5050_SMH_QQQ's judged anchor Sharpe >= its own anchor Sharpe.",
+    "pass_requires": "K1 OR K2, primary candidates only, subject to placebo/benchmark demotion.",
+    "multiple_comparisons": "This iteration's own n_trials=12 (10 primary + 1 placebo + 1 static control). A manual 10-candidate-only DSR is additionally reported in report.md."
+  }
+}

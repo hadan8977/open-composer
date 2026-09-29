@@ -51,7 +51,7 @@
     "dir:international_country_etf_momentum_rotation"
    ],
    "gap": "S1-S3 live in paper; bear-market risk measured (2016-2023 -48%)",
-   "next": "leave: batch 3 refuted 09-23 (keep SHY); reopen only with new information | 2026-09-28 gap search (gap-search-2026-09-28-1907): queued 3 new equity-ETF-menu candidates for the same rotation_cell engine (factor-style, narrow-industry, single-country) -- T-20260928-40/41. | 2026-09-28 T-20260928-40 batch screen (reports/research/iterations/h20260928_40_equity_etf_menus/results.json): 24 candidates (FACTOR MTUM/QUAL/USMV/VLUE/SIZE x12, INDUSTRY SMH/XBI/KRE/ITB/IGV/XOP/XRT/IHI x12) on the same rotation_cell engine -- 0 kept, 0 strong_keep, 5 watch_recent (all FACTOR, best FACTOR_L252_N1_WK anchor Sharpe 1.437/DSR 0.643, all fail the K1 stress bar), 19 refuted; K2 fails for all 24 (stress edge -0.08 to -0.31, anchor-window correlation with S3 0.45-0.81 too high to diversify). dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation both refuted for this scope. T-41 (single-country menu) remains blocked pending owner scope confirmation."
+   "next": "leave: batch 3 refuted 09-23 (keep SHY); reopen only with new information | 2026-09-28 gap search (gap-search-2026-09-28-1907): queued 3 new equity-ETF-menu candidates for the same rotation_cell engine (factor-style, narrow-industry, single-country) -- T-20260928-40/41. | 2026-09-28 T-20260928-40 batch screen (reports/research/iterations/h20260928_40_equity_etf_menus/results.json): 24 candidates (FACTOR MTUM/QUAL/USMV/VLUE/SIZE x12, INDUSTRY SMH/XBI/KRE/ITB/IGV/XOP/XRT/IHI x12) on the same rotation_cell engine -- 0 kept, 0 strong_keep, 5 watch_recent (all FACTOR, best FACTOR_L252_N1_WK anchor Sharpe 1.437/DSR 0.643, all fail the K1 stress bar), 19 refuted; K2 fails for all 24 (stress edge -0.08 to -0.31, anchor-window correlation with S3 0.45-0.81 too high to diversify). dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation both refuted for this scope. T-41 (single-country menu) remains blocked pending owner scope confirmation. | 2026-09-29 T-20260928-41 batch screen (reports/research/iterations/h20260928_41_country_etf_rotation/results.json): owner confirmed single-country equity ETFs in scope (2026-09-29); 8 candidates (COUNTRY_L{63,252}_N{1,2}_{MO,WK} on EWJ/EWG/EWU/EWA/EWC/EWZ/INDA/EWY/EWT) -- 0 kept, 0 strong_keep, 3 watch_recent (COUNTRY_L63_N1_MO anchor 1.2131, COUNTRY_L252_N2_MO anchor 1.2107, COUNTRY_L252_N2_WK anchor 1.2154, all fail the stress bar), 5 refuted; K2 fails for all 8 (every stress-window edge negative, down to -0.4633). dir:international_country_etf_momentum_rotation status=partial (3 watch_recent, not a keep) -- anchor-strong/stress-weak split corroborates the Du & Jiang (2024) ETF-momentum decay note found on the Quantpedia source page."
   },
   {
    "id": "trend_momentum.stock_momentum",
@@ -75,8 +75,8 @@
     "dir:composite_momentum_roe_v2",
     "dir:momentum_daily_crash_guard"
    ],
-   "gap": "only the rule top-50 book was run; residual and industry-relative momentum never tested; never combined with other signals Signal library v1: 12-1 momentum admitted; top-30 of the largest 500 held 20 days beats the universe by 17.7%/yr at 20 bp (43.6%/yr since 2024), max DD -50%. Composites v1 (09-23): adding avoid-side signals doubles IC but makes the top-30 book defensive (return falls as fast as drawdown); none beats momentum alone on Sharpe; none meets G1. Daily crash guards (H-20260924-02, 2026-09-24) refuted: the unguarded T1 book is 63.1%/yr with DD -41.5% on the anchor window but its 2026 holdout Sharpe is 0.87 (fails G2), and no published guard fixes both drawdown and placebo.",
-   "next": "none for sizing or guards; reopen only if a selection rule beats momentum's Sharpe on its own, or with hedges the owner permits"
+   "gap": "PARTIALLY CORRECTED 2026-09-29 (gap-search-04): residual momentum WAS tested by tier via signal_card (reports/research/signal-cards/resid_mom.md): t1 (largest-500) book strong (+19.4%/yr 20d, matches the number already in this note), but t2 weak (+4.8%/yr) and t3 NEGATIVE (-4.5%/yr) -- illiquid tier does not help residual momentum either, so 'residual momentum never tested' was stale. Industry-relative momentum remains genuinely untested locally (no signal card, no GICS/sector-neutral construction found) -- this part of the gap is still open but needs a sector/industry classification source not yet confirmed in data/features.",
+   "next": "none for sizing, guards, or tier re-tests of admitted signals; the only still-open item is industry-relative (sector-neutral) momentum, gated on confirming a local industry/GICS classification source"
   },
   {
    "id": "reversal.stock_short_term_reversal",
@@ -176,7 +176,7 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "untested",
+   "status": "searched",
    "directions": [
     "dir:buyback_announcement_effect",
     "dir:index_addition_deletion_effect",
@@ -184,10 +184,11 @@
     "dir:event_8k_item402_restatement_drift",
     "dir:spinoff_outperformance_recent_decay",
     "dir:seo_atm_offering_dilution_drift",
-    "dir:buyback_execution_vs_announcement"
+    "dir:buyback_execution_vs_announcement",
+    "dir:merger_arbitrage_target_announcement_drift"
    ],
-   "gap": "no event table by 8-K item; offerings, spin-offs, M&A never searched Item 4.02 restatement drift real (n=8,143, -2.0% at 20d) but short/avoidance use; spin-offs, SEO/ATM, buyback execution: weak evidence.",
-   "next": "event table from EDGAR submissions (week 1-2)"
+   "gap": "M&A now searched 2026-09-29 (gap-search-04): a 2025-10 working paper (exa.ai/library/publication/k3grbvwxkr8, abstract only) claims target-stock return predictability 30 days post-announcement (news coverage, pre-announcement volume, deal type significant; claimed Sharpe >2.1 after costs, not independently verified, methodology not read beyond abstract) and a 1992-2021 US size-effect study (ideas.repec.org/p/usi/wpaper/920.html, 51,780 events) finds small-cap M&A targets get larger PRE-announcement drift (information leakage, not the post-announcement window we can trade). No local M&A deal-list data source exists yet (needs a new free EDGAR full-text-search build, same missing-8-K-item-metadata blocker already logged for buyback/restatement/SEO). Other 8-K item sub-directions (buyback, restatement, SEO/ATM, spin-off, FDA) remain evidence_too_weak/not_executable, unchanged.",
+   "next": "T-20260929-03: build a free EDGAR full-text-search M&A deal list (Item 1.01 'Agreement and Plan of Merger'), then run the target long-only drift as a signal_card event; other sub-directions still gated on the same 8-K item-type metadata build"
   },
   {
    "id": "flows_structural.calendar_and_fomc",
@@ -229,8 +230,8 @@
     "dir:option_expiration_week_calendar_effect",
     "dir:letf_close_rebalancing_flow_reversal"
    ],
-   "gap": "LETF close-rebalancing flow queued (T-20260929-01); index-reconstitution-flow effect still never searched (Russell reconstitution sources remain unreadable). | T-20260928-42 (2026-09-29): option-expiration-week calendar effect (dir:option_expiration_week_calendar_effect) batch-screened and refuted -- 8/8 primary SPY/QQQ/DIA/IWM candidates (WEEK and WEEKMON variants) have negative anchor- and stress-window Sharpe against the frozen S1-S3 K1/K2 contract, corroborated by an internal non-expiration-week placebo control that shows the 3rd Friday is not special in this universe/window; other rebalance/hedging-flow mechanisms in this cell (e.g. options open-interest rollover data, dealer-gamma positioning, index-reconstitution flows, quarter-end institutional rebalancing) remain unexplored.",
-   "next": "search wave week 2 | 2026-09-28 gap search (gap-search-2026-09-28-22): queued dir:option_expiration_week_calendar_effect (Quantpedia opex-week rule + recent Garcia-Ares 2025 mechanism paper) -- T-20260928-42. Russell reconstitution not pursued this pass (LSEG PDF sources were unreadable/binary; the related S&P 500 add/delete inclusion effect is already dir:index_addition_deletion_effect, evidence_too_weak). | 2026-09-29 gap search (gap-search-2026-09-29-01): queued dir:letf_close_rebalancing_flow_reversal (Lenkey 2024 AIMSPress survey, mechanical LETF/gamma-hedging flow, source itself reads the effect as economically small but never locally tested) -- T-20260929-01. Index-reconstitution/Russell still not pursued (same PDF-access blocker as 2026-09-28)."
+   "gap": "T-20260929-01 (2026-09-29): LETF close-rebalancing flow reversal (dir:letf_close_rebalancing_flow_reversal) batch-screened and refuted -- 0/12 primary candidates clear K1/K2, corroborated by an internal frequency-matched random-day placebo (real drop-conditioned entries beat RAND on all 3 tickers, but the edge is too small to clear K1/K2). H-20260924-01's dip-reversion rules (dir:etf_dip_reversion_ibs_connors) re-judged under the same K1/K2 bar (companion iteration h20260929_01_dip_rejudge): also 0/12, same qualitative conclusion as the original G1/G1' verdict via a different, non-nested criterion. LETF close-rebalancing flow queued (T-20260929-01); index-reconstitution-flow effect still never searched (Russell reconstitution sources remain unreadable). | T-20260928-42 (2026-09-29): option-expiration-week calendar effect (dir:option_expiration_week_calendar_effect) batch-screened and refuted -- 8/8 primary SPY/QQQ/DIA/IWM candidates (WEEK and WEEKMON variants) have negative anchor- and stress-window Sharpe against the frozen S1-S3 K1/K2 contract, corroborated by an internal non-expiration-week placebo control that shows the 3rd Friday is not special in this universe/window; other rebalance/hedging-flow mechanisms in this cell (e.g. options open-interest rollover data, dealer-gamma positioning, index-reconstitution flows, quarter-end institutional rebalancing) remain unexplored.",
+   "next": "2026-09-29 (T-20260929-01): both dir:letf_close_rebalancing_flow_reversal and dir:etf_dip_reversion_ibs_connors closed for this scope under K1/K2; reopen only with a genuinely new signal (AUM/flow-magnitude proxy for LETF, closing-auction imbalance data or Stage B minute-bar timing for the dip family), not a re-tune of the existing grids. Index-reconstitution/Russell reconstitution still not pursued (same PDF-access blocker as prior rounds). search wave week 2 | 2026-09-28 gap search (gap-search-2026-09-28-22): queued dir:option_expiration_week_calendar_effect (Quantpedia opex-week rule + recent Garcia-Ares 2025 mechanism paper) -- T-20260928-42. Russell reconstitution not pursued this pass (LSEG PDF sources were unreadable/binary; the related S&P 500 add/delete inclusion effect is already dir:index_addition_deletion_effect, evidence_too_weak). | 2026-09-29 gap search (gap-search-2026-09-29-01): queued dir:letf_close_rebalancing_flow_reversal (Lenkey 2024 AIMSPress survey, mechanical LETF/gamma-hedging flow, source itself reads the effect as economically small but never locally tested) -- T-20260929-01. Index-reconstitution/Russell still not pursued (same PDF-access blocker as 2026-09-28)."
   },
   {
    "id": "alt_data.short_selling",
@@ -380,8 +381,8 @@
     "dir:long_only_fundamental_decile_10k",
     "dir:signal_library_v1_price_anomalies"
    ],
-   "gap": "judged long-short and whole-universe; long-only small-cap and low-capacity tiers never checked Signal library v1: idiosyncratic volatility, MAX and 52-week-high have strong ICs (0.04-0.05) but their value is on the avoid side, so top-30 long books do not beat the universe; residual momentum's largest-500 book is strong (+19.4%/yr) with a weak IC.",
-   "next": "feed them to the ranking model as features"
+   "gap": "CORRECTED 2026-09-29 (gap-search-04): the earlier note 'long-only small-cap and low-capacity tiers never checked' was stale. signal_card.py's per-tier long-K books (t1/t2/t3) already exist for every avoid-side signal in library v1 and are negative in every tier, including t3 (illiquid): idio_vol_63 t3 20d excess/yr -2.2% (reports/research/signal-cards/idio_vol_63.md), max_ret_21 t3 20d -4.5% (max_ret_21.md), high_52w (skew/near-52wk-high) t3 20d -4.5%/2024+ +0.4% and its formal K1/K2 strategy test also used universe_top_n=500 only and was refuted (dir:skewness_preference_52wk_high_pwb). No open long-only-by-tier gap remains for this signal family.",
+   "next": "closed for tier re-tests; only remaining open thread in this cell is feeding these as ranking-model features (model.multi_source_ranking), not a new standalone screen"
   },
   {
    "id": "intraday_hf.stock_intraday",
@@ -476,7 +477,7 @@
     "dir:momentum_risk_control_vs_spmo"
    ],
    "gap": "",
-   "next": "none (batch 3 refuted 09-23: keep SHY)"
+   "next": "none (batch 3 refuted 09-23: keep SHY; 2026-09-29 T-20260929-10 reopened dir:vix_term_structure_short_vol as a long-only-ETP dual-VIX-signal VRP strategy -- refuted, 0/10 primary candidates cleared K1/K2, all badly beaten by a static 50/50 SMH/QQQ control)"
   },
   {
    "id": "macro_cross_asset.defensive_rotation",

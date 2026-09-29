@@ -1,0 +1,187 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "driver": "brief_preregistered_long_only_etp_simplification",
+      "effect": "The source's own case 3 (full long-vol conviction, held via long VIXY) is dropped entirely (brief forbids any long-vol ETP leg) and collapsed with case 4 (cash) into a single 'not short-vol' state, expressed as SPY or SHY depending on the remainder-leg variant; the short-vol leg is expressed on SVXY (1x weight = VIX/100) rather than short VIXY, without QC's suggested 2x SVXY-beta-matching correction.",
+      "revision": "vix_vrp_etp_10_primary_plus_1_rand_placebo_plus_1_static_5050_control"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_10_vix_vrp_etp.jsonl",
+    "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl"
+  ],
+  "hypothesis_links": [
+    "H1",
+    "H2",
+    "H3"
+  ],
+  "iter_id": "h20260929_10_vix_vrp_etp",
+  "objective": "Preregister and batch-screen a long-only-ETP dual-VIX-signal volatility risk premium mechanism (Zarattini/Aziz/Mele 2025, SSRN 5316487, per the QuantConnect replication) for T-20260929-10, reopening dir:vix_term_structure_short_vol with new information (the mechanism needs only VIX/VIX3M index levels, not a VX futures curve). For scripts/screen_batch.py --batch h20260929_10_vix_vrp_etp --iteration h20260929_10_vix_vrp_etp. No return, Sharpe or backtest number is computed in this dossier.",
+  "schema_version": 3,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "quantconnect_dual_vix_signal_replication",
+      "source_card_path": "reports/harness/source_cards/h20260929_10_vix_vrp_etp.jsonl"
+    },
+    {
+      "claim_id": "concretum_group_volatility_edge_blog",
+      "source_card_path": "reports/harness/source_cards/h20260929_10_vix_vrp_etp.jsonl"
+    },
+    {
+      "claim_id": "ssrn_5316487_abstract_via_search_snippet",
+      "source_card_path": "reports/harness/source_cards/h20260929_10_vix_vrp_etp.jsonl"
+    },
+    {
+      "claim_id": "proshares_svxy_multiplier_change_2018",
+      "source_card_path": "reports/harness/source_cards/h20260929_10_vix_vrp_etp.jsonl"
+    },
+    {
+      "claim_id": "vix_r1_vixy_is_futures_not_spot",
+      "source_card_path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl"
+    },
+    {
+      "claim_id": "vix_r1_vix_basis_paper",
+      "source_card_path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl"
+    },
+    {
+      "claim_id": "vix_r1_vix_term_structure_paper",
+      "source_card_path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl"
+    },
+    {
+      "claim_id": "vix_r1_volatility_managed_portfolios",
+      "source_card_path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl"
+    },
+    {
+      "claim_id": "vix_r1_deflated_sharpe_method",
+      "source_card_path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+  "sources": [
+    {
+      "claim_id": "quantconnect_dual_vix_signal_replication",
+      "url": "https://www.quantconnect.com/research/21143/harvesting-the-volatility-risk-premium-with-a-dual-vix-signal/",
+      "published_or_updated_at": "2026-09-01",
+      "source_type": "platform_replication_with_code",
+      "credibility": "independent_from_scratch_backtest_with_runnable_code_on_a_widely_used_public_backtesting_platform",
+      "core_claim": "Independent QC backtest of the dual-VIX-signal strategy: eVRP=VIX-eRV30 (10-day realized SPY vol, annualized), signal 2 = VIX vs VIX3M, 4-case position logic (target_weight on VIXY), 2016-01..2026-07 Sharpe 0.729 vs SPY 0.582, 25-combo parameter grid all beating SPY, range 0.713-0.773.",
+      "project_applicability": "Primary source for this iteration's signal formulas, case logic and VIX/100 sizing rule; used verbatim except for the long-only-ETP simplification recorded in candidate_matrix_revisions above.",
+      "reflection": "Not the original paper (paywalled); an independent third-party replication using VIXY, not SVXY. Overfit/decay risk: the source's own 25-combo grid all clearing SPY's Sharpe is mild reassurance against gross overfitting to one parameter choice, but is not itself a walk-forward or out-of-sample test, and the 2016-2026 window includes the same recent bull-market-with-low-realized-vol regime this project's own anchor window sits inside."
+    },
+    {
+      "claim_id": "concretum_group_volatility_edge_blog",
+      "url": "https://concretumgroup.com/the-volatility-edge-a-dual-approach-for-vix-etns-trading/",
+      "published_or_updated_at": "2026-09-01",
+      "source_type": "author_affiliated_blog",
+      "credibility": "author_affiliated_not_independent",
+      "core_claim": "2008-2025, after realistic costs, the final dynamically-sized strategy compounds at 16.3%/yr, Sharpe ~1.0, ~15% equity correlation.",
+      "project_applicability": "Corroborates the QC replication's mechanism description at a summary level over a longer, different (2008-2025) window; not used to set any manifest parameter.",
+      "reflection": "Author-affiliated (Zarattini's own firm) -- treated as weak corroboration, not independent evidence. Thin direct-quote coverage on the curl snapshot; most detail via an AI-summarized fetch pass."
+    },
+    {
+      "claim_id": "ssrn_5316487_abstract_via_search_snippet",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5316487",
+      "published_or_updated_at": "2025-06-23",
+      "source_type": "paper_abstract_via_search_engine_snippet",
+      "credibility": "primary_source_abstract_only_full_text_unread",
+      "core_claim": "Zarattini/Aziz/Mele, SFI RP 25-91, 2025-06-23: four rule sets from constant short-vol to a dynamically-sized dual-signal strategy; 2008-2025, after realistic costs, final version 16.3%/yr, Sharpe 1, ~15% equity correlation.",
+      "project_applicability": "Independently confirms the paper's own 'four rule sets' framing and the 2008-2025 headline number, without depending on the Concretum blog.",
+      "reflection": "SSRN full text paywalled/bot-blocked on both curl and WebFetch (403). Marked UNREAD; no manifest parameter is sourced from text beyond this snippet."
+    },
+    {
+      "claim_id": "proshares_svxy_multiplier_change_2018",
+      "url": "https://www.proshares.com/our-etfs/strategic/svxy",
+      "published_or_updated_at": "2018-02-27",
+      "source_type": "provider_official_docs_prior_knowledge",
+      "credibility": "issuer_official_product_page_cited_from_prior_repo_knowledge_not_refetched",
+      "core_claim": "SVXY changed its target daily exposure from -1x to -0.5x of the S&P 500 VIX Short-Term Futures Index effective 2018-02-27.",
+      "project_applicability": "Grounds the preregistered decision to judge K1's stress window on the full 2016-05..2023-09 span (multiplier-mixed) while reporting a post-2018-03 cut as a secondary diagnostic.",
+      "reflection": "Not re-fetched this session (only new data download this round is VXVCLS, per the brief); consistent with the queue task's own text and this repo's prior VIX-related iterations."
+    },
+    {
+      "claim_id": "vix_r1_vixy_is_futures_not_spot",
+      "url": "https://www.proshares.com/our-etfs/strategic/vixy",
+      "published_or_updated_at": "2026-01-01",
+      "source_type": "provider_official_docs",
+      "credibility": "issuer_official_product_page_reused_from_prior_verified_local_card",
+      "core_claim": "ProShares states VIXY seeks exposure to an index of short-term VIX futures contracts, not the spot VIX index -- a VIX-futures ETP cannot substitute for the VIX/VIX3M spot-index signal inputs used by this strategy.",
+      "project_applicability": "Directly grounds this iteration's decision to read VIX/VIX3M as spot index levels (FRED VIXCLS/VXVCLS) rather than trying to derive them from any futures-based ETP price -- also explains why UVXY/VIXY long positions (forbidden by the brief) are not equivalent to a 'long the index' position anyway.",
+      "reflection": "Reused verbatim from the prior mom_vix_term_structure_overlay_r1 campaign's verified source card (reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl), not re-fetched this session, per the mission's reuse-before-repeat rule."
+    },
+    {
+      "claim_id": "vix_r1_vix_basis_paper",
+      "url": "https://doi.org/10.3905/jod.2014.21.3.054",
+      "published_or_updated_at": "2014-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_derivatives_reused_from_prior_verified_local_card",
+      "core_claim": "Simon and Campasano's peer-reviewed paper on the VIX futures basis studies the information content of the VIX-vs-VIX-futures relationship and trading strategies built on it.",
+      "project_applicability": "General academic grounding for VIX-term-structure-based trading signals as a studied class of strategy (this iteration's signal 2 is a spot-index analog: VIX vs VIX3M, not VIX vs VIX futures).",
+      "reflection": "Reused from the prior campaign's card, not independently re-read this session; a term-structure paper about futures basis specifically, not the spot VIX3M index this iteration actually uses."
+    },
+    {
+      "claim_id": "vix_r1_vix_term_structure_paper",
+      "url": "https://doi.org/10.1002/fut.21572",
+      "published_or_updated_at": "2014-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_futures_markets_reused_from_prior_verified_local_card",
+      "core_claim": "Luo and Zhang's paper on the term structure of VIX studies the relation among VIX horizons rather than a single volatility level.",
+      "project_applicability": "General academic grounding that the VIX-horizon-structure dimension (this iteration's signal 2) is a studied, not ad hoc, signal class.",
+      "reflection": "Reused from the prior campaign's card, not independently re-read this session."
+    },
+    {
+      "claim_id": "vix_r1_volatility_managed_portfolios",
+      "url": "https://doi.org/10.1111/jofi.12513",
+      "published_or_updated_at": "2017-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_finance_reused_from_prior_verified_local_card",
+      "core_claim": "Moreira and Muir's Volatility-Managed Portfolios: reducing risky exposure when volatility is high improves risk-adjusted returns in several benchmark factor portfolios.",
+      "project_applicability": "General methodology precedent for volatility-conditioned position sizing (this iteration's VIX/100 weight scaling is a related but distinct mechanism -- sizing a short-vol ETP position by the VIX level itself, not scaling a risky-asset position inversely to realized vol).",
+      "reflection": "Reused from the prior campaign's card, not independently re-read this session; the mechanism direction differs (Moreira/Muir de-risk when vol is high; this strategy's short-vol leg is sized UP when VIX is high, a different economic bet)."
+    },
+    {
+      "claim_id": "vix_r1_deflated_sharpe_method",
+      "url": "https://doi.org/10.3905/jpm.2014.40.5.094",
+      "published_or_updated_at": "2014-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_portfolio_management_reused_from_prior_verified_local_card",
+      "core_claim": "The Deflated Sharpe Ratio corrects an observed Sharpe ratio for selection bias, backtest overfitting and non-normality across multiple trials.",
+      "project_applicability": "Methodology identity for this iteration's dsr_anchor field (screen_lane.py's own deflated_sharpe_probability call) and the manual 10-candidate-only DSR reported in report.md.",
+      "reflection": "Reused method reference, not re-read this session; already the methodology basis for every prior screen_lane batch's dsr_anchor field."
+    },
+    {
+      "claim_id": "dir_vix_term_structure_short_vol_registry_row",
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-23",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_direction_registry_row",
+      "core_claim": "dir:vix_term_structure_short_vol status=not_executable, verdict='no local VX futures data; Alpaca does not provide VIX futures, and short-vol ETPs alone (UVXY/SVXY) cannot replicate the term-structure conditioning without futures-curve data', reopen_if='a VIX futures term-structure data source becomes available'.",
+      "project_applicability": "The direct prior decision this iteration reopens, with new information (the actual mechanism needs only VIX/VIX3M index levels) rather than the reopen_if condition being literally met -- documented explicitly in direction-review.json's existing_solution_comparison.",
+      "reflection": "This registry row's own verdict was written against a different, Concretum-style eVRP/contango-backwardation claim that explicitly required a futures curve; this iteration tests a materially simpler, independently-replicated mechanism, not the same untested claim."
+    },
+    {
+      "claim_id": "mom_vix_term_structure_overlay_r1_implfix1_negative_evidence",
+      "url": "reports/research/iterations/mom_vix_term_structure_overlay_r1_implfix1/evaluation-run/evaluation-report.json",
+      "published_or_updated_at": "2026-09-01",
+      "source_type": "internal_evidence",
+      "credibility": "this_project_own_executed_evaluation_result",
+      "core_claim": "research_pass=false; a VIX/VIX3M-gated TQQQ/QQQ/BIL exposure-ladder mechanism (a different mechanism from this iteration's direct SVXY position) found DSR promotion_probability of 0.0018-0.0058 across its 4 evaluated candidates.",
+      "project_applicability": "Adjacent negative evidence that VIX/VIX3M-conditioned timing overlays broadly struggle under this project's own evaluation contract; cited as prior art, not as a direct test of this iteration's own SVXY-based mechanism.",
+      "reflection": "Different underlying instrument (leveraged index exposure ladder vs. a direct short-vol ETP position) and different evaluation harness (the older breadth-campaign scaffolding, not screen_lane.py) -- a weak, not a decisive, prior."
+    }
+  ],
+  "spec_hash": "7ffc01e43d494e032826681ab26f1c52d2b708ee745e152e2f092a4549ff1d42",
+  "strategy_name": "h20260929_10_vix_vrp_etp",
+  "topic_coverage": [
+    "dual_vix_signal_mechanism_and_position_sizing",
+    "vix_vix3m_term_structure_index_definition",
+    "vix_futures_vs_spot_index_instrument_risk",
+    "svxy_multiplier_change_2018_structural_confound",
+    "volatility_managed_portfolio_academic_grounding",
+    "deflated_sharpe_methodology",
+    "adjacent_vix_timing_negative_evidence_this_project",
+    "registry_reopen_rationale_vs_original_futures_curve_blocker"
+  ],
+  "decision": "proceed",
+  "existing_solution_comparison": "`oc research directions check vix` and `check \"short vol\"` (run before any new work) return dir:vix_term_structure_short_vol (not_executable, needs VX futures curve data) as the only directly on-topic registry row; no local iteration has previously tested this specific SVXY-VIX/100-sized, long-only-ETP dual-signal mechanism. The closest adjacent prior local test, mom_vix_term_structure_overlay_r1_implfix1 (a VIX/VIX3M-gated TQQQ/QQQ/BIL exposure ladder), found research_pass=false with DSR promotion probabilities of 0.0018-0.0058 -- cited as weak adjacent negative evidence, not a repeat of this mechanism. This round's new information (the actual published mechanism needs only VIX/VIX3M spot index levels, both freely available via FRED, not a VX futures curve) is what justifies reopening a not_executable row rather than a refuted one.",
+  "negative_experiments_checked": "dir:vix_term_structure_short_vol (not_executable, cited above) and mom_vix_term_structure_overlay_r1_implfix1 (research_pass=false, cited above). Neither tested this specific mechanism; both are recorded as the closest prior art."
+}

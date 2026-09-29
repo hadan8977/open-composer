@@ -1,0 +1,85 @@
+{
+  "iter_id": "h20260928_41_country_etf_rotation",
+  "strategy_name": "h20260928_41_country_etf_rotation",
+  "source_spec_path": "strategy_specs/drafts/h20260928_41_country_etf_rotation.yaml",
+  "spec_hash": "92fede4069348f13d25b1fe02678775019d16f5ef2f4a4de995a4381a1dc9c76",
+  "schema_version": 3,
+  "created_at": "2026-09-29T05:10:00+00:00",
+  "objective": "Preregister 8 candidates for T-20260928-41: single-country developed/emerging equity ETF cross-sectional momentum rotation, reusing h20260928_40_equity_etf_menus.make_rotation_fn unedited, for scripts/screen_batch.py --batch h20260928_41_country_etf_rotation --iteration h20260928_41_country_etf_rotation. No return, Sharpe or backtest number is computed in this dossier.",
+  "paths": [
+    {
+      "name": "country_etf_rotation_screen",
+      "candidate_count": 8,
+      "hypothesis_refs": [
+        "H1"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "COUNTRY_L63_N1_MO",
+          "COUNTRY_L63_N1_WK",
+          "COUNTRY_L63_N2_MO",
+          "COUNTRY_L63_N2_WK",
+          "COUNTRY_L252_N1_MO",
+          "COUNTRY_L252_N1_WK",
+          "COUNTRY_L252_N2_MO",
+          "COUNTRY_L252_N2_WK"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "EWJ_buy_and_hold",
+        "EWG_buy_and_hold",
+        "EWU_buy_and_hold",
+        "EWA_buy_and_hold",
+        "EWC_buy_and_hold",
+        "EWZ_buy_and_hold",
+        "INDA_buy_and_hold",
+        "EWY_buy_and_hold",
+        "EWT_buy_and_hold",
+        "SHY_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 8,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_41_country_etf_rotation/candidate-manifest.json",
+  "candidate_manifest_sha256": "80efc1d94b252e9dcf99078aff974293fb6006fecdd430cd8d5d10f8749c9b6f",
+  "data_feasibility_path": "reports/research/iterations/h20260928_41_country_etf_rotation/data-feasibility.json",
+  "data_feasibility_sha256": "f052ef640e9e33fb1cc20cf7bc91e0104924f14aa5482bf831af3388ea72a6c4",
+  "cost_table_path": "reports/research/iterations/h20260928_41_country_etf_rotation/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_41_country_etf_rotation/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_41_country_etf_rotation/report.md",
+    "reports/research/iterations/h20260928_41_country_etf_rotation/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (median across offsets) >= 0.80 * S3's date-neutral Sharpe in BOTH windows (anchor >=1.1882, stress >=0.6447), 10bp per side, positive CAGR at 20bp. All 8 candidates.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows. All 8 candidates.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.1882 but stress does not clear its bar -- forward-tracked only.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress).",
+    "pass_requires": "K1 OR K2.",
+    "multiple_comparisons": "This iteration's own n_trials=8."
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_01_letf_flow_reversal",
+  "reviewed_at": "2026-09-29T04:05:00+00:00",
+  "decision": "proceed",
+  "objective": "Preregister and batch-screen 15 candidates (12 primary LETF_{SPY,QQQ,SMH}_D{2,3}_H{1,3} leveraged-ETF close-rebalancing-flow-reversal candidates plus 3 internal RAND placebo controls) for T-20260929-01 part A (gap-search 2026-09-29-01, flows_structural.rebalance_and_hedging_flows; registry dir:letf_close_rebalancing_flow_reversal, queued) via scripts/screen_batch.py --batch h20260929_01_letf_flow_reversal --iteration h20260929_01_letf_flow_reversal against the owner's K1/K2 keep rule. No return, Sharpe or backtest number is computed in this dossier.",
+  "target_regime_and_horizon": "Same frozen windows as every batch-screening round in this repo: stress 2016-05-02..2023-09-15 and anchor 2024-01-08..2026-09-17, judged on date-neutral Sharpe. D frequency, one version per candidate (no rebalance-day offset sweep, per screen_lane.py's docstring -- this is an event-driven daily rule, not a calendar-anchor with a shiftable rebalance day). The 2026-01-02..2026-09-17 holdout is reference-only and contaminated. Validity is limited to the local SIP daily archive's coverage for SPY/QQQ/SMH/SHY (2016-01-04 onward) -- no new data fetch is needed. This mechanism is mechanical (daily leverage-ratio rebalancing), not behavioral, so a priori it should not have decayed the way calendar anomalies have -- but Lenkey (2024)'s own synthesis reads the class-level economic magnitude as small, so the recent-regime bar this batch applies (K1/K2 vs S3) is a real test, not a formality.",
+  "existing_solution_comparison": "`oc research directions check letf` and `check dip` (run this session, transcript below) found: dir:letf_close_rebalancing_flow_reversal itself is 'queued' (this task's own registry entry, added by the same 2026-09-29 gap search that produced this queue task -- a match against itself, not a prior distinct test); dir:etf_dip_reversion_ibs_connors is 'refuted' (a different RSI(2)/IBS dip signal, re-judged here under a different keep bar by the companion h20260929_01_dip_rejudge iteration, not this one); dir:option_expiration_week_calendar_effect is 'refuted' (a different, calendar-anchored dealer-hedging-flow mechanism, same K1/K2 contract, 0/8 primary). No prior local iteration tests a same-ticker magnitude-conditioned drop-then-reversal rule on SPY/QQQ/SMH. This is the first local test of this specific mechanism. Lenkey (2024) is the one genuinely new source opened for this round (by the coordinator, in the queue task; not re-fetched in this execution session -- see external-brief.json's reflection field); its own literature review already synthesizes the underlying LETF-flow papers (Ivanov & Lenkey, Cheng & Madhavan, a 2022 SFI working paper), so a second independent read of those was judged low-value given the survey's synthesis already states the class-level conclusion this batch tests locally.",
+  "remaining_evidence_gap": "Whether any of the 12 primary lookback-free event-driven candidates actually clears K1, K2, strong_keep or watch_recent against S3's frozen reference numbers when run through the batch-screening lane under this project's 10bp/20bp next-open-fill cost contract, and whether any apparent edge survives the same-ticker RAND placebo falsification -- this is exactly what has not been tested locally and is what this round's screening pass computes, with no further parameter choice available to it once the manifest is frozen.",
+  "negative_experiments_checked": "h20260928_42_opex_week (another mechanical dealer/hedging-flow mechanism under the identical K1/K2 contract: 0/8 primary refuted, all negative anchor Sharpe, corroborated by an internal placebo) and h20260924_01_etf_dip_reversion (0/24 at the older G1/G1' bar, D1's own placebo failure) both set the recent-round base rate: published flow/reversal mechanisms have repeatedly failed this project's specific contract even where the underlying academic mechanism is judged real by its own source. Lenkey (2024)'s own synthesis already reads the LETF-rebalancing-flow literature as economically insignificant despite statistically significant individual-paper associations -- this batch is a direct, cheap test of whether that holds locally, not an assumption that it does.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress, signal at the session close, fill at the next session's open (both entry and exit) -- identical to the frozen S1/S2/S3 convention and every prior batch-screening round (cost-contract.json). Retrigger-while-holding is ignored (no extend, no stacking) -- a fixed, preregistered convention documented in candidate-manifest.json, not a choice made after seeing any result.",
+  "stop_condition": "If none of the 12 primary candidates clears K1, K2, or reaches watch_recent (or every apparent pass is beaten by its own same-ticker RAND placebo), dir:letf_close_rebalancing_flow_reversal is refuted for this scope and the flows_structural.rebalance_and_hedging_flows gap-search entry is closed for this specific mechanism; the next round should not re-tune this same threshold/hold grid on this same universe without a new, distinct signal (e.g. an actual AUM/flow-magnitude proxy from options or fund-flow data this repo's data does not yet support).",
+  "queries": [
+    {
+      "query": "Lenkey 2024 leveraged ETF market impact survey AIMSPress Quantitative Finance and Economics (curl fetch + WebFetch re-verification, this execution session)",
+      "opened_urls": [
+        "http://www.aimspress.com/article/doi/10.3934/QFE.2024031"
+      ],
+      "searched_at": "2026-09-29T04:02:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "http://www.aimspress.com/article/doi/10.3934/QFE.2024031",
+      "claim_id": "lenkey_2024_aimspress_letf_rebalancing_survey",
+      "claim": "Survey of the leveraged/inverse-ETF rebalancing-flow literature (Lenkey 2024, AIMSPress Quantitative Finance and Economics, open access). The literature consistently reports statistically significant associations between ETF rebalancing demand and late-day returns and volatility, but most papers suffer potentially serious methodological errors and the economic associations appear insignificant; concerns raised by policymakers are not supported by the overall empirical evidence.",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-01-01",
+      "market_and_period": "US leveraged/inverse equity-index ETFs, literature survey (no single sample period -- synthesizes multiple studies)",
+      "applicability": "Sole mechanism grounding for all 12 LETF_* primary candidates and the honest prior that the economic effect is likely small.",
+      "limitations": "A survey, not a single dataset with its own Sharpe/return figures to replicate directly; the underlying papers it reviews were not independently opened this round.",
+      "independent_replication": "n/a -- this batch's own local screen is the decisive test.",
+      "fetched_at": "2026-09-29T04:02:00+00:00",
+      "sha256": "7bfef3ecfbcc1f532f86d9f7c43e4f857f7e0f9764bdd3e55b5fe4781b050392",
+      "snapshot_path": "reports/research/iterations/h20260929_01_letf_flow_reversal/sources/lenkey-2024-aimspress-letf-survey.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_01_letf_flow_reversal.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 15 candidates through the batch-screening lane (scripts/screen_batch.py --batch h20260929_01_letf_flow_reversal --iteration h20260929_01_letf_flow_reversal) against S3's frozen stress/anchor windows and check K1/K2/placebo-falsification directly; the engine and cost/fill convention are already frozen and reused unedited, so this is the cheapest possible resolution.",
+    "pass_condition": "At least one of the 12 primary candidates clears K1 or K2 in candidate-manifest.json's keep_rule AND is not demoted by the RAND placebo internal falsification rule.",
+    "falsification_condition": "None of the 12 primary candidates has a date-neutral Sharpe >=80% of S3's in both windows with positive 20bp CAGR (K1), none of their 63-session inverse-vol blends with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows (K2), none reaches watch_recent, or every apparent pass is beaten by its own same-ticker RAND placebo.",
+    "max_compute_minutes": 15
+  }
+}

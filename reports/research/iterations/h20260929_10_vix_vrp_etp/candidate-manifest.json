@@ -1,0 +1,330 @@
+{
+  "iter_id": "h20260929_10_vix_vrp_etp",
+  "generated_at": "2026-09-29T05:20:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_10_vix_vrp_etp",
+  "objective": "Preregister 12 candidates for T-20260929-10 (owner research-list item 3): long-only-ETP dual-VIX-signal volatility risk premium (Zarattini/Aziz/Mele 2025, SSRN 5316487, per the QuantConnect replication). 10 mechanism candidates (3 RV-window variants of the full 2-signal combo, signal-1-only, signal-2-only, each in SPY-remainder and SHY-remainder versions) plus 1 internal RAND placebo and 1 static 50/50 SMH/QQQ external control, for scripts/screen_batch.py --batch h20260929_10_vix_vrp_etp --iteration h20260929_10_vix_vrp_etp. No return, Sharpe or backtest number is computed in this dossier.",
+  "candidates": [
+    {
+      "candidate_id": "VVRP_COMBO_RV5_SPY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_2signal_candidate",
+      "method": "vix_dual_signal_evrp_term_structure_svxy_sized_vix_over_100",
+      "ablation": "rv_window_neighbor_5d",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_combo",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 5,
+        "non_short_vol_leg": "SPY",
+        "svxy_weight_full": "VIX/100 (capped 1.0)",
+        "svxy_weight_half": "0.5*VIX/100 (capped 1.0)",
+        "rule": "Case1 (eVRP>0 & VIX<VIX3M): SVXY=VIX/100. Case2 (eVRP<0 & VIX<VIX3M): SVXY=0.5*VIX/100. Cases 3/4 (VIX>=VIX3M, any eVRP sign): SPY=1.0. eVRP=VIX-std(5d SPY returns,ddof=1)*sqrt(252)*100."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_COMBO_RV5_SHY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_2signal_candidate",
+      "method": "vix_dual_signal_evrp_term_structure_svxy_sized_vix_over_100",
+      "ablation": "rv_window_neighbor_5d",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_combo",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 5,
+        "non_short_vol_leg": "SHY (harness auto-remainder, candidate returns {} in cases 3/4)",
+        "svxy_weight_full": "VIX/100 (capped 1.0)",
+        "svxy_weight_half": "0.5*VIX/100 (capped 1.0)",
+        "rule": "Same as VVRP_COMBO_RV5_SPY but cases 3/4 hold cash (SHY) instead of SPY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_COMBO_RV10_SPY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_2signal_candidate",
+      "method": "vix_dual_signal_evrp_term_structure_svxy_sized_vix_over_100",
+      "ablation": "original_source_parameter",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_combo",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 10,
+        "non_short_vol_leg": "SPY",
+        "svxy_weight_full": "VIX/100 (capped 1.0)",
+        "svxy_weight_half": "0.5*VIX/100 (capped 1.0)",
+        "rule": "Original QC-replicated parameters (10-day RV window). Closest faithful-parameter analog to the source's own 2016-01..2026-07 Sharpe 0.729 (SPY-remainder matches the source's own 'idle capital in SPY' convention, though on VIXY-vs-SVXY and cost/fill conventions that differ -- see report.md reconciliation)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_COMBO_RV10_SHY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_2signal_candidate",
+      "method": "vix_dual_signal_evrp_term_structure_svxy_sized_vix_over_100",
+      "ablation": "original_source_parameter",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_combo",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 10,
+        "non_short_vol_leg": "SHY (harness auto-remainder)",
+        "svxy_weight_full": "VIX/100 (capped 1.0)",
+        "svxy_weight_half": "0.5*VIX/100 (capped 1.0)",
+        "rule": "Same as VVRP_COMBO_RV10_SPY but cases 3/4 hold cash (SHY) instead of SPY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_COMBO_RV20_SPY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_2signal_candidate",
+      "method": "vix_dual_signal_evrp_term_structure_svxy_sized_vix_over_100",
+      "ablation": "rv_window_neighbor_20d",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_combo",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 20,
+        "non_short_vol_leg": "SPY",
+        "svxy_weight_full": "VIX/100 (capped 1.0)",
+        "svxy_weight_half": "0.5*VIX/100 (capped 1.0)",
+        "rule": "Same combo rule as VVRP_COMBO_RV10_SPY with a 20-day realized-vol window (upper end of QC's own 6-14 day grid, extended to test sensitivity beyond it)."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_COMBO_RV20_SHY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_2signal_candidate",
+      "method": "vix_dual_signal_evrp_term_structure_svxy_sized_vix_over_100",
+      "ablation": "rv_window_neighbor_20d",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_combo",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 20,
+        "non_short_vol_leg": "SHY (harness auto-remainder)",
+        "svxy_weight_full": "VIX/100 (capped 1.0)",
+        "svxy_weight_half": "0.5*VIX/100 (capped 1.0)",
+        "rule": "Same as VVRP_COMBO_RV20_SPY but cases 3/4 hold cash (SHY) instead of SPY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_SIG1ONLY_SPY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_single_signal_ablation",
+      "method": "vix_evrp_sign_only_svxy_sized_vix_over_100",
+      "ablation": "signal2_dropped",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_sig1only",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 10,
+        "non_short_vol_leg": "SPY",
+        "rule": "eVRP>0 -> SVXY=VIX/100 (full, no half-size); else SPY=1.0. Term structure (signal 2) dropped entirely -- isolates signal 1's own contribution."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_SIG1ONLY_SHY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_single_signal_ablation",
+      "method": "vix_evrp_sign_only_svxy_sized_vix_over_100",
+      "ablation": "signal2_dropped",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_sig1only",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rv_window_days": 10,
+        "non_short_vol_leg": "SHY (harness auto-remainder)",
+        "rule": "Same as VVRP_SIG1ONLY_SPY but non-short-vol state holds cash (SHY) instead of SPY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_SIG2ONLY_SPY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_single_signal_ablation",
+      "method": "vix_term_structure_only_svxy_sized_vix_over_100",
+      "ablation": "signal1_dropped",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_sig2only",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "non_short_vol_leg": "SPY",
+        "rule": "VIX<VIX3M -> SVXY=VIX/100 (full, no half-size); else SPY=1.0. eVRP (signal 1) dropped entirely -- isolates signal 2's own contribution."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_SIG2ONLY_SHY",
+      "path": "vix_vrp_etp_screen",
+      "role": "primary_deterministic_single_signal_ablation",
+      "method": "vix_term_structure_only_svxy_sized_vix_over_100",
+      "ablation": "signal1_dropped",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_sig2only",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "non_short_vol_leg": "SHY (harness auto-remainder)",
+        "rule": "Same as VVRP_SIG2ONLY_SPY but non-short-vol state holds cash (SHY) instead of SPY."
+      },
+      "eligible_for_keep_tiers": true
+    },
+    {
+      "candidate_id": "VVRP_RAND_PLACEBO",
+      "path": "vix_vrp_etp_screen",
+      "role": "internal_placebo_not_keep_eligible",
+      "method": "deterministic_pseudo_random_day_entry_frequency_matched",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v1_evrp_and_term_structure",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_placebo",
+        "source_card": "vix_vrp_etp_internal_placebo_random_day",
+        "non_short_vol_leg": "SHY (harness auto-remainder)",
+        "trigger_rate_calc": "fraction of days in the full local history where VVRP_COMBO_RV10_SHY's real short-vol condition (case 1 or 2) fires; computed once, not restricted to select/anchor window.",
+        "rule": "Deterministic pseudo-random day (SHA-256 hash of 'VVRP|RAND|<date>', uniform draw vs the calibrated trigger rate) substitutes for the real eVRP/term-structure condition; on a trigger day, holds SVXY at that day's VIX/100 weight (same sizing as the real candidates). Internal falsification control, never keep-eligible."
+      },
+      "eligible_for_keep_tiers": false
+    },
+    {
+      "candidate_id": "STATIC5050_SMH_QQQ",
+      "path": "vix_vrp_etp_screen",
+      "role": "external_benchmark_control_not_keep_eligible",
+      "method": "static_5050_monthly_rebalanced_blend",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+      "fallback": "n/a (always invested)",
+      "data_contract": "data_v1_sip_daily_plus_fred_vix_vix3m",
+      "feature_contract": "feature_v2_none_static_control",
+      "label_contract": "label_v1_close_signal_next_open_fill",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_vvrp_vs_s3_k1_k2",
+      "parameters": {
+        "family": "vix_vrp_etp_external_control",
+        "source_card": "quantconnect_dual_vix_signal_replication",
+        "rule": "Fixed 50/50 SMH/QQQ, monthly rebalanced, no VIX signal at all. Owner-requested comparison point for this queue task; never keep-eligible, an external sanity benchmark only."
+      },
+      "eligible_for_keep_tiers": false
+    }
+  ],
+  "candidate_count": 12,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_plus_fred_vix_vix3m": "SVXY/SPY/SHY/SMH/QQQ daily bars, data/sip/daily/*/*.parquet (local SIP archive, no new fetch); VIX and VIX3M daily closes, data/research/vix/VIXCLS.csv (already local, fetched 2026-09-28) and data/research/vix/VXVCLS.csv (newly fetched this iteration via FRED's public CSV export, the one new data source this round)."
+    },
+    "features": {
+      "feature_v1_evrp_and_term_structure": "eVRP_t = VIX_t - std(trailing N daily SPY close-to-close returns ending at t, ddof=1)*sqrt(252)*100 (N in {5,10,20}); term structure = VIX_t < VIX3M_t (contango) vs VIX_t > VIX3M_t (backwardation). Both read from data/research/vix/*.csv, aligned onto the trading-day index with at-most-1-day forward fill (documented FRED gap policy), truncated at asof -- no look-ahead.",
+      "feature_v2_none_static_control": "No VIX signal at all -- STATIC5050_SMH_QQQ is a fixed monthly 50/50 SMH/QQQ blend, an external benchmark control only."
+    },
+    "labels": {
+      "label_v1_close_signal_next_open_fill": "Signal at session close -> fill at next session's open, both entry and exit; frozen project contract. Realized vol uses only close-to-close returns (no same-day intraday return, unlike the QC replication's own intraday-implied addend)."
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": "screen_lane.py frozen select 2023-09-18..2025-12-31 / anchor 2024-01-08..2026-09-17 / holdout 2026-01-02..2026-09-17 (contaminated) / stress 2016-05-02..2023-09-15 windows, D freq (single version, no offset sweep) for all VVRP_*/RAND candidates; STATIC5050_SMH_QQQ is M freq (21-offset sweep, judged by median)."
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": "10bp per side primary, 20bp per side stress, screen_lane.py COST_BPS_PRIMARY/STRESS."
+    },
+    "benchmarks": {
+      "benchmark_v1_vvrp_vs_s3_k1_k2": "K1 (median-offset -- n/a for D freq, single version -- net-10bp anchor Sharpe>=1.19 and stress Sharpe>=0.65, positive 20bp CAGR both windows) / K2 (63-session inverse-vol blend with S3 beats vol-matched S3+SHY control by >=0.05 Sharpe both windows) / strong_keep (K2 edge>=0.10, or K1 Sharpe in both windows >= S3's own 1.49/0.81) / watch_recent (anchor Sharpe>=1.19, stress unmet), per this manifest's keep_rule. Only the 10 non-placebo/non-control candidates are keep-eligible."
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml": "7ffc01e43d494e032826681ab26f1c52d2b708ee745e152e2f092a4549ff1d42"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_10_vix_vrp_etp.yaml",
+  "spec_hash": "7ffc01e43d494e032826681ab26f1c52d2b708ee745e152e2f092a4549ff1d42",
+  "trial_count_and_dsr_note": "12 candidates total (10 primary + 1 RAND placebo + 1 static-control) in this iteration's own screen_batch.py run; n_trials=12 is what leaderboard.json/results.json report automatically, and includes the 2 non-keep-eligible controls in that count (screen_lane.py's own convention, same as h20260929_01's 15=12+3). report.md additionally reports a manual 10-candidate-only DSR (excluding the 2 controls) using open_composer.research.campaign_statistics.deflated_sharpe_probability directly, for comparison.",
+  "keep_rule": {
+    "K1": "net-10bp Sharpe (D freq, single version -- no offset sweep) >= 1.1882 in the anchor window AND >= 0.6447 in the stress window, with positive CAGR at 20bp per side in both windows. Only the 10 primary (VVRP_*) candidates are eligible.",
+    "K2": "a 63-session trailing-inverse-vol monthly blend of the candidate with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH the anchor and stress windows. Only the 10 primary candidates are eligible.",
+    "watch_recent": "anchor-window Sharpe >= 1.1882 (K1's anchor bar) but the stress window does not clear its bar -- forward-tracked only, not a keep. Only primary candidates are eligible.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.4853 anchor / 0.8059 stress, exact figures from h20260928_01_s3_rebalance_tranching/results.json).",
+    "pass_requires": "K1 OR K2, for a primary (VVRP_*) candidate only.",
+    "placebo_and_benchmark_internal_falsification": "If a primary candidate would otherwise be kept (K1, K2, strong_keep, or watch_recent), but VVRP_RAND_PLACEBO or STATIC5050_SMH_QQQ has a judged anchor-window Sharpe >= that primary candidate's own judged anchor Sharpe, the primary candidate is demoted to 'not kept (placebo/benchmark replication)'. VVRP_RAND_PLACEBO and STATIC5050_SMH_QQQ themselves are NEVER eligible for K1/K2/strong_keep/watch_recent regardless of their own Sharpe.",
+    "multiple_comparisons": "This iteration's own leaderboard.json/results.json report n_trials=12 (10 primary + 1 placebo + 1 static control), computed automatically by scripts/screen_batch.py. A manual 10-candidate-only DSR is additionally computed and reported in report.md for comparison."
+  }
+}

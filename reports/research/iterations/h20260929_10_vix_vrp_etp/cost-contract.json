@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open",
+  "iter_id": "h20260929_10_vix_vrp_etp",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only SVXY/SPY/SHY/SMH/QQQ, no leverage held directly beyond SVXY's own built-in -0.5x/-1x structure, no shorting)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (next session open after the close signal)",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "k2_control_cost_model": "the vol-matched k*S3+(1-k)*SHY control pays no rebalancing cost (conservative in the control's favor, matching every prior batch-screening round's convention)",
+  "note_vs_source": "The QuantConnect replication's own convention (market-on-close orders, skip trade unless target weight changes sign or moves >=2%) is NOT applied here -- this project's frozen contract (close-signal -> next-session-open fill, 10bp/20bp per side, every signal day rebalanced) is applied unedited, identical to every other screen_lane batch. This means our version trades more often (no 2% no-trade band) than the source's own live-implementation convention; reported as a methodology difference in report.md's QuantConnect reconciliation, not adjusted for."
+}
