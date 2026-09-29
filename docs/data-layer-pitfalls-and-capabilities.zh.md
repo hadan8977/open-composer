@@ -24,6 +24,7 @@
 | 6 | ticker 被回收 | ❌ | 需永久证券标识（PERMNO / FIGI）。退市公司的 ticker 会被重新分配给别的公司。Alpaca bars 端点的 `asof` 参数可按日期解析同一实体的改名（仓库未用）；Databento `instrument_id` 是主流做法 |
 | 7 | 指数 / 宇宙成分历史 | ❌ | "2019-06 当时的标普成分股"，任何横截面策略的前提 |
 | 8 | 数据源与复权口径未钉死 | ✅ | `frame.attrs` 固定记录 feed 与 adjustment；provider feed 已在 `auto_research` 永久关闭。**2026-09-03 补充**：spec 级接入 SIP 走 `data.source: alpaca` + `data.path: data/sip/daily`（`source` 的 Literal 集合不含 `sip_parquet`，不能改 `strategy_spec.py`），`load_ohlcv_for_spec` / `fetch_ohlcv` / `load_daily_dataset` 三处均已支持，`frame.attrs["data_source_mode"]="sip_parquet"` 全程透传到回测报告 |
+| 9 | 个股脚本绕过价格清洗：重组复牌、单日坏价、漏复权拆股 | ⚠️💥 | **2026-09-29 实测（T-20260929-20）**：新闻/无新闻大跌反转的脚本只删了零成交的幽灵行，没调用 `open_composer/research/features/price_hygiene.py` 的 `sanitize_price_matrices`，结果被三类坏数据污染。① 破产重组后沿用旧代码重新上市：WOLF 2025-09-26 收 1.21，下一交易日 22.1，一笔 3 天空单记成 −1757%，整本账的日历收益被这一笔打穿（最大回撤低于 −100%）。② 单日坏价：KIDZ 510→9.495→421（2026-03-06 起），IXHL 4.76→0.167→4.24（2026-02-25 起），在跳空类信号里会变成巨大的假缺口。③ Alpaca `adjustment=all` 漏掉的拆股：APH 2026-08-26 收 161.34，次日 80.69（2:1），被当成龙头股"无新闻腰斩"。①② 由 `sanitize_price_matrices` 默认参数处理（≥10 倍跳变、停牌缺口）；③ 的 2:1 这类小比例它抓不到。扫描 2024–2026：价格 >1 美元、排除权证/单位/配股权后，开盘价和收盘价都落在常见拆股比例 ±2% 内的交易日共 62 个，其中有几个是真实新闻（NBIS 2025-09-09 +49%、CRNX 2026-07-07 +99%）。因此只能在信号当天排除"像拆股"的事件，不能按持有期内的结果剔除（会把空头腿真实的逼空删掉）。根治是接 Alpaca 公司行动 API（第 4 条已实测可用），传入 `sanitize_price_matrices` 的 `known_corporate_actions` 钩子。**规则**：凡是用 `data/sip/daily` 做个股层面回测的脚本，必须先过 `sanitize_price_matrices`，并把 `PriceHygieneReport` 计数写进 results |
 
 ## 二、时间与重采样
 
