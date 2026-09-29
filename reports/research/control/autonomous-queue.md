@@ -100,7 +100,7 @@
   - 2026-09-28 结果：不成立。协调员补正后 zoo 加入完整 Alpha158（154 列），TEST 窗口统一到 2026-09-08。批里选出的 F10（ROE+毛利率+低应计的三因子质量复合，SELECT ICIR 0.272）在 TEST rank IC 上赢 zoo 选出的 Alpha158 CORD60（0.0274 对 0.0217），但 TEST 20bp 前 50 组合夏普输（0.640 对 0.879）；两条都要满足才算通过，只满足一条。`--stage final` 通过；登记簿新增一行 `dir:llm_hypothesis_code_backtest_loop`（status refuted）；第二阶段不开。
 
 ### T-20260928-16 DeepSeek 试点：8-K 情绪加速度（一季度 IC）
-- status: running
+- status: cancelled
 - priority: 2
 - not_before:
 - goal: `dir:llm_8k_gdelt_sentiment_acceleration` 的最便宜否定测试。
@@ -108,9 +108,13 @@
 - done_when: IC 和安慰剂结果写进登记簿；决定继续或停止。
 - notes:
   - 2026-09-28 交互会话派 Sonnet 执行；DeepSeek 限流后按 next_try_at 自动续跑。自动轮不要碰。
+  - 2026-09-29 05:42:05 UTC：机主停掉执行代理（与 T-20260929-12 同一时刻），按取消处理，机主要求才继续。
+    - 停止后，独立的打分脚本仍把 DeepSeek 打分跑完了（09:58 UTC，2,092/2,092 条：2,042 条新闻 + 50 份 8-K，全部 ok，存在 `data/features/h20260928_16_sentiment_accel_scores/items.parquet`）。
+    - 预注册的 IC 和安慰剂没有算。如要继续，只剩这一步，不需要再调用 DeepSeek。
+    - 脚本和测试已归档。
 
 ### T-20260928-17 DeepSeek 试点：10-K/8-K 风险标签特征（400 份）
-- status: running
+- status: done
 - priority: 2
 - not_before:
 - goal: `dir:text_to_pit_feature_extraction` 的最便宜否定测试。
@@ -118,6 +122,7 @@
 - done_when: 结论写进登记簿。
 - notes:
   - 2026-09-28 交互会话派 Sonnet 执行，正在打分。自动轮不要碰。
+  - 结果（2026-09-28，队列状态 2026-09-29 补改）：登记簿 `dir:text_to_pit_feature_extraction` 已判 refuted。真实 IC 为负，但 8 个季度样本下和安慰剂噪声分不开（反号安慰剂达到真实幅度的 75%）。档案见 `reports/research/iterations/h20260928_17_filing_risk_labels/`。
 
 ### T-20260928-18 补 VIX 和 PUTW 数据，再测两条 ETF 规则
 - status: done

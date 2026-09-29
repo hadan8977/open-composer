@@ -1,0 +1,145 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_16_8k_sentiment_accel",
+  "strategy_name": "h20260928_16_8k_sentiment_accel_pilot",
+  "source_spec_path": "strategy_specs/drafts/h20260928_16_8k_sentiment_accel.yaml",
+  "spec_hash": "860f7e698b014e46c0be4295dff27b9945dd02d415f52bf0a3b706aae75d26c1",
+  "objective": "Reproduce the LLM_Alpha repo's sent_accel feature construction (rank of short-MA minus long-MA of DeepSeek-scored polarity*magnitude on 8-K text + news) on our own data for one recent quarter and check daily cross-sectional IC vs a shuffled-news placebo, before any CV harness or backtest -- the cheapest falsification test named in the registry for dir:llm_8k_gdelt_sentiment_acceleration.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "llm_alpha_repo_construction_and_results",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://github.com/quangkhaidataka/LLM_Alpha"
+    },
+    {
+      "claim_id": "engelberg_mclean_pontiff_2018_abstract_and_finding",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://rady.ucsd.edu/faculty/directory/engelberg/pub/portfolios/ANOMALIES_NEWS.pdf"
+    },
+    {
+      "claim_id": "tetlock_2007_media_pessimism_reversion",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://business.columbia.edu/sites/default/files-efs/pubfiles/3097/Tetlock_Media_Sentiment_JF.pdf"
+    },
+    {
+      "claim_id": "kakushadze_2016_101_formulaic_alphas_construction",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://arxiv.org/pdf/1601.00991"
+    },
+    {
+      "claim_id": "gdelt_project_public_open_coverage",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://www.gdeltproject.org/about.html"
+    },
+    {
+      "claim_id": "deepseek_api_openai_compatible_endpoint",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://api-docs.deepseek.com/"
+    },
+    {
+      "claim_id": "sec_edgar_free_public_access",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://www.sec.gov/edgar/search-and-access"
+    },
+    {
+      "claim_id": "purged_embargo_cv_definition",
+      "source_card_path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "url": "https://en.wikipedia.org/wiki/Purged_cross-validation"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/quangkhaidataka/LLM_Alpha",
+      "published_or_updated_at": "unknown",
+      "source_type": "platform_docs",
+      "credibility": "single_author_repo_self_audited",
+      "core_claim": "A market-neutral long-short portfolio whose signal (sent_accel) is built from LLM-extracted structured features (polarity, magnitude, event_type, tense, specificity, novelty) from EDGAR 8-K filings and GDELT 2.0 financial news, using the formula: raw_pol = polarity*magnitude per article; short_ma = 5-day rolling mean; long_ma = 20-day rolling mean; accel = short_ma - long_ma; score = -1*(cs_rank(accel)-0.5); smoothed = 30-day moving average (Alpha101 decay); rank-weighted dollar-neutral portfolio, GICS sector-neutralized, 5-day holding, weekly rebalance. On a point-in-time S&P 100 universe, Q1 2022-Q4 2024 OOS (753 trading days), net of 5bps round-trip cost: Sharpe +0.784, max drawdown 3.33%, beta_mkt +0.001, alpha +0.72bps/day with t-stat +1.345 (below 1.96 significance), 9/12 positive quarters. The frozen hyperparameter configuration failed its own pre-registered H2-2021 validation gate (IR=-1.50) and was carried forward via an author-documented override.",
+      "project_applicability": "This is the exact construction dir:llm_8k_gdelt_sentiment_acceleration is named for: sent_accel = -1*(cs_rank(short_ma(polarity*magnitude,5) - long_ma(polarity*magnitude,20)) - 0.5), rank-weighted, 5-day hold, purge(5)+embargo(5) CV. Pilot T-16 reproduces only this feature-construction formula on our own 8-K text scores + Alpaca/Benzinga news via DeepSeek in place of the source's Claude Haiku 4.5.",
+      "reflection": "Single-author repo (PhD student side project), not peer reviewed; author's own H2-2021 hyperparameter validation gate FAILED (IR=-1.50) and was self-overridden rather than passed; OOS alpha t-stat (+1.345) is below the 1.96 significance threshold; WRDS CRSP inputs are subscription-gated and not reproducible by us (we substitute our own PIT universe and SIP bars); repo cites the negation rule as the 'Engelberg-McLean-Pontiff (2018) mean-reversion convention' but the actual EMP2018 paper (see engelberg_mclean_pontiff_2018_abstract_and_finding below) does not state a sentiment-acceleration-reversal rule -- it finds anomaly returns are larger on news days, not that sentiment acceleration reverses; this is the repo author's own extrapolation, not a claim in the cited paper, and the mismatch is now recorded rather than repeated as if EMP2018 said it directly. Independent replication: No independent third-party replication of this exact repo found; the audit table in section 6 of the README (66/66 pytest cases, look-ahead/purge/PIT-universe/cost-realism checks) is the author's own self-audit, not third-party verification."
+    },
+    {
+      "url": "https://rady.ucsd.edu/faculty/directory/engelberg/pub/portfolios/ANOMALIES_NEWS.pdf",
+      "published_or_updated_at": "2017-07-27",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "Using a sample of 97 stock return anomalies, Engelberg, McLean and Pontiff (2018) find that anomaly returns are 50% higher on corporate news days and six times higher on earnings announcement days; results are most consistent with anomaly returns reflecting biased expectations that are at least partially corrected upon news arrival, rather than dynamic risk or pure data mining.",
+      "project_applicability": "Independent check on the LLM_Alpha repo's attribution: EMP2018 is the paper the repo cites to justify negating the sentiment-acceleration signal as a 'mean-reversion convention'; reading the actual abstract shows the paper's finding is that anomaly returns concentrate on corporate-news and earnings-announcement days (consistent with biased expectations corrected on news arrival), not a sentiment-acceleration-specific reversal rule -- a real but different mechanism.",
+      "reflection": "Working-paper PDF (2017-07-27), not the final published Journal of Finance 2018 typeset version; page/volume citation (73(5), 1971-2001) taken from the repo's own reference list and Wiley's public listing, not independently re-verified against a paywalled publisher copy this pass. Independent replication: This is itself the original paper; not a replication. Its own within-paper tests (dynamic risk vs mispricing vs data-mining) are the authors' robustness checks, not a third-party replication."
+    },
+    {
+      "url": "https://business.columbia.edu/sites/default/files-efs/pubfiles/3097/Tetlock_Media_Sentiment_JF.pdf",
+      "published_or_updated_at": "2007-06-01",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "High media pessimism predicts downward pressure on stock market prices followed by a reversion to fundamentals, and unusually high or low pessimism predicts high trading volume; evidence is consistent with noise/liquidity trading rather than media content as a proxy for new fundamental information.",
+      "project_applicability": "More directly supports a sentiment-reversal mechanism than EMP2018 does: high media pessimism predicts downward price pressure FOLLOWED BY a reversion to fundamentals -- the closer real precedent for treating a sentiment extreme/acceleration as a reversal (not continuation) signal, which is what T-16's candidate feature and its negation sign convention are actually testing.",
+      "reflection": "Sample is WSJ column-level aggregate market sentiment (not firm-level, not LLM-extracted, not 8-K/news-specific); this is a market-wide timing result, not a cross-sectional stock-picking result, so it supports the sign/mechanism plausibility only, not the specific cross-sectional construction. Independent replication: Original paper; widely cited (this pass did not re-run an independent replication), used here only as supporting mechanism evidence, not as the tested construction itself."
+    },
+    {
+      "url": "https://arxiv.org/pdf/1601.00991",
+      "published_or_updated_at": "2015-12-09",
+      "source_type": "paper",
+      "credibility": "primary_original_paper",
+      "core_claim": "Presents explicit formulas (also usable as computer code) for 101 real-life quantitative trading alphas built from cross-sectional rank, time-series, and decay operators; average holding period 0.6-6.4 days; average pairwise alpha correlation 15.9%; returns are correlated with volatility but show no significant dependence on turnover.",
+      "project_applicability": "Source of the 'Alpha101-style rank-weighted, cross-sectional-rank, decay/ts_mean-smoothed' construction grammar (cs_rank, ts_mean/decay operators) that both the LLM_Alpha repo and T-16's own feature/portfolio-weight construction reuse verbatim rather than inventing a new weighting scheme.",
+      "reflection": "The 101 alphas themselves are WorldQuant proprietary trading signals disclosed for research purposes; this paper does not itself contain any LLM, news, or 8-K text signal -- it is cited only for the rank-weighting/operator convention, not as evidence for the sentiment-acceleration mechanism. Independent replication: Widely reused operator library in the public quant-finance literature and open-source alpha zoos (e.g. Alpha101 implementations); not independently re-verified line-by-line this pass."
+    },
+    {
+      "url": "https://www.gdeltproject.org/about.html",
+      "published_or_updated_at": "unknown",
+      "source_type": "platform_docs",
+      "credibility": "reference_summary",
+      "core_claim": "GDELT is described by its own project as the largest, most comprehensive, and highest-resolution open database of world news media, monitoring print, broadcast, and web news in over 100 languages, from January 1 1979 to the present, with daily updates.",
+      "project_applicability": "Confirms GDELT is a free, open news-monitoring database (the news-source half of the LLM_Alpha construction); our own pilot substitutes our locally-held Alpaca/Benzinga news_packets store (already point-in-time timestamped) for GDELT rather than pulling GDELT directly, since the construction only requires timestamped financial news text, not GDELT specifically.",
+      "reflection": "GDELT's own about page is a marketing/overview page, not a technical data dictionary; it does not itself disclose per-article financial-news filtering methodology (the LLM_Alpha repo did its own GDELT financial-news filtering and deduplication to 2,908 articles). Independent replication: GDELT is an established, widely-used open dataset (used across many academic and industry projects); not independently re-verified for this specific claim beyond reading the official page."
+    },
+    {
+      "url": "https://api-docs.deepseek.com/",
+      "published_or_updated_at": "unknown",
+      "source_type": "provider_official_docs",
+      "credibility": "official_first_party_docs",
+      "core_claim": "The DeepSeek API uses an API format compatible with OpenAI and Anthropic; by modifying the configuration (base_url https://api.deepseek.com for the OpenAI format, or https://api.deepseek.com/anthropic for the Anthropic format) with an API key, the OpenAI or Anthropic SDK can be used to access the DeepSeek API.",
+      "project_applicability": "Confirms the DeepSeek API is OpenAI/Anthropic-format-compatible via base_url https://api.deepseek.com, matching this repo's existing OpenAI-compatible chat-completions client (scripts/score_earnings_text.py's make_requests_chat_call_fn) -- the same client code is reused for T-16/T-17 scoring, only the credentials file's model/base_url differ, per the brief's instruction to call the endpoint only through existing client code.",
+      "reflection": "Docs page is client-rendered (Docusaurus); only the 'Your First API Call' page's static HTML fragment was captured, not the full rate-limit/pricing pages (those require executing the page's JavaScript, out of scope for a text snapshot). Independent replication: Official first-party vendor documentation; not third-party verified, but this is the correct kind of source for an API contract claim."
+    },
+    {
+      "url": "https://www.sec.gov/edgar/search-and-access",
+      "published_or_updated_at": "unknown",
+      "source_type": "regulatory_docs",
+      "credibility": "official_first_party_docs",
+      "core_claim": "The SEC's EDGAR system provides free public access to millions of informational documents filed by publicly traded companies and others.",
+      "project_applicability": "Confirms 8-K filings (the source-text half of this pilot, already held locally in data/features/earnings_events and data/raw/earnings_text from the prior earnings-text iteration) are free public SEC data, consistent with the direction's 'zero new data acquisition' claim.",
+      "reflection": "Page is SEC's own search-portal landing page, not a data-license statement specific to bulk/programmatic 8-K access; our local 8-K text cache was already built by a prior iteration (h20260922_01_earnings_text) and this pilot does not re-fetch from EDGAR. Independent replication: Official first-party regulator page; SEC EDGAR's free/public status is also common knowledge independently confirmed by this project's own prior 8-K collection work."
+    },
+    {
+      "url": "https://blog.quantinsti.com/cross-validation-embargo-purging-combinatorial/",
+      "published_or_updated_at": "2020-10-07",
+      "source_type": "industry_standard",
+      "credibility": "reference_summary",
+      "core_claim": "Purging and embargoing (Lopez de Prado's terminology) both involve removing some of the data points near the boundaries of affected cross-validation folds in financial time series, to prevent training data whose label window overlaps a test-set label from leaking information across the train/test boundary.",
+      "project_applicability": "This pilot deliberately does NOT build the full purge(5)+embargo(5) walk-forward harness the LLM_Alpha source used -- it only checks the feature's raw daily cross-sectional IC on one quarter first, per the direction's own decision rule ('stop before building the full harness if the pilot IC is not stable-signed'). This source documents what that deferred, heavier validation step would be, so the omission is a scoped decision, not an unawareness of the standard.",
+      "reflection": "Third-party (QuantInsti) blog explainer of Lopez de Prado's purged/embargoed k-fold CV, not the primary book text (Advances in Financial Machine Learning, 2018, is not freely accessible and is not quoted or redistributed here) -- used only as a plain-language definition to document the deferred, heavier validation step this pilot does not build, not as the authoritative source for a specific numeric parameter. Independent replication: QuantInsti is a third-party educational provider, independent of De Prado; the underlying method itself has multiple independent open-source implementations (e.g. mlfinlab) not individually re-verified this pass."
+    }
+  ],
+  "topic_coverage": [
+    "sentiment_acceleration_feature_construction",
+    "sign_convention_and_reversal_mechanism_literature",
+    "rank_weighting_operator_grammar",
+    "free_data_provenance_8k_and_news",
+    "llm_endpoint_substitution_deepseek_for_claude",
+    "deferred_purge_embargo_cv_standard",
+    "prior_local_negative_text_results"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "revision": "single_candidate_pilot",
+      "reason": "The source's own construction is fully specified (formula, windows, sign) -- this pilot tests it as one preregistered candidate (feature IC only) rather than a grid, matching the direction's own 'cheapest possible falsification test' framing. No parameter search is preregistered; window lengths (5,20) and horizon (5 days) are fixed from the source, not tuned."
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260928-16-8k-sentiment-accel"
+  ]
+}

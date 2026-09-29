@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_16_8k_sentiment_accel_historical_evaluation_authorization",
+  "iter_id": "h20260928_16_8k_sentiment_accel",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 1,
+    "evaluation_authorized_count": 1,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 1,
+    "rows": [
+      {
+        "candidate_id": "SENT01",
+        "path": "sentiment_acceleration_ic_screen",
+        "action": "evaluate",
+        "reason_code": "local_8k_news_sip_data_available_deepseek_endpoint_existing_client",
+        "candidate_binding_sha256": "9f4df3537742fe87f17f1204ce7605f812427bf297795b6bd93bb266344a6585"
+      }
+    ]
+  },
+  "path_gates": {
+    "sentiment_acceleration_ic_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "SENT01"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "All required local data is present and confirmed on 2026-09-28: data/features/earnings_events/2026.parquet (1506 8-K rows in 2026 Q2), data/raw/earnings_text (raw 8-K text from h20260922_01_earnings_text), data/features/news_packets/2026.parquet (174394 rows, visible_at populated), and data/sip/daily/*/*.parquet (forward-return prices). No new capability or vendor is required; only a new DeepSeek prompt (polarity+magnitude) is added, reusing scripts/score_earnings_text.py's existing client/rate-limit machinery. Universe capped to a fixed-seed 50-ticker sample (see candidate-manifest.json parameters.universe_sampling) to bound the DeepSeek call volume to roughly 50 8-K items + their matched news items for the quarter, not the full ~1400-ticker universe."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260928_16_8k_sentiment_accel.yaml",
+      "sha256": "0b73151540917930e59817564ea79a33d3217b8af593b0ced7dc5279263673d5"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/cost-contract.json",
+      "sha256": "f97da800ca49719fd997ad0a196a37e6b88f0f683923911699040eb2674629f9"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_16_8k_sentiment_accel.jsonl",
+      "sha256": "03441439c84ddc1ea84bc095f09b3d08788dcc7ffcf00416662a7f438735ed3c"
+    }
+  }
+}

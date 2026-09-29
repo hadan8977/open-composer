@@ -1,0 +1,150 @@
+{
+  "iter_id": "h20260928_16_8k_sentiment_accel",
+  "generated_at": "2026-09-28T06:20:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_16_8k_sentiment_accel_pilot",
+  "objective": "Preregister the single sent_accel feature-IC candidate (SENT01) for dir:llm_8k_gdelt_sentiment_acceleration's cheapest falsification pilot, before any DeepSeek score or IC number is computed. Universe capped to a fixed-seed random 50-ticker sample of the 2026-Q2 8-K universe (see candidate SENT01 parameters.universe_sampling) to keep the DeepSeek call volume small.",
+  "candidates": [
+    {
+      "candidate_id": "SENT01",
+      "path": "sentiment_acceleration_ic_screen",
+      "role": "single_mechanism_feature_ic_pilot",
+      "method": "deepseek_polarity_magnitude_extraction_rank_acceleration",
+      "ablation": "none",
+      "spec_path": "strategy_specs/drafts/h20260928_16_8k_sentiment_accel.yaml",
+      "fallback": "no_row_emitted_on_ticker_days_with_zero_attributed_8k_or_news_items",
+      "data_contract": "data_v1_h20260928_16_8k_news_sip",
+      "feature_contract": "feature_v1_h20260928_16_sent_accel",
+      "label_contract": "label_v1_h20260928_16_forward_5d_return",
+      "validation_contract": "validation_v1_h20260928_16_ic_and_placebo",
+      "cost_contract": "cost_v1_h20260928_16_no_cost_ic_only",
+      "benchmark_contract": "benchmark_v1_h20260928_16_placebo_comparison",
+      "parameters": {
+        "candidate_id": "SENT01",
+        "short_window_days": 5,
+        "long_window_days": 20,
+        "horizon_trading_days": 5,
+        "quarter": "2026Q2",
+        "sign_conventions_reported": [
+          "accel",
+          "sent_accel_negated"
+        ],
+        "rationale": "Reproduces LLM_Alpha's sent_accel construction exactly (window lengths, horizon, rank-weighting grammar); source: github.com/quangkhaidataka/LLM_Alpha, see direction-review.json.",
+        "universe_sampling": "Fixed-seed random.Random(20260928).sample(...) of 50 tickers from the 1343 tickers with an 'ok' fetch_status 8-K text in data/features/earnings_events/2026.parquet for 2026 Q2 (2026-04-01..2026-06-30), chosen before any DeepSeek call to keep the pilot within a small, tractable DeepSeek call budget (the full-universe alternative would be ~1400 8-K items + ~31700 matched news items -- far outside a 'cheapest falsification test' budget).",
+        "universe_tickers": [
+          "AAON",
+          "AAPL",
+          "ADBE",
+          "ALIT",
+          "ALT",
+          "AMC",
+          "ARCB",
+          "ATR",
+          "BTU",
+          "BYD",
+          "CADL",
+          "CZR",
+          "DELL",
+          "DLTR",
+          "DVLT",
+          "EHC",
+          "ERIE",
+          "EVRG",
+          "FANG",
+          "FLNA",
+          "FNB",
+          "FRMI",
+          "FRSH",
+          "GENB",
+          "GPCR",
+          "HAL",
+          "HONA",
+          "HWM",
+          "L",
+          "LIVN",
+          "LOAR",
+          "LSCC",
+          "NAVN",
+          "OGN",
+          "PCAR",
+          "PODD",
+          "QS",
+          "RRC",
+          "RXT",
+          "SIRI",
+          "STLD",
+          "SUI",
+          "TER",
+          "TOL",
+          "TXG",
+          "UAA",
+          "WAB",
+          "WAL",
+          "WEX",
+          "YUM"
+        ],
+        "universe_size": 50
+      }
+    }
+  ],
+  "candidate_count": 1,
+  "contracts": {
+    "data": {
+      "data_v1_h20260928_16_8k_news_sip": {
+        "sources": [
+          "data/features/earnings_events/2026.parquet (8-K filing index, acceptance_utc)",
+          "data/raw/earnings_text/<cik>/<accession>.txt (raw 8-K EX-99.1 text, from h20260922_01_earnings_text)",
+          "data/features/news_packets/2026.parquet (Alpaca/Benzinga news, visible_at already computed)",
+          "data/sip/daily/*/*.parquet (daily close, for forward 5-trading-day returns)"
+        ],
+        "universe": "tickers with >=1 8-K filing in 2026 Q2 (2026-04-01..2026-06-30) in data/features/earnings_events/2026.parquet",
+        "window": [
+          "2026-04-01",
+          "2026-06-30"
+        ],
+        "confirmed_coverage": "2026.parquet has 1506 8-K rows in 2026 Q2 (2026Q1=1577, Q2=1506, Q3=1469 partial as of 2026-09-17); news_packets/2026.parquet has 174394 rows with visible_at through 2026-09-17; both confirmed present via pandas on 2026-09-28."
+      }
+    },
+    "features": {
+      "feature_v1_h20260928_16_sent_accel": {
+        "decision_lag_sessions": 1,
+        "definition": "Per (ticker, day t): raw_pol_k = polarity_k*magnitude_k for each 8-K/news item k with visible_at <= t (PIT join -- an item whose visible_at is after t is excluded from the feature at t, see tests/test_h20260928_16_sentiment_accel.py). short_ma_t = 5-trading-day rolling mean of raw_pol; long_ma_t = 20-trading-day rolling mean of raw_pol; accel_t = short_ma_t - long_ma_t; sent_accel_t = -1*(cs_rank(accel_t) - 0.5) (LLM_Alpha's negated convention); accel_t itself (un-negated) is also reported, since independent verification found the negation's cited justification (EMP2018) does not state a sentiment-acceleration reversal rule -- see direction-review.json remaining_evidence_gap."
+      }
+    },
+    "labels": {
+      "label_v1_h20260928_16_forward_5d_return": {
+        "definition": "close-to-close forward 5-trading-day return from day t+1 open to day t+6 open (close signal at t, next_bar_open fill, matching the frozen project convention); IC is Spearman rank correlation between the day-t cross-sectional feature and each ticker's forward 5-day return."
+      }
+    },
+    "validation": {
+      "validation_v1_h20260928_16_ic_and_placebo": {
+        "window": [
+          "2026-04-01",
+          "2026-06-30"
+        ],
+        "placebo": "shuffle news/8-K item ticker assignment across tickers within the same calendar date, recompute the identical feature pipeline, recompute IC",
+        "no_cv_harness_this_pass": true
+      }
+    },
+    "costs": {
+      "cost_v1_h20260928_16_no_cost_ic_only": {
+        "definition": "No cost model -- this pilot computes a feature and its IC only, no positions, no trades, no backtest."
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260928_16_placebo_comparison": {
+        "definition": "Real feature's daily rank IC vs the shuffled-news placebo's daily rank IC, both vs forward 5-day returns; also reports both the negated (sent_accel) and un-negated (accel) sign conventions."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_16_8k_sentiment_accel.yaml": "860f7e698b014e46c0be4295dff27b9945dd02d415f52bf0a3b706aae75d26c1"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_16_8k_sentiment_accel.yaml",
+  "spec_hash": "860f7e698b014e46c0be4295dff27b9945dd02d415f52bf0a3b706aae75d26c1",
+  "trial_count_and_dsr_note": "Single candidate; no multiple-comparisons correction applicable (n_trials=1). This pilot does not compute or report a Sharpe/DSR -- it is an IC-only feature check.",
+  "keep_rule": {
+    "pass_condition": "Mean daily rank IC over 2026 Q2 has a stable sign (>=60% of days share the mean's sign) AND the placebo's mean |IC| is <50% of the real mean |IC| (same sign).",
+    "fail_condition": "Either condition fails -> stop before any CV harness or backtest (direction-review.json stop_condition)."
+  }
+}

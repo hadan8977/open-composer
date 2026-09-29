@@ -1,0 +1,44 @@
+{
+  "schema_version": 3,
+  "created_at": "2026-09-28T06:20:00Z",
+  "iter_id": "h20260928_16_8k_sentiment_accel",
+  "strategy_name": "h20260928_16_8k_sentiment_accel_pilot",
+  "source_spec_path": "strategy_specs/drafts/h20260928_16_8k_sentiment_accel.yaml",
+  "spec_hash": "860f7e698b014e46c0be4295dff27b9945dd02d415f52bf0a3b706aae75d26c1",
+  "objective": "Cheapest falsification pilot for dir:llm_8k_gdelt_sentiment_acceleration: compute the LLM_Alpha sent_accel feature's daily cross-sectional rank IC vs forward 5-day returns on 2026 Q2 8-K + news data, DeepSeek-scored, plus a shuffled-news placebo. No CV harness, no backtest, no cost model.",
+  "paths": [
+    {
+      "name": "sentiment_acceleration_ic_screen",
+      "candidate_count": 1,
+      "hypothesis_refs": [
+        "H-20260928-16"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "SENT01"
+        ],
+        "short_window_days": 5,
+        "long_window_days": 20,
+        "horizon_trading_days": 5,
+        "cost_bps": null,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none",
+        "universe_size": 50
+      },
+      "benchmark_family": [
+        "shuffled_news_within_date_placebo"
+      ]
+    }
+  ],
+  "total_candidate_budget": 1,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/candidate-manifest.json",
+  "candidate_manifest_sha256": "5a640b02cd6a9464bd8b1df33f60d850840479f44d3793e21143513346c986d7",
+  "data_feasibility_path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/data-feasibility.json",
+  "data_feasibility_sha256": "31a6169da36f9ded530b0c29ee1c79d126d910d66bf205597a458d24df83e9df",
+  "cost_table_path": "reports/research/iterations/h20260928_16_8k_sentiment_accel/cost-contract.json",
+  "trial_ledger_paths": [],
+  "evaluation_report_paths": [],
+  "single_mechanism_no_campaign_attestation": true
+}
