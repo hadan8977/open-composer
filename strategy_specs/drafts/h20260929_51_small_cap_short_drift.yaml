@@ -1,0 +1,79 @@
+name: h20260929_51_small_cap_short_drift
+description: >-
+  Research-preregistration spec for iteration h20260929_51_small_cap_short_drift
+  (queue T-20260929-51, dir:small_cap_background_drift_short_basket).
+  Step 1: nine ETF spread candidates -- short IWM/RSP/IJR/XRT/KRE against a
+  trailing-beta long SPY hedge (monthly, weekly, 252d/63d beta, unhedged
+  control) plus one mirror-long placebo -- evaluated by
+  scripts/run_h20260929_51_small_cap_short_drift.py under the frozen
+  screen_lane windows/cost contract (10 bp per side, close signal -> next
+  open fill, all rebalance offsets) with a 0.5%/yr ETF borrow fee deducted.
+  The nominal entry/exit/portfolio fields are placeholders (short spread
+  books are executed by the dedicated script, as with other screen-evaluated
+  drafts; the schema caps weights at 1.0 so the real gross exposure of about 2.1x is not expressed here). Research only; no broker writes; lifecycle stays draft.
+timeframe: daily
+universe:
+- IWM
+- RSP
+- IJR
+- XRT
+- KRE
+- SPY
+- SHY
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 2
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_51:small_cap_short_drift
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: null
+  path: null
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+llm_review:
+  enabled: false
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_51_small_cap_short_drift
+  candidate_manifest_path: reports/research/iterations/h20260929_51_small_cap_short_drift/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_51_small_cap_short_drift/data-feasibility.json
+notes:
+  intent: >-
+    Preregistration-only research spec. Not paper-auto eligible; not connected
+    to any live/paper execution adapter. See
+    reports/research/iterations/h20260929_51_small_cap_short_drift/.

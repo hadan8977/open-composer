@@ -1,0 +1,22 @@
+{
+  "base_cost_bps": 10.0,
+  "borrow_etf_annual": 0.005,
+  "borrow_grid_step2": [
+    0.0,
+    0.05,
+    0.15
+  ],
+  "fill": "next_open_after_close_signal",
+  "judgment_tiers": {
+    "K1": "anchor >= 1.1882 and stress >= 0.6447 and 20 bp after-borrow CAGR > 0 in both windows",
+    "K2": "S3 inverse-63d-vol blend edge >= 0.05 in anchor and stress (sleeve = overlay + T-bill collateral)",
+    "dsr_trials_step1": 9,
+    "frozen_before_results": true,
+    "judged_value": "median over all rebalance offsets of the after-borrow 10 bp Sharpe",
+    "placebo": "SSD_PLACEBO_LONG_IWM_M252 must be negative in the anchor",
+    "reject": "otherwise",
+    "step1_gate_for_step2": "SSD_IWM_M252 anchor median Sharpe after borrow >= 0.6",
+    "watch_recent": "anchor >= 1.1882 but K1 stress not met"
+  },
+  "stress_cost_bps": 20.0
+}

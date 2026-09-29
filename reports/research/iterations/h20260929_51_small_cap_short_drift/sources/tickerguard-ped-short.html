@@ -1,0 +1,1700 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="aoqwkwzSQw1JTm214jqYDyspCNuLtsfszrk6xTrh">
+
+    
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            analytics_storage: 'denied',
+            wait_for_update: 500
+        });
+    </script>
+    <!-- Google Tag Manager -->
+    
+    <script>(function(w,d,s,l,i){
+        var gestartet=false;
+        function starten(){
+            if(gestartet)return;gestartet=true;
+            w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+            var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+            j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+            f.parentNode.insertBefore(j,f);
+        }
+        ['pointerdown','keydown','touchstart','scroll'].forEach(function(ev){
+            w.addEventListener(ev,starten,{once:true,passive:true,capture:true});
+        });
+        function nachLeerlauf(){
+            if(w.requestIdleCallback){w.requestIdleCallback(starten,{timeout:2000});}
+            else{w.setTimeout(starten,200);}
+        }
+        if(d.readyState==='complete'){nachLeerlauf();}
+        else{w.addEventListener('load',nachLeerlauf);}
+    })(window,document,'script','dataLayer','GTM-W8NC5GBW');</script>
+    <!-- End Google Tag Manager -->
+
+    
+            <script>
+            var _paq = window._paq = window._paq || [];
+            _paq.push(['disableCookies']);
+            _paq.push(['trackPageView']);
+            (function () {
+                var u = "https:\/\/analytics.boersenlotse.de\/";
+                _paq.push(['setTrackerUrl', u + 'matomo.php']);
+                _paq.push(['setSiteId', "2"]);
+                var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+                g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+            })();
+        </script>
+    
+    
+        <title>Post-Earnings-Drift Short Backtest - 8,861 Trades</title>
+<meta name="description" content="A backtest of 8,861 trades: shorting small-cap U.S. stocks after bad earnings lost −1.48% per trade on average, profitable in 0 of 4 time periods.">
+<link rel="canonical" href="https://tickerguard.com/articles/post-earnings-drift-backtest-study">
+
+<link rel="alternate" hreflang="en" href="https://tickerguard.com/articles/post-earnings-drift-backtest-study">
+<link rel="alternate" hreflang="de" href="https://boersenlotse.de/artikel/post-earnings-drift-backtest-studie">
+<link rel="alternate" hreflang="x-default" href="https://tickerguard.com/articles/post-earnings-drift-backtest-study">
+
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Post-Earnings-Drift Short Backtest - 8,861 Trades">
+<meta property="og:description" content="A backtest of 8,861 trades: shorting small-cap U.S. stocks after bad earnings lost −1.48% per trade on average, profitable in 0 of 4 time periods.">
+<meta property="og:url" content="https://tickerguard.com/articles/post-earnings-drift-backtest-study">
+<meta property="og:site_name" content="TickerGuard">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en.png">
+    <meta property="article:published_time" content="2026-08-25T21:47:02+00:00">
+        <meta property="article:modified_time" content="2026-08-25T21:47:02+00:00">
+    
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Post-Earnings-Drift Short Backtest - 8,861 Trades">
+<meta name="twitter:description" content="A backtest of 8,861 trades: shorting small-cap U.S. stocks after bad earnings lost −1.48% per trade on average, profitable in 0 of 4 time periods.">
+<meta name="twitter:site" content="@minnowstreet">
+<meta name="twitter:image" content="https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en.png">
+
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Shorting bad earnings: post-earnings-drift backtest loses −1.48% per trade",
+    "description": "A backtest of 8,861 trades: shorting small-cap U.S. stocks after bad earnings lost −1.48% per trade on average, profitable in 0 of 4 time periods.",
+    "image": [
+        "https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en.png",
+        "https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en.png",
+        "https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en.png"
+    ],
+    "datePublished": "2026-08-25T21:47:02+00:00",
+    "dateModified": "2026-08-25T21:47:02+00:00",
+    "author": {
+        "@type": "Person",
+        "name": "Thomas Mücke",
+        "url": "https://www.linkedin.com/in/thomas-m%C3%BCcke-ab6011192/",
+        "sameAs": [
+            "https://www.linkedin.com/in/thomas-m%C3%BCcke-ab6011192/"
+        ]
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "TickerGuard",
+        "url": "https://tickerguard.com",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://tickerguard.com/images/tickerguard/logo.svg",
+            "width": 220,
+            "height": 56
+        },
+        "sameAs": []
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://tickerguard.com/articles/post-earnings-drift-backtest-study"
+    },
+    "articleSection": "Studies",
+    "inLanguage": "en"
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is the post-earnings-announcement drift?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "It's the observation that after a company reports quarterly results, its stock tends to keep drifting in the same direction for weeks rather than moving all at once, because the market only partially digests the news on the day itself. The effect comes from academic research in the 1960s and 1980s and is considered largely gone in large-cap stocks today."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Does shorting small caps after bad earnings pay off?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Not according to this backtest: 8,861 simulated short trades lost −1.48% per trade after costs on average, were profitable in only 3 of 15 years, and in none of the four time periods tested. All 31 variants examined stayed negative."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Why is the mean more negative than the median?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The median (the typical trade, with half of outcomes above it and half below) was −0.61%, while the mean (all results added up and evenly distributed) was −1.56%. A short's loss is theoretically unlimited while its gain is capped at 100% — that asymmetry drags the mean down further than the typical trade suggests."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Was it the bad earnings report or just the price crash?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The crash. Against a matching price crash with no earnings report, there was no reliable difference (+0.67 percentage points, confidence band includes zero). Against random days, though, the rule was clearly worse (−1.15 percentage points). The earnings report itself provides no edge."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Were costs and the borrow fee included?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. The calculation includes spread, slippage, commission, and a 10% annual borrow fee — a realistic rate for hard-to-borrow small caps after a crash. Even at an unrealistically low 0.25% annual fee, the result stayed negative at −0.70%; there is no borrow rate at which the strategy breaks even."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Was buying after good earnings also tested?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No, this study covers only the short side after bad earnings. Buying after good earnings (the long side) has a different gain-loss structure and was deliberately left out of this test."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How was the result kept from being adjusted after the fact?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Every rule — thresholds, holding period, costs, control groups, and the success criterion — was documented and fixed before the first number was computed (preregistration). The backtest is also survivorship-bias-free: stocks that later went bankrupt or were delisted stay in the dataset with their full price history."
+            }
+        }
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://tickerguard.com"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Studies",
+            "item": "https://tickerguard.com/studies"
+        },
+        {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Shorting bad earnings: post-earnings-drift backtest loses −1.48% per trade",
+            "item": "https://tickerguard.com/articles/post-earnings-drift-backtest-study"
+        }
+    ]
+}
+</script>
+
+    
+
+    
+    <link rel="icon" href="https://tickerguard.com/images/tickerguard/favicon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="https://tickerguard.com/images/tickerguard/apple-touch-icon.png">
+    
+    <meta name="theme-color" content="#0E5057">
+
+    
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var dark = stored ? stored === 'dark'
+                    : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+
+    
+    <link rel="preload" as="style" href="https://tickerguard.com/build/assets/app-CyL_N3iH.css" /><link rel="modulepreload" as="script" href="https://tickerguard.com/build/assets/app-Cvc8ajye.js" /><link rel="stylesheet" href="https://tickerguard.com/build/assets/app-CyL_N3iH.css" /><script type="module" src="https://tickerguard.com/build/assets/app-Cvc8ajye.js"></script>
+    
+    <noscript><style>[x-reveal]{opacity:1 !important;transform:none !important}</style></noscript>
+</head>
+
+<body class="min-h-screen bg-paper text-ink antialiased selection:bg-accent/20 terminal">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W8NC5GBW"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    
+    <header x-data="{ open: false }" class="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur">
+    <div class="flex w-full flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-2.5 sm:px-6 md:py-2.5 lg:px-8">
+        
+        <a href="https://tickerguard.com" class="flex items-center gap-2.5">
+                            
+                <span class="font-sans text-[21px] font-bold leading-none tracking-[-0.035em] text-ink">Ticker<span class="text-accent">Guard</span></span>
+                    </a>
+
+        
+        <nav class="order-last hidden basis-full md:block 2xl:order-none 2xl:basis-auto" aria-label="Main navigation">
+            <ul class="flex flex-wrap items-center justify-center gap-1 font-sans text-[13px] font-medium 2xl:justify-start">
+                                                            <li>
+                            <a href="https://tickerguard.com/buy-signals"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Buy Signals
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/stocks/scanner"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Scanners
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/markets/screener"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Screener
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/stocks/compare"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Compare
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/stocks/earnings-calendar"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Earnings Calendar
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/research"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Deep Dives
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/studies"
+                                aria-current="page"                                class="rounded-sm px-2.5 py-1.5 transition ist-aktiv">
+                                Studies
+                            </a>
+                        </li>
+                                                                                
+                                                <li class="group relative">
+                            
+                            <a href="https://tickerguard.com/superinvestors"
+                                                              class="inline-flex items-center gap-1 rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Superinvestors
+                                <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </a>
+                            
+                            <ul class="invisible absolute right-0 top-full z-50 max-h-[75vh] min-w-52 overflow-y-auto rounded-md border border-line bg-paper p-1.5 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                                                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/politicians"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Politician Trades</a>
+                                    </li>
+                                                            </ul>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/market"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Market Conditions
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/portfolio-duel"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Portfolio Duel
+                            </a>
+                        </li>
+                                                                                <li>
+                            <a href="https://tickerguard.com/newsletter-letter"
+                                                              class="rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                The Letter
+                            </a>
+                        </li>
+                                                                                
+                                                <li class="group relative">
+                            
+                            <a href="https://tickerguard.com/markets/screener"
+                                                              class="inline-flex items-center gap-1 rounded-sm px-2.5 py-1.5 transition text-muted hover:text-ink">
+                                Market
+                                <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </a>
+                            
+                            <ul class="invisible absolute right-0 top-full z-50 max-h-[75vh] min-w-52 overflow-y-auto rounded-md border border-line bg-paper p-1.5 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                                                                                                    
+                                                                            <li aria-hidden="true" class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted ">Signals</li>
+                                                                                                                <li>
+                                        <a href="https://tickerguard.com/event-radar"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Event Radar</a>
+                                    </li>
+                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/side-finds"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Side Finds</a>
+                                    </li>
+                                                                    
+                                                                            <li aria-hidden="true" class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted mt-1 border-t border-line/60">Tools</li>
+                                                                                                                <li>
+                                        <a href="https://tickerguard.com/markets/map"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Heatmap</a>
+                                    </li>
+                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/markets/groups"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Sectors</a>
+                                    </li>
+                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/markets/insider-trading"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Insider Trading</a>
+                                    </li>
+                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/backtest"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Backtest</a>
+                                    </li>
+                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/journal"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Journal</a>
+                                    </li>
+                                                                    
+                                                                        <li>
+                                        <a href="https://tickerguard.com/developers"
+                                                                                      class="block rounded-sm px-3 py-2 transition hover:bg-surface hover:text-ink text-muted">Data API</a>
+                                    </li>
+                                                            </ul>
+                        </li>
+                                                </ul>
+        </nav>
+
+        <div class="flex items-center gap-1">
+            
+            <a href="https://tickerguard.com/feedback"
+               class="mr-2 hidden whitespace-nowrap rounded-sm bg-cta px-3 py-1.5 font-sans text-[13px] font-bold text-cta-ink transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent md:inline-block">
+                What&#039;s missing?
+            </a>
+
+            
+                            <a href="https://tickerguard.com/login"
+                   class="hidden items-center gap-1.5 rounded-sm px-2.5 py-1.5 font-sans text-[13px] font-medium text-muted transition hover:text-ink md:inline-flex">
+                    <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" stroke-linecap="round"/></svg>
+                    Log In
+                </a>
+            
+            <a href="https://tickerguard.com/search" aria-label="Open search"
+               class="grid size-8 place-items-center rounded-sm text-muted transition hover:bg-surface hover:text-ink">
+                <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+            </a>
+
+            <button @click="$store.theme.toggle()" aria-label="Toggle light/dark mode"
+                    class="grid size-8 place-items-center rounded-sm text-muted transition hover:bg-surface hover:text-ink">
+                <svg class="size-5 dark:hidden" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke-linecap="round"/></svg>
+                <svg class="hidden size-5 dark:block" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
+            </button>
+
+            <button @click="open = !open" aria-label="Menu"
+                    class="grid size-8 place-items-center rounded-sm text-muted transition hover:bg-surface hover:text-ink md:hidden">
+                <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+    </div>
+
+    
+    <nav x-show="open" x-cloak x-transition class="border-t border-line md:hidden" aria-label="Main navigation">
+        <ul class="flex flex-col px-4 py-1 font-sans text-[15px] sm:px-6">
+                            <li>
+                    <a href="https://tickerguard.com/buy-signals"
+                                              class="block border-b border-line/60 py-3 text-ink">Buy Signals</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/stocks/scanner"
+                                              class="block border-b border-line/60 py-3 text-ink">Scanners</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/markets/screener"
+                                              class="block border-b border-line/60 py-3 text-ink">Screener</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/stocks/compare"
+                                              class="block border-b border-line/60 py-3 text-ink">Compare</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/stocks/earnings-calendar"
+                                              class="block border-b border-line/60 py-3 text-ink">Earnings Calendar</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/research"
+                                              class="block border-b border-line/60 py-3 text-ink">Deep Dives</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/studies"
+                        aria-current="page"                        class="block border-b border-line/60 py-3 text-accent">Studies</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/superinvestors"
+                                              class="block border-b border-line/60 py-3 text-ink">Superinvestors</a>
+                                            
+                        <ul class="pb-1 pl-4">
+                                                            <li>
+                                    <a href="https://tickerguard.com/politicians"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Politician Trades</a>
+                                </li>
+                                                    </ul>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/market"
+                                              class="block border-b border-line/60 py-3 text-ink">Market Conditions</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/portfolio-duel"
+                                              class="block border-b border-line/60 py-3 text-ink">Portfolio Duel</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/newsletter-letter"
+                                              class="block border-b border-line/60 py-3 text-ink">The Letter</a>
+                                    </li>
+                            <li>
+                    <a href="https://tickerguard.com/markets/screener"
+                                              class="block border-b border-line/60 py-3 text-ink">Market</a>
+                                            
+                        <ul class="pb-1 pl-4">
+                                                            <li>
+                                    <a href="https://tickerguard.com/event-radar"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Event Radar</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/side-finds"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Side Finds</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/markets/map"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Heatmap</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/markets/groups"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Sectors</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/markets/insider-trading"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Insider Trading</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/backtest"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Backtest</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/journal"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Journal</a>
+                                </li>
+                                                            <li>
+                                    <a href="https://tickerguard.com/developers"
+                                                                              class="block border-b border-line/40 py-2.5 text-[14px] text-muted">Data API</a>
+                                </li>
+                                                    </ul>
+                                    </li>
+                        
+            <li class="mt-1 border-t border-line/60 pt-1">
+                                    <a href="https://tickerguard.com/login" class="block py-3 text-ink">Log In</a>
+                            </li>
+        </ul>
+    </nav>
+</header>
+
+    
+    <a href="https://tickerguard.com/market" aria-label="Buy Day gauge — go to Market Conditions"
+       class="hinweis-leiste group block">
+        <div class="mx-auto max-w-[1200px] px-4 py-2 font-sans">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span class="font-semibold text-ink">Buy Day today:</span>
+                <span class="inline-flex items-center gap-1.5 font-bold text-ink">
+                    <span aria-hidden="true" class="h-2.5 w-2.5 rounded-full bg-cta"></span>
+                    Neutral <span class="tabular-nums">(48)</span>
+                </span>
+                                <span class="text-muted transition group-hover:text-ink">Mixed market breadth · no major macro event</span>
+            </div>
+        </div>
+    </a>
+
+    <main id="main">
+        <div x-data="{ progress: 0, scrolled: false, update() {
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        this.progress = max > 0 ? Math.min(100, Math.round((h.scrollTop / max) * 100)) : 0;
+        this.scrolled = h.scrollTop > 480;
+    } }" x-init="update()" @scroll.window.passive="update()">
+
+    
+    <div class="fixed inset-x-0 top-0 z-50 h-1 bg-transparent"
+         role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100"
+         :aria-valuenow="progress">
+        <div class="h-full bg-accent motion-safe:transition-[width] motion-safe:duration-100 motion-safe:ease-out"
+             :style="`width: ${progress}%`"></div>
+    </div>
+
+    
+    <div x-cloak x-show="scrolled" x-transition.opacity
+         class="fixed inset-x-0 top-1 z-40 border-b border-line bg-paper/95 backdrop-blur">
+        <div class="mx-auto flex max-w-[1280px] items-center gap-4 px-4 py-2.5">
+            <p class="flex-1 truncate text-[14px] font-[550] tracking-[-0.018em] text-ink">Shorting bad earnings: post-earnings-drift backtest loses −1.48% per trade</p>
+            <div class="flex shrink-0 items-center gap-1">
+                <span class="hidden font-mono text-[10.5px] uppercase tracking-[0.13em] text-muted sm:inline">Share</span>
+                <span aria-label="Share on LinkedIn"
+                   class="grid size-8 place-items-center rounded-full text-muted">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0 0-5ZM3 9h4v12H3zM9 9h3.8v1.7h.1c.5-1 1.8-2 3.7-2 4 0 4.7 2.6 4.7 6V21h-4v-5.3c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V21H9z"/></svg>
+                </span>
+                <span aria-label="Share by email"
+                   class="grid size-8 place-items-center rounded-full text-muted">
+                    <svg class="size-4" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6" stroke-linecap="round"/></svg>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<article class="mx-auto max-w-[1280px] px-4 ">
+
+    
+    
+    
+    <header class="mx-auto max-w-[760px] pt-10 md:pt-14">
+        <nav aria-label="Breadcrumb" class="marke-still">
+            <a href="https://tickerguard.com" class="transition hover:text-accent">Home</a>
+            <span aria-hidden="true" class="px-1.5">/</span>
+            <a href="https://tickerguard.com/studies" class="transition hover:text-accent">Studies</a>
+                    </nav>
+
+        
+        <h1 class="mt-4 text-[length:clamp(26px,3.4vw,38px)] leading-[1.06] tracking-[-0.042em]">Shorting bad earnings: post-earnings-drift backtest loses −1.48% per trade</h1>
+        <p class="mt-4 text-[16.5px] leading-[1.55] text-muted">A preregistered backtest of 8,861 short trades across 2,615 small-cap U.S. stocks (2011-2026): shorting a stock after it dropped at least 10% on a bad earnings day lost money on average after costs, and even underperformed the identical short placed on random days.</p>
+
+        <div class="mt-7 flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-line py-4 text-[13px]">
+            <div class="flex items-center gap-3">
+                <img src="/images/autoren/thomas-muecke-160.webp" alt="" width="40" height="40" decoding="async"
+                     class="size-10 rounded-full border border-line object-cover">
+                <span>
+                    <span class="block font-semibold text-ink">Thomas Mücke</span>
+                    <span class="block text-muted">Founder &amp; Publisher</span>
+                </span>
+            </div>
+            <span class="ml-auto text-muted">
+                <time datetime="2026-08-25T21:47:02+00:00">August 25, 2026</time>
+                · 12 min read
+            </span>
+        </div>
+
+                
+        
+        
+            </header>
+
+    
+    
+    
+    
+    
+    <aside class="key-takeaways mx-auto mt-10 max-w-[760px] rounded-xl border border-line bg-surface px-6 py-5" x-reveal>
+        <h2 class="marke">Key Takeaways</h2>
+        <ul class="key-takeaways__list mt-3 space-y-2 text-[16px] leading-[1.6] text-ink">
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"></span>
+                    <span>8,861 short trades across 2,615 small-cap U.S. stocks (2011-2026, excluding 2020) averaged −1.48% per trade after all costs.</span>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"></span>
+                    <span>The bootstrap confidence band (−2.08% to −0.87%) sits entirely below zero — this isn&#039;t a statistical fluke.</span>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"></span>
+                    <span>Only 3 of 15 years and 0 of 4 time periods were profitable.</span>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"></span>
+                    <span>Versus the identical short placed on random days, the rule underperformed by −1.15 percentage points — the bad earnings report is a handicap, not an edge.</span>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"></span>
+                    <span>All 31 preregistered variants (signal definitions, holding periods, size classes, stops) stayed negative; roughly 0.8 positive cells would be expected by chance alone.</span>
+                </li>
+                    </ul>
+    </aside>
+
+    
+    
+    
+    
+    
+    <figure class="mx-auto mt-10 max-w-[1000px]" x-reveal>
+        <img src="https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en.png" alt="Shorting bad earnings: post-earnings-drift backtest loses −1.48% per trade"
+              srcset="https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en-640w.webp 640w, https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en-960w.webp 960w, https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en-1280w.webp 1280w, https://tickerguard.com/images/analysen/post-earnings-drift-backtest-studie/hero-t16-post-earnings-drift-backtest-studie-16x9-en-1600w.webp 1600w" sizes="(min-width: 1080px) 1000px, calc(100vw - 2rem)"              width="1600" height="900" loading="lazy" decoding="async"
+             class="aspect-[16/9] w-full object-cover">
+        <figcaption class="mt-2 font-mono text-[10.5px] text-muted">TickerGuard</figcaption>
+    </figure>
+
+    
+    
+    
+    <div class="xl:hidden">
+        <nav aria-label="Table of Contents" class="table-of-contents mx-auto mt-12 rounded-xl border border-line bg-surface px-6 py-5" x-reveal>
+        <h2 class="marke-still">Table of Contents</h2>
+        <ol class="mt-3 space-y-1.5 text-[14.5px]">
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">1.</span>
+                    <a href="#result-brief" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">The result in four numbers</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">2.</span>
+                    <a href="#what-is-the-post-earnings-announcement-drift" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">What is the post-earnings-announcement drift</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">3.</span>
+                    <a href="#how-this-was-calculated" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">How this was calculated</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">4.</span>
+                    <a href="#the-main-calculation" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">The main calculation</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">5.</span>
+                    <a href="#the-control-checks-the-real-finding" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">The control checks — the real finding</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">6.</span>
+                    <a href="#no-arm-works" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">No arm works</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">7.</span>
+                    <a href="#costs-and-the-borrow-fee" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">Costs and the borrow fee</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">8.</span>
+                    <a href="#does-the-finding-hold-over-time" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">Does the finding hold over time</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">9.</span>
+                    <a href="#what-this-means-and-what-it-doesnt" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">What this means — and what it doesn&#039;t</a>
+                </li>
+                            <li class="flex gap-3">
+                    <span aria-hidden="true" class="font-semibold tabular-nums text-accent">10.</span>
+                    <a href="#close" class="text-ink underline decoration-line underline-offset-4 transition hover:text-accent hover:decoration-accent">Close</a>
+                </li>
+                    </ol>
+    </nav>
+    </div>
+
+    
+    <div class="relative xl:pl-[252px]">
+    <aside class="absolute inset-y-0 left-0 hidden w-[220px] xl:block" aria-label="Table of Contents">
+        <nav class="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4"
+             data-chapters="[&quot;result-brief&quot;,&quot;what-is-the-post-earnings-announcement-drift&quot;,&quot;how-this-was-calculated&quot;,&quot;the-main-calculation&quot;,&quot;the-control-checks-the-real-finding&quot;,&quot;no-arm-works&quot;,&quot;costs-and-the-borrow-fee&quot;,&quot;does-the-finding-hold-over-time&quot;,&quot;what-this-means-and-what-it-doesnt&quot;,&quot;close&quot;]"
+             x-data="{
+                 active: '',
+                 modules: {},
+                 init() {
+                     const body = document.getElementById('artikel-body');
+                     if (! body) return;
+                     const chapters = JSON.parse(this.$el.dataset.chapters)
+                         .map((id) => document.getElementById(id))
+                         .filter(Boolean);
+                     // KI-Erlebnis-Module einsammeln, Anker vergeben, dem Kapitel davor zuordnen
+                     body.querySelectorAll('section > header > h3').forEach((h3, i) => {
+                         const sec = h3.closest('section');
+                         if (! sec.id) sec.id = 'ki-modul-' + (i + 1);
+                         let parent = '';
+                         for (const h of chapters) {
+                             if (h.compareDocumentPosition(sec) & Node.DOCUMENT_POSITION_FOLLOWING) parent = h.id;
+                         }
+                         if (parent === '') return;
+                         (this.modules[parent] ??= []).push({ id: sec.id, title: h3.textContent.split(':')[0].trim() });
+                     });
+                     // Scroll-Spy: letzte Sprungmarke oberhalb der Lesekante markieren
+                     const targets = chapters.concat(Array.from(body.querySelectorAll('section[id^=ki-modul-]')));
+                     const update = () => {
+                         let current = '';
+                         for (const t of targets) {
+                             if (t.getBoundingClientRect().top <= 140) current = t.id;
+                         }
+                         this.active = current;
+                     };
+                     window.addEventListener('scroll', update, { passive: true });
+                     update();
+                 },
+             }">
+            <p class="marke-still">Table of Contents</p>
+            <ol class="mt-3 space-y-1 border-l border-line text-[13px] leading-snug">
+                                    <li>
+                        <a href="#result-brief"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'result-brief' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">The result in four numbers</a>
+                        <template x-for="m in (modules['result-brief'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#what-is-the-post-earnings-announcement-drift"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'what-is-the-post-earnings-announcement-drift' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">What is the post-earnings-announcement drift</a>
+                        <template x-for="m in (modules['what-is-the-post-earnings-announcement-drift'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#how-this-was-calculated"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'how-this-was-calculated' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">How this was calculated</a>
+                        <template x-for="m in (modules['how-this-was-calculated'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#the-main-calculation"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'the-main-calculation' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">The main calculation</a>
+                        <template x-for="m in (modules['the-main-calculation'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#the-control-checks-the-real-finding"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'the-control-checks-the-real-finding' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">The control checks — the real finding</a>
+                        <template x-for="m in (modules['the-control-checks-the-real-finding'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#no-arm-works"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'no-arm-works' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">No arm works</a>
+                        <template x-for="m in (modules['no-arm-works'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#costs-and-the-borrow-fee"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'costs-and-the-borrow-fee' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">Costs and the borrow fee</a>
+                        <template x-for="m in (modules['costs-and-the-borrow-fee'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#does-the-finding-hold-over-time"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'does-the-finding-hold-over-time' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">Does the finding hold over time</a>
+                        <template x-for="m in (modules['does-the-finding-hold-over-time'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#what-this-means-and-what-it-doesnt"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'what-this-means-and-what-it-doesnt' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">What this means — and what it doesn&#039;t</a>
+                        <template x-for="m in (modules['what-this-means-and-what-it-doesnt'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                                    <li>
+                        <a href="#close"
+                           class="-ml-px block border-l-2 py-1 pl-3 transition hover:text-accent"
+                           :class="active === 'close' ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">Close</a>
+                        <template x-for="m in (modules['close'] ?? [])" :key="m.id">
+                            <a :href="'#' + m.id"
+                               class="-ml-px flex items-start gap-1.5 border-l-2 py-0.5 pl-6 text-[12px] transition hover:text-accent"
+                               :class="active === m.id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted'">
+                                <span aria-hidden="true" class="doku-form mt-px shrink-0">AI</span>
+                                <span x-text="m.title"></span>
+                            </a>
+                        </template>
+                    </li>
+                            </ol>
+        </nav>
+    </aside>
+<div id="artikel-body" class="prose prose-lg mt-12 max-w-none">
+            <p>After a bad earnings report, a stock often doesn't drop in one move — it
+keeps sliding for weeks. That's the post-earnings-announcement drift, and in
+theory a trader shouldn't need to dive into the chaos of the earnings day
+itself to profit from it: waiting for the first reaction and then shorting
+should be enough. This preregistered backtest ran exactly that rule on
+8,861 short trades across 2,615 different small-cap U.S. stocks, from 2011
+through 2026.</p>
+
+<p>Small caps are supposed to be the last place where the drift survives —
+in large, heavily-followed stocks, the academic literature says it has
+largely vanished. Only the short side is tested here: sell after the market
+has already reacted to the bad numbers, then cover 20 trading days later.
+Entering into the earnings-day gap itself, and buying after good earnings,
+are both outside the scope of this study.</p>
+
+<h2 id="result-brief">The result in four numbers</h2>
+<ul>
+  <li><strong>&minus;1.48%</strong> — the average result of a short trade
+  after all costs, using the winsorized mean (a mean where the most extreme
+  1% of values on each end are capped before averaging, so a few outliers
+  can't dominate the number). Across 8,861 trades, this rule cost money —
+  it didn't make any.</li>
+  <li><strong>&minus;2.08% to &minus;0.87%</strong> — the range the result
+  falls in with 95% confidence (a bootstrap confidence band: a range built
+  by repeatedly resampling the data itself, showing how stable an average
+  really is). It sits entirely below zero — this isn't a fluke.</li>
+  <li><strong>3 of 15 years</strong> were profitable at all, and
+  <strong>0 of 4 time periods</strong>. There is no stretch of history in
+  which the rule worked — it wasn't good once and dead now; it was
+  underwater the entire way through.</li>
+  <li><strong>&minus;1.15 percentage points</strong> — how much worse the
+  short after bad earnings performed than the identical short placed on
+  random days in the same stocks. The earnings report doesn't make the
+  short trade better. It makes it measurably worse.</li>
+</ul>
+
+<p>Shorting small-cap U.S. stocks after a bad earnings report lost money
+after costs over the study period, in none of the four time periods
+examined, and was profitable in only one out of five years.</p>
+
+<h2 id="what-is-the-post-earnings-announcement-drift">What is the post-earnings-announcement drift</h2>
+<p>The finding goes back to academic research from the late 1960s and 1980s
+(Ball &amp; Brown 1968, Bernard &amp; Thomas 1989): when a company reports
+its quarterly results, the market only partially digests the news on the
+day itself. After a positive surprise, the stock tends to keep drifting up
+for weeks; after a negative one, it tends to keep drifting down. The effect
+runs counter to the idea of an efficient market, which is exactly why it
+has been studied for decades.</p>
+<p>More recent research (including Chordia et al. 2014, Martineau 2021)
+finds that in large, widely-traded stocks the drift has largely disappeared
+— too many market participants watch for it, so it gets arbitraged away.
+In small, less-followed stocks it's supposed to still be there. This study
+tests exactly that gap — and only on the short side: selling short after
+bad earnings.</p>
+
+<h2 id="how-this-was-calculated">How this was calculated</h2>
+<p>Every rule — thresholds, holding period, costs, control groups, and the
+success criterion — was fixed before the first number was computed
+(preregistered). Nothing was adjusted after the fact to make the result
+look better.</p>
+<p>The backtest is <strong>survivorship-bias-free</strong>: stocks that were
+later delisted (bankruptcy, acquisition, or otherwise) stay in the dataset
+with their full price history. Dropping failed companies would inflate the
+apparent performance of any strategy.</p>
+<p>An earnings day is defined as the mandatory filing with the U.S.
+securities regulator in which a company discloses its quarterly results.
+Because the filing timestamp doesn't reliably indicate before- or
+after-market release, the <strong>reaction day</strong> is determined
+causally: if the stock already breaches the threshold on the filing day
+itself, that day is the reaction day and the trade enters at the next
+day's open; if it only breaches the threshold the day after, that day
+becomes the reaction day instead, with entry one day later still. No price
+that the trade couldn't have known at entry time ever enters the decision.</p>
+<p>Costs include spread and slippage, commission, and a <strong>borrow fee
+of 10% per year</strong> — small caps after a sharp drop are often hard to
+borrow, so a lower rate would have been optimistic. Sensitivity to this
+assumption is shown further below.</p>
+<p>Every number in this article <strong>excludes the year 2020</strong>.
+Its extreme price swings would have distorted every average; the year was
+still simulated, it simply isn't included in the figures shown here.</p>
+
+<h2 id="the-main-calculation">The main calculation</h2>
+<p>The core rule: if a U.S. stock with a market capitalization under $2
+billion drops at least 10% on its earnings day (or the day after), it is
+shorted at the next market open and covered 20 trading days later at the
+close — no stop, because a drift is a slow move and a stop would cut off
+exactly that slowness.</p>
+<!-- TABELLE: main-results -->
+<table>
+<caption>Main cell: short 20 trading days after a bad earnings report (excluding 2020)</caption>
+<thead><tr><th>Metric</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Trades (n)</td><td>8,861</td></tr>
+<tr><td>Distinct stocks</td><td>2,615</td></tr>
+<tr><td>Win rate (share of trades with a gain)</td><td>48.32% (Wilson 95% CI 47.28&ndash;49.37%)</td></tr>
+<tr><td>Median (the typical trade)</td><td>&minus;0.61%</td></tr>
+<tr><td>Mean (all trades weighted equally)</td><td>&minus;1.56%</td></tr>
+<tr><td>Winsorized mean (headline figure)</td><td>&minus;1.48%</td></tr>
+<tr><td>Bootstrap confidence band 95%</td><td>&minus;2.08% to &minus;0.87%</td></tr>
+<tr><td>Profit factor (sum of gains / sum of losses)</td><td>0.79</td></tr>
+<tr><td>Avg. winning trade</td><td>+11.97%</td></tr>
+<tr><td>Avg. losing trade</td><td>&minus;14.21%</td></tr>
+<tr><td>Avg. holding period</td><td>19.98 trading days (29.32 calendar days)</td></tr>
+</tbody>
+</table>
+<p>The median — the typical trade, with half of all outcomes above it and
+half below — comes in notably milder at &minus;0.61% than the mean at
+&minus;1.56%. That gap is a feature of shorting itself: a short's loss is
+unbounded (a stock can in theory rise without limit), while its gain is
+capped at 100% (a stock can't fall below zero). That asymmetry drags the
+mean down harder than a handful of strong rebounds should, further than the
+typical trade actually shows.</p>
+
+<h2 id="the-control-checks-the-real-finding">The control checks — the real finding</h2>
+<p>A single negative number doesn't prove the earnings report was to blame
+— maybe stocks lose money after any sharp drop, regardless of the cause.
+So two control arms ran alongside the main test: the identical short on
+<strong>random days</strong> in the same stocks, and the identical short
+after a <strong>matching price crash with no earnings report</strong>.</p>
+<!-- TABELLE: control-checks -->
+<table>
+<caption>Main cell vs. the two control arms (excluding 2020)</caption>
+<thead><tr><th>Cell</th><th>n</th><th>Winsorized mean</th><th>Bootstrap 95% CI</th></tr></thead>
+<tbody>
+<tr><td>Main cell (short after bad earnings)</td><td>8,861</td><td>&minus;1.48%</td><td>&minus;2.08% to &minus;0.87%</td></tr>
+<tr><td>Control: random days, same stocks</td><td>7,681</td><td>&minus;0.33%</td><td>&minus;0.80% to +0.13%</td></tr>
+<tr><td>Control: matching crash, no earnings day</td><td>3,069</td><td>&minus;2.15%</td><td>&minus;3.30% to &minus;1.09%</td></tr>
+</tbody>
+</table>
+<p>Against random days, the gap is clear: the short after bad earnings
+underperformed by <strong>&minus;1.15 percentage points</strong>
+(confidence band &minus;1.89 to &minus;0.43 points, which excludes zero).
+The earnings report is not an edge for the short seller — it's a
+handicap.</p>
+<p>Against the matching-crash control, there is <strong>no reliable
+difference</strong>: +0.67 percentage points in favor of the main cell,
+with a confidence band of &minus;0.64 to +1.94 points — zero sits right in
+the middle. In plain terms:</p>
+<blockquote>The textbook anomaly isn't tradable on the short side.</blockquote>
+<p>It isn't the bad earnings report that ruins the short — it's the crash
+itself. A stock that has already dropped 10% or more in a single day tends
+toward sharp, hard-to-predict rebounds over the following weeks, whether or
+not a quarterly number triggered the drop. The classic post-earnings-drift,
+as described in the literature, provides no independent edge on the short
+side of small caps.</p>
+
+<h2 id="no-arm-works">No arm works</h2>
+<p>31 preregistered variants were tested in total — different signal
+definitions, holding periods, size classes, and exit rules. By chance
+alone, at a 95% confidence level, about 0.8 of these cells would be
+expected to come out positive. Not a single one of the 31 did.</p>
+
+<h3>Signal definitions</h3>
+<p>Besides the raw price reaction (main cell), the test also ran the
+academic definition based on the earnings surprise (SUE — standardized
+unexpected earnings, meaning a quarter's earnings surprise relative to its
+usual swings over the prior eight quarters), a combination of both, a
+counter-check, and a blind short on every earnings day.</p>
+<!-- TABELLE: signal-arms -->
+<table>
+<caption>Signal arms compared (excluding 2020)</caption>
+<thead><tr><th>Arm</th><th>Definition</th><th>n</th><th>Winsorized mean</th><th>95% CI</th></tr></thead>
+<tbody>
+<tr><td>S1 EPS surprise</td><td>SUE &le; &minus;1</td><td>7,484</td><td>&minus;1.97%</td><td>&minus;2.47% to &minus;1.48%</td></tr>
+<tr><td>S2 price reaction (main cell)</td><td>reaction &le; &minus;10%</td><td>8,861</td><td>&minus;1.48%</td><td>&minus;2.08% to &minus;0.87%</td></tr>
+<tr><td>S3 combination</td><td>SUE &le; &minus;1 AND reaction &le; &minus;10%</td><td>1,563</td><td>&minus;1.72%</td><td>&minus;2.77% to &minus;0.69%</td></tr>
+<tr><td>G1 counter-check</td><td>reaction &le; &minus;10% despite good EPS</td><td>730</td><td>&minus;1.56%</td><td>&minus;3.02% to &minus;0.31%</td></tr>
+<tr><td>B0 base rate (blind)</td><td>every earnings day, unfiltered</td><td>69,457</td><td>&minus;2.07%</td><td>&minus;2.42% to &minus;1.74%</td></tr>
+</tbody>
+</table>
+
+<h3>Holding period</h3>
+<p>The longer the position stays open, the worse the result gets — a
+pattern that argues against a durable drift: a real drift should firm up
+over time, not dissolve.</p>
+<!-- TABELLE: holding-periods -->
+<table>
+<caption>Result by holding period (excluding 2020)</caption>
+<thead><tr><th>Holding period</th><th>n</th><th>Winsorized mean</th><th>95% CI</th></tr></thead>
+<tbody>
+<tr><td>5 trading days</td><td>8,909</td><td>&minus;0.34%</td><td>&minus;0.75% to +0.05%</td></tr>
+<tr><td>10 trading days</td><td>8,892</td><td>&minus;0.52%</td><td>&minus;1.03% to &minus;0.03%</td></tr>
+<tr><td>20 trading days (main cell)</td><td>8,861</td><td>&minus;1.48%</td><td>&minus;2.08% to &minus;0.87%</td></tr>
+<tr><td>40 trading days</td><td>8,745</td><td>&minus;2.58%</td><td>&minus;3.46% to &minus;1.71%</td></tr>
+<tr><td>60 trading days</td><td>8,375</td><td>&minus;4.00%</td><td>&minus;4.99% to &minus;2.95%</td></tr>
+</tbody>
+</table>
+
+<h3>Size classes</h3>
+<p>Even within small caps there's no rescuing slice: neither the smallest
+names (micro caps) nor the somewhat larger ones (small caps) turn positive.
+Mid and large caps are shown for comparison; they were never the target of
+this study.</p>
+<!-- TABELLE: size-classes -->
+<table>
+<caption>Result by market capitalization (excluding 2020)</caption>
+<thead><tr><th>Class</th><th>Threshold</th><th>n</th><th>Winsorized mean</th><th>95% CI</th></tr></thead>
+<tbody>
+<tr><td>Micro</td><td>&lt; $300M</td><td>3,058</td><td>&minus;0.91%</td><td>&minus;1.82% to +0.02%</td></tr>
+<tr><td>Small</td><td>$300M&ndash;$2B</td><td>5,803</td><td>&minus;1.77%</td><td>&minus;2.34% to &minus;1.22%</td></tr>
+<tr><td>Mid (comparison)</td><td>$2B&ndash;$10B</td><td>2,929</td><td>&minus;1.33%</td><td>&minus;1.90% to &minus;0.78%</td></tr>
+<tr><td>Large (comparison)</td><td>&ge; $10B</td><td>1,211</td><td>&minus;1.17%</td><td>&minus;1.92% to &minus;0.36%</td></tr>
+</tbody>
+</table>
+
+<h3>Stops and price targets</h3>
+<p>A stop could, in theory, have kept individual trades from spiraling out
+of control. In practice it changes nothing about the overall picture — every
+variant stays underwater.</p>
+<!-- TABELLE: stops -->
+<table>
+<caption>Result with stop or price target (excluding 2020)</caption>
+<thead><tr><th>Variant</th><th>n</th><th>Winsorized mean</th><th>95% CI</th></tr></thead>
+<tbody>
+<tr><td>No stop (main cell)</td><td>8,861</td><td>&minus;1.48%</td><td>&minus;2.08% to &minus;0.87%</td></tr>
+<tr><td>Stop +15% above entry</td><td>8,869</td><td>&minus;1.35%</td><td>&minus;1.79% to &minus;0.89%</td></tr>
+<tr><td>Stop +25% above entry</td><td>8,863</td><td>&minus;1.60%</td><td>&minus;2.15% to &minus;1.07%</td></tr>
+<tr><td>Stop = reaction-day high</td><td>8,779</td><td>&minus;1.29%</td><td>&minus;1.74% to &minus;0.86%</td></tr>
+<tr><td>Price target &minus;20%</td><td>8,891</td><td>&minus;0.88%</td><td>&minus;1.43% to &minus;0.33%</td></tr>
+</tbody>
+</table>
+
+<h2 id="costs-and-the-borrow-fee">Costs and the borrow fee</h2>
+<p>Shorting costs more than buying: on top of spread, slippage, and
+commission, there's a borrow fee for the shares being sold short. The main
+cell assumes 10% per year — a realistic rate for small caps right after a
+crash, when many market participants want to short at once and shares get
+harder to locate.</p>
+<!-- TABELLE: costs-borrow -->
+<table>
+<caption>Result by borrow fee, winsorized mean (excluding 2020)</caption>
+<thead><tr><th>Borrow rate p.a.</th><th>Winsorized mean</th></tr></thead>
+<tbody>
+<tr><td>0.25%</td><td>&minus;0.70%</td></tr>
+<tr><td>10% (main cell)</td><td>&minus;1.48%</td></tr>
+<tr><td>25%</td><td>&minus;2.69%</td></tr>
+<tr><td>100%</td><td>&minus;8.69%</td></tr>
+</tbody>
+</table>
+<p>There is no <strong>borrow-fee breakeven</strong> — a rate at which the
+strategy would come out flat — for the main cell. Even at an unrealistically
+low 0.25% per year, the result stays negative at &minus;0.70%. And with
+every cost stripped out entirely — no spread, no commission, no borrow fee
+— the winsorized mean still sits at &minus;0.48%. The real problem isn't
+the cost load; it's the price path itself. On average, these stocks rebound
+too often and too strongly for a short to outrun them.</p>
+
+<h2 id="does-the-finding-hold-over-time">Does the finding hold over time</h2>
+<p>Neither individual years nor broader time periods show a stretch where
+the rule made money.</p>
+<!-- TABELLE: time-periods -->
+<table>
+<caption>Result by time period, winsorized mean (excluding 2020)</caption>
+<thead><tr><th>Period</th><th>n</th><th>Winsorized mean</th></tr></thead>
+<tbody>
+<tr><td>2011&ndash;2015</td><td>2,206</td><td>&minus;0.77%</td></tr>
+<tr><td>2016&ndash;2019</td><td>2,357</td><td>&minus;2.05%</td></tr>
+<tr><td>2021&ndash;2023</td><td>2,199</td><td>&minus;0.92%</td></tr>
+<tr><td>2024&ndash;2026</td><td>2,099</td><td>&minus;2.24%</td></tr>
+</tbody>
+</table>
+<!-- TABELLE: by-year -->
+<table>
+<caption>Result by year, mean per trade (excluding 2020)</caption>
+<thead><tr><th>Year</th><th>n</th><th>Avg. per trade</th></tr></thead>
+<tbody>
+<tr><td>2011</td><td>344</td><td>+1.82%</td></tr>
+<tr><td>2012</td><td>468</td><td>&minus;1.53%</td></tr>
+<tr><td>2013</td><td>362</td><td>&minus;2.33%</td></tr>
+<tr><td>2014</td><td>452</td><td>&minus;1.54%</td></tr>
+<tr><td>2015</td><td>580</td><td>&minus;0.15%</td></tr>
+<tr><td>2016</td><td>597</td><td>&minus;7.93%</td></tr>
+<tr><td>2017</td><td>563</td><td>+0.72%</td></tr>
+<tr><td>2018</td><td>591</td><td>&minus;1.21%</td></tr>
+<tr><td>2019</td><td>606</td><td>&minus;0.05%</td></tr>
+<tr><td>2021</td><td>577</td><td>&minus;0.71%</td></tr>
+<tr><td>2022</td><td>832</td><td>+0.20%</td></tr>
+<tr><td>2023</td><td>790</td><td>&minus;2.27%</td></tr>
+<tr><td>2024</td><td>808</td><td>&minus;1.89%</td></tr>
+<tr><td>2025</td><td>1,015</td><td>&minus;2.78%</td></tr>
+<tr><td>2026 (through Mar. 31)</td><td>276</td><td>&minus;2.27%</td></tr>
+</tbody>
+</table>
+<p>Of 15 years measured, only 2011, 2017, and 2022 were profitable — 3 of
+15, or 20%. For comparison, a rule that actually worked would be expected
+to show far more winning years than that. None of the four broader time
+periods averaged positive either.</p>
+
+<h2 id="what-this-means-and-what-it-doesnt">What this means — and what it doesn't</h2>
+<p>The literature's claim that the post-earnings-drift survives in small
+caps did <strong>not hold up on the short side</strong> in this study.
+Whether the same claim fares better on the long side — buying after good
+earnings — wasn't tested here; the underlying asymmetry of gains and losses
+is reversed for a long position (gain theoretically unlimited, loss capped
+at 100%) and would need its own separate test. Other trading approaches on
+U.S. stocks have already been preregistered and tested, including
+<a href="/articles/episodic-pivots-backtest-study">breakouts following
+episodic price pivots</a> and
+<a href="/articles/intraday-strategies-backtest-study">several intraday
+strategies</a>, each with its own independently documented results.</p>
+<p>Three limits of this study belong in an honest accounting:</p>
+<ul>
+  <li><strong>Borrow availability wasn't actually verified.</strong> The
+  calculation assumes every stock was borrowable at the assumed 10% annual
+  rate. Whether a broker would actually have made the shares available —
+  especially for small stocks right after a crash — isn't ruled out, but
+  it isn't proven either.</li>
+  <li><strong>The choice of reaction day is a convention, not a fact of
+  nature.</strong> Because the filing timestamp doesn't reveal whether a
+  number came out before or after market close, a rule for choosing the
+  reaction day had to be set. Other plausible variants of that rule move
+  the result only modestly (roughly &minus;1.4% to &minus;1.9%) — the
+  overall conclusion doesn't change.</li>
+  <li><strong>The earnings-surprise measure (SUE) uses today's data
+  history.</strong> The volatility behind this metric is computed from the
+  quarterly figures as they stand today; later restatements of the
+  comparison quarters are baked in, even though the published value itself
+  is used as of its actual release date.</li>
+</ul>
+
+<h2 id="close">Close</h2>
+<p>Shorting small-cap U.S. stocks after bad earnings reports lost money
+after costs over the study period, worked in none of the 31 preregistered
+variants, and even underperformed the identical short placed on random
+days. Against a matching price crash with no earnings report, though, there
+was no measurable difference — the price action following a sharp drop was
+the real driver, not the earnings report itself.</p>
+
+<p class="text-sm text-muted">Source: own backtest of price and fundamental data, 2011 through 2026 (excluding 2020), 5,337 U.S. stock series with 153,715 tradable earnings days. Figures as of August 25, 2026. Design preregistered before the first number was computed.</p>
+
+<p>This article is a historical analysis of publicly available price and fundamental data and is not investment advice. It contains no buy or sell recommendation, no forecast, and no statement about any individual company listed today. Past results — simulated or real — are not a reliable indicator of future returns. Anyone making investment decisions should assess their own situation and risks, and seek professional advice where in doubt.</p>
+        </div>
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <section class="faq mx-auto mt-16 max-w-[760px]" x-reveal>
+        <h2 class="border-b border-line pb-2 text-[clamp(21px,2.4vw,27px)] leading-[1.06] tracking-[-0.038em] text-ink">Frequently Asked Questions</h2>
+        <div class="mt-2">
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>What is the post-earnings-announcement drift?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">It&#039;s the observation that after a company reports quarterly results, its stock tends to keep drifting in the same direction for weeks rather than moving all at once, because the market only partially digests the news on the day itself. The effect comes from academic research in the 1960s and 1980s and is considered largely gone in large-cap stocks today.</p>
+                    </div>
+                </div>
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>Does shorting small caps after bad earnings pay off?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">Not according to this backtest: 8,861 simulated short trades lost −1.48% per trade after costs on average, were profitable in only 3 of 15 years, and in none of the four time periods tested. All 31 variants examined stayed negative.</p>
+                    </div>
+                </div>
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>Why is the mean more negative than the median?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">The median (the typical trade, with half of outcomes above it and half below) was −0.61%, while the mean (all results added up and evenly distributed) was −1.56%. A short&#039;s loss is theoretically unlimited while its gain is capped at 100% — that asymmetry drags the mean down further than the typical trade suggests.</p>
+                    </div>
+                </div>
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>Was it the bad earnings report or just the price crash?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">The crash. Against a matching price crash with no earnings report, there was no reliable difference (+0.67 percentage points, confidence band includes zero). Against random days, though, the rule was clearly worse (−1.15 percentage points). The earnings report itself provides no edge.</p>
+                    </div>
+                </div>
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>Were costs and the borrow fee included?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">Yes. The calculation includes spread, slippage, commission, and a 10% annual borrow fee — a realistic rate for hard-to-borrow small caps after a crash. Even at an unrealistically low 0.25% annual fee, the result stayed negative at −0.70%; there is no borrow rate at which the strategy breaks even.</p>
+                    </div>
+                </div>
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>Was buying after good earnings also tested?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">No, this study covers only the short side after bad earnings. Buying after good earnings (the long side) has a different gain-loss structure and was deliberately left out of this test.</p>
+                    </div>
+                </div>
+                            <div x-data="{ open: false }" class="border-b border-line">
+                    <h3 class="text-[16px] tracking-[-0.018em] text-ink">
+                        <button type="button" @click="open = ! open" :aria-expanded="open"
+                                class="flex w-full items-center justify-between gap-4 py-4 text-left">
+                            <span>How was the result kept from being adjusted after the fact?</span>
+                            <svg class="size-5 shrink-0 text-accent transition-transform duration-200" :class="open && 'rotate-45'"
+                                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                        </button>
+                    </h3>
+                    <div x-show="open" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                        <p class="pb-5 text-[15px] leading-[1.65] text-muted">Every rule — thresholds, holding period, costs, control groups, and the success criterion — was documented and fixed before the first number was computed (preregistration). The backtest is also survivorship-bias-free: stocks that later went bankrupt or were delisted stay in the dataset with their full price history.</p>
+                    </div>
+                </div>
+                    </div>
+    </section>
+
+        
+        <aside class="author-byline mx-auto mt-16 flex max-w-[760px] items-start gap-5 border-t border-line pt-8" x-reveal>
+    <img src="/images/autoren/thomas-muecke-160.webp" alt="Thomas Mücke" width="72" height="72" loading="lazy"
+         class="size-18 shrink-0 rounded-full border border-line object-cover">
+    <div>
+        <p class="marke-still">About Thomas Mücke</p>
+        <p class="mt-1 text-[17px] font-[550] tracking-[-0.022em] text-ink">
+                            <a href="https://www.linkedin.com/in/thomas-m%C3%BCcke-ab6011192/" target="_blank" rel="me noopener"
+                   class="inline-flex items-center gap-2 transition hover:text-accent">
+                    Thomas Mücke
+                    
+                    <svg class="size-6 shrink-0 transition hover:opacity-80" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+                    <span class="sr-only">(LinkedIn profile, opens in a new tab)</span>
+                </a>
+                    </p>
+                    <p class="text-[13px] text-accent">Founder &amp; Publisher</p>
+                            <p class="mt-2 text-[14.5px] leading-[1.65] text-muted">TickerGuard was founded by Thomas Mücke, who spent more than ten years investigating white-collar crime with the German criminal police. Every analysis here follows the same method: we read the original filings ourselves — for U.S. companies the reports filed with the SEC (annual reports on Form 10-K, quarterly reports on Form 10-Q, current reports on Form 8-K) and earnings call transcripts, for European issuers the audited annual and half-year reports — recompute the numbers and back every statement with its source. The research is AI-assisted; a human frames and signs off on every piece.</p>
+                <p class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted">
+            <time datetime="2026-08-25T21:47:02+00:00">Published August 25, 2026</time>
+                                        <span aria-hidden="true">·</span>
+                <span>12 min read</span>
+                    </p>
+        
+        <p class="author-byline__ai-disclosure mt-3 flex items-start gap-2 rounded-md border border-line bg-surface px-3 py-2 text-[12px] leading-[1.6] text-muted">
+            <svg class="mt-0.5 size-4 shrink-0 text-accent" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.5-6.5-1.4 1.4M7.9 16.1l-1.4 1.4m0-11.4 1.4 1.4m8.2 8.2 1.4 1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>This piece was produced with the support of artificial intelligence and editorially reviewed.</span>
+        </p>
+    </div>
+</aside>
+
+        
+        
+        
+        
+        
+        <aside aria-label="Mandatory disclosures"
+       class="mx-auto mt-16 max-w-[760px] border-t border-line pt-8 text-[12px] leading-[1.65] text-muted">
+    <p class="marke-still">Mandatory disclosures and risk warning</p>
+    <p class="mt-3">Not investment advice. All research is for information only.</p>
+    <p class="mt-2">Investing involves risk — up to the total loss of the capital invested.</p>
+    <p class="mt-2">Assessments, expectations and outlooks in this piece are forecasts, not facts; they rest on the sources named in the text, as of the dates given there.</p>
+    <a href="https://tickerguard.com/stocks/ai-rating-methodology"
+       class="mt-3 inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent">
+        How we rate: our methodology
+    </a>
+</aside>
+</div>
+</article>
+
+
+    <section class="mx-auto mt-20 max-w-[1280px] border-t border-line px-4 pt-10">
+        <div class="mb-8 flex items-baseline justify-between gap-4">
+    <h2 class="text-[clamp(21px,2.4vw,27px)] leading-[1.06] tracking-[-0.038em] text-ink">
+                    You might also like
+            </h2>
+    </div>
+        <div class="mt-6 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+                            <article class="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition hover:border-accent" x-reveal="x-reveal">
+    <a href="https://tickerguard.com/articles/qqq-1-minute-mean-reversion-backtest-study" class="overflow-hidden">
+        
+        <img src="https://tickerguard.com/images/analysen/qqq-1-minuten-strategie/hero-t33-qqq-1-minuten-strategie-16x9-en.png"
+              srcset="https://tickerguard.com/images/analysen/qqq-1-minuten-strategie/hero-t33-qqq-1-minuten-strategie-16x9-en-640w.webp 640w, https://tickerguard.com/images/analysen/qqq-1-minuten-strategie/hero-t33-qqq-1-minuten-strategie-16x9-en-960w.webp 960w, https://tickerguard.com/images/analysen/qqq-1-minuten-strategie/hero-t33-qqq-1-minuten-strategie-16x9-en-1280w.webp 1280w, https://tickerguard.com/images/analysen/qqq-1-minuten-strategie/hero-t33-qqq-1-minuten-strategie-16x9-en-1600w.webp 1600w" sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, calc(100vw - 2rem)"              alt="1-Minute Day Trading on QQQ: 586 Variants Tested, None Held Up After Costs" width="1600" height="900" loading="lazy" fetchpriority="auto"
+             class="aspect-[16/9] w-full object-cover">
+    </a>
+    <div class="flex flex-1 flex-col px-4 pb-3.5 pt-3.5">
+        <div class="flex items-center justify-between gap-2">
+            <a href="https://tickerguard.com/studies" class="font-mono text-[10.5px] uppercase tracking-[0.13em] text-accent">Studies</a>
+                    </div>
+        <h3 class="mt-2 artikel-titel text-ink">
+            <a href="https://tickerguard.com/articles/qqq-1-minute-mean-reversion-backtest-study" class="transition hover:text-accent">1-Minute Day Trading on QQQ: 586 Variants Tested, None Held Up After Costs</a>
+        </h3>
+                    <p class="mt-2 text-[14.5px] leading-[1.55] text-muted">Price stretches away from its middle and snaps back — catch that and you are supposed to have a small, reliable edge. We computed…</p>
+                <p class="mt-auto flex flex-wrap items-center gap-2 pt-4 font-mono text-[11px] text-muted">
+            <span class="text-ink">Thomas Mücke</span>
+            <span aria-hidden="true">·</span>
+            <span>9 min</span>
+        </p>
+    </div>
+</article>
+                            <article class="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition hover:border-accent" x-reveal="x-reveal">
+    <a href="https://tickerguard.com/articles/martingale-index-backtest-study" class="overflow-hidden">
+        
+        <img src="https://tickerguard.com/images/analysen/martingale-index-backtest-studie/hero-t16-martingale-index-backtest-studie-16x9-en.png"
+              srcset="https://tickerguard.com/images/analysen/martingale-index-backtest-studie/hero-t16-martingale-index-backtest-studie-16x9-en-640w.webp 640w, https://tickerguard.com/images/analysen/martingale-index-backtest-studie/hero-t16-martingale-index-backtest-studie-16x9-en-960w.webp 960w, https://tickerguard.com/images/analysen/martingale-index-backtest-studie/hero-t16-martingale-index-backtest-studie-16x9-en-1280w.webp 1280w, https://tickerguard.com/images/analysen/martingale-index-backtest-studie/hero-t16-martingale-index-backtest-studie-16x9-en-1600w.webp 1600w" sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, calc(100vw - 2rem)"              alt="Martingale on the S&amp;P 500 and Nasdaq 100: 2.94% vs. 10.84%" width="1600" height="900" loading="lazy" fetchpriority="auto"
+             class="aspect-[16/9] w-full object-cover">
+    </a>
+    <div class="flex flex-1 flex-col px-4 pb-3.5 pt-3.5">
+        <div class="flex items-center justify-between gap-2">
+            <a href="https://tickerguard.com/studies" class="font-mono text-[10.5px] uppercase tracking-[0.13em] text-accent">Studies</a>
+                    </div>
+        <h3 class="mt-2 artikel-titel text-ink">
+            <a href="https://tickerguard.com/articles/martingale-index-backtest-study" class="transition hover:text-accent">Martingale on the S&amp;P 500 and Nasdaq 100: 2.94% vs. 10.84%</a>
+        </h3>
+                    <p class="mt-2 text-[14.5px] leading-[1.55] text-muted">A preregistered backtest of 216 buy-the-dip rules (a so-called martingale strategy) on the S&amp;P 500 and the Nasdaq 100, with data reaching back to…</p>
+                <p class="mt-auto flex flex-wrap items-center gap-2 pt-4 font-mono text-[11px] text-muted">
+            <span class="text-ink">Thomas Mücke</span>
+            <span aria-hidden="true">·</span>
+            <span>9 min</span>
+        </p>
+    </div>
+</article>
+                            <article class="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition hover:border-accent" x-reveal="x-reveal">
+    <a href="https://tickerguard.com/articles/one-cent-stop-loss-study" class="overflow-hidden">
+        
+        <img src="https://tickerguard.com/images/analysen/ein-cent-stop/hero-ein-cent-stop-16x9-en.png"
+              srcset="https://tickerguard.com/images/analysen/ein-cent-stop/hero-ein-cent-stop-16x9-en-640w.webp 640w, https://tickerguard.com/images/analysen/ein-cent-stop/hero-ein-cent-stop-16x9-en-960w.webp 960w, https://tickerguard.com/images/analysen/ein-cent-stop/hero-ein-cent-stop-16x9-en-1280w.webp 1280w, https://tickerguard.com/images/analysen/ein-cent-stop/hero-ein-cent-stop-16x9-en-1600w.webp 1600w" sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, calc(100vw - 2rem)"              alt="The One-Cent Stop in the Backtest: 0 of 162 Variants Held Up" width="1600" height="900" loading="lazy" fetchpriority="auto"
+             class="aspect-[16/9] w-full object-cover">
+    </a>
+    <div class="flex flex-1 flex-col px-4 pb-3.5 pt-3.5">
+        <div class="flex items-center justify-between gap-2">
+            <a href="https://tickerguard.com/studies" class="font-mono text-[10.5px] uppercase tracking-[0.13em] text-accent">Studies</a>
+                    </div>
+        <h3 class="mt-2 artikel-titel text-ink">
+            <a href="https://tickerguard.com/articles/one-cent-stop-loss-study" class="transition hover:text-accent">The One-Cent Stop in the Backtest: 0 of 162 Variants Held Up</a>
+        </h3>
+                    <p class="mt-2 text-[14.5px] leading-[1.55] text-muted">944 million trading attempts in the US stocks we analysed show: the ultra-tight one-cent stop, a recipe attributed to Dr. David Paul, did not…</p>
+                <p class="mt-auto flex flex-wrap items-center gap-2 pt-4 font-mono text-[11px] text-muted">
+            <span class="text-ink">Thomas Mücke</span>
+            <span aria-hidden="true">·</span>
+            <span>16 min</span>
+        </p>
+    </div>
+</article>
+                    </div>
+    </section>
+    </main>
+
+    
+    <section class="seiten-feedback"
+         data-pfad="/articles/post-earnings-drift-backtest-study"
+         data-url="https://tickerguard.com/page-feedback"
+         data-token="aoqwkwzSQw1JTm214jqYDyspCNuLtsfszrk6xTrh">
+    <style>
+        .seiten-feedback { max-width: 720px; margin: 3rem auto 0.5rem; padding: 1.25rem 1rem; border-top: 1px solid var(--color-line); text-align: center; font-size: 14px; line-height: 1.5; }
+        .seiten-feedback .sf-titel { margin: 0 0 .75rem; font-weight: 600; font-size: 15px; }
+        .seiten-feedback .sf-buttons { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+        .seiten-feedback .sf-btn { cursor: pointer; border: 1px solid var(--color-line); background: transparent; color: inherit; border-radius: 6px; padding: .45rem 1.1rem; font: inherit; font-size: 13.5px; font-weight: 600; }
+        .seiten-feedback .sf-btn:hover { border-color: currentColor; }
+        .seiten-feedback .sf-honig { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+        .seiten-feedback .sf-danke { margin: 0; font-weight: 600; }
+    </style>
+
+    <div class="sf-frage">
+        <p class="sf-titel">Was this page helpful to you?</p>
+        <div class="sf-buttons">
+            <button type="button" class="sf-btn" data-verdict="up">👍 Yes, helpful</button>
+            <button type="button" class="sf-btn" data-verdict="down">👎 Not really</button>
+        </div>
+    </div>
+
+    <input type="text" class="sf-honig" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+    <p class="sf-danke" hidden>Thanks for your feedback!</p>
+
+    <script>
+        (function () {
+            var box = document.currentScript.closest('.seiten-feedback');
+            var frage = box.querySelector('.sf-frage');
+            var danke = box.querySelector('.sf-danke');
+            var key = 'seiten-feedback:' + box.dataset.pfad;
+
+            // Schon abgestimmt? Dann direkt der Danke-Zustand.
+            try {
+                if (localStorage.getItem(key)) { frage.hidden = true; danke.hidden = false; return; }
+            } catch (e) { /* Private Mode */ }
+
+            box.querySelectorAll('.sf-frage .sf-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    fetch(box.dataset.url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': box.dataset.token,
+                        },
+                        body: JSON.stringify({
+                            path: box.dataset.pfad,
+                            verdict: btn.dataset.verdict,
+                            website: box.querySelector('.sf-honig').value,
+                        }),
+                    }).catch(function () { /* Feedback should never disrupt the page */ });
+
+                    frage.hidden = true;
+                    danke.hidden = false;
+                    try { localStorage.setItem(key, btn.dataset.verdict); } catch (e) { /* ok */ }
+                });
+            });
+        })();
+    </script>
+</section>
+
+    
+    <footer class="mt-24 border-t border-line">
+    <div class="mx-auto max-w-[1200px] px-4 pb-10 pt-12">
+        <div class="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[1.5fr_1fr_1fr_0.9fr_0.9fr]">
+            
+            <div class="col-span-2 lg:col-span-1">
+                                    <p class="font-sans text-[20px] font-bold leading-none tracking-[-0.035em] text-ink">Ticker<span class="text-accent">Guard</span></p>
+                                <p class="mt-4 font-display text-[15px] font-semibold leading-snug text-ink">Deep research on small stocks — independent, rigorous, readable.</p>
+                <p class="mt-3 max-w-sm font-sans text-[13.5px] leading-relaxed text-muted">TickerGuard publishes deep, evergreen research on small-cap stocks — built on fundamental data and SEC filings, independent and readable.</p>
+            </div>
+
+            
+                            <nav aria-label="Research &amp; Tools">
+                    <p class="marke-still">Research &amp; Tools</p>
+                    <ul class="mt-4 space-y-2.5 font-sans text-[13.5px]">
+                                                    <li><a href="https://tickerguard.com/buy-signals" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Buy Signals</a></li>
+                                                    <li><a href="https://tickerguard.com/stocks/scanner" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Scanners</a></li>
+                                                    <li><a href="https://tickerguard.com/markets/screener" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Screener</a></li>
+                                                    <li><a href="https://tickerguard.com/stocks/compare" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Compare</a></li>
+                                                    <li><a href="https://tickerguard.com/stocks/earnings-calendar" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Earnings Calendar</a></li>
+                                                    <li><a href="https://tickerguard.com/research" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Deep Dives</a></li>
+                                                    <li><a href="https://tickerguard.com/studies" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Studies</a></li>
+                                                    <li><a href="https://tickerguard.com/superinvestors" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Superinvestors</a></li>
+                                                    <li><a href="https://tickerguard.com/politicians" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Politician Trades</a></li>
+                                                    <li><a href="https://tickerguard.com/side-finds" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Side Finds</a></li>
+                                                    <li><a href="https://tickerguard.com/market" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Market Conditions</a></li>
+                                                    <li><a href="https://tickerguard.com/event-radar" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Event Radar</a></li>
+                                                    <li><a href="https://tickerguard.com/backtest" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Backtest</a></li>
+                                                    <li><a href="https://tickerguard.com/portfolio-duel" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Portfolio Duel</a></li>
+                                                    <li><a href="https://tickerguard.com/journal" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Journal</a></li>
+                                                                    </ul>
+                </nav>
+                            <nav aria-label="Markets &amp; Comparison">
+                    <p class="marke-still">Markets &amp; Comparison</p>
+                    <ul class="mt-4 space-y-2.5 font-sans text-[13.5px]">
+                                                    <li><a href="https://tickerguard.com/markets/screener" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Market</a></li>
+                                                    <li><a href="https://tickerguard.com/newsletter-letter" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">The Letter</a></li>
+                                                                    </ul>
+                </nav>
+                            <nav aria-label="Publisher">
+                    <p class="marke-still">Publisher</p>
+                    <ul class="mt-4 space-y-2.5 font-sans text-[13.5px]">
+                                                    <li><a href="https://tickerguard.com/about" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">About Us</a></li>
+                                                    <li><a href="https://tickerguard.com/reviews" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Reviews</a></li>
+                                                    <li><a href="https://tickerguard.com/brand" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Brand &amp; Press</a></li>
+                                                    <li><a href="https://tickerguard.com/developers" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Data API for developers</a></li>
+                                                    <li><a href="https://tickerguard.com/feedback" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">What&#039;s missing?</a></li>
+                                                    <li><a href="https://tickerguard.com/search" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Search</a></li>
+                                                    <li><a href="https://tickerguard.com/site-index" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Site Map</a></li>
+                                                    <li><a href="https://boersenlotse.de" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Börsenlotse — our German sister site</a></li>
+                                                                    </ul>
+                </nav>
+                            <nav aria-label="Legal">
+                    <p class="marke-still">Legal</p>
+                    <ul class="mt-4 space-y-2.5 font-sans text-[13.5px]">
+                                                    <li><a href="https://tickerguard.com/imprint" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Legal Notice</a></li>
+                                                    <li><a href="https://tickerguard.com/privacy" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Privacy</a></li>
+                                                    <li><a href="https://tickerguard.com/terms" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Terms of Service</a></li>
+                                                    <li><a href="https://tickerguard.com/withdrawal" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Right of Withdrawal</a></li>
+                                                                            <li><button type="button" x-data @click="$store.consent.reopen()" class="text-ink underline-offset-4 transition hover:text-accent focus-visible:text-accent focus-visible:underline">Cookie Settings</button></li>
+                                            </ul>
+                </nav>
+                    </div>
+
+        
+        <div class="mt-12 border-t border-line pt-6">
+            <p class="marke-still">Disclaimer</p>
+            <p class="mt-3 font-sans text-[12.5px] leading-relaxed text-muted">
+                TickerGuard makes no warranty as to the accuracy, completeness, or timeliness of the information presented. The content offered here is for information and illustration only and is in no way to be understood as a call to buy, hold, or sell securities, or as investment advice. TickerGuard may earn a commission on some links — that helps us keep our content free.
+                Some logos are provided by <a href="https://logo.dev" target="_blank" rel="noopener" class="text-accent underline-offset-2 transition hover:underline">Logo.dev</a> .
+            </p>
+        </div>
+        <div class="mt-6 flex flex-col gap-2 border-t border-line pt-6 font-sans text-[12.5px] text-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>© 2026 TickerGuard. Independent stock research.</p>
+            <p>Not investment advice. All research is for information only.</p>
+        </div>
+    </div>
+</footer>
+
+    
+            <div
+    id="cookie-consent"
+    data-version="1"
+    data-storage-key="boersenlotse-consent"
+    x-data
+    x-cloak
+>
+    
+    <div
+        x-show="! $store.consent.decided"
+        x-transition.opacity
+        role="dialog"
+        aria-label="Cookie and consent notice"
+        data-consent-banner
+        class="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-surface/95 px-4 py-3 backdrop-blur sm:py-5"
+    >
+        <div class="mx-auto flex max-w-[1000px] flex-col gap-2.5 sm:gap-4 md:flex-row md:items-center md:justify-between">
+            <p class="font-serif text-[13px] leading-[1.45] text-ink sm:text-[15px] sm:leading-relaxed">
+                We use essential cookies to run this site. Optional cookies for analytics and marketing are only set with your consent. More in our
+                <a href="https://tickerguard.com/privacy" class="underline decoration-accent underline-offset-2 transition hover:text-accent">Privacy Policy</a>.
+            </p>
+            
+            <div class="flex shrink-0 flex-wrap gap-1.5 sm:gap-2">
+                <button type="button" @click="$store.consent.openSettings()" class="knopf">
+                    Settings
+                </button>
+                <button type="button" @click="$store.consent.rejectAll()" class="knopf">
+                    Essential only
+                </button>
+                <button type="button" @click="$store.consent.acceptAll()" class="knopf knopf-akzent">
+                    Accept all
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div
+        x-show="$store.consent.showSettings"
+        x-transition.opacity
+        @keydown.escape.window="$store.consent.showSettings = false"
+        class="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+    >
+        <div class="w-full max-w-[560px] rounded-md border border-line bg-paper p-6"
+            @click.outside="$store.consent.showSettings = false">
+            <h2 class="font-display text-2xl font-semibold tracking-tight text-ink">Cookie settings</h2>
+            <p class="mt-2 font-serif text-[15px] leading-relaxed text-muted">Choose which categories you allow. Essential cookies are required to run the site and are always active.</p>
+
+            <div class="mt-5 space-y-4">
+                
+                <label class="flex items-start gap-3 opacity-70">
+                    <input type="checkbox" checked disabled class="mt-1 h-4 w-4 accent-accent">
+                    <span>
+                        <span class="block font-sans text-[14px] font-semibold text-ink">Necessary</span>
+                        <span class="block font-serif text-[13px] text-muted">Required to run the site securely (e.g. sessions, form protection). Always active.</span>
+                    </span>
+                </label>
+                
+                <label class="flex items-start gap-3">
+                    <input type="checkbox" x-model="$store.consent.categories.statistics" class="mt-1 h-4 w-4 accent-accent">
+                    <span>
+                        <span class="block font-sans text-[14px] font-semibold text-ink">Statistics</span>
+                        <span class="block font-serif text-[13px] text-muted">Cookie-based statistics services, loaded only after your consent. Our own traffic measurement with Matomo sets no cookies and runs independently of this — you can object to it via the opt-out in our privacy policy.</span>
+                    </span>
+                </label>
+                
+                <label class="flex items-start gap-3">
+                    <input type="checkbox" x-model="$store.consent.categories.marketing" class="mt-1 h-4 w-4 accent-accent">
+                    <span>
+                        <span class="block font-sans text-[14px] font-semibold text-ink">Marketing</span>
+                        <span class="block font-serif text-[13px] text-muted">Personalized content and advertising. Only loaded with your consent.</span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="mt-6 flex flex-wrap justify-end gap-2">
+                <button type="button" @click="$store.consent.save()" class="knopf knopf-primaer">
+                    Save choices
+                </button>
+                <button type="button" @click="$store.consent.acceptAll()" class="knopf knopf-akzent">
+                    Accept all
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+    
+</body>
+</html>

@@ -1,0 +1,159 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "etf_beta_hedged_short_spread",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "H1",
+      "source_urls": [
+        "https://arxiv.org/pdf/2608.14014"
+      ]
+    }
+  ],
+  "iter_id": "h20260929_51_small_cap_short_drift",
+  "objective": "T-20260929-51 step 1: test whether short IWM/RSP/IJR/XRT/KRE hedged with trailing-beta long SPY has a tradable Sharpe in 2024-2026 after 10 bp per side and a 0.5%/yr ETF borrow fee, or whether the Kargarzadeh et al. 2026 small-cap drift is a benchmark artifact. No return is computed in this dossier.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "kargarzadeh_2026_background_drift",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://arxiv.org/pdf/2608.14014"
+    },
+    {
+      "claim_id": "asness_2018_size_junk",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://jacobslevycenter.wharton.upenn.edu/wp-content/uploads/2015/05/Size-Matters-if-You-Control-Your-Junk.pdf"
+    },
+    {
+      "claim_id": "drechsler_2014_shorting_premium",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://www.nber.org/system/files/working_papers/w20282/w20282.pdf"
+    },
+    {
+      "claim_id": "quantrocket_2024_borrow_fees",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://www.quantrocket.com/blog/borrow-fees-alpha"
+    },
+    {
+      "claim_id": "verdad_2023_costly_shorts",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://verdadcap.com/archive/costly-shorts"
+    },
+    {
+      "claim_id": "tickerguard_2026_ped_short",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://tickerguard.com/articles/post-earnings-drift-backtest-study"
+    },
+    {
+      "claim_id": "alpaca_margin_short_selling",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "davolio_2002_market_for_borrowing",
+      "source_card_path": "reports/harness/source_cards/h20260929_51_small_cap_short_drift.jsonl",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=305479"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/h20260929_51_small_cap_short_drift.yaml",
+  "sources": [
+    {
+      "claim_id": "kargarzadeh_2026_background_drift",
+      "core_claim": "Neutral-news covered stocks trail their beta benchmark by -0.92%/month among small caps (-0.58% mid, -0.34% large); quiet stock-days drift -0.74/-0.88/-0.59%. Table 6 'short any covered small cap', beta-hedged to SPY, 2023-2026: Sharpe 1.35 gross, 0.78 at 20 bp per side. Cost model is a flat fee per side; borrow fees and locates not modelled.",
+      "credibility": "arXiv preprint, not peer reviewed; PDF read locally in full sections 5.2/5.6/Table 6",
+      "project_applicability": "Origin of the direction. Step 1 of this iteration tests the ETF-level version of the same benchmark drift with an explicit borrow fee.",
+      "published_or_updated_at": "2026-08-01",
+      "reflection": "Single sample 2023-2026, single-beta SPY benchmark; the authors themselves call the drift the residual of the benchmark. Decays if mega-cap leadership reverses; no borrow fee, so the 0.78 is an upper bound.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/pdf/2608.14014"
+    },
+    {
+      "claim_id": "asness_2018_size_junk",
+      "core_claim": "Size premium is weak, time-varying and weakened after the early 1980s, concentrated in microcaps; it becomes stable once quality/junk is controlled.",
+      "credibility": "AQR working paper (published JFE 2018); abstract and introduction read locally",
+      "project_applicability": "Prior that an unconditional short-small-cap spread is a regime bet on size, not a stable premium; the unhedged-for-quality IWM/SPY spread is expected to be weak outside regimes.",
+      "published_or_updated_at": "2015-01-22",
+      "reflection": "Long-only-factor framing, not a short-basket after-borrow test; documents decay of the raw size effect.",
+      "source_type": "paper",
+      "url": "https://jacobslevycenter.wharton.upenn.edu/wp-content/uploads/2015/05/Size-Matters-if-You-Control-Your-Junk.pdf"
+    },
+    {
+      "claim_id": "drechsler_2014_shorting_premium",
+      "core_claim": "Cheap-minus-expensive-to-short portfolio earns 1.43%/month gross, 0.91% net of fees; anomalies effectively disappear within the 80% of stocks with low short fees and are amplified among high-fee stocks.",
+      "credibility": "NBER working paper, abstract read locally",
+      "project_applicability": "Short-side returns of stocks concentrate where borrow is expensive: the easy-to-borrow (ETB) subset that Alpaca permits should show a much smaller drift than an all-stock basket. Motivates the ETB proxy tiers in step 2 and the 5/15% borrow grid.",
+      "published_or_updated_at": "2014-07-01",
+      "reflection": "US 2000s-2010s sample; borrow-fee data vendor-specific; effect is compensation for short risk, may not carry to 2023-26.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w20282/w20282.pdf"
+    },
+    {
+      "claim_id": "quantrocket_2024_borrow_fees",
+      "core_claim": "Stocks with high borrow fees tend to decline, but high borrow fees largely offset the profits from shorting them: the short strategy is profitable gross, roughly flat net of borrow fees.",
+      "credibility": "practitioner blog with IB borrow-fee archive 2018-04..2024-04; Alphalens methodology",
+      "project_applicability": "Borrow fee must be deducted per candidate; only ETB tiers belong in the tradable test.",
+      "published_or_updated_at": "2024-05-15",
+      "reflection": "Interactive Brokers rates, US ex-microcap, 2018-2024; not Alpaca's fee schedule.",
+      "source_type": "platform_docs",
+      "url": "https://www.quantrocket.com/blog/borrow-fees-alpha"
+    },
+    {
+      "claim_id": "verdad_2023_costly_shorts",
+      "core_claim": "Smaller, volatile, illiquid stocks are much more expensive to borrow; fees for a single name change sharply through time (GameStop 1% in Jan 2019, much higher by Jan 2021).",
+      "credibility": "asset manager research note",
+      "project_applicability": "Borrow-fee grid {0,5%,15%} and the short-squeeze month check (2021-01/02) in step 2.",
+      "published_or_updated_at": "2023-01-01",
+      "reflection": "Own borrow-cost classifier, no net-of-fee return number.",
+      "source_type": "platform_docs",
+      "url": "https://verdadcap.com/archive/costly-shorts"
+    },
+    {
+      "claim_id": "tickerguard_2026_ped_short",
+      "core_claim": "Shorting small caps after a -10% earnings day (8,861 trades, 2,615 stocks, 2011-2026) lost money after costs: mean -1.48% per trade, 48.3% hit rate; all 31 preregistered variants stayed negative.",
+      "credibility": "independent backtest write-up, 8,861 small-cap short trades 2011-2026",
+      "project_applicability": "Independent negative evidence on stock-level small-cap shorts in exactly the paper's window; this unconditional baseline is the placebo for such tests.",
+      "published_or_updated_at": "2026-09-01",
+      "reflection": "Event-conditioned, not an unconditional basket; unhedged trades.",
+      "source_type": "platform_docs",
+      "url": "https://tickerguard.com/articles/post-earnings-drift-backtest-study"
+    },
+    {
+      "claim_id": "alpaca_margin_short_selling",
+      "core_claim": "Shorting needs a margin account with >= $2,000; Alpaca distinguishes easy-to-borrow (ETB) and hard-to-borrow (HTB) securities, charges a daily stock borrow fee and provides a locate workflow for HTB names.",
+      "credibility": "broker documentation, fetched 2026-09-29",
+      "project_applicability": "Execution constraint: only ETB names are shortable without a locate; index ETFs are ETB. Short proceeds earn no interest.",
+      "published_or_updated_at": "2026-09-17",
+      "reflection": "Fee schedule is current, not historical; the 0.5%/yr ETF assumption is preregistered, not read from a fee table.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "davolio_2002_market_for_borrowing",
+      "core_claim": "Stock loan market 2000-2001: most stocks are cheap to borrow (loan fees near 0.25%) and a small share are 'special' with high fees and recalls.",
+      "credibility": "Journal of Financial Economics 66(2-3); found via WebSearch (SSRN page returned 403 to a direct fetch, so the abstract is a search summary, not an opened snapshot)",
+      "project_applicability": "Supports a low borrow fee for liquid ETF/large stocks and a stress grid for small ones.",
+      "published_or_updated_at": "2002-11-01",
+      "reflection": "2000-2001 sample only; the 0.25% figure is from the paper's well-known result, not re-read here (marked search_snippet_only).",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=305479"
+    }
+  ],
+  "spec_hash": "6a36596b1c1b3d5f1b9df0fd9bc16b40747bdda8b8a5801182c05a6a1d8fc087",
+  "strategy_name": "h20260929_51_small_cap_short_drift",
+  "topic_coverage": [
+    "small_cap_background_drift",
+    "beta_hedged_size_spread",
+    "size_premium_decay",
+    "short_borrow_fees",
+    "easy_to_borrow_execution_constraint",
+    "independent_negative_evidence_small_cap_shorts",
+    "benchmark_artifact_mega_cap_leadership"
+  ]
+}

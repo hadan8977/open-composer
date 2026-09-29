@@ -124,7 +124,7 @@
     "dir:cross_sectional_gap_fade"
    ],
    "gap": "gap fade edge sits in the illiquid short leg; end-of-day reversal triaged only",
-   "next": "measure real open costs (P2-A); test end-of-day reversal long leg"
+   "next": "measure real open costs (P2-A); test end-of-day reversal long leg | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): re-searched overnight/extended-hours anomalies; only already-registered sources (dir:overnight_intraday_gap_retail_pwb refuted on daily round-trip cost); exa 429 once; nothing queued."
   },
   {
    "id": "event.insider_13d",
@@ -140,11 +140,12 @@
     "dir:insider_form4_confirmation_gate",
     "dir:insider_buy_independent_broad_universe",
     "dir:insider_cluster_buy_top500",
+    "dir:insider_cluster_buy_top500_weekly_independent",
     "dir:event_13d_drift",
     "dir:activist_13d_long_horizon_hold"
    ],
    "gap": "insider tests were partly gates on momentum; still refuted standalone Signal library v1: cluster insider buying admitted as an event feature (+0.78% over 20 sessions, t=5.0; book +2.4%/yr at 20 bp); single buys lose after costs; new 13D filings drift down after we can buy (-0.56%, -3.5% since 2024).",
-   "next": "use cluster buys inside the ranking model"
+   "next": "use cluster buys inside the ranking model | 2026-09-29 T-20260929-04: exact H-20260916-08 design (top-500, weekly, buyers_60d>=2) rejected by signal_card (20d CAR +0.15% t=0.78, book excess +0.005%/yr at 20 bp, -11.9%/yr since 2024; reports/research/signal-cards/insider_cluster_buy_top500_weekly.md); all three cluster-buy scopes (event feature, broad monthly, top-500 weekly) now have a verdict; nothing further to test in this family."
   },
   {
    "id": "event.earnings_pead",
@@ -188,10 +189,11 @@
     "dir:spinoff_outperformance_recent_decay",
     "dir:seo_atm_offering_dilution_drift",
     "dir:buyback_execution_vs_announcement",
-    "dir:merger_arbitrage_target_announcement_drift"
+    "dir:merger_arbitrage_target_announcement_drift",
+    "dir:sec_item_105_cyber_incident_short"
    ],
    "gap": "M&A now searched 2026-09-29 (gap-search-04): a 2025-10 working paper (exa.ai/library/publication/k3grbvwxkr8, abstract only) claims target-stock return predictability 30 days post-announcement (news coverage, pre-announcement volume, deal type significant; claimed Sharpe >2.1 after costs, not independently verified, methodology not read beyond abstract) and a 1992-2021 US size-effect study (ideas.repec.org/p/usi/wpaper/920.html, 51,780 events) finds small-cap M&A targets get larger PRE-announcement drift (information leakage, not the post-announcement window we can trade). No local M&A deal-list data source exists yet (needs a new free EDGAR full-text-search build, same missing-8-K-item-metadata blocker already logged for buyback/restatement/SEO). Other 8-K item sub-directions (buyback, restatement, SEO/ATM, spin-off, FDA) remain evidence_too_weak/not_executable, unchanged.",
-   "next": "T-20260929-03: build a free EDGAR full-text-search M&A deal list (Item 1.01 'Agreement and Plan of Merger'), then run the target long-only drift as a signal_card event; other sub-directions still gated on the same 8-K item-type metadata build | 2026-09-29 gap search: ATM/424B5 dilution short re-searched, still no 2023+ quantified short signal; must first beat the unconditional small-cap short baseline (T-20260929-51)."
+   "next": "T-20260929-03: build a free EDGAR full-text-search M&A deal list (Item 1.01 'Agreement and Plan of Merger'), then run the target long-only drift as a signal_card event; other sub-directions still gated on the same 8-K item-type metadata build | 2026-09-29 gap search: ATM/424B5 dilution short re-searched, still no 2023+ quantified short signal; must first beat the unconditional small-cap short baseline (T-20260929-51). | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): searched Item 1.05 cyber-incident 8-Ks (arXiv 2512.06144, 54 filings, 7-day -3.07%, small caps -7.49%); too few events, small-cap hard-to-borrow; not queued, revisit as one row of a distress-item batch after T-20260929-03 builds the item table."
   },
   {
    "id": "flows_structural.calendar_and_fomc",
@@ -251,10 +253,11 @@
     "dir:short_interest_ratio_crowding_factor",
     "dir:finra_daily_short_volume_bjz",
     "dir:sec_fails_to_deliver_signal",
-    "dir:small_cap_background_drift_short_basket"
+    "dir:small_cap_background_drift_short_basket",
+    "dir:short_leg_anomalies_etb_borrow_cost"
    ],
    "gap": "daily short volume downloaded but never tested; fails-to-deliver never searched Signal library v1: FINRA daily short-volume z-score has no signal (IC 0.002); days to cover weak (IC 0.008, t=1.4).",
-   "next": "fails-to-deliver only with new evidence | 2026-09-29 gap search: short-side small-cap 'background drift' (arXiv 2608.14014, Sharpe 1.35 gross 2023-2026, borrow unmodelled) queued as T-20260929-51; HTB borrow fees eat the alpha (QuantRocket 2018-2024, Verdad), so the test is restricted to ETB proxies."
+   "next": "fails-to-deliver only with new evidence | 2026-09-29 gap search: short-side small-cap 'background drift' (arXiv 2608.14014, Sharpe 1.35 gross 2023-2026, borrow unmodelled) queued as T-20260929-51; HTB borrow fees eat the alpha (QuantRocket 2018-2024, Verdad), so the test is restricted to ETB proxies. | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): searched short-leg anomalies with real borrow fees: Muravyev, Pearson & Pollet (JF 2025) 162 anomalies 0.14%/month before fees, -0.01% after, profit concentrated in hard-to-borrow names; not queued, read T-20260929-51 and T-32 against it. | 2026-09-29 16:30 T-20260929-51 tested (h20260929_51_small_cap_short_drift): beta-hedged ETF short spreads with 10 bp per side and 0.5%/yr borrow, anchor 2024-01-08..2026-09-17 median-offset Sharpe after borrow IWM/SPY 0.390 (gate 0.6), IJR 0.585, RSP 0.400, XRT 0.644 (stress 0.103), KRE 0.259, unhedged short IWM -0.886, mirror-long placebo -0.484; 0 K1/K2/watch_recent; step 2 (stock baskets) not run; dir:small_cap_background_drift_short_basket refuted. Use IWM/SPY 0.39 (anchor) as the unconditional small-cap short baseline for stock-level short-event tests."
   },
   {
    "id": "alt_data.news_social",
@@ -307,16 +310,19 @@
    "universe": [
     "large_cap"
    ],
-   "status": "blocked_data",
+   "status": "searched",
    "directions": [
     "dir:options_derived_signals_retail",
     "dir:option_implied_variance_premium_pwb",
     "dir:options_data_deferred_owner_decision",
     "dir:iv_informed_dip_mean_reversion_live",
-    "dir:alpaca_free_options_iv_signals"
+    "dir:alpaca_free_options_iv_signals",
+    "dir:dolthub_free_options_eod_chain_data",
+    "dir:iv_hv_spread_stock_ranking_dolthub",
+    "dir:earnings_iv_crush_defined_risk_condor"
    ],
    "gap": "Alpaca's free options feed has no historical quotes; trade-based IV spreads have the wrong sign and negative autocorrelation (I-20260924-01, dir:alpaca_free_options_iv_signals not_executable).",
-   "next": "none unless the owner buys historical options quotes"
+   "next": "none unless the owner buys historical options quotes | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): DoltHub post-no-preference/options confirmed by direct SQL-API probe (free EOD chains with bid/ask, 2019-02..2026-09-28, plus volatility_history for ~1,540 symbols); status blocked_data -> searched. Queued T-20260929-60 (acceptance and cache), -61 (IV-HV stock ranking), -62 (earnings IV crush, defined risk); fallback T-20260929-64 (paid quotes, owner decision) if acceptance fails."
   },
   {
    "id": "options.options_income",
@@ -326,15 +332,16 @@
    "universe": [
     "etf"
    ],
-   "status": "blocked_permission",
+   "status": "searched",
    "directions": [
     "dir:put_credit_spread_income",
     "dir:naked_options_income_0dte",
     "dir:broker_native_bracket_multileg_options",
-    "dir:covered_call_cef_income_pwb"
+    "dir:covered_call_cef_income_pwb",
+    "dir:options_premium_selling_real_chain_batch"
    ],
    "gap": "Alpaca limits (no naked short options, no OCO multi-leg)",
-   "next": "none unless the owner changes permissions"
+   "next": "none unless the owner changes permissions | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): owner opened options Levels 1-3 on 2026-09-29 and the DoltHub chains carry bid/ask; index-level put-write/covered-call evidence is negative (CBOE PUT 6.87% vs SPY 10.79%; BXM 2020-25 +51% vs SPY +129%). Queued T-20260929-63 (28 candidates, real bid/ask, high-IV names are the only place K1 is plausible); status blocked_permission -> searched."
   },
   {
    "id": "fundamental.pit_accounting",

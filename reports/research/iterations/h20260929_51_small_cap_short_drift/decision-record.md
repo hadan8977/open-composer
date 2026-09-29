@@ -1,0 +1,8 @@
+# Decision Record: h20260929_51_small_cap_short_drift
+
+## P1 etf_beta_hedged_short_spread
+
+- Path: etf_beta_hedged_short_spread (9 preregistered candidates: short IWM/RSP/IJR/XRT/KRE hedged with trailing-beta SPY, IWM weekly, IWM 63d beta, IWM unhedged, mirror-long placebo)
+- Decision: **stop** (rejected; step 2 stock-level baskets not run). SSD_IWM_M252 anchor median Sharpe after 10 bp and 0.5%/yr borrow is 0.3903 (< 0.6 gate), stress 0.5537, DSR 0.190; no candidate reaches K1, K2 or watch_recent; the mirror-long placebo is negative (-0.484). Numbers: `reports/research/iterations/h20260929_51_small_cap_short_drift/results.json` (`step1_gate`, `candidates[].windows`).
+- Reason: the paper's 2023-2026 stock-level drift (Sharpe 1.35 gross) is not reproduced at ETF level with a single-beta SPY hedge; the beta-adjusted IWM drift is about -0.53%/month and the hedged spread earns about 0.4 Sharpe before and 0.39 after borrow. The unhedged short loses (anchor -0.886), so the positive spread comes from small caps trailing SPY, a regime relation that is weak here and roughly flat across sub-periods (stress 0.55). A stock basket carries higher borrow than the ETF and cannot exceed this baseline (queue plan).
+- Next iteration suggestion: registry row dir:small_cap_background_drift_short_basket = refuted. Use the ETF baseline (IWM/SPY hedged short, anchor Sharpe 0.39 after borrow) as the unconditional baseline any stock-level short-event test (IPO lockup, SEO/ATM, drop reversal) must beat by a margin. Reopen only with stock-level borrow data (a real fee history) or if the IWM/SPY relative return shows 6 consecutive months of decline with a beta-adjusted drift below -0.9%/month.

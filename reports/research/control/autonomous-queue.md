@@ -617,7 +617,7 @@
   - 2026-09-29 04:07 轮协调者合并入队：改为 ready、priority 3、去掉 not_before——免费 EDGAR 数据管道不需要机主决定，不算 blocked；摘要里 Sharpe>2.1 未读全文，只当弱先验。
 
 ### T-20260929-04 内部人集群买入：补测 H-20260916-08 唯一还空着的精确设计（top-500 池、周频）
-- status: ready
+- status: done
 - priority: 3
 - not_before:
 - goal: 登记簿里 `dir:insider_cluster_buy_top500` 明确写着"top-500/周频这个精确设计仍未测试"（`H-20260916-08`，2026-09-16 立项后一直排在其它卡片后面、预算 3 用了 0）。这是内部人集群买入方向里唯一还留白的精确 scope；两头都已经关闭：作为事件特征已采纳但很小（CAR +0.78%/20 日，t=5.0；`reports/research/signal-cards/insider_cluster_buy.md`），作为全池月频独立策略在 1501+ 档已被否定（跑输同波动 SPY，`dir:insider_buy_independent_broad_universe`）。**预期不高**——两头都已经不理想，周频换手只会加成本——排这个任务主要是花几分钟把登记簿这最后一条空白关掉，不是一个有前景的新线索。不需要新数据，直接复用已有 Form 4 特征和 `signal_card.py`。
@@ -627,6 +627,8 @@
 - done_when: signal card 生成在 `reports/research/signal-cards/`；`dir:insider_cluster_buy_top500` 和新建的 `dir:insider_cluster_buy_top500_weekly_independent` 都从 queued/partial 更新为终态，带 verdict、evidence、reopen_if；在 `current-view.zh.md` 的下一次更新里注明"内部人集群买入方向的三个 scope（事件特征、月频全池、周频 top500）已全部有定论"。
 - notes:
   - 2026-09-29 gap search (`gap-search-2026-09-29-04`) 添加。
+  - 2026-09-29 16:30 UTC 自动轮（a42b6bb7）开始，派 sonnet-high 子代理执行。
+  - 2026-09-29 16:30 轮结果（协调者已核对 card JSON）：否定。top-500（按月末时间点成交额排名）、每周最后一个交易日、buyers_60d≥2、次日开盘进、持有 20 日；9,352 个事件、381 只股票。flags：car_t_ge_3 假、beats_redated 真、book_positive_20bp 真、book_positive_20bp_recent 假，四项不全真。CAR(20 日) +0.15%、t 0.78、胜率 47.7%，2024 起 −0.73%；20bp 账本对全池超额 ≈0，2024 起 −11.9%/年。与卡片差异：事件模式无 30 只上限、无去重、无 BIL 填充。内部人集群买入三个 scope（事件特征小但采纳、月频全池否定、周频 top-500 否定）全部有定论。产物 `reports/research/signal-cards/insider_cluster_buy_top500_weekly.{json,md}`。
 
 ### T-20260929-21 交互会话：IPO 解禁期漂移（Field & Hanka 2001；做空 easy-to-borrow + 保守借券成本）
 - status: done
@@ -675,7 +677,7 @@
   - 2026-09-29 13:07 轮结果（协调者已对照 results.json 的 continue_rule/cells 核对）：否定，不做批量。论文效应在我们数据上复现，但只在周五收盘→周一开盘的缺口里：QQQ W<0 组比 W≥0 组低 51–62bp（t −3.0 到 −4.6），SPY 36–45bp；周一开盘→收盘没有同向效应（QQQ −2 到 +17bp，|t|≤1.1），开盘→周二开盘反而是反向。继续条件 0/12。按次日开盘成交不可交易。复开条件：确认 Alpaca 周日晚 8 点夜盘可交易且有数据。登记簿 `dir:crypto_weekend_to_monday_equity_transmission` refuted。产物：`reports/research/iterations/h20260929_50_crypto_weekend_monday/`，提交 5d5e788。
 
 ### T-20260929-51 小盘股做空"背景漂移"：同 β 对冲后的空头篮子在易借券、借券成本和随机篮子安慰剂之下是否还在（Kargarzadeh 等 arXiv 2608.14014）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 该论文（2023-2026，约 3000 只美股）发现"做空任何有新闻的小盘股"同 SPY β 对冲后毛夏普 1.35（20 bp 每边 0.78），新闻方向毫无贡献，全部来自小盘股相对单一 β 基准的每月约 -0.9% 漂移，作者没有建模借券费。问题：这是可交易的近期状态收益，还是"大盘巨头跑赢等权"的度量假象？回答它有两重价值：一是可能是当前市场里最便宜的空头端 Sharpe 来源；二是它是本队列所有个股空头事件测试（IPO 解禁、大跌反转、增发）必须超过的无条件基线，T-20、T-21 的空头结果没有拿它做对照。
@@ -683,3 +685,66 @@
 - done_when: 第一步表格（IWM/RSP/IJR/XRT/KRE 对 SPY，含借券与 20 bp）写入 `reports/research/iterations/h20260929_51_small_cap_short_drift/results.json`；若做第二步则含 20 条候选分档、借券网格、随机篮子安慰剂、最大轧空月；登记簿 `dir:small_cap_background_drift_short_basket` 更新状态并 `oc research directions validate` 通过；在 `dir:seo_atm_offering_dilution_drift` 和 `dir:ipo_lockup_expiration_drift` 的证据里写明无条件小盘空头基线的数字，供以后的空头事件测试引用。
 - notes:
   - 2026-09-29 13:07 轮缺口搜索（gap-search-2026-09-29-13）添加。
+  - 2026-09-29 16:07 UTC 自动轮开始（a42b6bb7），派 sonnet-high 子代理执行。
+  - 2026-09-29 16:07 轮结果（协调者已对照 results.json 核对 9 条）：否定，第一步就没过线，不做第二步。IWM/SPY 252 天 β 对冲空头扣 0.5%/年借券、10bp 后对标窗偏移中位数夏普 0.39（门槛 0.6），压力期 0.55；五个 ETF 最好 XRT 0.64（压力期 0.10）、IJR 0.59；不对冲纯做空对标窗 −0.89；做多镜像安慰剂 −0.48（符合预期）。K2 全不过（IWM_M63 对标窗 +0.049、压力期 +0.067，差一点）。DSR 0.19（9 次试验）。漂移是"小盘跑输 SPY"，β 调整后对标窗约 −0.53%/月，比论文的 −0.92% 小。批量通道 `weights_frame` 只保留正权重，所以写了独立脚本 `scripts/run_h20260929_51_small_cap_short_drift.py`（复用通道窗口/偏移/模拟器/DSR，加带符号权重和借券费）。无条件小盘空头基线 = 对标窗夏普 0.39，已写进 SEO/ATM 和 IPO 解禁两行登记簿。产物 `reports/research/iterations/h20260929_51_small_cap_short_drift/`。
+
+### T-20260929-60 DoltHub 免费期权库验收 + 本地缓存（解除期权格子的数据阻塞；T-61/62/63 的前置）
+- status: done
+- priority: 2
+- not_before:
+- goal: 期权格子从 09-15 起一直是 `blocked_data`（Alpaca 免费档没有历史报价）。2026-09-29 16 点的缺口搜索直接调用 DoltHub 的 SQL API，确认 `post-no-preference/options` 有免费的每日期权链（含买价、卖价、IV、希腊字母），2019-02-09 到 2026-09-28，另有 `volatility_history`（约 1,540 只标的的每日 iv_current、hv_current）。但每个标的每天只有约 130-190 个合约、最长约 6 周、AAPL 2024 年只有约 73% 的交易日，且没有文档写快照时间和报价来源。本任务只回答一件事：这份数据能不能用来给期权策略定价。通过就解锁 T-61（股票截面 IV 信号）、T-62（财报隐含波动率回落）、T-63（卖权利金批量）；不通过就让 T-64（付费数据）由机主决定。
+- plan: 数据验收，不是策略回测，不算研究迭代的回测门；但写 `direction-review.json`（引用 `dir:dolthub_free_options_eod_chain_data`）。**预注册的通过标准先写进 results.json 的 `criteria` 字段再拉数据。**
+  1. 写 `scripts/fetch_dolthub_options.py`：走 `https://www.dolthub.com/api/v1alpha1/post-no-preference/options?q=<SQL>`（无需密钥；每次最多 1000 行，所以按标的×年份×到期日分页，用 `ORDER BY ... LIMIT 1000 OFFSET n`），单线程、遇 429/5xx 指数退避、每 200 次请求写断点、结果落 `data/dolthub_options/*.parquet`（该目录不进 git，先确认 `.gitignore`；若没忽略就只加这一行，不动其它）。先做 20 次连续请求测限流；限流严重再考虑 dolt 命令行（要先查表大小，磁盘只剩约 23 GB，表大于 8 GB 不 clone）。不要用 Claude 读大量数据，只读汇总。
+  2. 缓存：`volatility_history` 全表（约 280 万行量级）；`option_chain` 只拉 SPY、QQQ、IWM、SMH、NVDA、TSLA、TQQQ、AAPL、MSFT、AMZN、GOOGL、META 的 2019-02→今（约 2,000-3,000 次请求）。
+  3. 验收检验（每条报数字，逐标的逐年）：(a) 交易日覆盖率 = 有数据的日期 ÷ `data/sip/daily` 该标的的交易日；(b) 时间点：用 put-call 平价 `C-P = S-K` 从近月 ATM 的买卖中间价反推标的价格，和 SIP 日线当日收盘价、次日开盘价比较，判断快照更接近哪一个；(c) 相对价差 (ask-bid)/mid：近月 ATM 与 25 delta 合约，按标的、年份的分位数（SPY/QQQ 与个股分开），和已发表的"ATM 跨式价差约占权利金 5-15%"对照；(d) `iv_current` 日自相关（应 > 0.9）、与链里 ATM 合约 vol 的一致性；(e) 缺口是否随机：缺失日和当日 |收益| 的关系；(f) 每个标的每天的合约数、到期日数随年份的变化（2019-2022 对 2024 起）；(g) 有没有零买价、买价大于卖价、卖价<买价、明显过期的报价占比。
+  4. 通过标准（先写死）：SPY、QQQ、AAPL、NVDA、TSLA 五个标的的日覆盖率 2019 起 ≥ 85%、2024 起 ≥ 90%；平价反推的标的价格与 SIP 收盘价（或开盘价，取更近者）中位相对偏差 ≤ 0.10%；SPY、QQQ 近月 ATM 相对价差中位数 ≤ 3%、个股 ≤ 10%；坏报价占比 ≤ 2%。**结论只有三档**：通过（解锁 T-61/62/63，成交口径写明"用哪天的快照近似次日成交"）；部分通过（只允许覆盖率达标的标的，其它任务只能用这个标的清单，写进 T-61/62/63 的 notes）；不通过（把 T-61/62/63 改 blocked，T-64 由 blocked 改 ready 并通知机主）。
+  5. 记录缓存位置、行数、每个标的的覆盖率表；若快照时间不明，明确写"信号日 d 的 IV 当作 d 收盘信息，成交用 d+1 开盘价还是 d+1 快照"的建议。登记簿 `dir:dolthub_free_options_eod_chain_data` 改状态并 `oc research directions validate` 通过。
+- done_when: `reports/research/iterations/h20260929_60_dolthub_options_acceptance/results.json` 含 criteria、每标的覆盖率/价差/平价偏差表、三档结论；`scripts/fetch_dolthub_options.py` 和它的单元测试（分页、退避、断点，用假响应）通过 ruff 和 pytest；T-61/62/63 的 notes 各追加一行结论；登记簿更新且 validate ok。
+- notes:
+  - 2026-09-29 16:07 轮缺口搜索（gap-search-2026-09-29-16）添加。简报 `reports/research/intel/gap-search-2026-09-29-16.md`。已验证（16:1x UTC 直接 SQL 调用）：option_chain 最新日期 2026-09-28、SPY 最早 2019-02-09；volatility_history 2026-09-28 有 1,536 个标的；AAPL 2026-09-28 链 192 行、4 个到期日。本任务未开始。
+  - 2026-09-29 16:30 UTC 自动轮（a42b6bb7）开始，派 sonnet-high 子代理执行。
+  - 2026-09-29 16:30 轮结果（协调者已核对 results.json）：按预注册标准"不通过"。覆盖率（服务器端逐日聚合，全部 1,919 个交易日，精确）：2019 起 SPY 61.4%、AAPL 62.0%、NVDA 61.7%、TSLA 53.9%（门槛 85%）；2024 起 87.5–87.9%（门槛 90%）；QQQ 完全没有数据，IWM/SMH/TQQQ 抽查也没有。2020-01→2024-08 每周大约只有 3 天；2024-09-04 起很密（SPY 97.9%、AAPL 98.5%，事后观察，不是标准）。价差和坏报价通过（ATM 价差中位 SPY 0.7%、个股 1.8–3.5%，坏报价 ≤0.4%）；平价偏差 0.15–0.40% 超过 0.10%（只能在 09-22 起 4–5 天上比，因为 SIP 日线是复权价）。快照是 d 日收盘。未拉全链和 volatility_history 全表；续跑 `uv run python scripts/fetch_dolthub_options.py --jobs chain,volhist --symbols SPY,QQQ,AAPL,NVDA,TSLA --chain-flush-units 25 --checkpoint-every 25`。产物 `reports/research/iterations/h20260929_60_dolthub_options_acceptance/`。
+
+### T-20260929-61 批量筛选：期权隐含波动率 vs 实现波动率的股票截面信号（Bali-Hovakimian / Goyal-Saretto 方向；交易的是股票，期权数据只当信号）
+- status: blocked（T-60 不通过；等 T-64 或免费密集段新合同）
+- priority: 2
+- not_before:
+- goal: 机主的信息源分层里，期权隐含信息排在 OHLCV 因子之上，但此前没有免费带报价的历史 IV，`dir:alpaca_free_options_iv_signals`、`dir:option_implied_crash_risk_xgboost_2026` 都因此不可执行。T-60 验收的 DoltHub `volatility_history` 提供约 1,540 只标的的每日 iv_current 和 hv_current。文献：实现波动率高于隐含波动率的股票之后收益更高（Bali & Hovakimian 2009；Goyal & Saretto 2009 测的是期权收益）；2026 年 arXiv 2608.26115 说 IV 信号 2023-2026 仍显著但 R2 很小。问题：在 2024 起的近期窗口、易借券股票上、扣 10/20 bp 之后，这类信号能不能达到 K1/K2。它交易股票，不受期权价差影响，是期权数据里成本最低的一条。
+- plan: 依赖 T-60 的缓存和结论（T-60 未完成先做 T-60 的第 1-2 步；T-60 判"不通过"则本任务改 blocked）。按 `dir:iv_hv_spread_stock_ranking_dolthub` 写 direction-review 和候选清单，**先预注册再算**。信号（预注册符号，符号错的镜像只当对照，不算候选）：IVRV = hv_current − iv_current（做多值高者）；IVCHG5 = iv_current / iv_week_ago − 1（做多 IV 下降者）；DEEPDIP = 在 close>200 日均线的上升趋势股里，3 日收益 ÷ (iv_current×√(3/252)) ≤ −1.5 的"跌幅超过期权隐含"股票（Deep Dip 的公开描述，做多）。候选 12 条 = 3 信号 × 持有 {5 日/周度、21 日/月度} × {只做多前十分位，多头前十分位 + 空头后十分位并用 SPY β 对冲}；池子固定 ADV 前 1,500 且价格 ≥ 5 美元（易借券代理；空头腿只在 ADV 前 500 内做）。对照（不是候选）：只按 hv 排序、只按 iv 排序（拆解安慰剂，项目规则：被单一分量复现 ≥50% 就停，参照 `dir:short_interest_ratio_crowding_factor` 的教训）、跨标的打乱 IV 的安慰剂。**最便宜的否定测试（几分钟，先于任何回测）**：三个信号对 5 日、21 日前瞻超额收益的 RankIC，2019-02→2023-08 与 2024-01-08 起分开算，按周做 Newey-West t。继续的条件：至少一个信号在 2024 起 IC 符号与预注册相同、|t| ≥ 2.5，且 2019-2023 同号，且 hv-only/iv-only 对照复现不到 50%。全不满足就停，写否定。信号日 d 的 IV 当作 d 收盘信息，成交用 d+1 开盘价，除非 T-60 证明快照晚于收盘（则再滞后一日）。价格面板必须先过 `sanitize_price_matrices` 默认参数并只按信号当天排除疑似拆股；内存紧，读行情一律 `scripts/run_capped.sh --mem 1.8G --`。通过 IC 关口后走批量通道 `scripts/screen_batch.py`，判定按运行手册第 5 节 K1/K2/近期观察，调仓日偏移取中位数（周度 5 个、月度 21 个），报 DSR，20 bp 复核，压力期在 IV 数据可得的部分（2019-02→2023-08，标"压力样本短：2019-02 起"）。
+- done_when: IC 表（三信号×两持有期×两窗×对照）写入 `reports/research/iterations/h20260929_61_iv_stock_ranking/results.json`；若过关则有 12 条候选的分档、DSR、20 bp 结果；登记簿 `dir:iv_hv_spread_stock_ranking_dolthub` 更新状态并 validate ok；`dir:alpaca_free_options_iv_signals`、`dir:iv_informed_dip_mean_reversion_live` 的证据里注明"已用带报价的 IV 重测"及结论。
+- notes:
+  - 2026-09-29 16:07 轮缺口搜索（gap-search-2026-09-29-16）添加。依赖 T-60。原文核对情况：Goyal-Saretto SSRN 页面 403，只按摘要知道结论，需在 direction-review 里注明。
+  - 2026-09-29 16:07 轮：T-60 判"不通过"，按本任务 plan 改 blocked。免费备选（不需要机主决定，但要新建独立合同）：只用 2024-09-04 以后的密集段（SPY、AAPL、NVDA、TSLA 及 MSFT/AMZN/GOOGL/META 抽查），按手册"不足 2 年压力期"条款只判对标窗、标"待补压力期"；QQQ/IWM/SMH/TQQQ 没有数据。付费数据见 T-64。 本任务依赖 volatility_history，其 2024-09 起的覆盖率还没测，是走免费路线的第一步。
+
+### T-20260929-62 批量筛选：财报隐含波动率回落，定义风险结构在真实买卖价下能否净赚（top-100 大盘股）
+- status: blocked（T-60 不通过；等 T-64 或免费密集段新合同）
+- priority: 2
+- not_before:
+- goal: 已发表/自述数据一致说财报隐含波动幅度平均高于实现幅度：theintrinsicinvestor.com（S&P 500 37,508 个事件 2010-2025，IV 比 RV 高 16.5 点，胜率 69%，季度夏普 2.05）；但它不含买卖价差，自己说 ATM 跨式价差占权利金 5-15%，前 100 名之外净夏普接近零或为负，且用模型 IV 而非真实报价；flashalpha 的 70 个事件（2025-06 到 2026-07）平均收割比只有 +0.02、5% 分位 −1.92。没有人用真实报价测过定义风险版本。这条是"事件短、单笔多、和 S3 相关性低"的候选，达到 K1 就值得排；Alpaca 期权 Level 3 允许价差（不允许裸卖跨式），所以只测铁蝶/铁鹰。和已否定的盈余意外三条线不同：这里交易的是波动率溢价，不押方向。
+- plan: 依赖 T-60（结论为通过或部分通过；不通过则改 blocked）。按 `dir:earnings_iv_crush_defined_risk_condor` 写 direction-review 和候选清单，先预注册。事件：`data/features/earnings_events/{2024,2025,2026}.parquet`（8-K Item 2.02，`acceptance_utc` 判盘前/盘后）；2019-02→2023-12 的压力样本需要 EDGAR Item 2.02 索引，若 T-20260929-03 已建 8-K 项目表就用它，没有就只做 2024 起并按运行手册标"压力样本短/待补压力期"（2.7 年，≥2 年，按对标窗和选择窗判）。标的池：T-60 覆盖率合格的名单里 ADV 前 50 与前 100 两档。定价：信号日收盘前一交易日（盘后公告为公告日）的快照建仓、事件后第一个快照平仓（成交口径以 T-60 结论为准）；**卖在买价、买在卖价**，另加每合约 0.65 美元（Alpaca 期权佣金/监管费本轮未核实，待核实，作保守假设）；敏感性：中间价 −25% 半价差。结构（预注册，全部候选计入试验次数）：先测量项（不是可交易候选）——卖 ATM 跨式、买回，得到"净权利金捕获率"；候选 12 条 = {铁蝶（短腿 ATM，翼在 ±1.0×隐含幅度；±1.5×隐含幅度）、铁鹰（短腿在 ±0.75×隐含幅度，翼在 ±1.5×隐含幅度）} × 池 {前 50，前 100} × 过滤 {全部事件，隐含幅度 / 自身过去 8 个季度实现幅度中位数 ≥ 1.2}（flashalpha 的"梯度"）。**最便宜的否定测试（先于候选）**：top-100 的 2024 起事件，卖 ATM 跨式（卖价成交）、买回（买价成交）的平均净盈亏占权利金的比例及其分位数；再对每个事件算"实现幅度 / 隐含幅度"，和上述已发表数字对照。若净盈亏平均 ≤ 0 就停（因为翼只会增加成本），写否定。组合口径：每笔按最大亏损配同额资本、同时持仓不超过 20 笔、闲置资金收益 0，按日盈亏算夏普；财报季集中，注明月度分布。安慰剂：同标的同结构放在随机非财报日（应≈只剩成本）、把事件打乱到别的标的。判定：运行手册第 5 节 K1/K2/近期观察，"调仓日偏移"的等价做法是入场提前/推后 0、1 个交易日两组和持有 1、2 日对比，中位数判，报 DSR，20 bp 等价口径用"价差 ×1.5"复核。最大单笔亏损、翼被击穿的比例必须报告。
+- done_when: 测量项表和 12 条候选分档写入 `reports/research/iterations/h20260929_62_earnings_iv_crush/results.json`（含覆盖率：有多少事件因缺链被丢弃，丢弃是否偏向大波动日）；登记簿 `dir:earnings_iv_crush_defined_risk_condor` 更新并 validate ok；若保留，写明失效信号（例如净权利金捕获率连续两个财报季为负）。
+- notes:
+  - 2026-09-29 16:07 轮缺口搜索（gap-search-2026-09-29-16）添加。依赖 T-60。expireworthless.com 那篇 846 个事件的测试 HTTP 402 打不开，未引用其数字。
+  - 2026-09-29 16:07 轮：T-60 判"不通过"，按本任务 plan 改 blocked。免费备选（不需要机主决定，但要新建独立合同）：只用 2024-09-04 以后的密集段（SPY、AAPL、NVDA、TSLA 及 MSFT/AMZN/GOOGL/META 抽查），按手册"不足 2 年压力期"条款只判对标窗、标"待补压力期"；QQQ/IWM/SMH/TQQQ 没有数据。付费数据见 T-64。
+
+### T-20260929-63 批量筛选：真实买卖价下的卖权利金（现金担保看跌、看跌价差、备兑看涨；ETF 与高 IV 个股/杠杆 ETF）
+- status: blocked（T-60 不通过；ETF 标的无数据）
+- priority: 3
+- not_before:
+- goal: 指数级的卖权利金证据是负面的：CBOE PUT 2007-2026 年化 6.87%、回撤 −37.1%，SPY 10.79%、−55.2%（theoptionsbench.com）；BXM 2020-2025 +51.3% 对 SPY +129.1%（coveredcallcalculator.net）；本仓库 XYLD 买入持有对标窗夏普 0.89、压力期 0.47（H-20260928-05）。没人用真实买卖价测过高 IV 标的（NVDA、TSLA、TQQQ、SMH）在 2024-2026 的表现，这是唯一可能超过 K1 的位置；同时它是唯一能给 S3 提供"下跌时收权利金"这种不同回报形状的期权族，所以还要看 K2。先验低，优先级 3。
+- plan: 依赖 T-60（通过或部分通过）。按 `dir:options_premium_selling_real_chain_batch` 写 direction-review 与候选清单，先预注册。标的 7 个：SPY、QQQ、IWM、SMH、NVDA、TSLA、TQQQ（以 T-60 覆盖率合格者为准）；结构 4 个：CSP_D30（卖 30 delta 看跌，全额现金担保）、CSP_D15、PCS_D30_W10（卖 30 delta 看跌、买 10 delta 看跌的价差）、CC_D30（持有标的正股 + 卖 30 delta 看涨）；到期日取距入场 28-35 天的月到期，持有到期，不滚动、不做 wheel、不提前平仓（避免引入未预注册的管理规则）；到期按标的收盘价内在价值结算，被行权的正股当日按收盘价了结（把期权盈亏和正股方向分开）。候选 = 7×4 = 28 条，全部计入 DSR。成交：卖在买价、买在卖价，每合约 0.65 美元（待核实），敏感性用中间价 −25% 半价差；闲置担保金收益按 0 计，另报按 SHY 收益的版本。**Sharpe 优先**：每条候选必须和"同标的买入持有按同样波动率缩放"的夏普比，不比总收益；再和 S3 按 63 天波动率倒数月度组合，看 K2 增量。**调仓日偏移**：入场日偏移取上一到期日后第 1..21 个交易日的每一个（21 本账），报中位数。窗口：对标窗 2024-01-08 起；压力期只能用 2019-02→2023-08（数据从 2019-02 起，含 2020 崩盘和 2022 熊市，标"压力样本短：2019-02 起"）。**最便宜的否定测试**：SPY、QQQ 的 CSP_D30 月度、卖价成交，偏移中位数夏普对同标的同波动买入持有的夏普；若两者在 2024 起都不高于对应买入持有，就把指数族整体判否，只保留高 IV 的 NVDA/TSLA/TQQQ/SMH 格子继续；这些格子再不满足 K1 或 K2 就整批收口。必须报告最大单月亏损、2025-04 和 2022 的月份、被行权比例、最大回撤。
+- done_when: 28 条候选的分档表（K1/K2/近期观察/淘汰）、每条对同波动买入持有的夏普差、DSR、20 bp 等价（价差 ×1.5）结果写入 `reports/research/iterations/h20260929_63_option_premium_selling/results.json`；登记簿 `dir:options_premium_selling_real_chain_batch` 更新并 validate ok；在 `dir:put_credit_spread_income`、`dir:covered_call_cef_income_pwb` 的证据里注明结论。
+- notes:
+  - 2026-09-29 16:07 轮缺口搜索（gap-search-2026-09-29-16）添加。依赖 T-60。
+  - 2026-09-29 16:07 轮：T-60 判"不通过"，按本任务 plan 改 blocked。免费备选（不需要机主决定，但要新建独立合同）：只用 2024-09-04 以后的密集段（SPY、AAPL、NVDA、TSLA 及 MSFT/AMZN/GOOGL/META 抽查），按手册"不足 2 年压力期"条款只判对标窗、标"待补压力期"；QQQ/IWM/SMH/TQQQ 没有数据。付费数据见 T-64。 7 个标的里 QQQ/IWM/SMH/TQQQ 没有数据，只剩 SPY/NVDA/TSLA。
+
+### T-20260929-64 机主决定：若 DoltHub 期权数据质量不够，是否购买历史期权买卖报价
+- status: blocked（等机主决定）
+- priority: 3
+- not_before:
+- goal: 只有 T-60 判 DoltHub 免费库"不通过"（覆盖率、时间点、价差或坏报价没达到预注册标准）时才有意义。此时 T-61（IV 股票信号）、T-62（财报波动率）、T-63（卖权利金）都没有可信的期权价格，要继续这个格子就需要付费的历史期权报价。
+- plan: 阻塞原因：付费数据和新的数据预算是机主的决定（CLAUDE.md：付费超出免费额度属机主决定），自动轮不得自行购买。T-60 判"不通过"后，由自动轮把本任务 status 改 `ready` 之前，先在汇报第一条通知机主；机主给出预算后再做：核实候选供应商（ORATS、Polygon/Massive 期权历史、Databento OPRA、ThetaData 等）的价格、历史起点、是否含买卖报价与盘中快照、再分发条款——本轮没有核实任何价格。免费的替代（Alpaca 免费档、Kaggle SPY 2010-2023、OptionsDX 到 2023）已在简报里排除。
+- done_when: 机主给出"买/不买/预算上限"；买则写数据接入任务并走 `modal_budget.py` 之外的独立预算记录；不买则把 `dir:dolthub_free_options_eod_chain_data` 和期权格子标 `blocked_data` 收口。
+- notes:
+  - 2026-09-29 16:07 轮缺口搜索（gap-search-2026-09-29-16）添加。当前不需要机主动作：等 T-60 结论。
+  - 2026-09-29 16:07 轮：T-60 已判"不通过"，本轮汇报已通知机主。付费数据属机主决定，自动轮不改 ready。

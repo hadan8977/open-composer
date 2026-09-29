@@ -1,0 +1,78 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260929_51_small_cap_short_drift/candidate-manifest.json",
+  "candidate_manifest_sha256": "6e5ab0572e2ba8a4b36c3942d9fa9968e86968f29663ed5c1146179b68a851a2",
+  "cost_table_path": "reports/research/iterations/h20260929_51_small_cap_short_drift/cost-table.json",
+  "created_at": "2026-09-29T16:16:38.519798+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260929_51_small_cap_short_drift/data-feasibility.json",
+  "data_feasibility_sha256": "71b0b5e7eb34f47adc4e1d341ec09d3fb8a1a3090f1b090df8bd0f19f1dfb7d8",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_51_small_cap_short_drift/report.md",
+    "reports/research/iterations/h20260929_51_small_cap_short_drift/results.json"
+  ],
+  "iter_id": "h20260929_51_small_cap_short_drift",
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_symbol_buy_and_hold_iwm",
+        "equal_weight_universe_rsp",
+        "market_proxy_spy",
+        "cash_proxy_bil",
+        "ex_post_best_symbol_not_applicable_spread"
+      ],
+      "candidate_count": 9,
+      "hypothesis_refs": [
+        "H1"
+      ],
+      "name": "etf_beta_hedged_short_spread",
+      "parameters": {
+        "beta_window": [
+          252,
+          63,
+          null
+        ],
+        "borrow_annual": [
+          0.005
+        ],
+        "freq": [
+          "M",
+          "W"
+        ],
+        "hedge": [
+          "SPY",
+          "none"
+        ],
+        "mirror_placebo": [
+          false,
+          true
+        ],
+        "rule": [
+          "short 1.0 IWM, long trailing-252d-beta SPY, monthly",
+          "short 1.0 RSP (equal-weight S&P 500), long beta SPY",
+          "short 1.0 IJR (S&P 600), long beta SPY",
+          "short 1.0 XRT, long beta SPY",
+          "short 1.0 KRE, long beta SPY",
+          "as SSD_IWM_M252 with weekly rebalance (5 offsets)",
+          "as SSD_IWM_M252 with trailing 63d beta",
+          "short 1.0 IWM, no hedge (control)",
+          "mirror placebo: long 1.0 IWM, short beta SPY; expected negative"
+        ],
+        "short": [
+          "IWM",
+          "RSP",
+          "IJR",
+          "XRT",
+          "KRE"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/h20260929_51_small_cap_short_drift.yaml",
+  "spec_hash": "6a36596b1c1b3d5f1b9df0fd9bc16b40747bdda8b8a5801182c05a6a1d8fc087",
+  "strategy_name": "h20260929_51_small_cap_short_drift",
+  "total_candidate_budget": 9,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_51_small_cap_short_drift/trial-ledger.jsonl"
+  ]
+}

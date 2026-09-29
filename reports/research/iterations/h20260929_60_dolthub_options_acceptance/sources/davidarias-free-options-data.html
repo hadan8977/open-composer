@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-N2VJF2P9');</script>
+  <!-- End Google Tag Manager -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4YZTVH29H8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4YZTVH29H8');
+  </script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Four free sources of historical option chain and volatility data (DoltHub, Cboe, Kaggle, OptionsDX), with the step by step signup for each one and runnable Python that pulls a real chain, builds a smile, and reads the VIX percentile. By David Arias, CFA." />
+  <meta name="keywords" content="free options data, historical option chains, implied volatility data, DoltHub options, OptionsDX, Kaggle SPY options, VIX history csv, yfinance option chain history, volatility surface python, options backtesting data, David Arias CFA" />
+  <meta property="og:title" content="Four Free Sources for Historical Option Chains, and How to Pull Them | David Arias, CFA" />
+  <meta property="og:description" content="Yahoo only gives you today's chain. Here are four free places the history actually lives, with the signup steps and the Python that pulls each one." />
+  <meta property="og:url" content="https://davidariasfinance.com/scripts/free-options-data/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:image" content="https://davidariasfinance.com/scripts/free-options-data/real_chain_smile.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="690" />
+  <meta property="og:image:type" content="image/png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Four Free Sources for Historical Option Chains" />
+  <meta name="twitter:description" content="DoltHub, Cboe, Kaggle and OptionsDX. How to get into each one, and the Python that turns it into a smile, a surface and a VIX percentile." />
+  <meta name="twitter:image" content="https://davidariasfinance.com/scripts/free-options-data/real_chain_smile.png" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://davidariasfinance.com/scripts/free-options-data/" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "headline": "Four Free Sources for Historical Option Chains, and How to Pull Them",
+      "url": "https://davidariasfinance.com/scripts/free-options-data/",
+      "description": "Four free sources of historical option chain and volatility data (DoltHub, Cboe, Kaggle, OptionsDX), with the step by step signup for each one and runnable Python that pulls a real chain, builds a smile, and reads the VIX percentile. By David Arias, CFA.",
+      "author": {
+        "@id": "https://davidariasfinance.com/#david"
+      },
+      "publisher": {
+        "@id": "https://davidariasfinance.com/#david"
+      },
+      "inLanguage": "en",
+      "isAccessibleForFree": true
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://davidariasfinance.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Python Code",
+          "item": "https://davidariasfinance.com/scripts/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Four Free Sources for Historical Option Chains, and How to Pull Them",
+          "item": "https://davidariasfinance.com/scripts/free-options-data/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <title>Free Historical Option Chain Data, Four Sources | David Arias, CFA</title>
+  <link rel="icon" type="image/png" href="../../Logos/DA.png" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    .calc-hero { background: linear-gradient(150deg, #ffffff 0%, #eef1fa 55%, #dde4f5 100%); padding: 120px 0 56px; text-align: center; }
+    .calc-breadcrumb { font-size: 0.82rem; color: var(--gray-400); margin-bottom: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .calc-breadcrumb a { color: var(--accent); text-decoration: none; }
+    .calc-breadcrumb a:hover { text-decoration: underline; }
+    .calc-hero-title { font-family: var(--font-serif); font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+    .calc-hero-sub { font-size: 1.05rem; color: var(--text-muted); max-width: 680px; margin: 0 auto; line-height: 1.7; }
+
+    .nb-container { max-width: 860px; margin: 0 auto; padding: 46px 24px 96px; }
+    .nb-cell { margin-bottom: 8px; }
+    .nb-markdown h2 { color: #191936; font-size: 1.5rem; margin: 40px 0 14px; padding-bottom: 6px; border-bottom: 1px solid #e6ebf5; }
+    .nb-markdown h3 { color: #323D90; font-size: 1.16rem; margin: 26px 0 10px; }
+    .nb-markdown p { font-size: 1.02rem; color: #3b4252; line-height: 1.78; margin-bottom: 14px; }
+    .nb-markdown ul, .nb-markdown ol { margin: 6px 0 16px 22px; color: #3b4252; line-height: 1.8; }
+    .nb-markdown li { margin-bottom: 7px; }
+    .nb-markdown strong { color: #191936; }
+    .nb-markdown em { color: #323D90; font-style: normal; font-weight: 600; }
+    .nb-markdown a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; font-weight: 600; }
+    .nb-markdown a:hover { text-decoration-thickness: 2px; }
+    .nb-markdown p code, .nb-markdown li code { background: #eef1f6; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; font-family: 'SF Mono', Consolas, monospace; color: #26304a; }
+
+    /* the script itself, a plain dark editor block, not a decorative card */
+    .nb-code { position: relative; margin: 8px 0 20px; }
+    .nb-code pre { background: #1e1e2e; color: #e4e4ef; padding: 20px 22px; border-radius: 8px; overflow-x: auto; font-family: 'SF Mono', Consolas, 'Courier New', monospace; font-size: 0.85rem; line-height: 1.62; margin: 0; }
+    .nb-code .copy-btn { position: absolute; top: 9px; right: 9px; background: rgba(255,255,255,0.08); color: #aab; border: 1px solid rgba(255,255,255,0.16); border-radius: 6px; padding: 4px 11px; cursor: pointer; font-size: 0.76rem; font-family: inherit; transition: all 0.18s; }
+    .nb-code .copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .nb-code-label { font-size: 0.76rem; font-weight: 600; letter-spacing: 0.04em; color: #6b7480; text-transform: uppercase; margin: 0 0 6px 2px; }
+
+    /* results as clean typographic tables, no outer frame, no shadow */
+    .rtable { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.92rem; }
+    .rtable caption { caption-side: top; text-align: left; font-size: 0.82rem; color: #6b7480; margin-bottom: 8px; }
+    .rtable thead th { text-align: right; padding: 8px 12px; color: #191936; font-weight: 700; border-bottom: 2px solid #323D90; font-size: 0.86rem; white-space: nowrap; }
+    .rtable thead th:first-child { text-align: left; }
+    .rtable tbody td { padding: 8px 12px; border-bottom: 1px solid #edf0f6; text-align: right; font-family: 'SF Mono', Consolas, monospace; font-size: 0.86rem; color: #26304a; }
+    .rtable tbody td:first-child { text-align: left; font-family: var(--font-sans, 'Inter'), sans-serif; font-weight: 600; color: #191936; }
+    .rtable tbody tr:last-child td { border-bottom: 0; }
+    .rtable .best { color: #1f7a4d; font-weight: 700; }
+    .rtable .txt { text-align: left; font-family: var(--font-sans, 'Inter'), sans-serif; font-weight: 400; color: #3b4252; }
+    .rtable thead th.txt { text-align: left; font-family: inherit; font-weight: 700; color: #191936; }
+    .rtable-wrap { overflow-x: auto; }
+
+    .nb-hr { border: none; border-top: 1px solid #e6ebf5; margin: 40px 0; }
+
+    .yt-embed-wrap { max-width: 720px; margin: 0 auto 6px; }
+    .yt-embed { position: relative; width: 100%; padding-top: 56.25%; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 26px rgba(25,25,54,.16); }
+    .yt-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .yt-embed-cap { text-align: center; font-size: 0.82rem; color: #6b7480; margin: 10px 0 0; }
+    .yt-embed-cap a { color: var(--accent); font-weight: 600; }
+
+    @media (max-width: 640px) {
+      .nb-container { padding: 32px 16px 72px; }
+      .nb-markdown h2 { font-size: 1.3rem; }
+      .nb-code pre { padding: 15px; font-size: 0.79rem; }
+    }
+  </style>
+</head>
+<body>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N2VJF2P9" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="nav-header" id="nav-header">
+    <div class="container nav-container">
+      <a class='logo' href='/'><img src="../../Logos/New_logo.png" alt="Encore7 Finance" class="logo-img" /></a>
+      <nav class="nav-links" id="nav-links">
+        <a href='/#content'>Content</a>
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-toggle">Options Calculators <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <div class="nav-dropdown-menu">
+            <a href="/calculators/black-scholes/">Black-Scholes IV Calculator</a>
+            <a href="/calculators/greeks/">Greeks Calculator</a>
+            <a href="/calculators/crr-binomial-tree/">CRR Binomial Tree</a>
+            <a href="/calculators/monte-carlo-gbm/">Monte Carlo GBM</a>
+          </div>
+        </div>
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-toggle">Asset Allocation <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <div class="nav-dropdown-menu">
+            <a href="/asset-allocation/historical-mvo/">Historical MVO Model</a>
+            <a href="/scripts/risk-based-allocation/">Risk Based Allocation</a>
+            <a href="/scripts/hierarchical-risk-parity/">Hierarchical Risk Parity</a>
+            <a class="nav-disabled" title="Coming soon">Forward MVO with CME</a>
+          </div>
+        </div>
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-toggle">Python Code <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <div class="nav-dropdown-menu">
+            <a href="/scripts/black-scholes-model/">Black-Scholes Model</a>
+            <a href="/scripts/option-greeks/">Option Greeks</a>
+            <a href="/scripts/advanced-greeks/">Advanced Greeks</a>
+            <a href="/scripts/gamma-surface/">Gamma Surface</a>
+            <a href="/scripts/volga-convexity-spread/">Volga Convexity Spread</a>
+            <a href="/scripts/heston-vol-surface/">Heston Vol Surface</a>
+            <a href="/scripts/neural-network-vol-surface/">Neural Network Vol Surface</a>
+            <a href="/scripts/spy-vol-surface-deep-learning/">SPY Vol Surface</a>
+            <a href="/scripts/deep-hedging/">Deep Hedging</a>
+            <a href="/scripts/monte-carlo-gbm/">Monte Carlo GBM</a>
+            <a href="/scripts/crr-binomial-tree/">CRR Binomial Tree</a>
+            <a href="/scripts/mvo-portfolio-optimization/">MVO Optimization</a>
+            <a href="/scripts/hierarchical-risk-parity/">Hierarchical Risk Parity</a>
+            <a href="/scripts/risk-based-allocation/">Risk Based Allocation</a>
+            <a href="/scripts/agentic-investment-committee/">Agentic Investment Committee</a>
+            <a href="/scripts/free-options-data/">Free Options Data</a>
+            <a href="/scripts/claude-design-fund/">Claude for Asset Management</a>
+          </div>
+        </div>
+        <a href="/research/">Research</a>
+        <a href="/glassbench/">Glassbench</a>
+      </nav>
+      <div class="nav-social">
+        <a href="https://www.linkedin.com/in/davidalmeida00/" target="_blank" rel="noopener" class="nav-social-icon" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <a href="https://www.youtube.com/@DavidAriasCFA222" target="_blank" rel="noopener" class="nav-social-icon" aria-label="YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20.06 12 20.06 12 20.06s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/></svg></a>
+        <a href="https://www.instagram.com/davidarias_cfa/" target="_blank" rel="noopener" class="nav-social-icon" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.849.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.849.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="https://x.com/Davidariasfin" target="_blank" rel="noopener" class="nav-social-icon" aria-label="X"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <section class="calc-hero">
+    <div class="container">
+      <nav class="calc-breadcrumb">
+        <a href="../../">Home</a>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Free Options Data</span>
+      </nav>
+      <h1 class="calc-hero-title">Four free sources for option chains, and how to pull them</h1>
+      <p class="calc-hero-sub">Yahoo hands you today's chain and nothing behind it. These four give you the history, for nothing, each with a real limit you should know before you build on it. Signup steps, runnable Python, and the output I got when I ran every block on 7 August 2026.</p>
+    </div>
+  </section>
+
+  <div class="nb-container">
+
+    <!-- ===== Newsletter signup (top of page) ===== -->
+    <div class="nb-cell" id="nb-newsletter-top">
+      <div class="nb-newsletter">
+        <h3 class="nb-newsletter-title">Get exclusive models, prompts and code</h3>
+        <p class="nb-newsletter-sub">
+          One short email when there's something new. Finance models, code walkthroughs, agentic prompts. No spam.
+        </p>
+        <form class="nb-newsletter-form" id="nb-newsletter-form-top" novalidate>
+          <input type="text"  name="name"  id="nb-nl-name-top"  placeholder="First name"  autocomplete="given-name" required />
+          <input type="email" name="email" id="nb-nl-email-top" placeholder="you@email.com" autocomplete="email"     required />
+          <input type="text" name="bot_field" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />
+          <button type="submit" class="nb-newsletter-btn" id="nb-nl-btn-top">Subscribe</button>
+        </form>
+        <p class="nb-newsletter-status" id="nb-nl-status-top" role="status" aria-live="polite"></p>
+        <div class="nb-newsletter-icons" aria-label="Tech stack we cover">
+          <span class="nb-newsletter-icons-label">Built with</span>
+          <div class="nb-icons-track">
+          <span class="nb-icon nb-icon-claude" title="Anthropic Claude"><img src="https://api.iconify.design/logos/anthropic-icon.svg" alt="Anthropic Claude" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-python" title="Python"><img src="https://api.iconify.design/logos/python.svg" alt="Python" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-r" title="R"><img src="https://api.iconify.design/logos/r-lang.svg" alt="R" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-openai" title="ChatGPT"><img src="https://api.iconify.design/logos/openai-icon.svg" alt="ChatGPT" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-github" title="GitHub"><img src="https://api.iconify.design/logos/github-icon.svg" alt="GitHub" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-jupyter" title="Jupyter"><img src="https://api.iconify.design/logos/jupyter.svg" alt="Jupyter" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-excel" title="Excel"><img src="https://api.iconify.design/vscode-icons/file-type-excel.svg" alt="Excel" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-powerpoint" title="PowerPoint"><img src="https://api.iconify.design/vscode-icons/file-type-powerpoint.svg" alt="PowerPoint" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-vscode" title="VS Code"><img src="https://api.iconify.design/logos/visual-studio-code.svg" alt="VS Code" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-sql" title="SQL"><img src="https://api.iconify.design/logos/postgresql.svg" alt="SQL" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-matlab" title="MATLAB"><img src="https://api.iconify.design/devicon/matlab.svg" alt="MATLAB" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-claude" aria-hidden="true"><img src="https://api.iconify.design/logos/anthropic-icon.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-python" aria-hidden="true"><img src="https://api.iconify.design/logos/python.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-r" aria-hidden="true"><img src="https://api.iconify.design/logos/r-lang.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-openai" aria-hidden="true"><img src="https://api.iconify.design/logos/openai-icon.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-github" aria-hidden="true"><img src="https://api.iconify.design/logos/github-icon.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-jupyter" aria-hidden="true"><img src="https://api.iconify.design/logos/jupyter.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-excel" aria-hidden="true"><img src="https://api.iconify.design/vscode-icons/file-type-excel.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-powerpoint" aria-hidden="true"><img src="https://api.iconify.design/vscode-icons/file-type-powerpoint.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-vscode" aria-hidden="true"><img src="https://api.iconify.design/logos/visual-studio-code.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-sql" aria-hidden="true"><img src="https://api.iconify.design/logos/postgresql.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-matlab" aria-hidden="true"><img src="https://api.iconify.design/devicon/matlab.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>Check my last vol and greeks video</h2>
+      <p>The reason I needed this data in the first place. Volatility trading and the greeks that sit past delta and gamma, worked on a live NVDA option chain rather than a toy example. Every number on screen came off a real chain, which is exactly the problem the four sources below solve.</p>
+      <div class="yt-embed-wrap">
+        <div class="yt-embed">
+          <iframe src="https://www.youtube-nocookie.com/embed/NxumZItkfiw" title="Advanced Option Greeks for Vol Trading: Vanna, Volga, Zomma" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <p class="yt-embed-cap">Vanna, volga, zomma, color and speed on a real NVDA chain. The full write up is <a href="../advanced-greeks/">here</a>.</p>
+      </div>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>Watch my video on machine learning for trade automation</h2>
+      <p>Ninety four firm characteristics feed a neural network with three hidden layers, trained on
+        expanding windows so that validation never sees the future. Predictions rank every stock, then the
+        top decile is bought and the bottom decile sold. Model selection runs on the information coefficient
+        rather than mean squared error, which holds up better on limited data.
+        Method comes from <a href="https://dachxiu.chicagobooth.edu/download/ML.pdf" target="_blank" rel="noopener">Gu, Kelly and Xiu (2020),
+        Empirical Asset Pricing via Machine Learning</a>, rebuilt here on free data instead of the 30,000
+        stocks and 920 features of the original. Last step connects the book to the Interactive Brokers API
+        through a Python script, so the strategy places its own long short orders rather than printing a
+        backtest. Code and notebook are on <a href="https://github.com/davidalmeida90/machine-learning-trading-engine" target="_blank" rel="noopener">GitHub</a>.</p>
+      <div class="yt-embed-wrap">
+        <div class="yt-embed">
+          <iframe src="https://www.youtube-nocookie.com/embed/j-uwUwr3aXw" title="Machine Learning Trading Bot With a Neural Network + IBKR API" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <p class="yt-embed-cap">Full build, from the 94 characteristics through training to a live order
+          sent to Interactive Brokers. Subtitles in English, Portuguese and Spanish.</p>
+      </div>
+    </div>
+
+    <hr class="nb-hr" />
+
+
+    <div class="nb-cell nb-markdown">
+      <p>Equity data is solved. You want ten years of SPY closes, one line of <code>yfinance</code> and you have it. Options are not solved. The moment you want the chain as it looked on a past date, the free tooling everybody uses simply stops working, and most people discover this halfway through building a backtest.</p>
+      <p>Here is the exact shape of the problem. This runs fine and returns nothing you can use for history.</p>
+      <div class="nb-code">
+        <button class="copy-btn">Copy</button>
+        <pre><code>import yfinance as yf
+
+spy = yf.Ticker("SPY")
+print(len(spy.options), spy.options[:3])
+# 29 ('2026-08-10', '2026-08-11', '2026-08-12')
+
+chain = spy.option_chain(spy.options[2])
+print(chain.calls.columns.tolist())
+# ['contractSymbol', 'lastTradeDate', 'strike', 'lastPrice', 'bid', 'ask', 'change',
+#  'percentChange', 'volume', 'openInterest', 'impliedVolatility', 'inTheMoney',
+#  'contractSize', 'currency']</code></pre>
+      </div>
+      <p>Twenty nine expiries, greeks absent, implied vol present, and no argument anywhere that takes a <em>quote date</em>. The object is a live snapshot of the book right now. Ask again tomorrow and today is gone, permanently, because nothing is stored. That is why anyone doing serious options work either pays for a vendor feed or runs a cron job that snapshots the chain every evening and waits a year for a usable sample.</p>
+      <p>The four sources below skip that wait. I ordered them by how much friction stands between you and data on disk, so the first one needs no account at all and the last one needs a checkout.</p>
+
+      <div class="rtable-wrap">
+      <table class="rtable">
+        <caption>The four, at a glance. Checked against each live source on 8 August 2026.</caption>
+        <thead>
+          <tr><th>Source</th><th class="txt">Coverage</th><th class="txt">Greeks and IV</th><th class="txt">Account</th><th class="txt">The catch</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>DoltHub</td><td class="txt">2,321 US symbols, 2019 to yesterday</td><td class="txt">yes</td><td class="txt">none</td><td class="txt">bulk pull needs the dolt CLI</td></tr>
+          <tr><td>Cboe</td><td class="txt">VIX daily, 1990 to yesterday</td><td class="txt">not applicable</td><td class="txt">none</td><td class="txt">index only, chains sit behind DataShop</td></tr>
+          <tr><td>Kaggle</td><td class="txt">SPY EOD, 2010 to 2023</td><td class="txt">yes, precomputed</td><td class="txt">free, API token</td><td class="txt">one ticker, stops in 2023</td></tr>
+          <tr><td>OptionsDX</td><td class="txt">10 tickers, 2010 to 2023, EOD to minutely</td><td class="txt">yes</td><td class="txt">free, then checkout</td><td class="txt">one year per order, some variants paid</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>1. DoltHub, the whole US market with no signup</h2>
+      <p>Dolt is a SQL database with git semantics. Branches, commits, diffs, all of it, on tables instead of files. The repo <code>post-no-preference/options</code> is a community maintained mirror of the US options market kept on that engine, and it is public. There is a serious consequence hiding in that sentence. Because a Dolt repo speaks SQL over HTTP, you can query the entire options market from a laptop with nothing installed except <code>requests</code>.</p>
+
+      <h3>Step by step</h3>
+      <ol>
+        <li>Open <a href="https://www.dolthub.com/repositories/post-no-preference/options" target="_blank" rel="noopener">dolthub.com/repositories/post-no-preference/options</a> and look at the two tables, <code>option_chain</code> and <code>volatility_history</code>.</li>
+        <li>Note the branch name. It is <code>master</code>, not <code>main</code>. Point the API at <code>main</code> and every query fails with <em>branch not found</em>, which is the single most common way people give up on this source.</li>
+        <li>Query it straight away at <code>https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master?q=&lt;your SQL&gt;</code>. No key, no header, no account.</li>
+        <li>Only if you want the whole thing offline, install the <code>dolt</code> CLI and run <code>dolt clone post-no-preference/options</code>. After that a <code>dolt pull</code> brings each new day in. Expect tens of gigabytes.</li>
+      </ol>
+
+      <h3>Pull a real chain and build the smile</h3>
+      <p>This is the script I would actually keep. It wraps the API in one function, pulls the SPY September expiry as it stood on 7 August 2026, and reads the 25 delta skew straight off the returned greeks. Every column below comes from the source, nothing is being estimated here.</p>
+      <div class="nb-code">
+        <button class="copy-btn">Copy</button>
+        <pre><code>import requests
+import pandas as pd
+
+API = "https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master"
+NUM = ["strike", "bid", "ask", "vol", "delta", "gamma", "vega"]
+
+def dolt(sql: str) -> pd.DataFrame:
+    """Run SQL against the public DoltHub repo. No auth, no rate limit key."""
+    r = requests.get(API, params={"q": sql}, timeout=60)
+    r.raise_for_status()
+    j = r.json()
+    if j["query_execution_status"] != "Success":
+        raise RuntimeError(j["query_execution_message"])
+    return pd.DataFrame(j["rows"])
+
+def chain(symbol: str, date: str, expiry: str) -> pd.DataFrame:
+    df = dolt(f"""
+        SELECT date, expiration, strike, call_put, bid, ask, vol, delta, gamma, vega
+        FROM option_chain
+        WHERE act_symbol = '{symbol}' AND date = '{date}' AND expiration = '{expiry}'
+        ORDER BY strike, call_put
+    """)
+    df[NUM] = df[NUM].astype(float)
+    return df
+
+df = chain("SPY", "2026-08-07", "2026-09-18")
+
+calls, puts = df[df.call_put == "Call"], df[df.call_put == "Put"]
+def nearest(frame, col, target):
+    return frame.loc[(frame[col] - target).abs().idxmin()]
+
+atm  = nearest(calls, "delta",  0.50)
+c25  = nearest(calls, "delta",  0.25)
+p25  = nearest(puts,  "delta", -0.25)
+
+print(f"{len(df)} quotes, {len(calls)} calls and {len(puts)} puts")
+print(f"ATM      strike {atm.strike:.0f}  IV {atm.vol:.2%}")
+print(f"25d call strike {c25.strike:.0f}  IV {c25.vol:.2%}")
+print(f"25d put  strike {p25.strike:.0f}  IV {p25.vol:.2%}")
+print(f"25 delta skew: {(p25.vol - c25.vol) * 100:.2f} vol points")</code></pre>
+      </div>
+
+      <div class="rtable-wrap">
+      <table class="rtable">
+        <caption>Output. SPY, quote date 7 August 2026, September 18 expiry, 54 quotes returned.</caption>
+        <thead>
+          <tr><th>Point</th><th>Strike</th><th>Delta</th><th>Implied vol</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>25 delta put</td><td>750</td><td>-0.2626</td><td class="best">15.22%</td></tr>
+          <tr><td>At the money call</td><td>773</td><td>0.5254</td><td>13.38%</td></tr>
+          <tr><td>25 delta call</td><td>796</td><td>0.2599</td><td>12.14%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>Three numbers and the smile is already there. The downside strike carries 3.08 vol points more than the equivalent upside strike, which is the equity skew doing exactly what it always does, put protection bid and call upside offered. You did not install anything, you did not sign anything, and you can loop that function over a date range to get the skew as a time series.</p>
+
+      <h3>The catch, said plainly</h3>
+      <p>Heavy aggregates over the full table time out on the public endpoint. A <code>COUNT(DISTINCT act_symbol)</code> across <code>option_chain</code> returns <em>context deadline exceeded</em>, and that is the API protecting itself rather than a bug in your SQL. Work per symbol and per date, the way the primary key is laid out, and it is fast. If you need to sweep the whole market, that is what the clone is for. The lighter <code>volatility_history</code> table does answer those questions, and it is where the coverage numbers on this page come from: 2,321 distinct symbols, most recent date 7 August 2026.</p>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>2. Cboe, the VIX history nobody needs to pay for</h2>
+      <p>Cboe publishes the full VIX series from its own CDN as a plain CSV. This is the exchange that computes the index, so this file is the primary source, not a redistribution. It goes back to 2 January 1990 and updates daily. One URL, no account, no key.</p>
+
+      <h3>Step by step</h3>
+      <ol>
+        <li>The file lives at <code>https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv</code>. Open it in a browser once to confirm it is four columns, DATE, OPEN, HIGH, LOW, CLOSE.</li>
+        <li>Swap <code>VIX</code> for another index ticker in that path to get its history. The same pattern serves the other Cboe volatility indices.</li>
+        <li>For anything beyond index levels, look at <a href="https://www.cboe.com/us/options/market_statistics/" target="_blank" rel="noopener">cboe.com/us/options/market_statistics</a>, which carries volume by symbol. Full historical chains are a DataShop product and they are not free.</li>
+      </ol>
+
+      <h3>Where does today sit in 36 years of fear</h3>
+      <p>The useful question is almost never the VIX level. It is the percentile, because a 15 handle means something different in 2017 than it does after a shock. This block answers it in about ten lines, straight from the URL, no local file.</p>
+      <div class="nb-code">
+        <button class="copy-btn">Copy</button>
+        <pre><code>import pandas as pd
+
+URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
+vix = pd.read_csv(URL, parse_dates=["DATE"]).set_index("DATE").sort_index()
+
+close = vix["CLOSE"]
+last  = close.iloc[-1]
+five  = close[close.index >= close.index[-1] - pd.Timedelta(days=1825)]
+
+print(f"{len(close)} sessions, {close.index[0]:%Y-%m-%d} to {close.index[-1]:%Y-%m-%d}")
+print(f"last close        {last:.2f}")
+print(f"percentile, 1990+ {(close < last).mean():.1%}")
+print(f"percentile, 5y    {(five  < last).mean():.1%}")
+print(f"mean {close.mean():.2f}, median {close.median():.2f}")
+print(f"sessions above 30 {(close > 30).mean():.2%}")
+print(close.nlargest(5).round(2))</code></pre>
+      </div>
+
+      <div class="rtable-wrap">
+      <table class="rtable">
+        <caption>Output. 9,246 sessions, 2 January 1990 to 7 August 2026.</caption>
+        <thead>
+          <tr><th>Measure</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Last close</td><td>14.90</td></tr>
+          <tr><td>Percentile since 1990</td><td>31.3%</td></tr>
+          <tr><td>Percentile, last 5 years</td><td>20.2%</td></tr>
+          <tr><td>Mean, median</td><td>19.44, 17.61</td></tr>
+          <tr><td>Sessions closing above 30</td><td>7.95%</td></tr>
+          <tr><td>Highest close ever</td><td>82.69 on 16 Mar 2020</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>Two percentiles that disagree, which is the whole point of computing both. Against the full 36 year record 14.90 sits at the 31st percentile, unremarkable. Against the last five years it is the 20th, quietly low. The 2008 and 2020 tails drag the long sample's distribution right, so the long lookback flatters the present. And 7.95% of all sessions closed above 30, so a regime most people file under rare is really one trading day in thirteen.</p>
+      <p>Worth keeping in view when you size a short vol trade off a backtest that happens to start in 2012.</p>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>3. Kaggle, fourteen years of SPY in one download</h2>
+      <p>The dataset is <a href="https://www.kaggle.com/datasets/dudesurfin/spy-options-eod-volatility-surface-2010-2023" target="_blank" rel="noopener">dudesurfin/spy-options-eod-volatility-surface-2010-2023</a>, and full credit to whoever put it together, because assembling fourteen clean years of chains is not a weekend job. End of day SPY, one parquet file per year, roughly 600 MB total, greeks and implied vol already computed by the publisher. This is the set I trained the <a href="../neural-network-vol-surface/">IV surface network</a> on, and it is the fastest path to a real volatility surface that exists for free.</p>
+      <p>The layout is wide rather than long. One row per quote date, expiry and strike, carrying <em>both</em> sides at once, with bracketed column names that survive as <code>[C_IV]</code>, <code>[P_IV]</code>, <code>[UNDERLYING_LAST]</code> and so on. Strip the brackets on load or every column reference in your code becomes ugly.</p>
+
+      <h3>Step by step</h3>
+      <ol>
+        <li>Create a free Kaggle account, then go to Settings, API, and click <em>Create New Token</em>. That downloads <code>kaggle.json</code>.</li>
+        <li>Put it at <code>~/.kaggle/kaggle.json</code> on Linux or macOS, or <code>C:\Users\&lt;you&gt;\.kaggle\kaggle.json</code> on Windows.</li>
+        <li><code>pip install kagglehub pandas pyarrow</code>. The <code>pyarrow</code> part is not optional, pandas cannot read parquet without an engine.</li>
+        <li>Download with the snippet below. It caches, so a second run is instant and does not re-pull 600 MB.</li>
+      </ol>
+
+      <div class="nb-code">
+        <button class="copy-btn">Copy</button>
+        <pre><code>import kagglehub
+
+path = kagglehub.dataset_download(
+    "dudesurfin/spy-options-eod-volatility-surface-2010-2023"
+)
+print(path)   # local cache dir holding spy_eod_2010.parquet ... spy_eod_2023.parquet
+
+# CLI equivalent, if you prefer:
+# kaggle datasets download -d dudesurfin/spy-options-eod-volatility-surface-2010-2023</code></pre>
+      </div>
+
+      <p>You do not have to touch the API at all if you would rather not. Open the <a href="https://www.kaggle.com/datasets/dudesurfin/spy-options-eod-volatility-surface-2010-2023" target="_blank" rel="noopener">dataset page</a>, hit Download, and you get the whole thing as one zip. Or expand the Data Explorer on the right and pull individual files, which is what I would do first. There are 14 of them, <code>spy_eod_2010.parquet</code> through <code>spy_eod_2023.parquet</code>, one per year. Grab a single year, check the columns are what you expect, then decide whether you want the other 13. No point pulling 600 MB to find out the schema does not suit you.</p>
+
+      <h3>The term structure through a real shock</h3>
+      <p>Any surface plot will look impressive here, so instead let me use the data for something you cannot do with a live feed at all. February 2018, the week short volatility blew up and XIV was wound down. This pulls the at the money implied vol on the four sessions around it, which is a question only historical chains can answer.</p>
+      <div class="nb-code">
+        <button class="copy-btn">Copy</button>
+        <pre><code>import pandas as pd
+from pathlib import Path
+
+df = pd.read_parquet(Path(path) / "spy_eod_2018.parquet")
+df.columns = [c.strip().strip("[]") for c in df.columns]      # the bracket tax
+for c in ["UNDERLYING_LAST", "STRIKE", "DTE", "C_IV", "P_IV"]:
+    df[c] = pd.to_numeric(df[c], errors="coerce")
+
+def atm_iv(day: str, lo: int, hi: int) -> pd.Series:
+    """At the money implied vol for the expiry closest to the middle of [lo, hi] days."""
+    d = df[df.QUOTE_DATE.astype(str).str.startswith(day)].copy()
+    w = d[d.DTE.between(lo, hi)]
+    w = w[w.DTE == w.DTE.iloc[(w.DTE - (lo + hi) / 2).abs().argsort().iloc[0]]]
+    return w.loc[(w.STRIKE - w.UNDERLYING_LAST).abs().idxmin()]
+
+for day in ["2018-02-02", "2018-02-05", "2018-02-06", "2018-02-09"]:
+    r30, r60 = atm_iv(day, 20, 40), atm_iv(day, 50, 70)
+    print(f"{day}  spot {r30.UNDERLYING_LAST:7.2f}   "
+          f"30d call IV {r30.C_IV:6.2%}   60d call IV {r60.C_IV:6.2%}")</code></pre>
+      </div>
+
+      <div class="rtable-wrap">
+      <table class="rtable">
+        <caption>Output. SPY at the money implied vol across the February 2018 volatility shock.</caption>
+        <thead>
+          <tr><th>Session</th><th>Spot</th><th>30d call IV</th><th>60d call IV</th><th>30d put IV</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Fri 2 Feb</td><td>275.52</td><td>14.99%</td><td>14.61%</td><td>13.18%</td></tr>
+          <tr><td>Mon 5 Feb</td><td>263.93</td><td class="best">33.94%</td><td>30.23%</td><td>18.31%</td></tr>
+          <tr><td>Tue 6 Feb</td><td>269.17</td><td>21.53%</td><td>18.80%</td><td>20.53%</td></tr>
+          <tr><td>Fri 9 Feb</td><td>261.70</td><td>22.25%</td><td>19.66%</td><td>21.84%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>Thirty day at the money vol went from 15 to 34 in one session and gave most of it back the next day, while the sixty day point moved far less. That is the term structure inverting under stress and then repairing, and it is the single clearest picture of why short dated volatility is a different asset from long dated volatility.</p>
+      <p>Now look at the last column on Monday. Call IV says 33.94% and put IV says 18.31% at essentially the same strike. That is not a market view, it is a data artifact. On a violently trending day the two sides of an end of day snapshot are stamped against an underlying that has already moved, and put call parity breaks in the file. Treat it as the standing warning for every free EOD source: take the out of the money side of each strike, drop quotes with a wide relative spread, and never trust a single row on a day the market gapped.</p>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>4. OptionsDX, when you need a ticker other than SPY</h2>
+      <p>OptionsDX sells historical chains and gives a slice of them away. Ten tickers are listed, SPY, SPX, VIX, QQQ, TSLA, AAPL, NVDA, UVXY, SLV and BTC on Deribit, each covering 2010 to 2023, at five quote frequencies from end of day down to minutely. The product description is specific about what is inside, all expirations and strikes, greeks, implied volatility, bid, ask, last, and the underlying price.</p>
+      <p>Two things to be straight about. Every product on the shop is priced as a range starting at zero, so some year and frequency combinations are free and others are not. Check the price after you pick, not before. And the order is one year at a time, delivered as monthly CSVs, so fourteen years of SPY is fourteen separate trips through checkout.</p>
+
+      <h3>Step by step</h3>
+      <ol>
+        <li>Register at <a href="https://www.optionsdx.com/shop/" target="_blank" rel="noopener">optionsdx.com/shop</a>, free account.</li>
+        <li>Pick a product, then choose a <em>Year</em> and a <em>Quote Frequency</em>. End of day is the cheap end. Minutely is the expensive one.</li>
+        <li>Confirm the price on the variant you selected, then check out. A zero price still goes through the cart.</li>
+        <li>Download the zip. Inside are monthly CSVs, saved with a <code>.txt</code> extension, comma separated, with bracketed headers.</li>
+      </ol>
+
+      <h3>A loader that survives their schema changing</h3>
+      <p>Do not hardcode column names against a vendor file you re-download every year. This loader normalises whatever headers arrive, finds the IV and greek columns by pattern, and melts the wide format into one row per option quote with the liquidity filters already applied. It is the same shape I use on the Kaggle parquet, because both arrive wide with a call block and a put block per strike.</p>
+      <div class="nb-code">
+        <button class="copy-btn">Copy</button>
+        <pre><code>import glob
+import numpy as np
+import pandas as pd
+
+DTE_MIN, DTE_MAX     = 7, 365      # skip 0 DTE noise and the sparse LEAPS tail
+IV_MIN, IV_MAX       = 0.03, 2.00  # kill negatives and the 40.0 blow-ups
+MAX_REL_SPREAD       = 0.50        # drop a quote if (ask - bid) / mid exceeds this
+
+def load_optionsdx(pattern: str) -> pd.DataFrame:
+    """Read every monthly file matching `pattern` into one long, filtered frame."""
+    frames = [pd.read_csv(f, skipinitialspace=True) for f in sorted(glob.glob(pattern))]
+    df = pd.concat(frames, ignore_index=True)
+    df.columns = [c.strip().strip("[]").upper() for c in df.columns]
+
+    base = pd.DataFrame({
+        "date":   pd.to_datetime(df["QUOTE_DATE"]),
+        "expiry": pd.to_datetime(df["EXPIRE_DATE"]),
+        "dte":    pd.to_numeric(df["DTE"], errors="coerce"),
+        "spot":   pd.to_numeric(df["UNDERLYING_LAST"], errors="coerce"),
+        "strike": pd.to_numeric(df["STRIKE"], errors="coerce"),
+    })
+
+    out = []
+    for prefix, kind in (("C", "call"), ("P", "put")):
+        bid = pd.to_numeric(df[f"{prefix}_BID"], errors="coerce")
+        ask = pd.to_numeric(df[f"{prefix}_ASK"], errors="coerce")
+        mid = (bid + ask) / 2.0
+        side = base.assign(
+            type=kind,
+            mid=mid,
+            iv=pd.to_numeric(df[f"{prefix}_IV"], errors="coerce"),
+            delta=pd.to_numeric(df.get(f"{prefix}_DELTA"), errors="coerce"),
+            rel_spread=(ask - bid) / mid.replace(0, np.nan),
+        )
+        # keep only the out of the money side, where the IV is cleanest
+        otm = side.strike > side.spot if kind == "call" else side.strike < side.spot
+        out.append(side[otm])
+
+    q = pd.concat(out, ignore_index=True)
+    q = q[q.dte.between(DTE_MIN, DTE_MAX)
+        & q.iv.between(IV_MIN, IV_MAX)
+        & q.rel_spread.le(MAX_REL_SPREAD)
+        & q.mid.gt(0)]
+    q["log_m"] = np.log(q.strike / q.spot)
+    q["tau"]   = q.dte / 365.0
+    return q.reset_index(drop=True)
+
+quotes = load_optionsdx("spy_eod_2023*.txt")
+print(quotes.shape)
+print(quotes.groupby("type").iv.describe()[["count", "mean", "50%"]])</code></pre>
+      </div>
+      <p>To check it holds up I pointed it at a full year of SPY end of day in the same wide layout, swapping <code>read_csv</code> for <code>read_parquet</code> and changing nothing else. 548,099 quotes survive the filters, and the split is the reason you keep both sides rather than averaging them.</p>
+
+      <div class="rtable-wrap">
+      <table class="rtable">
+        <caption>Surviving out of the money quotes, one full year of SPY end of day, after all four filters</caption>
+        <thead>
+          <tr><th>Side</th><th>Quotes</th><th>Mean IV</th><th>Median IV</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Calls, above spot</td><td>181,880</td><td>13.89%</td><td>13.58%</td></tr>
+          <tr><td>Puts, below spot</td><td>366,219</td><td class="best">26.79%</td><td>24.00%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>Twice as many put quotes as call quotes survive, and they carry roughly double the implied vol. That is the skew again, now as a population rather than three strikes, and it is the reason a surface fit that ignores option type will underfit the downside where all the interesting risk sits.</p>
+
+      <p>Four filters carry almost all the value here. Out of the money only, because a deep in the money quote is mostly intrinsic value and its implied vol is numerically unstable. Relative spread capped, because a quote nobody would trade is not a price. Implied vol bounded, because free files contain rows where the solver failed and left a 40.0 sitting in the column. Days to expiry bounded, because the zero DTE rows behave like a different instrument.</p>
+      <p>Skip those four and your surface fit will spend its capacity learning the junk rather than the smile. I have made that mistake, and the giveaway is a model whose worst errors all sit in the deep wings.</p>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <div class="nb-cell nb-markdown">
+      <h2>Which one for which job</h2>
+
+      <div class="rtable-wrap">
+      <table class="rtable">
+        <caption>What I would reach for, by task</caption>
+        <thead>
+          <tr><th>If you want to</th><th class="txt">Use</th><th class="txt">Because</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Track skew on one name over time</td><td class="txt"><strong>DoltHub</strong></td><td class="txt">greeks in the table, query by symbol and date, no install</td></tr>
+          <tr><td>Fit a volatility surface today</td><td class="txt"><strong>Kaggle</strong></td><td class="txt">fourteen clean years, IV precomputed, one download</td></tr>
+          <tr><td>Screen the whole market</td><td class="txt"><strong>DoltHub cloned</strong></td><td class="txt">2,321 symbols locally, the public API will time out</td></tr>
+          <tr><td>Study a specific name other than SPY</td><td class="txt"><strong>OptionsDX</strong></td><td class="txt">ten tickers, and intraday if the variant is free</td></tr>
+          <tr><td>Put a vol level in context</td><td class="txt"><strong>Cboe</strong></td><td class="txt">36 years of VIX from the exchange that computes it</td></tr>
+          <tr><td>Get today's chain</td><td class="txt"><strong>yfinance</strong></td><td class="txt">still the fastest snapshot, just store it yourself</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>The honest summary is that none of this replaces a paid feed. Coverage stops in 2023 on two of the four, the crypto book is a different market from equity options, and nobody is offering you free tick data on a single name of your choosing. What you do get is enough to build a surface, measure a skew, test a variance premium idea, and find out whether the strategy is worth paying for data before you pay for data.</p>
+      <p>One habit to steal regardless of which source you pick. Start a nightly snapshot of the chains you care about today, even if you never look at it. Options history is the one dataset you cannot buy back cheaply, and a year from now the cron job you set up tonight is the only sample nobody else has.</p>
+      <p>
+        The volatility surface network trained on the Kaggle set: <a href="../neural-network-vol-surface/">two neural nets learn the SPY IV surface</a><br />
+        The greeks that live on these chains: <a href="../advanced-greeks/">vanna, volga, color, zomma and speed</a>
+      </p>
+    </div>
+
+    <hr class="nb-hr" />
+
+    <!-- ===== Newsletter signup (end of page) ===== -->
+    <div class="nb-cell" id="nb-newsletter-bot">
+      <div class="nb-newsletter">
+        <h3 class="nb-newsletter-title">Get the next one before it goes public</h3>
+        <p class="nb-newsletter-sub">
+          Datasets I find, models I build and the code behind them. One short email, no spam.
+        </p>
+        <form class="nb-newsletter-form" id="nb-newsletter-form-bot" novalidate>
+          <input type="text"  name="name"  id="nb-nl-name-bot"  placeholder="First name"  autocomplete="given-name" required />
+          <input type="email" name="email" id="nb-nl-email-bot" placeholder="you@email.com" autocomplete="email"     required />
+          <input type="text" name="bot_field" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />
+          <button type="submit" class="nb-newsletter-btn" id="nb-nl-btn-bot">Subscribe</button>
+        </form>
+        <p class="nb-newsletter-status" id="nb-nl-status-bot" role="status" aria-live="polite"></p>
+        <div class="nb-newsletter-icons" aria-label="Tech stack we cover">
+          <span class="nb-newsletter-icons-label">Built with</span>
+          <div class="nb-icons-track">
+          <span class="nb-icon nb-icon-claude" title="Anthropic Claude"><img src="https://api.iconify.design/logos/anthropic-icon.svg" alt="Anthropic Claude" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-python" title="Python"><img src="https://api.iconify.design/logos/python.svg" alt="Python" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-r" title="R"><img src="https://api.iconify.design/logos/r-lang.svg" alt="R" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-openai" title="ChatGPT"><img src="https://api.iconify.design/logos/openai-icon.svg" alt="ChatGPT" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-github" title="GitHub"><img src="https://api.iconify.design/logos/github-icon.svg" alt="GitHub" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-jupyter" title="Jupyter"><img src="https://api.iconify.design/logos/jupyter.svg" alt="Jupyter" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-excel" title="Excel"><img src="https://api.iconify.design/vscode-icons/file-type-excel.svg" alt="Excel" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-powerpoint" title="PowerPoint"><img src="https://api.iconify.design/vscode-icons/file-type-powerpoint.svg" alt="PowerPoint" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-vscode" title="VS Code"><img src="https://api.iconify.design/logos/visual-studio-code.svg" alt="VS Code" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-sql" title="SQL"><img src="https://api.iconify.design/logos/postgresql.svg" alt="SQL" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-matlab" title="MATLAB"><img src="https://api.iconify.design/devicon/matlab.svg" alt="MATLAB" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-claude" aria-hidden="true"><img src="https://api.iconify.design/logos/anthropic-icon.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-python" aria-hidden="true"><img src="https://api.iconify.design/logos/python.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-r" aria-hidden="true"><img src="https://api.iconify.design/logos/r-lang.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-openai" aria-hidden="true"><img src="https://api.iconify.design/logos/openai-icon.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-github" aria-hidden="true"><img src="https://api.iconify.design/logos/github-icon.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-jupyter" aria-hidden="true"><img src="https://api.iconify.design/logos/jupyter.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-excel" aria-hidden="true"><img src="https://api.iconify.design/vscode-icons/file-type-excel.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-powerpoint" aria-hidden="true"><img src="https://api.iconify.design/vscode-icons/file-type-powerpoint.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-vscode" aria-hidden="true"><img src="https://api.iconify.design/logos/visual-studio-code.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-sql" aria-hidden="true"><img src="https://api.iconify.design/logos/postgresql.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          <span class="nb-icon nb-icon-matlab" aria-hidden="true"><img src="https://api.iconify.design/devicon/matlab.svg" alt="" loading="lazy" width="30" height="30" /></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Follow on X ===== -->
+  <section class="x-band">
+    <div class="container">
+      <div class="x-cta">
+        <span class="x-cta-eyebrow">On X</span>
+        <h2 class="x-cta-title">Follow me on X, my models are there</h2>
+        <p class="x-cta-sub">
+          I post the models as I build them, the changes I make to them, and the results that did
+          not work. Shorter than these write ups, and there are a lot more of them.
+        </p>
+        <a class="x-cta-btn" href="https://x.com/Davidariasfin" target="_blank" rel="noopener">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span>Follow me on X</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class='logo' href='/'><img src="../../Logos/New_logo.png" alt="Encore7 Finance" class="logo-img logo-img-footer" /></a>
+        <p class="footer-tagline">Emerging Markets &middot; Derivatives &middot; Quantitative Finance</p>
+        <div class="footer-social">
+          <a href="https://www.linkedin.com/in/davidalmeida00/" target="_blank" rel="noopener" class="footer-social-icon" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+          <a href="https://www.youtube.com/@DavidAriasCFA222" target="_blank" rel="noopener" class="footer-social-icon" aria-label="YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20.06 12 20.06 12 20.06s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/></svg></a>
+          <a href="https://medium.com/@davidarias2" target="_blank" rel="noopener" class="footer-social-icon" aria-label="Medium"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.54 12a6.8 6.8 0 0 1-6.77 6.82A6.8 6.8 0 0 1 0 12a6.8 6.8 0 0 1 6.77-6.82A6.8 6.8 0 0 1 13.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg></a>
+          <a href="https://www.instagram.com/davidarias_cfa/" target="_blank" rel="noopener" class="footer-social-icon" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.849.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.849.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://x.com/Davidariasfin" target="_blank" rel="noopener" class="footer-social-icon" aria-label="X"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        </div>
+      </div>
+      <nav class="footer-nav">
+        <a href='/#content'>Content</a>
+        <a href='/#model'>Options Calculators</a>
+        <a href='/#asset-allocation'>Asset Allocation</a>
+        <a href='/#contact'>Contact</a>
+      </nav>
+      <p class="footer-legal">&copy; <span id="year"></span> Encore7 Finance. All rights reserved.<br /><small>David Arias, CFA &middot; encore7finance.com</small><br /><small class="disclaimer">This website is for informational purposes only and does not constitute financial advice.</small></p>
+    </div>
+  </footer>
+
+  <script src="../../main.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.querySelectorAll('.nb-code .copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.parentElement.querySelector('code') || btn.parentElement.querySelector('pre');
+        navigator.clipboard.writeText(code.innerText).then(function () {
+          var t = btn.textContent; btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = t; }, 1400);
+        });
+      });
+    });
+
+    // Newsletter signup, POSTs to the Netlify Function which calls Beehiiv.
+    // Two forms on this page (top and end), so wire every one of them.
+    (function () {
+      document.querySelectorAll('.nb-newsletter-form').forEach(function (form) {
+        var box    = form.closest('.nb-newsletter');
+        var btn    = form.querySelector('.nb-newsletter-btn');
+        var status = box.querySelector('.nb-newsletter-status');
+
+        function setStatus(msg, cls) {
+          status.textContent = msg;
+          status.classList.remove('is-success', 'is-error');
+          if (cls) status.classList.add(cls);
+        }
+
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          var data  = new FormData(form);
+          var name  = (data.get('name')  || '').toString().trim();
+          var email = (data.get('email') || '').toString().trim();
+          var bot   = (data.get('bot_field') || '').toString();
+
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setStatus('Please enter a valid email.', 'is-error');
+            return;
+          }
+
+          btn.disabled = true;
+          var originalLabel = btn.textContent;
+          btn.textContent = 'Subscribing…';
+          setStatus('', null);
+
+          try {
+            var res = await fetch('/.netlify/functions/newsletter-signup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: name, email: email, source: 'free-options-data', bot_field: bot })
+            });
+            var body = await res.json().catch(function () { return {}; });
+
+            if (res.ok && body.ok) {
+              form.reset();
+              setStatus(body.already
+                ? "You’re already on the list."
+                : "Thanks! You're on the list. New models and prompts coming soon.",
+                'is-success');
+              if (typeof gtag === 'function') {
+                gtag('event', 'newsletter_signup', { signup_source: 'free-options-data' });
+              }
+            } else {
+              setStatus("Couldn’t subscribe right now. Try again in a moment.", 'is-error');
+            }
+          } catch (err) {
+            setStatus('Network error. Please try again.', 'is-error');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = originalLabel;
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

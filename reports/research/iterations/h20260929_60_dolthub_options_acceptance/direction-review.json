@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_60_dolthub_options_acceptance",
+  "reviewed_at": "2026-09-29T17:05:00+00:00",
+  "decision": "proceed",
+  "objective": "T-20260929-60: data acceptance (not a strategy backtest) of the free DoltHub post-no-preference/options database for pricing option strategies -- coverage of SPY/QQQ/AAPL/NVDA/TSLA vs the SIP daily sessions, snapshot time-of-day (put-call parity vs SIP close/open), relative spreads, bad quotes -- against thresholds written into results.json before the first data request. A pass unlocks T-61/62/63; otherwise T-64 (paid data) goes to the owner.",
+  "existing_solution_comparison": "Alpaca free-tier options (dir:alpaca_free_options_iv_signals) has no historical quotes (trade-derived IV covers 31-39% and has the opposite sign), so it cannot price spreads. Kaggle SPY and OptionsDX stop in 2023 and Cboe gives index level only (David Arias 2026-08). DoltHub is the only free source with single-name bid/ask chains to 2026-09; paid vendors (OptionMetrics, CBOE DataShop, ORATS) are not evaluated because paying is an owner decision (T-64). Checked `oc research directions check dolthub` and `options`: the only prior local mention is docs/answers-friday-plan-questions-2026-09-15.zh.md, which records the source as unconfirmed.",
+  "target_regime_and_horizon": "Data window 2019-02-09 to 2026-09-28; recent-regime window 2024-01-02 onward; daily EOD chains, near-month (about 0-6 weeks) only.",
+  "remaining_evidence_gap": "Quote provenance, snapshot time and license are undocumented on every page read; the acceptance run measures the snapshot time indirectly through put-call parity against SIP close/open. Only a sample of chain days can be pulled in the task window because the API latency is 30-60 s per request (measured), so chain-level tests are on a seeded random sample of days and coverage/quote-hygiene counts are exact from server-side aggregates.",
+  "negative_experiments_checked": "No local experiment has used DoltHub. The gap-search agent's own probe (gap-search-2026-09-29-16.md) already reported that AAPL had only about 73% of 2024 sessions in volatility_history and that each symbol-day has only 130-190 contracts and at most ~6 weeks of expiries: these are the expected failure modes and are what the criteria test.",
+  "cost_and_execution_assumptions": "No trading. For downstream tasks: sell at bid / buy at ask plus $0.65 per contract (unverified), signal day d information = close of d unless parity shows a later snapshot.",
+  "queries": [
+    {
+      "query": "free historical options data end-of-day bid ask quotes SPY chain 2024 2025",
+      "opened_urls": [
+        "https://davidariasfinance.com/scripts/free-options-data/"
+      ],
+      "searched_at": "2026-09-29T16:10:00+00:00"
+    },
+    {
+      "query": "dolthub post-no-preference options SQL API option_chain volatility_history",
+      "opened_urls": [
+        "https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master"
+      ],
+      "searched_at": "2026-09-29T16:12:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://davidariasfinance.com/scripts/free-options-data/",
+      "claim_id": "dolthub_arias_free_options_sources",
+      "claim": "David Arias (2026-08, checked against live sources 8 Aug 2026) lists DoltHub post-no-preference/options as covering 2,321 US symbols from 2019 to yesterday with greeks/IV, no account, and says the whole-market bulk pull needs the dolt CLI (tens of gigabytes).",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2026-08-08",
+      "market_and_period": "US equity/ETF option chains, 2019 to 2026-08, EOD.",
+      "applicability": "Confirms the source exists, is free and has single-name bid/ask chains; says nothing about coverage gaps, snapshot time or spread quality.",
+      "limitations": "Secondary blog; does not audit data quality; the 2,321-symbol count is about symbols, not per-day completeness.",
+      "independent_replication": "None yet: T-20260929-60 is the local acceptance test of these claims; the earlier local Alpaca free-tier test (dir:alpaca_free_options_iv_signals) had no historical quotes at all.",
+      "fetched_at": "2026-09-29T16:41:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260929_60_dolthub_options_acceptance/sources/davidarias-free-options-data.html",
+      "sha256": "ba881d09686f8fe76087ce96a9738c0780a9f937bf89fbe3a6d612cc2e0f9573",
+      "source_card_path": "reports/harness/source_cards/h20260929_60_dolthub_options_acceptance.jsonl"
+    },
+    {
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master",
+      "claim_id": "dolthub_sql_api_two_tables",
+      "claim": "The public DoltHub SQL API of post-no-preference/options answers without a key and exposes exactly two tables, option_chain and volatility_history.",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2026-09-29",
+      "market_and_period": "DoltHub post-no-preference/options, master branch, queried 2026-09-29.",
+      "applicability": "Direct evidence that the free SQL API is reachable from this machine and which tables exist.",
+      "limitations": "Says nothing about quote provenance, snapshot time, license or completeness.",
+      "independent_replication": "None yet: T-20260929-60 is the local acceptance test of these claims; the earlier local Alpaca free-tier test (dir:alpaca_free_options_iv_signals) had no historical quotes at all.",
+      "fetched_at": "2026-09-29T17:04:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260929_60_dolthub_options_acceptance/sources/dolthub-sql-api-show-tables.json",
+      "sha256": "f6c2cc91584dbc32f4bfdc4cba1a690d662df807aa80c993e57fa988b264b00d",
+      "source_card_path": "reports/harness/source_cards/h20260929_60_dolthub_options_acceptance.jsonl"
+    }
+  ],
+  "stop_condition": "Verdict per the preregistered rule in results.json: pass = all five acceptance symbols meet every criterion; partial = allowed list is the symbols meeting every criterion; fail = none; incomplete = acceptance chains not fully pulled in 90 minutes. No threshold is changed after data is seen.",
+  "cheapest_decisive_test": {
+    "action": "Server-side per-(date,symbol) aggregates over all US sessions 2019-02-09..2026-09-28 for the five symbols (exact coverage and quote hygiene) plus a seeded random sample of full-chain days for parity and spread.",
+    "pass_condition": "All four preregistered criteria hold for the five acceptance symbols (coverage >=85%/90%, parity deviation <=0.10%, ATM spread <=3% SPY/QQQ and <=10% single names, bad quotes <=2%).",
+    "falsification_condition": "Coverage of any acceptance symbol below 85% since 2019 or below 90% since 2024 already fails that symbol; parity, spread or bad-quote breaches fail it likewise.",
+    "max_compute_minutes": 90
+  }
+}
