@@ -1,0 +1,159 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260929_50_crypto_weekend_monday",
+  "strategy_name": "h20260929_50_crypto_weekend_monday",
+  "source_spec_path": "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml",
+  "spec_hash": "e766fd755db918596cc1b25d3d7b85ca64ba3252bb6565f7cbf5d123b6e38d3b",
+  "objective": "Step 1 of T-20260929-50: split the published weekend-crypto to Monday-equity effect into the Friday-close to Monday-open gap (not tradable under next-open fill) and the Monday open to close / open to next open segments (tradable), with a shuffle placebo, before spending compute on a batch.",
+  "topic_coverage": [
+    "crypto_stock_weekend_effect_mourey_frl_2025",
+    "asymmetry_negative_weekend_only",
+    "luna_2022_05_structural_break",
+    "weekend_price_discovery_and_monday_gap_binance_research_2026",
+    "equity_futures_sunday_open_priced_before_monday_open",
+    "alpaca_sunday_overnight_session_execution_caveat",
+    "crypto_weekend_momentum_distinct_regime_acr_2025",
+    "crypto_venue_price_discovery_arxiv_2025"
+  ],
+  "sources": [
+    {
+      "url": "https://ideas.repec.org/a/eee/finlet/v86y2025ipes1544612325019154.html",
+      "published_or_updated_at": "2025-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_finance_research_letters_abstract_read_locally_snapshotted",
+      "core_claim": "Mourey/Shahrour/Soiman: 20 largest cryptos (~85% of cap), Bayesian/Kalman; negative weekend crypto returns significantly predict Monday equity declines, positive returns have no effect; robust across Nasdaq, Russell 2000, S&P sector indices, S&P Crypto Index; transmission strengthens after the May 2022 LUNA collapse.",
+      "project_applicability": "Founding claim; defines the asymmetry (W<0 only) and the post-2022-06 regime this step tests.",
+      "reflection": "Abstract only; no return window definition, Sharpe, rule or cost. The paper does not say whether the Monday effect is in the gap or after the open; that is exactly what step 1 measures."
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S1544612325019154",
+      "published_or_updated_at": "2025-01-01",
+      "source_type": "paper",
+      "credibility": "publisher_page_403_on_scripted_fetch",
+      "core_claim": "Same paper (DOI 10.1016/j.frl.2025.108661), Finance Research Letters vol 86 issue PE.",
+      "project_applicability": "Confirms the venue and citation of the abstract read via RePEc.",
+      "reflection": "Full text not read; listed so that a future reader does not repeat the failed fetch."
+    },
+    {
+      "url": "https://acr-journal.com/article/the-weekend-effect-in-crypto-momentum-does-momentum-change-when-markets-never-sleep--1514/",
+      "published_or_updated_at": "2025-09-21",
+      "source_type": "paper",
+      "credibility": "low_tier_journal_snapshotted",
+      "core_claim": "7-day momentum on 10 large cryptos 2020-01..2025-04 earns more on weekends than weekdays, more so for altcoins.",
+      "project_applicability": "Shows weekend crypto return behaviour is a distinct object; supports using the 10-coin equal-weight signal alongside BTC and ETH.",
+      "reflection": "Crypto-only, no equity leg, costs not quantified; weak evidence, used only to justify the EW10 variant."
+    },
+    {
+      "url": "https://arxiv.org/abs/2506.08718",
+      "published_or_updated_at": "2025-06-01",
+      "source_type": "paper",
+      "credibility": "arxiv_abstract_read",
+      "core_claim": "Price discovery in crypto markets compares centralized and decentralized venues and spot versus futures for ETH then BTC.",
+      "project_applicability": "Supports treating Binance/Coinbase 15m bars as the price-discovery venues for the weekend signal.",
+      "reflection": "Abstract level; says nothing about equities or the Monday open."
+    },
+    {
+      "url": "https://finance.yahoo.com/markets/crypto/articles/weekend-chain-prices-monday-don-183331035.html",
+      "published_or_updated_at": "2026-09-22",
+      "source_type": "industry_standard",
+      "credibility": "syndicated_binance_research_summary",
+      "core_claim": "Weekend tokenized-equity prices captured a median 92% of Monday's opening gap (81% for gaps under 0.5%) on Binance Research data to 2026-07-28; roughly 49 hours without a US reference price between CME Friday close and Sunday evening.",
+      "project_applicability": "Prior that weekend information is already in the Monday open, so the effect should sit in the gap; the step-1 split table tests this directly on index ETFs.",
+      "reflection": "One summer, thin weekend volume, wide spreads, single stocks not index ETFs; not peer reviewed."
+    },
+    {
+      "url": "https://futuresclock.com/en/contracts/cme-es/",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "industry_standard",
+      "credibility": "third_party_clock_site",
+      "core_claim": "ES futures reopen Sunday 17:00 US Central (18:00 ET) so index risk is priced before Monday 09:30 ET.",
+      "project_applicability": "Mechanism for why a weekend-crypto move would be priced in the equity opening print.",
+      "reflection": "Not cmegroup.com (403); hours only."
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/docs/245-trading",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "broker_official_docs",
+      "credibility": "broker_official_documentation",
+      "core_claim": "Alpaca overnight session runs 8:00 PM ET Sunday to 4:00 AM ET Friday via Blue Ocean ATS for all NMS securities.",
+      "project_applicability": "A Sunday-night fill exists at the broker but is a different fill rule from the frozen Monday-open one; recorded as an out-of-scope caveat.",
+      "reflection": "No liquidity or spread information; no local Sunday-night price data."
+    },
+    {
+      "url": "https://alpaca.markets/blog/introducing-stocks-24_5-overnight-with-alpaca-trading-api/",
+      "published_or_updated_at": "2026-01-28",
+      "source_type": "broker_official_docs",
+      "credibility": "broker_blog_post",
+      "core_claim": "Alpaca 24/5 trading for the Trading API from 8:00 PM ET Sunday to 8:00 PM ET Friday.",
+      "project_applicability": "Corroborates the docs page hours.",
+      "reflection": "Marketing blog; same limits as the docs page."
+    },
+    {
+      "url": "reports/research/intel/gap-search-2026-09-29-13.md",
+      "published_or_updated_at": "2026-09-29",
+      "source_type": "industry_standard",
+      "credibility": "internal_intel_brief",
+      "core_claim": "Queued the direction after a gap search; notes the Alpaca crypto fee, the paper abstract and the Binance Research caution that the Monday gap already holds most weekend information.",
+      "project_applicability": "Source of the task and the cheapest-test plan.",
+      "reflection": "Internal document, not independent evidence."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "W_BTC",
+      "claim_ids": [
+        "mourey_frl_2025_crypto_stock_weekend",
+        "binance_research_weekend_onchain_monday_gap",
+        "cme_es_sunday_open"
+      ]
+    },
+    {
+      "candidate_id": "W_ETH",
+      "claim_ids": [
+        "mourey_frl_2025_crypto_stock_weekend",
+        "binance_research_weekend_onchain_monday_gap",
+        "cme_es_sunday_open"
+      ]
+    },
+    {
+      "candidate_id": "W_EW10",
+      "claim_ids": [
+        "mourey_frl_2025_crypto_stock_weekend",
+        "binance_research_weekend_onchain_monday_gap",
+        "cme_es_sunday_open"
+      ]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "binance_research_median_92pct_of_monday_gap_priced_on_weekend",
+      "effect": "Made the gap segment the explicit control and the oc/o2o segments the only gating ones: the source prior is that the transmission sits in the gap, so tradability requires a surviving post-open effect."
+    },
+    {
+      "driver": "mourey_asymmetry_negative_only_and_luna_regime",
+      "effect": "Gate uses the W<0 vs W>=0 grouping and the 2022-06+ and 2024-01-08+ samples; the W<-3% grouping and the full sample are informational; the mirror (positive weekend) is not a separate candidate because the paper says it has no effect."
+    },
+    {
+      "driver": "acr_weekend_effect_altcoins",
+      "effect": "Added the equal-weight 10-coin signal next to BTC and ETH, 3 signal rows in total, no further tuning of windows or thresholds."
+    }
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "H1",
+      "claim_ids": [
+        "mourey_frl_2025_crypto_stock_weekend"
+      ]
+    },
+    {
+      "hypothesis_id": "H2",
+      "claim_ids": [
+        "binance_research_weekend_onchain_monday_gap",
+        "cme_es_sunday_open"
+      ]
+    }
+  ]
+}

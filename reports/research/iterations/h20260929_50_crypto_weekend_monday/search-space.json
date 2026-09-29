@@ -1,0 +1,80 @@
+{
+  "iter_id": "h20260929_50_crypto_weekend_monday",
+  "strategy_name": "h20260929_50_crypto_weekend_monday",
+  "source_spec_path": "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml",
+  "spec_hash": "e766fd755db918596cc1b25d3d7b85ca64ba3252bb6565f7cbf5d123b6e38d3b",
+  "schema_version": 3,
+  "created_at": "2026-09-29T13:42:44Z",
+  "objective": "T-20260929-50 step 1: does weekend crypto return predict Monday SPY/QQQ/IWM only in the gap, or also in Monday open->close / open->next-open?",
+  "total_candidate_budget": 3,
+  "cost_assumptions": "no cost in step 1 (statistics only); step 2, if ever run, 10 bp per side primary, 20 bp stress",
+  "go_no_go_band": "continue only if a preregistered (signal, QQQ/SPY, oc/o2o) cell has W<0 mean below W>=0 mean, |Welch t|>=2.0 and |t| above placebo p90 in both 2022-06+ and 2024-01-08+ samples",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_50_crypto_weekend_monday/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_50_crypto_weekend_monday/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/candidate-manifest.json",
+  "data_feasibility_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/cost-contract.json",
+  "candidate_manifest_sha256": "dd27dd94efae3ff295986aab208768441f1bb1c8914597cb66b2456a65eab411",
+  "data_feasibility_sha256": "fc2cdf3ddf06d1d05ee0f083d85d948257ab8a91e0b091d721fd64b0c6541448",
+  "paths": [
+    {
+      "name": "weekend_split_table",
+      "candidate_count": 3,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "signal": [
+          "BTC",
+          "ETH",
+          "EW10"
+        ],
+        "groupings": [
+          "W<0 vs W>=0",
+          "W<-0.03 vs rest"
+        ],
+        "etfs": [
+          "SPY",
+          "QQQ",
+          "IWM"
+        ],
+        "segments": [
+          "gap",
+          "oc",
+          "o2o"
+        ],
+        "samples": {
+          "full": [
+            "2016-05-01",
+            "data_end"
+          ],
+          "post_luna": [
+            "2022-06-01",
+            "data_end"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "data_end"
+          ]
+        },
+        "placebo": {
+          "shuffles": 500,
+          "seed": 20260929
+        },
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "shuffled_weekend_signal_placebo",
+        "gap_segment_replication_of_published_effect",
+        "non_gating_iwm_and_big_drop_groupings"
+      ]
+    }
+  ]
+}

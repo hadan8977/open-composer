@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_50_crypto_weekend_monday",
+  "reviewed_at": "2026-09-29T13:42:44Z",
+  "decision": "proceed",
+  "objective": "T-20260929-50 step 1 (cheapest negative test). Mourey, Shahrour and Soiman (Finance Research Letters 86, 2025) report that negative weekend crypto returns predict Monday US equity declines and positive ones do not, stronger after May 2022. Question: is any of that predictive power available AFTER the Monday open (open->close or open->next-open), which is the only part our frozen close-signal/next-open-fill rule can trade, or does it sit entirely in the Friday-close -> Monday-open gap where it is priced before the fill? Only if it survives after the open does the ~20-candidate batch (T-20260929-50 plan) get run.",
+  "target_regime_and_horizon": "Recent regime first: samples 2022-06-01.. (post-LUNA, the paper's strengthened regime) and 2024-01-08.. (frozen benchmark window), with the full 2016-05.. sample as context. Horizon: one Monday per week (about 20 percent of trading days), segments gap (Friday close to Monday open), oc (Monday open to close), o2o (Monday open to Tuesday open). Signal W is crypto return from Friday 16:00 America/New_York to Sunday 24:00 UTC (= Monday 00:00 UTC), known before the Monday open. Validity window if it survives: only the post-2022-06 regime; failure signal is the |t| falling below 2 in a rolling 2-year window; not defined further until it passes the step-1 gate.",
+  "existing_solution_comparison": "`oc research directions check` on crypto/weekend/prediction-market keywords returns dir:prediction_market_crypto_as_equity_signal (evidence_too_weak, 2026-09-23: only a one-day lead-lag probe, no weekend window) and dir:crypto_weekend_to_monday_equity_transmission (queued 2026-09-29 by gap-search-2026-09-29-13, no local test). This iteration tests the queued row; it is not a reopening of the older row because the weekend-window construction and the peer-reviewed asymmetric claim are new information. No public product or third-party replication of the paper was found; the one adjacent public piece (Binance Research via Yahoo, 2026-09-22) says weekend prices already capture a median 92 percent of the Monday open gap, which is the prior this test can falsify.",
+  "remaining_evidence_gap": "The paper's abstract (full text is behind a 403) gives no return-window definition, no Sharpe, no trading rule and no costs; its sample (about 2021-01..2025-06) and its Bayesian/Kalman method differ from a plain weekly two-group mean comparison. Unknown before this step: whether the effect appears in gap, oc or o2o segments on SPY/QQQ/IWM SIP daily opens and closes, and whether it holds in the post-2022-06 and 2024-01-08+ samples that matter for near-term use.",
+  "negative_experiments_checked": "dir:prediction_market_crypto_as_equity_signal (evidence_too_weak, one-day lead-lag only, does not test the weekend window); dir:crypto_hour_of_day_seasonality_21_23utc (not_executable at Alpaca crypto fees, irrelevant here because no crypto trade is made); h20260929_33_crypto_trend (0/13 crypto trend rules, different mechanism); h20260929_36_router_sip (SIP recheck refuted, different mechanism). None tested weekend crypto returns against Monday equity segments.",
+  "cost_and_execution_assumptions": "Step 1 is a statistics table: mean differences in basis points, no costs are applied and none are claimed. The tradable part is defined by the frozen contract: signal known Sunday 24:00 UTC, fill at Monday open, so only oc and o2o segments count toward the continue gate; gap is reported only to see whether the paper's effect replicates. If step 2 were ever run it must use 10 bp per side (20 bp stress) on short SPY/QQQ/IWM (easy to borrow, borrow cost modeled) or the S3 Monday de-risk switch (2 extra sides). Alpaca does offer a Sunday 8:00 PM ET overnight session, but that is a different fill rule and is out of scope here; its existence is recorded as a caveat only.",
+  "stop_condition": "Continue to the batch only if, for one (signal, ETF in {QQQ, SPY}, segment in {oc, o2o}) cell, in BOTH the 2022-06+ and the 2024-01-08+ samples: mean(W<0) < mean(W>=0), |Welch t| >= 2.0 and |t| above the 90th percentile of the 500-shuffle placebo |t| distribution. Otherwise close as refuted, labelled 'predictive power in the gap, priced before the fill' if the gap segment shows the effect, or 'no predictive power' if it does not.",
+  "queries": [
+    {
+      "query": "weekend cryptocurrency returns predict Monday stock returns Nasdaq Bitcoin spillover paper",
+      "opened_urls": [
+        "https://ideas.repec.org/a/eee/finlet/v86y2025ipes1544612325019154.html",
+        "https://acr-journal.com/article/the-weekend-effect-in-crypto-momentum-does-momentum-change-when-markets-never-sleep--1514/",
+        "https://finance.yahoo.com/markets/crypto/articles/weekend-chain-prices-monday-don-183331035.html"
+      ],
+      "searched_at": "2026-09-29T13:40:40Z"
+    },
+    {
+      "query": "Alpaca overnight trading 24/5 US equities Blue Ocean ATS Sunday 8pm ET hours",
+      "opened_urls": [
+        "https://docs.alpaca.markets/us/docs/245-trading"
+      ],
+      "searched_at": "2026-09-29T13:40:50Z"
+    },
+    {
+      "query": "CME E-mini S&P 500 futures trading hours Sunday 6:00 p.m. ET open Globex",
+      "opened_urls": [
+        "https://futuresclock.com/en/contracts/cme-es/"
+      ],
+      "searched_at": "2026-09-29T13:40:55Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://ideas.repec.org/a/eee/finlet/v86y2025ipes1544612325019154.html",
+      "claim_id": "mourey_frl_2025_crypto_stock_weekend",
+      "claim": "negative weekend returns significantly predict Monday equity declines, while positive returns have no effect",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-01-01",
+      "market_and_period": "20 largest cryptocurrencies (~85% of crypto market cap) vs Nasdaq, Russell 2000, S&P sector indices, S&P Crypto Index; Bayesian/Kalman; Finance Research Letters vol 86 (2025); sample period not stated in the abstract",
+      "applicability": "Founding claim of the direction: an asymmetric weekend-crypto to Monday-equity transmission, stronger after May 2022. This iteration tests whether any of it survives the frozen Monday-open fill rule.",
+      "limitations": "Abstract only (publisher page returned 403); no Sharpe, trading rule, cost or entry time given; the return window definition (Friday close vs Saturday 00:00, Sunday close) and whether the Monday return is close-to-close, gap or open-to-close are not stated in the abstract.",
+      "independent_replication": "No independent replication found; the paper is a single-team Finance Research Letters study.",
+      "fetched_at": "2026-09-29T13:41:00Z",
+      "sha256": "8cef6951d52b8e1b39066815717b5638fb4c6b7b726f5f87983add780c21c79d",
+      "snapshot_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/sources/mourey-shahrour-soiman-frl-2025-repec.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/docs/245-trading",
+      "claim_id": "alpaca_24_5_overnight_session",
+      "claim": "The overnight session operates from 8:00 PM ET Sunday to 4:00 AM ET Friday",
+      "source_type": "broker_official_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "Alpaca Trading API, all NMS securities, overnight session via Blue Ocean ATS",
+      "applicability": "Sets the execution question: Alpaca can trade US equities from Sunday 8:00 PM ET, so a Sunday-night fill exists at the broker, but it is a different fill rule from the frozen Monday-open one and is not tested here.",
+      "limitations": "Broker documentation of hours only; says nothing about overnight liquidity, spreads, or whether our SIP daily data has any Sunday-night price. Does not change the frozen close-signal to next-open contract.",
+      "independent_replication": "Cross-checked by the Alpaca blog post announcing 24/5 trading (8:00 PM ET Sunday to 8:00 PM ET Friday).",
+      "fetched_at": "2026-09-29T13:41:00Z",
+      "sha256": "93dd4f5d5814d700f4538127538c83ea355075d2d4c264352f17e15100cb03af",
+      "snapshot_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/sources/alpaca-24-5-trading-docs.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl"
+    },
+    {
+      "url": "https://finance.yahoo.com/markets/crypto/articles/weekend-chain-prices-monday-don-183331035.html",
+      "claim_id": "binance_research_weekend_onchain_monday_gap",
+      "claim": "leaving roughly 49 hours in which no US reference price exists at all",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-09-22",
+      "market_and_period": "Binance Research data to 2026-07-28, weekend tokenized-equity prices on DEXs vs the following Monday opening gap, one summer",
+      "applicability": "Warns that weekend prices already contain most of the Monday gap; supports the prior that any weekend-to-Monday transmission is realised in the Friday-close to Monday-open gap before a Monday-open fill.",
+      "limitations": "One quarter of data, thin weekend volume, wide spreads; a Yahoo-hosted syndicated piece, not peer reviewed; concerns tokenized single stocks, not index ETFs.",
+      "independent_replication": "None found.",
+      "fetched_at": "2026-09-29T13:41:00Z",
+      "sha256": "5867116732e0c2b36b6b6d82ecc71842ef6439770a4ceae2f0fd2feb7bd213ff",
+      "snapshot_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/sources/yahoo-binance-research-weekend-onchain-prices.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl"
+    },
+    {
+      "url": "https://acr-journal.com/article/the-weekend-effect-in-crypto-momentum-does-momentum-change-when-markets-never-sleep--1514/",
+      "claim_id": "acr_weekend_effect_crypto_momentum",
+      "claim": "momentum strategies yield higher returns on weekends, with altcoins exhibiting a stronger differential than major coins",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-09-21",
+      "market_and_period": "10 large cryptocurrencies, 2020-01-01..2025-04-30, 7-day momentum, weekend vs weekday",
+      "applicability": "Shows weekend crypto behaviour differs from weekday behaviour; relevant to whether W measured Friday 16:00 ET to Sunday 24:00 UTC is a distinct signal. Crypto-only: says nothing about equities.",
+      "limitations": "Crypto-only, costs acknowledged but not quantified, Advances in Consumer Research (low tier venue), no equity leg.",
+      "independent_replication": "None found.",
+      "fetched_at": "2026-09-29T13:41:00Z",
+      "sha256": "e54b32083c555ef2a424f531aa70fc2c6e874d212c51f7b4ec8a9a42215c4d77",
+      "snapshot_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/sources/acr-journal-weekend-effect-crypto-momentum.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl"
+    },
+    {
+      "url": "https://futuresclock.com/en/contracts/cme-es/",
+      "claim_id": "cme_es_sunday_open",
+      "claim": "the Monday session already opens on Sunday at 17:00 exchange time",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "CME Globex E-mini S&P 500 (ES) session times, Central time",
+      "applicability": "ES futures reopen Sunday 17:00 CT (18:00 ET), so equity-index risk is priced before Monday 09:30 ET: the weekend information is expected to be in the Monday opening print.",
+      "limitations": "Third-party clock site, not cmegroup.com (403 on scripted fetch); hours only, no evidence about how much crypto information futures absorb.",
+      "independent_replication": "Consistent with the search-result summaries of CME Globex hours (Sunday 6:00 PM ET to Friday 5:00 PM ET).",
+      "fetched_at": "2026-09-29T13:41:00Z",
+      "sha256": "095800d6fe685c564efcffe1959143425f77d712659f3c9487aeb2477c6799aa",
+      "snapshot_path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/sources/futuresclock-cme-es-hours.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run scripts/run_h20260929_50_weekend_split.py once: 3 signals x 2 groupings x 3 ETFs x 3 return segments x 3 samples split table with Welch t and a 500-shuffle placebo (seed 20260929).",
+    "pass_condition": "At least one preregistered (signal, ETF in {QQQ,SPY}, segment in {oc,o2o}) cell has W<0 mean below W>=0 mean, |t|>=2.0 and |t| above the placebo 90th percentile in both the 2022-06+ and the 2024-01-08+ samples.",
+    "falsification_condition": "No such cell exists; then the direction is closed as refuted (in-gap, priced before the fill, or no predictive power) and no batch is run.",
+    "max_compute_minutes": 15
+  }
+}

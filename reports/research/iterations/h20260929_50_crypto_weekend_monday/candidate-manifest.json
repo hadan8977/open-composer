@@ -1,0 +1,223 @@
+{
+  "iter_id": "h20260929_50_crypto_weekend_monday",
+  "generated_at": "2026-09-29T13:42:44Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260929_50_crypto_weekend_monday",
+  "objective": "Step 1 of T-20260929-50: 3 signal rows (BTC, ETH, EW10) in one split-table analysis; no trading rule, no costs. Continue to the batch only if the preregistered continue_rule passes.",
+  "candidate_count": 3,
+  "candidates": [
+    {
+      "candidate_id": "W_BTC",
+      "path": "weekend_split_table",
+      "role": "decision_signal",
+      "method": "weekend_crypto_return_BTC_split_table",
+      "ablation": "threshold_0_and_minus3pct_groupings",
+      "spec_path": "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml",
+      "fallback": "none_if_data_missing_week_skipped",
+      "data_contract": "data_v1_h20260929_50_crypto15m_sipdaily",
+      "feature_contract": "feature_v1_h20260929_50_weekend_return",
+      "label_contract": "label_v1_h20260929_50_monday_segments",
+      "validation_contract": "validation_v1_h20260929_50_split_table",
+      "cost_contract": "cost_v1_h20260929_50_none_step1",
+      "benchmark_contract": "benchmark_v1_h20260929_50_shuffle_placebo",
+      "parameters": {
+        "signal": "BTC",
+        "signal_description": "Bitcoin, Coinbase USD 15m before 2017-08 else Binance BTCUSDT",
+        "groupings": [
+          "W<0 vs W>=0",
+          "W<-0.03 vs rest"
+        ],
+        "etfs": [
+          "SPY",
+          "QQQ",
+          "IWM"
+        ],
+        "segments": [
+          "gap",
+          "oc",
+          "o2o"
+        ],
+        "samples": [
+          "full",
+          "post_luna",
+          "anchor"
+        ],
+        "decision_eligible": true,
+        "gating_etfs": [
+          "QQQ",
+          "SPY"
+        ],
+        "gating_segments": [
+          "oc",
+          "o2o"
+        ],
+        "gating_grouping": "neg"
+      }
+    },
+    {
+      "candidate_id": "W_ETH",
+      "path": "weekend_split_table",
+      "role": "decision_signal",
+      "method": "weekend_crypto_return_ETH_split_table",
+      "ablation": "threshold_0_and_minus3pct_groupings",
+      "spec_path": "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml",
+      "fallback": "none_if_data_missing_week_skipped",
+      "data_contract": "data_v1_h20260929_50_crypto15m_sipdaily",
+      "feature_contract": "feature_v1_h20260929_50_weekend_return",
+      "label_contract": "label_v1_h20260929_50_monday_segments",
+      "validation_contract": "validation_v1_h20260929_50_split_table",
+      "cost_contract": "cost_v1_h20260929_50_none_step1",
+      "benchmark_contract": "benchmark_v1_h20260929_50_shuffle_placebo",
+      "parameters": {
+        "signal": "ETH",
+        "signal_description": "Ethereum, Coinbase USD 15m before its Binance listing else Binance ETHUSDT",
+        "groupings": [
+          "W<0 vs W>=0",
+          "W<-0.03 vs rest"
+        ],
+        "etfs": [
+          "SPY",
+          "QQQ",
+          "IWM"
+        ],
+        "segments": [
+          "gap",
+          "oc",
+          "o2o"
+        ],
+        "samples": [
+          "full",
+          "post_luna",
+          "anchor"
+        ],
+        "decision_eligible": true,
+        "gating_etfs": [
+          "QQQ",
+          "SPY"
+        ],
+        "gating_segments": [
+          "oc",
+          "o2o"
+        ],
+        "gating_grouping": "neg"
+      }
+    },
+    {
+      "candidate_id": "W_EW10",
+      "path": "weekend_split_table",
+      "role": "decision_signal",
+      "method": "weekend_crypto_return_EW10_split_table",
+      "ablation": "threshold_0_and_minus3pct_groupings",
+      "spec_path": "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml",
+      "fallback": "none_if_data_missing_week_skipped",
+      "data_contract": "data_v1_h20260929_50_crypto15m_sipdaily",
+      "feature_contract": "feature_v1_h20260929_50_weekend_return",
+      "label_contract": "label_v1_h20260929_50_monday_segments",
+      "validation_contract": "validation_v1_h20260929_50_split_table",
+      "cost_contract": "cost_v1_h20260929_50_none_step1",
+      "benchmark_contract": "benchmark_v1_h20260929_50_shuffle_placebo",
+      "parameters": {
+        "signal": "EW10",
+        "signal_description": "equal-weight mean of W over the available coins among BTC, ETH, LTC, BCH, LINK, DOGE, AVAX, UNI, AAVE, DOT (>=2 required)",
+        "groupings": [
+          "W<0 vs W>=0",
+          "W<-0.03 vs rest"
+        ],
+        "etfs": [
+          "SPY",
+          "QQQ",
+          "IWM"
+        ],
+        "segments": [
+          "gap",
+          "oc",
+          "o2o"
+        ],
+        "samples": [
+          "full",
+          "post_luna",
+          "anchor"
+        ],
+        "decision_eligible": true,
+        "gating_etfs": [
+          "QQQ",
+          "SPY"
+        ],
+        "gating_segments": [
+          "oc",
+          "o2o"
+        ],
+        "gating_grouping": "neg"
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20260929_50_crypto15m_sipdaily": {
+        "sources": [
+          "data/research/crypto/raw/binance/<SYMBOL>USDT monthly 15m kline zips (BTC, ETH, LTC, BCH, LINK, DOGE, AVAX, UNI, AAVE, DOT; read via scripts/fetch_crypto_session_prices.load_binance_15m, cached months only)",
+          "data/research/crypto/raw/coinbase/{BTC,ETH}-USD-15m.parquet (BTC/ETH before the Binance listing, from 2016-05)",
+          "data/sip/daily SPY/QQQ/IWM open and close read with duckdb memory_limit 400MB; SPY dates are the trading calendar"
+        ],
+        "join": "Monday trading date = first ETF trading date on or after the calendar Monday of the week; weeks with no trading date are skipped"
+      }
+    },
+    "features": {
+      "feature_v1_h20260929_50_weekend_return": {
+        "definition": "W = price at Sunday 24:00 UTC (close of the 15m bar opening 23:45 UTC) / price at Friday 16:00 America/New_York (open of the 15m bar opening at 16:00 ET) - 1; no bar with open time at or after Monday 00:00 UTC is used; EW10 = mean of the available coins' W (both endpoints present), at least 2 coins required; BTC and ETH need their own endpoints",
+        "holiday_rule": "if the calendar Monday is not a trading day the next trading day is the Monday sample, W still ends Sunday 24:00 UTC, and the sample is flagged holiday_monday=true; Friday-holiday weeks are flagged friday_holiday=true and use the last close before the Monday sample for the gap"
+      }
+    },
+    "labels": {
+      "label_v1_h20260929_50_monday_segments": {
+        "definition": "gap = open[M]/close[prev trading day]-1; oc = close[M]/open[M]-1; o2o = open[next trading day after M]/open[M]-1, in basis points, from SIP daily adjusted bars; M = Monday sample date"
+      }
+    },
+    "validation": {
+      "validation_v1_h20260929_50_split_table": {
+        "samples": {
+          "full": [
+            "2016-05-01",
+            "data_end"
+          ],
+          "post_luna": [
+            "2022-06-01",
+            "data_end"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "data_end"
+          ]
+        },
+        "sample_membership": "by Monday sample date",
+        "groupings": {
+          "neg": "W<0 vs W>=0",
+          "big": "W<-0.03 vs W>=-0.03"
+        },
+        "statistic": "mean(group A) - mean(group B) in bp, Welch t (unequal variances), n per group",
+        "placebo": "500 random permutations of W among the weeks of each (signal, sample), numpy default_rng seed 20260929; report the share of placebo |t| values below the real |t| and the placebo 90th percentile of |t|",
+        "continue_rule": "exists (signal in BTC,ETH,EW10; ETF in QQQ,SPY; segment in oc,o2o) with grouping neg such that in BOTH post_luna and anchor samples: mean(W<0) < mean(W>=0), |t|>=2.0, |t| > placebo p90 of |t|; gap segment, IWM, big grouping and full sample are informational",
+        "refuted_labels": "in_gap_priced_before_fill if the gap segment shows W<0 lower, |t|>=2 in both recent samples for QQQ or SPY for some signal; else no_predictive_power",
+        "holiday_mondays": "included in the main table, additionally reported ex-holiday as informational"
+      }
+    },
+    "costs": {
+      "cost_v1_h20260929_50_none_step1": {
+        "primary_bps": 0.0,
+        "contract_file": "reports/research/iterations/h20260929_50_crypto_weekend_monday/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260929_50_shuffle_placebo": {
+        "primary": "500-shuffle placebo of W across weeks, seed 20260929",
+        "gap_replication": "the gap-segment difference and t are reported to check whether the published effect exists in our data at all"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml": "e766fd755db918596cc1b25d3d7b85ca64ba3252bb6565f7cbf5d123b6e38d3b"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260929_50_crypto_weekend_monday.yaml",
+  "spec_hash": "e766fd755db918596cc1b25d3d7b85ca64ba3252bb6565f7cbf5d123b6e38d3b",
+  "keep_rule": "See contracts.validation.validation_v1_h20260929_50_split_table.continue_rule. Preregistered before any return, t value or placebo is computed. Reading of the brief frozen here: the same (signal, ETF, segment) cell must satisfy the criteria in both recent samples; 12 gating cells, no multiple-testing correction, which makes the gate lenient rather than strict."
+}

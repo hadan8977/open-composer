@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260929_50_crypto_weekend_monday_historical_evaluation_authorization",
+  "iter_id": "h20260929_50_crypto_weekend_monday",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 3,
+    "evaluation_authorized_count": 3,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "weekend_split_table": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "W_BTC",
+        "W_ETH",
+        "W_EW10"
+      ],
+      "reason_code": "crypto_15m_klines_cached_and_sip_daily_present"
+    }
+  },
+  "candidate_authorization": {
+    "candidate_count": 3,
+    "rows": [
+      {
+        "candidate_id": "W_BTC",
+        "path": "weekend_split_table",
+        "action": "evaluate",
+        "reason_code": "crypto_15m_klines_cached_and_sip_daily_present",
+        "candidate_binding_sha256": "b115614098e840f369f6ea1cd94922e88a4cfd596bf3458835b937853791a52a"
+      },
+      {
+        "candidate_id": "W_ETH",
+        "path": "weekend_split_table",
+        "action": "evaluate",
+        "reason_code": "crypto_15m_klines_cached_and_sip_daily_present",
+        "candidate_binding_sha256": "29fbbab6e6260fffffc5e4cf364dcc8b501e362330e51885a9c392969e6b5ca9"
+      },
+      {
+        "candidate_id": "W_EW10",
+        "path": "weekend_split_table",
+        "action": "evaluate",
+        "reason_code": "crypto_15m_klines_cached_and_sip_daily_present",
+        "candidate_binding_sha256": "dab0001f4795e0eae97bf41f16e191a1499cca638cd78aa58cf31967d74eba57"
+      }
+    ]
+  },
+  "notes": "Binance monthly 15m zips are cached under data/research/crypto/raw/binance through 2026-08; Coinbase BTC/ETH 15m parquet from 2016-05. SIP daily SPY/QQQ/IWM 2016-01-04..2026-09-28. Crypto data therefore ends 2026-08-31, so the last Monday samples are late August 2026. The daily bars carry no dividend adjustment guarantee beyond the SIP feed's own; ex-dividend days add noise of at most a few bp to the gap segment and none to the W grouping.",
+  "required_reference_names": [
+    "cost_contract"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260929_50_crypto_weekend_monday/cost-contract.json",
+      "sha256": "a8c9222787ae1dba9312c1ff3cc3b4ebf3e9fe5e38ec118582e97f963da6ef13"
+    }
+  }
+}

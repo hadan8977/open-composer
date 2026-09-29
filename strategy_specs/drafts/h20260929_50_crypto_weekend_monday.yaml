@@ -1,0 +1,97 @@
+name: h20260929_50_crypto_weekend_monday
+description: 'Preregistered T-20260929-50 step 1 (cheapest negative test) for dir:crypto_weekend_to_monday_equity_transmission. Split table only: weekend crypto return W (Friday 16:00 America/New_York to Sunday 24:00 UTC, known before the Monday open) versus Monday SPY/QQQ/IWM returns in three segments (gap Friday close to Monday open, oc Monday open to close, o2o Monday open to Tuesday open), W<0 vs W>=0 and W<-3% vs rest, three samples, Welch t and a 500-shuffle placebo. No trading rule and no cost in this step. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- QQQ
+- IWM
+lifecycle: draft
+position_direction: short_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260929_50:weekend_split_table
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  weekend_crypto_return:
+    source: expression
+    expression: close / lag(close, 5) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal W is the crypto return from Friday 16:00 America/New_York to Sunday 24:00 UTC computed from 15 minute Binance/Coinbase klines by scripts/run_h20260929_50_weekend_split.py, not by the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260929_50_crypto_weekend_monday
+  candidate_manifest_path: reports/research/iterations/h20260929_50_crypto_weekend_monday/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260929_50_crypto_weekend_monday/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260929_50_crypto_weekend_monday.jsonl
+  source_card_claim_ids:
+  - mourey_frl_2025_crypto_stock_weekend
+  - binance_research_weekend_onchain_monday_gap
+  - acr_weekend_effect_crypto_momentum
+  - cme_es_sunday_open
+  - alpaca_24_5_overnight_session
+  parameter_space:
+    signal:
+    - BTC
+    - ETH
+    - EW10
+  candidate_budget: 3
+  selection_objective: One split-table analysis per signal (BTC, ETH, equal-weight of the available coins of the 10). Continue to a batch only if a preregistered (signal, QQQ or SPY, oc or o2o) cell shows W<0 mean below W>=0 mean, |Welch t|>=2.0 and |t| above the 90th percentile of 500 shuffled-W placebo |t| in both the 2022-06+ and 2024-01-08+ samples; otherwise refuted.
+  anti_overfit_notes:
+  - Signals, groupings (W<0 vs W>=0; W<-3% vs rest), ETFs, segments, samples, placebo (500 shuffles, seed 20260929) and the continue rule are fixed in candidate-manifest.json before any return is computed.
+  - The continue rule requires the same cell in both recent samples; 12 gating cells (3 signals x 2 ETFs x 2 segments) are reported with no multiple-testing relief, and the W<-3% grouping and IWM are informational only.
+  validation_plan:
+  - sample_2022_06_01_onward
+  - sample_2024_01_08_onward
+  - sample_full_2016_05_onward_context
+  - shuffled_weekend_signal_placebo_500_seed_20260929
