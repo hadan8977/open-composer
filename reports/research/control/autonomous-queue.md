@@ -956,6 +956,7 @@
 - notes:
   - 2026-09-30 11:03 交互会话（Opus 主审）写预注册和简报（提交 8b7cf83，早于任何新数据）。official 阶段约 4,000 次 Alpaca 请求，别和 T-20260930-15 同时跑。
   - 2026-09-30 12:15 主审补充简报第 2 步的测量口径（不改门槛）：逐笔官方价是原始价，面板 r 是复权价，比较前乘同日复权因子 f_d = 本地 close / 原始 close（`adjustment=raw` 日线），否则除权夜和拆股夜会混进 Δ。
+  - 2026-09-30 13:25 主审轮（Opus）：本任务过了之后的下一步已预注册为 T-20260930-16（执行口径 + 账本），状态 blocked。19:07 主审轮审完本任务：gate_a、gate_b 都过就把 T-16 改成 ready，交 22:07 执行轮；任一不过就把 T-16 标 cancelled。主审检查（`t20260930_16_overnight_lo20_execution/lead-check-2026-09-30.md`）：LO20 只持隔夜主窗夏普 1.75，开盘到开盘持有只有 0.92（压力期 0.36），所以只能收盘附近买、开盘附近卖。
 
 ### T-20260930-15 T-13 实测报价核对：同时段延续的可成交收益（修正案 A1 + A2）
 - status: done（已主审 2026-09-30 12:20）
@@ -968,3 +969,14 @@
 - notes:
   - 2026-09-30 12:00 交互会话（Opus 主审）写简报，并由交互会话派一个 sonnet-high 子代理执行（两种自动轮都不要碰本任务）。
   - 2026-09-30 12:11 子代理（Sonnet 5.5）完成：336 次报价请求 + 150 次原始日线请求，无 429，报价缺失 0.8%/1.2%；报价按同日（复权 close / 原始 close）换到复权口径；产物 `quote-check.json`/`.md`，脚本 `scripts/run_t20260930_15_quote_check.py`，测试 13 个通过。主审已核对 quote-check.json 的 tier 与各字段，并独立复核了复权口径问题；结论见 T-20260930-13。
+
+### T-20260930-16 纲领 C2a″：隔夜 LO20 在模拟盘可成交价上的缺口 + 按这个成本的 K1/K2/DSR 账本（依赖 T-20260930-14）
+- status: blocked（等 T-20260930-14 主审：gate_a、gate_b 都过才改 ready；任一不过改 cancelled）
+- priority: 2
+- not_before:
+- goal: ON252_P500_LO20 的收益只在隔夜（主审检查：只持隔夜主窗夏普 1.75，开盘到开盘 0.92）。Alpaca 模拟盘按 NBBO 撮合、竞价单不可靠，所以要实测"15:59 按卖价买、次日 09:31 按买价卖"相对官方竞价价的缺口 c，再按 c 算 K1/K2/DSR。决定能不能向机主提议一条只持隔夜的模拟盘 sleeve。
+- plan: 预注册 `reports/research/iterations/t20260930_16_overnight_lo20_execution/hypotheses.md`（13:22 写，早于 T-14 结果和任何新数据）。阶段 A：40 天 × 20 只（D1 = T-14 的 20 天，D2 = 种子 20261001 的 20 天），P1 判定、P2–P7 只报告；c = s̄_P1 + 0.5 bp，≤8 viable、≤14 k2_only、>14 closed，缺失 >10% insufficient_data。阶段 B：6 个成本合同 × 5 个窗口的账本，K1（主窗 ≥1.19、压力期 ≥0.65）、K2（两窗 ≥0.05）、DSR（试验 22）。
+- done_when: results.json（tier_exec、c_bp、k1/k2 四个字段、paths、ledger、diagnostics）+ report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20260930-16.md
+- notes:
+  - 2026-09-30 13:25 主审轮（Opus）写预注册、主审检查记录和简报。只有 T-14 过了才执行；约 1,300 次行情请求，别和别的取数任务同时跑。
