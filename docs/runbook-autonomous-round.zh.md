@@ -223,6 +223,9 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 4. 运行 `uv run python scripts/autonomous_preflight.py release`，把输出 JSON 原样作为 `--usage-json` 传给
    `uv run python scripts/autonomous_preflight.py log --status <done|partial|failed> --task <任务 ID> --summary "<一句话>" --usage-json '<release 的输出>'`。
 5. 只 `git add` 本轮改动的文件；提交前 `git diff --cached | grep -iE "auth_token|ct0=|api[_-]?key|secret|bearer"` 确认没有密钥；提交信息末尾加一行 `Co-Authored-By:`，写本轮的模型：主审轮 `Claude Opus 5.5 <noreply@anthropic.com>`，执行轮 `Claude Sonnet 5.5 <noreply@anthropic.com>`。
+   - **迭代档案在 `.gitignore` 里**（`reports/research/iterations/*`）。新产出的 `results.json`、`report.md`、`candidate-manifest.json`、`prebacktest-validated-at.txt`、`cost-table.json`、`data-feasibility.json`、`sources/`、修正案等文件，必须逐个用 `git add -f <路径>` 加入。`cache/` 不提交。
+   - 提交后用 `git status --short --ignored reports/research/iterations/<id>` 确认除 `cache/` 外没有 `!!` 行。
+   - 2026-09-30 10:07 执行轮只提交了已跟踪的文件，两个任务的 `results.json` 都没进 git，由交互会话补交。
 6. **最后一条消息**是给机主看的汇报（在 Paseo 里显示）。执行轮只写三行：做了哪些简报、各自产物路径和"待主审"、值守是否正常。主审轮中文、简短，按这个结构：
    - **这一轮做了什么**（1–3 条）
    - **结果**（数字要和 JSON 核对过；否定的也写清楚为什么）
