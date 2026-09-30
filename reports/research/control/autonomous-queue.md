@@ -854,7 +854,7 @@
   - 2026-09-30 缺口搜索（gap-search-2026-09-30-01，协调者任务代码 R0930-0107-G）添加。原文核对：NBER w10275 已打开（摘要和全文）；Globe and Mail 付费墙、JFIR 403，均 claim_only。exa 检索六页里只有摘要，没有美股 2016 年后的效应大小，是本任务先验低的原因。
 
 ### T-20260930-10 纲领 A1：板块季节性前置扩到行业 ETF
-- status: ready
+- status: running
 - priority: 1
 - not_before:
 - goal: C2 的收益主要来自板块季节性前置（S 腿；H-20260928-20 里 S 族 10 个变体在 2026 留出窗全部为正，2026 年 S 腿 +43.7%）。本任务检验同一机制在行业 ETF 上是否成立。成立的话，模拟盘可以多一个机制相同、持仓不同的收益来源。
@@ -868,9 +868,10 @@
 - done_when: 迭代档案 + leaderboard + 纲领主线 A 的"学到了什么/下一步" + 登记簿 + 提交。
 - notes:
   - 2026-09-30 交互会话（Opus）按纲领 A1 写入。国家 ETF 版不做：AllocateSmartly 1971–2025 扩展测试夏普 0.46，基准 0.38，作者已停止跟踪（https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/）。
+  - 2026-09-30 04:07 自动轮（R0930-0407）开始：Opus 预注册设计写在 `reports/research/iterations/h20260930_10_industry_seasonality/hypotheses.md`，子代理执行。
 
 ### T-20260930-11 纲领 C1：跳空回补 × 竞价执行的最便宜否定（官方竞价价上毛边际还在不在）
-- status: ready
+- status: running
 - priority: 1
 - not_before:
 - goal: T-20260929-32 证明截面跳空回补的信号是真的（空头选股毛 +11.5 bp/天、毛夏普 1.33，安慰剂全输），死因是按逐只价差计的成本（18–28 bp/边，每天进出两次）。开盘竞价进、收盘竞价出不付买卖价差，可能把成本从每天约 40 bp 降到几 bp。本任务先确认毛边际在官方竞价价上还在，再决定是否做全量。
@@ -885,3 +886,4 @@
 - done_when: `reports/research/iterations/t20260930_11_gap_fade_auction/`（抽样表、偏差分布、分档毛边际、判定）+ 纲领主线 C 更新 + 登记簿 + 提交。
 - notes:
   - 2026-09-30 交互会话（Opus）按纲领 C1 写入。只调行情 API，不下单。适用边界要写进结论：Alpaca 模拟盘的开盘竞价单成交不可靠（2026-09-15 50 单里 45 单过期），模拟盘只能验证收盘竞价腿；开盘竞价腿只能在实盘或别的券商验证。
+  - 2026-09-30 04:07 自动轮（R0930-0407）开始：Opus 预注册设计写在 `reports/research/iterations/t20260930_11_gap_fade_auction/hypotheses.md`，子代理执行。
