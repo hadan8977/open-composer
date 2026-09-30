@@ -224,16 +224,18 @@
   - 2026-09-29 07:07 UTC 自动轮开始，派 sonnet-high 子代理执行（批量通道新增 `extend_panel` 钩子，提交 4a0775a）。
 
   - 2026-09-29 07:07 轮结果（协调者已对照 leaderboard.json 核对 14 条）：0 保留、5 条近期观察（watch_recent，已写 kept.jsonl，commit ee2b972）：LSS_N50_K1_1X/K2_1X/K2_2X/K3_1X/K3_2X 对标窗 1.23–1.44 过 1.19，压力期 0.42–0.64 都没过 0.645（K3_2X 0.643 差 0.002）。K2 对标窗全负。选股有真增量：最好 1.44 vs 菜单等权 0.98 vs 随机 0.72。2 倍杠杆在 vt40 下不提高夏普（1x≈2x）。DSR 最高 0.73。菜单 = 时间点 S&P 500 里 63 日成交额前 20/50（`menu.parquet` 冻结到 2026-09；前向跟踪需每月末重跑 `scripts/build_h20260929_34_menu.py`）。登记簿 `dir:levered_single_stock_momentum_top_k`（partial）。产物：`reports/research/iterations/h20260929_34_levered_single_stock/`。
-### T-20260929-35 日内截面规律（分钟数据，Modal）：日内周期性、隔夜/日内拉锯
+### T-20260929-35 日内截面规律之一：隔夜延续 × 竞价执行（Lou-Polk-Skouras 拉锯的隔夜腿；同时段周期性拆到 T-20260930-13）
 - status: ready
 - priority: 1
 - not_before:
 - goal: 已发表的截面日内规律，例如 Heston-Korajczyk-Sadka 2010 的同一时段收益延续，以及 Lou-Polk-Skouras 2019 的"动量赚在隔夜、反转赚在日内"，在流动性最好的股票上能否扣掉实际成本后赚钱。
 - plan: 先联网找 2020 年以后的复现；成本按分钟数据估计的价差另建日内合同，同时报告冻结的 10/20 bp。
 - done_when: 迭代档案 + 登记簿 + 提交。
+- brief: reports/research/control/briefs/T-20260929-35.md
 - notes:
   - 2026-09-30 交互会话（Opus）解除阻塞，属于纲领 C2（`docs/research-program.zh.md` 主线 C）。成本合同由 Opus 定，不再等机主：逐只实测价差 + 2 bp，且 2 倍成本下仍须通过；同时报告冻结的 10/20 bp。先算毛收益，毛收益低于 2 倍往返价差就直接否定。优先级排在纲领 C1（T-20260930-11）之后。
   - 2026-09-30 07:07 自动轮（Opus）：C1、C1b 已关闭，跳空回补整族关闭；本任务现在是纲领主线 C 的唯一剩余深挖实验（纲领 C2），提为 priority 1。下一轮执行前由 Opus 先写预注册（机制、池、成本合同按上面 notes、最便宜的否定：毛收益 < 2 倍往返实测价差即否定）。注意免费行情是 IEX 实时 + SIP 15 分钟延迟，任何需要 09:30 后实时信号的规则要按可见时刻选股。
+  - 2026-09-30 09:45 交互会话（Opus 主审）：预注册写死在 `reports/research/iterations/t20260929_35_overnight_persistence/hypotheses.md`，执行简报 `reports/research/control/briefs/T-20260929-35.md`。本任务只测隔夜腿：按过去隔夜收益十分位多空，收盘竞价进、次日开盘出，判定格 ON21_P1500_LS 主窗毛均值 ≥16 bp/晚通过、<8 bp 关闭（竞价每边 2 bp，2 倍 4 bp）。同时段周期性（HKS）拆到 T-20260930-13。执行轮先做本任务（重任务），T-13 在本任务的 panel 之后。
 
 ### T-20260929-36 纳斯达克 1 分钟多空事件路由：用 SIP 分钟数据复核
 - status: done
@@ -924,3 +926,14 @@
     3. **最便宜的否定先做可执行版**：先在 C1 的抽样里改用盘前信号重新选股，重算 T1 多头的毛边际。低于 20 bp/天 → 直接关闭，不建账本，纲领 C1b 记否定（死因：前视）。
   - 2026-09-30 07:07 自动轮（R0930-0707-C1b）开始：Opus 预注册写在 `reports/research/iterations/t20260930_12_smallcap_gap_auction/hypotheses.md`（按 05:05 审查改设计：X15 = 免费计划 15 分钟延迟下 09:11 ET 前的 SIP 盘前 bar 为主判定，X0 = 09:26 需付费实时 SIP，LA = 开盘价前视对照），子代理执行。
   - 2026-09-30 07:07 自动轮（R0930-0707-C1b）：done，否定（closed_unstable，Opus 已对照 results.json 的 decision_cells 核对）。判定格 X15_K10_EW 对标窗毛 −5.37 bp/天（t −1.03），安慰剂打赢 0.40，短窗 −4.15 bp；X0_K10_EW −4.80（t −0.94），0.53，+0.07；前视对照 LA_K10_EW −3.96。三条继续条件两个口径全不过，账本未跑。死因：C1 的 +42.5 bp 是整个 ≥$1M 池极端跳空（z 中位数 −3.7）落在 $5–20M 档的子集，先限池再取 10 只会混进均值 −17.3 bp 的温和跳空（`c1_reconciliation.json`）；池里只有 35% 的行 09:11 前有盘前成交。产物 `reports/research/iterations/t20260930_12_smallcap_gap_auction/`、`scripts/run_t20260930_12_smallcap_gap_auction.py`；登记簿 `dir:smallcap_gap_down_fade_auction_execution` → refuted。
+
+### T-20260930-13 日内截面规律之二：开盘/收盘半小时同时段延续 × 一腿竞价（Heston-Korajczyk-Sadka 2010；Haendler 等 2025 样本外）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 同一只股票在开盘半小时（09:30–10:00）和收盘半小时（15:30–收盘竞价）的收益与它过去 20 天同时段收益正相关（HKS：开盘 >11 bp、收盘 >8 bp 的十分位多空）。一腿走竞价后，2024–26 年的毛边际能否付 2 倍成本？是纲领主线 C2 的第二部分。
+- plan: 预注册写死在 `reports/research/iterations/t20260930_13_intraday_periodicity/hypotheses.md`：两个判定格 C_L20_P1500、O_L20_P1500 各自按主窗判定；m ≥ 2×RT1 通过，m < RT1 关闭；安慰剂 100 种子、相邻时段对照；只用 2023-08 → 2026-09 分钟档，压力期等通过后再定。
+- done_when: results.json + report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20260930-13.md
+- notes:
+  - 2026-09-30 09:45 交互会话（Opus 主审）从 T-20260929-35 拆出并写预注册和简报。依赖 T-20260929-35 的 panel 缓存（池相同）。2023 年分钟档要同时读整年旧分片和月目录（C1b 漏了旧分片，见简报"背景"）。
