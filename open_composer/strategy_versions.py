@@ -105,6 +105,15 @@ def _remove_unset_schema_extensions(spec: StrategySpec, payload: dict[str, objec
             "etf_rotation",
         ),
     )
+    portfolio_payload = payload.get("portfolio")
+    if spec.portfolio.etf_rotation is not None and isinstance(portfolio_payload, dict):
+        # 2026-09-30 -- calendar-blend selection rule; unset on the three
+        # momentum sleeves whose paper authorizations bind their hashes.
+        drop_unset(
+            spec.portfolio.etf_rotation,
+            portfolio_payload.get("etf_rotation"),
+            ("selection_rule", "eom_sector_blend"),
+        )
     if spec.model is None:
         return
     model_payload = payload.get("model")

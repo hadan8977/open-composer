@@ -42,6 +42,16 @@ Selection rule
    equity actually used for sizing are recorded in the artifact ``summary``
    under distinct keys.
 
+Calendar blend
+--------------
+``selection_rule=eom_reversal_sector_front_run_blend`` (card H-20260928-20,
+candidate C2) replaces steps 4-5 at each month's last session with
+:func:`eom_sector_blend_book`: ``reversal_weight`` in the reversal symbol when
+its return from the month's fourth Friday to the signal close is negative,
+plus the top ``top_n`` other menu symbols by their return over the month after
+the holding month one year earlier, sharing ``1 - reversal_weight``; the rest
+is cash. Steps 1-3 and 6 are unchanged.
+
 This module is deliberately much smaller than
 ``insider_portfolio_target_weights.py``: there is no forward-ledger/
 preregistration ceremony and no persisted hold-state, because determinism
@@ -52,6 +62,8 @@ rerun idempotent.
 from __future__ import annotations
 
 import json
+import math
+from bisect import bisect_right
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
@@ -88,6 +100,9 @@ MAPPING_MODE = "etf_rotation_portfolio_target_weight_mapping"
 SOURCE_TAG = "etf_rotation_portfolio_python_reference"
 TIME_RULE = "next_regular_session_opg_limit"
 SIGNAL_SOURCE = "etf_rotation_portfolio_observation"
+#: ``etf_rotation.selection_rule`` value for the calendar blend
+#: (:func:`eom_sector_blend_book`); any other value is trailing momentum.
+EOM_BLEND_RULE = "eom_reversal_sector_front_run_blend"
 
 
 @dataclass(frozen=True)
@@ -283,6 +298,139 @@ def build_weights(
     return weights
 
 
+# ---------------------------------------------------------------------------
+# calendar blend: selection_rule=eom_reversal_sector_front_run_blend
+
+
+@dataclass(frozen=True)
+class EOMSectorBlendBook:
+    """One month's calendar-blend book and the inputs that decided it."""
+
+    weights: dict[str, float]
+    reversal_symbol: str
+    reversal_anchor_session: date | None
+    reversal_return: float | None
+    reversal_fired: bool
+    reversal_reason: str | None
+    score_window: tuple[date, date]
+    scores: dict[str, float]
+    ineligible: dict[str, str]
+    picks: list[str]
+
+
+def fourth_friday(year: int, month: int) -> date:
+    """Every month has at least four Fridays; the fourth falls on day 22..28."""
+    first = date(year, month, 1)
+    return first + timedelta(days=(4 - first.weekday()) % 7 + 21)
+
+
+def front_run_score_window(signal_session: date) -> tuple[date, date]:
+    """The calendar month after the holding month, one year earlier: a
+    September 2026 month-end signal holds October 2026 and scores November
+    2025. Card H-20260928-20 (batch 2's ``_score_window``)."""
+    year, month = signal_session.year - 1, signal_session.month + 2
+    if month > 12:
+        year, month = year + 1, month - 12
+    start = date(year, month, 1)
+    return start, _last_day_of_month(start)
+
+
+def _last_on_or_before(ordered: Sequence[date], when: date) -> date | None:
+    position = bisect_right(ordered, when)
+    return ordered[position - 1] if position else None
+
+
+def _usable_close(closes: Mapping[date, float], day: date) -> float | None:
+    value = closes.get(day)
+    if value is None or not math.isfinite(value) or value <= 0:
+        return None
+    return float(value)
+
+
+def front_run_score(
+    dates: Sequence[date], closes: Mapping[date, float], window: tuple[date, date]
+) -> ScoreResult:
+    """Close-to-close return from the last bar on/before the window's first
+    day to the last bar on/before its last day. Pure; never raises."""
+    ordered = sorted(dates)
+    start = _last_on_or_before(ordered, window[0])
+    end = _last_on_or_before(ordered, window[1])
+    if start is None or end is None or start >= end:
+        return ScoreResult(None, f"no bars spanning {window[0]}..{window[1]}")
+    p0 = _usable_close(closes, start)
+    p1 = _usable_close(closes, end)
+    if p0 is None or p1 is None:
+        return ScoreResult(None, f"missing close in {window[0]}..{window[1]}")
+    return ScoreResult(p1 / p0 - 1.0, None)
+
+
+def eom_sector_blend_book(
+    series: Mapping[str, tuple[list[date], dict[date, float]]],
+    signal_session: date,
+    *,
+    menu: Sequence[str],
+    cash_symbol: str,
+    reversal_symbol: str,
+    reversal_weight: float,
+    top_n: int,
+) -> EOMSectorBlendBook:
+    """The ``EOMSectorBlendConfig`` book decided on ``signal_session``'s
+    close, which must be a month's last session. Reads only closes on or
+    before ``signal_session``. A leg that cannot be computed stays in cash,
+    as in the screen that measured it. Pure."""
+    weights: dict[str, float] = {}
+    dates, closes = series[reversal_symbol]
+    ordered = sorted(dates)
+    anchor = _last_on_or_before(ordered, fourth_friday(signal_session.year, signal_session.month))
+    reversal_return: float | None = None
+    reason: str | None = None
+    if signal_session not in closes:
+        reason = "no bar at signal_session"
+    elif anchor is None or anchor >= signal_session:
+        reason = "no session before signal_session on/before the fourth Friday"
+    else:
+        p0 = _usable_close(closes, anchor)
+        p1 = _usable_close(closes, signal_session)
+        if p0 is None or p1 is None:
+            reason = "missing close at the fourth-Friday anchor or signal_session"
+        else:
+            reversal_return = p1 / p0 - 1.0
+    fired = reversal_return is not None and reversal_return < 0.0
+    if fired:
+        weights[reversal_symbol] = float(reversal_weight)
+
+    window = front_run_score_window(signal_session)
+    scores: dict[str, float] = {}
+    ineligible: dict[str, str] = {}
+    for symbol in menu:
+        if symbol == reversal_symbol:
+            continue
+        result = front_run_score(*series[symbol], window)
+        if result.reason is not None:
+            ineligible[symbol] = result.reason
+        else:
+            scores[symbol] = float(result.score)  # type: ignore[arg-type]
+    picks: list[str] = []
+    if len(scores) >= top_n:
+        picks, _ = select_book(scores, top_n=top_n, cash_score=None, absolute_momentum_filter=False)
+        for symbol in picks:
+            weights[symbol] = (1.0 - float(reversal_weight)) / int(top_n)
+    remainder = 1.0 - sum(weights.values())
+    weights[cash_symbol] = remainder if remainder > 1e-9 else 0.0
+    return EOMSectorBlendBook(
+        weights=weights,
+        reversal_symbol=reversal_symbol,
+        reversal_anchor_session=anchor,
+        reversal_return=reversal_return,
+        reversal_fired=fired,
+        reversal_reason=reason,
+        score_window=window,
+        scores=scores,
+        ineligible=ineligible,
+        picks=picks,
+    )
+
+
 def resolve_sizing_equity(
     account_equity: float, notional_budget_usd: float | None
 ) -> tuple[float, bool, bool]:
@@ -469,14 +617,54 @@ def replay_books(
             )
         if position[day] + 1 < len(sessions):
             changes[position[day] + 1] = book
+    return _book_frame(sessions, changes, menu=menu, cash_symbol=cash_symbol), signal_sessions
+
+
+def replay_eom_sector_blend_books(
+    series: Mapping[str, tuple[list[date], dict[date, float]]],
+    sessions: Sequence[date],
+    *,
+    menu: Sequence[str],
+    cash_symbol: str,
+    reversal_symbol: str,
+    reversal_weight: float,
+    top_n: int,
+) -> tuple[pd.DataFrame, list[date]]:
+    """:func:`replay_books` for the calendar blend: the
+    :func:`eom_sector_blend_book` decided at every month's last session in
+    ``sessions``, live from the next session's open; all cash before the
+    first one."""
+    signal_sessions = [day for day in sessions if _is_period_end_month(day)]
+    position = {day: i for i, day in enumerate(sessions)}
+    changes: dict[int, dict[str, float]] = {}
+    for day in signal_sessions:
+        if position[day] + 1 < len(sessions):
+            changes[position[day] + 1] = eom_sector_blend_book(
+                series,
+                day,
+                menu=menu,
+                cash_symbol=cash_symbol,
+                reversal_symbol=reversal_symbol,
+                reversal_weight=reversal_weight,
+                top_n=top_n,
+            ).weights
+    return _book_frame(sessions, changes, menu=menu, cash_symbol=cash_symbol), signal_sessions
+
+
+def _book_frame(
+    sessions: Sequence[date],
+    changes: Mapping[int, dict[str, float]],
+    *,
+    menu: Sequence[str],
+    cash_symbol: str,
+) -> pd.DataFrame:
     columns = sorted({*menu, cash_symbol})
     current: dict[str, float] = {cash_symbol: 1.0}
     rows: list[dict[str, float]] = []
     for i in range(len(sessions)):
         current = changes.get(i, current)
         rows.append(dict(current))
-    weights = pd.DataFrame(rows, index=list(sessions)).reindex(columns=columns).fillna(0.0)
-    return weights, signal_sessions
+    return pd.DataFrame(rows, index=list(sessions)).reindex(columns=columns).fillna(0.0)
 
 
 def _decide_overlay(
@@ -561,6 +749,21 @@ def _overlay_report_lines(manifest: Mapping[str, Any]) -> list[str]:
     return lines
 
 
+def _blend_report_lines(manifest: Mapping[str, Any]) -> list[str]:
+    blend = manifest.get("eom_sector_blend")
+    if not blend:
+        return []
+    reversal = blend["reversal_return"]
+    return [
+        f"- Calendar blend: `{blend['reversal_symbol']}` return from the fourth-Friday close "
+        f"(`{blend['reversal_anchor_session']}`) = "
+        f"`{reversal if reversal is None else round(reversal, 5)}`, fired: "
+        f"`{blend['reversal_fired']}` (weight `{blend['reversal_weight']}` when fired); "
+        f"front-run window `{blend['front_run_score_window']}`, picks "
+        f"`{blend['front_run_picks']}` at `{blend['front_run_weight_per_pick']}` each"
+    ]
+
+
 # ---------------------------------------------------------------------------
 # entry points
 
@@ -589,7 +792,11 @@ def run_rotation_target_weight_mapping_for_spec(
 
     menu = [str(symbol).upper() for symbol in rotation_config.menu]
     cash_symbol = str(rotation_config.cash_symbol).upper()
-    lookbacks = [int(n) for n in rotation_config.lookbacks]
+    selection_rule = str(getattr(rotation_config, "selection_rule", None) or "trailing_momentum")
+    blend_cfg = getattr(rotation_config, "eom_sector_blend", None)
+    if selection_rule == EOM_BLEND_RULE and blend_cfg is None:
+        raise ValueError(f"selection_rule={EOM_BLEND_RULE} needs eom_sector_blend")
+    lookbacks = [int(n) for n in (rotation_config.lookbacks or [])]
     top_n = int(rotation_config.top_n)
     rebalance = str(rotation_config.rebalance)
     absolute_momentum_filter = bool(rotation_config.absolute_momentum_filter)
@@ -636,48 +843,89 @@ def run_rotation_target_weight_mapping_for_spec(
 
     scores: dict[str, float] = {}
     ineligible: dict[str, str] = {}
-    for symbol in menu:
-        dates, closes = series[symbol]
-        result = score_symbol(
-            dates,
-            closes,
+    unfilled_slot_policy = str(getattr(rotation_config, "unfilled_slot_policy", "cash") or "cash")
+    blend_manifest: dict[str, Any] | None = None
+    if selection_rule == EOM_BLEND_RULE:
+        blend = eom_sector_blend_book(
+            series,
+            signal_session,
+            menu=menu,
+            cash_symbol=cash_symbol,
+            reversal_symbol=str(blend_cfg.reversal_symbol).upper(),
+            reversal_weight=float(blend_cfg.reversal_weight),
+            top_n=top_n,
+        )
+        scores = dict(blend.scores)
+        ineligible = dict(blend.ineligible)
+        if blend.reversal_reason is not None:
+            ineligible[blend.reversal_symbol] = blend.reversal_reason
+        cash_score = None
+        picks = sorted(
+            symbol
+            for symbol, weight in blend.weights.items()
+            if symbol != cash_symbol and weight > 1e-12
+        )
+        dropped_by_filter: list[str] = []
+        weights = dict(blend.weights)
+        blend_manifest = {
+            "reversal_symbol": blend.reversal_symbol,
+            "reversal_weight": float(blend_cfg.reversal_weight),
+            "reversal_anchor_session": blend.reversal_anchor_session.isoformat()
+            if blend.reversal_anchor_session
+            else None,
+            "reversal_return": blend.reversal_return,
+            "reversal_fired": blend.reversal_fired,
+            "front_run_score_window": [day.isoformat() for day in blend.score_window],
+            "front_run_picks": list(blend.picks),
+            "front_run_weight_per_pick": (1.0 - float(blend_cfg.reversal_weight)) / top_n
+            if blend.picks
+            else 0.0,
+        }
+    else:
+        for symbol in menu:
+            dates, closes = series[symbol]
+            result = score_symbol(
+                dates,
+                closes,
+                signal_session=signal_session,
+                lookbacks=lookbacks,
+                min_history_sessions=min_history_sessions,
+            )
+            if result.reason is not None:
+                ineligible[symbol] = result.reason
+            else:
+                scores[symbol] = float(result.score)
+
+        cash_result = score_symbol(
+            cash_dates,
+            cash_closes,
             signal_session=signal_session,
             lookbacks=lookbacks,
             min_history_sessions=min_history_sessions,
         )
-        if result.reason is not None:
-            ineligible[symbol] = result.reason
-        else:
-            scores[symbol] = float(result.score)
+        if absolute_momentum_filter and cash_result.reason is not None:
+            raise ValueError(
+                f"cash_symbol {cash_symbol} is ineligible for scoring ({cash_result.reason}); "
+                "cannot apply absolute_momentum_filter"
+            )
+        cash_score = cash_result.score
 
-    cash_result = score_symbol(
-        cash_dates,
-        cash_closes,
-        signal_session=signal_session,
-        lookbacks=lookbacks,
-        min_history_sessions=min_history_sessions,
-    )
-    if absolute_momentum_filter and cash_result.reason is not None:
-        raise ValueError(
-            f"cash_symbol {cash_symbol} is ineligible for scoring ({cash_result.reason}); "
-            "cannot apply absolute_momentum_filter"
+        picks, dropped_by_filter = select_book(
+            scores,
+            top_n=top_n,
+            cash_score=cash_score,
+            absolute_momentum_filter=absolute_momentum_filter,
         )
-    cash_score = cash_result.score
-
-    picks, dropped_by_filter = select_book(
-        scores,
-        top_n=top_n,
-        cash_score=cash_score,
-        absolute_momentum_filter=absolute_momentum_filter,
-    )
-    unfilled_slot_policy = str(getattr(rotation_config, "unfilled_slot_policy", "cash") or "cash")
-    weights = build_weights(
-        picks,
-        top_n=top_n,
-        cash_symbol=cash_symbol,
-        unfilled_slot_policy=unfilled_slot_policy,
-    )
+        weights = build_weights(
+            picks,
+            top_n=top_n,
+            cash_symbol=cash_symbol,
+            unfilled_slot_policy=unfilled_slot_policy,
+        )
     book_weights = dict(weights)
+    row_scores: dict[str, float | None] = dict(scores)
+    if blend_manifest is not None:
+        row_scores[blend_manifest["reversal_symbol"]] = blend_manifest["reversal_return"]
 
     # Every price and equity the sizing reads is taken at the anchor: the
     # close whose data last changed the target weights (the rebalance close,
@@ -773,7 +1021,7 @@ def run_rotation_target_weight_mapping_for_spec(
     for symbol in sorted(weights):
         weight = float(weights[symbol])
         leg = "cash" if symbol == cash_symbol else "rotation"
-        score_value = cash_score if symbol == cash_symbol else scores.get(symbol)
+        score_value = cash_score if symbol == cash_symbol else row_scores.get(symbol)
         target_rows.append(
             {
                 "symbol": symbol,
@@ -819,6 +1067,8 @@ def run_rotation_target_weight_mapping_for_spec(
         "lookbacks": lookbacks,
         "top_n": top_n,
         "rebalance": rebalance,
+        "selection_rule": selection_rule,
+        "eom_sector_blend": blend_manifest,
         "absolute_momentum_filter": absolute_momentum_filter,
         "unfilled_slot_policy": unfilled_slot_policy,
         "min_history_sessions": min_history_sessions,
@@ -833,7 +1083,7 @@ def run_rotation_target_weight_mapping_for_spec(
         "selected_count": len(picks),
         "dropped_by_absolute_momentum": sorted(dropped_by_filter),
         "dropped_by_absolute_momentum_count": len(dropped_by_filter),
-        "weight_per_pick": (1.0 / top_n) if picks else 0.0,
+        "weight_per_pick": None if blend_manifest else ((1.0 / top_n) if picks else 0.0),
         "cash_weight": float(weights.get(cash_symbol, 0.0)),
         "anchor_session": anchor_session.isoformat(),
         "vol_target": overlay_manifest,
@@ -965,6 +1215,12 @@ def _build_signals(
         f"top_n={manifest['top_n']}",
         f"absolute_momentum_filter={manifest['absolute_momentum_filter']}",
     ]
+    blend = manifest.get("eom_sector_blend")
+    if blend:
+        conditions.append(
+            f"selection_rule={manifest['selection_rule']};reversal_fired={blend['reversal_fired']}"
+            f";front_run_window={'..'.join(blend['front_run_score_window'])}"
+        )
     overlay = manifest.get("vol_target")
     if overlay:
         conditions.append(
@@ -1022,6 +1278,7 @@ def _write_report(
         f"(binds: `{manifest['notional_budget_binds']}`)",
         f"- Idle cash: `{manifest['idle_cash']:.2f}` (`{manifest['idle_cash_fraction']:.4%}`)",
         *_overlay_report_lines(manifest),
+        *_blend_report_lines(manifest),
         f"- Signals logged this run: `{signal_count}`",
         "- Broker writes: `false`",
         "",

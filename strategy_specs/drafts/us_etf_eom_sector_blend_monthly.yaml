@@ -1,0 +1,121 @@
+name: us_etf_eom_sector_blend_monthly
+description: >-
+  C2 of card H-20260928-20 (kept watch_recent in reports/research/screens/kept.jsonl; owner 2026-09-30: recent-only strength is acceptable, put it on paper): a 50/50 capital mix of two calendar rules decided at every month's last session and held for the next month. Reversal leg (E0): SPY gets 50% when its close-to-close return from the month's fourth Friday to the month-end close is negative. Front-run leg (S0): the nine original sector SPDRs are scored by their return over the month after the holding month one year earlier (holding October 2026 scores November 2025); the top 2 get 25% each. Anything a leg does not use sits in SHY. Screen evidence (next-open fills, 10 bp per side, one version because the rule is calendar-anchored): 2024-01-08..2026-09-17 Sharpe 1.60, 21.1% a year, -6.6% max drawdown, 9.6% volatility, 13 turnovers a year, Sharpe 1.46 at 20 bp; untouched 2026 holdout Sharpe 2.59; 2016-05..2023-09 stress window Sharpe 0.55 with a -23.7% drawdown, so this is a recent-regime rule, not an all-weather one. Adds to S3: 50/50 combination edge +0.44 Sharpe on the anchor window, daily correlation 0.44; deflated Sharpe probability 0.77 after the 20-variant search, which found no variant good enough to replace it. Works while month-end selling pressure in SPY reverses and investors buy sectors ahead of their seasonal months. Failure signals: the watch_recent exit rule of the shadow record (scripts/shadow_forward.py; after 63 forward sessions, Sharpe below 0.5 or a drawdown beyond 1.5x the -6.6% anchor drawdown), the reversal leg losing money on most fired months over two quarters, or the front-run picks trailing the equal-weight sector basket. Exit: a 12% sleeve drawdown exit liquidates the sleeve and revokes its paper authorization.
+timeframe: daily
+universe: [SPY, XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY, SHY]
+lifecycle: draft
+position_direction: long_only
+entry:
+  # Unused: target weights come from
+  # open_composer.adapters.execution.rotation_target_weights, not from rule
+  # evaluation. Always-true placeholder to satisfy the StrategySpec schema,
+  # same convention as the three H-20260918-05 rotation sleeves.
+  all: [close > 0]
+  any: []
+exit:
+  all: []
+  any: [close <= 0]
+risk:
+  # The book holds at most SPY, two sectors and SHY. The exposure bound is the
+  # sleeve's own 15000 USD budget, and SPY alone is 50% of it in a fired month,
+  # so per-name caps are set to 1.0 rather than clamping the rule.
+  max_trades_per_day: 10
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: etf_rotation_portfolio
+  weighting: equal_weight
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  duplicate_signal_policy: stable_signal_id
+  etf_rotation:
+    menu: [SPY, XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY]
+    cash_symbol: SHY
+    selection_rule: eom_reversal_sector_front_run_blend
+    eom_sector_blend:
+      reversal_symbol: SPY
+      reversal_weight: 0.5
+    top_n: 2
+    rebalance: monthly_last_session
+    absolute_momentum_filter: false
+    # Same shared paper account and the same 15000 USD budget as the three
+    # H-20260918-05 sleeves; an independent forward record.
+    notional_budget_usd: 15000.0
+    # The screen compounds the sleeve's own P&L; sizing against budget plus
+    # marked P&L does the same.
+    sizing_basis: sleeve_equity
+    # Strategy-factory rule (docs/plan-strategy-factory-2026-09-22.zh.md):
+    # 0.75x the -6.6% anchor-window drawdown, clamped to 12%..30%, gives 12%.
+    # On 2016-2026 the rule fell more than 12% only in the 2020 crash (-23.7%)
+    # and the 2022 bear market (-18.2%); a 10% line would also have fired at
+    # the 2018-12-24 low (-11.0%, recovered by 2019-04-05).
+    drawdown_exit_pct: 0.12
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+execution_policy:
+  policy_id: etf_rotation_day_market_open_queue_v1
+  # Several strategies share one Alpaca paper account; strategy_ledger makes
+  # the planner reconcile against this strategy's own recorded fills and
+  # ignore positions it did not open. XLK, SPY and SHY also sit in other
+  # sleeves, so scoping by symbol would not be enough.
+  position_scope: strategy_ledger
+  order_style: day_market
+  time_in_force: day
+  naked_market_justification: >-
+    Paper rehearsal only, and the book is two to four of the most liquid US ETFs. Opening-auction (opg) orders expired unfilled for 45 of 50 names at the 2026-09-15 Alpaca Paper open, so this path uses a day market order queued after the close, which executes at the 09:30 open. TCA records the submitted price, the official open and the fill so the cost of the market order is measured rather than assumed.
+  price_protection: {limit_offset_bps: 20.0, max_open_gap_pct: 3.0, max_spread_bps: 10.0}
+  participation_cap: {max_adv_pct: 0.1, max_open_bar_volume_pct: 1.0}
+  fallback_behavior: {if_not_filled: skip, if_gap_exceeds_limit: skip, if_spread_exceeds_limit: skip}
+  tca:
+    enabled: true
+    compare_to: [decision_price, official_open, arrival_price, vwap]
+    record_submitted_at: true
+    record_fill_price: true
+    review_frequency: weekly
+  alternatives_compared: [moo_market, opg_limit]
+  source_card_ids: []
+reality_model:
+  fill_model: next_regular_open_with_policy
+  slippage_model: stress_bps_by_volatility_and_participation
+  stress_scenarios:
+    - {name: primary, slippage_bps: 10.0, open_gap_pct: 0.5}
+    - {name: stress, slippage_bps: 20.0, open_gap_pct: 1.5}
+    - {name: severe_report_only, slippage_bps: 35.0, open_gap_pct: 2.5}
+data:
+  source: alpaca
+  symbol: null
+  path: null
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+llm_review: {enabled: false}
+required_capabilities: [market.alpaca_bars]
+notes:
+  intent: >-
+    Forward paper record for the only watch_recent family that adds Sharpe to S3. The momentum-rotation watch_recent rows (factor, country, LSS) duplicate S3 (combination edge about 0), so they are not deployed.
+  candidate_id: h20260928_20_recent_regime_opt_c2
+  candidate_role: recent_window_calendar_sleeve_on_paper
+  promotion_eligible: false
+  order_authority: false
+  broker_writes: rehearsal_only
+  shadow_only: false
+  observation_only: false
+  paper_rehearsal:
+    status: below_contract
+    started: 2026-09-30
+    plan: reports/research/hypotheses/H-20260928-20-recent-regime-opt.md
+    gate_v2: not_evaluated
+    purpose: forward_evidence_on_recent_window_calendar_sleeve

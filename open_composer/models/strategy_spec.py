@@ -289,6 +289,35 @@ class RotationVolTargetConfig(BaseModel):
         return self
 
 
+class EOMSectorBlendConfig(BaseModel):
+    """``etf_rotation.selection_rule=eom_reversal_sector_front_run_blend``
+    (card H-20260928-20, candidate C2): two calendar legs decided at every
+    month's last session and held for the next month.
+
+    * Reversal leg: ``reversal_symbol`` gets ``reversal_weight`` when its
+      close-to-close return from the month's fourth Friday (the nearest
+      session on or before it) to the month's last session is negative.
+    * Front-run leg: every other ``menu`` symbol is scored by its return over
+      the calendar month that follows the holding month, one year earlier
+      (holding October 2026 -> November 2025); the top ``top_n`` each get
+      ``(1 - reversal_weight) / top_n``.
+
+    Whatever a leg does not use sits in ``cash_symbol``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reversal_symbol: str = "SPY"
+    reversal_weight: float = Field(default=0.5, gt=0, lt=1)
+
+    @field_validator("reversal_symbol")
+    @classmethod
+    def normalize_reversal_symbol(cls, value: str) -> str:
+        normalized = value.upper().strip()
+        if not normalized:
+            raise ValueError("eom_sector_blend.reversal_symbol cannot be blank")
+        return normalized
+
+
 class ETFRotationConfig(BaseModel):
     """``portfolio.mode=etf_rotation_portfolio`` selection rule.
 
@@ -298,15 +327,26 @@ class ETFRotationConfig(BaseModel):
     ``top_n`` scorers are held, and (when ``absolute_momentum_filter`` is set)
     a pick is dropped whenever its score does not exceed the cash symbol's
     score over the same lookbacks. ``unfilled_slot_policy`` decides what
-    happens to a dropped pick's weight. Consumed by
-    ``open_composer.adapters.execution.rotation_target_weights``.
+    happens to a dropped pick's weight. ``selection_rule`` can swap the
+    momentum rule for the calendar blend in ``EOMSectorBlendConfig``; the
+    sizing, sleeve-equity and drawdown-exit fields apply to either rule.
+    Consumed by ``open_composer.adapters.execution.rotation_target_weights``.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     menu: list[str] = Field(min_length=2, max_length=24)
     cash_symbol: str
-    lookbacks: list[int] = Field(min_length=1, max_length=8)
+    #: Which rule builds the book. ``trailing_momentum`` is the rule in the
+    #: class docstring. ``eom_reversal_sector_front_run_blend`` needs
+    #: ``eom_sector_blend``, ``monthly_last_session``, no lookbacks, no
+    #: absolute-momentum filter and no volatility target; ``top_n`` is the
+    #: front-run leg's pick count.
+    selection_rule: Literal["trailing_momentum", "eom_reversal_sector_front_run_blend"] = (
+        "trailing_momentum"
+    )
+    eom_sector_blend: EOMSectorBlendConfig | None = None
+    lookbacks: list[int] | None = Field(default=None, min_length=1, max_length=8)
     top_n: int = Field(ge=1)
     rebalance: Literal["monthly_last_session", "weekly_friday"]
     absolute_momentum_filter: bool = True
@@ -368,7 +408,9 @@ class ETFRotationConfig(BaseModel):
 
     @field_validator("lookbacks")
     @classmethod
-    def validate_lookbacks(cls, value: list[int]) -> list[int]:
+    def validate_lookbacks(cls, value: list[int] | None) -> list[int] | None:
+        if value is None:
+            return value
         if any(lookback < 2 or lookback > 504 for lookback in value):
             raise ValueError("etf_rotation.lookbacks entries must be in 2..504")
         if len(value) != len(set(value)):
@@ -387,6 +429,35 @@ class ETFRotationConfig(BaseModel):
                 "etf_rotation.sizing_basis=sleeve_equity and drawdown_exit_pct need "
                 "notional_budget_usd as the sleeve's starting equity"
             )
+        if self.selection_rule == "trailing_momentum":
+            if self.lookbacks is None:
+                raise ValueError("etf_rotation.selection_rule=trailing_momentum needs lookbacks")
+            if self.eom_sector_blend is not None:
+                raise ValueError(
+                    "etf_rotation.eom_sector_blend needs "
+                    "selection_rule=eom_reversal_sector_front_run_blend"
+                )
+            return self
+        blend = self.eom_sector_blend
+        if blend is None:
+            raise ValueError(
+                "etf_rotation.selection_rule=eom_reversal_sector_front_run_blend needs "
+                "eom_sector_blend"
+            )
+        if self.rebalance != "monthly_last_session":
+            raise ValueError("the eom sector blend rebalances only at monthly_last_session")
+        if self.lookbacks is not None or self.absolute_momentum_filter:
+            raise ValueError(
+                "the eom sector blend takes no lookbacks and no absolute_momentum_filter"
+            )
+        if self.vol_target is not None or self.unfilled_slot_policy != "cash":
+            raise ValueError(
+                "the eom sector blend supports neither vol_target nor renormalize_survivors"
+            )
+        if blend.reversal_symbol not in self.menu:
+            raise ValueError("eom_sector_blend.reversal_symbol must appear in menu")
+        if self.top_n > len(self.menu) - 1:
+            raise ValueError("etf_rotation.top_n must leave the reversal symbol out of the picks")
         return self
 
 
