@@ -1,0 +1,31 @@
+# Output of paper_fill_model.py, run 2026-09-30 13:35 UTC (interactive lead, Opus). pos = (fill - bid) / (ask - bid);
+# cost_* signed so that positive = worse for the order; quote = last valid SIP quote in [filled_at - 5 s, filled_at].
+queued market/day fills 137, days 10, quote found 107, open found 137, calls 147, 429s 0
+== side=buy etf=False n=64
+  pos              mean     0.65  q05/25/50/75/95    -2.05     0.92     1.00     1.00     2.64
+  cost_vs_mid_bp   mean    19.41  q05/25/50/75/95   -27.94     3.32    13.79    35.74    71.98
+  half_spread_bp   mean    20.28  q05/25/50/75/95     2.72     6.60    13.34    27.86    60.78
+  cost_vs_open_bp  mean    28.92  q05/25/50/75/95   -64.67   -14.28    22.35    53.70   157.60
+  delay_s          mean    85.67  q05/25/50/75/95    11.70    42.84    88.45   125.62   168.91
+  share at quote side (buy pos>=0.99 / sell pos<=0.01): 0.56
+== side=buy etf=True n=10
+  pos              mean    -3.92  q05/25/50/75/95   -28.86     0.67     1.00     1.39     3.75
+  cost_vs_mid_bp   mean    -4.02  q05/25/50/75/95   -36.51     0.35     0.64     2.63    10.24
+  half_spread_bp   mean     1.36  q05/25/50/75/95     0.62     0.62     1.00     2.13     2.63
+  cost_vs_open_bp  mean    15.72  q05/25/50/75/95    -8.87    -1.93     0.62    36.40    63.35
+  delay_s          mean   214.63  q05/25/50/75/95    23.22    87.04   139.58   185.21   668.23
+  share at quote side (buy pos>=0.99 / sell pos<=0.01): 0.70
+== side=sell etf=False n=60
+  pos              mean     0.44  q05/25/50/75/95    -0.76     0.00     0.00     0.89     2.92
+  cost_vs_mid_bp   mean    12.76  q05/25/50/75/95   -34.05   -11.89     9.44    28.76    66.38
+  half_spread_bp   mean    21.83  q05/25/50/75/95     2.44     6.66    16.61    26.72    65.93
+  cost_vs_open_bp  mean    37.04  q05/25/50/75/95   -76.01    -5.13    27.65    83.41   133.69
+  delay_s          mean   110.31  q05/25/50/75/95    13.01    69.30   113.60   161.83   187.28
+  share at quote side (buy pos>=0.99 / sell pos<=0.01): 0.40
+== side=sell etf=True n=3
+  pos              mean    -1.49  q05/25/50/75/95    -5.48    -3.05     0.00     0.81     1.46
+  cost_vs_mid_bp   mean     6.29  q05/25/50/75/95    -3.52    -1.66     0.67    11.43    20.04
+  half_spread_bp   mean     1.38  q05/25/50/75/95     0.77     1.18     1.68     1.73     1.77
+  cost_vs_open_bp  mean    13.36  q05/25/50/75/95     0.18     7.79    17.29    20.90    23.79
+  delay_s          mean   186.88  q05/25/50/75/95   168.15   178.46   191.35   197.53   202.48
+  share at quote side (buy pos>=0.99 / sell pos<=0.01): 0.67
