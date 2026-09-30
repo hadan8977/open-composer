@@ -910,3 +910,12 @@
 - done_when: 否定测试表（两窗毛均值/t/安慰剂分位/同池基准）+ 过关后的 4 条账本分档，写入 `reports/research/iterations/t20260930_12_smallcap_gap_auction/results.json`；direction-check 与两阶段 validate 通过；登记簿更新。
 - notes:
   - 2026-09-30 04:07 自动轮（R0930-0407）由 T-20260930-11 的 T1 结果派生。数据：`reports/research/iterations/t20260930_11_gap_fade_auction/cache/picks.parquet`（对标窗入选行）、`reports/research/iterations/t20260929_32_gap_fade_ls/cache/wide_matrices.parquet`（清洗后宽表）、`scripts/run_t20260930_11_gap_fade_auction.py`（官方价抓取，可复用）。T1 的对标窗 E_bar 已经看过，历史部分只能算"受污染"，前向 63 会话才是判决。
+  - **2026-09-30 05:05 UTC 交互会话（Opus）审查：执行前必须改设计，以下优先于上面的 plan。**
+    1. **前视问题（判决性）**：原计划按官方开盘价算 z 选股，又在官方开盘价买入。但开盘竞价单必须在 9:28 ET 前提交（Alpaca 文档：OPG 单 9:28 后当天拒收，https://docs.alpaca.markets/us/docs/orders-at-alpaca），那时开盘价还不知道。C1 的 +42.5 bp/天是在不可执行的选股口径上量的，其中可能有一部分只是竞价噪声的回归，事后才看得到。
+       - 改法：选股只用 9:28 之前的信息。本地分钟档有盘前 bar（04:00 起），用 9:27 及以前最后一根盘前 bar 的收盘价，相对前一日官方收盘价算跳空和 z（预注册时二选一写死；另一种是 9:00–9:27 的 VWAP）。9:27 前没有盘前成交的票不可选。
+       - 买在官方开盘价，卖在官方收盘价。
+       - 两种口径都报：开盘价选股 = 前视版，只作对照；盘前选股 = 可执行版。继续/停止只按可执行版判断。
+    2. **幸存者偏差**：`data/sip/daily` 没有退市股（`docs/data-layer-pitfalls-and-capabilities.zh.md` 第 3 条：SIVB、FRC 等 0 行）。小盘跳空低开做多正好漏掉后来退市的票，历史边际偏高。
+       - 结论里写明这一点；对标窗与 2016–23 分开报，2016–23 缺得更多。
+       - 判决仍以 10-01 起的前向影子记录为准，前向没有幸存者偏差。影子记录同样按盘前选股。
+    3. **最便宜的否定先做可执行版**：先在 C1 的抽样里改用盘前信号重新选股，重算 T1 多头的毛边际。低于 20 bp/天 → 直接关闭，不建账本，纲领 C1b 记否定（死因：前视）。
