@@ -100,7 +100,21 @@ LIST_ENDPOINTS: tuple[tuple[str, frozenset[str]], ...] = (
             }
         ),
     ),
-    ("/api/agents.json", frozenset({"generated_at", "counts", "agents", "heavy"})),
+    (
+        "/api/agents.json",
+        frozenset(
+            {
+                "generated_at",
+                "counts",
+                "recent_error_count",
+                "closed_collapsed_count",
+                "stale_hidden_count",
+                "other_project_hidden_count",
+                "agents",
+                "heavy",
+            }
+        ),
+    ),
     ("/api/paper.json", frozenset({"generated_at", "report", "auth_state_labels"})),
     ("/api/quota.json", frozenset({"generated_at", "report"})),
     ("/api/health.json", frozenset({"generated_at", "report"})),

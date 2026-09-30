@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -19,6 +19,8 @@ REAL_STRATEGY_NAMES = {
     "us_etf_growth_rotation_blend_top2_monthly",
     "us_etf_levered_rotation_63_top2_monthly",
     "us_insider_buy_broad_monthly",
+    # authorized 2026-09-30 before its first cycle wrote a `-latest.json`
+    "us_etf_eom_sector_blend_monthly",
 }
 
 _NOW = datetime(2026, 9, 19, tzinfo=UTC)
@@ -29,8 +31,16 @@ _NOW = datetime(2026, 9, 19, tzinfo=UTC)
 # --------------------------------------------------------------------------
 
 
-def test_five_real_strategies_are_discovered() -> None:
+def test_every_real_strategy_is_discovered() -> None:
     assert set(P.discover_strategy_names(REPO_ROOT)) == REAL_STRATEGY_NAMES
+
+
+def test_a_strategy_with_only_an_authorization_is_discovered(tmp_path: Path) -> None:
+    directory = tmp_path / "reports" / "paper" / "rehearsal"
+    directory.mkdir(parents=True)
+    (directory / "fresh_sleeve-authorization.json").write_text("{}", encoding="utf-8")
+    (directory / "old_sleeve-latest.json").write_text("{}", encoding="utf-8")
+    assert P.discover_strategy_names(tmp_path) == ("fresh_sleeve", "old_sleeve")
 
 
 def test_insider_strategy_is_observation_only() -> None:
@@ -314,6 +324,91 @@ def test_insider_has_no_dedicated_ledger() -> None:
 
 
 # --------------------------------------------------------------------------
+# Sleeve book: each sleeve marked on its own budget from its own fills
+# --------------------------------------------------------------------------
+
+
+def _write_sleeve(tmp_path: Path, name: str, budget: float, fills: list[dict]) -> None:
+    drafts = tmp_path / "strategy_specs" / "drafts"
+    drafts.mkdir(parents=True, exist_ok=True)
+    (drafts / f"{name}.yaml").write_text(
+        f"name: {name}\nexecution:\n  notional_budget_usd: {budget:.0f}\n", encoding="utf-8"
+    )
+    rehearsal = tmp_path / "reports" / "paper" / "rehearsal"
+    rehearsal.mkdir(parents=True, exist_ok=True)
+    (rehearsal / f"{name}-fills.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in fills), encoding="utf-8"
+    )
+
+
+def _write_daily_bars(tmp_path: Path, bars: list[tuple[str, str, float, float]]) -> None:
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    directory = tmp_path / "data" / "sip" / "daily" / "2026"
+    directory.mkdir(parents=True, exist_ok=True)
+    stamps = [datetime.fromisoformat(f"{day}T04:00:00+00:00") for _, day, _, _ in bars]
+    table = pa.table(
+        {
+            "symbol": [symbol for symbol, _, _, _ in bars],
+            "timestamp": pa.array(stamps, type=pa.timestamp("ns", tz="UTC")),
+            "open": [open_ for _, _, open_, _ in bars],
+            "close": [close for _, _, _, close in bars],
+        }
+    )
+    pq.write_table(table, directory / "shard-0000.parquet")
+
+
+def _fill(order_id: str, session: str, symbol: str, side: str, qty: float, price: float) -> dict:
+    return {
+        "broker_order_id": order_id,
+        "session": session,
+        "symbol": symbol,
+        "side": side,
+        "filled_qty": qty,
+        "filled_avg_price": price,
+    }
+
+
+def test_sleeve_book_is_marked_from_its_own_fills_at_each_close(tmp_path: Path) -> None:
+    buy = _fill("o1", "2026-09-18", "XYZ", "buy", 10, 100.0)
+    _write_sleeve(
+        tmp_path,
+        "demo",
+        10_000,
+        [buy, buy, _fill("o2", "2026-09-21", "XYZ", "sell", 5, 102.0)],  # o1 logged twice
+    )
+    _write_daily_bars(
+        tmp_path,
+        [
+            ("XYZ", "2026-09-18", 100.0, 101.0),
+            ("XYZ", "2026-09-21", 101.5, 103.0),
+            ("SPY", "2026-09-18", 500.0, 502.0),
+            ("SPY", "2026-09-21", 502.0, 505.0),
+        ],
+    )
+    perf = P.build_sleeve_performance(tmp_path, "demo")
+
+    assert perf.status == "live"
+    # Fri 18th -> Mon 21st: the weekend is not a session
+    assert [day.day for day in perf.history.days] == [date(2026, 9, 18), date(2026, 9, 21)]
+    navs = [day.point.equity for day in perf.history.days]
+    assert navs == pytest.approx([9_000 + 10 * 101.0, 9_510 + 5 * 103.0])
+    assert perf.return_pct == pytest.approx((10_025 / 10_000 - 1) * 100)
+    assert perf.benchmark_return_pct == pytest.approx((505 / 500 - 1) * 100)
+    assert perf.sessions_live == 2
+    assert perf.excess_pct == pytest.approx(perf.return_pct - perf.benchmark_return_pct)
+
+
+def test_sleeve_without_fills_or_budget_says_so(tmp_path: Path) -> None:
+    _write_sleeve(tmp_path, "empty", 15_000, [])
+    assert P.build_sleeve_performance(tmp_path, "empty").status == "no_fills"
+    _write_sleeve(tmp_path, "nobudget", 15_000, [_fill("o1", "2026-09-18", "XYZ", "buy", 1, 1.0)])
+    (tmp_path / "strategy_specs" / "drafts" / "nobudget.yaml").write_text("name: x\n")
+    assert P.build_sleeve_performance(tmp_path, "nobudget").status == "no_budget"
+
+
+# --------------------------------------------------------------------------
 # Routes
 # --------------------------------------------------------------------------
 
@@ -333,6 +428,12 @@ def test_paper_index_returns_200_and_lists_every_strategy(client: TestClient) ->
 def test_paper_index_shows_expired_and_observation_labels(client: TestClient) -> None:
     response = client.get("/paper")
     assert "observation only" in response.text
+
+
+def test_paper_index_lists_running_sleeves_before_the_rest(client: TestClient) -> None:
+    text = client.get("/paper").text
+    assert text.index("S1 · Sector rotation") < text.index("Not running")
+    assert text.index("Not running") < text.index("us_insider_buy_broad_monthly")
 
 
 @pytest.mark.parametrize(

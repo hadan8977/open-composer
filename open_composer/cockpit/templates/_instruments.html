@@ -16,10 +16,10 @@
 {%- endif -%}
 {%- endmacro %}
 
-{% macro equity_chart(history) -%}
+{% macro equity_chart(history, what="Paper account equity, last snapshot of each session") -%}
 {%- set chart = equity_columns(history) -%}
 {%- if chart and history.has_history -%}
-<div class="eqc" style="--n:{{ chart.columns|length }}" role="img" aria-label="Paper account equity, last snapshot of each day, {{ chart.columns|length }} days">
+<div class="eqc" style="--n:{{ chart.columns|length }}" role="img" aria-label="{{ what }}, {{ chart.columns|length }} sessions">
   <div class="eqc-plot">
     {%- for g in chart.grid %}<i class="eqc-gl{{ ' is-base' if g.is_base }}" style="--y:{{ '%.2f'|format(g.pct) }}%"><span class="num">{{ g.label }}</span></i>{% endfor -%}
     <div class="eqc-cols">
@@ -63,6 +63,32 @@
 </div>
 {%- endmacro %}
 
+{% macro queue_stages(queue) -%}
+{%- set labels = {"running": "Running", "review": "To review", "ready": "Ready", "blocked": "Blocked"} -%}
+<div class="stages" role="img" aria-label="Research tasks by state">
+  {%- for key in ("running", "review", "ready", "blocked") if queue.counts[key] %}<i class="st st--{{ key }}" style="flex:{{ queue.counts[key] }}" data-tip="{{ labels[key] }} · {{ queue.counts[key] }}"></i>{% endfor -%}
+</div>
+<div class="stage-legend">
+  {%- for key in ("running", "review", "ready", "blocked") %}
+  <a class="sl" href="/hypotheses#queue-{{ key }}"><i class="sw sw--{{ key }}"></i><span class="sl-n num">{{ queue.counts[key] }}</span><span class="sl-l">{{ labels[key] }}</span></a>
+  {%- endfor %}
+</div>
+{%- endmacro %}
+
+{# One paper sleeve's own book: return since its first fill vs SPY over the same sessions. #}
+{% macro sleeve_line(name, label, p) -%}
+<a class="sleeve" href="/paper/{{ name }}" data-detail title="{{ name }}">
+  <span class="sleeve-l">{{ label }}</span>
+  {%- if p.status == "live" %}
+  <span class="sleeve-r num {{ 'is-up' if p.return_pct > 0 else ('is-down' if p.return_pct < 0 else '') }}">{{ "%+.2f"|format(p.return_pct) }}%</span>
+  <span class="sleeve-b num">{% if p.benchmark_return_pct is not none %}SPY {{ "%+.2f"|format(p.benchmark_return_pct) }}%{% else %}SPY –{% endif %}</span>
+  <span class="sleeve-d num">{{ p.sessions_live }} session{{ "s" if p.sessions_live != 1 }}</span>
+  {%- else %}
+  <span class="sleeve-na">{{ {"no_fills": "no fills yet", "no_budget": "no budget in spec", "no_prices": "no closes yet"}.get(p.status, p.status) }}</span>
+  {%- endif %}
+</a>
+{%- endmacro %}
+
 {% macro live_card(session, live=true) -%}
 {%- set r = session.record -%}
 {%- set act = session.activity -%}
@@ -74,8 +100,8 @@
     {% if r.cwd %}<span class="lc-where clip">{{ r.cwd.rstrip("/").rsplit("/", 1)[-1] }}</span>{% endif %}
     <span class="lc-age num">{{ (act.last_entry_at or r.last_activity_at)|ago }}</span>
   </span>
-  <span class="lc-title">{{ r.title or r.id[:8] }}</span>
-  {% if act.last_text %}<span class="lc-say">{{ act.last_text }}</span>{% endif %}
+  <span class="lc-title">{{ session.display_title or r.title or r.id[:8] }}</span>
+  {% if session.display_subtitle %}<span class="lc-say">{{ session.display_subtitle }}</span>{% endif %}{% if act.last_text and not (session.display_subtitle and act.last_text.startswith(session.display_subtitle)) %}<span class="lc-say">{{ act.last_text }}</span>{% endif %}
   {% if session.recent_tools %}
   <span class="feed">
     {%- for e in session.recent_tools %}

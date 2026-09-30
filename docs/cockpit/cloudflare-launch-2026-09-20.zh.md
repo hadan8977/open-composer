@@ -165,3 +165,44 @@ cockpit 只有一个用户、只需浏览器，公网主机名 + Access 更简�
 - `quant.service`、`cloudflared-quant.service` 均 `active`，已 `enable`；`oc-cockpit.service`、`cloudflared-cockpit.service` 已 `disable --now` 并删除单元文件。
 - 本机 `curl` 七屏（`/`、`/hypotheses`、`/lineage`、`/agents`、`/paper`、`/quota`、`/health`）全部 `200`，`ProtectSystem=strict` 仍开启，日志无写入被拒。
 - connector 重新注册 4 条连接；公网根路径 `302` 跳到 `https://<team>.cloudflareaccess.com/...`，门禁生效。
+
+## 2026-09-30 补充：改代码后自动重启
+
+问题：`quant.service` 连续跑了 6 天旧代码（09-24 启动后没重启），驾驶舱一直显示已经修掉的问题，`/paper/<策略>` 还因为缺字段报 500。
+Python 进程只在启动时加载模板和代码；样式表的缓存版本号 `asset_v` 也只在启动时算一次。
+
+做法：加一对 systemd 单元。驾驶舱代码、模板、样式或脚本目录一有文件变化，就在 3 秒后重启 `quant.service`（`PathChanged` 只看这几个目录本身，不递归）。
+`quant.service` 本身不变，`ProtectSystem=strict` 仍然开着。
+
+`/etc/systemd/system/quant-reload.path`：
+
+```ini
+[Unit]
+Description=Restart the Quant cockpit when its code or templates change (added 2026-09-30: the service ran 6 days on stale code)
+
+[Path]
+PathChanged=/root/codex-test/open-composer/open_composer/cockpit
+PathChanged=/root/codex-test/open-composer/open_composer/cockpit/data
+PathChanged=/root/codex-test/open-composer/open_composer/cockpit/templates
+PathChanged=/root/codex-test/open-composer/open_composer/cockpit/static/css
+PathChanged=/root/codex-test/open-composer/open_composer/cockpit/static/js
+Unit=quant-reload.service
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`/etc/systemd/system/quant-reload.service`：
+
+```ini
+[Unit]
+Description=Restart quant.service after a cockpit code change
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 3
+ExecStart=/bin/systemctl restart quant.service
+```
+
+启用：`systemctl daemon-reload && systemctl enable --now quant-reload.path`。
+查看：`systemctl status quant-reload.path --no-pager`；最近一次重启时间看 `systemctl show quant.service -p ActiveEnterTimestamp`。

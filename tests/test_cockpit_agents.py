@@ -42,6 +42,7 @@ AGENT_CLOSED_RECENT = "dddddddd-dddd-dddd-dddd-dddddddddddd"
 AGENT_CLOSED_STALE = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
 
 NOW = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+REPO = Path("/repo")
 
 
 def _iso(dt: datetime) -> str:
@@ -266,7 +267,7 @@ def test_load_agents_orders_running_error_idle_then_closed(tmp_path: Path) -> No
     _write_agent_json(tmp_path, AGENT_ERROR, status="error", last_activity_at=NOW)
     _write_agent_json(tmp_path, AGENT_RUNNING, status="running", last_activity_at=NOW)
 
-    report = load_agents(root=tmp_path, now=NOW, enrich=False)
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
 
     assert [a.record.id for a in report.agents] == [
         AGENT_RUNNING,
@@ -282,7 +283,7 @@ def test_load_agents_orders_by_recency_within_a_state(tmp_path: Path) -> None:
     _write_agent_json(tmp_path, older, status="idle", last_activity_at=NOW)
     _write_agent_json(tmp_path, newer, status="idle", last_activity_at=NOW.replace(hour=13))
 
-    report = load_agents(root=tmp_path, now=NOW, enrich=False)
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
 
     assert [a.record.id for a in report.agents] == [newer, older]
 
@@ -299,7 +300,7 @@ def test_closed_agents_older_than_48h_are_collapsed_into_a_count(tmp_path: Path)
     stale_time = NOW.replace(day=17)  # far more than 48h before NOW
     _write_agent_json(tmp_path, AGENT_CLOSED_STALE, status="closed", last_activity_at=stale_time)
 
-    report = load_agents(root=tmp_path, now=NOW, enrich=False)
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
 
     ids = [a.record.id for a in report.agents]
     assert AGENT_CLOSED_RECENT in ids
@@ -314,7 +315,7 @@ def test_agent_with_no_timestamps_never_crashes_sorting_or_collapsing(tmp_path: 
         raw.pop(key, None)
     payload_path.write_text(json.dumps(raw), encoding="utf-8")
 
-    report = load_agents(root=tmp_path, now=NOW, enrich=False)
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
 
     # No reference timestamp at all -> treated as (collapsible) stale, never raises.
     assert report.closed_collapsed_count == 1
@@ -1120,3 +1121,315 @@ def test_tool_result_binary_blocks_are_named_not_dumped() -> None:
     out = _stringify_tool_result_content(content)
     assert out == "wrote the file [image]"
     assert "iVBOR" not in out
+
+
+# --------------------------------------------------------------------------
+# Project filter, 72h fold, 24h error count
+# --------------------------------------------------------------------------
+
+
+def _id(n: int) -> str:
+    return f"{n:08d}-0000-4000-8000-000000000000"
+
+
+def test_load_agents_keeps_only_this_project_and_counts_the_rest(tmp_path: Path) -> None:
+    _write_agent_json(tmp_path, _id(1), status="idle", cwd="/repo/sub")
+    _write_agent_json(tmp_path, _id(2), status="running", cwd="/elsewhere/proj")
+    _write_agent_json(tmp_path, _id(3), status="error", cwd="/repo-other")  # prefix, not inside
+    no_cwd = _write_agent_json(tmp_path, _id(4), status="idle")
+    raw = json.loads(no_cwd.read_text())
+    raw.pop("cwd")
+    no_cwd.write_text(json.dumps(raw), encoding="utf-8")
+
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
+
+    assert [a.record.id for a in report.agents] == [_id(1)]
+    assert report.other_project_hidden_count == 3
+    assert report.recent_error_count == 0  # the hidden error is not counted
+
+
+def test_non_running_agents_idle_over_72h_are_folded_but_running_stays(tmp_path: Path) -> None:
+    old = NOW - timedelta(hours=73)
+    fresh = NOW - timedelta(hours=71)
+    _write_agent_json(tmp_path, _id(1), status="running", last_activity_at=old)
+    _write_agent_json(tmp_path, _id(2), status="idle", last_activity_at=old)
+    _write_agent_json(tmp_path, _id(3), status="error", last_activity_at=old)
+    _write_agent_json(tmp_path, _id(4), status="idle", last_activity_at=fresh)
+    _write_agent_json(tmp_path, _id(5), status="closed", last_activity_at=NOW - timedelta(hours=60))
+
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
+
+    assert {a.record.id for a in report.agents} == {_id(1), _id(4)}
+    assert report.stale_hidden_count == 2
+    assert report.closed_collapsed_count == 1  # 48h rule, not counted as stale
+
+
+def test_recent_error_count_uses_24h_and_old_error_sorts_and_draws_as_idle(
+    tmp_path: Path,
+) -> None:
+    _write_agent_json(tmp_path, _id(1), status="error", last_activity_at=NOW - timedelta(hours=3))
+    _write_agent_json(tmp_path, _id(2), status="error", last_activity_at=NOW - timedelta(hours=30))
+    _write_agent_json(tmp_path, _id(3), status="idle", last_activity_at=NOW - timedelta(hours=1))
+
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
+
+    assert report.recent_error_count == 1
+    by_id = {a.record.id: a for a in report.agents}
+    assert by_id[_id(1)].recent_error is True
+    assert by_id[_id(2)].recent_error is False
+    # recent error first; the 30h-old error ranks with idle, by recency
+    assert [a.record.id for a in report.agents] == [_id(1), _id(3), _id(2)]
+
+
+def test_topbar_reports_an_old_error_as_idle(monkeypatch: pytest.MonkeyPatch) -> None:
+    from open_composer.cockpit import app as app_module
+
+    def _summary(n: int, *, recent: bool) -> A.AgentSummary:
+        record = _record(title="t", created_at=NOW, status="error", agent_id=_id(n))
+        return A.AgentSummary(record=record, activity=None, recent_error=recent)
+
+    stub = A.AgentsReport(
+        agents=(_summary(1, recent=True), _summary(2, recent=False)),
+        closed_collapsed_count=0,
+        closed_stale_cutoff=NOW,
+        generated_at=NOW,
+        warnings=(),
+    )
+
+    class _Cache:
+        def get(self, **_: object) -> A.AgentsReport:
+            return stub
+
+    monkeypatch.setattr(app_module, "get_default_topbar_agents_cache", lambda: _Cache())
+
+    assert app_module._topbar_agents() == ((_id(1), "error"), (_id(2), "idle"))
+
+
+# --------------------------------------------------------------------------
+# Display titles
+# --------------------------------------------------------------------------
+
+CREATED = datetime(2026, 9, 30, 7, 5, tzinfo=UTC)
+
+
+def _record(
+    *,
+    title: str | None,
+    created_at: datetime | None = CREATED,
+    status: str = "idle",
+    agent_id: str = AGENT_IDLE,
+) -> AgentRecord:
+    return AgentRecord(
+        id=agent_id,
+        provider="claude",
+        cwd="/repo",
+        workspace_id=None,
+        title=title,
+        created_at=created_at,
+        updated_at=None,
+        last_activity_at=None,
+        last_user_message_at=None,
+        last_status=status,
+        model=None,
+        session_id=None,
+    )
+
+
+@pytest.mark.parametrize(
+    ("prompt", "label"),
+    [
+        ("Open Composer 自动研究轮（轮次类型：主审轮 ...", "主审轮"),
+        ("Open Composer 自动研究轮（轮次类型：执行轮 ...", "执行轮"),
+        ("Open Composer 自动研究轮（机主 2026-09-27 批准 ...", "研究轮"),
+    ],
+)
+def test_auto_research_round_titles(prompt: str, label: str) -> None:
+    title, subtitle = A.compute_display_title(
+        _record(title=prompt), last_assistant_text="已完成 T-14。\n第二行"
+    )
+    assert title == f"{label} · 09-30 07:05 UTC"
+    assert subtitle == "已完成 T-14。"
+    assert A.compute_display_title(_record(title=prompt))[1] is None
+
+
+def test_auto_research_subtitle_is_cut_to_80_and_scrubbed() -> None:
+    secret = "sk-ant-api03-" + "A" * 40
+    title, subtitle = A.compute_display_title(
+        _record(title="Open Composer 自动研究轮"),
+        last_assistant_text=f"{secret} " + "x" * 200,
+    )
+    assert title.startswith("研究轮 · ")
+    assert subtitle is not None
+    assert len(subtitle) <= 80
+    assert secret not in subtitle
+
+
+def test_interactive_title_is_latest_human_message_with_origin_subtitle() -> None:
+    title, subtitle = A.compute_display_title(
+        _record(title="我在另一个session做好了准备，继续" + "。" * 60),
+        last_human="看一下  驾驶舱\n的 agents 列表",
+    )
+    assert title == "看一下 驾驶舱 的 agents 列表"
+    assert subtitle is not None
+    assert subtitle.startswith("起始：我在另一个session做好了准备，继续")
+    assert len(subtitle) == len("起始：") + 40
+
+
+def test_interactive_title_falls_back_to_raw_title() -> None:
+    assert A.compute_display_title(_record(title="原始提示")) == ("原始提示", None)
+    assert A.compute_display_title(_record(title=None)) == (AGENT_IDLE[:8], None)
+
+
+def test_display_title_is_scrubbed() -> None:
+    secret = "sk-ant-api03-" + "B" * 40
+    title, subtitle = A.compute_display_title(
+        _record(title=f"start {secret}"), last_human=f"use {secret} now"
+    )
+    assert secret not in title
+    assert subtitle is not None
+    assert secret not in subtitle
+
+
+def _user_line(content: object, *, at: datetime, **extra: object) -> dict:
+    return {
+        "type": "user",
+        "timestamp": _iso(at),
+        "message": {"role": "user", "content": content},
+        **extra,
+    }
+
+
+def test_last_human_message_skips_non_human_lines() -> None:
+    at = NOW
+    lines = [
+        _user_line("真正的问题", at=at),
+        _user_line("<system-reminder>x</system-reminder>", at=at),
+        _user_line(
+            [{"type": "text", "text": "<task-notification>done</task-notification>"}], at=at
+        ),
+        _user_line("<command-name>/clear</command-name>", at=at),
+        _user_line("<local-command-stdout>ok</local-command-stdout>", at=at),
+        _user_line("【自动研究轮汇报】第 3 轮完成", at=at),
+        _user_line("【执行轮提醒】请检查", at=at),
+        _user_line("   \n  ", at=at),
+        _user_line([{"type": "tool_result", "tool_use_id": "t", "content": "tool says hi"}], at=at),
+        _user_line("meta text", at=at, isMeta=True),
+        _assistant_text_line("assistant speaking", at=at),
+    ]
+    assert A.last_human_message("claude", lines) == "真正的问题"
+
+
+def test_last_human_message_takes_the_latest_and_strips_embedded_reminders() -> None:
+    lines = [
+        _user_line("较早的问题", at=NOW),
+        _user_line(
+            [
+                {"type": "text", "text": "<system-reminder>\nnoise\n</system-reminder>"},
+                {"type": "text", "text": "最新的问题 <system-reminder>more</system-reminder> 结尾"},
+            ],
+            at=NOW,
+        ),
+        _user_line(
+            [{"type": "text", "text": "<system-reminder>only noise</system-reminder>"}], at=NOW
+        ),
+    ]
+    assert A.last_human_message("claude", lines) == "最新的问题 结尾"
+    assert A.last_human_message("claude", []) is None
+
+
+def test_last_human_message_is_scrubbed() -> None:
+    secret = "sk-ant-api03-" + "C" * 40
+    assert secret not in (A.last_human_message("claude", [_user_line(secret, at=NOW)]) or "")
+
+
+def test_load_agents_enrich_uses_transcript_human_message(tmp_path: Path) -> None:
+    agents_root = tmp_path / "agents"
+    claude_root = tmp_path / "claude-projects"
+    session = "00000000-0000-4000-8000-0000000000aa"
+    _write_agent_json(
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id=session,
+        title="我在另一个session做好了准备，继续",
+        last_activity_at=NOW,
+    )
+    _write_claude_transcript(
+        claude_root,
+        "/repo",
+        session,
+        [
+            _user_line("我在另一个session做好了准备，继续", at=NOW),
+            _assistant_text_line("好的", at=NOW),
+            _user_line("驾驶舱的 Agents 列表不对", at=NOW),
+            _assistant_text_line("我来看看。", at=NOW),
+        ],
+    )
+
+    enriched = load_agents(
+        root=agents_root, claude_root=claude_root, now=NOW, project_root_path=REPO
+    )
+    cheap = load_agents(root=agents_root, now=NOW, enrich=False, project_root_path=REPO)
+
+    assert enriched.agents[0].display_title == "驾驶舱的 Agents 列表不对"
+    assert enriched.agents[0].display_subtitle == "起始：我在另一个session做好了准备，继续"
+    # enrich=False never reads a transcript: the raw title stands
+    assert cheap.agents[0].display_title == "我在另一个session做好了准备，继续"
+    assert cheap.agents[0].display_subtitle is None
+
+
+def test_auto_round_title_works_without_transcript(tmp_path: Path) -> None:
+    _write_agent_json(
+        tmp_path,
+        AGENT_IDLE,
+        status="idle",
+        title="Open Composer 自动研究轮（轮次类型：主审轮，见下）",
+    )
+    report = load_agents(root=tmp_path, now=NOW, enrich=False, project_root_path=REPO)
+    assert report.agents[0].display_title == "主审轮 · 09-20 12:00 UTC"
+
+
+def test_human_message_is_found_beyond_a_tail_full_of_tool_output(tmp_path: Path) -> None:
+    agents_root = tmp_path / "agents"
+    claude_root = tmp_path / "claude-projects"
+    session = "00000000-0000-4000-8000-0000000000bb"
+    _write_agent_json(
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id=session,
+        title="起始提示",
+        last_activity_at=NOW,
+    )
+    filler = [
+        _tool_result_line("x" * 500, tool_use_id=f"t{i}", at=NOW)
+        for i in range(40)  # ~20 KB of tool results after the human message
+    ]
+    path = _write_claude_transcript(
+        claude_root,
+        "/repo",
+        session,
+        [_user_line("较早但仍是最新的人发消息", at=NOW), *filler],
+    )
+
+    first = load_agents(
+        root=agents_root, claude_root=claude_root, now=NOW, tail_bytes=4000, project_root_path=REPO
+    )
+    assert first.agents[0].display_title == "较早但仍是最新的人发消息"
+
+    # incremental: appended tool output keeps the cached answer, a new human line replaces it
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(_tool_result_line("y" * 500, tool_use_id="tz", at=NOW)) + "\n")
+    second = load_agents(
+        root=agents_root, claude_root=claude_root, now=NOW, tail_bytes=4000, project_root_path=REPO
+    )
+    assert second.agents[0].display_title == "较早但仍是最新的人发消息"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(_user_line("新的问题", at=NOW)) + "\n")
+        handle.write(json.dumps(_tool_result_line("z" * 5000, tool_use_id="tw", at=NOW)) + "\n")
+    third = load_agents(
+        root=agents_root, claude_root=claude_root, now=NOW, tail_bytes=4000, project_root_path=REPO
+    )
+    assert third.agents[0].display_title == "新的问题"

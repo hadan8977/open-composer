@@ -2653,6 +2653,12 @@ class TopbarQuota:
     unavailable_reason: str | None
     bars: tuple[TopbarQuotaBar, ...]
 
+    @property
+    def disabled(self) -> bool:
+        """Switched off on purpose (`QUOTA_DISABLED_REASON`), not failing --
+        rendered as a quiet "off", never as a warning."""
+        return not self.available and self.unavailable_reason == QUOTA_DISABLED_REASON
+
 
 def unknown_topbar_quota() -> TopbarQuota:
     return TopbarQuota(available=False, unavailable_reason="unknown", bars=())

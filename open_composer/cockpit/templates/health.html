@@ -2,8 +2,10 @@
 {% from "_instruments.html" import meter %}
 {% block title %}Health · Quant{% endblock %}
 {% block content %}
-{% set stale = report.data_freshness|selectattr("status", "equalto", "stale")|list|length %}
-{% set warn = report.data_freshness|selectattr("status", "equalto", "warn")|list|length %}
+{% set live = report.data_freshness|selectattr("live")|list %}
+{% set research = report.data_freshness|rejectattr("live")|list %}
+{% set stale = live|selectattr("status", "equalto", "stale")|list|length %}
+{% set warn = live|selectattr("status", "equalto", "warn")|list|length %}
 {% set failing = report.cron.jobs|selectattr("status", "equalto", "stale")|list|length %}
 
 <div class="page-head">
@@ -13,10 +15,10 @@
 
 <div class="metrics">
   <div class="metric">
-    <span class="metric-label">Stale sources</span>
+    <span class="metric-label">Stale live feeds</span>
     <span class="metric-value num"><span class="dot dot--{{ 'stale' if stale else ('warn' if warn else 'ok') }}"></span>{{ stale }}</span>
-    <span class="ticks">{% for e in report.data_freshness %}<i class="tk tk--{{ e.status }}" data-tip="{{ e.name }} · {{ e.status }}"></i>{% endfor %}</span>
-    <span class="metric-sub">{{ warn }} warn · {{ report.data_freshness|length }} sources</span>
+    <span class="ticks">{% for e in live %}<i class="tk tk--{{ e.status }}" data-tip="{{ e.name }} · {{ e.status }}"></i>{% endfor %}{% for e in research %}<i class="tk" data-tip="{{ e.name }} · research table"></i>{% endfor %}</span>
+    <span class="metric-sub">{{ warn }} warn · {{ live|length }} live · {{ research|length }} research tables</span>
   </div>
   <div class="metric">
     <span class="metric-label">Cron failing</span>
@@ -77,14 +79,14 @@
 </div>
 {% endif %}
 
-<div class="section">Data freshness <span class="num">{{ report.data_freshness|length }}</span></div>
+<div class="section">Data freshness <span class="faint">only live feeds raise an alert; research tables are rebuilt when a study needs them · <span class="num">{{ report.data_freshness|length }}</span></span></div>
 {% if report.data_freshness %}
 <div class="group">
-  {% for entry in report.data_freshness %}
+  {% for entry in live + research %}
   <div class="row">
-    <span class="dot dot--{{ entry.status }}"></span>
+    <span class="dot dot--{{ entry.status if entry.live else 'unknown' }}"></span>
     <span class="row-main">
-      <span class="row-title"><span class="text">{{ entry.name }}</span></span>
+      <span class="row-title"><span class="text">{{ entry.name }}</span><span class="chip">{{ "live" if entry.live else "research" }}</span></span>
       <span class="row-sub">{{ entry.detail }}</span>
     </span>
     <span class="row-aside">

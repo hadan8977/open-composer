@@ -44,6 +44,10 @@
         <span class="num">{{ bar.percent_display }}</span>
       </a>
       {% endfor %}
+    {% elif topbar_quota_claude.disabled %}
+      <a class="strip-item strip-item--quiet" data-slot="quota-claude" href="/quota" title="{{ topbar_quota_claude.unavailable_reason }}">
+        <span class="t-cap">Claude</span><span class="faint">quota off</span>
+      </a>
     {% else %}
       <a class="strip-item" data-slot="quota-claude" href="/quota" title="{{ topbar_quota_claude.unavailable_reason }}">
         <span class="t-cap">Claude</span>

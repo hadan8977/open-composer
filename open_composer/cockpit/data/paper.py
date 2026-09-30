@@ -37,15 +37,21 @@ from __future__ import annotations
 
 import json
 import re
+import threading
+import time
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 from open_composer.cockpit.data.health import Status
 from open_composer.cockpit.security import secret_scrub
 from open_composer.config import project_root
+from open_composer.market_sessions import previous_us_equity_session, us_equity_session_dates
 
 AuthorizationState = Literal["authorized", "observation_only", "expired"]
 
@@ -149,7 +155,8 @@ def _read_json_object(path: Path, warnings: list[str]) -> dict[str, Any] | None:
 
 
 def discover_strategy_names(root: Path | None = None) -> tuple[str, ...]:
-    """Every strategy with a ``<name>-latest.json`` under the rehearsal dir.
+    """Every strategy with a ``<name>-latest.json`` or a current
+    ``<name>-authorization.json`` under the rehearsal dir.
 
     This -- not a hardcoded list -- is the source of truth for which
     strategies exist. The route layer validates a requested strategy name
@@ -160,8 +167,13 @@ def discover_strategy_names(root: Path | None = None) -> tuple[str, ...]:
     rehearsal_dir = base.joinpath(*REHEARSAL_DIR)
     if not rehearsal_dir.is_dir():
         return ()
-    suffix = "-latest.json"
-    return tuple(sorted(p.name[: -len(suffix)] for p in rehearsal_dir.glob(f"*{suffix}")))
+    names: set[str] = set()
+    # An authorized sleeve exists before its first cycle writes -latest.json
+    # (C2 was authorized 2026-09-30 03:48 and first cycles at 23:14 the same
+    # day); without the authorization glob it was invisible for that window.
+    for suffix in ("-latest.json", "-authorization.json"):
+        names.update(p.name[: -len(suffix)] for p in rehearsal_dir.glob(f"*{suffix}"))
+    return tuple(sorted(names))
 
 
 # --------------------------------------------------------------------------
@@ -1038,6 +1050,15 @@ def load_open_order_count(root: Path | None = None) -> tuple[int | None, tuple[s
 _MARKET_TZ = ZoneInfo("America/New_York")
 
 
+def session_of(moment: datetime) -> date:
+    """The exchange session an observation at ``moment`` describes: its New
+    York calendar date when that is a trading day, else the session before
+    (a Saturday snapshot reflects Friday's close)."""
+    day = moment.astimezone(_MARKET_TZ).date()
+    sessions = us_equity_session_dates(day, day)
+    return day if sessions else previous_us_equity_session(day)
+
+
 @dataclass(frozen=True)
 class AccountEquityDay:
     day: date
@@ -1046,16 +1067,20 @@ class AccountEquityDay:
 
 @dataclass(frozen=True)
 class AccountEquityHistory:
-    """The shared Alpaca Paper account's equity, one column per calendar day.
+    """The shared Alpaca Paper account's equity, one column per exchange session.
 
     Every sleeve's cycle snapshots are readings of the same broker account
     (see `_EQUITY_NOTE`), so the union of all strategies' real points plus
-    ``account.json`` is the account's observation record. Each day keeps its
-    last observation; a day with none (weekends, a missed cycle) stays an
-    explicit gap -- nothing is carried forward or interpolated.
+    ``account.json`` is the account's observation record. Each session keeps
+    its last observation; an observation made on a non-trading day (a weekend
+    or holiday snapshot) belongs to the preceding session, whose close it
+    reflects. Weekends and exchange holidays are not columns at all (owner
+    2026-09-30: non-trading days must not show); a *trading* day with no
+    observation (a missed cycle) stays an explicit gap -- nothing is carried
+    forward or interpolated.
     """
 
-    days: tuple[AccountEquityDay, ...]  # first..last observed day, gaps included
+    days: tuple[AccountEquityDay, ...]  # first..last observed session, gaps included
     first: EquityPoint | None
     latest: EquityPoint | None
     observations: int
@@ -1104,18 +1129,331 @@ def build_account_equity_history(
     ordered = sorted(by_instant.values(), key=lambda point: point.at)
     last_of_day: dict[date, EquityPoint] = {}
     for point in ordered:
-        last_of_day[point.at.astimezone(_MARKET_TZ).date()] = point
+        last_of_day[session_of(point.at)] = point
     days: list[AccountEquityDay] = []
     if last_of_day:
-        cursor, last = min(last_of_day), max(last_of_day)
-        while cursor <= last:
-            days.append(AccountEquityDay(day=cursor, point=last_of_day.get(cursor)))
-            cursor += timedelta(days=1)
+        for session in us_equity_session_dates(min(last_of_day), max(last_of_day)):
+            days.append(AccountEquityDay(day=session, point=last_of_day.get(session)))
     return AccountEquityHistory(
         days=tuple(days),
         first=ordered[0] if ordered else None,
         latest=ordered[-1] if ordered else None,
         observations=len(ordered),
+        warnings=tuple(warnings),
+    )
+
+
+# --------------------------------------------------------------------------
+# Live sleeves: display labels and each sleeve's own-ledger performance
+# --------------------------------------------------------------------------
+
+#: Short names the owner uses for the sleeves authorized on the shared paper
+#: account (S1-S3 since 2026-09-21, C2 since 2026-09-30). Anything not listed
+#: falls back to its strategy name.
+SLEEVE_LABELS: dict[str, str] = {
+    "us_etf_sector_rotation_252_top2_weekly": "S1 · Sector rotation",
+    "us_etf_growth_rotation_blend_top2_monthly": "S2 · Growth rotation",
+    "us_etf_levered_rotation_63_top2_monthly": "S3 · Levered rotation",
+    "us_etf_eom_sector_blend_monthly": "C2 · Month-end + seasonality",
+}
+
+BENCHMARK_SYMBOL = "SPY"
+SIP_DAILY_DIR = ("data", "sip", "daily")
+_BUDGET_RE = re.compile(r"^\s*notional_budget_usd:\s*([0-9][0-9_]*(?:\.[0-9]+)?)\s*$", re.M)
+_CLOSES_TTL_SECONDS = 900.0
+_closes_lock = threading.Lock()
+_closes_cache: dict[
+    tuple[str, tuple[str, ...], date], tuple[float, dict[str, dict[date, tuple[float, float]]]]
+] = {}
+_shard_index_cache: dict[Path, tuple[float, tuple[str, str] | None]] = {}
+
+
+def strategy_label(name: str) -> str:
+    return SLEEVE_LABELS.get(name, name)
+
+
+def load_sleeve_budget(root: Path | None = None, strategy_name: str = "") -> float | None:
+    """The sleeve's capital: ``notional_budget_usd`` in its draft spec.
+
+    Read with a regex rather than a YAML parser -- one scalar, and this
+    process keeps its import footprint small (see ``health`` on the 150MB
+    budget)."""
+    base = root or project_root()
+    path = base / "strategy_specs" / "drafts" / f"{strategy_name}.yaml"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = _BUDGET_RE.search(text)
+    return float(match.group(1).replace("_", "")) if match else None
+
+
+@dataclass(frozen=True)
+class SleeveFill:
+    session: date
+    symbol: str
+    signed_qty: float  # + bought, - sold
+    price: float
+
+
+def load_sleeve_fills(
+    root: Path | None = None, strategy_name: str = "", warnings: list[str] | None = None
+) -> tuple[SleeveFill, ...]:
+    """Every filled order in ``<name>-fills.jsonl`` (written by the 14:xx UTC
+    reconcile), de-duplicated by order id, in session order."""
+    base = root or project_root()
+    sink = warnings if warnings is not None else []
+    path = base.joinpath(*REHEARSAL_DIR, f"{strategy_name}-fills.jsonl")
+    if not path.exists():
+        return ()
+    by_id: dict[str, SleeveFill] = {}
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        sink.append(f"{path}: unreadable ({exc})")
+        return ()
+    for index, line in enumerate(lines):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            sink.append(f"{path}: line {index + 1} is not JSON, skipped")
+            continue
+        if not isinstance(row, dict):
+            continue
+        qty = _num(row.get("filled_qty"))
+        price = _num(row.get("filled_avg_price"))
+        symbol = row.get("symbol")
+        side = row.get("side")
+        try:
+            session = date.fromisoformat(str(row.get("session")))
+        except ValueError:
+            session = None
+        if not qty or qty <= 0 or not price or not isinstance(symbol, str) or session is None:
+            continue
+        if side not in ("buy", "sell"):
+            continue
+        key = str(row.get("broker_order_id") or row.get("client_order_id") or index)
+        signed = qty if side == "buy" else -qty
+        by_id[key] = SleeveFill(session=session, symbol=symbol, signed_qty=signed, price=price)
+    return tuple(sorted(by_id.values(), key=lambda fill: (fill.session, fill.symbol)))
+
+
+def _shard_symbol_range(path: Path) -> tuple[str, str] | None:
+    """(min, max) of the ``symbol`` column from the parquet footer, cached by
+    mtime; ``None`` when the footer carries no usable statistics."""
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    cached = _shard_index_cache.get(path)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
+    result: tuple[str, str] | None = None
+    try:
+        meta = pq.ParquetFile(path).metadata
+        names = [meta.schema.column(i).name for i in range(meta.num_columns)]
+        column = names.index("symbol")
+        lows, highs = [], []
+        for group in range(meta.num_row_groups):
+            stats = meta.row_group(group).column(column).statistics
+            if stats is None or not stats.has_min_max:
+                lows = []
+                break
+            lows.append(stats.min)
+            highs.append(stats.max)
+        if lows:
+            result = (min(lows), max(highs))
+    except (OSError, ValueError, pa.ArrowException):
+        result = None
+    _shard_index_cache[path] = (mtime, result)
+    return result
+
+
+def load_session_prices(
+    root: Path | None = None, symbols: tuple[str, ...] = (), start: date | None = None
+) -> dict[str, dict[date, tuple[float, float]]]:
+    """``{symbol: {session: (open, close)}}`` from the local SIP daily archive.
+
+    pyarrow only, timestamps read as raw int64 ticks: turning them into
+    Python datetimes would import pandas (see ``health._stat_max_as_date``).
+    Cached for 15 minutes -- the archive updates once a night."""
+    base = root or project_root()
+    wanted = tuple(sorted(set(symbols)))
+    if not wanted or start is None:
+        return {}
+    key = (str(base), wanted, start)
+    now_mono = time.monotonic()
+    with _closes_lock:
+        hit = _closes_cache.get(key)
+        if hit is not None and now_mono - hit[0] < _CLOSES_TTL_SECONDS:
+            return hit[1]
+    out: dict[str, dict[date, tuple[float, float]]] = {symbol: {} for symbol in wanted}
+    wanted_set = set(wanted)
+    epoch = date(1970, 1, 1)
+    for year in range(start.year, datetime.now(UTC).year + 1):
+        directory = base.joinpath(*SIP_DAILY_DIR, str(year))
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.glob("shard-*.parquet")):
+            span = _shard_symbol_range(path)
+            if span is not None and not any(span[0] <= symbol <= span[1] for symbol in wanted):
+                continue
+            try:
+                # ParquetFile.read without pandas metadata, python-side row
+                # filter, timestamps as raw int64 views: pq.read_table(filters=)
+                # and pyarrow.compute both import pandas (measured 2026-09-30).
+                table = pq.ParquetFile(path).read(
+                    columns=["symbol", "timestamp", "open", "close"], use_pandas_metadata=False
+                )
+            except (OSError, ValueError, pa.ArrowException):
+                continue
+            if table.num_rows == 0:
+                continue
+            unit = table.schema.field("timestamp").type.unit
+            per_day = {"s": 86_400, "ms": 86_400_000, "us": 86_400_000_000}.get(
+                unit, 86_400_000_000_000
+            )
+            syms = table.column("symbol").to_pylist()
+            if not wanted_set.intersection(syms):
+                continue
+            ticks = [
+                tick
+                for chunk in table.column("timestamp").chunks
+                for tick in chunk.view(pa.int64()).to_pylist()
+            ]
+            opens = table.column("open").to_pylist()
+            closes = table.column("close").to_pylist()
+            for symbol, tick, open_, close in zip(syms, ticks, opens, closes, strict=True):
+                if symbol not in wanted_set or tick is None or close is None:
+                    continue
+                # Daily bars are stamped at midnight New York (04:00 or 05:00
+                # UTC), so the UTC calendar day is the session date.
+                session = epoch + timedelta(days=tick // per_day)
+                if session >= start:
+                    out[symbol][session] = (float(open_) if open_ else float(close), float(close))
+    with _closes_lock:
+        _closes_cache[key] = (now_mono, out)
+    return out
+
+
+@dataclass(frozen=True)
+class SleevePerformance:
+    """One sleeve's own book, marked to market -- not the shared account.
+
+    Built from the sleeve's own fills (``-fills.jsonl``) and its spec's
+    ``notional_budget_usd``: cash starts at the budget, each fill moves cash
+    and quantity at its real fill price, and every exchange session from the
+    first fill to the newest local close is marked at that session's close.
+    Dividends paid into the shared account are not attributed to a sleeve.
+    """
+
+    budget: float | None
+    history: AccountEquityHistory | None  # one column per session, base = budget
+    start_session: date | None
+    last_session: date | None
+    nav: float | None
+    return_pct: float | None
+    benchmark_return_pct: float | None  # SPY, first-session open -> last close
+    sessions_live: int
+    status: str  # "live" | "no_fills" | "no_budget" | "no_prices"
+    warnings: tuple[str, ...]
+
+    @property
+    def excess_pct(self) -> float | None:
+        if self.return_pct is None or self.benchmark_return_pct is None:
+            return None
+        return self.return_pct - self.benchmark_return_pct
+
+
+def build_sleeve_performance(
+    root: Path | None = None, strategy_name: str = ""
+) -> SleevePerformance:
+    base = root or project_root()
+    warnings: list[str] = []
+    budget = load_sleeve_budget(base, strategy_name)
+    fills = load_sleeve_fills(base, strategy_name, warnings)
+
+    def _empty(status: str) -> SleevePerformance:
+        return SleevePerformance(
+            budget=budget,
+            history=None,
+            start_session=fills[0].session if fills else None,
+            last_session=None,
+            nav=None,
+            return_pct=None,
+            benchmark_return_pct=None,
+            sessions_live=0,
+            status=status,
+            warnings=tuple(warnings),
+        )
+
+    if not fills:
+        return _empty("no_fills")
+    if budget is None:
+        warnings.append(f"{strategy_name}: no notional_budget_usd in its draft spec")
+        return _empty("no_budget")
+    start = fills[0].session
+    symbols = tuple(sorted({fill.symbol for fill in fills} | {BENCHMARK_SYMBOL}))
+    prices = load_session_prices(base, symbols, start)
+    held = {fill.symbol for fill in fills}
+    marked_days = [
+        day
+        for day in sorted({d for symbol in held for d in prices.get(symbol, {})})
+        if all(day in prices.get(symbol, {}) for symbol in held)
+    ]
+    if not marked_days:
+        warnings.append(f"{strategy_name}: no local closes on or after {start} for {sorted(held)}")
+        return _empty("no_prices")
+    last = marked_days[-1]
+    sessions = us_equity_session_dates(start, last)
+    cash = budget
+    qty: dict[str, float] = {}
+    fill_iter = iter(fills)
+    pending = next(fill_iter, None)
+    days: list[AccountEquityDay] = []
+    nav = budget
+    for session in sessions:
+        while pending is not None and pending.session <= session:
+            cash -= pending.signed_qty * pending.price
+            qty[pending.symbol] = qty.get(pending.symbol, 0.0) + pending.signed_qty
+            pending = next(fill_iter, None)
+        marks = {symbol: prices.get(symbol, {}).get(session) for symbol, q in qty.items() if q}
+        if any(mark is None for mark in marks.values()):
+            days.append(AccountEquityDay(day=session, point=None))
+            continue
+        nav = cash + sum(q * marks[symbol][1] for symbol, q in qty.items() if q)
+        at = datetime(session.year, session.month, session.day, 20, 0, tzinfo=UTC)
+        days.append(
+            AccountEquityDay(day=session, point=EquityPoint(at=at, equity=nav, source="sleeve_nav"))
+        )
+    observed = [day.point for day in days if day.point is not None]
+    start_at = datetime(start.year, start.month, start.day, 13, 30, tzinfo=UTC)
+    history = AccountEquityHistory(
+        days=tuple(days),
+        first=EquityPoint(at=start_at, equity=budget, source="sleeve_budget"),
+        latest=observed[-1] if observed else None,
+        observations=len(observed),
+        warnings=(),
+    )
+    bench = prices.get(BENCHMARK_SYMBOL, {})
+    bench_start, bench_end = bench.get(start), bench.get(last)
+    benchmark = (
+        (bench_end[1] / bench_start[0] - 1.0) * 100.0
+        if bench_start and bench_end and bench_start[0]
+        else None
+    )
+    return SleevePerformance(
+        budget=budget,
+        history=history,
+        start_session=start,
+        last_session=last,
+        nav=nav,
+        return_pct=(nav / budget - 1.0) * 100.0,
+        benchmark_return_pct=benchmark,
+        sessions_live=len(sessions),
+        status="live",
         warnings=tuple(warnings),
     )
 
@@ -1128,6 +1466,7 @@ def build_account_equity_history(
 @dataclass(frozen=True)
 class StrategyDetail:
     name: str
+    label: str
     authorization: AuthorizationInfo
     generated_at: datetime | None  # this strategy's most recent cycle time
     session: str | None
@@ -1141,6 +1480,7 @@ class StrategyDetail:
     orders_window_truncated: bool
     fills: FillsSummary
     equity_series: EquitySeries
+    performance: SleevePerformance
     warnings: tuple[str, ...]
 
     @property
@@ -1148,16 +1488,57 @@ class StrategyDetail:
         return self.orders[-1].recorded_at if self.orders else None
 
 
+def all_sleeve_ledger_totals(root: Path | None = None) -> dict[str, float]:
+    """Sum of every dedicated sleeve ledger's quantity per symbol.
+
+    All sleeves share one broker account, so a symbol two sleeves hold (SHY
+    sits in S2 and S3) shows the *combined* quantity at the broker. Comparing
+    one sleeve's ledger with that total always "disagrees"; the account is
+    consistent when the broker holds exactly the sum of the ledgers."""
+    base = root or project_root()
+    totals: dict[str, float] = {}
+    for name in discover_strategy_names(base):
+        path = base.joinpath(*REHEARSAL_DIR, f"{name}-latest.json")
+        if not path.exists():
+            continue
+        data = _read_json_object(path, [])
+        if not data or data.get("position_scope") != "strategy_ledger":
+            continue
+        ledger = data.get("strategy_ledger_positions")
+        if not isinstance(ledger, dict):
+            continue
+        for symbol, qty in ledger.items():
+            value = _num(qty)
+            if isinstance(symbol, str) and value:
+                totals[symbol] = totals.get(symbol, 0.0) + value
+    return totals
+
+
 def _positions_agreement_summary(
-    positions: tuple[PositionRow, ...], *, has_dedicated_ledger: bool
+    positions: tuple[PositionRow, ...],
+    *,
+    has_dedicated_ledger: bool,
+    ledger_totals: dict[str, float] | None = None,
 ) -> str:
     if not has_dedicated_ledger:
         return "no dedicated position ledger (not authorized to hold isolated positions)"
-    comparable = [row for row in positions if row.agrees_with_broker is not None]
+    comparable = [
+        row for row in positions if row.ledger_qty is not None and row.broker_qty is not None
+    ]
     if not comparable:
         return "no comparable positions (ledger and/or broker side empty)"
-    matched = sum(1 for row in comparable if row.agrees_with_broker)
-    return f"{matched}/{len(comparable)} symbols match the broker account"
+    if ledger_totals is None:
+        matched = sum(1 for row in comparable if row.agrees_with_broker)
+        return f"{matched}/{len(comparable)} symbols match the broker account"
+    off = [
+        row.symbol
+        for row in comparable
+        if abs(ledger_totals.get(row.symbol, 0.0) - (row.broker_qty or 0.0)) > 1e-6
+    ]
+    if not off:
+        n = len(comparable)
+        return f"broker holds exactly the sum of all sleeve ledgers ({n}/{n} symbols)"
+    return f"broker differs from the sum of sleeve ledgers for {', '.join(sorted(off))}"
 
 
 def build_strategy_detail(
@@ -1207,7 +1588,9 @@ def build_strategy_detail(
 
     positions = _build_position_rows(order_rows, ledger_positions, broker_positions)
     positions_agreement = _positions_agreement_summary(
-        positions, has_dedicated_ledger=has_dedicated_ledger
+        positions,
+        has_dedicated_ledger=has_dedicated_ledger,
+        ledger_totals=all_sleeve_ledger_totals(base),
     )
 
     orders, orders_truncated, orders_warnings = load_orders(base, strategy_name)
@@ -1222,9 +1605,12 @@ def build_strategy_detail(
 
     fills = load_fills_summary(base, strategy_name)
     equity_series = build_equity_series(base, strategy_name)
+    performance = build_sleeve_performance(base, strategy_name)
+    warnings.extend(performance.warnings)
 
     return StrategyDetail(
         name=strategy_name,
+        label=strategy_label(strategy_name),
         authorization=authorization,
         generated_at=generated_at,
         session=session,
@@ -1238,6 +1624,7 @@ def build_strategy_detail(
         orders_window_truncated=orders_truncated,
         fills=fills,
         equity_series=equity_series,
+        performance=performance,
         warnings=tuple(warnings),
     )
 
@@ -1248,6 +1635,7 @@ class StrategySummary:
     pattern the plan calls for: one row per strategy, drill into one."""
 
     name: str
+    label: str
     authorization: AuthorizationInfo
     generated_at: datetime | None
     session: str | None
@@ -1256,13 +1644,20 @@ class StrategySummary:
     latest_fill_rate: float | None
     latest_fill_session: str | None
     last_order_at: datetime | None
+    performance: SleevePerformance
     warnings: tuple[str, ...]
+
+    @property
+    def is_running(self) -> bool:
+        """Authorized to trade now -- the sleeves the owner looks at first."""
+        return self.authorization.state == "authorized"
 
 
 def summarize_strategy(detail: StrategyDetail) -> StrategySummary:
     latest_fill = detail.fills.latest
     return StrategySummary(
         name=detail.name,
+        label=detail.label,
         authorization=detail.authorization,
         generated_at=detail.generated_at,
         session=detail.session,
@@ -1271,6 +1666,7 @@ def summarize_strategy(detail: StrategyDetail) -> StrategySummary:
         latest_fill_rate=latest_fill.fill_rate_by_notional if latest_fill else None,
         latest_fill_session=latest_fill.session if latest_fill else None,
         last_order_at=detail.last_order_at,
+        performance=detail.performance,
         warnings=detail.warnings,
     )
 
@@ -1308,6 +1704,7 @@ def build_paper_report(
             warnings.append(f"{name}: failed to build strategy report ({exc!r})")
             continue
         summaries.append(summarize_strategy(detail))
+    summaries.sort(key=lambda row: (not row.is_running, row.label))
 
     account = load_account_snapshot(base, now=now)
     kill_switch = load_kill_switch(base)
@@ -1343,12 +1740,17 @@ __all__ = [
     "PaperAccountReport",
     "PositionRow",
     "RehearsalCountdown",
+    "SLEEVE_LABELS",
+    "SleeveFill",
+    "SleevePerformance",
     "StrategyDetail",
     "StrategySummary",
     "build_account_equity_history",
     "build_equity_series",
     "build_paper_report",
+    "all_sleeve_ledger_totals",
     "build_rehearsal_countdown",
+    "build_sleeve_performance",
     "build_strategy_detail",
     "compute_equity_chart_layout",
     "discover_strategy_names",
@@ -1359,5 +1761,10 @@ __all__ = [
     "load_kill_switch",
     "load_open_order_count",
     "load_orders",
+    "load_session_prices",
+    "load_sleeve_budget",
+    "load_sleeve_fills",
+    "session_of",
+    "strategy_label",
     "summarize_strategy",
 ]

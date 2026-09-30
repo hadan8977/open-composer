@@ -1,5 +1,5 @@
 {% extends layout %}
-{% block title %}{{ detail.record.title or detail.record.id[:8] }} · Quant{% endblock %}
+{% block title %}{{ detail.display_title or detail.record.title or detail.record.id[:8] }} · Quant{% endblock %}
 {% macro timeline(entries) -%}
 <table class="t t--tight tl">
   <thead><tr><th>Time</th><th>What</th><th>Target</th><th class="num">Duration</th><th></th></tr></thead>
@@ -22,9 +22,11 @@
 {%- endmacro %}
 {% block content %}
 {% set record = detail.record %}
-<div class="detail" data-title="{{ record.title or record.id[:8] }}">
+{% set shown_title = detail.display_title or record.title or record.id[:8] %}
+<div class="detail" data-title="{{ shown_title }}">
   <div class="detail-head">
-    <h1 class="t-title">{{ record.title or record.id[:8] }}</h1>
+    <h1 class="t-title">{{ shown_title }}</h1>
+    {% if detail.display_subtitle %}<p class="state">{{ detail.display_subtitle }}</p>{% endif %}
     <p class="state"><span class="dot dot--{{ record.last_status|agent_dot }}"></span>{{ record.last_status }} <span class="faint">·</span> {{ record.provider }} <span class="faint">·</span> <span class="mono">{{ record.model or "unknown model" }}</span></p>
   </div>
 

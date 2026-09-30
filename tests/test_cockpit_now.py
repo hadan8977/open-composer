@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -25,10 +26,15 @@ from open_composer.cockpit.data.agents import (
     HeavyJobsReport,
     build_live_session,
 )
-from open_composer.cockpit.data.health import DiskStatus
+from open_composer.cockpit.data.health import DataFreshnessEntry, DiskStatus
 from open_composer.cockpit.data.hypotheses import build_hypotheses_report
 from open_composer.cockpit.data.now import NowReport, build_now_report, derive_attention
-from open_composer.cockpit.data.quota import TopbarQuota, TopbarQuotaBar, build_usage_estimate
+from open_composer.cockpit.data.quota import (
+    QUOTA_DISABLED_REASON,
+    TopbarQuota,
+    TopbarQuotaBar,
+    build_usage_estimate,
+)
 from open_composer.cockpit.viz import equity_columns, fresh_bars, led_columns
 
 NOW = datetime(2026, 9, 24, 12, 5, tzinfo=UTC)
@@ -164,9 +170,16 @@ def test_account_equity_history_keeps_gaps_and_uses_the_trading_day(tmp_path: Pa
     history = P.build_account_equity_history(tmp_path)
 
     by_day = {entry.day: entry.point for entry in history.days}
-    assert [entry.day for entry in history.days][0] == date(2026, 9, 10)
-    assert [entry.day for entry in history.days][-1] == date(2026, 9, 16)
-    assert by_day[date(2026, 9, 12)] is None  # a weekend stays a gap
+    # sessions only (owner 2026-09-30): no weekend columns at all ...
+    assert list(by_day) == [
+        date(2026, 9, 10),
+        date(2026, 9, 11),
+        date(2026, 9, 14),
+        date(2026, 9, 15),
+        date(2026, 9, 16),
+    ]
+    # ... but a missed trading day stays an explicit gap
+    assert by_day[date(2026, 9, 14)] is None
     assert by_day[date(2026, 9, 15)] is not None
     assert by_day[date(2026, 9, 15)].equity == 99_900.0
     assert history.observations == 4
@@ -191,14 +204,15 @@ def test_account_equity_history_is_empty_without_snapshots(tmp_path: Path) -> No
 def test_equity_columns_mark_up_down_flat_and_gap_days(tmp_path: Path) -> None:
     _write_snapshot(tmp_path, "alpha", datetime(2026, 9, 10, 20, 0, tzinfo=UTC), 100_000.0)
     _write_snapshot(tmp_path, "alpha", datetime(2026, 9, 11, 20, 0, tzinfo=UTC), 100_000.0)
-    _write_snapshot(tmp_path, "alpha", datetime(2026, 9, 14, 20, 0, tzinfo=UTC), 99_000.0)
-    _write_snapshot(tmp_path, "alpha", datetime(2026, 9, 15, 20, 0, tzinfo=UTC), 103_000.0)
+    # nothing on Monday the 14th; the weekend before it is not a column
+    _write_snapshot(tmp_path, "alpha", datetime(2026, 9, 15, 20, 0, tzinfo=UTC), 99_000.0)
+    _write_snapshot(tmp_path, "alpha", datetime(2026, 9, 16, 20, 0, tzinfo=UTC), 103_000.0)
     chart = equity_columns(P.build_account_equity_history(tmp_path))
 
     assert chart is not None
     kinds = [column.kind for column in chart.columns]
-    assert kinds == ["flat", "flat", "gap", "gap", "down", "up"]
-    assert [column.is_last for column in chart.columns] == [False] * 5 + [True]
+    assert kinds == ["flat", "flat", "gap", "down", "up"]
+    assert [column.is_last for column in chart.columns] == [False] * 4 + [True]
     assert any(line.is_base and line.label == "100k" for line in chart.grid)
     up = chart.columns[-1]
     assert 0 < up.bottom < 100 and 0 < up.height <= 100 - up.bottom
@@ -246,9 +260,11 @@ def test_fresh_bars_light_only_the_current_window() -> None:
 # --------------------------------------------------------------------------
 
 
-def _quota(available: bool, *, status: str = "ok") -> TopbarQuota:
+def _quota(available: bool, *, status: str = "ok", reason: str | None = None) -> TopbarQuota:
     if not available:
-        return TopbarQuota(available=False, unavailable_reason="token expired -- re-login", bars=())
+        return TopbarQuota(
+            available=False, unavailable_reason=reason or "token expired -- re-login", bars=()
+        )
     bar = TopbarQuotaBar(
         key="five_hour",
         label="5h",
@@ -321,7 +337,7 @@ def test_attention_orders_urgent_items_first() -> None:
     assert texts[:3] == ["Kill switch on", "1 authorization expired", "2 agent errors"]
     assert {item.level for item in items[:3]} == {"stale"}
     assert "Claude token expired" in texts
-    assert "3 sources stale" in texts
+    assert "3 live feeds stale" in texts
     assert "Auth ends in 2.5d" in texts
     assert "Disk 90% used" in texts
 
@@ -340,6 +356,22 @@ def test_attention_flags_a_hot_quota_window() -> None:
         memory=None,
     )
     assert [(item.level, item.text, item.href) for item in items] == [("stale", "5h 91%", "/quota")]
+
+
+def test_attention_ignores_a_quota_the_owner_switched_off() -> None:
+    items = derive_attention(
+        kill_switch=_kill(False),
+        expired=0,
+        soonest_expiry_days=None,
+        agent_errors=0,
+        failing_cron=0,
+        stale_sources=0,
+        claude=_quota(False, reason=QUOTA_DISABLED_REASON),
+        account=_account(),
+        disk=None,
+        memory=None,
+    )
+    assert [(item.level, item.text) for item in items] == [("ok", "All clear")]
 
 
 # --------------------------------------------------------------------------
@@ -447,7 +479,8 @@ def _agent(record_id: str, status: str, at: datetime) -> AgentSummary:
         model=None,
         session_id=None,
     )
-    return AgentSummary(record=record, activity=None)
+    # `load_agents` marks an error from the last RECENT_ERROR_HOURS as recent
+    return AgentSummary(record=record, activity=None, recent_error=status == "error")
 
 
 def _agents(*agents: AgentSummary, at: datetime = NOW) -> AgentsReport:
@@ -482,7 +515,8 @@ def test_now_shows_the_last_session_only_when_nothing_is_running(tmp_path: Path)
     resting = _now_report(tmp_path, older, newer, broken)
     assert resting.live == ()
     assert resting.last_active is not None and resting.last_active.record.id == "newer"
-    assert [record.id for record in resting.errored] == ["broken"]
+    assert [summary.record.id for summary in resting.errored] == ["broken"]
+    assert resting.agent_counts["error"] == 1
 
     busy = _agent("busy", "running", NOW - timedelta(hours=2))
     running = _now_report(tmp_path, older, newer, busy)
@@ -498,6 +532,35 @@ def test_now_shows_the_last_session_only_when_nothing_is_running(tmp_path: Path)
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(create_app(warm=False))
+
+
+def test_an_old_error_counts_as_idle_and_raises_nothing(tmp_path: Path) -> None:
+    stale = replace(_agent("stale", "error", NOW - timedelta(days=30)), recent_error=False)
+    report = _now_report(tmp_path, stale)
+    assert report.errored == ()
+    assert report.agent_counts["error"] == 0
+    assert report.agent_counts["idle"] == 1
+    assert report.last_active is not None and report.last_active.record.id == "stale"
+    assert not any("agent error" in item.text for item in report.attention)
+
+
+def test_only_live_feeds_count_as_stale_sources(tmp_path: Path) -> None:
+    live = DataFreshnessEntry("SIP daily archive", "", date(2026, 9, 29), 0, "ok", live=True)
+    table = DataFreshnessEntry("Factor table: alpha101", "", date(2026, 9, 11), 12, "stale")
+    report = build_now_report(
+        tmp_path,
+        agents=_agents(),
+        heavy=HeavyJobsReport(jobs=(), available=False, warnings=()),
+        hypotheses=build_hypotheses_report(tmp_path),
+        usage=build_usage_estimate(tmp_path / "none", now=NOW, subagent_root=tmp_path / "none"),
+        claude=_quota(True),
+        freshness=(live, table),
+        activity=_field([0, 1]),
+        now=NOW,
+    )
+    assert report.stale_sources == 0
+    assert report.live_sources == (live,) and report.research_sources == (table,)
+    assert not any("stale" in item.text for item in report.attention)
 
 
 def test_now_is_the_landing_screen(client: TestClient) -> None:

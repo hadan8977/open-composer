@@ -4,7 +4,11 @@
 {% block content %}
 <div class="page-head">
   <h1>Agents</h1>
-  <span class="aside num" title="closed before {{ report.closed_stale_cutoff.isoformat() }}">{{ report.closed_collapsed_count }} closed &gt;48h hidden</span>
+  {% set hidden_parts = [] %}
+  {% if report.closed_collapsed_count %}{% set _ = hidden_parts.append(report.closed_collapsed_count ~ " closed >48h") %}{% endif %}
+  {% if report.stale_hidden_count %}{% set _ = hidden_parts.append(report.stale_hidden_count ~ " idle >72h") %}{% endif %}
+  {% if report.other_project_hidden_count %}{% set _ = hidden_parts.append(report.other_project_hidden_count ~ " other projects") %}{% endif %}
+  {% if hidden_parts %}<span class="aside num" title="closed before {{ report.closed_stale_cutoff.isoformat() }}">hidden: {{ hidden_parts|join(" · ") }}</span>{% endif %}
 </div>
 
 <div class="bento bento--stack">
@@ -14,7 +18,7 @@
       <span class="counts num">
         <span><span class="dot dot--ok{{ ' dot--live' if counts.running }}"></span><b>{{ counts.running }}</b> running</span>
         <span><span class="dot dot--unknown"></span><b>{{ counts.idle }}</b> idle</span>
-        <span><span class="dot dot--{{ 'stale' if counts.error else 'unknown' }}"></span><b>{{ counts.error }}</b> error</span>
+        <span><span class="dot dot--{{ 'stale' if counts.error else 'unknown' }}"></span><b>{{ counts.error }}</b> error 24h</span>
         <span class="only-roomy"><b>{{ counts.closed }}</b> closed 48h</span>
       </span>
     </header>
@@ -44,17 +48,19 @@
   {% for agent in report.agents %}
   {% set record = agent.record %}
   {% set act = agent.activity %}
-  <a class="row" href="/agents/{{ record.id }}" data-detail data-filter="{{ record.provider }} {{ record.model or '' }} {{ record.title or '' }} {{ record.last_status }} {{ record.id }}">
-    <span class="dot dot--{{ record.last_status|agent_dot }}{% if record.last_status == 'running' %} dot--live{% endif %}"></span>
+  {% set shown = agent|shown_status %}
+  <a class="row" href="/agents/{{ record.id }}" data-detail data-filter="{{ record.provider }} {{ record.model or '' }} {{ agent.display_title }} {{ record.title or '' }} {{ shown }} {{ record.id }}">
+    <span class="dot dot--{{ shown|agent_dot }}{% if shown == 'running' %} dot--live{% endif %}"></span>
     <span class="row-main">
       <span class="row-title">
-        <span class="text">{{ record.title or record.id[:8] }}</span>
+        <span class="text">{{ agent.display_title or record.title or record.id[:8] }}</span>
       </span>
-      <span class="row-sub">{{ record.provider }} · <span class="mono">{{ (record.model or "unknown")|replace("claude-", "") }}</span>{% if act and act.current_file %} · <span class="mono">{{ act.current_file|replace(record.cwd ~ "/", "") if record.cwd else act.current_file }}</span>{% elif not act or not act.transcript_path %} · <span class="faint">no transcript</span>{% endif %}</span>
+      {% if agent.display_subtitle %}<span class="row-sub">{{ agent.display_subtitle }}</span>{% endif %}
+      <span class="row-sub">{{ record.provider }} · <span class="mono">{{ (record.model or "unknown")|replace("claude-", "") }}</span>{% if act and act.current_file %} · <span class="mono">{{ act.current_file|replace(record.cwd ~ "/", "") if record.cwd else act.current_file }}</span>{% elif act and not act.transcript_path %} · <span class="faint">{{ "transcript not linked yet" if shown == "running" else "no transcript" }}</span>{% endif %}</span>
     </span>
     <span class="row-aside">
       <span class="num" title="{{ record.last_activity_at.isoformat() if record.last_activity_at else '' }}">{{ record.last_activity_at|ago }}</span>
-      <span>{{ record.last_status }}</span>
+      <span title="{{ 'last run ended in error' if shown != record.last_status else '' }}">{{ shown }}</span>
     </span>
   </a>
   {% else %}

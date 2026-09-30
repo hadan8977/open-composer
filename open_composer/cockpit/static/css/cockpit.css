@@ -678,6 +678,9 @@ section[id] {
 .dot--unknown {
   background: var(--unknown);
 }
+.dot--ready {
+  background: rgba(var(--tint-rgb), 0.55);
+}
 .dot--lg {
   width: 10px;
   height: 10px;
@@ -1317,6 +1320,69 @@ a.tile-label::after {
   }
 }
 
+/* paper sleeves: one line per sleeve, its own book against SPY */
+.sleeves {
+  display: grid;
+  margin-top: 12px;
+  padding-top: 6px;
+  border-top: 1px solid var(--sep);
+}
+.sleeve {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: baseline;
+  column-gap: 14px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border-radius: 9px;
+  color: var(--label-2);
+  font-size: 12.5px;
+  line-height: 18px;
+  transition: background 0.14s var(--ease), color 0.14s var(--ease);
+}
+a.sleeve:hover {
+  background: rgba(var(--ink), 0.045);
+  color: var(--label);
+}
+.sleeve-l {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--label);
+}
+.sleeve-r {
+  font: 600 12.5px/18px var(--mono);
+  text-align: right;
+}
+.sleeve-r.is-up {
+  color: var(--ok);
+}
+.sleeve-r.is-down {
+  color: var(--stale);
+}
+.row-aside .is-up,
+.kv .is-up {
+  color: var(--ok);
+}
+.row-aside .is-down,
+.kv .is-down {
+  color: var(--stale);
+}
+.sleeve-b,
+.sleeve-d {
+  font: 400 11px/18px var(--mono);
+  color: var(--label-3);
+  text-align: right;
+  white-space: nowrap;
+}
+.sleeve-na {
+  grid-column: 2 / -1;
+  font: 400 11px/18px var(--mono);
+  color: var(--label-3);
+  text-align: right;
+}
+
 /* minor rows under a tile's main instrument */
 .minor,
 .recent {
@@ -1635,6 +1701,22 @@ a.mrow:hover {
 .st--unclassified,
 .sw--unclassified {
   background: var(--warn);
+}
+/* the research task queue (autonomous-queue.md) on the same bar */
+.st--review,
+.sw--review {
+  background: var(--warn);
+}
+.st--ready,
+.sw--ready {
+  background: rgba(var(--tint-rgb), 0.45);
+}
+.st--blocked,
+.sw--blocked {
+  background: rgba(var(--ink), 0.13);
+}
+.sw--blocked {
+  box-shadow: inset 0 0 0 1px rgba(var(--ink), 0.22);
 }
 .stage-legend {
   display: grid;
@@ -2890,6 +2972,12 @@ dialog.sheet::backdrop {
 @container content (max-width: 620px) {
   .bento {
     gap: 12px;
+  }
+  .sleeve {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .sleeve-d {
+    display: none;
   }
   .t-tokens,
   .t-system {

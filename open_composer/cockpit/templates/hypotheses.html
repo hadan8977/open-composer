@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_instruments.html" import stages %}
+{% from "_instruments.html" import stages, queue_stages %}
 {% block title %}Hypotheses · Quant{% endblock %}
 {% block content %}
 {% set lanes = report.lanes %}
@@ -8,6 +8,44 @@
   <span class="aside num">{{ report.cards|length }} cards · <a href="/lineage">Lineage</a></span>
 </div>
 
+{% if queue.available %}
+<section class="tile tile--hero" id="queue">
+  <header class="tile-head">
+    <span class="tile-label">Task queue</span>
+    <span class="tile-meta">autonomous-queue.md · {{ queue.open|length }} open of {{ queue.total }}</span>
+  </header>
+  {{ queue_stages(queue) }}
+</section>
+
+{% for key in ("running", "review", "ready", "blocked") %}
+{% set items = queue.open|selectattr("status", "equalto", key)|list %}
+{% if items %}
+<details class="lane" id="queue-{{ key }}" data-lane{% if key != "blocked" %} open{% endif %}>
+  <summary class="lane-head">
+    <span class="state"><span class="dot dot--{{ items[0].dot }}"></span>{{ items[0].label }}</span>
+    <span class="num">{{ items|length }}</span>
+  </summary>
+<section class="group" data-filter-group>
+  {% for item in items %}
+  <div class="row" data-filter="{{ item.task_id }} {{ item.title }} {{ item.status_text }}">
+    <span class="dot dot--{{ item.dot }}{{ ' dot--live' if key == 'running' }}"></span>
+    <span class="row-main">
+      <span class="row-title"><span class="id">{{ item.task_id }}</span><span class="text">{{ item.title }}</span></span>
+      <span class="row-sub">{{ item.last_note or item.status_text }}</span>
+    </span>
+    <span class="row-aside">
+      <span class="num">{{ item.updated_at|ago if item.updated_at else "–" }}</span>
+      <span>{{ item.status_text }}</span>
+    </span>
+  </div>
+  {% endfor %}
+</section>
+</details>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+<div class="section">Hypothesis cards</div>
 <section class="tile tile--hero">
   <header class="tile-head">
     <span class="tile-label">Pipeline</span>

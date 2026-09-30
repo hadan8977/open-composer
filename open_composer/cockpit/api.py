@@ -53,6 +53,7 @@ from fastapi.responses import JSONResponse
 from open_composer.cockpit.data.agents import (
     AGENT_ID_RE,
     build_agent_detail,
+    count_display_states,
     load_agents,
     load_heavy_jobs,
 )
@@ -297,15 +298,14 @@ def register_api_routes(app: FastAPI, *, status_context: Callable[[], dict[str, 
         root = project_root()
         report = load_agents()
         heavy = load_heavy_jobs()
-        counts = {
-            "running": sum(1 for a in report.agents if a.record.last_status == "running"),
-            "idle": sum(1 for a in report.agents if a.record.last_status == "idle"),
-            "error": sum(1 for a in report.agents if a.record.last_status == "error"),
-            "closed": sum(1 for a in report.agents if a.record.last_status == "closed"),
-        }
+        counts = count_display_states(report)
         payload = {
             "generated_at": to_jsonable(datetime.now(UTC), root=root),
             "counts": counts,
+            "recent_error_count": report.recent_error_count,
+            "closed_collapsed_count": report.closed_collapsed_count,
+            "stale_hidden_count": report.stale_hidden_count,
+            "other_project_hidden_count": report.other_project_hidden_count,
             "agents": to_jsonable(report.agents, root=root),
             "heavy": to_jsonable(heavy, root=root),
         }

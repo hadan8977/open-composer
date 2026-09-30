@@ -296,6 +296,12 @@ class DataFreshnessEntry:
     latest_date: date | None
     sessions_behind: int | None
     status: Status
+    #: Read by the paper sleeves every session (their signals come from the
+    #: SIP daily archive). Only a live source's age is an alert; the feature
+    #: and factor tables are research snapshots rebuilt when a study needs
+    #: them, so their age is shown but never raised (owner 2026-09-30: the
+    #: Now page's "9 sources stale" was noise).
+    live: bool = False
 
 
 #: `timeUnit` string (from a statistics logical-type's JSON) to ticks-per-second.
@@ -478,10 +484,16 @@ def _freshness_entry(
     today: date,
     warn_at: int,
     stale_after: int,
+    live: bool = False,
 ) -> DataFreshnessEntry:
     if latest is None:
         return DataFreshnessEntry(
-            name=name, detail=detail, latest_date=None, sessions_behind=None, status="unknown"
+            name=name,
+            detail=detail,
+            latest_date=None,
+            sessions_behind=None,
+            status="unknown",
+            live=live,
         )
     reference = _last_completed_session(today) or today
     behind = _sessions_behind(latest, reference)
@@ -492,6 +504,7 @@ def _freshness_entry(
         latest_date=latest,
         sessions_behind=behind,
         status=status,
+        live=live,
     )
 
 
@@ -525,7 +538,13 @@ def build_data_freshness(
     sip_latest, sip_detail = latest_date_in_sip_daily(base / "data" / "sip" / "daily")
     entries.append(
         _freshness_entry(
-            "SIP daily archive", sip_latest, sip_detail, today=ref_today, warn_at=2, stale_after=2
+            "SIP daily archive",
+            sip_latest,
+            sip_detail,
+            today=ref_today,
+            warn_at=2,
+            stale_after=2,
+            live=True,
         )
     )
 

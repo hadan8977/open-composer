@@ -73,6 +73,7 @@ from pathlib import Path
 from typing import Any, Final, Literal
 
 from open_composer.cockpit.security import secret_scrub
+from open_composer.config import project_root
 
 # --------------------------------------------------------------------------
 # On-disk roots. Bare module globals, never baked into a function's default
@@ -101,6 +102,39 @@ AGENT_ID_RE: Final[re.Pattern[str]] = re.compile(
 SUBAGENT_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[0-9a-f]{17}$")
 
 CLOSED_STALE_HOURS: Final[float] = 48.0
+#: A non-running, non-closed session whose last activity is older than this is
+#: dropped from the list and counted in `AgentsReport.stale_hidden_count`.
+STALE_HIDE_HOURS: Final[float] = 72.0
+#: An `error` session only counts towards `recent_error_count` (and only keeps
+#: its red dot) when its last activity is at most this old.
+RECENT_ERROR_HOURS: Final[float] = 24.0
+#: Display-title limits (`compute_display_title`).
+_DISPLAY_TITLE_CHARS: Final[int] = 80
+_DISPLAY_SUBTITLE_TITLE_CHARS: Final[int] = 40
+_DISPLAY_SUBTITLE_TEXT_CHARS: Final[int] = 80
+#: How much of the latest human message `AgentActivity` keeps (display cuts to 80).
+_LAST_HUMAN_KEEP_CHARS: Final[int] = 200
+#: A Paseo auto-research round's first prompt starts with this; every round
+#: shares one long prompt, so the raw title cannot tell two rounds apart.
+_AUTO_ROUND_PREFIX: Final[str] = "Open Composer 自动研究"
+_SYSTEM_REMINDER_RE: Final[re.Pattern[str]] = re.compile(
+    r"<system-reminder>.*?</system-reminder>", re.DOTALL
+)
+#: Text that starts with one of these is tooling or an automated report, not a
+#: message a person typed.
+_NON_HUMAN_PREFIXES: Final[tuple[str, ...]] = (
+    "<system-reminder>",
+    "<task-notification>",
+    "<command-",
+    "<local-command",
+    "【自动研究轮汇报",
+    "【执行轮提醒",
+    "<environment_context>",
+    "<user_instructions>",
+    "# AGENTS.md",
+    "[Request interrupted",
+    "This session is being continued from a previous conversation",
+)
 #: "read a bounded tail (last 256 KiB)" -- plan "Build", item 1.
 _TRANSCRIPT_TAIL_BYTES: Final[int] = 256 * 1024
 #: Per-poll cap for the SSE tail (plan section 6, rule 5: bounded reads,
@@ -223,6 +257,10 @@ class AgentActivity:
     last_text: str | None
     last_entry_at: datetime | None
     warning: str | None
+    #: The most recent message a person typed, found in the same bounded tail
+    #: (scrubbed, single line, <= `_LAST_HUMAN_KEEP_CHARS`); `None` if the tail
+    #: holds none. Input to `compute_display_title`.
+    last_human_message: str | None = None
 
 
 @dataclass(frozen=True)
@@ -236,6 +274,13 @@ class AgentSummary:
 
     record: AgentRecord
     activity: AgentActivity | None
+    #: Computed by `compute_display_title` (scrubbed); the raw `record.title`
+    #: is the first prompt of the session, which rarely says what it is about.
+    display_title: str = ""
+    display_subtitle: str | None = None
+    #: `True` for an `error` session whose last activity is within
+    #: `RECENT_ERROR_HOURS`; an older error renders as a grey idle dot.
+    recent_error: bool = False
 
 
 @dataclass(frozen=True)
@@ -245,6 +290,13 @@ class AgentsReport:
     closed_stale_cutoff: datetime
     generated_at: datetime
     warnings: tuple[str, ...]
+    #: Sessions whose `cwd` is missing or outside the project root. Not listed,
+    #: not counted in any state.
+    other_project_hidden_count: int = 0
+    #: Non-running, non-closed sessions with no activity for `STALE_HIDE_HOURS`.
+    stale_hidden_count: int = 0
+    #: Visible `error` sessions with activity in the last `RECENT_ERROR_HOURS`.
+    recent_error_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -287,6 +339,8 @@ class AgentDetail:
     transcript_kind: TranscriptKind
     transcript_available: bool
     warnings: tuple[str, ...]
+    display_title: str = ""
+    display_subtitle: str | None = None
 
 
 @dataclass(frozen=True)
@@ -642,9 +696,160 @@ def _pair_tool_durations(entries: list[TimelineEntry]) -> list[TimelineEntry]:
     return paired
 
 
-def _read_transcript_entries(
-    kind: TranscriptKind, path: Path, *, max_bytes: int
-) -> list[TimelineEntry]:
+def _human_text(text: str) -> str | None:
+    """One message block's human-typed text, or `None` if it is not one.
+
+    Embedded `<system-reminder>` blocks are removed first; what is left must be
+    non-blank and must not start with a tooling/automation prefix.
+    """
+    cleaned = _SYSTEM_REMINDER_RE.sub("", text).strip()
+    if not cleaned or cleaned.startswith(_NON_HUMAN_PREFIXES):
+        return None
+    return cleaned
+
+
+def _claude_user_line_human_text(line: dict[str, Any]) -> str | None:
+    if line.get("type") != "user" or line.get("isMeta") or line.get("isCompactSummary"):
+        return None
+    message = line.get("message")
+    content = message.get("content") if isinstance(message, dict) else None
+    blocks: list[str] = []
+    if isinstance(content, str):
+        blocks.append(content)
+    elif isinstance(content, list):
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "tool_result":
+                return None  # a tool's reply, never a person
+            text = block.get("text")
+            if block.get("type") == "text" and isinstance(text, str):
+                blocks.append(text)
+    kept = [t for t in (_human_text(b) for b in blocks) if t]
+    return "\n".join(kept) if kept else None
+
+
+def _codex_line_human_text(line: dict[str, Any]) -> str | None:
+    if line.get("type") != "response_item":
+        return None
+    payload = line.get("payload")
+    if not isinstance(payload, dict) or payload.get("type") != "message":
+        return None
+    if payload.get("role") != "user":
+        return None
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return None
+    blocks = [
+        block["text"]
+        for block in content
+        if isinstance(block, dict) and isinstance(block.get("text"), str)
+    ]
+    kept = [t for t in (_human_text(b) for b in blocks) if t]
+    return "\n".join(kept) if kept else None
+
+
+def last_human_message(kind: TranscriptKind, lines: list[dict[str, Any]]) -> str | None:
+    """The most recent message a person typed, from already-parsed tail lines.
+
+    Excludes tool results, `<system-reminder>`/`<task-notification>`/
+    `<command-*>`/`<local-command*>` text, the automatic `【自动研究轮汇报` and
+    `【执行轮提醒` reports and blank messages. Returns a scrubbed, single-line
+    string (at most `_LAST_HUMAN_KEEP_CHARS`), or `None`.
+    """
+    extract = _codex_line_human_text if kind == "codex" else _claude_user_line_human_text
+    for line in reversed(lines):
+        text = extract(line)
+        if text:
+            return _finalize_text(" ".join(text.split()), limit=_LAST_HUMAN_KEEP_CHARS) or None
+    return None
+
+
+#: A long interactive session's 256 KiB tail is often all tool output, with no
+#: human message in it. When the tail has none, look further back for the last
+#: one -- at most this far from the end of the file, in chunks, never holding
+#: more than one chunk in memory.
+_HUMAN_SCAN_MAX_BYTES: Final[int] = 16 * 1024 * 1024
+_HUMAN_SCAN_CHUNK_BYTES: Final[int] = 1024 * 1024
+_human_scan_cache: dict[str, tuple[int, str | None]] = {}
+_human_scan_lock = threading.Lock()
+
+
+def _scan_human_region(kind: TranscriptKind, path: Path, start: int, end: int) -> str | None:
+    """Last human message among the complete lines in bytes `[start, end)`.
+
+    `start` must be a line boundary. Reads backwards one chunk at a time and
+    only parses lines that mention a user role and carry no `tool_result`.
+    """
+    extract = _codex_line_human_text if kind == "codex" else _claude_user_line_human_text
+    with path.open("rb") as handle:
+        carry = b""
+        pos = end
+        while pos > start:
+            low = max(start, pos - _HUMAN_SCAN_CHUNK_BYTES)
+            handle.seek(low)
+            parts = (handle.read(pos - low) + carry).split(b"\n")
+            if low > start:
+                carry, parts = parts[0], parts[1:]
+            else:
+                carry = b""
+            for raw in reversed(parts):
+                if b'"user"' not in raw or b'"tool_result"' in raw:
+                    continue
+                try:
+                    obj = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(obj, dict):
+                    continue
+                text = extract(obj)
+                if text:
+                    return (
+                        _finalize_text(" ".join(text.split()), limit=_LAST_HUMAN_KEEP_CHARS) or None
+                    )
+            pos = low
+    return None
+
+
+def _scan_human_beyond_tail(kind: TranscriptKind, path: Path) -> str | None:
+    """`last_human_message` for a transcript whose tail held none.
+
+    Incremental: the result and the size scanned so far are cached per path,
+    so a growing live transcript only re-reads what was appended since.
+    """
+    try:
+        size = path.stat().st_size
+        with path.open("rb") as handle:
+            handle.seek(max(0, size - 1))
+            ends_clean = size == 0 or handle.read(1) == b"\n"
+    except OSError:
+        return None
+    key = str(path)
+    with _human_scan_lock:
+        cached = _human_scan_cache.get(key)
+    try:
+        if cached is not None and cached[0] <= size:
+            scanned, found = cached
+            fresh = _scan_human_region(kind, path, scanned, size) if size > scanned else None
+            found = fresh or found
+        else:
+            found = _scan_human_region(kind, path, max(0, size - _HUMAN_SCAN_MAX_BYTES), size)
+    except OSError:
+        return None
+    # A last line without its newline may still be growing: do not cache a
+    # scan position in the middle of it.
+    if ends_clean:
+        with _human_scan_lock:
+            if len(_human_scan_cache) > 256:
+                _human_scan_cache.clear()
+            _human_scan_cache[key] = (size, found)
+    return found
+
+
+def _read_transcript(
+    kind: TranscriptKind, path: Path, *, max_bytes: int, scan_beyond_tail: bool = True
+) -> tuple[list[TimelineEntry], str | None]:
+    """One bounded tail read -> `(entries, last human message)`."""
     result = _read_tail_bytes(path, max_bytes)
     if result is None:
         raise OSError(f"cannot read transcript {path}")
@@ -655,7 +860,16 @@ def _read_transcript_entries(
         if kind == "codex"
         else _entries_from_claude_style_lines(lines)
     )
-    return _pair_tool_durations(entries)
+    human = last_human_message(kind, lines)
+    if human is None and truncated and scan_beyond_tail:
+        human = _scan_human_beyond_tail(kind, path)
+    return _pair_tool_durations(entries), human
+
+
+def _read_transcript_entries(
+    kind: TranscriptKind, path: Path, *, max_bytes: int
+) -> list[TimelineEntry]:
+    return _read_transcript(kind, path, max_bytes=max_bytes, scan_beyond_tail=False)[0]
 
 
 def summarize_activity(
@@ -852,7 +1066,7 @@ def build_agent_activity(
     if path is None:
         return AgentActivity(kind, None, None, None, None, None)
     try:
-        entries = _read_transcript_entries(kind, path, max_bytes=tail_bytes)
+        entries, human = _read_transcript(kind, path, max_bytes=tail_bytes)
     except OSError as exc:
         return AgentActivity(
             kind,
@@ -863,7 +1077,63 @@ def build_agent_activity(
             warning=f"failed to read transcript for agent {record.id}: {exc}",
         )
     current_file, last_text, last_entry_at = summarize_activity(entries)
-    return AgentActivity(kind, path, current_file, last_text, last_entry_at, None)
+    return AgentActivity(kind, path, current_file, last_text, last_entry_at, None, human)
+
+
+def _single_line(text: str, limit: int) -> str:
+    return _finalize_text(" ".join(text.split()), limit=limit)
+
+
+def _first_line(text: str, limit: int) -> str | None:
+    for raw in text.splitlines():
+        if raw.strip():
+            return _finalize_text(raw.strip(), limit=limit) or None
+    return None
+
+
+def compute_display_title(
+    record: AgentRecord,
+    *,
+    last_human: str | None = None,
+    last_assistant_text: str | None = None,
+) -> tuple[str, str | None]:
+    """`(display_title, display_subtitle)` for one session; pure, scrubbed.
+
+    * Auto-research round (raw title starts with `Open Composer 自动研究轮`):
+      `主审轮`/`执行轮`/`研究轮` + ` · MM-DD HH:MM UTC` of `created_at`; the
+      subtitle is the first line of the last assistant message (80 chars).
+    * Otherwise the latest human message (80 chars, one line) with the subtitle
+      `起始：` + the raw title (40 chars). Without a human message it is the raw
+      title and no subtitle.
+    """
+    raw_title = record.title or ""
+    if raw_title.startswith(_AUTO_ROUND_PREFIX):
+        if "轮次类型：主审轮" in raw_title:
+            label = "主审轮"
+        elif "轮次类型：执行轮" in raw_title:
+            label = "执行轮"
+        else:
+            label = "研究轮"
+        stamp = record.created_at or record.updated_at
+        title = label if stamp is None else f"{label} · {stamp.astimezone(UTC):%m-%d %H:%M} UTC"
+        subtitle = (
+            _first_line(last_assistant_text, _DISPLAY_SUBTITLE_TEXT_CHARS)
+            if (last_assistant_text)
+            else None
+        )
+        return title, subtitle
+
+    fallback = _single_line(raw_title, 400) or record.id[:8]
+    if last_human:
+        title = _single_line(last_human, _DISPLAY_TITLE_CHARS)
+        if title:
+            subtitle = (
+                "起始：" + _single_line(raw_title, _DISPLAY_SUBTITLE_TITLE_CHARS)
+                if raw_title.strip() and _single_line(raw_title, 400) != title
+                else None
+            )
+            return title, subtitle
+    return fallback, None
 
 
 #: The Now screen's live card: how many of a running session's latest tool
@@ -880,6 +1150,8 @@ class LiveSession:
     record: AgentRecord
     activity: AgentActivity
     recent_tools: tuple[TimelineEntry, ...]
+    display_title: str = ""
+    display_subtitle: str | None = None
 
 
 def build_live_session(
@@ -892,21 +1164,31 @@ def build_live_session(
 ) -> LiveSession:
     """One bounded tail read, shared by the activity summary and the tool feed."""
     empty = AgentActivity("none", None, None, None, None, None)
+    base_title, base_subtitle = compute_display_title(record)
     try:
         kind, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
     except OSError as exc:
-        return LiveSession(record, replace(empty, warning=f"transcript lookup failed: {exc}"), ())
+        return LiveSession(
+            record,
+            replace(empty, warning=f"transcript lookup failed: {exc}"),
+            (),
+            base_title,
+            base_subtitle,
+        )
     if path is None:
-        return LiveSession(record, replace(empty, transcript_kind=kind), ())
+        return LiveSession(
+            record, replace(empty, transcript_kind=kind), (), base_title, base_subtitle
+        )
     try:
-        entries = _read_transcript_entries(kind, path, max_bytes=tail_bytes)
+        entries, human = _read_transcript(kind, path, max_bytes=tail_bytes)
     except OSError as exc:
         activity = AgentActivity(kind, path, None, None, None, f"transcript unreadable: {exc}")
-        return LiveSession(record, activity, ())
+        return LiveSession(record, activity, (), base_title, base_subtitle)
     current_file, last_text, last_entry_at = summarize_activity(entries)
-    activity = AgentActivity(kind, path, current_file, last_text, last_entry_at, None)
+    activity = AgentActivity(kind, path, current_file, last_text, last_entry_at, None, human)
     recent = [entry for entry in entries if entry.kind == "tool"][-tools:] if tools > 0 else []
-    return LiveSession(record, activity, tuple(recent))
+    title, subtitle = compute_display_title(record, last_human=human, last_assistant_text=last_text)
+    return LiveSession(record, activity, tuple(recent), title, subtitle)
 
 
 # --------------------------------------------------------------------------
@@ -922,13 +1204,23 @@ def load_agents(
     now: datetime | None = None,
     enrich: bool = True,
     tail_bytes: int = _TRANSCRIPT_TAIL_BYTES,
+    project_root_path: Path | None = None,
 ) -> AgentsReport:
-    """Every agent, sorted and bucketed, per plan "Build" item 1.
+    """This project's agents, sorted and bucketed, per plan "Build" item 1.
+
+    Only sessions whose `cwd` is inside the project root are kept; the rest
+    (including a missing `cwd`) are counted in `other_project_hidden_count`.
+    Among the kept ones:
+
+    * a closed agent whose last activity is older than `CLOSED_STALE_HOURS`
+      is counted in `closed_collapsed_count`, not listed;
+    * any other non-running agent idle for more than `STALE_HIDE_HOURS` is
+      counted in `stale_hidden_count`, not listed; running agents always show;
+    * `recent_error_count` counts visible `error` agents active within
+      `RECENT_ERROR_HOURS`; an older visible error sorts and draws as idle.
 
     Sort order: running -> error -> idle -> closed, then by most-recent
-    activity within each bucket. A closed agent whose last activity is
-    older than `CLOSED_STALE_HOURS` is dropped from the list and counted in
-    `closed_collapsed_count` instead ("collapsed into a count, not listed").
+    activity within each bucket.
 
     `enrich=False` skips transcript resolution/reading entirely (no
     filesystem access beyond the agent JSON files themselves) -- used by the
@@ -956,24 +1248,58 @@ def load_agents(
     # box with no Paseo agents configured yet), not a warning.
 
     cutoff = moment - timedelta(hours=CLOSED_STALE_HOURS)
+    stale_cutoff = moment - timedelta(hours=STALE_HIDE_HOURS)
+    error_cutoff = moment - timedelta(hours=RECENT_ERROR_HOURS)
+    root_path = (project_root_path if project_root_path is not None else project_root()).resolve()
+    inside_cache: dict[str, bool] = {}
+
+    def _in_project(cwd: str | None) -> bool:
+        if not cwd:
+            return False
+        if cwd not in inside_cache:
+            try:
+                inside_cache[cwd] = Path(cwd).resolve().is_relative_to(root_path)
+            except (OSError, RuntimeError, ValueError):
+                inside_cache[cwd] = False
+        return inside_cache[cwd]
+
+    def _reference(record: AgentRecord) -> datetime | None:
+        return record.last_activity_at or record.updated_at or record.created_at
+
+    def _is_recent_error(record: AgentRecord) -> bool:
+        reference = _reference(record)
+        return record.last_status == "error" and reference is not None and reference >= error_cutoff
+
     visible: list[AgentRecord] = []
     collapsed = 0
+    stale_hidden = 0
+    other_project = 0
     for record in records:
+        if not _in_project(record.cwd):
+            other_project += 1
+            continue
+        reference = _reference(record)
         if record.last_status == "closed":
-            reference = record.last_activity_at or record.updated_at or record.created_at
             if reference is None or reference < cutoff:
                 collapsed += 1
                 continue
+        elif record.last_status != "running" and (reference is None or reference < stale_cutoff):
+            stale_hidden += 1
+            continue
         visible.append(record)
 
     def _sort_key(record: AgentRecord) -> tuple[int, float]:
-        reference = record.last_activity_at or record.updated_at or record.created_at
+        reference = _reference(record)
         epoch = reference.timestamp() if reference is not None else float("-inf")
-        return (_STATE_RANK.get(record.last_status, len(_STATE_RANK)), -epoch)
+        status = record.last_status
+        if status == "error" and not _is_recent_error(record):
+            status = "idle"
+        return (_STATE_RANK.get(status, len(_STATE_RANK)), -epoch)
 
     visible.sort(key=_sort_key)
 
     summaries: list[AgentSummary] = []
+    recent_errors = 0
     for record in visible:
         activity: AgentActivity | None = None
         if enrich and record.last_status != "closed":
@@ -982,7 +1308,22 @@ def load_agents(
             )
             if activity.warning:
                 warnings.append(activity.warning)
-        summaries.append(AgentSummary(record=record, activity=activity))
+        title, subtitle = compute_display_title(
+            record,
+            last_human=activity.last_human_message if activity else None,
+            last_assistant_text=activity.last_text if activity else None,
+        )
+        recent = _is_recent_error(record)
+        recent_errors += 1 if recent else 0
+        summaries.append(
+            AgentSummary(
+                record=record,
+                activity=activity,
+                display_title=title,
+                display_subtitle=subtitle,
+                recent_error=recent,
+            )
+        )
 
     return AgentsReport(
         agents=tuple(summaries),
@@ -990,7 +1331,26 @@ def load_agents(
         closed_stale_cutoff=cutoff,
         generated_at=moment,
         warnings=tuple(warnings),
+        other_project_hidden_count=other_project,
+        stale_hidden_count=stale_hidden,
+        recent_error_count=recent_errors,
     )
+
+
+def display_status(summary: AgentSummary) -> str:
+    """The state every screen draws and counts: `record.last_status`, except
+    an `error` older than `RECENT_ERROR_HOURS` reads as `idle`."""
+    status = summary.record.last_status
+    return "idle" if status == "error" and not summary.recent_error else status
+
+
+def count_display_states(report: AgentsReport) -> dict[str, int]:
+    """Listed sessions per `display_status` (hidden ones are not counted)."""
+    counts = {"running": 0, "idle": 0, "error": 0, "closed": 0}
+    for summary in report.agents:
+        state = display_status(summary)
+        counts[state] = counts.get(state, 0) + 1
+    return counts
 
 
 #: T10 build item 5: how long `TopbarAgentsCache` reuses a `load_agents(enrich=False)`
@@ -1331,9 +1691,13 @@ def build_agent_detail(
     kind, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
     entries: tuple[TimelineEntry, ...] = ()
     entries_total = 0
+    human: str | None = None
+    last_text: str | None = None
     if path is not None:
         try:
-            all_entries = tuple(_read_transcript_entries(kind, path, max_bytes=tail_bytes))
+            parsed, human = _read_transcript(kind, path, max_bytes=tail_bytes)
+            all_entries = tuple(parsed)
+            last_text = summarize_activity(all_entries)[1]
             entries_total = len(all_entries)
             entries = all_entries[-max_entries:] if entries_total > max_entries else all_entries
         except OSError as exc:
@@ -1347,6 +1711,9 @@ def build_agent_detail(
         subagents = ()
         warnings.append(f"subagent discovery failed: {exc}")
 
+    display_title, display_subtitle = compute_display_title(
+        record, last_human=human, last_assistant_text=last_text
+    )
     return AgentDetail(
         record=record,
         entries=entries,
@@ -1355,6 +1722,8 @@ def build_agent_detail(
         transcript_kind=kind,
         transcript_available=path is not None,
         warnings=tuple(warnings),
+        display_title=display_title,
+        display_subtitle=display_subtitle,
     )
 
 
@@ -1572,6 +1941,8 @@ __all__ = [
     "AGENT_ID_RE",
     "CLAUDE_PROJECTS_DIR",
     "CLOSED_STALE_HOURS",
+    "RECENT_ERROR_HOURS",
+    "STALE_HIDE_HOURS",
     "CODEX_SESSIONS_DIR",
     "DEFAULT_SSE_KEEPALIVE_INTERVAL_SECONDS",
     "DEFAULT_SSE_MAX_DURATION_SECONDS",
@@ -1596,11 +1967,15 @@ __all__ = [
     "build_agent_activity",
     "build_agent_detail",
     "build_live_session",
+    "compute_display_title",
+    "count_display_states",
+    "display_status",
     "find_agent_record",
     "format_elapsed_seconds",
     "format_entry_count",
     "format_timeline_time",
     "get_default_topbar_agents_cache",
+    "last_human_message",
     "load_agents",
     "load_heavy_jobs",
     "load_subagent_tasks",

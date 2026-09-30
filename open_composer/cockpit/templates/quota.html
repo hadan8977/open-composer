@@ -27,6 +27,8 @@
       <div class="quota-line">
         {% if snap.available and snap.windows %}
           {% for w in snap.windows[:2] %}<span><span class="dot dot--{{ w.status }}"></span>{{ w.label }} <b class="num">{{ "%.0f%%"|format(w.percent_used) if w.percent_used is not none else "–" }}</b></span>{% endfor %}
+        {% elif snap.unavailable_reason == quota_disabled_reason %}
+          <span class="faint" title="{{ snap.unavailable_reason }}"><span class="dot dot--unknown"></span>Live quota off · estimate only</span>
         {% else %}
           <span><span class="dot dot--warn"></span>Live quota · {{ (snap.unavailable_reason or "unknown").split(" -- ")[0] }}</span>
         {% endif %}
@@ -78,7 +80,7 @@
     <span class="metric-value num"><span class="dot dot--{{ first.status }}"></span>{{ "%.0f%%"|format(first.percent_used) if first.percent_used is not none else "–" }}</span>
     <span class="metric-sub">{{ first.label }}{% if claude.served_from_cache %} · cached{% endif %}</span>
     {% else %}
-    <span class="metric-value is-word"><span class="dot dot--unknown"></span>unavailable</span>
+    <span class="metric-value is-word"><span class="dot dot--unknown"></span>{{ "off" if snap.unavailable_reason == quota_disabled_reason else "unavailable" }}</span>
     <span class="metric-sub" title="{{ snap.unavailable_reason }}">{{ snap.unavailable_reason }}</span>
     {% endif %}
   </div>

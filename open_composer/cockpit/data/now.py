@@ -1,12 +1,17 @@
 """The Now screen: one glance across every other screen (2026-09-24 redesign).
 
 Answers four questions in one view -- is anything wrong, what are the agents
-doing, where is paper equity, how much budget is burning -- by composing the
-other data modules rather than re-reading anything itself. Heavy sources the
-app already caches (the agent list, the usage estimate, the live quota, the
-activity field, data freshness) are passed in by the route; everything else
-here is a cheap file read. Like every cockpit data module this never renders
-HTML and never raises for a missing source.
+doing, how are the paper sleeves doing, how much budget is burning -- by
+composing the other data modules rather than re-reading anything itself.
+Heavy sources the app already caches (the agent list, the usage estimate, the
+live quota, the activity field, data freshness) are passed in by the route;
+everything else here is a cheap file read. Like every cockpit data module this
+never renders HTML and never raises for a missing source.
+
+Attention only counts what needs a look now (owner 2026-09-30: the old chips
+were noise): errors from the last `RECENT_ERROR_HOURS`, live data feeds (not
+research tables rebuilt on demand), and a live quota that is failing -- not
+one the owner switched off.
 """
 
 from __future__ import annotations
@@ -17,11 +22,13 @@ from pathlib import Path
 
 from open_composer.cockpit.data.activity import ActivityField
 from open_composer.cockpit.data.agents import (
-    AgentRecord,
     AgentsReport,
+    AgentSummary,
     HeavyJobsReport,
     LiveSession,
     build_live_session,
+    count_display_states,
+    display_status,
 )
 from open_composer.cockpit.data.health import (
     CronReport,
@@ -38,13 +45,17 @@ from open_composer.cockpit.data.paper import (
     AccountEquityHistory,
     AccountSnapshot,
     KillSwitchStatus,
+    SleevePerformance,
     build_account_equity_history,
+    build_sleeve_performance,
     discover_strategy_names,
     load_account_snapshot,
     load_authorization,
     load_kill_switch,
     load_open_order_count,
+    strategy_label,
 )
+from open_composer.cockpit.data.queue import QueueGlance, load_queue_glance
 from open_composer.cockpit.data.quota import TopbarQuota, UsageEstimate
 
 #: Research lanes folded into the four stages a glance needs. `unclassified`
@@ -92,6 +103,15 @@ class ResearchGlance:
 
 
 @dataclass(frozen=True)
+class SleeveGlance:
+    """One authorized paper sleeve's own book, for the Paper tile."""
+
+    name: str
+    label: str
+    performance: SleevePerformance
+
+
+@dataclass(frozen=True)
 class NowReport:
     generated_at: datetime
     equity: AccountEquityHistory
@@ -102,12 +122,14 @@ class NowReport:
     authorized: int
     expired: int
     soonest_expiry_days: float | None
-    agent_counts: dict[str, int]
+    agent_counts: dict[str, int]  # by `display_status`: old errors count as idle
     live: tuple[LiveSession, ...]
     last_active: LiveSession | None  # only when nothing is running
-    errored: tuple[AgentRecord, ...]
+    errored: tuple[AgentSummary, ...]  # errors from the last RECENT_ERROR_HOURS
     heavy: HeavyJobsReport
     research: ResearchGlance
+    queue: QueueGlance
+    sleeves: tuple[SleeveGlance, ...]
     usage: UsageEstimate
     claude: TopbarQuota
     freshness: tuple[DataFreshnessEntry, ...]
@@ -119,8 +141,17 @@ class NowReport:
     more_attention: int
 
     @property
+    def live_sources(self) -> tuple[DataFreshnessEntry, ...]:
+        return tuple(entry for entry in self.freshness if entry.live)
+
+    @property
+    def research_sources(self) -> tuple[DataFreshnessEntry, ...]:
+        return tuple(entry for entry in self.freshness if not entry.live)
+
+    @property
     def stale_sources(self) -> int:
-        return sum(1 for entry in self.freshness if entry.status == "stale")
+        """Stale *live* sources only -- see `DataFreshnessEntry.live`."""
+        return sum(1 for entry in self.live_sources if entry.status == "stale")
 
     @property
     def failing_cron(self) -> int:
@@ -165,7 +196,11 @@ def derive_attention(
     disk: DiskStatus | None,
     memory: MemoryStatus | None,
 ) -> list[Attention]:
-    """Everything that needs a look, most urgent first; `All clear` if nothing."""
+    """Everything that needs a look, most urgent first; `All clear` if nothing.
+
+    `agent_errors` and `stale_sources` must already be narrowed to recent
+    errors and live sources; a quota the owner switched off is not a finding.
+    """
     found: list[Attention] = []
     if kill_switch.enabled:
         found.append(Attention("stale", "Kill switch on", "/paper"))
@@ -179,20 +214,18 @@ def derive_attention(
         )
     if failing_cron:
         found.append(Attention("stale", f"{failing_cron} cron failing", "/health"))
-    if not claude.available:
-        reason = (claude.unavailable_reason or "unknown").split(" -- ")[0]
-        text = (
-            "Claude token expired" if reason.startswith("token expired") else f"Live quota {reason}"
-        )
-        found.append(Attention("warn", text, "/quota"))
-    else:
+    if claude.available:
         for bar in claude.bars:
             if bar.status in ("warn", "stale"):
                 found.append(Attention(bar.status, f"{bar.label} {bar.percent_display}", "/quota"))
+    elif not claude.disabled:
+        reason = (claude.unavailable_reason or "unknown").split(" -- ")[0]
+        text = "Claude token expired" if reason.startswith("token expired") else f"Quota {reason}"
+        found.append(Attention("warn", text, "/quota"))
     if stale_sources:
         found.append(
             Attention(
-                "warn", f"{stale_sources} source{'s' * (stale_sources != 1)} stale", "/health"
+                "warn", f"{stale_sources} live feed{'s' * (stale_sources != 1)} stale", "/health"
             )
         )
     if soonest_expiry_days is not None and 0 <= soonest_expiry_days < _AUTH_WARN_DAYS:
@@ -238,19 +271,30 @@ def build_now_report(
     kill_switch = load_kill_switch(root)
     open_orders, _warnings = load_open_order_count(root)
 
-    counts = {"running": 0, "idle": 0, "error": 0, "closed": 0}
-    for summary in agents.agents:
-        status = summary.record.last_status
-        counts[status] = counts.get(status, 0) + 1
+    counts = count_display_states(agents)
     running = [s.record for s in agents.agents if s.record.last_status == "running"]
     epoch = datetime.min.replace(tzinfo=UTC)
     running.sort(key=lambda record: record.last_activity_at or epoch, reverse=True)
     live = tuple(build_live_session(record) for record in running[:_LIVE_SESSIONS])
     # Nothing running: show what ran last (greyed), not an empty panel.
-    resting = [s.record for s in agents.agents if s.record.last_status in ("idle", "closed")]
+    resting = [s.record for s in agents.agents if display_status(s) in ("idle", "closed")]
     resting.sort(key=lambda record: record.last_activity_at or epoch, reverse=True)
     last_active = build_live_session(resting[0]) if not live and resting else None
-    errored = tuple(s.record for s in agents.agents if s.record.last_status == "error")
+    errored = tuple(s for s in agents.agents if display_status(s) == "error")
+    sleeves = tuple(
+        sorted(
+            (
+                SleeveGlance(
+                    name=name,
+                    label=strategy_label(name),
+                    performance=build_sleeve_performance(root, name),
+                )
+                for name, auth in zip(names, auths, strict=True)
+                if auth.state == "authorized"
+            ),
+            key=lambda sleeve: sleeve.label,
+        )
+    )
 
     try:
         cron = build_cron_report(repo_root=root)
@@ -266,7 +310,7 @@ def build_now_report(
         soonest_expiry_days=soonest,
         agent_errors=len(errored),
         failing_cron=sum(1 for job in cron.jobs if job.status == "stale"),
-        stale_sources=sum(1 for entry in freshness if entry.status == "stale"),
+        stale_sources=sum(1 for entry in freshness if entry.live and entry.status == "stale"),
         claude=claude,
         account=account,
         disk=disk,
@@ -288,6 +332,8 @@ def build_now_report(
         errored=errored,
         heavy=heavy,
         research=summarize_research(hypotheses, root),
+        queue=load_queue_glance(root),
+        sleeves=sleeves,
         usage=usage,
         claude=claude,
         freshness=freshness,
@@ -307,6 +353,7 @@ __all__ = [
     "PipelineStage",
     "RecentCard",
     "ResearchGlance",
+    "SleeveGlance",
     "build_now_report",
     "derive_attention",
     "summarize_research",

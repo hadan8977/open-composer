@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% from "_instruments.html" import money_hero, delta, equity_chart, led_meter, led_axis, burn, stages, live_card, meter %}
+{% from "_instruments.html" import money_hero, delta, equity_chart, led_meter, led_axis, burn, queue_stages, sleeve_line, live_card, meter %}
 {% block title %}Now · Quant{% endblock %}
 {% block content %}
 {% set r = report %}
 {% set eq = r.equity %}
 {% set c = r.agent_counts %}
 {% set usage = r.usage %}
+{% set q = r.queue %}
 
 <header class="page-head page-head--hero">
   <div>
@@ -37,6 +38,11 @@
     {% else %}
     <div class="well empty">No account snapshot yet</div>
     {% endif %}
+    {% if r.sleeves %}
+    <div class="sleeves" aria-label="Running sleeves, each on its own budget">
+      {%- for s in r.sleeves %}{{ sleeve_line(s.name, s.label, s.performance) }}{% endfor %}
+    </div>
+    {% endif %}
   </section>
 
   <section class="tile t-agents">
@@ -45,7 +51,7 @@
       <span class="counts num">
         <span><span class="dot dot--ok{{ ' dot--live' if c.running }}"></span><b>{{ c.running }}</b> live</span>
         <span><span class="dot dot--unknown"></span><b>{{ c.idle }}</b> idle</span>
-        {% if c.error %}<span><span class="dot dot--stale"></span><b>{{ c.error }}</b> error</span>{% endif %}
+        {% if c.error %}<span title="error in the last 24 hours"><span class="dot dot--stale"></span><b>{{ c.error }}</b> error</span>{% endif %}
       </span>
     </header>
     {% if r.live %}
@@ -58,10 +64,10 @@
     {% if r.live|length > 1 or r.errored or r.heavy.jobs %}
     <div class="minor">
       {%- for s in r.live[1:] %}
-      <a class="mrow" href="/agents/{{ s.record.id }}" data-detail><span class="dot dot--ok dot--live"></span><span class="mrow-t">{{ s.record.title or s.record.id[:8] }}</span><span class="mrow-a num">{{ (s.activity.last_entry_at or s.record.last_activity_at)|ago }}</span></a>
+      <a class="mrow" href="/agents/{{ s.record.id }}" data-detail><span class="dot dot--ok dot--live"></span><span class="mrow-t">{{ s.display_title or s.record.title or s.record.id[:8] }}</span><span class="mrow-a num">{{ (s.activity.last_entry_at or s.record.last_activity_at)|ago }}</span></a>
       {%- endfor %}
-      {%- for rec in r.errored[:3] %}
-      <a class="mrow" href="/agents/{{ rec.id }}" data-detail><span class="dot dot--stale"></span><span class="mrow-t">{{ rec.title or rec.id[:8] }}</span><span class="mrow-a num">error · {{ rec.last_activity_at|ago }}</span></a>
+      {%- for a in r.errored[:3] %}
+      <a class="mrow" href="/agents/{{ a.record.id }}" data-detail><span class="dot dot--stale"></span><span class="mrow-t">{{ a.display_title or a.record.title or a.record.id[:8] }}</span><span class="mrow-a num">error · {{ a.record.last_activity_at|ago }}</span></a>
       {%- endfor %}
       {%- for job in r.heavy.jobs[:3] %}
       {%- set share = (job.memory_current_bytes / job.memory_max_bytes) if job.memory_current_bytes is not none and job.memory_max_bytes else none %}
@@ -73,16 +79,21 @@
 
   <section class="tile t-research">
     <header class="tile-head">
-      <a class="tile-label" href="/hypotheses">Research</a>
-      <span class="tile-meta">{{ r.research.total }} cards</span>
+      <a class="tile-label" href="/hypotheses#queue">Research</a>
+      <span class="tile-meta">task queue · {{ q.total }} tasks</span>
     </header>
-    {{ stages(r.research) }}
-    {% if r.research.recent %}
+    {% if q.available %}
+    {{ queue_stages(q) }}
+    {% set moving = (q.open|rejectattr("status", "equalto", "blocked")|list)[:4] %}
+    {% if moving %}
     <div class="recent">
-      {%- for item in r.research.recent %}
-      <a class="mrow" href="/card/{{ item.card.id }}" data-detail><span class="dot dot--{{ item.status }}"></span><span class="mrow-main"><span class="mrow-t">{{ item.card.title }}</span><span class="mrow-s num">{{ item.card.id }} · {{ item.card.lane }} · {{ item.updated_at|ago }}</span></span></a>
+      {%- for item in moving %}
+      <a class="mrow" href="/hypotheses#queue-{{ item.status }}" title="{{ item.last_note or '' }}"><span class="dot dot--{{ item.dot }}{{ ' dot--live' if item.status == 'running' }}"></span><span class="mrow-main"><span class="mrow-t">{{ item.title }}</span><span class="mrow-s num">{{ item.task_id }} · {{ item.label|lower }}{% if item.updated_at %} · {{ item.updated_at|ago }}{% endif %}</span></span></a>
       {%- endfor %}
     </div>
+    {% endif %}
+    {% else %}
+    <div class="well empty">No task queue</div>
     {% endif %}
   </section>
 
@@ -98,6 +109,8 @@
     <div class="quota-line">
       {% if r.claude.available %}
         {% for bar in r.claude.bars %}<span title="{{ bar.reset_label }}"><span class="dot dot--{{ bar.status }}"></span>{{ bar.label }} <b class="num">{{ bar.percent_display }}</b></span>{% endfor %}
+      {% elif r.claude.disabled %}
+        <span class="faint" title="{{ r.claude.unavailable_reason }}"><span class="dot dot--unknown"></span>Live quota off · estimate only</span>
       {% else %}
         <span><span class="dot dot--warn"></span>Live quota · {{ (r.claude.unavailable_reason or "unknown").split(" -- ")[0] }}</span>
       {% endif %}
@@ -111,8 +124,8 @@
     </header>
     <div class="sys">
       <span class="sys-k">Data</span>
-      <span class="sys-v num">{{ r.stale_sources }}<span> stale of {{ r.freshness|length }}</span></span>
-      <span class="ticks">{% for e in r.freshness %}<i class="tk tk--{{ e.status }}" data-tip="{{ e.name }} · {{ e.status }}"></i>{% endfor %}</span>
+      <span class="sys-v num">{{ r.stale_sources }}<span> stale of {{ r.live_sources|length }} live</span></span>
+      <span class="ticks">{% for e in r.live_sources %}<i class="tk tk--{{ e.status }}" data-tip="{{ e.name }} · {{ e.status }}{% if e.latest_date %} · {{ e.latest_date.isoformat() }}{% endif %}"></i>{% endfor %}{% for e in r.research_sources %}<i class="tk" data-tip="{{ e.name }} · research table, rebuilt on demand{% if e.latest_date %} · {{ e.latest_date.isoformat() }}{% endif %}"></i>{% endfor %}</span>
 
       <span class="sys-k">Cron</span>
       {% if r.cron.available %}

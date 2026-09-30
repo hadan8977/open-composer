@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from open_composer.cockpit import app as APP_MODULE
 from open_composer.cockpit.app import create_app
 from open_composer.cockpit.data.hypotheses import load_cards
+from open_composer.cockpit.data.queue import parse_queue
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path, secret_scrub
 from open_composer.config import project_root
 
@@ -67,11 +68,22 @@ def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     # first: some cards' `layer` (e.g. "选股") is a literal substring of
     # another card's (e.g. "选股（独立策略）"), and stripping the short one
     # first would mangle the longer one into a leftover fragment.
+    # The research task queue (`/` tile, `/hypotheses` lanes) shows each
+    # task's authored title, status text and newest note: content too.
+    queue_text = (project_root() / "reports/research/control/autonomous-queue.md").read_text(
+        encoding="utf-8"
+    )
     known_content = sorted(
         {
             field
             for card in load_cards(project_root())
             for field in (card.title, card.layer, card.data_layer)
+            if field
+        }
+        | {
+            field
+            for item in parse_queue(queue_text)
+            for field in (item.title, item.status_text, item.last_note)
             if field
         },
         key=len,

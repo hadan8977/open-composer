@@ -58,6 +58,8 @@ from open_composer.cockpit.data.agents import (
     agent_state_dot,
     build_agent_detail,
     build_live_session,
+    count_display_states,
+    display_status,
     find_agent_record,
     format_elapsed_seconds,
     format_entry_count,
@@ -88,10 +90,11 @@ from open_composer.cockpit.data.paper import (
     build_paper_report,
     build_rehearsal_countdown,
     build_strategy_detail,
-    compute_equity_chart_layout,
     discover_strategy_names,
 )
+from open_composer.cockpit.data.queue import load_queue_glance
 from open_composer.cockpit.data.quota import (
+    QUOTA_DISABLED_REASON,
     THROTTLE_CALIBRATION_CACHE_TTL_SECONDS,
     USAGE_ESTIMATE_WINDOW_HOURS,
     CodexQuotaState,
@@ -175,7 +178,9 @@ TABS: tuple[tuple[str, str], ...] = (
 
 
 def _topbar_data_freshness(root: Path) -> dict[str, str]:
-    """Roll every data-freshness entry up into one badge for the top bar.
+    """Roll the live data sources (`DataFreshnessEntry.live`, the feeds the
+    paper sleeves read) up into one badge for the top bar. Research tables
+    rebuilt on demand are listed on `/health` but never turn this badge red.
 
     Best-effort: any failure degrades to an "unknown" badge rather than
     breaking the page the badge is decorating -- the health screen itself
@@ -183,7 +188,7 @@ def _topbar_data_freshness(root: Path) -> dict[str, str]:
     """
     try:
         entries = get_default_data_freshness_cache().get(root)
-        status = summarize_statuses(tuple(entry.status for entry in entries))
+        status = summarize_statuses(tuple(entry.status for entry in entries if entry.live))
     except Exception:
         return {"status": "unknown", "label": "unknown"}
     return {"status": status, "label": status}
@@ -254,8 +259,10 @@ def _topbar_agents() -> tuple[tuple[str, str], ...]:
         report = get_default_topbar_agents_cache().get()
     except Exception:
         return ()
+    # An `error` session with no activity in the last 24 hours reports as
+    # `idle`, so the bar's error dot/count only reflects current failures.
     return tuple(
-        (summary.record.id, summary.record.last_status)
+        (summary.record.id, display_status(summary))
         for summary in report.agents
         if summary.record.last_status != "closed"
     )
@@ -499,12 +506,14 @@ def create_app(*, warm: bool = True) -> FastAPI:
     templates.env.filters["elapsed_s"] = format_elapsed_seconds
     templates.env.filters["hms_ts"] = format_timeline_time
     templates.env.filters["agent_dot"] = agent_state_dot
+    templates.env.filters["shown_status"] = display_status
     templates.env.filters["ago"] = _format_ago
     templates.env.filters["hms"] = _format_hms
     templates.env.filters["money"] = _format_money
     templates.env.filters["k"] = _format_k
     templates.env.filters["count_sep"] = format_entry_count
     templates.env.globals["asset_v"] = _asset_version()
+    templates.env.globals["quota_disabled_reason"] = QUOTA_DISABLED_REASON
     templates.env.globals["equity_columns"] = equity_columns
     templates.env.globals["led_columns"] = led_columns
     templates.env.globals["fresh_bars"] = fresh_bars
@@ -581,6 +590,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
         context["headlines"] = headlines
         context["lane_status"] = lane_status
         context["research"] = summarize_research(report, project_root())
+        context["queue"] = load_queue_glance(project_root())
         return templates.TemplateResponse(request, "hypotheses.html", context)
 
     @app.get("/lineage", response_class=HTMLResponse)
@@ -671,12 +681,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
         """
         report = load_agents()
         heavy = load_heavy_jobs()
-        counts = {
-            "running": sum(1 for a in report.agents if a.record.last_status == "running"),
-            "idle": sum(1 for a in report.agents if a.record.last_status == "idle"),
-            "error": sum(1 for a in report.agents if a.record.last_status == "error"),
-            "closed": sum(1 for a in report.agents if a.record.last_status == "closed"),
-        }
+        counts = count_display_states(report)
         running = [a.record for a in report.agents if a.record.last_status == "running"]
         context = _base_context(request, "agents")
         context["report"] = report
@@ -766,7 +771,6 @@ def create_app(*, warm: bool = True) -> FastAPI:
         detail = build_strategy_detail(root, strategy)
         context = _base_context(request, "paper")
         context["detail"] = detail
-        context["chart"] = compute_equity_chart_layout(detail.equity_series)
         context["auth_state_labels"] = AUTH_STATE_LABELS
         return templates.TemplateResponse(request, "paper_detail.html", context)
 

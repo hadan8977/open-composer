@@ -1,10 +1,13 @@
 {% extends layout %}
-{% block title %}{{ detail.name }} · Quant{% endblock %}
+{% from "_instruments.html" import equity_chart %}
+{% block title %}{{ detail.label }} · Quant{% endblock %}
 {% block content %}
 {% set auth = detail.authorization %}
-<div class="detail" data-title="{{ detail.name }}">
+{% set perf = detail.performance %}
+<div class="detail" data-title="{{ detail.label }}">
   <div class="detail-head">
-    <h1 class="t-title">{{ detail.name }}</h1>
+    <h1 class="t-title">{{ detail.label }}</h1>
+    {% if detail.label != detail.name %}<p class="state mono faint">{{ detail.name }}</p>{% endif %}
     <p class="state">
       <span class="dot dot--{{ auth.status }}"></span>{{ auth_state_labels[auth.state] }}
       {% if auth.days_remaining is not none %} · <span class="num">{{ "%.1f"|format(auth.days_remaining) }}d</span> to expiry{% endif %}
@@ -12,6 +15,20 @@
       <span class="faint">·</span> <span title="{{ detail.generated_at.isoformat() if detail.generated_at else '' }}">{{ detail.generated_at|ago if detail.generated_at else "never" }}</span>
     </p>
   </div>
+
+  <div class="section">Sleeve book <span class="faint">{% if perf.budget is not none %}<span class="num">{{ perf.budget|money(0) }}</span> budget · {% endif %}own fills at fill prices, marked at each session close; dividends not attributed</span></div>
+  {% if perf.status == "live" %}
+  <div class="card">
+    <dl class="kv">
+      <dt>Return</dt><dd class="num"><b class="{{ 'is-up' if perf.return_pct > 0 else ('is-down' if perf.return_pct < 0 else '') }}">{{ "%+.2f%%"|format(perf.return_pct) }}</b> · NAV {{ perf.nav|money(0) }}</dd>
+      <dt>SPY same sessions</dt><dd class="num">{{ "%+.2f%%"|format(perf.benchmark_return_pct) if perf.benchmark_return_pct is not none else "–" }}{% if perf.excess_pct is not none %} · excess {{ "%+.2f"|format(perf.excess_pct) }} pts{% endif %}</dd>
+      <dt>Sessions</dt><dd class="num">{{ perf.sessions_live }} · {{ perf.start_session.isoformat() }} open → {{ perf.last_session.isoformat() }} close</dd>
+    </dl>
+    <div class="well well--chart mt6">{{ equity_chart(perf.history, what=detail.label ~ " sleeve NAV at each session close") }}</div>
+  </div>
+  {% else %}
+  <div class="card empty">{{ {"no_fills": "No fills yet", "no_budget": "No notional_budget_usd in the draft spec", "no_prices": "No local closes since the first fill yet"}.get(perf.status, perf.status) }}</div>
+  {% endif %}
 
   <div class="section">Authorization</div>
   <div class="card">
@@ -30,7 +47,7 @@
   {% if detail.positions %}
   <div class="table-wrap">
     <table class="t t--stack">
-      <thead><tr><th>Symbol</th><th class="num">Target w</th><th class="num">Target qty</th><th class="num">Ledger</th><th class="num">Broker</th><th class="num">Value</th><th class="num">Unrealized</th></tr></thead>
+      <thead><tr><th>Symbol</th><th class="num">Target w</th><th class="num">Target qty</th><th class="num">Ledger</th><th class="num" title="the shared account's whole position">Broker</th><th class="num" title="the shared account's whole position">Broker value</th><th class="num" title="the shared account's whole position">Broker unrealized</th></tr></thead>
       <tbody>
         {% for row in detail.positions %}
         <tr>
@@ -39,8 +56,8 @@
           <td class="num" data-l="Target qty">{{ row.target_qty if row.target_qty is not none else "–" }}</td>
           <td class="num" data-l="Ledger">{{ row.ledger_qty if row.ledger_qty is not none else "–" }}</td>
           <td class="num" data-l="Broker">{{ row.broker_qty if row.broker_qty is not none else "–" }}</td>
-          <td class="num" data-l="Value">{{ row.market_value|money if row.market_value is not none else "–" }}</td>
-          <td class="num" data-l="Unrealized">{{ row.unrealized_pl|money if row.unrealized_pl is not none else "–" }}</td>
+          <td class="num" data-l="Broker value">{{ row.market_value|money if row.market_value is not none else "–" }}</td>
+          <td class="num" data-l="Broker unrealized">{{ row.unrealized_pl|money if row.unrealized_pl is not none else "–" }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -95,20 +112,6 @@
       </tbody>
     </table>
   </div>
-  {% endif %}
-
-  <div class="section">Equity</div>
-  {% if chart %}
-  <div class="card">
-    <svg class="chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img" aria-label="equity history">
-      {% for bar in chart.bars %}<rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" rx="1.5"><title>{{ bar.title }}</title></rect>{% endfor %}
-    </svg>
-    {% if detail.equity_series.latest %}
-    <div class="t-foot muted mt6">latest <span class="num" title="{{ detail.equity_series.latest.at.isoformat() }}">{{ detail.equity_series.latest.at|ago }}</span>{% if detail.equity_series.note %} · {{ detail.equity_series.note }}{% endif %}</div>
-    {% endif %}
-  </div>
-  {% else %}
-  <div class="card empty">No history yet{% if detail.equity_series.note %} · {{ detail.equity_series.note }}{% endif %}</div>
   {% endif %}
 
   {% if detail.warnings %}

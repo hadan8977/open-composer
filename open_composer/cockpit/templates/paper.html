@@ -21,13 +21,13 @@
 <section class="tile tile--hero">
   <header class="tile-head">
     <span class="tile-label">Account equity</span>
-    <span class="tile-meta">Alpaca paper · shared by all sleeves · {{ equity.observed_days }} days observed</span>
+    <span class="tile-meta">Alpaca paper · shared by all sleeves · {{ equity.observed_days }} sessions observed</span>
   </header>
   <div class="hero">{{ money_hero(equity.latest.equity) }}{{ delta(equity) }}</div>
   <div class="well well--chart eqc-tall">{{ equity_chart(equity) }}</div>
   <div class="foot-row num">
     <span>last snapshot <b title="{{ equity.latest.at.isoformat() }}">{{ equity.latest.at|ago }}</b></span>
-    <span>{{ equity.observations }} real observations · last per trading day · gaps are days without one</span>
+    <span>{{ equity.observations }} real observations · last per trading session · weekends and holidays skipped · gaps are sessions without one</span>
   </div>
 </section>
 {% endif %}
@@ -62,25 +62,38 @@
   </div>
 </div>
 
-<div class="section">Strategies <span class="num">{{ report.strategies|length }}</span></div>
+{% set running = report.strategies|selectattr("is_running")|list %}
+{% set resting = report.strategies|rejectattr("is_running")|list %}
+
+{% macro strategy_row(strategy) -%}
+{%- set auth = strategy.authorization -%}
+{%- set perf = strategy.performance -%}
+<a class="row" href="/paper/{{ strategy.name }}" data-detail data-filter="{{ strategy.label }} {{ strategy.name }} {{ auth.state }} {{ strategy.cycle_status or '' }}">
+  <span class="dot dot--{{ auth.status }}"></span>
+  <span class="row-main">
+    <span class="row-title"><span class="text">{{ strategy.label }}</span><span class="chip chip--{{ auth.status }}">{{ auth_state_labels[auth.state] }}</span></span>
+    <span class="row-sub">{% if perf.status == "live" %}<span class="num">{{ perf.budget|money(0) }}</span> since <span class="num">{{ perf.start_session.strftime("%b %d") }}</span> · SPY <span class="num">{{ "%+.2f%%"|format(perf.benchmark_return_pct) if perf.benchmark_return_pct is not none else "–" }}</span> · {% elif perf.status == "no_fills" %}no fills yet · {% endif %}{% if strategy.generated_at %}last cycle {{ (strategy.cycle_status or "unknown")|replace("_", " ") }} {{ strategy.generated_at|ago }}{% else %}no cycle yet{% endif %}{% if auth.days_remaining is not none %} · auth <span class="num">{{ "%.0f"|format(auth.days_remaining) }}d</span>{% endif %}</span>
+  </span>
+  <span class="row-aside">
+    {% if perf.status == "live" %}<span class="num {{ 'is-up' if perf.return_pct > 0 else ('is-down' if perf.return_pct < 0 else '') }}">{{ "%+.2f%%"|format(perf.return_pct) }}</span><span class="num">{{ perf.sessions_live }} session{{ "s" if perf.sessions_live != 1 }}</span>
+    {% else %}<span class="num">–</span><span>{{ "no fills" if perf.status == "no_fills" else perf.status|replace("_", " ") }}</span>{% endif %}
+  </span>
+</a>
+{%- endmacro %}
+
+<div class="section">Running <span class="faint">each sleeve on its own budget, from its own fills · <span class="num">{{ running|length }}</span></span></div>
 <div class="group" data-filter-group>
-  {% for strategy in report.strategies %}
-  {% set auth = strategy.authorization %}
-  <a class="row" href="/paper/{{ strategy.name }}" data-detail data-filter="{{ strategy.name }} {{ auth.state }} {{ strategy.cycle_status or '' }}">
-    <span class="dot dot--{{ auth.status }}"></span>
-    <span class="row-main">
-      <span class="row-title"><span class="text">{{ strategy.name }}</span><span class="chip chip--{{ auth.status }}">{{ auth_state_labels[auth.state] }}</span></span>
-      <span class="row-sub">cycle {{ strategy.cycle_status or "unknown" }} · {{ strategy.generated_at|ago if strategy.generated_at else "never" }}{% if strategy.latest_fill_rate is not none %} · fill <span class="num">{{ "%.0f%%"|format(strategy.latest_fill_rate * 100) }}</span>{% endif %}</span>
-    </span>
-    <span class="row-aside">
-      {% if auth.days_remaining is not none %}<span class="num">{{ "%.1f"|format(auth.days_remaining) }}d</span><span>to expiry</span>
-      {% else %}<span class="num">–</span><span>{{ auth_state_labels[auth.state] }}</span>{% endif %}
-    </span>
-  </a>
-  {% else %}
-  <div class="empty">None</div>
-  {% endfor %}
+  {% for strategy in running %}{{ strategy_row(strategy) }}{% else %}<div class="empty">None</div>{% endfor %}
 </div>
+
+{% if resting %}
+<details class="lane">
+  <summary class="lane-head"><span class="state"><span class="dot dot--unknown"></span>Not running</span><span class="num">{{ resting|length }}</span></summary>
+  <div class="group" data-filter-group>
+    {% for strategy in resting %}{{ strategy_row(strategy) }}{% endfor %}
+  </div>
+</details>
+{% endif %}
 
 {% if report.warnings %}
 <details class="more">
