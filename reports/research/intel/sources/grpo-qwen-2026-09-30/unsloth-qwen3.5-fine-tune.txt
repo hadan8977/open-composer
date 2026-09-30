@@ -1,0 +1,298 @@
+Title: Qwen3.5 Fine-tuning Guide | Unsloth Documentation
+
+URL Source: https://docs.unsloth.ai/models/qwen3.5/fine-tune
+
+Markdown Content:
+⌘Ctrl k
+
+1.   [Models](https://docs.unsloth.ai/docs/models)
+2.   [💜Qwen3.5 - How to Run Locally](https://docs.unsloth.ai/docs/models/qwen3.5)
+
+## Qwen3.5 Fine-tuning Guide
+
+Learn how to fine-tune Qwen3.5 LLMs with Unsloth.
+
+You can now fine-tune [Qwen3.5](https://docs.unsloth.ai/docs/models/qwen3.5) model family (0.8B, 2B, 4B, 9B, 27B, 35B‑A3B, 122B‑A10B) with [**Unsloth**](https://github.com/unslothai/unsloth). Support includes both [vision](https://docs.unsloth.ai/docs/models/qwen3.5/fine-tune#vision-fine-tuning), text and [RL](https://docs.unsloth.ai/docs/models/qwen3.5/fine-tune#reinforcement-learning-rl) fine-tuning. **Qwen3.5‑35B‑A3B** - bf16 LoRA works on **74GB VRAM.**
+
+*   Unsloth makes Qwen3.5 train **1.5× faster** and uses **50% less VRAM** than FA2 setups. 
+*   Qwen3.5 bf16 LoRA VRAM use: **0.8B**: 3GB • **2B**: 5GB • **4B**: 10GB • **9B**: 22GB • **27B**: 56GB 
+*   Fine-tune **0.8B**,**2B** and**4B** bf16 LoRA via our **free****Google Colab notebooks**: 
+
+*   If you want to **preserve reasoning** ability, you can mix reasoning-style examples with direct answers (keep a minimum of 75% reasoning). Otherwise you can emit it fully. 
+*   **Full fine-tuning (FFT)** works as well. Note it will use 4x more VRAM. 
+*   Qwen3.5 is powerful for multilingual fine-tuning as it supports 201 languages. 
+*   After fine-tuning, you can export to [GGUF](https://docs.unsloth.ai/docs/models/qwen3.5/fine-tune#saving-export-your-fine-tuned-model) (for llama.cpp/Ollama/etc.) or [vLLM](https://docs.unsloth.ai/docs/models/qwen3.5/fine-tune#saving-export-your-fine-tuned-model) 
+
+If you’re on an older version (or fine-tuning locally), update first:
+
+Unsloth Studio:
+
+`unsloth studio update`
+
+Unsloth code-based:
+
+`pip install --upgrade --force-reinstall --no-cache-dir unsloth unsloth_zoo`
+
+**Please use**`transformers v5`**for Qwen3.5. Older versions will not work. Unsloth automatically uses transformers v5 by default now (except for Colab environments).**
+
+If training seems**slower than usual**, it’s because Qwen3.5 use custom Mamba Triton kernels. Compiling those kernels can take longer than normal, especially on T4 GPUs.
+
+It is not recommended to do QLoRA (4-bit) training on the Qwen3.5 models, no matter MoE or dense, due to higher than normal quantization differences.
+
+### MoE fine-tuning (35B, 122B)[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#moe-fine-tuning-35b-122b)
+
+For MoE models like **Qwen3.5‑35B‑A3B / 122B‑A10B / 397B‑A17B**:
+
+*   **Best to use bf16 setups (e.g. LoRA or full fine-tuning)** (MoE QLoRA 4‑bit is not recommended due to BitsandBytes limitations). 
+*   Unsloth’s MoE kernels are enabled by default and can use different backends; you can switch with `UNSLOTH_MOE_BACKEND`. 
+*   Router-layer fine-tuning is disabled by default for stability. 
+*   Qwen3.5‑122B‑A10B - bf16 LoRA works on 256GB VRAM. If you're using multiGPUs, add `device_map = "balanced"` or follow our [multiGPU Guide](https://docs.unsloth.ai/docs/basics/multi-gpu-training-with-unsloth). 
+
+### Quickstart[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#quickstart)
+
+#### 🦥 Unsloth Studio Guide[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#unsloth-studio-guide)
+
+Qwen3.5 can be run and fine-tuned in [Unsloth Studio](https://docs.unsloth.ai/docs/new/studio), our new open-source web UI for local AI. With Unsloth Studio, you can run models locally on **MacOS, Windows**, Linux and:
+
+*   Search, download, [run GGUFs](https://docs.unsloth.ai/docs/new/studio#run-models-locally) and safetensor models 
+
+*   Fast CPU + GPU inference via llama.cpp 
+
+![Image 1](https://unsloth.ai/docs/~gitbook/image?url=https%3A%2F%2F3215535692-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FxhOjnexMCB3dmuQFQ2Zq%252Fuploads%252F6HTkhiz3DUtrtcqASpTy%252Fobserve%2520skinny.png%3Falt%3Dmedia%26token%3D1981fe89-eccf-4c3d-ba92-d76f3123b05f&width=768&dpr=3&quality=100&sign=a667a110cc8235442804b6ba8ad2d2d0&sv=3)
+
+#### Install Unsloth[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#install-unsloth)
+
+Run in your terminal:
+
+**MacOS, Linux, WSL:**
+
+`curl -fsSL https://unsloth.ai/install.sh | sh`
+
+**Windows PowerShell:**
+
+`irm https://unsloth.ai/install.ps1 | iex`
+
+**Installation will be quick and take approx 1-2 mins.**
+
+#### Launch Unsloth[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#launch-unsloth)
+
+**MacOS, Linux, WSL and Windows:**
+
+`unsloth studio -H 0.0.0.0 -p 8888`
+
+**Then open**`http://localhost:8888`**in your browser.**
+
+#### Train Qwen3.5[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#train-qwen3.5)
+
+On first launch you will need to create a password to secure your account and sign in again later. You’ll then see a brief onboarding wizard to choose a model, dataset, and basic settings. You can skip it at any time.
+
+Search for Qwen3.5 in the search bar and select your desired model and dataset. Next, adjust your hyperparameters, context length as desired.
+
+![Image 2](https://unsloth.ai/docs/~gitbook/image?url=https%3A%2F%2F3215535692-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FxhOjnexMCB3dmuQFQ2Zq%252Fuploads%252FKljuGLmIAlo7s8J4LLOc%252FScreenshot%25202026-04-02%2520at%25202.08.54%25E2%2580%25AFAM.png%3Falt%3Dmedia%26token%3D8cb779f7-fbd3-49e5-95e7-cc615558d854&width=768&dpr=3&quality=100&sign=c15e6a2868114b163f003188fd99aec7&sv=3)
+
+#### Monitor training progress[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#monitor-training-progress)
+
+After you click start training, you will be able to monitor and observe the training progress of the model. The training loss should be steadily decreasing. Once done, the model will be automatically saved.
+
+![Image 3](https://unsloth.ai/docs/~gitbook/image?url=https%3A%2F%2F3215535692-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FxhOjnexMCB3dmuQFQ2Zq%252Fuploads%252Fhm21EMxnAiLJBgP3Tvtq%252FScreenshot%25202026-04-02%2520at%25202.13.21%25E2%2580%25AFAM.png%3Falt%3Dmedia%26token%3Dbabaecda-2b28-47d8-818b-4a74f4595325&width=768&dpr=3&quality=100&sign=2a11ac201c9eaf9bd8edaded2e87480e&sv=3)
+
+#### Export your fine-tuned model[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#export-your-fine-tuned-model)
+
+Once done, Unsloth Studio allows you to export the model to GGUF, safetensor etc formats.
+
+![Image 4](https://unsloth.ai/docs/~gitbook/image?url=https%3A%2F%2F3215535692-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FxhOjnexMCB3dmuQFQ2Zq%252Fuploads%252FZvedfVVAmectHAEHHlGg%252FScreenshot%25202026-04-02%2520at%25202.14.40%25E2%2580%25AFAM.png%3Falt%3Dmedia%26token%3D4ddefe19-657b-4861-86da-cbfd983f75ba&width=768&dpr=3&quality=100&sign=95b649184804fffea195eb63ec036999&sv=3)
+
+#### Unsloth Core (code-based) guide:[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#unsloth-core-code-based-guide)
+
+Below is a minimal SFT recipe (works for “text-only” fine-tuning). See also our [vision fine-tuning](https://docs.unsloth.ai/docs/basics/vision-fine-tuning) section.
+
+Qwen3.5 is “Causal Language Model with Vision Encoder” (it’s a unified VLM), so ensure you have the usual vision deps installed (`torchvision`, `pillow`) if needed, and keep Transformers up-to-date. Use the latest Transformers for Qwen3.5.
+
+**If you'd like to do**[**GRPO**](https://docs.unsloth.ai/docs/get-started/reinforcement-learning-rl-guide)**, it works in Unsloth if you disable fast vLLM inference and use Unsloth inference instead. Follow our**[**Vision RL**](https://docs.unsloth.ai/docs/get-started/reinforcement-learning-rl-guide/vision-reinforcement-learning-vlm-rl)**notebook examples.**
+
+```
+from unsloth import FastLanguageModel
+import torch
+from datasets import load_dataset
+from trl import SFTTrainer, SFTConfig
+
+max_seq_length = 2048  # start small; scale up after it works
+
+# Example dataset (replace with yours). Needs a "text" column.
+url = "https://huggingface.co/datasets/laion/OIG/resolve/main/unified_chip2.jsonl"
+dataset = load_dataset("json", data_files={"train": url}, split="train")
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "Qwen/Qwen3.5-27B",
+    max_seq_length = max_seq_length,
+    load_in_4bit = False,     # MoE QLoRA not recommended, dense 27B is fine
+    load_in_16bit = True,     # bf16/16-bit LoRA
+    full_finetuning = False,
+)
+
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16,
+    target_modules = [
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj",
+    ],
+    lora_alpha = 16,
+    lora_dropout = 0,
+    bias = "none",
+    # "unsloth" checkpointing is intended for very long context + lower VRAM
+    use_gradient_checkpointing = "unsloth",
+    random_state = 3407,
+    max_seq_length = max_seq_length,
+)
+
+trainer = SFTTrainer(
+    model = model,
+    train_dataset = dataset,
+    tokenizer = tokenizer,
+    args = SFTConfig(
+        max_seq_length = max_seq_length,
+        per_device_train_batch_size = 1,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 10,
+        max_steps = 100,
+        logging_steps = 1,
+        output_dir = "outputs_qwen35",
+        optim = "adamw_8bit",
+        seed = 3407,
+        dataset_num_proc = 1,
+    ),
+)
+
+trainer.train()
+```
+
+If you OOM:
+
+*   Drop `per_device_train_batch_size` to **1** and/or reduce `max_seq_length`. 
+
+**Loader example for MoE (bf16 LoRA):**
+
+```
+import os
+import torch
+from unsloth import FastModel
+
+model, tokenizer = FastModel.from_pretrained(
+    model_name = "unsloth/Qwen3.5-35B-A3B",
+    max_seq_length = 2048,
+    load_in_4bit = False,     # MoE QLoRA not recommended, dense 27B is fine
+    load_in_16bit = True,     # bf16/16-bit LoRA
+    full_finetuning = False,
+)
+```
+
+Once loaded, you’ll attach LoRA adapters and train similarly to the SFT example above.
+
+### Vision fine-tuning[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#vision-fine-tuning)
+
+Unsloth supports [vision fine-tuning](https://docs.unsloth.ai/docs/basics/vision-fine-tuning) for the multimodal Qwen3.5 models. Use the below Qwen3.5 notebooks and change the respective model names to your desired Qwen3.5 model.
+
+Qwen3.5-**9B**
+
+**Disabling Vision / Text-only fine-tuning:**
+
+To fine-tune vision models, we now allow you to select which parts of the mode to finetune. You can select to only fine-tune the vision layers, or the language layers, or the attention / MLP layers! We set them all on by default!
+
+```
+model = FastVisionModel.get_peft_model(
+    model,
+    finetune_vision_layers     = True, # False if not finetuning vision layers
+    finetune_language_layers   = True, # False if not finetuning language layers
+    finetune_attention_modules = True, # False if not finetuning attention layers
+    finetune_mlp_modules       = True, # False if not finetuning MLP layers
+
+    r = 16,                           # The larger, the higher the accuracy, but might overfit
+    lora_alpha = 16,                  # Recommended alpha == r at least
+    lora_dropout = 0,
+    bias = "none",
+    random_state = 3407,
+    use_rslora = False,               # We support rank stabilized LoRA
+    loftq_config = None,               # And LoftQ
+    target_modules = "all-linear",    # Optional now! Can specify a list if needed
+    modules_to_save=[
+        "lm_head",
+        "embed_tokens",
+    ],
+)
+```
+
+In order to fine-tune or train Qwen3.5 with multi-images,view our [**multi-image vision guide**](https://docs.unsloth.ai/docs/basics/vision-fine-tuning#multi-image-training)**.**
+
+### Reinforcement Learning (RL)[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#reinforcement-learning-rl)
+
+You can now train Qwen3.5 with RL, GSPO, GRPO etc with [our free notebook](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/Qwen3_5_(4B)_Vision_GRPO.ipynb):
+
+You can run Qwen3.5 RL with Unsloth even though it is not supported by vLLM, by setting `fast_inference=False` when loading the model:
+
+```
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="unsloth/Qwen3.5-4B",
+    fast_inference=False,
+)
+```
+
+### Saving / export fine-tuned model[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#saving-export-fine-tuned-model)
+
+You can view our specific inference / deployment guides for [Unsloth Studio](https://docs.unsloth.ai/docs/new/studio/export), [llama.cpp](https://docs.unsloth.ai/docs/basics/inference-and-deployment/saving-to-gguf), [vLLM](https://docs.unsloth.ai/docs/basics/inference-and-deployment/vllm-guide), [llama-server](https://docs.unsloth.ai/docs/basics/inference-and-deployment/llama-server-and-openai-endpoint), [Ollama](https://docs.unsloth.ai/docs/basics/inference-and-deployment/saving-to-ollama).
+
+#### Save to GGUF[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#save-to-gguf)
+
+Unsloth supports saving directly to GGUF:
+
+```
+model.save_pretrained_gguf("directory", tokenizer, quantization_method = "q4_k_m")
+model.save_pretrained_gguf("directory", tokenizer, quantization_method = "q8_0")
+model.save_pretrained_gguf("directory", tokenizer, quantization_method = "f16")
+```
+
+Or push GGUFs to Hugging Face:
+
+```
+model.push_to_hub_gguf("hf_username/directory", tokenizer, quantization_method = "q4_k_m")
+model.push_to_hub_gguf("hf_username/directory", tokenizer, quantization_method = "q8_0")
+```
+
+If the exported model behaves worse in another runtime, Unsloth flags the most common cause: **wrong chat template / EOS token at inference time** (you must use the same chat template you trained with).
+
+#### Save to vLLM[](https://docs.unsloth.ai/models/qwen3.5/fine-tune#save-to-vllm)
+
+vLLM version `0.16.0` does not support Qwen3.5. Wait until `0.170` or try the Nightly release.
+
+To save to 16-bit for vLLM, use:
+
+```
+model.save_pretrained_merged("finetuned_model", tokenizer, save_method = "merged_16bit")
+## OR to upload to HuggingFace:
+model.push_to_hub_merged("hf/model", tokenizer, save_method = "merged_16bit", token = "")
+```
+
+To save just the LoRA adapters, either use:
+
+```
+model.save_pretrained("finetuned_lora")
+tokenizer.save_pretrained("finetuned_lora")
+```
+
+Or use our builtin function:
+
+```
+model.save_pretrained_merged("finetuned_model", tokenizer, save_method = "lora")
+## OR to upload to HuggingFace
+model.push_to_hub_merged("hf/model", tokenizer, save_method = "lora", token = "")
+```
+
+For more details read our inference guides:
+
+Last updated 1 month ago
+
+Was this helpful?
+
+This site uses cookies to deliver its service and to analyze traffic. By browsing this site, you accept the [privacy policy](https://policies.gitbook.com/privacy/cookies).

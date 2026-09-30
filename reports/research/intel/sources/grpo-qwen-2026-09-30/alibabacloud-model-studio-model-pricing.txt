@@ -1,0 +1,10079 @@
+Title: Model inference pricing - Alibaba Cloud
+
+URL Source: https://www.alibabacloud.com/help/en/model-studio/model-pricing
+
+Markdown Content:
+Documentation
+Alibaba Cloud Model Studio
+User Guide (Models)
+User Guide (Agent)
+API Reference (Models)
+API Reference (Agent)
+CLI
+Search for Help Content
+Get Started
+Product introduction
+First API call to Qwen
+Recommended models
+Dynamic rate limiting
+Rate limiting
+Base URL overview
+Regions and endpoints
+Billing
+Free quota for new users
+Model inference pricing
+Training and deployment pricing
+Throughput Reservation Billing
+Savings plans
+Billing and cost management
+Budget management
+Token Plan
+Token Plan overview
+Personal Edition
+Team Edition
+Advanced Integration
+Coding Plan
+Model Playground
+Text generation
+Visual understanding
+Image generation and editing
+Video generation and editing
+World model
+Speech synthesis
+Audio generation
+Music generation
+Speech-to-text
+Speech-to-speech
+Omni-modal
+Embedding and rerank
+Clients and Developer Tools
+OpenClaw
+Hermes Agent
+Claude Code
+OpenCode
+Cursor
+Codex
+Qwen Code
+DeepSeek Harness
+QwenPaw
+Cherry Studio
+Chatbox
+Cline
+Qoder
+Qoder CN (formerly Lingma)
+Kilo CLI
+Postman
+Dify
+More tools
+Model Inference
+Fast mode (Prime)
+TPM reservation
+Fine-tuning
+Qwen model tuning
+Fine-tune image generation models
+Fine-tuning video generation models
+Deployment
+Dedicated Deployment Overview
+PTU provisioned throughput deployment
+DTU Dedicated compute deployment
+Token pay-as-you-go deployment
+API deployment guide
+My Models
+Model Routing
+Model Import
+Evaluation
+Model Evaluation (New) for International Site
+Define evaluation dimensions
+Statistics and Monitoring
+Model usage
+Model monitoring
+Asset Center
+Asset center
+Security and Compliance
+Permission management
+Transmission security
+Security certifications and privacy
+Training data summary
+Data retention policy
+Best Practices
+Text-to-text prompt guide
+Text-to-image prompt guide
+wan3.0 Video Generation Prompt Guide
+Video generation prompt guide
+Best practices for handling rate limiting
+Explicit Cache Best Practices
+Third-party model integration tutorial
+Real-time Audio and Video Integration
+Support
+Model List
+FAQ
+Related agreements
+Changelog
+Model decommissioning policy
+Model lifecycle and updates
+Model Platform Feature Update Announcements
+Home Page
+Alibaba Cloud Model Studio
+User Guide (Models)
+Billing
+Model inference pricing
+Model inference pricing
+Updated at: 2026-09-28 07:21:00
+Copy as MD
+Product
+
+Model API calls are billed on a pay-as-you-go basis by default.
+
+Note
+
+This document only lists standard prices. For the latest promotions, visit the Model Studio console.
+
+Note
+
+Some models support context caching (explicit cache and implicit cache). Cache-hit input tokens and the tokens used to create an explicit cache are billed at unit prices different from the standard input price (for example, explicit cache creation is billed at 125% of the standard input price, and cache hits at 10%). The input prices in the tables below do not include cache prices. For cache billing rules, discount rates, and supported models, see Context Cache.
+
+Tiered pricing rules 
+
+Some Model Studio models use tiered pricing. The unit price is determined by the total number of input tokens in a single request. All tokens in the request are billed at the unit price of the corresponding tier.
+
+In the pricing tiers, K means 1,000 and M means 1,000,000. For example, 128K equals 128,000 tokens, 256K equals 256,000 tokens, and 1M equals 1,000,000 tokens.
+
+For example, a model has two pricing tiers: 0 < tokens ≤ 32K and 32K < tokens ≤ 128K. If a request contains 100K input tokens, it falls into the second tier (32K < 100K ≤ 128K), and all tokens are billed at the unit price of the second tier.
+
+Text generation - Qwen 
+Qwen-Max 
+
+You are charged for input tokens and output tokens.
+
+If the model supports batch calls, the unit price for both input and output tokens is 50% of the real-time inference price. If the model supports context cache, only input tokens receive a discount. These two discounts cannot apply simultaneously.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Hong Kong (China)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+Model ID	Deployment scope	Mode	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought + answer
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3.8-max
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.8-max-0902
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.7-max
+
+Currently equivalent to qwen3.7-max-2026-05-20
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$2.5
+
+	
+
+$7.5
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.7-max-2026-06-08
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$2.5
+
+	
+
+$7.5
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.7-max-2026-05-20
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$2.5
+
+	
+
+$7.5
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.7-max-preview
+
+Currently equivalent to qwen3.7-max-2026-05-17
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+0<Token≤1M
+
+	
+
+$2.5
+
+	
+
+$7.5
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.7-max-2026-05-17
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+0<Token≤1M
+
+	
+
+$2.5
+
+	
+
+$7.5
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.6-max-preview
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤128K
+
+	
+
+$1.3
+
+	
+
+$7.8
+
+	
+
+1 million tokens
+
+
+
+
+128K<Token≤256K
+
+	
+
+$2
+
+	
+
+$12
+
+
+
+
+qwen3-max
+
+Currently equivalent to qwen3-max-2026-01-23
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$1.2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$2.4
+
+	
+
+$12
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+
+
+
+qwen3-max-2026-01-23
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$1.2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$2.4
+
+	
+
+$12
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+
+
+
+qwen3-max-2025-09-23
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+0<Token≤32K
+
+	
+
+$1.2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$2.4
+
+	
+
+$12
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+
+
+
+qwen3-max-preview
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$1.2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$2.4
+
+	
+
+$12
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+More models
+Model ID	Deployment scope	Mode	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-max
+
+50% batch inference discount
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+No tiered pricing
+
+	
+
+$1.6
+
+	
+
+$6.4
+
+	
+
+1 million tokens
+
+Qwen-Plus 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Hong Kong (China)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+Model ID	Deployment scope	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+Non-Thinking mode	Thinking mode (chain of thought + answer)
+
+
+qwen3.7-plus
+
+Currently equivalent to qwen3.7-plus-2026-05-26
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+List price $0.4 (Limited-time 20% off)
+
+	
+
+List price $1.6 (Limited-time 20% off)
+
+	
+
+List price $1.6 (Limited-time 20% off)
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+List price $1.2 (Limited-time 20% off)
+
+	
+
+List price $4.8 (Limited-time 20% off)
+
+	
+
+List price $4.8 (Limited-time 20% off)
+
+
+
+
+qwen3.7-plus-2026-05-26
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$1.6
+
+	
+
+$1.6
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.2
+
+	
+
+$4.8
+
+	
+
+$4.8
+
+
+
+
+qwen3.6-plus
+
+Currently equivalent to qwen3.6-plus-2026-04-02
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.5
+
+	
+
+$3
+
+	
+
+$3
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$2
+
+	
+
+$6
+
+	
+
+$6
+
+
+
+
+qwen3.6-plus-2026-04-02
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.5
+
+	
+
+$3
+
+	
+
+$3
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$2
+
+	
+
+$6
+
+	
+
+$6
+
+
+
+
+qwen3.5-plus
+
+Currently equivalent to qwen3.5-plus-2026-02-15
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$2.4
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.5
+
+	
+
+$3
+
+	
+
+$3
+
+
+
+
+qwen3.5-plus-2026-04-20
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$2.4
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.5
+
+	
+
+$3
+
+	
+
+$3
+
+
+
+
+qwen3.5-plus-2026-02-15
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$2.4
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.5
+
+	
+
+$3
+
+	
+
+$3
+
+
+
+
+qwen-plus
+
+Currently equivalent to qwen-plus-2025-12-01
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.2
+
+	
+
+$3.6
+
+	
+
+$12
+
+
+
+
+qwen-plus-latest
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.2
+
+	
+
+$3.6
+
+	
+
+$12
+
+
+
+
+qwen-plus-2025-12-01
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.2
+
+	
+
+$3.6
+
+	
+
+$12
+
+
+
+
+qwen-plus-2025-09-11
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.2
+
+	
+
+$3.6
+
+	
+
+$12
+
+
+
+
+qwen-plus-2025-07-28
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.2
+
+	
+
+$3.6
+
+	
+
+$12
+
+
+
+
+qwen-plus-2025-07-14
+
+	
+
+International
+
+	
+
+No tiered pricing
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+qwen-plus-2025-04-28
+
+	
+
+International
+
+	
+
+No tiered pricing
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+qwen-plus-2025-01-25
+
+	
+
+International
+
+	
+
+No tiered pricing
+
+	
+
+$0.4
+
+	
+
+$1.2
+
+	
+	
+
+1 million tokens
+
+Qwen-Flash 
+
+You are charged for input tokens and output tokens.
+
+If the model supports batch calls, the unit price for both input and output tokens is 50% of the real-time inference price. If the model supports context cache, only input tokens receive a discount. These two discounts cannot apply simultaneously.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Hong Kong (China)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+Model ID	Deployment scope	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3.8-flash
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤1M
+
+	
+
+$0.15
+
+	
+
+$0.47
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.7-flash
+
+Currently equivalent to qwen3.7-flash-2026-07-15
+
+50% batch inference discount
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$0.030
+
+	
+
+$0.130
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤256K
+
+	
+
+$0.100
+
+	
+
+$0.400
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.200
+
+	
+
+$0.800
+
+
+
+
+qwen3.7-flash-2026-07-15
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$0.030
+
+	
+
+$0.130
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤256K
+
+	
+
+$0.100
+
+	
+
+$0.400
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.200
+
+	
+
+$0.800
+
+
+
+
+qwen3.6-flash
+
+Currently equivalent to qwen3.6-flash-2026-04-16
+
+50% batch inference discount
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.25
+
+	
+
+$1.5
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1
+
+	
+
+$4
+
+
+
+
+qwen3.6-flash-2026-04-16
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.25
+
+	
+
+$1.5
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1
+
+	
+
+$4
+
+
+
+
+qwen3.5-flash
+
+Currently equivalent to qwen3.5-flash-2026-02-23
+
+50% batch inference discount
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤1M
+
+	
+
+$0.1
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-flash-2026-02-23
+
+	
+
+International
+
+	
+
+0<Token≤1M
+
+	
+
+$0.1
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen-flash
+
+Currently equivalent to qwen-flash-2025-07-28
+
+50% batch inference discount
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.05
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.25
+
+	
+
+$2
+
+
+
+
+qwen-flash-2025-07-28
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.05
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+256K<Token≤1M
+
+	
+
+$0.25
+
+	
+
+$2
+
+Qwen-Turbo 
+Note
+
+Qwen-Turbo will no longer be updated. We recommend switching to Qwen-Flash.
+
+You are charged for input tokens and output tokens.
+
+If the model supports batch calls, the unit price for both input and output tokens is 50% of the real-time inference price.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+Non-Thinking mode	Thinking mode (chain of thought + answer)
+
+
+qwen-turbo
+
+50% batch inference discount
+
+	
+
+International
+
+	
+
+$0.05
+
+	
+
+$0.2
+
+	
+
+$0.5
+
+	
+
+1 million tokens
+
+QwQ 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwq-plus
+
+	
+
+International
+
+	
+
+$0.8
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+Qwen-Long 
+
+You are charged for input tokens and output tokens.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+
+
+
+qwen-long-latest
+
+	
+
+$0.072
+
+	
+
+$0.287
+
+	
+
+No free quota
+
+
+
+
+qwen-long-2025-01-25
+
+	
+
+$0.072
+
+	
+
+$0.287
+
+	
+
+No free quota
+
+Qwen-Omni 
+
+Pricing rule: billed by input tokens and output tokens. For the token calculation rules of different modalities, see Billing and rate limits.
+
+Note
+
+The Qwen3.5-Omni, Qwen3-Omni, and Qwen-Omni-Turbo series offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)China (Hong Kong)Japan (Tokyo)Germany (Frankfurt)US (Virginia)
+Model ID	Deployment scope	Input price (per million tokens)	Cache-hit input price (per million tokens)	Output price (per million tokens)
+qwen3.8-omni-flash	International	USD 0.15	USD 0.016	USD 0.47
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+Text/Image/video	Audio	Text
+
+Multimodal input
+
+	Text + audio
+
+Audio only billed
+
+
+
+
+qwen3.5-omni-plus
+
+Currently equivalent to qwen3.5-omni-plus-2026-03-15
+
+	
+
+International
+
+	
+
+$1.4
+
+	
+
+$11
+
+	
+
+$8.3
+
+	
+
+$44
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-omni-plus-2026-03-15
+
+	
+
+International
+
+	
+
+$1.4
+
+	
+
+$11
+
+	
+
+$8.3
+
+	
+
+$44
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-omni-flash
+
+Currently equivalent to qwen3.5-omni-flash-2026-03-15
+
+	
+
+International
+
+	
+
+$0.4
+
+	
+
+$3
+
+	
+
+$2.2
+
+	
+
+$11.9
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-omni-flash-2026-03-15
+
+	
+
+International
+
+	
+
+$0.4
+
+	
+
+$3
+
+	
+
+$2.2
+
+	
+
+$11.9
+
+	
+
+1 million tokens
+
+More models
+
+Qwen-Omni-Realtime 
+
+Pricing rule: billed by input tokens and output tokens. For the token calculation rules of different modalities, see Billing and rate limits.
+
+For speech output, qwen3.8-omni-flash-realtime bills both the audio and its corresponding text at their respective output rates. Qwen3.5-Omni-Realtime models bill only the audio; the corresponding text is not charged.
+
+Note
+
+The free quotas listed in the tables apply only to Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Prices in USD per million tokens.
+
+Model ID
+
+	
+
+Input: text/images/video
+
+	
+
+Input: audio
+
+	
+
+Output: text
+
+	
+
+Output: audio
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen3.8-omni-flash-realtime
+
+	
+
+0.23
+
+	
+
+0.93
+
+	
+
+0.70
+
+	
+
+1.87
+
+	
+
+1 million tokens
+
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+Text/image	Audio	Text
+
+Multimodal input
+
+	Text + audio
+
+Audio only billed
+
+
+
+
+qwen3.5-omni-plus-realtime
+
+Currently equivalent to qwen3.5-omni-plus-realtime-2026-03-15
+
+	
+
+International
+
+	
+
+$2.1
+
+	
+
+$16.5
+
+	
+
+$12.4
+
+	
+
+$62
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-omni-plus-realtime-2026-03-15
+
+	
+
+International
+
+	
+
+$2.1
+
+	
+
+$16.5
+
+	
+
+$12.4
+
+	
+
+$62
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-omni-flash-realtime
+
+Currently equivalent to qwen3.5-omni-flash-realtime-2026-03-15
+
+	
+
+International
+
+	
+
+$0.55
+
+	
+
+$4.5
+
+	
+
+$3.3
+
+	
+
+$17.7
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-omni-flash-realtime-2026-03-15
+
+	
+
+International
+
+	
+
+$0.55
+
+	
+
+$4.5
+
+	
+
+$3.3
+
+	
+
+$17.7
+
+	
+
+1 million tokens
+
+More models
+
+QVQ 
+
+Pricing rule: billed by input tokens and output tokens. For the token calculation rules of different modalities, see Billing and rate limits.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qvq-max
+
+	
+
+International
+
+	
+
+$1.2
+
+	
+
+$4.8
+
+	
+
+1 million tokens
+
+Qwen-VL 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Hong Kong (China)Germany (Frankfurt)US (Virginia)
+Model ID	Deployment scope	Mode	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought + answer
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-vl-plus
+
+Currently equivalent to qwen3-vl-plus-2025-12-19
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$0.2
+
+	
+
+$1.6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.3
+
+	
+
+$2.4
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.6
+
+	
+
+$4.8
+
+
+
+
+qwen3-vl-plus-2025-12-19
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$0.2
+
+	
+
+$1.6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.3
+
+	
+
+$2.4
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.6
+
+	
+
+$4.8
+
+
+
+
+qwen3-vl-plus-2025-09-23
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$0.2
+
+	
+
+$1.6
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.3
+
+	
+
+$2.4
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.6
+
+	
+
+$4.8
+
+
+
+
+qwen3-vl-flash
+
+Currently equivalent to qwen3-vl-flash-2026-01-22
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$0.05
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.075
+
+	
+
+$0.6
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.12
+
+	
+
+$0.96
+
+
+
+
+qwen3-vl-flash-2026-01-22
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$0.05
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.075
+
+	
+
+$0.6
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.12
+
+	
+
+$0.96
+
+
+
+
+qwen3-vl-flash-2025-10-15
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤32K
+
+	
+
+$0.05
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.075
+
+	
+
+$0.6
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.12
+
+	
+
+$0.96
+
+More models
+Model ID	Deployment scope	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-vl-max
+
+context caching discount
+
+	
+
+International
+
+	
+
+No tiered pricing
+
+	
+
+$0.8
+
+	
+
+$3.2
+
+	
+
+1 million tokens
+
+
+
+
+qwen-vl-plus
+
+context caching discount
+
+	
+
+International
+
+	
+
+No tiered pricing
+
+	
+
+$0.21
+
+	
+
+$0.63
+
+	
+
+1 million tokens
+
+Qwen-OCR 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-vl-ocr
+
+Currently equivalent to qwen-vl-ocr-2025-11-20
+
+	
+
+International
+
+	
+
+$0.07
+
+	
+
+$0.16
+
+	
+
+1 million tokens
+
+
+
+
+qwen-vl-ocr-2025-11-20
+
+	
+
+International
+
+	
+
+1 million tokens
+
+Qwen Math 
+
+You are charged for input tokens and output tokens.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+
+
+
+qwen-math-plus
+
+	
+
+$0.574
+
+	
+
+$1.721
+
+	
+
+No free quota
+
+
+
+
+qwen-math-plus-latest
+
+	
+
+$0.574
+
+	
+
+$1.721
+
+	
+
+No free quota
+
+
+
+
+qwen-math-plus-2024-09-19
+
+	
+
+$0.574
+
+	
+
+$1.721
+
+	
+
+No free quota
+
+
+
+
+qwen-math-plus-2024-08-16
+
+	
+
+$0.574
+
+	
+
+$1.721
+
+	
+
+No free quota
+
+
+
+
+qwen-math-turbo
+
+	
+
+$0.287
+
+	
+
+$0.861
+
+	
+
+No free quota
+
+Qwen-Coder 
+
+You are charged for input tokens and output tokens.
+
+If the model supports context cache, only input tokens receive a discount.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+Model ID	Deployment scope	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-coder-plus
+
+Currently equivalent to qwen3-coder-plus-2025-09-23
+
+context caching discount
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$1
+
+	
+
+$5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$1.8
+
+	
+
+$9
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+
+
+
+256K<Token≤1M
+
+	
+
+$6
+
+	
+
+$60
+
+
+
+
+qwen3-coder-plus-2025-09-23
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$1
+
+	
+
+$5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$1.8
+
+	
+
+$9
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+
+
+
+256K<Token≤1M
+
+	
+
+$6
+
+	
+
+$60
+
+
+
+
+qwen3-coder-plus-2025-07-22
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$1
+
+	
+
+$5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$1.8
+
+	
+
+$9
+
+
+
+
+128K<Token≤256K
+
+	
+
+$3
+
+	
+
+$15
+
+
+
+
+256K<Token≤1M
+
+	
+
+$6
+
+	
+
+$60
+
+
+
+
+qwen3-coder-flash
+
+Currently equivalent to qwen3-coder-flash-2025-07-28
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$0.3
+
+	
+
+$1.5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.5
+
+	
+
+$2.5
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.8
+
+	
+
+$4
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.6
+
+	
+
+$9.6
+
+
+
+
+qwen3-coder-flash-2025-07-28
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$0.3
+
+	
+
+$1.5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.5
+
+	
+
+$2.5
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.8
+
+	
+
+$4
+
+
+
+
+256K<Token≤1M
+
+	
+
+$1.6
+
+	
+
+$9.6
+
+Qwen Translation 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen-mt-plus
+
+	
+
+International
+
+	
+
+$2.46
+
+	
+
+$7.37
+
+	
+
+1 million tokens
+
+
+
+
+qwen-mt-flash
+
+	
+
+International
+
+	
+
+$0.16
+
+	
+
+$0.49
+
+	
+
+1 million tokens
+
+
+
+
+qwen-mt-lite
+
+	
+
+International
+
+	
+
+$0.12
+
+	
+
+$0.36
+
+	
+
+1 million tokens
+
+
+
+
+qwen-mt-turbo
+
+	
+
+International
+
+	
+
+$0.16
+
+	
+
+$0.49
+
+	
+
+1 million tokens
+
+Qwen Data Mining 
+
+You are charged for input tokens and output tokens.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+
+
+
+qwen-doc-turbo
+
+	
+
+$0.087
+
+	
+
+$0.144
+
+	
+
+No free quota
+
+Qwen Deep Research 
+
+You are charged for input tokens and output tokens.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+
+
+
+qwen-deep-research
+
+	
+
+$7.742
+
+	
+
+$23.367
+
+	
+
+None
+
+Text generation - Qwen (open source) 
+Qwen3.8 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Mode	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought + answer
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3.8-2.4t-a95b
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$2
+
+	
+
+$6
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.8-27b
+
+context caching discount
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤1M
+
+	
+
+$0.5
+
+	
+
+$3
+
+	
+
+1 million tokens
+
+Qwen3.6 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input tokens per request
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+Non-Thinking mode
+
+	
+
+Thinking mode (chain of thought + answer)
+
+
+
+
+qwen3.6-35b-a3b
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.375
+
+	
+
+$2.25
+
+	
+
+$2.25
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.6-27b
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.6
+
+	
+
+$3.6
+
+	
+
+$3.6
+
+	
+
+1 million tokens
+
+Qwen3.5 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input tokens per request
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+Non-Thinking mode
+
+	
+
+Thinking mode (chain of thought + answer)
+
+
+
+
+qwen3.5-397b-a17b
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.6
+
+	
+
+$3.6
+
+	
+
+$3.6
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-122b-a10b
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.4
+
+	
+
+$3.2
+
+	
+
+$3.2
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-27b
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.3
+
+	
+
+$2.4
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-35b-a3b
+
+	
+
+International
+
+	
+
+0<Token≤256K
+
+	
+
+$0.25
+
+	
+
+$2
+
+	
+
+$2
+
+	
+
+1 million tokens
+
+Qwen3 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Mode
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+Non-Thinking mode
+
+	
+
+Thinking mode
+
+
+
+
+qwen3-next-80b-a3b-thinking
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.15
+
+	
+
+-
+
+	
+
+$1.2
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-next-80b-a3b-instruct
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.15
+
+	
+
+$1.2
+
+	
+
+-
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-235b-a22b-thinking-2507
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.23
+
+	
+
+-
+
+	
+
+$2.3
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-235b-a22b-instruct-2507
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.23
+
+	
+
+$0.92
+
+	
+
+-
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-30b-a3b-thinking-2507
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.2
+
+	
+
+-
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-30b-a3b-instruct-2507
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.2
+
+	
+
+$0.8
+
+	
+
+-
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-235b-a22b
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+$0.7
+
+	
+
+$2.8
+
+	
+
+$8.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-32b
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+$0.16
+
+	
+
+$0.64
+
+	
+
+$0.64
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-30b-a3b
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+$0.2
+
+	
+
+$0.8
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-14b
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+$0.35
+
+	
+
+$1.4
+
+	
+
+$4.2
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-8b
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+$0.18
+
+	
+
+$0.7
+
+	
+
+$2.1
+
+	
+
+1 million tokens
+
+Qwen-Omni 
+
+Pricing rule: billed by input tokens and output tokens. For the token calculation rules of different modalities, see Billing and rate limits.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+Text	Audio	Image/video	Text
+
+Text-only input
+
+	Text
+
+Multimodal input
+
+	Text + audio
+
+Audio only billed
+
+
+
+
+qwen2.5-omni-7b
+
+	
+
+International
+
+	
+
+$0.10
+
+	
+
+$6.76
+
+	
+
+$0.28
+
+	
+
+$0.40
+
+	
+
+$0.84
+
+	
+
+$13.51
+
+	
+
+1 million tokens (regardless of modality)
+
+Qwen3-Omni-Captioner 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen3-omni-30b-a3b-captioner
+
+	
+
+International
+
+	
+
+$3.81
+
+	
+
+$3.06
+
+	
+
+1 million tokens
+
+Qwen-VL 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+Model ID	Deployment scope	Mode	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought + answer
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-vl-235b-a22b-thinking
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.4
+
+	
+
+$4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-235b-a22b-instruct
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.4
+
+	
+
+$1.6
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-32b-thinking
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.16
+
+	
+
+$0.64
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-32b-instruct
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.16
+
+	
+
+$0.64
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-30b-a3b-thinking
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.2
+
+	
+
+$2.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-30b-a3b-instruct
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.2
+
+	
+
+$0.8
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-8b-thinking
+
+	
+
+International
+
+	
+
+Thinking mode only
+
+	
+
+$0.18
+
+	
+
+$2.1
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-vl-8b-instruct
+
+	
+
+International
+
+	
+
+Non-Thinking mode only
+
+	
+
+$0.18
+
+	
+
+$0.7
+
+	
+
+1 million tokens
+
+More models
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+Qwen-Coder 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input tokens per request
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen3-coder-next
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$0.3
+
+	
+
+$1.5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.5
+
+	
+
+$2.5
+
+
+
+
+128K<Token≤256K
+
+	
+
+$0.8
+
+	
+
+$4
+
+
+
+
+qwen3-coder-480b-a35b-instruct
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$1.5
+
+	
+
+$7.5
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$2.7
+
+	
+
+$13.5
+
+
+
+
+128K<Token≤200K
+
+	
+
+$4.5
+
+	
+
+$22.5
+
+
+
+
+qwen3-coder-30b-a3b-instruct
+
+	
+
+International
+
+	
+
+0<Token≤32K
+
+	
+
+$0.45
+
+	
+
+$2.25
+
+	
+
+1 million tokens
+
+
+
+
+32K<Token≤128K
+
+	
+
+$0.75
+
+	
+
+$3.75
+
+
+
+
+128K<Token≤200K
+
+	
+
+$1.2
+
+	
+
+$6
+
+Text generation - third-party models 
+DeepSeek 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+Note
+
+DeepSeek-V4-Flash-0731 has been adjusted to peak/off-peak pricing since 2026-08-17 00:00. The adjusted prices are shown in the table below. For more information, see DeepSeek-V4-Flash-0731 price adjustment notice.
+
+Peak hours refer to UTC+8 8:00 - 22:00, and off-peak hours refer to UTC+8 22:00 - 8:00 the next day.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)China（Hongkong）
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+deepseek-v4.1-flash
+
+context caching discount
+
+	
+
+International
+
+	
+
+Busy hours: $0.3
+
+Idle hours: $0.15
+
+	
+
+Busy hours: $1.2
+
+Idle hours: $0.6
+
+	
+
+1 million tokens
+
+
+
+
+deepseek-v4-pro
+
+context caching discount
+
+	
+
+International
+
+	
+
+$2.400
+
+	
+
+$4.800
+
+	
+
+1 million tokens
+
+
+
+
+deepseek-v4-pro-0813
+
+context caching discount
+
+	
+
+International
+
+	
+
+Busy hours: $1.32
+
+Idle hours: $0.66
+
+	
+
+Busy hours: $3.96
+
+Idle hours: $1.98
+
+	
+
+1 million tokens
+
+
+
+
+deepseek-v4-flash-0731
+
+context caching discount
+
+	
+
+International
+
+	
+
+Busy hours: $0.44
+
+Idle hours: $0.22
+
+	
+
+Busy hours: $1.32
+
+Idle hours: $0.66
+
+	
+
+1 million tokens
+
+
+
+
+deepseek-v4-flash
+
+context caching discount
+
+	
+
+International
+
+	
+
+$0.200
+
+	
+
+$0.400
+
+	
+
+1 million tokens
+
+
+
+
+deepseek-v3.2
+
+context caching discount
+
+	
+
+International
+
+	
+
+$0.57
+
+	
+
+$1.71
+
+	
+
+1 million tokens
+
+Kimi 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+China (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)SingaporeHong Kong (China)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+kimi-k3
+
+	
+
+$2.827
+
+	
+
+$14.133
+
+	
+
+No free quota
+
+
+
+
+kimi-k2.7-code
+
+	
+
+$0.894
+
+	
+
+$3.713
+
+	
+
+No free quota
+
+
+
+
+kimi-k2.6
+
+	
+
+$0.8939
+
+	
+
+$3.7131
+
+	
+
+No free quota
+
+
+
+
+kimi-k2.5
+
+	
+
+$0.574
+
+	
+
+$3.011
+
+	
+
+No free quota
+
+
+
+
+kimi-k2-thinking
+
+	
+
+$0.574
+
+	
+
+$2.294
+
+	
+
+No free quota
+
+
+
+
+Moonshot-Kimi-K2-Instruct
+
+	
+
+$0.574
+
+	
+
+$2.294
+
+	
+
+No free quota
+
+MiniMax 
+
+You are charged for input tokens and output tokens.
+
+China (Beijing)
+Model ID	Mode	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought and answer
+
+
+
+MiniMax-M2.5
+
+	
+
+Thinking mode only
+
+	
+
+$0.304
+
+	
+
+$1.213
+
+GLM 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)Hong Kong (China)
+Model ID	Deployment scope	Mode	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought and answer
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+glm-5.3
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+flat-rate pricing
+
+	
+
+$1.400
+
+	
+
+$4.400
+
+	
+
+1 million tokens
+
+
+
+
+glm-5.2
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+flat-rate pricing
+
+	
+
+$1.400
+
+	
+
+$4.400
+
+	
+
+1 million tokens
+
+
+
+
+glm-5.2-fast-preview
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+flat-rate pricing
+
+	
+
+$2.800
+
+	
+
+$8.800
+
+	
+
+None
+
+
+
+
+glm-5.1
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+0<Token≤200K
+
+	
+
+$1.400
+
+	
+
+$4.400
+
+	
+
+1 million tokens
+
+GLM-Zhipu AI 
+
+You are charged for input tokens and output tokens.
+
+Singapore
+Model ID	Deployment scope	Mode	Input tokens per request	Input price (per 1 million tokens)	Output price (per 1 million tokens)
+Chain of thought and answer
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+ZHIPU/GLM-5.2
+
+	
+
+International
+
+	
+
+Non-Thinking and Thinking modes
+
+	
+
+flat-rate pricing
+
+	
+
+$1.400
+
+	
+
+$4.400
+
+	
+
+None
+
+Image generation 
+
+You are charged based on the number of input images and the number of successfully generated images. For models where the input image price is not specified, you are not charged for input. You are charged for output based on the number of successfully generated images.
+
+Formula: Cost = Input image unit price × Number of input images + Image unit price × Number of images generated.
+
+Notes: Failed requests incur no cost and do not consume your free quota.
+
+Billing example: Some images fail to generate
+
+Qwen Image Generation and Editing 
+
+Billed by the number of input and output images. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Hong Kong (China)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+
+Model ID
+
+	
+
+Service deployment scope
+
+	
+
+Output image resolution
+
+	
+
+Input unit price
+
+	
+
+Output unit price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen-image-3.0-pro
+
+	
+
+International
+
+	
+
+1k
+
+	
+
+$0.003/image
+
+	
+
+$0.04/image
+
+	
+
+10 images
+
+
+
+
+2k
+
+	
+
+$0.075/image
+
+
+
+
+qwen-image-3.0
+
+	
+
+International
+
+	
+
+1k
+
+	
+
+$0.003/image
+
+	
+
+$0.03/image
+
+	
+
+10 images
+
+
+
+
+2k
+
+	
+
+$0.03/image
+
+Qwen Text-to-Image 
+
+Only output is billed. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Output price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-image-2.0-pro
+
+Currently equivalent to qwen-image-2.0-pro-2026-04-22
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-pro-2026-06-22
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-pro-2026-04-22
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-pro-2026-03-03
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0
+
+Currently equivalent to qwen-image-2.0-2026-03-03
+
+	
+
+International
+
+	
+
+$0.035/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-2026-03-03
+
+	
+
+International
+
+	
+
+$0.035/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-max
+
+Currently equivalent to qwen-image-max-2025-12-30
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-max-2025-12-30
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-plus
+
+Currently equivalent to qwen-image
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-plus-2026-01-09
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+100 images
+
+
+
+
+qwen-image
+
+	
+
+International
+
+	
+
+$0.035/image
+
+	
+
+100 images
+
+Qwen Image Editing 
+
+Only output is billed. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Output price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-image-2.0-pro
+
+Currently equivalent to qwen-image-2.0-pro-2026-04-22
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-pro-2026-06-22
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-pro-2026-04-22
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-pro-2026-03-03
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0
+
+Currently equivalent to qwen-image-2.0-2026-03-03
+
+	
+
+International
+
+	
+
+$0.035/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-2.0-2026-03-03
+
+	
+
+International
+
+	
+
+$0.035/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-edit-max
+
+Currently equivalent to qwen-image-edit-max-2026-01-16
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-edit-max-2026-01-16
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-edit-plus
+
+Currently equivalent to qwen-image-edit-plus-2025-10-30
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-edit-plus-2025-12-15
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-edit-plus-2025-10-30
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+100 images
+
+
+
+
+qwen-image-edit
+
+	
+
+International
+
+	
+
+$0.045/image
+
+	
+
+100 images
+
+Qwen Image Translation 
+
+Only output is billed. For pricing rules, see Image generation.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Service deployment scope
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+
+
+
+qwen-mt-image-2.0
+
+	
+
+International
+
+	
+
+$0.0006/image
+
+	
+
+100 images
+
+Qwen-Text-to-Image-Z-Image 
+
+Only output is billed. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+z-image-turbo
+
+	
+
+International
+
+	
+
+Prompt rewriting disabled (prompt_extend=false): $0.015/image
+
+Prompt rewriting enabled (prompt_extend=true): $0.03/image
+
+	
+
+100 images
+
+Wanx Text-to-Image 
+
+Only output is billed. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.6-t2i
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+50 images
+
+
+
+
+wan2.5-t2i-preview
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+50 images
+
+
+
+
+wan2.2-t2i-plus
+
+	
+
+International
+
+	
+
+$0.05/image
+
+	
+
+100 images
+
+
+
+
+wan2.2-t2i-flash
+
+	
+
+International
+
+	
+
+$0.025/image
+
+	
+
+100 images
+
+
+
+
+wan2.1-t2i-plus
+
+	
+
+International
+
+	
+
+$0.05/image
+
+	
+
+200 images
+
+
+
+
+wan2.1-t2i-turbo
+
+	
+
+International
+
+	
+
+$0.025/image
+
+	
+
+200 images
+
+Wanx Image Generation and Editing 
+
+Only output is billed. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.7-image-pro
+
+	
+
+International
+
+	
+
+$0.075/image
+
+	
+
+50 images
+
+
+
+
+wan2.7-image
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+50 images
+
+
+
+
+wan2.6-image
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+50 images
+
+Wanx General Image Editing 
+
+Only output is billed. For pricing rules, see Image generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.5-i2i-preview
+
+	
+
+International
+
+	
+
+$0.03/image
+
+	
+
+50 images
+
+AIVirtual Try-on - OutfitAnyone 
+aitryon-plus: Input is free while output is billed. For pricing rules, see Image generation.
+aitryon-parsing-v1: Input is billed while output is free. Billed by the number of input images. Failed requests are not billed.
+China (Beijing)
+
+Model ID
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+aitryon-plus
+
+	
+
+$0.071677/image
+
+	
+
+No free quota
+
+
+
+
+aitryon-parsing-v1
+
+	
+
+$0.000574/image
+
+Vidu-Image-Generation 
+Singapore
+
+Model ID
+
+	
+
+Output image resolution
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+vidu/vidu-image_reference2image
+
+	
+
+1K
+
+	
+
+$0.1/image
+
+	
+
+No free quota
+
+
+
+
+2K
+
+	
+
+$0.16/image
+
+
+
+
+4K
+
+	
+
+$0.24/image
+
+Video generation 
+
+You are not charged for input. You are charged for output based on the total duration of successfully generated videos (in seconds).
+
+Formula: Cost = Video unit price × Video duration (seconds).
+
+Notes:
+
+Some models charge by output video resolution. Prices differ for resolutions such as 480P, 720P, and 1080P.
+Some models charge by output video edition. Prices differ for editions such as Standard Edition and Professional Edition.
+Some models charge by output video aspect ratio. Prices differ for aspect ratios such as 1:1 and 3:4.
+Some models use a flat rate, regardless of resolution, edition, or aspect ratio.
+Failed requests incur no cost and do not consume your free quota.
+HappyHorse-Text-to-video 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+happyhorse-1.1-t2v
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.07/second
+
+	
+
+10 seconds
+
+
+
+
+720P
+
+	
+
+$0.14/second
+
+
+
+
+1080P
+
+	
+
+$0.18/second
+
+
+
+
+happyhorse-1.0-t2v
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.14/second
+
+	
+
+10 seconds
+
+
+
+
+1080P
+
+	
+
+$0.24/second
+
+HappyHorse-Image-to-video - first frame 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+happyhorse-1.1-i2v
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.07/second
+
+	
+
+10 seconds
+
+
+
+
+720P
+
+	
+
+$0.14/second
+
+
+
+
+1080P
+
+	
+
+$0.18/second
+
+
+
+
+happyhorse-1.0-i2v
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.14/second
+
+	
+
+10 seconds
+
+
+
+
+1080P
+
+	
+
+$0.24/second
+
+HappyHorse-Reference-to-video 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+happyhorse-1.1-r2v
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.07/second
+
+	
+
+10 seconds
+
+
+
+
+720P
+
+	
+
+$0.14/second
+
+
+
+
+1080P
+
+	
+
+$0.18/second
+
+
+
+
+happyhorse-1.0-r2v
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.14/second
+
+	
+
+10 seconds
+
+
+
+
+1080P
+
+	
+
+$0.24/second
+
+HappyHorse-Video editing 
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+
+Pricing rule: both input and output videos are billed by video duration (seconds). Failed requests are not billed and do not consume the free quota.
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Input and output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+happyhorse-1.0-video-edit
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+List price $0.14/second (Limited-time 20% off)
+
+	
+
+10 seconds
+
+
+
+
+1080P
+
+	
+
+List price $0.24/second (Limited-time 20% off)
+
+Wan 3.0-Video Generation 
+
+Pricing rule: both input and output videos are billed by video duration (seconds). Failed requests are not billed and do not consume the free quota.
+
+Billing formula: billable duration = input video duration + output video duration.
+
+The billable duration of the input video is the actual input video duration in seconds.
+The billable duration of the output video is the duration (in seconds) of successfully generated videos.
+The free quota is 30 seconds combined for input and output video duration.
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Japan (Tokyo)Germany (Frankfurt)US (Virginia)Hong Kong (China)
+
+Model ID
+
+	
+
+Service deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Input and output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan3.0-video-prime
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.068/second
+
+	
+
+30 seconds
+
+
+
+
+720P
+
+	
+
+$0.14/second
+
+
+
+
+1080P
+
+	
+
+$0.28/second
+
+
+
+
+wan3.0-video
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+List price $0.05/second (Limited-time 30% off)
+
+	
+
+30 seconds
+
+
+
+
+720P
+
+	
+
+List price $0.1/second (Limited-time 30% off)
+
+
+
+
+1080P
+
+	
+
+List price $0.2/second (Limited-time 30% off)
+
+Wanx-Text-to-Video 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.7-t2v-2026-06-12
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.7-t2v-2026-04-25
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.7-t2v
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.6-t2v
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.5-t2v-preview
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.05/second
+
+	
+
+50 seconds
+
+
+
+
+720P
+
+	
+
+$0.10/second
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.2-t2v-plus
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.02/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.10/second
+
+
+
+
+wan2.1-t2v-turbo
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.036/second
+
+	
+
+50 seconds
+
+
+
+
+720P
+
+	
+
+$0.036/second
+
+
+
+
+wan2.1-t2v-plus
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+Wanx-Image-to-Video 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video type
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.7-i2v-2026-04-25
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.7-i2v
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+Wanx-Image-to-Video-First-Frame 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video type
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.6-i2v-flash
+
+	
+
+International
+
+	
+
+Audio video
+
+audio=true
+
+	
+
+720P
+
+	
+
+$0.05/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.075/second
+
+
+
+
+Silent video
+
+audio=false
+
+	
+
+720P
+
+	
+
+$0.025/second
+
+
+
+
+1080P
+
+	
+
+$0.0375/second
+
+
+
+
+wan2.6-i2v
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.5-i2v-preview
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+480P
+
+	
+
+$0.05/second
+
+	
+
+50 seconds
+
+
+
+
+720P
+
+	
+
+$0.10/second
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.2-i2v-flash
+
+	
+
+International
+
+	
+
+Silent video
+
+	
+
+480P
+
+	
+
+$0.015/second
+
+	
+
+50 seconds
+
+
+
+
+720P
+
+	
+
+$0.036/second
+
+
+
+
+wan2.2-i2v-plus
+
+	
+
+International
+
+	
+
+Silent video
+
+	
+
+480P
+
+	
+
+$0.02/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.10/second
+
+
+
+
+wan2.1-t2v-turbo
+
+	
+
+International
+
+	
+
+Silent video
+
+	
+
+480P
+
+	
+
+$0.036/second
+
+	
+
+50 seconds
+
+
+
+
+720P
+
+	
+
+$0.036/second
+
+
+
+
+wan2.1-t2v-plus
+
+	
+
+International
+
+	
+
+Silent video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+Wanx-Image-to-Video-First-Last-Frame 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.2-kf2v-flash
+
+	
+
+International
+
+	
+
+480P
+
+	
+
+$0.015/second
+
+	
+
+50 seconds
+
+
+
+
+720P
+
+	
+
+$0.036/second
+
+
+
+
+1080P
+
+	
+
+$0.07/second
+
+
+
+
+wan2.1-kf2v-plus
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+Wanx-Reference-to-Video 
+
+Pricing rule: both input and output videos are billed by video duration (seconds). Failed requests are not billed and do not consume the free quota.
+
+Billing formula: billable duration = input video duration (up to 5 seconds) + output video duration.
+
+The billable duration of the input video does not exceed 5 seconds. For calculation rules, see Billing and rate limiting.
+The billable duration of the output video is duration (in seconds) of successfully generated videos.
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Germany (Frankfurt)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video type
+
+	
+
+Output video resolution
+
+	
+
+Input and output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.7-r2v-2026-06-12
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.7-r2v
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+wan2.6-r2v-flash
+
+	
+
+International
+
+	
+
+Audio video
+
+audio=true
+
+	
+
+720P
+
+	
+
+$0.05/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.075/second
+
+
+
+
+Silent video
+
+audio=false
+
+	
+
+720P
+
+	
+
+$0.025/second
+
+
+
+
+1080P
+
+	
+
+$0.0375/second
+
+
+
+
+wan2.6-r2v
+
+	
+
+International
+
+	
+
+Audio video
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+Wanx-Video-Editing 
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Pricing rule: both input and output videos are billed by video duration (seconds). Failed requests are not billed and do not consume the free quota.
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Input and output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.7-videoedit
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+Pricing rule: input is free. Output video is billed by video duration (seconds). Failed requests are not billed and do not consume the free quota.
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.1-vace-plus
+
+	
+
+International
+
+	
+
+720P
+
+	
+
+$0.10/second
+
+	
+
+50 seconds
+
+Wanx-Digital Human 
+wan2.2-s2v-detect: Input is billed while output is free. Input is billed by the number of images processed. Each input image is billed once as long as the request succeeds, regardless of the detection result.
+wan2.2-s2v: Input is free while output is billed. Output is billed by the duration (in seconds) of successfully generated videos. For pricing rules, see Video generation.
+China (Beijing)
+
+Model ID
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+wan2.2-s2v-detect
+
+	
+
+Input image: $0.000574/image
+
+	
+
+No free quota
+
+
+
+
+wan2.2-s2v
+
+	
+
+Output video:
+
+480P: $0.071677/second
+
+720P: $0.129018/second
+
+	
+
+No free quota
+
+Wanx-Image-to-Motion 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video mode
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.2-animate-move
+
+	
+
+International
+
+	
+
+Standard modewan-std
+
+	
+
+$0.12/second
+
+	
+
+50 seconds
+
+
+
+
+Professional modewan-pro
+
+	
+
+$0.18/second
+
+Wanx-Video-Face-Swap 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Output video mode
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+wan2.2-animate-mix
+
+	
+
+International
+
+	
+
+Standard modewan-std
+
+	
+
+$0.18/second
+
+	
+
+50 seconds
+
+
+
+
+Professional modewan-pro
+
+	
+
+$0.26/second
+
+AnimateAnyone 
+animate-anyone-detect-gen2: Input is billed while output is free. Input is billed by the number of images processed. Each input image is billed once as long as the request succeeds, regardless of the detection result.
+animate-anyone-template-gen2: Input is free while output is billed. Output is billed by the duration (in seconds) of successfully generated videos. For pricing rules, see Video generation.
+animate-anyone-gen2: Input is free while output is billed. Output is billed by the duration (in seconds) of successfully generated videos. For pricing rules, see Video generation.
+China (Beijing)
+
+Model ID
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+animate-anyone-detect-gen2
+
+	
+
+Input image: $0.000574/image
+
+	
+
+No free quota
+
+
+
+
+animate-anyone-template-gen2
+
+	
+
+Output video: $0.011469/second
+
+	
+
+No free quota
+
+
+
+
+animate-anyone-gen2
+
+	
+
+Output video: $0.011469/second
+
+	
+
+No free quota
+
+EMO 
+emo-detect-v1: Input is billed while output is free. Input is billed by the number of images processed. Each input image is billed once as long as the request succeeds, regardless of the detection result.
+emo-v1: Input is free while output is billed. Output is billed by the duration (in seconds) of successfully generated videos. For pricing rules, see Video generation.
+China (Beijing)
+
+Model ID
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+emo-detect-v1
+
+	
+
+Input image: $0.000574/image
+
+	
+
+No free quota
+
+
+
+
+emo-v1
+
+	
+
+Output video:
+
+1:1landscape video: $0.011469/second
+
+3:4landscape video: $0.022937/second
+
+LivePortrait 
+liveportrait-detect: Input is billed while output is free. Input is billed by the number of images processed. Each input image is billed once as long as the request succeeds, regardless of the detection result.
+liveportrait: Input is free while output is billed. Output is billed by the duration (in seconds) of successfully generated videos. For pricing rules, see Video generation.
+China (Beijing)
+
+Model ID
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+liveportrait-detect
+
+	
+
+Input image: $0.000574/image
+
+	
+
+No free quota
+
+
+
+
+liveportrait
+
+	
+
+Output video: $0.002868/second
+
+Emoji Sticker 
+emoji-detect-v1: Input is billed while output is free. Input is billed by the number of images processed. Each input image is billed once as long as the request succeeds, regardless of the detection result.
+emoji-v1: Input is free while output is billed. Output is billed by the duration (in seconds) of successfully generated videos. For pricing rules, see Video generation.
+China (Beijing)
+
+Model ID
+
+	
+
+Unit price
+
+	
+
+Free quota(Note)
+
+
+
+
+emoji-detect-v1
+
+	
+
+Input image: $0.000574/image
+
+	
+
+No free quota
+
+
+
+
+emoji-v1
+
+	
+
+Output video: $0.011469/second
+
+VideoRetalk 
+
+Only output is billed. For pricing rules, see Video generation.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+
+
+
+videoretalk
+
+	
+
+$0.011469/second
+
+	
+
+No free quota
+
+Video Style Repaint 
+
+Only output is billed. For pricing rules, see Video generation.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+
+
+
+video-style-transform
+
+	
+
+540P
+
+	
+
+$0.028671/second
+
+	
+
+No free quota
+
+
+
+
+720P
+
+	
+
+$0.071677/second
+
+Vidu-Reference-to-video 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Singapore
+
+Model ID
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+
+
+
+vidu/viduq3-mix_reference2video
+
+	
+
+720P
+
+	
+
+$0.12/second
+
+	
+
+No free quota
+
+
+
+
+1080P
+
+	
+
+$0.145/second
+
+
+
+
+vidu/viduq3-ad_reference2video
+
+	
+
+720P
+
+	
+
+$0.125/second
+
+	
+
+No free quota
+
+
+
+
+1080P
+
+	
+
+$0.15/second
+
+
+
+
+vidu/viduq3-drama_reference2video
+
+	
+
+720P
+
+	
+
+$0.14/second
+
+	
+
+No free quota
+
+
+
+
+1080P
+
+	
+
+$0.14/second
+
+Vidu-Image-to-video - first frame 
+
+Only output is billed. For pricing rules, see Video generation.
+
+Singapore
+
+Model ID
+
+	
+
+Output video resolution
+
+	
+
+Output price
+
+	
+
+Free quota(Note)
+
+
+
+
+vidu/viduq2-pro-fast_img2video
+
+	
+
+720P
+
+	
+
+$0.016/second
+
+	
+
+No free quota
+
+
+
+
+1080P
+
+	
+
+$0.032/second
+
+World models 
+HappyOyster-Adventure 
+
+Billing rules:
+
+World creation: Billed by the number of world creations. Cost = Number of world creations × Unit price.
+World experience: Billed by the output video duration (seconds). Cost = Video duration × Unit price. 480P only.
+Failed requests incur no cost.
+Note
+
+None of the following models offer a free quota in any region.
+
+SingaporeChina (Beijing)US (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Billing item
+
+	
+
+Unit price
+
+
+
+
+happyoyster-1.0-adventure
+
+	
+
+International
+
+	
+
+World creation
+
+	
+
+$0.0077/call
+
+
+
+
+World experience (480P)
+
+	
+
+$0.0308/second
+
+HappyOyster-Directing 
+
+Billing rules:
+
+World creation: Billed by the number of world creations. Cost = Number of world creations × Unit price. Whether a reference image is used affects the unit price: world creation without and with a reference image are priced separately.
+Instruction injection: Billed by the number of injected instructions. Cost = Number of instructions × Unit price.
+World experience: Billed by the output video duration (seconds). Cost = Video duration × Unit price. Unit prices differ by resolution (480P/720P).
+Failed requests incur no cost.
+Note
+
+None of the following models offer a free quota in any region.
+
+SingaporeUS (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Billing item
+
+	
+
+Unit price
+
+
+
+
+happyoyster-1.0-directing
+
+	
+
+International
+
+	
+
+World creation (without reference image)
+
+	
+
+$0.3113/call
+
+
+
+
+World creation (with reference image)
+
+	
+
+$0.0077/call
+
+
+
+
+Instruction injection
+
+	
+
+$0.0154/call
+
+
+
+
+World experience (480P)
+
+	
+
+$0.0539/second
+
+
+
+
+World experience (720P)
+
+	
+
+$0.0858/second
+
+HappyOyster-Acting 
+
+Billing rules:
+
+World creation: Billed by the number of world creations. Cost = Number of world creations × Unit price.
+Instruction injection: Billed by the number of injected instructions. Cost = Number of instructions × Unit price.
+World experience: Billed by the output video duration (seconds). Cost = Video duration × Unit price. Unit prices differ by resolution (480P/720P).
+Failed requests incur no cost.
+Note
+
+None of the following models offer a free quota in any region.
+
+SingaporeUS (Virginia)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Billing item
+
+	
+
+Unit price
+
+
+
+
+happyoyster-1.0-acting
+(Invitational preview)
+
+	
+
+International
+
+	
+
+World creation
+
+	
+
+$0.0077/call
+
+
+
+
+Instruction injection
+
+	
+
+$0.0077/call
+
+
+
+
+World experience (480P)
+
+	
+
+$0.0308/second
+
+
+
+
+World experience (720P)
+
+	
+
+$0.0462/second
+
+Audio generation 
+
+Input and output tokens are billed separately.
+
+China (Beijing)
+Model ID	Input price (USD/million tokens)	Output price (USD/million tokens)
+qwen-audio-3.1-tts-next	0.848	1.696
+Music generation 
+
+Pricing rule: billed by the duration (in seconds) of output audio. Input is free.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Output price (per second)
+
+	
+
+Free quota(Note)
+
+
+
+
+fun-music-preview
+
+	
+
+$0.000695
+
+	
+
+No free quota
+
+
+
+
+fun-music-v1
+
+	
+
+$0.000275
+
+Speech synthesis (text-to-speech) 
+
+Character counting rules: For the models in this section that are billed by character count (input prices are listed per 10,000 characters), the number of characters in the input text is counted as follows:
+
+Each Chinese character (including simplified Chinese characters, traditional Chinese characters, Japanese kanji, and Korean hanja) counts as 2 characters.
+Each other character (such as an English letter, a digit, a punctuation mark, a space, a Japanese kana, or a Korean letter) counts as 1 character.
+When SSML is used, the SSML tags themselves are not counted. Only the text content to be synthesized is counted.
+
+Examples: 你好 is 4 characters (2+2); 中A文123 is 8 characters (2+1+2+1+1+1); 中文。 is 5 characters (2+2+1); 中 文。 is 6 characters (2+1+2+1).
+
+Qwen-Audio-TTS 
+
+Billing rules: Fees are charged based on the number of characters in the input text. Output is not billed.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Service deployment scope
+
+	
+
+Input unit price (per 10,000 characters)
+
+	
+
+Free quota(note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen-audio-3.0-tts-plus
+
+	
+
+International
+
+	
+
+$0.2
+
+	
+
+10,000 characters
+
+
+
+
+qwen-audio-3.0-tts-flash
+
+	
+
+International
+
+	
+
+$0.15
+
+	
+
+10,000 characters
+
+Qwen-TTS 
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Qwen3-TTS-Instruct-FlashQwen3-TTS-VDQwen3-TTS-VCQwen3-TTS-Flash
+
+Pricing rule: billed by the number of input text characters. Output is free.
+
+Model ID	Deployment scope	Input price (per 10,000 characters)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-tts-instruct-flash
+
+Currently equivalent to qwen3-tts-instruct-flash-2026-01-26
+
+	
+
+International
+
+	
+
+$0.115
+
+	
+
+10000 characters
+
+
+
+
+qwen3-tts-instruct-flash-2026-01-26
+
+	
+
+International
+
+	
+
+$0.115
+
+	
+
+10000 characters
+
+Qwen-TTS-Realtime 
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Qwen3-TTS-Instruct-Flash-RealtimeQwen3-TTS-VD-RealtimeQwen3-TTS-VC-RealtimeQwen3-TTS-Flash-Realtime
+
+Pricing rule: billed by the number of input text characters. Output is free.
+
+Model ID	Deployment scope	Input price (per 10,000 characters)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-tts-instruct-flash-realtime
+
+Currently equivalent to qwen3-tts-instruct-flash-realtime-2026-01-22
+
+	
+
+International
+
+	
+
+$0.143
+
+	
+
+110,000 characters
+
+
+
+
+qwen3-tts-instruct-flash-realtime-2026-01-22
+
+	
+
+International
+
+	
+
+$0.143
+
+	
+
+110,000 characters
+
+Qwen-TTS Voice cloning 
+
+Pricing rule: billed by the number of new voice clones created.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Price (per voice clone)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen-voice-enrollment
+
+	
+
+International
+
+	
+
+$0.01
+
+	
+
+1,000 voices/account
+
+Qwen-TTS Voice design 
+
+Pricing rule: billed by the number of new voice clones created.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Price (per voice clone)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen-voice-design
+
+	
+
+International
+
+	
+
+$0.2
+
+	
+
+10 voices/account
+
+CosyVoice 
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Pricing rule: billed by the number of input text characters. Output is free.
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 10,000 characters)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+cosyvoice-v3-plus
+
+	
+
+International
+
+	
+
+$0.26
+
+	
+
+10,000 characters
+
+
+
+
+cosyvoice-v3-flash
+
+	
+
+International
+
+	
+
+$0.13
+
+	
+
+10,000 characters
+
+Speech recognition (speech-to-text) and translation (speech-to-text in a specified language) 
+Qwen-LiveTranslate-Flash-Realtime 
+
+Pricing rule: billed by input tokens and output tokens. For the token calculation rules of different modalities, see Billing.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+Input: audio	Input: image	Output: text	Output: audio
+
+
+qwen3.8-livetranslate-flash-realtime
+
+	
+
+International
+
+	
+
+$7.5
+
+	
+
+$0.55
+
+	
+
+$20
+
+	
+
+$30
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-livetranslate-flash-realtime
+
+	
+
+International
+
+	
+
+$7.5
+
+	
+
+$0.55
+
+	
+
+$20
+
+	
+
+$30
+
+	
+
+1 million tokens
+
+
+
+
+qwen3.5-livetranslate-flash-realtime-2026-05-19
+
+	
+
+International
+
+	
+
+$7.5
+
+	
+
+$0.55
+
+	
+
+$20
+
+	
+
+$30
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-livetranslate-flash-realtime
+
+Currently equivalent to qwen3-livetranslate-flash-realtime-2025-09-22
+
+	
+
+International
+
+	
+
+$10
+
+	
+
+$1.3
+
+	
+
+$10
+
+	
+
+$38
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-livetranslate-flash-realtime-2025-09-22
+
+	
+
+International
+
+	
+
+$10
+
+	$1.3	
+
+$10
+
+	
+
+$38
+
+	
+
+1 million tokens
+
+Qwen-LiveTranslate-Flash 
+
+Pricing rule: billed by input tokens and output tokens. For the token calculation rules of different modalities, see Billing.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+Input: audio
+
+	
+
+Input: image
+
+	
+
+Output: text
+
+	
+
+Output: audio
+
+
+
+
+qwen3-livetranslate-flash
+
+	
+
+International
+
+	
+
+$1.577
+
+	
+
+$0.631
+
+	
+
+$1.577
+
+	
+
+$6.308
+
+	
+
+1 million tokens
+
+
+
+
+qwen3-livetranslate-flash-2025-12-01
+
+	
+
+International
+
+	
+
+$1.577
+
+	
+
+$0.631
+
+	
+
+$1.577
+
+	
+
+$6.308
+
+	
+
+1 million tokens
+
+Qwen-Audio-3.1-ASR-Flash-Message 
+
+Pricing rule: billed by the number of input and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-audio-3.1-asr-flash-message	International	USD 0.93	USD 0.70	1,000,000 tokens
+Qwen-Audio-3.x-ASR-Flash-Streaming 
+
+Pricing rules:
+
+qwen-audio-3.1-asr-flash-streaming: billed separately for input and output tokens.
+qwen-audio-3.0-asr-flash-streaming: billed by the duration (in seconds) of input audio. Output is free.
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price	Output price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-audio-3.1-asr-flash-streaming	International	0.93 USD/million tokens	0.70 USD/million tokens	1,000,000 tokens
+qwen-audio-3.0-asr-flash-streaming	International	$0.00009/second	Free	36,000 seconds (10 hours)
+Qwen-Audio-3.x-ASR-Flash-Filetrans 
+
+Pricing rules:
+
+qwen-audio-3.1-asr-flash-filetrans: billed separately for input and output tokens.
+qwen-audio-3.0-asr-flash-filetrans: billed by the duration (in seconds) of input audio. Output is free.
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price	Output price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-audio-3.1-asr-flash-filetrans	International	0.15 USD/million tokens	0.47 USD/million tokens	1,000,000 tokens
+qwen-audio-3.0-asr-flash-filetrans	International	$0.000035/second	Free	36,000 seconds (10 hours)
+Qwen-Audio-3.x-ASR-Flash 
+
+Pricing rules:
+
+qwen-audio-3.1-asr-flash: billed separately for input and output tokens.
+qwen-audio-3.0-asr-flash: billed by the duration (in seconds) of input audio. Output is free.
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price	Output price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-audio-3.1-asr-flash	International	0.15 USD/million tokens	0.47 USD/million tokens	1,000,000 tokens
+qwen-audio-3.0-asr-flash	International	$0.000035/second	Free	36,000 seconds (10 hours)
+Qwen-ASR 
+
+Pricing rule: billed by the duration (in seconds) of input audio. Output is free.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)US (Virginia)
+Model ID	Deployment scope	Input price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-asr-flash-filetrans
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+qwen3-asr-flash-filetrans-2025-11-17
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+qwen3-asr-flash
+
+Currently equivalent to qwen3-asr-flash-2025-09-08
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+qwen3-asr-flash-2026-02-10
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+qwen3-asr-flash-2025-09-08
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+Qwen-ASR-Realtime 
+
+Pricing rule: billed by the duration (in seconds) of input audio. Output is free.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen3-asr-flash-realtime
+
+Currently equivalent to qwen3-asr-flash-realtime-2025-10-27
+
+	
+
+International
+
+	
+
+$0.000090/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+qwen3-asr-flash-realtime-2026-02-10
+
+	
+
+International
+
+	
+
+$0.000090/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+qwen3-asr-flash-realtime-2025-10-27
+
+	
+
+International
+
+	
+
+$0.000090/second
+
+	
+
+36,000 seconds (10 hours)
+
+Fun-ASR 
+Audio file recognition 
+
+Pricing rule: billed by the duration (in seconds) of input audio. Output is free.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+Model ID	Deployment scope	Input price	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+fun-asr
+
+Currently equivalent to fun-asr-2025-11-07
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+fun-asr-2025-11-07
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+fun-asr-2025-08-25
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+fun-asr-mtl
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+fun-asr-mtl-2025-08-25
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+fun-asr-flash-2026-06-15
+
+	
+
+International
+
+	
+
+$0.000035/second
+
+	
+
+36,000 seconds (10 hours)
+
+Real-time speech recognition 
+
+Pricing rule: billed by the duration (in seconds) of input audio. Output is free.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+fun-asr-realtime
+
+	
+
+International
+
+	
+
+$0.00009/second
+
+	
+
+36,000 seconds (10 hours)
+
+
+
+
+fun-asr-realtime-2025-11-07
+
+	
+
+International
+
+	
+
+$0.00009/second
+
+	
+
+36,000 seconds (10 hours)
+
+Paraformer 
+Audio file recognition 
+
+Pricing rule: billed by the duration (in seconds) of input audio. Output is free.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Input price
+
+
+
+
+paraformer-v2
+
+	
+
+$0.000012/second
+
+
+
+
+paraformer-8k-v2
+
+	
+
+$0.000012/second
+
+Real-time speech recognition 
+
+Pricing rule: billed by the duration (in seconds) of input audio. Output is free.
+
+China (Beijing)
+
+Model ID
+
+	
+
+Input price
+
+	
+
+Free quota(Note)
+
+
+
+
+paraformer-realtime-v2
+
+	
+
+$0.000035/second
+
+	
+
+No free quota
+
+
+
+
+paraformer-realtime-8k-v2
+
+	
+
+$0.000035/second
+
+Voice Chat 
+Real-time Voice Chat 
+
+Real-time voice chat models support both text and audio input and output, billed separately by input tokens and output tokens. Audio tokens are calculated based on duration: Total tokens = Audio duration (seconds) × 12.5. Durations less than 1 second are rounded up to 1 second.
+
+In multi-turn conversations, similar to text-based LLMs, the model maintains a complete conversation context to ensure coherent dialogue. Historical conversation content is processed and billed as input for subsequent turns, so the input token count increases progressively with each turn. The specific billing rules for each content type are as follows:
+
+User input audio and text: Counted as context and billed as input in each subsequent turn. Audio is billed as audio tokens, and text is billed as text tokens.
+User-configured instructions: Billed as text tokens once per turn.
+Model output text: Counted as context using text tokens and billed as input in each subsequent turn.
+Model output audio: Billed as audio tokens only once at output time and not counted as context.
+
+As the number of conversation turns increases, the accumulated context tokens grow progressively. We recommend controlling the number of turns in a single session or starting a new session at appropriate times to optimize costs.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment region
+
+	
+
+Input price (per million tokens)
+
+	
+
+Output price (per million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+Text
+
+	
+
+Audio
+
+	
+
+Text
+
+	
+
+Audio
+
+
+
+
+qwen-audio-3.1-realtime-plus
+
+	
+
+International
+
+	
+
+$0.8
+
+	
+
+$6.4
+
+	
+
+$6.4
+
+	
+
+$24
+
+	
+
+1,000,000 tokens
+
+
+
+
+qwen-audio-3.0-realtime-plus
+
+	
+
+International
+
+	
+
+$0.8
+
+	
+
+$6.4
+
+	
+
+$6.4
+
+	
+
+$24
+
+	
+
+1,000,000 tokens
+
+
+
+
+qwen-audio-3.0-realtime-flash
+
+	
+
+International
+
+	
+
+$0.23
+
+	
+
+$0.93
+
+	
+
+$0.7
+
+	
+
+$1.87
+
+	
+
+1,000,000 tokens
+
+Text embedding 
+
+Pricing rule: billed by input tokens. Output is free.
+
+SingaporeChina (Beijing)Hong Kong (China)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+text-embedding-v4
+
+	
+
+International
+
+	
+
+$0.07
+
+	
+
+1 million tokens
+
+
+
+
+text-embedding-v3
+
+	
+
+International
+
+	
+
+$0.07
+
+	
+
+500,000 tokens
+
+Multimodal embedding 
+
+Pricing rule: billed by input tokens. Output is free.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per million input tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+tongyi-embedding-vision-plus
+
+	
+
+International
+
+	
+
+$0.09
+
+	
+
+1 million tokens
+
+
+
+
+tongyi-embedding-vision-flash
+
+	
+
+International
+
+	
+
+Image/video: $0.03
+
+Text: $0.09
+
+	
+
+1 million tokens
+
+Text reranking 
+
+Pricing rule: billed by input tokens. Output is free.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Deployment scope
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+
+
+qwen3-rerank
+
+	
+
+International
+
+	
+
+$0.1
+
+	
+
+1 million tokens
+
+Industry models 
+Intent understanding 
+China (Beijing)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Output price (per 1 million tokens)
+
+	
+
+Free quota(Note)
+
+
+
+
+tongyi-intent-detect-v3
+
+	
+
+$0.058
+
+	
+
+$0.144
+
+	
+
+No free quota
+
+Role play 
+
+You are charged for input tokens and output tokens.
+
+Note
+
+The following models offer a free quota only in Singapore. No free quota is available in other regions.
+
+SingaporeChina (Beijing)Hong Kong (China)Germany (Frankfurt)US (Virginia)Japan (Tokyo)
+Model ID	Deployment scope	Input price (per 1 million tokens)	Output price (per 1 million tokens)	
+
+Free quota(Note)
+
+Valid for 90 days from the date of Model Studio activation, model release, or application approval, whichever is later
+
+
+qwen-plus-character
+
+Session Cache discount
+
+	
+
+International
+
+	
+
+$0.5
+
+	
+
+$1.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen-flash-character
+
+Session Cache discount
+
+	
+
+International
+
+	
+
+$0.05
+
+	
+
+$0.4
+
+	
+
+1 million tokens
+
+
+
+
+qwen-plus-character-ja
+
+	
+
+International
+
+	
+
+$0.5
+
+	
+
+$1.4
+
+	
+
+1 million tokens
+
+Decision model 
+
+You are charged for input tokens.
+
+SingaporeChina (Beijing)
+
+Model ID
+
+	
+
+Input price (per 1 million tokens)
+
+	
+
+Free quota
+
+
+
+
+decision-model-preview
+
+	
+
+Limited-time free
+
+Token consumption and cost control 
+
+The following items explain token consumption in common scenarios and how to reduce model call costs.
+
+Billing for file reads by URL: When a model reads a file through a URL, the transfer of the file itself does not consume tokens. However, after the file content is parsed, the parsed text is converted into input tokens and billed accordingly. The number of tokens consumed depends on the length of the parsed text, not the size of the original file. For large files, consider using knowledge base chunking and indexing to reduce token consumption instead of passing the full file content directly.
+Troubleshooting unusually high Credits consumption: Common causes of an unexpectedly high Credits cost for a single request include an oversized input token count and the use of Agent mode, which adds overhead from a large system prompt, tool and function definitions, and thinking-mode content. To reduce cost, try compressing historical messages, starting a new conversation, turning off thinking mode, or switching to a lightweight model (for example, a model in the Flash series).
+Recommended models for low-frequency calls: For low-frequency call scenarios such as heartbeat detection, use a low-cost model, such as one in the Qwen Flash series.
+Deprecated models: Models in the Qwen2.5 series and other models marked as deprecated in this document are no longer available for calling, and their pricing information can no longer be queried. Migrate to the corresponding current-generation models.
+Error codes 
+
+If a model call fails and returns an error message, see Error codes for resolution.
+
+Previous: Free quota for new users
+Next: Training and deployment pricing
+Is this page helpful?
+Feedback
+On this page （1）
+Tiered pricing rules
+Text generation - Qwen
+	Qwen-Max
+	Qwen-Plus
+	Qwen-Flash
+	Qwen-Turbo
+	QwQ
+	Qwen-Long
+	Qwen-Omni
+	Qwen-Omni-Realtime
+	QVQ
+	Qwen-VL
+	Qwen-OCR
+	Qwen Math
+	Qwen-Coder
+	Qwen Translation
+	Qwen Data Mining
+	Qwen Deep Research
+Text generation - Qwen (open source)
+	Qwen3.8
+	Qwen3.6
+	Qwen3.5
+	Qwen3
+	Qwen-Omni
+	Qwen3-Omni-Captioner
+	Qwen-VL
+	Qwen-Coder
+Text generation - third-party models
+	DeepSeek
+	Kimi
+	MiniMax
+	GLM
+	GLM-Zhipu AI
+Image generation
+	Qwen Image Generation and Editing
+	Qwen Text-to-Image
+	Qwen Image Editing
+	Qwen Image Translation
+	Qwen-Text-to-Image-Z-Image
+	Wanx Text-to-Image
+	Wanx Image Generation and Editing
+	Wanx General Image Editing
+	AIVirtual Try-on - OutfitAnyone
+	Vidu-Image-Generation
+Video generation
+	HappyHorse-Text-to-video
+	HappyHorse-Image-to-video - first frame
+	HappyHorse-Reference-to-video
+	HappyHorse-Video editing
+	Wan 3.0-Video Generation
+	Wanx-Text-to-Video
+	Wanx-Image-to-Video
+	Wanx-Image-to-Video-First-Frame
+	Wanx-Image-to-Video-First-Last-Frame
+	Wanx-Reference-to-Video
+	Wanx-Video-Editing
+	Wanx-Digital Human
+	Wanx-Image-to-Motion
+	Wanx-Video-Face-Swap
+	AnimateAnyone
+	EMO
+	LivePortrait
+	Emoji Sticker
+	VideoRetalk
+	Video Style Repaint
+	Vidu-Reference-to-video
+	Vidu-Image-to-video - first frame
+World models
+	HappyOyster-Adventure
+	HappyOyster-Directing
+	HappyOyster-Acting
+Audio generation
+Music generation
+Speech synthesis (text-to-speech)
+	Qwen-Audio-TTS
+	Qwen-TTS
+	Qwen-TTS-Realtime
+	Qwen-TTS Voice cloning
+	Qwen-TTS Voice design
+	CosyVoice
+Speech recognition (speech-to-text) and translation (speech-to-text in a specified language)
+	Qwen-LiveTranslate-Flash-Realtime
+	Qwen-LiveTranslate-Flash
+	Qwen-Audio-3.1-ASR-Flash-Message
+	Qwen-Audio-3.x-ASR-Flash-Streaming
+	Qwen-Audio-3.x-ASR-Flash-Filetrans
+	Qwen-Audio-3.x-ASR-Flash
+	Qwen-ASR
+	Qwen-ASR-Realtime
+	Fun-ASR
+	Paraformer
+Voice Chat
+	Real-time Voice Chat
+Text embedding
+Multimodal embedding
+Text reranking
+Industry models
+	Intent understanding
+	Role play
+	Decision model
+Token consumption and cost control
+Error codes
+
+Chat now with Alibaba Cloud Customer Service to assist you in finding the right products and services to meet your needs.
+
+WHY ALIBABA CLOUD
+
+About Alibaba Cloud
+Asia Accelerator
+Our Global Network
+Global Offices
+Trust Center
+Case Studies
+Analyst Reports
+
+PRODUCTS & PRICINGS
+
+Pricing Calculator
+ECS
+SAS
+Model Studio
+Database
+Security
+SMS
+
+SOLUTIONS
+
+Financial Services
+Retail
+Media
+Gaming
+ISV Solutions
+
+ENGAGE
+
+Developer Community
+Partner Network
+Startups
+Marketplace
+Join Alibaba Cloud
+
+RESOURCES & SUPPORT
+
+Documentation Center
+Training & Certification
+Service Notices
+Health Dashboard
+Submit a Ticket
+Security Report
+QwenCloud
+   
+© 2009-2026 Copyright by Alibaba Cloud All rights reserved
+Careers
+About Us
+Privacy Policy
+Legal
+Integrity Compliance Reporting Channel
+Service Notices
+Links

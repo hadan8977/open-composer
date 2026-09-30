@@ -1,0 +1,222 @@
+Title: Best Open Source Base Models for GRPO Fine-Tuning in 2026 | Modal Blog
+
+URL Source: https://modal.com/resources/best-open-source-base-models-grpo-fine-tuning
+
+Markdown Content:
+Group Relative Policy Optimization (GRPO) trains a language-model policy from groups of sampled responses, using rewards normalized within each group instead of a learned value model. Removing the critic simplifies the stack compared with PPO, but GRPO still creates a demanding systems problem: each prompt needs several rollouts, reward evaluation may execute untrusted code, and training alternates between inference-heavy generation and memory-heavy optimization. The best base checkpoint depends on the behavior you want to teach and the hardware available. Qwen3 offers a broad ladder of dense and mixture-of-experts models under Apache 2.0. AI2's OLMo 3 family adds unusually transparent data, code, checkpoints, and training artifacts. This guide ranks the infrastructure and six base models that form the strongest practical shortlist for GRPO work in 2026. Hardware figures are planning ranges, not guarantees; sequence length, group size, rollout engine, precision, optimizer, sharding, and checkpointing can change memory use substantially.
+
+## Key Takeaways
+
+*   **GRPO trades critic training for more rollouts**: relative rewards within each response group remove PPO's separate value model, but generation and reward evaluation become central cost drivers
+*   **Qwen3-30B-A3B-Base is the compute-efficiency leader**: its MoE design stores 30.5B parameters while activating about 3.3B per token, making it attractive when expert-parallel complexity is acceptable
+*   **OLMo 3 is the transparency leader**: AI2 publishes model weights alongside training details and artifacts, which supports reproducible research and deeper inspection
+*   **Dense 4B to 8B models are the easiest place to start**: Qwen3-4B-Base, Qwen3-8B-Base, and OLMo-3-1025-7B support faster reward iteration and practical LoRA or QLoRA experiments
+*   **Modal fits GRPO's uneven utilization pattern**: serverless GPUs, distributed training, secure Sandboxes, and documented [verl](https://modal.com/docs/examples/grpo_verl) and [TRL](https://modal.com/docs/examples/grpo_trl) examples keep rollout, reward, and update infrastructure in one code-first platform
+
+## 1. Modal
+
+[Modal](https://modal.com/products/training) is the infrastructure entry in this ranking: the platform on which the models below can generate rollouts, execute rewards, update weights, and move into production. GRPO has distinct resource phases. Generation benefits from high-throughput inference and broad concurrency, while optimization needs tightly connected GPUs and reward functions may need thousands of isolated CPU or GPU environments. Modal exposes all three through Python rather than requiring teams to operate a persistent Kubernetes cluster.
+
+### How Does Modal Work for GRPO?
+
+*   **Training**: multi-GPU and [multi-node Clustered Functions](https://modal.com/docs/guide/multi-node-training) with high-bandwidth RDMA networking
+*   **Rollouts**: autoscaling GPU Functions for vLLM, SGLang, verl, and TRL workloads
+*   **Rewards**: isolated [Modal Sandboxes](https://modal.com/products/sandboxes) for code execution, verifiers, and environment-based tasks
+*   **Storage**: Volumes and cloud-bucket mounts for checkpoints, datasets, and rollout traces
+*   **Economics**: per-second billing and scale-to-zero behavior instead of paying for an idle RL cluster
+
+### Infrastructure Capabilities
+
+| GRPO stage | Modal resources | Typical use |
+| --- | --- | --- |
+| Prototype | 1x A100, H100, or H200 | Small-model LoRA, reward debugging, short rollouts |
+| Distributed update | 4-8 GPUs per node; multi-node when required | Full-parameter or larger-model policy optimization |
+| Rollout generation | Autoscaling L4, A10, A100, H100, H200, or B200 Functions | Parallel sampling with vLLM or SGLang |
+| Reward evaluation | Elastic CPU/GPU Sandboxes | Tests, compilers, simulations, and model-based judges |
+
+**Best For:** Teams that want to iterate from a one-GPU GRPO experiment to distributed training and production inference without building and maintaining separate cluster, rollout, and sandbox systems.
+
+## 2. Qwen3-30B-A3B-Base
+
+[Qwen3-30B-A3B-Base](https://huggingface.co/Qwen/Qwen3-30B-A3B-Base) is the standout MoE option in this list. It combines 30.5B total parameters with roughly 3.3B active parameters per token, offering substantially more representational capacity than a 3B dense model without paying dense 30B compute on every generated token.
+
+### Architecture Specifications
+
+*   **Architecture**: mixture of experts with 128 experts and 8 selected per token
+*   **Parameters**: 30.5B total and approximately 3.3B activated per token
+*   **Context**: 32,768 tokens in the Base repository; longer operation depends on runtime configuration
+*   **Pretraining**: Qwen reports 36 trillion tokens spanning 119 languages and dialects for the Qwen3 family
+*   **Benchmark context**: Qwen reported the post-trained Qwen3-30B-A3B outperforming QwQ-32B while activating about one-tenth as many parameters; this indicates the lineage's post-training ceiling, not the Base checkpoint's out-of-box score
+*   **License**: Apache 2.0
+
+### GRPO Training Characteristics
+
+Sparse activation helps with the repeated forward passes that dominate GRPO rollout generation. It does not make this a 3.3B model for memory planning: training must place or shard all 30.5B expert weights, gradients, and optimizer state. Expert load balancing and framework support also add complexity. It is strongest when rollout throughput matters and the team can use FSDP, ZeRO, expert parallelism, or LoRA effectively.
+
+### Hardware Requirements
+
+| Configuration | Suggested hardware | Notes |
+| --- | --- | --- |
+| Quantized rollout serving | 1x 48-80GB GPU | Depends on quantization, KV cache, sequence length, and concurrency |
+| LoRA/QLoRA GRPO | 2-4x 80GB GPUs | Policy, reference, rollout engine, and long groups can require additional capacity |
+| Full-parameter GRPO | 8+ 80GB GPUs | Use FSDP/ZeRO, activation checkpointing, and optimizer sharding; production runs may need multiple nodes |
+
+**Best For:** Teams seeking the best balance of model capacity and active-token compute, with enough distributed-systems experience to manage MoE training.
+
+## 3. OLMo-3-1125-32B
+
+[OLMo-3-1125-32B](https://huggingface.co/allenai/OLMo-3-1125-32B) is the largest dense checkpoint in this ranking and the best fit for researchers who value openness across the training stack. AI2's OLMo program publishes more than weights: recipes, data documentation, intermediate artifacts, and evaluation details make the family especially useful for controlled post-training research.
+
+### Architecture Specifications
+
+*   **Architecture**: decoder-only dense transformer in the OLMo 3 family
+*   **Parameters**: approximately 32B
+*   **Release identifier**: 1125 denotes the November 2025 checkpoint generation
+*   **Openness**: model weights accompanied by AI2's open training ecosystem and evaluation artifacts
+*   **Benchmark context**: the 32B scale is intended for stronger reasoning and knowledge capacity than the 7B sibling, while exact results depend on the specific base, instruct, or post-trained checkpoint; compare scores from the linked model card rather than transferring instruct-model scores to Base
+*   **License**: follow the checkpoint's model card and OLMo license terms
+
+### Full Transparency
+
+A dense 32B policy provides predictable kernels and avoids expert-routing imbalance, but every rollout token touches the full network. That makes generation more expensive than on Qwen3-30B-A3B and makes sharding unavoidable for full training. In return, researchers get a cleaner architecture for studying reward design, clipping, KL control, and group-size effects without MoE routing as another variable.
+
+### Hardware Requirements
+
+| Configuration | Suggested hardware | Notes |
+| --- | --- | --- |
+| Quantized rollout serving | 1x 80GB GPU or 2x 48GB GPUs | Leave headroom for KV cache and grouped generations |
+| LoRA/QLoRA GRPO | 4x 80GB GPUs | May fit on fewer GPUs with aggressive quantization and short contexts |
+| Full-parameter GRPO | 8-16+ 80GB GPUs | Distributed optimizer state, policy/reference placement, and rollout workers drive the range |
+
+**Best For:** Open-science teams that need a high-capacity dense model and want to inspect or reproduce more of the pretraining and post-training pipeline.
+
+## 4. Qwen3-14B-Base
+
+[Qwen3-14B-Base](https://huggingface.co/Qwen/Qwen3-14B-Base) is a strong dense middle ground: materially more capacity than 7B-8B models while remaining far easier to train than dense 32B checkpoints.
+
+### Architecture Specifications
+
+*   **Architecture**: dense transformer with 40 layers, 40 query heads, and 8 KV heads
+*   **Parameters**: approximately 14.8B
+*   **Context**: 32,768 tokens in the Base repository; extended context requires a supported runtime configuration
+*   **Benchmark context**: Qwen reports Qwen3-14B-Base performance comparable to Qwen2.5-32B-Base across its launch evaluation, a vendor-reported family comparison rather than universal task equivalence
+*   **License**: Apache 2.0
+
+### GRPO Training Characteristics
+
+The regular dense topology works well with mainstream FSDP and ZeRO recipes and avoids MoE-specific communication. It is large enough to develop sophisticated reasoning after a good SFT cold start, but small enough that a single multi-GPU node can support meaningful LoRA GRPO runs. Group size and maximum completion length remain major cost levers because each prompt produces multiple full-policy generations.
+
+### Hardware Requirements
+
+| Configuration | Suggested hardware | Notes |
+| --- | --- | --- |
+| Rollout serving | 1x 40-48GB GPU in BF16 or smaller with quantization | KV cache and concurrency determine practical limits |
+| LoRA/QLoRA GRPO | 1-2x 80GB GPUs | Separate rollout workers improve throughput |
+| Full-parameter GRPO | 4-8x 80GB GPUs | Use FSDP/ZeRO and activation checkpointing |
+
+**Best For:** Teams wanting a capable dense policy that still fits practical single-node GRPO workflows.
+
+## 5. Qwen3-8B-Base
+
+[Qwen3-8B-Base](https://huggingface.co/Qwen/Qwen3-8B-Base) is the most broadly practical Qwen checkpoint here. It offers enough capacity for meaningful math, code, and instruction-following rewards while keeping rollout experiments fast enough for frequent iteration.
+
+### Architecture Specifications
+
+*   **Architecture**: dense transformer with 36 layers, 32 query heads, and 8 KV heads
+*   **Parameters**: approximately 8.2B
+*   **Context**: 32,768 tokens in the Base repository
+*   **Benchmark context**: Qwen reports broadly comparable base-model performance to Qwen2.5-14B-Base, placing the 8B checkpoint in an attractive capability-per-parameter tier
+*   **License**: Apache 2.0
+
+### GRPO Training Characteristics
+
+At 8B, researchers can afford more ablations across reward functions, group sizes, KL coefficients, and sampling temperatures. That often matters more than choosing a larger model too early. A compact policy also reduces stale-policy delays between generation and updates. For code or math, begin with verifiable rewards and monitor reward hacking rather than assuming a higher training reward means better generalization.
+
+### Hardware Requirements
+
+| Configuration | Suggested hardware | Notes |
+| --- | --- | --- |
+| Rollout serving | 1x 24GB GPU with quantization; 1x 40GB for more headroom | Long completions and larger batches increase KV-cache use |
+| LoRA/QLoRA GRPO | 1x 40-80GB GPU | Two GPUs can separate training from generation |
+| Full-parameter GRPO | 2-4x 80GB GPUs | Optimizer sharding and activation checkpointing recommended |
+
+**Best For:** GRPO research, reproducible baselines, and teams that prioritize iteration speed without dropping to a very small model.
+
+## 6. OLMo-3-1025-7B
+
+[OLMo-3-1025-7B](https://huggingface.co/allenai/OLMo-3-1025-7B) brings OLMo's open development philosophy to a resource-efficient scale. It is especially compelling for teams studying how GRPO changes a policy, because its surrounding artifacts make it easier to connect post-training behavior to the underlying model.
+
+### Architecture Specifications
+
+*   **Architecture**: decoder-only dense transformer in the OLMo 3 family
+*   **Parameters**: approximately 7B
+*   **Release identifier**: 1025 denotes the October 2025 checkpoint generation
+*   **Transparency**: designed for research with open weights and extensive training documentation
+*   **Benchmark context**: use the Base checkpoint's model-card results for pretraining comparisons; instruct and RL-tuned OLMo derivatives measure post-training as well as architecture
+*   **License**: follow the linked checkpoint's OLMo terms
+
+### Full Transparency Advantages
+
+The 7B dense scale is well suited to controlled GRPO studies. Teams can retain a frozen reference model, sample multiple responses, and run a trainable policy without a large cluster. OLMo's transparency is useful when testing hypotheses about reward shaping, data contamination, and capability shifts, although Qwen generally has broader deployment-tool support and a larger fine-tuning community.
+
+### Hardware Requirements
+
+| Configuration | Suggested hardware | Notes |
+| --- | --- | --- |
+| Rollout serving | 1x 24GB GPU with quantization | Use more memory for long contexts or high concurrency |
+| LoRA/QLoRA GRPO | 1x 40-80GB GPU | Comfortable range for policy plus short grouped rollouts |
+| Full-parameter GRPO | 2-4x 80GB GPUs | Sharding is typically required once optimizer state and activations are included |
+
+**Best For:** Reproducible GRPO research, interpretability work, and teams that prefer open training artifacts over the broadest model ecosystem.
+
+## 7. Qwen3-4B-Base
+
+[Qwen3-4B-Base](https://huggingface.co/Qwen/Qwen3-4B-Base) is the most resource-efficient recommendation in this ranking. It is large enough to learn useful reasoning patterns, yet small enough to support rapid experiments and parameter-efficient training on a single modern GPU.
+
+### Architecture Specifications
+
+*   **Architecture**: dense transformer with 36 layers
+*   **Parameters**: approximately 4B
+*   **Context**: 32,768 tokens
+*   **Benchmark context**: Qwen reports performance comparable to Qwen2.5-7B-Base, giving it roughly 7B-class launch performance at a smaller parameter count
+*   **License**: Apache 2.0
+
+### GRPO Training Characteristics
+
+Low rollout cost makes Qwen3-4B-Base ideal for tuning the GRPO system before scaling. Teams can test sparse versus dense rewards, response-group sizes, clipping, and sampling policies without consuming a large GPU cluster. It is also a realistic target for end-to-end code-reward experiments where each candidate must be compiled or tested in a Sandbox. For narrow domains, a carefully designed SFT cold start followed by GRPO can outperform a much larger untuned base model, but results depend on data and reward quality.
+
+### Hardware Requirements
+
+| Configuration | Suggested hardware | Notes |
+| --- | --- | --- |
+| Rollout serving | 1x 16-24GB GPU | Quantization increases batch and KV-cache headroom |
+| LoRA/QLoRA GRPO | 1x 24-48GB GPU | A practical single-GPU starting point |
+| Full-parameter GRPO | 1x 80GB or 2x 40-48GB GPUs | Conventional AdamW state alone is large; use checkpointing, sharding, or lower-memory optimizers |
+
+**Best For:** Resource-constrained teams, reward-function prototyping, education, and fast GRPO ablation studies.
+
+## Why Modal Stands Out for GRPO Fine-Tuning
+
+### Documented GRPO Examples for verl and TRL
+
+Modal provides runnable, maintained examples for two leading GRPO paths: a distributed [GRPO implementation with verl](https://modal.com/docs/examples/grpo_verl) and a [GRPOTrainer workflow with Hugging Face TRL](https://modal.com/docs/examples/grpo_trl). Teams can start from concrete image definitions, GPU configuration, storage, and launch code rather than translating a local notebook into cloud infrastructure from scratch.
+
+### Serverless Economics for Bursty RL Workloads
+
+GRPO rarely uses every resource uniformly. Rollout workers spike during sampling, reward workers fan out during evaluation, and tightly connected training GPUs become critical during updates. Modal bills compute by actual usage and lets resources scale to zero between runs. That model avoids keeping a fixed cluster idle while researchers inspect traces, adjust a reward, or prepare the next batch.
+
+### Secure Sandboxes for Reward Evaluation
+
+Coding and agentic rewards often execute model-generated programs. [Modal Sandboxes](https://modal.com/products/sandboxes) provide isolated, ephemeral environments backed by gVisor, with resource and network controls. Reward workers can compile code, run tests, or interact with tools without granting generated programs direct access to the trainer or host environment.
+
+### Fast Cold Starts
+
+Rollout and reward fleets must expand quickly or expensive training GPUs wait for samples. Modal's custom container runtime and filesystem are engineered for fast startup, while [Memory Snapshots](https://modal.com/docs/guide/memory-snapshots) can restore initialized CPU state and, through an Alpha capability, GPU state. Faster provisioning shortens the feedback loop and helps keep each GRPO stage supplied with work.
+
+### Code-First Development Without Infrastructure Overhead
+
+GPU types, container images, secrets, volumes, concurrency, retries, and schedules live alongside the training application in code. Modal handles provisioning and cluster orchestration. Researchers can move the same Python project from a local entry point to remote rollout generation and multi-node optimization without maintaining Helm charts or a permanent control plane.
+
+### Enterprise Security and Compliance
+
+Modal has completed a [SOC 2 Type II](https://modal.com/blog/soc2type2) audit, uses gVisor-based workload isolation, and supports HIPAA-compliant workloads on Enterprise plans through a BAA. Enterprise controls, auditability, and isolated reward execution matter when proprietary training data and generated code share one RL workflow.

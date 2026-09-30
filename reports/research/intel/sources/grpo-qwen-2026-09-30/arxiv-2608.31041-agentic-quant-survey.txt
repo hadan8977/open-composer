@@ -1,0 +1,1112 @@
+Agentic Quantitative Trading: A Survey of Workflows, Systems,
+and Evaluation
+Fengrui Hua∗
+
+Hengyi Yang∗
+
+arXiv:2608.31041v1 [q-fin.CP] 31 Aug 2026
+
+fhua430@connect.hkust-gz.edu.cn
+The Hong Kong University of Science
+and Technology (Guangzhou)
+Guangzhou, China
+
+Haohan Zhang
+
+hzhang760@connect.hkust-gz.edu.cn
+The Hong Kong University of Science
+and Technology (Guangzhou)
+Guangzhou, China
+
+Xinlei Hao∗
+
+hengyiyangyhy@gmail.com
+HSBC Business School, Peking
+University
+Shenzhen, China
+
+Bokai Cao
+
+mabkcao@connect.hkust-gz.edu.cn
+The Hong Kong University of Science
+and Technology (Guangzhou)
+Guangzhou, China
+
+Jia Li†
+
+jialee@connect.hkust-gz.edu.cn
+The Hong Kong University of Science
+and Technology (Guangzhou)
+Guangzhou, China
+
+Abstract
+Quantitative trading is moving from isolated predictive models
+toward agentic workflows that combine reasoning, tool use, memory, and feedback. This survey reviews agentic quantitative trading across five stages: factor mining, signal discovery, portfolio
+construction, order execution, and risk management. We further
+examine agentic quant trading systems through architecture, coordination, and adaptation, while comparing benchmarks across
+strategy construction, offline trading, live market evaluation, and
+reliability assessment. Our review finds that current systems remain
+concentrated on signal discovery, while complete integration with
+portfolio construction, execution, and risk control is still uncommon. Multi-agent systems also rely heavily on aggregation despite
+increasingly diverse workflow structures. Benchmark evidence further shows that strong model or forecasting capability does not
+reliably translate into trading performance under live market conditions and reliability controls. We conclude with future directions
+for more complete trading workflows, stronger coordination, and
+evaluation matched to the capability being assessed.
+
+Keywords
+Quantitative Trading, LLM Agents, Agentic Systems
+∗ Equal contribution.
+
+† Corresponding authors.
+
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for profit or commercial advantage and that copies bear this notice and the full citation
+on the first page. Copyrights for components of this work owned by others than the
+author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+republish, to post on servers or to redistribute to lists, requires prior specific permission
+and/or a fee. Request permissions from permissions@acm.org.
+Conference acronym ’XX, Woodstock, NY
+© 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+ACM ISBN 978-1-4503-XXXX-X/2018/06
+https://doi.org/XXXXXXX.XXXXXXX
+
+xinleihao@stu.pku.edu.cn
+HSBC Business School, Peking
+University
+Shenzhen, China
+
+Yiyan Qi
+
+qiyiyan@idea.edu.cn
+IDEA Research, International Digital
+Economy Academy
+Shenzhen, China
+
+Jian Guo†
+
+guojian@idea.edu.cn
+IDEA Research, International Digital
+Economy Academy
+Shenzhen, China
+ACM Reference Format:
+Fengrui Hua, Hengyi Yang, Xinlei Hao, Haohan Zhang, Bokai Cao, Yiyan Qi,
+Jia Li, and Jian Guo. 2026. Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation. In Proceedings of Make sure to enter the correct
+conference title from your rights confirmation email (Conference acronym ’XX).
+ACM, New York, NY, USA, 9 pages. https://doi.org/XXXXXXX.XXXXXXX
+
+1
+
+Introduction
+
+Quantitative trading refers to the use of mathematical models, statistical analysis, and machine learning algorithms to analyze market
+data, identify trading signals, and make investment decisions. Over
+the past decades, it has evolved from human-designed factors and
+statistical models to deep learning pipelines [21], driven by the increasing scale, complexity, and nonlinearity of financial data. More
+recently, the need to integrate heterogeneous market information
+and support complex financial decisions has motivated systems
+driven by LLMs [74, 82] and financial foundation models [62, 99].
+However, quantitative trading is not merely a prediction problem.
+It is a long-horizon workflow involving factor mining, signal validation, portfolio construction, order execution, risk monitoring,
+and continual adaptation under non-stationary markets.
+In this survey, we use the term agentic to refer to LLM-based systems that go beyond one-shot text generation. An agentic system
+typically decomposes a complex objective into intermediate subtasks, interacts with external tools, maintains task-relevant state,
+and updates its behavior through feedback, reflection, or iterative
+planning [1]. These capabilities have made LLM agents increasingly relevant across a wide range of domains, including software
+engineering [55], materials science [92], and financial services [54].
+Why Agentic Quantitative Trading? Agentic quantitative
+trading emerges from this workflow-level demand. Unlike isolated
+predictive models, LLM-based agentic systems can decompose complex trading tasks, coordinate specialized agents, and invoke external tools such as databases and backtesting engines [35]. They can
+
+Agentic Workflows across the Quantitative Trading Pipeline (Sec. 2)
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+Agentic Factor Mining
+(Sec. 2.1)
+
+Agentic Trading Signal
+Discovery (Sec. 2.2)
+
+Agentic Portfolio
+Construction (Sec. 2.3)
+Agentic Order Execution
+(Sec. 2.4)
+Agentic Risk Management
+(Sec. 2.5)
+
+Hua et al.
+
+Generative Agents
+
+FAMA [44], Multi-Agent LLM [5], Alpha-gpt [70], HARLA [86]
+
+Collaborative Agents
+
+FactorMAD [13], AlphaLogics [72], QRAFTI [45]
+
+Self-Evolving Agents
+
+AlphaAgent [65], CogAlpha [48], AlphaAgentEvo [66] , QuantaAlpha
+[24], FactorMiner [71], XALPHA [49], AlphaMemo [84]
+
+Tool-Augmented Agents
+
+LLM-MCTS [63], AlphaPROBE [23], Hubble [61], FactorEngine [46]
+
+Agent Reasoning Signal
+
+FinVision [17], MarketSenseAI [18, 19], TradingAgents [77], TradingGPT [42], TradingGroup [67], MountainLion [73], et al.
+
+Factor and Model Signal
+
+QuantAgent [69], MMRepAgent [38], RD-Agent [43], AlphaCrafter [89]
+
+Executable Strategy Signal
+
+FactFin [39], SHARP [6], OQL [51], Moira [20], AlphaQuanter [9]
+
+Portfolio Asset Selection
+
+MASS [22], 3S-Trader [4], LLM-Sector-Allocator [26], CryptoPortfolio-MAS [52], Alphaagents [97]
+
+Portfolio Optimization
+
+RAPTOR [2], CEF-Agents [57], FinLumen [95], BlindTrade [27]
+
+Instruction-to-Order Agent [29], PACE [60], AlphaCrafter [89], AgenticAITA [32]
+Agentic Risk Control
+
+Trade-or-not [14], FinRS [47], WebCryptoAgent [31], SAE [3]
+
+Agentic Risk Adaptation
+
+FinMem [88], ATLAS [56], TrustTrade [36]
+
+Figure 1: Taxonomy of agentic workflows across the quantitative trading pipeline.
+also retain memory of past decisions, reflect on failures, and adapt
+future behavior according to market regimes and performance feedback [1]. This shifts the central question from whether a model can
+forecast returns to how an agentic system can automate, revise, and
+control decisions across the trading process.
+Comparison with Existing Surveys. Existing surveys provide important foundations but adopt different units of analysis.
+The ICAIF 2025 survey by Saha et al. [59] reviews LLM agents
+across investment management and organizes the literature around
+broad use cases and agent designs. Xia et al. [76] examine trading
+agents as decision pipelines, with particular attention to protocol
+comparability, execution semantics, and reproducibility. Broader
+surveys of financial LLM agents [12, 75] cover applications across
+finance, while other reviews focus on trading agents, alpha mining,
+or selected stages of the trading process [10, 54, 93].
+Despite these advances, three aspects remain insufficiently connected. First, it remains unclear how agents are distributed across
+the quantitative trading workflow and which stages are less integrated into complete trading systems. Second, existing work provides limited insight into how architecture, coordination, and adaptation connect decisions across trading stages. Third, although prior
+work has highlighted important differences in evaluation protocols,
+it remains unclear how evaluation settings relate to different parts
+of the workflow and what claims about agent capability they can
+support. We organize the survey around these three questions.
+Review Scope. To address these questions, we review recent
+agentic quant trading research, focusing mainly on 2025–2026 while
+including earlier studies when relevant. We include studies where
+
+LLM agents contribute to trading workflows and exclude general
+financial LLM applications and non-agent prediction models. For
+complete systems, we code task coverage and system mechanisms
+using the taxonomies in Sections 2 and 3. The reported counts refer
+to the studies reviewed here.
+Our Contributions. Based on this review, we make three main
+contributions. First, we organize agentic quantitative trading around
+five stages: factor mining, signal discovery, portfolio construction,
+order execution, and risk management (Section 2). This reveals
+where agents currently operate across the trading process and
+where integration remains limited. Second, we analyze complete
+trading systems through three dimensions: architecture, coordination, and adaptation (Section 3), showing how decisions are connected and revised across stages. Third, we compare benchmarks
+for strategy construction, offline trading, live market evaluation,
+and reliability assessment (Section 4), and derive quantitative findings on workflow coverage, coordination patterns, and evaluation
+evidence (Section 5).
+
+2
+
+Agentic Workflows across the Quantitative
+Trading Pipeline
+
+This section reviews agentic workflows across five stages of the trading pipeline: factor mining, signal discovery, portfolio construction,
+order execution, and risk management. Factor mining methods are
+grouped by their dominant agent capability, while the remaining
+stages are organized by the roles agents play at each stage. Figure 1
+summarizes the resulting framework with representative studies.
+
+Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation
+
+2.1
+
+Agentic Factor Mining
+
+Factor mining aims to discover predictive variables for forecasting asset returns. Existing methods range from manual factor design [15] to machine learning [81] and formulaic search [85], but
+they face limitations such as factor crowding, opacity, redundancy,
+and weak economic grounding. These challenges motivate agentic
+factor mining, where LLM-centered agents generate ideas, collaborate through specialized roles, evolve through feedback, and use
+external tools to execute and evaluate candidate factors.
+Recent agentic factor mining studies can be organized around
+four dominant mechanisms, which are not mutually exclusive. (1)
+Generative agents transform existing factors, financial rationale,
+and human ideas into explicit factor formulas. FAMA [44] emphasizes autonomous exploration. Its Cross-Sample Selection reduces
+repetitive in-context generation, while Chain-of-Experience reuses
+successful mining trajectories to guide later search. Alpha-GPT [70]
+instead emphasizes human interaction, allowing quantitative researchers to express investment ideas in natural language and convert them into executable alpha formulas.
+(2) Collaborative agents divide factor research among agents
+with different roles. Instead of assigning ideation, implementation,
+and validation to a single model, these systems approximate the
+workflow of a quant research team. FactorMAD [13] uses debate
+between LLM agents to critique and refine alpha factors. AlphaLogics [72] organizes collaboration around market-logic discovery,
+using one set of agents to extract economic rationales and another
+to generate factors. Across these systems, the value is not merely
+“more agents,” but the use of structured interaction to improve interpretability, reduce unilateral reasoning errors, and make factor
+discovery closer to institutional research practice.
+(3) Self-evolving agents treat factor mining as an iterative
+learning process, using memory [49, 71], reinforcement learning
+(RL) [66], or trajectory-level evolution [24] to reuse successful patterns and improve future search. The shared logic is that alpha
+mining in non-stationary markets requires previous experience
+rather than independent sampling. This makes self-evolving agents
+promising for long-horizon discovery and redundancy control but
+also raises evaluation concerns: memory and evolution can overfit
+to historical validation regimes unless tested under strict out-ofsample and cross-market protocols.
+(4) Tool-augmented agents connect LLM reasoning with computational tools that search, implement, and evaluate candidate
+factors. LLM-MCTS [63] combines generation with tree search,
+AlphaPROBE [23] uses graph-guided retrieval, and Hubble [61]
+introduces constrained tools to improve the validity and diversity
+of mined factors. In these systems, tools are not auxiliary components but part of the factor development process. Overall, agentic
+methods turn factor mining from isolated formula generation into a
+research workflow that supports collaboration, repeated refinement,
+and systematic evaluation.
+
+2.2
+
+Agentic Trading Signal Discovery
+
+Traditional methods typically follow a modular pipeline: predictive
+factors are designed from prices, fundamentals, or alternative data,
+then used by statistical and deep learning models to forecast returns
+[21]. Agentic workflows instead allow agents to combine market
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+information across modalities and leverage LLMs’ reasoning and
+generation capabilities to refine trading signals or strategy logic
+[17, 73]. Since signal discovery is often embedded in e2e agentic
+trading systems, we focus here on representative signal designs
+and leave broader system architectures to Section 3.
+Agents support trading signal discovery in three main ways. (1)
+Agent reasoning signals treat the LLM agent as the primary producer of trading judgments. Rather than first constructing a formal
+factor or model, these systems ask agents to absorb heterogeneous
+market evidence and directly issue recommendations, ratings, or
+actions. Specialist agents analyze news, fundamentals, price dynamics, and macro conditions, while a synthesis agent converts
+their outputs into stock-level theses and ordinal recommendations
+[18]. Recent studies also introduce simulated investment teams [77],
+memory layers [42, 88], or verbal reinforcement [87] to stabilize
+the final buy/sell/hold decision. The strength of this paradigm lies
+in its ability to combine weak, heterogeneous, and partially textual evidence that is difficult to encode in a fixed model. However,
+this flexibility also increases the risk of temporal leakage, making
+backtest results overly optimistic.
+(2) Factor-model signals preserve the conventional quantitative premise that signals should come from explicit factors or
+models while using agents to automate and improve the research
+process around them. RD-Agent(Q) is representative: it coordinates
+factor discovery and model innovation, treating signal quality as
+the result of joint factor-model optimization [43]. Compared with
+direct agent generation, this paradigm offers stronger compatibility
+with established quantitative practice: signals are more measurable,
+backtestable, and decomposable. However, its value depends on
+whether the agent improves the factor/model pipeline rather than
+merely wrapping it in natural-language explanations.
+(3) Executable strategy signals refer to trading signals generated from executable trading logic constructed or optimized by
+agents. In this paradigm, the agent usually does not directly produce buy/sell/hold decisions through natural-language reasoning.
+Instead, it first translates trading intentions, market hypotheses,
+or historical feedback into rules, query languages [51], strategy
+programs [39], or trading policies [79]. These executable strategy
+logics are then evaluated in simulated trading environments [40]
+or reinforcement learning environments [9, 79], and the resulting
+actions are used as trading signals.
+
+2.3
+
+Agentic Portfolio Construction
+
+Portfolio construction converts trading signals into capital allocations under risk and diversification constraints. Classical methods such as mean-variance optimization, Black–Litterman allocation [25], and RL [28] provide well-established foundations. Recent
+agentic workflows extend this line of research by introducing specialized agents for asset selection and weight optimization.
+Portfolio asset selection concerns which assets should enter
+the portfolio. Agents combine financial indicators, news, market
+narratives [52], and simulated investor preferences [22] to produce
+asset rankings [4] and inclusion decisions. Their main role is to
+compare heterogeneous evidence rather than solve the numerical
+allocation problem. This allows textual information and investment
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+Hua et al.
+
+Figure 2: Taxonomy of agentic quantitative trading systems across three system-design dimensions.
+rationales to influence portfolio construction. However, the resulting rankings may change with the available evidence and inherit
+biases from agent judgments. Many systems also rely on simple
+allocation rules after selecting the assets.
+Portfolio weight optimization determines how capital is allocated across selected assets. RAPTOR [2] converts confidenceweighted agent views into inputs for a Black–Litterman optimizer,
+while CEF-Agents [57] uses LLM agents to generate heuristic procedures for mean–variance optimization and efficient frontier construction. In both cases, agents provide the views or optimization
+logic, and conventional optimization methods apply portfolio constraints and produce the final weights.
+
+2.4
+
+Agentic Order Execution
+
+Traditional order execution converts trading signals and portfolio decisions into market orders, limit orders, rebalancing trades,
+and execution schedules. Classical methods optimize transaction
+costs, market impact, slippage, latency, and inventory risk under
+predefined execution models [64].
+Recent agentic approaches address different parts of this process.
+Kang et al. [29] examine how LLMs interpret incomplete trading
+instructions, request missing details, and convert them into standardized orders. AlphaCrafter [89] translates factor ensembles into
+portfolio positions and rebalancing orders under risk constraints,
+while AgenticAITA [32] uses multi-agent deliberation and deterministic safety checks before execution. PACE [60] extends LLM
+reasoning to parent-order execution through long-horizon planning and short-horizon adjustment to recent market observations.
+
+Together, these studies move agentic trading from deciding what
+to trade toward controlling how decisions are executed. However,
+most evidence still comes from backtests, historical replay, or dry
+runs, with limited testing under live liquidity and execution costs.
+
+2.5
+
+Agentic Risk Management
+
+Traditional trading systems manage risk through volatility estimation, portfolio constraints, stop-loss rules, and post-trade evaluation [68]. In agentic workflows, risk management has two roles:
+constraining risky actions before execution and using observed
+outcomes to adjust future risk decisions.
+Agentic Risk Control estimates risk and uses it to constrain
+trading actions. Trade-or-not [14] uses agents to identify stochastic
+models and derive risk measures for trading decisions. WebCryptoAgent [31] separates slower strategic analysis from rapid monitoring during market shocks. At the execution stage, SAE [3] applies
+exposure budgets, cooldown periods, slippage limits, and venue
+restrictions before an order is released. Risk information therefore
+changes the trading action before it reaches the market, rather than
+appearing only in later performance metrics.
+Agentic Risk Adaptation uses past outcomes to revise later
+risk decisions. FinMem [88] stores important events and trading
+outcomes in layered memory, then adjusts its risk stance as market
+conditions change. ATLAS [56] updates the central agent’s prompt
+using delayed and noisy market feedback. TrustTrade [36] uses
+reflective memory and agreement among agents to reduce the influence of unreliable evidence.
+
+Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation
+
+3
+
+Agentic Quantitative Trading Systems
+
+While Section 2 examines how agents support individual stages of
+the trading pipeline, this section turns to quant trading systems and
+considers how these stages are connected within agentic workflows.
+We classify these systems along three dimensions: system architecture, coordination mechanism, and adaptation mechanism, as
+illustrated in Figure 2. Table 1 compares representative systems by
+their coverage of the five pipeline stages and their implementation
+along the three system dimensions.
+
+3.1
+
+System Architecture
+
+How are agentic workflows organized? Agentic trading systems differ
+in both what individual agents do and how they are arranged within
+the workflow. System architecture defines the order in which agents
+act and who controls the workflow. These choices determine how
+market analysis, portfolio construction, and execution are linked.
+Sequential and iterative structures are the most common and
+are frequently combined. Sequential pipelines organize trading
+tasks in a fixed order, which makes it easier to inspect the output of
+each stage and trace how a decision was produced. However, problems found at later stages may not prompt earlier agents to revise
+their decisions. Iterative architectures address this limitation by
+returning execution feedback to earlier stages, often through shared
+memory. Agents can then revise trading plans as market conditions
+change. QuantEvolve [90] iterates through hypothesis generation,
+coding, backtesting, and archive updates to retain strategies that
+perform well while maintaining diversity. RD-Agent(Q) [43] alternates between research and development, using backtest feedback
+to jointly refine factors and models while a multi-armed bandit
+scheduler selects the next direction.
+Hierarchical and orchestration architectures are closely related because both introduce a component that coordinates specialist agents. In a hierarchical system, a manager assigns tasks, reviews
+the agents’ outputs, and makes or approves the final decision. QuantAgents [40], for example, uses a manager and analyst structure to
+combine specialist analysis through repeated deliberation. Orchestration extends this role from decision making to workflow control.
+The orchestrator determines which agent or tool runs next, passes
+results between modules, and repeats a step when its output fails
+a check. The system proposed by Li et al. [35] uses MCP and A2A
+protocols to connect research, portfolio construction, risk control,
+and execution. In simple terms, a hierarchical manager decides
+among agent recommendations, whereas an orchestrator controls
+how the workflow proceeds. A system may use both structures.
+Human collaboration can be added to any architecture by
+reserving selected inputs or decisions for users. In FinArena [80],
+investors specify their risk preferences through an interactive interface, and the agent system uses them to produce personalized
+investment decisions.
+
+3.2
+
+Coordination Mechanism
+
+How do LLM agents make decisions? In agentic quantitative trading
+systems, coordination mechanisms determine how their outputs
+are combined into a trading decision. They govern how information
+passes between agents, how disagreements are handled, and what
+checks an action must pass before execution.
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+Direct coordination and aggregation govern how information
+flows between agents. Direct coordination sends one agent’s output
+to the next agent or module without first combining it with other
+results. In the framework by Li et al. [35], A2A enables agents to exchange messages directly, while MCP carries instructions between
+the orchestrator and individual agents. Aggregation instead collects
+outputs from several agents and combines them into one decision. It
+is widely used in systems such as ContestTrade, TradingGroup, and
+AlphaCrafter, where specialist outputs are combined before the next
+trading stage [67, 89, 96]. Direct coordination preserves the original
+output and allows fast transfer, while aggregation brings together
+several views but may lose detail when they are summarized.
+Debate and selection handle disagreement in different ways.
+Debate allows agents to challenge each other’s evidence before a
+decision is made. QuantAgents [40] organizes trading meetings
+in which specialist agents present different views and a manager
+makes the decision. Because each agent and discussion round requires more model calls, debate is better suited to major portfolio decisions than rapid execution. Selection instead compares candidate
+outputs and retains those with stronger evaluation results. ContestTrade [96] ranks agents using market feedback, giving greater
+influence to agents with better past performance. AlphaCrafter [89]
+uses validation results to select agents for the final ensemble. Selection requires less interaction than debate, but repeated ranking
+may favor the same agents and reduce strategy diversity.
+Gating checks whether an agent output meets required rules
+before it proceeds to the next stage. In AgenticAITA [32], typed
+JSON contracts specify what each stage must return, while a deterministic hard gate blocks outputs that violate safety rules before
+execution. This makes rejected actions easier to identify and trace,
+although strict gates may also block useful outputs that do not
+match predefined requirements.
+
+3.3
+
+Adaptation Mechanism
+
+How do LLM agents change over time? Financial markets change over
+time, and profitable signals often weaken. Trading agents therefore need mechanisms that revise their behavior as new evidence
+becomes available.
+Memory stores earlier market evidence and trading outcomes
+for later retrieval. FinMem [88] organizes financial information
+through layered memory and adjusts its memory span to retain
+important evidence. Reflection instead reviews past outcomes and
+extracts lessons for future decisions. FinAgent [94] links market
+evidence with subsequent price movements, then evaluates earlier
+trades and recommends corrections. TradingGroup [67] similarly
+allows its forecasting, style, and decision agents to learn from past
+successes and failures. These mechanisms make changes easier
+to trace, although noisy returns may still obscure which decision
+caused a gain or loss.
+Performance mechanisms return trading results to the agents.
+In FinVision [17], a reward agent calculates performance metrics
+that support the next round of prediction and reflection. Reward
+mechanisms convert outcomes into signals that shape future behavior. FinCon [87] extracts investment beliefs from changes in
+profit and loss, then sends verbal feedback to the agents that require
+revision. Regime mechanisms adjust the strategy according to the
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+System
+
+Task Coverage
+F S P E R
+
+Panel A: Single-agent systems
+FinMem [88]
+– ✓ – △ △
+FinAgent [94]
+– ✓ – △ △
+FLAG-Trader [79] – ✓ – △ –
+
+Hua et al.
+
+System Technical Implementation
+Architecture
+
+Coordination
+
+Sequential, Iterative
+Sequential, Iterative
+Iterative
+
+N/A
+N/A
+N/A
+
+Adaptation
+
+Distinctive Mechanism
+
+Mem., Reflection, Perf. Layered memory with adaptive risk persona.
+Memory, Reflection Dual-level reflection with memory retrieval.
+Reward
+PPO-tuned LLM policy network.
+
+Panel B: Multi-agent systems
+TradingGPT [42]
+– ✓ △ △ △
+Iterative
+Agg., Debate
+Memory, Reflection Layered memory agents with peer debate.
+FinCon [87]
+– ✓ ✓ △ ✓ Iterative, Hierarchical
+Agg.
+Mem., Reflection, Perf. Dual-level risk control with CVRF belief updates.
+FinVision [17]
+– ✓ △ △ △ Sequential, Iterative
+Aggregation
+Reflection, Perf.
+Visual reflection with portfolio-percent sizing.
+ContestTrade [96] ✓ ✓ ✓ △ △ Sequential, Hierarchical
+Agg., Select
+Performance
+Market-feedback contests for factor selection.
+Orchestration [35] ✓ ✓ ✓ ✓ ✓ Hierarchical, Orch.
+Direct, Agg., Gate Mem., Perf., Regime MCP/A2A from alpha to execution.
+FinArena [80]
+– ✓ △ △ △ Hierarchical, Human
+Aggregation
+Reflection
+Human risk preferences in MoE-style forecasts.
+MountainLion [73] – ✓ ✓ △ △
+Orch., Human
+Agg.
+Refl., Perf., Regime GraphRAG components for horizon-aware advice.
+QuantAgent-P [78] – ✓ – △ ✓
+Sequential, Orch.
+Aggregation
+Regime
+Price-driven HFT agents with risk bounded orders.
+QuantAgents [40] – ✓ ✓ △ ✓ Iterative, Hierarchical
+Agg., Debate
+Memory, Performance, Simulated trading meetings with dual rewards.
+Reflection, Reward
+QuantEvolve [90] △ ✓ △ △ △
+Iterative, Orch.
+Agg., Select
+Performance, Regime Quality-diversity evolutionary strategy archive.
+RD-Agent(Q) [43] ✓ ✓ – – –
+Iterative, Orch.
+Direct, Select
+Mem., Perf., Reward Joint factor–model optimization.
+TradingAgents [77] – ✓ – △ ✓ Sequential, Hierarchical
+Agg., Debate
+Reflection
+Trading firm roles with debate and approval.
+TradingGroup [67] – ✓ △ △ ✓ Sequential, Iterative
+Aggregation
+Mem., Reflection, Perf. End-to-end data-synthesis pipeline.
+AgenticAITA [32] – ✓ △ ✓ ✓
+Sequential, Orch.
+Direct, Gate
+Memory, Regime
+Typed JSON contracts, deterministic hard gates.
+AlphaCrafter [89] ✓ ✓ ✓ ✓ ✓ Sequential, Iterative
+Agg., Select
+Mem., Perf., Regime Continuously adaptive factor-to-execution.
+Invest-Teams [53] – ✓ ✓ – △
+Hierarchical
+Agg., Select
+N/A
+Explicitly decomposes into fine-grained tasks.
+HedgeAgents [37] – ✓ ✓ △ ✓ Iterative, Hierarchical
+Direct, Agg.
+Mem., Refl., Perf.
+Hedging experts coordinated through conferences.
+
+Table 1: Comparison of representative agentic quantitative trading systems across pipeline coverage and system mechanisms.
+F/S/P/E/R denote the five trading-workflow stages defined in Section 2. ✓ denotes core coverage, △ partial coverage, – no
+coverage; N/A indicates that no corresponding mechanism was identified.
+
+detected market state. AlphaCrafter [89] uses a Screener agent to
+assess the current regime and construct a matching factor ensemble.
+Performance feedback is most useful when interpreted together
+with regime signals, because weaker results may reflect a change
+in market style rather than a decline in predictive ability.
+
+4
+
+Datasets and Benchmarks
+
+Datasets and benchmarks determine which parts of an agentic trading workflow can be evaluated and how reliable the reported results
+are. Table 2 organizes existing studies into four groups: strategy
+construction, offline trading, live market evaluation, and reliability
+evaluation. Strategy construction benchmarks assess the quality
+of alpha formulas and whether trading intent can be translated
+into executable code or structured strategies [11, 30, 51]. Offline
+benchmarks instead test trading decisions with historical data or
+simulated markets, allowing controlled comparison across models
+and agent designs [7, 34, 91].
+Recent benchmarks increasingly move from isolated outputs to
+repeated decisions under live market conditions. DeepFund shows
+the practical difficulty of generating stable returns in live fund
+management and highlights the value of cash management and
+diversification [33]. Agent Market Arena further finds that, under
+shared verified inputs, agent architecture explains more performance variation than the LLM backbone [58]. PolyBench shows
+
+that high forecasting accuracy and confidence do not guarantee
+profit once liquidity and slippage affect execution [8]. Live evaluation therefore needs to assess trading decisions under actual market
+conditions rather than language capability alone.
+Benchmark design is also shifting from measuring returns to testing whether those returns are trustworthy. Profit Mirage introduces
+FinLake-Bench to examine whether apparent performance depends
+on knowledge leakage and memorized market outcomes [39]. AutoRedTrader tests how synthetic misinformation changes agent decisions and whether time series evidence improves resistance [50].
+KTD-FIN controls ticker and date memory channels, then separates
+market exposure, style exposure, and stock selection effects [98].
+These studies show that cumulative return alone cannot establish agent capability. Reported gains are more credible when they
+survive temporal controls and adversarial tests, with attribution
+confirming where the returns originate.
+
+5
+
+Discussion
+
+The comparison in Tables 1 and 2 reveals three clear patterns. These
+counts describe the systems and benchmarks included in this review
+rather than the entire literature.
+Finding 1: Signal discovery dominates, while complete
+trading workflows remain rare. All 20 systems in Table 1 treat
+
+Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation
+
+Paper
+
+Task
+
+Data
+
+Panel A: Strategy Construction Evaluation
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+Metrics
+
+Main Findings
+
+Predictiveness, stability,
+robustness, diversity
+
+Multidimensional metrics identify high quality alphas more effectively
+than backtest-only screening.
+Reliable strategy generation requires runnable code, realistic trading logic,
+and alignment with user intent.
+Semantic accuracy predicts strategy quality better than execution success
+alone, while OQL reduces hallucination and risk.
+
+AlphaEval [11]
+
+Formulaic alpha evaluation A-shares, US stocks
+
+QuantCode [30]
+
+Strategy code generation
+
+OQL [51]
+
+Natural language to option
+Query quality & strategy
+New task-specific datasets
+strategies
+quality
+
+New task-specific datasets Judge pass rate
+
+Panel B: Offline Trading Evaluation
+
+Stocks, crypto, ETFs;
+prices, reports, news
+US stocks; reports, BBS,
+Stock market simulation
+events
+Contamination-free stock US stocks; prices,
+back-trading
+fundamentals, news
+
+InvestorBench [34] Financial decision-making
+StockAgent [91]
+StockBench [7]
+
+CR, MDD, Sharpe,
+volatility
+Effectiveness, reliability,
+impact
+Return, MDD, Sortino
+
+Agents that incorporate advanced memory systems and dynamic risk
+assessment improve adaptation to market fluctuations.
+External information, agent profiles, and backbone models shape trading
+behavior and simulated price dynamics.
+Most agents struggle to beat buy and hold, and strong static financial
+knowledge does not guarantee trading success.
+
+Panel C: Live Market Evaluation
+
+US stocks; prices, reports, CR, CRbnh, MDD, Sharpe, Most LLMs lost money in live evaluation; cash management and
+fundamentals, news
+WR, beta, alpha
+diversification were more decisive than fluent analysis.
+CR, MDD, Sortino,
+General intelligence does not transfer reliably to trading; risk control
+AI-Trader [16]
+Autonomous live trading A-shares, US stocks, crypto
+volatility
+drives cross-market robustness.
+CR, WR, MDD, Sharpe,
+Models show distinct allocation styles; strong static benchmark scores do
+LiveTradeBench [83] Live portfolio allocation US stocks, Polymarket
+not predict live trading performance.
+volatility
+US Stocks, crypto; prices, CR, MDD, Sharpe,
+Agent architecture explains more performance variation than the LLM
+AMA [58]
+Lifelong live trading arena
+news
+volatility
+backbone under shared verified inputs.
+Prediction-market
+Accuracy and confidence do not ensure profit; order-book liquidity and
+PolyBench [8]
+Polymarket; news
+Return, Sharpe, accuracy
+forecasting and trading
+slippage materially change rankings.
+Economies, companies;
+Deep research agents lead, but precise recurrent numerical forecasting
+FinDF [41]
+Live financial forecasting
+Accuracy
+macro tasks
+remains difficult under temporal isolation.
+DeepFund [33]
+
+Live fund investment
+
+Panel D: Reliability Evaluation
+Leakage and
+Six assets; prices, news,
+FinLake-Bench [39]
+counterfactual evaluation counterfactuals
+Adversarial
+BTC; prices, news,
+AutoRedTrader [50]
+misinformation robustness synthetic misinformation
+Leakage-controlled
+KTD-FIN [98]
+A-shares
+attribution benchmark
+
+CR, MDD, Sharpe, PC,
+confidence invariance
+CR, exposure & success
+rate
+CR, MDD, Sharpe,
+turnover, ECE
+
+Backtest gains fall after model cutoffs, while counterfactual tests reveal
+reliance on memorized outcomes.
+Subtle financial misinformation can change trading decisions, while
+time-series grounding reduces attack effectiveness.
+Masking alters agent decisions, while returns mainly reflect market and
+style exposure rather than stock selection.
+
+Table 2: Benchmark and dataset comparison for agentic quantitative trading systems. Abbreviations: CR = cumulative return;
+WR = win rate; MDD = maximum drawdown; PC = prediction consistency, ECE = expected calibration error
+signal discovery as a core function. Factor mining is core in 4 systems, portfolio construction in 8, order execution in 3, and risk
+management in 9. Only 4 systems cover all five stages at least
+partially, and only 2 treat all five as core functions. Most systems
+can therefore produce trading signals, but few carry them through
+portfolio construction, execution, and risk control.
+Finding 2: Most systems mix architectures, but aggregation
+dominates coordination. Seventeen of the 20 systems combine
+more than one architectural structure, and 12 use an iterative structure. Among the 17 multi-agent systems, 15 aggregate outputs from
+several agents. Selection appears in 5 systems, debate in 3, and explicit gating in 2. Agent roles and workflow structures have become
+diverse, but most systems still rely on aggregation to reach a final
+decision.
+Finding 3: Evaluation setting changes what the reported
+results mean. The 15 benchmarks in Table 2 include 3 for strategy
+construction, 3 for offline trading, 6 for live evaluation, and 3 for reliability. All live-market benchmarks that report trading outcomes
+show that realized performance depends on factors beyond model
+capability, including risk control, system design, liquidity, and slippage [8, 16, 33, 58, 83]. All three reliability benchmarks show that
+leakage, misinformation, or return attribution can change the interpretation of agent performance [39, 50, 98]. Backtest success or
+forecasting accuracy therefore provides weaker evidence than live
+trading or reliability evaluation.
+
+6
+
+Future Directions
+
+Complete trading workflows. Current systems are stronger at
+generating signals than turning them into portfolios, orders, and
+risk decisions. Future work should evaluate the full path from signal
+generation to executed trades. Agents do not need to replace all
+components; portfolio optimizers, execution algorithms, and risk
+rules can remain conventional, while agents handle tasks requiring
+reasoning or changing information [2, 35, 89]. Feedback from later
+outcomes should also update earlier decisions.
+Coordination beyond aggregation. Most multi-agent systems
+combine outputs, but few test which agent should be trusted or
+when an action should be blocked. Selection, debate, and gating
+provide alternative mechanisms. ContestTrade selects agents using past performance, QuantAgents enables competing views, and
+AgenticAITA blocks unsafe actions before execution [32, 40, 96].
+Future studies should compare these mechanisms under the same
+settings and record why decisions are changed or rejected.
+Evaluation matched to capability claims. Different evaluations support different conclusions. An executable strategy does not
+guarantee profit, and a profitable backtest does not prove live trading ability. Future benchmarks should match evaluation settings to
+the capability being tested, while controlling information timing,
+execution costs, liquidity, and slippage. Profit Mirage, KTD-FIN,
+and PolyBench show that conclusions can change when leakage,
+attribution, or market frictions are considered [8, 39, 98].
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+7
+
+Conclusion
+
+This survey examines agentic quantitative trading from trading
+tasks to complete systems and their evaluation. The reviewed systems show a clear imbalance: signal discovery is nearly universal,
+while complete integration with portfolio construction, execution,
+and risk control remains rare. System architectures are often mixed,
+but multi-agent decisions still rely heavily on aggregation. Benchmark evidence also becomes less favorable once evaluation moves
+from historical tests to live markets and reliability controls. These
+results suggest that the next challenge is not simply to build larger
+groups of trading agents, but to connect decisions to execution
+and test them under conditions that reveal whether the resulting
+returns are real and reproducible.
+
+References
+[1] Mohamad Abou Ali et al. 2025. Agentic AI: a comprehensive survey of architectures, applications, and future directions. Artificial Intelligence Review 59, 1
+(2025), 11.
+[2] Blake Almon et al. 2025. RAPTOR: Reasoned Agentic Portfolio Trading with
+Orchestrated Rebalancing. In NORA: The First Workshop on Knowledge Graphs
+{\& } Agentic Systems Interplay.
+[3] Ailiya Borjigin et al. 2026. Execution Is the New Attack Surface: SurvivabilityAware Agentic Crypto Trading with OpenClaw-Style Local Executors. arXiv
+preprint arXiv:2603.10092 (2026).
+[4] Kefan Chen et al. 2025. 3S-Trader: A Multi-LLM Framework for Adaptive
+Stock Scoring, Strategy, and Selection in Portfolio Optimization. arXiv preprint
+arXiv:2510.17393 (2025).
+[5] Qizhao Chen et al. 2025. Multi-agent llm framework for formulaic alpha generation and selection in quantitative trading. In 2025 IEEE International Conference
+on Big Data (BigData). IEEE, 7143–7152.
+[6] Xiwen Chen et al. 2026. SHARP: A Self-Evolving Human-Auditable Rubric Policy
+for Financial Trading Agents. arXiv preprint arXiv:2605.06822 (2026).
+[7] Yanxu Chen et al. 2025. Stockbench: Can llm agents trade stocks profitably in
+real-world markets? arXiv preprint arXiv:2510.02209 (2025).
+[8] Pu Cheng et al. 2026. PolyBench: Benchmarking LLM Forecasting and Trading
+Capabilities on Live Prediction Market Data. arXiv preprint arXiv:2604.14199
+(2026).
+[9] Zheye Deng et al. 2025. AlphaQuanter: An End-to-End Tool-Orchestrated
+Agentic Reinforcement Learning Framework for Stock Trading. arXiv preprint
+arXiv:2510.14264 (2025).
+[10] Han Ding et al. 2024. Large language model agent in financial trading: A survey.
+arXiv preprint arXiv:2408.06361 (2024).
+[11] Hongjun Ding et al. 2025. Alphaeval: A comprehensive and efficient evaluation
+framework for formula alpha mining. arXiv preprint arXiv:2508.13174 (2025).
+[12] Yifei Dong et al. 2025. Large language model agents in finance: A survey bridging
+research, practice, and real-world deployment. Findings of the Association for
+Computational Linguistics: EMNLP 2025 (2025), 17889–17907.
+[13] Yitong Duan et al. 2025. FactorMAD: A Multi-Agent Debate Framework Based
+on Large Language Models for Interpretable Stock Alpha Factor Mining. In
+Proceedings of the 6th ACM International Conference on AI in Finance. 605–613.
+[14] Dimitrios Emmanoulopoulos et al. 2025. To trade or not to trade: An agentic
+approach to estimating market risk improves trading decisions. arXiv preprint
+arXiv:2507.08584 (2025).
+[15] Eugene F Fama et al. 2015. A five-factor asset pricing model. Journal of financial
+economics 116, 1 (2015), 1–22.
+[16] Tianyu Fan et al. 2025. AI-Trader: Benchmarking Autonomous Agents in RealTime Financial Markets. arXiv preprint arXiv:2512.10971 (2025).
+[17] Sorouralsadat Fatemi et al. 2024. FinVision: A multi-agent framework for stock
+market prediction. In Proceedings of the 5th ACM International Conference on AI
+in Finance. 582–590.
+[18] George Fatouros et al. 2025. Marketsenseai 2.0: Enhancing stock analysis through
+llm agents. arXiv preprint arXiv:2502.00415 (2025).
+[19] George Fatouros et al. 2026. Signal or Noise in Multi-Agent LLM-based Stock
+Recommendations? arXiv preprint arXiv:2604.17327 (2026).
+[20] Polydoros Giannouris et al. 2026. Moira: Language-driven Hierarchical Reinforcement Learning for Pair Trading. arXiv preprint arXiv:2605.01954 (2026).
+[21] Jian Guo et al. 2024. Quant 4.0: engineering quantitative investment with automated, explainable, and knowledge-driven artificial intelligence. Frontiers of
+Information Technology & Electronic Engineering 25, 11 (2024), 1421–1445.
+[22] Taian Guo et al. 2025. MASS: Multi-agent simulation scaling for portfolio construction. arXiv preprint arXiv:2505.10278 (2025).
+
+Hua et al.
+
+[23] Taian Guo et al. 2026. AlphaPROBE: Alpha Mining via Principled Retrieval and
+On-graph biased evolution. arXiv preprint arXiv:2602.11917 (2026).
+[24] Jun Han et al. 2026. Quantaalpha: An evolutionary framework for llm-driven
+alpha mining. arXiv preprint arXiv:2602.07085 (2026).
+[25] Guangliang He et al. 2002. The intuition behind Black-Litterman model portfolios.
+Available at SSRN 334304 (2002).
+[26] Ryan Quek Wei Heng et al. 2025. Leveraging LLMs for top-down sector allocation
+in automated trading. arXiv preprint arXiv:2503.09647 (2025).
+[27] Joohyoung Jeon et al. 2026. Can Blindfolded LLMs Still Trade? An AnonymizationFirst Framework for Portfolio Optimization. arXiv preprint arXiv:2603.17692
+(2026).
+[28] Zhengyao Jiang et al. 2017. A deep reinforcement learning framework for the
+financial portfolio management problem. arXiv preprint arXiv:1706.10059 (2017).
+[29] Yu Kang et al. 2025. Can large language models effectively process and execute
+financial trading instructions? Frontiers of Information Technology & Electronic
+Engineering 26, 10 (2025), 1832–1846.
+[30] Alexey Khoroshilov et al. 2026. QuantCode-Bench: A Benchmark for Evaluating the Ability of Large Language Models to Generate Executable Algorithmic
+Trading Strategies. arXiv preprint arXiv:2604.15151 (2026).
+[31] Ali Kurban et al. 2026. WebCryptoAgent: Agentic Crypto Trading with Web
+Informatics. arXiv preprint arXiv:2601.04687 (2026).
+[32] Ivan Letteri. 2026. AgenticAITA: A Proof-Of-Concept About Deliberative
+Multi-Agent Reasoning for Autonomous Trading Systems. arXiv preprint
+arXiv:2605.12532 (2026).
+[33] Changlun Li et al. 2026. Time travel is cheating: Going live with deepfund for realtime fund investment benchmarking. Advances in Neural Information Processing
+Systems 38 (2026).
+[34] Haohang Li et al. 2025. Investorbench: A benchmark for financial decisionmaking tasks with llm-based agent. In Proceedings of the 63rd Annual Meeting of
+the Association for Computational Linguistics (Volume 1: Long Papers). 2509–2525.
+[35] Jifeng Li et al. 2025. Orchestration Framework for Financial Agents: From Algorithmic Trading to Agentic Trading. arXiv preprint arXiv:2512.02227 (2025).
+[36] Minghan Li et al. 2026. TrustTrade: Human-Inspired Selective Consensus Reduces
+Decision Uncertainty in LLM Trading Agents. arXiv preprint arXiv:2603.22567
+(2026).
+[37] Xiangyu Li et al. 2025. Hedgeagents: A balanced-aware multi-agent financial
+trading system. In Companion Proceedings of the ACM on Web Conference 2025.
+296–305.
+[38] Xiangyu Li et al. 2025. MMRepAgent: Explainable Stock Earnings Forecasting via
+Multimodal Report Agent Framework. Knowledge-Based Systems (2025), 115197.
+[39] Xiangyu Li et al. 2025. Profit Mirage: Revisiting Information Leakage in LLMbased Financial Agents. arXiv preprint arXiv:2510.07920 (2025).
+[40] Xiangyu Li et al. 2025. QuantAgents: Towards Multi-agent Financial System via
+Simulated Trading. arXiv preprint arXiv:2510.04643 (2025).
+[41] Xiangyu Li et al. 2026. FinDeepForecast: A Live Multi-Agent System for
+Benchmarking Deep Research Agents in Financial Forecasting. arXiv preprint
+arXiv:2601.05039 (2026).
+[42] Yang Li et al. 2023. Tradinggpt: Multi-agent system with layered memory and
+distinct characters for enhanced financial trading performance. arXiv preprint
+arXiv:2309.03736 (2023).
+[43] Yuante Li et al. 2026. R&D-Agent-Quant: a multi-agent framework for datacentric factors and model joint optimization. Advances in Neural Information
+Processing Systems 38 (2026).
+[44] Zhiwei Li et al. 2024. Can large language models mine interpretable financial
+factors more effectively? a neural-symbolic factor mining agent model. In Findings
+of the Association for Computational Linguistics: ACL 2024. 3891–3902.
+[45] Terence Lim et al. 2026. QRAFTI: An Agentic Framework for Empirical Research
+in Quantitative Finance. arXiv preprint arXiv:2604.18500 (2026).
+[46] Qinhong Lin et al. 2026. FactorEngine: A Program-level Knowledge-Infused
+Factor Mining Framework for Quantitative Investment.
+arXiv preprint
+arXiv:2603.16365 (2026).
+[47] Bijia Liu and Ronghao Dang. 2025. FINRS: A Risk-Sensitive Trading Framework
+for Real Financial Markets. arXiv preprint arXiv:2511.12599 (2025).
+[48] Fengyuan Liu et al. 2025. Cognitive Alpha Mining via LLM-Driven Code-Based
+Evolution. arXiv preprint arXiv:2511.18850 (2025).
+[49] Fengyuan Liu et al. 2026. XALPHA: A Memory-Driven AI Quant Researcher for
+Hypothesis-to-Code Alpha Discovery. arXiv preprint arXiv:2607.08332 (2026).
+[50] Zhiwei Liu et al. 2026. AutoRedTrader: Autonomous Red Teaming of Trading Agents through Synthetic Misinformation Injection. arXiv preprint
+arXiv:2605.09185 (2026).
+[51] Haochen Luo et al. 2026. From Natural Language to Executable Option Strategies
+via Large Language Models. arXiv preprint arXiv:2603.16434 (2026).
+[52] Yichen Luo et al. 2025. Llm-powered multi-agent system for automated crypto
+portfolio management. arXiv preprint arXiv:2501.00826 (2025).
+[53] Kunihiro Miyazaki et al. 2026. Toward Expert Investment Teams: A Multi-Agent
+LLM System with Fine-Grained Trading Tasks. arXiv preprint arXiv:2602.23330
+(2026).
+
+Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation
+
+[54] Izunna Okpala et al. 2025. Agentic ai systems applied to tasks in financial services:
+Modeling and model risk management crews. arXiv preprint arXiv:2502.05439
+(2025).
+[55] Nesreen Otoum et al. 2026. Methods and Techniques of Agentic Software Engineering: A Systematic Literature Review. IEEE Access 14 (2026), 7443–7465.
+[56] Charidimos Papadakis et al. 2025. ATLAS: Adaptive Trading with LLM AgentS
+Through Dynamic Prompt Optimization and Multi-Agent Coordination. arXiv
+preprint arXiv:2510.15949 (2025).
+[57] Simon Paquette-Greenbaum et al. 2026. LLM Agents for Combinatorial Efficient
+Frontiers: Investment Portfolio Optimization. arXiv preprint arXiv:2601.00770
+(2026).
+[58] Lingfei Qian et al. 2026. When Agents Trade: Live Multi-Market Trading Arena
+for LLM Agents. In Proceedings of the ACM Web Conference 2026. 7833–7844.
+[59] Preetha Saha et al. 2025. Large language model agents for investment management: Foundations, benchmarks, and research frontiers. In Proceedings of the 6th
+ACM International Conference on AI in Finance. 736–744.
+[60] Zane Shen, Xinli Xu, Guangyi Zhang, Jialong Chen, Jinsong Zhou, Cong Chen,
+Guibao Shen, Dongyu Yan, Luozhou Wang, and Zhen Yang. 2026. Can Large
+Language Models Execute Parent Orders? arXiv preprint arXiv:2607.28410 (2026).
+[61] Runze Shi et al. 2026. Hubble: An llm-driven agentic framework for safe, diverse,
+and reproducible alpha factor discovery. arXiv preprint arXiv:2604.09601 (2026).
+[62] Yu Shi et al. 2026. Kronos: A foundation model for the language of financial
+markets. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 40.
+25366–25373.
+[63] Yu Shi et al. 2026. Navigating the Alpha Jungle: An LLM-Powered MCTS Framework for Formulaic Alpha Factor Mining. In Proceedings of the AAAI Conference
+on Artificial Intelligence, Vol. 40. 997–1005.
+[64] Makoto Shimoshimizu. 2024. Introduction to optimal execution. In Machine
+Learning Approaches in Financial Analytics. Springer, 3–50.
+[65] Ziyi Tang et al. 2025. AlphaAgent: LLM-driven alpha mining with regularized
+exploration to counteract alpha decay. In Proceedings of the 31st ACM SIGKDD
+Conference on Knowledge Discovery and Data Mining V. 2. 2813–2822.
+[66] Ziyi Tang et al. 2026. AlphaAgentEvo: Evolution-Oriented Alpha Mining via
+Self-Evolving Agentic Reinforcement Learning. In The Fourteenth International
+Conference on Learning Representations.
+[67] Feng Tian et al. 2025. TradingGroup: A Multi-Agent Trading System with SelfReflection and Data-Synthesis. arXiv preprint arXiv:2508.17565 (2025).
+[68] Stanislav Uryasev. 2000. Conditional value-at-risk: Optimization algorithms
+and applications. In proceedings of the IEEE/IAFE/INFORMS 2000 conference on
+computational intelligence for financial engineering (CIFEr)(Cat. No. 00TH8520).
+IEEE, 49–57.
+[69] Saizhuo Wang et al. 2024. Quantagent: Seeking holy grail in trading by selfimproving large language model. arXiv preprint arXiv:2402.03755 (2024).
+[70] Saizhuo Wang et al. 2025. Alpha-gpt: Human-ai interactive alpha mining for quantitative investment. In Proceedings of the 2025 Conference on Empirical Methods in
+Natural Language Processing: System Demonstrations. 196–206.
+[71] Yanlong Wang et al. 2026. FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery. arXiv preprint arXiv:2602.14670
+(2026).
+[72] Zhangyuhua Weng et al. 2026. AlphaLogics: A Market Logic-Driven Multi-Agent
+System for Scalable and Interpretable Alpha Factor Generation. arXiv preprint
+arXiv:2603.20247 (2026).
+[73] Siyi Wu et al. 2025. MountainLion: A Multi-Modal LLM-Based Agent System for
+Interpretable and Adaptive Financial Trading. arXiv preprint arXiv:2507.20474
+(2025).
+[74] Xiaojun Wu et al. 2024. Golden Touchstone: A Comprehensive Bilingual
+Benchmark for Evaluating Financial Large Language Models. arXiv preprint
+arXiv:2411.06272 (2024).
+[75] Yaxiong Wu et al. 2026. Agentic FinTech: A Comprehensive Survey on AI Agents
+in Finance in the Era of LLMs. Available at SSRN 6136529 (2026).
+[76] Yihan Xia et al. 2026. Agentic Trading: When LLM Agents Meet Financial Markets.
+arXiv preprint arXiv:2605.19337 (2026).
+[77] Yijia Xiao et al. 2024. Tradingagents: Multi-agents llm financial trading framework. arXiv preprint arXiv:2412.20138 (2024).
+[78] Fei Xiong et al. 2025. Quantagent: Price-driven multi-agent llms for highfrequency trading. arXiv preprint arXiv:2509.09995 (2025).
+[79] Guojun Xiong et al. 2025. Flag-trader: Fusion llm-agent with gradient-based
+reinforcement learning for financial trading. In Findings of the Association for
+Computational Linguistics: ACL 2025. 13921–13934.
+[80] Congluo Xu et al. 2025. Finarena: A human-agent collaboration framework for
+financial market analysis and forecasting. arXiv preprint arXiv:2503.02692 (2025).
+[81] Wentao Xu et al. 2021. Hist: A graph-based framework for stock trend forecasting
+via mining concept-oriented shared information. arXiv preprint arXiv:2110.13716
+(2021).
+[82] Hongyang Yang et al. 2023. Fingpt: Open-source financial large language models.
+arXiv preprint arXiv:2306.06031 (2023).
+[83] Haofei Yu et al. 2025. Livetradebench: Seeking real-world alpha with large
+language models. arXiv preprint arXiv:2511.03628 (2025).
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+[84] Hang Yu et al. 2026. AlphaMemo: Structured Search-Process Memory for SelfEvolving Alpha Mining Agents. arXiv preprint arXiv:2606.20625 (2026).
+[85] Shuo Yu et al. 2023. Generating synergistic formulaic alpha collections via
+reinforcement learning. In Proceedings of the 29th ACM SIGKDD conference on
+knowledge discovery and data mining. 5476–5486.
+[86] Shuo Yu et al. 2026. A hybrid approach to formulaic alpha discovery with large
+language model assistance. Frontiers of Computer Science 20, 2 (2026), 2002316.
+[87] Yangyang Yu et al. 2024. Fincon: A synthesized llm multi-agent system with conceptual verbal reinforcement for enhanced financial decision making. Advances
+in Neural Information Processing Systems 37 (2024), 137010–137045.
+[88] Yangyang Yu et al. 2025. Finmem: A performance-enhanced llm trading agent
+with layered memory and character design. IEEE Transactions on Big Data (2025).
+[89] Yishuo Yuan et al. 2026. AlphaCrafter: A Full-Stack Multi-Agent Framework for
+Cross-Sectional Quantitative Trading. arXiv preprint arXiv:2605.05580 (2026).
+[90] Junhyeog Yun et al. 2025. QuantEvolve: Automating Quantitative Strategy
+Discovery through Multi-Agent Evolutionary Framework. arXiv preprint
+arXiv:2510.18569 (2025).
+[91] Chong Zhang et al. 2024. When ai meets finance (stockagent): Large language
+model-based stock trading in simulated real-world environments. arXiv preprint
+arXiv:2407.18957 (2024).
+[92] Huan Zhang et al. 2026. Towards Agentic Intelligence for Materials Science.
+arXiv preprint arXiv:2602.00169 (2026).
+[93] Junjie Zhang et al. 2025. A survey on large language model-based alpha mining.
+Frontiers of Information Technology & Electronic Engineering 26, 10 (2025), 1809–
+1821.
+[94] Wentao Zhang et al. 2024. A multimodal foundation agent for financial trading:
+Tool-augmented, diversified, and generalist. In Proceedings of the 30th acm sigkdd
+conference on knowledge discovery and data mining. 4314–4325.
+[95] Zhilu Zhang et al. 2026. FinLumen: A Game-Theoretic Multi-Agent Framework
+for Rational Portfolio Management. In ICASSP 2026-2026 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 19597–19601.
+[96] Li Zhao et al. 2025. ContestTrade: A multi-agent trading system based on internal
+contest mechanism. arXiv preprint arXiv:2508.00554 (2025).
+[97] Tianjiao Zhao et al. 2025. Alphaagents: Large language model based multi-agents
+for equity portfolio constructions. arXiv preprint arXiv:2508.11152 (2025).
+[98] Taojie Zhu et al. 2026. From Knowing to Doing: A Memory-Controlled Benchmark
+for LLM Trading Agents on Stock Markets. arXiv preprint arXiv:2605.28359 (2026).
+[99] Zhuohang Zhu et al. 2025. FinCast: A Foundation Model for Financial TimeSeries Forecasting. In Proceedings of the 34th ACM International Conference on
+Information and Knowledge Management. 4539–4549.
+
+

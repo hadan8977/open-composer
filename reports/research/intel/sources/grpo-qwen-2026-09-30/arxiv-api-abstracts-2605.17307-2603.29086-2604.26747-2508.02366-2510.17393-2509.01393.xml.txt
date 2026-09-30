@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/2If0QJ+YT7Y0+kpYAXV/zQ5R3Ok</id>
+  <title>arXiv Query: search_query=&amp;id_list=2605.17307,2603.29086,2604.26747,2508.02366,2510.17393,2509.01393&amp;start=0&amp;max_results=10</title>
+  <updated>2026-09-30T18:42:48Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=10&amp;id_list=2605.17307,2603.29086,2604.26747,2508.02366,2510.17393,2509.01393" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
+  <opensearch:totalResults>6</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2510.17393v1</id>
+    <title>3S-Trader: A Multi-LLM Framework for Adaptive Stock Scoring, Strategy, and Selection in Portfolio Optimization</title>
+    <updated>2025-10-20T10:34:01Z</updated>
+    <link href="https://arxiv.org/abs/2510.17393v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.17393v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models (LLMs) have recently gained popularity in stock trading for their ability to process multimodal financial data. However, most existing methods focus on single-stock trading and lack the capacity to reason over multiple candidates for portfolio construction. Moreover, they typically lack the flexibility to revise their strategies in response to market shifts, limiting their adaptability in real-world trading. To address these challenges, we propose 3S-Trader, a training-free framework that incorporates scoring, strategy, and selection modules for stock portfolio construction. The scoring module summarizes each stock's recent signals into a concise report covering multiple scoring dimensions, enabling efficient comparison across candidates. The strategy module analyzes historical strategies and overall market conditions to iteratively generate an optimized selection strategy. Based on this strategy, the selection module identifies and assembles a portfolio by choosing stocks with higher scores in relevant dimensions. We evaluate our framework across four distinct stock universes, including the Dow Jones Industrial Average (DJIA) constituents and three sector-specific stock sets. Compared with existing multi-LLM frameworks and time-series-based baselines, 3S-Trader achieves the highest accumulated return of 131.83% on DJIA constituents with a Sharpe ratio of 0.31 and Calmar ratio of 11.84, while also delivering consistently strong results across other sectors.</summary>
+    <category term="q-fin.PM" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-20T10:34:01Z</published>
+    <arxiv:primary_category term="q-fin.PM"/>
+    <author>
+      <name>Kefan Chen</name>
+    </author>
+    <author>
+      <name>Hussain Ahmad</name>
+    </author>
+    <author>
+      <name>Diksha Goel</name>
+    </author>
+    <author>
+      <name>Claudia Szabo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.17307v1</id>
+    <title>Deep Reinforcement Learning Framework for Diversified Portfolio Management Across Global Equity Markets</title>
+    <updated>2026-05-17T07:50:37Z</updated>
+    <link href="https://arxiv.org/abs/2605.17307v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.17307v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This study develops and evaluates a deep reinforcement learning framework for dynamic portfolio allocation across global equity markets. The Soft Actor-Critic algorithm is used to learn continuous portfolio weights within a Markov Decision Process, incorporating transaction costs, turnover penalties, and diversification constraints into the reward function. Five model configurations are compared, varying in reward formulation, policy structure (flat versus hierarchical Dirichlet), portfolio constraints, and temporal encoder (LSTM versus Transformer), and evaluated via walk-forward optimization across sixteen out-of-sample folds spanning 2003-2026 on the Nasdaq-100, Nikkei 225, and Euro Stoxx 50. Results show that RL strategies achieve competitive risk-adjusted performance primarily in the Euro Stoxx 50, where statistically significant abnormal returns are observed, but the central hypothesis is only partially confirmed: no strategy achieves statistically significant excess returns relative to Buy and Hold under HAC-robust inference across all markets. Regime analysis reveals that RL adds the most value during periods of elevated uncertainty, while ensemble aggregation across markets improves risk-adjusted performance and confirms the benefits of geographic diversification.</summary>
+    <category term="q-fin.PM" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.NE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="q-fin.TR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-17T07:50:37Z</published>
+    <arxiv:comment>67 pages, 11 figures, 16 tables</arxiv:comment>
+    <arxiv:primary_category term="q-fin.PM"/>
+    <author>
+      <name>Kamil Kashif</name>
+    </author>
+    <author>
+      <name>Robert Ślepaczuk</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.29086v2</id>
+    <title>Realistic Market Impact Modeling for Reinforcement Learning Trading Environments</title>
+    <updated>2026-04-04T01:18:06Z</updated>
+    <link href="https://arxiv.org/abs/2603.29086v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.29086v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reinforcement learning (RL) has shown promise for trading, yet most open-source backtesting environments assume negligible or fixed transaction costs, causing agents to learn trading behaviors that fail under realistic execution. We introduce three Gymnasium-compatible trading environments -- MACE (Market-Adjusted Cost Execution) stock trading, margin trading, and portfolio optimization -- that integrate nonlinear market impact models grounded in the Almgren-Chriss framework and the empirically validated square-root impact law. Each environment provides pluggable cost models, permanent impact tracking with exponential decay, and comprehensive trade-level logging. We evaluate five DRL algorithms (A2C, PPO, DDPG, SAC, TD3) on the NASDAQ-100, comparing a fixed 10 bps baseline against the AC model with Optuna-tuned hyperparameters. Our results show that (i) the cost model materially changes both absolute performance and the relative ranking of algorithms across all three environments; (ii) the AC model produces dramatically different trading behavior, e.g., daily costs dropping from $200k to $8k with turnover falling from 19% to 1%; (iii) hyperparameter optimization is essential for constraining pathological trading, with costs dropping up to 82%; and (iv) algorithm-cost model interactions are strongly environment-specific, e.g., DDPG's OOS Sharpe jumps from -2.1 to 0.3 under AC in margin trading while SAC's drops from -0.5 to -1.2. We release the full suite as an open-source extension to FinRL-Meta.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-30T23:57:11Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Lucas Riera Abbade</name>
+    </author>
+    <author>
+      <name>Anna Helena Reali Costa</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2508.02366v3</id>
+    <title>Language Model Guided Reinforcement Learning in Quantitative Trading</title>
+    <updated>2025-10-25T22:25:16Z</updated>
+    <link href="https://arxiv.org/abs/2508.02366v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2508.02366v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Algorithmic trading requires short-term tactical decisions consistent with long-term financial objectives. Reinforcement Learning (RL) has been applied to such problems, but adoption is limited by myopic behaviour and opaque policies. Large Language Models (LLMs) offer complementary strategic reasoning and multi-modal signal interpretation when guided by well-structured prompts. This paper proposes a hybrid framework in which LLMs generate high-level trading strategies to guide RL agents. We evaluate (i) the economic rationale of LLM-generated strategies through expert review, and (ii) the performance of LLM-guided agents against unguided RL baselines using Sharpe Ratio (SR) and Maximum Drawdown (MDD). Empirical results indicate that LLM guidance improves both return and risk metrics relative to standard RL.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="q-fin.TR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-08-04T12:52:11Z</published>
+    <arxiv:comment>12 pages (4 pages appendix and references) and 6 figures. Accepted for presentation at FLLM 2025, Vienna</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Adam Darmanin</name>
+    </author>
+    <author>
+      <name>Vince Vella</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.01393v2</id>
+    <title>Adaptive Alpha Weighting with PPO: Enhancing Prompt-Based LLM-Generated Alphas in Quant Trading</title>
+    <updated>2026-03-04T02:58:52Z</updated>
+    <link href="https://arxiv.org/abs/2509.01393v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.01393v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper introduces a reinforcement learning framework that employs Proximal Policy Optimization (PPO) to dynamically optimize the weights of multiple large language model (LLM)-generated formulaic alphas for stock trading strategies. Formulaic alphas are mathematically defined trading signals derived from price, volume, sentiment, and other data. Although recent studies have shown that LLMs can generate diverse and effective alphas, a critical challenge lies in how to adaptively integrate them under varying market conditions. To address this gap, we leverage a DeepSeek model to generate fifty alphas for ten stocks, and then use PPO to adjust their weights in real time. Experimental results indicate that the PPO-optimized strategy does not consistently deliver the highest cumulative returns across all stocks, but it achieves comparatively higher Sharpe ratios and smaller maximum drawdowns in most cases. When compared with baseline strategies, including equal-weighted, buy-and-hold, random entry/exit, and momentum approaches, PPO demonstrates more stable risk-adjusted performance. The findings highlight the importance of reinforcement learning in the allocation of alpha weights and show the potential of combining LLM-generated signals with adaptive optimization for robust financial forecasting and trading.</summary>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="q-fin.PM" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-01T11:39:54Z</published>
+    <arxiv:comment>This paper has been accepted by International Journal of Data Science and Analytics</arxiv:comment>
+    <arxiv:primary_category term="cs.CE"/>
+    <author>
+      <name>Qizhao Chen</name>
+    </author>
+    <author>
+      <name>Hiroaki Kawashima</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.26747v1</id>
+    <title>From Hypotheses to Factors: Constrained LLM Agents in Cryptocurrency Markets</title>
+    <updated>2026-04-29T14:46:10Z</updated>
+    <link href="https://arxiv.org/abs/2604.26747v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.26747v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>LLM agents are promising tools for empirical discovery, but their flexibility can also turn discovery into uncontrolled search. We study how to use agents under a reproducible protocol through cryptocurrency factor discovery. Our framework casts the task as sequential hypothesis search: an agent reads an append-only experiment trace, proposes falsifiable factor hypotheses, and maps them to executable recipes, while a deterministic engine enforces fixed data splits, selection gates, transaction costs, and portfolio tests. Candidate actions are restricted to a point-in-time factor DSL, making both successful and failed hypotheses auditable. A ridge-combined portfolio trained only on 2020--2022 data achieves a 44.55% annualized return and Sharpe ratio of 1.55 in the 2024--2026 pure out-of-sample period after a 5 basis point one-way trading cost.</summary>
+    <category term="q-fin.PM" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="q-fin.GN" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="q-fin.TR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-29T14:46:10Z</published>
+    <arxiv:primary_category term="q-fin.PM"/>
+    <author>
+      <name>Yikuan Huang</name>
+    </author>
+    <author>
+      <name>Zheqi Fan</name>
+    </author>
+    <author>
+      <name>Kaiqi Hu</name>
+    </author>
+    <author>
+      <name>Yifan Ye</name>
+    </author>
+  </entry>
+</feed>
