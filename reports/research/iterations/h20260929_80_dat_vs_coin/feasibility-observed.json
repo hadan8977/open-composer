@@ -1,0 +1,245 @@
+{
+  "raw_rows_since_panel_start": {
+    "BMNR": 331,
+    "CIFR": 1459,
+    "CLSK": 1679,
+    "CORZ": 1376,
+    "ETHA": 549,
+    "FBTC": 681,
+    "HUT": 1329,
+    "IREN": 1220,
+    "MARA": 1946,
+    "MSTR": 1946,
+    "RIOT": 1946,
+    "SBET": 1946,
+    "SPY": 1946,
+    "WULF": 1946
+  },
+  "ghost_bar_rows_dropped": {
+    "CLSK": 1,
+    "CORZ": 276,
+    "SBET": 11,
+    "WULF": 117
+  },
+  "hygiene_manifest": {
+    "contract": "price_hygiene.mask_regime_breaks_no_pad.v1",
+    "pad_across_gaps": false,
+    "thresholds": {
+      "max_one_day_price_ratio": 10.0,
+      "max_one_day_abs_log_return": 2.30259,
+      "max_gap_sessions": 5,
+      "mask_gap_min_abs_log_step": 0.2,
+      "mask_gap_long_sessions": 21
+    },
+    "breaks_detected": 7,
+    "symbols_masked": 1,
+    "symbols_masked_for_jump": 1,
+    "symbols_masked_for_gap": 0,
+    "price_cells_masked": 427,
+    "masked_symbols": [
+      "CORZ"
+    ],
+    "corporate_action_feed": "none_available",
+    "breaks_by_symbol": {
+      "CORZ": [
+        {
+          "symbol": "CORZ",
+          "kind": "jump",
+          "last_session_before": "2022-12-30",
+          "first_session_after": "2024-01-24",
+          "price_ratio": 45.8056,
+          "log_return": 3.82441,
+          "gap_sessions": 266,
+          "explained_by_corporate_action": false,
+          "masked": true
+        }
+      ],
+      "WULF": [
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-01-22",
+          "first_session_after": "2019-02-01",
+          "price_ratio": 1.0291,
+          "log_return": 0.0286811,
+          "gap_sessions": 8,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-05-07",
+          "first_session_after": "2019-05-14",
+          "price_ratio": 1.0041,
+          "log_return": 0.00408818,
+          "gap_sessions": 5,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-06-07",
+          "first_session_after": "2019-06-17",
+          "price_ratio": 1.03846,
+          "log_return": 0.0377403,
+          "gap_sessions": 6,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-06-17",
+          "first_session_after": "2019-06-25",
+          "price_ratio": 0.920988,
+          "log_return": -0.0823086,
+          "gap_sessions": 6,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-09-27",
+          "first_session_after": "2019-10-04",
+          "price_ratio": 0.90694,
+          "log_return": -0.0976789,
+          "gap_sessions": 5,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-10-17",
+          "first_session_after": "2019-10-29",
+          "price_ratio": 1.00323,
+          "log_return": 0.00322415,
+          "gap_sessions": 8,
+          "explained_by_corporate_action": false,
+          "masked": false
+        }
+      ]
+    },
+    "notes": []
+  },
+  "discards": [
+    {
+      "symbol": "SBET",
+      "rule": "pre-2025-05-27 rows (reused ticker)",
+      "rows": 1597
+    },
+    {
+      "symbol": "SBET",
+      "rule": "adjacent-session |log return| > 0.5 (not verified as split)",
+      "session": "2025-05-29",
+      "log_return": 0.9993046463357309
+    },
+    {
+      "symbol": "SBET",
+      "rule": "adjacent-session |log return| > 0.5 (not verified as split)",
+      "session": "2025-06-13",
+      "log_return": -1.2618728902180445
+    },
+    {
+      "symbol": "CIFR",
+      "rule": "pre-2021-08-30 rows (SPAC / prior security)",
+      "rows": 183
+    },
+    {
+      "symbol": "WULF",
+      "rule": "pre-2021-12-14 rows (SPAC / prior security)",
+      "rows": 627
+    },
+    {
+      "symbol": "BMNR",
+      "rule": "pre-2025-06-05 rows (reused ticker)",
+      "rows": 0
+    }
+  ],
+  "coverage_after_hygiene": {
+    "BMNR": {
+      "rows": 331,
+      "first": "2025-06-05",
+      "last": "2026-09-29"
+    },
+    "CIFR": {
+      "rows": 1276,
+      "first": "2021-08-30",
+      "last": "2026-09-29"
+    },
+    "CLSK": {
+      "rows": 1678,
+      "first": "2020-01-24",
+      "last": "2026-09-29"
+    },
+    "CORZ": {
+      "rows": 673,
+      "first": "2024-01-24",
+      "last": "2026-09-29"
+    },
+    "ETHA": {
+      "rows": 549,
+      "first": "2024-07-23",
+      "last": "2026-09-29"
+    },
+    "FBTC": {
+      "rows": 681,
+      "first": "2024-01-11",
+      "last": "2026-09-29"
+    },
+    "HUT": {
+      "rows": 1329,
+      "first": "2021-06-15",
+      "last": "2026-09-29"
+    },
+    "IREN": {
+      "rows": 1220,
+      "first": "2021-11-17",
+      "last": "2026-09-29"
+    },
+    "MARA": {
+      "rows": 1946,
+      "first": "2019-01-02",
+      "last": "2026-09-29"
+    },
+    "MSTR": {
+      "rows": 1946,
+      "first": "2019-01-02",
+      "last": "2026-09-29"
+    },
+    "RIOT": {
+      "rows": 1946,
+      "first": "2019-01-02",
+      "last": "2026-09-29"
+    },
+    "SBET": {
+      "rows": 336,
+      "first": "2025-05-27",
+      "last": "2026-09-29"
+    },
+    "WULF": {
+      "rows": 1202,
+      "first": "2021-12-14",
+      "last": "2026-09-29"
+    }
+  },
+  "spot_coverage": {
+    "BTCUSD": {
+      "rows": 2594,
+      "first": "2016-05-02",
+      "last": "2026-08-31"
+    },
+    "ETHUSD": {
+      "rows": 2575,
+      "first": "2016-05-20",
+      "last": "2026-08-31"
+    }
+  },
+  "calendar": [
+    "2019-01-02",
+    "2026-09-29"
+  ]
+}

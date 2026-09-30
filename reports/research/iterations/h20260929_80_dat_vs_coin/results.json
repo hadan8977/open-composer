@@ -1,0 +1,1009 @@
+{
+  "iter_id": "h20260929_80_dat_vs_coin",
+  "stage": "ic_gate_only",
+  "verdict": "evidence_too_weak_stage2_no_keeper",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "windows": {
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "stress": [
+      "2020-08-11",
+      "2023-12-29"
+    ]
+  },
+  "horizon_sessions": 20,
+  "newey_west_lag": 20,
+  "n_placebo": 500,
+  "placebo_seed": 20260930,
+  "placebo_definition": "circular shift of the signal against the forward spread return by a random offset in [21, n-21]; placebo_pct = percent of 500 placebo sign-adjusted ICs strictly below the observed sign-adjusted IC",
+  "ic_table": [
+    {
+      "pair": "P1",
+      "signal": "Z120",
+      "window": "anchor",
+      "expected_ic_sign": -1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 25,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": 0.07337199682518404,
+      "nw_t": 0.5266463243869378,
+      "placebo_pct": 32.0,
+      "placebo_p_one_sided": 0.68,
+      "placebo_ic_p95_sign_adjusted": 0.3094464775205867,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P1",
+      "signal": "Z120",
+      "window": "stress",
+      "expected_ic_sign": -1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 31,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.2916852299957252,
+      "nw_t": -2.783850873886901,
+      "placebo_pct": 100.0,
+      "placebo_p_one_sided": 0.0,
+      "placebo_ic_p95_sign_adjusted": 0.1199881756823004,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P1",
+      "signal": "Z250",
+      "window": "anchor",
+      "expected_ic_sign": -1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 27,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": 0.15062732097478512,
+      "nw_t": 1.0768896493600384,
+      "placebo_pct": 33.0,
+      "placebo_p_one_sided": 0.67,
+      "placebo_ic_p95_sign_adjusted": 0.3621636022566292,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P1",
+      "signal": "Z250",
+      "window": "stress",
+      "expected_ic_sign": -1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 25,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.39480985006843594,
+      "nw_t": -3.59974811105961,
+      "placebo_pct": 100.0,
+      "placebo_p_one_sided": 0.0,
+      "placebo_ic_p95_sign_adjusted": 0.16466864457630506,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P1",
+      "signal": "M20",
+      "window": "anchor",
+      "expected_ic_sign": 1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 25,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": 0.0786923170803815,
+      "nw_t": 0.6426638663333898,
+      "placebo_pct": 82.39999999999999,
+      "placebo_p_one_sided": 0.176,
+      "placebo_ic_p95_sign_adjusted": 0.17289187096570072,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P1",
+      "signal": "M20",
+      "window": "stress",
+      "expected_ic_sign": 1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 36,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.06947802402513108,
+      "nw_t": -0.7233254213377169,
+      "placebo_pct": 25.8,
+      "placebo_p_one_sided": 0.742,
+      "placebo_ic_p95_sign_adjusted": 0.16943427306918496,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P1",
+      "signal": "M60",
+      "window": "anchor",
+      "expected_ic_sign": 1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 30,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": 0.0683387128094338,
+      "nw_t": 0.5048281728905178,
+      "placebo_pct": 65.2,
+      "placebo_p_one_sided": 0.348,
+      "placebo_ic_p95_sign_adjusted": 0.6012715693054775,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P1",
+      "signal": "M60",
+      "window": "stress",
+      "expected_ic_sign": 1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 39,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.1849007973080558,
+      "nw_t": -1.6211639776269313,
+      "placebo_pct": 2.0,
+      "placebo_p_one_sided": 0.98,
+      "placebo_ic_p95_sign_adjusted": 0.3588029103901003,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P2",
+      "signal": "Z120",
+      "window": "anchor",
+      "expected_ic_sign": -1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 26,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": 0.1205595028471393,
+      "nw_t": 0.833894412581173,
+      "placebo_pct": 14.799999999999999,
+      "placebo_p_one_sided": 0.852,
+      "placebo_ic_p95_sign_adjusted": 0.22036110978891166,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P2",
+      "signal": "Z120",
+      "window": "stress",
+      "expected_ic_sign": -1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 29,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.03708690383280454,
+      "nw_t": -0.3311331571129152,
+      "placebo_pct": 49.8,
+      "placebo_p_one_sided": 0.502,
+      "placebo_ic_p95_sign_adjusted": 0.15777330057297934,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P2",
+      "signal": "Z250",
+      "window": "anchor",
+      "expected_ic_sign": -1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 25,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": -0.01597104882737192,
+      "nw_t": -0.12251925733982708,
+      "placebo_pct": 25.2,
+      "placebo_p_one_sided": 0.748,
+      "placebo_ic_p95_sign_adjusted": 0.18094124663408734,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P2",
+      "signal": "Z250",
+      "window": "stress",
+      "expected_ic_sign": -1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 31,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.05867614703725345,
+      "nw_t": -0.535536371941573,
+      "placebo_pct": 62.8,
+      "placebo_p_one_sided": 0.372,
+      "placebo_ic_p95_sign_adjusted": 0.11943092872858188,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P2",
+      "signal": "M20",
+      "window": "anchor",
+      "expected_ic_sign": 1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 33,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": 0.13777879491060993,
+      "nw_t": 1.191107581045241,
+      "placebo_pct": 75.6,
+      "placebo_p_one_sided": 0.244,
+      "placebo_ic_p95_sign_adjusted": 0.23202920909760352,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P2",
+      "signal": "M20",
+      "window": "stress",
+      "expected_ic_sign": 1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 39,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.03352645078299337,
+      "nw_t": -0.32809562718052565,
+      "placebo_pct": 48.8,
+      "placebo_p_one_sided": 0.512,
+      "placebo_ic_p95_sign_adjusted": 0.21775208543314648,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P2",
+      "signal": "M60",
+      "window": "anchor",
+      "expected_ic_sign": 1,
+      "first_date": "2024-01-08",
+      "last_date": "2026-08-28",
+      "n_episodes": 33,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 663,
+      "ic": -0.09278212767681575,
+      "nw_t": -0.7230275718645445,
+      "placebo_pct": 35.6,
+      "placebo_p_one_sided": 0.644,
+      "placebo_ic_p95_sign_adjusted": 0.409562780520174,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P2",
+      "signal": "M60",
+      "window": "stress",
+      "expected_ic_sign": 1,
+      "first_date": "2020-08-11",
+      "last_date": "2023-12-29",
+      "n_episodes": 41,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 849,
+      "ic": -0.168685598647753,
+      "nw_t": -1.4263835892243475,
+      "placebo_pct": 13.0,
+      "placebo_p_one_sided": 0.87,
+      "placebo_ic_p95_sign_adjusted": 0.4497391737880551,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P3",
+      "signal": "Z120",
+      "window": "anchor",
+      "expected_ic_sign": -1,
+      "first_date": "2025-11-14",
+      "last_date": "2026-08-28",
+      "n_episodes": 8,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 197,
+      "ic": -0.5719308489431768,
+      "nw_t": -4.290679443507674,
+      "placebo_pct": 100.0,
+      "placebo_p_one_sided": 0.0,
+      "placebo_ic_p95_sign_adjusted": 0.2885756979303027,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P3",
+      "signal": "Z120",
+      "window": "stress",
+      "expected_ic_sign": -1,
+      "first_date": null,
+      "last_date": null,
+      "n_episodes": 0,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 0,
+      "ic": null,
+      "nw_t": null,
+      "placebo_pct": null,
+      "sign_matches_preregistered": null
+    },
+    {
+      "pair": "P3",
+      "signal": "Z250",
+      "window": "anchor",
+      "expected_ic_sign": -1,
+      "first_date": "2026-05-26",
+      "last_date": "2026-08-28",
+      "n_episodes": 2,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 67,
+      "ic": -0.5628541783063294,
+      "nw_t": -2.3729568075589307,
+      "placebo_pct": 100.0,
+      "placebo_p_one_sided": 0.0,
+      "placebo_ic_p95_sign_adjusted": 0.022268337457099524,
+      "sign_matches_preregistered": true
+    },
+    {
+      "pair": "P3",
+      "signal": "Z250",
+      "window": "stress",
+      "expected_ic_sign": -1,
+      "first_date": null,
+      "last_date": null,
+      "n_episodes": 0,
+      "episode_rule": "|z|>1.0, starts >= 20 sessions apart",
+      "n_obs": 0,
+      "ic": null,
+      "nw_t": null,
+      "placebo_pct": null,
+      "sign_matches_preregistered": null
+    },
+    {
+      "pair": "P3",
+      "signal": "M20",
+      "window": "anchor",
+      "expected_ic_sign": 1,
+      "first_date": "2025-08-25",
+      "last_date": "2026-08-28",
+      "n_episodes": 10,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 255,
+      "ic": -0.43154165701713754,
+      "nw_t": -2.6446154101112183,
+      "placebo_pct": 0.0,
+      "placebo_p_one_sided": 1.0,
+      "placebo_ic_p95_sign_adjusted": 0.2989644004747532,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P3",
+      "signal": "M20",
+      "window": "stress",
+      "expected_ic_sign": 1,
+      "first_date": null,
+      "last_date": null,
+      "n_episodes": 0,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 0,
+      "ic": null,
+      "nw_t": null,
+      "placebo_pct": null,
+      "sign_matches_preregistered": null
+    },
+    {
+      "pair": "P3",
+      "signal": "M60",
+      "window": "anchor",
+      "expected_ic_sign": 1,
+      "first_date": "2025-10-21",
+      "last_date": "2026-08-28",
+      "n_episodes": 7,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 215,
+      "ic": -0.3059817913980053,
+      "nw_t": -1.6197798959999752,
+      "placebo_pct": 10.4,
+      "placebo_p_one_sided": 0.896,
+      "placebo_ic_p95_sign_adjusted": 0.35576317950204056,
+      "sign_matches_preregistered": false
+    },
+    {
+      "pair": "P3",
+      "signal": "M60",
+      "window": "stress",
+      "expected_ic_sign": 1,
+      "first_date": null,
+      "last_date": null,
+      "n_episodes": 0,
+      "episode_rule": "|R|>=0.1, starts >= 20 sessions apart",
+      "n_obs": 0,
+      "ic": null,
+      "nw_t": null,
+      "placebo_pct": null,
+      "sign_matches_preregistered": null
+    }
+  ],
+  "gate_checks": {
+    "rule": "continue only if at least one (pair, signal) cell has, on the anchor window, IC sign equal to the preregistered sign with NW(lag 20) |t| >= 2.0, the stress window (where >= 60 valid sessions exist) has the same sign, and >= 6 independent anchor episodes",
+    "cells": {
+      "P1_Z120": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": 0.07337199682518404,
+            "expected_sign": -1,
+            "pass": false
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": 0.5266463243869378,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.2916852299957252,
+            "stress_nw_t": -2.783850873886901,
+            "pass": true,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 25,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P1_Z250": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": 0.15062732097478512,
+            "expected_sign": -1,
+            "pass": false
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": 1.0768896493600384,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.39480985006843594,
+            "stress_nw_t": -3.59974811105961,
+            "pass": true,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 27,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P1_M20": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": 0.0786923170803815,
+            "expected_sign": 1,
+            "pass": true
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": 0.6426638663333898,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.06947802402513108,
+            "stress_nw_t": -0.7233254213377169,
+            "pass": false,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 25,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P1_M60": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": 0.0683387128094338,
+            "expected_sign": 1,
+            "pass": true
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": 0.5048281728905178,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.1849007973080558,
+            "stress_nw_t": -1.6211639776269313,
+            "pass": false,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 30,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P2_Z120": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": 0.1205595028471393,
+            "expected_sign": -1,
+            "pass": false
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": 0.833894412581173,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.03708690383280454,
+            "stress_nw_t": -0.3311331571129152,
+            "pass": true,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 26,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P2_Z250": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": -0.01597104882737192,
+            "expected_sign": -1,
+            "pass": true
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": -0.12251925733982708,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.05867614703725345,
+            "stress_nw_t": -0.535536371941573,
+            "pass": true,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 25,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P2_M20": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": 0.13777879491060993,
+            "expected_sign": 1,
+            "pass": true
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": 1.191107581045241,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.03352645078299337,
+            "stress_nw_t": -0.32809562718052565,
+            "pass": false,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 33,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P2_M60": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": -0.09278212767681575,
+            "expected_sign": 1,
+            "pass": false
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": -0.7230275718645445,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": true,
+            "stress_n_obs": 849,
+            "stress_ic": -0.168685598647753,
+            "stress_nw_t": -1.4263835892243475,
+            "pass": false,
+            "note": ""
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 33,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P3_Z120": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": -0.5719308489431768,
+            "expected_sign": -1,
+            "pass": true
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": -4.290679443507674,
+            "threshold": 2.0,
+            "pass": true
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": false,
+            "stress_n_obs": 0,
+            "stress_ic": null,
+            "stress_nw_t": null,
+            "pass": true,
+            "note": "not applicable (no stress data)"
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 8,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": true
+      },
+      "P3_Z250": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": -0.5628541783063294,
+            "expected_sign": -1,
+            "pass": true
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": -2.3729568075589307,
+            "threshold": 2.0,
+            "pass": true
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": false,
+            "stress_n_obs": 0,
+            "stress_ic": null,
+            "stress_nw_t": null,
+            "pass": true,
+            "note": "not applicable (no stress data)"
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 2,
+            "threshold": 6,
+            "pass": false
+          }
+        },
+        "all_pass": false
+      },
+      "P3_M20": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": -0.43154165701713754,
+            "expected_sign": 1,
+            "pass": false
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": -2.6446154101112183,
+            "threshold": 2.0,
+            "pass": true
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": false,
+            "stress_n_obs": 0,
+            "stress_ic": null,
+            "stress_nw_t": null,
+            "pass": true,
+            "note": "not applicable (no stress data)"
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 10,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      },
+      "P3_M60": {
+        "checks": {
+          "c1_anchor_sign_matches_preregistered": {
+            "value": -0.3059817913980053,
+            "expected_sign": 1,
+            "pass": false
+          },
+          "c2_anchor_abs_nw_t_ge_2.0": {
+            "value": -1.6197798959999752,
+            "threshold": 2.0,
+            "pass": false
+          },
+          "c3_stress_same_sign_when_data": {
+            "stress_has_data": false,
+            "stress_n_obs": 0,
+            "stress_ic": null,
+            "stress_nw_t": null,
+            "pass": true,
+            "note": "not applicable (no stress data)"
+          },
+          "c4_anchor_independent_episodes_ge_6": {
+            "value": 7,
+            "threshold": 6,
+            "pass": true
+          }
+        },
+        "all_pass": false
+      }
+    },
+    "passing_cells": [
+      "P3_Z120"
+    ],
+    "continue": true
+  },
+  "discard_list": [
+    {
+      "symbol": "SBET",
+      "rule": "pre-2025-05-27 rows (reused ticker)",
+      "rows": 1597
+    },
+    {
+      "symbol": "SBET",
+      "rule": "adjacent-session |log return| > 0.5 (not verified as split)",
+      "session": "2025-05-29",
+      "log_return": 0.9993046463357309
+    },
+    {
+      "symbol": "SBET",
+      "rule": "adjacent-session |log return| > 0.5 (not verified as split)",
+      "session": "2025-06-13",
+      "log_return": -1.2618728902180445
+    },
+    {
+      "symbol": "CIFR",
+      "rule": "pre-2021-08-30 rows (SPAC / prior security)",
+      "rows": 183
+    },
+    {
+      "symbol": "WULF",
+      "rule": "pre-2021-12-14 rows (SPAC / prior security)",
+      "rows": 627
+    },
+    {
+      "symbol": "BMNR",
+      "rule": "pre-2025-06-05 rows (reused ticker)",
+      "rows": 0
+    }
+  ],
+  "hygiene_manifest": {
+    "contract": "price_hygiene.mask_regime_breaks_no_pad.v1",
+    "pad_across_gaps": false,
+    "thresholds": {
+      "max_one_day_price_ratio": 10.0,
+      "max_one_day_abs_log_return": 2.30259,
+      "max_gap_sessions": 5,
+      "mask_gap_min_abs_log_step": 0.2,
+      "mask_gap_long_sessions": 21
+    },
+    "breaks_detected": 7,
+    "symbols_masked": 1,
+    "symbols_masked_for_jump": 1,
+    "symbols_masked_for_gap": 0,
+    "price_cells_masked": 427,
+    "masked_symbols": [
+      "CORZ"
+    ],
+    "corporate_action_feed": "none_available",
+    "breaks_by_symbol": {
+      "CORZ": [
+        {
+          "symbol": "CORZ",
+          "kind": "jump",
+          "last_session_before": "2022-12-30",
+          "first_session_after": "2024-01-24",
+          "price_ratio": 45.8056,
+          "log_return": 3.82441,
+          "gap_sessions": 266,
+          "explained_by_corporate_action": false,
+          "masked": true
+        }
+      ],
+      "WULF": [
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-01-22",
+          "first_session_after": "2019-02-01",
+          "price_ratio": 1.0291,
+          "log_return": 0.0286811,
+          "gap_sessions": 8,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-05-07",
+          "first_session_after": "2019-05-14",
+          "price_ratio": 1.0041,
+          "log_return": 0.00408818,
+          "gap_sessions": 5,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-06-07",
+          "first_session_after": "2019-06-17",
+          "price_ratio": 1.03846,
+          "log_return": 0.0377403,
+          "gap_sessions": 6,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-06-17",
+          "first_session_after": "2019-06-25",
+          "price_ratio": 0.920988,
+          "log_return": -0.0823086,
+          "gap_sessions": 6,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-09-27",
+          "first_session_after": "2019-10-04",
+          "price_ratio": 0.90694,
+          "log_return": -0.0976789,
+          "gap_sessions": 5,
+          "explained_by_corporate_action": false,
+          "masked": false
+        },
+        {
+          "symbol": "WULF",
+          "kind": "gap",
+          "last_session_before": "2019-10-17",
+          "first_session_after": "2019-10-29",
+          "price_ratio": 1.00323,
+          "log_return": 0.00322415,
+          "gap_sessions": 8,
+          "explained_by_corporate_action": false,
+          "masked": false
+        }
+      ]
+    },
+    "notes": []
+  },
+  "coverage_after_hygiene": {
+    "BMNR": {
+      "rows": 331,
+      "first": "2025-06-05",
+      "last": "2026-09-29"
+    },
+    "CIFR": {
+      "rows": 1276,
+      "first": "2021-08-30",
+      "last": "2026-09-29"
+    },
+    "CLSK": {
+      "rows": 1678,
+      "first": "2020-01-24",
+      "last": "2026-09-29"
+    },
+    "CORZ": {
+      "rows": 673,
+      "first": "2024-01-24",
+      "last": "2026-09-29"
+    },
+    "ETHA": {
+      "rows": 549,
+      "first": "2024-07-23",
+      "last": "2026-09-29"
+    },
+    "FBTC": {
+      "rows": 681,
+      "first": "2024-01-11",
+      "last": "2026-09-29"
+    },
+    "HUT": {
+      "rows": 1329,
+      "first": "2021-06-15",
+      "last": "2026-09-29"
+    },
+    "IREN": {
+      "rows": 1220,
+      "first": "2021-11-17",
+      "last": "2026-09-29"
+    },
+    "MARA": {
+      "rows": 1946,
+      "first": "2019-01-02",
+      "last": "2026-09-29"
+    },
+    "MSTR": {
+      "rows": 1946,
+      "first": "2019-01-02",
+      "last": "2026-09-29"
+    },
+    "RIOT": {
+      "rows": 1946,
+      "first": "2019-01-02",
+      "last": "2026-09-29"
+    },
+    "SBET": {
+      "rows": 336,
+      "first": "2025-05-27",
+      "last": "2026-09-29"
+    },
+    "WULF": {
+      "rows": 1202,
+      "first": "2021-12-14",
+      "last": "2026-09-29"
+    }
+  },
+  "beta_summary": {
+    "P1": {
+      "mean": 1.1026762160035881,
+      "min": 0.5,
+      "max": 1.9779900917008055,
+      "first_valid": "2019-03-01"
+    },
+    "P2": {
+      "mean": 1.0944383606950583,
+      "min": 0.5,
+      "max": 2.156197601357395,
+      "first_valid": "2019-03-01"
+    },
+    "P3": {
+      "mean": 1.1376310387231734,
+      "min": 0.7360369235023302,
+      "max": 1.4281791669456334,
+      "first_valid": "2025-07-28"
+    }
+  },
+  "stage2": {
+    "file": "screen-results.json",
+    "script": "scripts/run_h20260929_80_dat_screen.py",
+    "tier_counts": {
+      "reject": 23,
+      "reject_placebo": 1
+    },
+    "k1_or_k2_candidates": [],
+    "watch_recent_before_placebo": [
+      "P3_Z120_SYM"
+    ],
+    "note": "stage 2 ran because gate_checks.continue was true via P3_Z120 only; result: no K1/K2 candidate; the only watch_recent-before-placebo candidate (P3_Z120_SYM) fails the random-entry placebo (17.5% of placebos at or above), K2 edge -0.49, DSR 0.21, stress window unavailable"
+  }
+}

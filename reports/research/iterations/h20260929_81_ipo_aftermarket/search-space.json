@@ -1,0 +1,77 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260929_81_ipo_aftermarket/candidate-manifest.json",
+  "candidate_manifest_sha256": "24534d1cbb8344468c5c700c9c8f838e3f851f0369d66fe263fc2098042dc85b",
+  "cost_table_path": "reports/research/iterations/h20260929_81_ipo_aftermarket/cost-table.json",
+  "created_at": "2026-09-30T01:33:30.529335+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260929_81_ipo_aftermarket/data-feasibility.json",
+  "data_feasibility_sha256": "22b48d3228409f8741472a79b265df5ac8a7a4525b2e4c78cb9c2a302f1fae8a",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_81_ipo_aftermarket/results.json",
+    "reports/research/iterations/h20260929_81_ipo_aftermarket/report.md"
+  ],
+  "iter_id": "h20260929_81_ipo_aftermarket",
+  "paths": [
+    {
+      "benchmark_family": [
+        "qqq_iwm_equal_weight_market_adjustment",
+        "qp_shift_pm10_pm60_placebo",
+        "random_date_placebo_200",
+        "mirror_family_C_long_R5_le_minus10",
+        "all_eligible_unconditional_short_baseline"
+      ],
+      "candidate_count": 10,
+      "hypothesis_refs": [
+        "T-20260929-81"
+      ],
+      "name": "ipo_aftermarket_calendar",
+      "parameters": {
+        "entry": [
+          "QP-2 open",
+          "QP-1 open",
+          "session 6 open short"
+        ],
+        "exit": [
+          "QP+2 close",
+          "QP+5 close"
+        ],
+        "family": [
+          "A",
+          "B"
+        ],
+        "hold_sessions": [
+          20,
+          40
+        ],
+        "k": [
+          2,
+          5
+        ],
+        "pool": [
+          "all",
+          "adv1500"
+        ],
+        "role": [
+          "decision_eligible",
+          "control_window_not_decision_eligible",
+          "informational_h40"
+        ],
+        "signal": [
+          "R5 >= +20% (first open to 5th session close)"
+        ],
+        "signal_session": [
+          "QP-3 close",
+          "QP-2 close"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/h20260929_81_ipo_aftermarket.yaml",
+  "spec_hash": "452166eb994bfa46d9af0a5cdb97bb4953d16f70273ebf0fc23a8b4b99b18303",
+  "strategy_name": "h20260929_81_ipo_aftermarket",
+  "total_candidate_budget": 10,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_81_ipo_aftermarket/trial-ledger.jsonl"
+  ]
+}

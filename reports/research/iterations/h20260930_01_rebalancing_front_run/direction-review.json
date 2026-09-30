@@ -1,0 +1,167 @@
+{
+ "schema_version": 1,
+ "iter_id": "h20260930_01_rebalancing_front_run",
+ "reviewed_at": "2026-09-30T01:32:53Z",
+ "decision": "proceed",
+ "objective": "T-20260930-01: does the Harvey-Mazzoleni-Melone 60/40 rebalancing-pressure signal (Threshold averaged over 25 deltas 0.1%..2.5%, Calendar last-week signal, weight W = 0.6*(-Threshold/0.012) + 0.4*CalendarMod), simulated from SPY and IEF closes, still forecast next-day SPY returns in the part a next-open fill can capture (the open-to-close leg) in 2016-2026 and in the 2024-01-08..2026-09-29 window, and does an equity-leg-only book (SPY, QQQ, TQQQ/SQQQ) clear a net Sharpe of 0.8 after 10 bp per side? Bond-leg spreads (R1, R2, R7) are diagnostics only because the owner rejected cross-asset trading on 2026-09-28.",
+ "target_regime_and_horizon": "Daily signal, one-session hold; regression windows by return date: full 2016-01-05..2026-09-29, stress 2016-05-02..2023-08-31, anchor 2024-01-08..2026-09-29 (all frozen before results). Ledger windows (only if the gate passes) use scripts/screen_lane.py WINDOWS unchanged. Regime claim: post-2016, crowded-trade era; validity window and invalidation signal are the anchor-window coefficient sign and t.",
+ "existing_solution_comparison": "Published: NBER w33554 (Sharpe 1.11 futures spread 1997-09..2023-03, 0.90 excluding 2008-09..2009-03 and 2020-03, roughly 1 net of authors' cost estimate) and QuantReturns independent replication (futures 1.42 2007..2025-06, SPY/TLT ETF version Sharpe 1.17, Beta 0.12, no costs, both legs traded). Not enough for us: both are close-to-close futures spreads with a bond leg (owner rejected cross-asset 2026-09-28), untradable at Alpaca as futures, and neither reports the overnight/intraday split or costs at a next-open fill. Local work fills exactly that gap: the equity leg only, ETF closes, open-to-close return, 10 bp per side.",
+ "remaining_evidence_gap": "Where the 17 bp lives (overnight, invisible to a next-open fill, versus intraday) is unreported in the sources; whether the effect survives 2016-2026 after publication and crowding (Daniel: competition erodes liquidity-provision anomalies; Parker-Schoar-Sun: flows spread over months); the source Calendar rule differs between the paper (reversal on first business day, 1.5 percent normalisation) and QuantReturns (last session, 0.012) and the task fixes the QuantReturns version; SPY/IEF closes are not dividend-adjusted (verified against local adjusted data in the report).",
+ "negative_experiments_checked": "oc research directions check rebalanc on 2026-09-30: no prior direction matching except the queued registry entry dir:pension_rebalancing_front_run_equity_leg. dir:index_rebalance_flow_prediction (not_executable 2026-09-28) is REOPENED: it said the paper has no strategy Sharpe and needs an index rebalancing calendar; the January 2026 revision Section 4 gives the rule and Sharpe, and the signal needs only SPY and IEF returns, no calendar. grep -ril rebalanc over iterations finds only h20260928_16_8k_sentiment_accel, h20260928_02_cross_asset_sleeve (static or unrelated) and older LETF rebalancing and S3 tranching work, none testing this mechanism. reports/research/signal-cards overnight_mom_21 and intraday_rev_21 found no signal on generic overnight/intraday effects, which does not test this signal.",
+ "cost_and_execution_assumptions": "Frozen contract: signal at the close of t, fill at the open of t+1, 10 bp per side per leg on weight change (20 bp check), hold to close t+1 (open-to-close, primary, entry and exit each pay) or to open t+2 (open-to-open, reported); SPY/QQQ short borrow 0.3 percent per year (3 percent sensitivity) charged per session held short; TQQQ/SQQQ are long-only instruments; W>0 means long equity, W<0 short SPY/QQQ or long SQQQ. Sharpe via the frozen base.metrics with BIL as the risk-free leg.",
+ "stop_condition": "Stage 1 gate (frozen, thresholds unchanged after seeing results): equity-leg (SPY) open-to-close Threshold regression coefficient negative, full-sample HC3 t <= -2.5, anchor-window same sign with |t| >= 2.0. If the effect sits in the overnight leg instead, write that it is not obtainable at a next-open fill and stop. If Stage 1 fails, no candidate ledger is run. If Stage 1 passes, continue only when at least one equity-leg candidate among R3, R4, R5, R6, R8 has 10 bp net Sharpe >= 0.8 full-sample and >= 0.8 anchor; then K1/K2 tiers, DSR over 8, 20 bp, random-date placebo <= 10 percent. Bond-leg candidates never advance without an owner decision.",
+ "queries": [
+  {
+   "query": "Harvey Mazzoleni Melone unintended consequences of rebalancing threshold calendar signal front-running Sharpe",
+   "opened_urls": [
+    "https://www.nber.org/system/files/working_papers/w33554/w33554.pdf",
+    "https://www.nber.org/papers/w33554",
+    "https://kentdaniel.net/discuss/2025/HMM.pdf"
+   ],
+   "searched_at": "2026-09-30T01:11:00Z"
+  },
+  {
+   "query": "pension rebalancing front-run replication SPY TLT QuantReturns calendar signal last five trading days",
+   "opened_urls": [
+    "https://github.com/rwydaegh/unintended-consequences/blob/main/docs/short_blog.md",
+    "https://people.duke.edu/~charvey/Media/2025/B_February_5_2025.pdf"
+   ],
+   "searched_at": "2026-09-30T01:14:00Z"
+  },
+  {
+   "query": "Parker Schoar Sun target date funds rebalancing stock market dynamics NBER",
+   "opened_urls": [
+    "https://www.nber.org/papers/w28028"
+   ],
+   "searched_at": "2026-09-30T01:31:00Z"
+  }
+ ],
+ "sources": [
+  {
+   "url": "https://www.nber.org/system/files/working_papers/w33554/w33554.pdf",
+   "claim_id": "hmm_nber_w33554_next_day_reversal_and_reversion",
+   "claim": "Harvey, Mazzoleni and Melone (NBER w33554, March 2025, revised January 2026, full text read): a one-standard-deviation increase in the Threshold (Calendar) signal lowers next-day S&P 500 futures returns by about 16 (17) bp and raises 10-year Treasury futures returns by 4 (2) bp; the pressure reverts within two weeks; Section 4 front-running spread portfolio (long S&P 500 futures / short 10y note futures, weight = average of modified Threshold and Calendar signals) has Sharpe above 1 over 1997-2023.",
+   "source_type": "paper",
+   "published_or_updated_at": "unknown",
+   "market_and_period": "US S&P 500 and 10-year note futures, 1997-2023, close-to-close daily.",
+   "applicability": "Source of the Threshold and Calendar signal definitions, the next-day sign expectation (equity down when equity is overweight) and the two-week reversion horizon used to set the placebo shift range.",
+   "limitations": "Futures returns, close-to-close, not open-to-close; author-reported Sharpe with the authors' own cost estimate; multiple-comparison bias on signal windows flagged by the discussant; effect concentrated before the 2016 start of the local sample is not excluded.",
+   "independent_replication": "QuantReturns replication (2025) reproduces the sign and roughly the size; no independent live record found.",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "1b1a17b969d38eb6cfb9486c5696f04e6b524b80c2f78bcddaa1ae469e466572",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/nber_w33554.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://www.nber.org/papers/w33554",
+   "claim_id": "hmm_nber_w33554_abstract_17bp",
+   "claim": "NBER abstract page (revision date January 2026): institutional rebalancing has a market-wide impact; equity returns fall 17 bp over the next day when stocks are overweight; cost to investors about 16 billion USD a year.",
+   "source_type": "paper",
+   "published_or_updated_at": "unknown",
+   "market_and_period": "US, futures, 1997-2023.",
+   "applicability": "Headline effect size the negation regression is measured against (the effect is a close-to-close 17 bp, larger than a 10 bp per side cost).",
+   "limitations": "Abstract only; close-to-close, not the overnight/intraday split that determines what a next-open fill can capture.",
+   "independent_replication": "See hmm_nber_w33554_next_day_reversal_and_reversion.",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "db15e9b21d81435b341393d61f5977b5efc93bf5a493dcb21b3f84fe32bb2db5",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/nber_w33554_landing.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://www.nber.org/system/files/working_papers/w33554/w33554.pdf",
+   "claim_id": "hmm_nber_w33554_calendar_modification",
+   "claim": "Paper Section 4 defines the modified Calendar signal as sign(-Calendar) in the last week (5 days) of a month, a reversal term sign(Calendar_{-4}) on the first business day of the new month, and zero on any other day; the Threshold part is rescaled to -Threshold/1.5% so both signals have equal risk contribution.",
+   "source_type": "paper",
+   "published_or_updated_at": "unknown",
+   "market_and_period": "Same as the paper.",
+   "applicability": "Fixes the Calendar structure (last-week days plus one reversal day). The queue task and the QuantReturns replication use normalisation 0.012 and put the reversal on the last session of the month; the preregistration follows the task.",
+   "limitations": "Paper normalises by 1.5%, QuantReturns by 0.012, and the paper places the reversal on the first business day; the preregistered candidate uses the task's version and the difference is a disclosed deviation.",
+   "independent_replication": "See hmm_nber_w33554_next_day_reversal_and_reversion.",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "1b1a17b969d38eb6cfb9486c5696f04e6b524b80c2f78bcddaa1ae469e466572",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/nber_w33554.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://www.nber.org/papers/w28028",
+   "claim_id": "psu_nber_w28028_tdf_contrarian_rebalancing",
+   "claim": "Parker, Schoar and Sun (NBER w28028, JF 2023): target date funds rebalance contrarianly between stocks and bonds within a few months; the flows reach stocks held through mutual funds and reduce their next-quarter returns.",
+   "source_type": "paper",
+   "published_or_updated_at": "unknown",
+   "market_and_period": "US mutual funds, 2000s-2010s, quarterly.",
+   "applicability": "Independent evidence that the rebalancing flow exists and is spread over months, so a next-day-only signal captures only part of it.",
+   "limitations": "Quarterly horizon, cross-sectional stock effect; not a daily index timing rule; no Sharpe.",
+   "independent_replication": "Cited by Harvey et al. as supporting evidence.",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "3a3895337611cdca9450f900e2adea491c57f3a69dc96a516e91b5d6f2ff4f0f",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/parker_schoar_sun_w28028.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://kentdaniel.net/discuss/2025/HMM.pdf",
+   "claim_id": "daniel_2025_multiple_comparison_bias",
+   "claim": "Kent Daniel discussion slides (Red Rock 2025): the signal windows (thresholds 0.1-2.5 percent, calendar 5 days before month end) were selected among many, so the reported t-statistics are biased upward.",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "unknown",
+   "market_and_period": "US, 1997-2023.",
+   "applicability": "Motivates the frozen out-of-window test (2016-2026 is after most of the source sample) and DSR over 8 trials.",
+   "limitations": "Discussant slides, no own replication.",
+   "independent_replication": "Not applicable (critique).",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "9f1ae1923cda16c62c522112d4cbd370f296a719acb7910e7e60e72536b29941",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/daniel_hmm_slides.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://kentdaniel.net/discuss/2025/HMM.pdf",
+   "claim_id": "daniel_2025_liquidity_provision_competition",
+   "claim": "Daniel: liquidity-provision anomalies (index inclusion, short-term reversal, leveraged ETF rebalancing) historically faded as competition rose, and the paper's 16 billion annual cost is a worst-case estimate.",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "unknown",
+   "market_and_period": "US.",
+   "applicability": "Prior that the effect decayed after publication (2025) and after the 2016 start of the local sample.",
+   "limitations": "Historical analogy, not a test on this signal.",
+   "independent_replication": "Not applicable (critique).",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "9f1ae1923cda16c62c522112d4cbd370f296a719acb7910e7e60e72536b29941",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/daniel_hmm_slides.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://github.com/rwydaegh/unintended-consequences/blob/main/docs/short_blog.md",
+   "claim_id": "quantreturns_2025_calendar_last_day_rule",
+   "claim": "QuantReturns replication (GitHub mirror of the 2025-07-03 article): Threshold signal averaged over deltas, divided by 0.012 and inverted; Calendar signal zero except the last five sessions of a month, minus sign for the first four, inverse of the 5th-last value on the last day; weight 0.6 Threshold + 0.4 Calendar; futures Sharpe 1.24 (1997-2025), 1.42 (2007-2025-06); SPY/TLT ETF version CAGR 15.62 percent, Sharpe 1.17, no costs.",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "2025-07-03",
+   "market_and_period": "US futures and SPY/TLT, 2007-2025.",
+   "applicability": "Concrete implementable formula for the modified Calendar signal.",
+   "limitations": "Author self-computed, not peer reviewed, no transaction costs, both legs traded, close-to-close.",
+   "independent_replication": "Reproduces the paper's shape; no third-party check.",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "97b0f62eb01ab6676237b00f4b974c96d76936bfecced73f1a6f6a55bd016373",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/quantreturns_short_blog.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  },
+  {
+   "url": "https://people.duke.edu/~charvey/Media/2025/B_February_5_2025.pdf",
+   "claim_id": "bloomberg_2025_02_front_running_open_secret",
+   "claim": "Bloomberg (2025-02-05): front-running of scheduled pension and balanced-fund rebalancing by fast-money speculators is described as an open secret.",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "2025-02-05",
+   "market_and_period": "US, 2025 press.",
+   "applicability": "Evidence that the trade is crowded, which is the decay risk to test in the 2024-2026 window.",
+   "limitations": "News article; no strategy numbers.",
+   "independent_replication": "None.",
+   "fetched_at": "2026-09-30T01:29:00Z",
+   "sha256": "2a2d612abc26e97a63e6b70f71fc1a6583d3b732b2aeb0ceb83f2d280d066a49",
+   "snapshot_path": "reports/research/iterations/h20260930_01_rebalancing_front_run/sources/bloomberg_2025_02_05.txt",
+   "source_card_path": "reports/harness/source_cards/h20260930_01_rebalancing_front_run.jsonl"
+  }
+ ],
+ "cheapest_decisive_test": {
+  "action": "scripts/run_h20260930_01_rebalancing.py regress under scripts/run_capped.sh --mem 600M: SPY and SPY-IEF next-day return (overnight, intraday, total) on the Threshold signal (and Calendar variants), HC3, three windows, 500 date-shift placebos; reads only SPY, IEF, TLT, QQQ, TQQQ, SQQQ, BIL daily bars.",
+  "pass_condition": "SPY open-to-close Threshold coefficient negative, full-sample HC3 t <= -2.5 and anchor-window t <= -2.0.",
+  "falsification_condition": "Coefficient positive or |t| below either bar, or the effect concentrated in the overnight leg with intraday insignificant.",
+  "max_compute_minutes": 15
+ }
+}

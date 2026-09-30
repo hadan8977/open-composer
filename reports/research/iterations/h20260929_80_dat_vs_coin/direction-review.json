@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260929_80_dat_vs_coin",
+  "reviewed_at": "2026-09-30T01:15:50Z",
+  "decision": "proceed",
+  "objective": "T-20260929-80: after 2024-01-11 (spot bitcoin ETFs), does a beta-hedged spread of bitcoin/ether treasury stocks (MSTR; BMNR+SBET) and a miner basket versus the coin they track carry a tradeable mean-reversion (Z family, premium high -> DAT underperforms) or continuation (M family) signal after 10 bp per side on both legs plus borrow on the short DAT leg? Stage 1 is a cheap IC negation test; only if it passes are 24 preregistered candidates screened (K1/K2, DSR over 24, placebo, 15%/yr borrow, 20 bp).",
+  "target_regime_and_horizon": "Regime-specific to 2024-2026: spot bitcoin ETFs (2024-01-11) removed the access premium, treasury stocks then traded at a volatile premium (2.6x 2024-03, expanded 2024-11) compressing to enterprise mNAV < 1 (2026-06) and most DATs below holdings value (2026-09-21). Anchor window 2024-01-08..2026-09-17; stress window 2020-08-11..2023-12-29 (spot BTC leg, no ETF, 25 bp per side; P3 ETH treasuries have only the anchor window because BMNR and SBET data start 2025-05/06). Horizon 20 sessions (IC), weekly rebalance with 5 offsets and max hold 60 sessions (books, only if the gate passes). Validity beyond the current premium regime is not assumed; a pass would be labeled recent-regime evidence with expiry when the DAT premium regime ends (e.g. broad mNAV back above 2x or ETF-like NAV arbitrage).",
+  "existing_solution_comparison": "Published: practitioner record of Kerrisdale long BTC ETFs / short MSTR (2024-03, 2.57x mNAV; second-hand Substack write-up, original report not found), Elm Wealth (Haghani and White, 2024-12-05) explaining why they would not hold long-BTC/short-MSTR, DWF Ventures via BlockWest (2026-09-25) and AlphaBriefing/The Defiant on the compression. Academic anchors: Aufiero et al. arXiv 2505.14655 (average BTC beta 0.62, MSTR above 1, argues for dynamic hedge ratios), Lee-Shleifer-Thaler 1991 and Pontiff 1996 on closed-end fund premium/discount dynamics and arbitrage costs. Why not enough: all evidence is one or two premium cycles, author-computed, without a rules-based cost-inclusive test; nobody publishes a multi-year backtest with borrow and two-leg costs. Locally nothing tested stock-vs-coin spreads: T-33 (h20260929_33_crypto_trend) tested BTC spot trend only and T-50 weekend crypto to index ETFs.",
+  "remaining_evidence_gap": "No holdings (mNAV) series locally and mNAV definitions disagree across sources (0.97x vs 1.12x for Strategy the same week), so version 1 uses only price ratios and cannot separate premium from leverage/preferred changes. Kerrisdale original report unavailable; the SSRN papers on the Strategy treasury model (Hu; Lim) returned a bot check and were not read. Borrow availability and fees for DAT and miner names on Alpaca are unknown (3% main, 15% sensitivity). Stress window uses spot BTC prices at 09:30/16:00 ET as the hedge leg, which is not an ETF and has 25 bp per side cost.",
+  "negative_experiments_checked": "oc research directions check treasury (2026-09-30): dir:btc_treasury_miner_stock_vs_coin_relative_value queued (this task, repeat 1.00 with itself only). grep -ril mstr over reports/research/control, iterations and ledger finds only autonomous-queue.md and unrelated older iteration payloads that list MSTR among symbols (mom_dynamic_theme_stock_r9, step11/13 progress notes, h20260916_03_meta_label schedule baseline); none tested a stock-versus-coin spread. dir:crypto_trend_btc (T-33) and dir:crypto_weekend_to_monday_equity_transmission (T-50) are adjacent and different mechanisms.",
+  "cost_and_execution_assumptions": "Signal at the close of t, fill at the next open; 10 bp per side on each leg (20 bp check); short DAT leg borrow 3%/yr main and 15%/yr sensitivity (not extra candidates); coin leg is FBTC (2024-01-11 onward) or ETHA (2024-07-23 onward), spot BTC/ETH session prices before that with 25 bp per side (flagged); IBIT not used (local rows from 2022-09-08 belong to an older security), XXI and NAKA not used (reused tickers), SBET only from 2025-05-27 with a continuity rule (sessions with |log return| > 0.5 dropped and reported). Prices pass sanitize_price_matrices defaults; miner entry dates: CIFR 2021-08-30 and WULF 2021-12-14 (before that the local rows are the SPAC or a prior security, checked in price levels before any return), others on first post-hygiene row (CORZ 2024-01-24 by the hygiene mask). Weekly rebalance with 5 offsets, median across offsets decides. Beta: 60-session rolling OLS of DAT log return on coin log return, clipped [0.5, 3.0], at least 40 valid pairs; the forward label uses beta known at the signal close, the M-family signal uses beta lagged one session.",
+  "stop_condition": "Stage 1 (frozen, no change after results): compute, per pair (P1 MSTR/BTC, P2 miner basket/BTC, P3 BMNR+SBET/ETH) and signal (Z120, Z250, M20, M60; Z expected IC sign negative, M expected positive) the Spearman IC versus the next-20-session beta-hedged spread return (open t+1 to open t+21), Newey-West lag-20 t, 500 random-alignment placebos, and the number of independent anchor-window episodes (|z|>1 for Z, |R|>=10% for M, starts >= 20 sessions apart). Continue only if at least one (pair, signal) cell has, on the anchor window, IC sign equal to the preregistered sign with |NW t| >= 2.0, the stress window (where at least 60 valid sessions exist) has the same sign, and at least 6 independent anchor episodes. Otherwise stop: registry row refuted or evidence_too_weak, no ledger, no added variants. Stage 2 (only after a pass): runbook section 5 K1/K2/watch_recent, DSR over 24 trials, random-entry placebo exceeded by <= 10%, positive after 15%/yr borrow, 20 bp check. The 12 cells are a multiple-comparison family; a pass triggers DSR at stage 2 rather than relaxing anything.",
+  "queries": [
+    {
+      "query": "Kerrisdale long bitcoin ETF short MicroStrategy MSTR mNAV premium trade",
+      "opened_urls": [
+        "https://navnoorbawa.substack.com/p/how-hedge-funds-made-50-returns-betting",
+        "https://elmwealth.com/microstrategy-bitcoin/"
+      ],
+      "searched_at": "2026-09-29T23:12:00Z"
+    },
+    {
+      "query": "digital asset treasury companies mNAV below 1 DWF Ventures Strategy 2026",
+      "opened_urls": [
+        "https://blockwest.co/dwf-ventures-finds-most-crypto-treasury-stocks-trade-below-their-holdings-value/",
+        "https://thedefiant.io/news/markets/strategy-enterprise-mnav-drops-below-1-first-time",
+        "https://www.alphabriefing.com/the-bitcoin-treasury-trade-just-broke-its-own-math/"
+      ],
+      "searched_at": "2026-09-29T23:16:00Z"
+    },
+    {
+      "query": "Strategy MicroStrategy mNAV premium bitcoin treasury companies academic paper SSRN arXiv 2025",
+      "opened_urls": [
+        "https://arxiv.org/abs/2505.14655",
+        "https://arxiv.org/abs/2507.14910"
+      ],
+      "searched_at": "2026-09-30T01:12:00Z"
+    },
+    {
+      "query": "Lee Shleifer Thaler Investor Sentiment and the Closed-End Fund Puzzle; Pontiff Costly Arbitrage closed-end funds",
+      "opened_urls": [
+        "https://www.nber.org/papers/w3465",
+        "https://econpapers.repec.org/RePEc:oup:qjecon:v:111:y:1996:i:4:p:1135-1151."
+      ],
+      "searched_at": "2026-09-30T01:13:00Z"
+    },
+    {
+      "query": "Grayscale Bitcoin Trust GBTC premium discount arbitrage closed-end fund",
+      "opened_urls": [
+        "https://www.coindesk.com/markets/2024/01/11/grayscales-gbtc-discount-closes-to-zero-for-first-time-since-february-2021"
+      ],
+      "searched_at": "2026-09-30T01:12:30Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://elmwealth.com/microstrategy-bitcoin/",
+      "published_or_updated_at": "2024-12-05",
+      "source_type": "industry_standard",
+      "claim_id": "elm_2024_12_mstr_premium_may_persist",
+      "claim": "Haghani and White (Elm Wealth, 2024-12-05): MSTR common equity about 2.4x the roughly $40B of bitcoin it owns; they expect the premium to shrink over time (\"surprised if MSTR is not at a discount in five years\") but would not short MSTR against BTC (\"We hate being short with unlimited downside ... the likelihood of getting squeezed out seems especially high\") and would not buy a 1x long-BTC/short-MSTR ETF.",
+      "market_and_period": "2024-12-05",
+      "applicability": "Motivates reporting the short-DAT-only side separately and stressing borrow (3% and 15% per year); the symmetric side is the control.",
+      "limitations": "Practitioner blog, no backtest of a rules-based spread; opinion on tail risk of the short leg; written at premium 2.4x, before the 2025-26 compression.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:09:35Z",
+      "sha256": "2540822e6613303f4552e35d44736bd11c860424403c1980557154f017d89330",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/elmwealth_2024-12-05_microstrategy_bitcoin.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://navnoorbawa.substack.com/p/how-hedge-funds-made-50-returns-betting",
+      "published_or_updated_at": "2025-10-14",
+      "source_type": "industry_standard",
+      "claim_id": "substack_2025_kerrisdale_long_btc_short_mstr",
+      "claim": "Substack case study (2025-10-14): Kerrisdale 2024-03-28 long BTC ETFs / short MSTR at 2.57x mNAV; from 2021-01-01 to 2024-03, 813 trading days, MSTR traded above 2.0x NAV on only 51 days (6.3%); three-year average premium 1.3x, median 1.2x; 2021-02-09 premium 3.9x.",
+      "market_and_period": "2025-10-14",
+      "applicability": "Origin of the mean-reversion (Z family) sign: high premium -> DAT underperforms coin.",
+      "limitations": "Secondary, author-computed; Kerrisdale original report not found (404); one or two premium cycles; not a verified live record. Numbers are claim_only and are not used as targets.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:09:38Z",
+      "sha256": "be19f77b72c0810637e071866295d15c051b1eb3f778f3c203a390b86db31502",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/substack_2025-10-14_kerrisdale_mstr_case.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://blockwest.co/dwf-ventures-finds-most-crypto-treasury-stocks-trade-below-their-holdings-value/",
+      "published_or_updated_at": "2026-09-25",
+      "source_type": "industry_standard",
+      "claim_id": "dwf_2026_09_only_4_of_20_dats_above_nav",
+      "claim": "BlockWest 2026-09-25 on the DWF Ventures 2026-09-24 report: as of 2026-09-21 only 4 of the top 20 crypto treasury stocks trade above holdings value (Bit Digital 1.49x, Strive 1.21x, Hyperliquid Strategies 1.17x, BitMine 1.02x, Strategy 0.97x, SovereignAI 0.22x), ex debt and preferred.",
+      "market_and_period": "2026-09-25",
+      "applicability": "Shows the 2024-26 premium regime and why the first version uses only prices (no holdings series).",
+      "limitations": "Secondary reporting of a firm report; mNAV excludes debt and preferred so it differs from other sources.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:09:41Z",
+      "sha256": "9b9da52fc69a4337303776806242906e1696588e0125c845447bff33f2816387",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/blockwest_2026-09-25_dwf_treasury_mnav.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://thedefiant.io/news/markets/strategy-enterprise-mnav-drops-below-1-first-time",
+      "published_or_updated_at": "2026-06-27",
+      "source_type": "industry_standard",
+      "claim_id": "defiant_2026_06_strategy_enterprise_mnav_below_1",
+      "claim": "The Defiant 2026-06-27: Strategy enterprise mNAV crossed below 1 (about 0.99x); MSTR closed at $82.31, a 52-week low; 847,363 BTC, BTC near $60.5k, $15.5B preferred, $6.75B converts.",
+      "market_and_period": "2026-06-27",
+      "applicability": "Regime evidence for the anchor window, not a test.",
+      "limitations": "News article; single-day snapshot; enterprise definition.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:09:44Z",
+      "sha256": "79ca5ac0dd9bf1bea6b2e538b5e4b219d02ce3c23e9386aefed329ee6ddaa71b",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/defiant_2026-06-27_strategy_mnav_below_1.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://www.alphabriefing.com/the-bitcoin-treasury-trade-just-broke-its-own-math/",
+      "published_or_updated_at": "2026-09-25",
+      "source_type": "industry_standard",
+      "claim_id": "alphabriefing_2026_09_mnav_definition_dispersion",
+      "claim": "AlphaBriefing 2026-09-25 (BitcoinTreasuries.net data of 2026-09-25): Strategy mNAV about 1.12, Twenty One 0.72, Metaplanet 0.79, OranjeBTC 0.74, Nakamoto 0.91.",
+      "market_and_period": "2026-09-25",
+      "applicability": "Justifies a price-ratio-only signal in version 1.",
+      "limitations": "News article; definition differs from DWF (0.97 the same week), so mNAV is not comparable across sources.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:09:45Z",
+      "sha256": "4839cf629a3bd90e95cc468c5ad3b169c0308993ad49467d101a2e7d752cd349",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/alphabriefing_2026-09-25_treasury_trade.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/2505.14655",
+      "published_or_updated_at": "2025-05-20",
+      "source_type": "paper",
+      "claim_id": "aufiero_2025_btc_treasury_beta",
+      "claim": "Aufiero et al. (arXiv:2505.14655): 39 listed BTC-holding firms, daily log returns to April 2025: average BTC beta 0.62, 12 firms including MSTR with beta above 1; transfer entropy shows BTC leads stocks; the authors stress dynamic hedging ratios.",
+      "market_and_period": "2025-05-20",
+      "applicability": "Supports the rolling 60-session beta hedge clipped to [0.5, 3.0].",
+      "limitations": "Abstract page only (full text not opened); sample ends April 2025; no relative-value trading test.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:13:22Z",
+      "sha256": "caccc0949b3916a8837bb1ffd2182b2b9188dbc1c90d8fd44e0152a3a9115414",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/arxiv_2505_14655_strategy_bitcoin_interactions.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/2507.14910",
+      "published_or_updated_at": "2025-07-01",
+      "source_type": "paper",
+      "claim_id": "arxiv_2507_14910_leverage_treasury_companies",
+      "claim": "arXiv:2507.14910 \"Through the Looking Glass: Bitcoin Treasury Companies\" (q-fin.PM, 8 pages): discusses how leverage, through corporate debt or stock pledged as loan collateral, fuels the treasury-company trend, plus a Kelly-criterion extension.",
+      "market_and_period": "2025-07-01",
+      "applicability": "Mechanism background: leverage-fuelled premium can reverse abruptly; no numeric input.",
+      "limitations": "Abstract page only; theoretical/discussion note, no return test.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:13:59Z",
+      "sha256": "f0a2f4e92230147332420af02505391005ec9fc203f91446dfadbb6047147728",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/arxiv_2507_14910_bitcoin_treasury_companies.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://www.nber.org/papers/w3465",
+      "published_or_updated_at": "1991-03-01",
+      "source_type": "paper",
+      "claim_id": "lst_1991_closed_end_fund_sentiment",
+      "claim": "Lee, Shleifer and Thaler (JF 1991, NBER w3465): closed-end fund discounts are driven by individual investor sentiment, move together, and narrow when small stocks do well.",
+      "market_and_period": "1991-03-01",
+      "applicability": "Prior that premium/discount to holdings mean-reverts but slowly (reason for a 20-session horizon and 120/250 windows).",
+      "limitations": "Closed-end funds 1960s-1980s, not crypto treasuries; discount variation is a sentiment-plus-arbitrage-cost story, not proof of a tradeable reversion after 10 bp costs.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:13:32Z",
+      "sha256": "67219eb54ce78a5fe7aa0667fa835a641c4ce0da01d009f39d1786777d115110",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/nber_w3465_lee_shleifer_thaler_1991.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://econpapers.repec.org/RePEc:oup:qjecon:v:111:y:1996:i:4:p:1135-1151.",
+      "published_or_updated_at": "1996-11-01",
+      "source_type": "paper",
+      "claim_id": "pontiff_1996_costly_arbitrage",
+      "claim": "Pontiff (QJE 1996): closed-end fund deviations from asset value are larger for hard-to-replicate portfolios, low-dividend funds, small funds and when interest rates are high; arbitrage costs allow large price deviations.",
+      "market_and_period": "1996-11-01",
+      "applicability": "Costs and short-selling frictions explain why a premium may persist; supports treating the short-DAT leg with borrow stress.",
+      "limitations": "Abstract page only (full text restricted); 1990s closed-end funds.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:14:02Z",
+      "sha256": "903cb58833faa5717487df9242060870dd44fee8942d4c577f9d81488e2cbdd2",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/pontiff_1996_costly_arbitrage_abstract.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    },
+    {
+      "url": "https://www.coindesk.com/markets/2024/01/11/grayscales-gbtc-discount-closes-to-zero-for-first-time-since-february-2021",
+      "published_or_updated_at": "2024-01-11",
+      "source_type": "industry_standard",
+      "claim_id": "coindesk_2024_01_gbtc_discount_zero",
+      "claim": "CoinDesk 2024-01-11: GBTC discount to NAV shrank to 0% for the first time since February 2021 as the trust converted to an ETF.",
+      "market_and_period": "2024-01-11",
+      "applicability": "Defines the anchor window start (spot bitcoin ETFs listed 2024-01-11) and the pre-ETF spot-leg caveat.",
+      "limitations": "News article; covers the regime break that motivates using FBTC only from 2024-01-11.",
+      "independent_replication": "Not independently replicated here.",
+      "fetched_at": "2026-09-30T01:13:41Z",
+      "sha256": "5db346bb4e8f0661eebccb2472d8d5ff6e458ec3138a16c9f1c265a9da622ae1",
+      "snapshot_path": "reports/research/iterations/h20260929_80_dat_vs_coin/sources/coindesk_2024-01-11_gbtc_discount_zero.txt",
+      "source_card_path": "reports/harness/source_cards/h20260929_80_dat_vs_coin.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "scripts/run_h20260929_80_dat_ic.py ic under scripts/run_capped.sh --mem 1.8G: 3 pairs x 4 signals x 2 windows Spearman IC vs next-20-session beta-hedged spread return, Newey-West lag 20, 500 placebos, episode counts; no ledger before it.",
+    "pass_condition": "At least one (pair, signal) cell: anchor IC sign as preregistered with |NW t| >= 2.0, stress window same sign where data exists (>= 60 sessions), >= 6 independent anchor episodes.",
+    "falsification_condition": "No cell satisfies all conditions (the practitioner premium-compression story does not show up as a signed, significant 20-session IC in price-only data).",
+    "max_compute_minutes": 10
+  }
+}

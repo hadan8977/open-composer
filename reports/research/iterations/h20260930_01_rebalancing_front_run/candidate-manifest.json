@@ -1,0 +1,223 @@
+{
+  "candidate_count": 8,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R1_SPREAD_SPY_IEF",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "spread_long_spy_short_ief",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "cross_asset_diagnostic": true,
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "SPY minus IEF",
+        "position": "clip(W,-2,2) long SPY, opposite IEF",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "diagnostic_bond_leg_not_advanceable",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R2_SPREAD_SPY_TLT",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "spread_long_spy_short_tlt",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "cross_asset_diagnostic": true,
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "SPY minus TLT",
+        "position": "clip(W,-2,2) long SPY, opposite TLT",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "diagnostic_bond_leg_not_advanceable",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R3_SPY",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "equity_only_spy",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "SPY",
+        "position": "sign(W)*min(|W|,1), negative = short SPY",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "equity_leg_primary",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R4_QQQ",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "equity_only_qqq",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "QQQ",
+        "position": "sign(W)*min(|W|,1), negative = short QQQ",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "equity_leg_primary",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R5_TQQQ_SQQQ",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "equity_only_3x_pair",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "TQQQ if W>0 else SQQQ",
+        "position": "min(|W|,1) long TQQQ (W>0) or long SQQQ (W<0)",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "equity_leg_primary",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R6_SPY_ABSW_GE1",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "equity_only_spy_strong_only",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "SPY",
+        "position": "R3 only on days |W|>=1, else flat; threshold not tuned",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "equity_leg_primary",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R7_SPREAD_ABSW_GE1",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "spread_strong_only",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "cross_asset_diagnostic": true,
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "SPY minus IEF",
+        "position": "R1 only on days |W|>=1",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "diagnostic_bond_leg_not_advanceable",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "R8_SPY_CALENDAR_ONLY",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "cash",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "equity_only_calendar_part",
+      "parameters": {
+        "costs": "10bp per side per leg on weight change (20bp check); SPY/QQQ short borrow 0.3%/yr (3% sensitivity)",
+        "fill": "close signal t, next open fill t+1; open->close primary, open->open reported",
+        "legs": "SPY",
+        "position": "CalMod (values -1,0,+1) as SPY weight; no Threshold",
+        "signal": "W = 0.6*(-THR/0.012) + 0.4*CalMod; THR = mean of 25 delta portfolios 0.1%..2.5%; CalMod per preregistration.md"
+      },
+      "path": "rebalancing_front_run",
+      "role": "equity_leg_primary",
+      "spec_path": "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-09-30T01:32:53Z",
+  "generated_before_backtest": true,
+  "iter_id": "h20260930_01_rebalancing_front_run",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml": "418c4d26cbbdfc03733a0da118693e52d9658c96526bd66b9636134dc704ff75"
+  }
+}

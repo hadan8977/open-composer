@@ -1,0 +1,3 @@
+# Search Space: h20260930_01_rebalancing_front_run
+
+Single-mechanism lightweight path (no campaign contract). One path, `rebalancing_front_run`, with 8 preregistered candidates R1-R8 sharing spec `strategy_specs/drafts/h20260930_01_rebalancing_front_run.yaml`. Benchmark family: date_shift_placebo_500, spy_buy_and_hold, cash_proxy_bil, s3_k1_k2. Costs in `reports/research/iterations/h20260930_01_rebalancing_front_run/cost-table.json`. The candidate manifest `candidate-manifest.json` is the authoritative per-candidate binding; formulas are in `preregistration.md`. Nothing is tuned; two holding variants (open-to-close, open-to-open) are reports of the same candidate, not extra trials.

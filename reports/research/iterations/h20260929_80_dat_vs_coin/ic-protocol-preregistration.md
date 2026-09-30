@@ -1,0 +1,13 @@
+# IC protocol preregistration (written before any spread return or IC was computed)
+
+Script: scripts/run_h20260929_80_dat_ic.py (sha256 at preregistration: 095f97210423b4e79ec9696a31254d3819ebffa2840d407508b336e54500a105). Frozen details the plan left open:
+
+- Calendar: SPY SIP session dates; prices pass sanitize_price_matrices defaults after dropping ghost bars (volume 0 and trade_count 0).
+- Coin leg: close-to-close log return from FBTC / ETHA when both today's and the previous close exist, otherwise the session spot price (BTCUSD / ETHUSD 09:30 open, 16:00 close). Coin open level = chained close index at t-1 plus ln(open_t / close_(t-1)) from the same source rule.
+- DAT leg: equal-weight mean of member close-to-close log returns (no padding across missing prices). Forward window return = mean over members valid at both opens of ln(open_(t+21) / open_(t+1)) (buy-and-hold basket formed at the next open).
+- Beta: 60-session rolling OLS slope of DAT log return on coin log return, at least 40 valid pairs, clipped [0.5, 3.0]. Label: fwd = DAT window return - beta_t * coin window return, with beta known at the signal close. M-family daily hedged return uses beta lagged one session.
+- Z signal: cumulative sum of (r_dat - r_coin) = log price ratio; z = (x_t - mean_L) / std_L over the trailing L sessions incl. t, L in {120, 250}. Expected IC sign negative. M signal: trailing K-session sum of the hedged daily return, K in {20, 60}; expected IC sign positive.
+- IC: Spearman rank correlation over sessions in the window with both signal and label valid; Newey-West (Bartlett, lag 20) t on the product series of standardized ranks. Placebo: 500 circular shifts of the signal (offset uniform in [21, n-21], seed 20260930); placebo_pct = percent of placebo sign-adjusted ICs strictly below the observed sign-adjusted IC. Placebo is reported, not part of the continue condition.
+- Episodes (anchor window): sessions with |z| > 1 (Z) or |R| >= 10% (M) among valid sessions, counted greedily with starts at least 20 sessions apart.
+- Stress window has data only if >= 60 valid sessions; otherwise condition 3 is not applicable. A (pair, signal) cell passes if all four conditions hold on that same signal; the gate continues if any cell passes.
+- Data rules: SBET only from 2025-05-27 and sessions with |log return| > 0.5 blanked and reported; BMNR from 2025-06-05; CIFR from 2021-08-30 and WULF from 2021-12-14 (earlier local rows are a SPAC / prior security, verified in price levels before any return was computed); XXI, NAKA, IBIT not used. feasibility-observed.json records the coverage and discards.

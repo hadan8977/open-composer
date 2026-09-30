@@ -1,0 +1,88 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260929_80_dat_vs_coin/candidate-manifest.json",
+  "candidate_manifest_sha256": "0cb11acd04783ffcbb9a067f7fe3a37a9c21074346053a7532abeec2354b84c5",
+  "cost_table_path": "reports/research/iterations/h20260929_80_dat_vs_coin/cost-table.json",
+  "created_at": "2026-09-30T01:15:52.556745+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260929_80_dat_vs_coin/data-feasibility.json",
+  "data_feasibility_sha256": "91f15ea7fa523d577562f70cdebaecfa5f434c6785f5e68276f80d4cce7a2f3f",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260929_80_dat_vs_coin/results.json",
+    "reports/research/iterations/h20260929_80_dat_vs_coin/screen-results.json",
+    "reports/research/iterations/h20260929_80_dat_vs_coin/report.md"
+  ],
+  "iter_id": "h20260929_80_dat_vs_coin",
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_pair_random_alignment_placebo",
+        "coin_buy_and_hold",
+        "cash_proxy_bil",
+        "s3_k1_k2"
+      ],
+      "candidate_count": 24,
+      "hypothesis_refs": [
+        "T-20260929-80"
+      ],
+      "name": "dat_vs_coin_spread",
+      "parameters": {
+        "costs": [
+          "10bp per side both legs; borrow 3%/yr (15% sensitivity); 20bp check"
+        ],
+        "expected_ic_sign": [
+          -1,
+          1
+        ],
+        "family": [
+          "Z",
+          "M"
+        ],
+        "fill": [
+          "close signal, next open fill, weekly rebalance 5 offsets median"
+        ],
+        "lookback": [
+          120,
+          250,
+          20,
+          60
+        ],
+        "pair": [
+          "P1",
+          "P2",
+          "P3"
+        ],
+        "pair_name": [
+          "MSTR/BTC",
+          "miner basket/BTC",
+          "ETH treasury basket/ETH"
+        ],
+        "side": [
+          "symmetric",
+          "short_dat_long_coin_only"
+        ],
+        "signal": [
+          "Z120",
+          "Z250",
+          "M20",
+          "M60"
+        ],
+        "thresholds": [
+          "|z|>=1.0 enter, |z|<=0.25 exit, max hold 60 sessions",
+          "|R|>=10% hold in R direction"
+        ],
+        "windows": [
+          "anchor+stress",
+          "anchor only"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/h20260929_80_dat_vs_coin.yaml",
+  "spec_hash": "df956d8a2051c4f7284bedc0bf02c961eddc1fdd9396568a164233dfb6f5370e",
+  "strategy_name": "h20260929_80_dat_vs_coin",
+  "total_candidate_budget": 24,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260929_80_dat_vs_coin/trial-ledger.jsonl"
+  ]
+}
