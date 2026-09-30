@@ -1,14 +1,77 @@
 {
-  "cost_table_path": "",
-  "created_at": "2026-09-30T08:52:20.728440+00:00",
-  "data_feasibility_path": "",
-  "evaluation_report_paths": [],
+  "candidate_manifest_path": "reports/research/iterations/t20260929_35_overnight_persistence/candidate-manifest.json",
+  "candidate_manifest_sha256": "970008b84cda657cd1352f5e4ef1a3671c6e1db0e8ae2f49fd82a12d28b7f25b",
+  "cost_table_path": "reports/research/iterations/t20260929_35_overnight_persistence/cost-table.json",
+  "created_at": "2026-09-30T10:11:31.848492+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20260929_35_overnight_persistence/data-feasibility.json",
+  "data_feasibility_sha256": "c425a1a6211119beac373490ddd9600b4481f4980d176dae934186e881c57b43",
+  "evaluation_report_paths": [
+    "reports/research/iterations/t20260929_35_overnight_persistence/results.json",
+    "reports/research/iterations/t20260929_35_overnight_persistence/report.md"
+  ],
   "iter_id": "t20260929_35_overnight_persistence",
-  "paths": [],
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_pool_random_long_short_placebo_100_seeds",
+        "pool_equal_weight_next_night",
+        "spy_close_to_open",
+        "tug_of_war_TOW21",
+        "diagnostic_intraday_leg"
+      ],
+      "candidate_count": 20,
+      "hypothesis_refs": [
+        "T-20260929-35"
+      ],
+      "name": "overnight_persistence_auction",
+      "parameters": {
+        "decision_cell": [
+          false,
+          true
+        ],
+        "entry_exit": [
+          "close auction buy/sell-short (cls), next open sell/cover, hold overnight only"
+        ],
+        "form": [
+          "decile_long_short_10pct",
+          "top20_long_only"
+        ],
+        "lookback": [
+          5,
+          21,
+          63,
+          252
+        ],
+        "placebo_seeds": [
+          100
+        ],
+        "pool": [
+          "P1500",
+          "P500"
+        ],
+        "pool_top_n": [
+          1500,
+          500
+        ],
+        "secondary_cell": [
+          true,
+          false
+        ],
+        "signal": [
+          "ON5",
+          "ON21",
+          "ON63",
+          "ON252",
+          "TOW21"
+        ]
+      }
+    }
+  ],
   "schema_version": 3,
-  "source_spec_path": null,
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "total_candidate_budget": 80,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20260929_35_overnight_persistence.yaml",
+  "spec_hash": "c9667ed800e0b134660682e473e983eb3bed436c7b44f7842180a423e5d1b60b",
+  "strategy_name": "t20260929_35_overnight_persistence",
+  "total_candidate_budget": 20,
   "trial_ledger_paths": []
 }

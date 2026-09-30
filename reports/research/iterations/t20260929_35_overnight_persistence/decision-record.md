@@ -1,12 +1,17 @@
 # Decision Record: t20260929_35_overnight_persistence
 
-TODO: At the end of the round, record each path's continue/pivot/stop decision,
-evidence, rejected variants, next action, and whether ML or AI-information
-round entry conditions are met.
+## Path
 
-## P1
+overnight_persistence_auction (C2a)
 
-- Path:
-- Decision: pending
-- Reason:
-- Next iteration suggestion:
+## Decision
+
+pending
+
+## Reason
+
+Preregistered; no result computed yet.
+
+## Next iteration suggestion
+
+Run scripts/run_t20260929_35_overnight_persistence.py panel then screen; tier is computed mechanically and reviewed by the lead.

@@ -1,14 +1,75 @@
 {
-  "cost_table_path": "",
-  "created_at": "2026-09-30T08:57:45.442498+00:00",
-  "data_feasibility_path": "",
-  "evaluation_report_paths": [],
+  "candidate_manifest_path": "reports/research/iterations/t20260930_13_intraday_periodicity/candidate-manifest.json",
+  "candidate_manifest_sha256": "50a840cbae661f96598b13e0dea1f0db9de0d0a012c3622566826d760b9f0a74",
+  "cost_table_path": "reports/research/iterations/t20260930_13_intraday_periodicity/cost-table.json",
+  "created_at": "2026-09-30T11:00:38.451284+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20260930_13_intraday_periodicity/data-feasibility.json",
+  "data_feasibility_sha256": "d84520ec28ee0ddc5891428adf62eeac8f4f0f0ebc49fe77175e73e920aced18",
+  "evaluation_report_paths": [
+    "reports/research/iterations/t20260930_13_intraday_periodicity/results.json",
+    "reports/research/iterations/t20260930_13_intraday_periodicity/report.md"
+  ],
   "iter_id": "t20260930_13_intraday_periodicity",
-  "paths": [],
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_pool_random_long_short_placebo_100_seeds",
+        "adjacent_period_signal_control",
+        "closing_half_hour_r_C1_r_C2_split"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "T-20260930-13"
+      ],
+      "name": "intraday_periodicity_one_auction_leg",
+      "parameters": {
+        "decision_cell": [
+          false,
+          true
+        ],
+        "entry_exit": [
+          "opening auction opg/DAY buy and sell-short before 09:28 ET, continuous market exit at 10:00",
+          "continuous market entry at 15:30, closing auction cls exit"
+        ],
+        "form": [
+          "decile_long_short_10pct"
+        ],
+        "lookback_days": [
+          1,
+          5,
+          20
+        ],
+        "period": [
+          "O",
+          "C"
+        ],
+        "placebo_seeds": [
+          100
+        ],
+        "pool": [
+          "P1500",
+          "P500"
+        ],
+        "pool_top_n": [
+          1500,
+          500
+        ],
+        "signal": [
+          "S_O_L1",
+          "S_O_L5",
+          "S_O_L20",
+          "S_C_L1",
+          "S_C_L5",
+          "S_C_L20"
+        ]
+      }
+    }
+  ],
   "schema_version": 3,
-  "source_spec_path": null,
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "total_candidate_budget": 80,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20260930_13_intraday_periodicity.yaml",
+  "spec_hash": "1a231f27f9204a5eaa302f2babc6a3d4a50c12bb95ea3389d6c55a6e92744714",
+  "strategy_name": "t20260930_13_intraday_periodicity",
+  "total_candidate_budget": 12,
   "trial_ledger_paths": []
 }

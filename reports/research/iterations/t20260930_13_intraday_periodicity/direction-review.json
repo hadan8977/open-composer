@@ -1,21 +1,257 @@
 {
   "cheapest_decisive_test": {
-    "action": "",
-    "falsification_condition": "",
-    "max_compute_minutes": null,
-    "pass_condition": ""
+    "action": "scripts/run_t20260930_13_intraday_periodicity.py extract (2023-08..2026-09 minute bars, P1500 ever-members, both shard layouts merged) then screen (12 candidates x 4 windows, ordinary and Newey-West 5-lag t, 100-seed same-pool placebo for all cells, adjacent-period control, r_C1/r_C2 split, RT1 and 1x/2x/frozen costs, by-year, mechanical tier) under run_capped 1.8G; results.json.",
+    "falsification_condition": "Per decision cell (C_L20_P1500, O_L20_P1500) in the 2024-01-08..2026-09-29 window: gross mean m < RT1, or Newey-West t < 2.0, or placebo beat < 0.90 closes that cell. Both closed closes same-period periodicity as an independent return source.",
+    "max_compute_minutes": 60,
+    "pass_condition": "Per decision cell: m >= 2 x RT1 (RT1 = long leg h + 4 bp plus short leg h + 4 bp, mean over selected names per day) with Newey-West t >= 2.0 and placebo beat >= 0.90. Marginal RT1 <= m < 2 x RT1 goes to a 200-name measured-quote sample (2x cost >= 0) before anything else."
   },
-  "cost_and_execution_assumptions": "",
-  "decision": "pending",
-  "existing_solution_comparison": "",
+  "cost_and_execution_assumptions": "Closing segment: continuous-auction market entry at 15:30 (half spread h plus 2 bp), closing-auction cls exit before 15:50 ET (2 bp). Opening segment: opening-auction entry (DAY market before 09:28 ET, 2 bp), 10:00 continuous exit (h plus 2 bp). h = 0.5 x 21-day Abdi-Ranaldo spread (ml30.spread_estimate_from_ohlc, data before t). 2x stress: continuous 2h + 4 bp, auction 4 bp. Frozen 10/20 bp per side reported only. Shorts intraday only, easy-to-borrow proxy DTC quantile < 0.90 (T-32 load_dtc/attach_dtc), Alpaca ETB borrow fee 0. Alpaca docs opened 2026-09-30.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Heston-Korajczyk-Sadka 2010 (JF): same-half-hour decile spread 3.01 bp per half-hour, over 11 bp in the opening half hour, 8 bp in the last, on NYSE 2001-05, gross, with a 1.7 bp half spread as the cost benchmark; Haendler et al. 2025 abstract: pattern persists out of sample, open driven by VWAP trading, close by market-on-close flow. Nobody opened here tests it in 2024-26 with one auction leg. This repo has no signal card on half-hour periodicity; T-20260929-35 (C2a) tested the overnight leg on the same pool.",
   "iter_id": "t20260930_13_intraday_periodicity",
-  "negative_experiments_checked": "",
-  "objective": "",
-  "queries": [],
-  "remaining_evidence_gap": "",
-  "reviewed_at": null,
+  "negative_experiments_checked": "oc research directions check intraday periodicity close half-hour (2026-09-30): no registry direction on half-hour periodicity. Related negatives read: program line C closed single-symbol intraday rules; dir:intraday_reversal_reit_pwb (refuted); dir:overnight_intraday_gap_retail_pwb (refuted); T-20260929-32 (cross-sectional gap fade, refuted), T-20260930-11 and T-20260930-12 (auction check and small-cap gap-down long, refuted at 7.09 and -5.4 bp/day). Difference: half-hour cross-sectional ranking on the same-period past mean, entered or exited in an auction, not a gap or single-symbol rule.",
+  "objective": "T-20260930-13 (C2b): in 2024-01-08..2026-09-29, do top-1500 dollar-volume US common stocks ranked by the past-20-day mean of the same half-hour return (opening 09:30-10:00, closing 15:30-16:00) keep a same-period long/short gross edge of at least 2 x RT1, with Newey-West t >= 2 and a same-pool random placebo beat >= 0.90, so that one auction leg per trade lowers the cost enough to pay?",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://arxiv.org/abs/1005.3535"
+      ],
+      "query": "heston 2010 intraday cross section (source: arxiv.org)",
+      "searched_at": "2026-09-30T10:58:12Z"
+    },
+    {
+      "opened_urls": [
+        "https://scholar.smu.edu/business_finance_research/322/"
+      ],
+      "query": "haendler 2025 periodicity puzzle (source: scholar.smu.edu)",
+      "searched_at": "2026-09-30T10:58:12Z"
+    },
+    {
+      "opened_urls": [
+        "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+      ],
+      "query": "lou polk skouras 2019 half hour components (source: personal.lse.ac.uk)",
+      "searched_at": "2026-09-30T10:58:14Z"
+    },
+    {
+      "opened_urls": [
+        "https://econpapers.repec.org/article/eeejfinec/v_3a141_3ay_3a2021_3ai_3a1_3ap_3a172-194.htm"
+      ],
+      "query": "bogousslavsky 2021 overnight borrow margin (source: econpapers.repec.org)",
+      "searched_at": "2026-09-30T10:58:15Z"
+    },
+    {
+      "opened_urls": [
+        "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+      ],
+      "query": "gjw jfqa 2026 auction price impact (source: www.cambridge.org)",
+      "searched_at": "2026-09-30T10:58:15Z"
+    },
+    {
+      "opened_urls": [
+        "https://www.nyse.com/data-insights/nyse-closing-auction-price-discovery-opportunities-reach-new-highs"
+      ],
+      "query": "nyse closing auction share 2024q2 (source: www.nyse.com)",
+      "searched_at": "2026-09-30T10:58:16Z"
+    },
+    {
+      "opened_urls": [
+        "https://docs.alpaca.markets/docs/orders-at-alpaca"
+      ],
+      "query": "alpaca orders cls opg deadlines (source: docs.alpaca.markets)",
+      "searched_at": "2026-09-30T10:58:16Z"
+    },
+    {
+      "opened_urls": [
+        "https://docs.alpaca.markets/docs/margin-and-short-selling"
+      ],
+      "query": "alpaca margin etb zero borrow fee (source: docs.alpaca.markets)",
+      "searched_at": "2026-09-30T10:58:16Z"
+    },
+    {
+      "opened_urls": [
+        "https://ux-tauri.unisg.ch/RePEc/usg/sfwpfi/WPF-1604.pdf"
+      ],
+      "query": "abdi ranaldo 2017 spread estimator (source: ux-tauri.unisg.ch)",
+      "searched_at": "2026-09-30T10:58:18Z"
+    }
+  ],
+  "remaining_evidence_gap": "Not measured: quoted half spread at 15:30 and 10:00 (h is a daily Abdi-Ranaldo proxy, marginal tier needs 200 measured names), opening-auction impact of our orders, cls and opg fill reliability on the paper account, official opening price versus the daily-bar open (fat tail per T-11). Minute-data coverage and survivorship reported as the share of pool-days with minute bars; 2023 minute bars merge two shard layouts. Last-trade prices carry bid-ask bounce (noise, not a source of continuation at a one-day lag).",
+  "reviewed_at": "2026-09-30T11:01:12Z",
   "schema_version": 1,
-  "sources": [],
-  "stop_condition": "",
-  "target_regime_and_horizon": ""
+  "sources": [
+    {
+      "applicability": "Sets the magnitudes the two decision cells are compared against (open > 11 bp, close > 8 bp) and the same-period signal S_{X,L}.",
+      "claim": "Heston, Korajczyk and Sadka (JF 2010, arXiv 1005.3535): a stock return in a half-hour interval is positively related to its return in the same half-hour interval on each of the previous 40 trading days; the Day 1 decile long/short earns 3.01 bp per half-hour at the same time next day, over 11 bp in the opening half-hour and averaging 1.75 bp over the rest of the day.",
+      "claim_id": "heston_2010_intraday_cross_section",
+      "core_claim": "Heston, Korajczyk and Sadka (JF 2010, arXiv 1005.3535): a stock return in a half-hour interval is positively related to its return in the same half-hour interval on each of the previous 40 trading days; the Day 1 decile long/short earns 3.01 bp per half-hour at the same time next day, over 11 bp in the opening half-hour and averaging 1.75 bp over the rest of the day.",
+      "credibility": "jf_peer_reviewed",
+      "fetched_at": "2026-09-30T10:58:12Z",
+      "independent_replication": "Haendler-Heston-Korajczyk-Sadka 2025 report the pattern persists out of sample.",
+      "limitations": "2001-2005 sample; gross of costs (the paper compares 3 bp with a 1.7 bp half quoted spread for S&P 500 names); the arXiv snapshot was pdftotext of the full paper, tables were not re-derived here.",
+      "market_and_period": "US NYSE stocks 2001-2005, 30-minute intervals, decile spreads",
+      "project_applicability": "Sets the magnitudes the two decision cells are compared against (open > 11 bp, close > 8 bp) and the same-period signal S_{X,L}.",
+      "published_or_updated_at": "2010-12-01",
+      "reflection": "Continuous-trading gross returns, no auction cost; decay since 2005 unknown, which is why the main window is 2024-26 only.",
+      "sha256": "d0dd580458d142a45776a7b7623c0457a7ee8fee50c5ecb17c642de84bf94d3f",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/hks_full.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/1005.3535"
+    },
+    {
+      "applicability": "Mechanism for using the opening auction entry and the closing auction exit; supports the decision-cell split into open and close.",
+      "claim": "Haendler, Heston, Korajczyk and Sadka (2025, The Intra-Day Stock Return Periodicity Puzzle, abstract): the periodicity persists out of sample, is strongest at the open and close, and open periodicity is driven by VWAP trading while close periodicity is driven by market-on-close trading; VWAP-like trading explains part of the open and midday periodicity and up to 30 percent of the closing interval.",
+      "claim_id": "haendler_2025_periodicity_puzzle",
+      "core_claim": "Haendler, Heston, Korajczyk and Sadka (2025, The Intra-Day Stock Return Periodicity Puzzle, abstract): the periodicity persists out of sample, is strongest at the open and close, and open periodicity is driven by VWAP trading while close periodicity is driven by market-on-close trading; VWAP-like trading explains part of the open and midday periodicity and up to 30 percent of the closing interval.",
+      "credibility": "working_paper_top_authors",
+      "fetched_at": "2026-09-30T10:58:12Z",
+      "independent_replication": "Consistent with Heston et al. 2010; no independent tradability study with auction costs.",
+      "limitations": "Only the SMU repository abstract was read; the SSRN full text (abstract_id 5749704) returned 403 via curl and a captcha page via r.jina.ai (haendler_ssrn_jina.txt), so table magnitudes were not verified.",
+      "market_and_period": "US stocks, out of sample after Heston et al. 2010 (abstract only)",
+      "project_applicability": "Mechanism for using the opening auction entry and the closing auction exit; supports the decision-cell split into open and close.",
+      "published_or_updated_at": "2025-11-01",
+      "reflection": "Abstract-level evidence only; no cost analysis.",
+      "sha256": "7072da421320b3fca6df16fa591cac8d9b9eb6dff787dd3c71e4f1ab87fcf0ef",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/haendler.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "paper",
+      "url": "https://scholar.smu.edu/business_finance_research/322/"
+    },
+    {
+      "applicability": "Defines the boundary windows (first and last half hour) used for r_O and r_C and shows that they contain the auctions.",
+      "claim": "Lou, Polk and Skouras (JFE 2019): dollar trading volume is decomposed over 30-minute windows, the first window starting at 9:30 includes the opening auction and the last window includes the closing auction; overnight and intraday components of strategy returns are separated by these windows.",
+      "claim_id": "lou_polk_skouras_2019_half_hour_components",
+      "core_claim": "Lou, Polk and Skouras (JFE 2019): dollar trading volume is decomposed over 30-minute windows, the first window starting at 9:30 includes the opening auction and the last window includes the closing auction; overnight and intraday components of strategy returns are separated by these windows.",
+      "credibility": "jfe_peer_reviewed",
+      "fetched_at": "2026-09-30T10:58:14Z",
+      "independent_replication": "Related decomposition in Akbas et al. 2022.",
+      "limitations": "Read for the half-hour volume decomposition and definitions only, not for the C2a overnight claim (covered by t20260929_35_overnight_persistence).",
+      "market_and_period": "US stocks 1993-2013",
+      "project_applicability": "Defines the boundary windows (first and last half hour) used for r_O and r_C and shows that they contain the auctions.",
+      "published_or_updated_at": "2019-04-25",
+      "reflection": "Descriptive decomposition, not a tradable rule.",
+      "sha256": "15d25eb9fe47b6a20375f5dfdba1062fe402e65caa6d07afa785cfb7e9dd1c42",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/lps.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "paper",
+      "url": "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+    },
+    {
+      "applicability": "Alternative explanation for a weak or reversed close-period edge; motivates the r_C1/r_C2 split.",
+      "claim": "Bogousslavsky (JFE 2021): lending fees are typically charged only on positions held overnight, so arbitrageurs trading on mispricing reduce their positions before the end of the day; a mispricing factor earns positive returns throughout the day but performs poorly at the end of it.",
+      "claim_id": "bogousslavsky_2021_overnight_borrow_margin",
+      "core_claim": "Bogousslavsky (JFE 2021): lending fees are typically charged only on positions held overnight, so arbitrageurs trading on mispricing reduce their positions before the end of the day; a mispricing factor earns positive returns throughout the day but performs poorly at the end of it.",
+      "credibility": "jfe_peer_reviewed",
+      "fetched_at": "2026-09-30T10:58:15Z",
+      "independent_replication": "None opened here.",
+      "limitations": "Abstract-level snapshot; suggests the closing half-hour may carry a negative arbitrageur-flow component, which cuts against a same-period long/short in C.",
+      "market_and_period": "US stocks, abstract-level",
+      "project_applicability": "Alternative explanation for a weak or reversed close-period edge; motivates the r_C1/r_C2 split.",
+      "published_or_updated_at": "2021-07-01",
+      "reflection": "Cost-blind; supports the failure reading without changing the gates.",
+      "sha256": "11f126d46e75098ef8f581bb456137d57e41ca83ebd4a1d2aa40e589fa4e9315",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/bogousslavsky.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "paper",
+      "url": "https://econpapers.repec.org/article/eeejfinec/v_3a141_3ay_3a2021_3ai_3a1_3ap_3a172-194.htm"
+    },
+    {
+      "applicability": "Supports the closing-auction exit at 2 bp and warns that the opening-auction entry is the more expensive leg.",
+      "claim": "Goyal, Jegadeesh and Wu (JFQA 2026): price impact is lower in closing auctions than in the continuous market for all stocks except Nasdaq microcaps; opening auctions are illiquid (median opening auction volume about 0.92 percent of ADV).",
+      "claim_id": "gjw_jfqa_2026_auction_price_impact",
+      "core_claim": "Goyal, Jegadeesh and Wu (JFQA 2026): price impact is lower in closing auctions than in the continuous market for all stocks except Nasdaq microcaps; opening auctions are illiquid (median opening auction volume about 0.92 percent of ADV).",
+      "credibility": "jfqa_peer_reviewed",
+      "fetched_at": "2026-09-30T10:58:15Z",
+      "independent_replication": "None opened here.",
+      "limitations": "Opening auction illiquidity is a caution for the opening leg of the O decision cell; the 2 bp auction cost in the contract is an assumption, not measured here.",
+      "market_and_period": "US stocks, recent sample (abstract and first pages)",
+      "project_applicability": "Supports the closing-auction exit at 2 bp and warns that the opening-auction entry is the more expensive leg.",
+      "published_or_updated_at": "2026-01-01",
+      "reflection": "Impact estimates are for size-scaled trades; our paper account orders are small.",
+      "sha256": "32d1995ffbaa05cf090bb2bdfc325487e20d39903d2094f1fb584626a7f8b0e6",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/gjw.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+    },
+    {
+      "applicability": "Recent-window motivation for C_L20_P1500 (closing flow share at a record).",
+      "claim": "NYSE data insights: in Q2 2024 US closing auctions matched 55.5 bn dollars per day and accounted for 9.44 percent of total notional value traded, a record high.",
+      "claim_id": "nyse_closing_auction_share_2024q2",
+      "core_claim": "NYSE data insights: in Q2 2024 US closing auctions matched 55.5 bn dollars per day and accounted for 9.44 percent of total notional value traded, a record high.",
+      "credibility": "exchange_official",
+      "fetched_at": "2026-09-30T10:58:16Z",
+      "independent_replication": "None.",
+      "limitations": "Exchange marketing-style data note; supports the recent-strength argument for close-period flow only.",
+      "market_and_period": "US equities, Q2 2024",
+      "project_applicability": "Recent-window motivation for C_L20_P1500 (closing flow share at a record).",
+      "published_or_updated_at": "2024-07-01",
+      "reflection": "A share of volume is not evidence of predictability.",
+      "sha256": "3a2bf926b20e8d21bb0a67621093276cd57f899d5e193a249e699e9255b4bd5c",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/nyse.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "exchange_official_docs",
+      "url": "https://www.nyse.com/data-insights/nyse-closing-auction-price-discovery-opportunities-reach-new-highs"
+    },
+    {
+      "applicability": "Execution contract: opening-auction entry before 09:28 ET, closing-auction exit before 15:50 ET.",
+      "claim": "Alpaca orders documentation: OPG orders execute only in the opening auction and are rejected if submitted after 9:28am ET before 7pm; CLS orders are rejected if submitted after 3:50pm ET before 7pm and are routed to the primary exchange auctions.",
+      "claim_id": "alpaca_orders_cls_opg_deadlines",
+      "core_claim": "Alpaca orders documentation: OPG orders execute only in the opening auction and are rejected if submitted after 9:28am ET before 7pm; CLS orders are rejected if submitted after 3:50pm ET before 7pm and are routed to the primary exchange auctions.",
+      "credibility": "broker_official",
+      "fetched_at": "2026-09-30T10:58:16Z",
+      "independent_replication": "None.",
+      "limitations": "Documentation, not a fill test; cls and opg fill reliability on the paper account is unmeasured.",
+      "market_and_period": "Alpaca Trading API, opened 2026-09-30",
+      "project_applicability": "Execution contract: opening-auction entry before 09:28 ET, closing-auction exit before 15:50 ET.",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Rules may change; re-check before any paper use.",
+      "sha256": "5a5458e40fbc0199e530f42b8ff28d7e88459555e3e9753b32bc4ea0c8593783",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/alpaca_orders.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/orders-at-alpaca"
+    },
+    {
+      "applicability": "Short leg carries no borrow fee because positions are intraday only and restricted to the ETB proxy.",
+      "claim": "Alpaca margin and short selling documentation: $0 locate and borrow fees on all easy-to-borrow shares for Trading API users; over 5,000 ETB securities.",
+      "claim_id": "alpaca_margin_etb_zero_borrow_fee",
+      "core_claim": "Alpaca margin and short selling documentation: $0 locate and borrow fees on all easy-to-borrow shares for Trading API users; over 5,000 ETB securities.",
+      "credibility": "broker_official",
+      "fetched_at": "2026-09-30T10:58:16Z",
+      "independent_replication": "None.",
+      "limitations": "The ETB list is not point in time in our data; the DTC quantile below 0.90 is the easy-to-borrow proxy for the short leg.",
+      "market_and_period": "Alpaca Trading API, opened 2026-09-30",
+      "project_applicability": "Short leg carries no borrow fee because positions are intraday only and restricted to the ETB proxy.",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Hard-to-borrow shorts would be charged; the proxy excludes them.",
+      "sha256": "b4e38cf5133b8210863d575735a29ac6a10aa10230b62f4d68c16c001561df2c",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/alpaca_margin.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "applicability": "Supplies h = 0.5 x 21-day AR spread used for the continuous-auction leg cost.",
+      "claim": "Abdi and Ranaldo (RFS 2017): a bid-ask spread estimator built from daily close, high and low prices that outperforms the Corwin-Schultz high-low estimator and the Roll model for less liquid assets.",
+      "claim_id": "abdi_ranaldo_2017_spread_estimator",
+      "core_claim": "Abdi and Ranaldo (RFS 2017): a bid-ask spread estimator built from daily close, high and low prices that outperforms the Corwin-Schultz high-low estimator and the Roll model for less liquid assets.",
+      "credibility": "rfs_peer_reviewed",
+      "fetched_at": "2026-09-30T10:58:18Z",
+      "independent_replication": "Opened earlier in T-20260930-11.",
+      "limitations": "A daily estimate, not the half-hour quoted spread at 15:30 or 10:00; the marginal tier requires measured Alpaca quotes.",
+      "market_and_period": "US stocks, low-frequency spread estimation",
+      "project_applicability": "Supplies h = 0.5 x 21-day AR spread used for the continuous-auction leg cost.",
+      "published_or_updated_at": "2017-04-01",
+      "reflection": "Quoted spreads are wider at the open and narrower at 15:30 than the daily average, so h is a rough level.",
+      "sha256": "f2750cbdd980b722ee5b4bc0fdfa3a66594cb9482e569b84ba39b2c18012a713",
+      "snapshot_path": "reports/research/iterations/t20260930_13_intraday_periodicity/sources/abdi.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl",
+      "source_type": "paper",
+      "url": "https://ux-tauri.unisg.ch/RePEc/usg/sfwpfi/WPF-1604.pdf"
+    }
+  ],
+  "stop_condition": "Frozen in hypotheses.md: a decision cell is closed if m < RT1, Newey-West t < 2.0 or placebo beat < 0.90; passing needs m >= 2 x RT1 and both other gates; marginal goes to measured-quote sampling. Both cells closed closes same-period periodicity as an independent source (diagnostic remains only as a timing reference if the closing-period t >= 2). No change to pool, signals, windows, gates or costs after seeing results.",
+  "target_regime_and_horizon": "Main window 2024-01-08 to 2026-09-29 (decision); selection window 2023-09-18 to 2025-12-31; contaminated holdout 2026-01-02 to 2026-09-17; new holdout 2026-09-18 to 2026-09-29 (listed only). Stress period 2016-2023 (sip-hist) read only after a cell passes. Holding period one half hour (09:30-10:00 or 15:30-16:00). A gross-edge measurement; a pass licenses stress period, measured quotes, ledger and a forward shadow, not trading. Validity ends if the forward 63-session gross mean falls below the tier threshold."
 }

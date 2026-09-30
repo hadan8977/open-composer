@@ -1,14 +1,307 @@
 {
-  "candidate_matrix_revisions": [],
-  "current_source_card_paths": [],
-  "hypothesis_links": [],
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "overnight_persistence_auction",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20260929-35",
+      "source_urls": [
+        "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+      ]
+    }
+  ],
   "iter_id": "t20260929_35_overnight_persistence",
-  "objective": "US minute momentum round 1",
-  "schema_version": 3,
-  "source_evidence_bindings": [],
-  "source_spec_path": null,
-  "sources": [],
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "topic_coverage": []
+  "objective": "T-20260929-35 (C2a): in 2024-01-08..2026-09-29, do top-1500 dollar-volume US common stocks ranked by past overnight return (ON_5/21/63/252, TOW_21) keep a next-night close-to-open long/short edge of at least 16 bp/night gross, with Newey-West t >= 2 and a same-pool random placebo beat >= 0.90, so that two auction legs with no quoted spread can pay the cost?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "lou_polk_skouras_2019_overnight_persistence",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+    },
+    {
+      "claim_id": "aboody_2018_overnight_weekly_persistence",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://anderson-review.ucla.edu/wp-content/uploads/2021/03/Aboody-et-al_overnight_returns_and_firmspecific_investor_sentiment_JFQA2018.pdf"
+    },
+    {
+      "claim_id": "akbas_2022_tug_of_war_future_returns",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://ink.library.smu.edu.sg/lkcsb_research/7712/"
+    },
+    {
+      "claim_id": "bogousslavsky_2021_overnight_borrow_margin",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://econpapers.repec.org/article/eeejfinec/v_3a141_3ay_3a2021_3ai_3a1_3ap_3a172-194.htm"
+    },
+    {
+      "claim_id": "heston_2010_intraday_cross_section",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://arxiv.org/abs/1005.3535"
+    },
+    {
+      "claim_id": "haendler_2025_periodicity_puzzle",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://scholar.smu.edu/business_finance_research/322/"
+    },
+    {
+      "claim_id": "gjw_jfqa_2026_auction_price_impact",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+    },
+    {
+      "claim_id": "alpaca_orders_cls_opg_deadlines",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/orders-at-alpaca"
+    },
+    {
+      "claim_id": "alpaca_margin_etb_zero_borrow_fee",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "salotra_2026_overnight_daytime_etf",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://www.mdpi.com/2227-9091/14/4/84"
+    },
+    {
+      "claim_id": "lachance_2023_past_year_overnight_predictor",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_url": "https://onlinelibrary.wiley.com/doi/full/10.1002/rfe.1180"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20260929_35_overnight_persistence.yaml",
+  "sources": [
+    {
+      "applicability": "Sets the 16 bp/night gross magnitude that the decision cell must reach; supplies the tug-of-war signal used for TOW_21.",
+      "claim": "Lou, Polk and Skouras (JFE 2019): the value-weight decile long/short on past-month overnight returns earns a three-factor overnight alpha of 3.47% per month (t 16.83) and an intraday alpha of -3.02% per month (t -9.74); the premia of the strategies studied are earned overnight, with opposite-signed intraday legs.",
+      "claim_id": "lou_polk_skouras_2019_overnight_persistence",
+      "core_claim": "Lou, Polk and Skouras (JFE 2019): the value-weight decile long/short on past-month overnight returns earns a three-factor overnight alpha of 3.47% per month (t 16.83) and an intraday alpha of -3.02% per month (t -9.74); the premia of the strategies studied are earned overnight, with opposite-signed intraday legs.",
+      "credibility": "jfe_peer_reviewed",
+      "fetched_at": "2026-09-30T10:08:06Z",
+      "independent_replication": "Akbas et al. 2022 and Lachance 2023 report related persistence; no independent tradability study with costs.",
+      "limitations": "Uses first-print or official open depending on the data set; no transaction costs; the text states t 16.83 for the three-factor alpha while hypotheses.md cites t 16.6 (raw Table 1 figure); the difference is not material to the frozen gates.",
+      "market_and_period": "US stocks, CRSP 1993-2013, value-weight deciles",
+      "project_applicability": "Sets the 16 bp/night gross magnitude that the decision cell must reach; supplies the tug-of-war signal used for TOW_21.",
+      "published_or_updated_at": "2019-04-25",
+      "reflection": "Uses first-print or official open depending on the data set; no transaction costs; the text states t 16.83 for the three-factor alpha while hypotheses.md cites t 16.6 (raw Table 1 figure); the difference is not material to the frozen gates.",
+      "sha256": "3ddddfb6496e85e6d551c7f33beace0c6bca79ea46ab81e257faf7df09496004",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/lps.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+    },
+    {
+      "applicability": "Sets the ON_5 (one-week) candidate and the second decision cell ON5_P1500_LS.",
+      "claim": "Aboody, Even-Tov, Lehavy and Trueman (JFQA 2018): stocks in the top overnight-return decile in week w have a significantly higher average overnight return in week w+1 than the lowest decile; the difference is 1.76 percentage points, decreasing but still reliably positive for weeks w+2 to w+4.",
+      "claim_id": "aboody_2018_overnight_weekly_persistence",
+      "core_claim": "Aboody, Even-Tov, Lehavy and Trueman (JFQA 2018): stocks in the top overnight-return decile in week w have a significantly higher average overnight return in week w+1 than the lowest decile; the difference is 1.76 percentage points, decreasing but still reliably positive for weeks w+2 to w+4.",
+      "credibility": "jfqa_peer_reviewed",
+      "fetched_at": "2026-09-30T10:08:08Z",
+      "independent_replication": "Lou-Polk-Skouras 2019 report persistence with different sorting horizon and weighting.",
+      "limitations": "Equal-weight, includes small and illiquid stocks; no costs; published date is the journal year, month approximate.",
+      "market_and_period": "US stocks, 1992-2013",
+      "project_applicability": "Sets the ON_5 (one-week) candidate and the second decision cell ON5_P1500_LS.",
+      "published_or_updated_at": "2018-12-01",
+      "reflection": "Equal-weight, includes small and illiquid stocks; no costs; published date is the journal year, month approximate.",
+      "sha256": "1612f5ab69c5c302c598e52b91d5453558dc51a414f508741c999559f07676ce",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/aboody.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://anderson-review.ucla.edu/wp-content/uploads/2021/03/Aboody-et-al_overnight_returns_and_firmspecific_investor_sentiment_JFQA2018.pdf"
+    },
+    {
+      "applicability": "Explains why holding the whole day nets to about zero (the repo's close-to-close cards) and motivates the overnight-only leg.",
+      "claim": "Akbas, Boehmer, Jiang and Koch (JFE 2022): a higher frequency of positive overnight returns followed by negative trading day reversals during a month indicates a more intense daily tug of war between noise traders overnight and arbitrageurs during the day, and predicts higher future returns in the cross section.",
+      "claim_id": "akbas_2022_tug_of_war_future_returns",
+      "core_claim": "Akbas, Boehmer, Jiang and Koch (JFE 2022): a higher frequency of positive overnight returns followed by negative trading day reversals during a month indicates a more intense daily tug of war between noise traders overnight and arbitrageurs during the day, and predicts higher future returns in the cross section.",
+      "credibility": "jfe_peer_reviewed",
+      "fetched_at": "2026-09-30T10:08:15Z",
+      "independent_replication": "Related to Lou-Polk-Skouras 2019; no independent replication opened.",
+      "limitations": "Original page blocked by an anti-bot page (Incapsula, 200 with empty body); text read through https://r.jina.ai/ mirror of the same URL. Close-to-close future returns, not overnight-only.",
+      "market_and_period": "US stocks, long sample per the paper",
+      "project_applicability": "Explains why holding the whole day nets to about zero (the repo's close-to-close cards) and motivates the overnight-only leg.",
+      "published_or_updated_at": "2022-09-01",
+      "reflection": "Original page blocked by an anti-bot page (Incapsula, 200 with empty body); text read through https://r.jina.ai/ mirror of the same URL. Close-to-close future returns, not overnight-only.",
+      "sha256": "a9dd744e612e74641899a401666a9edb683f0702e9562df4086c702b1e95fe32",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/akbas_jina.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://ink.library.smu.edu.sg/lkcsb_research/7712/"
+    },
+    {
+      "applicability": "Justifies charging borrow for the overnight short leg and treating the last-hour and overnight legs as differently priced.",
+      "claim": "Bogousslavsky (JFE 2021): margin requirements are higher overnight and lending fees are typically charged only on positions held overnight, which pushes arbitrageurs to reduce positions before the close; a mispricing factor earns positive returns throughout the day but performs poorly at the end of the day, more so in the second half of the sample.",
+      "claim_id": "bogousslavsky_2021_overnight_borrow_margin",
+      "core_claim": "Bogousslavsky (JFE 2021): margin requirements are higher overnight and lending fees are typically charged only on positions held overnight, which pushes arbitrageurs to reduce positions before the close; a mispricing factor earns positive returns throughout the day but performs poorly at the end of the day, more so in the second half of the sample.",
+      "credibility": "jfe_peer_reviewed",
+      "fetched_at": "2026-09-30T10:08:08Z",
+      "independent_replication": "Consistent with Lou-Polk-Skouras 2019 and Akbas et al. 2022.",
+      "limitations": "Abstract only (EconPapers page); full text is paywalled.",
+      "market_and_period": "US stocks, long sample per the paper",
+      "project_applicability": "Justifies charging borrow for the overnight short leg and treating the last-hour and overnight legs as differently priced.",
+      "published_or_updated_at": "2021-01-01",
+      "reflection": "Abstract only (EconPapers page); full text is paywalled.",
+      "sha256": "065fb7e604a8c95bfbb43aa6c6d40852210dfc2f1c26423c4d984d3b549c78a3",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/bogousslavsky.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://econpapers.repec.org/article/eeejfinec/v_3a141_3ay_3a2021_3ai_3a1_3ap_3a172-194.htm"
+    },
+    {
+      "applicability": "Contrast source for the open/close periodicity (queued as T-20260930-13); not a candidate here.",
+      "claim": "Heston, Korajczyk and Sadka (JF 2010): there is a striking pattern of return continuation at half-hour intervals that are exact multiples of a trading day, lasting at least 40 trading days; short-term reversal is driven by temporary liquidity imbalances lasting less than an hour.",
+      "claim_id": "heston_2010_intraday_cross_section",
+      "core_claim": "Heston, Korajczyk and Sadka (JF 2010): there is a striking pattern of return continuation at half-hour intervals that are exact multiples of a trading day, lasting at least 40 trading days; short-term reversal is driven by temporary liquidity imbalances lasting less than an hour.",
+      "credibility": "jf_peer_reviewed",
+      "fetched_at": "2026-09-30T10:08:09Z",
+      "independent_replication": "Haendler et al. 2025 report out-of-sample persistence.",
+      "limitations": "Abstract page read; the paper is about half-hour periodicity, used here only as a contrast.",
+      "market_and_period": "US stocks, 2001-2005",
+      "project_applicability": "Contrast source for the open/close periodicity (queued as T-20260930-13); not a candidate here.",
+      "published_or_updated_at": "2010-05-19",
+      "reflection": "Abstract page read; the paper is about half-hour periodicity, used here only as a contrast.",
+      "sha256": "b08853739b00018316037f73f09a873335eb57da1481b4636fe36bd94aa4db59",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/hks.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/1005.3535"
+    },
+    {
+      "applicability": "Recent evidence that flow-driven open/close patterns persist; background for the auction-execution framing.",
+      "claim": "Haendler, Heston, Korajczyk and Sadka (SSRN 5749704, 2025): the intra-day periodicity patterns persist out-of-sample; proxies for institutional trading (lendable shares, VWAP-like trading, index inclusion) explain the open and midday periodicity, and the results suggest open periodicity is driven by VWAP trading while close periodicity is driven by market-on-close trading.",
+      "claim_id": "haendler_2025_periodicity_puzzle",
+      "core_claim": "Haendler, Heston, Korajczyk and Sadka (SSRN 5749704, 2025): the intra-day periodicity patterns persist out-of-sample; proxies for institutional trading (lendable shares, VWAP-like trading, index inclusion) explain the open and midday periodicity, and the results suggest open periodicity is driven by VWAP trading while close periodicity is driven by market-on-close trading.",
+      "credibility": "working_paper",
+      "fetched_at": "2026-09-30T10:08:09Z",
+      "independent_replication": "Replicates Heston et al. 2010 out of sample by the same authors.",
+      "limitations": "Abstract page only; working paper, not peer reviewed.",
+      "market_and_period": "US stocks, out-of-sample after 2010",
+      "project_applicability": "Recent evidence that flow-driven open/close patterns persist; background for the auction-execution framing.",
+      "published_or_updated_at": "2025-11-14",
+      "reflection": "Abstract page only; working paper, not peer reviewed.",
+      "sha256": "c2ca239e3684fbe35656479dba21a35e15d090de5b52e92d4cc10537101fc9ad",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/haendler.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://scholar.smu.edu/business_finance_research/322/"
+    },
+    {
+      "applicability": "Supports the 2 bp per side auction cost contract and its 2x stress; warns that the opening leg is the expensive one.",
+      "claim": "Goyal, Jegadeesh and Wu (JFQA 2026, NYSE and Nasdaq 2012-2021): closing auctions carry about 10% of daily volume and have lower price impact than the continuous market for all stocks except Nasdaq microcaps; opening auctions are illiquid and carry the largest price impact; anomaly long/short portfolios cost 17-41 bp per year.",
+      "claim_id": "gjw_jfqa_2026_auction_price_impact",
+      "core_claim": "Goyal, Jegadeesh and Wu (JFQA 2026, NYSE and Nasdaq 2012-2021): closing auctions carry about 10% of daily volume and have lower price impact than the continuous market for all stocks except Nasdaq microcaps; opening auctions are illiquid and carry the largest price impact; anomaly long/short portfolios cost 17-41 bp per year.",
+      "credibility": "jfqa_peer_reviewed",
+      "fetched_at": "2026-09-30T10:08:09Z",
+      "independent_replication": "SSRN 4300417 working paper; no independent replication found.",
+      "limitations": "Costs annualized for low-turnover anomalies, not a nightly book; institutional-size orders.",
+      "market_and_period": "NYSE and Nasdaq stocks, 2012-2021",
+      "project_applicability": "Supports the 2 bp per side auction cost contract and its 2x stress; warns that the opening leg is the expensive one.",
+      "published_or_updated_at": "2026-03-05",
+      "reflection": "Costs annualized for low-turnover anomalies, not a nightly book; institutional-size orders.",
+      "sha256": "2c9ced13781b7b5e23bebd4f63eb19be906b1f0fbb06db8a4d148eb8b6c5cd0a",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/gjw.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+    },
+    {
+      "applicability": "Fixes the executable route: cls before 15:50 ET in, DAY market or opg before 09:28 ET out.",
+      "claim": "Alpaca orders: the cls time in force submits market-on-close and limit-on-close orders that execute only in the closing auction; cls orders submitted after 3:50pm ET and before 7:00pm ET are rejected; opg orders execute only in the opening auction and are rejected after 9:28am ET.",
+      "claim_id": "alpaca_orders_cls_opg_deadlines",
+      "core_claim": "Alpaca orders: the cls time in force submits market-on-close and limit-on-close orders that execute only in the closing auction; cls orders submitted after 3:50pm ET and before 7:00pm ET are rejected; opg orders execute only in the opening auction and are rejected after 9:28am ET.",
+      "credibility": "broker_official",
+      "fetched_at": "2026-09-30T10:08:09Z",
+      "independent_replication": "Primary source.",
+      "limitations": "Documents order acceptance, not fill quality; paper cls fills untested, paper opg fills unreliable (45 of 50 expired on 2026-09-15).",
+      "market_and_period": "Alpaca documentation, current (2026-09-30)",
+      "project_applicability": "Fixes the executable route: cls before 15:50 ET in, DAY market or opg before 09:28 ET out.",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Documents order acceptance, not fill quality; paper cls fills untested, paper opg fills unreliable (45 of 50 expired on 2026-09-15).",
+      "sha256": "be4ca7690729957cff96b1786caf3f0461f85949872f53919b36ff5e73b9f6ea",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/alpaca_orders.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/orders-at-alpaca"
+    },
+    {
+      "applicability": "Shows the T-32 borrow tiers are conservative for ETB names; the ETB proxy (DTC quantile) is diagnostic (e).",
+      "claim": "Alpaca margin and short selling: $0 locate and borrow fees on all easy-to-borrow (ETB) shares for Trading API users; hard-to-borrow shares are charged.",
+      "claim_id": "alpaca_margin_etb_zero_borrow_fee",
+      "core_claim": "Alpaca margin and short selling: $0 locate and borrow fees on all easy-to-borrow (ETB) shares for Trading API users; hard-to-borrow shares are charged.",
+      "credibility": "broker_official",
+      "fetched_at": "2026-09-30T10:08:10Z",
+      "independent_replication": "Primary source.",
+      "limitations": "Rendered web page without a versioned date; the design charges T-32 tiered borrow anyway as the conservative reading.",
+      "market_and_period": "Alpaca documentation, current (2026-09-30)",
+      "project_applicability": "Shows the T-32 borrow tiers are conservative for ETB names; the ETB proxy (DTC quantile) is diagnostic (e).",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Rendered web page without a versioned date; the design charges T-32 tiered borrow anyway as the conservative reading.",
+      "sha256": "d523ed3eb0f0c55af150685c12950de657bef842cf978b219c449049a986c851",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/alpaca_margin.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "applicability": "Background for the 1-2 bp cost sensitivity used in the auction contract.",
+      "claim": "Salotra et al. (Risks 2026): overnight versus daytime static and momentum strategies on ten sector ETFs over 1999-2025 show that reversal strategies outperform buy-and-hold, but the outperformance decreases significantly with transaction costs of 1 bp versus 2 bp.",
+      "claim_id": "salotra_2026_overnight_daytime_etf",
+      "core_claim": "Salotra et al. (Risks 2026): overnight versus daytime static and momentum strategies on ten sector ETFs over 1999-2025 show that reversal strategies outperform buy-and-hold, but the outperformance decreases significantly with transaction costs of 1 bp versus 2 bp.",
+      "credibility": "peer_reviewed_open_access",
+      "fetched_at": "2026-09-30T10:08:39Z",
+      "independent_replication": "Consistent with the LPS decomposition; no stock-level evidence.",
+      "limitations": "Original page returned 403 to curl; text read through the https://r.jina.ai/ mirror. ETFs only, background for cost sensitivity.",
+      "market_and_period": "Ten US sector ETFs, 1999-2025",
+      "project_applicability": "Background for the 1-2 bp cost sensitivity used in the auction contract.",
+      "published_or_updated_at": "2026-04-07",
+      "reflection": "Original page returned 403 to curl; text read through the https://r.jina.ai/ mirror. ETFs only, background for cost sensitivity.",
+      "sha256": "6c2318388676b4a6bffbccd9b17412801a8ffe9003d5837a09c49e1136bdd14e",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/salotra.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://www.mdpi.com/2227-9091/14/4/84"
+    },
+    {
+      "applicability": "Motivates the ON_252 candidate.",
+      "claim": "Lachance (Review of Financial Economics 2023, 1995-2021): the past year's overnight return is the most important predictor of future overnight returns, followed by volatility, momentum and turnover; an overnight momentum strategy of picking the top decile of past-year overnight returns yields 37.5% annually versus -18.99% for the bottom decile.",
+      "claim_id": "lachance_2023_past_year_overnight_predictor",
+      "core_claim": "Lachance (Review of Financial Economics 2023, 1995-2021): the past year's overnight return is the most important predictor of future overnight returns, followed by volatility, momentum and turnover; an overnight momentum strategy of picking the top decile of past-year overnight returns yields 37.5% annually versus -18.99% for the bottom decile.",
+      "credibility": "peer_reviewed",
+      "fetched_at": "2026-09-30T10:09:01Z",
+      "independent_replication": "Consistent with Lou-Polk-Skouras 2019.",
+      "limitations": "Original page returned 403 to curl; text read through the https://r.jina.ai/ mirror (full text obtained, not only the snippet). Raw overnight returns, no execution costs.",
+      "market_and_period": "US stocks, 1995-2021",
+      "project_applicability": "Motivates the ON_252 candidate.",
+      "published_or_updated_at": "2023-01-01",
+      "reflection": "Original page returned 403 to curl; text read through the https://r.jina.ai/ mirror (full text obtained, not only the snippet). Raw overnight returns, no execution costs.",
+      "sha256": "7de0881ec97a2d9da651d44a2090616ad414ac5ff3dd0de02f3613bc18115e8a",
+      "snapshot_path": "reports/research/iterations/t20260929_35_overnight_persistence/sources/lachance.txt",
+      "source_card_path": "reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl",
+      "source_type": "paper",
+      "url": "https://onlinelibrary.wiley.com/doi/full/10.1002/rfe.1180"
+    }
+  ],
+  "spec_hash": "c9667ed800e0b134660682e473e983eb3bed436c7b44f7842180a423e5d1b60b",
+  "strategy_name": "t20260929_35_overnight_persistence",
+  "topic_coverage": [
+    "overnight_persistence_lou_polk_skouras",
+    "weekly_overnight_persistence_aboody",
+    "tug_of_war_future_returns_akbas",
+    "overnight_borrow_margin_arbitrageur_constraint_bogousslavsky",
+    "intraday_periodicity_contrast_heston",
+    "open_close_flow_periodicity_haendler",
+    "closing_and_opening_auction_price_impact_goyal_jegadeesh_wu",
+    "alpaca_cls_opg_order_deadlines",
+    "alpaca_etb_borrow_fee",
+    "overnight_daytime_etf_cost_sensitivity_salotra",
+    "past_year_overnight_predictor_lachance"
+  ]
 }

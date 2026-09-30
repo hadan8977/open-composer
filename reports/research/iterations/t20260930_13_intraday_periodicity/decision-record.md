@@ -1,12 +1,17 @@
 # Decision Record: t20260930_13_intraday_periodicity
 
-TODO: At the end of the round, record each path's continue/pivot/stop decision,
-evidence, rejected variants, next action, and whether ML or AI-information
-round entry conditions are met.
+## Path
 
-## P1
+intraday_periodicity_one_auction_leg (C2b)
 
-- Path:
-- Decision: pending
-- Reason:
-- Next iteration suggestion:
+## Decision
+
+pending
+
+## Reason
+
+Preregistered; no result computed yet.
+
+## Next iteration suggestion
+
+Run scripts/run_t20260930_13_intraday_periodicity.py extract then screen; tier is computed mechanically and reviewed by the lead.
