@@ -1022,7 +1022,7 @@
 
 
 ### T-20260930-19 模型族扫描阶段 2：三个 WX_H63 格做成只做多月度组合，固定 10/20 bp 下判 K1/K2（接 T-20260930-17）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 回答机主 09-29「XGBoost 等其他模型不行吗」的赚钱部分：阶段 1 选出的 XGB/LGBM/CAT_WX_H63 做成 V1（全池前 50）/ V2（流动性最差三分位前 50）组合后，能不能在固定成本下过 K1 或 K2？B0 的书（T-28-30）对标窗 flat10 只有 0.33。
@@ -1031,3 +1031,5 @@
 - brief: reports/research/control/briefs/T-20260930-19.md
 - notes:
   - 2026-09-30 19:25 UTC 19:07 主审轮（Opus）写预注册和简报。先验：任何一本书过 K1 的概率 <5%（阶段 1 的 IC 在成本最高的股票里，K2 要在 S3 最强的 2024–26 年加分）。Modal 最坏约 $1.3，本月已用 $5.09。22:07 执行轮做。
+  - 2026-09-30 22:08 UTC 22:07 执行轮（Sonnet）开始，交给一个 sonnet-high 子代理。
+  - 2026-09-30 23:10 UTC 22:07 执行轮（Sonnet 5.5，子代理 52 次调用）跑完，待主审。results.json：verdict=parity_failed（`parity.all_ok` false）。阶段 2 对阶段 1 的 RankIC 差（容差 0.002）：XGB_WX_H63 0.0018 ok、LGBM_WX_H63 0.0037 fail、CAT_WX_H63 0.0051 fail、复现格 LGBM_W3_H21 0.0017 ok；B0 组合核对 ok（压力期 0.4621 对 0.462，对标窗 0.3266 对 0.327）。阶段 2 验证形成日比阶段 1 多 2 个（2023-07-31、08-31；74 对 72），在 72 个共同日上均值仍差 0.0008–0.0021（逐日差最大 0.037），多出的日子解释不了差距。六本书 K1、K2 全为 false（对标窗 flat10 夏普：XGB V1 0.163 / V2 -0.172、LGBM V1 0.333 / V2 0.267、CAT V1 0.239 / V2 0.422；压力期 0.300–0.662；K2 对标窗 -0.39 到 -0.66），DSR（试验 30）0.009–0.083，安慰剂对标窗打赢比例 0.00–1.00。Modal 实际 $0.345（烟测两次共 $0.091，本月投影 $8.55）。偏离简报：`--data` 加了 results_stage1.json；首次烟测 20 分钟超时，改 4 核 45 分钟重跑；`--stage cost` 额外写花费。`iteration validate --stage final` 余三项拦截（trial_ledger、evaluation_report、decision_record），留给主审填。产物：`scripts/run_t20260930_17b_model_family_book.py`、`tests/test_t20260930_17b_model_family_book.py`（9 测试过）、`reports/research/iterations/t20260930_17b_model_family_book/{results.json,report.md,results_smoke.json,report_smoke.md}`（results/report/smoke 已 git add -f），日志 `logs/modal-t20260930-19-*.log`。子代理 model 字段核对为 claude-sonnet-5-5。需主审决定：parity_failed（两格 RankIC 偏差超容差）按简报一字不改的规则处理，是调查原因后重跑还是按预注册视为核对失败。
