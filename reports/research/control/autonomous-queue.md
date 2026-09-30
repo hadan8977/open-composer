@@ -181,7 +181,7 @@
     改 `refuted`。不进 Stage 2（$2.85 未花）。
 
 ### T-20260929-32 放开做空：十几个"空头腿不可执行"方向重新分级 + 跳空回补多空重测
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 机主 2026-09-29 把研究范围放到 Alpaca 模拟盘能交易的全部品种（含做空）。跳空回补 2016–2021 扣成本前年化 99%、夏普 3.0，收益在空头腿，当时只因不能做空而停。
@@ -189,6 +189,7 @@
 - done_when: `reports/research/control/short-unlocked-retriage-2026-09-29.md`、`reports/research/iterations/t20260929_32_gap_fade_ls/`；登记簿更新；提交。
 - notes:
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
+  - 2026-09-30 13:55 交互主审（Opus）：产物和提交已在（`reports/research/control/short-unlocked-retriage-2026-09-29.md`、`reports/research/iterations/t20260929_32_gap_fade_ls/`，提交 bd526ff）；结论已进纲领主线 C（跳空回补整族于 2026-09-30 关闭）。状态从 running 补成 done。
 
 ### T-20260929-37 放开做空后的多空批量：双重股权套利、ETF 与成分股领先滞后回归、板块月内动量
 - status: done
@@ -253,7 +254,7 @@
   - 2026-09-29 13:07 轮结果（协调者已对照 results.json 的 decision/placebo_distribution/k2_inputs 核对）：否定。冻结路由（lb10_entry2_top1…qprior_negative_reversal）在 SIP 1 分钟数据上原样重跑，原函数 `_backtest_params` 逐位复现。对标窗 2024-01-08→2026-09-28，188 笔：10bp 夏普 −0.13、年化 −1.4%；20bp 夏普 −0.73、年化 −14.2%；原草稿 2.5bp 成本下夏普 0.33，每笔毛利约 22bp、盈亏平衡约 10.9bp/边。空头腿从未触发（top_n=1 时空头与多头用同一排序、名额已被占，见 intraday_daily_rotation.py 1012–1026 行），所以 IEX 的 research_pass 实际是只做多的"开盘回落买入"。安慰剂 200 个只打赢 89%（门槛 90%）。K1 否（−0.13<1.19）、K2 否（组合增量 −0.61）。同窗同成本下 SIP 年化 10.3%/夏普 0.54，IEX 记录 35.2%/1.41，约三分之二没经受住数据源更换。分钟数据已复权。压力期待补（分钟数据 2023 起）。登记簿 `dir:nasdaq_long_short_event_router_1m` → refuted。产物：`reports/research/iterations/h20260929_36_router_sip/`，提交 fd814c7。
 
 ### T-20260929-30 模型大扫描：XGBoost/CatBoost/MLP/Ridge/LightGBM/集成 × 训练窗 × 预测周期
-- status: running
+- status: superseded（→ T-20260930-17）
 - priority: 1
 - not_before:
 - goal: 机主 2026-09-29："XGBoost 等其他模型不行吗，多试一些，用最大的努力"。用证据回答：同一批数据上换模型族、训练窗（3 年/1 年滚动）、预测周期（5/21/63 天）能否得到可交易的排序。
@@ -261,9 +262,10 @@
 - done_when: `reports/research/iterations/t20260929_30_model_zoo/`；登记簿行 `dir:ml_model_zoo_stock_ranking_2026`；提交。
 - notes:
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
+  - 2026-09-30 13:55 交互主审（Opus）：09-29 起没有任何产物（迭代目录、intel、Modal 账本、进程都没有），视为中断。由 T-20260930-17 接手，原块保留。
 
 ### T-20260929-31 强化学习与"大模型 + 强化学习"（Qwen/GRPO 等）交易证据
-- status: running
+- status: superseded（→ T-20260930-18）
 - priority: 1
 - not_before:
 - goal: 机主问"RL 的 Qwen 之类的不行吗"。先读 2025–2026 原文和实盘记录（nof1 Alpha Arena、LiveTradeBench、Trading-R1、FLAG-Trader、FinRL 比赛），只有证据支持才定一个 ≤ $3 的试点。
@@ -271,6 +273,7 @@
 - done_when: 简报在 `reports/research/intel/`；登记簿 validate ok；提交。
 - notes:
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
+  - 2026-09-30 13:55 交互主审（Opus）：09-29 起没有任何产物，视为中断。由 T-20260930-18 接手（交互会话子代理在做），原块保留。
 
 ### T-20260928-30 纯量价 LightGBM 小盘排序：只做多组合 + 逐只价差成本
 - status: done
@@ -981,3 +984,24 @@
 - notes:
   - 2026-09-30 13:25 主审轮（Opus）写预注册、主审检查记录和简报。只有 T-14 过了才执行；约 1,300 次行情请求，别和别的取数任务同时跑。
   - 2026-09-30 13:37 交互主审（Opus）：修正案 A1（`t20260930_16_overnight_lo20_execution/amendment-2026-09-30-a1-panel-basis.md`，写于 T-14 结果和本步任何新数据之前）。判定成本 c 改为相对面板 r 配对（账本从面板 r 里扣 c，原定义相对官方价，会漏掉 T-14 测的 Δ）；加只报告路径 P8（09:32 卖出）。依据是本账户 137 笔开盘前挂好的市价单回执：个股成交中位数在 09:30 后 88–114 秒，成交价中位数正好在卖价/买价上，此时半价差中位数 13–17 bp。简报已同步。
+
+### T-20260930-17 机主问题：纯量价排序换模型族、训练窗、预测周期（阶段 1，接手 T-20260929-30）
+- status: ready
+- priority: 3
+- not_before:
+- goal: 回答机主 2026-09-29 的"XGBoost 等其他模型不行吗，多试一些，用最大的努力"。在 B0 的数据、特征、目标和走步切分下，换模型族（XGBoost、CatBoost、Ridge、MLP/NN3、秩均值集成）、训练窗（3 年滚动 / 扩张）、周期（21 / 63 日），排序能力会不会实质变好。
+- plan: 预注册 `reports/research/iterations/t20260930_17_model_family_sweep/hypotheses.md`（13:48 写）。阶段 1：24 格，只在压力期，用已缓存的 T-28-10 月度面板；B0 复现核对（0.0200 ± 0.0010）；模型族效应 ≥ +0.010 且 t ≥ 3 算实质改进；按压力期 NW t 取前 3 格（t ≥ 2）进阶段 2。阶段 2（组合，固定 10/20 bp，K1/K2）由主审审完阶段 1 后另发简报。Modal ≤ $3，20 个分片。
+- done_when: results_stage1.json（b0_parity、cells、family_effect、answer_family、stage2_cells、modal_cost_usd）+ report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20260930-17.md
+- notes:
+  - 2026-09-30 13:55 交互主审（Opus）写预注册和简报。文献 13:47 打开：Gu-Kelly-Xiu 2020 的非线性模型之间 R² 只差 0.33–0.40%；Avramov-Cheng-Metzker 2023 说机器学习的利润集中在微盘股、按合理成本后变差。先验：任何格子过 K1 的概率低于 5%，本任务主要是给机主有证据的答案。训练全在 Modal 上，本机只汇总，可以和 T-14 同轮跑。
+
+### T-20260930-18 机主问题：强化学习与"大模型 + 强化学习"交易的公开证据（接手 T-20260929-31）
+- status: running
+- priority: 2
+- not_before:
+- goal: 回答机主 2026-09-29 的"RL 的 Qwen 之类的不行吗"。先读 2025–2026 原文和实盘/前向记录（nof1 Alpha Arena、LiveTradeBench、Trading-R1、FLAG-Trader、Fin-R1、FinRL 比赛、反面证据），只有证据支持才定一个 ≤ $3 的试点。
+- plan: 只调研。交互会话派 1 个 Sonnet 5.5 子代理（协调者任务代码 R0930-1345-RL），产出简报、来源快照和登记簿行 `dir:rl_llm_trading_2026`；主审审核后提交。
+- done_when: `reports/research/intel/rl-llm-trading-evidence-2026-09-30.md`、`reports/research/intel/sources/rl-llm-2026-09-30/`、登记簿 validate ok；提交。
+- notes:
+  - 2026-09-30 13:45 交互主审（Opus）派出。自动轮不要碰。
