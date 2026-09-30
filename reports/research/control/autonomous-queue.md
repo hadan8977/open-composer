@@ -225,13 +225,14 @@
 
   - 2026-09-29 07:07 轮结果（协调者已对照 leaderboard.json 核对 14 条）：0 保留、5 条近期观察（watch_recent，已写 kept.jsonl，commit ee2b972）：LSS_N50_K1_1X/K2_1X/K2_2X/K3_1X/K3_2X 对标窗 1.23–1.44 过 1.19，压力期 0.42–0.64 都没过 0.645（K3_2X 0.643 差 0.002）。K2 对标窗全负。选股有真增量：最好 1.44 vs 菜单等权 0.98 vs 随机 0.72。2 倍杠杆在 vt40 下不提高夏普（1x≈2x）。DSR 最高 0.73。菜单 = 时间点 S&P 500 里 63 日成交额前 20/50（`menu.parquet` 冻结到 2026-09；前向跟踪需每月末重跑 `scripts/build_h20260929_34_menu.py`）。登记簿 `dir:levered_single_stock_momentum_top_k`（partial）。产物：`reports/research/iterations/h20260929_34_levered_single_stock/`。
 ### T-20260929-35 日内截面规律（分钟数据，Modal）：日内周期性、隔夜/日内拉锯
-- status: blocked（等机主决定日内成本口径）
+- status: ready
 - priority: 2
 - not_before:
 - goal: 已发表的截面日内规律，例如 Heston-Korajczyk-Sadka 2010 的同一时段收益延续，以及 Lou-Polk-Skouras 2019 的"动量赚在隔夜、反转赚在日内"，在流动性最好的股票上能否扣掉实际成本后赚钱。
 - plan: 先联网找 2020 年以后的复现；成本按分钟数据估计的价差另建日内合同，同时报告冻结的 10/20 bp。
 - done_when: 迭代档案 + 登记簿 + 提交。
 - notes:
+  - 2026-09-30 交互会话（Opus）解除阻塞，属于纲领 C2（`docs/research-program.zh.md` 主线 C）。成本合同由 Opus 定，不再等机主：逐只实测价差 + 2 bp，且 2 倍成本下仍须通过；同时报告冻结的 10/20 bp。先算毛收益，毛收益低于 2 倍往返价差就直接否定。优先级排在纲领 C1（T-20260930-11）之后。
 
 ### T-20260929-36 纳斯达克 1 分钟多空事件路由：用 SIP 分钟数据复核
 - status: done
@@ -851,3 +852,36 @@
 - done_when: 十窗口年度表、成本后均值/t/正年份数、两个安慰窗口、2024 起窗口写入 `reports/research/iterations/h20260930_03_tax_loss_year_end/results.json`；登记簿 `dir:tax_loss_selling_year_end_rebound` 更新终态且 `oc research directions validate` 通过；`direction-check` 和 `iteration validate` 两个阶段通过。
 - notes:
   - 2026-09-30 缺口搜索（gap-search-2026-09-30-01，协调者任务代码 R0930-0107-G）添加。原文核对：NBER w10275 已打开（摘要和全文）；Globe and Mail 付费墙、JFIR 403，均 claim_only。exa 检索六页里只有摘要，没有美股 2016 年后的效应大小，是本任务先验低的原因。
+
+### T-20260930-10 纲领 A1：板块季节性前置扩到行业 ETF
+- status: ready
+- priority: 1
+- not_before:
+- goal: C2 的收益主要来自板块季节性前置（S 腿；H-20260928-20 里 S 族 10 个变体在 2026 留出窗全部为正，2026 年 S 腿 +43.7%）。本任务检验同一机制在行业 ETF 上是否成立。成立的话，模拟盘可以多一个机制相同、持仓不同的收益来源。
+- plan: 设计要点由 Opus 写在 `docs/research-program.zh.md` 主线 A；执行轮把它写进迭代档案并预注册。
+  - 宇宙：2015-01 以前上市、非杠杆、非反向的美国行业 ETF，约 25 只（SPDR、iShares、VanEck 的行业 ETF，剔除 9 个板块 SPDR 本身）。清单在看结果前冻结，写进候选清单；`data/sip/daily` 里 2015–2026 缺数据的剔除，并写明剔除原因。
+  - 规则与 S0 完全相同：`scripts/screen_batches/h20260928_20_recent_opt.py` 的 `make_sector_seasonality_fn`，只换 universe。
+  - 预注册 6 格：top_n∈{2,3,5} × avg_years∈{1,5}。批量通道 `scripts/screen_batch.py`（K1/K2、20 bp、压力期、DSR）。
+  - 安慰剂：打分窗口随机平移 1–11 个月，20 个种子；真实规则要打赢 ≥90% 的种子。
+  - 最便宜的否定：6 格没有一格过 K1 → 停，纲领 A1 记否定并写死因。
+  - 过了：测"C2 + 行业腿"相对 C2 的夏普增量（同波动对照），不改 C2 已冻结的规则。
+- done_when: 迭代档案 + leaderboard + 纲领主线 A 的"学到了什么/下一步" + 登记簿 + 提交。
+- notes:
+  - 2026-09-30 交互会话（Opus）按纲领 A1 写入。国家 ETF 版不做：AllocateSmartly 1971–2025 扩展测试夏普 0.46，基准 0.38，作者已停止跟踪（https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/）。
+
+### T-20260930-11 纲领 C1：跳空回补 × 竞价执行的最便宜否定（官方竞价价上毛边际还在不在）
+- status: ready
+- priority: 1
+- not_before:
+- goal: T-20260929-32 证明截面跳空回补的信号是真的（空头选股毛 +11.5 bp/天、毛夏普 1.33，安慰剂全输），死因是按逐只价差计的成本（18–28 bp/边，每天进出两次）。开盘竞价进、收盘竞价出不付买卖价差，可能把成本从每天约 40 bp 降到几 bp。本任务先确认毛边际在官方竞价价上还在，再决定是否做全量。
+- plan: 设计要点在 `docs/research-program.zh.md` 主线 C。
+  1. 入选记录：用 `reports/research/iterations/t20260929_32_gap_fade_ls/` 的每日入选；没有落盘就按它的脚本重建 2024-01-08 以后的入选。按日成交额分档（$5–20M、$20–100M、>$100M）分层抽约 300 个（股票, 日），抽样种子写进档案。
+  2. 官方价：用 Alpaca 历史逐笔成交（SIP），按条件码找出上市交易所的开盘竞价成交（opening print / official open）和收盘竞价成交（closing print / official close）。先在 5 个样本上人工核对条件码的含义，写进档案。
+  3. 记录日线 open/close 与官方竞价价的偏差分布。
+  4. 在官方价上重算入选组合的 open→close，多空两腿按原规则的方向。
+  - 判定（预先写死）：
+    - 日成交额 ≥$20M 的两档，官方竞价价上的毛边际 ≥8 bp/天 → 进全量预注册。全量的成本 = 费用 + 开盘竞价冲击（按 Goyal-Jegadeesh-Wu, JFQA 2026 的开盘竞价口径做压力档）+ 借券。
+    - 低于 8 bp → 关闭日内个股线（纲领主线 C 的停止条件），写死因。
+- done_when: `reports/research/iterations/t20260930_11_gap_fade_auction/`（抽样表、偏差分布、分档毛边际、判定）+ 纲领主线 C 更新 + 登记簿 + 提交。
+- notes:
+  - 2026-09-30 交互会话（Opus）按纲领 C1 写入。只调行情 API，不下单。适用边界要写进结论：Alpaca 模拟盘的开盘竞价单成交不可靠（2026-09-15 50 单里 45 单过期），模拟盘只能验证收盘竞价腿；开盘竞价腿只能在实盘或别的券商验证。
