@@ -1,10 +1,23 @@
 # 自动研究轮执行手册 — 2026-09-27
 
-机主 2026-09-27 批准自动研究轮；2026-09-28 改为**每 3 小时一轮**（UTC 01:07、04:07、07:07、10:07、13:07、16:07、19:07、22:07）。2026-09-29 机主决定不再查真实额度接口（第 6 节；**额度方案 A** 已被取代，不再是生效规则）。每轮由 Paseo 定时任务启动一个新的研究代理。本手册就是那个代理的完整任务说明；定时任务的提示词只让它读本文件并照做。改流程时改本文件，不用重建定时任务。
+机主 2026-09-27 批准自动研究轮；2026-09-28 改为每 3 小时一轮。**2026-09-30 起主审轮和执行轮交替**（机主：「用 opus xhigh/max 做好规划，其他的交给 sonnet5.5 high 来做也比较好，注意控制额度」）：
+
+- **主审轮**：UTC 01:07、07:07、13:07、19:07。Opus 5.5，思考强度 max。Paseo 定时任务 `oc-research-lead-round`。
+- **执行轮**：UTC 04:07、10:07、16:07、22:07。Sonnet 5.5，思考强度 high。Paseo 定时任务 `oc-research-exec-round`，模型填 `sonnet`：Paseo 按 `~/.claude/settings.json` 把它解析成 `claude-sonnet-5-5`（2026-09-30 实测）。
+
+2026-09-29 机主决定不再查真实额度接口（第 6 节；**额度方案 A** 已被取代，不再是生效规则）。每轮由 Paseo 定时任务启动一个新代理。本手册就是那个代理的完整任务说明；定时任务的提示词只写轮次类型，让它读本文件照做。改流程时改本文件。改模型、思考强度或时间要重建定时任务：`paseo schedule update` 改不了思考强度，要先用 `paseo schedule create --thinking <id>` 新建，再暂停旧的。
 
 ## 0. 身份、目标和边界
 
-- **你是谁**：定时启动的研究代理，模型是最新的 Opus（现在是 5.5），思考强度 **high**。你是**研究负责人**，不只是协调者（机主 2026-09-30：「研究方向、研究思路、优化思路这些，都得靠你，追求质量啊」）。方向判断、假设、预注册、否定测试的设计、结果解读和下一步都由你自己做，写进迭代档案和 `docs/research-program.zh.md`。Sonnet 子代理只做机械执行：按你写好的规格写代码、建数据、跑回测。机主平时用 max 在交互会话里对话；你和交互会话共用 5 小时额度和每周额度，额度规则见第 6 节。
+- **你是谁**：看定时任务提示词开头写的是哪种轮次。
+  - **主审轮**（Opus 5.5，max）：你是**研究负责人**，不只是协调者（机主 2026-09-30：「研究方向、研究思路、优化思路这些，都得靠你，追求质量啊」）。
+    - 由你来做：审核执行轮的结果、判断方向、提出假设、预注册、设计否定测试、解读结果、定下一步。
+    - 写进迭代档案、执行简报和 `docs/research-program.zh.md`。
+  - **执行轮**（Sonnet 5.5，high）：你只执行主审轮写好的执行简报（第 4B 节）。
+    - 不做：改设计或预注册、找新方向、改研究纲领或 `current-view`、给结果下"有效/否定"的结论。
+    - 结果按简报的验收标准机械核对后写进队列，标"待主审"。
+  - 两种轮次的 Sonnet 子代理都只做机械执行：按写好的简报写代码、建数据、跑回测。
+  - 机主平时用 max 在交互会话里对话。所有轮次和交互会话共用 5 小时额度和每周额度，省额度的做法见第 5 节"额度"，预算规则见第 6 节。
 - **目标**：`docs/research-mission.zh.md`——尽快找到并验证扣除成本后近期能明显赚钱的策略，推进模拟盘证据，为以后实盘做准备。方向比努力重要：先搜索、复用、找反例，再花算力。
 - **允许**：联网调研；读写仓库文件；写代码和测试；在冻结门槛下做预先登记的有界回测；更新方向登记簿、覆盖地图、`current-view`；本地 `git commit`。
 - **禁止**（任何理由都不行）：
@@ -45,10 +58,18 @@ uv run python scripts/autonomous_preflight.py acquire --agent-id <上一步看�
 
 ## 2. 读上下文（控制在 15 分钟以内）
 
-1. `docs/research-mission.zh.md` 全文。
-2. `docs/current-view.zh.md` 最上面一到两个日期小节，不要通读。
-3. `reports/research/control/autonomous-queue.md`（任务队列）全文，`reports/research/control/autonomous-log.md` 最后 10 行。
-4. 记忆索引会自动加载；只打开和本轮任务相关的记忆条目。
+上下文越长，后面每次调用都越贵（第 5 节"额度"）。只读本轮要用的部分。
+
+1. `docs/research-mission.zh.md` 已经随 `CLAUDE.md` 自动加载，不要再读一遍。
+2. 主审轮读：
+   - `docs/research-program.zh.md` 全文；
+   - `docs/current-view.zh.md` 最上面一到两个日期小节，用 `awk '/^## /{c++} c<=2'` 截取，不要通读（全文 118 KB）。
+   - 执行轮两个都不读。
+3. 队列 `reports/research/control/autonomous-queue.md` **不要整文件读**（217 KB，约 8 万 token）：
+   - 先用 `grep -nE '^### |^- status|^- priority|^- brief' reports/research/control/autonomous-queue.md` 看任务列表；
+   - 再用 `sed -n <起>,<止>p` 只读要处理的任务块。
+4. `reports/research/control/autonomous-log.md` 读最后 10 行。
+5. 记忆索引会自动加载；只打开和本轮任务相关的记忆条目。
 
 ## 3. 值守检查（只读，10 分钟以内）
 
@@ -65,23 +86,69 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 - 算异常的情况：`-latest.md` 状态是 error / blocked；工作日的报告超过 30 小时没更新；日志里有 Traceback；有撤单、部分成交或未成交；alerts 状态不是 ok 或只有已知的"快照过期"警告以外的告警；授权 7 天内到期。
 - 异常写进汇报第一条，并在队列里加一个修复任务。**不要**自己改券商状态、授权或 crontab。代码缺陷可以在本轮修（写测试），但不能触发下单。
 
-## 4. 选任务
+## 4. 本轮做什么
 
-- **先读 `docs/research-program.zh.md`（研究纲领）**。
-- **深挖实验**（每轮至少一个，最多两个）：
-  - 从纲领里优先级最高、前置条件已满足的主线"下一步"中取；这些在队列里是 `priority: 1` 且 notes 写着"纲领 A1/C1…"的任务。
-  - 实验的机制、预注册网格、最便宜的否定测试、通过后下一步，都由你在派子代理之前写进迭代档案。子代理只实现和运行，任务说明按第 8 节。
-  - 结果出来后，由你对照原始 JSON 解读，决定改执行方式、换宇宙、再深一层还是关线，并写回纲领。
-- **队列任务**（探索或维护）：
-  - 按文件顺序取 `status: ready` 且 `not_before` 已到的任务，和深挖实验合计最多两个、互不依赖，各交给一个子代理并行做。
-  - 开始时把它们改成 `running`，在 notes 里写本轮开始时间。`running` 且 notes 写着"交互会话"的任务不要碰。
-- **找新方向**由你自己做，不派子代理。每天最多一次，看 `reports/research/control/autonomous-log.md` 当天有没有做过：
-  1. `uv run oc research directions summary`、`reports/research/harvest/coverage.json` 和纲领，优先找能归入纲领主线的机制，而不是新格子。
-  2. 联网搜索要打开原文（论文复现、反面证据、开源代码、从业者实盘记录），可以用 `scripts/harvest_search.py run --channel <exa|web|reddit|x|github|archive> --query "<...>" --n 8 --max-read 6`。
-  3. 新方向先 `uv run oc research directions check <关键词>` 查重、查本仓库的负面实验，再按登记簿格式追加，`uv run oc research directions validate` 必须 ok。
-  4. 最多往队列里加 2 个新任务，写清楚机制、最便宜的否定测试和"过了之后做什么"。
-- 队列空了不必补满：纲领的深挖实验优先，没有值得做的就早点收尾。
-- 两个任务都做完且没超 90 分钟，可以再做一个 20 分钟以内的小任务（文档、登记、小修复）。
+`running` 且 notes 写着"交互会话"的任务，两种轮次都不要碰。
+
+### 4A. 主审轮（Opus max）
+
+1. **审核**（最先做）。对象是上一主审轮以来执行轮做完的任务，也就是队列 notes 里标着"待主审"的那些。
+   - 对照原始 JSON 逐条核对预注册标准，重点查五项：
+     - 前视：信号有没有用到成交价，或成交时刻之后的信息；
+     - 幸存者偏差：`data/sip/daily` 里没有退市股；
+     - 安慰剂；
+     - 成本；
+     - 不挑调仓日。
+   - 下结论：保留、否定，或写明死因。死因决定下一步是改执行方式、换宇宙、再深一层，还是关线。
+   - 把结论写回纲领和队列，队列里的"待主审"改成结论。
+2. **设计深挖实验**，每轮 1–2 个。
+   - 从纲领里优先级最高、前置条件已满足的主线"下一步"中取。
+   - 由你写进迭代档案：机制、预注册网格、最便宜的否定测试、过了之后做什么。
+   - `direction-check` 和 `iteration validate --stage pre-backtest` 能在本轮跑的就跑通；跑不了的，把确切命令写进简报。
+   - 然后写执行简报 `reports/research/control/briefs/<任务 ID>.md`，格式按第 8 节模板。在队列任务块里加 `- brief: <路径>`，状态设为 `ready`。
+   - 简报要写死这几样，让 Sonnet 不用探索仓库就能一次做对：
+     - 复用哪些现成脚本和模块（`scripts/screen_lane.py`、`scripts/screen_batch.py`、已有的 `scripts/run_*.py` 等）；
+     - 确切命令；
+     - 验收字段；
+     - 时间上限。
+3. **小检查自己做**，不派子代理。
+   - 范围：10 次工具调用以内、输出压得到几十行的决定性检查。例如读几个 JSON 字段、一条命令能跑完的 IC 检验、复核一个数字。
+4. **长执行留给执行轮**。例外两种可以在本轮派 1 个 `sonnet-high` 子代理（前台运行），结果在本轮审核：
+   - 结果会改变本轮的设计；
+   - 有时效，例如 12-15 前必须出结论。
+5. **找新方向**由你自己做，不派子代理。每天最多一次，看 `reports/research/control/autonomous-log.md` 当天有没有做过：
+   1. 看 `uv run oc research directions summary`、`reports/research/harvest/coverage.json` 和纲领。优先找能归入纲领主线的机制，而不是新格子。
+   2. 联网搜索要打开原文：论文复现、反面证据、开源代码、从业者实盘记录。
+      - 可以用 `scripts/harvest_search.py run --channel <exa|web|reddit|x|github|archive> --query "<...>" --n 8 --max-read 6`。
+      - 只精读最相关的两三篇，别把整页结果留在上下文里。
+   3. 新方向先查重：`uv run oc research directions check <关键词>`，同时查本仓库的负面实验。再按登记簿格式追加，`uv run oc research directions validate` 必须 ok。
+   4. 最多往队列里加 2 个新任务。写清楚机制、最便宜的否定测试和"过了之后做什么"。
+6. 队列空了不必补满。纲领的深挖实验优先，没有值得设计的就早点收尾。
+
+### 4B. 执行轮（Sonnet high）
+
+1. **选任务**：同时满足以下条件的任务，按 `priority`、再按文件顺序取，最多 2 个：
+   - 队列里带 `brief:` 字段；
+   - `status: ready`；
+   - `not_before` 已到。
+
+   没有这样的任务，做完值守（第 3 节）就收尾。不要做这几件事：
+   - 自己设计实验；
+   - 找新方向；
+   - 派子代理补任务；
+   - 做没有简报的任务，那要先经主审轮设计。
+2. **开始时**：把任务改成 `running`，notes 写本轮开始时间。
+3. **执行**：每个简报交给一个新的 `sonnet-high` 子代理，前台运行。
+   - 任务说明 = 简报全文，加上任务代码（第 5 节）。
+   - 两个任务互不依赖才并行；重的回测同一时间只跑一个。
+4. **记录结果**：子代理结束后，按简报的验收标准机械核对 JSON 字段。
+   - 把数字和产物路径写进队列 notes，末尾写"待主审"。
+   - 状态改 `done`（全部跑完），或 `partial`（写断点）。
+   - 不写"保留/否定/有效"一类结论。
+   - 不改纲领、`current-view`、登记簿和覆盖地图，这些由主审轮做。
+5. **简报跑不下去**时停下，状态改 `blocked`，notes 写清原因和需要主审轮决定什么。
+   - 算跑不下去的情况：缺数据；代码错误必须改设计才能修；验收条件含糊。
+   - 不改变设计的明显 bug 可以修：写测试，并在 notes 里写明。
 
 ## 5. 执行规则
 
@@ -107,7 +174,38 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 - **子代理**：只用 `subagent_type: "sonnet-high"`（Sonnet 5.5，high）。
   - 定义文件已把模型固定为 `claude-sonnet-5-5`。**不要给 Agent 工具传 `model` 参数**：传了会覆盖固定的型号。
   - 机主 2026-09-30：不再用 Sonnet 5。每轮结束前查一次子代理记录里的 `model` 字段，必须是 `claude-sonnet-5-5`；不是就在汇报里写明。
-  - 如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`：`provider: "claude/claude-opus-5-5"`（Paseo 的模型列表里还没有 Sonnet 5.5，不准退回 `claude-sonnet-5`），`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`，`notifyOnFinish: true`，任务说明里要把 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项写进去。一轮最多 4 个，同一时间最多 2 个（额度方案 A）。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
+  - 如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`。
+    - 参数：`provider: "claude/sonnet"`、`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`、`notifyOnFinish: true`。
+    - Paseo 把 `sonnet` 按 `~/.claude/settings.json` 解析成 `claude-sonnet-5-5`（2026-09-30 实测）。不准选列表里的 `claude-sonnet-5`。
+    - 任务说明里要写进 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项。
+  - 一轮最多 3 个，同一时间最多 2 个。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
+  - 任务说明第一行写任务代码，例如 `任务代码 T-20260930-12`。之后给这个子代理的 SendMessage 都以同一代码开头，否则它会把消息当成注入拒绝（2026-09-29）。
+- **额度：主代理做还是子代理做**。机主 2026-09-30：「注意控制额度，比如反复的上下文，你要分清楚 subagent 还是在主 agent 做要更节省呢」。
+  - **实测**：数据是 2026-09-29/30 的七轮加上 07:07 那一轮，出自本机 transcript 的粗算，不是额度接口。
+    - Opus 主代理每轮 26–77 次调用，上下文中位数 90–155k token。
+    - Sonnet 子代理每轮 2–4 个，每个 30–120 次调用，上下文中位数 100–200k、最高 333k。
+    - 按标价折算（Opus 单价约为 Sonnet 的 1.7 倍），子代理占一轮消耗的 60–90%，多数在 80% 上下。
+  - **消耗 ≈ 调用次数 × 当时的上下文大小**：每次调用都要把整段上下文重读一遍。
+    - 代理起步只有约 26–31k；涨到一两百 k 的部分全是读进来的文件和工具输出。
+    - 输出和思考 token 只占约两成，其中主代理的输出只占 4–8%。所以主审轮用 max 大约只多花 5–15%，真正贵的是长上下文里的多次调用。
+  - **规则**：
+    1. **主代理做**两类事。
+       - 判断：审核、设计、预注册、解读、写纲领。
+       - 短活：10 次调用以内，例如读几个 JSON 字段、改一处、跑一条命令、提交。
+       - 短活不要派子代理：子代理要从约 26k 重新起步，还要重新找文件，比主代理直接做更贵。
+    2. **子代理做**长的机械循环：写代码、测试、跑回测、修错，预计超过 15 次调用的。
+       - 一个实验一个子代理。不要让一个子代理连做两个实验，第二个会背着第一个的上下文。
+    3. **上下文要小**：
+       - 按段读，不整文件读：`rg -n`、`sed -n a,bp`、Read 的 offset/limit。
+       - JSON 用 `jq` 或 python 一行，只取需要的字段。
+       - 测试用 `-q` 加 `| tail -20`。
+       - 不要 `cat` 日志、队列（217 KB）或 `current-view`（118 KB）。
+       - 子代理的任务说明里也写上这一条。
+    4. **简报写死**要复用的文件和确切命令，让子代理不必探索仓库；写时间上限。
+       - 反例：09-29 04:07 那一轮有一个子代理跑了 176 次调用、上下文涨到 392k，一个子代理就用掉约两轮半的量。
+    5. **同一实验的小修补**：子代理刚结束、修补又不大，就 SendMessage 给原子代理（带任务代码）；否则新开一个，简报指向已有文件。
+    6. **不派"补任务/缺口搜索"子代理**：找方向由主审轮自己做，每天最多一次。
+    7. **没活就早收尾**：执行轮没有带简报的任务，做完值守就结束。一轮只值守大约只花一轮研究的零头。
 
 ## 6. 预算
 
@@ -119,13 +217,13 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 
 ## 7. 收尾（必须做）
 
-1. 更新队列：`done` / `partial` / `blocked`，加一行结果和产物路径。
-2. **更新研究纲领**（你自己写，不交给子代理）：在 `docs/research-program.zh.md` 对应主线下改"学到了什么"和"下一步"，写日期和产物路径，并按新证据重排优先级。否定的实验要写死因，以及死因意味着下一步是改执行、换宇宙还是关线。
-3. 有结论时：登记簿追加行（`uv run oc research directions validate` 必须 ok）、更新 `coverage.json`，在 `docs/current-view.zh.md` 顶部加一个短的日期小节（不超过 12 行：结论、数字、下一步）。没有结论就不要改 `current-view`。
+1. 更新队列：`done` / `partial` / `blocked`，加一行结果和产物路径（执行轮末尾写"待主审"）。
+2. **更新研究纲领**（只有主审轮做，你自己写，不交给子代理）：在 `docs/research-program.zh.md` 对应主线下改"学到了什么"和"下一步"，写日期和产物路径，并按新证据重排优先级。否定的实验要写死因，以及死因意味着下一步是改执行、换宇宙还是关线。
+3. 有结论时（只有主审轮做）：登记簿追加行（`uv run oc research directions validate` 必须 ok）、更新 `coverage.json`，在 `docs/current-view.zh.md` 顶部加一个短的日期小节（不超过 12 行：结论、数字、下一步）。没有结论就不要改 `current-view`。
 4. 运行 `uv run python scripts/autonomous_preflight.py release`，把输出 JSON 原样作为 `--usage-json` 传给
    `uv run python scripts/autonomous_preflight.py log --status <done|partial|failed> --task <任务 ID> --summary "<一句话>" --usage-json '<release 的输出>'`。
-5. 只 `git add` 本轮改动的文件；提交前 `git diff --cached | grep -iE "auth_token|ct0=|api[_-]?key|secret|bearer"` 确认没有密钥；提交信息末尾加一行 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`。
-6. **最后一条消息**是给机主看的汇报（在 Paseo 里显示）。中文、简短，按这个结构：
+5. 只 `git add` 本轮改动的文件；提交前 `git diff --cached | grep -iE "auth_token|ct0=|api[_-]?key|secret|bearer"` 确认没有密钥；提交信息末尾加一行 `Co-Authored-By:`，写本轮的模型：主审轮 `Claude Opus 5.5 <noreply@anthropic.com>`，执行轮 `Claude Sonnet 5.5 <noreply@anthropic.com>`。
+6. **最后一条消息**是给机主看的汇报（在 Paseo 里显示）。执行轮只写三行：做了哪些简报、各自产物路径和"待主审"、值守是否正常。主审轮中文、简短，按这个结构：
    - **这一轮做了什么**（1–3 条）
    - **结果**（数字要和 JSON 核对过；否定的也写清楚为什么）
    - **模拟盘值守**（正常 / 异常及处理）
@@ -133,16 +231,24 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - **需要你决定的**（没有就写"无"）
    第一次出现的专业词用一句话解释。不要贴日志，不要列文件清单。
 7. **把同一段汇报送到机主的对话里**（定时任务结束后会自动归档本代理，机主看不到这里）：用 ToolSearch 加载 `mcp__paseo__send_agent_prompt`，`agentId` 取 `config/autonomous-report-target.json` 的 `agent_id`，`background: true`，`notifyOnFinish: false`，消息以 `【自动研究轮汇报 MM-DD HH:MM UTC】` 开头。跳过的轮不发（机主在用对话时本来就会跳过）。发送失败就在自动轮日志的摘要里写"汇报未送达"。
+   - **主审轮**每轮都发。汇报里要包括上一执行轮的结果，以及你审核后的结论；机主只看审核过的结论。
+   - **执行轮**平时不发：它的结果还没审核，由下一主审轮汇报。只有两种情况要发，消息以 `【执行轮提醒 MM-DD HH:MM UTC】` 开头：
+     - 模拟盘值守发现异常；
+     - 有需要机主决定的事。
 
 ## 8. 子代理任务说明模板
 
+主审轮写执行简报、任何一轮派子代理，都用这个模板。
+
 ```
+任务代码：<T-YYYYMMDD-NN>（之后给这个子代理的消息都以它开头）
 目标：<一句话，要回答的问题>
 背景：<为什么做；相关文件路径：卡片、脚本、数据、上一轮结果>
 输入：<数据路径、窗口、候选清单路径>
 步骤：<编号步骤，带确切命令；哪一步之前必须先通过哪个检查>
 验收标准：<可机械核对的条件，例如 JSON 里哪个字段满足什么>
-禁止：<不许改的文件、不许做的操作；照抄 ~/.claude/agents/sonnet-high.md 的"Never"之外的本任务特有限制>
+复用：<现成脚本、模块、模板的路径；写明"不要另起炉灶、不要通读仓库">
+禁止：<不许改的文件、不许做的操作；照抄 ~/.claude/agents/sonnet-high.md 的"Never"之外的本任务特有限制；不许删除或回退不是本任务创建的文件；不整文件读队列、current-view、日志，JSON 只取需要的字段>
 产出：<写到哪些文件>
 汇报：<不超过 12 行：做了什么、结论和数字（注明来自哪个文件）、没做完的>
 上限：<时间、内存（run_capped 的 --mem）>
@@ -161,6 +267,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 - goal: 要回答的问题，以及它怎样更快接近盈利
 - plan: 步骤、预注册要点、通过标准
 - done_when: 可核对的完成条件
+- brief: reports/research/control/briefs/<任务 ID>.md（主审轮写；执行轮只做带这个字段的任务；可空）
 - notes: 每轮追加一行：日期、做到哪、产物路径、下一条命令
 ```
 
