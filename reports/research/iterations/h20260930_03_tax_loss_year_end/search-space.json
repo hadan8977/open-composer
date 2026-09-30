@@ -1,0 +1,59 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/candidate-manifest.json",
+  "candidate_manifest_sha256": "c565005790f2a93cc680a5bd7344fb26045696a075a724d0ac4377eb1bf6719c",
+  "cost_table_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/cost-table.json",
+  "created_at": "2026-09-30T07:18:01.408250+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/data-feasibility.json",
+  "data_feasibility_sha256": "9d624585085e33ac31595318089cb7289040cd456249b4e7863ea65b381914c8",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260930_03_tax_loss_year_end/results.json",
+    "reports/research/iterations/h20260930_03_tax_loss_year_end/report.md"
+  ],
+  "iter_id": "h20260930_03_tax_loss_year_end",
+  "paths": [
+    {
+      "benchmark_family": [
+        "equal_weight_pool_same_adv_rank_band",
+        "iwm_hedge_reported_separately",
+        "feb15_and_jun15_placebo_windows"
+      ],
+      "candidate_count": 6,
+      "hypothesis_refs": [
+        "T-20260930-03"
+      ],
+      "name": "tax_loss_ytd_loser_rebound",
+      "parameters": {
+        "cost_bps_per_side": [
+          "ADV rank 1-500: 3, 501-1000: 6, 1001-1500: 12"
+        ],
+        "entry": [
+          "first open on or after 16 December"
+        ],
+        "exit": [
+          "15 January close",
+          "31 January close"
+        ],
+        "pool": [
+          "ADV rank 1-1500",
+          "ADV rank 501-1500"
+        ],
+        "selection": [
+          "YTD lowest decile within pool",
+          "YTD <= -30 percent"
+        ],
+        "signal": [
+          "YTD = close on 15 December (or last trading day before) / last close of prior year - 1"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/h20260930_03_tax_loss_year_end.yaml",
+  "spec_hash": "124ac0c26b6f7a64bf2c7b758e2bd3ad640a54f99c3535546d464a3880a73e69",
+  "strategy_name": "h20260930_03_tax_loss_year_end",
+  "total_candidate_budget": 6,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260930_03_tax_loss_year_end/trial-ledger.jsonl"
+  ]
+}

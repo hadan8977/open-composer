@@ -1,0 +1,76 @@
+{
+  "candidate_accounting": {
+    "balanced": true,
+    "dependency_skipped_count": 0,
+    "evaluation_authorized_count": 4,
+    "frozen_candidate_count": 4,
+    "unresolved_count": 0
+  },
+  "candidate_authorization": {
+    "candidate_count": 4,
+    "rows": [
+      {
+        "action": "evaluate",
+        "candidate_binding_sha256": "1247610414b1761f4705a628001c787a42f7a98502b027276fe522e872b5f0fd",
+        "candidate_id": "X15_K10_EW",
+        "path": "smallcap_premarket_gap_long",
+        "reason_code": "single_mechanism_lightweight_path_ready"
+      },
+      {
+        "action": "evaluate",
+        "candidate_binding_sha256": "fa6bfe96c9c5e18655cbc6f59d595ab792f0d00b2414c05b4c9a9eb191f56105",
+        "candidate_id": "X15_K10_IV",
+        "path": "smallcap_premarket_gap_long",
+        "reason_code": "single_mechanism_lightweight_path_ready"
+      },
+      {
+        "action": "evaluate",
+        "candidate_binding_sha256": "7c26ec6a31b846c6762c5d6bc1725fa8f85096deee948773e2c17fb767c8ffee",
+        "candidate_id": "X15_K5_EW",
+        "path": "smallcap_premarket_gap_long",
+        "reason_code": "single_mechanism_lightweight_path_ready"
+      },
+      {
+        "action": "evaluate",
+        "candidate_binding_sha256": "4bfa1c2440bba506c9011b6e42ee342d3546595e5485cccf70adaa09a51e5902",
+        "candidate_id": "X15_K5_IV",
+        "path": "smallcap_premarket_gap_long",
+        "reason_code": "single_mechanism_lightweight_path_ready"
+      }
+    ]
+  },
+  "data_notes": {
+    "daily": "data/sip/daily; daily close equals the official close (T-11 check); daily open matches the official open at median 0 with fat tails (T-11)",
+    "minute_archive": "data/sip/minute 2023-01..2026-09-29, bar-start UTC timestamps, adjusted, includes 04:00 ET pre-market bars",
+    "sample_limit": "pre-market bars exist only from 2023-01; 2016-2023 stress period is LA-only daily"
+  },
+  "historical_evaluation_authorized": true,
+  "iter_id": "t20260930_12_smallcap_gap_auction",
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "path_gates": {
+    "smallcap_premarket_gap_long": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "X15_K10_EW",
+        "X15_K10_IV",
+        "X15_K5_EW",
+        "X15_K5_IV"
+      ],
+      "historical_evaluation_go": true
+    }
+  },
+  "report_type": "single_mechanism_lightweight_path",
+  "required_reference_names": [
+    "cost_table"
+  ],
+  "required_references": {
+    "cost_table": {
+      "path": "reports/research/iterations/t20260930_12_smallcap_gap_auction/cost-table.json",
+      "sha256": "6893ea9b0c46808c21ea31cc6c6b2d1c0610b6feb344f98ba22b9ef6a90e174f"
+    }
+  },
+  "research_pass": false,
+  "schema_version": 1,
+  "workflow_pass": true
+}

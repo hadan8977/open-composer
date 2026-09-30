@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260930_03_tax_loss_year_end",
+  "reviewed_at": "2026-09-30T07:19:10Z",
+  "decision": "proceed",
+  "objective": "T-20260930-03: test on local US daily data whether year-to-date losers (ADV top 1,500, price >= 5 USD, funds excluded) bought at the open after 15 December and held to 15 or 31 January beat the equal-weight pool after ADV-tiered costs (3/6/12 bp per side) in ten December windows 2016-2025. Registry direction dir:tax_loss_selling_year_end_rebound; six preregistered candidates.",
+  "target_regime_and_horizon": "Seasonal window 16 December to 15/31 January, ten annual observations 2016-2025 plus February and June placebo windows and a 15 November diagnostic window; long-only equal-weight baskets of about 150 stocks (100 in the 501-1,500 pool), two trades a year. A pass would only license a forward-only tracking task with not_before 2026-12-15 (the true out-of-sample window); no paper trading.",
+  "existing_solution_comparison": "Published: Ivkovic-Poterba-Weisbenner (NBER w10275) and Grinblatt-Keloharju show tax-loss selling and turn-of-the-year buying pressure in trade data; Schwert (w9277) shows the small-minus-large first-two-weeks-of-January spread through 2001; Kaul et al. (2025) find January returns larger for capital-loss, illiquid and volatile stocks over 1874-1917; McLean-Pontiff estimate about 35% post-publication decay. Practitioner packaging (Quantpedia) is a small-cap tilt with numbers ending 2007; a Globe and Mail summary of a TSX loser rebound and a JFIR 'fading' snippet were not readable (claim_only). No opened source gives a US year-to-date-loser price effect after 2015, so nothing can be reused as an effect size; the local test is the only missing evidence and it is nearly free.",
+  "remaining_evidence_gap": "The size, after 2016 and after tiered costs, of the mid-December to January excess return of US year-to-date losers versus the equal-weight pool in liquid stocks, and whether it separates from the same construction in February-March and June-July.",
+  "negative_experiments_checked": "oc research directions check tax loss (2026-09-30): dir:tax_loss_selling_year_end_rebound is queued (no prior verdict); other hits are unrelated (collective2 extreme-os, ema_crossover, meta-strategy rotation, momentum risk control). grep -ril 'tax.loss|january effect' over reports/research/control, iterations, ledger finds only queue/intel text and source snapshots for other iterations (sector seasonality papers), no prior local experiment of this signal. Related closed directions are different mechanisms (end-of-month reversal, sector seasonality).",
+  "cost_and_execution_assumptions": "Per-side cost by ADV rank on the signal day: 1-500 3 bp, 501-1000 6 bp, 1001-1500 12 bp (SPREAD_BPS_TIERS, scripts/run_h20260929_21_lockup_books.py), round trip 2x; entry at the daily-bar open after the signal close, exit at the close; no borrow (long only); benchmark equal-weight pool without costs (conservative), IWM-hedged version reported separately. Signal close -> next open fill as in the frozen protocol; sanitize_price_matrices defaults plus a split-like session filter on the window.",
+  "cheapest_decisive_test": {
+    "action": "Run scripts/run_h20260930_03_tax_loss_year_end.py: ten annual excess tables for six candidates, net mean, year-clustered t, positive years, mean without best year, Dec 2024 and Dec 2025, February and June placebo means, W1 diagnostic, IWM-hedged version.",
+    "pass_condition": "For a candidate: mean net excess >= +1.5%, >= 7 of 10 years positive, year-clustered t >= 2.0, placebo means summing to at most half of the real mean, and both Dec 2024 and Dec 2025 positive.",
+    "falsification_condition": "Any of the five conditions failing for every candidate closes the direction as refuted (tax-loss rebound closed); no ledger, no threshold change.",
+    "max_compute_minutes": 30
+  },
+  "stop_condition": "Frozen before any result: close as refuted if no candidate meets all five continue conditions in hypotheses.md; a pass is only a forward-only watch item with not_before 2026-12-15. No change to pool, thresholds, exits, cost tiers, windows or candidates after seeing results.",
+  "queries": [
+    {
+      "query": "tax-loss selling December losers January rebound recent",
+      "searched_at": "2026-09-30T01:05:00Z",
+      "opened_urls": [
+        "https://www.nber.org/system/files/working_papers/w10275/w10275.pdf"
+      ]
+    },
+    {
+      "query": "tax-loss selling turn-of-the-year stock returns losers January paper",
+      "searched_at": "2026-09-30T07:14:30Z",
+      "opened_urls": [
+        "http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2025-Greece/papers/JanEffectsEFMAFULL.pdf",
+        "https://economics.wm.edu/wp/cwm_wp15.pdf"
+      ]
+    },
+    {
+      "query": "Grinblatt Moskowitz tax-loss selling past returns consistency January",
+      "searched_at": "2026-09-30T07:15:00Z",
+      "opened_urls": [
+        "https://www.anderson.ucla.edu/documents/areas/fac/finance/14-00.pdf"
+      ]
+    },
+    {
+      "query": "January effect stock returns since 2000 weakened decline tax-loss selling recent evidence US 2010s",
+      "searched_at": "2026-09-30T07:15:40Z",
+      "opened_urls": [
+        "https://quantpedia.com/strategies/january-effect-in-stocks"
+      ]
+    },
+    {
+      "query": "McLean Pontiff post-publication decay and Schwert anomalies and market efficiency (direct PDF fetch)",
+      "searched_at": "2026-09-30T07:15:50Z",
+      "opened_urls": [
+        "https://www.hec.ca/finance/Fichier/McLean.pdf",
+        "https://www.nber.org/system/files/working_papers/w9277/w9277.pdf"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.nber.org/system/files/working_papers/w10275/w10275.pdf",
+      "claim_id": "ivkovic_poterba_weisbenner_w10275_dec_tax_loss_selling",
+      "claim": "Ivkovic, Poterba and Weisbenner (NBER w10275, January 2004) compare a large discount broker's individual-investor trades in taxable versus tax-deferred accounts and find tax-loss selling throughout the calendar year, most pronounced in December and especially for investors who realized capital gains elsewhere in the portfolio, plus a capital-gains lock-in effect.",
+      "source_type": "paper",
+      "published_or_updated_at": "2004-01-01",
+      "market_and_period": "US discount-broker individual accounts, 1990s trade data",
+      "applicability": "Establishes that December selling of losers by taxable individuals exists; motivates the mid-December entry.",
+      "limitations": "Trade-level evidence only; gives no stock-price return size for a December-to-January rebound, and covers the 1990s before the growth of tax-sheltered accounts.",
+      "independent_replication": "Corroborated by Grinblatt and Keloharju (Finland, same tax-loss pattern); no US post-2015 replication opened.",
+      "fetched_at": "2026-09-30T07:16:00Z",
+      "sha256": "92884b85a2e1744f426ed4cd6c3bab43b5fddef1968fc4f6b7e5dc63faf059c4",
+      "snapshot_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/sources/nber_w10275.txt",
+      "source_card_path": "reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl"
+    },
+    {
+      "url": "https://www.anderson.ucla.edu/documents/areas/fac/finance/14-00.pdf",
+      "claim_id": "grinblatt_keloharju_2002_tax_loss_buying_pressure",
+      "claim": "Grinblatt and Keloharju (draft 2002-07-03, NBER w8745) find that Finnish investors realize losses more than gains toward the end of December and repurchase the sold stocks, producing net tax-loss buying pressure that is negative before the turn of the year and positive afterwards, and that turn-of-the-year returns, particularly for small firms, relate to that pressure.",
+      "source_type": "paper",
+      "published_or_updated_at": "2002-07-03",
+      "market_and_period": "Finnish stocks, household and institutional trades, 1990s",
+      "applicability": "Supports the sign of the price pressure (December negative, January positive) that the mid-December entry tries to harvest.",
+      "limitations": "Finnish market with a different tax regime; 1990s sample; regression evidence, no tradeable long-only excess return net of costs.",
+      "independent_replication": "Same direction as Ivkovic-Poterba-Weisbenner for US individuals; Kaul et al. 2025 find the effect also existed in 1874-1917 without income taxes.",
+      "fetched_at": "2026-09-30T07:16:00Z",
+      "sha256": "bdcdc96707d7fbdd75ff1e9e4a8156b8ffe5996b593a07650e7205c8ac76a94f",
+      "snapshot_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/sources/gm_wash_sales.txt",
+      "source_card_path": "reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl"
+    },
+    {
+      "url": "https://www.nber.org/system/files/working_papers/w9277/w9277.pdf",
+      "claim_id": "schwert_w9277_turn_of_year_small_firm",
+      "claim": "Schwert (NBER w9277) shows on CRSP data that the small-minus-large NYSE return difference in the first 15 calendar days of January was still reliably positive after publication (daily alpha 0.00641, t 9.87, 1962-2001; 0.00565, t 5.37, 1990-2001), while the small-firm premium overall was much smaller after 1982 than in 1926-1982.",
+      "source_type": "paper",
+      "published_or_updated_at": "2002-10-01",
+      "market_and_period": "CRSP NYSE size deciles, 1962-2001",
+      "applicability": "Shows the turn-of-the-year window effect survived publication through 2001 for the small-minus-large spread; ends 2001, so it says nothing about 2016-2026.",
+      "limitations": "Size spread, not year-to-date losers; ends in 2001; the fading after 2001 is not measured.",
+      "independent_replication": "Keim (1983) and Reinganum (1983) are the original results; the JFIR 'revisited' paper reportedly finds fading later (claim_only).",
+      "fetched_at": "2026-09-30T07:16:00Z",
+      "sha256": "c0d7e2aeac0b87084384b16c4e1a00ef4c58400e448ae7167d3cf40deec3616f",
+      "snapshot_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/sources/nber_w9277_schwert.txt",
+      "source_card_path": "reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl"
+    },
+    {
+      "url": "http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2025-Greece/papers/JanEffectsEFMAFULL.pdf",
+      "claim_id": "kaul_mehrotra_morck_phillips_2025_january_before_taxes",
+      "claim": "Kaul, Mehrotra, Morck and Phillips (EFMA 2025 working paper) document a 3.1 percent January price increase in NYSE stocks over 1874-1917, before income taxes, and find larger January returns for small stocks, stocks with capital losses, illiquid stocks and volatile stocks, pointing to arbitrage costs as the reason the effect persists.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-01-06",
+      "market_and_period": "NYSE stock-level data 1874-1917",
+      "applicability": "Supports that losers and illiquid stocks carry the larger January return, and argues against pure tax explanation; so the pool restriction to ADV top 1,500 may remove the illiquid stocks where the effect is largest.",
+      "limitations": "Historic sample before income taxes and modern institutions; not a 2016-2026 estimate; working-paper draft.",
+      "independent_replication": "Consistent with Roll (1983) as cited by the authors; no independent replication opened.",
+      "fetched_at": "2026-09-30T07:16:00Z",
+      "sha256": "597d8eed3e0122f34374a2968d7fcfb377805303d8eeafebb19f8ac08c0a3f27",
+      "snapshot_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/sources/efma2025_jan_effect.txt",
+      "source_card_path": "reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl"
+    },
+    {
+      "url": "https://www.hec.ca/finance/Fichier/McLean.pdf",
+      "claim_id": "mclean_pontiff_2012_post_publication_decay",
+      "claim": "McLean and Pontiff (October 2012 working-paper version of the JF 2016 article) study 82 published return predictors and find that the average post-publication decay, attributed to both statistical bias and price pressure from aware investors, is about 35 percent, larger for anomaly portfolios of large, liquid stocks.",
+      "source_type": "paper",
+      "published_or_updated_at": "2012-10-01",
+      "market_and_period": "82 US stock characteristics, publication-date splits, up to 2011",
+      "applicability": "Prior that a 1983-era calendar anomaly is weaker in 2016-2025 and weaker in liquid stocks; sets the low prior stated in the queue.",
+      "limitations": "Average across 82 characteristics; the January-loser effect is not singled out.",
+      "independent_replication": "Published version JF 2016; used elsewhere in this repository.",
+      "fetched_at": "2026-09-30T07:16:00Z",
+      "sha256": "016efe18ba28a3fe35176a4b6e42d00ebb14e3377596555dba32b98ac28d4bf7",
+      "snapshot_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/sources/mclean_pontiff.txt",
+      "source_card_path": "reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl"
+    },
+    {
+      "url": "https://economics.wm.edu/wp/cwm_wp15.pdf",
+      "claim_id": "anderson_gerlach_ditraglia_2005_lab_january",
+      "claim": "Anderson, Gerlach and DiTraglia (William and Mary WP 15, March 2005) find in two laboratory auction environments that prices in the January markets were systematically higher than those in December, suggesting a psychological contribution to the January effect.",
+      "source_type": "paper",
+      "published_or_updated_at": "2005-03-01",
+      "market_and_period": "Laboratory auctions with student subjects, 2005",
+      "applicability": "Weak side evidence that a January-over-December price gap can arise without taxes.",
+      "limitations": "Lab experiment; no market data; no return size for a stock strategy.",
+      "independent_replication": "None opened.",
+      "fetched_at": "2026-09-30T07:16:00Z",
+      "sha256": "f41f78f6c2fca14bb8788f24243820aacd92be508211089b649d1451425d043d",
+      "snapshot_path": "reports/research/iterations/h20260930_03_tax_loss_year_end/sources/wm_january_effect.txt",
+      "source_card_path": "reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl"
+    }
+  ]
+}

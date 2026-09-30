@@ -1,0 +1,112 @@
+name: h20260930_03_tax_loss_year_end
+description: 'Preregistered T-20260930-03 measurement: US stocks with the lowest year-to-date return on 15 December (ADV top 1,500, close >= 5 USD, funds excluded) bought at the next open and held to 15 January or 31 January, excess versus the equal-weight pool after ADV-tiered costs, ten December windows 2016-2025, with 15 February and 15 June placebo windows. Research only, no broker writes.'
+timeframe: daily
+universe:
+- QQQ
+- IWM
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 150
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 150
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260930_03:tax_loss_year_end_measurement
+costs:
+  commission_pct: 0.0
+  slippage_bps: 12.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  tax_loss_ytd_loser:
+    source: expression
+    expression: close / lag(close, 252) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal (close on 15 December divided by the close on the last trading day of the prior year, minus 1) is built inside scripts/run_h20260930_03_tax_loss_year_end.py.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260930_03_tax_loss_year_end
+  candidate_manifest_path: reports/research/iterations/h20260930_03_tax_loss_year_end/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260930_03_tax_loss_year_end/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260930_03_tax_loss_year_end.jsonl
+  source_card_claim_ids:
+  - ivkovic_poterba_weisbenner_w10275_dec_tax_loss_selling
+  - grinblatt_keloharju_2002_tax_loss_buying_pressure
+  - schwert_w9277_turn_of_year_small_firm
+  - kaul_mehrotra_morck_phillips_2025_january_before_taxes
+  - mclean_pontiff_2012_post_publication_decay
+  - anderson_gerlach_ditraglia_2005_lab_january
+  - quantpedia_january_effect_in_stocks
+  - globe_and_mail_2025_tsx_losers_claim_only
+  - jfir_tax_loss_selling_january_revisited_claim_only
+  parameter_space:
+    signal_selection:
+    - ytd_lowest_decile
+    - ytd_le_minus_30pct
+    pool:
+    - adv_top_1500
+    - adv_rank_501_1500
+    exit:
+    - jan_15
+    - jan_31
+  candidate_budget: 6
+  selection_objective: Measurement, not a return search. Continue to a forward-only watch task only if a candidate passes all five frozen conditions in hypotheses.md.
+  candidate_budget_note: Six preregistered candidates; the diagnostic window W1, the February and June placebo windows, the IWM-hedged version and the 2017-2025 nine-year cut are reported but do not enter any verdict.
+  anti_overfit_notes:
+  - Pool, signal, thresholds, exits, cost tiers and the five continuation conditions are frozen in hypotheses.md before any result is computed; the design text is the queue task T-20260930-03 written at 2026-09-30 01:07.
+  - No threshold, window or candidate is changed after seeing results.
+  validation_plan:
+  - Ten annual excess tables per candidate, clustered t over the ten annual excesses, positive-year count, mean without the best year
+  - Placebo windows of 15 February and 15 June with the same construction
+  - Recent split Dec 2024 and Dec 2025 reported separately
+notes:
+  intent: Test whether year-to-date losers rebound from mid-December to January after tiered costs, versus the equal-weight pool, in ten US windows.
+  hypothesis_id: T-20260930-03
+  previous_link: dir:tax_loss_selling_year_end_rebound
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

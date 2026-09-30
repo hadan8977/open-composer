@@ -1,0 +1,112 @@
+name: t20260930_12_smallcap_gap_auction
+description: 'Preregistered T-20260930-12 (corridor C1b): $5-20M dollar-volume gap-down long, selected only with SIP pre-market minute bars visible before the 09:27 ET opening-auction deadline (X15: bars to 09:11 ET on the free plan; X0: bars to 09:26 ET on paid real-time SIP), entered at the daily-bar open and exited at the daily close; look-ahead control LA uses the daily open as in C1. Research only, no broker writes.'
+timeframe: daily
+universe:
+- QQQ
+- IWM
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 15
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 15
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20260930_12:smallcap_gap_auction_premarket
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  smallcap_premarket_gap_long:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The pre-market gap signal z = (P/prev_close - 1)/sigma21 is built inside scripts/run_t20260930_12_smallcap_gap_auction.py from the local SIP minute archive.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: t20260930_12_smallcap_gap_auction
+  candidate_manifest_path: reports/research/iterations/t20260930_12_smallcap_gap_auction/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20260930_12_smallcap_gap_auction/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl
+  source_card_claim_ids:
+  - alpaca_market_data_plans_iex_realtime_sip_15min
+  - alpaca_orders_opg_0928_deadline
+  - gjw_jfqa_2026_auction_price_impact
+  - lou_polk_skouras_2019_overnight_intraday
+  - nagel_2012_reversal_liquidity_provision
+  - concretum_2026_identifying_stocks_to_fade
+  - alpaca_market_data_faq_condition_rules
+  - utp_spec_condition_codes_q_m_o_6
+  parameter_space:
+    price_caliber:
+    - X15_premarket_to_0911
+    k:
+    - 10
+    - 5
+    weight:
+    - equal
+    - inverse_sigma21
+  candidate_budget: 4
+  selection_objective: Measurement of a gross edge with pre-market-only selection, not a return search. Continue to a ledger only if the X15_K10_EW decision cell passes all three frozen conditions in hypotheses.md.
+  candidate_budget_note: Four X15 cells are the candidates. X0 (bars to 09:26) and LA (daily open, C1 caliber) are computed on the same four cells as comparators only; family cumulative trial count is T-32 + C1 + these 12 cells, reported as DSR trial count if a ledger is built.
+  anti_overfit_notes:
+  - Pool, K, weights, windows, the 100-seed same-pool placebo and the three continue conditions are frozen in hypotheses.md before any pre-market bar is read.
+  - The pre-market data extraction is a mechanical per-(symbol, date) summary and contains no return computation.
+  - Historical part 2024-2026 was already seen by C1 and counts as contaminated evidence; the forward shadow from 2026-10-01 is the verdict source.
+  validation_plan:
+  - Daily basket gross return mean, ordinary t and Newey-West 5-lag t on main and short windows
+  - 100-seed same-pool random K-basket placebo, beat fraction
+  - Same-pool equal-weight baseline and excess
+  - Adjustment consistency exclusion (minute vs daily prev close, |ln ratio| > 0.10)
+notes:
+  intent: Test whether the C1 small-cap gap-down long edge survives when selection uses only pre-market information executable before the 09:28 ET OPG deadline.
+  hypothesis_id: T-20260930-12
+  previous_link: dir:cross_sectional_gap_fade
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

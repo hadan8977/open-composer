@@ -105,3 +105,12 @@ C1 的 +42.5 bp 主要来自用官方开盘价选股的前视（开盘竞价噪�
 ### Stop/Pivot criterion
 
 X15 判定格三条全过 → 账本 + 前向影子；X15 不过、X0 过 → 机主决定付费实时 SIP，本线 blocked；都不过 → C1b 关闭（上文"读法"）。
+
+---
+
+## 执行者索引（追加，不改上文任何设计段落）
+
+- 规格：`strategy_specs/drafts/t20260930_12_smallcap_gap_auction.yaml`；候选清单：`candidate-manifest.json`（X15 四格）；X0、LA 各四格是 `search-space.json` 的 benchmark_family 对照，不是候选。
+- 脚本：`scripts/run_t20260930_12_smallcap_gap_auction.py`（stage：premarket / screen / book）；盘前汇总缓存：`cache/premarket/<YYYY-MM>.parquet`（只含 04:00–09:11、04:00–09:26 的最后一根 bar 价与时刻、盘前成交额、当日最后一根常规 bar close，不含任何收益计算）。
+- dv21 沿用 T-32 `build_signal_panel` 的实现（前 21 个交易日成交额滚动中位数，不含当日）；本文"平均成交额"按该实现执行，池边界 [$5M, $20M) 不变。
+- 复权一致性检查缺少前一交易日分钟数据（无法核对）的（股票, 日）保留并在 results.json 报告数量。

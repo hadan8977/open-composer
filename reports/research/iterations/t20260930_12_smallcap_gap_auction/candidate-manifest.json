@@ -1,0 +1,140 @@
+{
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "X15_K10_EW",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "premarket_gap_z_lowest_k_long_open_to_close",
+      "parameters": {
+        "caliber": "X15: close of last SIP minute bar starting in [04:00, 09:11] ET",
+        "decision_cell": true,
+        "entry_exit": "daily open buy, daily close sell, no overnight",
+        "k": 10,
+        "placebo_seeds": 100,
+        "pool": "dv21 in [5M, 20M), prev_close>=5, history>=60, sigma21>0",
+        "weight": "equal"
+      },
+      "path": "smallcap_premarket_gap_long",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20260930_12_smallcap_gap_auction.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "X15_K10_IV",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "premarket_gap_z_lowest_k_long_open_to_close",
+      "parameters": {
+        "caliber": "X15: close of last SIP minute bar starting in [04:00, 09:11] ET",
+        "decision_cell": false,
+        "entry_exit": "daily open buy, daily close sell, no overnight",
+        "k": 10,
+        "placebo_seeds": 100,
+        "pool": "dv21 in [5M, 20M), prev_close>=5, history>=60, sigma21>0",
+        "weight": "inverse_sigma21"
+      },
+      "path": "smallcap_premarket_gap_long",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20260930_12_smallcap_gap_auction.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "X15_K5_EW",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "premarket_gap_z_lowest_k_long_open_to_close",
+      "parameters": {
+        "caliber": "X15: close of last SIP minute bar starting in [04:00, 09:11] ET",
+        "decision_cell": false,
+        "entry_exit": "daily open buy, daily close sell, no overnight",
+        "k": 5,
+        "placebo_seeds": 100,
+        "pool": "dv21 in [5M, 20M), prev_close>=5, history>=60, sigma21>0",
+        "weight": "equal"
+      },
+      "path": "smallcap_premarket_gap_long",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20260930_12_smallcap_gap_auction.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "X15_K5_IV",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "premarket_gap_z_lowest_k_long_open_to_close",
+      "parameters": {
+        "caliber": "X15: close of last SIP minute bar starting in [04:00, 09:11] ET",
+        "decision_cell": false,
+        "entry_exit": "daily open buy, daily close sell, no overnight",
+        "k": 5,
+        "placebo_seeds": 100,
+        "pool": "dv21 in [5M, 20M), prev_close>=5, history>=60, sigma21>0",
+        "weight": "inverse_sigma21"
+      },
+      "path": "smallcap_premarket_gap_long",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20260930_12_smallcap_gap_auction.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-09-30T07:23:13.410164+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20260930_12_smallcap_gap_auction",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20260930_12_smallcap_gap_auction.yaml": "b07722ece9d0b38b709bc5091b9535bd5f39ed38c0648091a9a7c06d487e6835"
+  }
+}

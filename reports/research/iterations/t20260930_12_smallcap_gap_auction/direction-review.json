@@ -1,0 +1,201 @@
+{
+  "cheapest_decisive_test": {
+    "action": "scripts/run_t20260930_12_smallcap_gap_auction.py: premarket (per-month minute-archive summary, checkpointed) then screen (3 calibers x 4 cells, windows, t and Newey-West t, 100-seed same-pool placebo, same-pool baseline), under run_capped 1.5G; results.json.",
+    "falsification_condition": "Any of the three fails for X15_K10_EW; then X0 is read for the paid-data question and LA for the look-ahead share.",
+    "max_compute_minutes": 60,
+    "pass_condition": "X15_K10_EW: main mean >= 20 bp/day and ordinary t >= 2.0; main placebo beat fraction >= 0.90; short-window mean >= 10 bp/day."
+  },
+  "cost_and_execution_assumptions": "Cheapest-negation stage charges no cost. Ledger stage (if reached): 5 bp per side base, 10 bp per side stress, 10/20 bp per side frozen contract, one round trip per day. Selection cutoffs: X15 last bar starting 09:11 ET (free-plan 15-minute-delayed SIP at a 09:27 submission), X0 last bar starting 09:26 ET (paid real-time SIP). Fill at daily open / daily close (official prints within tolerance per C1). OPG submission deadline 09:28 ET.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Published gap-fade evidence (Concretum 2026, gross Sharpe about 2.08, cost-blind) and the liquidity-provision reading (Nagel 2012; Lou-Polk-Skouras 2019) support a reversal after overnight moves, but no source tests a selection made only from pre-market prices at the $5-20M dollar-volume tier before the OPG deadline. Alpaca docs (opened 2026-09-30): free plan real-time is IEX only and SIP history has the latest-15-minutes limit, Algo Trader Plus is $99/month; OPG orders after 09:28 ET are rejected. Reuse: T-32 pool construction, hygiene and split filter, and C1 official-price findings are imported unchanged.",
+  "iter_id": "t20260930_12_smallcap_gap_auction",
+  "negative_experiments_checked": "oc research directions check gap fade premarket (2026-09-30): dir:cross_sectional_gap_fade refuted at T-32 (short-leg gross +11.5 bp, cost-killed), reopen_if satisfied by C1's auction-price path; C1 (t20260930_11) closed the >=$20M tiers at 7.09 bp/day < 8 bp and queued this T1 long leg (C1b). dir:overnight_intraday_gap_retail_pwb refuted (fixed overnight hold, different mechanism). Difference from the refuted lines: small-cap tier, long only, pre-market-only selection, look-ahead controlled.",
+  "objective": "T-20260930-12 (C1b): with only information available before 09:27 ET (SIP pre-market minute bars visible on the free plan up to the 09:11 bar, or to 09:26 on paid real-time SIP), does the $5-20M dollar-volume gap-down long (K lowest z, open buy, close sell) keep >= 20 bp/day gross, and beat a same-pool random basket placebo? Registry direction dir:cross_sectional_gap_fade (refuted at T-20260929-32 after per-stock costs; C1 closed the >=$20M tiers and left the $5-20M long leg at +42.5 bp/day with a look-ahead in the selection price).",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+      ],
+      "query": "Goyal Jegadeesh Wu price impact in closing auctions opening auctions and continuous markets benchmark cost of trading on anomalies",
+      "searched_at": "2026-09-30T04:14:30Z"
+    },
+    {
+      "opened_urls": [
+        "https://www.utpplan.com/DOC/UtpBinaryOutputSpec.pdf",
+        "https://docs.alpaca.markets/us/docs/market-data-faq",
+        "https://forum.alpaca.markets/t/open-close-in-historical-trades/8089"
+      ],
+      "query": "Alpaca market data trade conditions Q Official Open M Official Close UTP CTA sale condition",
+      "searched_at": "2026-09-30T04:14:50Z"
+    },
+    {
+      "opened_urls": [
+        "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+      ],
+      "query": "Lou Polk Skouras tug of war overnight versus intraday expected returns",
+      "searched_at": "2026-09-30T04:15:40Z"
+    },
+    {
+      "opened_urls": [
+        "https://ux-tauri.unisg.ch/RePEc/usg/sfwpfi/WPF-1604.pdf"
+      ],
+      "query": "Abdi Ranaldo simple estimation of bid-ask spreads from daily close high low prices",
+      "searched_at": "2026-09-30T04:15:45Z"
+    },
+    {
+      "opened_urls": [
+        "https://www.nber.org/system/files/working_papers/w17653/w17653.pdf"
+      ],
+      "query": "Nagel Evaporating Liquidity short-term reversal returns liquidity provision",
+      "searched_at": "2026-09-30T04:15:50Z"
+    },
+    {
+      "opened_urls": [
+        "https://concretumgroup.substack.com/p/identifying-stocks-to-fade"
+      ],
+      "query": "Concretum Identifying Stocks to Fade overnight gap intraday reversal",
+      "searched_at": "2026-09-30T04:14:40Z"
+    },
+    {
+      "opened_urls": [
+        "https://docs.alpaca.markets/docs/about-market-data-api"
+      ],
+      "query": "Alpaca market data API subscription plans Basic IEX real-time SIP 15 minutes delayed Algo Trader Plus",
+      "searched_at": "2026-09-30T07:20:30Z"
+    },
+    {
+      "opened_urls": [
+        "https://docs.alpaca.markets/us/docs/orders-at-alpaca"
+      ],
+      "query": "Alpaca orders OPG market on open time in force submission deadline 9:28",
+      "searched_at": "2026-09-30T07:20:50Z"
+    }
+  ],
+  "remaining_evidence_gap": "Whether the +42.5 bp/day C1 long-leg edge survives when the gap is measured from the last pre-market bar visible before the deadline (09:11 bar on the free plan, 09:26 bar on paid real-time SIP) instead of the opening print; whether it beats a same-pool random basket. Not measured: opening-auction impact of our orders, fill reliability of paper OPG orders (45 of 50 expired on 2026-09-15), borrow (long only, none), fees. Survivorship bias: data/sip/daily has no delisted names.",
+  "reviewed_at": "2026-09-30T07:23:13Z",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "Frames the second cost item (opening-auction impact) that this step does not measure and that the full preregistration must stress; supports entering at the open only in small size or by limit orders.",
+      "claim": "Goyal, Jegadeesh and Wu (JFQA 2026, NYSE and Nasdaq 2012-2021): closing auctions carry about 10% of daily volume and have lower price impact than the continuous market for all stocks except Nasdaq microcaps; opening auctions are illiquid (opening auction volume is 5%-10% of closing auction volume, under 1.5% of ADV after 2015) and carry the largest price impact; long/short anomaly portfolios cost 17-41 bp per year, 9-21 bp excluding microcaps in closing auctions.",
+      "claim_id": "gjw_jfqa_2026_auction_price_impact",
+      "fetched_at": "2026-09-30T04:15:19Z",
+      "independent_replication": "Working-paper version SSRN 4300417 (2022); no independent replication found.",
+      "limitations": "Costs are annualized for low-turnover anomaly portfolios, not a daily-turnover book; price impact is measured for institutional-size orders, not the effect of the auction price vs daily-bar open, which is what this step measures.",
+      "market_and_period": "NYSE and Nasdaq stocks, 2012-2021, TAQ plus exchange auction files",
+      "published_or_updated_at": "2026-03-05",
+      "sha256": "e66d44c69ad5bb4502c0c9e2aea36da275340c9da53aae9bd7b1c11b39c83e93",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/gjw_jfqa.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+    },
+    {
+      "applicability": "Fixes the official-price rule: official open = trade with condition Q, else O; official close = M, else 6.",
+      "claim": "UTP Plan specification (Sept 2026 edition) sale-condition table: Q = Market Center Official Open, O = Opening Prints, M = Market Center Official Close, 6 = Closing Prints; direct data recipients should use the Q value as the official market center opening value.",
+      "claim_id": "utp_spec_condition_codes_q_m_o_6",
+      "fetched_at": "2026-09-30T04:15:23Z",
+      "independent_replication": "Primary source, no replication needed.",
+      "limitations": "Nasdaq (UTP) specification; the CTA equivalent for NYSE and NYSE American tapes A and B uses the same letters but is a separate document not fetched here; the check5 step verifies the codes against real trades.",
+      "market_and_period": "Nasdaq-listed (tape C) UTDF feed, current specification",
+      "published_or_updated_at": "2026-09-01",
+      "sha256": "204528614949e72abc1a275de65fcef447433c0f24c30dcb9f8a01637f34f5a4",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/utp_spec.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "exchange_official_docs",
+      "url": "https://www.utpplan.com/DOC/UtpBinaryOutputSpec.pdf"
+    },
+    {
+      "applicability": "Tells us the daily-bar open and close are built from a rule set that can exclude Q and M prints, so official auction prices can differ from the daily-bar open/close, which is the paired difference measured here.",
+      "claim": "Alpaca Market Data FAQ: the rules that decide which trades update a bar depend on tape (A, B NYSE; C Nasdaq; O OTC), the trade conditions and the bar type; a trade can have more than one condition and the strictest rule applies; the table lists per-condition whether open/close, high/low and volume are updated.",
+      "claim_id": "alpaca_market_data_faq_condition_rules",
+      "fetched_at": "2026-09-30T04:15:22Z",
+      "independent_replication": "Primary source.",
+      "limitations": "The FAQ is a rendered web page; the exact per-condition table is read from the page text; there is no versioned date on the page, the published date recorded is the fetch-time year.",
+      "market_and_period": "Alpaca Market Data API, SIP feed, current documentation",
+      "published_or_updated_at": "2025-12-01",
+      "sha256": "4169df9f2ed9f8268fc275ce6e0e443cbc0f2819d5a062bda73601972e5ca04a",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/alpaca_market_data_faq.html",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/market-data-faq"
+    },
+    {
+      "applicability": "Confirms that split of returns between close-to-open and open-to-close is a stable feature; the gap-fade signal trades the intraday leg after the overnight gap.",
+      "claim": "Lou, Polk and Skouras (JFE 2019): for 14 trading strategies, profits are earned entirely overnight (reversal and a variety of momentum strategies) or entirely intraday, typically with profits of opposite signs across the two components.",
+      "claim_id": "lou_polk_skouras_2019_overnight_intraday",
+      "fetched_at": "2026-09-30T04:15:57Z",
+      "independent_replication": "Subsequent literature (Akbas et al. 2022, cited by Concretum) reports similar patterns.",
+      "limitations": "Uses first-print or official open depending on the data set and no transaction costs; not a tradability study.",
+      "market_and_period": "US stocks, CRSP, decades of daily open/close data",
+      "published_or_updated_at": "2019-04-25",
+      "sha256": "15d25eb9fe47b6a20375f5dfdba1062fe402e65caa6d07afa785cfb7e9dd1c42",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/lps.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "paper",
+      "url": "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+    },
+    {
+      "applicability": "Justifies the parent experiment T-32 per-stock spread cost that this step tries to bypass with auction prices.",
+      "claim": "Abdi and Ranaldo (RFS 2017): a bid-ask spread estimator from daily close, high and low prices gives the highest cross-sectional and average time-series correlations with the TAQ effective spread when quote data are unavailable, and the most accurate estimates for less liquid stocks.",
+      "claim_id": "abdi_ranaldo_2017_close_high_low_spread",
+      "fetched_at": "2026-09-30T04:15:59Z",
+      "independent_replication": "Widely reimplemented (bidask R package).",
+      "limitations": "Estimator accuracy is highest for monthly averages, noisy for single stock-days.",
+      "market_and_period": "US stocks, TAQ effective spread benchmark, 1993-2012",
+      "published_or_updated_at": "2017-12-01",
+      "sha256": "f2750cbdd980b722ee5b4bc0fdfa3a66594cb9482e569b84ba39b2c18012a713",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/abdi_ranaldo.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "paper",
+      "url": "https://ux-tauri.unisg.ch/RePEc/usg/sfwpfi/WPF-1604.pdf"
+    },
+    {
+      "applicability": "Interprets the gap-fade edge as liquidity provision, which competes with the spread we would have to pay; edge concentrates in high-VIX periods.",
+      "claim": "Nagel (RFS 2012, NBER WP 17653): returns of short-term reversal strategies proxy for the returns to liquidity provision; the expected return is strongly time-varying and predictable with the VIX, rising sharply in turmoil.",
+      "claim_id": "nagel_2012_reversal_liquidity_provision",
+      "fetched_at": "2026-09-30T04:16:01Z",
+      "independent_replication": "Replicated in follow-up papers on reversal and liquidity.",
+      "limitations": "Monthly/weekly reversal, not intraday gap fade; paid liquidity means the edge and the cost are linked.",
+      "market_and_period": "US stocks, 1926-2010",
+      "published_or_updated_at": "2011-12-01",
+      "sha256": "cd30318802f225bbf9146f99e55665e581b810bb127a4dbeb5f93a000984fad3",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/nagel.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w17653/w17653.pdf"
+    },
+    {
+      "applicability": "Fixes the X15 information set: at 09:27 ET the newest SIP minute bar visible on the free plan starts at 09:11 and ends 09:12; X0 (bars to 09:26) needs the paid real-time SIP.",
+      "claim": "Alpaca Trading API market data plans: the free Basic plan (default for paper and live accounts) has real-time IEX only for equities and the SIP historical data is limited to the latest 15 minutes; Algo Trader Plus ($99/month) covers all US exchanges in real time with no historical restriction.",
+      "claim_id": "alpaca_market_data_plans_iex_realtime_sip_15min",
+      "fetched_at": "2026-09-30T07:21:11Z",
+      "independent_replication": "Primary source.",
+      "limitations": "Plan table on a live documentation page without a version date (updated_at is the fetch date); the project .env feed is IEX, so the SIP 15-minute rule is what a free-plan job at 09:27 ET would see; pricing can change.",
+      "market_and_period": "Alpaca documentation, current (2026-09-30)",
+      "published_or_updated_at": "2026-09-30",
+      "sha256": "07589f63dae160f462102120f9d8ee66f8ac37271a6dbbe12d2c6cf1a55b63d8",
+      "snapshot_path": "reports/research/iterations/t20260930_12_smallcap_gap_auction/sources/alpaca_about_market_data_api.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/about-market-data-api"
+    },
+    {
+      "applicability": "The signal must be computed before 09:28 ET (design uses 09:27), which is why the opening print cannot be used for selection (C1's lookahead) and why the pre-market cutoffs 09:11 / 09:26 are used.",
+      "claim": "Alpaca orders: OPG (market/limit on open) orders execute only in the opening auction and unfilled remainder is cancelled; OPG orders submitted after 9:28am and before 7:00pm ET are rejected; a market order entered between 9:28:01 and 9:29:59 on a Nasdaq security does not get the Nasdaq Official Opening Price.",
+      "claim_id": "alpaca_orders_opg_0928_deadline",
+      "fetched_at": "2026-09-30T07:21:11Z",
+      "independent_replication": "Primary source.",
+      "limitations": "Documents order acceptance, not fill quality; paper opening-auction fills were unreliable on 2026-09-15 (45 of 50 orders expired).",
+      "market_and_period": "Alpaca documentation, current (2026-09-30)",
+      "published_or_updated_at": "2026-09-30",
+      "sha256": "be4ca7690729957cff96b1786caf3f0461f85949872f53919b36ff5e73b9f6ea",
+      "snapshot_path": "reports/research/iterations/t20260930_12_smallcap_gap_auction/sources/alpaca_orders_at_alpaca.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_12_smallcap_gap_auction.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/orders-at-alpaca"
+    }
+  ],
+  "stop_condition": "Frozen in hypotheses.md before any pre-market bar is read: continue only if X15_K10_EW has main-window gross mean >= 20 bp/day with ordinary t >= 2.0, main-window placebo beat fraction >= 0.90 (100 same-pool random K-basket seeds), and short-window mean >= 10 bp/day. X15 fail and X0 pass: blocked on a paid SIP decision. Both fail: closed (look-ahead if LA >= 20 bp, else unstable). No change to pool, K, weights, windows or gates after seeing results.",
+  "target_regime_and_horizon": "Benchmark window 2024-01-08 to 2026-09-29 (contaminated: C1 saw it), short window 2023-02-01 to 2024-01-05; one-day hold from the daily-bar open to the close, long only. A gross-edge measurement; a pass licenses a ledger and a forward shadow record from 2026-10-01, not trading. Validity ends if the forward 63-session gross mean falls below 20 bp/day."
+}
