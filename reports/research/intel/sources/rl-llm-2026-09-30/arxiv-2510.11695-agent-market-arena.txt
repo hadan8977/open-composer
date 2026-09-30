@@ -1,0 +1,877 @@
+                                          When Agents Trade: Live Multi-Market Trading Benchmark for
+                                                                  LLM Agents
+                                                  Lingfei Qian                         Xueqing Peng                              Yan Wang                 Vincent Jim                    Huan He
+                                                     The Fin AI                            The Fin AI                            The Fin AI                 Zhang                       The Fin AI
+                                                    New Haven                             New Haven                             New Haven                   The Fin AI                 New Haven
+                                                  Connecticut, USA                      Connecticut, USA                      Connecticut, USA             New Haven                 Connecticut, USA
+                                                                                                                                                         Connecticut, USA
+
+                                                      Zehan Li                         Hanley Smith                                Yi Han                  Yueru He                    Haohang Li
+                                                       DeepKin                               PAAL AI                       Georgia Institute of       Columbia University          Stevens Institute of
+arXiv:2510.11695v2 [cs.CL] 30 Oct 2025
+
+
+
+
+                                                   New Haven                            Toronto, Ontario                      Technology               New York, New York              Technology
+                                                 Connecticut, USA                           Canada                        Atlanta, Georgia, USA               USA                  Hoboken, New Jersey
+                                                                                                                                                                                          USA
+
+                                                   Yupeng Cao                           Yangyang Yu                             Alejandro                   Peng Lu                   Jian-Yun Nie
+                                               Stevens Institute of                  Stevens Institute of                       Lopez-Lira                Université de                Université de
+                                                   Technology                            Technology                       University of Florida            Montréal                     Montréal
+                                               Hoboken, New Jersey                   Hoboken, New Jersey                    Gainesville, Florida        Montréal, Quebec             Montréal, Quebec
+                                                      USA                                   USA                                   USA                       Canada                       Canada
+
+                                                                                       Guojun Xiong                          Jimin Huang∗                  Sophia
+                                                                                     Harvard University                         The Fin AI                Ananiadou
+                                                                                         Cambridge                             New Haven               National Centre for
+                                                                                      Massachusetts, USA                    Connecticut, USA         Text Mining, University
+                                                                                                                           National Centre for            of Manchester
+                                                                                                                         Text Mining, University       Manchester, United
+                                                                                                                              of Manchester                  Kingdom
+                                                                                                                           Manchester, United
+                                                                                                                                 Kingdom
+
+                                         Abstract                                                                                        them across GPT-4o, GPT-4.1, Claude-3.5-haiku, Claude-sonnet-4,
+                                         Although Large Language Model (LLM)-based agents are increas-                                   and Gemini-2.0-flash. Live experiments on both cryptocurrency
+                                         ingly used in financial trading, it remains unclear whether they                                and stock markets demonstrate that agent frameworks display
+                                         can reason and adapt in live markets, as most studies test models                               markedly distinct behavioral patterns, spanning from aggressive
+                                         instead of agents, cover limited periods and assets, and rely on                                risk-taking to conservative decision-making, whereas model back-
+                                         unverified data. To address these gaps, we introduce Agent Market                               bones contribute less to outcome variation. AMA thus establishes
+                                         Arena (AMA), the first lifelong, real-time benchmark for evalu-                                 a foundation for rigorous, reproducible, and continuously evolv-
+                                         ating LLM-based trading agents across multiple markets. AMA                                     ing evaluation of financial reasoning and trading intelligence in
+                                         integrates verified trading data, expert-checked news, and diverse                              LLM-based agents.
+                                         agent architectures within a unified trading framework, enabling
+                                         fair and continuous comparison under real conditions. It imple-                                 CCS Concepts
+                                         ments four agents, including InvestorAgent as a single-agent base-                              • Information systems → Data analytics; Data stream min-
+                                         line, TradeAgent and HedgeFundAgent with different risk styles,                                 ing; • Computing methodologies → Multi-agent systems; •
+                                         and DeepFundAgent with memory-based reasoning, and evaluates                                    Applied computing → Economics.
+                                         ∗ Corresponding Author
+                                                                                                                                         Keywords
+                                         Permission to make digital or hard copies of all or part of this work for personal or
+                                         classroom use is granted without fee provided that copies are not made or distributed           Live trading benchmark, Multi-agent, Large language models, Fi-
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       nancial decision systems
+                                         on the first page. Copyrights for components of this work owned by others than the
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          ACM Reference Format:
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   Lingfei Qian, Xueqing Peng, Yan Wang, Vincent Jim Zhang, Huan He, Zehan
+                                         and/or a fee. Request permissions from permissions@acm.org.
+                                                                                                                                         Li, Hanley Smith, Yi Han, Yueru He, Haohang Li, Yupeng Cao, Yangyang
+                                         Conference acronym ’XX, Woodstock, NY
+                                         © 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                                                                                                                         Yu, Alejandro Lopez-Lira, Peng Lu, Jian-Yun Nie, Guojun Xiong, Jimin
+                                         ACM ISBN 978-1-4503-XXXX-X/2018/06                                                              Huang, and Sophia Ananiadou. 2018. When Agents Trade: Live Multi-
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 Market Trading Benchmark for LLM Agents. In Proceedings of Make sure
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                               Lingfei et al.
+
+
+to enter the correct conference title from your rights confirmation email       To fill this gap, we propose Agent Market Arena (AMA), the first
+(Conference acronym ’XX). ACM, New York, NY, USA, 12 pages. https:          lifelong, real-time, and multi-class-asset evaluation framework for
+//doi.org/XXXXXXX.XXXXXXX                                                   LLM-based trading agents, built entirely on verified and continu-
+                                                                            ously updated market data. AMA has been live for two months and
+                                                                            will remain active as an open, evolving benchmark that grows along-
+1     Introduction
+                                                                            side real markets. The defining features of AMA lie in its unified
+Can large language model (LLM)-based agents truly trade in real             protocol, verified information streams, and multi-class-asset market
+time? This question sits at the cutting edge of financial artificial in-    coverage. The protocol standardizes how agents interact with the
+telligence, where language models are transforming from static text         market. Every agent starts with the same initial capital, trades at a
+generators into autonomous decision-making systems that perceive,           fixed daily time, and follows identical execution and feedback rules,
+plan, and act in dynamic environments [11, 21]. Financial markets,          ensuring fair and reproducible evaluation. AMA also maintains
+which are volatile, high-dimensional, and unforgiving, offer per-           a verified information pipeline that continuously integrates price
+haps the most stringent test of this emerging intelligence [1, 20, 28].     data, financial news, and company reports. Each stream is standard-
+Trading is not about isolated predictions, but about making sequen-         ized, summarized, and checked for factual accuracy, consistency,
+tial, high-stakes decisions in a world that changes every second. To        and neutrality through a expert verification, providing reliable and
+succeed, agents must not only understand market narratives but              unbiased inputs for trading decisions. In addition, AMA connects
+also adapt continuously to unfolding events, uncertain feedback,            to diverse markets spanning equities and cryptocurrencies, offering
+and adversarial forces [7, 19, 39].                                         a realistic and dynamic testbed for adaptive reasoning.
+   There are multiple efforts attempting to answer this question.               Based on it, for the first time, a set of state-of-the-art LLM–based
+DeepFund [17] marks a significant step forward, introducing a               agent systems has been deployed to operate continuously in two
+multi-agent framework that integrates live data streams to simu-            stocks (Tesla (TSLA) and Biomarin Pharmaceutical (BMRN))
+late real-time decision-making. InvestorBench [18] expanded static          and two cryptocurrencies (Ethereum (ETH) and Bitcoin (BTC)).
+evaluation into trading simulations, replaying historical data to           The deployment began two months ago and has since run with-
+assess hypothetical returns. Beyond these, benchmarks focused on            out interruption, executing daily trades and adapting to real-time
+financial sentiment analysis [24, 25], event extraction [12, 16], and       market fluctuations. The system includes InvestorBench [18],
+financial text understanding [42, 46] advanced domain comprehen-            TradeAgent [40], HedgeFundAgent [37], and DeepFundAgent [17],
+sion but did not capture adaptivity or feedback, the hallmarks of           each representing distinct reasoning strategies, ranging from ag-
+real-world trading.                                                         gressive trading to conservative hedging, and from role-based to
+   Despite all these efforts, it is still nontrivial to answer the ques-    memory-adaptive decision-making. For each agent framework, we
+tion, as existing benchmarks continue to face three fundamental             further test multiple LLM backbones, enabling AMA to disentangle
+challenges. Firstly, existing work mainly evaluates models rather           the effects of agent architecture and model choice under identi-
+than agents. Frameworks such as DeepFund [17] and Investor-                 cal trading conditions. All trading activities are logged through
+Bench [18] are tied to fixed agent structures, which evaluate model         the AMA evaluation pipeline3 , producing a continuously growing
+backbones rather than the agents themselves. Even when different            dataset of real-world decisions and outcomes. Performance is mea-
+LLMs are substituted, performance trends remain similar, suggest-           sured using standard financial metrics, including cumulative return,
+ing that identical frameworks lead to convergent decision behaviors.        annualized volatility, maximum drawdown, and sharpe ratio, al-
+Secondly, the evaluation scope is extremely limited. DeepFund               lowing consistent and interpretable comparison across agents and
+tests agent with only a limited time period of 24 days that focuses         markets.
+only on U.S. stocks (Apple, American Express, Bank of America,                  Our two-month live trading results show that LLM-based agents
+Coca-Cola, and Chevron), meaning just 24 decisions per stock in             can consistently show promising capabilities in making trading deci-
+total. Such a narrow setup offers little insight into how agents gener-     sions, demonstrating genuine reasoning ability in dynamic financial
+alize across diverse market regimes, particularly when transitioning        environments. Across all assets and sessions, agent architecture
+between bullish and bearish conditions, or longer trading horizons.         proved to be the dominant factor shaping behavior. InvestorAgent
+Thirdly, the input data lacks consistency and verification. Exist-          achieved Sharpe ratios of 6.47 on TSLA, outperforming Buy &
+ing trading benchmarks rely on heterogeneous data sources, such             Hold with smoother returns and lower drawdowns. DeepFundA-
+as yfinance1 and Finnhub2 , to retrieve market prices and news.             gent reached 2.45 on BTC, showing that memory-based reason-
+However, existing benchmarks do not follow a unified data acquisi-          ing improves adaptability under volatility. TradeAgent and Hedge-
+tion protocol, and their news feeds frequently overlap or contradict        FundAgent favored aggressive risk selection, delivering remarkable
+caused by leveraging multi API sources. The same market event               returns accompanied by elevated volatility. Changing the LLM
+may appear multiple times or with varying emphasis across sources,          backbone among GPT-4o[15], GPT-4.1[27], Claude-3.5-haiku[2],
+introducing redundancy and inconsistency. Such unverified and               Claude-sonnet-4[3], and Gemini-2.0-flash[10] shifted outcomes by
+noisy inputs distort the informational environment available to             less than agent switching, confirming that these patterns are stable
+agents, thereby undermining the reliability and interpretability of         and reproducible across models.
+their trading decisions.                                                        Our contributions could be summarized as follows.
+
+1 https://pypi.org/project/yfinance/
+2 https://finnhub.io/                                                       3 https://ama.thefin.ai/live
+When Agents Trade: Live Multi-Market Trading Benchmark for LLM Agents                            Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+   ⊲Firstly, we introduce Agent Market Arena, the first lifelong,
+real-time benchmark for evaluating LLM-based financial agents
+under live market conditions.
+   ⊲Secondly, we construct a verified dataset that covers multi mar-
+kets, integrating real trading data with expert-reviewed financial
+news to ensure factual accuracy, neutrality, and continuous updates.
+   ⊲ Thirdly, we implement a diverse suite of trading agents, in-
+cluding single-agent, multi-agent, with various role and memory-
+adaptive designs, to examine how agent structures and the trading
+style shape performance across assets.
+   ⊲ Finally, we build a transparent leaderboard that records prof-
+itability and adaptability over time, offering an open and repro-
+ducible platform for studying intelligent financial agents.
+
+
+2 Related Work
+2.1 Benchmarking LLMs in Financial Domain
+There is now a growing body of work on financial benchmarks.
+Early financial NLP benchmarks [5, 6, 22, 33, 38, 42] such as Fin-
+Ben [41] expanded evaluation beyond sentiment and QA to include
+retrieval augmented tasks and multi-step decision-making prob-
+lems, yet they remained largely static and English-centric. There
+were also efforts [29, 47] introduced benchmarks broadening the
+linguistic focus beyond English and Chinese, while MultiFinBen[30]
+extended these observations to multilingual and multimodal evalu-
+ation. FinReason[31] further introduced financial reasoning tasks,
+showing that generic reasoning models degrade on financial data.
+
+
+2.2    Trading Agents and Live Benchmark
+                                                                            Figure 1: Overall framework of Agent Market Arena.
+There is also a growing line of research that explores using LLMs or
+agents to make decisions and study their performance in decision-
+making. A growing set of studies has begun to design and an-               It consists of three main components. First, the Market Intel-
+alyze trading agents. FinMem[44] and InvestorBench[18] intro-           ligence Stream (MIS) continuously aggregates data from multiple
+duced memory-augmented LLM agents and benchmarked them                  sources and generates high-quality daily summaries of market con-
+over backtesting market information. FLAG-TRADER[43] com-               ditions. The summary is reviewed by financial experts to ensure
+bined language models with policy-gradient training for sequential      accuracy, completeness, and neutrality. Second, the Agent Execu-
+decision making. FinCon[45] extended the memory updating to             tion Protocol (AEP) provides a unified environment for deploying
+multi-agent interaction, proposing a framework for single-stock         multiple trading agents, allowing each to access the verified updates
+trading and portfolio management, incorporating hierarchical com-       and make independent trading decisions across evaluated assets.
+munication and risk control. HedgeFundAgents[37] advanced this          Finally, the Performance Analytics Interface (PAI) offers a continu-
+direction by modeling a hedge-fund hierarchy, coordinating a cen-       ously updated dashboard that tracks and compares the real-time
+tral manager with hedging experts to achieve more robust re-            performance of all agents built on different LLM backbones, provid-
+turns. TradeAgents[40] further explored decentralized coordina-         ing a transparent view of profitability, stability, and adaptability.
+tion among specialized trading agents, highlighting how division
+of labor can improve market decision making. Yet these systems          3.1      Market Intelligence Stream (MIS)
+often operate in static environments. To address benchmark leak-        We begin by collecting real-time market data from a wide range
+age and excessive intervention, DeepFund[17] proposed a live            of heterogeneous sources to ensure both coverage and accuracy.
+multi-agent arena for fund investment, enabling dynamic eval-           These include general-purpose APIs and online news aggregators.
+uation of LLM-driven strategies.                                        We leverage sources such as OpenAI Web Search 4 , Finnhub, News-
+                                                                        Data5 , yifinance, CryptoNews6 , and Binance7 , which provide access
+3     Agent Market Arena: Real-time trading and                         not only to news streams from established financial outlets, but
+                                                                        also to social media content. This ensures that both API-driven
+      competition
+                                                                        4 https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses
+The overall framework of Agent Market Arena is illustrated in           5 https://newsdata.io/
+Figure 1. It is designed to evaluate how different agent frameworks     6 https://cryptonews.com/
+
+perform when given access to the real-time market environment.          7 https://www.binance.com/en
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                   Lingfei et al.
+
+
+feeds, direct news content, and integrated social media signals from       contextual trading metadata. This consistent input design guaran-
+platforms such as Twitter8 and Reddit9 are incorporated to cap-            tees that all agents operate under the same market knowledge and
+ture emerging sentiment. This multi-source integration reduces the         temporal conditions.
+bias of relying on a single channel and provides a broader, more               Outputs. Agents produce discrete daily actions from the same
+balanced, and truly real-time view of the market environment.              action space: BUY, SELL, HOLD. These actions are used to update
+   Despite the diversity of sources, much of the content may par-          the simulated portfolio and compute next-day returns. A BUY action
+tially overlap, which could introduce bias if the same information         means the agent expects the asset’s value to rise and increases its po-
+repeatedly appears to the agents. To address this, we apply a sum-         sition; a SELL action indicates the opposite expectation; and a HOLD
+marization step to consolidate the news and prevent redundancy             action reflects neutrality or uncertainty, keeping the current posi-
+from distorting the evaluation. We use GPT-5-nano for this task,           tion unchanged. All trading decisions are executed synchronously
+with implementation details provided in Appendix A.                        at the same fixed time, ensuring fair comparison across models and
+   Quality control. To rigorously evaluate the quality of the sum-         markets.
+marized news, we randomly sample 20 daily items from the gener-                Prompts and Hyperparameters. Each agent is additionally
+ated outputs, covering both equities and cryptocurrencies, 20 days         guided by a structured system prompt that defines trading strategy
+for each. Following the focus of previous works, two independent           and action descriptions. To maintain fairness, generation parame-
+annotators assess each item according to the following criteria: (1)       ters such as temperature, retry times are fixed across all agents and
+Date Accuracy[8]: Each item must correspond precisely to the               backbones 10 .
+intended trading date and the associated assets. (2) Coverage[36]:             InvestorAgent[18] is a single-agent framework that integrates a
+The sample must include all major news of the day directly related         memory module to store historical trading decisions and contextual
+to the target assets across the principal categories that drive prices,    information. It analyzes past outcomes to extract actionable insights,
+ensuring that no significant asset-related information is omitted.         which are then used to refine future optimization and decision-
+(3) Bias Awareness[9]: Determine whether the summarization                 making processes.
+process introduces any additional or noticeable bias that is absent            TradeAgent[40] follows a multi-agent architecture inspired
+from the original content. For each criterion, we adopt a three-level      by real-world trading firms. Rather than relying solely on fixed
+scale: 0 indicates not satisfied, 1 indicates partially satisfied, and 2   technical indicators, it orchestrates specialized roles—such as fun-
+indicates fully satisfied.                                                 damental, sentiment, news, and technical analysts—whose insights
+   The evaluation was conducted independently by two annotators            are debated by researcher agents and then aggregated by a trader
+using the 20-day samples for both equities and cryptocurrencies.           agent. Final trade proposals are checked by risk management and a
+Results show strong consistency: date accuracy agreement reached           portfolio manager before execution.
+87.5%, coverage 92.5%, and bias awareness 100%. Most date dis-                 HedgefundAgent[37] models a hedge-fund team by orches-
+crepancies (7 cases, score = 1) were due to API latency, where the         trating specialized agents that follow characters of famous trading
+retrieved link was current but the article content lagged by one           people, like Aswath Damodaran and Ben Graham, among others,
+or two days. Four cases received a score of 1 for coverage, pri-           each simulate distinct roles in the investment process. Their signals
+marily due to partially incomplete summaries that omitted minor            are aggregated by a portfolio manager to produce trade intents,
+updates—such as relevant company name changes, indicating shifts           while a risk manager computes risk metrics and enforces position
+in business direction. These omissions were considered acceptable,         limits.
+as all major market-moving events were accurately captured within              DeepFundAgent[17] is designed to test adaptability by pro-
+the evaluated summaries. For the bias awareness, no summariza-             cessing streaming inputs, generating trade signals, and updating
+tion was found to introduce bias or sentiment beyond what existed          positions based on history portfolio updates that stored in mem-
+in the original news sources. This rigorous daily quality control          ories, as well as the media, technical analysis. This setup enables
+ensures that the benchmark reflects high-fidelity, real-time market        an assessment of how LLM-based decision systems perform in dy-
+narratives and minimizes the propagation of outdated or biased             namic environments compared to rule-based or static benchmarks.
+information into agent evaluation.
+
+3.2     Agent Execution Protocol (AEP)                                     3.3     Performance Analytics Interface (PAI)
+The Agent Execution Protocol (AEP) defines how all agents in AMA           Each agent makes one trading decision per day, represented as
+interact with the market environment. It standardizes three core           a signal 𝑤𝑡 ∈ {1, −1, 0}, where 𝑤𝑡 = 1 means buying the asset,
+components, including inputs, outputs, and configuration, to ensure        𝑤𝑡 = −1 means selling it, and 𝑤𝑡 = 0 means holding the current
+that performance differences arise from reasoning ability rather           position. The agent’s daily return is: 𝑟𝑡 = 𝑤𝑡 𝑃𝑡𝑃−𝑃 𝑡 −1
+                                                                                                                             𝑡 −1
+                                                                                                                                     , and its overall
+than implementation variance.                                              performance over time is tracked through cumulative return: 𝑅𝑡 =
+                                                                           Î𝑡
+   Inputs. Each agent receives identical daily inputs, including             𝑖=1 (1 + 𝑟 𝑖 ) − 1.
+verified market data and the summarized news from the MIS. The
+information is structured into a unified prompt format contain-
+ing asset identifiers, historical prices, recent news summaries, and
+
+8 https://x.com/?lang=en
+9 https://www.reddit.com                                                   10 For more details, please check Appendix B
+When Agents Trade: Live Multi-Market Trading Benchmark for LLM Agents                                                                                                   Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+Agent
+
+
+
+
+                                                            TSLA                                                   BMRN                                                         BTC                                                  ETH
+
+                 Model
+
+
+
+
+                                                                                    (↓)
+
+
+
+
+                                                                                                                                                    (↓)
+
+
+
+
+                                                                                                                                                                                                        (↓)
+
+
+
+
+                                                                                                                                                                                                                                                               (↓)
+                                                        )
+
+
+
+
+                                                                                                               )
+
+
+
+
+                                                                                                                                                                         )
+
+
+
+
+                                                                                                                                                                                                                              )
+                                        )
+
+
+
+
+                                                                                                  )
+
+
+
+
+                                                                                                                                                              )
+
+
+
+
+                                                                                                                                                                                                                  )
+                                                                    )
+
+
+
+
+                                                                                                                            )
+
+
+
+
+                                                                                                                                                                                        )
+
+
+
+
+                                                                                                                                                                                                                                              )
+                                                  AR% (↑
+
+
+
+
+                                                                                                         AR% (↑
+
+
+
+
+                                                                                                                                                                       AR% (↑
+
+
+
+
+                                                                                                                                                                                                                            AR% (↑
+                                      CR% (↑
+
+
+
+
+                                                                                            CR% (↑
+
+
+
+
+                                                                                                                                                            CR% (↑
+
+
+
+
+                                                                                                                                                                                                                CR% (↑
+                                                              AV% (↓
+
+
+
+
+                                                                                                                     AV% (↓
+
+
+
+
+                                                                                                                                                                                 AV% (↓
+
+
+
+
+                                                                                                                                                                                                                                       AV% (↓
+                                                                                  MDD%
+
+
+
+
+                                                                                                                                               MDD%
+
+
+
+
+                                                                                                                                                                                                      M DD%
+
+
+
+
+                                                                                                                                                                                                                                                             M DD%
+                                                                         SR (↑)
+
+
+
+
+                                                                                                                                    SR (↑)
+
+
+
+
+                                                                                                                                                                                             SR (↑)
+
+
+
+
+                                                                                                                                                                                                                                                   SR (↑)
+Buy & Hold       -                  46.88      962.13        40.89      6.00       6.34    -6.89      -35.53        29.03        -1.37        15.03        0.66       4.02      30.05       0.28      11.95   18.56      176.92       71.71       1.77      20.23
+                 GPT-4o             33.01      783.38        42.32      5.37      6.34     -5.33      -25.93        26.99        -0.98        14.36        -1.22      -7.10     20.77       -0.25      8.79    -1.98     -11.29       55.58        0.06     22.13
+                 GPT-4.1            40.83       764.39       34.35      6.47      4.38      3.79       23.19        24.33         0.98         7.35        -3.34     -18.40     20.32       -0.90      9.92     1.35       8.38       50.73        0.41     23.76
+                 Gemini-2.0-flash   10.57        80.22       42.30      1.60      8.50    -13.88      -53.62        25.23        -2.92        19.57        -2.78     -15.51     19.58       -0.76     10.20    -6.39     -32.64       64.98       -0.28     32.27
+InvestorAgent
+                 Claude-3.5-haiku   11.55       124.83       38.35      2.30      8.35     -8.35      -41.48        25.49        -1.97        15.24        -7.06     -35.46     30.02       -1.31     15.18     5.05      34.29       71.94        0.76     22.98
+                 Claude-sonnet-4    28.91       328.14       41.01      3.76      8.41     -6.89      -34.58        28.34        -1.36        15.12        -6.48     -33.04     25.93       -1.42     12.62     5.56      38.20       61.40        0.83     27.17
+                 Vote               29.13       293.80       37.68      3.83      8.37     -5.47      -28.08        27.50        -1.06        13.64        -2.19     -12.43     22.16       -0.49      9.68    -1.97     -11.20       58.80        0.09     28.80
+                 GPT-4o              -4.25     -54.22        22.36      -3.38      5.73   -1.95       -22.97        21.56        -1.11         7.81        -5.05     -26.67      7.50       -4.09      5.05    -6.23     -31.95      31.78        -1.05     15.95
+                 GPT-4.1            -38.72     -94.33        50.68      -5.38     38.72    4.84        27.51        23.39         1.15         6.20        -5.65     -29.41     28.83       -1.07      9.76   -11.42     -51.61      68.44        -0.72     24.75
+                 Gemini-2.0-flash    21.91     203.20        30.23       3.82      6.41   -0.31        -1.61        22.11         0.04         9.46         5.02     34.09      24.27        1.33      5.83     9.78      74.78      52.88         1.32     16.01
+TradeAgent
+                 Claude-3.5-haiku    -6.62     -36.48        25.72      -1.64     11.05   -9.45       -40.61        16.81         3.01        13.85       -14.51     -60.85     24.07       -3.77     16.37   -12.93     -56.31      50.12        -1.40     15.21
+                 Claude-sonnet-4     -5.43     -24.10        26.42      -0.91     12.89   14.57       121.92        21.86         3.76         3.81       -13.02     -56.61     26.36       -3.03     15.02   -12.35     -54.57      41.10        -1.71     20.50
+                 Vote                -0.36      -2.30        24.44       0.02      9.03    1.22         7.55        18.90         0.48         6.70        -7.28     -36.39     23.83       -1.78     11.53    -9.89     -46.39      40.12        -1.35     14.57
+                 GPT-4o             -29.15     -84.86        40.94      -4.39     29.15   23.70       247.76        26.59        4.83          5.59        -9.09     -43.46     29.97       -1.76     11.14   39.66      638.04       69.75       3.21      14.63
+                 GPT-4.1            -29.15     -84.86        40.94      -4.39     29.15   23.70        247.76       26.59        4.83          5.59        -9.09     -43.46     29.97       -1.76     11.14   39.66       638.04      69.75       3.21      14.63
+                 Gemini-2.0-flash   -29.15     -84.86        40.94      -4.39     29.15   23.70        247.76       26.59        4.83          5.59        -9.09     -43.46     29.97       -1.76     11.14   39.66       638.04      69.75       3.21      14.63
+HedgeFundAgent
+                 Claude-3.5-haiku   -29.15     -84.86        40.94      -4.39     29.15   23.70        247.76       26.59        4.83          5.59        -9.09     -43.46     29.97       -1.76     11.14   39.66       638.04      69.75       3.21      14.63
+                 Claude-sonnet-4    -29.15     -84.86        40.94      -4.39     29.15   23.70        247.76       26.59        4.83          5.59        -9.09     -43.46     29.97       -1.76     11.14   39.66       638.04      69.75       3.21      14.63
+                 Vote               -29.15     -84.86        40.94      -4.39     29.15   23.70        247.76       26.59        4.83          5.59        -9.09     -43.46     29.97       -1.76     11.14   39.66       638.04      69.75       3.21      14.63
+                 GPT-4o              13.89      95.19        37.14       1.98      7.61     3.72       22.68        25.89         0.92         8.92        -0.30      -1.80     24.35        0.04      7.98    18.03     169.68       71.07        1.74     21.86
+                 GPT-4.1             -5.52     -27.77        37.30      -0.69     19.22     4.86       29.67        16.67         1.64         3.49         0.44       2.68      1.08       2.45       0.00     2.89      18.56       58.62        0.57     26.08
+                 Gemini-2.0-flash    -8.04     -55.62        20.40      -3.88      8.04     3.59       20.84        24.77         0.89         6.57         0.00       0.00      0.00        0.00      0.00   -13.11     -56.85       40.55       -1.87     22.20
+DeepFundAgent
+                 Claude-3.5-haiku   -15.43     -57.76        38.49      -2.04     28.48    -1.12       -6.01        26.80        -0.10        12.25         1.67      10.40     27.51        0.50      7.91    10.74      84.08       69.93        1.21     23.11
+                 Claude-sonnet-4     -6.96     -32.07        35.81      -0.90     12.99     5.48       34.81        25.27         1.31         8.52        -8.24     -40.23     21.91       -2.24     10.18     8.20      60.29       56.87        1.11     18.58
+                 Vote                 8.61      55.75        36.68       1.39     10.14     9.45       52.43        22.82         1.96         6.42        -0.54      -3.20      1.33       -2.45      0.54     4.91      33.22       65.65        0.75     13.00
+
+Table 1: Merged live trading outcomes for four agents across five backbone models on two stock assets (TSLA, BMRN) and two
+crypto assets (BTC, ETH), from Aug 1 to Sep 30. Metrics: CR (Cumulative Return), AR (Annualized Return), AV (Annualized
+Volatility), SR (Sharpe Ratio), and MDD (Maximum Drawdown). “Vote” denotes majority-vote ensembles across the backbones.
+
+
+
+    To assess trading performance, we employ five widely used finan-                                                               Cryptocurrencies such as BTC and ETH operate in highly volatile,
+cial indicators. The Cumulative Return (CR) [13] measures the to-                                                               sentiment-driven environments that react rapidly to macroeco-
+tal growth of an agent’s portfolio over the evaluation period, captur-                                                          nomic and policy signals, providing a rigorous test of model adapt-
+ing its overall profitability. The Annualized Return (AR) [34] ad-                                                              ability under extreme market fluctuations. [4] In contrast, equities
+                                                         252
+justs this value to a yearly rate, 𝑅annual = (1+𝑅𝑡 ) 𝑇 −1 allowing com-                                                         like TSLA and BMRN are influenced by sector-specific fundamen-
+parisons across different time spans. To quantify risk,                                                                         tals—technological innovation, production metrics, or clinical trial
+                                                             √ we compute
+the Annualized Volatility (AV) [14] as 𝜎annual = 252 × std(𝑟𝑡 ),                                                                results—allowing us to assess how well the system handles struc-
+which reflects how much the agent’s daily returns fluctuate. The                                                                tured, information-rich contexts. [32] By combining these hetero-
+                                                 𝑟¯ −𝑟                                                                          geneous assets, we ensure that the evaluation spans diverse asset
+Sharpe Ratio (SR) [35], given by 𝑆 = 𝜎 𝑓 , evaluates how effi-
+                                                  annual                                                                        classes, time sensitivities, offering a comprehensive benchmark for
+ciently the agent converts risk into return, assuming a risk-free rate
+                                                                                                                                decision-making agents in real-world trading conditions.
+𝑟 𝑓 = 0. Finally, the Maximum Drawdown (MDD) [23] is defined
+                                                                                                                              Agent initialization and evaluation. To establish historical ground-
+                        𝑖 ≤𝑡 𝑅𝑖 −𝑅𝑡
+as 𝐷 max = max𝑡 max   max𝑖 ≤𝑡 𝑅𝑖      , capturing the largest observed loss                                                     ing and construct contextual memory, agents undergo an initializa-
+from a peak to a trough and indicating downside exposure.                                                                       tion phase with data from 2025-05-01 to 2025-07-31, during which
+    All metrics are updated daily and displayed on a real-time leader-                                                          they adapt to recent market dynamics, simulate realistic trading en-
+board that compares the profitability, stability, and adaptability of                                                           vironments, and form representative portfolio positions. Real-time
+agents across different LLM backbones and market types.                                                                         evaluation begins on 2025-08-01. As of the paper’s drafting date:
+                                                                                                                                2025-09-30, the agents have completed two months of live trading
+                                                                                                                                and continue to operate autonomously, producing daily trading
+4       Experiment Settings                                                                                                     actions and performance evaluations in real time.
+LLM selection. For each agent, we evaluate five different backbone
+models from OpenAI, Claude, and Gemini. Specifically, we include
+GPT-4o, GPT-4.1, Gemini-2.0-flash, Claude-3.5-haiku, and Claude-                                                                5            Results
+sonnet-4.                                                                                                                       In this section, we examine how different agents perform in a
+Assets. We evaluate both equity and cryptocurrency markets to                                                                   continuously evolving live trading environment to address the
+capture distinct market dynamics and behavioral patterns. Our                                                                   following research questions (RQs):
+representative test assets include Bitcoin (BTC) and Ethereum (ETH)
+from the cryptocurrency space, and two publicly traded stocks,                                                                               • RQ1: Can LLM-based agents truly trade, meaning make
+Tesla (TSLA) and BioMarin Pharmaceutical (BMRN), representing                                                                                  profitable and consistent decisions that outperform simple
+the high-technology and biomedicine sectors, respectively.                                                                                     Buy & Hold strategies in live markets?
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                                           Lingfei et al.
+
+
+                                          TSLA                                                                                    TSLA
+
+  25
+                                                                                          0
+   0
+  25
+                                                                                         50
+
+                                          BMRN                                                                                    BMRN
+  20                                                                                     20
+
+   0                                                                                      0
+
+
+
+                                              BTC                                                                                  BTC
+
+   0                                                                                      0
+  10                                                                                     10
+
+
+                                              ETH                                                                                  ETH
+  50
+  25                                                                                     25
+   0                                                                                      0
+                                                                                         25
+   2025-08-01 2025-08-15           2025-09-01 2025-09-15              2025-10-01          2025-08-01 2025-08-15            2025-09-01 2025-09-15              2025-10-01
+
+                                                                                                Claude-sonnet-4-20250514    GPT-4o             Vote
+             Deepfundagent   Hedgefundagent         Investoragent   Tradeagent                  GPT-4.1                     Gemini-2.0-flash   claude-3-5-haiku-20241022
+
+(a) Comparison of aggregated performance of different agents                          (b) Comparison of aggregated performance of different LLMs
+across four assets.                                                                   across four assets.
+
+Figure 2: Aggregated performance of different agents and LLMs across four assets. The solid line represents the average
+cumulative return, while the shaded area indicates the range between the maximum and minimum CR observed when
+switching LLMs or agent frameworks.
+
+
+       • RQ2: Which factor contributes more to trading performance,                of 8.61% on TSLA and 9.45% on BMRN, with annualized volatilities
+         the agent’s structural framework or the reasoning ability of              of 36.68% and 22.82% and Sharpe ratios of 1.39 and 1.96, respectively.
+         its underlying LLM backbone?                                              InvestorAgent also performs competitively, particularly under
+       • RQ3: How effectively can agents interpret and translate                   GPT-4.1, reaching 40.83% cumulative return with a Sharpe ratio of
+         complex market information into trading decisions that an-                6.47 on TSLA. It also shows sensitivity to backbone models and as-
+         ticipate and adapt to price fluctuations?                                 sets, with its CR on BMRN dropping from 3.79% (GPT-4.1) to –6.89%
+       • RQ4: How do different trading philosophies, from aggres-                  (Claude-sonnet-4). TradeAgent and HedgeFundAgent display
+         sive to conservative strategies, influence decision-making                wider fluctuations, with TradeAgent’s returns on TSLA ranging
+         behavior and overall profitability across markets?                        from –38.72% (GPT-4.1) to 21.91% (Gemini-2.0-Flash). HedgeFundA-
+                                                                                   gent demonstrates mixed outcomes, achieving 39.66% CR on ETH
+                                                                                   in one setup but negative returns on BTC. Yet it maintains relative
+5.1      Performance of Agents in Live Trading                                     robustness across backbones due to its hierarchical coordination
+         (RQ1)                                                                     with sixteen specialized sub-agents feed two managerial agents
+Table 1 summarizes the live trading results of all agents across both              that aggregate signals, reducing variance introduced by individual
+cryptocurrency and stock markets. Overall, the findings confirm                    LLMs.
+that LLM-based agents can indeed trade profitably in real time,                       Across these experiments, no single LLM or agent consistently
+often surpassing simple buy-and-hold strategies while maintaining                  outperforms others across all assets. Nevertheless, the results reveal
+stability across dynamic market conditions. The outcomes, however,                 clear evidence of agent–model complementarity, where certain pair-
+vary significantly across agents and asset types, illustrating that                ings yield notably stronger outcomes. For instance, TradeAgent cou-
+performance depends heavily on design philosophy and market                        pled with Gemini-2.0-flash attains leading performance on TSLA,
+context.                                                                           ETH, and BTC, and ranks second on BMRN. InvestorAgent per-
+   Among the evaluated systems, DeepFundAgent delivers the                         forms best when paired with GPT-4.1, delivering strong results on
+most balanced and consistent results, achieving cumulative returns
+When Agents Trade: Live Multi-Market Trading Benchmark for LLM Agents                      Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+
+
+Figure 3: Agent performance on BTC under different market events. The bars represent the profit gap between TradeAgent
+(Gemini-2.0-flash) and InvestorAgent (GPT-4.1).
+
+
+both TSLA and BMRN. Similarly, DeepFundAgent achieves its high-         return trajectories against the Buy & Hold baseline (Figure 3) and
+est returns with GPT-4o, exhibiting robust performance on ETH           examined how each agent interpreted macroeconomic signals and
+and TSLA and maintaining competitiveness across remaining as-           adapted its strategy during major volatility events. We focus on
+sets. This underscores the importance of conducting multi-market        three key episodes: August 13, August 28, and September 28, which
+evaluations, which offer broader insights compared to analyses          capture both successful trades and failed forecasts.
+restricted to a limited set of assets and results.                         On August 13–14, global equity markets entered a period of
+                                                                        broad-based bullish momentum, with major indices across the U.S.,
+5.2    Which Matters More: Agent Architecture or                        Europe, and Asia reaching record highs. This synchronized up-
+                                                                        swing, fueled by policy-easing expectations and renewed sovereign
+       LLM Backbone? (RQ2)
+                                                                        inflows, was widely described by media as one of the most coordi-
+To disentangle the relative influence of agent design and LLM back-     nated global rallies in recent years. [26] Despite overwhelmingly
+bone on live trading performance, we aggregate outcomes across all      bullish sentiment, TradeAgent identified the fragility of this ex-
+agent–model pairings, as illustrated in Figure 2. Figure 2a reports     treme optimism, recognizing that an “unprecedented” event lacked
+the performance of each agent under different LLMs, while Figure        historical equilibrium. It correctly hedged risk near the peak, prof-
+2b summarizes how each LLM performs across agent architectures.         iting when prices normalized. On August 28–29, During August
+   Overall, the results reveal that modifying the underlying LLM        28–29, several rare structural shifts occurred: (1) Political capital
+within a fixed agent framework produces only modest changes             met mining, as the Trump-backed American Bitcoin Corp. listed on
+in profitability, whereas varying the agent design while holding        NASDAQ via its merger with Gryphon Digital Mining, marking one
+the LLM constant leads to far greater performance divergence. For       of the first clear intersections between politics and Bitcoin infras-
+instance, in Figure 2a, the InvestorAgent results on TSLA cluster       tructure. (2) Institutional accumulation surged in Asia, with major
+tightly, showing minimal spread across LLM configurations, indi-        Japanese and Korean firms announcing plans to integrate Bitcoin
+cating that switching models has limited effect. By contrast, Figure    into their fiscal reserves. (3) Ecosystem innovation advanced, driven
+2b shows GPT-4.1 (light blue) spanning a wide range of returns          by the RGB protocol and Tether’s integration on the Bitcoin net-
+across agents, demonstrating that the structural design of the agent    work, expanding Bitcoin’s role beyond a store of value. Although
+exerts a stronger influence on trading outcomes than the reasoning      these were long-term bullish signals, TradeAgent detected short-
+capability of the backbone itself.                                      term exhaustion in technicals and executed a SELL, accurately
+   These findings suggest that an agent’s architecture, includ-         anticipating a short-term correction. By contrast, on September
+ing its decision logic, coordination strategy, and risk control         28–29, the agent’s short position, initially justified by ETF outflows
+mechanisms, plays a more decisive role in shaping profitabil-           and synchronized drawdowns, was reversed by a sudden surge
+ity and stability than merely upgrading to a more powerful model.       in liquidity and sovereign inflows, leading to a short squeeze. All
+Within the AMA environment, enhancing the way agents utilize            agents shared this misjudgment, reflecting the difficulty of reacting
+LLM may thus yield greater gains than improving the LLMs alone.         to abrupt macro reversals.
+                                                                           Figure 4 shows that for most of the period, the performance
+5.3    Understanding Agents’ Decision-Making                            gap between InvestorAgent (GPT-4.1) and TradeAgent (Gemini-
+       Driven by Market Signals (RQ3)                                   2.0-flash) remained narrow. InvestorAgent captured the early rally
+                                                                        around August 13 but missed later turning points, allowing TradeAgent
+To better understand how agents make trading decisions under real-
+                                                                        to overtake it by capitalizing on volatility and adapting more dy-
+time and volatile market conditions, we analyzed the behavior of
+                                                                        namically to shifting sentiment. These results suggest that the
+TradeAgent and InvestorAgent on BTC, using Gemini-2.0-flash
+                                                                        most successful agents are those capable of exploiting pe-
+and GPT-4.1 as backbones. BTC was selected for its high sensitivity
+                                                                        riods of volatility rather than merely following long-term
+to market news and sentiment. We compared their cumulative
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                             Lingfei et al.
+
+
+
+
+Figure 4: Cumulative return comparison of Buy-and-Hold baseline for BTC (Aug–Sep 2025), annotated with daily news sentiment
+(green = bullish, gray = neutral, red = bearish) and agent voting signals (squares: blue = BUY, gray = HOLD, orange = SELL.
+
+
+trends, as agents that take advantages of volatility fits more for      In contrast, DeepFundAgent demonstrated a more conservative
+the daily trading frequency of AMA.                                     decision pattern, frequently opting for the “vote” action and main-
+   This analysis also highlights the value of a continuously up-        taining stable returns across multiple assets. The prudence observed
+dating, multi-class-asset benchmark built on verified and diverse       in both agents’ strategies may stem from their memory-adaptive
+market data. Real-time developments across both equities and cryp-      mechanisms, which enable them to draw on prior high-risk experi-
+tocurrencies demonstrate that agent performance cannot be fairly        ences and adjust decisions toward more risk-averse behaviors.
+assessed through static or single-market evaluations. By integrating       These findings, consistent with Table 1, underscore that trading
+verified data streams and standardized decision protocols, AMA          style is a key determinant of profitability and risk exposure.
+enables systematic comparison of multiple agents under consistent       DeepFundAgent achieved consistent, moderate gains, while the
+and dynamic market conditions. This design provides a more com-         aggressive HedgeFundAgent generated substantial profits in ETH
+prehensive and generalizable understanding of how different agent       and BMRN, which are 39.66% and 23.70% respectively, but incurred
+architectures interpret across real-world financial environments.       significant losses in TSLA and BTC. Together, these results reaffirm
+                                                                        a fundamental market principle, higher risk can lead to greater
+5.4     Revealing the Influence of Agent Trading                        reward but also greater potential loss.
+        Styles and Patterns (RQ4)
+                                                                        6   Conclusion
+We further investigate how trading styles shape agent behavior in
+the AMA framework. Figure 4 shows the interplay between daily           In this work, we introduced AMA, the first continuously updat-
+market sentiment, BTC price dynamics, and agent voting behaviors.       ing, multi class-asset benchmark for evaluating LLM-based trading
+   Although all agents operate on identical market information,         agents in real time. Built upon three core components, including
+their trading strategies diverge from the first day. HedgeFundAgent     verified multi-market information streams, a unified trading proto-
+and InvestorAgent favored short positions, whereas DeepFundA-           col, and a transparent performance interface, AMA establishes a
+gent preferred buying and TradeAgent tended to hold. These strate-      reproducible and dynamic foundation for studying financial trading
+gic contrasts became more distinct as trading progressed, reflecting    agents under genuine market conditions. It bridges the gap between
+each framework’s inherent risk preferences and decision logic.          language understanding and live decision-making.
+   Across the two-month live trading period, overall market sen-           Our findings reveal four key insights. First, LLM-based agents
+timent remained optimistic. Nevertheless, HedgeFundAgent per-           can trade effectively and consistently outperform simple buy & hold
+sistently maintained short positions, revealing its contrarian and      strategies in live environments. Second, agent architecture, rather
+high-risk nature. TradeAgent, despite being generally more volatile,    than the choice of LLM backbone, exerts the strongest influence on
+chose to hold positions on most days, indicating that while inher-      profitability and adaptability. Third, agents demonstrate distinct rea-
+ently aggressive, it could exhibit conservative behavior depending      soning behaviors when interpreting complex, fast-changing market
+on its backbone model. InvestorAgent’s decisions largely followed       signals, with more adaptive frameworks proving better at navigat-
+prevailing market trends, as reflected in its cumulative return curve   ing volatility. Finally, trading styles, ranging from aggressive to
+(Figure 2a), which outperformed others for most of the trading pe-      conservative, shape each agent’s risk–return profile and stability
+riod. The agent frequently executed buy and sell actions, exhibiting    over time. In future work, we plan to extend AMA with inter-agent
+a proactive and risk-taking trading style. Nevertheless, its overall    communication, cross-asset dynamics, and reinforcement learning
+profitability remained moderate across assets, suggesting that it       feedback, advancing toward a deeper understanding of autonomous
+adopted a relatively cautious stance during periods of elevated risk.   financial intelligence in LLM-driven systems.
+When Agents Trade: Live Multi-Market Trading Benchmark for LLM Agents                                               Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+References                                                                                 [26] Chibuike Oguh. 2025. World equities hit record highs, US yields fall on optimism
+ [1] Mahmoud Ahmad Al-Khasawneh, Asif Raza, Saif Ur Rehman Khan, and Zia Khan.                  for Fed rate cut. Reuters (2025). https://www.reuters.com/world/china/global-
+     2024. Stock market trend prediction using deep learning approach. Computational            markets-update-6-graphic-2025-08-13/
+     Economics (2024), 1–32.                                                               [27] OpenAI. 2025. Introducing GPT-4.1 in the API. https://openai.com/index/gpt-4-
+ [2] Anthropic. 2025. Claude 3.5 Haiku. https://www.anthropic.com/claude/haiku.                 1/.
+ [3] Anthropic. 2025. Introducing Claude 4. https://www.anthropic.com/news/claude-         [28] Antonio Pagliaro. 2025. Artificial intelligence vs. efficient markets: A critical
+     4.                                                                                         reassessment of predictive models in the big data era. Electronics 14, 9 (2025),
+ [4] Eugene Msizi Buthelezi. 2025. Cryptocurrency responses to us monetary policy               1721.
+     shocks: a data-driven exploration of price and volatility patterns. The American      [29] Xueqing Peng, Triantafillos Papadopoulos, Efstathia Soufleri, Polydoros Gian-
+     Economist 70, 1 (2025), 94–119.                                                            nouris, Ruoyu Xiang, Yan Wang, Lingfei Qian, Jimin Huang, Qianqian Xie, and
+ [5] Zhiyu Chen, Wenhu Chen, Charese Smiley, Sameena Shah, Iana Borova, Dylan                   Sophia Ananiadou. 2025. Plutus: Benchmarking large language models in low-
+     Langdon, Reema Moussa, Matt Beane, Ting-Hao Huang, Bryan Routledge, et al.                 resource greek finance. arXiv preprint arXiv:2502.18772 (2025).
+     2021. Finqa: A dataset of numerical reasoning over financial data. arXiv preprint     [30] Xueqing Peng, Lingfei Qian, Yan Wang, Ruoyu Xiang, Yueru He, Yang Ren,
+     arXiv:2109.00122 (2021).                                                                   Mingyang Jiang, Jeff Zhao, Huan He, Yi Han, et al. 2025. MultiFinBen: A Multilin-
+ [6] Zhiyu Chen, Shiyang Li, Charese Smiley, Zhiqiang Ma, Sameena Shah, and                     gual, Multimodal, and Difficulty-Aware Benchmark for Financial LLM Evaluation.
+     William Yang Wang. 2022. Convfinqa: Exploring the chain of numerical reasoning             arXiv preprint arXiv:2506.14028 (2025).
+     in conversational finance question answering. arXiv preprint arXiv:2210.03849         [31] Lingfei Qian, Weipeng Zhou, Yan Wang, Xueqing Peng, Jimin Huang, and Qian-
+     (2022).                                                                                    qian Xie. 2025. Fino1: On the transferability of reasoning enhanced llms to
+ [7] Nina Deliu. 2024. Reinforcement learning for sequential decision making in                 finance. arXiv e-prints (2025), arXiv–2502.
+     population research. (2024).                                                          [32] Scott Richardson, Richard Sloan, and Haifeng You. 2012. What makes stock prices
+ [8] Casey Dougal, Joseph Engelberg, Diego Garcia, and Christopher A Parsons. 2012.             move? Fundamentals vs. investor recognition. Financial Analysts Journal 68, 2
+     Journalists and the stock market. The Review of Financial Studies 25, 3 (2012),            (2012), 30–50.
+     639–679.                                                                              [33] Soumya Sharma, Tapas Nayak, Arusarka Bose, Ajay Kumar Meena, Koustuv
+ [9] Matthew Gentzkow and Jesse M Shapiro. 2006. Media bias and reputation. Journal             Dasgupta, Niloy Ganguly, and Pawan Goyal. 2022. FinRED: A dataset for relation
+     of political Economy 114, 2 (2006), 280–316.                                               extraction in financial domain. In Companion Proceedings of the Web Conference
+[10] GoogleCloudPlatform generative-AI. 2025.            intro_gemini_2_0_flash.ipynb.          2022. 595–597.
+     https://github.com/GoogleCloudPlatform/generative-ai/blob/main/gemini/                [34] William F. Sharpe. 1966. Mutual Fund Performance. Journal of Business 39, 1
+     getting-started/intro_gemini_2_0_flash.ipynb.                                              (1966), 119–138. doi:10.1086/294846
+[11] Taicheng Guo, Xiuying Chen, Yaqi Wang, Ruidi Chang, Shichao Pei, Nitesh V             [35] William F Sharpe. 1998. The sharpe ratio. Streetwise–the Best of the Journal of
+     Chawla, Olaf Wiest, and Xiangliang Zhang. 2024. Large language model based                 Portfolio Management 3, 3 (1998), 169–85.
+     multi-agents: A survey of progress and challenges. arXiv preprint arXiv:2402.01680    [36] Paul C Tetlock. 2007. Giving content to investor sentiment: The role of media in
+     (2024).                                                                                    the stock market. The Journal of finance 62, 3 (2007), 1139–1168.
+[12] Cuiyun Han, Jinchuan Zhang, Xinyu Li, Guojin Xu, Weihua Peng, and Zengfeng            [37] virattt. 2025. AI Hedge Fund Team. https://github.com/virattt/ai-hedge-fund.
+     Zeng. 2022. Duee-fin: A large-scale dataset for document-level event extraction.           Accessed: YYYY-MM-DD.
+     In CCF International Conference on Natural Language Processing and Chinese            [38] Yan Wang, Yang Ren, Lingfei Qian, Xueqing Peng, Keyi Wang, Yi Han, Dongji
+     Computing. Springer, 172–183.                                                              Feng, Xiao-Yang Liu, Jimin Huang, and Qianqian Xie. 2025. FinTagging: An
+[13] John Hull. 2012. Risk management and financial institutions,+ Web Site. Vol. 733.          LLM-ready Benchmark for Extracting and Structuring Financial Information.
+     John Wiley & Sons.                                                                         arXiv preprint arXiv:2505.20650 (2025).
+[14] John C. Hull. 2018. Options, Futures, and Other Derivatives (10 ed.). Pearson         [39] Mengxi Xiao, Zihao Jiang, Lingfei Qian, Zhengyu Chen, Yueru He, Yijing Xu,
+     Education.                                                                                 Yuecheng Jiang, Dong Li, Ruey-Ling Weng, Min Peng, et al. 2025. Retrieval-
+[15] Aaron Hurst, Adam Lerer, Adam P Goucher, Adam Perelman, Aditya Ramesh,                     augmented large language models for financial time series forecasting. arXiv
+     Aidan Clark, AJ Ostrow, Akila Welihinda, Alan Hayes, Alec Radford, et al. 2024.            preprint arXiv:2502.05878 (2025).
+     Gpt-4o system card. arXiv preprint arXiv:2410.21276 (2024).                           [40] Yijia Xiao, Edward Sun, Di Luo, and Wei Wang. 2024. TradingAgents: Multi-
+[16] Gilles Jacobs and Veronique Hoste. 2020. Extracting fine-grained economic events           agents LLM financial trading framework. arXiv preprint arXiv:2412.20138 (2024).
+     from business news. In Proceedings of the 1st joint workshop on financial narrative   [41] Qianqian Xie, Weiguang Han, Zhengyu Chen, Ruoyu Xiang, Xiao Zhang, Yueru
+     processing and multiling financial summarisation. 235–245.                                 He, Mengxi Xiao, Dong Li, Yongfu Dai, Duanyu Feng, et al. 2024. Finben: A
+[17] Changlun Li, Yao Shi, Chen Wang, Qiqi Duan, Runke Ruan, Weijie Huang, Haonan               holistic financial benchmark for large language models. Advances in Neural
+     Long, Lijun Huang, Yuyu Luo, and Nan Tang. 2025. Time Travel is Cheating:                  Information Processing Systems 37 (2024), 95716–95743.
+     Going Live with DeepFund for Real-Time Fund Investment Benchmarking. arXiv            [42] Qianqian Xie, Weiguang Han, Xiao Zhang, Yanzhao Lai, Min Peng, Alejandro
+     preprint arXiv:2505.11065 (2025).                                                          Lopez-Lira, and Jimin Huang. 2023. Pixiu: A comprehensive benchmark, instruc-
+[18] Haohang Li, Yupeng Cao, Yangyang Yu, Shashidhar Reddy Javaji, Zhiyang Deng,                tion dataset and large language model for finance. Advances in Neural Information
+     Yueru He, Yuechen Jiang, Zining Zhu, Koduvayur Subbalakshmi, Guojun Xiong,                 Processing Systems 36 (2023), 33469–33484.
+     et al. 2024. Investorbench: A benchmark for financial decision-making tasks with      [43] Guojun Xiong, Zhiyang Deng, Keyi Wang, Yupeng Cao, Haohang Li, Yangyang
+     llm-based agent. arXiv preprint arXiv:2412.18174 (2024).                                   Yu, Xueqing Peng, Mingquan Lin, Kaleb E Smith, Xiao-Yang Liu, et al. 2025.
+[19] Zhenglong Li, Vincent Tam, and Kwan L Yeung. 2024. Developing a multi-agent                FLAG-Trader: Fusion LLM-Agent with Gradient-based Reinforcement Learning
+     and self-adaptive framework with deep reinforcement learning for dynamic                   for Financial Trading. arXiv preprint arXiv:2502.11433 (2025).
+     portfolio risk management. arXiv preprint arXiv:2402.00515 (2024).                    [44] Yangyang Yu, Haohang Li, Zhi Chen, Yuechen Jiang, Yang Li, Jordan W Suchow,
+[20] Chin Yang Lin and João Alexandre Lobo Marques. 2024. Stock market prediction               Denghui Zhang, and Khaldoun Khashanah. 2025. Finmem: A performance-
+     using artificial intelligence: A systematic review of systematic reviews. Social           enhanced llm trading agent with layered memory and character design. IEEE
+     Sciences & Humanities Open 9 (2024), 100864.                                               Transactions on Big Data (2025).
+[21] Alejandro Lopez-Lira. 2025. Can Large Language Models Trade? Simulating               [45] Yangyang Yu, Zhiyuan Yao, Haohang Li, Zhiyang Deng, Yuechen Jiang, Yupeng
+     Financial Theories and Experiments using LLM Agents. (2025).                               Cao, Zhi Chen, Jordan Suchow, Zhenyu Cui, Rong Liu, et al. 2024. Fincon: A
+[22] Lefteris Loukas, Manos Fergadiotis, Ilias Chalkidis, Eirini Spyropoulou, Pro-              synthesized llm multi-agent system with conceptual verbal reinforcement for
+     dromos Malakasiotis, Ion Androutsopoulos, and Georgios Paliouras. 2022.                    enhanced financial decision making. Advances in Neural Information Processing
+     FiNER: Financial numeric entity recognition for XBRL tagging. arXiv preprint               Systems 37 (2024), 137010–137045.
+     arXiv:2203.06482 (2022).                                                              [46] Liwen Zhang, Weige Cai, Zhaowei Liu, Zhi Yang, Wei Dai, Yujie Liao, Qianru Qin,
+[23] Malik Magdon-Ismail and Amir F Atiya. 2004. Maximum drawdown. Risk                         Yifei Li, Xingyu Liu, Zhiqiang Liu, et al. 2023. Fineval: A chinese financial domain
+     Magazine 17, 10 (2004), 99–102.                                                            knowledge evaluation benchmark for large language models. arXiv preprint
+[24] Pekka Malo, Ankur Sinha, Pekka Korhonen, Jyrki Wallenius, and Pyry Takala.                 arXiv:2308.09975 (2023).
+     2014. Good debt or bad debt: Detecting semantic orientations in economic texts.       [47] Xiao Zhang, Ruoyu Xiang, Chenhan Yuan, Duanyu Feng, Weiguang Han, Ale-
+     Journal of the Association for Information Science and Technology 65, 4 (2014),            jandro Lopez-Lira, Xiao-Yang Liu, Meikang Qiu, Sophia Ananiadou, Min Peng,
+     782–796.                                                                                   et al. 2024. Dólares or dollars? unraveling the bilingual prowess of financial llms
+[25] Dimitrios K Nasiopoulos, Konstantinos I Roumeliotis, Damianos P Sakas, Kanellos            between spanish and english. In Proceedings of the 30th ACM SIGKDD Conference
+     Toudas, and Panagiotis Reklitis. 2025. Financial Sentiment Analysis and Classifi-          on Knowledge Discovery and Data Mining. 6236–6246.
+     cation: A Comparative Study of Fine-Tuned Deep Learning Models. International
+     Journal of Financial Studies 13, 2 (2025), 75.
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                        Lingfei et al.
+
+
+A     Details of quality control                                          Prompt For Summarization
+To ensure the daily market information delivered to agents is of
+                                                                          Task: Analyze the provided {symbol} news articles from
+high quality, we conducted multiple iterative refinements of the
+                                                                          {date_str} and produce a clear, comprehensive, and well-
+summarization prompt. Initially, we performed a preliminary re-
+                                                                          structured summary.
+view and adjustment based on data collected from May 1 to May
+10, which significantly improved generation quality. Subsequently,        Instructions:
+we sampled 20 days of BTC and TSLA news from cryptocurrency                   • Use only the provided articles for your analysis.
+and stock markets, respectively, and had two domain experts inde-             • Do not retrieve or reference any external informa-
+pendently verify their accuracy and coverage to ensure the quality              tion.
+and reliability of the generated summaries.                                   • Refrain from including current prices or speculative
+   This iterative process ensured that the final summaries captured             forecasts.
+both market breadth and factual precision, minimizing redundancy              • Focus strictly on the events, sentiment, and con-
+and bias across sources. As a result, the refined daily inputs pro-             textual details presented in the articles.
+vided agents with consistent, verified, and information-rich market           • Do not mention or enumerate article IDs in the out-
+contexts for decision-making.                                                   put.
+                                                                          Articles from {date_str}:
+                                                                          {articles_text}
+    Quality Control Guideline                                             Output Requirements:
+                                                                             (1) Provide a cohesive summary highlighting the key
+    Purpose. This guideline outlines the procedures to ensure
+                                                                                 developments for {symbol}.
+    high-quality and unbiased daily news summaries used by
+                                                                             (2) Identify major themes or emerging narratives within
+    agents.
+                                                                                 the content.
+    1. Objective                                                             (3) Assess and articulate the overall market sentiment
+    Daily summarized news must accurately represent the key                      reflected in the articles.
+    information from multiple sources without introducing                 Compose your response as a coherent and polished narra-
+    bias. Each asset’s daily summary should be:                           tive that maintains logical flow and clarity throughout.
+         • Accurate: Correctly aligned with the trading date.
+         • Comprehensive: Cover all major price-driving cat-
+           egories.
+         • Unbiased: Maintain balanced sentiment and tone.
+         • Diverse: Incorporate multiple independent sources.         B    Details of agent execution protocol
+                                                                          Prompt For Summarization
+    2. Rules and Scoring
+    Rule 1: Date Accuracy – Ensure all articles correspond
+    to the correct trading date.                                          You are a professional financial decision-making agent spe-
+         • 0 = Not aligned – multiple off-date items.                     cialized in quantitative and fundamental reasoning with
+         • 1 = Mostly aligned – minor off-date presence.                  a daily trading frequency. Your primary task is to analyze
+         • 2 = Fully aligned – all sources match the target date.         the reasoning outputs of other agent roles and integrate
+                                                                          their insights into a unified, evidence-based conclusion.
+    Rule 2: Coverage of Key News Drivers – Include all
+                                                                          Based on your analysis and the provided definitions, deter-
+    major asset-specific developments.
+                                                                          mine the most appropriate trading decision for the target
+         • 0 = Very limited – one category only.                          asset [ASSET] given its current market price [PRICES]and
+         • 1 = Partial – two to three categories.                         contextual signals.
+         • 2 = Comprehensive – all four key drivers.                      Your possible actions are defined as follows:
+    Rule 3: Bias Awareness – Evaluate sentiment balance                   - Buy: Indicates a bullish outlook or perceived undervalu-
+    across sources and summaries.                                         ation, suggesting the asset price is likely to rise. And you
+         • 0 = Skewed – one-sided sentiment.                              choose to be in long position.
+         • 1 = Moderate – partial balance.                                - Sell: Indicates a bearish outlook or perceived overvalu-
+         • 2 = Balanced – neutral overall tone.                           ation, suggesting the asset price is likely to fall. And you
+    Rule 4: Source Diversity – Verify multi-outlet represen-              choose to be in short position.
+    tation.                                                               - Hold: Indicates market uncertainty or equilibrium, sug-
+                                                                          gesting no immediate trading action. And you choose to
+         • 0 = Low diversity – one outlet dominant.
+                                                                          go flat position.
+         • 1 = Moderate – two to three outlets.
+                                                                          Return your final output strictly in the following format:
+         • 2 = High diversity – four or more outlets.
+                                                                          [Decision]: Buy / Sell / Hold
+When Agents Trade: Live Multi-Market Trading Benchmark for LLM Agents                       Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+   System Prompt Definition. Each agent operates under a struc-             • The Overview Dashboard facilitates longitudinal tracking
+tured system prompt that defines its analytical objective and reason-         and ranking of live agents.
+ing behavior. The prompt guides the model to integrate multi-source         • The Equity Comparison View supports temporal and inter-
+financial information and produce consistent, interpretable trading           agent analysis for understanding decision-making robust-
+decisions. Specifically, the agent is assigned the following role and         ness.
+task. This design ensures interpretability and reproducibility across     By integrating these views, the system allows researchers to sys-
+agents and backbones. For consistency and fairness, all LLM-based       tematically assess the interplay between agent architectures, LLM
+agents share identical generation settings, including temperature,      backbones, and strategy adaptability under continuously evolving
+top-𝑝, and maximum token length, as detailed below.                     market environments.
+   Hyperparameters. Table 2 summarizes the key parameters
+used in DeepFund. These parameters control model randomness,            Received 20 February 2007; revised 12 March 2009; accepted 5 June 2009
+retry behaviors, data coverage, and decision memory. All settings
+remain fixed during evaluation to ensure a fair comparison across
+models and runs.
+
+C    Performance analysis interface
+To enable transparent and reproducible evaluation of live trading
+behaviors, we built an interactive web-based monitoring interface
+(Figures 5–6) for AMA. This platform allows users to observe, ana-
+lyze, and compare the performance of LLM-driven trading agents
+in real time.
+
+   Overview Dashboard. The main interface (Figure 5) aggregates
+all agent performances under live market conditions. It displays
+core metrics including total balance, cumulative return (with and
+without fees), Sharpe ratio, and win rate. Agents are dynamically
+ranked by returns, while an automatic refresh mechanism (default:
+every 30 seconds) ensures synchronization with real-time market
+data streams. Users can quickly identify outperforming agents and
+drill down for detailed performance trajectories.
+   The filtering panel supports four orthogonal dimensions:
+     • Agents: TradeAgent, InvestorAgent, HedgeFundAgent, and
+       DeepFundAgent.
+     • Assets: e.g., BTC, ETH, TSLA, and BMRN, covering both finan-
+       cial and crypto markets.
+     • Models: backbones including GPT-4.1, GPT-4o, et,al.
+     • Strategies: such as Baseline, Flip on Reversal, and
+       Pyramid Exit, supporting customized evaluation modes.
+This multi-axis filtering framework allows flexible comparison
+across model architectures, market domains, and trading strate-
+gies.
+
+   Equity Comparison View. The second interface (Figure 6) intro-
+duces an interactive visualization module for cross-agent equity
+analysis. Users can select subsets of agents, assets, and LLM mod-
+els to render synchronized equity curves that represent portfo-
+lio growth trajectories over time. Each line denotes one agent-
+model combination (e.g., InvestorAgent-BTC-GPT4o), with dy-
+namic tooltips revealing daily balance, model type, and strategy.
+   This design enables detailed visual inspection of relative perfor-
+mance dynamics, stability, and divergence patterns under identical
+market signals. Researchers can thus examine how agents differ in
+volatility tolerance, recovery behavior, and decision consistency,
+offering an intuitive complement to tabular metrics.
+
+  Analytical Utility. Together, the two interfaces provide both a
+macro-level snapshot and a micro-level analytical view:
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                 Lingfei et al.
+
+
+          Parameter                     Default Value        Usage
+          LLM temperature                      0.5           Controls randomness of the LLM inference.
+          Retry times                           3            Number of retries for LLM inference if the LLM do not give correct response.
+          Warm-up windows                      90            Trading days that used to initialize the agents.
+          Decision memory size                  7            Number of past recent actions and price history for decision-making.
+                                                          Table 2: DeepFund parameter settings.
+
+
+
+
+Figure 5: Agent Market Arena Dashboard (Overview View). The interface provides a unified view for monitoring, comparing,
+and analyzing the real-time performance of LLM-based trading agents across assets, models, and strategies.
+
+
+
+
+Figure 6: Equity Comparison View. Users can select specific agents, assets, and models to visualize comparative equity curves,
+enabling multi-dimensional evaluation of performance dynamics.
+

@@ -1,0 +1,230 @@
+                                                    A New DAPO Algorithm for Stock Trading
+                                                                       Ruijian Zha†                                                         Bojun Liu†
+                                              Department of Computer Science, Columbia University                     Department of Computer Science, Columbia University
+                                                              New York, NY, USA                                                      New York, NY, USA
+                                                             rz2689@columbia.edu                                                     bl3092@columbia.edu
+
+
+
+
+                                            Abstract—Recent advances in reinforcement learning, like                      posed for LLM preference tuning, to avoid issues like
+                                         Dynamic sAmpling Policy Optimization (DAPO) algorithm, have                      entropy collapse and to enable dynamic sampling of
+                                         demonstrated strong performance when combined with Large
+arXiv:2505.06408v2 [cs.CE] 21 May 2025
+
+
+
+
+                                                                                                                          meaningful state-action pairs.
+                                         Language Models (LLMs). Motivated by this, we investigate
+                                                                                                                        • Introducing an adjustable reward formula that allows
+                                         whether similar benefits can be achieved in financial trading. We
+                                         develop a novel trading agent that integrates an improved Group                  more nuanced control. This enables us to emphasize
+                                         Relative Policy Optimization (GRPO) algorithm, enhanced with                     sentiment or risk as desired.
+                                         insights from DAPO, and incorporates LLM-based signals of risk              Our tests on the NASDAQ-100 index show that our new DAPO
+                                         and sentiment from financial news. We evaluate our method on
+                                         the NASDAQ-100 index using the FNSPID dataset. Our improved                 algorithm surpasses the best performance of CPPO-DeepSeek
+                                         DAPO algorithm achieves a cumulative return of 230.49 % and                 [4] while significantly reduces computational requirements.
+                                         an Information Ratio of 0.37, outperforming the CPPO-DeepSeek
+                                         baseline. Additionally, our approach reduces training time from                                  II. R ELATED W ORK
+                                         approximately 8 hours to 2.5 hours over 100 epochs, while                   A. Reinforcement Learning for Trading
+                                         significantly decreasing RAM usage. Our approach addresses
+                                         limitations of existing RL-LLM frameworks, offering a scalable                 PPO [1] is widely applied to stock trading scenarios [2], but
+                                         solution for building financial trading agents. Code is available           it can be vulnerable to large drawdowns. CPPO [3] addresses
+                                         at: https://github.com/Ruijian-Zha/FinRL-DAPO-SR/                           tail risk using Conditional Value at Risk (CVaR) constraints,
+                                            Index Terms—Algorithmic trading, Reinforcement learning,
+                                         Risk management, Sentiment analysis, DAPO, GRPO
+                                                                                                                     and FinRL-DeepSeek [5] extends CPPO by incorporating
+                                                                                                                     LLM-generated sentiment and risk signals from financial news
+                                                                  I. I NTRODUCTION                                   data. While effective, these methods are typically resource-
+                                                                                                                     intensive due to high-dimensional state spaces, value func-
+                                            Financial Reinforcement learning (FinRL) has gained trac-
+                                                                                                                     tions, and extensive hyperparameter tuning.
+                                         tion in algorithmic trading for automating portfolio decisions
+                                         under uncertainty [1], [2]. However, challenges like large                  B. GRPO and DAPO
+                                         drawdowns and limited interpretability persist. Extensions of
+                                                                                                                       Group Relative Policy Optimization (GRPO) eliminates
+                                         PPO, e.g., CPPO [3] and FinRL-DeepSeek [5], incorporate
+                                                                                                                     the need for a value function by calculating group-level
+                                         tail-risk constraints and textual signals, yet often require
+                                                                                                                     advantages, promising lower memory consumption and stable
+                                         lengthy training (> 7 hours) and significant memory overhead.
+                                                                                                                     updates. DAPO [6] refines GRPO for large-scale language
+                                            The FinRL Contest 2025 [9] aims to advance the application
+                                                                                                                     models, introducing:
+                                         of reinforcement learning in finance by evaluating intelligent
+                                                                                                                       • Decoupled clipping: Replaces symmetric clipping with an
+                                         trading strategies. Task 1: FinRL-DeepSeek [9] explores the
+                                         integration of FinRL with large language models (LLMs), us-                      asymmetric range defined by parameters, ϵlow and ϵhigh .
+                                         ing DeepSeek’s open-source models [4] to generate sentiment                      This allows flexible policy updates, enhancing exploration
+                                         and risk signals from financial news. This task encourages                       in high-reward scenarios while constraining risk.
+                                                                                                                       • Dynamic sampling: Samples with uniform risk-adjusted
+                                         innovation in combining quantitative modeling with natural
+                                         language understanding to improve trading performance.                           rewards are filtered out, ensuring that the model focuses
+                                            We made the following three contributions:                                    on variations where learning signals are richer, thus
+                                                                                                                          promoting faster and more stable convergence.
+                                            • Adopting     Group Relative Policy Optimization
+                                               (GRPO), a critic-free RL approach that reduces memory                 We adapt these insights to a FinRL setting, focusing on daily
+                                               usage by sampling multiple actions from each state and                aggregated sentiment and risk signals from LLMs.
+                                               normalizing the rewards within that group.                                                III. M ETHODOLOGY
+                                            • Leveraging Decoupled Clipping and Dynamic sAm-
+                                               pling Policy Optimization (DAPO) [6], originally pro-                 A. Stock Trading Environment
+                                                                                                                       We follow the standard FinRL Contest setting for the
+                                            Accepted at the 2025 IEEE 11th International Conference on Intelligent   definition of states, actions, and rewards as outlined in [9].
+                                         Data and Security (IDS). Ranked 2nd place in the FinRL Contest 2025 (Task
+                                         1).                                                                         The state represents the current status of the trading environ-
+                                            † These authors contributed equally to this work.                        ment, including the available cash, stock prices, number of
+shares held, and various technical indicators, including LLM                    where rt (θ) = πθπθ (a(at |st |st )t ) . By enabling asymmetric clipping,
+                                                                                                   old
+sentiment and risk values. The action refers to the decisions                   the policy has greater flexibility to reinforce advantageous
+made by the trading agent, which includes buying, selling or                    actions, while large negative updates remain constrained for
+holding stocks. The reward is the feedback signal received                      stability.
+after taking an action, calculated as the change in total asset                    Dynamic Sampling. To improve sample efficiency, we filter
+value.                                                                          out states with all the same rewards. The policy parameters θ
+B. GRPO with Exponentiated Sentiment-Risk Reward                                are updated via stochastic gradient descent:
+   Group Relative Policy Optimization (GRPO). For each                                               θ ← θ + α∇θ LGRP O (θ).
+state st , the policy πθ samples a group of n potential actions
+                                                                                By filtering out uninformative samples and employing decou-
+{at,1 , at,2 , . . . , at,n }. The group advantage for action at,i is
+                                                                                pled clipping, our GRPO-inspired DAPO algorithm balances
+then defined as:
+                                                                                exploration and stability in large-scale financial trading.
+                                             rt,i − µt
+                           AG (st , at,i ) =                          (1)
+                                              σt + ϵ                                    IV. P RELIMINARY R ESULTS AND D ISCUSSION
+where rt,i denotes the reward for each candidate action, ϵ is                   A. Dataset
+a small constant to avoid division by zero, and                                    We use the FNSPID dataset [7], which includes 15.7 million
+                                                                                time-aligned financial news records from 1999–2023. Since
+                                             v
+                           n
+                                             u1 n
+                                             u X
+                       1X
+            µt =              rt,j , σt = t           (rt,j − µt )2 . (2)       our primary objective is not to derive sentiment and risk
+                       n j=1                    n j=1                           signals, we adopt the pre-extracted LLM-based metrics from
+                                                                                FinRL-DeepSeek [5], avoiding the overhead of retraining or
+By relying on these group-based comparisons, GRPO obviates
+                                                                                fine-tuning large language models.
+the need for a separate critic network, reducing computational
+overhead and potentially stabilizing updates.                                   B. Impacts of Risk and Sentiment Signals
+   Sentiment-Risk Adjusted Rewards. Our baseline reward                            We first assess the contribution of risk and sentiment signals
+rt,i for action at,i is the portfolio return over one trading                   by comparing four configurations: (1) using only risk signals
+period. Let St,i and Rt,i be the aggregated sentiment and risk                  (α = 0, β = 1), (2) only sentiment signals (α = 1, β = 0),
+scores for each stock i at time t. We then incorporate sentiment                (3) balanced risk and sentiment (α = 1, β = 1), with (4)
+and risk via:                                                                   the NASDAQ-100 index as a baseline. Fig 1 shows that the
+                                          α
+                  ′                  St,i                                       balanced configuration achieves a higher cumulative returns
+                 rt,i = rt,i ·                               (3)
+                                    β
+                               Rt,i + 1e − 8                                    and improved risk-adjusted metrics compared to using either
+                                                                                signal alone. Incorporating both signals allows the agent to
+where                                                                           favor actions with high sentiment (indicating market optimism)
+              m                                  m
+              X                                  X                              while avoiding high-risk scenarios, leading to more robust
+     St,i =         wt,i,j f (Sf,j ),   Rt,i =         wt,i,j f (Rf,j ),
+                                                                                trading decisions.
+              j=1                                j=1
+
+and weight wt,i,j reflects the proportion of stock j held
+by action at,i . Meanwhile, f map discrete LLM-generated
+sentiment and risk scores (1 . . . 5) to continuous factors (
+0.99, 0.995, 1.0, 1.005, 1.01), amplifying rewards under favor-
+able sentiment and low risk. The exponents α, β ≥ 0 control
+the relative influence of sentiment vs. risk; for instance, α > β
+gives heavier weight to sentiment, while α = β = 0 effectively
+disables sentiment-risk adjustments.
+C. GRPO-Inspired DAPO
+   Policy Optimization with Decoupled Clipping. While
+GRPO offers a critic-free and memory-efficient alternative to
+traditional RL methods, it still suffers from limited exploration
+and learning inefficiencies in flat reward landscapes. To ad-                   Fig. 1. Comparison of the Baseline, Risk-Only, and Sentiment-Only reward
+                                                                                settings vs. the NASDAQ-100, showing 2020–2023 cumulative returns after
+dress these issues, we replace the uniform symmetric clipping                   100 training epochs on six years of data.
+parameter ϵ in GRPO with two asymmetric thresholds: ϵlow
+and ϵhigh . The GRPO loss is updated as:                                        C. Effects of Varying α and β
+ LGRP O (θ)                                                                        Next, we evaluate how different exponents for sentiment
+                                                                                (α) and risk (β) influence the reward shaping. We compare
+    h                                                     G i
+ = E min rt (θ) AG
+                 t , clip rt (θ), 1 − ϵ low , 1 + ϵ high  At ,
+                                                                                five settings: (1) Risk-Heavy (α = 1, β = 3), (2) Balanced
+                                                              (4)               (α = 2, β = 2), (3) Sentiment Emphasis (α = 3, β = 1), (4)
+
+
+
+                                                                            2
+Strong Sentiment (α = 5, β = 1), and (5) the NASDAQ-100                           ments were conducted on a system with an Intel(R) Xeon(R)
+index. Fig 2 illustrates that a sentiment-emphasized configura-                   CPU @ 2.20GHz, 12 logical cores, 6 physical cores.
+tion (α = 3, β = 1) yields notably higher cumulative returns
+                                                                                    Metric                           Our Model       CPPO-DeepSeek 10%
+than either balanced or risk-focused settings, suggesting that                      RAM Usage (GB)                        15                120
+strong sentiment signals can drive profitable trades.                               Training Time (100 Epochs)        2.5 hours          ∼7-8 hours
+                                                                                  Table 3. Comparison of memory and training time (100 epochs, 20k steps
+                                                                                  each).
+
+                                                                                                V. C ONCLUSION AND F UTURE W ORK
+                                                                                    We presented an improved DAPO algorithm for algorith-
+                                                                                  mic trading that integrates exponent-weighted sentiment-risk
+                                                                                  scores. This approach allows flexible tuning of the reward
+                                                                                  to emphasize sentiment or risk. Results on the NASDAQ-
+                                                                                  100 index demonstrate potential for superior returns vs. prior
+                                                                                  SOTA, with faster training and much less memory usage.
+                                                                                    Future directions include:
+                                                                                    1) Intraday Timescales: Extending the approach to shorter
+                                                                                        intervals for rapid event-driven trading.
+Fig. 2. Comparison of four sentiment–risk weightings vs. the NASDAQ-100,            2) Enhanced Prompts: Using more detailed LLM prompts
+showing 2020–2023 cumulative returns after 100 training epochs on six years
+of data.                                                                                for sector-specific or event-specific signals.
+                                                                                    3) Adaptive α, β: Automatically adjusting exponents based
+  Both balanced (α = 1, β = 1) and Sentiment Emphasis                                   on market regimes.
+(α = 3, β = 1) achieve ∼ 230.49% return, reflecting the
+                                                                                                                R EFERENCES
+reward function’s robustness within a reasonable α, β range.
+Moderate α values leverage sentiment effectively, while β = 1                      [1] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Prox-
+                                                                                       imal policy optimization algorithms,” arXiv preprint arXiv:1707.06347,
+ensures balanced risk consideration. In contrast, Risk-Heavy                           2017.
+(α = 1, β = 3) over-penalizes risk, and Strong Sentiment                           [2] X.-Y. Liu, H. Yang, Q. Chen, et al., “FinRL: A deep reinforcement
+(α = 5, β = 1) over-emphasizes sentiment, leading to                                   learning library for automated stock trading in quantitative finance,”
+                                                                                       arXiv preprint arXiv:2011.09607, 2022.
+suboptimal results. This indicates α and β should remain                           [3] C. Y. Ying, X. Zhou, H. Su, et al., “Towards safe reinforcement learning
+balanced to maintain consistent performance across market                              via constraining conditional value-at-risk,” in IJCAI, 2022, pp. 3673–
+conditions.                                                                            3680.
+                                                                                   [4] DeepSeek-AI et al., “DeepSeek-V3 Technical Report,” arXiv preprint
+   Metric                        Our Model      CPPO-DeepSeek 10%                      arXiv:2412.19437, 2024.
+   Cumulative Return              230.49%            ∼215%                         [5] M. Benhenda, “FinRL-DeepSeek: LLM-infused risk-sensitive reinforce-
+   Max Drawdown                   -49.11%            ∼-35%                             ment learning for trading agents,” arXiv preprint arXiv:2502.07393,
+   Rachev Ratio1                     1.12             0.9818                           2025.
+   Information Ratio2                0.37             0.0078                       [6] Q. Yu, Z. Zhang, R. Zhu, et al., “DAPO: An open-source LLM rein-
+   CVaR (5%)                       -5.64%            -4.37%                            forcement learning system at scale,” arXiv preprint arXiv:2503.14476,
+   Outperformance Frequency         50.0%          Not reported                        2025.
+                                                                                   [7] Z. Dong, X. Fan, Z. Peng, et al., “Fnspid: A comprehensive financial
+Table 1. Comparison of key metrics between our method and CPPO-DeepSeek                news dataset in time series,” arXiv preprint arXiv:2402.06698, 2024.
+10%, which incorporates DeepSeek data.                                             [8] C. Y. Ying, X. Zhou, H. Su, D. Yan, N. Chen, and J. Zhu, “Towards
+                                                                                       safe reinforcement learning via constraining conditional value-at-risk,”
+                                                                                       in Proceedings of the Thirty-First International Joint Conference on Ar-
+  To comply with the contest requirement, we also evaluated                            tificial Intelligence (IJCAI-22), pp. 3673–3680, 2022, doi: 10.24963/ij-
+our model on the 2019–2023 period. Table 2 summarizes the                              cai.2022/510.
+performance metrics over this timeframe:                                           [9] K. Wang, K. Xiao, and X.Y. Liu, “Parallel Market Environments for
+                                                                                       FinRL Contests,” arXiv preprint arXiv:2504.02281, 2025.
+          Metric                        Our Model (2019–2023)                     [10] X.-Y. Liu, Z. Xia, H. Yang, J. Gao, D. Zha, M. Zhu, C. D. Wang,
+          Cumulative Return                   335.58%                                  Z. Wang, and J. Guo,“Dynamic datasets and market environments for
+          Max Drawdown                        -50.24%                                  financial reinforcement learning, ” Machine Learning - Nature, 2024.
+          Rachev Ratio                           1.09                             [11] H. H. Yang, X.-Y. Liu, H. Tong, Y. Zhang, J. Wang, and L. Deng,
+          Information Ratio                      0.30                                  “Deep reinforcement learning for automated stock trading: an ensemble
+          CVaR (5%)                            -5.50%                                  strategy,” Proceedings of the 30th ACM International Conference on
+          Outperformance Frequency             49.6%                                   Information & Knowledge Management (CIKM), pp. 2245–2252, 2020.
+
+Table 2. Backtesting results of our algorithm for the 2019–2023 period,
+meeting the contest’s guideline for evaluation.
+
+                                                                                    1 The Rachev Ratio measures tail-risk-adjusted performance by comparing
+D. Improved Computation Efficiency
+                                                                                  expected tail gains to expected tail losses.
+  Our DAPO algorithm significantly reduces computational                            2 Information Ratio evaluates the consistency of excess returns relative to a
+requirements compared to the CPPO-DeepSeek [5]. Experi-                           benchmark.
+
+
+
+
+                                                                              3
+

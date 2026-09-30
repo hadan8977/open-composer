@@ -1,0 +1,835 @@
+                                                       FLAG-T RADER: Fusion LLM-Agent with Gradient-based
+                                                           Reinforcement Learning for Financial Trading
+                                         Guojun Xiong1 , Zhiyang Deng2 , Keyi Wang3 , Yupeng Cao2 , Haohang Li2 , Yangyang Yu2 ,
+                                              Xueqing Peng7 , Mingquan Lin4 , Kaleb E Smith5 , Xiao-Yang Liu Yanglet3,6 ,
+                                                           Jimin Huang7 , Sophia Ananiadou8 , Qianqian Xie7,*
+                                                   1
+                                                       Harvard University, 2 Stevens Institute of Technology, 3 Columbia University,
+                                                        4
+                                                          University of Minnesota, 5 NVIDIA, 6 Rensselaer Polytechnic Institute,
+                                                                         7
+                                                                           TheFinAI, 8 University of Manchester
+                                                                                *
+                                                                                    Correspondence: xqq.sincere@gmail.com
+                                                               Abstract                                  2019). Thirdly, the heavy reliance on manually
+                                                                                                         crafted technical indicators (e.g., MACD, RSI)
+                                             Large language models (LLMs) fine-tuned on                  and complex feature engineering (Liang et al.,
+                                             multimodal financial data have demonstrated                 2018) introduces subjective biases, leads to infor-
+arXiv:2502.11433v3 [cs.AI] 19 Feb 2025
+
+
+
+
+                                             impressive reasoning capabilities in various fi-
+                                                                                                         mation loss, and reduces the robustness of real-time
+                                             nancial tasks. However, they often struggle
+                                             with multi-step, goal-oriented scenarios in inter-          decision-making, especially in volatile market con-
+                                             active financial markets, such as trading, where            ditions.
+                                             complex agentic approaches are required to im-                 The emergence of Large Language Models
+                                             prove decision-making. To address this, we pro-             (LLMs) offer significant potential for financial
+                                             pose FLAG-T RADER, a unified architecture in-               decision-making by addressing key limitations of
+                                             tegrating linguistic processing (via LLMs) with             RL-based trading strategies. Leveraging their trans-
+                                             gradient-driven reinforcement learning (RL)
+                                                                                                         former architecture, they serve as multimodal fea-
+                                             policy optimization, in which a partially fine-
+                                             tuned LLM acts as the policy network, leverag-              ture extractors, integrating time-series and textual
+                                             ing pre-trained knowledge while adapting to the             data, capturing long-range dependencies, and gen-
+                                             financial domain through parameter-efficient                eralizing across market regimes, while also extract-
+                                             fine-tuning. Through policy gradient optimiza-              ing nuanced sentiment signals without relying on
+                                             tion driven by trading rewards, our framework               manually crafted features (Chen et al., 2021; Yang
+                                             not only enhances LLM performance in trading                et al., 2023a; Jin et al., 2023; Wood et al., 2021;
+                                             but also improves results on other financial-               Yu et al., 2024a; Deng et al., 2023). Nonethe-
+                                             domain tasks. We present extensive empirical
+                                             evidence to validate these enhancements.
+                                                                                                         less, adapting LLMs for trading presents key chal-
+                                                                                                         lenges. First, their deployment often relies on agen-
+                                         1   Introduction                                                tic frameworks (Li et al., 2024b, 2023; Yu et al.,
+                                                                                                         2025), which incur high implementation and op-
+                                         Algorithmic financial trading represents a critically           erational costs due to their complex architecture.
+                                         complex decision-making domain that perpetually                 Second, LLMs are primarily trained for static text
+                                         grapples with the intertwined challenges of synthe-             generation, making them ill-suited for sequential
+                                         sizing heterogeneous market signals and dynami-                 decision-making in trading. This prompts us to the
+                                         cally refining strategies (Hambly et al., 2023; Yu              following question:
+                                         et al., 2024b; Li et al., 2023). Traditional rein-
+                                         forcement learning (RL) approaches, despite their                   Can we design a framework that seam-
+                                         theoretical grounding in Markov Decision Pro-                      lessly integrates LLMs’ reasoning with RL’s
+                                         cesses (MDPs), confront three fundamental limita-                  reward-driven optimization to tackle the
+                                         tions when deployed in financial markets. Firstly,                 challenges of financial sequential decision-
+                                         their inability to coherently model multimodal mar-                making?
+                                         ket states—spanning sequential price movements,                    To resolve these interconnected challenges, we
+                                         quantitative technical indicators, and unstructured             FLAG-T RADER, a unified architecture integrat-
+                                         textual sentiments—compromises data integration                 ing linguistic processing (via LLMs) with gradient-
+                                         (Zhang et al., 2019; Nassirtoussi et al., 2014). Sec-           driven RL policy optimization, as shown in Figure
+                                         ondly, non-stationary data distributions inherent to            1. This framework advances two synergistic inno-
+                                         financial systems systematically erode strategy gen-            vations: a parameter-efficient fine-tuning module
+                                         eralizability across market regimes (Zhang et al.,              that jointly encodes temporal market data and tex-
+
+                                                                                                     1
+                                                                                       Policy Gradient
+
+
+                                            LLM
+                                                                      Log-likelihood
+
+
+
+                                                                                                         Reply buffer
+                                                                     Reward
+
+                  Prompts                                            Move
+
+           Task description
+
+           Admissible action space
+                                        Output: Action                  Environment
+           Current state
+
+
+
+
+Figure 1: A high-level overview of our LLM-based reinforcement learning setup for financial trading. The
+environment provides the current state st . A prompt containing task details, the action space, and the current state is
+fed into the LLM, which outputs a trading action at . The action is executed in the environment, yielding a reward
+r(st , at ) and next state st+1 . The log-likelihood logπθ (at |lang(st )) is then leveraged by a policy gradient method
+(e.g., PPO), with experience tuples stored in a replay buffer for iterative updates.
+
+
+tual streams into unified state representations and a          to enhance financial decision-making while main-
+hybrid RL component that explicitly incorporates               taining computational efficiency.
+external environment reward gradients into policy
+updates, ensuring alignment with trading perfor-               2   Related Work
+mance metrics. Our contributions are summarized
+as follows.                                                    RL in Finance. RL has shown promise for fi-
+                                                               nancial decision-making, spanning Q-learning ap-
+   First, we propose the FLAG-T RADER frame-                   proaches for Sharpe ratio maximization (Gao and
+work, where a partially fine-tuned LLM acts as the             Chan, 2000), dynamic asset allocation (Jangmin
+policy network, leveraging pre-trained knowledge               et al., 2006), deep Q-learning (Jeong and Kim,
+while adapting to the financial domain through                 2019), tabular SARSA (de Oliveira et al., 2020),
+parameter-efficient fine-tuning. The model pro-                policy-based portfolio optimization (Shi et al.,
+cesses market data using a textual state representa-           2019), and actor-critic methods (Ye et al., 2020) en-
+tion, enabling it to interpret and respond to market           hanced by adversarial training (Liang et al., 2018)
+conditions effectively. Rather than fine-tuning the            and transformer-based architectures (Huang et al.,
+entire LLM, only a subset of its parameters is up-             2024). Recent research efforts in RL for finan-
+dated, balancing domain adaptation and knowledge               cial applications have been greatly aided by open-
+retention. This design allows FLAG-T RADER to                  source frameworks like FinRL (Liu et al., 2022),
+make informed trading decisions while remaining                which standardize implementations and provide re-
+computationally efficient and preserving the LLM’s             producible benchmarks. Comprehensive surveys
+general reasoning capabilities.                                (Hambly et al., 2023; Sun et al., 2023) further show-
+   Second, we conduct extensive experiments to                 case advances in both methodological rigor and
+evaluate FLAG-T RADER across multiple financial                real-world deployment. Despite these advances,
+trading tasks. Our results demonstrate that FLAG-              RL-based trading still requires large training data,
+T RADER consistently outperforms both the buy-                 struggles with non-stationary markets, and faces
+and-hold strategy and LLM-agentic baselines, par-              challenges incorporating multimodal information
+ticularly in terms of cumulative return and Sharpe             in real time.
+ratio, which we prioritize for financial performance              LLMs in Finance. A growing trend is the in-
+assessment. Notably, our approach enables a small-             tegration of LLMs into financial decision-making.
+scale (135M parameter) open-source LLM to sur-                 Hybrid systems like FinCon (Yu et al., 2025) and
+pass much larger proprietary models, highlighting              TradingGPT (Li et al., 2023) leverage language
+the effectiveness of RL fine-tuning in optimizing              understanding to enhance trading agents, while
+LLM-driven trading strategies. These findings un-              domain-specific models such as F IN BERT (Araci,
+derscore the potential of integrating LLMs with RL             2019; Yang et al., 2020), FLANG (Shah et al.,
+
+                                                           2
+2022) and O PEN -F IN LLM S (Xie et al., 2024b)               time t, and financial news sentiment or macroeco-
+have excelled at financial text tasks through special-        nomic indicators Nt ; bt = (Ct , Ht ) ∈ Y represents
+ized pre-training. Recent efforts include machine             the trading account balance, including available
+reading comprehension (Zhang and Zhang, 2023),                cash Ct at time t, and number of stock shares Ht .
+open-source financial LLMs (Liu et al., 2023),                   Action. The agent chooses from a discrete set
+BloombergGPT with domain-adapted tokenization                 of trading actions A = {Sell : −1, Hold : 0, Buy :
+(Wu et al., 2023), and InvestLM (Yang et al.,                 1}, where at = −1 denotes selling all holdings
+2023b) featuring numerical reasoning—achieving                (liquidate the portfolio), at = 0 denotes holding
+strong results in sentiment analysis (Huang et al.,           (no trading action), and at = 1 represents buying
+2023), earnings call interpretation (Xie et al., 2023),       with all available cash (convert all cash into stocks).
+and regulatory document processing. Additionally,                State Transition. The state transition dynam-
+F IN B EN (Xie et al., 2024a), benchmark study for            ics are governed by a stochastic process st+1 ∼
+LLMs in finance, have emerged to comprehensively              T (·|st , at ). The trading account evolves according
+evaluate model performance across various finan-              to the following equations:
+cial tasks. However, LLM-based methods often                     • If Sell: Ct+1 = Ct + Ht Pt+1 ,            Ht+1 = 0.
+lack sequential decision-making mechanisms, are
+computationally expensive (especially with RL),                  • If Hold: Ct+1 = Ct ,         Ht+1 = Ht .
+and struggle with non-stationary market conditions.              • If Buy: Ct+1 = 0,        Ht+1 = Ht + PCt+1
+                                                                                                           t
+                                                                                                              .
+   LLM Agents for Sequential Decision Making.
+                                                                Reward. The agent receives a reward based on
+The integration of LLMs with agentic frameworks
+                                                              the daily trading profit & loss (PnLs):
+has opened new avenues for financial decision-
+making. For instance, F IN M EM (Yu et al., 2024a)                         R(st , at ) = SRt − SRt−1 ,
+introduced memory-augmented LLM agents for                    where SRt denotes the Sharpe ratio at day t, com-
+portfolio management, F INAGENT (Zhang et al.,                puted by using the historical PnL from time 0 to
+2024) leveraged hierarchical structures in high-              time t. Moreover, PnL at time t is calculated as
+frequency trading, and multi-agent systems like
+F IN ROBOT (Yang et al., 2024) and F IN C ON (Yu                pnlt := (Ct − Ct−1 ) + (Ht Pt − Ht−1 Pt−1 ).
+et al., 2024b) emphasize contextual adaptation and            Then, the Sharpe ratio SRt at time t can be calcu-
+collaboration. Meanwhile, fine-tuning LLMs and                lated as:
+vision-language models (VLMs) with reinforce-                                  E[pnl1 , · · · , pnlt ] − rf
+ment learning has proven effective in complex                           SRt :=                              , (1)
+                                                                                 σ[pnl1 , · · · , pnlt ]
+tasks: LLaRP (Szot et al., 2023) positions LLMs as
+                                                              where E[pnl1 , · · · , pnlt ] is the sample average of
+generalizable policies for embodied tasks, and RL-
+                                                              daily PnL up to time t, rf is the risk-free rate, and
+tuned VLMs (Zhai et al., 2024) enhance multi-step
+                                                              σ[pnl1 , · · · , pnlt ] is the sample standard deviation
+decision-making. However, LLMs remain com-
+                                                              of daily PnL up to time t.
+putationally expensive for real-time deployment,
+                                                                 The goal is to find an admissible policy π to max-
+and risk-sensitive trading demands robustness to
+                                                              imize the expected value of cumulative discounted
+non-stationary markets, calling for careful model
+                                                              reward, i.e.,
+complexity and balanced exploration-exploitation.                                                  " T        #
+                                                                                                     X
+                                                                          π                               t
+                                                                 max V (s) =                E            γ Rt , (2)
+3   Problem Statement                                              π             s0 =s,at ∼π(·|st )
+                                                                                                       t=0
+                                                                                 st+1 ∼T (·|st ,at )
+We define the financial decision-making process as            where Rt is a shortened version R(st , at ) and
+a finite horizon partially observable Markov deci-            γ ∈ (0, 1] is the discount factor controlling the
+sion process (MDP) with time index {0, · · · , T },           importance of future rewards.
+represented by the tuple: M = (S, A, T , R, γ),                 Our goal is to train an LLM agent parameterized
+where each component is described in detail below.            by θ to find the optimized policy πθ for (2), i.e.,
+   State. The state space S = X × Y consists of
+two components: market observations and trading                        at ∼ πθ (·|st ) = LLM(lang(st ); θ),        (3)
+account balance, i.e., st = (mt , bt ) ∈ S. Specif-           where lang(st ) are the prompts generated by con-
+ically, mt = (Pt , Nt ) ∈ X represents the mar-               verting state st into structured text. The proposed
+ket observation process, includingstock price Pt at           pipeline is illustrated in Figure 1.
+
+                                                          3
+                                                                                                                            Policy head
+                 Finance trading
+
+                                                             Frozen      Trainable
+                                                                                                MLP layers
+                                                              Base          Top
+                                                             Layers       Layers                                               Actor
+                                                                                                                                    Value
+                                                                                                MLP layers
+                                                                                                                            Value head
+                                                                                LLM
+
+                Environment
+                                                         Env. reward                                                           Critic
+
+Figure 2: The FLAG-T RADER pipeline for financial trading, utilizing an LLM-based actor-critic architecture. The
+LLM consists of frozen base layers θfrozen that retain pre-trained knowledge and trainable top layers θtrain for
+financial decision-making. Both the P OLICY _N ET and VALUE _N ET share these trainable layers while maintaining
+separate policy head θP and value head θV , which are updated by policy gradient method.
+
+
+4     FLAG-T RADER                                           it to produce well-informed and actionable trading
+                                                             strategies, as illustrated in Figure 3.
+To tackle the challenge of directly fine-tuning an
+LLM for both alignment and decision-making, we
+                                                                                        Financial Stock Trading
+introduce FLAG-T RADER, a fused LLM-agent                      Task: Assist traders in making optimal buy, hold, or sell decisions for a stock
+and RL framework for financial stock trading.                  portfolio. The goal is to maximize long-term returns while managing risk. The agent
+                                                               should execute buy if the stock is undervalued based on historical trends, sell if it is
+In FLAG-T RADER, a partially fine-tuned LLM                    overvalued or risk is high, and hold if market conditions are uncertain. Trades should
+                                                               minimize transaction costs and align with market momentum indicators.
+serves as the policy network, leveraging its pre-              Legible Actions: Choose from “{Buy, Sell, Hold}” based on market conditions and risk
+                                                               assessment.
+trained knowledge while adapting to the financial              Current State: Given the following market data:
+                                                               {{
+domain through parameter-efficient fine-tuning, as              "historical_prices": [{', '.join([str(val)[:6] for val in obs.cpu().tolist()[0]])}],
+                                                                "account_status": {{
+shown in Figure 2. The model processes financial                  "cash_balance": {info['cash']},
+                                                                  "asset_position": {info['asset']},
+information using a textual state representation,                 "total_account_value": {info['total']}
+                                                                }},
+allowing it to interpret and respond to market con-             "previous_decision_metrics": {{
+                                                                  "recent_rewards": {[str(val)[:6] for val in info['rewards_memory'][-10:]]},
+ditions effectively. Instead of fine-tuning the entire            "net_values": {[str(val)[:10] for val in info['asset_memory'][-10:]]},
+                                                                  "actions": {info.get('action_memory', [])[-10:]},
+network, only a subset of the LLM’s parameters                  }}
+is trained, striking a balance between adaptation              }}
+                                                               Output Action. Format your answer as a JSON as in the following examples: {‘Action’:
+and knowledge retention. In the following, we will             Sell}, {‘Action’: Buy}, {‘Action’: Hold}.
+
+present the prompt input design and the detailed
+architecture of FLAG-T RADER.
+                                                             Figure 3: The format of input prompt. It contains the
+4.1   Prompt Input Design                                    task description, the legible action set, the current state
+                                                             description, and the output action format.
+The first stage of the pipeline involves design-
+ing a robust and informative prompt, denoted as
+lang(st ), which is constructed based on the current         4.2      FLAG-T RADER Architecture
+state st to guide the LLM in making effective trad-          To incorporate parameter-efficient fine-tuning into
+ing decisions. The prompt is carefully structured to         the policy gradient framework, we partition the
+encapsulate essential elements that provide context          intrinsic parameters of the LLM into two distinct
+and ensure coherent, actionable outputs. It con-             components: the frozen parameters inherited from
+sists of four key components: a task description,            pretraining, denoted as θforzen , and the trainable pa-
+which defines the financial trading objective, out-          rameters, denoted as θtrain . This separation allows
+lining the problem domain and expected actions; a            the model to retain general language understanding
+legible action space, specifying the available trad-         while adapting to financial decision-making with
+ing decisions (Sell,” Hold,” “Buy”); a current               minimal computational overhead. Building upon
+state representation, incorporating market indica-           this LLM structure, we introduce a policy network
+tors, historical price data, and portfolio status to         and a value network, both of which leverage the
+contextualize the decision-making process; and an            trainable top layers of the LLM for domain adapta-
+output action, which generates an executable trad-           tion while sharing the frozen layers for knowledge
+ing decision. This structured prompt ensures that            retention. The overall architecture is illustrated in
+the LLM receives comprehensive input, enabling               Figure 2.
+
+                                                         4
+4.2.1 Policy Network Design                                         This ensures that actions outside the valid set A
+The policy network is responsible for generating an                 (e.g., selling when no stocks are held) have zero
+optimal action distribution over the trading decision               probability, preventing invalid execution.
+space A, conditioned on the observed market state.                  4.2.2 Value Network Design
+It consists of three main components:
+                                                                    The value network serves as the critic in the RL
+   State Encoding. To effectively process financial
+                                                                    framework, estimating the expected return of a
+data using the LLM, the numerical market state s
+                                                                    given state to guide the policy network’s optimiza-
+is first converted into structured text using a prede-
+                                                                    tion. To efficiently leverage the shared LLM repre-
+fined template1
+                                                                    sentation, the value network shares the same back-
+   lang(s) = "Price: $p, Vol: v, RSI: r,...".            (4)        bone as the policy network, processing the tex-
+                                                                    tual state representation through the frozen and
+This transformation enables the model to leverage                   trainable layers (4)–(6). This design ensures ef-
+the LLM’s textual reasoning capabilities, allowing                  ficient parameter utilization while maintaining a
+it to understand and infer trading decisions in a                   structured and informative state encoding. After
+structured, language-based manner.                                  passing through the LLM processing layers, the
+   LLM Processing. The tokenized text represen-                     output h(2) is fed into a separate value prediction
+tation of the state is then passed through the LLM                  head, which maps the extracted features to a scalar
+backbone, which consists of: 1) Frozen layers                       value estimation:
+(preserve general knowledge): Token embeddings
+E = Embed(lang(s)) pass through LLM frozen                                V (s) = VALUE _N ET(h(2) , θV ) ∈ R1 ,     (9)
+layers, i.e.,
+                                                                    where θV is the parameter of VALUE _N ET.
+             h(1) = LLM1:N (E; θfrozen ).                (5)
+                                                                    4.3   Online Policy Gradient Learning
+These layers preserve general knowledge acquired                    The policy and value networks in FLAG-T RADER
+from pretraining, ensuring that the model main-                     are trained using an online policy gradient ap-
+tains a strong foundational understanding of lan-                   proach, ensuring that the model continuously re-
+guage and reasoning. 2) Trainable layers (domain-                   fines its decision-making ability. The learning pro-
+specific adaptation): The output from the frozen                    cess follows an iterative cycle of state observation,
+layers is then passed through the trainable lay-                    action generation, reward evaluation, and policy
+ers, which are fine-tuned specifically for financial                optimization. The parameters of the model are
+decision-making, i.e.,                                              updated using stochastic gradient descent (SGD),
+         h(2) = LLMN +1:N +M (h(1) ; θtrain ).           (6)        leveraging the computed policy and value losses to
+                                                                    drive optimization.
+This structure enables efficient adaptation to the fi-                 At each training step, we define two key loss
+nancial domain without modifying the entire LLM,                    functions, i.e., policy loss LP : measures how
+significantly reducing training cost while maintain-                well the policy network aligns with the expected
+ing performance.                                                    advantage-weighted log probability of actions;
+   Policy Head. Finally, the processed representa-                  value loss LV : ensures that the value network ac-
+tion is fed into the policy head, which outputs a                   curately estimates the expected return.
+probability distribution over the available trading                 Remark 4.1. The definitions of policy loss and
+actions according to                                                value loss may vary across different actor-critic
+                                                                    (AC) algorithms. Here, we present a general formu-
+  logits = P OLICY _N ET(h(2) , θP ) ∈ R|A| , (7)
+                                                                    lation for clarity and ease of expression. Notably,
+where θP is the parameter of P OLICY _N ET, with                    our framework is designed to be flexible and adapt-
+action masking for invalid trades:                                  able, making it compatible with a wide range of
+          (                                                         AC algorithms.
+            0                        a∈/ A,                            Based on these loss functions, the model updates
+ π(a|s) =        exp(logits(a))                 (8)
+            P
+               ′    exp(logits(a′ )) otherwise.                     the respective network parameters using backprop-
+                 a ∈A
+
+   1
+                                                                    agation as follows.
+     To simplify notation, we use lang(st ) to represent both
+the state encoding and the prompt, acknowledging this slight           Update Policy Head. The policy network pa-
+abuse of notation for convenience.                                  rameters θP are updated via SGD to minimize the
+
+                                                                5
+policy loss LP                                                Algorithm 1 FLAG-T RADER
+                                                               1: Require: Pre-trained LLM with parameter
+                θP ← θP − η∇θP LP ,               (10)            θ := (θfrozen , θtrain ), environment dynamics
+                                                                  T , reward function R;
+where η is the learning rate for updating policy
+                                                               2: Initialize policy network θP and value network
+head θP .
+                                                                  θV with shared LLM trainable layers θtrain ;
+   Update Value Head. The value network param-
+                                                               3: Initialize experience replay buffer B ← ∅
+eters θV are optimized via SGD to minimize the
+                                                               4: for iteration t = 1, 2, . . ., do
+temporal difference (TD) error over policy loss LV
+                                                               5:    Fetch the current state st from the envi-
+               θV ← θV − η∇θV LV .                (11)               ronment and construct an input prompt
+                                                                     lang(st );
+   Update Trainable LLM Layers. The train-                     6:    Pass prompt lang(st ) through LLM;
+able LLM parameters θtrain are updated via SGD                 7:    P OLICY _N ET outputs at from action space
+jointly based on both the policy and value losses,                   {“buy,” “sell,” “hold”} based on (8);
+i.e., LP and LV , allowing the shared LLM repre-               8:    Execute action at in the environment and
+sentation to align with optimal decision-making:                     observe reward r(st , at ) and transition to
+                                                                     new state st+1 ;
+      θtrain ← θtrain − β∇θtrain (LP + LV ),      (12)         9:    Store experience tuple (st , at , rt , st+1 ) in
+                                                                     replay buffer B;
+where β is the learning rate for LLM parameter                10:    if t mod τ = 0 then
+θtrain .                                                      11:       Update policy head θP according to (10);
+   The updates in (10)–(12) are performed itera-              12:       Update value head θV according to (11);
+tively until the stopping criteria are met, as outlined       13:       Update the trainable LLM layers θtrain
+in Algorithm 1. This iterative learning process                         according to (12).
+effectively balances exploration and exploitation,            14:    end if
+enhancing policy performance while maintaining                15: end for
+stability. To mitigate overfitting and policy diver-          16: Return: Fine-tuned P OLICY _N ET(θP ).
+gence, we employ Proximal Policy Optimization
+(PPO), which constrains updates by limiting the
+divergence from previous policies, ensuring more              (JNJ), UVV Corporation (UVV), Honeywell In-
+controlled and reliable learning. The detailed pro-           ternational Inc. (HON), Tesla, Inc. (TSLA) and
+cedure of how to compute policy loss LP and value             Bitcoin (BTC). As summarized in Table 1, each
+loss LP can be found in Appendix A.                           agent’s performance is measured across these as-
+                                                              sets. All language models use a temperature of
+5     Experiments                                             0.6 during inference to balance consistency and
+This section describes the overall experimental de-           creativity in their responses.
+sign and environmental setup for comparing the                   We report four metrics-Composite Return (CR),
+performance of different trading agents under con-            Sharpe Ratio (SR), Annualized Volatility (AV), and
+sistent conditions.                                           Maximum Drawdown (MDD) and select final re-
+                                                              sults from the test trajectory corresponding to the
+5.1     Experiment Setup                                      median of these metrics. If the median values arise
+For our single-asset trading tasks, we adopt two              from different epochs, we prioritize the run produc-
+baselines: the buy-and-hold strategy and the LLM-             ing the median SR. Due to varying data availability,
+based trading agent from INVESTORBENCH (Li                    warm-up and test periods may differ. For the trad-
+et al., 2024a), which integrates 13 proprietary               ing tasks of five stocks, the warm-up period is July
+or open-source large language models. Our pro-                1, 2020, to September 30, 2020, and the test period
+posed model, FLAG-T RADER (built on a 135M-                   is October 1, 2020, to May 6, 2021. On the other
+parameter LLM), is then evaluated against these               hand, the warm-up period of BTC trading is from
+baselines for a comprehensive performance com-                2023-02-11 to 2023-04-04 and the test period is
+parison.                                                      from 2023-04-05 to 2023-11-05.
+   We focus on five stocks and one crypto: Mi-                   We deploy LLMs using the vllm framework,
+crosoft Corporation (MSFT), Johnson & Johnson                 with configurations depending on model size.
+
+                                                          6
+        Table 1: Performance of stock trading with different LLMs as backbone model across seven stocks.
+  Model                                     MSFT                                      JNJ                               UVV
+                               CR↑      SR↑       AV↓      MDD↓      CR↑      SR↑           AV↓   MDD↓     CR↑      SR↑       AV↓     MDD↓
+  Buy & Hold                  15.340    1.039    24.980    9.428     13.895   1.343     17.500    9.847    36.583   2.112    29.299   15.406
+                                                          Financial Domain Models
+  Palmyra-Fin-70B             14.697    0.897    27.518     9.428    5.748  0.450       19.317    9.367    37.875   2.039    31.200   15.967
+                                                            Proprietary Models
+  GPT-o1-preview              17.184    0.962    30.000    9.428 13.561 1.086           20.864    9.847    41.508   2.147    32.479    9.633
+  GPT-4                       16.654    0.932    30.022    9.428 13.712 1.103           20.894    9.860    31.791   1.640    32.567   10.434
+  GPT-4o                      12.461    0.924    22.653    6.647    9.099   0.875       17.471    7.169    8.043    0.496    27.241   14.889
+                                                            Open-Source Models
+  Qwen2.5-72B-Instruct          7.421    0.588   21.238     6.973 14.353 1.140          20.995     9.812   37.178   1.822    34.223   13.365
+  Llama-3.1-70B-Instruct      17.396    1.335    21.892     7.045 13.868 1.121          20.779     9.825   35.981   1.728    34.986   15.406
+  DeepSeek-67B-Chat           13.941    0.834    28.081     7.850 14.426 1.185          20.450     9.825   29.940   1.481    33.964   15.407
+  Yi-1.5-34B-Chat             22.093    1.253    29.613     9.428 14.004 1.180          19.938     9.847   20.889   1.020    34.417   14.936
+  Qwen2.5-32B-Instruct         -0.557   -0.041   22.893     8.946  2.905   0.292        16.725     7.169   -1.623   -0.097   27.973   17.986
+  DeepSeek-V2-Lite (15.7B)    11.904    0.694    28.796    16.094 -7.482 -0.670         18.773    17.806   33.560   1.703    33.099   12.984
+  Yi-1.5-9B-Chat              19.333    1.094    29.690     9.428 18.606 1.611          19.409    10.986   49.415   2.410    34.446   11.430
+  Llama-3.1-8B-Instruct       22.703    1.322    28.855     7.385 13.988 1.486          20.460     9.969   41.108   1.981    34.866   16.429
+  Qwen-2.5-Instruct-7B        -10.305   -0.724   23.937    23.371 21.852 0.980          37.425     9.573   11.752   0.853    22.988   15.451
+                                                              FLAG-TRADER
+  SmolLM2-135M-Instruct       20.106    1.373    24.932    9.428 33.724 3.344           17.174    9.320    46.799   1.463    67.758   35.039
+  1
+    The Buy & Hold strategy is a passive investment approach commonly used as a baseline strategy, where an investor
+    purchases stocks and holds onto them for an extended period regardless of market fluctuations.
+  2
+    An upward arrow (↑) next to a metric indicates that higher values signify better performance, while a downward arrow (↓)
+    indicates that lower values are preferable.
+  3
+    The numbers highlighted in red indicate the best-performing outcomes for the corresponding metrics.
+
+
+Small-scale models (under 10B parameters) run                            where pnlt is the PnL at time t, and Ct−1 +
+on two RTX A6000 GPUs (48GB each), mid-scale                             Ht−1 Pt−1 is the account balance at time t − 1.
+models (10B–65B parameters) require four RTX                             Notice that higher values indicate better strategy
+A6000 GPUs, and large-scale models (over 65B                             effectiveness.
+parameters) use eight A100 GPUs (80GB each).                             Sharpe Ratio (SR) assesses risk-adjusted returns
+These setups provide sufficient resources for both                       by dividing the average excess return (Rp ) over the
+inference and training, enabling a fair compari-                         risk-free rate (rf ) by its volatility (σp ):
+son of trading performance across different assets.
+                                                                                                           Rp − rf
+FLAG-T RADER is trained by using PPO algorithm,                                                   SR =             .                    (14)
+which is detailed in Algorithm 2 in Appendix A.                                                              σp
+                                                                         Notice that higher ratios signify better perfor-
+5.2    Evaluation Metrics
+                                                                         mance.
+We use four widely recognized financial metrics                          Annualized Volatility (AV) % and Daily Volatil-
+(Hull, 2007) to evaluate and compare the invest-                         ity (DV) % quantify return fluctuations; AV is
+ment performance of various LLM backbones                                derived by scaling DV (standard deviation of daily
+across different tasks: Cumulative Return (CR),                          logarithmic returns) by the square root of the an-
+Sharpe Ratio (SR), Annualized Volatility (AV), and                       nual trading days (252):
+Maximum Drawdown (MDD). As CR and SR fo-                                                             √
+cus more on long-term gains and risk-adjusted re-                                        AV = DV × 252.                (15)
+turns, they are typically considered more important
+                                                                         This metric highlights potential return deviations
+than AV and MDD for assessing asset trading per-
+                                                                         across the year.
+formance. Accordingly, we treat CR and SR as our
+                                                                         Max Drawdown (MDD) % calculates the largest
+primary metrics for the final evaluation.
+                                                                         drop from peak to trough of the value of balance
+Cumulative Return (CR) % measures the total
+                                                                         account:
+value change of an investment over time by sum-
+ming logarithmic return calculated from daily PnL:                                                         Vpeak − Vtrough
+                                                                                       MDD = max(                          ).           (16)
+                                                                                                                Vpeak
+             T
+             X                      pnlt
+      CR =         log (1 +                    ),             (13)       Notice that lower values indicate lesser risk and
+                              Ct−1 + Ht−1 Pt−1
+             t=1                                                         higher strategy robustness.
+
+                                                                     7
+          Table 2: Performance of stock trading with different LLMs as backbone model across seven stocks.
+      Model                                   HON                                 TSLA                                BTC
+                                 CR↑      SR↑      AV↓     MDD↓     CR↑       SR↑      AV↓     MDD↓      CR↑      SR↑       AV↓     MDD↓
+      Buy & Hold                 33.256   2.347   23.967   9.195   39.244     0.869   75.854   37.975   21.821    0.683    37.426   20.796
+                                                           Financial Domain Models
+      Palmyra-Fin-70B            20.016   1.464   22.974    6.824 -6.661 -0.222 50.379         25.820   -20.812   -1.212   20.036   27.782
+                                                               Proprietary Models
+      GPT-o1-preview             13.162   0.776   28.511   11.558 34.499 0.796        72.822   35.490   34.060    1.114    35.846   17.075
+      GPT-4                      34.342   2.005   28.779    9.195 45.246 1.190        63.896   25.031   22.396    0.828    31.699   17.206
+      GPT-4o                     38.540   2.418   26.782    8.979 45.946 1.348        57.281   21.631   14.330    0.532    31.304   17.278
+                                                              Open-Source Models
+      Qwen2.5-72B-Instruct       34.309   2.000   28.779    9.292 39.112 1.075        61.136   26.985   0.549     0.325     1.979    0.897
+      Llama-3.1-70B-Instruct     43.944   2.646   27.903    8.993 37.545 0.891        70.815   29.813   20.440    0.758    31.604   17.813
+      DeepSeek-67B-Chat          32.536   1.909   28.628   10.782 35.647 0.885        67.660   33.359   28.307    0.891    37.219   17.944
+      Yi-1.5-34B-Chat            30.743   1.823   28.335    9.195 35.364 0.808        73.561   35.490   13.620    0.434    36.778   22.790
+      Qwen2.5-32B-Instruct       26.332   1.980   22.348    5.261 21.336 0.729        49.157   20.704   11.566    0.869    15.608    7.984
+      DeepSeek-V2-Lite (15.7B)   16.686   0.974   28.771   16.806 31.458 0.744        68.524   35.404   4.804     0.153    36.846   20.562
+      Yi-1.5-9B-Chat             29.028   1.700   28.682   12.588 31.350 0.703        74.895   37.975   7.953     0.253    36.799   26.545
+      Llama-3.1-8B-Instruct      39.079   2.320   28.299   10.341 35.622 0.832        71.936   36.383   20.521    0.646    37.240   21.104
+      Qwen-2.5-Instruct-7B       4.291    0.285   24.933   14.156 41.203 0.925        74.862   37.975   19.477    0.612    37.289   20.796
+                                                               FLAG-TRADER
+      SmolLM2-135M-Instruct      34.342   2.429   23.913   10.872 50.394 1.362        64.004   37.975   45.511    1.734    30.903   24.440
+ 1
+   The Buy & Hold strategy is a passive investment approach commonly used as a baseline strategy, where an investor
+   purchases stocks and holds onto them for an extended period regardless of market fluctuations.
+ 2
+   An upward arrow (↑) next to a metric indicates that higher values signify better performance, while a downward arrow (↓)
+   indicates that lower values are preferable.
+ 3
+   The numbers highlighted in red indicate the best-performing outcomes for the corresponding metrics.
+
+
+5.3     Experimental Results                                                     els (e.g., GPT-o1-preview) in the baseline
+     • FLAG-Trader achieves superior stock trad-                                 framework-FLAG-T RADER leverages an RL-
+       ing performance. Unlike the baseline agent,                               based training pipeline to enable a 135M-
+       which relies on an LLM-agentic framework,                                 parameter open-source model to outperform
+       FLAG-T RADER undergoes an RL-based post-                                  significantly larger models in financial trading
+       training phase. As shown in Table 1 and Table                             tasks. This demonstrates that a well-designed
+       2, FLAG-T RADER consistently outperforms                                  training strategy can bridge or even surpass
+       the baseline across multiple metrics, demon-                              the performance gap typically associated with
+       strating its stronger adaptability and optimiza-                          model scale.
+       tion in diverse market environments.
+                                                                          6     Conclusion
+     • Convergence to a (stable) optimal policy.                          In this paper, we introduced FLAG-T RADER,
+       When using an LLM as the policy network in                         a novel framework that integrates LLMs with
+       deep RL, the policy is jointly parameterized                       RL for financial trading. In particular, FLAG-
+       by the model’s intrinsic parameters and the                        T RADER leverages LLMs as policy networks,
+       prompt. Although the initial prompts strongly                      allowing for natural language-driven decision-
+       influence policy generation during the first few                   making while benefiting from reward-driven op-
+       training epochs, this effect diminishes over                       timization through RL fine-tuning. Our framework
+       time. Consequently, the system converges to                        enables small-scale LLMs to surpass larger pro-
+       a relatively stable policy that becomes less                       prietary models by efficiently adapting to market
+       sensitive to the initial prompts, indicating that                  conditions via a structured reinforcement learn-
+       RL training allows the LLM-based agent to                          ing approach. Through extensive experiments
+       refine its strategy and achieve a robust trading                   across multiple stock trading scenarios, we demon-
+       policy.                                                            strated that FLAG-T RADER consistently outper-
+     • FLAG-T RADER enables small-scale mod-                              forms baseline methods, including LLM-agentic
+       els to surpass large-scale counterparts.                           frameworks and conventional RL-based trading
+       While increasing model size generally en-                          agents. These results highlight the potential of
+       hances financial decision-making and robust-                       integrating LLMs with RL to achieve adaptability
+       ness— as seen with large proprietary mod-                          in financial decision-making.
+
+
+                                                                     8
+Limitations and Potential Risk                               Ben Hambly, Renyuan Xu, and Huining Yang. 2023.
+                                                               Recent advances in reinforcement learning in finance.
+Despite its promising results, FLAG-T RADER has                Mathematical Finance, 33(3):437–503.
+several limitations. First, while our approach sig-
+nificantly enhances the decision-making ability of           Allen H Huang, Hui Wang, and Yi Yang. 2023. Finbert:
+                                                               A large language model for extracting information
+LLMs, it remains computationally expensive, par-               from financial text. Contemporary Accounting Re-
+ticularly when fine-tuning on large-scale market               search, 40(2):806–841.
+datasets. Reducing computational overhead while
+maintaining performance is an important direction            Yuling Huang, Xiaoxiao Wan, Lin Zhang, and Xiaop-
+                                                               ing Lu. 2024. A novel deep reinforcement learning
+for future research. Second, financial markets ex-             framework with bilstm-attention networks for algo-
+hibit high volatility and non-stationarity, posing             rithmic trading. Expert Systems with Applications,
+challenges for long-term generalization. Future                240:122581.
+work should explore techniques such as continual
+                                                             John Hull. 2007. Risk Management and Financial Insti-
+learning or meta-learning to enhance model adapt-              tutions. John Wiley & Sons.
+ability in evolving market conditions. Third, while
+FLAG-T RADER effectively integrates textual and              O Jangmin, Jongwoo Lee, Jae Won Lee, and Byoung-
+                                                               Tak Zhang. 2006. Adaptive stock trading with dy-
+numerical data, its reliance on structured prompts
+                                                               namic asset allocation using reinforcement learning.
+could introduce biases in decision-making. Improv-             Information Sciences, 176(15):2121–2147.
+ing prompt design or exploring retrieval-augmented
+methods may further enhance robustness. Lastly,              Gyeeun Jeong and Ha Young Kim. 2019. Improving
+                                                               financial trading decisions using deep q-learning: Pre-
+real-world trading requires stringent risk manage-             dicting the number of shares, action strategies, and
+ment, and FLAG-T RADER currently optimizes for                 transfer learning. Expert Systems with Applications,
+financial returns without explicitly incorporating             117:125–138.
+risk-sensitive constraints. Extending the framework
+                                                             Ming Jin, Shiyu Wang, Lintao Ma, Zhixuan Chu,
+to integrate risk-aware objectives and dynamic port-           James Y Zhang, Xiaoming Shi, Pin-Yu Chen, Yux-
+folio optimization could provide more robust and               uan Liang, Yuan-Fang Li, Shirui Pan, and 1 others.
+practical financial trading solutions.                         2023. Time-llm: Time series forecasting by repro-
+                                                               gramming large language models. arXiv preprint
+                                                               arXiv:2310.01728.
+References
+                                                             Haohang Li, Yupeng Cao, Yangyang Yu, Shashid-
+Dogu Araci. 2019. Finbert: Financial sentiment analy-          har Reddy Javaji, Zhiyang Deng, Yueru He, Yuechen
+  sis with pre-trained language models. arXiv preprint         Jiang, Zining Zhu, Koduvayur Subbalakshmi, Guo-
+  arXiv:1908.10063.                                            jun Xiong, and 1 others. 2024a. Investorbench: A
+                                                               benchmark for financial decision-making tasks with
+Lili Chen, Kevin Lu, Aravind Rajeswaran, Kimin Lee,            llm-based agent. arXiv preprint arXiv:2412.18174.
+   Aditya Grover, Misha Laskin, Pieter Abbeel, Aravind
+   Srinivas, and Igor Mordatch. 2021. Decision trans-        Yang Li, Yangyang Yu, Haohang Li, Zhi Chen, and
+   former: Reinforcement learning via sequence mod-            Khaldoun Khashanah. 2023. Tradinggpt: Multi-
+   eling. Advances in neural information processing            agent system with layered memory and distinct char-
+   systems, 34:15084–15097.                                    acters for enhanced financial trading performance.
+Renato Arantes de Oliveira, Heitor S Ramos,                    arXiv preprint arXiv:2309.03736.
+  Daniel Hasan Dalip, and Adriano César Machado
+                                                             Yuan Li, Bingqiao Luo, Qian Wang, Nuo Chen, Xu Liu,
+  Pereira. 2020. A tabular sarsa-based stock market
+                                                               and Bingsheng He. 2024b. Cryptotrade: A reflective
+  agent. In Proceedings of the First ACM International
+                                                               llm-based agent to guide zero-shot cryptocurrency
+  Conference on AI in Finance, pages 1–8.
+                                                               trading. In Proceedings of the 2024 Conference on
+Xiang Deng, Vasilisa Bashlovkina, Feng Han, Simon              Empirical Methods in Natural Language Processing,
+  Baumgartner, and Michael Bendersky. 2023. What               pages 1094–1106.
+  do llms know about financial markets? a case study
+  on reddit market sentiment analysis. In Companion          Zhipeng Liang, Hao Chen, Junhao Zhu, Kangkang
+  Proceedings of the ACM Web Conference 2023, pages            Jiang, and Yanran Li. 2018. Adversarial deep rein-
+  107–110.                                                     forcement learning in portfolio management. arXiv
+                                                               preprint arXiv:1808.09940.
+Xiu Gao and Laiwan Chan. 2000. An algorithm for
+  trading and portfolio management using q-learning          Xiao-Yang Liu, Guoxuan Wang, and Daochen Zha.
+  and sharpe ratio maximization. In Proceedings of             2023. Fingpt: Democratizing internet-scale data
+  the international conference on neural information           for financial large language models. arXiv preprint
+  processing, pages 832–837. Citeseer.                         arXiv:2307.10485.
+
+
+                                                         9
+Xiao-Yang Liu, Ziyi Xia, Jingyang Rui, Jiechao Gao,              models for financial applications. arXiv preprint
+  Hongyang Yang, Ming Zhu, Christina Wang, Zhao-                 arXiv:2408.11878.
+  ran Wang, and Jian Guo. 2022. Finrl-meta: Mar-
+  ket environments and benchmarks for data-driven              Hongyang Yang, Xiao-Yang Liu, and Christina Dan
+  financial reinforcement learning. Advances in Neural           Wang. 2023a. Fingpt: Open-source financial large
+  Information Processing Systems, 35:1835–1849.                  language models. arXiv preprint arXiv:2306.06031.
+
+Arman Khadjeh Nassirtoussi, Saeed Aghabozorgi,                 Hongyang Yang, Boyu Zhang, Neng Wang, Cheng Guo,
+  Teh Ying Wah, and David Chek Ling Ngo. 2014. Text              Xiaoli Zhang, Likun Lin, Junlin Wang, Tianyu Zhou,
+  mining for market prediction: A systematic review.             Mao Guan, Runjia Zhang, and 1 others. 2024. Fin-
+  Expert Systems with Applications, 41(16):7653–                 robot: An open-source ai agent platform for finan-
+  7670.                                                          cial applications using large language models. arXiv
+                                                                 preprint arXiv:2405.14767.
+Raj Sanjay Shah, Kunal Chawla, Dheeraj Eidnani,
+  Agam Shah, Wendi Du, Sudheer Chava, Natraj Ra-               Yi Yang, Yixuan Tang, and Kar Yan Tam. 2023b. In-
+  man, Charese Smiley, Jiaao Chen, and Diyi Yang.                vestlm: A large language model for investment using
+  2022. When flue meets flang: Benchmarks and                    financial domain instruction tuning. arXiv preprint
+  large pre-trained language model for financial do-             arXiv:2309.13064.
+  main. arXiv preprint arXiv:2211.00083.
+                                                               Yi Yang, Mark Christopher Siy Uy, and Allen Huang.
+Si Shi, Jianjun Li, Guohui Li, and Peng Pan. 2019.               2020. Finbert: A pretrained language model
+   A multi-scale temporal feature aggregation convo-             for financial communications.     arXiv preprint
+   lutional neural network for portfolio management.             arXiv:2006.08097.
+   In Proceedings of the 28th ACM international con-
+   ference on information and knowledge management,            Yunan Ye, Hengzhi Pei, Boxin Wang, Pin-Yu Chen,
+   pages 1613–1622.                                              Yada Zhu, Ju Xiao, and Bo Li. 2020. Reinforcement-
+                                                                 learning based portfolio management with aug-
+Shuo Sun, Rundong Wang, and Bo An. 2023. Rein-                   mented asset movement prediction states. In Pro-
+  forcement learning for quantitative trading. ACM               ceedings of the AAAI conference on artificial intelli-
+  Transactions on Intelligent Systems and Technology,            gence, volume 34, pages 1112–1119.
+  14(3):1–29.
+                                                               Yangyang Yu, Haohang Li, Zhi Chen, Yuechen Jiang,
+Andrew Szot, Max Schwarzer, Harsh Agrawal, Bog-                  Yang Li, Denghui Zhang, Rong Liu, Jordan W Su-
+  dan Mazoure, Rin Metcalf, Walter Talbott, Natalie              chow, and Khaldoun Khashanah. 2024a. Finmem: A
+  Mackraz, R Devon Hjelm, and Alexander T Toshev.                performance-enhanced llm trading agent with layered
+  2023. Large language models as generalizable poli-             memory and character design. In Proceedings of the
+  cies for embodied tasks. In The Twelfth International          AAAI Symposium Series, volume 3, pages 595–597.
+  Conference on Learning Representations.
+                                                               Yangyang Yu, Zhiyuan Yao, Haohang Li, Zhiyang Deng,
+Kieran Wood, Sven Giegerich, Stephen Roberts, and                Yupeng Cao, Zhi Chen, Jordan W Suchow, Rong Liu,
+  Stefan Zohren. 2021. Trading with the momentum                 Zhenyu Cui, Zhaozhuo Xu, and 1 others. 2024b. Fin-
+  transformer: An intelligent and interpretable archi-           con: A synthesized llm multi-agent system with con-
+  tecture. arXiv preprint arXiv:2112.08534.                      ceptual verbal reinforcement for enhanced financial
+                                                                 decision making. arXiv preprint arXiv:2407.06567.
+Shijie Wu, Ozan Irsoy, Steven Lu, Vadim Dabravolski,
+  Mark Dredze, Sebastian Gehrmann, Prabhanjan Kam-             Yangyang Yu, Zhiyuan Yao, Haohang Li, Zhiyang Deng,
+  badur, David Rosenberg, and Gideon Mann. 2023.                 Yuechen Jiang, Yupeng Cao, Zhi Chen, Jordan Su-
+  Bloomberggpt: A large language model for finance.              chow, Zhenyu Cui, Rong Liu, and 1 others. 2025.
+  arXiv preprint arXiv:2303.17564.                               Fincon: A synthesized llm multi-agent system with
+                                                                 conceptual verbal reinforcement for enhanced finan-
+Qianqian Xie, Weiguang Han, Zhengyu Chen, Ruoyu                  cial decision making. Advances in Neural Informa-
+  Xiang, Xiao Zhang, Yueru He, Mengxi Xiao, Dong                 tion Processing Systems, 37:137010–137045.
+  Li, Yongfu Dai, Duanyu Feng, and 1 others. 2024a.
+  The finben: An holistic financial benchmark for large        Yuexiang Zhai, Hao Bai, Zipeng Lin, Jiayi Pan, Sheng-
+  language models. arXiv preprint arXiv:2402.12659.              bang Tong, Yifei Zhou, Alane Suhr, Saining Xie,
+                                                                 Yann LeCun, Yi Ma, and 1 others. 2024. Fine-tuning
+Qianqian Xie, Weiguang Han, Xiao Zhang, Yanzhao                  large vision-language models as decision-making
+  Lai, Min Peng, Alejandro Lopez-Lira, and Jimin                 agents via reinforcement learning. arXiv preprint
+  Huang. 2023. Pixiu: A large language model, in-                arXiv:2405.10292.
+  struction data and evaluation benchmark for finance.
+  arXiv preprint arXiv:2306.05443.                             Wentao Zhang, Lingxuan Zhao, Haochong Xia, Shuo
+                                                                Sun, Jiaze Sun, Molei Qin, Xinyi Li, Yuqing Zhao,
+Qianqian Xie, Dong Li, Mengxi Xiao, Zihao Jiang,                Yilei Zhao, Xinyu Cai, and 1 others. 2024. Finagent:
+  Ruoyu Xiang, Xiao Zhang, Zhengyu Chen, Yueru                  A multimodal foundation agent for financial trading:
+  He, Weiguang Han, Yuzhe Yang, and 1 others. 2024b.            Tool-augmented, diversified, and generalist. arXiv
+  Open-finllms: Open multimodal large language                  preprint arXiv:2402.18485.
+
+
+                                                          10
+Yuzhe Zhang and Hong Zhang. 2023. Finbert–mrc: fi-
+  nancial named entity recognition using bert under the
+  machine reading comprehension paradigm. Neural
+  Processing Letters, 55(6):7393–7413.
+Zihao Zhang, Stefan Zohren, and Stephen J. Roberts.
+  2019. Deep reinforcement learning for trading. In
+  The Journal of Financial Data Science.
+
+
+
+
+                                                          11
+A      Additional Algorithmic Details: FLAG-T RADER with PPO
+
+In this section, we outline a detailed procedure for training the FLAG-T RADER architecture via PPO,
+where the P OLICY _N ET (actor) and the  VALUE _N ET (critic) share a subset of trainable parameters
+from a LLM, with θ = θtrain , θP , θV . We define θpolicy = θtrain , θP ) and θvalue = θtrain , θV ) for
+simplicity.
+   Advantage Estimation. We use the Generalized Advantage Estimation (GAE) to compute the advan-
+tage function At :
+
+                               T
+                               X −1
+                                     (γλ)k rt+k + γVθvalue (st+k+1 ) − Vθvalue (st+k ) ,
+                                                                                     
+                       At =                                                                          (17)
+                               k=0
+
+
+where γ is the discount factor, and λ is the GAE parameter.
+   Probability Ratio. Let θpolicy,old denote the parameters before the current update. The PPO probability
+ratio is
+
+                                                          πθpolicy (at | st )
+                                       rt (θpolicy ) =                           .                   (18)
+                                                         πθpolicy,old (at | st )
+
+
+     PPO Clipped Objective. PPO clips this ratio to prevent overly large updates. The surrogate objective
+is
+
+                                 h                                                        i
+               LP (θpolicy ) = Et min rt (θpolicy ) At , clip rt (θpolicy ), 1 − ε, 1 + ε At ,       (19)
+
+
+where ε is a hyperparameter.
+  Value Function Loss. The critic (value network) is updated by minimizing the difference between the
+predicted value Vθvalue (st ) and the target return Rt . A common choice is:
+
+                                                  h                      i
+                                 LV (θvalue ) = Et (Vθvalue (st ) − Rt )2 .                          (20)
+
+
+     Combined Loss. We often add an entropy term to encourage exploration, yielding the overall objective:
+
+                                                                                    
+                      Ltotal (θ) = − LP (θpolicy ) + c1 LV (θvalue ) − c2 H πθpolicy ,               (21)
+
+
+where c1 and c2 are weighting coefficients, and H(πθpolicy ) represents the policy entropy.
+     Parameter Updates. At each iteration, we apply gradient descent on the total loss:
+
+
+                                           θP ← θP − η ∇θP LP ,                                      (22)
+                                           θV ← θV − η ∇θV LV ,                                      (23)
+                                       θtrain ← θtrain − β ∇θtrain Ltotal ,                          (24)
+
+
+where η and β are learning rates for the policy head, value head, and trainable LLM layers respectively.
+The algorithm is summerized in Algorithm 2.
+
+                                                         12
+Algorithm 2 FLAG-TRADER with PPO
+ 1: Input: Pre-trained LLM parameters (θfrozen , θtrain ); actor parameters θP ; critic parameters θV ;
+    environment E; discount factor γ; GAE parameter λ; PPO clip ε; learning rates η, β;
+ 2: Initialize θtrain , θP , θV ; let θold ← θ
+ 3: Initialize replay buffer B ← ∅
+ 4: for iteration = 1 to max_iters do
+ 5:    // Collect Rollouts
+ 6:    for t = 1 to T do
+ 7:       Fetch the current state st from the environment and construct an input prompt lang(st );
+ 8:       Pass prompt lang(st ) through LLM;
+ 9:       P OLICY _N ET outputs at from action space {“buy,” “sell,” “hold”} based on (8);
+10:       Execute action at in the environment and observe reward r(st , at ) and transition to new state
+          st+1 ;
+11:       Store experience tuple (st , at , rt , st+1 ) in replay buffer B;
+12:    end for
+13:    // Compute Advantage and Targets
+14:    for each transition in B do
+15:       Compute Vθvalue (st ) and advantage At (e.g., via GAE)
+16:    end for
+17:    // Perform PPO Updates
+18:    for update_epoch = 1 to K do
+19:       Sample mini-batch M from B
+                                                     πθ     (at |st )
+20:      Compute probability ratio rt (θpolicy ) = πθ policy (at |st ) ;
+                                                 h   policy,old
+                                                                                                     i
+21:      Compute PPO loss LP (θpolicy ) = Et min rt (θpolicy ) At , clip rt (θpolicy ), 1 − ε, 1 + ε At ;
+                                                   h                     i
+22:      Compute Value loss LV (θvalue ) = Et (Vθvalue (st ) − Rt )2 ;
+                                                                                              
+23:      Compute total loss Ltotal (θ) = − LP (θpolicy ) + c1 LV (θvalue ) − c2 H πθpolicy ;
+24:      Perform gradient descent on each parameter group:
+
+                                           θP ← θP − η ∇θP LP ,
+                                           θV ← θV − η ∇θV LV ,
+                                        θtrain ← θtrain − β ∇θtrain Ltotal ;
+
+25:   end for
+26:   // Update old policy parameters
+                                 
+27:   Update θ = θtrain , θP , θV by θold ← θ;
+28: end for
+29: Return: Fine-tuned P OLICY _N ET(θP ).
+
+
+B     Additional Experimental Details
+Hyperparameters for Finetuening FLAG-T RADER with PPO in Algorithm 2
+
+
+
+
+                                                   13
+            Table 3: FLAG-T RADER with PPO Finetuning Hyperparameters and Settings.
+
+Parameter                      Default Value             Description
+total_timesteps                13860                     Total number of timesteps
+learning_rate                  5 × 10−4                  Learning rate of optimizer
+num_envs                       1                         Number of parallel environments
+num_steps                      40                        Steps per policy rollout
+anneal_lr                      True                      Enable learning rate annealing
+gamma                          0.95                      Discount factor γ
+gae_lambda                     0.98                      Lambda for Generalized Advantage Estimation
+update_epochs                  1                         Number of update epochs per cycle
+norm_adv                       True                      Advantages whitening
+clip_coef                      0.2                       Surrogate clipping coefficient
+clip_vloss                     True                      Clipped loss for value function
+ent_coef                       0.05                      Coefficient of entropy term
+vf_coef                        0.5                       Coefficient of value function
+kl_coef                        0.05                      KL divergence with reference model
+max_grad_norm                  0.5                       Maximum gradient clipping norm
+target_kl                      None                      Target KL divergence threshold
+dropout                        0.0                       Dropout rate
+llm                            "SmolLM2-135M-Instruct"   Model to fine-tune
+train_dtype                    "float16"                 Training data type
+gradient_accumulation_steps    8                         Number of gradient accumulation steps
+minibatch_size                 32                        Mini-batch size for fine-tuning
+max_episode_steps              65                        Maximum number of steps per episode
+
+
+
+
+                                               14
+

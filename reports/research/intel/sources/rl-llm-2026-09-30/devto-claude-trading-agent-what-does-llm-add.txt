@@ -1,0 +1,64 @@
+Title: Claude as a trading agent: what does the LLM actually add over a plain script?
+
+URL Source: https://dev.to/shenao_yu_e15c14815264a44/claude-as-a-trading-agent-what-does-the-llm-actually-add-over-a-plain-script-21l2
+
+Published Time: 2026-08-14T01:36:19Z
+
+Markdown Content:
+This came up in Chinese AI developer communities this week, and the numbers are almost beside the point.
+
+A physics researcher (no CS background, no finance training) connected Claude to a US brokerage account via API, wrote a simple automated trading strategy, and ran a live experiment for one week with $500. The rules were deliberately conservative: long equities only, no margin, no futures, no shorting, no HFT. "You can't earn beyond your own understanding," the author wrote, "so I only do things I can understand."
+
+After seven trading days: $510.65, up 2.20%. VOO returned 1.88% that week. QQQ returned 2.05%.
+
+The author is careful about this: one week is not a result, it's a data point. But 374 comments later, the conversation has moved somewhere more interesting than return attribution.
+
+## [](https://dev.to/shenao_yu_e15c14815264a44/claude-as-a-trading-agent-what-does-the-llm-actually-add-over-a-plain-script-21l2#the-actual-problem-being-solved) The actual problem being solved
+
+The author runs two accounts in parallel. The Claude-managed account follows the strategy. The manually managed account is, by the author's own description, a textbook retail investor failure mode: constant overconfidence, overtrading, getting whipsawed. The AI account simply executed the plan and did not deviate.
+
+This is a real and documented problem. Systematic strategies outperforming discretionary ones is well-established in quantitative finance, and the reason is usually behavioral rather than informational. Retail investors underperform their own funds because they trade at the wrong moments.
+
+But here is the thing the thread mostly glossed over: retail algo trading infrastructure has been accessible for years. Alpaca offers a free brokerage API with paper and live trading. Interactive Brokers has had algorithmic access for over a decade. QuantConnect lets you backtest and deploy strategies without writing broker integration code from scratch. A fixed rules-based Python script connected to any of these would also not panic, not overtrade, and not second-guess the plan.
+
+So the question worth asking is not "can Claude beat the market" but "what does the LLM layer add that a deterministic script would not?"
+
+## [](https://dev.to/shenao_yu_e15c14815264a44/claude-as-a-trading-agent-what-does-the-llm-actually-add-over-a-plain-script-21l2#what-the-architecture-actually-looks-like) What the architecture actually looks like
+
+The author published a simplified, anonymized version of the code. From the trade log visible in the post, the bot executes fractional share market orders across a small set of equities: LCID, KO, SMH, AAPL, among others. The bot runs daily analysis and execution automatically; the author checks logs each evening to confirm no bugs.
+
+This is not a chat-based workflow. It requires agentic tool use with brokerage API access, where Claude is calling functions rather than answering questions. One commenter noted their own Claude just responds with "I am not a financial adviser" to any market question, which points to the gap between a raw chat interface and a purpose-built agentic pipeline with appropriate system prompting.
+
+The cost structure: Claude Pro at $200/year, already paid for research work, making the marginal cost of the trading bot effectively zero. But again, the brokerage API and Python are free regardless of whether you use Claude or a fixed script. The $200 is not the infrastructure cost; it's the LLM cost on top of infrastructure that would exist either way.
+
+## [](https://dev.to/shenao_yu_e15c14815264a44/claude-as-a-trading-agent-what-does-the-llm-actually-add-over-a-plain-script-21l2#what-the-llm-might-actually-be-doing) What the LLM might actually be doing
+
+The author describes the strategy as "very simple" but the full logic isn't public. There are two meaningfully different versions of this experiment:
+
+**Version A:** Claude runs daily natural-language market analysis, synthesizes signals, and adjusts position sizing or stock selection based on that analysis. In this version, the LLM is doing something a fixed script cannot, because the inputs are unstructured and the reasoning is adaptive.
+
+**Version B:** Claude executes a fixed set of rules that could be expressed as deterministic code, and the LLM wrapper is mostly convenience, handling the API calls and logging in a more readable way than raw Python.
+
+A second commenter in the thread reported a parallel result using Claude for chart analysis and GPT for fundamental analysis on AI-related tech stocks during a rough July, coming out slightly positive. That framing suggests Version A, where the LLMs are doing genuine analytical work rather than just executing rules.
+
+But one week of positive returns in a strong tech week does not distinguish between the two. Both versions would have produced similar outputs in a trending market.
+
+## [](https://dev.to/shenao_yu_e15c14815264a44/claude-as-a-trading-agent-what-does-the-llm-actually-add-over-a-plain-script-21l2#the-comments-worth-reading) The comments worth reading
+
+The skeptical voices focused on two practical issues.
+
+Taxes: short-term capital gains on frequent trades in a taxable account can get complicated fast. One commenter pointed out that accounting costs alone could erase small gains. The author appears to be trading in what looks like a Roth IRA based on the account labels visible in the post, which would sidestep this, but the thread did not confirm it.
+
+Commission structure: the author appears to be on a zero-commission platform. Another commenter mentioned paying a minimum of $3 per trade on their broker, which would materially change the math on small fractional orders.
+
+Geographic limitation: someone noted that A-share markets in mainland China are almost certainly incompatible with this approach, both technically and regulatorily.
+
+## [](https://dev.to/shenao_yu_e15c14815264a44/claude-as-a-trading-agent-what-does-the-llm-actually-add-over-a-plain-script-21l2#what-this-is-and-is-not) What this is and is not
+
+Seven trading days in a strong week for tech stocks is not a backtest, not a stress test, and not a risk-adjusted performance analysis. The author knows this.
+
+What it might be evidence of is something narrower: that for a retail investor whose primary failure mode is behavioral rather than informational, any automated system that removes them from the execution decision could matter more than the strategy itself. Whether Claude specifically is the right tool for that, versus a simpler and more auditable fixed script, is a question this experiment cannot answer yet.
+
+The author plans to continue. The more useful follow-up would be a week where the strategy signal and market direction diverge sharply. That is when you find out whether the discipline holds, and also when you find out whether the LLM's daily analysis is actually doing anything a moving average crossover could not.
+
+What does Claude add in the execution loop that a fixed script with identical rules would not provide?

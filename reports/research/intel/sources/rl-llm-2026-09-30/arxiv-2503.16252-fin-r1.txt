@@ -1,0 +1,2255 @@
+                                                   Fin-R1: A Large Language Model for
+                                          Financial Reasoning through Reinforcement
+                                                                                  Learning
+arXiv:2503.16252v5 [cs.CL] 19 Mar 2026
+
+
+
+
+                                           Zhaowei Liu1 , Xin Guo1 , Zhi Yang1 , Fangqi Lou1 , Lingfeng Zeng1 , Jinyi Niu2 ,
+                                                  Mengping Li1 , Qi Qi1 , Zhiqiang Liu1 , Yiyang Han3 , Dongpo Cheng4 ,
+                                                 Ronghao Chen5 , Huacan Wang5 , Xingdong Feng1 , Huixia Judy Wang6 ,
+                                                                       Chengchun Shi7∗ , and Liwen Zhang1,8∗
+
+
+                                                1 School of Statistics and Data Science, Shanghai University of Finance and Economics, China
+
+
+                                                                 2 School of Mathematical Sciences, Fudan University, China
+
+
+                                                        3 School of Economics, Shanghai University of Finance and Economics, China
+
+
+                                          4 AI Finance Development and Service Center, Shanghai University of Finance and Economics, China
+
+
+                                                                                     5 QuantaAlpha, China
+
+
+                                                                       6 Department of Statistics, Rice University, USA
+
+
+                                                      7 Department of Statistics, London School of Economics and Political Science, UK
+
+
+                                                   8 Qinghai Provincial Key Laboratory of Big Data in Finance and Artificial Intelligence
+
+
+                                                               Application Technology, Qinghai Institute of Technology, China
+
+
+                                                                                       Abstract
+
+                                                    In recent years, general-purpose large language models (LLMs) such as GPT,
+                                                 Gemini, Claude, and DeepSeek have advanced at an unprecedented pace. Despite
+                                                 these achievements, their application to finance remains challenging, due to fragmented
+                                           ∗
+                                               Address for correspondence:     Liwen Zhang (zhang.liwen@shufe.edu.cn),        Chengchun Shi
+                                         (c.shi7@lse.ac.uk)
+
+
+                                                                                           1
+     data sources, reasoning processes, and weak transferability to business applications.
+     In response, we introduce Fin-R1, a reasoning LLM designed for financial scenarios.
+     With a compact size of 7 billion parameters, Fin-R1 reduces deployment costs while
+     addressing the aforementioned challenges. Its development follows a two-stage pipeline.
+     First, we construct Fin-R1-Data, a high-quality financial dataset consisting of 60,091
+     chain-of-thought (CoT) samples, distilled and filtered from multiple authoritative
+     benchmarks to ensure consistency and reliability. Second, we train Fin-R1 using
+     Fin-R1-Data through supervised fine-tuning (SFT), followed by reinforcement learn-
+     ing (RL). This stage substantially improves the model’s ability to solve complex
+     financial reasoning tasks, yielding outputs that are both accurate and interpretable.
+     Despite its relatively small parameter scale, Fin-R1 achieves competitive empiri-
+     cal performance across established financial benchmarks and demonstrates practical
+     utility in compliance checking and robo-advisory. Our code is publicly available at
+     https://github.com/SUFE-AIFLM-Lab/Fin-R1, and has already attracted over 700
+     stars.
+
+
+Keywords: Large Reasoning Model, Supervised Fine-tuning, Group Relative Policy Opti-
+mization, Finance.
+
+
+
+1    Introduction
+
+Large language models (LLMs) are highly sophisticated neural networks that can understand
+
+and generate human language. In recent years, they have achieved groundbreaking progress
+
+in natural language processing, making an important step toward artificial general intelli-
+
+gence (AGI, Touvron et al., 2023; Google, 2024; Naveed et al., 2025). At the core of LLMs
+
+lies a two-stage training paradigm. The first stage, pre-training (Bai et al., 2023; Google,
+
+2023), leverages the transformer architecture (Vaswani et al., 2017) to enable LLMs to learn
+
+linguistic patterns, world knowledge, and basic reasoning capacities from vast amounts
+
+of unlabeled text. However, pre-trained LLMs remain limited in their ability to handle
+
+complex reasoning tasks. This limitation has led to the second stage, post-training, where
+
+customized algorithms have been developed to enhance reasoning ability and improve output
+
+quality. These algorithms include supervised fine-tuning (SFT, Ouyang et al., 2022) to inject
+
+                                               2
+reasoning knowledge, reinforcement learning from human feedback (RLHF, Christiano et al.,
+
+2017) to improve output quality, and reinforcement learning with verifiable rewards (RLVR,
+
+Lambert et al., 2024) to optimize the model’s reasoning capabilities through objectively
+
+verifiable signals. Although post-training is conducted on small-scale data and constitutes
+
+less than 1% of the total training computation (Lai et al., 2025), it plays a pivotal role in
+
+enhancing reasoning performance, task alignment, and response reliability, enabling LLMs
+
+to handle various complex tasks at near-human levels.
+
+Building on these post-training algorithms, a new generation of general-purpose, reasoning-
+
+oriented LLMs has emerged, including OpenAI’s o1 (OpenAI, 2024b) and o1-like models
+
+such as QwQ (Qwen Team, 2024b) and Marco-o1 (Zhao et al., 2024b). These models
+
+explicitly incorporate an exploration–reflection–iteration (ERI) mechanism to enhance
+
+reasoning. In ERI, the model first explores multiple candidate reasoning traces, then
+
+verifies them through self-consistency or verifiable signals, and finally iterates to refine the
+
+reasoning process until convergence. This mechanism has led to significant improvements in
+
+chain-of-thought (CoT, Wei et al., 2022)1 reasoning on complex tasks, with performance
+
+often reaching the level of human experts. It is particularly useful in mathematical and
+
+logical problems that require a deep understanding of the problems themselves, step-by-step
+
+reasoning, and precise solutions. However, our empirical investigation reveals that such
+
+general-purpose, reasoning-oriented LLMs become limited when applied to the financial
+
+domain (see Section 5). These limitations stem primarily from three sources:
+
+1. Financial data are highly fragmented and lack a unified structure (Wang et al., 2024b;
+
+   Guo et al., 2025b; Li et al., 2024; Dong et al., 2024), making the integration of knowledge
+
+   extremely difficult. Specifically, information such as contractual terms, regulatory
+
+   requirements, macroeconomic indicators, and market signals is often dispersed across
+
+   heterogeneous sources, and can be inconsistent or even mutually contradictory. This not
+   1
+    CoT refers to a sequence of intermediate reasoning steps that can be elicited either through carefully
+designed few-shot examples or through some simple magical prompts (e.g., “Let us think step by step”).
+
+
+
+                                                    3
+   only increases the cost of data preprocessing but also explains why high-quality CoT data
+
+   remain scarce in finance. As financial reasoning relies on the integration of economic,
+
+   legal, and quantitative logic, the shortage of high-quality data limits the capability of
+
+   existing models to reason coherently in finance.
+
+2. Most existing LLMs still operate as “black boxes,” with reasoning processes that remain
+
+   intransparent: we only observe the final outputs, but not the underlying reasoning paths
+
+  (Wang et al., 2023; Zhao et al., 2024a; Tong et al., 2024). Such lack of transparency
+
+   conflicts with the regulatory and compliance requirements of the financial sector where
+
+   traceability and explainability are essential, restricting their deployment in practice.
+
+3. In high-stakes financial applications, existing models often suffer from weak transferability
+
+   and generalization, which makes their outputs unreliable (Yu et al., 2024; Fatouros et al.,
+
+   2024; Zhou et al., 2024). Specifically, financial tasks involve evolving environments,
+
+   which challenge the ability of existing models to generalize and adapt across scenarios.
+
+   For instance, models trained solely via SFT rely heavily on memorizing previously seen
+
+   examples rather than performing reasoning grounded in financial logic (Zhang et al.,
+
+   2025b). This largely limits their effectiveness in applications such as credit assessment
+
+   and risk pricing.
+
+Our contribution. To overcome these limitations, we propose a two-stage framework for
+
+training domain-specific reasoning LLMs tailored to financial applications. The proposed
+
+framework consists of a data construction stage and a model training stage, and the overall
+
+pipeline is shown in Figure 1. Specifically:
+
+• In the first stage, we construct a reasoning dataset for finance, termed as Fin-R1-Data,
+
+  which covers a wide range of financial scenarios encountered in practice. This stage
+
+  addresses the first challenge of fragmented data sources and the scarcity of CoT data
+
+  within financial domains, offering the basis for the subsequent SFT and RL. Specifically,
+
+  Fin-R1-Data is a high-quality bilingual dataset containing over 60,000 entries, integrating
+
+
+                                               4
+5
+    Figure 1: The pipeline for constructing Fin-R1. The diagram depicts the two-stage construction framework of Fin-R1: Data
+    Generation (using DeepSeek-R1 for reasoning to generate CoT data, followed by quality filtering with the Qwen2.5-72B-Instruct)
+    and Model Training (including SFT pretraining and GRPO optimization for Fin-R1). Additionally, the right side highlights the
+    performance of Fin-R1 in financial code generation, professional knowledge, and business knowledge. Here, x denotes the input
+    query, c represents the generated reasoning content, y is the model output answer, and s∗ corresponds to the ground-truth answer
+    contained in y.
+  data from diverse sources – including open-source datasets and proprietary examination
+
+  problems – to ensure comprehensive coverage of professional expertise, business practices,
+
+  and numerical reasoning. Its construction proceeds in two steps. During the data distilla-
+
+  tion step, we leverage DeepSeek-R1 (Guo et al., 2025a) to produce reasoning traces while
+
+  standardizing answer formats. In the subsequent data filtering step, we employ Qwen2.5-
+
+  72B-Instruct (Yang et al., 2024) as an evaluator to investigate the logical consistency,
+
+  coherence, and domain alignment of the data, screen out low-quality samples and retain
+
+  high-quality data for reasoning. The left panel of Figure 1 depicts a high-quality CoT
+
+  example after filtering.
+
+• In the second stage, we post-train LLMs by applying SFT and RL on Fin-R1-Data to
+
+  obtain our Fin-R1 model. This stage substantially enhances the pre-trained model’s
+
+  generalization and transferability across diverse business applications, addressing the
+
+  third challenge. Specifically, SFT uses carefully collected CoT samples from Fin-R1-Data
+
+  to enable the model to “think before answering” and to conduct integrated reasoning
+
+  across legal, economic, and quantitative domains. The next step applies GRPO, a
+
+  computationally efficient variant of proximal policy optimization (PPO, Schulman et al.,
+
+  2017) which evaluates model’s outputs using group-relative advantage functions, to ensure
+
+  both correctness and structural consistency in reasoning chains. Such a two-step post-
+
+  training approach – first SFT, then GRPO – enables a 7B-parameter model to deliver
+
+  reliable and trustworthy outputs in financial applications. Notably, despite being 100
+
+  times smaller than leading frontier reasoning models, Fin-R1 achieved an average score
+
+  of 75.2 on financial reasoning benchmarks, ranking second overall and delivering the
+
+  nearly best performance on mainstream financial benchmarks (e.g., FinQA, Chen et al.,
+
+  2021). Compared with models of the same 7B scale, Fin-R1 outperformed the existing
+
+  state-of-the-art models by more than 17 points.
+
+• Additionally, the two stages together also tackle the second challenge by making the
+
+  reasoning process transparent. Specifically, in the data construction stage, we explicitly
+
+
+
+                                             6
+                              (a) Chinese interaction example
+
+
+
+
+                              (b) English interaction example
+
+Figure 2: Specific interaction examples based on Fin-R1 are provided, where Figure 2a and
+Figure 2b show QA related to government bonds in a Chinese context and QA related to
+debt risk in an English context, respectively. The final answers and ground truth in all
+model outputs are marked in the same color.
+
+
+  present reasoning paths in a human-readable format in the training data, to guide
+
+  the model toward a “think-then-reason” paradigm. In the model training stage, we
+
+  incorporate a format reward function (Equation (4.2)) during RL training to further
+
+  constrain the model’s outputs, ensuring that reasoning remains explicit and interpretable.
+
+  As an illustration, Figure 2 presents detailed outputs of Fin-R1 in both Chinese and
+
+  English, while the right panel of Figure 1 showcases concise examples across various
+
+  financial scenarios.
+
+Paper organization. The remainder of this paper is organized as follows. Section
+
+2 reviews the related work. Section 3 presents the construction of Fin-R1-Data, while
+
+Section 4 details the proposed two-step training pipeline. Section 5 conducts comprehensive
+
+
+
+                                             7
+experiments to demonstrate the superior performance of Fin-R1 across multiple financial
+
+benchmarks. Section 6 concludes the study and outlines directions for future research.
+
+Additional implementation details, data descriptions, case studies, and experimental settings
+
+are provided in the Supplementary Material to facilitate reproducibility.
+
+
+2     Related Work
+
+In this section, we discuss three strands of related work: pre-training, post-training, and
+
+their applications to the financial domain.
+
+Pre-training. Pre-training enables LLMs to learn linguistic patterns and fundamental
+
+knowledge from massive text corpora (Devlin et al., 2019; Floridi and Chiriatti, 2020; Xue
+
+et al., 2021). Through auto-regressive next-token prediction on trillions of internet tokens,
+
+these models absorbed knowledge across diverse domains such as programming (Kocetkov
+
+et al., 2022), mathematics (Drori et al., 2022), and other professional or scientific fields (Lo
+
+et al., 2020). However, LLM pre-training faces several practical challenges. First, it is highly
+
+resource-intensive: for example, training PaLM with 540 billion parameters requires 6,144
+
+TPU v4 chips over several weeks (Chowdhery et al., 2023). Second, as high-quality internet
+
+text data show signs of exhaustion (Villalobos et al., 2024), the scaling law (Kaplan et al.,
+
+2020) that links model size, data volume, and performance appears to approach its limit.
+
+Although large-scale synthetic corpora can be potentially employed, their effectiveness has
+
+not yet been fully validated (Shumailov et al., 2024). Third, pre-trained models often struggle
+
+to generalize to domain-specific reasoning tasks. This hinders their abilities to understand
+
+complex financial logic, such as derivative pricing or risk-hedging strategies (Zoph et al.,
+
+2020; Abnar et al., 2021).
+
+Post-training. There is a growing consensus that additional algorithmic paradigms beyond
+
+pre-training are required to move closer to AGI. Recent reasoning-oriented models, such as
+
+OpenAI’s o1 and DeepSeek-R1, position post-training as such a paradigm (see Kumar et al.,
+
+
+
+                                               8
+2025, for an overview). Post-training aims to mitigate pre-trained models’ limitations by
+
+aligning their outputs with human values, while reducing biases and inaccuracies (Bai et al.,
+
+2022). It typically includes fine-tuning for task-specific adaptation (Trung et al., 2024), RL
+
+for encouraging the model to explore better outputs guided by feedback signals (Zhang
+
+et al., 2025a), and test-time scaling for boosting model performance without retraining the
+
+model (TTS, Hu et al., 2022). Among these methods, RL-based post-training has repeatedly
+
+demonstrated that well-defined reward signals can drive AI agents to achieve superhuman
+
+performance on complex tasks (Ouyang et al., 2022).
+
+Among RL algorithms, PPO, a computationally efficient approximation to the trust region
+
+policy optimization algorithm (Schulman et al., 2015), has been widely adopted for post-
+
+training LLMs. By limiting the divergence between the old and new policies, PPO effectively
+
+mitigates the issue of policy collapse commonly encountered in traditional policy gradient
+
+algorithms. However, PPO suffers from several limitations, including training instability,
+
+high sensitivity to hyperparameter tuning, and substantial computational cost arising from
+
+the need to learn a value function for the language model (Engstrom et al., 2020; Zheng
+
+et al., 2023; Xu et al., 2024b).
+
+To address these challenges, Rafailov et al. (2023) proposed a direct preference optimization
+
+(DPO), which expresses the reward model in closed-form using the optimal policy, and
+
+transforms the complex RL problem into a more tractable classification task. DPO eliminates
+
+the need for value function training, substantially lowers the computational cost, and reduces
+
+the number of hyperparameters. Nevertheless, it remains highly dependent on the reference
+
+policy and suffers from limited generalization to out-of-distribution samples (Xu et al.,
+
+2024a; Feng et al., 2024; Xu et al., 2025; Ye et al., 2025).
+
+Building on PPO, Shao et al. (2024) achieved a major breakthrough in LLM reasoning
+
+by introducing the GRPO algorithm. Unlike traditional PPO, which primarily relies on
+
+a single-stream reward to guide model optimization, GRPO generates multiple candidate
+
+
+
+                                              9
+outputs and computes advantages based on their relative performance within the group,
+
+thus eliminating the need for learning a value network and considerably improving the
+
+computational efficiency. Compared to both PPO and DPO, GRPO demonstrates clear
+
+advantages in reasoning-intensive tasks such as mathematical problem solving (Guo et al.,
+
+2025a). See Zhang et al. (2025a) for a comprehensive discussion of RL algorithms for
+
+LLMs.
+
+Financial LLMs. Pre-trained and post-trained models discussed above are primarily
+
+tailored for general-purpose tasks. Recently, several financial LLMs have been developed,
+
+such as BloombergGPT (Wu et al., 2023), DISC-FinLLM (Chen et al., 2023), PIXIU (Xie
+
+et al., 2023), and XuanYuan (Zhang and Yang, 2023). However, these models are primarily
+
+designed for non-reasoning tasks. In contrast, our proposed model, Fin-R1, can reason,
+
+which allows it to integrate fragmented financial knowledge across business applications
+
+to generate practically useful outputs. Meanwhile, models such as XuanYuan-FinX1-
+
+Preview (Duxiaoman DI Team, 2024) and Fino1 (Qian et al., 2025) adopt o1-like reasoning
+
+paradigm to strengthen numerical computation and logical analysis in financial applications.
+
+In parallel, FinAgent (Zhang et al., 2024) enhances trading decision making via multimodal
+
+tool integration. These efforts collectively push financial LLMs from mere text understanding
+
+toward explicit reasoning and decision making. Nevertheless, there remains substantial
+
+room to improve reasoning accuracy and transparency, and to enhance model transferability
+
+across financial scenarios (Huang et al., 2024; Xie et al., 2024a).
+
+
+3    Data Construction
+
+In this section, we introduce Fin-R1-Data, a high-quality dataset specifically designed for
+
+post-training financial LLMs. Section 3.1 describes the overall structure of Fin-R1-Data
+
+and Section 3.2 details the data construction process.
+
+
+
+
+                                             10
+Figure 3: The overall structure of Fin-R1-Data. The inner circle shows the four components
+of Fin-R1-Data, while the outer circle shows the raw datasets used to construct them.
+
+
+3.1    Data Overview
+
+Fin-R1-Data consists of 60,091 bilingual (Chinese and English) entries, organized into four
+
+categories, as shown in Figure 3. We refer to these four categories as financial advanced
+
+business knowledge, financial basic business knowledge, financial professional knowledge, and
+
+financial code, which will be explained in detail as follows. Each data category is derived by
+
+first collecting a raw dataset and then applying specific processing steps. The raw datasets
+
+are detailed in Section A of the Supplementary Material.
+
+Financial advanced business knowledge. This data subset accounts for roughly 25% of
+
+the total data. It primarily consists of problems that require explicit reasoning in financial
+
+applications, and often integrates multiple capabilities such as numerical computation,
+
+causal inference, and contextual understanding. Some representative examples include
+
+numerical reasoning on financial data, sentiment classification of financial news, financial
+
+news categorization, and causal relationship extraction.
+
+Financial basic business knowledge. This data subset primarily focuses on knowledge
+
+representation and content generation tasks that do not involve complex reasoning, and con-
+
+                                             11
+tributes over 50% of the total dataset. It is oriented toward the acquisition, expression, and
+
+standardization of basic financial information, covering tasks such as regulatory compliance,
+
+financial domain knowledge acquisition, and financial text generation.
+
+Financial professional knowledge. This category of data is designed to handle complex,
+
+specialized application scenarios, covering questions that can only be answered by humans
+
+with sufficient professional financial expertise. It mainly contains three types of data: (i)
+
+explanations of financial terminology, providing precise interpretations of specialized terms
+
+and concepts; (ii) financial calculations, involving specialized computational algorithms and
+
+models; and (iii) questions from finance-related postgraduate entrance examinations. The
+
+last type of data is scarce. To address this, we constructed a financial postgraduate entrance
+
+exam (FinPEE ) dataset using original examination questions from Shanghai University of
+
+Finance and Economics. This dataset was constructed in two steps: (a) text extraction,
+
+where PDF-based source materials were converted into Markdown format using Mineru
+
+(Wang et al., 2024a), and (b) expert review, in which structured question–answer pairs were
+
+verified by financial experts to ensure accuracy.
+
+Financial code. The last dataset consists of financial code, i.e., scripts and programs
+
+designed to solve financial problems (e.g., quantitative trading). The purpose of constructing
+
+this dataset is to enable LLMs to automatically generate financial code and quantitative
+
+strategy scripts – both play a vital role in applications such as algorithmic trading which
+
+requires high-frequency code generation and execution, risk modeling which requires coding
+
+for building credit risk assessment models, and portfolio management which requires to
+
+implement portfolio optimization strategies.
+
+
+3.2    Data Processing
+
+In this section, we describe how Fin-R1-Data was constructed based on the raw datasets
+
+detailed in Section A of the Supplementary Material. Our data construction pipeline consists
+
+of two major steps: data distillation and data filtering. The first step leverages existing
+
+                                             12
+LLMs to generate answers to the questions in the raw datasets, whereas the second step
+
+reviews the generated answers to ensure their quality and consistency. Figure 4 visualizes
+
+the workflow of these two steps.
+
+Data distillation. We extract all questions from the raw datasets and employ DeepSeek-
+
+R1-671B to generate both the reasoning paths and corresponding answers for each question.
+
+We choose DeepSeek-R1-671B for its large number of parameters and strong reasoning
+
+capabilities, which ensure both diversity and reliability in the generated answers. When
+
+prompting DeepSeek-R1-671B to generate reasoning paths and answers, we configure
+
+the hyperparameters in alignment with its official specifications. In particular: (i) The
+
+temperature to generate tokens is set to 0.6. (ii) For mathematical questions, we employ
+
+the standard prompt “Please use \boxed{} to wrap the final answer” to ensure consistency
+
+in the answer format. (iii) A line break “\n” is forced to appended at the beginning of each
+
+output. Details of the prompts used to generate the answers are provided in Section B.1 of
+
+the Supplementary Material.
+
+Data filtering. This step consists of answer check and reasoning selection. The former
+
+evaluates the accuracy of responses generated in the data distillation step, whereas the
+
+latter assesses the quality and coherence of the reasoning paths. We illustrate them in
+
+Figure 4.
+
+Specifically, we first review the responses generated by DeepSeek-R1-671B during data
+
+distillation. For objective questions, we retain only those responses whose answers exactly
+
+match the correct ones. For subjective questions, we adopt the LLM-as-Judges paradigm
+
+– using a well-tuned LLM as an automated evaluator – to access the correctness of each
+
+answer and discard any incorrect ones. We further conduct a comparative study to compare
+
+GPT-4o (OpenAI, 2024a) against Qwen2.5-72B-Instruct (Yang et al., 2024) as judges, and
+
+evaluate different prompting strategies for enabling these LLMs to serve effectively in this
+
+role. Our experimental results show that Qwen2.5-72B-Instruct achieves an accuracy rate
+
+
+
+                                            13
+14
+     Figure 4: The data construction pipeline. Data distillation: generate the reasoning path and the answer to each question in raw
+     datasets. Data filtering: review the answer and reasoning path. The examples for each step are presented in boxes.
+of 99.6% and outperforms GPT-4o. We thus select Qwen2.5-72B-Instruct as the judge
+
+model and employ the optimal prompt that achieves the highest accuracy. Further details
+
+on the experimental setup and results are provided in Section C.1 of the Supplementary
+
+Material.
+
+We next focus on the filtered dataset that contains correct answers to the questions and
+
+evaluate their reasoning paths. Following Xie et al. (2024b), we similarly adopt the LLM-as-
+
+Judges paradigm and prompt the LLM to evaluate the reasoning paths according to criteria
+
+from the following seven dimensions: internal consistency, term overlap rate, number of
+
+reasoning steps, logical coherence, content diversity, task-domain relevance, and alignment
+
+with task instructions. To evaluate the performance of LLMs as judges, we conducted
+
+additional experiments to compare human annotations against LLM evaluations. The results,
+
+detailed in Section C.2 of the Supplementary Material, demonstrate that Qwen2.5-72B-
+
+Instruct closely aligns with human judgments, exhibiting only minor discrepancies, whereas
+
+GPT-4o shows larger deviations. Based on these findings, we select Qwen2.5-72B-Instruct
+
+to assess the quality of the reasoning paths, and retain only the high-quality ones for the
+
+subsequent SFT. In the yellow boxes of Figure 4, we present examples of both a high-quality
+
+and a low-quality reasoning trajectory to illustrate their differences. The sentence beginning
+
+with “Thinking:” is generated by Qwen2.5-72B-Instruct, which analyzes the rationality of
+
+each reasoning trajectory and assigns a corresponding quality score.
+
+
+4    Model Training
+
+In this section, we detail our training procedure for Fin-R1. We adopt Qwen2.5-7B-Instruct
+
+as the base model. To enhance its reasoning capabilities in finance, we adopt a two-step
+
+post-training procedure, consisting of SFT and RL. In the first step, the model is trained
+
+on the Fin-R1-Data to learn to think before answering and to expand its financial-domain
+
+knowledge. Building on this, GRPO is employed in the second step with two rule-based
+
+reward functions – a format reward and an accuracy reward – to further enhance the model’s
+
+                                             15
+Figure 5: Stage 2 – The post-training pipeline. The model is first trained via SFT on
+Fin-R1-Data and is then optimized through GRPO with two reward functions, a format
+reward and an accuracy reward.
+
+
+reasoning capabilities. Figure 5 visually summarizes this training procedure.
+
+
+4.1    Supervised Fine-tuning
+
+As an autoregressive model, an LLM generates text by sequentially predicting the next
+
+token conditioned on the previously generated token sequence. Each token v corresponds
+
+to a word, subword, or punctuation mark drawn from a vocabulary V. Let πθ denotes the
+
+probability mass function of the model’s next-token distribution, i.e.,
+
+
+      πθ (v|v− ) = P(LLM selects v as the next token|the previous token sequence v− ),
+
+
+where θ denotes the model parameter. We refer πθ as the policy as it is the objective being
+
+optimized during the RL training.
+
+Pre-trained autoregressive models are often limited, as they tend to mimic their pre-training
+
+
+
+                                             16
+data (e.g., by repeating the query), which reduces their effectiveness in various downstream
+
+tasks. To address this, SFT is employed to inject desired behavior into the model. Its core
+
+idea is to leverage the model’s existing ability to generate coherent text and adapt it to a
+
+new task by fine-tuning θ with high-quality supervised examples, through which the model
+
+is explicitly guided to output the desired solutions. This approach avoids training a model
+
+from scratch while enhancing its performance on the target task.
+
+More specifically, we denote the SFT training dataset by DSFT , consisting of pairs (x, o),
+
+where x is a query and o is the corresponding output. Each output o consists of two parts:
+
+a reasoning trace c, enclosed in <think>...</think> tags, and an answer y, enclosed
+
+in <answer>...</answer> tags. It is worth noting that, for objective questions, the
+
+answer typically includes a numerical solution (denoted by s), often highlighted using
+
+\boxed..., along with any supporting explanation. Figure 6 illustrates an example of the
+
+data structure.
+
+SFT’s objective function is typically set to the cross-entropy loss that minimizes the
+
+discrepancy between the model’s predicted next token and the corresponding ground-truth
+
+token in the SFT dataset. We decompose a response o into a sequence of tokens (o1 , . . . , on ).
+
+The probability of outputting o given the query x can be factorizes as
+
+                                               n
+                                               Y
+                                πθ (o | x) =         πθ (ot | x, o<t ) ,
+                                               t=1
+
+
+where o<t := {o1 , . . . , ot−1 } for t ≤ n. To compute θ, SFT minimizes the following cross-
+
+entropy loss, which is equivalent to maximizing the log-likelihood:
+
+                                            X                          
+                            LSFT (θ) =                  − log πθ (o | x) .                 (4.1)
+                                         (x,o)∼DSFT
+
+
+
+By definition, the use of the cross-entropy loss function (4.1) encourages the model to
+
+assign higher probability to the high-quality answers provided in the dataset. In doing
+
+
+                                                17
+                                              SFT Data Example
+                "Question": "Below is a finance-related tweet. Please analyze its sentiment.\n
+                \"0\" represents \"Bearish\"\n \"1\" represents \"Bullish\"\n \"2\" represents
+                \"Neutral\"\n\n Requirements:\n -Your output should be one of the above
+                labels.\n -Add a \"\\n\" at the beginning of each output before generating
+                data\n put the final answer in \\boxed{}\n Text: U.S. consumers fear for jobs,
+                debt payments because of coronavirus: New York Fed survey
+                https://t.co/rKzcOAejIE https://t.co/q1H7vftWjJ"
+                "Thinking": "...... The key words are \"fear,\" \"jobs,\" \"debt payments,\" and
+                \"coronavirus.\" Fear is a negative emotion, which usually indicates bearish
+                sentiment...... The tweet doesn't mention any positive aspects...... So overall, the
+                sentiment here is negative, pointing towards bearish.......Since the tweet
+                highlights economic fears and potential negative impacts, the correct label should
+                be 0.",
+                "Answer": "\\boxed{0}\n\nThe tweet reports that U.S. consumers are
+                experiencing fear regarding their job security and ability to manage debt
+                payments due to the coronavirus pandemic, as highlighted by a New York Federal
+                Reserve survey. The language used—\"fear,\" \"jobs,\" \"debt payments,\" and
+                the direct reference to the pandemic—carries a strongly negative connotation.
+                Such concerns typically signal reduced consumer spending, potential economic
+                contraction, and stress on financial systems, all of which align with a bearish
+                (negative) outlook for markets. There is no countervailing positive or neutral
+                language to offset these fears, ruling out \"Bullish\" or \"Neutral\"
+                classifications. The authoritative source (New York Fed survey) further
+                underscores the credibility and severity of the concerns, reinforcing the bearish
+                sentiment."
+
+
+
+
+Figure 6: An SFT data example. The input x is the question, and the model output o
+includes a reasoning trace c (enclosed in the Thinking block) and an answer y (enclosed in
+the Answer block). The answer provides a numerical solution s, which in this case is 0.
+
+
+so, it guides the model to internalize correct reasoning and answer patterns, effectively
+
+adapting it to the target domain task. In practice, the minimization of (4.1) is carried out
+
+via stochastic gradient optimization where gradients are obtained through backpropagation,
+
+and the parameters are updated using adaptive algorithms such as Adam (Kingma and Ba,
+
+2014).
+
+To conclude this section, we remark that SFT is generally understood as a method of
+
+behavior cloning: it aims to imitate expert demonstrations – including both the reasoning
+
+traces and the final answers – but it cannot learn entirely new behaviors beyond those
+
+present in the training data. This is its fundamental limitation. In addition, heterogeneity
+
+in annotators’ writing styles and preferences may further reduce its effectiveness. These
+
+limitations highlight the need to move beyond behavior cloning and enable the model to
+
+refine its behavior through feedback.
+
+
+
+                                                        18
+                                          RL Data Example
+           "Question": "Below is a finance-related tweet. Please analyze its sentiment.\n \"0\"
+           represents \"Bearish\"\n \"1\" represents \"Bullish\"\n \"2\" represents
+           \"Neutral\"\n\n Text: U.S. consumers fear for jobs, debt payments because of
+           coronavirus: New York Fed survey https://t.co/G4ks6dZU8O
+           https://t.co/8d8gjmTbR2"
+           "Solution": "0"
+
+
+
+
+Figure 7: An RL data example, consisting of an objective question x and its numerical
+solution s∗ .
+
+
+4.2    Group Relative Policy Optimization
+
+We employ RL to address the aforementioned limitations of SFT. The empirical benefits of
+
+incorporating RL are illustrated in Table 2, which shows a substantial improvement in model
+
+performance. Among RL algorithms for LLM reasoning, GRPO is particularly attractive
+
+because it optimizes the policy using relative rewards within a group and avoids the need to
+
+compute value networks as in PPO-type algorithms, which makes it more computationally
+
+efficient while maintaining statistical efficiency comparable to PPO.
+
+We begin by introducing the notation used throughout this section. The RL training dataset
+
+DRL consists of pairs {(x, s∗ )}, where x denotes an objective question, and s∗ denotes its
+
+numerical solution; see Figure 7 for a concrete data example. We highlight three differences
+
+between this dataset and the SFT training data: (i) In SFT, the query x includes both
+
+objective and subjective questions, whereas in the RL dataset, x is restricted to objective
+
+questions only; (ii) In SFT, each data entry contains the full output o, including the
+
+reasoning trace c, as well as the answer y, which comprises both the solution s∗ and its
+
+explanation. In contrast, the RL data contains only the solution s∗ ; (iii) Because SFT
+
+requires the full output o, we apply data filtering (see Section 3.2) to remove instances in
+
+which Qwen’s generated output o is inconsistent with s∗ . As a result, the SFT dataset
+
+does not contain these hard questions with incorrect outputs, whereas GRPO uses these
+
+questions for training.
+
+
+
+                                                    19
+Algorithm 1 Group Relative Policy Optimization
+Input: SFT policy πSFT ; RL dataset DRL ; hyperparameters (I, M, G, ϵ, β)
+ 1: Initialize policy πθ ← πSFT
+ 2: for iteration = 1, . . . , I do
+ 3:     for step = 1, . . . , M do
+ 4:         Sample a minibatch B from DRL
+ 5:         Freeze the old policy πθold ← πθ
+ 6:         for each (x, s∗ ) ∈ B do
+ 7:             Sample G candidate outputs
+
+                                         {oi }G
+                                              i=1 ∼ πθold (· | x)
+
+ 8:           Compute rewards ri = R(oi , yi∗ ) using format and accuracy criteria
+ 9:           Estimate group-relative advantages A  bi,t
+10:       Update the policy parameter θ via gradient ascent with the gradient in Equation (4.5)
+11: return final policy πθRL
+
+
+Given the dataset, GRPO operates as follows: it initialize the policy model πθ to the SFT
+
+policy πSFT , iteratively generates multiple candidate outputs o for each question x, evaluates
+
+these outputs against the solution s∗ using predefined reward functions, computes the
+
+advantage function from these rewards, and updates the policy accordingly. See Algorithm 1
+
+for its pseudocode and Figure 5 for a visualization. We detail the output rewards, advantage
+
+calculation, and policy update below.
+
+Reward function. Given a training data entry (x, s∗ ) sampled from DRL , GRPO uses
+
+its sampling policy (denoted by πθold ) to generate G ≥ 2 candidate outputs {o1 , . . . , oG } ∼
+
+πθold (· | x) to the question x. For each output oi , its reward ri is given by
+
+
+                           ri = R(oi , s∗ ) = Rfmt (oi ) + Racc (oi , s∗ ),
+
+
+where Rfmt (defined in (4.2)) denotes the format reward function that enforces strict
+
+constraints on the format of the output, and Racc (defined in (4.3)) denotes the accuracy
+
+reward function that evaluates semantic agreement between oi and the ground-truth solution
+
+s∗ .
+
+The format reward encourages outputs outputs to include a reasoning trace enclosed within
+
+
+                                                 20
+<think>. . .</think> tags and a concise answer enclosed within <answer>. . .</answer> tags,
+
+without additional content outside these tags. It assigns a score of 1 if the output strictly
+
+follows this format and 0 otherwise, i.e.,
+
+                                           
+                                           
+                                           1, if the format matches,
+                                           
+                              Rfmt (o) =                                                      (4.2)
+                                           
+                                           0, otherwise.
+                                           
+
+
+
+To compute the accuracy reward, we employ Qwen2.5-Max (Qwen Team, 2024a) as the
+
+evaluator. Specifically, for each candidate output o, we extract the answer enclosed within
+
+the <answer>. . .</answer> tags and prompt Qwen2.5-Max to assess whether the enclosed
+
+answer is semantically consistent with the ground-truth answer s∗ (See Section B of the
+
+Supplementary Material for the prompts used to instruct Qwen2.5-Max as the evaluator). If
+
+they are consistent, the reward is set to 1; otherwise, it is set to 0. Formally, we define
+
+                     
+                     1, if the judged answer in o is semantically consistent with s∗ ,
+                     
+                     
+   Racc (o, s∗ ) =                                                                            (4.3)
+                     
+                     0, otherwise.
+                     
+
+
+
+Advantage Calculation. Based on the reward ri , PPO estimates the value function
+
+V πθ (x) = E(ri | x), where the expectation is taken over the stochasticity in generating the
+
+output induced by the policy πθ , which is typically random. It then calculates the advantage
+
+function as the difference between ri and the estimated value to construct the gradient to
+
+update θ. The purpose of using the advantage rather than the raw reward is to reduce
+
+the variance of the gradient estimate, which in turn improves the statistical efficiency of
+
+policy learning (Williams, 1992). However, the value function is typically parameterized
+
+by a transformer network, whose training and storage incur substantial computational and
+
+memory overhead.
+
+GRPO addresses this challenge by completely avoiding value function estimation. Instead,
+
+
+                                                  21
+for each input x, it generates G rewards to approximate the value using their empirical
+
+mean, r̄ = G−1 G
+               P
+                  i=1 ri . More specifically, their advantage function for each ri is calculated
+
+as follows:
+                                                   r − r̄
+                                Ai =             q iP                           ,                (4.4)
+                                                  1   G
+                                       max(ϵ,       G      j=1 (rj   − r̄)2 )
+
+where ϵ is a small constant (e.g., 10−8 ) used to prevent division by zero. As shown in (4.4),
+
+in addition to computing the difference between ri and its expected value, the advantage is
+
+further standardized using the standard error of r̄. This standardization increases the weight
+
+assigned to differences with low uncertainty in r̄ while downweighting those associated with
+
+higher uncertainty. For sufficiently large G, r̄ approaches the oracle value function, making
+
+GRPO as statistically efficient as PPO while being considerably more computationally
+
+efficient.
+
+Policy Update. At each training step, GRPO samples a minibatch B of (x, s∗ ) pairs from
+
+DRL , generates G outputs for each x ∈ B and computes the advantage Ai for each of the
+
+ith output oi . It then calculates the gradient of the policy value E(x,s∗ )∼DRL ,o∼πθ (•|x) R(o, s∗ )
+
+as follows,
+
+            G        |oi |
+         1 X 1 Xn                                                      
+  g(θ) =                   min wi,t (θ)Ai , clip wi,t (θ), 1 − ϵ, 1 + ϵ Ai ∇θ log πθ (oi,t |x, oi,<t )
+         G i=1 |oi | t=1
+                                                                     o
+                                             − β∇θ DKL (πθ ∥ πref ) .
+                                                                                                  (4.5)
+
+Let us elaborate on Equation (4.5) below. First, wi,t (θ) denotes the importance sampling
+
+(IS) ratio
+                                                  πθ (oi,t |x, oi,<t )
+                                    wi,t (θ) =                           ,
+                                                 πθold (oi,t |x, oi,<t )
+
+which corrects for the distribution shift between the current policy πθ and the sampling
+
+                                                                     ̸ θold , even though the
+policy πθold . This allows the policy gradient to be evaluated for θ =
+
+advantages Ai are computed using samples generated by πθold .
+
+
+
+                                                    22
+Second, the clipping operator clip(wi,t (θ), 1 − ϵ, 1 + ϵ) restricts the IS ratio to the range
+
+[1 − ϵ, 1 + ϵ], which prevents avoid large ratios that would inflate the variance of the policy
+
+gradient.
+
+Finally, ∇θ DKL (πθ ∥ πSFT ) denotes the gradient of the Kullback–Leibler (KL) divergence
+
+measure between πθ and the SFT policy, estimated using the minibatch of samples, and
+
+β > 0 denotes the regularization parameter. This KL regularization term encourages the
+
+learned policy to remain close to the SFT policy, limits excessive exploration, preserves
+
+knowledge acquired during SFT, and mitigates the risk of training collapse.
+
+Given the gradient in (4.5), GRPO performs the gradient ascent algorithm θ ← θ + ηg(θ)
+
+M ≥ 1 steps, initialized from θ = θold . After these updates, the sampling parameter is
+
+updated by setting θold ← θ, and the procedure is repeated.
+
+
+
+5     Experiment
+
+In this section, we conduct numerical experiments to demonstrate that Fin-R1 – despite
+
+having only 7B parameters – achieves strong performance across mainstream financial
+
+benchmarks. We first introduce the datasets used for evaluation, along with the evaluation
+
+methodology. We next describe the baseline models for comparison. Finally, we report our
+
+experimental results.
+
+
+5.1    Evaluation Datasets and Methodology
+
+We employ five representative open-source datasets for evaluation: FinQA, ConvFinQA,
+
+Ant-Finance, TFNS, and Finance-Instruct-500k. These datasets were chosen for their
+
+diversity to ensure a broad and comprehensive evaluation. Except for Finance-Instruct-500k,
+
+other datasets are composed of objective questions with unique reference answers. Further
+
+details about these datasets can be found in Section A of the Supplementary Material. For
+
+Finance-Instruct-500k, we evaluate the performance various models on a custom 10% test
+
+                                              23
+      (a) Difference in decimal places.                     (b) Difference in expression.
+
+Figure 8: The difference between the model output and the reference solution. Figure 8a
+illustrates the difference in decimal precision, whereas Figure 8b visualizes the difference
+caused by alternative numeric representations.
+
+
+subset, extracted via stratified sampling from the full dataset. For all other datasets, we
+
+randomly sample 1,000 questions for testing; if a set contains fewer than 1,000 questions,
+
+we employ all questions for testing.
+
+For numerical calculation questions, LLM-generated answers may be mathematically correct
+
+but expressed in a different valid format, due to variations in decimal precision or alternative
+
+numeric representations (see Figure 8 for illustrations). Directly comparing these answers
+
+with the reference answers will often mark them as incorrect because they do not match
+
+exactly, even though they should be considered correct. To address this, we use LLMs
+
+as an automated evaluation judge for answer check by adopting the prompt template
+
+and the evaluation methodology proposed by Zhu et al. (2024). Although this evaluation
+
+paradigm appears straightforward, we have systematically conducted numerical experiments
+
+to fine-tune several critical parameters in the prompt template for optimizing the reliability
+
+of the LLM-based judge. Further experimental details can be found in the Section B of the
+
+Supplementary Material. Based on the optimized prompt, we instruct the LLM to report
+
+each model’s performance on a 100-point scale, which reflects the percentage of questions
+
+answered correctly by each model.
+
+
+5.2     Baselines
+
+We compare our Fin-R1 against eight state-of-the-art LLMs, including (i) DeepSeek-R1;
+
+(ii) DeepSeek-R1-Distill-Qwen-7B; (iii) DeepSeek-R1-Distill-Qwen-14B; (iv) DeepSeek-R1-
+
+
+
+                                              24
+                Table 1: Evaluation results across different financial benchmarks.
+
+Model                           Parameters FinQA ConvFinQA Ant Finance TFNS Finance-Instruct-500K Average
+DeepSeek-R1                        671B     71.0     82.0        90.0   78.0         70.0          78.2
+Qwen2.5-32B-Instruct               32B      72.0     78.0        84.0   77.0         58.0          73.8
+DeepSeek-R1-Distill-Qwen-32B        32B     70.0     72.0        87.0   79.0         54.0          72.4
+Qwen2.5-14B-Instruct               14B      68.0     77.0        84.0   72.0         56.0          71.4
+DeepSeek-R1-Distill-Llama-70B      70B      68.0     74.0        84.0   62.0         56.0          69.2
+DeepSeek-R1-Distill-Qwen-14B        14B     62.0     73.0        82.0   65.0         49.0          66.2
+Qwen2.5-7B-Instruct                 7B      60.0     66.0        85.0   68.0         49.0          65.6
+DeepSeek-R1-Distill-Qwen-7B         7B      55.0     62.0        71.0   60.0         42.0          58.0
+Fin-R1                             7B      76.0     85.0         81.0    71.0         62.9          75.2
+
+
+
+Distill-Qwen-32B; (v) DeepSeek-R1-Distill-Llama-70B; (vi) Qwen-2.5-7B-Instruct; (vii)
+
+Qwen-2.5-14B-Instruct; and (viii) Qwen-2.5-32B-Instruct. The models labeled “Distill” are
+
+lightweight variants obtained through knowledge distillation, a technique that transfers
+
+knowledge from a large, high-performance teacher model (e.g., DeepSeek-R1) to smaller
+
+student models (e.g., Qwen and Llama series), while preserving comparable reasoning
+
+capabilities (see, e.g., Section 2.4 in Guo et al., 2025a). This approach enables the efficient
+
+deployment of advanced financial LLMs in resource-constrained settings. These baseline
+
+models were chosen to cover a broad range of sizes, from lightweight to large-scale ar-
+
+chitectures, while maintaining strong performance in terms of reasoning capability and
+
+computational efficiency. Our comparison aims to comprehensively evaluate Fin-R1 against
+
+leading baselines in financial applications.
+
+
+5.3      Results
+
+The results are reported in Table 1. It can be seen that Fin-R1 delivers impressive
+
+performance despite its compact 7B parameter scale. Specifically, it achieves an average
+
+score of 75.2, ranking the second overall, and outperforms all models of similar size, with
+
+only a 3-point gap from the best-performing DeepSeek-R1 (78.2). Notably, it outperforms
+
+DeepSeek-R1-Distill-Llama-70B (69.2) by 6 points. Fin-R1 also attains the first place in
+
+two reasoning tasks – FinQA and ConvFinQA – with scores of 76.0 and 85.0, respectively,
+
+outperforming all competing models. These results demonstrate Fin-R1’s strong reasoning
+
+
+
+                                                            25
+                   Table 2: Evaluation results in different financial benchmarks.
+
+ Model                 Parameters FinQA ConvFinQA Ant Finance TFNS Finance-Instruct-500K Average
+ Qwen2.5-7B-Instruct      7B      60.0     66.0        85.0    68.0         49.0          65.6
+ Fin-R1-Zero              7B      62.1     76.3        72.2    70.9         57.6          67.8
+ Fin-R1-SFT               7B      73.0     81.0        76.0    68.0         61.4          71.9
+ Fin-R1                   7B      76.0     85.0        81.0    71.0         62.9          75.2
+
+
+
+capabilities in financial applications. For the remaining tasks, it also achieves comparable
+
+or better performance over baseline models such as Qwen2.5-7B-Instruct.
+
+Next, we conduct an ablation study to demonstrate the effectiveness of our two-step training
+
+process (i.e., SFT & GRPO). Specifically, we compare Fin-RL against two variants: (1)
+
+Fin-R1-SFT, trained only with SFT; and (2) Fin-R1-Zero, trained exclusively using the
+
+GRPO algorithm. For reference, we also include the base model Qwen2.5-7B-Instruct and
+
+report the results in Table 2. It can be seen that directly applying GRPO improves the
+
+base model’s capabilities, but the gains are modest. A closer look at the model output
+
+(see Figure 9a) reveals that using GRPO alone for RL training often produces incoherent
+
+outputs. To the contrary, Fin-R1-SFT achieves much higher scores across most datasets.
+
+the value of high-quality reasoning trace data in Fin-R1: SFT leverages these traces to
+
+guide model outputs, GRPO relies solely on final answers and ignores reasoning traces (see
+
+Figure 1). As a result, GRPO-based training can produce incoherent outputs in pursuit of
+
+reward maximization. However, there is a notable gap between Fin-R1-SFT and Fin-R1,
+
+demonstrating the effectiveness of the two-step post-training in enhancing the reasoning
+
+capabilities of financial LLMs.
+
+Finally, to save space, we present a case study in Section D of the Supplementary Material
+
+to showcase Fin-R1’s outstanding performance in financial applications.
+
+
+
+
+                                                  26
+                                   (a) Fin-R1-Zero output
+
+
+
+
+                                   (b) Fin-R1-SFT output
+
+Figure 9: Example model outputs from the ablation study: Figure 9a and Figure 9b show
+the outputs of Fin-R1-Zero, trained solely on the GRPO algorithm, and Fin-R1-SFT, trained
+solely on SFT, respectively. The incorrect answers are marked in blue.
+
+
+6    Conclusion
+
+We introduce Fin-R1, a financial LLM, in this paper to simultaneously address three core
+
+challenges in finance: fragmented financial data, intransparent reasoning processes of existing
+
+financial LLMs and their weak business generalization capabilities. We construct Fin-R1-
+
+Data—a high-quality financial reasoning CoT dataset—and train Fin-R1 using a combination
+
+of SFT and GRPO. Our model achieves state-of-the-art performance, outperforming much
+
+larger LLMs with over one-hundred-times more parameters, and attains the best scores
+
+of 85.0 and 76.0 on the ConvFinQA and FinQA benchmark datasets, respectively. Our
+
+proposal considerably advances the application of LLMs in finance.
+
+In the future, we will focus on advancing the field of fintech along two directions. First,
+
+we will refine Fin-R1’s architecture to accommodate financial multimodal data and deepen
+
+its application in cutting-edge areas. Second, we will promote the widespread adoption
+
+of LLMs in finance by fostering deeper integration with risk management and regulatory
+
+
+
+                                              27
+compliance, ultimately expanding the practical utility of Fin-R1.
+
+
+
+References
+Abnar, S., Dehghani, M., Neyshabur, B., and Sedghi, H. (2021). Exploring the limits of
+
+  large scale pre-training. arXiv preprint arXiv:2110.02095.
+
+Alipay Team (2023).      Financial Evaluation Dataset.      https://github.com/alipay/
+
+  financial_evaluation_dataset. Accessed: 2024-03-18.
+
+Anonymous (2024).      Twitter Financial News Sentiment.        https://huggingface.co/
+
+  datasets/zeroshot/twitter-financial-news-sentiment. Accessed: 2024-03-18.
+
+Bai, J., Bai, S., Chu, Y., Cui, Z., Dang, K., Deng, X., Fan, Y., Ge, W., Han, Y., Huang, F.,
+
+  et al. (2023). Qwen technical report. arXiv preprint arXiv:2309.16609.
+
+Bai, Y., Kadavath, S., Kundu, S., Askell, A., Kernion, J., Jones, A., Chen, A., Goldie, A.,
+
+  Mirhoseini, A., McKinnon, C., et al. (2022). Constitutional ai: Harmlessness from ai
+
+  feedback. arXiv preprint arXiv:2212.08073.
+
+Chen, W., Wang, Q., Long, Z., Zhang, X., Lu, Z., Li, B., Wang, S., Xu, J., Bai, X., Huang,
+
+  X., et al. (2023). Disc-finllm: A chinese financial large language model based on multiple
+
+  experts fine-tuning. arXiv preprint arXiv:2310.15205.
+
+Chen, Z., Chen, W., Smiley, C., Shah, S., Borova, I., Langdon, D., Moussa, R., Beane, M.,
+
+  Huang, T.-H., Routledge, B. R., et al. (2021). Finqa: A dataset of numerical reasoning
+
+  over financial data. In Proceedings of the 2021 Conference on Empirical Methods in
+
+  Natural Language Processing, pages 3697–3711.
+
+Chen, Z., Li, S., Smiley, C., Ma, Z., Shah, S., and Wang, W. Y. (2022). Convfinqa:
+
+  Exploring the chain of numerical reasoning in conversational finance question answering. In
+
+  Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing,
+
+  pages 6279–6292. Association for Computational Linguistics.
+
+Chowdhery, A., Narang, S., Devlin, J., Bosma, M., Mishra, G., Roberts, A., Barham, P.,
+
+
+
+                                             28
+  Chung, H. W., Sutton, C., Gehrmann, S., et al. (2023). Palm: Scaling language modeling
+
+  with pathways. Journal of Machine Learning Research, 24(240):1–113.
+
+Christiano, P. F., Leike, J., Brown, T., Martic, M., Legg, S., and Amodei, D. (2017).
+
+  Deep reinforcement learning from human preferences. Advances in neural information
+
+  processing systems, 30.
+
+Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. (2019). Bert: Pre-training of
+
+  deep bidirectional transformers for language understanding. In Proceedings of the 2019
+
+  conference of the North American chapter of the association for computational linguistics:
+
+  human language technologies, volume 1 (long and short papers), pages 4171–4186.
+
+Dong, Z., Fan, X., and Peng, Z. (2024). Fnspid: A comprehensive financial news dataset
+
+  in time series. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge
+
+  Discovery and Data Mining, pages 4918–4927.
+
+Drori, I., Zhang, S., Shuttleworth, R., Tang, L., Lu, A., Ke, E., Liu, K., Chen, L., Tran,
+
+  S., Cheng, N., et al. (2022). A neural network solves, explains, and generates university
+
+  math problems by program synthesis and few-shot learning at human level. Proceedings
+
+  of the National Academy of Sciences of the United States of America, 119(32):1–10.
+
+Duxiaoman DI Team (2023a).           FinanceIQ.     https://github.com/Duxiaoman-DI/
+
+  XuanYuan/tree/main/FinanceIQ. Accessed: 2024-03-18.
+
+Duxiaoman DI Team (2023b).           FinCorpus.     https://huggingface.co/datasets/
+
+  Duxiaoman-DI/FinCorpus.
+
+Duxiaoman DI Team (2024).            XuanYuan-finx1-preview.        https://github.com/
+
+  Duxiaoman-DI/XuanYuan. Accessed: 2024-03-18.
+
+Engstrom, L., Ilyas, A., Santurkar, S., Tsipras, D., Janoos, F., Rudolph, L., and Madry, A.
+
+  (2020). Implementation matters in deep policy gradients: A case study on ppo and trpo.
+
+  In International Conference on Learning Representations. PMLR.
+
+Fatouros, G., Metaxas, K., Soldatos, J., and Kyriazis, D. (2024). Can large language
+
+  models beat wall street? unveiling the potential of ai in stock selection. arXiv preprint
+
+
+                                            29
+  arXiv:2401.03737.
+
+Feng, D., Qin, B., Huang, C., Zhang, Z., and Lei, W. (2024).            Towards analyzing
+
+  and understanding the limitations of dpo: A theoretical perspective. arXiv preprint
+
+  arXiv:2404.04626.
+
+Floridi, L. and Chiriatti, M. (2020). Gpt-3: Its nature, scope, limits, and consequences.
+
+  Minds and machines, 30(4):681–694.
+
+Flowers, J. G. (2025). Finance Instruct 500k. https://huggingface.co/datasets/
+
+  Josephgflowers/Finance-Instruct-500k. Accessed: 2025-03-18.
+
+Google (2023). Palm 2 technical report. arXiv preprint arXiv:2305.10403.
+
+Google, G. T. (2024). Gemini 1.5: Unlocking multimodal understanding across millions of
+
+  tokens of context. arXiv preprint arXiv:2403.05530.
+
+Guo, D., Yang, D., Zhang, H., Song, J., Zhang, R., Xu, R., Zhu, Q., Ma, S., Wang, P., Bi, X.,
+
+  et al. (2025a). Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement
+
+  learning. arXiv preprint arXiv:2501.12948.
+
+Guo, X., Xia, H., Liu, Z., Cao, H., Yang, Z., Liu, Z., Wang, S., Niu, J., Wang, C., Wang,
+
+  Y., et al. (2025b). Fineval: A chinese financial domain knowledge evaluation benchmark
+
+  for large language models. In Proceedings of the 2025 Conference of the Nations of the
+
+  Americas Chapter of the Association for Computational Linguistics: Human Language
+
+ Technologies (Volume 1: Long Papers), pages 6258–6292.
+
+Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen, W., et al.
+
+  (2022). Lora: Low-rank adaptation of large language models. ICLR, 1(2):3.
+
+Huang, J., Xiao, M., Li, D., Jiang, Z., Yang, Y., Zhang, Y., Qian, L., Wang, Y., Peng,
+
+  X., Ren, Y., et al. (2024). Open-finllms: Open multimodal large language models for
+
+  financial applications. arXiv preprint arXiv:2408.11878.
+
+Kaplan, J., McCandlish, S., Henighan, T., Brown, T. B., Chess, B., Child, R., Gray, S.,
+
+  Radford, A., Wu, J., and Amodei, D. (2020). Scaling laws for neural language models.
+
+  arXiv preprint arXiv:2001.08361.
+
+
+                                             30
+Kingma, D. P. and Ba, J. (2014). Adam: A method for stochastic optimization. arXiv
+
+  preprint arXiv:1412.6980.
+
+Kocetkov, D., Li, R., Allal, L. B., Li, J., Mou, C., Ferrandis, C. M., Jernite, Y., Mitchell,
+
+  M., Hughes, S., Wolf, T., et al. (2022). The stack: 3 tb of permissively licensed source
+
+  code. arXiv preprint arXiv:2211.15533.
+
+Kumar, K., Ashraf, T., Thawakar, O., Anwer, R. M., Cholakkal, H., Shah, M., Yang, M.-H.,
+
+  Torr, P. H., Khan, F. S., and Khan, S. (2025). Llm post-training: A deep dive into
+
+  reasoning large language models. arXiv preprint arXiv:2502.21321.
+
+Lai, H., Liu, X., Gao, J., Cheng, J., Qi, Z., Xu, Y., Yao, S., Zhang, D., Du, J., Hou, Z.,
+
+  Lv, X., Huang, M., Dong, Y., and Tang, J. (2025). A Survey of Post-Training Scaling in
+
+  Large Language Models. In Proceedings of the 63rd Annual Meeting of the Association for
+
+  Computational Linguistics (Volume 1: Long Papers), pages 2771–2791, Vienna, Austria.
+
+Lambert, N., Morrison, J., Pyatkin, V., Huang, S., Ivison, H., Brahman, F., Miranda, L.
+
+  J. V., Liu, A., Dziri, N., Lyu, S., et al. (2024). Tulu 3: Pushing frontiers in open language
+
+  model post-training. arXiv preprint arXiv:2411.15124.
+
+Li, X., Li, Z., Shi, C., Xu, Y., Du, Q., Tan, M., and Huang, J. (2024). Alphafin: Benchmark-
+
+  ing financial analysis with retrieval-augmented stock-chain framework. In Proceedings
+
+  of the 2024 Joint International Conference on Computational Linguistics, Language
+
+  Resources and Evaluation (LREC-COLING 2024), pages 773–783.
+
+Lo, K., Wang, L. L., Neumann, M., Kinney, R., and Weld, D. S. (2020). S2orc: The
+
+  semantic scholar open research corpus. In Proceedings of the 58th Annual Meeting of the
+
+  Association for Computational Linguistics, pages 4969–4983.
+
+Lu, D., Wu, H., Liang, J., Xu, Y., He, Q., Geng, Y., Han, M., Xin, Y., and Xiao, Y. (2023).
+
+  BBT-Fin: Comprehensive construction of chinese financial domain pre-trained language
+
+  model, corpus and benchmark. arXiv preprint arXiv:2302.09432.
+
+Malik, L. (2024). Quant-trading-instruct. https://huggingface.co/datasets/lumalik/
+
+  Quant-Trading-Instruct.
+
+
+                                              31
+Naveed, H., Khan, A. U., Qiu, S., Saqib, M., Anwar, S., Usman, M., Akhtar, N., Barnes,
+
+  N., and Mian, A. (2025). A comprehensive overview of large language models. ACM
+
+ Transactions on Intelligent Systems and Technology, 16(5):1–72.
+
+OpenAI (2024a). Gpt-4o model documentation: Parameter configuration and data formats.
+
+  https://platform.openai.com/docs/models/gpt-4o. Accessed: 2025-03-18.
+
+OpenAI (2024b).        Learning to reason with llms.          https://openai.com/blog/
+
+  learning-to-reason-with-llms/. Accessed: 2024-03-18.
+
+Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C., Mishkin, P., Zhang, C.,
+
+  Agarwal, S., Slama, K., Ray, A., et al. (2022). Training language models to follow
+
+  instructions with human feedback. Advances in neural information processing systems,
+
+  35:27730–27744.
+
+Qian, L., Zhou, W., Wang, Y., Peng, X., Yi, H., Zhao, Y., Huang, J., Xie, Q., and Nie,
+
+  J.-y. (2025). Fino1: On the transferability of reasoning-enhanced llms and reinforcement
+
+  learning to finance. arXiv preprint arXiv:2502.08127.
+
+Qwen Team (2024a). Qwen 2.5 technical report. arXiv preprint arXiv:2412.15115.
+
+Qwen Team (2024b). Qwq: Reflect deeply on the boundaries of the unknown. https:
+
+  //github.com/QwenLM/QwQ.
+
+Rafailov, R., Sharma, A., Mitchell, E., Manning, C. D., Ermon, S., and Finn, C. (2023).
+
+  Direct preference optimization: Your language model is secretly a reward model. Advances
+
+  in neural information processing systems, 36:53728–53741.
+
+Schulman, J., Levine, S., Abbeel, P., Jordan, M., and Moritz, P. (2015). Trust region policy
+
+  optimization. In International conference on machine learning, pages 1889–1897. PMLR.
+
+Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. (2017). Proximal
+
+  policy optimization algorithms. arXiv preprint arXiv:1707.06347.
+
+Shao, Z., Wang, P., Zhu, Q., Xu, R., Song, J., Bi, X., Zhang, H., Zhang, M., Li, Y., Wu,
+
+  Y., et al. (2024). Deepseekmath: Pushing the limits of mathematical reasoning in open
+
+  language models. arXiv preprint arXiv:2402.03300.
+
+
+                                            32
+Shumailov, I., Shumaylov, Z., Zhao, Y., Papernot, N., Anderson, R., and Gal, Y. (2024). Ai
+
+  models collapse when trained on recursively generated data. Nature, 631(8022):755–759.
+
+Tong, H., Li, J., Wu, N., Gong, M., Zhang, D., and Zhang, Q. (2024). Ploutos: Towards
+
+  interpretable stock movement prediction with financial large language model. arXiv
+
+  preprint arXiv:2403.00782.
+
+Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux, M.-A., Lacroix, T., Rozière, B.,
+
+  Goyal, N., Hambro, E., Azhar, F., et al. (2023). Llama: Open and efficient foundation
+
+  language models. arXiv preprint arXiv:2302.13971.
+
+Trung, L., Zhang, X., Jie, Z., Sun, P., Jin, X., and Li, H. (2024). Reft: Reasoning with
+
+  reinforced fine-tuning. In Proceedings of the 62nd Annual Meeting of the Association for
+
+  Computational Linguistics (Volume 1: Long Papers), pages 7601–7614.
+
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L.,
+
+  and Polosukhin, I. (2017). Attention is all you need. Advances in neural information
+
+  processing systems, 30.
+
+Villalobos, P., Ho, A., Sevilla, J., Besiroglu, T., Heim, L., and Hobbhahn, M. (2024).
+
+  Position: Will we run out of data? limits of llm scaling based on human-generated data.
+
+  In International Conference on Machine Learning, pages 49523–49544. PMLR.
+
+Wang, B., Xu, C., Zhao, X., Ouyang, L., Wu, F., Zhao, Z., Xu, R., Liu, K., Qu, Y.,
+
+  Shang, F., et al. (2024a). Mineru: An open-source solution for precise document content
+
+  extraction. arXiv preprint arXiv:2409.18839.
+
+Wang, S., Yuan, H., Ni, L. M., and Guo, J. (2024b). Quantagent: Seeking holy grail in
+
+  trading by self-improving large language model. arXiv preprint arXiv:2402.03755.
+
+Wang, S., Yuan, H., Zhou, L., Ni, L. M., Shum, H.-Y., and Guo, J. (2023). Alpha-
+
+  gpt: Human-ai interactive alpha mining for quantitative investment. arXiv preprint
+
+  arXiv:2308.00016.
+
+Wei, J., Wang, X., Schuurmans, D., Bosma, M., Xia, F., Chi, E., Le, Q. V., Zhou, D., et al.
+
+  (2022). Chain-of-thought prompting elicits reasoning in large language models. Advances
+
+
+                                             33
+  in neural information processing systems, 35:24824–24837.
+
+Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist
+
+  reinforcement learning. Machine Learning, 8(3–4):229–256.
+
+Wu, S., Irsoy, O., Lu, S., Dabravolski, V., Dredze, M., Gehrmann, S., Kambadur, P.,
+
+  Rosenberg, D., and Mann, G. (2023). Bloomberggpt: A large language model for finance.
+
+  arXiv preprint arXiv:2303.17564.
+
+Xie, Q., Han, W., Chen, Z., Xiang, R., Zhang, X., He, Y., Xiao, M., Li, D., Dai, Y., Feng,
+
+  D., et al. (2024a). Finben: A holistic financial benchmark for large language models.
+
+  Advances in Neural Information Processing Systems, 37:95716–95743.
+
+Xie, Q., Han, W., Zhang, X., Lai, Y., Peng, M., Lopez-Lira, A., and Huang, J. (2023).
+
+  Pixiu: A comprehensive benchmark, instruction dataset and large language model for
+
+  finance. Advances in Neural Information Processing Systems, 36:33469–33484.
+
+Xie, Q., Huang, J., Li, D., Chen, Z., Xiang, R., Xiao, M., Yu, Y., Somasundaram, V., Yang,
+
+  K., Yuan, C., et al. (2024b). Finnlp-agentscen-2024 shared task: Financial challenges in
+
+  large language models-finllms. In Proceedings of the Eighth Financial Technology and
+
+  Natural Language Processing and the 1st Agent AI for Scenario Planning, pages 119–126.
+
+Xu, E., Ye, K., Zhou, H., Zhu, L., Quinzan, F., and Shi, C. (2025). Doubly robust alignment
+
+  for large language models. arXiv preprint arXiv:2506.01183.
+
+Xu, H., Sharaf, A., Chen, Y., Tan, W., Shen, L., Van Durme, B., Murray, K., and Kim,
+
+  Y. J. (2024a). Contrastive preference optimization: Pushing the boundaries of LLM
+
+  performance in machine translation. In International Conference on Machine Learning,
+
+  pages 55204–55224. PMLR.
+
+Xu, S., Fu, W., Gao, J., Ye, W., Liu, W., Mei, Z., Wang, G., Yu, C., and Wu, Y. (2024b).
+
+  Is DPO superior to PPO for LLM alignment? a comprehensive study. In International
+
+  Conference on Machine Learning, pages 54983–54998. PMLR.
+
+Xue, L., Constant, N., Roberts, A., Kale, M., Al-Rfou, R., Siddhant, A., Barua, A., and
+
+  Raffel, C. (2021). mt5: A massively multilingual pre-trained text-to-text transformer. In
+
+
+                                            34
+  Proceedings of the 2021 Conference of the North American Chapter of the Association for
+
+  Computational Linguistics: Human Language Technologies, pages 483–498.
+
+Yang, A., Yang, B., Zhang, B., Hui, B., Zheng, B., Yu, B., Li, C., Liu, D., Huang, F., Wei,
+
+  H., et al. (2024). Qwen2. 5 technical report. arXiv preprint arXiv:2412.15115.
+
+Ye, K., Zhou, H., Zhu, J., Quinzan, F., and Shi, C. (2025). Robust reinforcement
+
+  learning from human feedback for large language models fine-tuning. arXiv preprint
+
+  arXiv:2504.03784.
+
+Yu, Y., Yao, Z., Li, H., Deng, Z., Jiang, Y., Cao, Y., Chen, Z., Suchow, J., Cui, Z., Liu,
+
+  R., et al. (2024). Fincon: A synthesized llm multi-agent system with conceptual verbal
+
+  reinforcement for enhanced financial decision making. Advances in Neural Information
+
+  Processing Systems, 37:137010–137045.
+
+Zhang, K., Zuo, Y., He, B., Sun, Y., Liu, R., Jiang, C., Fan, Y., Tian, K., Jia, G., Li,
+
+  P., et al. (2025a). A survey of reinforcement learning for large reasoning models. arXiv
+
+  preprint arXiv:2509.08827.
+
+Zhang, W., Xie, Y., Sun, Y., Chen, Y., Wang, G., Li, Y., Ding, B., and Zhou, J. (2025b). On-
+
+  policy rl meets off-policy experts: Harmonizing supervised fine-tuning and reinforcement
+
+  learning via dynamic weighting. arXiv preprint arXiv:2508.11408.
+
+Zhang, W., Zhao, L., Xia, H., Sun, S., Sun, J., Qin, M., Li, X., Zhao, Y., Zhao, Y., Cai,
+
+  X., et al. (2024). A multimodal foundation agent for financial trading: Tool-augmented,
+
+  diversified, and generalist. In Proceedings of the 30th acm sigkdd conference on knowledge
+
+  discovery and data mining, pages 4314–4325.
+
+Zhang, X. and Yang, Q. (2023). Xuanyuan 2.0: A large chinese financial chat model with
+
+  hundreds of billions parameters. In Proceedings of the 32nd ACM international conference
+
+  on information and knowledge management, pages 4435–4439.
+
+Zhao, H., Chen, H., Yang, F., Liu, N., Deng, H., Cai, H., Wang, S., Yin, D., and Du,
+
+  M. (2024a). Explainability for large language models: A survey. ACM Transactions on
+
+  Intelligent Systems and Technology, 15(2):1–38.
+
+
+                                            35
+Zhao, Y., Yin, H., Zeng, B., Wang, H., Shi, T., Lyu, C., Wang, L., Luo, W., and Zhang,
+
+  K. (2024b). Marco-o1: Towards open reasoning models for open-ended solutions. arXiv
+
+  preprint arXiv:2411.14405.
+
+Zheng, R., Dou, S., Gao, S., Hua, Y., Shen, W., Wang, B., Liu, Y., Jin, S., Liu, Q., Zhou,
+
+  Y., et al. (2023). Secrets of rlhf in large language models part i: PPO. arXiv preprint
+
+  arXiv:2307.04964.
+
+Zhou, W., Zhang, S., Gu, Y., Chen, M., and Poon, H. (2024). Universalner: Targeted
+
+  distillation from large language models for open named entity recognition. In International
+
+  Conference on Learning Representations. PMLR.
+
+Zhu, L., Wang, X., and Wang, X. (2024). JudgeLM : Fine-tuned large language models are
+
+  scalable judges. https://openreview.net/forum?id=87YOFayjcG.
+
+Zoph, B., Ghiasi, G., Lin, T.-Y., Cui, Y., Liu, H., Cubuk, E. D., and Le, Q. (2020).
+
+  Rethinking pre-training and self-training. Advances in neural information processing
+
+  systems, 33:3833–3845.
+
+
+
+
+                                             36
+THIS SUPPLEMENT IS STRUCTURED as follows. Section A systematically compiles
+
+information on the sources of the datasets used in our experiments and case studies, covering
+
+dataset categories, content descriptions, data sources, open-source status, language types,
+
+data types, and the sizes of the original and processed data; it also provides a structured
+
+table summarizing the key datasets employed in our financial AI experiments. Section B
+
+presents prompt templates for data distillation and filtering: Subsection B.1 introduces the
+
+data-distillation prompt, which follows the official DeepSeek-R1 configuration and comprises
+
+the task description, task input, task instruction, an explicit execution directive, and
+
+normative notes, together with the corresponding figure; Subsections B.2 and B.3 outline
+
+the answer-check prompt and the reasoning-selection prompt, respectively. The former
+
+consists of a role definition, an input module, judgment rules for consistency assessment,
+
+and output-format requirements; the latter is designed around seven key dimensions and
+
+specifies evaluation criteria, input components, and the scoring method. Both prompts are
+
+accompanied by supporting figures. Subsection C.1 evaluates the impact of five prompt
+
+formats on evaluation-model performance, builds a quantitative evaluation metric system,
+
+and accordingly identifies Qwen2.5-72B-Instruct as the judge model for answer check;
+
+the experimental data and performance-comparison results both support this conclusion.
+
+Subsection C.2 reports supplementary experiments conducted to select the reasoning scoring
+
+model: we compare the scoring outcomes of Qwen2.5-72B-Instruct, GPT-4o, and human
+
+annotators, and visualize correlations among their score distributions using heatmaps.
+
+Section D presents a case study that intuitively demonstrates Fin-R1’s superior reasoning
+
+and response performance in financial scenarios.
+
+
+
+A      Details for raw datasets
+
+Here we provide information on the sources of the datasets used in our experiments and
+
+case studies. The table 3 systematically classifies financial data by different business scopes,
+
+including financial advanced business knowledge, financial non-reasoning business knowledge,
+
+                                              37
+financial professional knowledge, and financial code, providing a comprehensive overview of
+
+the data composition in experiments. The table 4 elaborates on each financial data source,
+
+detailing aspects like whether the data is open, the language used, the data type, and both
+
+the original and processed sizes.
+
+• FinanceQT (Malik, 2024): Focuses on generating financial code and quantitative
+
+  strategy scripts for financial scenarios.
+
+• Finance-500K (Flowers, 2025): Covers professional financial content such as financial
+
+  terminology explanation and QA on financial expertise.
+
+• FinanceIQ (Duxiaoman DI Team, 2023a): Used for tasks including financial
+
+  terminology explanation, QA on financial expertise, and financial calculations.
+
+• FinPEE (Constructed by us): Centered on financial calculation tasks, built based on
+
+  original exam questions of Shanghai University of Finance and Economics.
+
+• Ant-Finance (Alipay Team, 2023): Involves financial business tasks that do not
+
+  require complex reasoning, such as content generation and compliance management.
+
+• FinCorpus (Duxiaoman DI Team, 2023b): Contains corpora related to financial
+
+  domain knowledge acquisition and financial text generation.
+
+• FinQA (Chen et al., 2021): Focuses on reasoning tasks for financial data, such as
+
+  numerical reasoning in financial business.
+
+• ConvFinQA (Chen et al., 2022): Used for QA tasks in the financial field that require
+
+  context-aware reasoning.
+
+• TFNS (Anonymous, 2024): Mainly supports reasoning tasks with sentiment analysis
+
+  attributes, such as sentiment classification of financial news.
+
+• FinCUGE (Lu et al., 2023): Involves multiple types of reasoning tasks in the financial
+
+  field, including numerical analysis and causal relationship extraction.
+
+
+
+
+                                               38
+                      Table 3: Financial Data Category Details
+
+
+Data Category     Description                  Source            Proportion Number
+
+
+Financial Code    Financial Quantitative       FinanceQT         0.25%         152
+                  Strategy Code Generation
+
+
+                  Covers professional financial Finance-500K     18.80%        11300
+Financial
+                  content like terminology
+Professional
+                  explanation, expertise Q&A, FinanceIQ          4.32%         2596
+Knowledge
+                  and calculations
+                                                FinPEE           0.30%         179
+
+Financial         Content Generation in
+Non-reasoning     Financial Business,          Ant-Finance       2.58%         1548
+Business          Regulatory Compliance,
+Knowledge         Financial Knowledge          FinCorpus         48.74%        29288
+
+
+                                                 FinQA           4.91%         2948
+                  Numerical Reasoning on
+Financial         Financial Data, Financial
+Reasoning         News Sentiment Classification,ConvFinQA        12.70%        7629
+Business          Financial News Classification,
+Knowledge         Financial Causal               TFNS            4.08%         2451
+                  Relationship Extraction
+                                                 FinCUGE         3.33%         2000
+
+
+
+
+                          Table 4: Financial Data Source
+
+   Source        Open     Language     Data Type      Original Size       Processed Size
+ FinanceQT       Open      English     Choice Qs             0.39k            0.15k
+Finance-500K     Open      English      QA Pairs           518.19k            11.30k
+ FinanceIQ       Open      Chinese     Choice Qs            7.17k              2.60k
+   FinPEE        Closed    Chinese     Calculation           0.35k            0.18k
+Ant-Finance      Open      Chinese     Choice/T-F            8.45k            1.55k
+ FinCorpus       Open      Chinese       Corpus            235.21k            29.29k
+   FinQA         Open      English      QA Pairs            8.28k              2.95k
+ ConvFinQA       Open      English      QA Pairs            14.12k             7.63k
+    TFNS         Open      English      Sentiment           11.93k             2.45k
+  FinCUGE        Open      Chinese     Multi-task           66.67k             2.00k
+
+
+
+                                        39
+B     The Prompt of Data Construction
+
+In this section, we introduce the prompt templates for data distillation and filtering.
+
+
+B.1     The Prompt of Data Distillation
+
+For the data distillation step in the pipeline of data construction for Fin-R1-Data, we
+
+refer to the official prompt setting of DeepSeek-R1 and construct the prompt presented in
+
+Figure 10. The prompt is consisted of three key components. First, it specifies the task
+
+description, input, and instruction, which define the problem, the data to be processed,
+
+and the required operation. Second, it includes an explicit execution directive (“Please
+
+analyze... and generate...”), which guides the model to align its reasoning with the task
+
+requirements. Third, it provides normative notes, requiring the model to reason according
+
+to the instruction.
+
+
+
+
+                 Figure 10: The prompt of data distillation that we used.
+
+
+
+B.2     The Prompt of Answer Check
+
+For answer check in data filtering step, the prompt presented in Figure 11 is structured into
+
+four main parts: an initial role definition that frames the model as a scoring assistant, an
+
+input section providing both the ground truth and the model answer, a set of rules that
+
+specify how numerical equivalence and rounding should be judged for consistency, and an
+
+                                             40
+output format requirement that constrains the response to a binary decision.
+
+
+
+
+                  Figure 11: The prompt for answer check that we used.
+
+
+
+B.3     The Prompt of Reasoning Selection
+
+For reasoning selection in data filtering step, the prompt template presented in Figure 12 is
+
+designed based 7 key dimensions (Xie et al., 2024b) and is consisted of the evaluation criteria
+
+that structure how the reasoning process should be assessed; the inputs, the reasoning
+
+process and the standard answer, against which the evaluation is carried out; the description
+
+of scoring method, where each criterion is worth one point and the final decision is binary (1
+
+for high-quality reasoning if all seven points are met, otherwise 0), with the score required
+
+
+                                              41
+for standardized extraction.
+
+
+
+
+                 Figure 12: The prompt for reasoning selection we used.
+
+
+
+
+C     Model Selection for Data Construction
+
+In this section, we provide the supplementary experiments to illustrate the model selection
+
+process of data construction.
+
+
+C.1     Model Selection for Answer Check
+
+In the research on answer verification tasks based on LLM-as-Judge, we reveals that although
+
+the surface task format appears relatively simple (i.e. determining binary output 1 or 0
+
+                                            42
+based on consistency between model-generated answers and reference answers), different
+
+prompt wording strategies significantly influence the performance of evaluation models. To
+
+quantitatively analyze this phenomenon, we design 5 different prompt templates presented
+
+in Figure 11, 13, 14, 15, 16, our used format (OF), the format where the content to be
+
+judged is at the end (CIE), the format with the original question passed in (WQ), the
+
+format with the original question passed in and the question-and-answer content placed at
+
+the end (CIE-WQ), and the Chinese format (ZH). We randomly select 100 sample instances
+
+from the FinQA dataset and conduct five repeated experiments for each prompt strategy
+
+to assess result stability. This process yielded 500 comparative results per prompt group,
+
+with model performance evaluated through consistency analysis against human-annotated
+
+results. Experiments were conducted using both GPT-4o and Qwen2.5-72B-Instruct.
+
+To systematically evaluate the impact of different prompting strategies on evaluation model
+
+performance, this study established a quantitative evaluation metrics system comprising
+
+two core indicators:
+
+   • Classification Inaccuracy: defined as the proportion of samples where model
+
+     judgments disagree with human annotations.
+
+   • Format Irregularity: reflecting the degree to which model outputs fail to strictly
+
+     adhere to binary constraints (0/1).
+
+Through statistical analysis of 500 comparative results under each prompting strategy,
+
+the performance comparison data are shown in Table 5. The systematic analysis based
+
+on experimental data reveals that different prompt strategies significantly influence the
+
+performance of evaluation models. We analyze the results as follows:
+
+   • Text positioning strategies demonstrate model-specific differences. GPT-4o shows
+
+     stable performance under the CIE strategy when reference answers are post-positioned,
+
+     with an inaccuracy rate of 2.0%, while Qwen2.5-72B-Instruct exhibits superior adap-
+
+     tation to the rule-preceding OF strategy, achieving an extremely high accuracy of
+
+
+                                            43
+            Figure 13: The prompt for answer check with input at the end.
+
+
+
+
+                         Inaccuracy                       Irregularity
+     Format    GPT-4o    Qwen2.5-72B-Instruct    GPT-4o Qwen2.5-72B-Instruct
+     OF          2.8%            0.4%             0.8%             0.0%
+     CIE         2.0%            2.0%             0.0%             0.0%
+     WQ          6.0%            8.0%             3.6%             3.2%
+     CIE-WQ      4.8%            9.6%             1.6%             3.2%
+     ZH          5.2%            1.6%             0.0%             0.0%
+
+Table 5: Comparison of GPT-4o and Qwen2.5-72B-Instruct on answer judgment inaccuracy
+and irregularity across different prompt formats.
+
+
+
+                                         44
+Figure 14: The prompt for answer check with question in input.
+
+
+
+
+                             45
+Figure 15: The prompt for answer check with input containing question at the end.
+
+
+
+
+                                       46
+Figure 16: The Chinese prompt for answer check.
+
+
+
+
+                      47
+      99.6%.
+
+   • Although incorporating original questions as contextual information theoretically
+
+      enhances semantic comprehension, it substantially increases the format deviation rates
+
+      (Irregularity). Under the WQ strategy, GPT-4o and Qwen2.5-72B-Instruct exhibit
+
+      3.6% and 3.2% Irregularity respectively. Manual verification identifies that format
+
+      deviations predominantly occur in long-text samples, potentially due to input sequence
+
+      elongation inducing model hallucinations (e.g., Qwen2.5-72B-Instruct’s classification
+
+      error rate under WQ strategy surges from baseline 0.4% to 8.0%).
+
+   • Cross-lingual testing indicates that Chinese prompts (ZH), while partially ensuring
+
+      format compliance, yield significantly higher classification errors than optimal English
+
+      strategies due to the English evaluation context. Compared with GPT-4o, Qwen2.5-
+
+      72B-Instruct demonstrates better Chinese prompt adaptability.
+
+Based on the above analyses, we ultimately select Qwen2.5-72B-Instruct as the judge model
+
+to check the answer generated by data distillation, which achieves both high accuracy and
+
+regularity with prompt template we used.
+
+
+C.2     Model Selection for Reasoning Selection
+
+To compare the scoring outcomes between human annotators and language models, we
+
+conducted supplementary experiments. Specifically, we randomly selected 20 data points
+
+from the dataset filtered in the initial preprocessing step and evaluated their reasoning
+
+performance using Qwen2.5-72B-Instruct and GPT-4o. The evaluation followed seven
+
+predefined judgment criteria. Each data point received a score of 1 if its reasoning satisfied
+
+a given criterion and 0 otherwise. The total score for each data point was obtained by
+
+summing across all criteria, resulting in a range from 0 (minimum) to 7 (maximum). Given
+
+the scoring framework, we effectively employed a binary scoring approach (0/1) at the
+
+criterion level.
+
+
+
+
+                                             48
+To establish a reference baseline, human annotators independently scored the reasoning for
+
+the same data points. We then visualized the correlation between the scoring distributions
+
+of Qwen2.5-72B-Instruct, GPT-4o, and human annotations using heatmaps (see Figure
+
+17) to assess their alignment and discrepancies. The results show that Qwen2.5-72B-
+
+Instruct exhibits high concordance with human annotations, with most questions having a
+
+correlation score of 1, and only minor deviations in a few cases. In contrast, GPT-4o shows
+
+larger discrepancies, indicating lower alignment with human judgments. Based on these
+
+findings, we ultimately selected Qwen2.5-72B-Instruct as the scoring model for reasoning
+
+selection.
+
+
+
+
+  (a) Qwen2.5-72B-Instruct vs. Human                       (b) GPT-4o vs. Human
+
+Figure 17: Heatmap comparison of reasoning scores between LLMs and human annotators.
+Figure 17a and 17b represent the correlation between the scores of Qwen2.5-72B-Instruct
+and GPT-4o with human scores.
+
+
+
+
+D      Case Study
+
+Based on the actual performance of Fin-R1 in the financial domain, we conducted a case
+
+study to more intuitively demonstrate the excellent performance of Fin-R1 in financial
+
+scenarios. Figure 18 shows an example of the actual interactive output of both Fin-R1 and
+
+the base model Qwen2.5-7B-Instruct in a financial securities investment scenario. From the
+
+outputs of the two models, it is evident that when the prompt does not specify a particular
+
+task output format, Qwen2.5-7B-Instruct fails to respond in a structured ”thought-first,
+
+                                            49
+then-answer” format, which is essential for meeting the requirements of reasoning tasks in
+
+the financial domain. Even when the task output format is specified, Qwen2.5-7B-Instruct’s
+
+performance remains suboptimal. In contrast, Fin-R1 outperforms Qwen2.5-7B-Instruct
+
+in both logical reasoning and accuracy of its responses. Not only does Fin-R1 provide
+
+high-quality reasoning processes, but its answers are also correct and more focused.
+
+
+
+
+                     (a) Qwen2.5-7B-Instruct output without a prompt
+
+
+
+
+                       (b) Qwen2.5-7B-Instruct output with a prompt
+
+
+
+
+                            (c) Fin-R1 output without a prompt
+
+Figure 18: The specific examples from the case study, where Figure 18a and Figure 18b are
+the outputs of Qwen2.5-7B-Instruct without and with a prompt, respectively, and Figure 18c
+is the high-quality output of Fin-R1. The incorrect answers are marked in blue, and the
+correct answers are marked in red, consistent with the ground truth.
+
+
+
+
+                                            50
+

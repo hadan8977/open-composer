@@ -997,7 +997,7 @@
   - 2026-09-30 13:52 交互主审（Opus）写预注册和简报。文献 13:47 打开：Gu-Kelly-Xiu 2020 的非线性模型之间 R² 只差 0.33–0.40%；Avramov-Cheng-Metzker 2023 说机器学习的利润集中在微盘股、按合理成本后变差。先验：任何格子过 K1 的概率低于 5%，本任务主要是给机主有证据的答案。训练全在 Modal 上，本机只汇总，可以和 T-14 同轮跑。
 
 ### T-20260930-18 机主问题：强化学习与"大模型 + 强化学习"交易的公开证据（接手 T-20260929-31）
-- status: running
+- status: done
 - priority: 2
 - not_before:
 - goal: 回答机主 2026-09-29 的"RL 的 Qwen 之类的不行吗"。先读 2025–2026 原文和实盘/前向记录（nof1 Alpha Arena、LiveTradeBench、Trading-R1、FLAG-Trader、Fin-R1、FinRL 比赛、反面证据），只有证据支持才定一个 ≤ $3 的试点。
@@ -1005,3 +1005,4 @@
 - done_when: `reports/research/intel/rl-llm-trading-evidence-2026-09-30.md`、`reports/research/intel/sources/rl-llm-2026-09-30/`、登记簿 validate ok；提交。
 - notes:
   - 2026-09-30 13:45 交互主审（Opus）派出。自动轮不要碰。
+  - 2026-09-30 13:56 交互主审（Opus）审核：结论停放（`dir:rl_llm_trading_2026` parked）。有 RL 训练的证据全是回测，多数不扣成本；实盘记录（Alpha Arena、ChatGPT 微盘股）都是零样本大模型，没有 RL。最强正面证据 Alpha-R1（Qwen3-8B + GRPO，2025 年样本外、每边 10 bp，标普池年化 47.87%、夏普 1.62，作者自报 DSR 0.66–0.84）只有一年、无人复现，训练约 7,680 张 H800 卡时。反面证据：独立 FinRL PPO 夏普 0.559，低于等权 1.115（0.10% 成本，2019–2023）。主审抽核 5 个数字都在快照里；补注 Alpha Arena 数字来自一份 AI 代理写的第三方报告，属三手来源。简报 `reports/research/intel/rl-llm-trading-evidence-2026-09-30.md`，快照 30 个 .txt。
