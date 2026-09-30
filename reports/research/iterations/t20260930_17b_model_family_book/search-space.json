@@ -1,0 +1,83 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20260930_17b_model_family_book/candidate-manifest.json",
+  "candidate_manifest_sha256": "6afca1e58e9dd732505ecbeb17feec3cc1e5a2082b6deeb8936060a4d48811cd",
+  "cost_table_path": "reports/research/iterations/t20260930_17b_model_family_book/cost-table.json",
+  "created_at": "2026-09-30T19:20:33.229197+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20260930_17b_model_family_book/data-feasibility.json",
+  "data_feasibility_sha256": "43511bc3fc1d3a3e0e952d5e909132ea91b694f81daf77cc74762ff58d2d5dc3",
+  "evaluation_report_paths": [],
+  "iter_id": "t20260930_17b_model_family_book",
+  "paths": [
+    {
+      "benchmark_family": [
+        "random_rank_placebo_20_seeds",
+        "vol_matched_S3_K2_control",
+        "b0_book_parity_T-20260928-30_V1_flat10"
+      ],
+      "candidate_count": 6,
+      "hypothesis_refs": [
+        "T-20260930-17-S2"
+      ],
+      "name": "model_family_sweep_stage2_book",
+      "parameters": {
+        "book": [
+          "V1_all_pool_top50",
+          "V2_illiquid_tercile_top50"
+        ],
+        "buffer_rank": [
+          150
+        ],
+        "capacity": [
+          "<=1% of 21d median dollar volume, $100k account"
+        ],
+        "embargo_days": [
+          63
+        ],
+        "horizon_days": [
+          63
+        ],
+        "judge_cost": [
+          "flat 10 bp/side (K1 Sharpe, K2 edge), flat 20 bp/side (CAGR > 0)"
+        ],
+        "model_family": [
+          "XGB",
+          "LGBM",
+          "CAT"
+        ],
+        "model_settings": [
+          "XGBRegressor hist depth6 lr0.05 n400 subsample0.8 colsample0.8 min_child_weight200 lambda1 seed20260930",
+          "kt.LGBM_REG_PARAMS (B0 unchanged)",
+          "CatBoostRegressor depth6 lr0.05 it400 RMSE rsm0.8 Bernoulli subsample0.8 min_data_in_leaf200 seed20260930"
+        ],
+        "n_top": [
+          50
+        ],
+        "rebalance_offsets": [
+          21
+        ],
+        "retrain": [
+          "quarterly"
+        ],
+        "stage": [
+          "2_portfolio_fixed_cost"
+        ],
+        "train_window": [
+          "expanding_all_history"
+        ],
+        "train_years": [
+          50
+        ],
+        "weights": [
+          "equal"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20260930_17b_model_family_book.yaml",
+  "spec_hash": "0fe97a0d7ceefb02530a947f26453cbe68bab025a4f534b11b744f395b7351ef",
+  "strategy_name": "t20260930_17b_model_family_book",
+  "total_candidate_budget": 6,
+  "trial_ledger_paths": []
+}
