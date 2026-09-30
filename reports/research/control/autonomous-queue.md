@@ -225,7 +225,7 @@
 
   - 2026-09-29 07:07 轮结果（协调者已对照 leaderboard.json 核对 14 条）：0 保留、5 条近期观察（watch_recent，已写 kept.jsonl，commit ee2b972）：LSS_N50_K1_1X/K2_1X/K2_2X/K3_1X/K3_2X 对标窗 1.23–1.44 过 1.19，压力期 0.42–0.64 都没过 0.645（K3_2X 0.643 差 0.002）。K2 对标窗全负。选股有真增量：最好 1.44 vs 菜单等权 0.98 vs 随机 0.72。2 倍杠杆在 vt40 下不提高夏普（1x≈2x）。DSR 最高 0.73。菜单 = 时间点 S&P 500 里 63 日成交额前 20/50（`menu.parquet` 冻结到 2026-09；前向跟踪需每月末重跑 `scripts/build_h20260929_34_menu.py`）。登记簿 `dir:levered_single_stock_momentum_top_k`（partial）。产物：`reports/research/iterations/h20260929_34_levered_single_stock/`。
 ### T-20260929-35 日内截面规律之一：隔夜延续 × 竞价执行（Lou-Polk-Skouras 拉锯的隔夜腿；同时段周期性拆到 T-20260930-13）
-- status: done（待主审）
+- status: done（已主审 2026-09-30 11:50：判定格关闭；ON252 另立 T-20260930-14）
 - priority: 1
 - not_before:
 - goal: 已发表的截面日内规律，例如 Heston-Korajczyk-Sadka 2010 的同一时段收益延续，以及 Lou-Polk-Skouras 2019 的"动量赚在隔夜、反转赚在日内"，在流动性最好的股票上能否扣掉实际成本后赚钱。
@@ -238,6 +238,7 @@
   - 2026-09-30 09:00 交互会话（Opus 主审）：预注册写死在 `reports/research/iterations/t20260929_35_overnight_persistence/hypotheses.md`，执行简报 `reports/research/control/briefs/T-20260929-35.md`。本任务只测隔夜腿：按过去隔夜收益十分位多空，收盘竞价进、次日开盘出，判定格 ON21_P1500_LS 主窗毛均值 ≥16 bp/晚通过、<8 bp 关闭（竞价每边 2 bp，2 倍 4 bp）。同时段周期性（HKS）拆到 T-20260930-13。执行轮先做本任务（重任务），T-13 在本任务的 panel 之后。
   - 2026-09-30 10:07 执行轮（Sonnet 5.5，R0930-1007）开始：子代理按简报执行。
   - 2026-09-30 10:57 执行轮：子代理跑完 panel + screen，pre-backtest 检查通过（10:12:19Z，早于 results.json generated_at 10:55:37Z），hypotheses.md 未改。字段齐全（results.json）。判定格 ON21_P1500_LS 主窗 2.56 bp/晚、t_nw5 0.66、n 683、placebo_beat 1.00、tier closed、stress_class recent_only（压力期 4.81 bp、t_nw5 2.98）、竞价 2 倍成本净 -13.89 bp/晚；第二格 ON5_P1500_LS -4.62 bp、t_nw5 -1.02、placebo_beat 0.00、tier closed、recent_only、2 倍净 -21.07。诊断：(a) 同一组合次日日内 -13.70 bp（t_nw5 -3.17），(b) P1500 按过去日内排序的下一晚 -3.84 bp（t_nw5 -1.18）。LO 前 20 主窗绝对 -0.84 bp、超额（对池等权）-7.59 bp。子代理备注（非判定）：ON252_P1500_LS 11.99 bp（t_nw5 3.08）、ON252_P500_LS 17.01 bp（t_nw5 3.24）在冻结判定格之外，20 次试验之一；placebo_beat=1.00 是因为随机组合市场中性、波动远小于真实组合（按冻结设计）；AR 价差中位数 38 bp，连续竞价成本列约 -150 bp；子代理自选了 4 项口径（先 dv21 排名再 $5/63 日过滤、腿大小 floor(10%)、价差 NaN 用当晚池中位数、诊断 (b) 用 t-21..t-1 日内均值），已写进脚本 docstring 和 report.md。未做：官方竞价价抽样（无格通过或边缘）；`--stage final` 检查（卡在试验账本和 decision record，属主审）。待主审。产物：`reports/research/iterations/t20260929_35_overnight_persistence/`（results.json、report.md、cache/panel.parquet）、`scripts/run_t20260929_35_overnight_persistence.py`、`tests/test_t20260929_35_overnight_persistence.py`、`strategy_specs/drafts/t20260929_35_overnight_persistence.yaml`、`reports/harness/source_cards/t20260929_35_overnight_persistence.jsonl`、`logs/t20260929_35_*.log`。
+  - 2026-09-30 11:50 主审（交互会话 Opus）：对照 results.json 并用 cache/panel.parquet 独立重算（差值 ≤0.05 bp，AAPL 抽查 r = close_t→open_{t+1} 对齐无前视）。**判定格 ON21_P1500_LS 关闭**：主窗 +2.56 bp/晚（NW t 0.66），<8 bp；第二格 ON5 −4.6 bp 关闭；压力期 ON21 +4.8 bp（t 2.98）→ 一月口径的隔夜延续在 2016–23 就只有竞价成本的一半，2024 起更弱。拉锯仍在：同一组合次日日内 −13.7 bp（t −3.2）。死因：短窗口信号太弱，不是执行。**只报告的 ON252（过去一年）格强**：P500 LS 主窗 +17.0 bp（t 3.26）、压力期 +7.6（t 3.30）；P1500 +12.0（t 3.08）/ +8.6（t 5.35）；与 Lachance 2023「过去一年隔夜收益是最强预测变量」一致。它是 20 格之一且两窗都已看过，不能算通过 → 另立 T-20260930-14（没看过的 dv21 1501–3000 池 + 官方竞价价核对）。另：本任务 continuous_1x/2x 净值作废（日线 AR 价差对大盘股高估 20–60 倍，见 T-13 修正案 A1）。
 
 ### T-20260929-36 纳斯达克 1 分钟多空事件路由：用 SIP 分钟数据复核
 - status: done
@@ -930,7 +931,7 @@
   - 2026-09-30 07:07 自动轮（R0930-0707-C1b）：done，否定（closed_unstable，Opus 已对照 results.json 的 decision_cells 核对）。判定格 X15_K10_EW 对标窗毛 −5.37 bp/天（t −1.03），安慰剂打赢 0.40，短窗 −4.15 bp；X0_K10_EW −4.80（t −0.94），0.53，+0.07；前视对照 LA_K10_EW −3.96。三条继续条件两个口径全不过，账本未跑。死因：C1 的 +42.5 bp 是整个 ≥$1M 池极端跳空（z 中位数 −3.7）落在 $5–20M 档的子集，先限池再取 10 只会混进均值 −17.3 bp 的温和跳空（`c1_reconciliation.json`）；池里只有 35% 的行 09:11 前有盘前成交。产物 `reports/research/iterations/t20260930_12_smallcap_gap_auction/`、`scripts/run_t20260930_12_smallcap_gap_auction.py`；登记簿 `dir:smallcap_gap_down_fade_auction_execution` → refuted。
 
 ### T-20260930-13 日内截面规律之二：开盘/收盘半小时同时段延续 × 一腿竞价（Heston-Korajczyk-Sadka 2010；Haendler 等 2025 样本外）
-- status: done（待主审）
+- status: done（主审中：毛边际强但可成交性待 T-20260930-15 实测报价，按修正案 A2 分档）
 - priority: 2
 - not_before:
 - goal: 同一只股票在开盘半小时（09:30–10:00）和收盘半小时（15:30–收盘竞价）的收益与它过去 20 天同时段收益正相关（HKS：开盘 >11 bp、收盘 >8 bp 的十分位多空）。一腿走竞价后，2024–26 年的毛边际能否付 2 倍成本？是纲领主线 C2 的第二部分。
@@ -941,3 +942,26 @@
   - 2026-09-30 09:00 交互会话（Opus 主审）从 T-20260929-35 拆出并写预注册和简报。依赖 T-20260929-35 的 panel 缓存（池相同）。2023 年分钟档要同时读整年旧分片和月目录（C1b 漏了旧分片，见简报"背景"）。
   - 2026-09-30 10:58 执行轮（Sonnet 5.5，R0930-1007）开始：T-35 的 panel 已就绪，子代理按简报执行。
   - 2026-09-30 11:48 执行轮：子代理跑完 extract + screen，pre-backtest 检查通过（11:01:19Z，早于 results.json generated_at 11:42:34Z），hypotheses.md 未改（子代理称被档案生成器覆盖过一次，已逐字节还原，git diff 为空）。字段齐全（results.json，主窗 2024-01-08→2026-09-29，n=684）。判定格 C_L20_P1500：均值 17.13 bp、t_nw5 15.68、placebo_beat 1.00、rt1_bp 74.67、tier closed；O_L20_P1500：14.60 bp、t_nw5 4.84、placebo_beat 1.00、rt1_bp 77.25、tier closed。注意：这两个 tier 按冻结的 AR 价差成本（约 34 bp/腿）机械算出，而主审的修正案 A1（ceca3b9）已声明 AR 价差高估流动股价差 20–60 倍、作废 RT1 和 tier，30 天实测报价抽样未做——判定留给主审。诊断（不入 tier）：C 的盈亏平衡 h 为 4.57 bp/腿（1 倍）、0.28（2 倍）；O 为 3.30（1 倍）、2 倍为负。相邻时段对照（同时段减对照）：C +20.31 bp（t_nw5 13.18，对照本身 -3.17、t_nw5 -3.48）；O +16.92 bp（t_nw5 3.99，对照本身 -2.32、t_nw5 -0.90）。收盘段拆分：r_C1（15:30–15:50）3.83 bp（t_nw5 4.23）、r_C2（15:50–收盘，含竞价）13.23 bp（t_nw5 24.77）。其他窗口：C 的 2026 受污染窗 +21.03 bp、新留出 +14.04 bp（n=8）；O 的 2026 受污染窗 +13.63 bp（t_nw5 1.44）、新留出 +20.20 bp（n=8）。分钟覆盖（P1500 池日中有分钟 bar 的比例）：2023 0.924、2024 0.939、2025 0.964、2026 0.989；46 个池日未过收盘一致性检查；2023 年 2192 个代码中 732 个只在整年旧分片里，两种布局已合并去重（按 bar 集指纹），1453 个重叠。子代理自选口径：日线开/收盘价在 2023-07 窗口重新载入并清洗；空头腿只用易借券、DTC 缺失视为不限制；安慰剂空头腿从同一易借券集合抽取（均写进 report.md）。未做：修正案 A1 的 30 天实测报价抽样（输入在 `cache/picks_*.parquet`）；`--stage final` 检查（只被 search_space_trial_ledger_paths_empty_final 和 decision_record_missing_continue_pivot_stop 卡住，属主审）。遗留：`cache/extract/_legacy/` 是子代理创建的未用目录（删除被拒绝），可以删。待主审。产物：`reports/research/iterations/t20260930_13_intraday_periodicity/`（results.json、report.md、cache/）、`scripts/run_t20260930_13_intraday_periodicity.py`、`tests/test_t20260930_13_intraday_periodicity.py`、`strategy_specs/drafts/t20260930_13_intraday_periodicity.yaml`、`reports/harness/source_cards/t20260930_13_intraday_periodicity.jsonl`、`logs/t20260930_13_*.log`。
+  - 2026-09-30 11:55 主审（交互会话 Opus）：results.json 里按日线 AR 价差算的 RT1（74.7/77.3 bp）和 tier 作废（修正案 A1，11:00 提交，早于本任务 pre-backtest 检查和结果）。毛边际：C_L20_P1500 17.1 bp/天（NW t 15.7，安慰剂 1.00），其中 15:50→收盘（含竞价）13.2 bp、t 24.8，几乎全在多头（+12.6 / −0.7）；O_L20_P1500 14.6 bp（t 4.8）；相邻时段对照 C −3.2、O −2.3 → 同时段信号真实存在。但 t 高得异常，且集中在"最后成交价 → 竞价价"这一截：时段起点用的是最后成交价，若它在价差里的位置按股票持续，会造出交易不到的收益。所以成本改为实测可成交收益的配对缺口 s（修正案 A2，11:52 提交，早于任何报价）；判定交给 T-20260930-15。流程提醒：子代理称档案生成器覆盖过一次 hypotheses.md 后已还原，以后执行轮在跑结果前先 `git diff` 冻结文件。
+
+### T-20260930-14 纲领 C2a′：一年期隔夜延续（ON252）的样本外核对 + 官方竞价价核对
+- status: ready
+- priority: 2
+- not_before:
+- goal: T-35 的只报告格 ON252（过去一年隔夜收益）在 P500/P1500 两窗都强（P500 LS 主窗 +17.0 bp/晚），但已被看过。用没看过的股票（dv21 1501–3000）和官方竞价价核对它是不是普遍特征、是不是日线开盘价的假象。过了就是一条可以只做多、只持有隔夜、两腿都走竞价的近期策略。
+- plan: 预注册 `reports/research/iterations/t20260930_14_overnight_persistence_12m/hypotheses.md`：测试 A 池 B 两窗均值 >0 且 NW t ≥2；测试 B 20 个种子日 P500 十分位官方价配对差 ≥ −4 bp/晚、缺失 ≤10%；诊断 ADR、动量、财报夜、集中度。两个都过 → 前向影子 + 提请机主开"LO 前 20 隔夜" sleeve。
+- done_when: results.json（gate_a、gate_b）+ report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20260930-14.md
+- notes:
+  - 2026-09-30 11:03 交互会话（Opus 主审）写预注册和简报（提交 8b7cf83，早于任何新数据）。official 阶段约 4,000 次 Alpaca 请求，别和 T-20260930-15 同时跑。
+
+### T-20260930-15 T-13 实测报价核对：同时段延续的可成交收益（修正案 A1 + A2）
+- status: running
+- priority: 1
+- not_before:
+- goal: T-13 的收盘段毛边际 17.1 bp/天集中在"最后成交价 → 收盘竞价价"，可能是成交价在价差里的位置造成的、交易不到的收益。用 Alpaca 历史 NBBO 在 30 个种子日上直接算可成交收益和缺口 s，按修正案 A2 分档，决定 T-13 两个判定格是关闭、边缘还是通过。
+- plan: 简报写死：抽 30 天、15:30/15:50/10:00 的最后有效报价、s = 成交价口径 − 可成交口径的配对差；关闭 m−s−8<0，通过 m−2s−16≥0。
+- done_when: quote-check.json（每格 s、net_1x、net_2x、tier）+ quote-check.md。
+- brief: reports/research/control/briefs/T-20260930-15.md
+- notes:
+  - 2026-09-30 12:00 交互会话（Opus 主审）写简报，并由交互会话派一个 sonnet-high 子代理执行（两种自动轮都不要碰本任务）。
