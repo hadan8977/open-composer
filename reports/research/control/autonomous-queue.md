@@ -189,7 +189,7 @@
 - done_when: `reports/research/control/short-unlocked-retriage-2026-09-29.md`、`reports/research/iterations/t20260929_32_gap_fade_ls/`；登记簿更新；提交。
 - notes:
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
-  - 2026-09-30 13:55 交互主审（Opus）：产物和提交已在（`reports/research/control/short-unlocked-retriage-2026-09-29.md`、`reports/research/iterations/t20260929_32_gap_fade_ls/`，提交 bd526ff）；结论已进纲领主线 C（跳空回补整族于 2026-09-30 关闭）。状态从 running 补成 done。
+  - 2026-09-30 13:52 交互主审（Opus）：产物和提交已在（`reports/research/control/short-unlocked-retriage-2026-09-29.md`、`reports/research/iterations/t20260929_32_gap_fade_ls/`，提交 bd526ff）；结论已进纲领主线 C（跳空回补整族于 2026-09-30 关闭）。状态从 running 补成 done。
 
 ### T-20260929-37 放开做空后的多空批量：双重股权套利、ETF 与成分股领先滞后回归、板块月内动量
 - status: done
@@ -262,7 +262,7 @@
 - done_when: `reports/research/iterations/t20260929_30_model_zoo/`；登记簿行 `dir:ml_model_zoo_stock_ranking_2026`；提交。
 - notes:
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
-  - 2026-09-30 13:55 交互主审（Opus）：09-29 起没有任何产物（迭代目录、intel、Modal 账本、进程都没有），视为中断。由 T-20260930-17 接手，原块保留。
+  - 2026-09-30 13:52 交互主审（Opus）：09-29 起没有任何产物（迭代目录、intel、Modal 账本、进程都没有），视为中断。由 T-20260930-17 接手，原块保留。
 
 ### T-20260929-31 强化学习与"大模型 + 强化学习"（Qwen/GRPO 等）交易证据
 - status: superseded（→ T-20260930-18）
@@ -273,7 +273,7 @@
 - done_when: 简报在 `reports/research/intel/`；登记簿 validate ok；提交。
 - notes:
   - 2026-09-29 交互会话派 Sonnet 在做，自动轮不要碰。
-  - 2026-09-30 13:55 交互主审（Opus）：09-29 起没有任何产物，视为中断。由 T-20260930-18 接手（交互会话子代理在做），原块保留。
+  - 2026-09-30 13:52 交互主审（Opus）：09-29 起没有任何产物，视为中断。由 T-20260930-18 接手（交互会话子代理在做），原块保留。
 
 ### T-20260928-30 纯量价 LightGBM 小盘排序：只做多组合 + 逐只价差成本
 - status: done
@@ -994,7 +994,7 @@
 - done_when: results_stage1.json（b0_parity、cells、family_effect、answer_family、stage2_cells、modal_cost_usd）+ report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
 - brief: reports/research/control/briefs/T-20260930-17.md
 - notes:
-  - 2026-09-30 13:55 交互主审（Opus）写预注册和简报。文献 13:47 打开：Gu-Kelly-Xiu 2020 的非线性模型之间 R² 只差 0.33–0.40%；Avramov-Cheng-Metzker 2023 说机器学习的利润集中在微盘股、按合理成本后变差。先验：任何格子过 K1 的概率低于 5%，本任务主要是给机主有证据的答案。训练全在 Modal 上，本机只汇总，可以和 T-14 同轮跑。
+  - 2026-09-30 13:52 交互主审（Opus）写预注册和简报。文献 13:47 打开：Gu-Kelly-Xiu 2020 的非线性模型之间 R² 只差 0.33–0.40%；Avramov-Cheng-Metzker 2023 说机器学习的利润集中在微盘股、按合理成本后变差。先验：任何格子过 K1 的概率低于 5%，本任务主要是给机主有证据的答案。训练全在 Modal 上，本机只汇总，可以和 T-14 同轮跑。
 
 ### T-20260930-18 机主问题：强化学习与"大模型 + 强化学习"交易的公开证据（接手 T-20260929-31）
 - status: running
