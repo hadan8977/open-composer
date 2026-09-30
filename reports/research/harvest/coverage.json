@@ -122,10 +122,11 @@
    "status": "tested_partial",
    "directions": [
     "dir:end_of_day_reversal",
-    "dir:cross_sectional_gap_fade"
+    "dir:cross_sectional_gap_fade",
+    "dir:smallcap_gap_down_fade_auction_execution"
    ],
    "gap": "gap fade edge sits in the illiquid short leg; end-of-day reversal triaged only",
-   "next": "measure real open costs (P2-A); test end-of-day reversal long leg | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): re-searched overnight/extended-hours anomalies; only already-registered sources (dir:overnight_intraday_gap_retail_pwb refuted on daily round-trip cost); exa 429 once; nothing queued."
+   "next": "measure real open costs (P2-A); test end-of-day reversal long leg | 2026-09-29 16:07 gap search (gap-search-2026-09-29-16): re-searched overnight/extended-hours anomalies; only already-registered sources (dir:overnight_intraday_gap_retail_pwb refuted on daily round-trip cost); exa 429 once; nothing queued. | 2026-09-30 04:07 round T-20260930-11: gap fade at official auction prices -- liquid tiers (>=$20M) closed (7.09 bp/day < 8); $5-20M long leg +42.5 bp/day at auction prices queued as T-20260930-12 (dir:smallcap_gap_down_fade_auction_execution)."
   },
   {
    "id": "event.insider_13d",
@@ -217,10 +218,11 @@
     "dir:sectoral_intramonth_momentum",
     "dir:front_running_sector_seasonality",
     "dir:pre_holiday_effect_small_cap_tier",
-    "dir:tax_loss_selling_year_end_rebound"
+    "dir:tax_loss_selling_year_end_rebound",
+    "dir:front_running_industry_etf_seasonality"
    ],
    "gap": "Turn-of-month, EOM reversal, sector seasonality, pre-FOMC drift all tested (refuted/watch_recent, do not repeat); the small-firm-only pre-holiday premium had not been isolated at the stock/tier level -- now queued (T-20260929-02).",
-   "next": "cheap test (batch 3 is done) | 2026-09-28 gap search (gap-search-2026-09-28-22): reviewed, no new candidate queued here -- end-of-month reversal and sector seasonality are already tested/watch_recent (do not repeat); the option-expiration-week effect was assigned to flows_structural.rebalance_and_hedging_flows instead (dealer/rollover-flow mechanism, not a plain calendar-day effect) -- see that cell's T-20260928-42. | 2026-09-29 gap search (gap-search-2026-09-29-01): queued dir:pre_holiday_effect_small_cap_tier (Ariel 1990 replication: premium survives only in small firms out of sample 1983-2019) via signal_card event mode on tiers t1 vs t3 -- T-20260929-02. | 2026-09-29 19:07 round T-20260929-37 (h20260929_37_ls_short_unlocked): sector SPDR intramonth momentum REFUTED as a long-short book -- 0/5 (Quantpedia composite anchor median Sharpe -1.04 after 10 bp + borrow; best plain monthly ablation 0.12/-0.01). | 2026-09-30 gap search (gap-search-2026-09-30-01): year-end tax-loss rebound queued as T-20260930-03 (low prior: no opened post-2015 US effect size; conclusion needed before 2026-12-15)."
+   "next": "cheap test (batch 3 is done) | 2026-09-28 gap search (gap-search-2026-09-28-22): reviewed, no new candidate queued here -- end-of-month reversal and sector seasonality are already tested/watch_recent (do not repeat); the option-expiration-week effect was assigned to flows_structural.rebalance_and_hedging_flows instead (dealer/rollover-flow mechanism, not a plain calendar-day effect) -- see that cell's T-20260928-42. | 2026-09-29 gap search (gap-search-2026-09-29-01): queued dir:pre_holiday_effect_small_cap_tier (Ariel 1990 replication: premium survives only in small firms out of sample 1983-2019) via signal_card event mode on tiers t1 vs t3 -- T-20260929-02. | 2026-09-29 19:07 round T-20260929-37 (h20260929_37_ls_short_unlocked): sector SPDR intramonth momentum REFUTED as a long-short book -- 0/5 (Quantpedia composite anchor median Sharpe -1.04 after 10 bp + borrow; best plain monthly ablation 0.12/-0.01). | 2026-09-30 gap search (gap-search-2026-09-30-01): year-end tax-loss rebound queued as T-20260930-03 (low prior: no opened post-2015 US effect size; conclusion needed before 2026-12-15). | 2026-09-30 04:07 round T-20260930-10 (h20260930_10_industry_seasonality): front-running seasonality on 23 industry ETFs REFUTED -- 0/6 reach anchor Sharpe 1.19 (best 1.12), 1-year cells lose to the random-shift placebo (beat 0.20-0.45), C2 combination edge negative in every cell; do not extend the S leg to industries."
   },
   {
    "id": "flows_structural.rebalance_and_hedging_flows",

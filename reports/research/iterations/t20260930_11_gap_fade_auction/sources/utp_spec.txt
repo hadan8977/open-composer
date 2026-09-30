@@ -1,0 +1,2520 @@
+     UTP Data Feed Services Specification
+     Version 4.1
+     Revised – Trading Action Code
+
+
+
+
+September 2026                              1
+     Table of Contents
+     1       Overview ............................................................................................................................. 5
+         1.1     Introduction ........................................................................................................................... 6
+         1.2     Data Types .............................................................................................................................. 6
+           1.2.1      Table of Types ............................................................................................................................6
+           1.2.2      Numeric Types ...........................................................................................................................6
+           1.2.3      Alpha Types .................................................................................................................................6
+         1.3     Message Table ....................................................................................................................... 7
+     2       Messages ............................................................................................................................. 8
+         2.1     Message Header .................................................................................................................... 8
+         2.2     UTP Quotation Messages (UQDF) ................................................................................... 9
+           2.2.1     FINRA ADF Market Participant Quotation Message (QM) .......................................9
+           2.2.2     New Messages to Support Protected and Odd Lot Quote Messages ................. 10
+                 2.2.2.1           Combined Quote Message Short Form (QC) ........................................................................... 10
+                 2.2.2.2           Combined Quote Message Long Form (QD) ........................................................................... 11
+                 2.2.2.3           Odd Lot Quote Message Short Form (QA) ............................................................................... 12
+                 2.2.2.4           Odd Lot Quote Message Long Form (QB) ................................................................................ 13
+             2.2.3             National BBO Appendage.................................................................................................... 14
+                 2.2.3.1           National BBO Appendage Short-form ....................................................................................... 15
+                 2.2.3.2           National BBO Appendage Long-form ........................................................................................ 15
+             2.2.4             FINRA ADF MPID Appendage ........................................................................................... 15
+             2.2.5             BOLO Appendage ................................................................................................................... 16
+                 2.2.5.1           BOLO Appendage Short Form....................................................................................................... 16
+                 2.2.5.2           BOLO Appendage Long Form ........................................................................................................ 17
+                 2.2.5.3           BOLO Appendage MPID Form ...................................................................................................... 17
+             2.2.6             Odd Lot Attachment Type................................................................................................... 17
+                 2.2.6.1           Odd Lot Price Level Attachment Short Form ......................................................................... 18
+                 2.2.6.2           Odd Lot Price Level Attachment Long Form .......................................................................... 18
+                 2.2.6.3           Odd Lot Price Level Attachment ADF MPID Form ............................................................... 18
+         2.3     Trade Messages (UTDF) .................................................................................................. 19
+           2.3.1     Trade Report Message Short-form (TM) ...................................................................... 20
+           2.3.2     Trade Report Message Long-form (TN)........................................................................ 21
+           2.3.3     Trade Cancel/Error Message (TO).................................................................................. 22
+           2.3.4     Trade Correction Message (TP) ....................................................................................... 23
+           2.3.5     Prior Day As-Of Trade Message (TQ) ............................................................................. 24
+         2.4     Administrative Messages................................................................................................ 25
+           2.4.1     Trade and Quote Services (UQDF & UTDF) ................................................................. 25
+                 2.4.1.1           General Administrative Message (AA) ...................................................................................... 25
+                 2.4.1.2           CROSS SRO Trading Action Message (AH) .............................................................................. 25
+                 2.4.1.3           Market Center Trading Action Message (AK) ........................................................................ 26
+                 2.4.1.4           Issue Symbol Directory Messages ............................................................................................... 27
+                 2.4.1.5           Regulation SHO Short Sale Price Test Restricted Indicator Message (AV) ............... 29
+                 2.4.1.6           Limit Up – Limit Down Price Band Message (AP) ................................................................ 29
+                 2.4.1.7           Market Wide Circuit Breaker Decline Level Message (AC) .............................................. 30
+                 2.4.1.8           Market Wide Circuit Breaker Status Message (AD) ............................................................ 30
+                 2.4.1.9           Auction Collar Message (AE) ......................................................................................................... 31
+             2.4.2             Trade Services Only (UTDF only) .................................................................................... 32
+                 2.4.2.1           Closing Trade Summary Report Message (AU) ..................................................................... 32
+                 2.4.2.2           Total Consolidated & Market Center Volume Message (VV) .......................................... 34
+             2.4.3             Quote Services Only (UQDF only) ................................................................................... 35
+                 2.4.3.1           Session Close Recap Message (AR) ............................................................................................. 35
+
+
+September 2026                                                                                                                                                       2
+         2.5     Control Messages ............................................................................................................... 35
+           2.5.1     Trade and Quote Services (UQDF & UTDF) ................................................................. 36
+                 2.5.1.1         Start Of Day (CI) .................................................................................................................................. 36
+                 2.5.1.2         End Of Day (CJ) .................................................................................................................................... 36
+                 2.5.1.3         Market Session Open (CO) ............................................................................................................. 37
+                 2.5.1.4         Market Session Close (CC) .............................................................................................................. 37
+                 2.5.1.5         End of Transmissions (CZ) ............................................................................................................. 38
+             2.5.2           Trade Services Only (UTDF only) .................................................................................... 39
+                 2.5.2.1         End Of Trade Reporting (CX) ........................................................................................................ 39
+                 2.5.2.2         End of Consolidated Last Sale Eligibility (CS) ........................................................................ 39
+             2.5.3           Quote Services Only (UQDF only) ................................................................................... 40
+                 2.5.3.1         Quote Wipe-Out (CP) ........................................................................................................................ 40
+     3       Code Definitions ............................................................................................................ 41
+         3.1    Market Center Originator ID ......................................................................................... 41
+         3.2    Sub-Market Center ID ...................................................................................................... 42
+         3.3    Quote Condition Code ...................................................................................................... 43
+         3.4    SIP Generated Update ...................................................................................................... 43
+         3.5    LULD BBO Indicator.......................................................................................................... 44
+         3.6    LULD National BBO Indicator........................................................................................ 44
+         3.7    Retail Interest Code .......................................................................................................... 44
+         3.8    NBBO Appendage Indicator ........................................................................................... 45
+         3.9    FINRA ADF MPID Appendage Indicator ..................................................................... 45
+         3.10 Consolidated Price Change Indicator ......................................................................... 46
+         3.11 Participant Price Change Indicator............................................................................. 46
+         3.12 Reg SHO Action Code ........................................................................................................ 46
+         3.13 Trade Through Exempt Code ........................................................................................ 46
+         3.14 Sale Condition ..................................................................................................................... 47
+           3.14.1    Sale Condition Modifiers ..................................................................................................... 47
+           3.14.2    UTP Sale Condition Matrix ................................................................................................. 48
+           3.14.3    Sale Condition Combination Table.................................................................................. 50
+           3.14.4    Sale Condition and Trade Through Exempt Combinations .................................. 51
+           3.14.5    Sale Condition Notes ............................................................................................................. 51
+         3.15 Trade Cancel Type Code.................................................................................................. 52
+         3.16 As-Of Action ......................................................................................................................... 52
+         3.17 Trading Action/State Indicator .................................................................................... 52
+         3.18 Market Center Close Indicator ...................................................................................... 53
+         3.19 Special Condition ............................................................................................................... 53
+         3.20 Authenticity ......................................................................................................................... 53
+         3.21 Issue Type ............................................................................................................................ 54
+         3.22 Issue Subtype ...................................................................................................................... 55
+         3.23 Market Tier .......................................................................................................................... 55
+         3.24 Short Sale Threshold Indicator .................................................................................... 56
+         3.25 Financial Status Indicator .............................................................................................. 56
+         3.26 LULD Price Band Indicator............................................................................................. 56
+         3.27 Market Wide Circuit Breaker Status Level Indicator ........................................... 57
+         3.28 BOLO Appendage Indicator ........................................................................................... 57
+         3.29 Odd Lot Attachment Type ............................................................................................... 57
+         3.30 Round Lot Size .................................................................................................................... 57
+         3.31 New Issue Indicator .......................................................................................................... 57
+         3.32 Minimum Price Increment ............................................................................................. 58
+
+
+September 2026                                                                                                                                                                   3
+         3.33     Exchange Traded Product (ETP) Flag ........................................................................ 58
+     4     Revision History ............................................................................................................ 59
+
+
+
+
+September 2026                                                                                                                        4
+     1 Overview
+     New Enhanced Symbol Directory Message:
+     UTP SIP will introduce an “Enhanced Symbol Directory Message” (Category A – Type F) in
+     support of new releases in Q4 2026. This message will be sent alongside the current Symbol
+     Directory Message (Category A – Type B).
+
+     At the request of the UTP Operating Committee and the Industry, several additional fields
+     will begin to be provided as part of a directory spin to aid the industry in preparing for new
+     initiatives this year.
+
+         •   SEC Mandated MPI Tick Rule: Starting November 2027, rule changes require a
+             minimum price indicator. The Enhanced Message will include an “mpiTick”
+             increment for each Nasdaq Listed security. Beginning on November 1ST, 2027,
+             Nasdaq Listing Market will provide UTP SIP with MPI values as designated by the
+             SEC mandate, which will be distributed to data recipients via the Enhanced Symbol
+             Directory Message.
+
+         •   Extended Operational Hours: Starting December 6, 2026, the industry has agreed
+             to begin operating UTP SIP on a new schedule that will cover 23 hours 5 days a
+             week. Upon implementation of this new schedule, the UTP SIP will begin on Sundays
+             at 21:00 (9:00pm EST) through Fridays at 20:00 (8:00pm EST) with a scheduled 1-
+             hour maintenance window each evening between approximately 20:00 – 21:00
+             (8:00pm – 9:00 pm EST).
+
+     UTP will offer additional data in the Enhanced Symbol Directory to help the industry adapt
+     to new operational hours.
+
+         •   New Issue Indicator: initial implementation will indicate IPO status
+         •   ETP Indicator: Indicates if this security is an exchange-traded product
+         •   MPI Tick: Minimum Price Increment for security
+         •   Trading State: Trading State (halted / trading) at time of message dissemination
+         •   Halt Reason: If Security Halted, reason code is provided
+         •   Reg SHO Action: Reg SHO state (Rule 201) at time of dissemination
+
+     At launch, UTP SIP will fill these fields with current production info (if available). When the
+     Listing Market supports the enhancements, UTP SIP will update these fields based on their
+     provided data.
+
+     Beginning December 6, 2026, the following values are expected to be received from the
+     Listing Market and populated accordingly within the new Enhanced Symbol Directory
+     Message.
+
+         •   RESERVED conPrior Close: Consolidated prior day’s close, adjusted if needed
+         •   RESERVED lmPrior Close: Listing Market’s official prior day’s close, adjusted if
+             needed
+
+     Please refer to section 2.4.1.4 for the new Enhanced Symbol Directory format.
+
+
+
+
+September 2026                                                                                    5
+     1.1 Introduction
+     All messages sent from the SIP host to the client are sequenced, and their delivery is
+     guaranteed by the lower level INET MoldUDP64 protocol.
+
+     1.2     Data Types
+
+     1.2.1 Table of Types
+      Type       Description
+      byte       Single digit Alpha Field
+      short      Big-Endian Unsigned 16-Bit Integer
+      int        Big-Endian Unsigned 32-Bit Integer
+      long       Big-Endian Unsigned 64-Bit Integer
+      byte[]     Fixed Width Alpha Field
+      varbyte[]  Variable Width Alpha Field - Length contained in the prior field within the
+                 same message
+
+     1.2.2    Numeric Types
+         •    Unsigned big-endian (network byte order) binary values
+         •    Numeric types include short, int, long
+         •    Prices represented by long fields have implied 6 decimal places.
+         •    Prices represented by short fields have implied 2 decimal places.
+         •    Volume represented by long fields have implied 6 decimal places.
+         •    Timestamps are long and represent nanoseconds since Epoch.
+
+     1.2.3    Alpha Types
+         •    ASCII encoded
+         •    Left justified and padded on the right with spaces
+         •    Alpha (alphanumeric) fields include byte, byte[], and varbyte[]
+
+
+
+
+September 2026                                                                                 6
+      1.3    Message Table
+
+  Category    Type  Allowed         Quote      Trade
+                                                         Message Description
+                    Participant     Feed       Feed
+  FINRA ADF Market Participant Quote will continue to be supported
+  Q          M      FINRA           Y          N         FINRA ADF Market Participant Quote
+
+  Quote Messages – New Messages
+  Odd Lot Only supported on April 27, 2026
+  Q           A      All              Y      N          Odd Lot Quote Message Short form
+  Q           B      All              Y      N          Odd Lot Quote Message Long form
+  Combined (Protected/Odd Lot) supported on April 27, 2026
+  Q           C      All              Y      N          UTP Combined Quote Short-Form
+  Q           D      All              Y      N          UTP Combined Quote Long-Form
+
+  Trade Messages – New Messages
+  Fractional Reporting supported on February 23, 2026
+  T           M       All            N         Y         Trade Report Message Short-form
+  T           N       All            N         Y         Trade Report Message Long-form
+  T           O       All            N         Y         Trade Cancel/Error
+  T           P       All            N         Y         Trade Correction
+  T           Q       All            N         Y         Prior Day As-Of Trade
+
+  Administrative Messages
+  A           A      All             Y          Y        General Administrative
+  A           H      Nasdaq          Y          Y        CROSS SRO Trading Action
+  A           K      All             Y          Y        Market Center Trading Action
+  A           B      All             Y          Y        Issue Symbol Directory
+  A           V      Nasdaq          Y          Y        Reg SHO Short Sale Restrict Indicator
+  A           P      SIP             Y          Y        Limit Up – Limit Down Price Band
+  A           C      SIP             Y          Y        Market Wide Circuit Breaker Decline
+  A           D      SIP             Y          Y        Market Wide Circuit Breaker Status
+  A           U      All             N          Y        Closing Trade Summary Report
+  V           V      All             N          Y        Total Consolidated and Market Volume
+  A           R      All             Y          N        Session Close Recap
+  A           E      Nasdaq          Y          Y        Auction Collar Message
+  Control Messages
+  C           I      SIP             Y          Y        Start Of Day
+  C           J      SIP             Y          Y        End Of Day
+  C           O      All             Y          Y        Market Session Open
+  C           C      All             Y          Y        Market Session Close
+  C           Z      SIP             Y          Y        End Of Transmissions
+  C           X      All             N          Y        End Of Trade Reporting
+  C           S      SIP             N          Y        End Of Consolidated Last Sale Eligible
+  C           P      All             Y          N        Quote Wipe-Out
+
+
+
+
+September 2026                                                                            7
+     2     Messages
+
+     2.1       Message Header
+
+     All outbound data feed messages will precede each message specific data section with a
+     message header.
+
+      Name                Offset   Length   Type     Notes
+      version             0        1        byte     Protocol Version
+      msgCategory         1        1        byte     Message Category
+      msgType             2        1        byte     Message Type
+      orig                3        1        byte     Market Center Originator
+      subMarketId         4        1        byte     Sub-Market Center ID
+      sipTime             5        8        long     SIP Timestamp
+      timestamp1          13       8        long     Participant Timestamp
+      partToken           21       8        long     Participant Token
+
+     The message header contains a one-byte alpha version field to allow for each message
+     format to be updated, while still supporting previous versions of a message during
+     transition.
+
+     The orig field (Market Center Originator ID) is a 1 byte, alphanumeric character that
+     indicates the UTP participant or system that originated the message.
+
+     The subMarketId (Sub-Market Center Identifier) is a one-byte alphanumeric field that will
+     be used for reporting trades originated by FINRA ADF or a FINRA Trade Reporting Facility
+     (TRF). FINRA, as the regulator of the over-the- counter market, is responsible for reporting
+     internalized trades of its member firms. FINRA may however, align with other UTP
+     participant exchanges to facilitate the collection, verification, and reporting of internalized
+     trade transactions to the UTP SIP through a trade reporting facility (TRF).
+
+     Since FINRA acts as the regulator for all over-the-counter transactions, the Market Center
+     Originator ID field will carry the value of “D” for FINRA. When the transaction is collected as
+     part of a joint Trade Reporting Facility (TRF), the UTP SIP will indicate in the Sub-Market
+     Center field the TRF responsible for the trade.
+
+     The sipTime is the time the outbound message is produced by the SIP.
+
+     The field timestamp1 is a participant-provided timestamp representing the number of
+     nanoseconds since Epoch. The value is a long numeric. The SIP will simply pass through
+     the value provided by the participant where applicable.
+
+           •    If from an Exchange: denotes the Exchange Matching Engine Publication
+                timestamp for a transaction. Exchanges use a clock sync methodology ensuring that
+                timestamps are accurate within tolerances of 100 microseconds or less.
+           •    If from the FINRA Alternative Display Facility (ADF) and/or a FINRA Trade
+                Reporting Facility (TRF): denotes the time of execution that a FINRA member
+                reports to the FINRA ADF or a FINRA TRF. FINRA shall convert times that its
+
+
+
+
+September 2026                                                                                    8
+            members report to it in seconds or milliseconds to nanoseconds and shall provide
+            such times to the Processor in nanoseconds since Epoch.
+
+     The partToken (Participant Token) is a long value. The Participant Token field is intended
+     for UTP SIP internal use only and Data Recipients should ignore/disregard this field to the
+     extent that it does not impact their normal data processing.
+
+
+
+     2.2 UTP Quotation Messages (UQDF)
+     Effective November 3, 2025, with the implementation of the Round Lot changes, exchanges
+     are expected to enter Quotation Size represented in the number of actual shares, rounded
+     down to the nearest multiple of the round lot size assigned to the security.
+
+
+     2.2.1 FINRA ADF Market Participant Quotation Message (QM)
+      Name                 Offset Length Type        Notes
+      version              0        1        byte    1 – Protocol Version
+      msgCategory          1        1        byte    Q – Quote Messages (UTP Quote Feed
+                                                     Only)
+      msgType              2        1        byte    M – FINRA ADF Quotation Message
+      orig                 3        1        byte    Market Center Originator ID
+      subMarketId          4        1        byte    Sub Market Center ID
+      sipTime              5        8        long    SIP Timestamp
+      timestamp1           13       8        long    Participant Timestamp
+      partToken            21       8        long    Participant Token
+      timestamp2           29       8        long    FINRA Timestamp
+      symbol               37       11       byte[] Security Identifier
+      bidPrice             48       8        long    Bid Price
+      bidSize              56       4        int     Bid Size
+      askPrice             60       8        long    Ask Price
+      askSize              68       4        int     Ask Size
+      quoteCond            72       1        byte    Quote Condition
+      mpid                 73       4        byte[] FINRA Market Participant
+
+     For FINRA quotes that do not affect the NBBO or FINRA BBO a FINRA ADF Market
+     Participant Quotation Message will be sent.
+
+     When the FINRA BBO quote does impact either the current FINRA best bid or best ask, a
+     FINRA ADF market participant quote message (QM) may be produced.
+
+     If the FINRA ADF provides a proprietary feed of its quotation information, then the
+     FINRA ADF will publish the time of the quotations as also published on the facility’s
+     proprietary feed. The ADF shall convert times that it reports quotations on its proprietary
+     feed in seconds or milliseconds to nanoseconds and shall provide such times to the
+     Processor in nanoseconds since Epoch in the timestamp2 field.
+
+     If the FINRA ADF does not have a proprietary quotation feed, timestamp2 will be set to
+     0.
+
+
+September 2026                                                                                9
+     With the implementation of the Odd Lot Release on April 27, 2026, the following messages
+     were introduced and supported. These new messages replaced the previously
+     disseminated messages, this was a “Hot Cut” implementation.
+
+     2.2.2   New Messages to Support Protected and Odd Lot Quote Messages
+
+     UTP SIP currently uses one of two message formats to publish UTP participant protected
+     quotes on UQDF: short form and long form. The main differences are in the capacity of
+     certain fields (similar to input messages); in addition, the long form provides additional
+     ADF-specific fields not available in the short form.
+
+     With the introduction of Odd Lot Quote information, it is likely that exchanges will require
+     the ability to update both protected quotes and odd lot quotes based on a single event in
+     their systems. New combined quote messages will be introduced to allow the UTP SIP to
+     publish protected quotes and potentially odd lot quote data in a single message. The odd lot
+     quote data would be attached at the end of the outbound message or as a separate Odd Lot
+     only message .detailed in sections below.
+
+     2.2.2.1 Combined Quote Message Short Form (QC)
+
+     For odd lot quotations, the UTP SIP will follow the protected quote precedent and offer both
+     short form and long form varieties of output messages.
+
+      Name                   Offset   Length    Type     Notes
+      version                0        1         byte     1 – Protocol Version
+      msgCategory            1        1         byte     Q – Quote Messages (UTP Quote Feed Only)
+      msgType                2        1         byte     C – Short Format Combined Quotation
+                                                         Message
+      orig                   3        1         byte     Market Center Originator ID
+      subMarketId            4        1         byte     Sub Market Center ID
+      sipTime                5        8         long     SIP Timestamp
+      timestamp1             13       8         long     Participant Timestamp
+      partToken              21       8         long     Participant Token
+      symbol                 29       5         byte[]   Security Identifier
+      bidPrice               34       2         short    Protected Bid Price
+      bidSize                36       2         short    Protected Bid Size
+      askPrice               38       2         short    Protected Ask Price
+      askSize                40       2         short    Protected Ask Size
+      quoteCond              42       1         byte     Quote Condition
+      sipGenUpdate           43       1         byte     SIP Generated Update Flag
+      luldBboIndicator       44       1         byte     LULD BBO Indicator
+      rii                    45       1         byte     Retail Interest Indicator
+      nbboIndicator          46       1         byte     NBBO Appendage Indicator
+      luldNbboIndicator      47       1         byte     LULD National BBO Indicator
+      boloIndicator          48       1         byte     BOLO Appendage Indicator
+      olAttachmentType       49       1         byte     Odd Lot Attachment Type
+      olAttachmentCount      50       2         short    Odd Lot Attachment Count
+
+
+
+
+September 2026                                                                                    10
+     The location of the odd lot quote attachment depends on the presence or absence of the
+     NBBO appendage and / or the BOLO appendage and, if present, the type of NBBO appendage
+     and / or the type of BOLO appendage; the ‘nbboIndicator’ and ‘boloIndcator’ fields provide
+     this information. Note that the message can contain an NBBO appendage without a BOLO
+     appendage, a BOLO appendage without an NBBO appendage, both NBBO and BOLO
+     appendages present, or both NBBO and BOLO attachments absent.
+
+     The SIP will use the short form of this message format only if the UTP participant’s
+     quotation meets the following criteria:
+        • The Issue Symbol is 5 characters or less
+        • Both Bid and Ask Prices have a maximum price of $655.35
+        • Both Bid and Ask Prices only use 2 decimal precisions
+        • Both Bid and Ask Sizes are less than 65535
+        • Odd Lot Price has a maximum price of $655.35
+        • Odd Lot Prices only use 2 decimal precisions
+        • Odd Lot Sizes have a maximum size of 65535
+        • Quote is not a FINRA quote.
+
+     2.2.2.2 Combined Quote Message Long Form (QD)
+
+     For odd lot quotations, the UTP SIP will follow the protected quote precedent and offer both
+     short form and long form varieties of output messages.
+
+      Name                      Offset    Length    Type     Notes
+      version                   0         1         byte     1 – Protocol Version
+      msgCategory               1         1         byte     Q – Quote Messages (UTP Quote Feed Only)
+      msgType                   2         1         byte     D – Long-format Combined Quotation Message
+      orig                      3         1         byte     Market Center Originator ID
+      subMarketId               4         1         byte     Sub Market Center ID
+      sipTime                   5         8         long     SIP Timestamp
+      timestamp1                13        8         long     Participant Timestamp
+      partToken                 21        8         long     Participant Token
+      timestamp2                29        8         Long     ADF Timestamp
+      symbol                    37        11        byte[]   Security Identifier
+      bidPrice                  48        8         long     Protected Bid Price
+      bidSize                   56        4         int      Protected Bid Size
+      askPrice                  60        8         long     Protected Ask Price
+      askSize                   68        4         int      Protected Ask Size
+      quoteCond                 72        1         byte     Quote Condition
+      sipGenUpdate              73        1         byte     SIP Generated Update Flag
+      luldBboIndicator          74        1         byte     LULD BBO Indicator
+      rii                       75        1         byte     Retail Interest Indicator
+      nbboIndicator             76        1         byte     NBBO Appendage Indicator
+      luldNbboIndicator         77        1         byte     LULD National BBO Indicator
+      finraAdfMpidIndicator     78        1         byte     FINRA ADF MPID Appendage Indicator
+      boloIndicator             79        1         byte     BOLO Appendage Indicator
+      olAttachmentType          80        1         byte     Odd Lot Attachment Type
+      olAttachmentCount         81        2         short    Odd Lot Attachment Count
+
+
+
+September 2026                                                                                11
+     The location of the odd lot quote attachment depends on the presence or absence of the
+     NBBO appendage, the FINRA ADF MPID appendage and / or the BOLO appendage and, if
+     present, the type of NBBO appendage and / or the type of BOLO appendage; the
+     ‘nbboIndicator’, ‘finraAdfMpidIndicator’ and ‘boloIndicator’ fields provide this information.
+
+     The order of precedence following the base message fields is:
+     1.     NBBO appendage
+     2.     ADF MPID appendage
+     3.     BOLO appendage
+     4.     Odd Lot attachment
+
+     For odd lot only quotations, the UTP SIP will follow the combined protected quote
+     precedent and offer both short form and long form varieties of output messages.
+
+     2.2.2.3 Odd Lot Quote Message Short Form (QA)
+
+      Name                   Offset   Length    Type     Notes
+      version                0        1         byte     1 – Protocol Version
+      msgCategory            1        1         byte     Q – Quote Messages (UTP Quote Feed Only)
+      msgType                2        1         byte     A – Short Format Odd Lot Quotation Message
+      orig                   3        1         byte     Market Center Originator ID
+      subMarketId            4        1         byte     Sub Market Center ID
+      sipTime                5        8         long     SIP Timestamp
+      timestamp1             13       8         long     Participant Timestamp
+      partToken              21       8         long     Participant Token
+      symbol                 29       5         byte[]   Security Identifier
+      sipGenUpdate           34       1         byte     SIP Generated Update Flag
+      boloIndicator          35       1         byte     BOLO Appendage Indicator
+      olAttachmentType       36       1         byte     Odd Lot Attachment Type
+      olAttachmentCount      37       2         short    Odd Lot Attachment Count
+
+     The location of the odd lot quote attachment depends on the presence or absence of the
+     BOLO appendage and, if present, the type of BOLO appendage; the ‘boloIndcator’ field
+     provides this information:
+
+         0 or 1: the odd lot quote attachment immediately follows the ‘olAttachmentCount’ field
+         2: the odd lot quote attachment immediately follows the short-form BOLO appendage
+         3: the odd lot quote attachment immediately follows the long-form BOLO appendage
+         5: the odd lot quote attachment immediately follows the MPID-form BOLO appendage
+
+     When present, the BOLO appendage immediately follows the ‘olAttachmentCount’ field.
+
+     The SIP will use the short form of this message format only if the UTP participant’s
+     quotation meets the following criteria:
+        • The Issue Symbol is 5 characters or less
+
+
+
+
+September 2026                                                                                 12
+     2.2.2.4 Odd Lot Quote Message Long Form (QB)
+
+      Name                   Offset   Length   Type     Notes
+      version                0        1        byte     1 – Protocol Version
+      msgCategory            1        1        byte     Q – Quote Messages (UTP Quote Feed Only)
+      msgType                2        1        byte     B – Long Format Odd Lot Quotation Message
+      orig                   3        1        byte     Market Center Originator ID
+      subMarketId            4        1        byte     Sub Market Center ID
+      sipTime                5        8        long     SIP Timestamp
+      timestamp1             13       8        long     Participant Timestamp
+      partToken              21       8        long     Participant Token
+      timestamp2             29       8        long     ADF Timestamp
+      symbol                 37       11       byte[]   Security Identifier
+      sipGenUpdate           48       1        byte     SIP Generated Update Flag
+      boloIndicator          49       1        byte     BOLO Appendage Indicator
+      olAttachmentType       50       1        byte     Odd Lot Attachment Type
+      olAttachmentCount      51       2        short    Odd Lot Attachment Count
+
+     The location of the odd lot quote attachment depends on the presence or absence of the
+     BOLO appendage and, if present, the type of BOLO appendage; the ‘boloIndcator’ field
+     provides this information:
+
+         0 or 1: the odd lot quote attachment immediately follows the ‘olAttachmentCount’ field
+         2: the odd lot quote attachment immediately follows the short-form BOLO appendage
+         3: the odd lot quote attachment immediately follows the long-form BOLO appendage
+         5: the odd lot quote attachment immediately follows the MPID-form BOLO appendage
+
+     When present, the BOLO appendage immediately follows the ‘olAttachmentCount’ field.
+
+
+
+
+September 2026                                                                                13
+     Message Appendages and Message Attachments
+     In addition to the new message types, the UTP SIP has defined new types of message
+     appendages and message attachments to support odd lot quotes. The following section
+     provides the details for all the supported appendages and attachments.
+
+     2.2.3 National BBO Appendage
+     If the UTP participant’s quotation impacts the national best bid and offer of the issue, a
+     National BBO Appendage will be added to the original short- or long-form message. The
+     appendage will include all relevant information concerning the Best Bid and Best Ask of the
+     issue and the originating market center.
+
+     Within the Quotation message, the National BBO Indicator will denote the type of
+     appendage to be included. The allowable National BBO Indicator values are as follows:
+
+
+      Code       Value
+                 No National BBO Change – The UTP participant’s quote does not affect the
+      0          National BBO. Vendors should continue to show the existing National BBO. No
+                 appendage is required.
+                 No National BBO Can be Calculated – The National BBO cannot be
+      1          calculated therefore vendors should show National BBO fields as blank. No
+                 appendage is required.
+                 Short Form National BBO Appendage Attached – A new National BBO was
+                 generated as a result of the UTP participant’s quote update and the new
+      2
+                 National BBO information is contained in the attached short form appendage.
+                 See criteria for the short form appendage below.
+                 Long Form National BBO Appendage Attached – A new National BBO was
+      3          generated as a result of the UTP participant’s quote update and the new
+                 information is contained in the attached long form appendage.
+                 Quote Contains All National BBO Information – Current UTP participant’s
+                 quote is itself the National BBO. Vendors should update National BBO to
+                 reflect this new quote and single market center. (National Best Bid Market
+      4
+                 Center and National Best Ask Market Center fields should be updated to
+                 reflect the Market Center Originator ID value in the UQDF message header.)
+                 No appendage is required.
+
+     To economize on bandwidth, the simplest form of the National BBO Appendage will be used
+     whenever possible.
+
+
+
+
+September 2026                                                                               14
+     2.2.3.1 National BBO Appendage Short-form
+      Name                 Offset Length Type              Notes
+      nbboQuoteCond        0      1        byte            NBBO Quote Condition
+      nbBidMarketCenter    1      1        byte            National Best Bid Market Center
+      nbBidPrice           2      2        short           National Best Bid Price
+      nbBidSize            4      2        short           National Best Bid Size
+      nbAskMarketCenter    6      1        byte            National Best Ask Market Center
+      nbAskPrice           7      2        short           National Best Ask Price
+      nbAskSize            9      2        short           National Best Ask Size
+
+     2.2.3.2 National BBO Appendage Long-form
+      Name                 Offset Length Type              Notes
+      nbboQuoteCond        0      1        byte            NBBO Quote Condition
+      nbBidMarketCenter    1      1        byte            National Best Bid Market Center
+      nbBidPrice           2      8        long            National Best Bid Price
+      nbBidSize            10     4        int             National Best Bid Size
+      nbAskMarketCenter    14     1        byte            National Best Ask Market Center
+      nbAskPrice           15     8        long            National Best Ask Price
+      nbAskSize            23     4        int             National Best Ask Size
+
+     2.2.4 FINRA ADF MPID Appendage
+     If the FINRA ADF participant’s BBO quotation impacts their single participant at either the
+     Bid or Ask side of their market for the issue, a FINRA ADF MPID Appendage will be added to
+     the original short- or long-form message. This appendage will include the ADF’s single
+     participant for its best bid and size and/or the ADF’s single participant for its best ask and
+     size.
+
+     Within the Quotation message, the FINRA ADF MPID Indicator will denote the type of
+     appendage to be included. The allowable values are as follows:
+
+      Code           Value
+                     No ADF MPID changes – Current ADF quote does not affect the FINRA
+      0              MPID. Vendors should continue to show the existing FINRA MPID(s). No
+                     appendage required.
+                     No ADF MPID exists – There is no calculation of the FINRA MPID(s).
+      1              Vendors should show the FINRA MPID fields as blank. No appendage is
+                     required.
+                     ADF MPID(s) attached - FINRA MPID was generated and the information
+      2
+                     is contained in the attached appendage.
+                     Not applicable - Quotation originates from a UTP participant other than
+      <space>        the FINRA. Vendors should continue to show the existing FINRA MPID(s).
+                     No appendage is required.
+
+     The following appendage will be added to the UTP Quote message when necessary:
+
+      Name                    Offset   Length     Type     Notes
+      bidAdfMpid              0        4          byte[]   Bid ADF MPID
+      askAdfMpid              4        4          byte[]   Ask ADF MPID
+
+
+
+September 2026                                                                                  15
+     2.2.5 BOLO Appendage
+     Best Odd Lot Order (BOLO): The UTP SIP is required to calculate and publish the Best Odd
+     Lot Order (BOLO). The BOLO price is the best odd lot quote price superior to the protected
+     NBBO price. BOLO changes will be reflected on the quote data feed message in the form of
+     the new BOLO appendage when necessary.
+
+     The BOLO Indicator will denote the type of appendage to be included. The allowable BOLO
+     Indicator values are as follows:
+
+
+      Code       Value
+                 No BOLO Change – The UTP participant’s quote does not affect the BOLO.
+      0          Vendors should continue to show the existing BOLO. No appendage is
+                 required.
+                 No BOLO Can be Calculated – The BOLO cannot be calculated therefore
+      1
+                 vendors should show BOLO fields as blank. No appendage is required.
+                 Short Form BOLO Appendage Attached – A new BOLO was generated as a
+                 result of the UTP participant’s quote update and the new BOLO information is
+      2
+                 contained in the attached short form appendage. See criteria for the short
+                 form appendage below.
+                 Long Form BOLO Appendage Attached – A new BOLO was generated as a
+      3          result of the UTP participant’s quote update and the new information is
+                 contained in the attached long form appendage.
+                 MPID Form BOLO Appendage Attached – A new BOLO was generated as a
+      5          result in FINRA ADF participant update and the new information is contained
+                 in the attached MPID BOLO appendage.
+
+     To economize on bandwidth, the simplest form of the BOLO Appendage will be used
+     whenever possible.
+
+     2.2.5.1 BOLO Appendage Short Form
+     Append to odd lot or combined quote message to provide BOLO information using short
+     format
+
+      Name                   Offset   Length    Type    Notes
+      olBidMarketCenter      0        1         byte    BOLO Best Bid Market Center
+      olBidPrice             1        2         short   BOLO Bid Price
+      olBidSize              3        2         short   BOLO Bid Size
+      olAskMarketCenter      5        1         byte    BOLO Best Ask Market Center
+      olAskPrice             6        2         short   BOLO Ask Price
+      olAskSize              8        2         short   BOLO Ask Size
+
+
+
+
+September 2026                                                                               16
+     2.2.5.2 BOLO Appendage Long Form
+     Append to odd lot or combined quote message to provide BOLO information using long
+     format
+      Name                   Offset Length Type Notes
+      olBidMarketCenter      0       1        byte    BOLO Best Bid Market Center
+      olBidPrice             1       8        long    BOLO Bid Price
+      olBidSize              9       2        short BOLO Bid Size
+      olAskMarketCenter      11      1        byte    BOLO Best Ask Market Center
+      olAskPrice             12      8        long    BOLO Ask Price
+      olAskSize              20      2        short BOLO Ask Size
+
+     2.2.5.3 BOLO Appendage MPID Form
+     Append to odd lot or combined quote message to provide BOLO information with ADF MPID
+     attribution
+      Name                   Offset Length Type Notes
+      olBidMarketCenter      0       1        byte    BOLO Best Bid Market Center
+      olBidPrice             1       8        long    BOLO Bid Price
+      olBidSize              9       2        short BOLO Bid Size
+      olAskMarketCenter      11      1        byte    BOLO Best Ask Market Center
+      olAskPrice             12      8        long    BOLO Ask Price
+      olAskSize              20      2        short BOLO Ask Size
+      olBidMpid              22      4        byte[] BOLO Best Bid Market Participant Identifier
+      olAskMpid              26      4        byte[] BOLO Best Ask Market Participant Identifier
+
+     2.2.6 Odd Lot Attachment Type
+     The UTP SIP is required to receive and publish potentially multiple odd lot quote price
+     levels per participant per security.
+
+     The number of odd lot price levels included in the attachment will be specified via Odd Lot
+     Attachment count while the Odd Lot Attachment Type Indicator within the core message
+     will denote the type of attachment(s) to be included. The allowable Odd Lot Attachment
+     Type Indicator values are as follows:
+
+
+      Code        Value
+                  No Odd Lot Price Levels attached – The UTP participant’s quote does not contain any
+      0
+                  odd lot price level(s). No attachment required.
+                  Short Form Odd Lot Price Levels attached – The UTP participant’s quote does contain
+      2
+                  odd lot price level(s). See criteria for the short form Odd Lot attachment below.
+                  Long Form Odd Lot Price Levels attached – The UTP participant’s quote does contain
+      3
+                  odd lot price level(s). See criteria for the long form Odd Lot attachment below.
+                  MPID Form Odd Lot Price Levels Attached – An update results in requiring notification
+      5           of a FINRA ADF participant update within a price level. See criteria for the ADF MPID Odd
+                  Lot attachment below.
+
+     To economize on bandwidth, the simplest form of the Odd Lot Appendage will be used
+     whenever possible.
+
+
+
+
+September 2026                                                                                 17
+     2.2.6.1 Odd Lot Price Level Attachment Short Form
+     Provides one or more odd lot price levels as an attachment to the odd lot or combined quote
+     message using short format
+
+      Name                    Offset   Length    Type     Notes
+      olMCID                  0        1         byte     Market Center ID
+      olSide                  1        1         byte     Side
+      olPrice                 2        2         short    Odd Lot Price
+      olSize                  4        2         short    Shares at Odd Lot Price
+
+     2.2.6.2 Odd Lot Price Level Attachment Long Form
+     Provides one or more odd lot price levels as an attachment to the odd lot or combined quote
+     message using long format
+
+      Name                    Offset   Length    Type     Notes
+      olMCID                  0        1         byte     Market Center ID
+      olSide                  1        1         byte     Side
+      olPrice                 2        8         long     Odd Lot Price
+      olSize                  10       2         short    Shares at Odd Lot Price
+
+     2.2.6.3 Odd Lot Price Level Attachment ADF MPID Form
+     Provides one or more odd lot price levels as an attachment to the odd lot or combined quote
+     message including ADF MPID attribution.
+
+      Name                    Offset   Length    Type     Notes
+      olMCID                  0        1         byte     Market Center ID
+      olSide                  1        1         byte     Side
+      olPrice                 2        8         long     Odd Lot Price
+      olSize                  10       2         short    Shares at Odd Lot Price
+      olMpid                  12       4         byte[]   ADF Market Participant Identifier
+                                                          (blank if Market Center is not “D”)
+
+     The allowable values for SIDE will be as follows:
+      Code        Value
+      B           Represents an update for the Bid Side
+      A           Represents an update for the Ask Side
+
+     When a participant submits a replacement of their existing OL price, they should submit the
+     removal first then add the new price.
+
+     To remove a price level, the participant submits OL attachment with the size of zero and
+     the price of the level they wish removed.
+
+             Side = B
+             Price = 10.05
+             Size = 0
+
+
+
+
+September 2026                                                                                  18
+     2.3   Trade Messages (UTDF)
+
+     The following message formats are used to disseminate Trade Reports, Trade Corrections,
+     and Trade Cancellations/Errors for NASDAQ listed securities.
+
+     If the sale condition code is equal to “R” (Seller), the Seller Sale’s Day (saleDays) field will
+     reflect the number of days that may elapse before delivery of the stock. If the sale condition
+     is not “R”, it will be zero filled.
+
+     Timestamp2 will be used by the FINRA ADF and/or a FINRA TRF to provided timestamp
+     representing the number of nanoseconds since Epoch.
+
+     • If from an Exchange: timestamp2 should be set to 0
+
+     • If from the FINRA Alternative Display Facility (ADF) or a FINRA Trade Reporting
+     Facility (TRF):
+
+             If the FINRA ADF or a FINRA TRF provides a proprietary feed of trades
+     reported by the facility, then the FINRA facility will publish the time of the
+     transmission as also published on the facility’s proprietary trade feed. The TRF or ADF
+     shall convert times that it reports trades on its proprietary trade feed in seconds or
+     milliseconds to nanoseconds and shall provide such times to the Processor in nanoseconds
+     since Epoch.
+
+             If the FINRA ADF or the FINRA TRF facility does not have a proprietary trade
+     feed, timestamp2 should be set to 0.
+
+     The tradeId is an identifier for tracking trades. Any Cancel/Error or Correction messages
+     will include the trade Id of the trade being canceled or corrected in the origTradeId field.
+     The tradeId is unique per participant per sub market center per symbol per session.
+
+     The tuple orig, subMarketId, symbol, tradeId will be unique within a trading session.
+
+
+
+
+September 2026                                                                                    19
+     2.3.1    Trade Report Message Short-form (TM)
+
+      Name                     Offset Length Type          Notes
+      version                       0      1 byte          1 – Protocol Version
+      msgCategory                   1          1 byte      T – Trade Messages (UTP Trade Feed Only)
+                                                           M – Fractional Short-format Trade Report
+      msgType                       2          1 byte
+                                                           Message
+      orig                          3          1 byte      Market Center Originator ID
+      subMarketId                   4          1 byte      Sub Market Center ID
+      sipTime                       5          8 long      SIP Timestamp
+      timestamp1                   13          8 long      Participant Timestamp
+      partToken                    21          8 long      Participant Token
+      timestamp2                   29          8 long      FINRA Timestamp
+      symbol                       37          5 byte[]    Security Identifier
+      tradeId                      42          8 long      Trade Id
+      price                        50          2 short     Trade Price
+      volume                       52          8 long      Trade Volume (implied 6 decimals)
+      cond                         60          4 byte[]    Sale Condition
+      tradeThrExempt               64          1 byte      Trade Through Exempt Flag
+      consPriceChangeInd           65          1 byte      Consolidated Price Change Indicator
+      partPriceChangeInd           66          1 byte      Participant Price Change Indicator
+                Total Length       67
+
+     The SIP will use the short form of trade report message format only if the UTP participant’s
+     transaction meets the following criteria:
+
+        •     The Issue Symbol is 5 characters or less
+        •     Trade price has a maximum price of $655.35
+        •     Trade price only uses 2 decimal precision
+        •     Sale Condition modifier is not equal to “R” (Seller)
+
+
+
+
+September 2026                                                                                   20
+     2.3.2    Trade Report Message Long-form (TN)
+
+      Name                     Offset Length Type           Notes
+      version                       0      1 byte           1 – Protocol Version
+      msgCategory                   1          1 byte       T – Trade Messages (UTP Trade Feed Only)
+                                                            N – Fractional Long-format Trade Report
+      msgType                       2          1 byte
+                                                            Message
+      orig                          3          1 byte       Market Center Originator ID
+      subMarketId                   4          1 byte       Sub Market Center ID
+      sipTime                       5          8 long       SIP Timestamp
+      timestamp1                   13          8 long       Participant Timestamp
+      partToken                    21          8 long       Participant Token
+      timestamp2                   29          8 long       FINRA Timestamp
+      symbol                       37        11 byte[]      Security Identifier
+      tradeId                      48          8 long       Trade Id
+      price                        56          8 long       Trade Price
+      volume                       64          8 long       Trade Volume (implied 6 decimals)
+      trcond                       72          4 byte[]     Sale Condition
+      tradeThrExempt               76          1 byte       Trade Through Exempt Flag
+      saleDays                     77          2 short      Seller’s Sale Days
+      consPriceChangeInd           79          1 byte       Consolidated Price Change Indicator
+      partPriceChangeInd           80          1 byte       Participant Price Change Indicator
+                Total Length       81
+
+     If the sale condition code is equal to “R” (Seller), the saleDays field will reflect the number of
+     days that may elapse before delivery of the stock. If the sale condition is not “R”, this field
+     will be zero filled.
+
+
+
+
+September 2026                                                                                      21
+     2.3.3   Trade Cancel/Error Message (TO)
+
+      Name                     Offset Length Type    Notes
+      version                       0      1 byte    1 – Protocol Version
+      msgCategory                 1       1 byte     T – Trade Messages (UTP Trade Feed Only)
+      msgType                     2       1 byte     O – Fractional Trade Cancel/Error Message
+      orig                        3       1 byte     Market Center Originator ID
+      subMarketId                 4       1 byte     Sub Market Center ID
+      sipTime                     5       8 long     SIP Timestamp
+      timestamp1                 13       8 long     Participant Timestamp
+      partToken                  21       8 long     Participant Token
+      timestamp2                 29       8 long     FINRA Timestamp
+      symbol                     37      11 byte[]   Security Identifier
+      cancelType                 48       1 byte     Trade Cancellation Type
+      origTradeId                49       8 long     Original Trade Id
+      origPrice                  57       8 long     Original Trade Price
+      origVolume                 65       8 long     Original Volume (implied 6 decimals)
+      origCond                   73       4 byte[]   Original Sale Condition
+      origTradeThrExempt         77       1 byte     Original Trade Through Exempt Flag
+      origSaleDays               78       2 short    Original Seller’s Sale Days
+      consHighPrice              80       8 long     Consolidated High Price
+      consLowPrice               88       8 long     Consolidated Low Price
+      consLastPrice              96       8 long     Consolidated Last Price
+      consVolume                104       8 long     Consolidated Volume (implied 6 decimals)
+      consPriceChangeInd        112       1 byte     Consolidated Price Change Indicator
+      consLastPriceOrig         113       1 byte     Market Center Originator ID
+      partHighPrice             114       8 long     Market Participant High Price
+      partLowPrice              122       8 long     Market Participant Low Price
+      partLastPrice             130       8 long     Market Participant Last Price
+      partVolume                138       8 long     Market Participant Volume (implied 6 decimals)
+                Total Length    146
+
+
+
+
+September 2026                                                                             22
+     2.3.4   Trade Correction Message (TP)
+
+      Name                     Offset Length Type    Notes
+      version                       0      1 byte    1 – Protocol Version
+      msgCategory                 1       1 byte     T – Trade Messages (UTP Trade Feed Only)
+      msgType                     2       1 byte     P – Fractional Trade Correction Message
+      orig                        3       1 byte     Market Center Originator ID
+      subMarketId                 4       1 byte     Sub Market Center ID
+      sipTime                     5       8 long     SIP Timestamp
+      timestamp1                 13       8 long     Participant Timestamp
+      partToken                  21       8 long     Participant Token
+      timestamp2                 29       8 long     FINRA Timestamp
+      symbol                     37      11 byte[]   Security Identifier
+      origTradeId                48       8 long     Original Trade Id
+      origPrice                  56       8 long     Original Trade Price
+      origVolume                 64       8 long     Original Volume (implied 6 decimals)
+      origCond                   72       4 byte[]   Original Sale Condition
+      origTradeThrExempt         76       1 byte     Original Trade Through Exempt Flag
+      origSaleDays               77       2 short    Original Seller’s Sale Days
+      corrTradeId                79       8 long     Corrected Trade Id
+      corrPrice                  87       8 long     Corrected Trade Price
+      corrVolume                 95       8 long     Corrected Volume (implied 6 decimals)
+      corrCond                  103       4 byte[]   Corrected Sale Condition
+      corrTradeThrExempt        107       1 byte     Corrected Trade Through Exempt Flag
+      corrSaleDays              108       2 short    Corrected Seller’s Sale Days
+      consHighPrice             110       8 long     Consolidated High Price
+      consLowPrice              118       8 long     Consolidated Low Price
+      consLastPrice             126       8 long     Consolidated Last Price in
+      consVolume                134       8 long     Consolidated Volume (implied 6 decimals)
+      consPriceChangeInd        142       1 byte     Consolidated Price Change Indicator
+      consLastPriceOrig         143       1 byte     Market Center Originator ID
+      partHighPrice             144       8 long     Market Participant High Price
+      partLowPrice              152       8 long     Market Participant Low Price
+      partLastPrice             160       8 long     Market Participant Last Price
+      partVolume                168       8 long     Market Participant Volume (implied 6 decimals)
+                Total Length    176
+
+
+
+
+September 2026                                                                             23
+     2.3.5    Prior Day As-Of Trade Message (TQ)
+
+      Name                     Offset Length Type       Notes
+      version                       0      1 byte       1 – Protocol Version
+      msgCategory                 1         1 byte      T – Trade Messages (UTP Trade Feed Only)
+      msgType                     2         1 byte      Q – Fractional As-Of Trade Message
+      orig                        3         1 byte      Market Center Originator ID
+      subMarketId                 4         1 byte      Sub Market Center ID
+      sipTime                     5         8 long      SIP Timestamp
+      timestamp1                 13         8 long      Participant Timestamp
+      partToken                  21         8 long      Participant Token
+      timestamp2                 29         8 long      FINRA Timestamp
+      symbol                     37        11 byte[]    Security Identifier
+      tradeId                    48         8 long      Trade Id
+      price                      56         8 long      Trade Price
+      volume                     64         8 long      Trade Volume (implied 6 decimals)
+      cond                       72         4 byte[]    Sale Condition
+      tradeThrExempt             76         1 byte      Trade Through Exempt Flag
+      saleDays                   77         2 short     Seller’s Sale Days
+      asOfAction                 79         1 byte      As-Of Action
+      priorTime                  80         8 long      Timestamp of Trade
+                Total Length     88
+
+     The tradeId for as-of trades is a pass-through value sent by the Participant. There is no
+     guarantee of uniqueness and may be 0 if the Participant chooses not to include a tradeId.
+
+
+
+
+September 2026                                                                                   24
+     2.4     Administrative Messages
+
+     2.4.1    Trade and Quote Services (UQDF & UTDF)
+
+     2.4.1.1 General Administrative Message (AA)
+      Name                   Offset Length Type                   Notes
+      version                0        1        byte               1 – Protocol Version
+      msgCategory            1        1        byte               A – Administrative Messages
+      msgType                2        1        byte               A – General Administrative
+                                                                  Message
+      orig                       3        1          byte         Market Center Originator ID
+      subMarketId                4        1          byte         Sub Market Center ID
+      sipTime                    5        8          long         SIP Timestamp
+      timestamp1                 13       8          long         Participant Timestamp
+      partToken                  21       8          long         Participant Token
+      textLen                    29       2          short        Text Length
+      text                       31       var        varbyte[]    Text
+
+     2.4.1.2 CROSS SRO Trading Action Message (AH)
+      Name                  Offset Length Type                Notes
+      version               0        1        byte            1 – Protocol Version
+      msgCategory           1        1        byte            A – Administrative Messages
+      msgType               2        1        byte            H – Trading Action Message
+      orig                  3        1        byte            Market Center Originator ID
+      subMarketId           4        1        byte            Sub Market Center ID
+      sipTime               5        8        long            SIP Timestamp
+      timestamp1            13       8        long            Participant Timestamp
+      partToken             21       8        long            Participant Token
+      symbol                29       11       byte[]          Security Identifier
+      action                40       1        byte            Trading Action Code
+      actionSequence        41       4        int             Trading Action Sequence Number
+      actionTime            45       8        long            Timestamp of when the action occurred.
+      Reason                53       6        byte[]          Reason for the Trading Action
+
+     This fixed format message will be used to inform subscribers of trading actions – such as
+     halts, pauses, quotation resumptions and trading resumptions – impacting the trading of a
+     NASDAQ-listed issue across all UTP participants.
+
+     The actionSequence field is intended for UTP SIP internal use only and Data Recipients
+     should ignore/disregard this field to the extent that it does not impact their normal data
+     processing.
+
+
+
+
+September 2026                                                                                    25
+     2.4.1.3 Market Center Trading Action Message (AK)
+      Name         Offset Length Type Notes
+      version      0       1        byte   1 – Protocol Version
+      msgCategory 1        1        byte   A – Administrative Messages
+      msgType      2       1        byte   K – Market Center Trading Action Message
+      orig         3       1        byte   Market Center Originator ID
+      subMarketId 4        1        byte   Sub Market Center ID
+      sipTime      5       8        long   SIP Timestamp
+      timestamp1 13        8        long   Participant Timestamp
+      partToken    21      8        long   Participant Token
+      symbol       29      11       byte[] Security Identifier
+      action       40      1        byte   Trading Action Code
+      actionTime   41      8        long   Timestamp of when the action occurred.
+      mcId         49      1        byte   Market Center Identifier
+
+     This fixed format message will inform UTP data feed subscribers of when a UTP participant
+     invokes or releases a market center-specific trading halt for a NASDAQ-listed security. In
+     contrast to the Cross SRO Trading Action (Category A – Type H) data format, the Market
+     Center Trading Action (Category A – Type K) message impacts trading activity only for the
+     UTP participant identified in the Market Center (MC) ID field.
+
+     Other UTP participants may continue to quote and trade the issue as normal. Because the
+     issue remains active on other markets, the UTP participant will remove their quotes or
+     mark their quotes as non-NBBO eligible during the market center-specific trading halt.
+
+
+
+
+September 2026                                                                              26
+     2.4.1.4 Issue Symbol Directory Messages
+
+     UTP SIP will introduce an “Enhanced Symbol Directory Message” (Category A – Type F) in
+     support of new releases in Q4 2026. This message will be sent alongside the current Symbol
+     Directory Message (Category A – Type B).
+
+     2.4.1.4.1 Current Symbol Directory Message (AB)
+      Name                    Offset Length Type            Notes
+      version                 0       1        byte         1 – Protocol Version
+      msgCategory             1       1        byte         A – Administrative Messages
+      msgType                 2       1        byte         B – Issue Symbol Directory
+                                                            Message
+      orig                     3         1         byte     Market Center Originator ID
+      subMarketId              4         1         byte     Sub Market Center ID
+      sipTime                  5         8         long     SIP Timestamp
+      timestamp1               13        8         long     Participant Timestamp
+      partToken                21        8         long     Participant Token
+      symbol                   29        11        byte[]   Security Identifier
+      oldSymbol                40        11        byte[]   Old Security Identifier
+      name                     51        30        byte[]   Issue Name
+      type                     81        1         byte     Issue Type
+      subtype                  82        2         byte[]   Issue Subtype
+      mktTier                  84        1         byte     Market Tier
+      auth                     85        1         byte     Authenticity
+      sstInd                   86        1         byte     Short Sale Threshold Indicator
+      roundLotSz               87        2         short    Round Lot Size
+      finStatInd               89        1         byte     Financial Status Indicator
+
+     The roundLotSz indicates the number of shares that make up a round lot for the given
+     security. Allowable values are 00001 to 99999. For most NASDAQ issues, the round lot size
+     is 100 shares.
+
+     UTP intends to retire the existing Issue Symbol Directory Message (AB) sometime in the
+     first quarter of 2027. A UTP Vendor notice will be issued prior to its retirement.
+
+
+
+
+September 2026                                                                                27
+     2.4.1.4.2 Enhanced Symbol Directory Message (AF)
+      Enhanced Symbol Directory Message (AF)
+      Name         Offset Length Type Notes
+      version              0        1 byte      1 – Protocol Version
+      msgCategory          1        1 byte      A – Administrative Messages
+      msgType              2        1 byte      F – Issue Symbol Directory Message
+      orig                 3        1 byte      Market Center Originator ID
+      subMarketId           4         1 byte     Sub Market Center ID
+      sipTime               5         8 long     SIP Timestamp
+      timestamp1          13          8 long     Participant Timestamp
+      partToken           21          8 long     Participant Token
+      symbol              29         11 byte[] Security Identifier
+      oldSymbol           40         11 byte[] Old Security Identifier
+      name                51         30 byte[] Issue Name
+      type                81          1 byte     Issue Type
+      subtype             82          2 byte[] Issue Subtype
+      mktTier             84          1 byte     Market Tier
+      auth                85          1 byte     Authenticity
+      sstInd              86          1 byte     Short Sale Threshold Indicator “Rule 203(b)(3)”
+      roundLotSz          87          2 short Round Lot Size
+      finStatInd          89          1 byte     Financial Status Indicator
+      etpFlag             90          1 byte     Exchange Traded Product (ETP) Indicator
+      newIssueInd         91          1 byte     New Issue Indicator
+      mpiTick             92          1 byte     MPI Tick Rule
+      tradingState        93          1 byte     Trading State (halted / trading)
+      haltReason          94          6 byte [] Reason for Halt
+      regShoaction       100          1 byte     Reg SHO Action “Rule 201”
+      conPriorClose      101          8 long     RESERVED Consolidated Prior Day Close Price
+      lmPriorOCP         109          8 long     RESERVED Listing Market Official Prior Day Close Price
+     The roundLotSz indicates the number of shares that make up a round lot for the given
+     security. Allowable values are 00001 to 99999.
+
+     Note: All symbols will have Penny “mpiTick” until Nov 2027, when Half Penny MPI is
+     introduced, as mandated by the SEC.
+
+     The Enhanced Symbol Directory message is not republished if the Trading Action or Reg
+     SHO Action of a symbol changes intraday. Data recipients must continue to process the
+     following, existing messages, for intraday updates to these data elements.
+         • Cross SRO Trading Action Message (Category A – Tye H)
+         • Reg SHO Short Sale Price Test Restricted Indicator (Category A – Type V)
+
+     UTP intends to retire the existing Issue Symbol Directory Message (AB) sometime in the
+     first quarter of 2027. A UTP Vendor notice will be issued prior to its retirement.
+
+
+September 2026                                                                                28
+     2.4.1.5 Regulation SHO Short Sale Price Test Restricted Indicator Message (AV)
+      Name                   Offset Length Type           Notes
+      version                0        1         byte      1 – Protocol Version
+      msgCategory            1        1         byte      A – Administrative Messages
+      msgType                2        1         byte      V – Reg SHO Restriction Indicator
+                                                          Message
+      orig                   3        1         byte      Market Center Originator ID
+      subMarketId            4        1         byte      Sub Market Center ID
+      sipTime                5        8         long      SIP Timestamp
+      timestamp1             13       8         long      Participant Timestamp
+      partToken              21       8         long      Participant Token
+      symbol                 29       11        byte[] Security Identifier
+      regShoAction           40       1         byte      Reg SHO Action
+
+     The Securities and Exchange Commission (SEC) implemented changes to Rule 201 of the
+     Regulation SHO (Reg SHO). For details, please refer to SEC Release Number 34-61595.
+
+     In association with the Reg SHO rule change, the UTP SIP will introduce a Reg SHO Short
+     Sale Price Test Restricted Indicator. As part of the pre-opening spin process, NASDAQ, as the
+     primary listing market, will generate Reg SHO Short Sale Price Test Restricted Indicator
+     messages indicating the Rule 201 status for all NASDAQ-listed securities. NASDAQ will also
+     send the Reg SHO Short Sale Price Test Restricted Indicator message in the event of an
+     intraday status change.
+
+     2.4.1.6 Limit Up – Limit Down Price Band Message (AP)
+      Name                     Offset Length Type       Notes
+      version                  0       1       byte     1 – Protocol Version
+      msgCategory              1       1       byte     A – Administrative Messages
+      msgType                  2       1       byte     P – LULD Price Band Message
+      orig                     3       1       byte     Market Center Originator ID
+      subMarketId              4       1       byte     Sub Market Center ID
+      sipTime                  5       8       long     SIP Timestamp
+      timestamp1               13      8       long     Participant Timestamp
+      partToken                21      8       long     Participant Token
+      symbol                   29      11      byte[] Security Identifier
+      luldPriceBandInd         40      1       byte     LULD Price Band Indicator
+      luldTime                 41      8       long     LULD Price Band Effective Time
+      limitDownPrice           49      8       long     Limit Down
+      limitUpPrice             57      8       long     Limit Up
+
+     The Securities and Exchange Commission (SEC) adopted a Plan, to be implemented in two
+     phases, to provide for a market-wide Limit Up–Limit Down (LULD) mechanism intended to
+     address extraordinary market volatility in NMS Stocks. The new LULD procedures are
+     designed to prevent trades in individual NMS Stocks from occurring outside of specified
+     Upper and Lower Limit Price Bands.
+
+
+
+
+September 2026                                                                                29
+     2.4.1.7 Market Wide Circuit Breaker Decline Level Message (AC)
+      Name                   Offset Length Type         Notes
+      version                0        1        byte     1 – Protocol Version
+      msgCategory            1        1        byte     A – Administrative Messages
+      msgType                2        1        byte     C – MWCB Decline Message
+      orig                   3        1        byte     Market Center Originator ID
+      subMarketId            4        1        byte     Sub Market Center ID
+      sipTime                5        8        long     SIP Timestamp
+      timestamp1             13       8        long     Participant Timestamp
+      partToken              21       8        long     Participant Token
+      mwcbLevel1             29       8        long     MWCB Level 1
+      mwcbLevel2             37       8        long     MWCB Level 2
+      mwcbLevel3             45       8        long     MWCB Level 3
+
+     A Market Wide Circuit Breaker (MWCB) Level message will inform participants and the UTP
+     data recipients what the daily MWCB breach points are set to for the current trading day.
+
+     The MWCB Levels will generally remain in effect for the remainder of the current trading
+     day and will be reset each trading day based on the prior day’s closing value of the S&P 500
+     index. However, there can be situations where the breach levels were set due to erroneous
+     activity. In this case the breach levels may reset and disseminate the MWCB breach levels
+     again. Participants and UTP data recipients should process and use the most recently
+     disseminated levels for that trading day.
+
+
+     2.4.1.8 Market Wide Circuit Breaker Status Message (AD)
+      Name                   Offset Length Type         Notes
+      version                0        1         byte    1 – Protocol Version
+      msgCategory            1        1         byte    A – Administrative Messages
+      msgType                2        1         byte    D – MWCB Status Message
+      orig                   3        1         byte    Market Center Originator ID
+      subMarketId            4        1         byte    Sub Market Center ID
+      sipTime                5        8         long    SIP Timestamp
+      timestamp1             13       8         long    Participant Timestamp
+      partToken              21       8         long    Participant Token
+      mwcbStatus             29       1         byte    MWCB Status Level Indicator
+
+     A Market Wide Circuit Breaker (MWCB) Status message will inform participants and the
+     UTP data recipients when a MWCB has breached one of the established levels.
+     The MWCB Status message will be generated once for each level if the S&P 500 declines
+     past the established breaker decline level for the trading day.
+
+
+
+
+September 2026                                                                                30
+     2.4.1.9 Auction Collar Message (AE)
+      Name                  Offset Length        Type      Notes
+      version               0      1             byte      1 – Protocol Version
+      msgCategory           1      1             byte      A – Administrative Messages
+      msgType               2      1             byte      E – Auction Collar Message
+      orig                  3      1             byte      Market Center Originator ID
+      subMarketId           4      1             byte      Sub Market Center ID
+      sipTime               5      8             long      SIP Timestamp
+      timestamp1            13     8             long      Participant Timestamp
+      partToken             21     8             long      Participant Token
+      symbol                29     11            byte []   Security Identifier
+      actionSequence        40     4             int       Trading Action Sequence Number
+      CollarReferencePrice 44      8             long      Reference price used to set collar
+      CollarUpPrice         52     8             long      Collar Up Price
+      CollarDownPrice       60     8             long      Collar Down Price
+      CollarExtension       68     1             byte      Collar Extension Indicator
+
+     Primary markets using an automated reopening will calculate new Auction Collars, in
+     compliance with rules around prices for re-opening, when applicable and publish this new
+     Auction Collar Message (Category A – Type E) to SIP.
+
+     The initial Auction Collars will be published immediately after the LULD Trading Pause.
+
+     Subsequent Auction Collars will be published approximately every five minutes, while in an
+     LULD Trading Pause, until the primary market is able to reopen.
+
+     The collar extension indicator will be used to reflect when a new collar has been published.
+     The first collar extension, at the time of the pause, will be set to zero indicating the first
+     collar message and will increment by 1 for each new message received by the primary
+     market and disseminated via the SIP, during the pause event. Range for this attribute is 0 to
+     255 binary values.
+
+     Should a security have multiple pause events during the trading day, at every new pause,
+     the collar extension indicator is reset to zero by the primary market.
+
+
+
+
+September 2026                                                                                  31
+     2.4.2   Trade Services Only (UTDF only)
+
+     2.4.2.1 Closing Trade Summary Report Message (AU)
+      Name                 Offset Length Type Notes
+      version                   0      1 byte   1 – Protocol Version
+      msgCategory                  1        1 byte      A – Administrative Messages
+                                                        U – Fractional Closing Trade Summary Report
+      msgType                      2        1 byte
+                                                        Message
+      orig                         3        1 byte      Market Center Originator ID
+      subMarketId                  4        1 byte      Sub Market Center ID
+      sipTime                      5        8 long      SIP Timestamp
+      timestamp1                  13        8 long      Participant Timestamp
+      partToken                   21        8 long   Participant Token
+      symbol                      29       11 byte[] Security Identifier
+      dailyConsHighPrice          40        8 long   Daily Consolidated High Price
+      dailyConsLowPrice           48        8 long      Daily Consolidated Low Price
+      dailyConsClosePrice         56        8 long      Daily Consolidated Closing Price
+      consLastPriceOrig           64        1 byte      Market Center Originator ID
+      consVolume                  65        8 long      Consolidated Volume (implied 6 decimals)
+      tradeActionInd              73        1 byte      Trading Action/State Indicator
+      numMktCenterAttch           74        2 short     Number of Market Center Attachments
+
+     Attachment(s) – Market Center Closing Price & Volume Summary
+      Name            Offset Length Type Notes
+      mcId                 0        1 byte      Market Center Identifier
+      mcClosingPrice          1         8 long       Market Center Closing Price
+      mcVolume                9         8 long       Market Center Volume (implied 6 decimals)
+      mcCloseInd             17         1 byte       Market Center Close Indicator
+      partHighPrice          18         8 long       Market Participant High Price
+      partLowPrice           26         8 long       Market Participant Low Price
+
+     The Closing Trade Summary Report will be disseminated three times daily at the following
+     times:
+        • The initial report will be disseminated at approximately 4:30 p.m., ET, and will
+            reflect the closing price for UTP participants who choose to have their official
+            closing price calculated in time for this report as well as the preliminary closing
+            prices for the consolidated market and other UTP participants in NASDAQ-listed
+            issues.
+        • This second report will be disseminated at 5:20 p.m., ET, and will reflect the closing
+            price for UTP participants who choose to have their official closing price calculated
+            in time for this report as well as the preliminary closing prices for the consolidated
+            market and other UTP participants in NASDAQ-listed issues.
+
+
+September 2026                                                                                 32
+        •   The final instance of the Closing Trade Summary report will be generated upon the
+            End of Trading Reporting event. This report will contain the final closing price and
+            volume data for the consolidated market as well as all UTP participants in a
+            NASDAQ-listed issue.
+
+        If the market center provides an official closing price value, the UTP SIP will populate
+        the “Market Center Closing Price Indicator” value in the message attachment with the
+        value of “M”. If the market center does not provide an official closing price value, the
+        message will reflect the final last sale eligible trade received by the UTP SIP from the
+        market center for the given issue.
+
+        For all instances of the Closing Trade Summary Report, the message shall consist of a
+        consolidated trade summary followed by any associated market center attachment(s).
+        Please note that firms should process all three instances of the Closing Trade Summary
+        Report for the most up-to-date and accurate information.
+
+        Note: Under certain market event circumstances, the UTP SIP reserves the right to
+        amend the time of dissemination for any one or all of the closing trade summary reports
+        without prior notification.
+
+
+
+
+September 2026                                                                                 33
+     2.4.2.2 Total Consolidated & Market Center Volume Message (VV)
+      Name                  Offset Length Type Notes
+      version                    0       1 byte     1 – Protocol Version
+      msgCategory                  1        1 byte      V – Administrative Messages
+                                                        V – Fractional Total Consolidated and Market
+      msgType                      2        1 byte
+                                                        Center Volume Message
+      orig                         3        1 byte      Market Center Originator ID
+      subMarketId                  4        1 byte      Sub Market Center ID
+      sipTime                      5        8 long      SIP Timestamp
+      timestamp1                 13         8 long      Participant Timestamp
+      partToken                  21         8 long      Participant Token
+      totalConsVolume            29         8 long      Total Consolidated Volume (implied 6 decimals)
+      numMktCenterAttch          37         2 short     Number of Market Center Attachments
+
+     Attachment(s) – Market Center Volume
+      Name        Offset Length Type Notes
+      mcId             0       1 byte     Market Center Identifier
+      mcVolume           1        8 long      Current Market Center Volume (implied 6 decimals)
+
+     The Total Consolidated & Market Center Volume message will be used to relay intra- day
+     values for the current total cumulative consolidated share volume and each active market
+     center current cumulative volume activity as reported by all UTP participants in all NASDAQ
+     issues. The consolidated volume report reflects trading activity up to the time that the
+     message was generated. Only market centers with positive volume will be disseminated for
+     a given time interval.
+
+     The Total Consolidated Volume Report message format consists of two parts:
+
+        •    Message Label: This section provides the current total cumulative consolidated
+             share volume. It also denotes how many market center attachments are being
+             relayed as part of this message.
+
+        •    Message Attachment(s): This section provides the market center identifier and the
+             current market center volume for the given time interval.
+
+
+
+
+September 2026                                                                                34
+     2.4.3   Quote Services Only (UQDF only)
+
+     2.4.3.1 Session Close Recap Message (AR)
+      Name                    Offset Length         Type     Notes
+      version                 0       1             byte     1 – Protocol Version
+      msgCategory             1       1             byte     A – Administrative Messages
+      msgType                 2       1             byte     R – Session Close Recap Message
+      orig                    3       1             byte     Market Center Originator ID
+      subMarketId             4       1             byte     Sub Market Center ID
+      sipTime                 5       8             long     SIP Timestamp
+      timestamp1              13      8             long     Participant Timestamp
+      partToken               21      8             long     Participant Token
+      symbol                  29      11            byte[]   Security Identifier
+      nbBidMarketCtr          40      1             byte     National Best Bid Market Center
+      nbBidPrice              41      8             long     National Best Bid Price
+      nbBidSize               49      8             long     National Best Bid Size
+      nbAskMarketCtr          57      1             byte     National Best Ask Market Center
+      nbAskPrice              58      8             long     National Best Ask Price
+      nbAskSize               66      8             long     National Best Ask Size
+      specialCond             74      1             byte     Special Condition
+      numMktCenterAttch       75      2             short    Number of Market Center
+                                                             Attachments
+
+     Attachment(s) – Market Center Close Recap
+      Name                   Offset Length Type              Notes
+      mcId                   0        1        byte          Market Center Identifier
+      bidPrice               1        8        long          Market Center Bid Price
+      bidSize                9        8        long          Market Center Bid Size
+      askPrice               17       8        long          Market Center Ask Price
+      askSize                25       8        long          Market Center Ask Size
+
+     At the request of the market data community, the UTP SIP generates a Session Close Recap
+     message that reflects the National BBO quotation information at the close of the normal
+     market session. To generate this recap, the UTP SIP takes a snapshot of the National BBO at
+     the time that the Market Close event is generated. The UTP SIP also includes as attachments
+     most recent quote update from each UTP participant at the time of the snapshot event.
+
+     Please note that the UQDF Session Close Recap message is intended for informational
+     purposes only. The UTP Operating Plan does not recognize an official NBBO closing value at
+     this time.
+
+     The Session Close Recap Message is comprised of two sections. The label contains the
+     National BBO at the market close. The attachment(s) reflects the UTP participant BBO
+     quotation(s) at the market close.
+
+     2.5 Control Messages
+     Control Messages are utilized to inform the user(s) of various conditions and events during
+     the trading day.
+
+
+
+
+September 2026                                                                                35
+     2.5.1   Trade and Quote Services (UQDF & UTDF)
+
+     2.5.1.1 Start Of Day (CI)
+      Name                     Offset     Length    Type      Notes
+      version                  0          1         byte      1 – Protocol Version
+      msgCategory              1          1         byte      C – Control Messages
+      msgType                  2          1         byte      I – Start of Day Message
+      orig                     3          1         byte      Market Center Originator ID
+      subMarketId              4          1         byte      Sub Market Center ID
+      sipTime                  5          8         long      SIP Timestamp
+      timestamp1               13         8         long      Participant Timestamp
+      partToken                21         8         long      Participant Token
+
+     The Start of Day control message signifies the beginning of each operational cycle for SIP
+     Processing. Each day, the Start of Day control message will be sent to inform SIP subscribers
+     that all subsequent data transmitted will be real-time updates and should be treated
+     accordingly.
+
+
+     2.5.1.2 End Of Day (CJ)
+      Name                      Offset    Length    Type      Notes
+      version                   0         1         byte      1 – Protocol Version
+      msgCategory               1         1         byte      C – Control Messages
+      msgType                   2         1         byte      J – End of Day Message
+      orig                      3         1         byte      Market Center Originator ID
+      subMarketId               4         1         byte      Sub Market Center ID
+      sipTime                   5         8         long      SIP Timestamp
+      timestamp1                13        8         long      Participant Timestamp
+      partToken                 21        8         long      Participant Token
+
+     The End of Day control message signals the end of active message dissemination for the UTP
+     SIP operational cycle. The system shall generate and disseminate the End of Day control
+     message upon receipt of the appropriate inbound control messages from all inbound
+     sources.
+
+
+
+
+September 2026                                                                                36
+     2.5.1.3 Market Session Open (CO)
+      Name                   Offset Length         Type     Notes
+      version                0        1            byte     1 – Protocol Version
+      msgCategory            1        1            byte     C – Control Messages
+      msgType                2        1            byte     O – Market Session Open Message
+      orig                   3        1            byte     Market Center Originator ID
+      subMarketId            4        1            byte     Sub Market Center ID
+      sipTime                5        8            long     SIP Timestamp
+      timestamp1             13       8            long     Participant Timestamp
+      partToken              21       8            long     Participant Token
+
+     The Market Session Open Control Message signifies the opening of market systems for the
+     session indicated in the Message Header. This message signifies the beginning of the Normal
+     Market Session.
+
+     Please note that each UTP participant may choose to provide a Market Session Open control
+     message.
+
+
+     2.5.1.4 Market Session Close (CC)
+      Name                    Offset Length        Type     Notes
+      version                 0        1           byte     1 – Protocol Version
+      msgCategory             1        1           byte     C – Control Messages
+      msgType                 2        1           byte     C –Market Session Close Message
+      orig                    3        1           byte     Market Center Originator ID
+      subMarketId             4        1           byte     Sub Market Center ID
+      sipTime                 5        8           long     SIP Timestamp
+      timestamp1              13       8           long     Participant Timestamp
+      partToken               21       8           long     Participant Token
+
+     The Session Close Control Message signals the closing of market systems for the session
+     indicated in the Message Header. Upon receipt of this message, Vendors should close the
+     appropriate market center security records in their files. Please note that each UTP
+     participant may choose to provide a Market Session Close control message.
+
+
+
+
+September 2026                                                                                 37
+     2.5.1.5 End of Transmissions (CZ)
+      Name                   Offset Length          Type      Notes
+      version                0         1            byte      1 – Protocol Version
+      msgCategory            1         1            byte      C – Control Messages
+      msgType                2         1            byte      Z – End of Transmissions Message
+      orig                   3         1            byte      Market Center Originator ID
+      subMarketId            4         1            byte      Sub Market Center ID
+      sipTime                5         8            long      SIP Timestamp
+      timestamp1             13        8            long      Participant Timestamp
+      partToken              21        8            long      Participant Token
+
+     The End of Transmissions Message signals that there will be no further transmissions of
+     data sent through the UTP SIP line. This message will be transmitted at the end of the day,
+     and will be the last message of the day.
+
+
+
+
+September 2026                                                                                 38
+     2.5.2   Trade Services Only (UTDF only)
+
+     2.5.2.1 End Of Trade Reporting (CX)
+      Name                   Offset Length          Type        Notes
+      version                0        1             byte        1 – Protocol Version
+      msgCategory            1        1             byte        C – Control Messages
+      msgType                2        1             byte        X – End of Trade Reporting
+                                                                Message
+      orig                        3         1          byte     Market Center Originator ID
+      subMarketId                 4         1          byte     Sub Market Center ID
+      sipTime                     5         8          long     SIP Timestamp
+      timestamp1                  13        8          long     Participant Timestamp
+      partToken                   21        8          long     Participant Token
+     The End of Trade Reporting Control Message signals that SIP has completed its trade entry
+     eligibility and that no further data will be accepted by the UTP SIP for the market session.
+     Upon dissemination of the last End of Trade Reporting control message, the UTP SIP will
+     generate the Closing Trade Summary Report.
+
+
+
+     2.5.2.2 End of Consolidated Last Sale Eligibility (CS)
+      Name                    Offset Length Type            Notes
+      version                 0        1          byte      1 – Protocol Version
+      msgCategory             1        1          byte      C – Control Messages
+      msgType                 2        1          byte      S – End of Consolidated Last Sale
+                                                            Eligibility
+      orig                    3        1          byte      Market Center Originator ID
+      subMarketId             4        1          byte      Sub Market Center ID
+      sipTime                 5        8          long      SIP Timestamp
+      timestamp1              13       8          long      Participant Timestamp
+      partToken               21       8          long      Participant Token
+
+     The End of Consolidated Last Sale Eligibility control message signals the closing of the
+     trade-reporting window for consolidated last sale calculation eligibility.
+     Under the UTP plan, all participants must report trade transactions that impact the last sale
+     price within 10 seconds of the normal market session close. The message will be generated
+     10 seconds after the market close message from the primary market.
+
+
+
+
+September 2026                                                                                 39
+     2.5.3   Quote Services Only (UQDF only)
+
+     2.5.3.1 Quote Wipe-Out (CP)
+      Name                   Offset       Length     Type      Notes
+      version                0            1          byte      1 – Protocol Version
+      msgCategory            1            1          byte      C – Control Messages
+      msgType                2            1          byte      P – Quote Wipe-Out Message
+      orig                   3            1          byte      Market Center Originator ID
+      subMarketId            4            1          byte      Sub Market Center ID
+      sipTime                5            8          long      SIP Timestamp
+      timestamp1             13           8          long      Participant Timestamp
+      partToken              21           8          long      Participant Token
+
+     The Quote Wipe-Out message will be sent to indicate that a UTP Participant is experiencing
+     a problem with their internal systems and, as a result, are not able to update their UTP BBO
+     quotation information. The SIP will identify the UTP participant subject to the Quote Wipe
+     Out via the Market Center Originator ID field.
+
+     During the Quote Wipe-out the SIP will zero out all quotes for the associated market center
+     and recalculate the National BBO as necessary. Once the UTP participant resumes its
+     normal operations, that participant will be required to enter fresh quotation information.
+
+     Note: The SIP shall only disseminate the Quote Wipe-Out Control message when a UTP
+     participant is requesting the SIP to remove its quote from ALL NASDAQ-listed securities.
+
+     The SIP has the capability to remove a UTP participant's quote at the security level. If a UTP
+     participant experiences a quoting problem that affects a single issue or a limited range of
+     issues, the SIP has the capability of closing the market center's quote in only the impacted
+     securities. Since the UTP participant is still active in other NASDAQ issues, however, the SIP
+     will not send out a Quote Wipe-Out control message.
+
+
+
+
+September 2026                                                                                  40
+     3     Code Definitions
+
+     3.1    Market Center Originator ID
+
+      Description                                           Value
+      Cboe Group of Exchanges
+            Cboe BYX Exchange, Inc.                           Y
+            Cboe BZX Exchange, Inc.                           Z
+            Cboe EDGA Exchange, Inc.                          J
+            Cboe EDGX Exchange, Inc.                          K
+            Cboe Exchange, Inc.                               W
+      Nasdaq Group of Exchanges
+          Nasdaq Texas, LLC                                   B
+          Nasdaq PHLX LLC                                     X
+          Nasdaq, Inc.                                        Q
+          Nasdaq ISE, LLC*                                    I
+      NYSE Group of Exchanges
+         New York Stock Exchange LLC                          N
+         NYSE Arca, Inc.                                      P
+         NYSE American, LLC                                   A
+         NYSE National, Inc.                                  C
+         NYSE Texas                                           M
+      Independent Venues
+          Texas Stock Exchange LLC (TXSE)                     F
+          24X National Exchange, LLC                          G
+          Financial Industry Regulatory Authority (FINRA)     D
+          Investors’ Exchange LLC (IEX)                       V
+          Long-Term Stock Exchange (LTSE)                     L
+          MIAX Pearl, LLC (MIAX)                              H
+         MEMX LLC (MEMX)                                      U
+      Generated By SIP
+         Market Independent                                   E
+      Unassigned Values Available
+         Pending Future Use                                   R
+            Pending Future Use                               0-9
+
+
+
+
+September 2026                                                      41
+     3.2 Sub-Market Center ID
+      Description                                                 Value
+      FINRA / NYSE TRF                                                N
+      FINRA / Nasdaq TRF Carteret                                     Q
+      FINRA / Nasdaq TRF Chicago                                      B
+      Trade originates from FINRA Alternative Display Facility.    <space>
+      Unassigned Values Available
+          Not Currently in use                                    0-9
+          Not Currently in use                                       A
+          Not Currently in use                                       C
+          Not Currently in use                                       I
+          Not Currently in use                                       J
+          Not Currently in use                                       K
+          Not Currently in use                                       L
+          Not Currently in use                                       M
+          Not Currently in use                                       P
+          Not Currently in use                                       V
+          Not Currently in use                                       W
+          Not Currently in use                                       X
+          Not Currently in use                                       Y
+          Not Currently in use                                       Z
+
+
+
+
+September 2026                                                               42
+     3.3 Quote Condition Code
+     At the market center level, the allowable values are as follows:
+      Description                                             Value
+      *Manual Ask, automated Bid                                 A
+      *Manual Bid, automated Ask                                 B
+      Fast trading                                               F
+      *Manual Bid and Ask                                        H
+      Order imbalance                                            I
+      Closed quote                                               L
+      Non-firm quote                                             N
+      *Opening quote automated                                   O
+      *Regular, two-sided open quote automated                   R
+      Manual Bid and Ask (non-firm)                              U
+      Order influx                                               X
+      *Automated bid, no offer; or automated offer, no bid       Y
+      No open/no resume                                          Z
+      Intraday Auction                                           4
+     * Indicates that quotation including this quote condition is NBBO eligible.
+
+     At the National BBO level the following definitions will be supported. These values are
+     intended to indicate the status of the NBBO as being either open or closed and are not an
+     indication of an automatic status.
+       Description                       Value
+       NBBO Closed                       L
+       NBBO Regular, two-sided open R
+       NBBO Regular, one-sided open Y
+     Note: Firms should not use the Quote Condition field alone to determine trading status for a
+     given issue. Firms must process the Trading Action administrative message for trading halt,
+     trading pause, quotation resumption, and trading resumption status changes for NASDAQ-
+     listed securities.
+
+     3.4 SIP Generated Update
+      Description                                                                       Value
+      Transaction originated from the market participant identified in the Market       <space>
+      Center Originator ID field of the Message Header.
+      This message is the result of a SIP-generated transaction (e.g. price band        E
+      change)
+
+
+
+
+September 2026                                                                                43
+     3.5 LULD BBO Indicator
+      Description                                                      Value
+      Limit Up Limit Down Not Applicable                               <space>
+      Bid Price above Upper Limit Price Band – Bid is Non-Executable   A
+      Ask Price below Lower Limit Price Band – Ask is Non-Executable   B
+      Bid and Ask outside price band. Not Executable                   C
+
+
+     3.6 LULD National BBO Indicator
+      Description                                                                    Value
+      Limit Up Limit Down Not Applicable                                             <space>
+      National Best Bid and National Best Ask are Executable                         A
+      National Best Bid below Lower Limit Price Band – National Best Bid is Non-     B
+      Executable
+      National Best Ask above Upper Limit Price Band – National Best Ask is Non-     C
+      Executable
+      National Best Bid below Lower Limit Price Band and National Best Ask above     D
+      Upper Limit Price Band – National Best Bid and National Best Ask are Non-
+      Executable
+      National Best Bid equals Upper Limit Price Band – National Best Bid is in      E
+      Limit State
+      National Best Offer equals Lower Limit Price Band – National Best Ask is in    F
+      Limit State
+      National Best Bid equals Upper Limit Price Band – National Best Bid is in      G
+      Limit State and National Best Ask above Upper Limit Price Band – National
+      Best Ask is Non-Executable
+      National Best Ask equals Lower Limit Price Band – National Best Ask is in      H
+      Limit State and National Best Bid below Lower Limit Price Band – National
+      Best Bid is Non-Executable
+      National Best Bid equals Upper Limit Price Band and National Best Ask equals   I
+      Lower Limit Price Band
+      *crossed not in limit state
+
+
+     3.7 Retail Interest Code
+      Description                                 Value
+      Retail Interest Not Applicable              <space>
+      Retail Interest On Bid Quote                A
+      Retail Interest On Ask Quote                B
+      Retail Interest On both Bid and Ask Quote   C
+
+
+
+
+September 2026                                                                             44
+     3.8 NBBO Appendage Indicator
+      Description                                                                           Value
+      No National BBO Change – The UTP participant’s quote does not affect the              0
+      National BBO. Vendors should continue to show the existing National BBO. No
+      appendage is required.
+      No National BBO Can be Calculated – The National BBO cannot be calculated             1
+      therefore vendors should show National BBO fields as blank. No appendage is
+      required.
+      Short Form National BBO Appendage Attached – A new National BBO was                   2
+      generated as a result of the UTP participant’s quote update and the new
+      National BBO information is contained in the attached short form appendage.
+      See criteria for the short form appendage below.
+      Long Form National BBO Appendage Attached – A new National BBO was                    3
+      generated as a result of the UTP participant’s quote update and the new
+      information is contained in the attached long form appendage.
+      Quote Contains All National BBO Information – Current UTP participant’s               4
+      quote is itself the National BBO. Vendors should update National BBO to reflect
+      this new quote and single market center. (National Best Bid Market Center and
+      National Best Ask Market Center fields should be updated to reflect the Market
+      Center Originator ID value in the UQDF message header.) No appendage is
+      required.
+
+
+
+     3.9 FINRA ADF MPID Appendage Indicator
+      Description                                                                       Value
+      Not applicable - Quotation originates from a UTP participant other than the       <space>
+      FINRA. Vendors should continue to show the existing FINRA MPID(s). No
+      appendage is required.
+      No ADF MPID changes – Current ADF quote does not affect the FINRA MPID.           0
+      Vendors should continue to show the existing FINRA MPID(s). No appendage
+      required.
+      No ADF MPID exists – There is no calculation of the FINRA MPID(s). Vendors        1
+      should show the FINRA MPID fields as blank. No appendage is required.
+      ADF MPID(s) attached - FINRA MPID was generated and the information is            2
+      contained in the attached appendage.
+
+
+
+
+September 2026                                                                                  45
+     3.10 Consolidated Price Change Indicator
+      Description                                                        Value
+      No prices changed                                                  0
+      Consolidated Last price changed                                    1
+      Consolidated Low price changed                                     2
+      Consolidated Last and Consolidated Low prices changed              3
+      Consolidated High price changed                                    4
+      Consolidated Last and Consolidated High prices changed             5
+      Consolidated High and Consolidated Low prices changed              6
+      All Consolidated prices changed                                    7
+
+
+     3.11 Participant Price Change Indicator
+      Description                                                        Value
+      No prices changed                                                  0
+      Participant Last price changed                                     1
+      Participant Low price changed                                      2
+      Participant Last and Low prices changed                            3
+      Participant High price changed                                     4
+      Participant Last and High prices changed                           5
+      Participant High and Low prices changed                            6
+      All Participant prices changed                                     7
+
+
+     3.12 Reg SHO Action Code
+      Description                                                    Value
+      No price test in effect                                        0
+      Reg SHO in effect due to an intra day price drop in security   1
+      Reg SHO Restriction remains in effect                          2
+
+     3.13 Trade Through Exempt Code
+      Description                  Value
+      611 Trade Through Exempt     X
+      Not 611 Trade Through Exempt <space>
+
+
+
+
+September 2026                                                                   46
+     3.14 Sale Condition
+
+     The Sale Condition field is used to indicate the type of trade transaction entered by a UTP
+     participant. Market data subscribers may use this field to determine when to update the
+     high, low, and last sale prices and volume for an issue.
+
+     As part of SEC Regulation NMS UTP participants will be required to identify trade
+     transactions that have been exempted from the trade through rule.
+
+
+     3.14.1 Sale Condition Modifiers
+
+      Condition                        Modifier      Condition                           Modifier
+      Regular Sale                        @          Seller                                 R
+      Acquisition                          A         Split Trade                            S
+      Bunched Trade                        B         Form T                                 T
+                                                     Extended trading hours (Sold
+      Cash Sale                            C                                                U
+                                                     Out of Sequence)
+      Distribution                         D         Contingent Trade                       V
+      Placeholder                          E         Average Price Trade                   W
+      Intermarket Sweep                    F         Cross/Periodic Auction Trade           X
+      Bunched Sold Trade                   G         Yellow Flag Regular Trade              Y
+      Price Variation Trade                H         Sold (out of sequence)                 Z
+      Odd Lot Trade                        I         Stopped Stock (Regular Trade)          1
+      Rule 155 Trade (AMEX)                K         Derivatively priced                    4
+      Sold Last                            L         Re-Opening Prints                      5
+      Market Center Official Close        M          Closing Prints                         6
+                                                     Qualified Contingent Trade
+      Reserved                             N                                                7
+                                                     (“QCT”)
+      Opening Prints                       O         Placeholder For 611 Exempt             8
+                                                     Corrected Consolidated Close
+      Prior Reference Price                P                                                9
+                                                     (per listing market)
+      Market Center Official Open          Q
+
+
+
+
+September 2026                                                                                  47
+     3.14.2 UTP Sale Condition Matrix
+                                                    Consolidated         Market Center
+                                                     Processing           Processing
+                                                     Guidelines           Guidelines
+                                                Update      Update   Update       Update    Update
+      Modifier   Condition
+                                                High/Low Last        High/Low Last          Volume
+      @          Regular Sale                   Yes         Yes      Yes          Yes       Yes
+      A          Acquisition                    Yes         Yes      Yes          Yes       Yes
+      B          Bunched Trade                  Yes         Yes      Yes          Yes       Yes
+      C          Cash Sale                      No          No       No           No        Yes
+      D          Distribution                   Yes         Yes      Yes          Yes       Yes
+      E          Placeholder                    TBD         TBD      TBD          TBD       TBD
+      F          Intermarket Sweep              Yes         Yes      Yes          Yes       Yes
+      G          Bunched Sold Trade             Yes         No1      Yes          No1       Yes
+      H          Price Variation Trade          No          No       No           No        Yes
+      I          Odd Lot Trade                  No          No       No           No        Yes
+      K          Rule 155 Trade (AMEX)          Yes         Yes      Yes          Yes       Yes
+      L          Sold Last                      Yes         Yes2     Yes          Yes       Yes
+      M          Market Center Official Close   No          No       Yes          Yes       No
+      N          Reserved                       No          No       No           No        TBD
+      O          Opening Prints                 Yes         Yes      Yes          Yes       Yes
+      P          Prior Reference Price          Yes         No1      Yes          No1       Yes
+      Q          Market Center Official         No          No       Yes          No        No
+                 Open3
+      R          Seller                         No         No        No          No         Yes
+      S          Split Trade                    Yes        Yes       Yes         Yes        Yes
+      T          Form T                         No         No        No          No         Yes
+      U          Extended trading hours         No         No        No          No         Yes
+                 (Sold Out of Sequence)
+      V          Contingent Trade               No         No        No          No         Yes
+      W          Average Price Trade            No         No        No          No         Yes
+      X          Cross/Periodic Auction         Yes        Yes       Yes         Yes        Yes
+                 Trade
+      Y          Yellow Flag Regular Trade      Yes        Yes       Yes         Yes        Yes
+      Z          Sold (out of sequence)         Yes        No1       Yes         No1        Yes
+      1          Stopped Stock (Regular         Yes        Yes       Yes         Yes        Yes
+                 Trade)
+      4          Derivatively priced            Yes        No1       Yes         No1        Yes
+      5          Re-Opening Prints              Yes        Yes       Yes         Yes        Yes
+      6          Closing Prints                 Yes        Yes       Yes         Yes        Yes
+      7          Qualified Contingent Trade     No         No        No          No         Yes
+                 (“QCT”)
+      8          Placeholder For 611            TBD        TBD       TBD         TBD        TBD
+                 Exempt
+      9          Corrected Consolidated         Yes        Yes       No          No         No
+                 Close (per listing market)
+
+
+
+
+September 2026                                                                         48
+     1 UTDF Subscribers should only update the field values if the trade is the first or only last sale
+
+       eligible trade transaction of the business day from any UTP participant.
+
+     2 UTDF subscribers should update consolidated last sale field if received prior to the End of
+
+       Last Sale Eligibility Control Message (16:00:10). After End of Last Sale Eligibility Control
+       Message is received the transaction would only update the market center-specific last sale
+       value but not the consolidated last sale value.
+
+      3 Please note that direct data recipients, which maintain individual market center open values,
+
+       should use the “Q” value as the official market center opening value and populate data
+       displays accordingly.
+
+     Notes:
+
+         •    For the sale condition modifier of “M” (Market Center Close Price), UTDF
+              subscribers should note that this value is available to, but may not be supported by,
+              all UTP participants. If a UTP Participant does not provide this sale condition code,
+              UTDF subscribers should continue to show its final last sale eligible trade as the
+              closing price for the market center.
+         •    The “M” sale condition modifier will update the last sale price for the market center,
+              but not the consolidated market. If the market center responsible for the
+              consolidated last sale price submits a separate “M” transaction, it is possible that the
+              two last sale values will not match.
+         •    For the sale condition modifier of “Q” (Market Center Open Price), UTDF subscribers
+              should note that this value is available to, but may not be supported by, all UTP
+              participants.
+         •    For statistical update of the High/Low/Last, if there are multiple sale conditions
+              within the trade record, a “no” update for any one of the statistics will take
+              precedence for that related statistical record and no update will occur for the
+              related value.
+
+
+
+
+September 2026                                                                                        49
+     3.14.3 Sale Condition Combination Table
+      Level1 Byte:     Level2 Byte:     Level3 Byte:
+      Settlement       Reason for TT    Extended Hours     Level4 Byte:
+      Type             Exemption        or Sold            SRO Trade Detail
+      @ = Regular      F = Intermarket T = Form T          1 = Stopped Stock
+      Trade            Sweep
+      C = Cash         O = Opening      L = Sold Last      A = Acquisition
+                       Prints
+      N = Reserved     4 = Derivatively Z = Sold (Out of   B = Bunched
+                       Priced           Sequence)
+      R = Seller       5 = Re-Opening U = Extended         D = Distribution
+                       Prints           trading hours -
+                                        Sold Out of
+                                        Sequence
+      Y = Yellow Flag 6 = Closing                          E = Placeholder Future
+                       Prints
+                       7 = Qualified                       G = Bunched Sold Trade
+                       Contingent
+                       Trade (“QCT”)
+                       8 = Placeholder                     H = Price Variation
+                       For 611 Exempt
+                       9 = Corrected                       I = Odd Lot Trade
+                       Consolidated
+                       Close (per
+                       listing market)
+                                                           K = Rule 155
+                                                           M = Market Center Official Close Price
+                                                           P = Prior Reference Price
+                                                           Q = Market Center Official Open Price
+                                                           S = Split Trade
+                                                           V = Contingent Trade
+                                                           W = Average Price Trade
+                                                           X = Cross/Periodic Auction Trade
+                       <Space>          <Space>            <Space>
+
+
+
+
+September 2026                                                                           50
+     3.14.4 Sale Condition and Trade Through Exempt Combinations
+     Participant is required to submit the Reg NMS sale condition data in proper byte location
+     sequence and proper trade through exempt flag as follows:
+
+     Scenario A: If the trade record is marked as 611 exempt (X) then the allowable four bytes
+     values are as follows:
+          Trade
+        Through           Level1 – Byte    Level 2 – Byte       Level 3 Byte
+         Exempt            Settlement     Reason for TT      Extended Hours               Level 4 – Byte
+      611 Exempt              Type           Exemption             or Sold               SRO Trade Detail
+            X            @, C, N, R, or Y F, O, 4, 5, 6, 7, T, L, Z, U, <space> 1, A, B, D, E, G, H, I, K, M, P, Q, S,
+                                              8, 9,                             V, W, X, <space>
+                                              <space>
+
+     Scenario B: If the trade record is marked as Not 611 exempt (space) then the allowable
+     four bytes values are as follows:
+          Trade
+        Through           Level1 – Byte   Level 2 – Byte       Level 3 Byte
+         Exempt            Settlement     Reason for TT     Extended Hours               Level 4 – Byte
+       611 Exempt              Type         Exemption             or Sold               SRO Trade Detail
+        <space>          @, C, N, R, or Y O, 5, 6,         T, L, Z, U, <space> 1, A, B, D, E, G, H, I, K, M, P, Q, S,
+                                              <space>                          V, W, X, <space>
+
+
+     3.14.5 Sale Condition Notes
+     Note 1: The Form T (T) Sale Condition should be applied for the following:
+        • Trades executed on trade day between 12:00 a.m. and 9:30 a.m.
+        • Trades executed on trade day between 4:00:01 p.m. and 8:00 p.m.
+
+     Note 2: The U Extended Hours (Sold out of sequence) Sale Condition should be applied
+     when transactions executed during the following time periods are reported more than 10
+     seconds after execution.
+         • Trades executed on trade day between 12:00 a.m. and 9:30 a.m.
+         • Trades executed on trade day between 4:00:01 p.m. and 8:00 p.m.
+
+     Note 3: The Sale Condition “M”, Market Center Close Price, is used to indicate the “official”
+     closing value as determined by a market center. A message generated with this condition
+     will contain the market center generated closing price. The “M” sale condition modifier
+     shall only affect the market center closing/last sale value and will not affect the
+     consolidated market value.
+
+     Note 4: The Sale Condition “Q”, Market Center Open Price, is used to indicate the “official”
+     open value as determined by a Market Center. A message generated with this condition will
+     contain the Market Center generated open price. The “Q” sale condition shall only affect the
+     Market Center open high/low values and will not affect any of the consolidated market
+     values.
+
+     Note 5: Certain UTP Participants utilize the “W” sale condition (average price trades) to
+     report stopped stock transactions. Because “W” sale condition trades reflect other
+
+
+
+September 2026                                                                                     51
+     transaction prices, the trades with this sale condition will not affect the consolidated or
+     market center high, low, or last sale prices. Volume statistics, however, will be impacted.
+
+     Note 6: Current Day Odd lot transactions will be rejected back to the participant via Error
+     Code “Invalid Volume”, for the following reasons:
+     • Invalid Volume
+     • Report Volume is zero and sale condition does not equal “9”, “M” or “Q”
+     • Report Volume contains volume less than a round lot and sale condition does not
+        equal “I”
+
+     Note 7: The Sale Condition “Y”, Yellow Flag, is used to convey periods of time when a
+     Market Center may be experiencing technical difficulties. This sale condition will affect the
+     Market Center and Consolidated last sale, high, low and volume values.
+
+     Note 8: The Sale Condition “9”, Corrected Consolidated Close (per listing market), will be
+     allowed to be used only by the Listing Market and may be used to adjust the consolidated
+     last sale price. The Corrected Consolidated Close will be eligible to set the High, Low and
+     Last for the consolidated statistics and will not update the participant records. Volume will
+     always be reported as zero and will appear in Level 2 of the extended sale condition
+     modifier field on the UTDF and CTS data feeds. Corrected Consolidated Close transactions
+     will be rejected back to participants for the following reasons:
+
+      Sale Condition “9” Processing scenario                              Validation Processing
+      Sale Condition “9” Trades received before allowable reporting       Invalid Reporting Time
+      time of 30 seconds after market close
+      Sale Condition “9” Trades received from non-listing market          Invalid User Origin
+      Sale Condition “9” Trades received from Listing Market with         Invalid Volume
+      Volume Other than Zero (0)
+
+
+     3.15 Trade Cancel Type Code
+      Description Value
+      Cancel      C
+      Error       E
+
+     3.16 As-Of Action
+      Description                                               Value
+      As-Of Trade Addition                                      A
+      As-Of Trade Cancel                                        C
+
+     3.17 Trading Action/State Indicator
+      Description                                    Value
+      Trading Halt                                   H
+      Quotation Resumption, including after EMA      Q
+      Trading Resumption                             T
+      Volatility Trading Pause                       P
+
+
+
+
+September 2026                                                                                     52
+     3.18 Market Center Close Indicator
+      Description                                             Value
+      Market Center Closing Price is based on transaction     M
+      with “M” sale condition modifier.
+      Market Center Closing Price is not based on a           <space>
+      transaction with an “M” sale condition modifier.
+
+
+
+     3.19 Special Condition
+      Description                                                       Value
+      One-sided National BBO at Market Close.                           O
+      Trading Halt In Effect at Market Close.                           H
+      No Eligible Market Participant Quotes in Issue at Market Close.   M
+      No Special Condition exists.                                      <space>
+
+
+     3.20 Authenticity
+      Description      Value
+      Live/Production P
+      Test             T
+      Demo             D
+      Deleted          X
+
+
+
+
+September 2026                                                                    53
+     3.21 Issue Type
+      Description                     Value
+      American Depository Receipt     A
+      Bond                            B
+      Common Stock                    C
+      Depository Receipt              F
+      144A                            I
+      Limited Partnership             L
+      Note                            N
+      Ordinary Shares                 O
+      Preferred Stock                 P
+      Other Securities                Q
+      Rights                          R
+      Shares of Beneficial Interest   S
+      Convertible Debenture           T
+      Unit                            U
+      Units of Beneficial Interest    V
+      Warrant                         W
+
+     (Note: The list above reflects the allowable values in the Nasdaq security master database.
+     Only a subset of these values are currently in use.)
+
+
+
+
+September 2026                                                                                54
+     3.22 Issue Subtype
+      Description                           Value   Description                     Value
+      Trust Preferred                       A       Equity Linked Note              M
+      Alpha Index ETNs                      AI      Managed Fund Shares             MF
+      Index Linked Note                     B       ETN-Multi-Factor Index-         ML
+                                                    Linked Securities
+      Common Shares                         C       Managed Trust Securities        MT
+      Commodity Based Trust Shares          CB      NY Registry Shares              N
+      Commodity Futures Trust Shares        CF      Income Depositary Shares        O
+      Commodity-Linked Securities           CL      Third Party Trust Certificate   P
+      Commodity Index Trust Shares          CM      Poison Pill                     PP
+      Collateralized Mortgage Obligation    CO      Partnership Units               PU
+      Currency Trust Shares                 CT      Closed End Funds                Q
+      Commodity-Currency-Linked             CU      Reg-S                           R
+      Securities
+      Currency Warrants                     CW      Commodity-Redeemable            RC
+                                                    Commodity-Linked
+                                                    Securities
+      Global Depositary Shares              D       ETN-Redeemable Futures-         RF
+                                                    Linked Securities
+      ETF-Unit Investment Trust             E       REIT                            RT
+      Equity Gold Shares                    EG      Commodity-Redeemable            RU
+                                                    Currency-Linked Securities
+      ETN-Equity Index-Linked Securities    EI      SEED                            S
+      Exchange Traded Managed Fund          EM      Spot Rate Closing               SC
+      (ETMF)
+      Exchange Traded Note                  EN      Spot Rate Intraday              SI
+      Equity Units                          EU      Tracking Stock                  T
+      HOLDRS                                F       Trust Certificate               TC
+      ETN-Fixed Income-Linked Securities    FI      Trust Units                     TU
+      ETN-Futures-Linked Securities         FL      Portal                          U
+      Exchange Traded Debt                  G       Contingent Value Right          V
+      ETF-Management Investment             I       Trust Issued Receipts           W
+      Company
+      Interest Rate                         IR      World Currency Option           WC
+      Index Warrant                         IW      Trust                           X
+      Index-Linked Exchangeable Notes       IX      Other                           Y
+      Corporate Backed Trust Security       J       N/A                             Z
+      Contingent Litigation Right/Warrant   L
+      Limited Liability Company             LL
+
+     3.23 Market Tier
+      Description                   Value
+      Nasdaq Global Select Market   Q
+      Nasdaq Global Market          G
+      Nasdaq Capital Market         S
+
+
+
+
+September 2026                                                                           55
+     3.24 Short Sale Threshold Indicator
+      Description                                    Value
+      Issue is restricted under SEC Rule 203(b)(3)   Y
+      Issue is not restricted                        N
+      Threshold Indicator not available              <space>
+
+
+     3.25 Financial Status Indicator
+       Description                                                                 Value
+       Creations and/or Redemptions Suspended for Exchange Traded Product C
+       Deficient: Issuer Failed to Meet NASDAQ Continued Listing Requirements D
+       Delinquent: Issuer Missed Regulatory Filing Deadline                        E
+       Bankrupt: Issuer Has Filed for Bankruptcy                                   Q
+       Normal (Default): Issuer Is NOT Deficient, Delinquent, or Bankrupt.         N
+       Deficient and Bankrupt                                                      G
+       Deficient and Delinquent                                                    H
+       Delinquent and Bankrupt                                                     J
+       Deficient, Delinquent, and Bankrupt                                         K
+     Notes: External Market Data Distributors must provide the Financial Status Indicator field
+     for NASDAQ-listed securities to their customer displays. Once the Financial Status Indicator
+     field is in place, NASDAQ plans to discontinue the use of fifth character symbol suffixes for
+     delinquent or bankrupt issues.
+
+
+     3.26 LULD Price Band Indicator
+      Description                                                  Value
+      Opening Update US market Hours                               A
+      Intra-Day Update US Market Hours                             B
+      Restated Value                                               C
+      Suspended during trading halt or trading pause               D
+      Re-Opening Update US Market Hours                            E
+      Outside price band rule hours                                F
+      Extended Operational Hours (9:00 pm – 4:00 am EST)
+          • Initial / Update Value                                 G
+          • Zeroing Value                                          H
+      None provided                                                <space>
+
+     With the introduction of the new operational hours the UTP SIP will begin to support
+     dissemination of new LULD Price protections covering the new additional operational
+     hours. To aid the industry in identifying this, we have added a new Indicator value.
+
+
+
+
+September 2026                                                                                 56
+     3.27 Market Wide Circuit Breaker Status Level Indicator
+      Description                                                          Value
+      Market Wide Circuit Breaker Decline Level 1 Breached (7% decline)    1
+      Market Wide Circuit Breaker Decline Level 2 Breached (13% decline)   2
+      Market Wide Circuit Breaker Decline Level 3 Breached (20% decline)   3
+
+
+     3.28 BOLO Appendage Indicator
+      Description                                                                      Value
+      No BOLO Change – The UTP participant’s quote does not affect the BOLO.           0
+      Vendors should continue to show the existing BOLO. No appendage is required.
+      No BOLO Can be Calculated – The BOLO cannot be calculated therefore              1
+      vendors should show BOLO fields as blank. No appendage is required.
+      Short Form BOLO Appendage Attached – A new BOLO was generated as a               2
+      result of the UTP participant’s quote update and the new BOLO information is
+      contained in the attached short form appendage.
+      Long Form BOLO Appendage Attached – A new BOLO was generated as a                3
+      result of the UTP participant’s quote update and the new information is
+      contained in the attached long form appendage.
+      MPID Form BOLO Appendage Attached – A new BOLO was generated as a                5
+      result in FINRA ADF participant update and the new information is contained in
+      the attached MPID BOLO appendage.
+
+     3.29 Odd Lot Attachment Type
+      Description                                                                      Value
+      No Odd Lot Price Levels attached – The UTP participant’s quote does not          0
+      contain any odd lot price level(s). No attachment required.
+      Short Form Odd Lot Price Levels attached – The UTP participant’s quote does      2
+      contain odd lot price level(s).
+      Long Form Odd Lot Price Levels attached – The UTP participant’s quote does       3
+      contain odd lot price level(s).
+      MPID Form Odd Lot Price Levels Attached – An update results in requiring         5
+      notification of a FINRA ADF participant update within a price level.
+
+     3.30 Round Lot Size
+         Share Price           Round Lot Size
+         $0 - $250             100
+         $250.01 - $1000       40
+         $1000.01 - $10,000    10
+         $10,000.01 - more     1
+
+     3.31 New Issue Indicator
+         Description                   Value
+         Not an IPO                      0
+         Initial Public Offering (IPO)   1
+         Reserved                        2
+
+
+
+
+September 2026                                                                             57
+     3.32 Minimum Price Increment
+         Description            Value
+         Varies by price          0
+         MPI (0.0001)             1
+         MPI (0.001)              2
+         MPI (0.01) Penny         3
+         MPI (0.05) Nickel        4
+         MPI (0.10) Dime          5
+         MPI (0.25) Quarter       6
+         MPI (0.005) Half Penny   7
+
+     Note: All symbols will have Penny MPI until November 2027, when the new Half Penny MPI
+     is introduced.
+
+     Once the SEC mandate becomes effective (November 1, 2027) it is expected that Nasdaq will
+     assign the stocks with either the penny ($0.01) or half Penny ($0.005) values.
+
+
+     3.33 Exchange Traded Product (ETP) Flag
+         Description       Value
+         Issue Is an ETP      Y
+         Issue not an ETP     N
+         No Value Provided <space>
+
+
+
+
+September 2026                                                                            58
+     4 Revision History
+      Revision Date           Change
+      1.0      10/27/2015     Initial Version
+      1.2      12/24/2015     Include the calculation and dissemination of the market participant
+                              statistical level tracking of High / Low / Last and volume.
+      1.2a       01/19/2016   Minor edits to clean up terminology throughout the document.
+      1.2b       03/03/2016       • Minor edits to text formatting throughout document
+                                  • Corrected allowable values on page 50 to correctly identify
+                                       Issue Sub Types
+                                  • Correct the definition of Trade Condition “M” to read Market
+                                       Center Official Close
+      1.2c       03/18/2016   At the request of Bats we modified their exchange Naming
+                              Convention
+      1.2d       03/28/2016   Corrected field consVolume in the Trade Cancel/Error message (TZ)
+                              to the correct type which is 8 byte long.
+      1.2e       4/12/2016    Corrected sale condition field type from byte to byte[].
+                              Added clarification that the End of Trade Reporting Control
+                              Message (CX) is generated by the SIP prior to final Closing Trade
+                              Summary Report.
+      1.2f       6/8/2016     Added NBBO Quote Condition descriptions.
+                              Corrected AP, AC and AD messages allowed participant in the
+                              message table.
+                              Clarified 611 trade through exempt code.
+      1.3        02/24/2017   Added Auction Collar Message (AE) to section 2.4.1.9
+      1.3a       6/30/2017    Revised the last sale trade reporting eligibility from 90 seconds
+                              down to 10 seconds.
+      1.3b       08/21/2017   Revised Auction Collar Message (AE) to clearly define the allowable
+                              value for Collar Extension Indicator.
+      1.3c       05/07/2018   Revised the documentation to reflect the changes to FINRA Trade
+                              reporting Facilities as detailed in UTP Vendor Alert 2018-06
+      1.4        12/3/2019    Modified 3.1 to reflect corporate name changes for the Market
+                              Center Originator ID’s
+                              Added Pending Market Center Originator ID’s to allow for future use
+                              by new exchanges entering the UTP Plan. To be assigned once
+                              approved by SEC and UTP Plan.
+                              Assigned “L” Originator ID to the Long-Term Stock Exchange
+      1.5        5/5/2020     Assigned “H” Originator ID to MIAX Pearl, LLC
+                              Assigned “U” Originator ID to MEMX LLC
+      1.6        6/21/2021    Updated Section 3.14 Sale Condition:
+                              Revised the existing Sale Condition (Cross Trade “X”), which is
+                              described as a trade transaction resulting from a market center’s
+                              crossing session. Will be redefined to allow for the reporting of any
+                              exchanges Periodic Auctions.
+      1.7        4/14/2023    Updated document to clarify that Alpha fields are alphanumeric and
+                              may contain numeric values 0-9
+                              Modified 2.2.5 to reflect that a QM message may be produced to
+                              support FINRA ADF messaging.
+
+
+
+
+September 2026                                                                      59
+      1.8        4/26/2024    Sale Condition ‘N’ (Next Day Trade) marked as Reserved as input
+                              Participants will transition to a shortened standard settlement
+                              cycle.
+      1.9        5/7/2025     Modified Spec to reflect the Reg NMS rule changes for Round Lot
+                              Transparency.
+                              Introduction of new Round Lot Tier Designations.
+                              Informed change to quote size being in actual shares with the
+                              Round Lot changes, effective November 3, 2025.
+                              Removed Section 4 “Binary and ASCII Protocol Differences”
+                              Renumbered Section 5 to Section 4
+                              Revised the Exchange Name for NYSE Chicago to NYSE Texas
+                              (Originator ID of “M”)
+      1.9a       6/12/2025    Assigned “G” Originator ID to 24X National Exchange LLC
+
+                              Revised 3.14.5 Sale Condition Note 6 to reflect Odd Lot validation
+                              only on Current Day Trades.
+      2.0        March 2024   Created a new supported version of the specification to
+                              accommodate Fractional Share Trade Reporting
+
+                              Once the “Hot Cut” is live this will replace the Binary Version 1.7
+      2.0a       April 2024   Sale Condition ‘N’ (Next Day Trade) marked as Reserved as input
+                              Participants will transition to a shortened standard settlement cycle
+      2.1        May 2025     Modified Spec to reflect the Reg NMS rule changes for Round Lot
+                              Transparency.
+                              Introduction of new Round Lot Tier Designations.
+                              Informed change to quote size being in actual shares with the
+                              Round Lot changes, effective November 3, 2025.
+                              Removed Section 4 “Binary and ASCII Protocol Differences”
+                              Renumbered Section 5 to Section 4
+                              Revised the Exchange Name for NYSE Chicago to NYSE Texas
+                              (Originator ID of “M”)
+      2.1a       6/12/2025    Assigned “G” Originator ID to 24X National Exchange, LLC
+
+                              Revised 3.14.5 Sale Condition Note 6 to reflect Odd Lot validation
+                              only on Current Day Trades.
+      3.0        8/7/2025     Revised Numbering throughout to reflect the addition of new Odd
+                              Lot Processing
+
+                              Updated the document to include the Odd Lot release details
+                              throughout this specification. Release is scheduled for April 27,
+                              2026.
+      3.0a       11/3/2025    Section 2.2.8 added the allowable values for SIDE.
+                              B = Bid Side
+                              A = Ask Side
+      3.0b       1/30/2026    Assigned “F” Originator ID to Texas Stock Exchange, LLC (TXSE)
+
+
+
+September 2026                                                                      60
+      3.0c       2/13/2026   Revised the Exchange Name for Nasdaq BX to Nasdaq Texas, LLC
+                             (Originator ID of “B”)
+      4.0        6/8/2026    Modified Spec to introduce a new Enhanced Symbol Directory
+                             Message (Category A – Type F) supporting future releases.
+
+                             Added Release enhancement in support of SEC MPI Tick Rule
+                             changes.
+
+                             Added Release enhancements to support move to a 23/5
+                             operational hours.
+
+                             Added Sections 3.33 – 3.35 to reflect new field values within the
+                             Enhanced Symbol Directory Message.
+
+                             Added a new allowable value within Section 3.28 “LULD Price Band
+                             Indicator”.
+      4.0a       7/8/2026    Added release date enhancement in support of SEC MPI Tick Rule
+                             changes.
+
+
+      4.1        9/1/2026    Revised the Closing Trade Summary Report Message (AU)- “Trading
+                             Action Code” name to Trading Action/State Indicator.
+
+                             Deleted the original/outdated Trading Action/State Indicator due to
+                             Enhanced Symbol Directory implementation:
+
+
+
+
+                             Updated the header for the below:
+
+
+
+
+September 2026                                                                     61
+

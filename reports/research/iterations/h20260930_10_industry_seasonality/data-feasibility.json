@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260930_10_industry_seasonality_historical_evaluation_authorization",
+  "iter_id": "h20260930_10_industry_seasonality",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 6,
+    "evaluation_authorized_count": 6,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 6,
+    "rows": [
+      {
+        "candidate_id": "I_K2_Y1",
+        "path": "industry_seasonality_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "cacca57f20695f06a6022e1f7f0eeb61dfc9fe036a675ff20c842f88811f81d0"
+      },
+      {
+        "candidate_id": "I_K3_Y1",
+        "path": "industry_seasonality_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "7b093ae999655c969aafcd32726c22ac70d11cfdb31f0af0308173bcf592f14f"
+      },
+      {
+        "candidate_id": "I_K5_Y1",
+        "path": "industry_seasonality_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "e320dabefbea618881692ba162dd44860db4e5d78921ccf875e3cf1bb5f29f18"
+      },
+      {
+        "candidate_id": "I_K2_Y5",
+        "path": "industry_seasonality_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "53066748d4dd4712be507964181657d2166272ff4fa70e21d17b2c47ec10c1b9"
+      },
+      {
+        "candidate_id": "I_K3_Y5",
+        "path": "industry_seasonality_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "e17e8efbf1b800d691b7e79fc73978625f17d51c4a7014610f308ace29225389"
+      },
+      {
+        "candidate_id": "I_K5_Y5",
+        "path": "industry_seasonality_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "e744334b8186f4a45299f1b4b07b0641e77cda45c1e018e96c82a162dc56d0c5"
+      }
+    ]
+  },
+  "path_gates": {
+    "industry_seasonality_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "I_K2_Y1",
+        "I_K3_Y1",
+        "I_K5_Y1",
+        "I_K2_Y5",
+        "I_K3_Y5",
+        "I_K5_Y5"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "The 23 industry ETFs plus SHY and BIL are in the local SIP daily archive (coordinator check in hypotheses.md: all have 2,700 sessions 2016-01-04 to 2026-09-29). No new capability or vendor is needed; the panel loader, cost/fill convention and calendar helpers are the unchanged screen_lane / h20260928_05_batch2 ones; the rule function is imported from h20260928_20_recent_opt unchanged."
+    }
+  },
+  "data_gaps_noted_not_fetched": {},
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260930_10_industry_seasonality/cost-contract.json",
+      "sha256": "fa3e08bf86d5337c92067bb8552fc5268d954af0f59003fa48e3dad93088015f"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260930_10_industry_seasonality.jsonl",
+      "sha256": "6dc367cf58bf6b787498163402b6ff6460f702038735a7556ed6f62f794b214f"
+    },
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "sha256": "e6f71d628c98b98ed70b27b5fab1abb045f75bdfeafb5d31319ee18d4f28ff7f"
+    }
+  }
+}

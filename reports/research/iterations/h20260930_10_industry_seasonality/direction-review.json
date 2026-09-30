@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260930_10_industry_seasonality",
+  "reviewed_at": "2026-09-30T04:15:00+00:00",
+  "decision": "proceed",
+  "objective": "Test whether the front-running sector-seasonality rule that drives the C2 sleeve's 2026 return (S0: top-2 of 9 sector SPDRs, score = the same calendar month one month later last year, long-only, month-end signal, next-open fill) also works on a wider set of 23 industry ETFs, and if so whether an industry leg adds Sharpe to C2 (50/50 EOM reversal + S0) beyond a vol-matched C2. Parent direction dir:front_running_sector_seasonality; new direction dir:front_running_industry_etf_seasonality (plan A1). Six preregistered cells: top_n in {2,3,5} x avg_years in {1,5}, universe frozen at 23 ETFs, rule code unchanged.",
+  "target_regime_and_horizon": "Recent-window question, same frozen screen_lane windows as the parent: select 2023-09-18..2025-12-31, anchor 2024-01-08..2026-09-17 (screen_lane WINDOWS; hypotheses.md writes the data end 2026-09-29, also reported), holdout 2026-01-02..2026-09-17 (contaminated, reference only), stress 2016-05-02..2023-09-15. No claim of long-run persistence: S0 itself passes anchor (1.40) but not stress (0.45); the extension is judged by a two-stage rule (hypotheses.md) that only asks for recent strength beating a random-shift placebo and a C2 combination increment on both windows. Failure signals: placebo beat fraction > 10%, 20bp anchor CAGR <= 0, or increment < +0.05 on either window.",
+  "existing_solution_comparison": "oc research directions check (industry ETF seasonality; front running sector seasonality) shows dir:front_running_sector_seasonality partial (S0 watch_recent, batch-2 and h20260928_20 found no variant replacing it) and dir:narrow_industry_etf_momentum_rotation / giants_sweep industry SMA trend refuted -- those are momentum/trend on industry ETFs, not seasonality. No registry row covers same-month front-running seasonality on industry ETFs. Published record: Keloharju-Linnainmaa-Nyberg 17 FF industries same-month long-short 0.70%/month (t 3.79), 1963-2011 (opened, AQR PDF lines 613-616, 1995); Quantpedia top-2 front-running on 9 SPDRs; no ready-made product tracks the industry-ETF version, so only local data adaptation, costs and current validity are missing.",
+  "negative_experiments_checked": "(1) Allocate Smartly extended test of the country-ETF front-running version found it inconsistent before the author sample and stopped tracking it (opened). (2) S0 itself: stress Sharpe 0.45 < 0.65 (H-20260928-05 batch 2), 9 variants in h20260928_20 none replaced it, family DSR 0.77. (3) giants_sweep_20260922: 0/24 published SMA/trend rules on industry ETFs cleared the frozen gates (different mechanism, but same universe class). (4) KLN itself reports the un-shifted same-month sort; the shift-1 front-running variant has no published industry-level test.",
+  "remaining_evidence_gap": "Whether the same shift-1 top-N rule keeps its edge on 23 less-liquid industry ETFs after 10bp/side (and 20bp) costs, whether it beats a random-shift placebo (shift drawn from 2..9 each holding month, seeds 1-20, beat fraction <= 10%), and whether it adds Sharpe to C2 on both the anchor and stress windows.",
+  "cost_and_execution_assumptions": "Frozen screen_lane contract: signal at month-end close, fill at next session open, sum(|delta weight|) x 10bp per side (20bp stress), remainder in SHY, long-only, ETFs only. Industry ETFs (PBW, PEJ, PBJ, XPH, IAI...) are thinner than sector SPDRs, so 10bp may understate real spread; 20bp result is reported and required > 0. No short leg, no borrow.",
+  "stop_condition": "Stage 1 fails if no cell has anchor 10bp Sharpe >= 1.19 AND 20bp anchor CAGR > 0 AND placebo beat fraction <= 10% -> A1 refuted; stage 2 fails if no stage-1 cell adds >= +0.05 Sharpe to C2 vs the vol-matched C2 on both anchor and stress -> industry leg duplicates C2, A1 closed. Nothing is added, changed or re-run after seeing results.",
+  "queries": [
+    {
+      "query": "oc research directions check industry ETF seasonality front running",
+      "opened_urls": [
+        "https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/"
+      ],
+      "searched_at": "2026-09-30T04:10:00+00:00"
+    },
+    {
+      "query": "Keloharju Linnainmaa Nyberg common factors in return seasonalities industry same-calendar-month",
+      "opened_urls": [
+        "https://www.aqr.com/-/media/AQR/Documents/News/2015/AllSeasons20141219pdf.pdf"
+      ],
+      "searched_at": "2026-09-30T04:12:00+00:00"
+    },
+    {
+      "query": "front-running seasonality extended test country ETFs Allocate Smartly",
+      "opened_urls": [
+        "https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/"
+      ],
+      "searched_at": "2026-09-30T04:13:30+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.aqr.com/-/media/AQR/Documents/News/2015/AllSeasons20141219pdf.pdf",
+      "claim_id": "kln2014_common_factors_return_seasonalities_industry",
+      "claim": "Keloharju, Linnainmaa and Nyberg ('Common Factors in Return Seasonalities', AQR-hosted December 2014 working-paper version of the Journal of Finance article) sort 17 Fama-French industry portfolios by their average return in the same calendar month over the prior 20 years and trade the top two and bottom two portfolios long-short; over January 1963-December 2011 the industry same-month strategy earns 0.70% per month (t-value = 3.79), and 0.59% (t = 3.11) excluding January, while the other-month sort earns -0.81% (t = -4.32). This is the un-shifted same-calendar-month sort (shift 0); the paper does not test a one-month front-running shift, ETFs, or costs.",
+      "quote": "industry strategy earns 0.70% (t-value = 3.79)",
+      "source_type": "paper",
+      "published_or_updated_at": "2014-12-19",
+      "market_and_period": "17 Fama-French US industry portfolios (value-weighted), monthly, January 1963-December 2011; same-month sort over the prior 20 years, long top 2 / short bottom 2.",
+      "applicability": "Primary support that same-calendar-month return seasonality exists at industry level (the mechanism the front-running rule leans on): I_K2_Y5 mirrors the top-2 sort with a 5-year (not 20-year) average. Supports the long leg only indirectly, since the paper reports a long-short spread and this lane is long-only (short bottom-2 not traded).",
+      "limitations": "1963-2011 gross portfolio returns, no transaction costs; 20-year averaging vs. at most 5 years of ETF history here (data start 2016-01); shift 0, not the shift-1 front-running variant; industries are Fama-French portfolios, not investable ETFs; the effect may have decayed after publication (2014 working paper).",
+      "independent_replication": "Journal of Finance 2016 version of the same paper (peer-reviewed); Heston and Sadka (2008) report seasonalities largely independent of industry effects, per the paper own footnote. No independent ETF-level replication found.",
+      "fetched_at": "2026-09-30T04:13:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260930_10_industry_seasonality/sources/aqr-allseasons-2014-extracted.txt",
+      "sha256": "4a016fd2bbefb4d4004fd010c1a0fefcb7b75f51466d0025a784fd6a84912a54",
+      "source_card_path": "reports/harness/source_cards/h20260930_10_industry_seasonality.jsonl"
+    },
+    {
+      "url": "https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/",
+      "claim_id": "quantpedia_front_running_sector_seasonality_industry_extension",
+      "claim": "Quantpedia's 'Front-Running Seasonality in US Stock Sectors' page (9 Select Sector SPDRs XLB/XLE/XLF/XLI/XLK/XLP/XLU/XLV/XLY, Nov 2000-Nov 2023 backtest with data through Sep 2024) tests holding 1 through 7 ETFs long-only, monthly rebalance, and reports holding TWO ETFs in long positions is the best-performing cut of the 'front-running' variant (score-window shifted forward by one month vs. the naive 'true seasonality' baseline, which is 'at best, comparable to those of the benchmark'). Short positions were tested but found ineffective and dropped. The page does NOT test finer industry ETFs, multi-year score averaging, or a wider universe.",
+      "quote": "holding two ETFs in long positions",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2024-09-05",
+      "market_and_period": "9 Select Sector SPDR ETFs, Nov 2000-Nov 2023 backtest window, data through Sep 5 2024.",
+      "applicability": "Parent rule for this iteration: the front-running (shift 1) top-N long-only sort is reused verbatim (make_sector_seasonality_fn) and only the universe is widened from 9 sector SPDRs to 23 industry ETFs; top-N grid {2,3,5} and avg_years {1,5} are the preregistered extension.",
+      "limitations": "Quantpedia numeric tables are chart images, not machine-readable; sector SPDRs, not industry ETFs; author flags the strategy seasonality chart as possibly coincidental; no transaction-cost detail in text.",
+      "independent_replication": "Allocate Smartly tested the country-ETF version and did not find it consistently effective over a longer horizon (source card below); no independent replication of the sector or industry-ETF version.",
+      "fetched_at": "2026-09-28T05:21:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260930_10_industry_seasonality/sources/quantpedia-front-running-sector-seasonality.html",
+      "sha256": "d85cd4a27278033490e41969911ed085b01451ac444f46db51044761ff12435e",
+      "source_card_path": "reports/harness/source_cards/h20260930_10_industry_seasonality.jsonl"
+    },
+    {
+      "url": "https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/",
+      "claim_id": "allocatesmartly_country_etf_front_running_extended_test_industry_ctx",
+      "claim": "Allocate Smartly independently extended Quantpedia's front-running seasonality mechanism (applied to 23 country ETFs / MSCI country indices, not US sectors) back to 1971 using ~30+ additional years of MSCI index data beyond the original author's sample, and found the strategy 'would not have been consistently effective over the long-term' in that extended pre-sample period; they explicitly state they 'will not be tracking this strategy on an ongoing basis' as a result, despite the in-sample cut reporting a Sharpe of 0.46 vs. a 0.38 benchmark (CAGR 13.2% vs 11.2%, max drawdown -59.1%).",
+      "quote": "we will not be tracking this strategy on an ongoing basis",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2023-01-01",
+      "market_and_period": "23 country ETFs / MSCI country indices, extended sample back to 1971.",
+      "applicability": "Negative evidence for the whole front-running-seasonality family, closest independent replication attempt found; motivates the two-stage decision (placebo beat fraction and the C2 combination gates) rather than accepting a good recent Sharpe alone.",
+      "limitations": "Country ETFs and MSCI index data, not US industry ETFs; different sample; the -59.1% max drawdown is a caution regardless.",
+      "independent_replication": "None found beyond this single Allocate Smartly test.",
+      "fetched_at": "2026-09-28T05:31:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260930_10_industry_seasonality/sources/allocatesmartly-front-running-country-etf-extended-test.html",
+      "sha256": "def81d34372b00cb4b0a230dd5c337efa9469a6e06b1f125b590ee00aab768a5",
+      "source_card_path": "reports/harness/source_cards/h20260930_10_industry_seasonality.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run scripts/screen_batch.py once on the 6 preregistered cells (Alpaca SIP daily panel, 23 industry ETFs + SHY/BIL), then 20 random-shift placebo seeds per cell and the C2-combination increment via scripts/run_h20260930_10_placebo_and_c2_combo.py; judge mechanically against the two-stage rule in hypotheses.md.",
+    "pass_condition": "Stage 1: some cell with anchor 10bp Sharpe >= 1.19, 20bp anchor CAGR > 0 and placebo beat fraction <= 10%; stage 2: that cell adds >= +0.05 Sharpe to C2 vs vol-matched C2 on both anchor and stress windows.",
+    "falsification_condition": "No cell satisfies stage 1 -> A1 refuted; or no stage-1 cell satisfies stage 2 -> industry leg duplicates C2 and A1 closes. No retry with new universe, grid or shift set.",
+    "max_compute_minutes": 60
+  }
+}

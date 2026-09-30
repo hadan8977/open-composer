@@ -1,0 +1,427 @@
+{
+  "iter_id": "h20260930_10_industry_seasonality",
+  "generated_at": "2026-09-30T04:25:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "industry_etf_seasonality_h20260930_10",
+  "objective": "Preregister 6 grid cells (top_n 2/3/5 x avg_years 1/5) of the front-running seasonality rule on a frozen 23-ETF industry universe, judged by the two-stage rule below. No return is computed by this manifest.",
+  "candidate_count": 6,
+  "candidates": [
+    {
+      "candidate_id": "I_K2_Y1",
+      "path": "industry_seasonality_screen",
+      "role": "grid_cell",
+      "method": "front_running_sector_seasonality_industry_etf_universe",
+      "ablation": "universe_23_industry_etfs_top_n_and_avg_years_only",
+      "spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_industry_etf_panel",
+      "feature_contract": "feature_v1_industry_front_running_score",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_industry_vs_s0_and_c2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XBI",
+          "IBB",
+          "XPH",
+          "IHI",
+          "IHF",
+          "SMH",
+          "IGV",
+          "FDN",
+          "SKYY",
+          "XTL",
+          "KRE",
+          "KIE",
+          "IAI",
+          "XOP",
+          "OIH",
+          "XME",
+          "ITA",
+          "IYT",
+          "ITB",
+          "XRT",
+          "PBJ",
+          "PEJ",
+          "PBW"
+        ],
+        "top_n": 2,
+        "shift": 1,
+        "avg_years": 1,
+        "signal_dates": "month_end_signal_dates (h20260928_05_batch2, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_industry_extension",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "I_K3_Y1",
+      "path": "industry_seasonality_screen",
+      "role": "grid_cell",
+      "method": "front_running_sector_seasonality_industry_etf_universe",
+      "ablation": "universe_23_industry_etfs_top_n_and_avg_years_only",
+      "spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_industry_etf_panel",
+      "feature_contract": "feature_v1_industry_front_running_score",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_industry_vs_s0_and_c2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XBI",
+          "IBB",
+          "XPH",
+          "IHI",
+          "IHF",
+          "SMH",
+          "IGV",
+          "FDN",
+          "SKYY",
+          "XTL",
+          "KRE",
+          "KIE",
+          "IAI",
+          "XOP",
+          "OIH",
+          "XME",
+          "ITA",
+          "IYT",
+          "ITB",
+          "XRT",
+          "PBJ",
+          "PEJ",
+          "PBW"
+        ],
+        "top_n": 3,
+        "shift": 1,
+        "avg_years": 1,
+        "signal_dates": "month_end_signal_dates (h20260928_05_batch2, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_industry_extension",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "I_K5_Y1",
+      "path": "industry_seasonality_screen",
+      "role": "grid_cell",
+      "method": "front_running_sector_seasonality_industry_etf_universe",
+      "ablation": "universe_23_industry_etfs_top_n_and_avg_years_only",
+      "spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_industry_etf_panel",
+      "feature_contract": "feature_v1_industry_front_running_score",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_industry_vs_s0_and_c2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XBI",
+          "IBB",
+          "XPH",
+          "IHI",
+          "IHF",
+          "SMH",
+          "IGV",
+          "FDN",
+          "SKYY",
+          "XTL",
+          "KRE",
+          "KIE",
+          "IAI",
+          "XOP",
+          "OIH",
+          "XME",
+          "ITA",
+          "IYT",
+          "ITB",
+          "XRT",
+          "PBJ",
+          "PEJ",
+          "PBW"
+        ],
+        "top_n": 5,
+        "shift": 1,
+        "avg_years": 1,
+        "signal_dates": "month_end_signal_dates (h20260928_05_batch2, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_industry_extension",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "I_K2_Y5",
+      "path": "industry_seasonality_screen",
+      "role": "grid_cell",
+      "method": "front_running_sector_seasonality_industry_etf_universe",
+      "ablation": "universe_23_industry_etfs_top_n_and_avg_years_only",
+      "spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_industry_etf_panel",
+      "feature_contract": "feature_v1_industry_front_running_score",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_industry_vs_s0_and_c2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XBI",
+          "IBB",
+          "XPH",
+          "IHI",
+          "IHF",
+          "SMH",
+          "IGV",
+          "FDN",
+          "SKYY",
+          "XTL",
+          "KRE",
+          "KIE",
+          "IAI",
+          "XOP",
+          "OIH",
+          "XME",
+          "ITA",
+          "IYT",
+          "ITB",
+          "XRT",
+          "PBJ",
+          "PEJ",
+          "PBW"
+        ],
+        "top_n": 2,
+        "shift": 1,
+        "avg_years": 5,
+        "signal_dates": "month_end_signal_dates (h20260928_05_batch2, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_industry_extension",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "I_K3_Y5",
+      "path": "industry_seasonality_screen",
+      "role": "grid_cell",
+      "method": "front_running_sector_seasonality_industry_etf_universe",
+      "ablation": "universe_23_industry_etfs_top_n_and_avg_years_only",
+      "spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_industry_etf_panel",
+      "feature_contract": "feature_v1_industry_front_running_score",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_industry_vs_s0_and_c2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XBI",
+          "IBB",
+          "XPH",
+          "IHI",
+          "IHF",
+          "SMH",
+          "IGV",
+          "FDN",
+          "SKYY",
+          "XTL",
+          "KRE",
+          "KIE",
+          "IAI",
+          "XOP",
+          "OIH",
+          "XME",
+          "ITA",
+          "IYT",
+          "ITB",
+          "XRT",
+          "PBJ",
+          "PEJ",
+          "PBW"
+        ],
+        "top_n": 3,
+        "shift": 1,
+        "avg_years": 5,
+        "signal_dates": "month_end_signal_dates (h20260928_05_batch2, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_industry_extension",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "I_K5_Y5",
+      "path": "industry_seasonality_screen",
+      "role": "grid_cell",
+      "method": "front_running_sector_seasonality_industry_etf_universe",
+      "ablation": "universe_23_industry_etfs_top_n_and_avg_years_only",
+      "spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_industry_etf_panel",
+      "feature_contract": "feature_v1_industry_front_running_score",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_industry_vs_s0_and_c2",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XBI",
+          "IBB",
+          "XPH",
+          "IHI",
+          "IHF",
+          "SMH",
+          "IGV",
+          "FDN",
+          "SKYY",
+          "XTL",
+          "KRE",
+          "KIE",
+          "IAI",
+          "XOP",
+          "OIH",
+          "XME",
+          "ITA",
+          "IYT",
+          "ITB",
+          "XRT",
+          "PBJ",
+          "PEJ",
+          "PBW"
+        ],
+        "top_n": 5,
+        "shift": 1,
+        "avg_years": 5,
+        "signal_dates": "month_end_signal_dates (h20260928_05_batch2, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_industry_extension",
+        "source_directly_tested_this_variant": false
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_industry_etf_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "BIL",
+          "FDN",
+          "IAI",
+          "IBB",
+          "IGV",
+          "IHF",
+          "IHI",
+          "ITA",
+          "ITB",
+          "IYT",
+          "KIE",
+          "KRE",
+          "OIH",
+          "PBJ",
+          "PBW",
+          "PEJ",
+          "SHY",
+          "SKYY",
+          "SMH",
+          "XBI",
+          "XME",
+          "XOP",
+          "XPH",
+          "XRT",
+          "XTL"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_industry_front_running_score": {
+        "decision_lag_sessions": 1,
+        "rule": "make_sector_seasonality_fn(universe=23 industry ETFs, top_n, shift=1, avg_years) from scripts/screen_batches/h20260928_20_recent_opt.py, unchanged; score = mean over avg_years prior years of the one-month return of the calendar month one month after the holding month; avg_years=5 uses fewer years before 2021 (missing years skipped)",
+        "no_lookahead": "reads close.loc[:asof] only"
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open, per scripts/run_h20260918_05_recent_menu.py convention"
+      }
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": {
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17"
+        ],
+        "stress": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "offsets": "'D' freq: one version per candidate",
+        "panel_start": "2015-01-02",
+        "anchor_note": "hypotheses.md writes the anchor end as 2026-09-29 (data end); screen_lane WINDOWS end 2026-09-17. Both are reported; the screen_lane window is the stage-1 window."
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_screen_lane": {
+        "contract_path": "reports/research/iterations/h20260930_10_industry_seasonality/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_industry_vs_s0_and_c2": {
+        "members": [
+          "S0_parent_rule",
+          "C2_vol_matched",
+          "S3_incumbent",
+          "random_shift_placebo_seeds_1_20"
+        ],
+        "keep_rule": "two-stage rule in adoption_rule"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml": "ab95059c611e8c9266d8bcaf21d2e1a95fdc064f6a2d6c83308452555033fc2d"
+  },
+  "source_spec_path": "strategy_specs/drafts/industry_etf_seasonality_h20260930_10.yaml",
+  "spec_hash": "ab95059c611e8c9266d8bcaf21d2e1a95fdc064f6a2d6c83308452555033fc2d",
+  "single_mechanism_no_campaign_attestation": true,
+  "g3_not_applicable_reason": "Not applicable: G3 is implemented directly as the random-shift placebo (20 seeds per cell, beat fraction <= 10%) in scripts/run_h20260930_10_placebo_and_c2_combo.py; no G1-G5 threshold is relaxed.",
+  "adoption_rule": {
+    "text": "Two-stage rule (hypotheses.md, frozen before any result; quoted verbatim in substance).\nStage 1 (continue condition): at least one cell meets ALL of: anchor-window (2024-01-08 -> data end) 10bp Sharpe >= 1.19; 20bp anchor-window CAGR > 0; random-shift placebo beat fraction <= 10% (placebo = same top_n/avg_years, per holding month shift drawn independently from {2..9}, seeds 1-20; beat fraction = share of seeds whose anchor 10bp Sharpe >= the real rule's; at most 2 of 20). No cell -> A1 refuted, stop, record which condition failed.\nStage 2 (the real question): for stage-1 cells, combine the cell with C2 by inverse 63-day vol, monthly, and compare Sharpe to a C2 scaled to the same volatility. Increment >= +0.05 on BOTH the anchor and the stress window (2016-05-02 -> 2023-09-15) -> keep (watch_recent or higher), forward shadow tracking; otherwise 'industry leg duplicates C2', close A1. If several cells pass, pick the representative by select-window (2023-09-18 -> 2025-12-31) Sharpe; report the rest.\nAlways reported: K1/K2 versus S3, DSR (n=6 and n=16 with the 10 S-family variants of H-20260928-20), 2026 contaminated window, stress window, daily-return correlation with S0. Not done: changing universe, grid or shift set after results; a pass does not put anything on the paper account.",
+    "universe": [
+      "XBI",
+      "IBB",
+      "XPH",
+      "IHI",
+      "IHF",
+      "SMH",
+      "IGV",
+      "FDN",
+      "SKYY",
+      "XTL",
+      "KRE",
+      "KIE",
+      "IAI",
+      "XOP",
+      "OIH",
+      "XME",
+      "ITA",
+      "IYT",
+      "ITB",
+      "XRT",
+      "PBJ",
+      "PEJ",
+      "PBW"
+    ],
+    "multiple_comparisons": "6 cells in the DSR (n=6); family total 16 with the 10 S-family variants of H-20260928-20"
+  }
+}

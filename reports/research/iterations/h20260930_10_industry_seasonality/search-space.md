@@ -1,0 +1,3 @@
+# Search Space: h20260930_10_industry_seasonality
+
+One path, six preregistered cells, all computed with `make_sector_seasonality_fn` (shift 1) on a frozen 23-ETF industry universe: top_n in {2, 3, 5} crossed with avg_years in {1, 5}. Month-end signal, next-open fill, 10bp per side primary and 20bp stress, remainder in SHY, long-only. Total candidate budget 6 (limit 24 per path, 80 per round). Benchmarks: S0 (parent 9-sector rule), C2 (vol-matched), S3 incumbent. Random-shift placebo (shift drawn from 2..9 each holding month, seeds 1-20) is a control, not a candidate. No model training, no further variants after results.

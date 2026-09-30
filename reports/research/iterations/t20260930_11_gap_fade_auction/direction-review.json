@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "iter_id": "t20260930_11_gap_fade_auction",
+  "reviewed_at": "2026-09-30T04:18:20Z",
+  "decision": "proceed",
+  "objective": "T-20260930-11 (corridor C1): registry direction dir:cross_sectional_gap_fade (refuted at T-20260929-32 after per-stock costs of 18-28 bp per side). Measure, for the >=$20M dollar-volume tiers, the gross edge of the same gap-fade picks on official opening and closing auction prices: E_off = E_bar + mean paired difference Delta, Delta = r_off - r_bar from a 400-row stratified sample, versus the frozen bar of 8 bp/day per unit position.",
+  "target_regime_and_horizon": "Benchmark window 2024-01-08 to the last day of the local panel; one-day hold (official open in, official close out), long and short legs; stress window 2016-05-02 to 2023-08-31 reported on daily bars only. This is a measurement of a price-definition effect, not a claim about a market regime; a continue verdict would only license a full preregistration, not trading.",
+  "existing_solution_comparison": "Published: Concretum (2026) reports the gap fade at CAGR about 98% / Sharpe 2.08 gross of costs and itself warns that commissions, impact and borrow change the picture; Goyal-Jegadeesh-Wu (JFQA 2026) say closing auctions are the cheapest venue and opening auctions illiquid. Why not enough: no source measures the official auction prices that a gap-fade book would actually trade at, per stock, against the daily-bar open/close that our backtests use; the parent T-32 cost model is estimated from close/high/low (Abdi-Ranaldo), a proxy that an auction-priced execution might bypass. Reuse: T-32 picks, price hygiene and easy-to-borrow proxy are imported, not rebuilt.",
+  "remaining_evidence_gap": "Whether daily-bar open equals the official opening auction price (Alpaca daily bars are built from trades with conditions that exclude Q and M prints, so the first eligible trade defines the bar open) and whether the paired difference moves the gross edge above the 8 bp bar in the >=$20M tiers. Not measured here: opening-auction price impact of our own orders (Goyal-Jegadeesh-Wu stress tier), borrow, fees, and Alpaca paper opening-auction fill reliability (45 of 50 orders expired on 2026-09-15).",
+  "negative_experiments_checked": "oc research directions check gap fade (2026-09-30): dir:cross_sectional_gap_fade refuted at T-20260929-32 (gross short-leg edge +11.5 bp/day, Sharpe 1.33, placebo 100% lost to the real book; realistic 2x-per-side cost plus borrow -38.5 bp/day; K1 and K2 reject in all 8 cells, including the >$100M tier). Its reopen_if names exactly an execution path with materially lower effective spread than the Abdi-Ranaldo estimate, which is what auction prices would test; dir:overnight_intraday_gap_retail_pwb refuted (different mechanism: fixed overnight hold); dir:letf_close_rebalancing_flow_reversal refuted (ETF-level). The T-32 report was read for selection rule, hygiene and tiers.",
+  "cost_and_execution_assumptions": "This step charges no costs: it measures gross edge on official auction prices. Selection and price hygiene follow T-32 (signal z = (open/prev_close - 1)/sigma21; long dv21>=$1M, close>=$5, history>=60 days, 10 lowest z; short dv21>=$5M and dtc percentile<0.90, 10 highest z; sanitize_price_matrices defaults; split-like trigger sessions dropped). Official price rule frozen in hypotheses.md: open = trade with condition Q else O, close = M else 6, from Alpaca historical SIP trades (data.alpaca.markets only). Full-book costs (fees, JFQA opening-auction impact stress, borrow by tier) belong to the follow-up preregistration; Alpaca paper cannot verify the opening leg reliably.",
+  "stop_condition": "Frozen before any official auction price is fetched. Continue to a full preregistration only if E_off_T2T3 >= 8 bp/day per unit position, where E_off = E_bar + mean Delta per tier and leg, pooled over T2 and T3 by row count with the long and short legs equally weighted. Close the intraday single-stock gap-fade line if E_off_T2T3 < 8 bp. A tier whose missing rate exceeds 20% is reported no_conclusion and cannot support continue. No change to tiers, sample sizes, seed, the 8 bp bar or the price rule after seeing results.",
+  "queries": [
+    {
+      "query": "Goyal Jegadeesh Wu price impact in closing auctions opening auctions and continuous markets benchmark cost of trading on anomalies",
+      "opened_urls": [
+        "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846"
+      ],
+      "searched_at": "2026-09-30T04:14:30Z"
+    },
+    {
+      "query": "Alpaca market data trade conditions Q Official Open M Official Close UTP CTA sale condition",
+      "opened_urls": [
+        "https://www.utpplan.com/DOC/UtpBinaryOutputSpec.pdf",
+        "https://docs.alpaca.markets/us/docs/market-data-faq",
+        "https://forum.alpaca.markets/t/open-close-in-historical-trades/8089"
+      ],
+      "searched_at": "2026-09-30T04:14:50Z"
+    },
+    {
+      "query": "Lou Polk Skouras tug of war overnight versus intraday expected returns",
+      "opened_urls": [
+        "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf"
+      ],
+      "searched_at": "2026-09-30T04:15:40Z"
+    },
+    {
+      "query": "Abdi Ranaldo simple estimation of bid-ask spreads from daily close high low prices",
+      "opened_urls": [
+        "https://ux-tauri.unisg.ch/RePEc/usg/sfwpfi/WPF-1604.pdf"
+      ],
+      "searched_at": "2026-09-30T04:15:45Z"
+    },
+    {
+      "query": "Nagel Evaporating Liquidity short-term reversal returns liquidity provision",
+      "opened_urls": [
+        "https://www.nber.org/system/files/working_papers/w17653/w17653.pdf"
+      ],
+      "searched_at": "2026-09-30T04:15:50Z"
+    },
+    {
+      "query": "Concretum Identifying Stocks to Fade overnight gap intraday reversal",
+      "opened_urls": [
+        "https://concretumgroup.substack.com/p/identifying-stocks-to-fade"
+      ],
+      "searched_at": "2026-09-30T04:14:40Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.cambridge.org/core/journals/journal-of-financial-and-quantitative-analysis/article/price-impact-in-closing-auctions-opening-auctions-and-continuous-markets-a-benchmark-for-cost-of-trading-on-anomalies/0F72910A79C5B42CF6E85F55164CE846",
+      "published_or_updated_at": "2026-03-05",
+      "source_type": "paper",
+      "claim_id": "gjw_jfqa_2026_auction_price_impact",
+      "claim": "Goyal, Jegadeesh and Wu (JFQA 2026, NYSE and Nasdaq 2012-2021): closing auctions carry about 10% of daily volume and have lower price impact than the continuous market for all stocks except Nasdaq microcaps; opening auctions are illiquid (opening auction volume is 5%-10% of closing auction volume, under 1.5% of ADV after 2015) and carry the largest price impact; long/short anomaly portfolios cost 17-41 bp per year, 9-21 bp excluding microcaps in closing auctions.",
+      "market_and_period": "NYSE and Nasdaq stocks, 2012-2021, TAQ plus exchange auction files",
+      "applicability": "Frames the second cost item (opening-auction impact) that this step does not measure and that the full preregistration must stress; supports entering at the open only in small size or by limit orders.",
+      "limitations": "Costs are annualized for low-turnover anomaly portfolios, not a daily-turnover book; price impact is measured for institutional-size orders, not the effect of the auction price vs daily-bar open, which is what this step measures.",
+      "independent_replication": "Working-paper version SSRN 4300417 (2022); no independent replication found.",
+      "fetched_at": "2026-09-30T04:15:19Z",
+      "sha256": "e66d44c69ad5bb4502c0c9e2aea36da275340c9da53aae9bd7b1c11b39c83e93",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/gjw_jfqa.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_11_gap_fade_auction.jsonl"
+    },
+    {
+      "url": "https://www.utpplan.com/DOC/UtpBinaryOutputSpec.pdf",
+      "published_or_updated_at": "2026-09-01",
+      "source_type": "exchange_official_docs",
+      "claim_id": "utp_spec_condition_codes_q_m_o_6",
+      "claim": "UTP Plan specification (Sept 2026 edition) sale-condition table: Q = Market Center Official Open, O = Opening Prints, M = Market Center Official Close, 6 = Closing Prints; direct data recipients should use the Q value as the official market center opening value.",
+      "market_and_period": "Nasdaq-listed (tape C) UTDF feed, current specification",
+      "applicability": "Fixes the official-price rule: official open = trade with condition Q, else O; official close = M, else 6.",
+      "limitations": "Nasdaq (UTP) specification; the CTA equivalent for NYSE and NYSE American tapes A and B uses the same letters but is a separate document not fetched here; the check5 step verifies the codes against real trades.",
+      "independent_replication": "Primary source, no replication needed.",
+      "fetched_at": "2026-09-30T04:15:23Z",
+      "sha256": "204528614949e72abc1a275de65fcef447433c0f24c30dcb9f8a01637f34f5a4",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/utp_spec.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_11_gap_fade_auction.jsonl"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/docs/market-data-faq",
+      "published_or_updated_at": "2025-12-01",
+      "source_type": "broker_official_docs",
+      "claim_id": "alpaca_market_data_faq_condition_rules",
+      "claim": "Alpaca Market Data FAQ: the rules that decide which trades update a bar depend on tape (A, B NYSE; C Nasdaq; O OTC), the trade conditions and the bar type; a trade can have more than one condition and the strictest rule applies; the table lists per-condition whether open/close, high/low and volume are updated.",
+      "market_and_period": "Alpaca Market Data API, SIP feed, current documentation",
+      "applicability": "Tells us the daily-bar open and close are built from a rule set that can exclude Q and M prints, so official auction prices can differ from the daily-bar open/close, which is the paired difference measured here.",
+      "limitations": "The FAQ is a rendered web page; the exact per-condition table is read from the page text; there is no versioned date on the page, the published date recorded is the fetch-time year.",
+      "independent_replication": "Primary source.",
+      "fetched_at": "2026-09-30T04:15:22Z",
+      "sha256": "4169df9f2ed9f8268fc275ce6e0e443cbc0f2819d5a062bda73601972e5ca04a",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/alpaca_market_data_faq.html",
+      "source_card_path": "reports/harness/source_cards/t20260930_11_gap_fade_auction.jsonl"
+    },
+    {
+      "url": "https://personal.lse.ac.uk/polk/research/TugOfWar.pdf",
+      "published_or_updated_at": "2019-04-25",
+      "source_type": "paper",
+      "claim_id": "lou_polk_skouras_2019_overnight_intraday",
+      "claim": "Lou, Polk and Skouras (JFE 2019): for 14 trading strategies, profits are earned entirely overnight (reversal and a variety of momentum strategies) or entirely intraday, typically with profits of opposite signs across the two components.",
+      "market_and_period": "US stocks, CRSP, decades of daily open/close data",
+      "applicability": "Confirms that split of returns between close-to-open and open-to-close is a stable feature; the gap-fade signal trades the intraday leg after the overnight gap.",
+      "limitations": "Uses first-print or official open depending on the data set and no transaction costs; not a tradability study.",
+      "independent_replication": "Subsequent literature (Akbas et al. 2022, cited by Concretum) reports similar patterns.",
+      "fetched_at": "2026-09-30T04:15:57Z",
+      "sha256": "15d25eb9fe47b6a20375f5dfdba1062fe402e65caa6d07afa785cfb7e9dd1c42",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/lps.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_11_gap_fade_auction.jsonl"
+    },
+    {
+      "url": "https://ux-tauri.unisg.ch/RePEc/usg/sfwpfi/WPF-1604.pdf",
+      "published_or_updated_at": "2017-12-01",
+      "source_type": "paper",
+      "claim_id": "abdi_ranaldo_2017_close_high_low_spread",
+      "claim": "Abdi and Ranaldo (RFS 2017): a bid-ask spread estimator from daily close, high and low prices gives the highest cross-sectional and average time-series correlations with the TAQ effective spread when quote data are unavailable, and the most accurate estimates for less liquid stocks.",
+      "market_and_period": "US stocks, TAQ effective spread benchmark, 1993-2012",
+      "applicability": "Justifies the parent experiment T-32 per-stock spread cost that this step tries to bypass with auction prices.",
+      "limitations": "Estimator accuracy is highest for monthly averages, noisy for single stock-days.",
+      "independent_replication": "Widely reimplemented (bidask R package).",
+      "fetched_at": "2026-09-30T04:15:59Z",
+      "sha256": "f2750cbdd980b722ee5b4bc0fdfa3a66594cb9482e569b84ba39b2c18012a713",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/abdi_ranaldo.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_11_gap_fade_auction.jsonl"
+    },
+    {
+      "url": "https://www.nber.org/system/files/working_papers/w17653/w17653.pdf",
+      "published_or_updated_at": "2011-12-01",
+      "source_type": "paper",
+      "claim_id": "nagel_2012_reversal_liquidity_provision",
+      "claim": "Nagel (RFS 2012, NBER WP 17653): returns of short-term reversal strategies proxy for the returns to liquidity provision; the expected return is strongly time-varying and predictable with the VIX, rising sharply in turmoil.",
+      "market_and_period": "US stocks, 1926-2010",
+      "applicability": "Interprets the gap-fade edge as liquidity provision, which competes with the spread we would have to pay; edge concentrates in high-VIX periods.",
+      "limitations": "Monthly/weekly reversal, not intraday gap fade; paid liquidity means the edge and the cost are linked.",
+      "independent_replication": "Replicated in follow-up papers on reversal and liquidity.",
+      "fetched_at": "2026-09-30T04:16:01Z",
+      "sha256": "cd30318802f225bbf9146f99e55665e581b810bb127a4dbeb5f93a000984fad3",
+      "snapshot_path": "reports/research/iterations/t20260930_11_gap_fade_auction/sources/nagel.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_11_gap_fade_auction.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "scripts/run_t20260930_11_gap_fade_auction.py: picks (rebuild benchmark-window picks, E_bar by tier and leg, 400-row stratified sample under run_capped 1.2G), check5 (hand-check condition codes on 5 rows), fetch (Alpaca historical trades, opening window 09:29-09:45 ET and closing window 15:59-16:10 ET, resumable, 3 requests per second), analyze (paired Delta, bootstrap 90% interval, E_off).",
+    "pass_condition": "E_off_T2T3 >= 8 bp/day per unit position with T2 and T3 missing rates each at most 20%; then the follow-up full preregistration (auction book, JFQA impact stress, borrow by tier) is licensed.",
+    "falsification_condition": "E_off_T2T3 < 8 bp/day: the intraday single-stock gap-fade line is closed and the cause recorded (price definition or thin margin). A tier with missing rate above 20% is no_conclusion, not a pass.",
+    "max_compute_minutes": 60
+  }
+}

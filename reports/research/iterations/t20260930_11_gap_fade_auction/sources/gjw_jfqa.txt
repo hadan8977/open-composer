@@ -1,0 +1,2465 @@
+                                                                                                            https://doi.org/10.1017/S0022109026102592
+JOURNAL OF FINANCIAL AND QUANTITATIVE ANALYSIS
+© The Author(s), 2026. Published by Cambridge University Press on behalf of the Michael G. Foster
+School of Business, University of Washington. This is an Open Access article, distributed under the terms
+of the Creative Commons Attribution licence (http://creativecommons.org/licenses/by/4.0), which permits
+unrestricted re-use, distribution and reproduction, provided the original article is properly cited.
+doi:10.1017/S0022109026102592
+
+
+Price Impact in Closing Auctions, Opening
+Auctions, and Continuous Markets:
+A Benchmark for Cost of Trading on Anomalies
+
+Amit Goyal
+University of Lausanne Swiss Finance Institute
+amit.goyal@unil.ch
+
+Narasimhan Jegadeesh
+Emory University Goizueta Business School
+jegadeesh@emory.edu (corresponding author)
+
+Yanbin Wu
+University of Florida Warrington College of Business
+yanbin.wu@warrington.ufl.edu
+
+
+
+
+Abstract
+Closing auctions account for about 10% of daily trading volume and offer a potentially
+attractive alternative to trading in the continuous market. We find that the price impact is
+lower in closing auctions than in the continuous market for all stocks except Nasdaq micro-
+caps. Opening auctions are illiquid. We compute trading costs for anomalies based strategies
+by strategically placing orders in the lower cost mechanism. The annualized trading costs for
+long/short portfolios based on financial ratios such as profitability and investment range from
+17 to 41 basis points (bps). Excluding microcaps, these costs fall to 9–21 bps in closing
+auctions.
+
+
+
+
+I.    Introduction
+      The price impact of an order is the extent to which its execution moves market
+prices. It is a measure of market liquidity and a key part of the market microstructure
+literature. Empirical estimates of price impact are also important for assessing
+whether trading strategies derived from numerous anomalies documented in the
+literature are profitable net of trading costs. Examples of earlier papers that examine
+this issue include Chen and Velikov (2023), Korajczyk and Sadka (2004), Novy-
+Marx and Velikov (2016), and Patton and Weller (2020). Practitioners closely track
+the price impacts of their trades because they directly diminish the performance of
+their portfolios. The expected price impact is also a significant factor in a fund
+manager’s trading and portfolio rebalancing decisions.
+
+    We thank Goizueta Business School, Emory University for partial financial support. We thank
+participants at Robeco, Michael Brennan, Clifton Green, Robert Korajcyzk, Mikel Tapia, Sheridan
+Titman, Mihail Velikov, two anonymous referees, and Thierry Foucault (the editor) for their helpful
+comments and suggestions.
+
+
+                                                       1
+                                                                                                              https://doi.org/10.1017/S0022109026102592
+2 Journal of Financial and Quantitative Analysis
+
+      This literature largely focuses on trading in the continuous market. However,
+closing auctions have become increasingly popular over the last few years, and they
+serve as an alternative mechanism for trading. For instance, Jegadeesh and Wu
+(2022) find that closing auction volume accounts for about 10% of the average daily
+volume (ADV) in recent years and document that closing auctions attract unin-
+formed traders.1 Theoretical models show that an increased presence of uninformed
+traders results in a smaller price impact.
+      The opening auction is another trading mechanism, though its trading volume
+is significantly smaller than that in the closing auctions. However, investors who
+trade relatively small quantities and large investors who split orders across multiple
+trading mechanisms could benefit from routing a part of their orders to the opening
+auction, depending on the marginal price impact.
+      While there is extensive literature on trading in the continuous market, rela-
+tively little research exists on trading in closing auctions. This study addresses a few
+key questions: i) What is the price impact of trades in closing and opening auctions
+versus that in the continuous market? ii) How do these impacts vary across stocks
+with different characteristics? iii) What are the implications for trading strategies
+with different turnover rates? We answer these questions and provide the first
+comprehensive comparison of price impacts across these trading mechanisms.
+      We first estimate a price impact model for closing auctions. Previously,
+Jegadeesh and Wu (2022) estimate a price impact model that specifies impact as
+a linear function of order size to compare the liquidity of closing auctions on the
+NYSE versus Nasdaq. However, we find that a model in which price impact is
+related to the square root of order size fits the closing auctions’ data significantly
+better than the linear model and therefore we use the square root model in our
+analyses. We also find that the linear model significantly underestimates the price
+impact in closing auctions. For example, the price impact estimate for a 1% ADV
+order with the linear model in Jegadeesh and Wu (2022) is 2.35 bps whereas it is
+17.7 bps with the square root model. We estimate price impact as a function of stock
+characteristics, which we use to compute trading costs for characteristics based
+trading strategies. We also estimate a similar model for opening auctions.
+      Next, we estimate the price impact for the continuous market. Earlier papers
+that estimate price impact models for continuous markets include Breen, Hodrick,
+and Korajczyk (2002), Glosten and Harris (1988), and Novy-Marx and Velikov
+(2016). The price impact in the continuous market has declined over time, possibly
+because of increased competition across exchanges and decimalization. Because
+one of our objectives is to compare the price impact in auctions versus that in the
+continuous market, we estimate the price impact models for the continuous
+market also over the same recent sample period as for auctions. We estimate a
+square root model for this mechanism as well because it fits the data significantly
+better than a linear model.
+   1
+     Jegadeesh and Wu (2022) use trades driven by ETF mispricing related arbitrage activities as a proxy
+for uninformed trading, given that trade motives are unobservable. These arbitrage activities are driven
+by ETF mispricing rather than firm-specific fundamentals. The authors find that their measures of ETF
+arbitrage activity are significantly related to the closing auction volumes of constituent stocks. Further-
+more, they show that closing auction volume is significantly associated with the creation and redemption
+activities of passive index funds.
+                                                                                                                 https://doi.org/10.1017/S0022109026102592
+                                                                    Goyal, Jegadeesh, and Wu 3
+
+      The practitioner literature (see, e.g., BARRA (1997), Frazzini, Israel, and
+Moskowitz (2018), and Grinold and Kahn (1999)) typically models price impact
+as a function of the square root of order size and estimates the models using real-
+time trades of institutional funds. However, cost estimates based on institutional
+trades are not generalizable to the CRSP universe because the institutional trade
+samples comprised bigger and relatively more liquid stocks than the CRSP uni-
+verse.2 We estimate the price impact model for continuous markets for all
+U.S.-traded stocks with available data.
+      Institutional investors often algorithmically split their large orders and trade
+them in smaller lots to lower the price impact. Frazzini et al. (2018) report the price
+impacts for such algorithmically split orders executed by a large institution. We
+compare the price impact in closing auctions with Frazzini et al. (2018) estimates to
+assess their relative magnitudes. Because Frazzini et al. (2018) sample comprised
+bigger market cap and more liquid stocks, we compare the closing auction price
+impacts of nonmicrocap stocks (defined as stocks with market capitalizations above
+the 20th percentile of NYSE-listed stocks) and find that the price impact is smaller
+in closing auctions.3
+      Finally, we compute a benchmark for the cost of trading on anomalies.
+Because we consider multiple mechanisms, our estimates allow us to compute
+the cost if traders execute their trades in the lowest cost mechanism. We consider
+strategies that use various stock-specific characteristics. The low turnover strategies
+we consider use accounting ratios such as firm size and book-to-market ratios,
+which are rebalanced annually. The medium and high turnover strategies we
+consider are a momentum strategy and 1-month return reversals, which are reba-
+lanced monthly.
+
+
+II.    Closing Auctions
+     The NYSE and Nasdaq determine daily closing prices for stocks listed on
+their respective exchanges through closing auctions. We briefly explain the
+closing auction procedures in both exchanges here; and more detailed descrip-
+tions can be found in Bogousslavsky and Muravyev (2023) and Jegadeesh and
+Wu (2022).
+     Both exchanges open their electronic order books several hours before the
+markets open to accept market-on-close (MOC) and limit-on-close (LOC) orders.4
+During much of our sample period, Nasdaq accepted new MOCs or modifications
+to existing ones until 3:50 PM and LOCs until 3:58 PM. At 4:00 PM, Nasdaq
+algorithmically determines the price that maximizes the number of shares matched
+based on on-close orders and executes the cross at that price, known as the Nasdaq
+
+    2
+      For instance, Chen, Jegadeesh, and Wermers (2000, Table 2) report that the stocks that mutual funds
+most actively trade are roughly in the 70th percentiles of turnover and market cap. Also, Frazzini et al.
+((2018), Table I) report that their institutional trade data set covers 20.9% of the stocks traded in the U.S.
+but they account for 71.8% of the aggregate market cap, indicating its heavy tilt toward bigger stocks.
+    3
+      Over our sample period, nonmicrocap stocks account for 98.6% of the total market cap of all CRSP
+stocks.
+    4
+      Currently, the NYSE accepts on-close orders from 6:30 AM, and Nasdaq from 4:00 AM.
+                                                                                                           https://doi.org/10.1017/S0022109026102592
+4 Journal of Financial and Quantitative Analysis
+
+Official Close Price (NOCP).5 When there is an excess demand from LOCs at the
+NOCP price, Nasdaq uses time priority to allocate shares.
+      Similarly, the NYSE accepted new MOCs or modifications to existing ones
+through its electronic order book until 3:50 PM and LOCs until 3:58 PM. Floor traders
+at the NYSE are allowed to place or modify discretionary client orders until 3:59:50
+PM.6 The NYSE’s designated market makers (DMM) manage its closing auctions
+for their assigned stocks and are tasked with setting closing prices “at a level that
+satisfies all interest that is willing to participate at a price better than the closing
+auction price” (see https://www.nyse.com/article/nyse-closing-auction-insiders-
+guide). When there is an excess demand from LOC orders at the closing price,
+the NYSE uses a parity/priority rule that allows DMMs to override time priority in
+making allocation decisions.
+
+A.       Data and the Sample
+      The exchanges start disseminating closing auction data to their subscribers at
+the same time that they close the electronic order book and continually update the
+data. These data include order imbalances for each stock. The NYSE defines order
+imbalances as “the volume of better-priced buy (sell) shares that cannot be paired
+with both at-priced and better-priced sell (buy) shares at the NYSE Last Sale
+[price].”7 The Nasdaq closing auction data also include similar imbalance infor-
+mation for Nasdaq-listed stocks.
+      We obtain auction data from the NYSE and Nasdaq for stocks listed on their
+exchanges. The data source for the NYSE is https://www.nyse.com/market-data/
+historical/taq-order-imbalances and for Nasdaq is https://www.nasdaq.com/solu
+tions/data/equities/nasdaq-totalview. Our sample comprised common stocks, share
+codes = 10 or 11 on CRSP. We exclude other securities such as preferred shares,
+American Depositary Receipts, closed end funds, warrants, and REITs because one
+of our objectives is to compute the execution costs to trade based on anomalies and
+most of the anomalies are based on samples of common stocks. Our sample period
+is from January 2012 to December 2021. Because one of our goals is to compare the
+price impacts in auctions versus those in continuous markets, our sample comprised
+the intersection of stocks in the auction data set and the intraday microseconds
+Trade and Quote (TAQ) data, which we use for the continuous market.
+      Table 1 reports the summary statistics for all CRSP stocks, CRSP stocks
+listed on the NYSE and Nasdaq, and the stocks in the intersection of TAQ and
+     5
+      See https://www.nasdaqtrader.com/content/productsservices/Trading/ClosingCrossfaq.pdf. Nas-
+daq traders can also place Imbalance Only orders until 3:58 PM, which are similar to limit orders but
+are only executed if they result in price improvement.
+    6
+      See https://www.nyse.com/publicdocs/nyse/markets/nyse/NYSE_Opening_and_Closing_Auctions_
+Fact_Sheet.pdf. The NYSE accepts Closing Offset orders, which are similar to Nasdaq’s imbalance only
+orders, until 3:58 PM.
+    7
+      See https://www.nyse.com/data-insights/nyse-introduces-closing-auction-imbalance-analysis-tool#:
+~:text=Imbala‌nce%3A%20the%20volume%20of%20better,if%20last%20sale%20%3E%20offer%
+20price. The NYSE started disseminating the closing information at 3:45 PM from the beginning of the
+sample period and switched to 3:50 PM on Apr. 1, 2019. Nasdaq disseminated closing information
+starting at 3:50 PM from the beginning of our sample period until switching to 3:55 PM on Oct. 29, 2018,
+and then back to 3:50 PM from Apr. 15, 2019. All times are Eastern Time zone.
+                                                                                                                                       https://doi.org/10.1017/S0022109026102592
+                                                                                  Goyal, Jegadeesh, and Wu 5
+
+
+                                                           TABLE 1
+                                                    Summary Statistics
+
+In Table 1, we present summary statistics for the sample used in the study. We report the average number of stocks, mean size
+decile rank for market capitalization based on NYSE breakpoints, median market capitalization (in millions of dollars), the ratio
+of total market capitalization to market capitalization in the CRSP universe, median dollar trading volume (in millions of dollars),
+median daily return volatility (expressed in annualized terms), and median daily return (expressed in annualized terms). We
+calculate these statistics each month and report their time-series averages. The CRSP stock sample comprised all stocks with
+share codes 10 or 11 that are listed on the NYSE or Nasdaq. TAQ and Auction is a subsample of CRSP Stocks that also have
+data on TAQ and closing and opening auctions; this is the universe of stocks that we use to estimate the price impact models
+for continuous trading, opening auctions, and closing auctions. The sample period is 2012 to 2021.
+                                         CRSP Sample              CRSP Stocks (NYSE and Nasdaq)                  TAQ and Auction
+
+No. of firms                                  3,708                               3,523                                 2,980
+Average size decile rank                      3.67                                3.79                                  4.21
+Median market cap ($m)                         663                                751                                   1,080
+Market cap/CRSP market cap                     100                               99.8                                  95.8
+Median trading volume ($m)                     98                                 115                                   182
+Daily return volatility                       0.368                               0.360                                 0.355
+Daily return                                  0.133                               0.137                                 0.144
+
+
+
+
+auction data sets. During our sample period, the average number of NYSE/Nasdaq
+stocks in CRSP is 3,523 and the TAQ/Auctions sample is 2,980, which accounts for
+95.6% of the market capitalization of all CRSP stocks. Looking at the size decile
+rank (with breakpoints constructed from the full sample of NYSE stocks), the
+TAQ/Auctions stocks are slightly bigger (average decile rank of 4.21 for TAQ/Auc-
+tions vs. 3.79 for CRSP stocks; average market capitalization of $1,080 million for
+TAQ/Auctions vs. $751 million for CRSP stocks). TAQ/Auctions stocks are also
+slightly more liquid (measured by trading volume) than all stocks.
+
+B.     Closing Auction Volume
+
+      Graph A of Figure 1 plots the rolling 180-day moving average of the total
+closing auction volume as a percentage of ADV from 2012 to 2021. The X-axis is
+the ending date of each 180-day window and the Y-axis is the cross-sectional
+average of the daily closing auction volume as a percentage of ADV. The closing
+auction volume steadily grows from about 4% ADV at the beginning of the sample
+period to a peak of about 10% ADV at the end. Table 2 presents summary statistics
+for the closing auction trading volume. The average trading volume during our
+sample period is 7.10% ADV and the median is 5.34% ADV. The trading volume
+distribution is positively skewed and the difference between the median and the
+90th percentile is about twice that between the median and the 10th percentile.
+      Graph B of Figure 1 also plots the cross-sectional median of daily closing
+auction volume, which shows significant spikes on Fridays. Bogousslavsky and
+Muravyev (2023) attribute the spikes to the fact that options expire on Fridays. The
+Friday spikes are bigger on triple-witching days, when future contracts, equity
+index options, and options on individual stocks all expire.
+      Table 2 presents the summary statistics for the closing auction volume. We
+report the closing auction volume as a percentage of the ADV over the previous
+10 days. We calculate the cross-sectional statistics (means, median, standard devi-
+ation, 10th, and 90th percentiles) daily and report their time-series averages. The
+table reports the statistics for all stocks, as well as partitioned subsamples based on
+market capitalization. The “Large” category comprised all stocks with market
+                                                                                                                             https://doi.org/10.1017/S0022109026102592
+6 Journal of Financial and Quantitative Analysis
+
+                                                                    FIGURE 1
+                                             Closing Auction Volume as a Percentage of ADV
+Figure 1 plots the closing auction volume over time. Graph A represents the 180-day moving averages of the closing auction
+volume as a percentage of ADV, while Graph B presents the daily cross-sectional mean of closing auction volumes as a
+percentage of ADV. The sample comprised all NYSE and Nasdaq stocks that have data on TAQ, and the auctions data
+provided by the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+
+                                                   Graph A. Moving Average of Closing Auction Volume
+
+                                      10
+
+
+
+
+                                       8
+                     Trading Volume
+
+
+
+
+                                       6
+
+
+
+
+                                       4
+                                      01jan2012   31Dec2013    31Dec2015   31Dec2017       31Dec2019   31Dec2021
+                                                                       Date
+
+                                                         Graph B. Daily Closing Auction Volume
+                                100
+
+
+
+                                      80
+               Trading Volume
+
+
+
+
+                                      60
+
+
+
+                                      40
+
+
+
+                                      20
+
+
+
+                                       0
+                                      01jan2012   31Dec2013    31Dec2015     31Dec2017     31Dec2019   31Dec2021
+                                                                         Date
+
+
+
+
+capitalizations greater than the median NYSE market capitalization and the “Small”
+category comprised all stocks with market capitalizations between the 20th and the
+50th percentile of the market capitalizations of the NYSE stocks. The “Micro”
+category comprised all stocks with market capitalizations less than the 20th per-
+centile of all NYSE stocks.
+      The closing auction trading volumes for Large and Small stocks are bigger
+than those for Micro stocks. Jegadeesh and Wu (2022) find that stocks in the indices
+tracked by ETFs are more actively traded in closing auctions and Micro stocks are
+less likely to be held in these ETFs. The average Friday volume is bigger than that
+for all days for all size categories.
+      Table 2 also reports closing auction trading volumes on earnings announce-
+ment days (EADs), which we define as days when earnings are announced after
+                                                                                                                                        https://doi.org/10.1017/S0022109026102592
+                                                                                   Goyal, Jegadeesh, and Wu 7
+
+
+                                                            TABLE 2
+                                     Summary Statistics for Closing Auctions
+
+Table 2 presents the summary statistics for trading volume in closing auctions. Panel A reports the closing auction volume as a
+percentage of the 10-day average trading volume (ADV). We calculate cross-sectional statistics (means, median, standard
+deviation, 10th, and 90th percentiles) of these percentages and then report their time-series averages. The statistics are calculated
+for all stocks as well as for subsamples of stocks. We classify stocks with market capitalizations above the median NYSE market
+capitalization as “Large,” stocks with market capitalizations between the 20th and the 50th percentile of NYSE market
+capitalization as “Small,” and stocks with market capitalizations smaller than the 20th percentile of NYSE market capitalization
+as “Micro.” We also report these statistics separately for all days, for Fridays only, and earnings announcement days (EADs) only.
+We compute the statistics for EADs only if the number of stocks on an EAD is at least 62, which is the 25th percentile of the
+distribution of number of stocks with earnings across all days. The sample comprised all NYSE and Nasdaq stocks that have data
+on TAQ, and the auctions data provided by the NYSE and Nasdaq. The sample period is from January 2012 to December
+2021.
+Sample                       M                       SD                     10th                    Median                     90th
+
+                                                                           All Days
+All                         7.10                     8.38                   0.61                     5.34                     14.75
+Large                       8.65                     9.52                   0.51                     6.84                     17.79
+Small                       8.32                     9.55                   0.50                     6.36                     17.54
+Micro                       5.77                     7.22                   0.72                     4.18                     11.88
+
+                                                                           Fridays
+All                       11.10                    13.24                    1.04                     7.97                     23.71
+Large                     12.38                    14.29                    0.85                     9.36                     25.81
+Small                     13.44                    15.40                    0.94                     9.88                     28.97
+Micro                      9.06                    11.40                    1.17                     6.19                     19.36
+
+                                                                            EADs
+All                         6.79                     6.20                   1.52                     5.45                     13.05
+Large                       7.88                     6.67                   2.03                     6.55                     14.63
+Small                       7.00                     6.00                   1.62                     5.75                     13.42
+Micro                       5.85                     6.02                   1.08                     4.45                     11.64
+
+
+
+
+close. Because trading volume distribution is highly skewed, we compute the
+statistics for EADs in the table using only days when there are at least 62 stocks
+in the sample, which is the 25th percentile of the distribution of the number of EAD
+stocks per day. The average volume on EADs is 6.79% ADV, smaller than the
+7.10% ADV that we observe for all days.
+      Overall, the closing auction volume has grown significantly over the last
+decade for all stocks including the Micro stocks. The closing auction volume is
+on average bigger on Fridays and smaller on EADs than on other days.
+
+C.       Price Impact: Closing Auctions
+      The auction mechanism captures the essence of the Grossman and Miller
+(1988) model where there are two groups of participants—market makers and
+liquidity traders. Liquidity traders submit buy and sell orders to meet their exog-
+enous liquidity needs, which market makers then aggregate and execute at a single
+clearing price. The market clearing price is above the fundamental value if the order
+imbalance is positive and vice versa. The resulting price impact—defined as the
+difference between the clearing price and the fundamental value—represents the
+cost liquidity traders pay for the liquidity provided by market makers.8
+     8
+     Kyle (1984, 1985) and Admati and Pfleiderer (1988) present models that have informed traders in
+addition to market makers and liquidity traders. Because the market maker is risk neutral in these models,
+market makers set the clearing price equal to the expected fundamental value of the asset conditional on
+the aggregate imbalance across all orders placed by informed and liquidity traders.
+                                                                                         https://doi.org/10.1017/S0022109026102592
+8 Journal of Financial and Quantitative Analysis
+
+      There is a key difference between the closing auction settlement procedure
+and the determination of the market-clearing price in Grossman and Miller (1988).
+In their model, order imbalances and market clearing prices are determined simul-
+taneously. In contrast, in closing auctions, the time when exchanges close the
+electronic order books for MOC orders varied from 3:45 PM to 3:55 PM during
+our sample period, while the closing price is determined at 4:00 PM. The first
+dissemination of order imbalances coincided with the closing of MOC order books.
+      Jegadeesh and Wu ((2022), Figure 2) present the trajectory of order imbal-
+ances from the time of first dissemination to close. They show that the order
+imbalance is at the highest level at the time of first dissemination and then steadily
+declines. At the close, the order imbalances are cleared on Nasdaq, and a relatively
+small imbalance remains in the NYSE. The designated market maker for each stock
+is responsible for finding counterparties or becoming the counterparty to clear the
+market at the close.
+1. The Model
+     Because one of our objectives is to compare costs under competing trading
+mechanisms, we focus on the expected execution cost under each one. This
+section estimates price impact as a function of order imbalance for closing auctions.
+     In closing auctions, only MOC orders are guaranteed execution and hence we
+consider the execution cost for traders who place such MOC orders before the
+exchanges close their electronic order books. We compute the order imbalance
+(OI) at the time of the first dissemination of closing order imbalance as
+(1)                            OI id = Buyid  Sell id ,
+
+where Buyid and Sell id are the aggregate orders on the corresponding sides for stock
+i on day d.
+      Although the closing auction clears at 4:00 PM after the end of continuous
+market trading, the information about order imbalances OI is continually dissem-
+inated before that time. A natural question that arises is, should we compute price
+impact based on the price at close or at some point in time between the first OI
+announcement and closes? To help address this question, we start by examining the
+trajectory of price impact during the auction period.
+      The time of first dissemination of order imbalances (OIAnn) varied during our
+sample period as follows: i) Jan. 1, 2012 to Oct. 28, 2018–3:50 PM in Nasdaq and
+3:45 PM in the NYSE, ii) Oct. 29, 2018 to Apr. 14, 2019–3:55 PM in Nasdaq; and Oct.
+29, 2018 to Mar. 31, 2019–3:45 PM in NYSE, and iii) Apr. 15 to Dec. 31, 2021–3:50
+PM in Nasdaq; Apr. 1, 2019 to Dec. 31, 2021–3:50 PM for NYSE. We compute price
+impact over multiple intervals starting from the last continuous market price before
+OIAnn to i) every minute after OIAnn until the last continuous market trade
+(“LastTrade”), and ii) at the close (“Close”). We compute realized impact at the
+end of interval τ as
+
+                                              Pτid  PCI
+(2)                             Impactτid =            id
+                                                          ,
+                                                  PCI
+                                                    id
+
+                                                                       τ
+where PCIid is the last continuous market price before OIAnn and the P id is the last
+price at the end of interval τ for stock i on day d.
+                                                                                                                                                                                              https://doi.org/10.1017/S0022109026102592
+                                                                                                                      Goyal, Jegadeesh, and Wu 9
+
+                                                                                       FIGURE 2
+                                       Minute by Minute Price Impact in Closing Auctions
+In Figure 2, for each stock i on day d, we compute realized impact at the end of interval τ as
+
+                                                                                                P τid  P CI
+                                                                              Impact τid =                id
+                                                                                                               ,
+                                                                                                   P CI
+                                                                                                     id
+                  τ
+where P CI
+         id and P id are the last continuous market price before first dissemination of order imbalances (OIAnn) and the last
+price at the end of the interval τ. The last interval τ corresponding to 4:00 PM is denoted at 4:00 LT. We also compute price
+impact from the last continuous market price before OIAnn to the close (denoted as 4:00 C). We then estimate the following
+square root model:
+                                                                                   pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+                                              Impact τid = a τit + λτit signðX id Þ jX id j + ετid ,
+where X id = OI id =ADV id , OI id is the signed order imbalance of stock i on day d, and ADV id is the average trading volume of
+stock i over 10 days prior to day d. Finally, we fit the following cross-sectional regression each month to estimate the trajectory
+of λ from OIAnn to Close for each size category:
+                                                                          λτit = θτ0t + θτ1t NASDit1 + e τt ,
+where NASD is an indicator variable equal to 1 if the stock is listed on Nasdaq and zero otherwise. We also interact both the
+intercept and the NASD indicator variable with three size categories Large, Small, and Micro stocks, respectively. We classify
+stocks with market capitalizations above the median NYSE market capitalization as “Large,” stocks with market capitalizations
+between the 20th and the 50th percentile of NYSE market capitalization as “Small,” and stocks with market capitalizations
+smaller than the 20th percentile of NYSE market capitalization as “Micro.” The sample comprised all NYSE and Nasdaq stocks
+that have data on TAQ and the auctions data provided by the NYSE and Nasdaq. The time of first dissemination of order
+imbalances (OIAnn) is listed in the heading of each graph. The sample period is from January 2012 to December 2021.
+
+            Graph A. NYSE, Jan 1, 2012, to Oct 28, 2018                                                  Graph B. Nasdaq, Jan 1, 2012, to Oct 28, 2018
+          First dissemination of order imbalances: 3:45 pm                                              First dissemination of order imbalances: 3:50 pm
+    2.0                                                                                           4.5
+                    Micro                                                                                            Micro
+    1.5             Small                                                                         3.5                Small
+                    Large                                                                                            Large
+                                                                                                  2.5
+    1.0
+                                                                                                  1.5
+    0.5
+                                                                                                  0.5
+    0.0
+                                                                                                –0.5
+                                                                                                             3:46
+                                                                                                             3:47
+                                                                                                             3:48
+                                                                                                             3:49
+                                                                                                             3:50
+                                                                                                             3:51
+                                                                                                             3:52
+                                                                                                             3:53
+                                                                                                             3:54
+                                                                                                             3:55
+                                                                                                             3:56
+                                                                                                             3:57
+                                                                                                             3:58
+                                                                                                             3:59
+                                                                                                          4:00 LT
+                                                                                                           4:00 C
+              3:46
+              3:47
+              3:48
+              3:49
+              3:50
+              3:51
+              3:52
+              3:53
+              3:54
+              3:55
+              3:56
+              3:57
+              3:58
+              3:59
+           4:00 LT
+            4:00 C
+
+
+
+
+           Graph C. NYSE, Oct 29, 2018, to Mar 31, 2019                                                 Graph D. Nasdaq, Oct 29, 2018, to Apr 14, 2019
+          First dissemination of order imbalances: 3:45 pm                                              First dissemination of order imbalances: 3:55 pm
+    2.0             Micro                                                                                            Micro
+                                                                                                 6.0
+                    Small                                                                        5.0                 Small
+    1.5             Large                                                                                            Large
+                                                                                                 4.0
+    1.0                                                                                          3.0
+                                                                                                 2.0
+    0.5
+                                                                                                 1.0
+    0.0                                                                                          0.0
+                                                                                                             3:46
+                                                                                                             3:47
+                                                                                                             3:48
+                                                                                                             3:49
+                                                                                                             3:50
+                                                                                                             3:51
+                                                                                                             3:52
+                                                                                                             3:53
+                                                                                                             3:54
+                                                                                                             3:55
+                                                                                                             3:56
+                                                                                                             3:57
+                                                                                                             3:58
+                                                                                                             3:59
+                                                                                                          4:00 LT
+                                                                                                           4:00 C
+
+
+
+
+                                                                                                –1.0
+              3:46
+              3:47
+              3:48
+              3:49
+              3:50
+              3:51
+              3:52
+              3:53
+              3:54
+              3:55
+              3:56
+              3:57
+              3:58
+              3:59
+           4:00 LT
+            4:00 C
+
+
+
+
+            Graph E. NYSE, Apr 1, 2019, to Dec 31, 2021                                                 Graph F. Nasdaq, Apr 15, 2019, to Dec 31, 2021
+          First dissemination of order imbalances: 3:50 pm                                              First dissemination of order imbalances: 3:50 pm
+    2.0             Micro                                                                                            Micro
+                                                                                                  5.0
+                    Small                                                                                            Small
+    1.5             Large                                                                         4.0                Large
+    1.0                                                                                           3.0
+                                                                                                  2.0
+    0.5
+                                                                                                  1.0
+    0.0                                                                                           0.0
+           3:51
+                  3:52
+                         3:53
+                                3:54
+                                       3:55
+                                              3:56
+                                                     3:57
+                                                            3:58
+                                                                   3:59
+                                                                             4:00 LT
+                                                                                       4:00 C
+
+
+
+
+                                                                                                          3:51
+                                                                                                                   3:52
+                                                                                                                          3:53
+                                                                                                                                 3:54
+                                                                                                                                        3:55
+                                                                                                                                               3:56
+                                                                                                                                                      3:57
+                                                                                                                                                             3:58
+                                                                                                                                                                    3:59
+                                                                                                                                                                           4:00 LT
+                                                                                                                                                                                     4:00 C
+                                                                                                             https://doi.org/10.1017/S0022109026102592
+10 Journal of Financial and Quantitative Analysis
+
+    We estimate the following square root model, which specifies a relation
+between Impact and square root of OI normalized by ADV9:
+                                                                pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+(3)      Square root model : Impactτid = aτit + λτit signðX id Þ jX id j + ετid ,
+
+where X id = OI id =ADV id , OI id is the signed order imbalance of stock i on day d, and
+ADV id is the average trading volume of stock i over the prior 10 days. We normalize
+OI by ADV for comparability across stocks. We first estimate λτit for each τ within
+each stock month using all days d in month t.
+     In the next stage, we fit the following cross-sectional regression each month to
+estimate the trajectory of λ from OIAnn to Close for each size category:
+(4)                                λτit = θτ0t + θτ1t NASDit1 + eτt ,
+
+where NASD is an indicator variable equal to 1 if the stock is listed on Nasdaq and
+zero otherwise. We add this variable because Nasdaq and the NYSE do not always
+start reporting OI at the same time. We also interact both the intercept and the NASD
+indicator variable with three size categories defined earlier to account for potential
+differences across size categories.10 We fit the Fama and MacBeth (1973) cross-
+sectional regression (4) each month
+                                      with all the stocks in the sample that month.
+      Figure 2 presents θτ0 and θτ0 + θτ1 × NASD as functions of τ during the three
+subperiods with different times for OIAnn. As mentioned earlier, during the first
+subperiod, OIAnn was 3:45 PM for the NYSE and 3:50 PM for Nasdaq. We observe
+the following patterns:
+  i) θ0 exhibits significant
+                             jumps at 3:46 PM for all three size categories.
+ ii) θτ0 + θτ1 × NASD for each size category is the estimate of Nasdaq-listed
+     stocks’ response in that category. The sign of these estimates fluctuates
+     between 3:45 PM and 3:50 PM and their magnitude is small relative to θτ0 . The
+     estimates are all significant starting from 3:46 PM.
+iii) θ0 in all size categories increases on average from 3:45 PM to 4:00 PM
+     (LastTrade).
+iv) There is a sharp jump in impact from the LastTrade price close for Micro and
+     Small stocks both in the NYSE and Nasdaq.
+
+       We find similar patterns in the other subperiods as well. Observations i) and
+ii) indicate that OI information leads to stock price movement. Observation
+iii) indicates that there is some delay in stock price reaction to OI information both
+in the NYSE and Nasdaq, and the speed of reaction is faster for bigger stocks. The
+literature documents delayed reactions to intraday announcements in other contexts
+as well, which indicates we need to expand the observation window after OI
+announcements to capture the events’ full impact.11
+
+      9
+    Later, we also consider other functional forms of the relation between Impact and OI.
+      10
+      For both closing and opening auctions and for the continuous market, the price impact model
+specifications with size categories fit the data significantly better than that with a continuous variable
+such as the log of market capitalization.
+   11
+      For example, Bradley, Clarke, Lee, and Ornthanalai ((2014), Figure 1) find delays of about 60
+minutes before prices fully react to intraday recommendation revisions, and Gómez-Cram and Grotteria
+(2022) find such delays in SPY price reaction following the release of FOMC minutes.
+                                                                                                                 https://doi.org/10.1017/S0022109026102592
+                                                                  Goyal, Jegadeesh, and Wu 11
+
+     Observation iv) is consistent with the price jump between LastTrade and Close
+that Bogousslavsky and Muravyev (2023) document. Bogousslavsky and Mura-
+vyev (2023) also find that this price jump reverses by open the next day and hence it
+would be difficult for arbitrageurs to profit solely from this pattern.
+     At this stage, it is important to note that MOC orders are filled at the Close
+price and not at any intermediate prices. Therefore, in all subsequent analyses we
+compute price impact as
+
+                                                      PClose
+                                                       id      PCI
+                                                                 id
+(5)                                    Impact id =                  ,
+                                                          PCIid
+
+
+where PClose is the price at close and PCI is the last continuous market price before
+the NYSE first reports order imbalances.12 We use this time for both the NYSE and
+Nasdaq, though Nasdaq started reporting OI a few minutes after the NYSE during
+much of our sample period. We use the NYSE first reporting time to account for
+possible information spillovers from the NYSE OI information to Nasdaq stocks.13
+
+2.     Estimates
+      The last subsection considers a square root price impact model, but the
+literature also uses linear price impact models (see, e.g. Jegadeesh and Wu
+(2022), Korajczyk and Sadka (2004), and Novy-Marx and Velikov (2016)). We
+now consider the following linear model and compare its performance versus the
+square root model:14
+(6)                        Linear model : Impact id = ait + λit X id + ϵ id :
+
+We use the same approach as with the square root model to estimate λit for each
+stock month.
+     Figure 3 compares fitted values from the square root and linear models with the
+actual average price impact for 100 categories ranked by order imbalances. For both
+Large and Small stocks, the square root model fitted values closely track the actual
+price impact for order imbalances smaller than about 5% ADV, which covers most
+of the observations. The linear model significantly underestimates the price impact
+over this range.15 Therefore, we use the square root model from this point forward.
+Table A1 presents summary statistics on these price impact coefficients from the
+      12
+       Using NBBO midpoint price instead of trade price makes virtually no difference to our results.
+      13
+       Measuring the impact of an event starting from a point in time prior to the event is commonly used
+in the event study literature to account for potential information leakage. During the first subperiod, the
+NYSE stared disseminating OI information at 3:45 PM and Nasdaq at 3:50 PM. Because 5-minute
+unconditional expected returns for stocks are infinitesimal, our approach does not bias the results and
+any systematic drift during this period would only reflect information leakage. As a robustness check,
+when we compute price impact for Nasdaq-listed stocks based on price change from the time of first
+dissemination at Nasdaq, we find no qualitative difference in any of our results.
+    14
+       We also estimated the model Impact i = ai + λi signðX i ÞjX i jpi , which estimates the exponent pi for
+each stock. The median of the distribution of pi is 0.49, and the interquartile range is [0.34–0.69], which
+are consistent with the square root model.
+    15
+       For example, the R2 of the linear model varies between 89% and 93%, while that of the square root
+model varies between 97% and 100% for all panels in Figure 3 except for Micro stocks in Nasdaq, where
+the R2 is 78% for the linear model and 91% for the square root model.
+                                                                                                                               https://doi.org/10.1017/S0022109026102592
+12 Journal of Financial and Quantitative Analysis
+
+                                                       FIGURE 3
+                         Linear Versus Square Root Model for Closing Auctions
+Figure 3 plots the price impact for trade sizes that vary from 8% ADV to +8% ADV over the last 10 days. We present
+these costs for trading during closing auctions. Each day, we divide the sample into 100 groups based on the trade size. We
+calculate the average market impact for each of these groups. These statistics are then averaged across days, and the black
+dots present the actual market impact. The orange line represents the implied market impact from a square root model, while
+the blue line represents the implied market impact from a linear model. In the second stage, we run Fama–MacBeth
+regressions of market impact on lagged characteristics as those in model A of Table 3. Using estimates from those regres-
+sions, different graphs present separate cost estimates for Large, Small, and Micro stocks and for NYSE and Nasdaq stocks.
+We classify stocks with market capitalizations above the median NYSE market capitalization as “Large,” stocks with market
+capitalizations between the 20th and the 50th percentile of NYSE market capitalization as “Small,” and stocks with market
+capitalizations smaller than the 20th percentile of NYSE market capitalization as “Micro.” The sample comprised all NYSE and
+Nasdaq stocks that have data on TAQ and the auctions data provided by the NYSE and Nasdaq. The sample period is from
+January 2012 to December 2021.
+
+                  Graph A. Large Stocks, NYSE                                  Graph B. Large Stocks, Nasdaq
+   0.2%                                                          0.3%
+                                                                 0.2%
+   0.1%
+                                                                 0.1%
+   0.0%                                                          0.0%
+                                                                –0.1%
+  –0.1%
+                                                                –0.2%
+  –0.2%                                                         –0.3%
+      –8% –6% –4% –2% 0%              2%    4%    6%    8%          –8% –6% –4% –2% 0%             2%    4%    6%    8%
+                     Trade Size as % of ADV                                        Trade Size as % of ADV
+
+
+             Graph C. Small Stocks, NYSE                                   Graph D. Small Stocks, Nasdaq
+   0.3%                                                          0.4%
+   0.2%                                                          0.3%
+                                                                 0.2%
+   0.1%                                                          0.1%
+   0.0%                                                          0.0%
+  –0.1%                                                         –0.1%
+                                                                –0.2%
+  –0.2%                                                         –0.3%
+  –0.3%                                                         –0.4%
+      –8% –6% –4% –2% 0% 2% 4% 6%                       8%          –8% –6% –4% –2% 0% 2% 4% 6%                      8%
+                     Trade Size as % of ADV                                        Trade Size as % of ADV
+
+
+             Graph E. Micro Stocks, NYSE                                   Graph F. Micro Stocks, Nasdaq
+   0.6%                                                          0.7%
+   0.4%                                                          0.5%
+   0.2%                                                          0.3%
+                                                                 0.1%
+   0.0%
+                                                                –0.1%
+  –0.2%                                                         –0.3%
+  –0.4%                                                         –0.5%
+  –0.6%                                                         –0.7%
+      –8% –6% –4% –2% 0% 2% 4% 6%                       8%          –8% –6% –4% –2% 0% 2% 4% 6%                      8%
+                Trade Size as % of ADV                                             Trade Size as % of ADV
+
+
+
+square root model. The mean price impact for 1% ADV is 17.7 bps, but the median
+is significantly smaller, at 8.4 bps. There is substantial heterogeneity in these price
+impact measures with a cross-sectional standard deviation of 34.6 bps.
+      We also examine the relation between λs and additional stock-specific char-
+acteristics, which we choose based on the underlying intuition from various models.
+In Grossman and Miller (1988), the price impact increases with the inventory risk
+borne by the market makers, and we use stock return volatility to proxy for this risk.
+The literature finds that price impact is inversely related to price, and hence, we use
+the log of price to capture this effect. To account for the differences between the
+market structures, we include an indicator variable for Nasdaq. Kyle (1985) implies
+that price impact increases with the likelihood of informed trades, which is poten-
+tially correlated with market capitalization. Therefore, we allow the price impact to
+vary across size categories.
+                                                                                                              https://doi.org/10.1017/S0022109026102592
+                                                                 Goyal, Jegadeesh, and Wu 13
+
+     We estimate the relation between the λs and the additional stock characteristics
+using the following cross-sectional regression:
+(7)           λit = θ0t + θ1t NASDit1 + θ2t Sigmait1  θ3t LnðPriceit1 Þ + eit ,
+
+where NASD is an indicator variable equal to 1 if the stock is listed on Nasdaq and
+zero otherwise, Sigma is the standard deviation of daily returns computed over the
+previous 22 days, and lnðPriceÞ is the natural logarithm of closing price over the
+previous day, adjusted for any stock splits. To account for the differences across
+different size categories, we interact the intercept, θ0 , and all conditioning variables
+with size categories, as defined earlier. We fit the cross-sectional regression (7) each
+month with all the stocks in the sample that month. We use the Fama and MacBeth
+(1973) approach to compute the coefficient estimates and we compute their stan-
+dard errors with Newey–West correction using 12 lags.
+      Table 3 reports the regression estimates of equation (7) using the square root
+model λ estimates. The coefficient θ0 in model A for the NYSE Micro stocks is 1.82.
+The coefficients θ0 interacted with Small and Large are significantly smaller,
+indicating that the price impacts are smaller for bigger stocks even with trade sizes
+normalized by ADV. The NASD indicator variable slope coefficients are reliably
+greater than zero for all three size categories, indicating that the price impact in
+Nasdaq is significantly bigger for all size categories. The price impacts for a 1%
+ADV trade implied by these estimates are 18.2, 7.4, and 4.5 bps in NYSE, and 44.7,
+12.5, and 10.2 bps in Nasdaq, for Micro, Small, and Large stocks, respectively.
+      Model B adds Sigma and model C further adds ln(Price). Nasdaq stocks are,
+on average, more volatile and lower priced than NYSE stocks and model C controls
+for these differences. The NASD coefficients are statistically significantly positive
+for all size categories even after adding these controls. The coefficient on Sigma is
+significantly positive for all size categories. However, the impact of ln(Price) on
+price impact is statistically significant only for Micro and Small stocks.
+      Jegadeesh and Wu (2022) use a linear model for closing auctions similar to
+equation (6) and estimate the model using the Fama–MacBeth approach with
+monthly cross-sectional regressions. Their estimated price impact is an average
+of 2.35 bps for all stocks, compared to our estimate of 17.7 bps. Their lower estimate
+is partly due to their use of a linear price impact model and partly because they
+employ cross-sectional regressions, whereas we use a time-series model.16 Even
+our price impact estimate for large stocks is significantly larger than the estimates
+from Jegadeesh and Wu’s (2022) linear model for all stocks.
+
+
+III.       Price Impact: Opening Auctions
+     Both the NYSE and Nasdaq use opening auctions to determine open prices for
+stocks that have crossing interests from traders.17 The exchanges open their order
+books for market-on-open and limit-on-open orders at the same time as they do for
+      16
+        As shown in Figure 3, the square root model provides a better fit to the data. However, its fitted
+values are larger than those of the linear model in the region where most order imbalances occur.
+     17
+        If there is no crossing interest for a particular stock, the DMMs post the opening quotes for NYSE-
+listed stocks, and the first eligible trade price is the official Nasdaq opening price.
+                                                                                                                                      https://doi.org/10.1017/S0022109026102592
+14 Journal of Financial and Quantitative Analysis
+
+
+                                                            TABLE 3
+                                   Price Impact Models for Closing Auctions
+
+In Table 3, we estimate market impact using closing auction data for each stock month from the following time-series
+regression:
+                                                                     pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+                                         R id = ait + λit signðX id Þ jX id j + ϵ id ,
+where R id is the return on the ith stock on day d of month t calculated as percentage change from the last continuous market
+price before the NYSE first reports order imbalance and the price at close; and X it is the first-disseminated order imbalance
+from exchange feeds divided by average trading volume over the previous 10 days. In the second stage, we run monthly
+Fama–MacBeth cross-sectional regressions:
+                                                     λit = θ0t + θ01t Z it1 + e it ,
+where Z it1 is the vector of stock specific conditioning variables. We use three conditioning variables: NASD is an indicator
+variable equal to 1 if the stock trades on Nasdaq and 0 otherwise, Sigma is the daily volatility calculated using the last 22 days,
+and Price is the closing price the previous day. We winsorize Sigma at 10% and 200% (annualized) and the Price at $0.5 and
+$300. The intercept θ0 and all conditioning variables are interacted with size categories, as defined in Table 2. The table next
+reports the average Fama–MacBeth θ coefficients and the corresponding t-statistics in parentheses, using Newey–West
+standard errors with 12 lags. All coefficients are multiplied by 100. The sample comprised all NYSE and Nasdaq stocks that
+have data on TAQ, and the auctions data provided by the NYSE and Nasdaq. The sample period is from January 2012 to
+December 2021.
+                                                    A                                     B                                   C
+
+θ0 × Micro                                         1.82                                  0.87                               4.83
+                                                 (10.32)                                (4.34)                            (19.45)
+θ0 × Small                                         0.74                                   0.20                               0.91
+                                                 (10.37)                                 (3.28)                             (8.57)
+θ0 × Large                                         0.45                                   0.16                               0.28
+                                                  (7.30)                                 (2.92)                             (2.71)
+NASD × Micro                                       2.66                                   2.31                               1.97
+                                                  (7.18)                                 (7.43)                             (6.82)
+NASD × Small                                       0.51                                   0.49                               0.51
+                                                  (7.84)                                 (8.13)                             (8.31)
+NASD × Large                                       0.57                                   0.51                               0.51
+                                                 (20.54)                                (15.82)                            (15.45)
+Sigma × Micro                                                                             5.06                               2.58
+                                                                                        (19.21)                            (24.03)
+Sigma × Small                                                                             1.29                               1.13
+                                                                                        (14.07)                            (11.75)
+Sigma × Large                                                                             0.99                               0.96
+                                                                                         (8.58)                             (7.89)
+ln(Price) × Micro                                                                                                           2.04
+                                                                                                                           (15.54)
+ln(Price) × Small                                                                                                           0.20
+                                                                                                                           (12.10)
+ln(Price) × Large                                                                                                           0.03
+                                                                                                                            (1.80)
+      2
+Adj. R                                           19.8                                    30.5                               41.9
+
+
+
+
+closing auctions. Nasdaq on-open orders may be entered or modified until 9:30 AM
+and the NYSE accepts on-open orders until the stock is opened by the DMM, even if
+the opening is delayed beyond 9:30 AM.18 Nasdaq algorithmically determines the
+opening price based on the crossing interest and it constrains the price to be within a
+range of 10% of the best bid and ask price quotes at that time. The NYSE also
+determines the opening prices algorithmically if it falls within the 10% band around
+the reference price but if it falls outside this band, the DMM manually sets the
+opening price.
+    18
+       Both the NYSE and Nasdaq delay the opening of stocks with large order imbalances when the
+market opens. Aggarwal and Wu (2025) report that initial public offerings typically open with a delay
+after regulatory changes in 2013.
+                                                                                                                           https://doi.org/10.1017/S0022109026102592
+                                                                                Goyal, Jegadeesh, and Wu 15
+
+A.     Opening Auction Volume
+     The auction data sets that we obtain from the NYSE and Nasdaq also contain
+similar details for opening auctions as those for closing auctions. Figure 4 plots the
+180-day moving average of opening auction volume as a percentage ADV from
+2012 to 2021. The volume reaches a peak of about 2.2% ADV in 2013 and then
+decreases to less than 1.5% ADVafter 2015. The current opening auction volume is
+about 5%–10% of the closing auction volume. The mean volume spikes on Fridays
+and the spike is particularly large on triple-witching days. Barclay, Hendershott, and
+Jones (2008) find that the surge in volume on triple-witching days is due to arbitrage
+activities related to index futures and options, which are settled based on the
+opening prices of constituent stocks.
+
+                                                              FIGURE 4
+                                       Opening Auctions Volume as a Percentage of ADV
+
+Figure 4 plots the opening auction volume over time. Graph A presents the 180-day moving average measure for the opening
+auction volumes as a percentage of ADV over the last 10 days, while Graph B presents the daily cross-sectional mean of
+opening auction volumes as a percentage of ADV. The sample comprised all NYSE and Nasdaq stocks that have data on TAQ
+and the auctions data provided by the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+
+                                             Graph A. Moving Average of Opening Auction Volume
+
+                                 2.2
+
+
+                                  2
+               Trading Volume
+
+
+
+
+                                 1.8
+
+
+                                 1.6
+
+
+                                 1.4
+
+
+                                 1.2
+
+
+                                 01jan2012   31Dec2013   31Dec2015   31Dec2017       31Dec2019   31Dec2021
+                                                                 Date
+
+
+                                                   Graph B. Daily Opening Auction Volume
+                                 40
+
+
+
+
+                                 30
+                Trading Volume
+
+
+
+
+                                 20
+
+
+
+
+                                 10
+
+
+
+
+                                  0
+                                 01jan2012   31Dec2013   31Dec2015   31Dec2017       31Dec2019   31Dec2021
+                                                                 Date
+                                                                                                                                      https://doi.org/10.1017/S0022109026102592
+16 Journal of Financial and Quantitative Analysis
+
+
+                                                           TABLE 4
+                                   Summary Statistics for Opening Auctions
+
+Table 4 presents the summary statistics for trading volume in opening auctions. Panel A reports opening auction volume as a
+percentage of the 10-day average trading volume (ADV). We calculate cross-sectional statistics (means, median, standard
+deviation, 10th, and 90th percentiles) of these percentages and report their time-series averages. The statistics are calculated
+for all stocks as well as for subsamples of stocks, as defined in Table 2. We also report these statistics separately for all days,
+for Fridays only, and earnings announcement days (EADs) only. We compute the statistics for EAD only if the number of stocks
+on an EAD is at least 62, which is the 25th percentile of the distribution of number of stocks with earnings across all days. The
+sample comprised all NYSE and Nasdaq stocks that have data on TAQ, and the auctions data provided by the NYSE and
+Nasdaq. The sample period is from January 2012 to December 2021.
+Sample                      M                      SD                      10th                    Median                     90th
+
+                                                                          All Days
+All                        1.58                    3.62                    0.18                     0.92                      3.07
+Large                      1.36                    3.21                    0.22                     0.84                      2.50
+Small                      1.42                    3.05                    0.20                     0.88                      2.72
+Micro                      1.76                    4.14                    0.15                     0.98                      3.49
+
+                                                                           Fridays
+All                        2.94                    4.86                    0.20                     1.88                      6.44
+Large                      2.29                    4.12                    0.23                     1.51                      4.67
+Small                      2.56                    4.11                    0.21                     1.65                      5.53
+Micro                      3.41                    5.62                    0.18                     2.16                      7.65
+
+                                                                            EADs
+All                        1.54                    2.91                    0.17                     0.83                      3.08
+Large                      1.42                    2.64                    0.18                     0.83                      2.75
+Small                      1.43                    2.41                    0.19                     0.83                      2.82
+Micro                      1.71                    3.47                    0.17                     0.83                      3.50
+
+
+
+      Table 4 presents the opening auction volume summary statistics. Overall, the
+average trading volume is the largest for Micro stocks at 1.76% ADV and is the
+smallest for Large stocks at 1.36% ADV. The average volume for all stocks on Fridays
+is 2.94% ADV, which is twice as large as that for all days. The volume doubles for
+virtually all subsamples and it is the biggest for Micro stocks. The average volume is
+1.54% ADVon EADs, which is marginally lower than that on an average day.19 Also,
+the median opening auction volume is 0.92% ADV, which indicates traders who seek
+to trade larger quantities may not find adequate liquidity in this market.
+
+B.         Opening Auctions Price Impact Estimates
+
+     This subsection estimates the square root price impact model for opening
+auctions. We use the opening auction data that the NYSE and Nasdaq disseminate
+in real time for this regression. The NYSE starts disseminating the opening infor-
+mation at 8:00 AM and continually updates it until the stock opens for continuous
+trade. Nasdaq started disseminating opening information at 9:28 AM from Jan. 2012
+to Apr. 26, 2021, and at 9:25 AM from Apr. 27, 2021 to Dec. 2021, the end of our
+sample period. Under both regimes, however, Nasdaq closed its MOO order book at
+9:28 AM. Therefore, we measure the price impact for MOO orders as
+
+                                                                Popen
+                                                                 id  Pid
+                                                                           9:28
+(8)                                           Impact id =             9:28
+                                                                                ,
+                                                                    Pid
+
+
+
+      19
+      We use the same identity of EADs as that for closing auctions. Specifically, for opening auctions,
+day t is an EAD for stocks that announce earnings after the market close on day t  1.
+                                                                                                                                   https://doi.org/10.1017/S0022109026102592
+                                                                             Goyal, Jegadeesh, and Wu 17
+
+where Popen is the open price and P9:28 is the last premarket trade price between 9:27
+AM and 9:28 AM on TAQ. Although the NYSE starts reporting the opening market
+information earlier, we measure price impact based on the order imbalances and
+prices as of 9:28 AM to estimate the price impact model for the NYSE-listed stocks as
+well because premarket trades typically accumulate around that time. Intuitively,
+equation (8) represents the price impact for orders placed when the MOO order
+book is last open for both the NYSE- and Nasdaq-listed stocks.
+     Figure 5 compares fitted values from the square root and linear models with the
+actual average price impact for 100 categories ranked based on order imbalances as
+of 9:28 AM. As with closing auctions, the square root model fits the data significantly
+better than the linear model. The figures also show that order imbalances are rarely
+
+
+                                                         FIGURE 5
+                         Linear Versus Square Root Model for Opening Auctions
+Figure 5 plots the price impact for trade sizes that vary from 2% ADV to +2% ADV over the last 10 days. We present these
+costs for trading during opening auctions. Each day, we divide the sample into 100 groups based on the trade size. We
+calculate the average market impact for each of these groups. These statistics are then averaged across days, and the black
+dots present the actual market impact. The orange line represents the implied market impact from a square root model, while
+the blue line represents the implied market impact from a linear model. In the second stage, we run Fama–MacBeth
+regressions of market impact on lagged characteristics as those in model A of Table 5. Using estimates from those
+regressions, different graphs present separate cost estimates for Large, Small, and Micro stocks and for NYSE and Nasdaq
+stocks. Large is equal to one if the stock is Large (market capitalization above the median NYSE market capitalization). We
+classify stocks with market capitalizations above the median NYSE market capitalization as “Large,” stocks with market
+capitalizations between the 20th and the 50th percentile of NYSE market capitalization as “Small,” and stocks with market
+capitalizations smaller than the 20th percentile of NYSE market capitalization as “Micro.” The left side of each panel plots the
+results for NYSE stocks, while the right side of each panel plots the results for Nasdaq stocks. The sample comprised all NYSE
+and Nasdaq stocks that have data on TAQ and the auctions data provided by the NYSE and Nasdaq. The sample period is
+from January 2012 to December 2021.
+
+                  Graph A. Large Stocks, NYSE                                     Graph B. Large Stocks, Nasdaq
+ 0.2%                                                          0.9%
+                                                               0.7%
+ 0.1%                                                          0.5%
+                                                               0.3%
+ 0.0%                                                          0.1%
+                                                              –0.1%
+                                                              –0.3%
+–0.1%                                                         –0.5%
+                                                              –0.7%
+–0.2%                                                         –0.9%
+    –2%            –1%          0%            1%           2%     –2%              –1%           0%            1%          2%
+                      Trade Size as % of ADV                                          Trade Size as % of ADV
+
+
+                  Graph C. Small Stocks, NYSE                                     Graph D. Small Stocks, Nasdaq
+ 0.3%                                                          1.4%
+ 0.2%                                                          1.0%
+ 0.1%                                                          0.6%
+                                                               0.2%
+ 0.0%
+                                                              –0.2%
+–0.1%                                                         –0.6%
+–0.2%                                                         –1.0%
+–0.3%                                                         –1.4%
+    –3%       –2%      –1%      0%       1%        2%      3%     –3%          –2%      –1%      0%       1%        2%     3%
+                      Trade Size as % of ADV                                          Trade Size as % of ADV
+
+
+              Graph E. Micro Stocks, NYSE              Graph E. Micro Stocks, Nasdaq
+ 0.8%                                      3.0%
+ 0.6%                                      2.0%
+ 0.4%
+ 0.2%                                      1.0%
+ 0.0%                                      0.0%
+–0.2%                                     –1.0%
+–0.4%
+–0.6%                                     –2.0%
+–0.8%                                     –3.0%
+    –5% –4% –3% –2% –1% 0% 1% 2% 3% 4% 5%     –5% –4% –3% –2% –1% 0% 1% 2% 3% 4% 5%
+                Trade Size as % of ADV                    Trade Size as % of ADV
+                                                                                                                                  https://doi.org/10.1017/S0022109026102592
+18 Journal of Financial and Quantitative Analysis
+
+greater than 1% ADV for Large stocks and 2% ADV for Small and Micro stocks.
+Therefore, the price impacts for trades outside this range should be interpreted with
+caution. The linear model significantly underestimates price impact within these
+intervals.
+     Premarket trade prices are available for only 32.8% of the stocks in our sample
+and we use all stocks with 9:28 AM premarket prices to estimate the square root price
+impact model from equation (3). Table 5 presents the results of the second-stage
+Fama–MacBeth regression from equation (7). The slope coefficient θ0 in model
+A for Micro stocks is 3.34, which is significantly greater than the corresponding
+slope coefficient for closing auctions. The slope coefficients are also significantly
+bigger for Small and Large stocks. The slope coefficients on NASD and Sigma are
+significantly positive for all size categories in model B. However, in model C, the
+impact of Sigma is negative, albeit statistically insignificantly different from zero,
+for Micro stocks; and the impact of ln(Price) on price impact is not statistically
+significant for any size category.
+
+
+                                                             TABLE 5
+                                  Price Impact Models for Opening Auctions
+
+In Table 5, we estimate market impact using opening auction data for each stock month as
+                                                                       pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+                                           R id = ait + λit signðX id Þ jX id j + ϵ id ,
+where R id is the return on the ith stock on day d of month t calculated as the percentage change in last premarket trade price
+between 9:27 AM and 9:28 AM on TAQ to the price at open; and X id is the order imbalance as of 9:28 AM from exchange feeds
+divided by average trading volume over the past 10 days. In the second stage, we run monthly Fama–MacBeth cross-
+sectional regressions:
+                                                      λit = θ0t + θ01t Z it1 + e it ,
+where Z it1 is the vector of stock specific conditioning variables as described in Table 3. Table 5 reports the average Fama–
+MacBeth θ coefficients and the corresponding t-statistics in parentheses, using Newey–West standard errors with 12 lags. All
+coefficients are multiplied by 100. The sample comprised all NYSE and Nasdaq stocks that have data on TAQ, and the
+auctions data provided by the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+                                                  A                                        B                             C
+
+θ0 × Micro                                       3.34                                      2.36                         17.95
+                                               (12.14)                                    (1.94)                        (1.52)
+θ0 × Small                                       1.70                                      1.05                          1.21
+                                                (4.96)                                    (3.42)                        (3.75)
+θ0 × Large                                       1.34                                      0.86                          0.12
+                                                (4.88)                                    (6.04)                        (0.20)
+NASD × Micro                                    12.57                                    10.22                           4.68
+                                                (8.44)                                   (5.22)                         (1.06)
+NASD × Small                                     9.70                                      9.31                          9.33
+                                               (18.47)                                   (15.54)                       (15.18)
+NASD × Large                                     5.30                                      5.15                          5.07
+                                               (17.75)                                   (17.66)                       (16.65)
+Sigma × Micro                                                                              3.12                       10.20
+                                                                                          (2.23)                      (0.91)
+Sigma × Small                                                                              1.49                          1.40
+                                                                                          (4.76)                        (4.53)
+Sigma × Large                                                                              1.51                          1.79
+                                                                                          (3.65)                        (6.37)
+ln(Price) × Micro                                                                                                       4.34
+                                                                                                                        (1.50)
+ln(Price) × Small                                                                                                       0.04
+                                                                                                                        (0.53)
+ln(Price) × Large                                                                                                      0.17
+                                                                                                                       (1.49)
+      2
+Adj. R                                          31.1                                     32.7                           33.4
+                                                                                                      https://doi.org/10.1017/S0022109026102592
+                                                             Goyal, Jegadeesh, and Wu 19
+
+      The price impact in opening auctions is much larger than in closing auctions
+though the opening auction sample comprised only stock that had a premarket trade
+price at 9:28 AM, which tend to be the more liquid stocks. Because of overnight
+information flow, particularly due to corporate announcements that are made after
+the close of the previous day and premarket news, opening auctions are likely to
+attract informed traders. In contrast, Jegadeesh and Wu (2022) find that uninformed
+investors significantly contribute to the closing auction volume, and this difference
+is likely the reason for the small volume in opening auctions and the bigger price
+impact. It is unlikely that the opening auction would be an attractive mechanism for
+traders whose goal is to minimize the price impact of their trades.
+
+IV.         Price Impact: The Continuous Market
+     While the opening and closing prices in the U.S. stock markets are determined
+in auctions, prices are set in continuous markets during the rest of the day. This
+section presents our price impact model for continuous markets.
+
+A.         Data
+
+      We use the intraday transaction millisecond TAQ data to estimate price impact.
+We compute intraday order imbalances and returns during 30-minute intervals
+starting from the opening auction to the last trade during continuous trading. We
+follow Holden and Jacobsen (2014) to filter errors in TAQ data after matching trade
+data with the prevailing quotes. To minimize data errors, we exclude intraday
+returns where the 30-minute return is greater than 10% or less than 10%. We
+compute returns based on the last valid trade at the end of each interval. This yields
+13 intraday intervals from 9:30 AM to 4:00 PM.
+      We follow Holden and Jacobsen (2014) to modify the Lee and Ready (1991)
+algorithm where we first classify trades using the tick test and then update trade
+classification based on prevailing quote instead of the 5-second method as in Lee
+and Ready (1991). We aggregate the signed trades at 30-minute intervals during
+regular trading hours and compute returns based on the last valid trade at the end of
+each interval. For each stock i, the order imbalance during the interval τ on day d is
+                                              Buyidτ  Sell idτ
+(9)                                 X idτ =                     :
+                                                ADV id1
+
+We calculate the price impact during the interval τ on day d as
+                                                  Pidτ  Pidτ1
+(10)                               Impact idτ =                 ,
+                                                     Pidτ1
+
+where Pidτ and Pidτ1 are the last prices at the end of the interval τ and τ  1
+respectively for stock i on day d. We then estimate square root model as in equation
+(3) for each stock month using all 30-minute intervals starting from 9:30 AM to 4:00
+PM across all days d in month t.20
+
+      20
+      The 3:30 PM to 4:00 PM interval ends with the last continuous market trade before the closing
+auction.
+                                                                                                                                      https://doi.org/10.1017/S0022109026102592
+20 Journal of Financial and Quantitative Analysis
+
+B.     Price Impact Estimates
+      Figure 6 compares the fitted values for square root versus linear models fitted
+separately for the NYSE and Nasdaq listed Large, Small, and Micro stocks. To
+ensure comparability, all estimates are with a sample of stocks in the intersection of
+the TAQ and auction samples. The figure also presents the actual price impact for
+stocks grouped based on the trade size for reference. Specifically, we divide the
+sample into 100 trade-size cohorts and compute the average market impact for each
+cohort.
+      As Figure 6 illustrates, the square root model fits the actual impact better than
+the linear model. Trade sizes outside the ±5% ADV band are infrequent for Large
+and Small stocks for 30-minute intervals and they are only slightly more frequent
+
+                                                          FIGURE 6
+                        Linear Versus Square Root Model for Continuous Markets
+Figure 6 plots the price impact for trade sizes that vary from 8% ADV to +8% ADV over the last 10 days. We present these costs for
+trading in continuous markets. Each day, we divide the sample into 100 groups based on the trade size. We calculate the average
+market impact for each of these groups. These statistics are then averaged across days, and the black dots present the actual
+market impact. The orange line represents the implied market impact from a square root model, while the blue line represents the
+implied market impact from a linear model. In the second stage, we run Fama–MacBeth regressions of market impact on lagged
+characteristics as those in model A of Table 6. Using estimates from those regressions, different graphs present separate cost
+estimates for Large, Small, and Micro stocks and for NYSE and Nasdaq stocks. We classify stocks with market capitalizations above
+the median NYSE market capitalization as “Large,” stocks with market capitalizations between the 20th and the 50th percentile of
+NYSE market capitalization as “Small,” and stocks with market capitalizations smaller than the 20th percentile of NYSE market
+capitalization as “Micro.” The sample comprised all NYSE and Nasdaq stocks that have data on TAQ and the auctions data provided
+by the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+
+                   Graph A. Large Stocks, NYSE                                     Graph B. Large Stocks, Nasdaq
+  0.3%                                                             0.3%
+  0.2%                                                             0.2%
+  0.1%                                                             0.1%
+  0.0%                                                             0.0%
+ –0.1%                                                            –0.1%
+ –0.2%                                                            –0.2%
+ –0.3%                                                            –0.3%
+     –8% –6% –4% –2% 0%                 2%     4%    6%     8%         –8% –6% –4% –2% 0%                2%     4%     6%    8%
+                       Trade Size as % of ADV                                           Trade Size as % of ADV
+
+
+                   Graph C. Small Stocks, NYSE                                      Graph D. Small Stocks, Nasdaq
+  0.4%                                                             0.4%
+
+  0.2%                                                             0.2%
+
+  0.0%                                                             0.0%
+
+ –0.2%                                                            –0.2%
+
+ –0.4%                                                            –0.4%
+     –8% –6% –4% –2% 0%                 2%     4%    6%     8%         –8% –6% –4% –2% 0%                2%     4%     6%    8%
+                       Trade Size as % of ADV                                           Trade Size as % of ADV
+
+
+             Graph E. Micro Stocks, NYSE                                   Graph F. Micro Stocks, Nasdaq
+  0.8%                                                          0.8%
+  0.6%                                                          0.6%
+  0.4%                                                          0.4%
+  0.2%                                                          0.2%
+  0.0%                                                          0.0%
+ –0.2%                                                         –0.2%
+ –0.4%                                                         –0.4%
+ –0.6%                                                         –0.6%
+ –0.8%                                                         –0.8%
+     –8% –6% –4% –2% 0% 2% 4% 6%                            8%      –8% –6% –4% –2% 0% 2% 4% 6%                              8%
+                       Trade Size as % of ADV                                           Trade Size as % of ADV
+                                                                                                            https://doi.org/10.1017/S0022109026102592
+                                                               Goyal, Jegadeesh, and Wu 21
+
+for Micro stocks (98.6%, 97.2%, and 92.9% of trades are within ±5% ADV for
+Large, Small, and Micro stocks, respectively). The linear model significantly under-
+estimates the price impact for trades within this band. The adj-R2 for the square root
+model is also significantly bigger than that for the linear model. Therefore, we use
+only the square root model.21 Table A1 presents descriptive statistics on the square
+root model price impact for continuous markets. As with closing auction price
+impact measures, we observe a substantial heterogeneity.
+     The sparsity of trades larger than 5% ADV in TAQ data calls for caution in
+extrapolating price impact estimates for trades outside this range. Similar caution
+should be exercised in extrapolating estimates with institutional trades such as the
+one in Frazzini et al. (2018). For example, the mean trade size in Frazzini et al.
+((2018), Table 1) is 0.9% ADV (median = 0.4%, standard deviation = 1.7%), which
+indicates that trades larger than 5% ADV are relatively rare in their data as well.
+     As before, we fit the cross-sectional regression (7) for each trading day with all
+stocks in the sample. Table 6 presents the regression estimates with conditioning
+variables added sequentially. In model A, θ0 is 2.13, 1.51, and 0.91 for Micro, Small,
+and Large stocks, respectively, indicating that even after normalizing with ADV, the
+price impact is significantly smaller for larger stocks on NYSE. The slope coefficient
+on NASD is reliably greater than zero for only Large stocks in model A.
+     The incremental impact of Sigma is significantly positive for all size categories
+in models B and C, and the incremental impact of ln(Price) is positive for Small
+and Micro stocks in model C. The adj-R2 increases from 15.7% for model A to
+43.9% for model C.
+
+
+V.        Price Impact in Closing Auctions Versus the Continuous
+          Market
+      This section compares the price impact in closing auctions versus the contin-
+uous market. While making the comparison, we add a caveat that any misclassifica-
+tion of orders as Buys or Sells would bias price impact estimates from equation (3)
+toward zero because of an error-in-variables problem. Because exchanges use
+actual orders to compute aggregate buy and sell orders for auctions, order imbal-
+ances in auctions are measured without error. However, the price impact estimates
+for the continuous market are biased downward because we algorithmically classify
+the direction of trades, and the algorithm misclassifies some trades (see Chakra-
+barty, Li, Nguyen, and Van Ness (2007)).
+      Figure 7 presents the price impact as a function of order size for closing
+auctions and continuous markets. This figure computes price impacts with model
+A estimates in Tables 3 and 6. For example, for large stocks in Graph A, the
+closing auction price impacts are 3.2 and 10.1 bps in NYSE and 7.2 and 22.7 bps
+for trade sizes of 0.5% ADV and 5% ADV, and the corresponding continuous
+
+
+     21
+      As with closing auctions, we also estimate the exponent pi for each stock in the continuous market.
+The median of the distribution of pi is 0.45, and the interquartile range is [0.21–0.68], which are
+consistent with the square root model. Additionally, as with closing auctions, using NBBO midpoint
+price instead of trade price leads to very similar price impact measures.
+                                                                                                                                    https://doi.org/10.1017/S0022109026102592
+22 Journal of Financial and Quantitative Analysis
+
+
+                                                              TABLE 6
+                                Price Impact Models for Continuous Markets
+
+In Table 6, we estimate market impact using the continuous market data for each stock month as
+                                                                        pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+                                          R idτ = ait + λit signðX idτ Þ jX idτ j + ϵ idτ ,
+where R idτ is the return on the ith stock during the 30-minute interval τ of day d of month t, and X idτ is the signed number of
+shares divided by the average trading volume over the past 10 days. In the second stage, we run monthly Fama–MacBeth
+cross-sectional regressions:
+                                                       λit = θ0t + θ01t Z it1 + e it ,
+where Z it1 is the vector of stock specific conditioning variables as described in Table 3. Table 6 reports the average Fama–
+MacBeth θ coefficients and the corresponding t-statistics in parentheses, using Newey–West standard errors with 12 lags. All
+coefficients are multiplied by 100. The sample comprised all NYSE and Nasdaq stocks that have data on TAQ, and the
+auctions data provided by the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+                                                   A                                        B                               C
+
+θ0 × Micro                                        2.13                                      0.84                           1.62
+                                                (10.51)                                   (14.95)                        (15.74)
+θ0 × Small                                        1.51                                      0.47                           1.27
+                                                (12.58)                                    (8.32)                        (12.04)
+θ0 × Large                                        0.91                                      0.10                          0.02
+                                                (13.79)                                    (1.17)                        (0.09)
+NASD × Micro                                      0.08                                     0.03                          0.08
+                                                 (1.15)                                   (0.79)                        (2.04)
+NASD × Small                                      0.09                                      0.04                           0.06
+                                                 (1.38)                                    (0.76)                         (1.10)
+NASD × Large                                      0.27                                      0.13                           0.12
+                                                 (4.87)                                    (3.11)                         (3.05)
+Sigma × Micro                                                                               2.39                           2.03
+                                                                                          (12.50)                        (10.98)
+Sigma × Small                                                                               2.58                           2.37
+                                                                                          (12.58)                        (11.84)
+Sigma × Large                                                                               2.77                           2.80
+                                                                                          (10.12)                         (9.73)
+ln(Price) × Micro                                                                                                         0.28
+                                                                                                                          (8.40)
+ln(Price) × Small                                                                                                         0.22
+                                                                                                                          (9.69)
+ln(Price) × Large                                                                                                        0.02
+                                                                                                                         (0.96)
+Adj. R2                                          15.7                                      41.2                           43.9
+
+
+
+markets price impacts are 6.4 and 20.2 bps for NYSE and 8.3 and 26.3 bps for
+Nasdaq.22
+     For small stocks in Graph B, the closing auction price impacts are 5.2 and
+16.5 bps for NYSE and 8.8 and 27.9 bps for Nasdaq for trade sizes of 0.5% ADV
+and 5% ADVand the corresponding continuous markets price impacts are 10.7 and
+33.8 bps for NYSE and 11.3 and 35.8 bps for Nasdaq. Graph C shows that for Micro
+stocks, the price impact in the closing auctions is about the same as in the contin-
+uous market for NYSE stocks but is greater for Nasdaq stocks. For instance, the
+closing auction price impacts are 31.6 and 100.0 bps for trade sizes of 0.5% ADV
+and 5% ADVand the corresponding continuous markets price impacts are 15.6 and
+49.4 bps for Nasdaq.
+
+    22
+      Nasdaq and the NYSE charge fees of between $0.00085 and $0.0027 per share for trades executed
+in closing auctions. See http://nasdaqtrader.com/Trader.aspx?id=PriceListTrading2 and https://www.
+nyse.com/publicdocs/nyse/markets/nyse/NYSE_Price_List.pdf for fee schedules. The average price of
+stocks traded in closing auctions is $39.11 in our sample, and the maximum fee of $0.0027 is less
+than 0.69 bps for the average stock.
+                                                                                                                                                                                            https://doi.org/10.1017/S0022109026102592
+                                                                                                                            Goyal, Jegadeesh, and Wu 23
+
+                                                                                         FIGURE 7
+                                                                                 Cost Comparisons
+Figure 7 plots market impact (in basis points) for trade sizes that vary from 0.5% ADV to 5.0% ADV over the last 10 days. We
+present these costs for trading during closing auctions and continuous markets using estimates from model A of Tables 3 and
+6, respectively. Different graphs present separate cost estimates for Large, Small, and Micro stocks and for NYSE and Nasdaq
+stocks. We classify stocks with market capitalizations above the median NYSE market capitalization as “Large,” stocks with
+market capitalizations between the 20th and the 50th percentile of NYSE market capitalization as “Small,” and stocks with
+market capitalizations smaller than the 20th percentile of NYSE market capitalization as “Micro.” The sample comprised all
+NYSE and Nasdaq stocks that have data on TAQ and the auctions data provided by the NYSE and Nasdaq. The sample period
+is from January 2012 to December 2021.
+
+                                     Graph A. Large Stocks, NYSE                                                               Graph B. Large Stocks, Nasdaq
+                  30                                                                                            30
+                              Closing Auctions                                                                              Closing Auctions
+                  25          Continuous Markets                                                                25          Continuous Markets
+   Basis points
+
+
+
+
+                                                                                                 Basis points
+                  20                                                                                            20
+                  15                                                                                            15
+                  10                                                                                            10
+                   5                                                                                             5
+                   0                                                                                             0
+                       0.5%
+
+                              1.0%
+
+                                       1.5%
+
+                                              2.0%
+
+                                                     2.5%
+
+                                                            3.0%
+
+                                                                   3.5%
+
+                                                                          4.0%
+
+                                                                                  4.5%
+
+                                                                                          5.0%
+
+
+
+
+                                                                                                                     0.5%
+
+                                                                                                                             1.0%
+
+                                                                                                                                    1.5%
+
+                                                                                                                                           2.0%
+
+                                                                                                                                                  2.5%
+
+                                                                                                                                                         3.0%
+
+                                                                                                                                                                3.5%
+
+                                                                                                                                                                       4.0%
+
+                                                                                                                                                                              4.5%
+
+                                                                                                                                                                                     5.0%
+                                       Trade Size as % of ADV                                                                       Trade Size as % of ADV
+
+
+                                     Graph C. Small Stocks, NYSE                                                               Graph D. Small Stocks, Nasdaq
+                  50                                                                                            50
+                  45          Closing Auctions                                                                  45          Closing Auctions
+                  40          Continuous Markets                                                                40          Continuous Markets
+   Basis points
+
+
+
+
+                                                                                                 Basis points
+
+
+
+
+                  35                                                                                            35
+                  30                                                                                            30
+                  25                                                                                            25
+                  20                                                                                            20
+                  15                                                                                            15
+                  10                                                                                            10
+                   5                                                                                             5
+                   0                                                                                             0
+                       0.5%
+
+                              1.0%
+
+                                       1.5%
+
+                                              2.0%
+
+                                                     2.5%
+
+                                                            3.0%
+
+                                                                   3.5%
+
+                                                                          4.0%
+
+                                                                                  4.5%
+
+                                                                                         5.0%
+
+
+
+
+                                                                                                                     0.5%
+
+                                                                                                                             1.0%
+
+                                                                                                                                    1.5%
+
+                                                                                                                                           2.0%
+
+                                                                                                                                                  2.5%
+
+                                                                                                                                                         3.0%
+
+                                                                                                                                                                3.5%
+
+                                                                                                                                                                       4.0%
+
+                                                                                                                                                                              4.5%
+
+                                                                                                                                                                                     5.0%
+                                       Trade Size as % of ADV                                                                       Trade Size as % of ADV
+
+
+                                     Graph E. Micro Stocks, NYSE                                                                Graph F. Micro Stocks, Nasdaq
+              100             Closing Auctions                                                              100             Closing Auctions
+               90                                                                                            90
+               80             Continuous Markets                                                             80             Continuous Markets
+   Basis points
+
+
+
+
+                                                                                                 Basis points
+
+
+
+
+               70                                                                                            70
+               60                                                                                            60
+               50                                                                                            50
+               40                                                                                            40
+               30                                                                                            30
+               20                                                                                            20
+               10                                                                                            10
+                0                                                                                             0
+                       0.5%
+
+                              1.0%
+
+                                       1.5%
+
+                                              2.0%
+
+                                                     2.5%
+
+                                                            3.0%
+
+                                                                   3.5%
+
+                                                                          4.0%
+
+                                                                                  4.5%
+
+                                                                                          5.0%
+
+
+
+
+                                                                                                                     0.5%
+
+                                                                                                                             1.0%
+
+                                                                                                                                    1.5%
+
+                                                                                                                                           2.0%
+
+                                                                                                                                                  2.5%
+
+                                                                                                                                                         3.0%
+
+                                                                                                                                                                3.5%
+
+                                                                                                                                                                       4.0%
+
+                                                                                                                                                                              4.5%
+
+                                                                                                                                                                                     5.0%
+
+
+
+
+                                       Trade Size as % of ADV                                                                       Trade Size as % of ADV
+
+
+
+
+Price Impact of Institutional Trades
+
+     Because price impact is an increasing function of trade size, large institutions
+often algorithmically break up large orders into smaller trading lots. Frazzini et al.
+((2018), Figure 1) present an illustration of such algorithmic order execution by a
+large institution. We do not observe such order execution strategies in publicly
+available data sets such as TAQ, but several papers use proprietary trade data to
+estimate price impact (see, e.g., Almgren, Thum, Hauptmann, and Li (2005), Chan
+and Lakonishok (1993), and Frazzini et al. (2018)). The samples in these papers
+comprised orders executed only in the continuous market.
+                                                                                                                                        https://doi.org/10.1017/S0022109026102592
+24 Journal of Financial and Quantitative Analysis
+
+                                                                     FIGURE 8
+            Cost Comparisons of Closing Auctions Trading for Large and Small Stocks
+In Figure 8, we plot the price impact (in basis points) for trade sizes that vary from 0.5% ADV to 5.0% ADV over the last 10 days. We
+present these costs for Large and Small stocks for trading during closing auctions; an estimate which combines Large and Small
+stocks; and reproduced from Frazzini et al. ((2018), Figure 5). The sample comprised all NYSE and Nasdaq stocks that have data
+on TAQ and the auctions data provided by the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+
+                                  24      Closing Auctions (Large stocks)
+                                          Closing Auctions (Small stocks)
+                                  20      Closing Auctions (Small+Large)
+                                          Frazzini, Isral, and Moskowitz (2018)
+
+                                  16
+                   Basis points
+
+
+
+
+                                  12
+
+                                   8
+
+                                  4
+
+                                  0
+                                       0.5%   1.0%    1.5%      2.0% 2.5% 3.0% 3.5%        4.0%   4.5%     5.0%
+                                                                  Trade Size as % of ADV
+
+
+
+
+      The results in Figure 7 indicate that the price impacts estimated with TAQ data
+for continuous markets are bigger than those for closing auctions. But how does the
+price impact for algorithmic trades compare with that for closing auctions? To
+address this question, we compare our closing auction price impact estimates with
+those from Frazzini et al. (2018). Many orders in the Frazzini et al. data fall at the
+lower end of the trading range in Figure 7.
+      Institutions typically trade larger and more liquid stocks relative to the CRSP
+universe. For instance, Chen et al. (2000) report that the average market cap of
+stocks that mutual funds hold is around the 70th percentile of NYSE stocks. The
+average NYSE size deciles for Large and Small stocks in our sample are 7.89 and
+3.88, respectively, and for the combined sample, the average is 5.96. Therefore, the
+market cap of the Frazzini et al. (2018) sample is smaller than the Large stocks but
+bigger than both the Small and combined samples.
+      Figure 8 compares closing price impact estimates for the Large, Small, and
+combined Large/Small samples with the Frazzini et al. (2018) estimates.23 The
+institutional trade price impact is bigger than the closing auction price impact for
+Large stocks. The former is also bigger than the price impact for the combined
+sample. For instance, the institutional trade price impact for a 1% ADV trade is
+9.3 bps versus 8.2 bps in closing auctions for the combined sample.24
+
+
+    23
+      We obtain these estimates by running the cross-sectional regression (7) without the Z variables.
+The θ0 estimates for Large, Small, and combined Large/Small are 0.63 (t-statistic = 11.07), 1.03
+(t-stat. = 15.65) and 0.82 (t-stat. = 13.85), respectively.
+    24
+      Because our price-impact estimates are obtained from regressions of price changes on contempo-
+raneous order imbalances, they may be subject to endogeneity concerns arising from simultaneity or
+omitted variables—specifically, unobserved factors that may jointly affect both order submission and
+prices. This limitation is inherent to empirical designs based on standard archival trade and quote data
+and cannot be fully ruled out. The same caveat applies to the first indicative order imbalance in closing
+auctions, which may itself be correlated with latent demand or information that also influences prices.
+Accordingly, our price-impact estimates should be interpreted with this limitation in mind.
+                                                                                          https://doi.org/10.1017/S0022109026102592
+                                                    Goyal, Jegadeesh, and Wu 25
+
+VI.    Price Impact for Trading on Anomalies: A Benchmark
+     What is the effect of price impact on the profitability of trading strategies
+documented in academic literature? Korajczyk and Sadka (2004) and Lesmond,
+Schill, and Zhou (2004) examine this issue for price momentum strategies, and
+Novy-Marx and Velikov (2016) address it for several other strategies as well. These
+papers use price impact models estimated in continuous markets.
+     We find that price impact is smaller in the continuous market for Micro stocks
+traded on Nasdaq and in closing auctions for all other stocks. Therefore, the price
+impact in the lower cost mechanism would be the right benchmark for the cost of
+trading on anomalies, which this section presents. For comparison, we also present
+the results for all trade executions exclusively in closing auctions or continuous
+markets. Because opening auctions are illiquid, we do not consider them in this
+section.
+     We consider several strategies based on various anomalies, which assign
+stocks to one of 10 characteristic-sorted deciles. Specifically, we consider the
+following characteristic-based strategies:
+
+A.    Low Turnover
+• Size: Market capitalization
+• Book-to-market ratio: Ratio of Book equity to market capitalization, where book
+  equity is computed as in Fama and French (1992).
+• Profitability: Ratio of operating profits to book equity, where operating profits are
+  equal to the difference between sales (REVT) and cost of goods sold (COGS), and
+  selling, general, and administrative expenses (SGA) where SGA is computed as
+  the difference between Compustat data items XSGA and XRD (XRD replaced
+  with zero if missing).
+• Investments: Growth in total assets (Compustat data item AT).
+     We assume that firms publicly release their financial data for each fiscal year
+before the end of June of the following year. Therefore, we sort stocks in the low-
+turnover category at the end of June of every year using financial ratios from the
+previous fiscal year, construct value-weighted decile portfolios, and rebalance
+annually. These strategies correspond to four of the five factors in Fama and French
+(2015) model.
+
+B.    Medium Turnover
+• Price Momentum: Portfolio sorts are based on returns over the previous
+  12 months, skipping the most recent month.
+
+C.    High Turnover
+• One-month reversals: Portfolio sorts are based on returns during the previous
+  month.
+    The medium turnover strategy is the momentum strategy of Jegadeesh and
+Titman (1993) and the 1-month strategy is the return reversal strategy of Jegadeesh
+(1990). These portfolios are rebalanced every month.
+                                                                                                              https://doi.org/10.1017/S0022109026102592
+26 Journal of Financial and Quantitative Analysis
+
+     The sample includes all common stocks (share code = 10 or 11) listed on
+NYSE and Nasdaq (exchange code = 1 or 3). All strategies are value weighted, and
+the decile breakpoints are based on the sample of NYSE stocks only. The sample
+period is as before, namely from January 2012 to December 2021.
+     We calculate net returns as follows: Say that the notional dollar value of the
+portfolio at time 0 is V 0 . Since we consider value-weighted portfolios, then by
+definition:
+(11)                                     V t = V t1 × ð1 + Rt Þ,
+
+where Rt is the gross return and V t is the portfolio value at time t. Consider a stock i
+at a rebalancing date t. If the desired weights after rebalancing are given by wit, then
+we have that the change in weight Δwit = wit  wit1 × ð1 + Rit Þ × V t1 =V t and the
+fraction of ADV to trade for this stock is X it = ½V t1 × Δwit =Pit =ADV it1 , where Pit
+is the price of stock i at time t.
+      The expected price impact in continuous markets should account for the fact
+that the price impact estimates in Table 6 use order imbalances computed over each
+interval. If we consider an order to implement trading strategies in isolation then the
+price impact, say PI ðX it Þ, would be
+                                                           pﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+(12)                           PI ðX it Þ = λit signðX it Þ jX it j:
+
+     However, all orders placed to implement the trading strategies should be
+viewed as incremental orders and not in isolation or as a part of the trades in the
+sample. Let Qit be the daily order imbalance in the sample with an associated
+frequency distribution ϕðQit Þ. For a given realization of Qit , we assume that the
+price impact of an order of size X it is based on a total size of ðQit + X it Þ, as if X it were
+incremental. We then average the price impact across all possible realizations of Qit .
+In other words, the expected incremental price impact for incremental order of X it ,
+conditional on the distribution of Qit is
+                                 Z                 pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+(13)         E ½PI ðX it Þ = λit signðQit + X it Þ jðQit + X it ÞjϕðQit ÞdQit :
+
+We use empirical distribution of Qit and numerically compute the integral in
+equation (13).25 We report select percentiles of Qit for both closing auctions and
+continuous trading in Table A2.
+     To account for the effect of stock characteristics on price impact, we use model
+C estimates of λit in Tables 3 and 6 to compute the price impact. The expected price
+impact of trades at time t for each portfolio is
+                                        X
+(14)                         E½PI t  =   i
+                                            E½PI ðX it Þ × Δwit :
+
+Table 7 presents the results with Panel A presents the annualized gross returns for
+the six trading strategies. We reverse the order of portfolios for Size and Investment
+so that decile 10 corresponds to small stocks and low investment, respectively.
+
+   25
+     If the price impact function were linear, then equation (13) simplifies to E ½PI ðX it Þ = λit X it .
+Because our price impact function is nonlinear, we use equation (13).
+                                                                                                            https://doi.org/10.1017/S0022109026102592
+                                                               Goyal, Jegadeesh, and Wu 27
+
+Additionally, we also consider a combination strategy where we form a multifactor
+portfolio that is an equal-weighted portfolio of the corresponding deciles portfolios
+based on individual characteristics. To reduce clutter, we report the results for only
+selected deciles 1, 3, 5, 7, and 10. The table also reports results for decile 101,
+which we refer to as the long/short portfolio.
+      The profitability varies across trading strategies during our sample period. For
+example, the gross long/short portfolio returns are negative for Size and Investment,
+and significantly positive for Profitability and multifactor strategy. Because our
+objective is to examine the price impact cost incurred by various strategies in the
+recent period and differences across trading mechanisms, we focus on trading costs
+and not on profitability per se.
+      Panel B of Table 7 reports portfolio turnover in percentage. We calculate
+turnover as the sum of absolute changes in percentage portfolio weights from
+1 month to the next, and it includes both sells and buys. For the extreme deciles,
+the turnover ranges from 1.72% to 15.40% for the four low-turnover strategies,
+about 75%–140% for the momentum strategy, and, as expected, the high-turnover
+reversal strategy has the highest turnover, at around 180%. The turnover for the
+long/short portfolio is the sum of turnovers for deciles 10 and 1.
+      Multifactor strategy portfolios have slightly lower turnover than the average of
+the six individual portfolios. For example, the turnover for the long/short portfolio
+for multifactors is 94.02% versus the average of 96.62% for the six individual
+factors. The multifactor portfolio turnover is smaller because some stocks that leave
+the portfolio based on one factor contemporaneously enter it based on another
+factor.26
+      Because we value weight our portfolios, additions or deletions change the
+weights of all the other stocks in the portfolio which adds to turnover. This effect
+increases with the frequency of rebalancing, and it is particularly large for momen-
+tum and reversals. The trading costs we report in this table include the cost of such
+mechanical rebalancing, but we later consider cost mitigation strategies.
+      We compute the turnover and price impact assuming a starting portfolio value
+of $100 million. Panel C of Table 7 presents the average stock trade as a percentage
+of ADV over the last 10 days. The average trade ranges from a low of almost zero
+percent for large stocks to a high of 2.97% ADV per month for the 1-month loser
+portfolio. The average trade for reversals exhibits a U-shaped pattern because
+extreme portfolios are disproportionately populated with volatile small-cap stocks.
+Although the extreme momentum deciles are also disproportionately populated
+with volatile stocks, the average turnover declines with decile rank because ADV
+tends to increase with past returns.
+      Panels D and E of Table 7 present the price impact costs for trade executions in
+closing auctions and the continuous market, respectively.27 The execution costs are
+about the same in closing auctions and continuous markets, except for the small
+firm decile and the medium and high turnover strategies. The cost advantage for
+
+   26
+       DeMiguel, Martín-Utrera, Nogales, and Uppal (2020) find that execution costs for the strategy that
+combines multiple signals are smaller than those for single-characteristic strategies that Novy-Marx and
+Velikov (2016) consider.
+    27
+       We winsorize trade size at ±5% ADV.
+                                                                                                                                         https://doi.org/10.1017/S0022109026102592
+28 Journal of Financial and Quantitative Analysis
+
+
+                                                            TABLE 7
+                                              Portfolio Returns and Costs
+
+In Table 7, we construct value-weighted decile portfolios on six strategies based on size, book-to-market, profitability,
+investment, momentum, and reversal. Size is market capitalization. Book-to-market is calculated as in Fama and French
+(1992). Profitability is the ratio of operating profits to book equity. Investment is the growth in total assets. We reverse the order
+of portfolios for Size and Investment so that decile 10 corresponds to small stocks and low investment, respectively.
+Momentum is the cumulative return over the last 11 months skipping the most recent month. Reversal is the return during
+the previous month. Strategies based on book-to-market, profitability, and investment are rebalanced once a year at the end of
+June. Strategies based on momentum and reversal are rebalanced every month. The breakpoints for sorts are based on NYSE
+stocks only. The last row combines the six strategies into an equally weighted multifactor strategy. We report annualized gross
+returns in Panel A, portfolio turnover in percent per month in Panel B, and the average stock trade size divided by average
+trading volume over the past 10 days for an initial portfolio value of $100 million. We report the cost in percent per year for
+trading in closing auctions and continuous markets using estimates from model C of Tables 3 and 6 in Panels D and E,
+respectively. Strategic trading costs in Panel F are computed by trading nonmicrocap stocks in closing auctions and
+microcap stocks in continuous markets. Long/short 10-1 portfolio returns that are statistically significant at the 95% level
+are in boldface. The sample comprised all NYSE and Nasdaq stocks that have data on TAQ and the auctions data provided by
+the NYSE and Nasdaq. The sample period is from January 2012 to December 2021.
+                            1                   3                   5                   7                   10                 10–1
+
+Panel A. Gross Returns (percent per year)
+Size                      16.67               16.89               14.57                13.64               15.13               1.54
+B/M                       20.30               16.23               14.52                11.69               20.54                0.23
+Profitability             13.56               13.86               15.05                14.99               19.05                5.49
+Investment                16.52               17.60               14.10                13.31               16.26               0.26
+Momentum                  17.12               16.35               18.32                16.38               17.27                0.15
+Reversal                  16.88               13.35               16.30                17.72               19.97                3.09
+Multifactor               16.84               15.71               15.48                14.62               18.04                1.19
+Panel B. Portfolio Turnover (percent per month)
+Size                       1.72                7.98               11.01               11.09                 8.53               10.25
+B/M                        5.70               10.12               12.78               13.39                 9.69               15.40
+Profitability              7.58               10.49               10.71               10.59                 4.87               12.45
+Investment                13.30               15.06               15.30               15.51                15.74               29.04
+Momentum                  75.23              126.87              138.54              140.00                69.16              144.39
+Reversal                 182.59              179.81              175.03              180.56               185.59              368.17
+Multifactor               46.17               54.36               54.69               55.57                47.84               94.02
+Panel C. Average Stock Trade (percent of ADV)
+Size                       0.01                 0.10                0.25                0.33                0.88
+B/M                        0.07                 0.09                0.16                0.26                0.39
+Profitability              0.23                 0.30                0.20                0.13                0.09
+Investment                 0.13                 0.17                0.18                0.20                0.32
+Momentum                   2.08                 2.12                2.02                1.58                1.11
+Reversal                   2.36                 1.73                1.88                2.09                2.97
+Multifactor                0.53                 0.33                0.29                0.29                0.73
+Panel D. Costs in Closing Auctions (percent per year)
+Size                       0.00                 0.05                0.14                0.23                0.65                 0.66
+B/M                        0.03                 0.05                0.08                0.11                0.16                 0.19
+Profitability              0.10                 0.12                0.08                0.06                0.02                 0.13
+Investment                 0.09                 0.10                0.08                0.09                0.21                 0.29
+Momentum                   1.55                 1.04                0.96                0.77                0.50                 2.05
+Reversal                   2.14                 1.05                1.04                1.21                2.91                 5.05
+Multifactor                0.25                 0.12                0.11                0.11                0.32                 0.57
+Panel E. Costs in Continuous Markets (percent per year)
+Size                       0.00                 0.09                0.22                0.35                0.41                 0.41
+B/M                        0.03                 0.07                0.12                0.16                0.23                 0.27
+Profitability              0.12                 0.17                0.12                0.10                0.03                 0.15
+Investment                 0.11                 0.13                0.12                0.14                0.27                 0.38
+Momentum                   1.91                 1.54                1.45                1.14                0.68                 2.58
+Reversal                   2.84                 1.52                1.54                1.77                3.91                 6.75
+Multifactor                0.27                 0.14                0.13                0.14                0.34                 0.61
+Panel F. Strategic Trading Costs (percent per year)
+Size                       0.00                 0.05                0.14                0.23                0.42                 0.42
+B/M                        0.03                 0.05                0.08                0.10                0.15                 0.17
+Profitability              0.09                 0.11                0.08                0.06                0.02                 0.11
+Investment                 0.08                 0.10                0.08                0.09                0.19                 0.27
+Momentum                   1.30                 0.99                0.94                0.75                0.48                 1.78
+Reversal                   1.96                 1.03                1.02                1.19                2.61                 4.57
+Multifactor                0.21                 0.12                0.10                0.11                0.26                 0.47
+                                                                                                           https://doi.org/10.1017/S0022109026102592
+                                                               Goyal, Jegadeesh, and Wu 29
+
+small stocks reflects the fact that Micro stocks are cheaper to trade in the continuous
+market. The small stocks also are a larger fraction of the extreme Momentum and
+Reversal deciles than other deciles, but the execution costs are smaller in closing
+auctions. For instance, the execution cost for the loser Reversal portfolio, is 2.91%
+in closing auctions versus 3.91% in continuous markets.
+      The trading cost for the multifactor portfolio is significantly smaller than the
+average trading costs for the corresponding decile and long/short portfolios based
+on individual factors. For example, the cost in closing auctions for long/short
+portfolio is 0.57% for the multifactor strategy versus 1.39% average across indi-
+vidual signals. The smaller trading cost is partly due to the smaller turnover because
+of offsetting trades as we noted earlier. A more important factor is that the multi-
+factor strategy invests a smaller dollar amount in each stock and hence trades a
+smaller fraction of ADV per stock.
+      Because we find systematic differences in trading costs, Panel F of Table 7
+evaluates the cost of strategic execution: trade Micro stocks on Nasdaq in the
+continuous market and all the other stocks in closing auctions. The cost of strategic
+execution is smaller than the cost of trading exclusively in either mechanism, which
+illustrates the benefit of our price impact models. For example, the cost for the
+Reversal long/short portfolio is 4.57% with strategic execution, versus 5.05% and
+6.75% in Panels D and E.
+1.   Alphas
+      Table 8 reports CAPM alphas of portfolio returns from Table 7. We calculate
+these alphas for gross returns as well as net returns, net of transaction costs with
+trades executed only in closing auctions or the continuous market and for the
+strategic execution strategy. In general, the pattern of alphas in Table 8 mirrors that
+of returns and costs in Table 7. One exception is momentum strategies. For these
+strategies, net alphas of 101 portfolio are large and positive. This happens
+primarily because the short leg (past losers) has high market betas and, therefore,
+large negative alphas.
+2.   Nonmicro stocks
+      Many institutional funds do not trade Micro stocks because of their illiquidity
+and large price impacts. So, we also compute trading costs when Micro stocks are
+excluded.28 Table 9 presents the results for this sample. The long/short portfolio
+returns in Table 9 are generally similar to those in Table 7 with a few exceptions. The
+long/short portfolio returns for momentum are 4.80% in Table 9 versus 0.15% in
+Table 7, consistent with the evidence in Jegadeesh and Titman (2001). Also,
+Reversal is not profitable after excluding Micro stocks.
+      Panels D and E report costs for executing trades in closing auctions and the
+continuous market, respectively. Because we find that price impact is smaller in
+closing auctions than in the continuous market, Table 9 does not have a separate
+strategic execution panel. The price impact is smaller in closing auctions for all
+decile and long/short portfolios. The difference is particularly large for the high
+    28
+       We exclude stocks with capitalization below the 20th percentile of NYSE stocks at the time of
+portfolio formation (at the end of June for annually rebalanced strategies and the end of each month for
+monthly rebalanced strategies).
+                                                                                                                                  https://doi.org/10.1017/S0022109026102592
+30 Journal of Financial and Quantitative Analysis
+
+
+                                                         TABLE 8
+                                                    Portfolio Alphas
+
+In Table 8, we construct value-weighted decile portfolios as in Table 7. This table reports CAPM alphas of these portfolios. We
+report these alphas for both gross returns and net returns.
+                           1                  3                 5                  7                  10                10–1
+
+Panel A. Gross Alpha (percent per year)
+Size                     1.09              0.90              4.32             6.84               4.10               5.19
+B/M                      2.58               1.28              0.99             5.74               3.57               6.14
+Profitability           3.30              5.04              2.49             0.53                2.69                6.00
+Investment              2.11               0.63              1.34             4.20                0.88                2.99
+Momentum               13.17              3.33               1.87              0.71                0.51               13.67
+Reversal                0.05              1.70              0.26             0.51               6.37               6.32
+Multifactor             2.49              1.51              1.25             2.85               1.66                0.83
+Panel B. Alpha Net of Costs in Closing Auctions (percent per month)
+Size                     1.09              0.98              4.53             7.17               4.48               5.57
+B/M                      2.55               1.22              1.10             5.89               3.77               6.38
+Profitability           3.42              5.20              2.60             0.62                2.66                5.85
+Investment              2.22               0.51              1.46             4.34                0.62                2.63
+Momentum               15.00              4.78               0.48             0.40               0.16               11.17
+Reversal                2.80              3.16              1.76             2.26              10.21              12.92
+Multifactor             2.76              1.65              1.38             2.99               1.99                0.25
+Panel C. Alpha Net of Costs in Continuous Markets (percent per month)
+Size                     1.09              0.95              4.45             7.06               4.71               5.80
+B/M                      2.55               1.24              1.07             5.84               3.71               6.31
+Profitability           3.40              5.15              2.56             0.59                2.67                5.87
+Investment              2.19               0.54              1.42             4.28                0.68                2.71
+Momentum               14.69              4.33               0.93             0.05                0.01               11.65
+Reversal                2.13              2.72              1.28             1.72               9.27              11.30
+Multifactor             2.74              1.63              1.36             2.97               1.97                0.28
+Panel D. Alpha Net of Strategic Trading Costs (percent per year)
+Size                     1.09              0.95              4.45             7.06               4.49               5.58
+B/M                      2.55               1.24              1.07             5.84               3.70               6.30
+Profitability           3.39              5.14              2.56             0.59                2.67                5.89
+Investment              2.19               0.54              1.42             4.28                0.70                2.74
+Momentum               14.44              4.28               0.95             0.04                0.03               11.92
+Reversal                1.95              2.70              1.26             1.70               8.96              10.82
+Multifactor             2.70              1.62              1.36             2.96               1.91                0.37
+
+
+
+
+turnover Reversal strategy, for which the long/short portfolio execution cost in
+closing auctions is 3.37% in Panel D of Table 9 versus the strategic execution cost of
+4.57% in Panel F of Table 7.
+
+3. Price Impact without Concurrent Orders
+     The price impact equals λit f ðX it Þ if each order were considered in isolation,
+disregarding the expected effect of concurrent orders. For reference, we report the
+expected price impact computed using equation (12) in Panels A and B of
+Table A3 for the sample of all stocks and nonmicro-cap stocks, respectively.
+The general pattern of the order execution costs in Table A3 is similar to those
+in Tables 7 and 9 though the costs are slightly bigger in Table A3 because of
+Jensen’s inequality.29
+
+    29
+      Because the price impact function is non-linear, E½PI ðX it Þ ≠ λit f ðX it Þ. Intuitively, the second order
+Taylor series approximation of equation (8) is E½PI ðX it Þ ≈ λit f ðX it Þ  0:5λit × σ 2Q , where σ 2Q is the
+variance of Qit . Because of the concavity of price impact E½PI ðX it Þ < λit f ðX it Þ. This footnote uses
+the Taylor series approximation to explain the underlying intuition, but we use the empirical distribution
+of Qit in equation (9) to compute E ½PI ðX it Þ.
+                                                                                                                                  https://doi.org/10.1017/S0022109026102592
+                                                                             Goyal, Jegadeesh, and Wu 31
+
+VII.            Breakeven Capacity
+     We compute the breakeven capacity of a trading strategy as follows: The net
+return of the strategy is
+
+(15)                                Rnet = RGross  Trading Cost ðV Þ=V ,
+
+where Rgross
+         t    and Rnet
+                    t are the strategy’s gross and net returns, V is the value of the
+portfolio and Trading Cost ðV Þ=V is the cost of execution per dollar of portfolio
+value. Because price impact is a square root function of trade size, Trading CostðV Þ
+is proportional to V 1:5 , the numerator increases at a rate faster than the denominator
+and the cost per dollar increases with V . The square root model implies that trading
+                                       pﬃﬃﬃﬃ
+cost per dollar increases at the rate V . The strategy reaches its breakeven point
+when Rnet = 0, or when Trading Cost ðV Þ=V = RGross .
+      Tables 7 and 9 report the cost per $100 million dollar invested
+                                                                    Grossin each strategy.
+                                            BE
+Therefore, the breakeven capacity V = $100million × R                      =Trading Cost
+ð100mÞ2 . Table 10 reports the breakeven capacity based on the corresponding
+values for the long/short portfolios in Tables 7 and 9.
+      With all stocks, the breakeven capacity with strategic execution is $633
+million for the multifactor strategy and $251 billion for Profitability. The capacities
+for Reversals, B/M and Momentum range from $1 million to $177 million, but all
+the other strategies have zero capacity.
+      With nonmicro stocks, Profitability earns about the same return as with all
+stocks, but because of smaller per dollar trading cost its capacity increases to $331
+billion. Momentum becomes more profitable with nonmicro stocks and hence its
+capacity increases to $1.8 billion. The capacity for the multifactor strategy is now
+$741 million but none of the other strategies are profitable.
+
+
+                                                         TABLE 9
+                                 Portfolio Returns and Costs (No Microcaps)
+
+In Table 9, we construct value-weighted decile portfolios as in Table 7 except that we exclude microcap stocks at the portfolio
+formation date. Microcap stocks are defined as those with market capitalizations below the 20th percentile of the NYSE
+stocks.
+                          1                  3                   5                  7                 10                10–1
+
+Panel A. Gross Returns (percent per year)
+Size                     16.67              16.98              14.56              16.30              15.81              0.86
+B/M                      20.04              16.85              13.93              14.12              17.59              2.44
+Profitability            13.62              14.40              17.43              13.03              19.04               5.42
+Investment               16.85              17.14              14.08              14.62              14.87              1.98
+Momentum                 13.04              16.21              17.51              15.79              17.84               4.80
+Reversal                 17.20              14.33              17.22              19.64              17.15              0.05
+Multifactor              16.24              15.99              15.79              15.58              17.05               0.81
+Panel B. Portfolio Turnover (percent per month)
+Size                     1.71               8.01               11.11              12.02              11.91              13.62
+B/M                      5.65              10.56               12.69              13.25               6.28              11.93
+Profitability            7.72              10.80               11.29              11.99               5.03              12.74
+Investment              13.19              14.42               15.62              15.95              15.68              28.88
+Momentum                72.36             131.56              144.14             144.38              71.27             143.64
+Reversal               181.60             180.41              176.36             180.91             183.83             365.43
+Multifactor             45.48              54.75               55.29              57.04              47.65              93.13
+                                                                                                    (continued on next page)
+                                                                                                                                        https://doi.org/10.1017/S0022109026102592
+32 Journal of Financial and Quantitative Analysis
+
+
+                                                    TABLE 9 (continued)
+                                  Portfolio Returns and Costs (No Microcaps)
+
+                           1                    3                     5                  7                 10                 10–1
+
+Panel C. Average Stock Trade (percent of ADV)
+Size                       0.01                0.10                   0.24               0.34               0.51
+B/M                        0.05                0.08                   0.13               0.23               0.19
+Profitability              0.16                0.22                   0.18               0.11               0.06
+Investment                 0.11                0.12                   0.15               0.17               0.19
+Momentum                   1.10                1.55                   1.51               1.21               0.86
+Reversal                   1.72                1.37                   1.55               1.69               2.01
+Multifactor                0.21                0.17                   0.18               0.19               0.28
+Panel D. Costs in Closing Auctions (percent per year)
+Size                       0.00                0.05                   0.12               0.20               0.36                0.37
+B/M                        0.02                0.05                   0.08               0.12               0.06                0.09
+Profitability              0.07                0.09                   0.09               0.07               0.02                0.09
+Investment                 0.08                0.09                   0.09               0.10               0.13                0.21
+Momentum                   0.66                0.93                   0.91               0.78               0.47                1.13
+Reversal                   1.60                1.05                   1.08               1.20               1.77                3.37
+Multifactor                0.13                0.11                   0.11               0.11               0.17                0.30
+Panel E. Costs in Continuous Markets (percent per year)
+Size                       0.00                0.08                   0.19               0.32               0.48                0.48
+B/M                        0.03                0.07                   0.12               0.19               0.11                0.14
+Profitability              0.11                0.14                   0.14               0.11               0.03                0.14
+Investment                 0.12                0.12                   0.14               0.16               0.19                0.31
+Momentum                   1.04                1.51                   1.42               1.18               0.68                1.72
+Reversal                   2.45                1.57                   1.64               1.83               2.85                5.30
+Multifactor                0.17                0.14                   0.13               0.15               0.22                0.40
+
+
+
+
+                                                            TABLE 10
+                                                    Breakeven Capacity
+                                                                                             h                             i2
+In Table 10, we compute the breakeven capacity of a trading strategy as V BE = $100 million × R Gross =Trading Cost ð100m Þ ,
+where R Gross is the gross return of the long/short strategy and Trading Cost ð100m Þ is the trading cost for trading $100 million.
+Panels A and B report these calculations following Tables 7 and 9, respectively. Portfolio returns that are statistically significant
+at the 95% level are in boldface.
+                         Size          B/M          Profitability       Investment      Momentum         Reversal        Multifactor
+
+Panel A. All Stocks
+
+                                                                    Return (percent per year)
+                        1.54           0.23            5.49              0.26              0.15            3.09           1.19
+                                                                    Costs (percent per year)
+Closing                   0.66          0.19            0.13                 0.29            2.05            5.05           0.57
+Continuous                0.41          0.27            0.15                 0.38            2.58            6.75           0.61
+Strategic trading         0.42          0.17            0.11                 0.27            1.78            4.57           0.47
+                                                               Breakeven Capacity (in $ million)
+Closing                    —           148            188,909                —                 37           432              37
+Continuous                 —           75             125,789                —                 0             21              381
+Strategic trading          —           177            250,803                —                 1             46              633
+Panel B. Nonmicro Stocks
+
+                                                                    Return (percent per year)
+                        0.86         2.44             5.42              1.98              4.80          0.05            0.81
+                                                                    Costs (percent per year)
+Closing                   0.37          0.09            0.09                 0.21            1.13            3.37           0.30
+Continuous                0.48          0.14            0.14                 0.31            1.72            5.30           0.40
+                                                               Breakeven Capacity (in $ million)
+Closing                    —            —             331,850                —               1,809           —               741
+Continuous                 —            —             146,241                —                779            —               418
+                                                                                                         (continued on next page)
+                                                                                                                     https://doi.org/10.1017/S0022109026102592
+                                                                            Goyal, Jegadeesh, and Wu 33
+
+
+                                             TABLE 10 (continued)
+                                             Breakeven Capacity
+
+                       Size          B/M     Profitability       Investment      Momentum   Reversal   Multifactor
+
+Panel C. Cost Mitigation 10 %/20 %
+
+                                                             Return (percent per year)
+                       5.88          0.83       5.28               3.41            1.82      3.87       3.24
+                                                             Costs (percent per year)
+Closing                1.67           0.07       0.10               0.31            0.79      4.30       0.55
+Continuous             0.96           0.10       0.12               0.39            0.95      5.73       0.49
+Strategic trading      0.99           0.07       0.09               0.28            0.68      3.89       0.42
+                                                        Breakeven Capacity (in $ million)
+Closing                1,238          —       288,816              12,286            538      81         3,431
+Continuous             3,736          —       193,161               7,470            370      46         4,296
+Strategic trading      3,532          —       386,270              14,538            722      99         6,066
+
+
+
+
+      Finally, we examine whether a cost mitigation strategy that reduces portfolio
+turnover increases trading capacity. The mitigation strategy that we consider is the
+10/20 partial rebalancing strategy that Novy-Marx and Velikov (2016) propose. To
+reduce turnover, this strategy takes positions in stocks when they enter the extreme
+deciles. However, any existing position in a stock is closed only when it falls outside
+extreme 20% cutoffs. While this strategy controls turnover it could also affect gross
+profits because the long/short portfolios continue to hold stocks based on stale
+ranks.
+      Panel C of Table 10 presents long/short portfolio returns with this cost miti-
+gation strategy. Although the trading strategies now use stale information, the
+profits for most of them are greater in Panel C than in Panel A. The only exceptions
+are B/M and Profitability, where profits are marginally smaller. The breakeven
+capacity increases for all strategies except B/M. The capacity increases from $251
+billion to $386 billion even for Profitability because of smaller execution costs. The
+capacity is significantly higher with strategic execution than with exclusive exe-
+cution in a single mechanism.
+
+VIII.       Conclusion
+      The price impact of trades is a measure of market liquidity, and it is a key topic
+in market microstructure literature. The literature largely focuses on market liquid-
+ity in the continuous market. This article estimates price impact models for closing
+and opening auctions as well.
+      We find that price impact is notably smaller in closing auctions than that in the
+continuous market for all stocks except Nasdaq Micro stocks. Also, the closing
+auction price impact is smaller for nonmicro stocks (stocks with market capitali-
+zation greater than the 20th NYSE percentile) than that of real time institutional
+trades in Frazzini et al. (2018). In contrast, opening auctions are illiquid and have
+relatively large price impacts.
+      We estimate the execution costs for several trading strategies motivated by
+popular anomalies in academic literature. When an investor trades in the lower
+cost mechanism, the annual two-way costs for long/short strategies based on
+                                                                                                                                  https://doi.org/10.1017/S0022109026102592
+34 Journal of Financial and Quantitative Analysis
+
+financial ratios such as book-to-market, profitability, and investments range from
+12 to 29 bps for a $100 million portfolio. Because traders can execute their orders
+in either closing auctions or the continuous market, our calibrated model provides
+a new benchmark to evaluate whether trading strategies remain viable after
+accounting for trading costs.
+      Traders can potentially get even lower execution costs by strategically split-
+ting orders across mechanisms. For instance, traders could time their trades and
+execute larger trades during more liquid periods. Also, large orders may incur lower
+costs if they are partly executed in continuous markets and partly in closing
+auctions. In theory, traders would allocate trades across mechanisms to equalize
+marginal price impact. Determining the optimal trade split, however, requires an
+understanding of how price impact is transmitted between mechanisms. For exam-
+ple, if part of a large order is executed during regular trading, how does it affect the
+trade prices for subsequent orders in closing auctions and opening auctions?
+Traders may also spread execution over multiple days in closing auctions. What
+would be the price impact if trades were split over multiple days and mechanisms?
+Large institutions likely employ such strategies, and access to their proprietary data
+could provide valuable insights into these dynamics.
+
+
+Appendix A. Additional Tables
+
+                                                        TABLE A1
+                                        Summary Statistics on Lambdas
+
+Table A1 presents summary statistics on lambda estimates from equation (3) for closing auctions and continuous markets.
+Each month, we calculate cross-sectional mean, Std. Dev., and select percentiles. The table then reports time-series
+averages of these statistics. All numbers are reported in bps for 1% ADV.
+                                                             Closing                                               Continuous
+
+M                                                              17.7                                                   16.7
+SD                                                             34.6                                                   14.5
+25th percentile                                                 2.9                                                    7.9
+50th percentile                                                 8.4                                                   13.1
+75th percentile                                                17.8                                                   21.3
+
+
+
+
+                                                        TABLE A2
+                                     Percentiles of Daily Order Imbalance
+
+Table A2 presents selected percentiles of daily order imbalance Q it (in %) for closing auctions and the continuous market that
+are used for calculating price impact of portfolio strategies in equation (13).
+Percentile                                                Closing                                                  Continuous
+
+1                                                          7.14                                                     7.26
+5                                                          3.62                                                     3.61
+10                                                         2.15                                                     2.20
+25                                                         0.45                                                     0.84
+50                                                          0.00                                                     0.09
+75                                                          0.40                                                      0.63
+90                                                          2.08                                                      1.93
+95                                                          3.51                                                      3.30
+99                                                          6.94                                                      6.97
+                                                                                                                                 https://doi.org/10.1017/S0022109026102592
+                                                                            Goyal, Jegadeesh, and Wu 35
+
+
+                                                       TABLE A3
+                                   Portfolio Costs (Alternative Calculations)
+
+In Table A3, we construct value-weighted decile portfolios as in Tables 7 and 9 and report portfolio trading costs except that
+we calculate these from equation (12) and not equation (13). See the text for more details.
+                            1                  3                   5                7                 10                10-1
+
+Panel A. Costs in Closing Auctions (percent per year), All Stocks
+Size                      0.01               0.07                 0.16            0.25               0.69               0.70
+B/M                       0.04               0.07                 0.10            0.12               0.18               0.22
+Profitability             0.12               0.13                 0.10            0.08               0.03               0.15
+Investment                0.11               0.12                 0.10            0.11               0.23               0.34
+Momentum                  1.73               1.24                 1.16            0.98               0.64               2.37
+Reversal                  2.55               1.33                 1.30            1.48               3.28               5.83
+Multifactor               0.36               0.20                 0.18            0.19               0.44               0.80
+Panel B. Costs in Continuous Markets (percent per year), All Stocks
+Size                      0.01               0.11                 0.25            0.38               0.43               0.44
+B/M                       0.05               0.09                 0.15            0.19               0.25               0.31
+Profitability             0.14               0.20                 0.15            0.12               0.05               0.19
+Investment                0.15               0.17                 0.16            0.18               0.30               0.46
+Momentum                  2.16               1.88                 1.77            1.49               0.90               3.06
+Reversal                  3.46               1.98                 1.96            2.19               4.45               7.91
+Multifactor               0.46               0.30                 0.28            0.29               0.52               0.98
+Panel C. Strategic Trading Costs (percent per year), All Stocks
+Size                      0.01               0.07                 0.16            0.25               0.44               0.45
+B/M                       0.04               0.07                 0.10            0.12               0.16               0.20
+Profitability             0.10               0.13                 0.10            0.08               0.03               0.13
+Investment                0.11               0.12                 0.10            0.10               0.21               0.32
+Momentum                  1.46               1.19                 1.14            0.97               0.61               2.08
+Reversal                  2.35               1.31                 1.28            1.45               2.95               5.30
+Multifactor               0.32               0.20                 0.18            0.19               0.37               0.68
+Panel D. Costs in Closing Auctions (percent per year), Nonmicrocap Stocks
+Size                      0.01               0.06                 0.14            0.22               0.39               0.39
+B/M                       0.04               0.07                 0.09            0.13               0.07               0.11
+Profitability             0.08               0.10                 0.11            0.09               0.03               0.12
+Investment                0.11               0.11                 0.11            0.11               0.15               0.26
+Momentum                  0.80               1.12                 1.11            0.99               0.61               1.41
+Reversal                  1.96               1.32                 1.32            1.45               2.09               4.05
+Multifactor               0.22               0.19                 0.18            0.19               0.25               0.47
+Panel E. Costs in Continuous Markets (percent per year), Nonmicrocap Stocks
+Size                      0.01               0.10                 0.22            0.35               0.51               0.51
+B/M                       0.05               0.10                 0.14            0.21               0.12               0.17
+Profitability             0.13               0.16                 0.17            0.14               0.05               0.18
+Investment                0.16               0.16                 0.18            0.20               0.23               0.38
+Momentum                  1.29               1.83                 1.74            1.53               0.91               2.20
+Reversal                  3.05               2.02                 2.04            2.22               3.39               6.43
+Multifactor               0.34               0.29                 0.28            0.30               0.39               0.73
+
+
+
+
+References
+Admati, A. R., and P. Pfleiderer. “A Theory of Intraday Patterns: Volume and Price Variability.” Review
+   of Financial Studies, 1 (1988), 3–40.
+Aggarwal, R., and Y. Wu. “Price Discovery from Offer Price to Opening Price of Initial Public
+   Offerings.” Journal of Financial and Quantitative Analysis, 60 (2025), 3443–3474.
+Almgren, R.; C. Thum; E. Hauptmann; and H. Li. “Direct Estimation of Equity Market Impact.” Risk, 18
+   (2005), 58–62.
+Barclay, M. J.; T. Hendershott; and C. M. Jones. “Order Consolidation, Price Efficiency, and Extreme
+   Liquidity Shocks.” Journal of Financial and Quantitative Analysis, 43 (2008), 93–121.
+BARRA. Market Impact Model Handbook. Berkeley, CA: BARRA (1997) .
+Bogousslavsky, V., and D. Muravyev. “Who Trades at the Close? Implications for Price Discovery and
+   Liquidity.” Journal of Financial Markets, 66 (2023), 100852.
+Bradley, D.; J. Clarke; S. Lee; and C. Ornthanalai. “Are Analysts’ Recommendations Informative?
+   Intraday Evidence on the Impact of Time Stamp Delays.” Journal of Finance, 69 (2014), 645–673.
+Breen, W. J.; L. S. Hodrick; and R. A. Korajczyk. “Predicting Equity Liquidity.” Management Science,
+   48 (2002), 470–483.
+                                                                                                          https://doi.org/10.1017/S0022109026102592
+36 Journal of Financial and Quantitative Analysis
+
+Chakrabarty, B.; B. Li; V. Nguyen; and R. A. Van Ness. “Trade Classification Algorithms for Electronic
+   Communications Network Trades.” Journal of Banking and Finance, 31 (2007), 3806–3821.
+Chan, L. K. C., and J. Lakonishok. “Institutional Trades and Intraday Stock Price Behavior.” Journal of
+   Financial Economics, 33 (1993), 173–199.
+Chen, H.-L.; N. Jegadeesh; and R. Wermers. “The Value of Active Mutual Fund Management: An
+   Examination of the Stockholdings and Trades of Fund Managers.” Journal of Financial and
+   Quantitative Analysis, 35 (2000), 343–368.
+Chen, A. Y., and M. Velikov. “Zeroing in on the Expected Returns of Anomalies.” Journal of Financial
+   and Quantitative Analysis, 58 (2023), 968–1004.
+DeMiguel, V.; A. Martín-Utrera; F. J. Nogales; and R. Uppal. “A Transaction-Cost Perspective on the
+   Multitude of Firm Characteristics.” Review of Financial Studies, 33 (2020), 2180–2222.
+Fama, E. F., and K. R. French. “The Cross-Section of Expected Stock Returns.” Journal of Finance, 47
+   (1992), 427–465.
+Fama, E. F., and K. R. French. “A Five-Factor Asset Pricing Model.” Journal of Financial Economics,
+   116 (2015), 1–22.
+Fama, E. F., and J. D. MacBeth. “Risk, Return, and Equilibrium: Empirical Tests.” Journal of Political
+   Economy, 81 (1973), 607–636.
+Frazzini, A.; R. Israel; and T. J. Moskowitz. “Trading Costs.” SSRN Working Paper 3229719, AQR
+   Capital Management (2018).
+Glosten, L. R., and L. E. Harris. “Estimating the Components of the Bid/Ask Spread.” Journal of
+   Financial Economics, 21 (1988), 123–142.
+Gómez-Cram, R., and M. Grotteria. “Real-Time Price Discovery via Verbal Communication: Method
+   and Application to Fedspeak.” Journal of Financial Economics, 143 (2022), 993–1025.
+Grinold, R. C., and R. N. Kahn. Active Portfolio Management: A Quantitative Approach for Producing
+   Superior Returns and Selecting Superior Returns and Controlling Risk. New York, NY: McGraw
+   Hill Professional (1999).
+Grossman, S. J., and M. H. Miller. “Liquidity and Market Structure.” Journal of Finance, 43 (1988),
+   617–633.
+Holden, C. W., and S. Jacobsen. “Liquidity Measurement Problems in Fast, Competitive Markets:
+   Expensive and Cheap Solutions.” Journal of Finance, 69 (2014), 1747–1785.
+Jegadeesh, N. “Evidence of Predictable Behavior of Security Returns.” Journal of Finance, 45 (1990),
+   881–898.
+Jegadeesh, N., and S. Titman. “Returns to Buying Winners and Selling Losers: Implications for Stock
+   Market Efficiency.” Journal of Finance, 48 (1993), 65–91.
+Jegadeesh, N., and S. Titman. “Profitability of Momentum Strategies: An Evaluation of Alternative
+   Explanations.” Journal of Finance, 56 (2001), 699–720.
+Jegadeesh, N., and Y. Wu. “Closing Auctions: Nasdaq Versus NYSE.” Journal of Financial Economics,
+   143 (2022), 1120–1139.
+Korajczyk, R. A., and R. Sadka. “Are Momentum Profits Robust to Trading Costs?” Journal of Finance,
+   59 (2004), 1039–1082.
+Kyle, A. S. “Market Structure, Information, Futures Markets, and Price Formation.” In International
+   Agricultural Trade: Advanced Readings in Price Formation, Market Structure, G. G. S. Price
+   Instability, A. Schmitz, and A. H. Sarris, eds. Boulder and London: Westview Press (1984), 45–64.
+Kyle, A. S. “Continuous Auctions and Insider Trading.” Econometrica, 53 (1985), 1315–1335.
+Lee, C. M. C., and M. J. Ready. “Inferring Trade Direction from Intraday Data.” Journal of Finance, 46
+   (1991), 733–746.
+Lesmond, D. A.; M. J. Schill; and C. Zhou. “The Illusory Nature of Momentum Profits.” Journal of
+   Financial Economics, 71 (2004), 349–380.
+Novy-Marx, R., and M. Velikov. “A Taxonomy of Anomalies and their Trading Costs.” Review of
+   Financial Studies, 29 (2016), 104–147.
+Patton, A., and B. M. Weller. “What You See Is Not What You Get: The Costs of Trading Market
+   Anomalies.” Journal of Financial Economics, 137 (2020), 515–549.
+

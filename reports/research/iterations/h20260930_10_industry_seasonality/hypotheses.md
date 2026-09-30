@@ -59,3 +59,10 @@ XBI, IBB, XPH, IHI, IHF, SMH, IGV, FDN, SKYY, XTL, KRE, KIE, IAI, XOP, OIH, XME,
 - 写"C2 + 行业腿"的前向跟踪规格，从 2026-10 月末开始按冻结规则影子记录，满 3 个月再评估。
 - 纲领 A 线加一条"前置机制在行业层面成立"。
 - 回头看 S 腿：它和行业腿的相关如果很低，说明季节性在细分行业上是独立的收益来源。
+
+## 校验用标记段（2026-09-30 追加，只补 `iteration validate` 要求的四个小节名，不改上面任何规则、宇宙、网格、平移集合或门槛；以上文字为准）
+
+- **Hypothesis**：同一个前置一个月的同月季节性规则，在 23 只行业 ETF 上也成立，并且能给 C2 加夏普（假设卡 H-20260930-10-industry-seasonality）。
+- **Failure mode**：第一段任一条不过（对标窗 10bp 夏普 < 1.19、20bp 对标窗年化 <= 0、安慰剂打赢比例 > 10%）；或第二段增量在对标窗或压力期 < +0.05（行业腿与 C2 重复）；发表后衰减、流动性差的 ETF 让 10bp 低估真实成本。
+- **Measurement**：`scripts/screen_batch.py` 的 leaderboard.json（夏普、20bp、DSR），`scripts/run_h20260930_10_placebo_and_c2_combo.py` 的安慰剂 20 个种子与 C2 组合增量，结果写进 results.json。
+- **Stop/Pivot criterion**：第一段无格子通过 -> 停（记死因）；第二段无格子通过 -> 关闭 A1；通过 -> 只做前向影子跟踪，不上模拟盘；不因结果改宇宙、网格或平移量。
