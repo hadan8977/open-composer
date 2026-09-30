@@ -1,0 +1,76 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20260930_17_model_family_sweep/candidate-manifest.json",
+  "candidate_manifest_sha256": "6cc3072ecaf1a42c8f8f9af369b76d172b69d7aa4b2e2cae8ee60eea19c450e9",
+  "cost_table_path": "reports/research/iterations/t20260930_17_model_family_sweep/cost-table.json",
+  "created_at": "2026-09-30T16:10:09.696319+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20260930_17_model_family_sweep/data-feasibility.json",
+  "data_feasibility_sha256": "90152b05c1063f552543639cea898a4adb9b3340ba7269eec60fce84ff40ce02",
+  "evaluation_report_paths": [],
+  "iter_id": "t20260930_17_model_family_sweep",
+  "paths": [
+    {
+      "benchmark_family": [
+        "lgbm_same_group_baseline",
+        "b0_reproduction_cell",
+        "same_panel_random_rank_reference",
+        "liquidity_tercile_breakdown"
+      ],
+      "candidate_count": 24,
+      "hypothesis_refs": [
+        "T-20260930-17"
+      ],
+      "name": "model_family_sweep_stage1",
+      "parameters": {
+        "b0_reproduction_cell": [
+          true,
+          false
+        ],
+        "embargo_days": [
+          21,
+          63
+        ],
+        "horizon_days": [
+          21,
+          63
+        ],
+        "model_family": [
+          "LGBM",
+          "XGB",
+          "CAT",
+          "RIDGE",
+          "MLP",
+          "ENS"
+        ],
+        "model_settings": [
+          "kt.LGBM_REG_PARAMS (B0 unchanged)",
+          "XGBRegressor hist depth6 lr0.05 n400 subsample0.8 colsample0.8 min_child_weight200 lambda1 seed20260930",
+          "CatBoostRegressor depth6 lr0.05 it400 RMSE rsm0.8 Bernoulli subsample0.8 min_data_in_leaf200 seed20260930",
+          "Ridge alpha1.0, NaN rank filled 0.5",
+          "MLPRegressor (32,16,8) relu alpha1e-4 lr1e-3 batch2048 max_iter100 early_stopping val0.1 patience5 seed20260930, NaN 0.5, standardized target",
+          "equal-weight mean of percentile ranks of the five family predictions"
+        ],
+        "retrain": [
+          "quarterly"
+        ],
+        "stage": [
+          "1_stress_window_rankic_only"
+        ],
+        "train_window": [
+          "rolling_3y",
+          "expanding_all_history"
+        ],
+        "train_years": [
+          3,
+          50
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20260930_17_model_family_sweep.yaml",
+  "spec_hash": "fa31f665f7d7eaccf69211b0514469d4866e3e5dca5cc8e2a01da5a11043a458",
+  "strategy_name": "t20260930_17_model_family_sweep",
+  "total_candidate_budget": 24,
+  "trial_ledger_paths": []
+}

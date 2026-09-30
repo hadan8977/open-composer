@@ -1,14 +1,61 @@
 {
-  "cost_table_path": "",
-  "created_at": "2026-09-30T11:02:08.111657+00:00",
-  "data_feasibility_path": "",
+  "candidate_manifest_path": "reports/research/iterations/t20260930_14_overnight_persistence_12m/candidate-manifest.json",
+  "candidate_manifest_sha256": "9fc2a57dc3d184a9402aa29c7f44f97a915dd61e5f48c3057d4c933d1135bade",
+  "cost_table_path": "reports/research/iterations/t20260930_14_overnight_persistence_12m/cost-table.json",
+  "created_at": "2026-09-30T16:09:09.832538+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20260930_14_overnight_persistence_12m/data-feasibility.json",
+  "data_feasibility_sha256": "230ed993dcc044ff93b30bacfbbc911d87f383db300932a4a349a9becf2960ab",
   "evaluation_report_paths": [],
   "iter_id": "t20260930_14_overnight_persistence_12m",
-  "paths": [],
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_pool_random_long_short_placebo_100_seeds",
+        "pool_equal_weight_next_night",
+        "spy_close_to_open",
+        "diagnostic_intraday_leg"
+      ],
+      "candidate_count": 1,
+      "hypothesis_refs": [
+        "T-20260930-14"
+      ],
+      "name": "overnight_persistence_oos_band",
+      "parameters": {
+        "decision_cell": [
+          true
+        ],
+        "entry_exit": [
+          "close auction buy/sell-short (cls), next open sell/cover, hold overnight only"
+        ],
+        "form": [
+          "decile_long_short_10pct"
+        ],
+        "lookback": [
+          252
+        ],
+        "placebo_seeds": [
+          100
+        ],
+        "pool": [
+          "B1501_3000"
+        ],
+        "pool_rank_hi": [
+          3000
+        ],
+        "pool_rank_lo": [
+          1501
+        ],
+        "signal": [
+          "ON252"
+        ]
+      }
+    }
+  ],
   "schema_version": 3,
-  "source_spec_path": null,
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "total_candidate_budget": 80,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20260930_14_overnight_persistence_12m.yaml",
+  "spec_hash": "0ae349fbf2250d308c59bae7f6eba2097dcb3eaab774396c1dd2ba2e292011df",
+  "strategy_name": "t20260930_14_overnight_persistence_12m",
+  "total_candidate_budget": 1,
   "trial_ledger_paths": []
 }

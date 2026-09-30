@@ -949,7 +949,7 @@
   - 2026-09-30 12:20 主审（交互会话 Opus）：按修正案 A2 用 T-20260930-15 的实测报价判定，**两格关闭**。C_L20_P1500：s 25.2 bp（多 18.5、空 6.7），net_1x −16.1、net_2x −49.3；30 天样本成交价口径毛 11.5 bp、可成交口径 −13.7 bp。O_L20_P1500：s 42.0 bp，net_1x −35.4。**毛边际大部分是数据假象**：日线档与分钟档的复权口径不一致（分红股 NKE/RF/KEY/TSN 等，日线 close 比分钟最后常规价高约 1%），close_日线 / p_1529_分钟 带固定偏差、跨天延续；剔除 23 只受影响股票后样本毛边际 2.3 bp，多头可成交 −7.6 bp（主审用 2025 年缓存独立复核：2,446 只里 30 只中位偏差 >0.4%）。死因：干净的同时段延续只有约 2 bp，远小于半价差（入选股约 7 bp）→ 关闭同时段周期性这条线，不改执行也救不回。已记入 `docs/data-layer-pitfalls-and-capabilities.zh.md` 第 58、59 项。
 
 ### T-20260930-14 纲领 C2a′：一年期隔夜延续（ON252）的样本外核对 + 官方竞价价核对
-- status: ready
+- status: done（待主审）
 - priority: 2
 - not_before:
 - goal: T-35 的只报告格 ON252（过去一年隔夜收益）在 P500/P1500 两窗都强（P500 LS 主窗 +17.0 bp/晚），但已被看过。用没看过的股票（dv21 1501–3000）和官方竞价价核对它是不是普遍特征、是不是日线开盘价的假象。过了就是一条可以只做多、只持有隔夜、两腿都走竞价的近期策略。
@@ -957,6 +957,8 @@
 - done_when: results.json（gate_a、gate_b）+ report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
 - brief: reports/research/control/briefs/T-20260930-14.md
 - notes:
+  - 2026-09-30 16:10 UTC 执行轮（Sonnet 5.5）开始，交给 sonnet-high 子代理。
+  - 2026-09-30 17:03 UTC 执行轮完成（待主审）：results.json 的 gate_a=true、gate_b=false（脚本机械判定）。测试 A（池 B dv21 1501–3000，ON252 LS，毛）：主窗 +13.69 bp/晚 t_nw5 5.19 n 683 placebo_beat 1.00；压力期 +17.35 bp t 12.02 n 1729 placebo_beat 1.00；下一天日内腿主窗 -15.72 bp、压力期 -20.74 bp；池均 1,332 只/晚，退市股占池行 22.9%。测试 B（20 个种子日，1,958 对，缺失 0）：delta_ls_bp -2.72（≥-4 过）、delta_lo20_bp -5.88（<-4 不过）→ gate_b 假；另有 10 夜 f_{t+1}/f_t≠1。诊断（P500/P1500 主窗）：剔 ADR 后 LS 17.12/11.48 bp；与 12-1 动量秩相关 0.567/0.498；剔财报夜后 16.24/11.43 bp；前 10 只占 LS 盈亏 32.2%/19.0%。子代理另报（不在 results.json、未用于判定）：LO20 里 41/1,958 行 |Δ|≥50 bp，剔除后 LO20 均值 Δ -2.64 bp。偏差：抽样日取主窗内 ON252_P500 有效夜（末日无次日开盘）；ON252 单独算，测试核对与 t35.rolling_signals 相等，t35 对账 P500 17.01/P1500 11.99 bp 一致。hypotheses.md 未变。`iteration validate --stage final` 被试验台账路径、评估报告路径和 decision record 的 continue/pivot/stop 拦住（主审填）。T-20260930-16 保持 blocked，不由执行轮改。产物：reports/research/iterations/t20260930_14_overnight_persistence_12m/{results.json,report.md}，scripts/run_t20260930_14_overnight_12m.py，tests/test_t20260930_14_overnight_12m.py。待主审。
   - 2026-09-30 11:03 交互会话（Opus 主审）写预注册和简报（提交 8b7cf83，早于任何新数据）。official 阶段约 4,000 次 Alpaca 请求，别和 T-20260930-15 同时跑。
   - 2026-09-30 12:15 主审补充简报第 2 步的测量口径（不改门槛）：逐笔官方价是原始价，面板 r 是复权价，比较前乘同日复权因子 f_d = 本地 close / 原始 close（`adjustment=raw` 日线），否则除权夜和拆股夜会混进 Δ。
   - 2026-09-30 13:25 主审轮（Opus）：本任务过了之后的下一步已预注册为 T-20260930-16（执行口径 + 账本），状态 blocked。19:07 主审轮审完本任务：gate_a、gate_b 都过就把 T-16 改成 ready，交 22:07 执行轮；任一不过就把 T-16 标 cancelled。主审检查（`t20260930_16_overnight_lo20_execution/lead-check-2026-09-30.md`）：LO20 只持隔夜主窗夏普 1.75，开盘到开盘持有只有 0.92（压力期 0.36），所以只能收盘附近买、开盘附近卖。
@@ -986,7 +988,7 @@
   - 2026-09-30 13:37 交互主审（Opus）：修正案 A1（`t20260930_16_overnight_lo20_execution/amendment-2026-09-30-a1-panel-basis.md`，写于 T-14 结果和本步任何新数据之前）。判定成本 c 改为相对面板 r 配对（账本从面板 r 里扣 c，原定义相对官方价，会漏掉 T-14 测的 Δ）；加只报告路径 P8（09:32 卖出）。依据是本账户 137 笔开盘前挂好的市价单回执：个股成交中位数在 09:30 后 88–114 秒，成交价中位数正好在卖价/买价上，此时半价差中位数 13–17 bp。简报已同步。
 
 ### T-20260930-17 机主问题：纯量价排序换模型族、训练窗、预测周期（阶段 1，接手 T-20260929-30）
-- status: ready
+- status: done（待主审）
 - priority: 3
 - not_before:
 - goal: 回答机主 2026-09-29 的"XGBoost 等其他模型不行吗，多试一些，用最大的努力"。在 B0 的数据、特征、目标和走步切分下，换模型族（XGBoost、CatBoost、Ridge、MLP/NN3、秩均值集成）、训练窗（3 年滚动 / 扩张）、周期（21 / 63 日），排序能力会不会实质变好。
@@ -994,6 +996,8 @@
 - done_when: results_stage1.json（b0_parity、cells、family_effect、answer_family、stage2_cells、modal_cost_usd）+ report.md + 档案通过 pre-backtest 检查；结果标"待主审"。
 - brief: reports/research/control/briefs/T-20260930-17.md
 - notes:
+  - 2026-09-30 16:10 UTC 执行轮（Sonnet 5.5）开始，交给 sonnet-high 子代理。
+  - 2026-09-30 17:03 UTC 执行轮完成阶段 1（待主审）：results_stage1.json 24 格齐全，b0_parity=true（LGBM_W3_H21 RankIC 0.020001）、h21_target_check_max_abs_diff 0.0、answer_family=material（仅 WX_H63 组，最好的是秩均值集成 ENS，不是单一模型族；XGB/CAT/Ridge/MLP 各组均 <+0.010）。各组 LGBM → 最好非 LGBM 差值（NW t）：W3_H21 0.02000→ENS 0.02647 +0.00647（2.72）；W3_H63 0.04064→ENS 0.04956 +0.00892（3.55）；WX_H21 0.02323→ENS 0.03145 +0.00822（3.25）；WX_H63 0.04673→ENS 0.05878 +0.01205（4.47）。stage2_cells（规则机械选出）：XGB_WX_H63 t 5.65 RankIC 0.05300、LGBM_WX_H63 t 5.40 RankIC 0.04673、CAT_WX_H63 t 5.21 RankIC 0.05391，三格均为扩张窗 + 63 日周期。换手代理（预测秩自相关）h21 0.486、h63 0.647。Modal 实际花费 $0.2206（烟测 + 20 分片）。子代理提示：H21→H63 的增益按年不均匀，Ridge/MLP 在 H63 最流动三分位（T1）为负。偏差：烟测跑了分片 8（CAT）以同时验 xgboost 与 catboost；--smoke 取前 2 个可训练 fold；预测文件多带 target、adv_tercile；close_wide 无 SPY，加了 spy 阶段（cache/spy_close.parquet）；new_lightweight_iteration.py 覆盖了 hypotheses.md，已从 /tmp/t17-hyp.bak 还原，cmp 与 git diff 为空。未做阶段 2；`--stage final` 被台账路径、评估报告路径和 decision record 的 pending 拦住（主审填）。产物：reports/research/iterations/t20260930_17_model_family_sweep/{results_stage1.json,report.md}，scripts/run_t20260930_17_model_family_sweep.py，tests/test_t20260930_17_model_family_sweep.py。待主审。
   - 2026-09-30 13:52 交互主审（Opus）写预注册和简报。文献 13:47 打开：Gu-Kelly-Xiu 2020 的非线性模型之间 R² 只差 0.33–0.40%；Avramov-Cheng-Metzker 2023 说机器学习的利润集中在微盘股、按合理成本后变差。先验：任何格子过 K1 的概率低于 5%，本任务主要是给机主有证据的答案。训练全在 Modal 上，本机只汇总，可以和 T-14 同轮跑。
 
 ### T-20260930-18 机主问题：强化学习与"大模型 + 强化学习"交易的公开证据（接手 T-20260929-31）

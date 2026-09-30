@@ -1,0 +1,232 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "model_family_sweep_stage1",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20260930-17",
+      "source_urls": [
+        "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20260930_17_model_family_sweep",
+  "objective": "T-20260930-17 (stage 1): on the cached T-20260928-10 monthly panel (302,433 rows, 2016-05 to 2023-08, close >= $3, 21d ADV >= $1M, funds excluded, delisted included) and B0's 24 price-volume features, does swapping the model family (LightGBM, XGBoost, CatBoost, Ridge, NN3-shaped MLP, rank-mean ensemble), the training window (3y rolling vs expanding) or the horizon (21d vs 63d) raise the stress-window walk-forward RankIC by >= 0.010 (t >= 3.0) over same-cell LightGBM?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "gu_kelly_xiu_2020_ml_asset_pricing",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+    },
+    {
+      "claim_id": "avramov_cheng_metzker_2023_ml_vs_economic_restrictions",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://econpapers.repec.org/RePEc:inm:ormnsc:v:69:y:2023:i:5:p:2587-2619"
+    },
+    {
+      "claim_id": "grinsztajn_2022_trees_vs_deep_tabular",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://arxiv.org/abs/2207.08815"
+    },
+    {
+      "claim_id": "chen_pelger_zhu_2024_deep_learning_asset_pricing",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://arxiv.org/abs/1904.00745"
+    },
+    {
+      "claim_id": "lightgbm_parameters_doc",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://lightgbm.readthedocs.io/en/stable/Parameters.html"
+    },
+    {
+      "claim_id": "xgboost_parameter_doc",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://xgboost.readthedocs.io/en/stable/parameter.html"
+    },
+    {
+      "claim_id": "catboost_regressor_doc",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://catboost.ai/docs/en/concepts/python-reference_catboostregressor"
+    },
+    {
+      "claim_id": "sklearn_mlpregressor_doc",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_url": "https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20260930_17_model_family_sweep.yaml",
+  "sources": [
+    {
+      "applicability": "Sets the prior that model-family differences among nonlinear models are small (RankIC moves under 0.005); supports the NN3 shape and the 0.010 material-effect threshold.",
+      "claim": "Gu, Kelly and Xiu (RFS 2020): monthly out-of-sample R2 of individual US stock returns is 0.34% for gradient-boosted trees, 0.33% for random forests, 0.33% for NN1 and 0.40% at most for NN3; PCR 0.26%, elastic net 0.11%; all methods agree on a small set of dominant price-trend signals.",
+      "claim_id": "gu_kelly_xiu_2020_ml_asset_pricing",
+      "core_claim": "Gu, Kelly and Xiu (RFS 2020): monthly out-of-sample R2 of individual US stock returns is 0.34% for gradient-boosted trees, 0.33% for random forests, 0.33% for NN1 and 0.40% at most for NN3; PCR 0.26%, elastic net 0.11%; all methods agree on a small set of dominant price-trend signals.",
+      "credibility": "rfs_peer_reviewed",
+      "fetched_at": "2026-09-30T13:47:00Z",
+      "independent_replication": "Avramov-Cheng-Metzker 2023 and Chen-Pelger-Zhu 2024 extend it; none tests these six families under a small-cap, cost-aware, 2016-2023 walk-forward.",
+      "limitations": "Full-text via r.jina.ai; tuned models, 920 features incl. fundamentals and macro; no transaction costs; sample ends 2016.",
+      "market_and_period": "US stocks 1957-2016, 920 features",
+      "project_applicability": "Sets the prior that model-family differences among nonlinear models are small (RankIC moves under 0.005); supports the NN3 shape and the 0.010 material-effect threshold.",
+      "published_or_updated_at": "2020-05-01",
+      "reflection": "Full-text via r.jina.ai; tuned models, 920 features incl. fundamentals and macro; no transaction costs; sample ends 2016.",
+      "sha256": "97dfe0ff119f3b4fe428a14c28bbf76ccf35b9237ef3f8baf62162e07cf6a0bf",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/gu-kelly-xiu-2020-rfs-ml.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "paper",
+      "url": "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+    },
+    {
+      "applicability": "Explains why stage 2 uses fixed 10/20 bp costs and why liquidity terciles are reported.",
+      "claim": "Avramov, Cheng and Metzker (Management Science 2023): deep-learning signal profits come from difficult-to-arbitrage stocks and high limits-to-arbitrage states; excluding microcaps, distressed stocks or high-volatility episodes attenuates them, and reasonable trading costs deteriorate them further because of high turnover.",
+      "claim_id": "avramov_cheng_metzker_2023_ml_vs_economic_restrictions",
+      "core_claim": "Avramov, Cheng and Metzker (Management Science 2023): deep-learning signal profits come from difficult-to-arbitrage stocks and high limits-to-arbitrage states; excluding microcaps, distressed stocks or high-volatility episodes attenuates them, and reasonable trading costs deteriorate them further because of high turnover.",
+      "credibility": "management_science_peer_reviewed",
+      "fetched_at": "2026-09-30T13:47:00Z",
+      "independent_replication": "Consistent with T-20260928-30, where fixed 10 bp did not pass; no independent replication found.",
+      "limitations": "Abstract page only (SSRN full text needs a human check); no full replication.",
+      "market_and_period": "US stocks 1957-2016",
+      "project_applicability": "Explains why stage 2 uses fixed 10/20 bp costs and why liquidity terciles are reported.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Abstract page only (SSRN full text needs a human check); no full replication.",
+      "sha256": "fb6bcf312d512c475a51c240224a18aacd9b0d3d39407ee780fab5083f7b86b6",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/avramov-cheng-metzker-2023-ms-repec.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "paper",
+      "url": "https://econpapers.repec.org/RePEc:inm:ormnsc:v:69:y:2023:i:5:p:2587-2619"
+    },
+    {
+      "applicability": "Prior that the MLP cell will not beat the tree families; MLP kept because GKX report NN3 as best.",
+      "claim": "Grinsztajn, Oyallon and Varoquaux (NeurIPS D&B 2022): on 45 medium-sized tabular datasets tree-based models (XGBoost, random forests) remain state-of-the-art, including after tuning; neural networks are hurt by uninformative features and non-rotation-invariance.",
+      "claim_id": "grinsztajn_2022_trees_vs_deep_tabular",
+      "core_claim": "Grinsztajn, Oyallon and Varoquaux (NeurIPS D&B 2022): on 45 medium-sized tabular datasets tree-based models (XGBoost, random forests) remain state-of-the-art, including after tuning; neural networks are hurt by uninformative features and non-rotation-invariance.",
+      "credibility": "neurips_datasets_benchmarks_peer_reviewed",
+      "fetched_at": "2026-09-30T16:08:29Z",
+      "independent_replication": "Widely reproduced; not tested on cross-sectional return ranks.",
+      "limitations": "Not a financial return panel; abstract page snapshot.",
+      "market_and_period": "45 general tabular datasets, not finance",
+      "project_applicability": "Prior that the MLP cell will not beat the tree families; MLP kept because GKX report NN3 as best.",
+      "published_or_updated_at": "2022-07-18",
+      "reflection": "Not a financial return panel; abstract page snapshot.",
+      "sha256": "d11e72a65b6bf884f202704615c885fab2c4ed58bc56265510a9302d344919db",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/grinsztajn.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2207.08815"
+    },
+    {
+      "applicability": "Shows that the objective, not only the family, could matter; not tested here (grid stays regression on excess return rank).",
+      "claim": "Chen, Pelger and Zhu (Management Science 2024): a deep neural network with a no-arbitrage criterion, adversarial test assets and macro states outperforms benchmarks out of sample in Sharpe, explained variation and pricing errors.",
+      "claim_id": "chen_pelger_zhu_2024_deep_learning_asset_pricing",
+      "core_claim": "Chen, Pelger and Zhu (Management Science 2024): a deep neural network with a no-arbitrage criterion, adversarial test assets and macro states outperforms benchmarks out of sample in Sharpe, explained variation and pricing errors.",
+      "credibility": "management_science_peer_reviewed",
+      "fetched_at": "2026-09-30T16:08:29Z",
+      "independent_replication": "Avramov et al. 2023 report the gains shrink outside difficult-to-arbitrage names.",
+      "limitations": "Needs macro states and a different objective (SDF), not a pure ranking regression; arXiv abstract page; no trading costs.",
+      "market_and_period": "US stocks 1967-2016, 46 firm characteristics + 178 macro series",
+      "project_applicability": "Shows that the objective, not only the family, could matter; not tested here (grid stays regression on excess return rank).",
+      "published_or_updated_at": "2019-03-11",
+      "reflection": "Needs macro states and a different objective (SDF), not a pure ranking regression; arXiv abstract page; no trading costs.",
+      "sha256": "c01c2ac520a2cb4210c8c8c8a258a6b97bc9b02208df312ff734285b9eaf0f3f",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/chen-pelger-zhu.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/1904.00745"
+    },
+    {
+      "applicability": "Grid uses kt.LGBM_REG_PARAMS unchanged (B0 reproduction cell).",
+      "claim": "LightGBM documents min_data_in_leaf, feature_fraction and bagging parameters used by the B0 parameter set (kt.LGBM_REG_PARAMS) and native missing-value handling.",
+      "claim_id": "lightgbm_parameters_doc",
+      "core_claim": "LightGBM documents min_data_in_leaf, feature_fraction and bagging parameters used by the B0 parameter set (kt.LGBM_REG_PARAMS) and native missing-value handling.",
+      "credibility": "official_docs",
+      "fetched_at": "2026-09-30T16:08:29Z",
+      "independent_replication": "n/a",
+      "limitations": "Documentation only; says nothing on financial data.",
+      "market_and_period": "library docs",
+      "project_applicability": "Grid uses kt.LGBM_REG_PARAMS unchanged (B0 reproduction cell).",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Documentation only; says nothing on financial data.",
+      "sha256": "35e8fdf04a71dd21fe434fdafb9bb9b8222d5af36cc33b7ce8bf65a75383201d",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/lightgbm-params.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://lightgbm.readthedocs.io/en/stable/Parameters.html"
+    },
+    {
+      "applicability": "Fixes the XGB parameter names used in the preregistered grid.",
+      "claim": "XGBoost documents tree_method=hist, max_depth, learning_rate, subsample, colsample_bytree, min_child_weight and reg_lambda used in the XGB grid cell; missing values are handled natively.",
+      "claim_id": "xgboost_parameter_doc",
+      "core_claim": "XGBoost documents tree_method=hist, max_depth, learning_rate, subsample, colsample_bytree, min_child_weight and reg_lambda used in the XGB grid cell; missing values are handled natively.",
+      "credibility": "official_docs",
+      "fetched_at": "2026-09-30T16:08:29Z",
+      "independent_replication": "n/a",
+      "limitations": "Documentation only.",
+      "market_and_period": "library docs",
+      "project_applicability": "Fixes the XGB parameter names used in the preregistered grid.",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Documentation only.",
+      "sha256": "c210f332783aea56fd3ae4bcc1dbce1430ed90f269f946f889e6372eaf20d85a",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/xgboost-params.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://xgboost.readthedocs.io/en/stable/parameter.html"
+    },
+    {
+      "applicability": "Fixes the CAT parameter names in the grid; hyperparameters are not tuned.",
+      "claim": "CatBoostRegressor documents depth, learning_rate, iterations, loss_function, rsm, bootstrap_type, subsample and min_data_in_leaf used in the CAT grid cell; native missing-value handling.",
+      "claim_id": "catboost_regressor_doc",
+      "core_claim": "CatBoostRegressor documents depth, learning_rate, iterations, loss_function, rsm, bootstrap_type, subsample and min_data_in_leaf used in the CAT grid cell; native missing-value handling.",
+      "credibility": "official_docs",
+      "fetched_at": "2026-09-30T16:08:30Z",
+      "independent_replication": "n/a",
+      "limitations": "Snapshot of a JS-rendered page; only the static text is captured; min_data_in_leaf applies to lossguide/depthwise growth in the docs, so the setting may be inert under the default symmetric tree.",
+      "market_and_period": "library docs",
+      "project_applicability": "Fixes the CAT parameter names in the grid; hyperparameters are not tuned.",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Snapshot of a JS-rendered page; only the static text is captured; min_data_in_leaf applies to lossguide/depthwise growth in the docs, so the setting may be inert under the default symmetric tree.",
+      "sha256": "e65cc844fbe872c8f6d07b226482ba92698bcb8f51da1f19b9d0fc58ea2d26f6",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/catboost-regressor.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://catboost.ai/docs/en/concepts/python-reference_catboostregressor"
+    },
+    {
+      "applicability": "Fixes the MLP parameter names; NaN ranks are filled with 0.5 before fitting.",
+      "claim": "scikit-learn MLPRegressor documents hidden_layer_sizes, activation, alpha, learning_rate_init, batch_size, max_iter, early_stopping, validation_fraction and n_iter_no_change used in the MLP grid cell; no native missing-value handling.",
+      "claim_id": "sklearn_mlpregressor_doc",
+      "core_claim": "scikit-learn MLPRegressor documents hidden_layer_sizes, activation, alpha, learning_rate_init, batch_size, max_iter, early_stopping, validation_fraction and n_iter_no_change used in the MLP grid cell; no native missing-value handling.",
+      "credibility": "official_docs",
+      "fetched_at": "2026-09-30T16:08:31Z",
+      "independent_replication": "n/a",
+      "limitations": "Documentation only; not the GKX ensemble with batch normalisation.",
+      "market_and_period": "library docs",
+      "project_applicability": "Fixes the MLP parameter names; NaN ranks are filled with 0.5 before fitting.",
+      "published_or_updated_at": "2026-09-30",
+      "reflection": "Documentation only; not the GKX ensemble with batch normalisation.",
+      "sha256": "e15796b781a7b42f60d5c21d0fe2e98a0faa5ab647102dcffca001604ad18d37",
+      "snapshot_path": "reports/research/iterations/t20260930_17_model_family_sweep/sources/sklearn-mlp.txt",
+      "source_card_path": "reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html"
+    }
+  ],
+  "spec_hash": "fa31f665f7d7eaccf69211b0514469d4866e3e5dca5cc8e2a01da5a11043a458",
+  "strategy_name": "t20260930_17_model_family_sweep",
+  "topic_coverage": [
+    "ml_return_prediction_gu_kelly_xiu",
+    "ml_profit_limits_to_arbitrage_avramov",
+    "tree_vs_deep_tabular_grinsztajn",
+    "deep_asset_pricing_chen_pelger_zhu",
+    "lightgbm_parameters",
+    "xgboost_parameters",
+    "catboost_parameters",
+    "sklearn_mlp_parameters"
+  ]
+}

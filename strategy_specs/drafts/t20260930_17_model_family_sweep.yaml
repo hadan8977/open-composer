@@ -1,0 +1,114 @@
+name: t20260930_17_model_family_sweep
+description: 'Preregistered T-20260930-17: does swapping the model family (LightGBM, XGBoost, CatBoost, Ridge, MLP, rank-mean ensemble), the training window (3y rolling vs expanding) or the horizon (21d vs 63d) change the stress-window walk-forward RankIC of the B0 price-volume ranking model by 0.010 or more? Stage 1 measures RankIC only on the cached T-20260928-10 monthly panel; stage 2 (cost-aware long-only books) is a separate later brief. Research only, no broker writes.'
+timeframe: daily
+universe:
+- QQQ
+- IWM
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 40
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 40
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20260930_17:model_family_sweep
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  model_family_rank_signal:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The 24 price-volume features, targets and model cells are built inside scripts/run_t20260930_17_model_family_sweep.py from the cached T-20260928-10 monthly panel.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: t20260930_17_model_family_sweep
+  candidate_manifest_path: reports/research/iterations/t20260930_17_model_family_sweep/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20260930_17_model_family_sweep/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20260930_17_model_family_sweep.jsonl
+  source_card_claim_ids:
+  - gu_kelly_xiu_2020_ml_asset_pricing
+  - avramov_cheng_metzker_2023_ml_vs_economic_restrictions
+  - grinsztajn_2022_trees_vs_deep_tabular
+  - chen_pelger_zhu_2024_deep_learning_asset_pricing
+  - lightgbm_parameters_doc
+  - xgboost_parameter_doc
+  - catboost_regressor_doc
+  - sklearn_mlpregressor_doc
+  parameter_space:
+    model_family:
+    - LGBM
+    - XGB
+    - CAT
+    - RIDGE
+    - MLP
+    - ENS
+    train_window:
+    - W3_rolling_3y
+    - WX_expanding
+    horizon_days:
+    - 21
+    - 63
+  candidate_budget: 24
+  selection_objective: Measurement of whether the model family changes walk-forward RankIC, not a return search. LGBM_W3_H21 is the B0 reproduction cell and must give 0.0200 +- 0.0010. Family effect is material only if the best non-LGBM family beats LGBM in the same (window, horizon) by >= 0.010 RankIC with t >= 3.0.
+  candidate_budget_note: 6 families x 2 training windows x 2 horizons = 24 cells; hyperparameters fixed in hypotheses.md and not tuned. DSR trial count 30 (24 cells + 4 T-20260928-10 candidates + 2 T-20260928-30 books) if a ledger is built.
+  anti_overfit_notes:
+  - Grid, hyperparameters, stress-window walk-forward splits and the stage-2 selection rule (top 3 by NW t, t >= 2.0, B0 excluded) are frozen in hypotheses.md before any cell is computed.
+  - Stage 1 uses only validation-role dates of the stress period 2016-05 to 2023-08; the recent window is untouched until stage 2.
+  validation_plan:
+  - Walk-forward RankIC mean, Newey-West t (lag 0 for h21, lag 2 for h63), liquidity terciles, by-year, rank autocorrelation turnover proxy
+  - B0 reproduction check 0.0200 +- 0.0010 before any other cell is read
+notes:
+  intent: Answer the owner's 2026-09-29 question whether XGBoost and other model families improve the pure price-volume ranking, with evidence.
+  hypothesis_id: T-20260930-17
+  previous_link: dir:lgbm_price_volume_ranking_small_caps
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

@@ -1,0 +1,112 @@
+name: t20260930_14_overnight_persistence_12m
+description: 'Preregistered T-20260930-14 (corridor C2a-prime): one-year overnight-return persistence (ON252) on the unseen dv21 rank 1501-3000 pool (test A) plus an official auction-price pairing on a 20-day sample of the P500 pool (test B, measurement not a candidate). Decile long/short, bought at the closing auction and sold at the next opening. Research only, no broker writes.'
+timeframe: daily
+universe:
+- QQQ
+- IWM
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 40
+  max_position_weight: 0.10
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 40
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.10
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20260929_35:overnight_persistence_auction
+costs:
+  commission_pct: 0.0
+  slippage_bps: 25.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  overnight_persistence:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. ON_t = ln(open_t / close_{t-1}) rolling means and the tug-of-war signal are built inside scripts/run_t20260930_14_overnight_persistence_12m.py from data/sip/daily plus data/sip-delisted/by_year.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: t20260930_14_overnight_persistence_12m
+  candidate_manifest_path: reports/research/iterations/t20260930_14_overnight_persistence_12m/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20260930_14_overnight_persistence_12m/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20260930_14_overnight_persistence_12m.jsonl
+  source_card_claim_ids:
+  - lou_polk_skouras_2019_overnight_persistence
+  - aboody_2018_overnight_weekly_persistence
+  - akbas_2022_tug_of_war_future_returns
+  - bogousslavsky_2021_overnight_borrow_margin
+  - heston_2010_intraday_cross_section
+  - haendler_2025_periodicity_puzzle
+  - gjw_jfqa_2026_auction_price_impact
+  - alpaca_orders_cls_opg_deadlines
+  - alpaca_margin_etb_zero_borrow_fee
+  - salotra_2026_overnight_daytime_etf
+  - lachance_2023_past_year_overnight_predictor
+  parameter_space:
+    signal:
+    - ON_252
+    pool:
+    - B1501_3000
+    form:
+    - LS_decile
+  candidate_budget: 1
+  selection_objective: Out-of-sample measurement, not a return search. Single candidate ON252_B1501_3000_LS (dv21 rank 1501-3000, decile long/short, close to next open); test B (official auction prices on a 20-day seeded sample of ON252_P500) is a measurement check and not a candidate.
+  candidate_budget_note: 1 trial here; family cumulative trial count is the 20 cells of T-20260929-35 plus this one, reported as 22 with the two signal cards if a ledger is built.
+  anti_overfit_notes:
+  - Pool B, signal, form, windows, gate thresholds (t 2.0 both windows; delta -4 bp; missing share 10 percent), the seed 20260930 and the 100-seed placebo are frozen in hypotheses.md before any pool B or official-price number is computed.
+  - ON252 in P500 and P1500 was seen in T-20260929-35 (contaminated); pool B is unseen.
+  - Diagnostics 1-6 are reported and do not enter the gates.
+  validation_plan:
+  - Pool B nightly gross LS series mean (bp) and Newey-West 5-lag t in the main window and the stress period
+  - 100-seed same-pool random long/short placebo, beat fraction, by-year table, next-day intraday leg
+  - Official auction close and open prices on 20 seeded days, adjusted to the daily basis, delta versus daily-bar returns
+notes:
+  intent: Test whether the one-year overnight persistence signal holds on unseen dv21 rank 1501-3000 stocks and on official auction prices.
+  hypothesis_id: T-20260930-14
+  previous_link: dir:overnight_intraday_gap_retail_pwb
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

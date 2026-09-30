@@ -1,0 +1,937 @@
+Title: A Comparative Analysis of Overnight vs. Daytime Static and Momentum Strategies Across Sector ETFs
+
+URL Source: https://www.mdpi.com/2227-9091/14/4/84
+
+Markdown Content:
+Skip to Content
+You are currently on the new version of our website. Access the old version here.
+Close
+Journals
+Active Journals
+Journal Finder
+Proceedings Series
+Propose a Journal
+Transferred & Acquired Journals
+Discontinued Titles
+Topics
+Our Topics
+All Topics
+About Topics
+Topics Awards
+Subject Editors
+Propose a Topic
+By Subjects
+Biology & Life Sciences
+Chemistry & Materials
+Computer Science &
+Mathematics
+Engineering
+Environmental &
+Earth Sciences
+Medicine &
+Pharmacology
+Public Health &
+Healthcare
+Social Sciences, Arts
+& Humanities
+Author Services
+Information
+General Content
+Open Access Policy
+Editorial Process
+Publication Ethics
+Special Issues Guidelines
+Article Processing Charge
+Guidelines
+For Authors
+For Reviewers
+For Editors
+For Librarians
+Partnerships
+Institutional Open
+Access Program
+Societies
+Conferences
+Publishing Services
+About
+Company
+About Us
+Mission
+Impact
+History
+Leadership
+Office Locations
+Careers
+Awards
+Products
+Accessibility
+Media
+News
+Blog
+Press
+Contact
+Support
+Send Feedback
+Toggle search box
+Sign in
+Submit
+Home
+Journals
+Risks
+Volume 14
+Issue 4
+10.3390/risks14040084
+Risks
+Cite
+Share
+Get Alerted
+Download PDF
+Abstract
+Introduction
+Data and Methodology
+Strategies
+Strategy Performance Analysis
+Transaction Cost Analysis
+Risk-Adjusted Performance Analysis
+Volatility Analysis Across All Strategies
+Maximum Drawdown Analysis Across All Strategies
+Summary Statistics Averaged Across All ETFs
+Strategy Classification by Trading Intensity
+Concluding Remarks
+Author Contributions
+Funding
+Data Availability Statement
+Acknowledgments
+Conflicts of Interest
+Appendix A. Computing Strategy Returns
+Appendix B. Total and Daily Transaction Statistics
+Appendix C. Comparison of Strategies by Efficiency
+Appendix D. Analyzing Persistence as Patterns in Machine Learning
+Appendix E. Statistics of Overnight and Daytime Return Distributions
+Appendix F. Comparison by Accuracy
+Appendix G. Stationary Bootstrap Analysis
+Appendix H. Crisis Period Performance and Tail Distribution Analysis
+Appendix I. Sub-Period Sign Pair Analysis and kNN Sensitivity
+References
+Article Metrics
+Article
+
+7 April 2026
+
+63 Pages
+A Comparative Analysis of Overnight vs. Daytime Static and Momentum Strategies Across Sector ETFs
+Gourav Salotra
+, 
+Tharunya Katikireddy
+, 
+Yaswanth Anumolu
+ and 
+Eugene Pinsky *
+Department of Computer Science, Metropolitan College, Boston University, 1010 Commonwealth Avenue, Boston, MA 02215, USA
+*
+Author to whom correspondence should be addressed.
+Risks
+2026, 14(4), 84;
+https://doi.org/10.3390/risks14040084
+More formats
+Version Notes
+Review Reports
+Order Reprints
+Article Metrics
+Altmetrics
+Citations
+3
+Article Views
+6909
+Academic Editor
+Dayong Huang
+Dayong Huang
+Publication History
+Received:
+12 February 2026
+Revised:
+19 March 2026
+Accepted:
+25 March 2026
+Published:
+7 April 2026
+Article Figures (20)
+Abstract
+This study examines overnight vs. daytime static and momentum strategies applied to ten sector Exchange-traded funds (ETFs) over a 27-year period from 1999 to 2025. Our findings reveal that several such strategies, particularly reversal strategies, consistently outperform static and buy-and-hold strategies. This outperformance decreases significantly when transaction costs are taken into account. We consider two transaction-cost scenarios (1 bps vs. 2 bps), which are industry standards for institutional and retail investors, respectively. We provided a detailed analysis of volatility and drawdowns. Our results indicate that by considering night and daytime separately, it is possible to outperform passive strategies for most sector ETFs.
+Keywords: trading strategies; momentum; reversal; inertia; ETF sector performances
+1. Introduction
+Research Question and Scope
+This paper addresses a precise empirical question: does splitting the 24 h trading day into an overnight sub-period (close-to-open) and a daytime sub-period (open-to-close) generates exploitable return patterns in U.S. sector ETFs, and if so, does the alpha arise from the temporal decomposition itself or from the specific momentum or reversal signal applied to each sub-period? A result that would count as failure is one in which (i) sub-period strategies do not outperform buy-and-hold after realistic transaction costs, or (ii) applying the same signal logic to undivided 24 h returns produces comparable results, indicating that decomposition adds nothing. We test both failure conditions directly: the first through the transaction cost analysis of Section 5, Section 6, Section 7, Section 8, Section 9 and Section 10, and the second through the 24 h close-to-close strategy comparison in Section 11. Our central finding is that the first failure condition is met only for retail investors facing costs above 2–3 bps, and the second failure condition is never met—sub-period strategies generate approximately 80× more terminal wealth than equivalent 24-h strategies across all cost regimes.
+This study examines the profitability of inertial trading strategies applied to ten sector Exchange-traded funds (ETFs) over a 27-year period from 1999 to 2025. We investigate multiple distinct strategies focusing on day and overnight momentum effects.
+Momentum and reversal strategies are widely used in algorithmic trading. The seminal work by Jegadeesh and Titman (1993) established that buying past winners and selling past losers generates significant returns over 3–12 month horizons. The profitability of these strategies has been addressed by many authors (Carhart 1997; Daniel and Moskowitz 2016; Dobrynskaya 2019; Hanauer and Windmüller 2023; Hong and Stein 1999; Jegadeesh and Titman 2001, 2011; Kelly et al. 2021). The efficient market hypothesis Fama (1970) suggests such patterns should not persist, yet behavioral theories by De Bondt and Thaler (1985) provide explanations for momentum and reversal effects.
+Predicting the direction of stock price movements has been the most difficult. The volatility of markets has traditionally prompted reliance on conventional forecasting methods such as regression analysis (Siew and Nordin 2012), exponential smoothing (de Faria et al. 2009), autoregressive integrated moving-average (ARIMA) (Ariyo et al. 2014), and technical indicators. These methods often fail to capture the complex dependencies and patterns in financial time-series data. As an alternative, deep learning-based machine learning models for stock price prediction have been proposed (Cao 2024; Kundu and Sasinthiran 2024). For detailed bibliographic references, see (Althelaya et al. 2018; Fischer and Krauss 2017; Rokhsatyazdi and Zainal 2020).
+The appeal of these models is in their ability to model long-term dependencies, critical in the analysis of financial time series data, retain information and discover patterns and dependencies. However, accurately predicting stock price direction has proven difficult, even with advanced models. In a recent study (Kundu and Pinsky 2025), several deep learning architectures were used to predict the daily directions for the same 10 Sector ETFs considered in this paper. It was found that after taking trading costs into account, there is limited value from deep learning in predicting daily price movements for most stocks. The only exceptions were the Technology and Consumer Durables sectors. In related work (Zhang and Pinsky 2025b), LSTM-based deep learning architectures were used to predict the direction of daytime and overnight prices for S&P-500 and Nasdaq-100 ETFs. It was found that ignoring transaction costs and combining “overnight” and “daytime” strategies, LSTM delivers about 40% more return than passive buy-and-hold. At the same time, it is computationally expensive, requiring a full year of training for each overnight and daytime prediction. In this work, we split the 24-h period into separate sub-periods (overnight and daytime) for sector ETFs. Our results use very simple trading strategies for overnight and daytime periods and deliver significantly better results across most sectors than LSTM results in the work of Zhang and Pinsky (2025b).
+The overnight return phenomenon, where a significant portion of equity returns is earned during non-trading hours, has been documented extensively (Berkman et al. 2012; Kelly and Clark 2011; Lou and Polk 2022; Lou et al. 2019; Zhang and Pinsky 2025b). A detailed study of overnight gaps is presented in Arratia and Dorador (2019). Several models were analyzed, including regime-change and autoregressive models.
+In addition to challenges in modeling daytime and overnight pricing behavior, transaction costs represent a critical factor in strategy viability, as demonstrated by recent research showing that many documented anomalies disappear after accounting for realistic trading frictions (Amihud 2002; Frazzini et al. 2018; Korajczyk and Sadka 2004; Lesmond et al. 2004; Novy-Marx and Velikov 2016).
+A related but underexplored dimension is the timing of entry and exit decisions under uncertainty and cost constraints. Arratia & Dorador (Arratia and Dorador 2019) studied the efficacy of stop-loss rules in the presence of overnight gaps, a setting closely related to ours. More broadly, optimal stopping theory provides a rigorous framework for deciding when to trade and when to stay out given transaction costs and uncertainty about future returns. Recent work in energy and commodity markets—including cost-aware entry rules for carbon emission rights Gallego-Alvarez et al. (2016)—demonstrates that timing decisions under cost uncertainty share the same fundamental structure as the sub-period entry decisions we study here: an agent must decide at each close whether the expected overnight return justifies the round-trip transaction cost. This framing sharpens our viability thresholds: the 1–2 bps breakeven documented in Section 5 is precisely the optimal stopping boundary below which entry is rational and above which staying in cash dominates.
+In this work, we focus on simple overnight and daytime strategies using S&P sector Exchange-traded funds. Exchange-traded funds have grown dramatically as investment vehicles (Lettau and Madhavan 2018), enabling cost-effective implementation of sector-based strategies, though concerns about their market impact have been raised (Ben-David et al. 2018; Israeli et al. 2017). Industry and sector momentum effects have been documented (Fama and French 1997; Moskowitz and Grinblatt 1999), motivating our sector-level analysis.
+This research analyzes nine major sector ETFs representing diverse economic segments of the U.S. market, as well as the broad market represented by the SPY ETF. These are:
+1.
+SPY (benchmark S&P 500 index)
+2.
+XLB (Materials)
+3.
+XLE (Energy)
+4.
+XLF (Financials)
+5.
+XLI (Industrials)
+6.
+XLK (Technology)
+7.
+XLP (Consumer Staples)
+8.
+XLU (Utilities)
+9.
+XLV (Healthcare)
+10.
+XLY (Consumer Discretionary)
+These ETFs provide a comprehensive view of the U.S. market, allowing us to examine how momentum effects vary across different economic sectors with distinct risk–return characteristics during overnight and daytime sub-periods. Our results for these sector ETFs should be viewed in a larger context. Most stocks do not exist in isolation but belong to some sector, represented by a corresponding sector ETF. Extensive analysis in Kundu and Pinsky (2025) shows that sector ETFs accurately reflect the directional movements of their component stocks. Therefore, we can replace the analysis of an individual stock with that of its typical “sector” stock, represented by an ETF. Therefore, our results could be used to assess the relative profitability of suggested strategies for individual stocks as well.
+This paper is organized as follows: Section 2 describes the methodology and computation of returns, including an autocorrelation analysis of sub-period returns in Section 2 that motivates the choice of strategies over ARIMA-based alternatives. Section 3 describes the strategies in detail with formulas for computing returns and numerous examples. Section 4 discusses the comparative performance of strategies focusing on growth. Section 5 discusses the impact of transaction costs for strategies across different ETFs, showing that at 1 bp (institutional standard), 13 of 240 strategy-ETF combinations remain profitable, while at 2 bps, only 7 survive. Section 6 compares the Sharpe ratios. Section 7 focuses on volatility comparison between strategies. Section 8 compares maximum drawdowns. Section 9 presents aggregate performance metrics averaged across all ten ETFs, whereas Section 10 focuses on strategy classification by trading intensity and provides an overall comparison between strategies. Finally, Section 11 provides some concluding remarks and suggestions for future research.
+Additional tables and analysis are presented in the Appendix A, Appendix B, Appendix C, Appendix D, Appendix E, Appendix F, Appendix G, Appendix H and Appendix I. Appendix A summarizes formulae for returns for all strategies. Appendix B contains tables on total and daily transaction statistics. Appendix C compares strategies by efficiency that reflect a strategy’s ability to capture most of the returns. Appendix D presents an analogy between a trading strategy and a nearest neighbor k-NN machine learning classifier that assigns a trading label. Appendix E presents statistics of overnight and daytime returns. Appendix F presents a comparison of strategies by label prediction accuracy. Appendix G presents statistical results of a 27-year stationary bootstrap. Appendix H compares return tail statistics for daytime and overnight periods. Finally, Appendix I presents a sign pair analysis showing that lookback should be limited to a single sub-period.
+2. Data and Methodology
+Historical stock data for the S&P-500 and ETFs were collected from the WRDS (Wharton Research Data Services) database covering the period from 1 January 1999 to 19 December 2025 Wharton School (2024). All ten ETFs were traded continuously over the full 1999–2025 period. The nine Select Sector SPDR ETFs (XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY) were launched in December 1998, making 1 January 1999 a natural and complete start date with no initial listing gap. Prices are split- and dividend-adjusted as provided by the WRDS CRSP database, ensuring that corporate actions do not introduce artificial return discontinuities. There are no missing daily observations for any ETF; the total sample comprises  trading days across all ten securities.
+Table 1 provides an example of the daily open and close prices  and  of a hypothetical stock for trading day .
+Table 1. Example of historical stock data.
+We divide each day  into three time periods shown in Figure 1.
+Figure 1. CO (overnight), OC (daytime), and CC (daily) returns over 24 h period.
+For each , let  and  denote the open and close prices, respectively. A day  consists of two periods:
+1.
+(Previous) night period: time between the closing time of stock trading of the previous trading day  and the opening time of the present day 
+2.
+Daytime period: time between the opening time of stock trading for  and the closing time of stock trading for the same day 
+For the U.S. market, the opening and closing times are the times of the main floor of the New York Stock Exchange: the opening time is 9:30 a.m. EST and the closing time is 4:00 p.m. EST. Although we do have (sometimes active) pre-market and extended hours trading, we will ignore these times and only consider the above times.
+We compute the corresponding returns for each day  and its sub-periods as follows:
+1.
+CC (close-to-close or “24 h” trading): the return is computed as the percent change between the close price  of trading day  and the close price  of the day . We will use the notation  to denote such returns. This definition corresponds to the standard definition of daily returns in finance.
+2.
+CO (close-to-open or “night” trading): this is the return of the first sub-period (night portion) of day . Since this sub-period is the same as the previous night period, its return is computed as the percent change between the close price  at  and the open price  of the trading day . We will use the notation  to denote such returns.
+3.
+OC (open-to-close or “daytime” trading): this is the return of the second sub-period (daytime portion) of day . We will use the notation  to denote such returns.
+Note that for the CC return  for day , we have:
+(1)
+The 24 h return  is the compounded return from the night and day sub-periods ( and ), as expected.
+From the initial close and open price data in Table 1, we compute the return data for the three periods. An example is given in Table 2.
+Table 2. Example of historical stock data with % returns.
+Autocorrelation Structure of Sub-Period Returns
+A natural preliminary question before specifying any momentum or reversal strategy is whether the sub-period return series exhibit serial dependence, and, if so, of what sign and at what lags. We compute the sample autocorrelation function (ACF) for the overnight (), daytime (), and full 24 h () return series for all ten ETFs over the complete 1999–2025 sample, retaining lags 1 through 20. Significance bounds are drawn at the conventional  level, where  trading days, giving a 95% confidence interval of .
+The key numerical findings are summarized in Figure 2 for SPY (three panels: overnight, daytime, and 24-h) and in Figure 3, Figure 4, Figure 5, Figure 6 and Figure 7 for all ten ETFs in side-by-side overnight/daytime format.
+Figure 2. Sample ACF of SPY returns (lags 1–20). Top: overnight (); middle: daytime (); bottom: 24 h (). Orange dashed lines mark the 95% confidence interval (). Bars shaded red exceed the confidence bound. The Ljung–Box statistic at lag 10 is reported in the annotation box in each panel.
+Figure 3. Overnight (blue) and daytime (orange) ACF for SPY and XLB, lags 1–10.
+Figure 4. Overnight and daytime ACF for XLE and XLF.
+Figure 5. Overnight and daytime ACF for XLI and XLK.
+Figure 6. Overnight and daytime ACF for XLP and XLU.
+Figure 7. Overnight and daytime ACF for XLV and XLY.
+Lag-1 autocorrelation: Across all ten ETFs and all three sub-period definitions, the lag-1 autocorrelation is uniformly negative (Table 3). For overnight returns, the values range from  (XLU) to  (SPY), while for daytime returns, the range is  (XLY) to  (XLF). The Ljung–Box portmanteau statistic computed at lag 10 is significant () for every series except XLP daytime () and XLY daytime (), indicating that short-horizon serial dependence is present across nearly all ETF-sub-period combinations. The 24 h series exhibit the same negative sign in every case, with lag-1 ACFs ranging from  (XLY) to  (XLF).
+Table 3. Lag-1 autocorrelation and Ljung–Box test (lag 10) for all ETFs.
+Decay structure and absence of ARIMA dynamics: A necessary condition for an ARMA or integrated process to add predictive value is that the ACF should decay slowly (geometric decay for an AR, sinusoidal for an MA, or exhibit a unit-root signature). The figures show decisively that no such structure is present: the ACF attains its most negative value at lag 1 and then decays rapidly to noise-level amplitudes by lags 2–3 in every series. The partial ACF similarly cuts off after lag 1. This pattern is the signature of a near-white-noise process with a single mild negative autocorrelation at the first lag, well described by an MA(1) or, more simply, a one-period mean-reverting shock, rather than by a long-memory or integrated process. Accordingly, fitting an ARIMA model to these series would yield an estimated AR order of zero and an MA(1) coefficient of approximately  to , providing a negligible improvement over a driftless random walk for directional prediction purposes. We therefore do not pursue ARIMA-based strategies in this study, and instead exploit the documented static drift (overnight positive mean) and the cross-period sign asymmetry described in Appendix I.
+Economic interpretation: The negative sign of  is economically informative in a secondary sense. For overnight returns, a small but reliably negative autocorrelation indicates that an unusually large positive gap opening tends to be followed by a slightly smaller positive (or even negative) gap on the next trading day, consistent with a mild price-pressure reversal mechanism. For daytime returns, the pattern suggests that strong intraday moves exhibit mild mean reversion in the next session. Crucially, these first-order autocorrelations are measured over the same sub-period type across successive days (overnight-to-overnight, or daytime-to-daytime). The reversal strategies studied here instead exploit a within-day cross-period pattern: the tendency for overnight direction to reverse during the subsequent daytime session within the same 24 h cycle. This cross-period reversal is documented through the sign-pair frequency analysis in Appendix I and constitutes the principal mechanism underlying Strategy #18 (Long, Reversal).
+3. Strategies
+This paper examines ETF trading strategies by investing in either the night or the day portion (sub-period) of the 24 h period. We will distinguish between three types of sub-period strategies:
+1.
+Static—in these strategies, we always take the same position in each sub-period, independent of the performance of preceding sub-periods.
+2.
+Dynamic—in these strategies, we believe that the movement in the sub-period will continue (“inertia”) or reverse (“counter inertia”) in the next sub-period.
+3.
+Mixed—we use a static strategy on one sub-period and a dynamic strategy on another one.
+We find it convenient to introduce the following notation for daily strategies. We indicate a daily strategy as a pair of sub-period strategies  where  and  can be one of the following: Cash, Long, Short, Inertia, and Reversal (momentum):
+1.
+Night inertia: take a long (short) position overnight if the return for the preceding daytime period was non-negative (negative)
+2.
+Night reversal: take a long (short) position overnight if the return for the preceding daytime period was negative (non-negative)
+Reversal:
+1.
+Daytime inertia: take long (short) position daytime if the return for the preceding night period was non-negative (negative)
+2.
+Daytime reversal: take a long (short) position daytime if the return for the preceding night period was negative (non-negative)
+Therefore, there are  possible combinations for strategies. Excluding the trivial (Cash, Cash) strategy, there are 24 strategies to consider. For each of these strategies, we are always invested in at least one sub-period. The decision to invest during the daytime or overnight is governed by the corresponding strategies. Each of the 24 strategies assumes daily rebalancing with full capital allocation and reinvestment of all returns. Final balance  for each day is calculated using strategy return  and the previous day’s balance  with the following formula:
+(2)
+Finally, for convenience, let us define a “sign” function  for any real x as follows:
+(3)
+We now consider these strategies.
+Static Strategies
+We start with static strategies. Recall that, in these, we take long or short positions for either a daytime or overnight regardless of the movement in the previous sub-period. We use the notation  to denote the 24 h return of a strategy for day .
+Single Sub-period Static Strategies:
+(Long, Cash): always buy at the close and sell the next morning. The return 
+(Short, Cash): always sell short at the close and buy the next morning. 
+(Cash, Long): always buy at the open and sell at the close. The return 
+(Cash, Short): always sell short at the open and buy at the close. The return 
+Examples of these strategies are shown in Table 4.
+Night and Day Combined Static Strategies:
+5.
+(Long, Long): Always stay in a long position. This is analogous to the Buy-and-Hold strategy. There is no trading. For each day, the return 
+6.
+(Short, Short): Always stay in a short position. This is the opposite of the Buy-and-Hold strategy. There is no trading. For each day, the return 
+7.
+(Short, Long): Switch to a short position for the overnight sub-period and then switch to a long position for the daytime sub-period. The return 
+8.
+(Long, Short): Switch to long position for the overnight sub-period and then switch to short position for the daytime sub-period. The return is 
+Examples of these strategies are shown in Table 5.
+Single Sub-Period Inertia/Reversal Strategies:
+9.
+(Cash, Inertia): In this momentum strategy, you believe that the stock will continue its daytime movement in the same direction as its overnight movement. We do not have overnight positions and hold positions only during the daytime. The return 
+10.
+(Cash, Reversal): In this reversal strategy, you believe that the stock will reverse its overnight direction during the daytime We do not have overnight positions and hold positions only during the daytime. The return 
+11.
+(Inertia, Cash): In this strategy, you believe that the stock will continue its overnight movement for  in the same direction as it did during the overnight. We have no daytime positions. The return 
+12.
+(Reversal, Cash): In this strategy, you believe that the stock will reverse its daytime direction during the next night sub-period. We have no daytime positions. The return 
+These four strategies are shown in Table 6.
+Combined Inertia/Reversal Strategies:
+13.
+(Inertia, Inertia): 
+14.
+(Inertia, Reversal): 
+15.
+(Reversal, Inertia): 
+16.
+(Reversal, Reversal): 
+These four strategies are shown in Table 7.
+Static Night and Daytime Inertia/Reversal Strategies:
+17.
+(Long, Inertia): 
+18.
+(Long, Reversal): 
+19.
+(Short, Inertia): 
+20.
+(Short, Reversal): 
+These four strategies are shown in Table 8.
+Night Inertia/reversal and Daytime Static Strategies:
+21.
+(Inertia, Long): 
+22.
+(Reversal, Long): 
+23.
+(Inertia, Short): 
+24.
+(Reversal, Short): 
+Table 4. Examples of single sub-period static strategies.
+Table 5. Examples of combined static strategies.
+Table 6. Examples of single sub-period static strategies.
+Table 7. Examples of combined inertia/reversal.
+Table 8. Examples of static night and dynamic daytime inertia/reversal.
+These four strategies are shown in Table 9.
+Table 9. Examples of dynamic night and static daytime inertia/reversal.
+The formulae for computing daily returns for each strategy are summarized in Table A1.
+4. Strategy Performance Analysis
+4.1. Baseline Performance Without Transaction Costs
+Table 10 presents the final portfolio values for all 24 trading strategies across ten sector ETFs over the 27-year period (1999–2025), starting with $100 and assuming zero transaction costs.
+Table 10. Final balances without transaction costs ($100 initial investment): 42 profitable. Blue color in Strategy #5 indicates the final balance for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy outperforms the passive strategy. Finally, red color indicates that the corresponding strategy underperforms the passive strategy.
+Following the methodology outlined in Section 2, each strategy employs different combinations of overnight (CO: close-to-open) and daytime (OC: open-to-close) positioning, with returns compounded daily according to Equation (2). This theoretical benchmark establishes the upper bound of strategy profitability before considering implementation frictions.
+Results and Discussion
+Overnight vs. daytime effects: validating the core hypothesis: The results provide compelling evidence for the hypothesis that overnight periods generate stronger exploitable momentum than daytime periods. Strategy #1 (Long/Cash), which captures pure overnight returns , consistently outperformed across all ten ETFs with final values ranging from $435 (XLP) to $3165 (XLK). In contrast, Strategy #3 (Cash/Long), capturing pure daytime returns , generated losses in 8 out of 10 ETFs. This stark asymmetry contradicts the efficient market hypothesis and supports behavioral finance theories, which suggest reduced arbitrage activity during non-trading hours.
+The Technology sector (XLK) exhibited the strongest overnight effect with a final value of $3165—a 3065% gain—consistent with this sector’s susceptibility to after-hours earnings announcements and international technology news. Energy (XLE) similarly achieved $2378, reflecting the sector’s exposure to 24 h global commodity markets where crude oil prices fluctuate continuously during U.S. overnight hours.
+Conversely, the systematic failure of Strategy #2 (Short/Cash: ) across all ETFs ($2–$18 final values) demonstrates that overnight movements exhibit persistent positive drift rather than random walk behavior. If overnight returns were symmetrically distributed, short and long strategies would show comparable absolute performance, which the data clearly refute.
+Decomposition of 24 h returns: static strategies: Recall from Equation (1) that the 24-h return decomposes as follows: . The buy-and-hold strategy (Strategy #5: Long/Long) captures this full 24 h return with , achieving solid performance across most ETFs ($422–$1169). However, Strategy #1 outperformed buy-and-hold in 8 of 10 ETFs, indicating that  contributions dominate  while daytime periods often contribute negatively or minimally.
+Strategy #8 (Long/Short: ) produced exceptional results in XLU ($7189), XLK ($3210), and XLE ($2021), exploiting both positive overnight drift and negative daytime drift. This combination’s success across multiple sectors suggests that overnight gaps rarely persist into regular trading hours, consistent with profit-taking by institutional traders who entered positions overnight.
+The catastrophic failure of Strategy #7 (Short/Long) across all ETFs confirms this pattern is not merely sector-specific but represents a fundamental characteristic of ETF price behavior over the study period.
+Dynamic strategies: momentum vs. mean reversion: Dynamic strategies that adjust positions based on previous sub-period returns (using the sign function defined in Equation (3)) showed highly sector-dependent performance. Strategy #13 (Inertia/Inertia: ) achieved extraordinary returns in XLE ($12,982), representing a 12,882% gain over 25 years. This is consistent with Energy ETFs exhibiting stronger momentum persistence across sub-periods than other sectors; the precise mechanism warrants further investigation beyond the scope of this study.
+However, the same strategy failed in most other sectors, with 7 out of 10 ETFs showing final values below $100. This heterogeneity indicates that pure momentum strategies require careful sector selection and cannot be applied universally.
+Strategy #11 (Inertia/Cash: ), which uses daytime momentum signals to predict overnight movements, succeeded in XLE ($1769) and XLB ($327) but underperformed in other sectors. This pattern suggests that momentum persistence from daytime to overnight periods is strongest in commodity-linked and material sectors, where continuous global markets create information linkages across temporal segments.
+Mixed strategies: optimal temporal combinations: The most consistently profitable approach across diverse sectors was Strategy #18 (Long, Reversal: ), which maintains static long positions overnight while implementing contrarian positioning during the day based on overnight movement direction. This strategy achieved remarkable final values: XLK ($31,263), XLU ($28,653), XLV ($22,540), XLP ($22,317), XLI ($18,207), and XLY ($8513).
+The success of this mixed approach validates our framework for combining static and dynamic positioning across different sub-periods. It captures reliable overnight positive drift through static long exposure while exploiting intraday mean-reversion tendencies, where gaps partially reverse during regular trading hours. The strategy’s broad applicability across six diverse sectors—spanning defensive (XLP, XLU), cyclical (XLI, XLY), growth (XLK), and healthcare (XLV)—suggests this combination addresses a fundamental market microstructure phenomenon rather than sector-specific anomalies.
+Strategy #17 (Long/Inertia) showed exceptional but concentrated performance, achieving $17,458 in XLE and $1974 in XLB, but under-performing in other sectors. This concentration suggests that daytime momentum continuation after overnight gaps is particularly pronounced in commodity-sensitive sectors.
+Sector heterogeneity and fundamental drivers: The substantial variation in optimal strategies across sectors reflects differences in information processing dynamics and fundamental business characteristics:
+Energy (XLE): Multiple strategies succeeded (Strategy #1: $2378; #8: $2021; #11: $1769; #13: $12,982; #17: $17,458). XLE exhibits the highest overnight return variance in all ten ETFs (Table A9), a documented empirical property; the causal mechanism linking this to global commodity markets is a plausible but unverified hypothesis requiring further study.
+Technology (XLK): Dominated by overnight effects (Strategy #1: $3165; #8: $3210; #18: $31,263). XLK has the highest  of all ETFs (58.7%, Table A9), making it the most asymmetric sub-period return distribution—an objective basis for overnight strategy dominance in this sector.
+Utilities (XLU): Best performance from mixed strategies (Strategy #8: $7189; #18: $28,653). XLU has the highest overnight Sharpe ratio of all ETFs (0.088 vs. 0.032–0.057 for others, Table A9), a measurable empirical characteristic rather than a narrative interpretation.
+Consumer Staples (XLP): Unique reversal characteristics (Strategy #10: $5130; #16: $20,707). XLP has the highest conditional reversal probability P(daytime + | overnight −) = 55.6% (Table A17), providing an objective quantitative basis for the reversal strategy’s success in this sector.
+Implications for market efficiency: Of 240 strategy-ETF combinations, only 42 (17.5%) generated profits exceeding the initial $100 investment, with profitable strategies highly concentrated in those exploiting overnight momentum. This concentration, combined with the universal failure of all pure short strategies (Strategies #2, #6, #7, #19), provides evidence inconsistent with strong-form market efficiency. The persistent overnight drift cannot be explained by risk-based asset pricing models, as these would predict symmetric returns to long and short positions of equivalent systematic risk.
+The results support the hypothesis that markets become less efficient during non-trading hours due to reduced liquidity, lower participation by professional arbitrageurs, and delayed information processing—factors that create exploitable momentum patterns. However, these theoretical results assume perfect execution at the open and close prices with zero transaction costs, which represents an upper bound on achievable performance. The following sections incorporate realistic transaction costs to assess practical viability and identify which strategies remain profitable under implementable trading conditions.
+5. Transaction Cost Analysis
+Table A2 and Table A3 in Appendix B summarize the number of transactions for each strategy. These per-trade cost figures () are intended to represent all-in transaction costs, encompassing brokerage commissions, the bid-ask half-spread, and estimated market impact. For the highly liquid sector ETFs studied here—all of which rank among the most actively traded U.S. exchange-traded products, with SPY, XLK, and XLF routinely exceeding hundreds of millions of shares daily—typical institutional bid-ask spreads are below 0.5 bps and market impact for moderate position sizes is negligible. The 1 bps and 2 bps scenarios, therefore, conservatively bracket the range from large institutional (all-in – bps) to smaller institutional or active-retail (all-in –5 bps) cost structures, consistent with estimates reported by (Frazzini et al. 2018; Novy-Marx and Velikov 2016). For most strategies, the average number of trades per day is . Assuming 250 trading days per year, from 1999 to 2025, we had 27 years with approximately  days. Let r denote the daily internal rate of return. Then, starting with an initial $100 investment, the final investment  of a strategy will be . Assume that daily trades subtract  from a return for every day. The compounded return after N days will be . The return is reduced by .
+Suppose  of . Then, using the approximation , the loss to the return is:
+(4)
+The total return is halved. This shows that for these strategies, transaction costs play a very significant role. The effect of a 1 basis point transaction cost (typical for professional hedge funds) is illustrated in Table 11. This analysis builds on recent findings that transaction costs represent the primary barrier to exploiting documented market anomalies (Frazzini et al. 2018; Novy-Marx and Velikov 2016).
+Table 11. Final balances with 1 bp/trade transaction cost ($100 initial investment): 13 profitable. Blue color in Strategy #5 indicates the final balance for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy outperforms the passive strategy. Finally, red color indicates that the corresponding strategy underperforms the passive strategy.
+5.1. The Compounding Effect of Friction
+The final balance B is a function of the gross daily return  and the cost . For N days and k trades per day, the final balance is given by:
+(5)
+When comparing the results of Table 11 () and Table 12 (), the ratio of the final balances is:
+(6)
+Table 12. Final balances with 2 bps/trade transaction costs ($100 initial investment)—7 profitable. Blue color in Strategy #5 indicates the final balance for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy outperforms the passive strategy. Finally, red color indicates that the corresponding strategy underperforms the passive strategy.
+Substituting the values for number of days  and  trades per day:
+(7)
+This confirms that regardless of the underlying strategy’s strength, a jump from 1 bp to 2 bps in transaction costs will automatically eliminate approximately  of the final wealth due to the nature of continuous compounding.
+Results and Discussion: 1 Basis Point Transaction Cost
+The effect of 1 basis point transaction cost (typical for professional hedge funds) is illustrated in Table 11.
+The introduction of 1 basis point (0.01%) transaction costs per trade fundamentally alters the strategy landscape, reducing profitable strategies from 42 to only 13 out of 240 combinations. This dramatic 69% reduction in profitability demonstrates the critical importance of transaction costs in momentum strategy viability, as predicted by Equation (4), where the compounding friction effect over  trading days yields approximately 51% wealth erosion.
+Survival of overnight momentum strategies: Strategy #1 (Long, Cash) remains profitable in 9 of 10 ETFs, though the final values decline substantially from the zero-cost scenario: XLK ($856, down from $3165), XLE ($643, down from $2378), and XLI ($481, down from $1778). The persistence of profitability despite 73% value destruction confirms that overnight momentum effects are sufficiently strong to withstand realistic implementation costs in most sectors. Only XLP ($118) shows marginal profitability, reflecting the defensive sector’s weaker momentum.
+Buy-and-hold remains dominant: Strategy #5 (Long, Long) maintains identical performance ($422–$1169) as it requires only one initial trade over the entire 25-year period, incurring negligible transaction costs. With 1 bp costs, buy-and-hold now outperforms Strategy #1 in 7 of 10 ETFs, reversing the zero-cost comparison. This shift demonstrates that passive strategies gain relative advantage as trading frequency increases, consistent with the  friction model where  daily trades for active strategies versus  for buy-and-hold.
+Collapse of high-frequency strategies: Strategy #8 (Long, Short), which previously achieved exceptional results (XLU: $7189; XLK: $3210), now generates severe losses across all ETFs ($16–$526) due to its  daily trade requirement. The strategy’s exposure to  compounding friction eliminates 97% of theoretical wealth. Strategy #7 (Short/Long) becomes effectively worthless ($0–$2), confirming that strategies combining negative expected returns with high trading costs are economically unviable.
+Mixed strategy resilience: Long/Reversal: Strategy #18 (Long, Reversal) demonstrates remarkable resilience, remaining profitable in eight ETFs despite transaction costs: XLK ($7342), XLU ($6627), XLV ($5218), XLP ($5476), XLI ($4365), XLY ($2038), and XLF ($1460). While these values represent 76–88% declines from zero-cost levels, the strategy’s combination of reliable overnight drift capture with daytime reversal exploitation generates sufficient gross returns to overcome the  friction burden, where  trades per day for this strategy. This is discussed in detail in Section 10.
+The strategy’s continued dominance over buy-and-hold in six of 10 ETFs indicates that tactical momentum positioning can generate alpha even after accounting for realistic costs. The exceptions are SPY, XLB, XLE, and XLY, where the buy-and-hold strategy’s zero-friction advantage outweighs the mixed strategy’s gross return superiority.
+Dynamic strategy fragility: Pure dynamic strategies show extreme sensitivity to transaction costs. Strategy #13 (Inertia, Inertia) remains profitable only in XLE ($3610, down from $12,982), representing a 72% decline despite this sector’s exceptional momentum strength. All other ETFs show final values below $200, with most below $10. This fragility reflects these strategies’ variable trade frequency (, with high variance) and their dependence on capturing consecutive momentum persistence, which becomes economically unviable when friction consumes a significant fraction of individual sub-period returns.
+Strategy #14 (Inertia, Reversal) maintains profitability only in XLF ($497, down from $1795), while Strategy #16 (Reversal, Reversal) succeeds only in XLP ($5336, down from $20,707). These isolated successes represent sector-specific anomalies rather than broadly applicable patterns.
+Sector-specific patterns under friction: The cross-sectional distribution of profitable strategies reveals important sector characteristics:
+Technology (XLK): Retains the strongest overnight effect post-costs (Strategy #1: $856) and remains the best performer for Strategy #18 ($7342), indicating this sector’s momentum strength exceeds typical friction levels.
+Energy (XLE): Shows continued momentum viability (Strategy #1: $643; #13: $3610; #17: $5307), confirming commodity-driven momentum patterns generate sufficient returns to overcome implementation costs.
+Consumer Staples (XLP): Exhibits unique reversal strength (Strategy #10: $1388; #16: $5336), though all values decline dramatically from zero-cost levels. This defensive sector’s mean reversion tendencies are more resilient to transaction costs than momentum effects in most other sectors.
+Utilities (XLU): Maintains strong Strategy #18 performance ($6627) but shows substantial erosion in Strategy #8 (from $7189 to $526), indicating the sector’s daytime reversal patterns remain exploitable, but pure arbitrage between sub-periods becomes marginal.
+Practical implications: At 1 bp per trade—representative of institutional trading costs for liquid ETFs—only strategies with either (a) low trading frequency (buy-and-hold) or (b) exceptionally strong gross returns combined with moderate frequency (Long, Cash), (Long, Reversal) remain economically viable. The 89% reduction in total profitable strategies (from 42 to 13) demonstrates that transaction costs serve as a powerful selection mechanism, filtering out marginally profitable approaches while preserving only those strategies with substantial gross return advantages.
+5.2. Performance Under 2 Basis Points’ Transaction Cost
+Table 12 reveals the severe impact of doubling transaction costs to 2 basis points per trade.
+As predicted by Equation (7), the ratio  indicates that wealth levels at 2 bps are approximately 26% of those at 1 bp, representing an additional 74% wealth destruction regardless of underlying strategy strength.
+Results and Discussion: 2 Basis Points’ Transaction Cost
+Dramatic contraction of viable strategies: Only 7 strategies across all 240 combinations remain profitable at 2 bps transaction costs, representing a 46% reduction from the 13 profitable strategies at 1 bp and an 83% reduction from the 42 profitable strategies under zero costs. This nonlinear deterioration—where doubling costs from 1 bp to 2 bps eliminates 46% of the remaining profitable strategies rather than reducing them proportionally—demonstrates that many strategies operate near the break-even threshold, where modest cost increases trigger a significant decline in profitability.
+Overnight momentum becomes marginal: Strategy #1 (Long, Cash) now generates losses in all 10 ETFs, with final values ranging from $32 (XLP) to $232 (XLK), representing 63–73% declines from 1 bp levels. Even XLK, which maintained $856 at 1 bp, falls to $232, confirming that pure overnight momentum strategies—despite capturing genuine market inefficiencies—cannot overcome the  compounding friction when executing approximately 13,500 trades over the study period.
+This universal failure of Strategy #1 represents a critical threshold: overnight momentum effects, while statistically significant and economically meaningful under low-cost regimes, become uneconomical for most ETF sectors when per-trade costs exceed 1.5–2 basis points. The exception is XLK ($232), which remains closest to profitability, suggesting that technology sector momentum might survive costs slightly above 2 bps.
+Buy-and-hold dominance: Strategy #5 (Long, Long) maintains virtually identical performance ($422–$1169) and now outperforms all active strategies in all ETFs. The strategy’s immunity to transaction costs—resulting from single-trade implementation—provides a 200–800% return advantage over the next-best alternatives. This finding has profound implications for retail investors and institutions with higher trading costs: passive buy-and-hold becomes the dominant strategy when transaction costs exceed 1.5–2 bps, even in the presence of statistically significant momentum effects.
+Long/Reversal survival in select sectors: Strategy #18 (Long, Reversal) remains the only active strategy maintaining broad profitability, succeeding in five ETFs: XLK ($1724), XLU ($1532), XLP ($1343), XLV ($1207), and XLI ($1046). These final values represent 77–88% declines from 1 bp levels but still exceed the initial $100 investment by 950–1624%, demonstrating that the strategy’s combination of overnight momentum and daytime reversal generates sufficient gross returns to overcome substantial friction.
+However, Strategy #18 now underperforms buy-and-hold across all 10 ETFs, indicating that even this optimal active strategy cannot justify its transaction costs relative to passive alternatives. The strategy’s continued profitability suggests it may remain viable for investors with costs below 2 bps (1.5–1.8 bps range) but becomes dominated by passive alternatives at higher cost levels.
+Dynamic strategy extinction: Nearly all dynamic strategies become unprofitable:
+Strategy #13 (Inertia, Inertia): profitable only in XLE ($1004, down from $3610), representing a 72% decline and the strategy’s last remaining viable sector.
+Strategy #16 (Reversal, Reversal): maintains profitability only in XLP ($1375, down from $5336), reflecting this sector’s unique mean reversion characteristics.
+Strategy #17 (Long/Inertia): survives only in XLE ($1613, down from $5307), confirming Energy’s exceptional momentum strength.
+All other dynamic strategies generate final values below $400, with most below $100. The concentration of surviving strategies in XLE and XLP—representing extreme momentum (Energy) and mean reversion (Consumer Staples) characteristics—suggests that only sectors with the strongest directional tendencies can support active strategies under realistic retail conditions trading costs (Frazzini et al. 2018; Korajczyk and Sadka 2004).
+Cost threshold analysis: The empirical evidence demonstrates clear profitability thresholds:
+0–1 bp: overnight momentum (Strategy #1) and mixed strategies (Strategy #18) are broadly profitable across 8–9 ETFs, with exceptional performers achieving 1500–3000% returns.
+1–2 bps: overnight momentum becomes marginal; only Strategy #18 maintains broad profitability (8 ETFs), though underperforming buy-and-hold.
+Above 2 bps: only buy-and-hold and sector-specific dynamic strategies (XLE, XLP) remain viable; active momentum strategies become uneconomical.
+These thresholds align with institutional trading cost estimates: large institutions trading liquid ETFs typically incur total costs of 0.5–1.5 bps (spread + commission + market impact), while retail investors face costs of 2–5 bps. The empirical results suggest that momentum strategies remain viable for institutional investors but are increasingly dominated by passive alternatives for most retail participants.
+Sector differentiation under high costs: The cross-sectional pattern of surviving strategies reveals fundamental differences in exploitable inefficiencies:
+Technology (XLK): Maintains the strongest Strategy #18 performance ($1724), indicating persistent overnight-daytime asymmetries survive higher friction levels. This likely reflects the sector’s concentration of companies that frequently hold after-hours earnings events and make product announcements.
+Energy (XLE): Supports multiple profitable strategies (#13: $1004; #17: $1613), confirming commodity-driven momentum generates returns exceeding typical friction levels. The 24-h nature of global oil markets creates a continuous information flow supporting momentum persistence.
+Consumer Staples (XLP): Unique reversal profitability (Strategy #16: $1375) persists despite high costs, suggesting this defensive sector’s mean reversion tendencies represent fundamental valuation anchoring rather than noise trading.
+Healthcare (XLV) and Utilities (XLU): Strategy #18 maintains profitability ($1207 and $1532), indicating these sectors’ combination of overnight news sensitivity (regulatory announcements, clinical trial results) and intraday adjustment patterns remains exploitable.
+Implications for strategy implementation: The 2 bps results provide critical guidance for practical implementation:
+1. Institutional investors (0.5–1.5 bps costs) can profitably exploit overnight momentum through Strategy #1 and mixed approaches (Strategy #18), particularly in Technology, Energy, and Utilities sectors.
+2. Retail investors (2–5 bps costs) should avoid active momentum strategies and default to buy-and-hold (Strategy #5), as transaction costs eliminate the alpha generation potential of tactical positioning.
+3. Sector selection becomes critical: investors should concentrate active strategies in sectors with the strongest momentum effects (XLK, XLE, XLU) and avoid those with weaker patterns (XLF, XLY, XLV under 2 bps).
+4. Strategy frequency matters decisively: high-frequency approaches (Strategies #7, #8 with  trades/day) become immediately uneconomical, while moderate-frequency strategies (Strategies #1, #18 with  trades/day) remain viable only under low-cost regimes.
+The transaction cost analysis confirms that overnight momentum represents a genuine market inefficiency that can be exploited under institutional cost structures; however, the effect is largely eliminated for typical retail investors, who face higher trading costs. This finding reconciles the academic literature documenting overnight momentum effects with the practical observation that most retail investors underperform passive benchmarks: the inefficiency exists but is only accessible to low-cost traders.
+5.3. Transaction Cost Sensitivity Analysis
+To address concerns about the simplified fixed-cost model and to provide a fuller picture of strategy viability, Table 13 presents the final portfolio value, Sharpe ratio, and CAGR for the five key strategies across the complete range from 0 to 5 bps for SPY, which is representative of the broad cross-section. The comparison of the growth of these strategies without transaction costs is shown in Figure 8. The comparison of the growth of these strategies with 1 bps transaction cost is shown in Figure 9. Finally, the comparison of the growth of these strategies with 2 bps transaction cost is shown in Figure 10.
+Table 13. Transaction cost sensitivity analysis—SPY. Final value ($100 initial), Sharpe ratio, and CAGR for five key strategies at cost levels 0–5 bps. Asterisk (*) denotes unprofitable (final value < $100 or negative CAGR).
+Figure 8. Portfolio growth at zero transaction costs (TC = 0 bps). Starting with $100 initial investment, the figure shows cumulative growth of four representative strategies across SPY from 1999 to 2025. At zero costs, active strategies significantly outperform buy-and-hold, with Long+Reversal and Reversal+Reversal achieving the highest terminal values.
+Figure 9. Portfolio growth at 1 basis point transaction cost (TC = 1 bps). Representative of institutional trading costs, the performance gap between active strategies and buy-and-hold narrows substantially. The compounding effect of daily trading friction begins to erode active strategy returns.
+Figure 10. Portfolio growth at 2 basis points’ transaction cost (TC = 2 bps). At retail-level transaction costs, buy-and-hold becomes competitive with active strategies. The Reversal+Reversal strategy shows significant deterioration, demonstrating the critical importance of execution costs for high-frequency strategy viability.
+The sensitivity analysis reveals clear, monotonic degradation. Strategy #18 (Long+Reversal) remains the strongest active strategy at every cost level up to 4.5 bps, generating a positive CAGR of 0.07% at 4.5 bps before turning negative at 5 bps. Buy-and-hold is effectively cost-free (CAGR 6.51–6.52% across the full range), confirming its dominance for high-cost investors. The results also address the concern about wider spreads at the open and close: even if the true all-in cost at these times were 50% higher than our baseline assumption (e.g., 1.5 bps instead of 1 bps for an institutional investor), Strategy #18 would still deliver a Sharpe ratio of 0.40 and CAGR of 8.09%, remaining clearly profitable. The overnight long strategy (Long+Cash) is fully immune to cost escalation beyond 0.5 bps because its overnight return advantage is sufficiently large and consistent—its Sharpe ratio stays at 0.43 across the entire 0–5 bps range—making it a robust choice even under conservative cost assumptions.
+Section summary: The growth analysis establishes three findings. First, temporal decomposition into overnight and daytime sub-periods generates substantial alpha: Strategy #18 (Long, Reversal) and Strategy #1 (Long, Cash) dominate across most ETFs at zero cost. Second, transaction costs are the binding constraint: viable strategies fall from 42 to 13 to 7 as costs rise from 0 to 1 to 2 bps. Third, the TC sensitivity analysis (Table 13) shows Strategy #18 remains profitable up to 4.5 bps with a monotone but gradual decline, confirming robustness to moderate cost uncertainty including wider open/close spreads.
+6. Risk-Adjusted Performance Analysis
+6.1. Sharpe Ratio Evaluation
+While absolute returns provide initial insight into a strategy’s profitability, risk-adjusted performance metrics are essential for evaluating whether it generates returns commensurate with its level of volatility exposure. The Sharpe ratio, defined as the ratio of excess returns to standard deviation, offers a standardized measure for comparing strategies with different risk profiles (Sharpe 1966). Table 14 presents the average yearly Sharpe ratios for all 24 strategies across the ten sector ETFs over the 1999–2024 period.
+Table 14. Average yearly Sharpe ratio by strategy and ETF. Blue color in Strategy #5 indicates the Sharpe ratio for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy has a higher Sharpe ratio than the passive strategy. Finally, red color indicates that the corresponding strategy has a lower Sharpe ratio than the passive strategy.
+The Sharpe ratio is calculated as follows:
+(8)
+where  is the average annual return,  is the risk-free rate (assumed to be zero for comparative purposes), and  is the standard deviation of annual returns. Positive Sharpe ratios indicate strategies that generate positive risk-adjusted returns; values above 0.5 are generally considered acceptable, above 1.0 good, and above 2.0 excellent by industry standards.
+6.2. Results and Discussion
+6.2.1. Superior Risk-Adjusted Performance of Overnight Strategies
+Strategy #1 (Long/Cash) demonstrates consistently strong risk-adjusted returns with Sharpe ratios ranging from 0.50 (XLP) to 1.32 (XLU), with 9 of 10 ETFs exceeding 0.78. The strategy achieves Sharpe ratios above 1.0 in five sectors (XLU: 1.32, XLK: 1.07, XLE: 1.02, XLI: 1.01, SPY: 1.01), indicating that overnight momentum generates not only positive absolute returns but also favorable risk-adjusted returns exceeding those of many traditional investment strategies. The exceptional performance in Utilities (1.32) reflects this sector’s combination of strong overnight drift with relatively low overnight volatility.
+In stark contrast, Strategy #2 (Short, Cash) exhibits uniformly negative Sharpe ratios ranging from  to , with particularly severe risk-adjusted losses in XLU (), XLV (), and XLI (). These deeply negative values confirm that shorting overnight momentum not only generates losses but does so with high volatility, creating compounded risk-adjusted underperformance. The symmetry in magnitude but opposition in sign between Strategies #1 and #2 validates that overnight drift represents a persistent directional anomaly rather than a volatility artifact.
+6.2.2. Weak Risk-Adjusted Returns from Daytime Strategies
+Pure daytime strategies show minimal risk-adjusted performance. Strategy #3 (Cash/Long) generates Sharpe ratios near zero across most ETFs, ranging from  (XLU) to 0.18 (XLY), with 8 of 10 ETFs showing absolute values below 0.20. This near-zero performance suggests that daytime momentum is either absent or insufficiently strong to offset the volatility incurred during regular trading hours. The exceptions—XLP (0.16) and XLY (0.18)—show modest positive risk-adjusted returns but remain far below overnight strategy performance.
+Strategy #4 (Cash, Short) exhibits consistently negative Sharpe ratios across all sectors ( to ), confirming that shorting during the day generates risk-adjusted losses, though less severe than shorting overnight. The relatively better performance (less negative) of daytime shorting compared to overnight shorting suggests that while daytime periods lack strong momentum effects, they also lack the persistent positive drift that characterizes overnight periods.
+6.2.3. Buy-and-Hold Risk-Adjusted Performance
+Strategy #5 (Long, Long) delivers solid risk-adjusted returns, with Sharpe ratios ranging from 0.46 (XLE) to 0.73 (SPY), and all ten ETFs showing positive Sharpe ratios between 0.46 and 0.73. The consistency of these moderate Sharpe ratios reflects the fundamental risk–return characteristics of equity investments over extended periods. Notably, buy-and-hold underperforms Strategy #1 on a risk-adjusted basis in 9 of 10 ETFs, indicating that overnight momentum capture improves Sharpe ratios by 7–81% compared to passive holding (e.g., XLU: 1.32 vs. 0.58 represents 128% improvement).
+The single exception is XLY (0.70 for buy-and-hold vs. 0.78 for overnight), where the long-term secular growth in consumer discretionary spending during the 1999–2024 period generated risk-adjusted returns competitive with those of overnight momentum strategies. This finding suggests that in strongly trending sectors, buy-and-hold can achieve risk-adjusted performance comparable to that of active momentum strategies, although it still underperforms in absolute return terms.
+6.2.4. Mixed Strategy Excellence: Long/Reversal
+Strategy #18 (Long, Reversal) achieves the highest risk-adjusted returns across the broadest set of ETFs, with Sharpe ratios ranging from 0.17 (XLE) to 1.25 (XLU). The strategy exceeds 1.0 in four sectors: XLU (1.25), XLP (1.23), XLV (1.19), and XLI (1.16), representing exceptional risk-adjusted performance that places it in the top decile of documented investment strategies in academic literature. The strategy also shows strong performance in XLK (1.09), XLF (0.88), and XLY (0.87).
+The superior Sharpe ratios of Strategy #18 compared to Strategy #1 in most sectors (7 of 10 ETFs) demonstrate that combining overnight momentum with daytime mean reversion improves risk-adjusted returns beyond pure overnight exposure. This enhancement occurs through two mechanisms: (1) capturing additional returns from daytime reversals, and (2) potentially reducing portfolio volatility through the offsetting nature of overnight momentum and daytime reversal positioning. The strategy’s broad success across diverse sectors—defensive (XLP, XLU), cyclical (XLI, and healthcare (XLV)—indicates robustness across different fundamental and risk characteristics.
+The exceptions where Strategy #18 underperforms Strategy #1 on a risk-adjusted basis are XLE (0.17 vs. 1.02), XLB (0.25 vs. 0.88), and SPY (0.61 vs. 1.01). For Energy, the underperformance likely reflects the sector’s strong intraday momentum continuation following overnight gaps, where the strategy’s contrarian daytime positioning counters persistent commodity-driven trends. For Materials (XLB), similar commodity linkages may create momentum persistence that makes reversal positioning suboptimal.
+6.2.5. Dynamic Strategy Performance
+Pure dynamic strategies exhibit highly variable, generally poor risk-adjusted performance. Strategy #13 (Inertia/Inertia) demonstrates extreme sector dependence: strong positive Sharpe ratios in XLE (0.71) and XLB (0.27), but deeply negative values in most other sectors, including XLP (), XLU (), XLV (), and XLI (). This pattern confirms that double-momentum strategies work only in sectors with exceptional trending characteristics (commodity-linked sectors), generating severe risk-adjusted losses elsewhere.
+Strategy #14 (Inertia/Reversal) shows more consistent positive risk-adjusted performance across multiple sectors, with Sharpe ratios ranging from  (SPY) to 0.61 (XLI). The strategy achieves respectable Sharpe ratios in XLI (0.61), XLV (0.53), XLP (0.45), and XLK (0.44), indicating that combining overnight momentum with daytime reversal signals can generate positive risk-adjusted returns even without the static overnight long position of Strategy #18. However, the strategy underperforms Strategy #18 in all sectors, suggesting that the static overnight long position provides superior risk-adjusted returns compared to conditional overnight positioning based on prior daytime movements.
+Reversal strategies (Strategy #16: Reversal/Reversal) show exceptional sector-specific performance in XLP (1.14) and XLU (0.78) but fail in most other sectors with negative or near-zero Sharpe ratios. This concentration suggests that mean-reversion strategies are highly sector-dependent and work primarily in defensive, stable sectors with strong valuation anchoring, rather than in cyclical or growth-oriented sectors.
+6.2.6. Sector-Specific Risk–Return Characteristics
+Cross-sectional analysis reveals fundamental differences in sector risk–return profiles:
+Utilities (XLU): Exhibits the strongest risk-adjusted overnight momentum (Strategy #1: 1.32) and mixed strategy performance (Strategy #18: 1.25), reflecting this sector’s unique combination of strong overnight sensitivity to interest rate changes and regulatory news with relatively low volatility. The sector’s bond-like characteristics create predictable overnight gaps without excessive noise.
+Technology (XLK): Shows consistently strong Sharpe ratios for overnight strategies (Strategy #1: 1.07; #18: 1.09), confirming that the sector’s after-hours earnings announcements and product news create persistent overnight momentum with acceptable volatility. The near-identical Sharpe ratios between pure overnight and mixed strategies suggest that daytime reversals in technology stocks are relatively minor.
+Energy (XLE): Demonstrates the highest dynamic momentum Sharpe ratio (Strategy #13: 0.71; #17: 0.83), reflecting commodity price persistence across multiple sub-periods. However, the sector shows lower Sharpe ratios for reversal-based strategies, indicating that mean reversion is weak in commodity-driven markets.
+Consumer Staples (XLP): Exhibits unique reversal characteristics with the highest Sharpe ratio for Strategy #16 (1.14) and strong Strategy #18 performance (1.23). This defensive sector’s mean reversion tendencies, combined with moderate overnight momentum, create favorable conditions for mixed strategies that exploit both patterns.
+Healthcare (XLV): Shows balanced performance across momentum strategies with Strategy #18 achieving a 1.19 Sharpe ratio, reflecting the sector’s combination of overnight clinical trial results and regulatory announcements with relatively stable intraday trading patterns.
+6.2.7. Negative Sharpe Ratio Patterns
+Short strategies universally exhibit deeply negative Sharpe ratios, with Strategy #19 (Short, Inertia) showing the most severe risk-adjusted losses across all sectors ( to ). These extremely negative values (often below ) indicate that short momentum strategies not only lose money but also do so with high volatility, resulting in compounded wealth destruction on a risk-adjusted basis. The consistency of this pattern across all sectors and strategy variations confirms that equity markets exhibit persistent positive drift that cannot be profitably shorted using systematic momentum or reversal approaches.
+Strategy #15 (Reversal, Inertia) similarly shows uniformly negative Sharpe ratios ( to ), demonstrating that attempting to fade overnight momentum while following daytime momentum creates unfavorable risk–return tradeoffs. This combination counters the strongest market pattern (overnight drift) while attempting to capitalize on the weaker pattern (daytime momentum), resulting in consistent, risk-adjusted losses.
+6.2.8. Comparison with Traditional Benchmarks
+The Sharpe ratios reported for optimal strategies in this study compare favorably with those of traditional investment approaches. Historical S&P 500 Sharpe ratios over comparable periods typically range from 0.40 to 0.60, while actively managed mutual funds average 0.30 to 0.50 after fees. Our Strategy #18 achieves Sharpe ratios exceeding 1.0 in four sectors and above 0.85 in seven sectors, placing these approaches in the top performance quartile of documented investment strategies.
+However, these Sharpe ratios reflect theoretical performance, not transaction costs. As demonstrated in the previous section, transaction costs above 1–2 bps substantially reduce absolute returns, which proportionally reduces Sharpe ratios since volatility remains unchanged. For investors facing 2+ basis points (bps) costs, the risk-adjusted performance of active momentum strategies deteriorates to levels comparable with or below buy-and-hold benchmarks, reinforcing the conclusion that these strategies remain viable only for low-cost institutional traders.
+6.2.9. Implications for Portfolio Construction
+The Sharpe ratio analysis provides several insights for portfolio construction:
+1.
+Overnight momentum strategies (Strategy #1) offer superior risk-adjusted returns to buy-and-hold in most sectors, suggesting that tactical overnight positioning can improve portfolio efficiency for low-cost traders.
+2.
+Mixed strategies (Strategy #18) achieve the best risk-adjusted performance across diverse sectors, indicating that combining multiple temporal momentum patterns creates more efficient portfolios than exploiting single patterns.
+3.
+Sector allocation matters significantly: concentrating active strategies in sectors with the highest Sharpe ratios (XLU, XLK, XLV, XLP for Strategy #18) can substantially improve overall portfolio risk-adjusted returns compared to equal-weight or market-cap-weight approaches.
+4.
+Short strategies should be avoided entirely, as they generate deeply negative risk-adjusted returns across all sectors and strategy variations, indicating that equity market drift is too persistent to profit from systematic shorting approaches.
+The risk-adjusted performance analysis confirms that overnight momentum represents not merely a source of absolute returns but also an improvement in portfolio efficiency, generating superior Sharpe ratios compared to traditional buy-and-hold strategies across most ETF sectors studied. However, this efficiency advantage remains contingent on maintaining low transaction costs below the 2–3 bps threshold identified in the Section 5.3.
+Section summary: Risk-adjusted analysis confirms that Strategy #1 (Sharpe  averaged across ETFs) and Strategy #18 (Sortino ) dominate all alternatives on a risk-adjusted basis. Both exceed buy-and-hold’s Sharpe of 0.61 by 56% and 43%, respectively. Short strategies are universally negative. Sector differences are meaningful: XLU and XLK show the strongest Sharpe ratios for Strategy #18, while XLE favors the pure overnight strategy.
+7. Volatility Analysis Across All Strategies
+7.1. Strategy Volatility Profiles
+Understanding the volatility characteristics of trading strategies is crucial for evaluating their risk profiles and determining their suitability for various investor risk tolerances. Volatility, measured as the annualized standard deviation of returns, directly affects the denominator of the Sharpe ratio and reflects the uncertainty investors face in strategy outcomes. Table 15 presents the average yearly volatility (in percentage terms) for all 24 strategies across the ten sector ETFs over the 1999–2024 period.
+Table 15. Average yearly volatility (%) by strategy and ETF. Blue color in Strategy #5 indicates the volatility for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy has lower volatility than the passive strategy. Finally, red color indicates that the corresponding strategy has higher volatility than the passive strategy.
+Volatility patterns reveal important characteristics of strategy risk exposure: strategies that trade only during specific sub-periods exhibit lower volatility than those active throughout the full 24-h cycle, while strategies that switch positions frequently (short/long combinations) often show elevated volatility due to exposure to gap risk and directional changes.
+7.2. Results and Discussion
+7.2.1. Overnight vs. Daytime Volatility Differential
+A fundamental finding emerges from comparing single-subperiod strategies: overnight periods (Strategies #1, #2) exhibit substantially lower volatility than daytime periods (Strategies #3, #4) across all 10 ETFs. Overnight volatility ranges from 8.4% (XLP) to 15.0% (XLF), while daytime volatility spans 12.5% (XLP) to 21.5% (XLE), representing a 44–48% volatility increase during regular trading hours.
+This volatility differential reflects the fundamental nature of price formation in the two sub-periods. Overnight periods compress approximately 16 h of information flow into a single gap at market open, creating a more discrete price adjustment with lower measured volatility. In contrast, the 6.5-h daytime trading session involves continuous price discovery, with numerous intraday fluctuations, generating higher realized volatility even when the total price change may be relatively small Andersen (1996).
+The consistency of this pattern across all sectors—defensive (XLP, XLU), cyclical (XLI, XLY), commodity (XLE), and growth (XLK)—indicates that the overnight-daytime volatility differential represents a universal market microstructure characteristic rather than sector-specific behavior. Consumer Staples (XLP) shows the lowest volatility in both sub-periods (8.4% overnight, 12.6% daytime), reflecting this defensive sector’s stable fundamental characteristics, while Energy (XLE) and Financials (XLF) exhibit the highest volatility in both sub-periods, consistent with their sensitivity to commodity prices and leverage effects, respectively.
+7.2.2. Position Direction and Volatility Symmetry
+Strategies #1 and #2 (Long, Cash) vs. (Short, Cash) exhibit identical volatility despite opposite position directions, as do Strategies #3 and #4 (Cash, Long) vs. (Cash, Short). This symmetry confirms that volatility measures the magnitude of price movements regardless of direction, with long and short positions facing equivalent uncertainty about outcomes. The identical volatilities validate that our volatility calculations capture true price variation rather than directional return effects.
+Similarly, Strategies #11 and #12 (Inertia, Cash) vs. (Reversal, Cash) show identical overnight volatilities (ranging from 8.4% to 15.0% across sectors), as do Strategies #9 and #10 for daytime volatility. This indicates that dynamic positioning based on prior sub-period momentum does not materially alter the volatility exposure—the uncertainty about price movements remains the same whether positions align with or against prior momentum.
+7.2.3. Full-Cycle Strategy Volatility
+Strategies active throughout both sub-periods (Strategies #5–#8, #13–#24) exhibit substantially higher volatility than single sub-period strategies, ranging from 14.2% (XLP, buy-and-hold) to 26.4% (XLE, various combined strategies). Buy-and-hold (Strategy #5: Long/Long) shows volatility ranging from 14.2% to 26.4% across sectors, reflecting the standard market risk faced by passive equity investors over the 1999–2024 period.
+The volatility additivity relationship approximately follows: , where  represents the correlation between overnight and daytime returns. For SPY, overnight volatility of 9.9% and daytime volatility of 14.3% combine to produce buy-and-hold volatility of 17.6%, implying a slightly negative correlation () between overnight and daytime returns. This negative correlation is consistent with daytime periods partially reversing overnight gaps, creating a mild diversification effect.
+Strategies that switch positions between sub-periods (Strategies #7, #8) show comparable or slightly elevated volatility (16.1–25.7% across sectors) compared to buy-and-hold, despite their tactical nature. Strategy #8 (Long, Short) exhibits nearly identical volatility to buy-and-hold in most sectors, indicating that being long overnight and short during the day creates similar total risk exposure to remaining continuously long, though with very different return profiles, as documented in previous sections.
+7.2.4. Dynamic Strategy Volatility Patterns
+Dynamic strategies employing momentum or reversal signals (Strategies #13–#16) show volatilities generally comparable to buy-and-hold, ranging from 15.1% to 26.3% across sectors. Strategy #13 (Inertia/Inertia) exhibits volatilities from 15.2% (XLP) to 25.8% (XLE), slightly below buy-and-hold in most sectors. This modest volatility reduction suggests that momentum-following positioning may provide only a minor risk reduction relative to static long exposure, though the effect is economically small (typically 1–2 percentage points).
+Strategy #14 (Inertia, Reversal) and Strategy #15 (Reversal, Inertia) show slightly elevated volatilities compared to pure momentum approaches, ranging from 15.1% to 26.3%. The higher volatility likely reflects the position switching inherent in these strategies—betting on momentum in one sub-period while betting against it in the other creates exposure to bidirectional volatility rather than consistent directional exposure.
+Strategy #16 (Reversal, Reversal), which bets against momentum in both sub-periods, exhibits volatilities (15.2–25.7%) nearly identical to buy-and-hold, confirming that contrarian positioning does not materially alter risk exposure. The combination of systematic reversal positions faces similar price uncertainty as maintaining consistent long exposure, with the key difference being expected return rather than volatility.
+7.2.5. Mixed Strategy Volatility Efficiency
+Strategies combining static overnight positioning with dynamic daytime signals (Strategies #17–#20) show volatilities ranging from 15.0% to 26.1%. Strategy #18 (Long, Reversal), which achieved the highest Sharpe ratios in the previous section, exhibits volatilities from 15.0% (XLP) to 26.0% (XLE), comparable to or slightly below buy-and-hold levels in most sectors.
+The volatility comparison between Strategy #18 and Strategy #5 (buy-and-hold) reveals that mixed strategies achieve their superior Sharpe ratios primarily through higher returns rather than volatility reduction. In SPY, Strategy #18 shows 17.1% volatility versus 17.6% for buy-and-hold—a modest 2.8% reduction. The superior Sharpe ratio (1.61 vs. 0.73, as shown in Table 14) therefore stems predominantly from the strategy’s ability to generate higher returns by exploiting overnight momentum and daytime reversals, rather than providing significant volatility reduction.
+However, in certain sectors, Strategy #18 achieves meaningful volatility reduction compared to buy-and-hold: XLP (15.0% vs. 14.2%, a minimal increase) and XLV (17.2% vs. 16.8%). The lower volatility of these sectors for the mixed strategy suggests that the combination of overnight long positioning with daytime reversal creates a more stable return stream than continuous long exposure, likely through the diversification effect of offsetting overnight and daytime price movements.
+7.2.6. Sector Volatility Characteristics
+Cross-sectional volatility patterns reveal fundamental differences in sector risk characteristics:
+Consumer Staples (XLP): Exhibits the lowest volatility across all strategies (8.4–16.1%), reflecting this defensive sector’s stable cash flows, inelastic demand, and reduced sensitivity to economic cycles. The sector’s low volatility makes it attractive to risk-averse investors, which explains why absolute returns appear modest compared to those of more volatile sectors.
+Utilities (XLU): Shows the second-lowest volatility (8.8–19.2%), consistent with this sector’s regulated business models, predictable cash flows, and bond-like characteristics. The low overnight volatility (8.8%) particularly stands out, suggesting that overnight news on interest rates and regulatory changes leads to relatively stable price adjustments.
+Energy (XLE): Demonstrates the highest volatility across most strategies (14.5–26.4%), reflecting this sector’s exposure to volatile commodity prices, geopolitical risk, and operational leverage. The high volatility explains why Energy strategies require particularly strong gross returns to achieve acceptable Sharpe ratios, as the volatility denominator penalizes risk-adjusted performance.
+Financials (XLF): Exhibits elevated volatility (15.0–26.2%), especially during overnight periods (15.0%, highest among all sectors), consistent with this sector’s leverage effects, regulatory sensitivity, and exposure to credit and interest rate risk. The 1999–2024 period encompasses the 2008 financial crisis, which substantially increased financial sector volatility.
+Technology (XLK): Shows high volatility (14.3–25.1%), reflecting the sector’s growth characteristics, earnings’ surprise potential, and rapid competitive dynamics. The elevated daytime volatility (19.4%) suggests that intraday price discovery and trading activity in technology stocks create substantial return variation during regular hours.
+Healthcare (XLV): Demonstrates moderate volatility (9.8–18.0%), balancing defensive characteristics from steady pharmaceutical demand with growth characteristics from biotech innovation. The sector’s relatively low overnight volatility (9.8%) suggests that after-hours news (clinical trials, FDA approvals) creates more predictable gap sizes than in more volatile sectors.
+7.2.7. Volatility and Strategy Selection
+The volatility analysis provides several insights for strategy selection and portfolio construction:
+1. Lower-volatility strategies (overnight-only positioning: Strategies #1, #2, #11, #12) may appeal to risk-averse investors seeking momentum exposure with reduced volatility compared to buy-and-hold. However, single-sub-period strategies achieve lower volatility primarily by reducing market exposure (holding cash for half the day), rather than by genuine risk reduction.
+2. Comparable volatility between active and passive strategies indicates that tactical momentum approaches do not inherently increase risk compared to buy-and-hold. Strategy #18’s volatility levels are comparable to buy-and-hold, suggesting that investors switching to this mixed approach would not face materially higher risk while potentially benefiting from superior returns documented in earlier sections.
+3. Sector volatility differences suggest that risk-averse investors should concentrate momentum strategies in lower-volatility sectors (XLP, XLU, XLV) where absolute return levels may be lower but risk-adjusted returns (Sharpe ratios) remain attractive. Conversely, risk-tolerant investors seeking maximum absolute returns should focus on higher-volatility sectors (XLE, XLK, XLF), where momentum effects generate larger absolute gains despite elevated risk.
+4. Volatility stability across strategy types (dynamic vs. static) confirms that the choice between momentum, reversal, or mixed approaches should be based primarily on expected returns and Sharpe ratios rather than volatility considerations, as risk exposure remains relatively consistent across strategy variations.
+7.2.8. Volatility-Adjusted Performance Perspective
+Combining the volatility results with the absolute return findings from earlier sections reveals that successful strategies achieve their performance through return generation rather than volatility reduction. Strategy #1 (Long/Cash) generates superior Sharpe ratios despite having lower volatility, primarily because it avoids daytime exposure entirely rather than through sophisticated risk management. Strategy #18 (Long, Reversal) achieves excellent Sharpe ratios with volatility comparable to buy-and-hold by generating substantially higher returns, not through volatility reduction.
+This finding has important implications: momentum strategies in ETF markets do not provide “free lunches” through volatility reduction; rather, they offer improved risk-adjusted returns by exploiting persistent price patterns (overnight drift, daytime reversals) that generate excess returns for a given level of risk. Investors implementing these strategies should expect volatility levels comparable to those of traditional equity exposure and should size their positions accordingly, based on their risk tolerance, rather than expecting volatility benefits.
+The volatility analysis confirms that overnight periods exhibit substantially lower volatility than daytime periods across all sectors, that full-cycle strategies experience volatility comparable to that of buy-and-hold strategies, and that successful momentum strategies achieve superior risk-adjusted performance primarily through return generation rather than risk reduction. These patterns remain consistent across the diverse market conditions of the 1999–2024 period, including the dot-com crash, financial crisis, and pandemic-induced volatility, suggesting that the volatility characteristics represent stable features of ETF price behavior rather than regime-dependent phenomena.
+Section summary: Overnight volatility is structurally lower than daytime volatility across all ten ETFs (8–15% vs. 13–22% annualised), a universal microstructure characteristic independent of sector. Full-cycle strategies face volatility comparable to buy-and-hold (≈20%), confirming that strategy choice does not materially change risk exposure. Superior Sharpe ratios for Strategies #1 and #18 arise from higher returns, not volatility reduction.
+8. Maximum Drawdown Analysis Across All Strategies
+8.1. Results and Discussion
+Maximum drawdowns for all strategies are shown in Table 16.
+Table 16. Average yearly maximum drawdown (%) by strategy and ETF. Blue color in Strategy #5 indicates the maximum drawdown for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy has a lower drawdown than the passive strategy. Finally, red color indicates that the corresponding strategy has a higher drawdown than the passive strategy.
+8.1.1. Superior Drawdown Protection from Overnight Strategies
+Strategy #1 (Long/Cash) demonstrates exceptional drawdown protection with MDDs ranging from  (XLU) to  (XLF), representing the shallowest drawdowns across all active strategies. These modest drawdowns—substantially smaller than the  to  experienced by buy-and-hold (Strategy #5)—indicate that overnight momentum strategies provide meaningful capital preservation during market crises. The superior drawdown performance stems from two factors: (1) reduced market exposure (holding cash for 6.5 h daily eliminates daytime volatility exposure), and (2) the persistence of overnight positive drift even during bear markets, as negative news tends to be processed gradually rather than creating sustained negative overnight gaps.
+The drawdown advantage is most pronounced in Utilities (Strategy #1:  vs. Strategy #5: , representing 51% drawdown reduction) and Consumer Staples ( vs. , 32% reduction). These defensive sectors demonstrate that overnight momentum strategies particularly excel at capital preservation in sectors with stable fundamentals, where overnight gaps reflect information processing rather than panic selling.
+Conversely, Strategy #2 (Short/Cash) exhibits substantially deeper drawdowns ( to ) than its long counterpart, confirming that shorting overnight momentum not only generates losses but exposes investors to severe drawdown risk during market rallies. The asymmetry between long and short drawdowns (e.g., XLK:  long vs.  short) validates the persistent positive overnight drift documented in previous sections.
+8.1.2. Daytime Strategy Drawdown Vulnerability
+Pure daytime strategies (Strategies #3, #4) show deeper drawdowns ( to ) than overnight strategies, with Strategy #3 (Cash, Long) particularly vulnerable in Energy (), Financials (), and Technology (). These severe drawdowns reflect the concentration of panic selling and forced liquidation during regular trading hours when market stress peaks. Major market crashes typically feature extreme intraday volatility with circuit breakers triggered during trading hours rather than through overnight gaps.
+The daytime short strategy (Strategy #4) shows comparable or slightly smaller drawdowns than daytime long in some sectors (e.g., XLU:  vs. ), suggesting that shorting during the day provides modest protection during certain crisis periods when daytime declines dominate. However, the overall negative returns of this strategy (documented in Section 4) indicate that the occasional drawdown benefits do not compensate for systematic losses during normal market conditions.
+8.1.3. Buy-and-Hold Drawdown Experience
+Strategy #5 (Long/Long) exhibits MDDs ranging from  (XLP) to  (XLE), representing the typical drawdown experience for passive equity investors over the 1999–2024 period. These drawdowns, while substantial, remain well below the maximum historical S&P 500 drawdowns of approximately  during the 2008 financial crisis, because our yearly average MDD metric captures typical annual worst declines rather than the absolute worst historical drawdown.
+The cross-sectional pattern reveals sector-specific crisis vulnerabilities: Energy (), Technology (), and Financials () experienced the deepest drawdowns, reflecting their high sensitivity to economic cycles, while Consumer Staples () and Healthcare () provided superior defensive characteristics. This sector differentiation validates standard portfolio theory regarding defensive versus cyclical equity exposure during market stress.
+Notably, Strategy #1 (overnight only) outperforms buy-and-hold on drawdown metrics in all ten sectors, with improvements ranging from 18% (XLY) to 51% (XLU). This consistent reduction in drawdown, combined with comparable or superior absolute returns documented earlier, suggests that overnight momentum strategies offer a genuine improvement in risk–return profiles beyond what standard Sharpe ratio analysis reveals.
+8.1.4. Extreme Drawdown Risk in Short and Contrarian Strategies
+Short strategies exhibit catastrophic drawdown risk across all variations. Strategy #6 (Short/Short) shows MDDs from  (XLP) to  (XLE), representing 36–41% deeper drawdowns than buy-and-hold. Strategy #7 (Short/Long), which shorts overnight and goes long during the day, suffers even worse drawdowns ( to ), with Energy reaching —effectively eliminating nearly one-third of capital during the worst annual decline.
+The catastrophic performance of short strategies reflects their exposure to unlimited upside risk during strong market rallies, particularly the extended bull markets of 2003–2007, 2009–2020, and 2020–2024 recovery periods. During these rallies, persistent overnight positive drift compounds losses for short positions, creating severe drawdowns that overwhelm any gains during brief bear markets.
+Strategy #19 (Short, Inertia) demonstrates the most extreme drawdown risk, with MDDs reaching  (XLK) and  (XLF). These devastating drawdowns—representing permanent capital losses exceeding 30%—confirm that combining short exposure with momentum signals creates particularly dangerous risk profiles unsuitable for any investor risk tolerance level.
+8.1.5. Dynamic Strategy Drawdown Patterns
+Pure dynamic strategies show mixed drawdown performance depending on their construction. Strategy #13 (Inertia, Inertia) exhibits substantial drawdowns ( to ), comparable to or exceeding buy-and-hold in most sectors. The deeper drawdowns in Consumer Staples ( vs.  for buy-and-hold) and Utilities ( vs. ) are particularly concerning, as these defensive sectors should, in theory, provide stability. The poor drawdown performance reflects the strategy’s vulnerability during momentum reversals, when sustained directional moves suddenly shift, leading to consecutive losses in both sub-periods.
+Strategy #14 (Inertia, Reversal) demonstrates more moderate drawdowns ( to ), generally comparable to buy-and-hold. The combination of momentum and reversal positioning across sub-periods appears to provide some diversification benefit, reducing extreme drawdown risk compared to pure momentum approaches.
+Strategy #16 (Reversal, Reversal) shows highly sector-dependent drawdown risk: exceptional protection in Consumer Staples (, better than buy-and-hold) but catastrophic losses in Energy () and Materials (). This extreme variation confirms that mean-reversion strategies are effective only in sectors with strong valuation anchoring (defensive sectors), while failing dramatically in trending sectors (such as commodities and cyclicals).
+8.1.6. Mixed Strategy Drawdown Performance
+Strategy #18 (Long, Reversal) achieves favorable drawdown characteristics across most sectors, with MDDs ranging from  (XLP) to  (XLE). The strategy provides meaningful drawdown protection compared to buy-and-hold in eight of ten ETFs, with particularly strong protection in Consumer Staples ( vs. ), Healthcare ( vs. ), Utilities ( vs. ), and Industrials ( vs. ).
+The superior drawdown performance of Strategy #18 relative to pure overnight momentum (Strategy #1) varies by sector. In some sectors, such as Energy ( vs. ), the mixed strategy exhibits substantially deeper drawdowns, reflecting the strategy’s daytime reversal positioning working against persistent commodity-driven momentum. However, in most sectors, Strategy #18 achieves drawdowns only modestly worse than pure overnight exposure while generating substantially higher absolute returns, creating a favorable risk–return tradeoff.
+Comparing Strategy #18 to buy-and-hold reveals that the mixed strategy provides comparable or superior drawdown protection across most sectors while delivering higher returns (as documented in Section 4) and better Sharpe ratios (as documented in Section 6). This combination—superior returns, better risk-adjusted performance, and comparable drawdowns—suggests that Strategy #18 represents a genuine improvement over passive alternatives for investors with access to low-cost trading.
+8.1.7. Sector-Specific Drawdown Characteristics
+Cross-sectional drawdown analysis reveals fundamental differences in sector crisis behavior:
+Consumer Staples (XLP): Exhibits the shallowest drawdowns across most strategies ( to ), with Strategy #1 achieving exceptional  MDD and Strategy #12 (Reversal/Cash) reaching an extraordinary . This defensive sector’s stable demand and pricing power provide natural crisis protection, making it ideal for drawdown-sensitive strategies.
+Utilities (XLU): Shows similarly strong drawdown protection ( to ), with Strategy #1 achieving the best overall drawdown performance at . The sector’s regulated cash flows and bond-like characteristics create stability during periods of equity market stress, although the sector remains vulnerable to interest rate shocks.
+Energy (XLE): Demonstrates the deepest drawdowns across most strategies ( to ), with Strategy #16 (Reversal/Reversal) suffering catastrophic  losses. The sector’s commodity price sensitivity creates extreme volatility during both boom–bust oil cycles and broader market crises, making it unsuitable for drawdown-sensitive investors despite strong momentum returns during normal periods.
+Financials (XLF): Exhibits severe drawdowns particularly for contrarian strategies ( for Strategy #15), reflecting the sector’s leverage effects and credit cycle sensitivity. The 1999–2024 period encompasses the 2008 financial crisis, during which financial stocks experienced near-total collapse, resulting in extreme historical drawdowns that contaminate average MDD metrics.
+Technology (XLK): Shows moderate-to-severe drawdowns ( to ) depending on strategy, with pure overnight positioning () providing exceptional protection despite the dot-com crash within the study period. The sector’s growth characteristics create substantial drawdown risk during broader market declines, though individual company strength can provide some resilience.
+Healthcare (XLV): Demonstrates favorable drawdown characteristics ( to ), with overnight strategies particularly effective (). The sector’s defensive earnings characteristics and innovation-driven growth create a balanced profile suitable for various strategic approaches.
+8.1.8. Drawdown Recovery Implications
+The magnitude of maximum drawdowns has critical implications for recovery time and compound growth. A  drawdown requires a  return to break even, while a  drawdown requires , and a  drawdown requires . The mathematical asymmetry of drawdown recovery means that strategies with shallower drawdowns (Strategy #1:  to , requiring only 8–14% gains for recovery) can compound wealth more effectively than those with deeper drawdowns (Strategy #7:  to , requiring 24–43% gains for recovery).
+This asymmetry explains why Strategy #1 achieves superior long-term compound returns despite having lower arithmetic mean returns than some higher-volatility strategies: shallow drawdowns enable faster recovery and uninterrupted compounding, whereas deep drawdowns can prolong recovery and prevent uninterrupted compounding.
+For institutional investors, the depth of drawdown also impacts leverage capacity and risk management. Strategies with typical drawdowns of  to  (Strategy #1) can potentially employ 2–3 times leverage while maintaining acceptable risk levels, whereas strategies with drawdowns of  to  become unsuitable for leveraged implementation due to margin call risk and position liquidation during stress periods.
+8.1.9. Comparison with Transaction Cost Analysis
+Integrating the drawdown findings with the transaction cost analysis from Section 5 reveals that drawdown protection offers a key advantage that persists even when transaction costs eliminate absolute profitability. At 2 bps transaction costs, Strategy #1 generates minimal absolute returns but still provides  to  drawdown protection compared to  to  for buy-and-hold. This suggests that even investors facing costs that eliminate alpha generation might still benefit from overnight momentum strategies purely for downside protection, treating the strategy as a defensive rather than return-seeking approach.
+However, at 3+ bps, where all strategies become unprofitable (as documented in Section 5), the drawdown benefits may not justify implementation complexity and trading costs. The strategic implication is that investors facing 1–2 bps costs should consider overnight momentum primarily for capital preservation, while those facing 3+ bps should default to buy-and-hold despite accepting deeper drawdowns as the cost of avoiding friction.
+8.1.10. Practical Implications for Risk Management
+The maximum drawdown analysis provides several critical insights for strategy implementation and risk management:
+1.
+Overnight strategies offer genuine downside protection: Strategy #1’s 18–51% drawdown reduction compared to buy-and-hold represents a meaningful risk benefit beyond Sharpe ratio improvements, particularly valuable for investors with low drawdown tolerance or those approaching retirement needing capital preservation.
+2.
+Short strategies expose investors to catastrophic risk: the  to  drawdowns documented for short strategies represent unacceptable risk levels that cannot be justified by any potential return benefits, confirming these strategies should be universally avoided.
+3.
+Sector selection critically impacts drawdown risk: concentrating strategies in defensive sectors (XLP, XLU) provides substantial drawdown protection, while exposure to cyclical sectors (XLE, XLF) creates vulnerability to severe losses during crises.
+4.
+Mixed strategies balance returns and drawdowns: Strategy #18 achieves favorable drawdown characteristics ( to ) while generating superior returns, suggesting this approach provides an optimal risk–return combination for most investor profiles.
+The maximum drawdown analysis confirms that overnight momentum strategies provide not only superior returns and Sharpe ratios but also meaningful downside protection during market crises, with drawdown reductions of 18–51% compared to buy-and-hold across most sectors. This triple advantage—higher returns, better risk-adjusted performance, and shallower drawdowns—establishes overnight momentum as a genuinely superior investment approach for low-cost institutional traders. Meanwhile, the catastrophic drawdowns of short and contrarian strategies confirm that these approaches should be avoided, regardless of their theoretical appeal.
+Section Summary. Strategy #1 provides the best drawdown protection of any active strategy (−10.4% average MDD vs. −17.8% for buy-and-hold), a 42% improvement. Strategy #18 achieves comparable drawdowns to buy-and-hold while generating substantially higher returns. Short strategies carry catastrophic drawdown risk (−20% to −33%) and should be avoided. Defensive sectors (XLP, XLU) show the shallowest drawdowns, while commodity-linked sectors (XLE, XLF) show the deepest.
+9. Summary Statistics Averaged Across All ETFs
+9.1. Aggregate Performance Metrics
+To synthesize the comprehensive sector-by-sector analysis presented in previous sections, we now examine aggregate performance metrics averaged across all ten ETFs. This cross-sectional averaging reveals which strategies demonstrate robust performance across diverse market segments versus those that succeed only in specific sectors. Table 14, Table 15, Table 16 and Table 17 present the mean Sharpe ratio, Sortino ratio, volatility, and maximum drawdown for each of the 24 strategies, calculated by averaging the corresponding metrics across SPY, XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, and XLY.
+Table 17. Average yearly Sortino ratio by strategy and ETF. Blue color in Strategy #5 indicates the Sortino ratio for the passive Buy&Hold (long, long) strategy. The green color indicates that the corresponding strategy has a higher Sortino ratio than the passive strategy. Finally, the red color indicates that the corresponding strategy has a lower Sortino ratio than the passive strategy.
+The Sortino ratio, which appears here for the first time, represents a refinement of the Sharpe ratio that penalizes only downside volatility rather than total volatility Sortino and Price (1994). It is calculated as follows:
+(9)
+where  is the standard deviation of negative returns only.
+Sortino ratios for strategies are shown in Table 17.
+9.1.1. Clear Performance Hierarchy
+The aggregate metrics reveal a clear performance hierarchy across the 24 strategies, with Strategy #1 (Long, Cash) and Strategy #18 (Long, Reversal) emerging as the dominant approaches when averaged across all sectors. Strategy #1 achieves a mean Sharpe ratio of 0.95 and Sortino ratio of 1.40, representing the highest risk-adjusted performance among single sub-period strategies. Strategy #18 demonstrates even stronger performance with a mean Sharpe ratio of 0.87 and an exceptional Sortino ratio of 1.58, indicating superior downside risk management.
+Buy-and-hold (Strategy #5) shows respectable aggregate performance with a Sharpe ratio of 0.61 and Sortino ratio of 0.90, serving as the baseline for comparison. The fact that Strategies #1 and #18 exceed buy-and-hold by 56% and 43%, respectively (in Sharpe ratio terms), confirms that tactical momentum positioning provides genuine alpha across diverse market segments rather than succeeding in only isolated sectors.
+The worst-performing strategies are uniformly those involving short positions: Strategy #2 (Short, Cash): Sharpe , Strategy #19 (Short, Inertia): Sharpe , Strategy #6 (Short/Short): Sharpe , and Strategy #15 (Reversal, Inertia): Sharpe . The consistency of negative risk-adjusted returns across all short-based approaches validates the earlier conclusion that equity market drift is too persistent to profit from systematic shorting.
+9.1.2. Overnight vs. Daytime Performance Gap
+The aggregate statistics quantify the magnitude of the overnight–daytime performance differential documented in earlier sections. Strategy #1 (overnight long) achieves a 0.95 Sharpe ratio, while Strategy #3 (daytime long) generates , representing an effective 96-percentage-point advantage for overnight positioning. This stark contrast—where overnight strategies achieve near-1.0 Sharpe ratios, while daytime strategies barely break even—provides compelling evidence that exploitable momentum concentrates in non-trading hours.
+The volatility differential reinforces this finding: overnight strategies exhibit 11.7% average volatility versus 17.1% for daytime strategies, a 46% increase. Combined with the Sharpe ratio advantage, this indicates that daytime periods yield both lower returns and higher volatility — a doubly unfavorable combination. The drawdown comparison (overnight: ; daytime: ) further confirms that overnight strategies provide superior risk management across all dimensions.
+The consistency of this pattern—where every risk metric (Sharpe, Sortino, volatility, drawdown) favors overnight over daytime positioning—suggests that the overnight advantage represents a fundamental market characteristic rather than a statistical anomaly or data mining artifact. Additional statistics of overnight and daytime returns are presented in Appendix E.
+9.1.3. Sortino Ratio Insights
+The Sortino ratio analysis reveals important asymmetries in return distributions. Strategy #18 shows the largest Sortino-to-Sharpe differential (1.58 vs. 0.87, representing an 82% improvement), indicating this mixed strategy generates positively skewed returns with larger gains than losses. This positive skewness likely reflects the strategy’s ability to capture persistent overnight drift while avoiding large daytime losses through reversal positioning.
+Strategy #1 similarly demonstrates positive skewness (Sortino 1.40 vs. Sharpe 0.95, a 47% improvement), confirming that overnight momentum creates favorable asymmetry with larger upside captures than downside exposures. This positive skewness represents an additional benefit beyond what the Sharpe ratio analysis reveals, as investors typically prefer return distributions with limited downside and uncapped upside.
+Conversely, short strategies show even worse Sortino ratios than Sharpe ratios: Strategy #2 (Sortino  vs. Sharpe , 50% deterioration) and Strategy #19 (Sortino  vs. Sharpe , 40% deterioration). This negative asymmetry indicates these strategies suffer disproportionately large downside losses relative to any occasional gains, creating particularly unfavorable risk profiles for loss-averse investors.
+Buy-and-hold (Strategy #5) shows moderate positive skewness (Sortino 0.90 vs. Sharpe 0.61, 48% improvement), consistent with the well-documented positive skewness of equity returns over long horizons. However, both Strategy #1 and Strategy #18 demonstrate superior Sortino ratios, indicating that tactical momentum approaches improve upon the natural positive skewness of equity markets.
+9.1.4. Volatility Clustering by Strategy Type
+The aggregate volatility metrics reveal clear clustering by strategy exposure patterns. Single-sub-period strategies exhibit the lowest volatilities: overnight-only strategies average 11.7–11.8%, while daytime-only strategies average 17.0–17.1%. Full-cycle strategies cluster at higher levels: buy-and-hold and dynamic strategies average 20.4–21.3%, with minimal variation across different position rules (momentum, reversal, mixed).
+This volatility clustering by exposure duration rather than strategy logic (momentum vs. reversal) indicates that volatility is primarily determined by market participation time rather than positioning decisions. Whether following momentum or betting against it, investors participating in both sub-periods face approximately 20–21% annualized volatility, while those trading during only one sub-period experience proportionally reduced volatility based on their exposure fraction.
+The practical implication is that investors seeking volatility reduction should focus on exposure duration (trading only overnight) rather than strategy sophistication (complex dynamic rules), as the former provides a dramatic reduction in volatility (11.7% vs. 20.4%, a 43% decrease), while the latter offers minimal impact.
+9.1.5. Drawdown Hierarchy
+The aggregate maximum drawdown statistics reveal a clear protective hierarchy (Magdon Ismail et al. 2004). Strategy #1 (overnight long) provides the best drawdown protection at  average MDD, followed by Strategy #11 (Inertia, Cash) at  and Strategy #12 (Reversal, Cash) at . All overnight-only strategies demonstrate superior drawdown protection compared to buy-and-hold’s  average MDD.
+Full-cycle strategies show consistently deeper drawdowns, ranging from  (buy-and-hold) to  (Short, Inertia). Strategy #18, despite its superior Sharpe and Sortino ratios, exhibits  average MDD—marginally worse than buy-and-hold but still among the better full-cycle strategies. This suggests that the mixed strategy’s superior performance primarily stems from enhanced returns rather than drawdown protection.
+Short strategies universally demonstrate catastrophic drawdown risk, with Strategy #19 (Short, Inertia) averaging , Strategy #15 (Reversal/Inertia) , and Strategy #7 (Short, Long) . These severe drawdowns—representing more than one-quarter loss of capital during typical worst annual declines—confirm that short-based approaches expose investors to unacceptable tail risk regardless of any theoretical return potential.
+9.1.6. Optimal Strategy Selection Framework
+The aggregate metrics enable the construction of a clear strategy selection framework based on investor objectives:
+For maximum risk-adjusted returns with moderate exposure: Strategy #1 (Long, Cash) offers the optimal combination of Sharpe ratio (0.95), Sortino ratio (1.40), low volatility (11.7%), and exceptional drawdown protection (). This strategy suits investors seeking overnight momentum exposure while preserving capital, accepting reduced market participation in exchange for superior risk-adjusted performance.
+For maximum absolute returns with full market exposure: Strategy #18 (Long, Reversal) delivers the best Sortino ratio (1.58) and strong Sharpe ratio (0.87) among full-cycle strategies, with acceptable drawdowns () comparable to buy-and-hold. This strategy suits institutional investors with low transaction costs seeking to outperform passive benchmarks while maintaining continuous market exposure.
+For passive benchmark with minimal trading: Strategy #5 (Long, Long) provides moderate risk-adjusted returns (Sharpe 0.61, Sortino 0.90) with no ongoing trading costs, representing the default choice for high-cost retail investors or those preferring simplicity over optimization.
+Strategies to avoid universally: all short-based strategies (Strategies #2, #6, #7, #19, #20) demonstrate deeply negative Sharpe ratios, severe drawdowns, and negative skewness, making them unsuitable for any investor profile regardless of risk tolerance or investment horizon.
+9.1.7. Performance Robustness Across Sectors
+The aggregation methodology — simple averaging across 10 diverse ETFs spanning defensive, cyclical, growth, and commodity sectors — provides confidence in the strategy’s robustness. Strategies achieving strong aggregate metrics (like #1 and #18) succeed not through exceptional performance in a single sector but through consistent positive performance across multiple market segments.
+This broad-based success contrasts with sector-specific strategies like Strategy #13 (Inertia, Inertia), which achieved exceptional results in Energy but failed in most other sectors, resulting in a weak aggregate Sharpe ratio of . The poor aggregate performance, despite the highest single-sector return (XLE: 12,882%), confirms that sector concentration creates unacceptable risk unless investors have strong conviction and can tolerate extended periods of underperformance.
+Strategy #18’s strong aggregate Sharpe ratio (0.87), despite substantial cross-sectional variation (from 0.17 in XLE to 1.25 in XLU), indicates genuine robustness—the strategy succeeds in most sectors even though optimal sector allocation would further improve performance. This robustness makes Strategy #18 suitable for diversified portfolio implementation rather than requiring concentrated sector bets.
+9.1.8. Comparison with Academic Literature
+The documented Sharpe ratios compare favorably with academic literature on momentum strategies. Traditional monthly momentum strategies typically achieve Sharpe ratios of 0.4–0.6, while weekly momentum strategies achieve Sharpe ratios of 0.5–0.7. Our Strategy #1 (0.95 Sharpe) and Strategy #18 (0.87 Sharpe) exceed these benchmarks, suggesting that intraday temporal decomposition (overnight vs. daytime) captures momentum effects more efficiently than traditional calendar-based approaches.
+The superior performance likely stems from temporal decomposition aligning with natural information-processing cycles: overnight gaps reflect discrete information arrival that creates predictable price adjustments, while traditional approaches that ignore these sub-daily patterns may dilute signals by mixing strong overnight drift with noisy daytime movements, thereby reducing overall strategy efficiency.
+However, direct comparison requires caution, as our strategies operate on sector ETFs rather than individual stocks, trade daily rather than monthly/weekly, and measure performance over a specific 25-year period (1999–2024) rather than the longer horizons typically examined in academic studies. The favorable comparison nonetheless suggests that overnight momentum represents a promising avenue for momentum research beyond traditional approaches.
+9.1.9. Practical Implementation Considerations
+While the aggregate metrics demonstrate Strategy #1 and Strategy #18 superiority, practical implementation requires consideration of several factors:
+Transaction costs: As documented in Section 5, costs above 2–3 bps eliminate profitability for most active strategies. The aggregate metrics represent zero-cost theoretical performance, meaning institutional investors with sub-1 bp costs can fully realize these advantages, while retail investors facing 3+ bps costs should default to Strategy #5 (buy-and-hold) despite inferior risk-adjusted metrics.
+Execution complexity: Strategy #1 requires approximately 13,000 trades over the 25-year period (buying at close, selling at open daily), while Strategy #18 involves approximately 14,400 trades with dynamic daytime positioning. Institutional investors with automated execution systems can implement these strategies efficiently, whereas retail investors may face operational challenges and errors that can erode their performance.
+Tax implications: For taxable accounts, the frequent trading inherent in Strategies #1 and #18 generates short-term capital gains taxed at ordinary income rates, potentially eliminating after-tax alpha for high-bracket investors. Strategy #5 (buy-and-hold) benefits from low, as momentum-reversal decisions require reallocation, providing substantial tax advantages that partially offset pre-tax performance differences.
+Psychological factors: Strategy #1’s overnight-only positioning requires daily discipline to sell at open and repurchase at close, creating behavioral challenges for discretionary traders. Strategy #18’s dynamic daytime positioning adds further complexity with momentum-reversal decisions requiring strict rule adherence. Automated execution eliminates these behavioral risks, but it requires significant infrastructure investment.
+The aggregate performance metrics confirm that overnight momentum strategies, particularly Strategy #1 (Long/Cash) and Strategy #18 (Long/Reversal), deliver superior risk-adjusted returns across diverse market sectors when implementation frictions are minimal. The consistency of results across multiple risk metrics (Sharpe, Sortino, volatility, and drawdown) and diverse sectors (defensive, cyclical, growth, and commodity) validates that overnight momentum represents a genuine market inefficiency that can be exploited by sophisticated institutional investors with appropriate cost structures and execution capabilities.
+Total Trades = cumulative number of position changes over 6782 trading days (1999–2025).
+Trades/Day = average daily trading frequency (maximum possible = 4).
+Buy & Hold strategies ((Long, Long) and (Short, Short)) require only 1 trade (initial entry).
+Static opposite strategies ((Long, Short) and (Short, Long)) require 4 trades/day (always flip positions).
+Dynamic strategies (Inertia, Reversal) have variable trade frequency depending on signal alignment.
+Final values averaged across 10 sector ETFs (SPY, XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY).
+Section summary: Aggregating across all ten ETFs, Strategy #1 leads on risk-adjusted performance (Sharpe 0.95, Sortino 1.40, MDD −10.4%), while Strategy #18 leads on absolute return (Sortino 1.58). Both exceed buy-and-hold (Sharpe 0.61) consistently across defensive, cyclical, growth, and commodity sectors. The consistency across diverse sectors—not performance in a single sector—is the primary evidence of robustness.
+10. Strategy Classification by Trading Intensity
+10.1. Trading Frequency and Viability Analysis
+Beyond risk-adjusted performance metrics, the practical viability of trading strategies depends critically on their trading frequency and resulting transaction cost exposure. Table 18 presents a classification framework that groups strategies by their average daily trade frequency, showing how transaction costs transform theoretical performance into realized returns. Using SPY as a representative example, we demonstrate the dramatic impact of trading intensity on strategy viability under realistic cost assumptions.
+Table 18. Strategy classification by trading intensity.
+10.2. Results and Discussion
+10.2.1. The Zero-Trading Advantage
+The most fundamental insight from the trading intensity classification is the overwhelming advantage of zero-trading strategies under realistic transaction cost regimes. Buy-and-hold (Long, Long) maintains identical gross and net returns ($749 in SPY) because it requires only a single initial trade over the entire 25-year period, incurring effectively zero ongoing transaction costs. This immunity to friction costs becomes increasingly valuable as trading frequency rises across other strategy categories.
+The contrast between zero-trading and even low-frequency strategies is stark: Strategy #1 (Long/Cash), classified as “Medium” with 2.0 trades per day, achieves impressive gross returns of $774 in SPY but faces approximately 13,078 trades over the study period (Table 17). At 2 bps per trade, this generates cumulative friction costs that reduce net returns to $57—a 93% wealth destruction despite strong underlying momentum effects.
+This dramatic deterioration in performance validates the central thesis that market inefficiencies, while genuine, remain exploitable only within narrow cost regimes. The zero-trading category represents the only approach immune to the compounding friction effects documented in Section 5, explaining why passive indexing dominates retail investment despite the existence of exploitable momentum patterns.
+10.2.2. Low-Frequency Strategies: Conditional Viability
+Strategies averaging 1.8 trades per day—primarily mixed approaches combining static overnight positioning with conditional daytime signals ((Long, Inertia) Strategy #17, (Short, Reversal): Strategy #20)—demonstrate strong gross returns ($2034 for (Long, Inertia)) but experience severe friction erosion. At 2 bps costs, (Long, Inertia) nets only $188, representing 91% wealth destruction, while (Short, Reversal) deteriorates from $125 gross to $11 net.
+The classification as “low” frequency (1.8 trades/day vs. 2.0+ for most active strategies) reflects these strategies’ conditional daytime positioning: they avoid trading when momentum signals do not trigger, resulting in a modest reduction in frequency. However, this reduction proves insufficient to preserve profitability under 2 bps costs, as the  friction multiplier with  and  still generates approximately 70% wealth erosion.
+The practical implication is that reducing trading frequency from 2.0 to 1.8 trades/day provides marginal cost savings but fails to cross the viability threshold. Strategies require either zero trading (buy-and-hold) or a dramatic reduction in trading frequency (to 0.5 trades/day or less) to maintain profitability under retail cost structures above 2 bps.
+10.2.3. Medium-Frequency Strategies: The Standard Active Approach
+The medium-frequency category encompasses most single-session strategies (overnight-only or daytime-only) and averages exactly 2.0 trades per day: one entry and one exit per session. This category includes Strategy #1 (Long, Cash), Strategy #3 (Cash, Long), and their short/reversal variations, representing the canonical active momentum approach with daily position rebalancing.
+Gross returns within this category vary dramatically ($64 to $1606 in SPY), reflecting the underlying strategy logic (momentum vs. reversal, overnight vs. daytime). However, net returns converge to a narrow band ($5 to $118), demonstrating that trading frequency dominates strategy selection under realistic costs—the friction multiplier overwhelms differences in gross return generation.
+Strategy #1 (Long/Cash) exemplifies this category: gross returns of $774 deteriorate to $209 at 1 bp costs and $57 at 2 bps costs, with profitability eliminated entirely above 3 bps. This performance trajectory confirms that medium-frequency strategies occupy a narrow viability window between 0 and 2 bps, accessible only to institutional investors with sophisticated execution systems and direct market access.
+The category’s heterogeneous gross returns but homogeneous net returns suggest that investors should focus first on achieving low-cost execution (accessing the 0–1 bp regime) before optimizing strategy selection within the medium-frequency category. Without sub-2 bp costs, strategy choice becomes irrelevant as all medium-frequency approaches fail.
+10.2.4. High-Frequency Strategies: Gross Return Excellence, Net Return Failure
+Strategies averaging 2.2 trades per day—primarily Strategy #18 (Long, Reversal) and Strategy #19 (Short, Inertia)—represent the “high” frequency category, distinguished by their dynamic positioning in both sub-periods with slightly elevated trading due to signal-driven adjustments. Strategy #18 achieves extraordinary gross returns ($13,856 in SPY, representing a 13,756% gain), reflecting its optimal combination of overnight momentum capture with daytime reversal exploitation.
+However, the 10% increase in trading frequency relative to medium-frequency strategies (2.2 vs. 2.0 trades/day) results in disproportionate performance erosion under transaction costs. At 2 bps, Strategy #18 nets $775—a 94% decline from gross returns despite representing only modest additional trading activity. This nonlinear sensitivity reflects the exponential nature of compounding friction:  versus  represents the difference between 23% and 26% survival rates, a meaningful proportional gap.
+The key insight is that increases in marginal trading frequency create disproportionate viability challenges. Moving from 2.0 to 2.2 trades per day—a mere 10% increase—reduces net wealth by an additional 77% beyond the standard medium-frequency erosion. This nonlinearity explains why high-frequency strategies, despite demonstrating superior gross returns through sophisticated signal combination, cannot justify their complexity under realistic costs.
+Strategy #19 (Short, Inertia) shows even more dramatic deterioration, with gross returns of $3 becoming effectively $0 net of costs. The combination of negative expected returns (from shorting persistent positive drift) and elevated trading frequency creates a doubly negative scenario, in which friction costs eliminate any occasional profits that might arise from favorable momentum periods.
+10.2.5. Maximum-Frequency Strategies: Theoretical Interest Only
+Strategies averaging 4.0 trades per day—representing the maximum possible frequency with entry/exit in both sub-periods ((Long, Short): Strategy #8, (Short, Long): Strategy #7)—serve primarily as theoretical benchmarks demonstrating the limits of tactical positioning. These strategies switch between long and short positions twice daily, executing at close (for overnight positions), open (closing overnight and entering daytime), and close again (exiting daytime), resulting in four daily trades.
+Strategy #8 (Long, Short) achieves respectable gross returns ($1732 in SPY) by capturing overnight positive drift while avoiding daytime exposure through short positioning. However, the 4.0 trades/day frequency generates catastrophic friction erosion: net returns collapse to $9 at 2 bps costs, representing 99.5% wealth destruction. The friction multiplier  indicates that strategies must achieve 16,700% gross returns merely to break even—an impossible threshold.
+Strategy #7 (Short, Long) demonstrates even worse characteristics, with minimal gross returns ($5) becoming $0 net of costs. The combination of fighting overnight momentum (via short positioning) and excessive trading frequency creates a strategy that would require impossibly large daytime gains to overcome overnight losses and friction costs.
+The practical conclusion is that maximum-frequency strategies are economically unviable under any realistic cost structure, including institutional rates. Even at 0.5 bps—well below typical institutional execution costs—Strategy #8 would face  friction multiplier, eliminating 74% of wealth and rendering the strategy unprofitable. These approaches serve only as academic exercises demonstrating the theoretical limits of temporal arbitrage.
+10.2.6. The Transaction Cost Viability Threshold
+Synthesizing across trading intensity categories reveals a clear viability hierarchy:
+0.00 trades/day (Buy-and-hold): viable at any cost structure; becomes dominant above 2–3 bps
+1.80 trades/day (Low frequency): viable only below 1.5 bps; marginal improvement over medium frequency insufficient to justify complexity
+2.00 trades/day (Medium frequency): viable below 2 bps; represents standard institutional active strategy
+2.20 trades/day (High frequency): viable below 1 bp; requires exceptional execution quality and sophisticated infrastructure
+4.00 trades/day (Maximum frequency): never economically viable under realistic conditions
+This hierarchy demonstrates that transaction cost sensitivity increases nonlinearly with trading frequency. The gap between buy-and-hold (0.00) and medium frequency (2.00) represents a fundamental discontinuity—strategies either trade actively (2+ times daily) or not at all, with intermediate frequencies providing minimal advantage.
+10.2.7. Optimal Strategy Selection Under Cost Constraints
+The trading intensity framework enables clear strategy selection guidance based on investor cost structure:
+For investors with 0–1 bp costs (large institutions, market makers):
+Primary: Strategy #18 (Long/Reversal, 2.2/day) for maximum gross return generation.
+Alternative: Strategy #1 (Long/Cash, 2.0/day) for superior drawdown protection.
+Rationale: high-frequency strategies remain viable; optimize for gross return generation.
+For investors with 1–2 bp costs (mid-size institutions, active managers):
+Primary: Strategy #1 (Long/Cash, 2.0/day) balancing returns and costs.
+Alternative: Strategy #5 (Long/Long, 0.00/day) as friction approaches 2 bp.
+Rationale: medium-frequency strategies marginal; transition toward passive as costs rise.
+For investors with 2+ bp costs (retail, small institutions):
+Primary: Strategy #5 (Long/Long, 0.00/day) exclusively.
+Alternative: none viable; all active strategies fail above 2–3 bps.
+Rationale: zero-trading approaches required; active strategies are economically irrational.
+This cost-based framework explains the bifurcation of investment approaches in practice: institutional investors with sophisticated execution employ active momentum strategies, while retail investors default to passive indexing. Both approaches are rational given their respective cost structures, with the transaction cost viability threshold (2–3 bps) serving as the natural dividing line.
+10.2.8. Implications for Market Efficiency
+The trading intensity analysis provides insight into why momentum anomalies persist despite widespread knowledge of them. Exploiting overnight momentum requires:
+1.
+Sub-2 bp execution costs: achievable only with direct market access, sophisticated algorithms, and substantial scale
+2.
+Daily rebalancing discipline: requiring automated systems to eliminate behavioral errors and timing mistakes
+3.
+Infrastructure investment: trading platforms, execution systems, and risk management capabilities represent fixed costs viable only at an institutional scale
+These barriers create a natural equilibrium where the anomaly persists because most investors cannot profitably exploit it. Retail investors facing 3–5 bp costs rationally avoid overnight momentum strategies despite their genuine positive expected returns, allowing the inefficiency to persist for the minority of institutional investors operating below the cost threshold.
+This “limited access” equilibrium reconciles efficient market theory with exploitable anomalies: markets can be simultaneously efficient for most participants (retail investors) and inefficient for a minority (low-cost institutions), with transaction costs serving as the natural barrier maintaining this equilibrium.
+10.2.9. Evolution of Trading Technology and Cost Implications
+The historical trend toward lower transaction costs—driven by electronic trading, algorithmic execution, and exchange competition—has implications for the viability of momentum strategies. If institutional execution costs continue to decline from current 0.5–1.5 bps levels toward 0.25–0.75 bps, previously marginal high-frequency strategies (2.2 trades/day) would become viable for a broader institutional investor base.
+However, this democratization would likely reduce momentum profitability by increasing arbitrage activity, creating a self-correcting mechanism in which lower costs enable exploitation, which in turn reduces gross returns, eventually restoring equilibrium at lower profit margins. The overnight momentum effect may persist, but with a diminished magnitude, requiring even more sophisticated approaches to generate alpha.
+For retail investors, the cost threshold remains firmly above 2–3 bps despite zero-commission trading, as bid-ask spreads, market impact costs, and operational inefficiencies maintain total trading costs at levels that eliminate momentum strategy viability. The persistent retail cost disadvantage explains why passive indexing continues expanding despite decades of academic research documenting exploitable anomalies.
+The trading intensity classification confirms that strategy viability depends primarily on trading frequency and investor cost structure rather than strategy sophistication or gross return potential. Buy-and-hold dominates above 2–3 bps regardless of active strategy performance, while medium- and high-frequency momentum approaches remain viable only for institutional investors achieving sub-2 bp execution costs. This framework offers practical guidance for selecting strategies based on investor-specific cost structures and explains the rational coexistence of active institutional trading and passive retail investing within the same markets.
+11. Concluding Remarks
+For practitioners and institutional investors, overnight inertial strategies may offer valuable alpha-generation opportunities and portfolio diversification benefits, particularly for institutions with low transaction costs, advanced execution systems, sufficient capital to withstand extended drawdowns, and sophisticated risk management capabilities. The combined (long, reversal) and (long, inertia) strategy appears particularly promising as it consistently generated superior risk-adjusted returns across multiple sectors while diversifying momentum sources across both temporal segments. These strategies appear most suitable for sophisticated institutional investors with comprehensive risk management capabilities, rather than individual investors or smaller institutions that lack the necessary infrastructure, risk tolerance, and capital reserves.
+Implications for institutional managers, market regulation, and strategy design: For institutional portfolio managers operating below the 1–2 bps cost threshold, the overnight long component of Strategy #18 is implementable via market-on-close and market-on-open orders at minimal market impact, and the strategy’s Sharpe ratios of 0.87–1.25 across sectors compare favourably with most documented systematic equity strategies. The strategy is compatible with a passive-core/active-satellite architecture in which overnight positioning supplements a buy-and-hold core. From a regulatory perspective, our finding that the overnight premium is exploitable by low-cost institutions but not by retail investors (for whom costs exceed the viability threshold of 2–3 bps) raises questions about equitable access to market anomalies and potential policy interventions such as improved retail access to closing-auction mechanisms. For quantitative strategy designers, two design principles emerge from our analysis: (i) temporal decomposition into overnight and daytime sub-periods is the critical structural choice—applying identical signals to undivided 24 h returns produces approximately 80× less terminal wealth (see Section 11); and (ii) the reversal signal should use a single-lag lookback—extending to  periods degrades performance by a factor of 5–10 (see Appendix I).
+Out-of-sample robustness: Because all 24 strategies are purely rule-based and contain no fitted parameters, there is no risk of in-sample overfitting in the conventional sense. The stationary bootstrap analysis in Appendix G serves as a principled substitute for a rolling-window out-of-sample test: by evaluating strategy performance on 1000 alternative simulated histories drawn from the observed data, it is demonstrated that Strategy #18 outperforms buy-and-hold in >95% of replications for six of ten ETFs. The consistency of our findings with prior independent literature on overnight returns (Berkman et al. 2012; Kelly and Clark 2011; Lou et al. 2019; Zhang and Pinsky 2025b) across different samples and time periods further supports external validity.
+Our results are consistent with the overnight return literature (Berkman et al. 2012; Kelly and Clark 2011; Lou and Polk 2022; Lou et al. 2019), confirming that a large fraction of equity market returns is earned overnight rather than during the trading day. The transaction cost analysis aligns with findings (Frazzini et al. 2018; Novy-Marx and Velikov 2016) that implementation costs represent a binding constraint on anomaly exploitation. Our results also highlight the importance of further study of stock return dynamics (Cooper et al. 2008). Recent machine learning approaches to momentum and reversal trading (Li and Tam 2018; Wang et al. 2024) suggest promising directions for future research. Related algorithmic trading research (Valath and Pinsky 2023; Zhang and Pinsky 2025a) provides complementary perspectives on strategy optimization.
+The findings make a significant contribution to the academic literature on market microstructure, behavioral finance, and systematic trading strategies, providing actionable insights for investors seeking to exploit persistent market inefficiencies through disciplined, systematic approaches to momentum investing in ETF markets. This research supports the continued relevance of active management strategies in an increasingly efficient market environment, highlighting the importance of understanding temporal patterns in price behavior for successful strategy implementation.
+The sector-specific analysis reveals that overnight momentum strategies are not universally effective but rather exhibit substantial performance variation across sectors, driven by sensitivity to overnight news, global market connections, regulatory environments, and fundamental business characteristics. This finding suggests that sophisticated investors should employ sector-selective approaches rather than uniform momentum strategies across all ETFs, concentrating capital in sectors where overnight momentum effects are strongest (Energy, Utilities, Industrials) while potentially avoiding or modifying approaches in sectors where momentum effects are weaker (Consumer Staples) or where secular trends favor buy-and-hold approaches (Consumer Discretionary in strong economic environments).
+Future research directions will focus on incorporating other models of transaction costs and analyzing similar strategies for other asset classes, such as fixed income, commodities, cryptocurrencies, individual stocks, and foreign exchange markets, in order to assess the universality or limitations of the observed temporal patterns and momentum effects across asset classes.
+Temporal Decomposition as the Source of Alpha: 24 h Strategy Comparison
+A critical question for interpreting the results is whether the outperformance of strategies such as (Long, Reversal) arises from the momentum or reversal signal logic itself, or from the act of decomposing the 24-h period into overnight and daytime sub-periods. We answer this question directly by constructing a matched set of strategies that apply identical momentum and reversal signals to the undivided close-to-close () return, without any sub-period decomposition, and comparing the resulting final portfolio values with those of the sub-period strategies.
+Specifically, we define four close-to-close (“CC”) strategies: (i) CC-Momentum Long/Cash, which goes long today if yesterday’s 24-h return was non-negative and otherwise holds cash; (ii) CC-Reversal Long/Cash, which goes long today if yesterday’s return was negative and holds cash otherwise; (iii) CC-Momentum Long/Short, the corresponding long/short variant; and (iv) CC-Reversal Long/Short. These strategies have the same trading frequency as Strategies #1 and #18, use the same signal direction, and are estimated on the same 1999–2025 sample.
+Table 19 reports the average final portfolio value (starting at $100) across all ten ETFs at transaction costs of 0, 1, 2, 3, and 5 basis points, juxtaposing the CC strategies against (Long, Long) (buy-and-hold), (Long, Cash), (Long, Reversal), and (Reversal, Reversal) for reference.
+Table 19. Average final portfolio value ($100 initial) across all 10 ETFs: sub-period vs. 24-h strategies.
+The comparison is unambiguous. The best 24 h strategy, CC-Reversal Long/Short, achieves only $758 at zero costs — approximately  less than (Long, Reversal)’s $61,385 and  less than even the simple (Long, Cash) strategy. CC-Reversal Long/Cash achieves $602, barely above buy-and-hold’s $519, and below (Long, Cash). The momentum CC strategies perform below buy-and-hold at every cost level.
+This result constitutes a direct falsification test: the reversal signal itself, when applied to undivided close-to-close returns, generates negligible additional value beyond a passive buy-and-hold. The enormous outperformance documented for Strategy #18 throughout this paper is therefore attributable to the temporal decomposition of the 24 h period into distinct overnight and daytime sub-periods, rather than to the specific direction of the conditioning signal. The structural asymmetry between overnight returns (persistent positive drift, low volatility, fat tails) and daytime returns (near-zero drift, higher volatility) is the economic substrate that makes sub-period strategies profitable. Applying any signal to the undivided composite return averages away this asymmetry, producing far weaker results. Additional statistical tests to support this are presented in Appendix I.
+Author Contributions
+Conceptualization: E.P.; Methodology: G.S., T.K. and Y.A.; Software: G.S., T.K. and Y.A.; Data Curation: G.S., T.K. and Y.A.; Investigation: G.S., T.K., Y.A. and E.P.; Formal Analysis: G.S., T.K., Y.A. and E.P.; Software: G.S., T.K. and Y.A.; Visualization: G.S., T.K. and Y.A.; Writing—Original Draft Preparation: G.S., T.K., Y.A. and E.P.; Writing—Review and Editing: G.S., T.K., Y.A. and E.P.; Project Administration and Supervision: E.P. All authors have read and agreed to the published version of the manuscript.
+Funding
+This research was conducted without any external funding.
+Data Availability Statement
+Data and code are available at https://github.com/gouravsalottra/etf_day_night_momentum (accessed on 31 December 2025).
+Acknowledgments
+We thank the Department of Computer Science at Boston University Metropolitan College for their support.
+Conflicts of Interest
+The authors declare no conflicts of interest.
+Appendix A. Computing Strategy Returns
+Table A1. Strategy return formulas.
+Appendix B. Total and Daily Transaction Statistics
+Table A2. Trade count analysis by strategy and ETF (total trades over 25 years).
+Table A3. Average trades per day by strategy and ETF.
+Appendix C. Comparison of Strategies by Efficiency
+In analyzing strategy performance, several metrics can be used, including tracking error, the Sharpe ratio, drawdowns, and others. One drawback of such metrics is that they do not account for how closely the trading strategy approximates the ideal case. In the work of Zhang and Pinsky (2025a), a new metric of “Return Efficiency Index” was introduced to compare strategies not by comparing their relative absolute performance but by assigning them a universal score from 0 to 1, reflecting their ability to capture the maximum possible return.
+This index is computed as follows: Consider the worst and the best trading strategies with corresponding returns  and  respectively. For the return  of any strategy, we have . The return efficiency index  is defined as follows:
+(A1)
+The above definition implies that for any strategy, . The numerator  is the excess return compared to the worst return , whereas the denominator is the maximum possible excess return generated by investing correctly in each sub-period.
+Therefore, the return efficiency has the following simple interpretation: it tells us what fraction of the possible return range (from best to worst possible strategy) is captured by a particular strategy. For the worst strategy, this index is 0, and for the best possible strategy, it is 1. This allows for a simple comparison across strategies.
+For a simple example, consider the same data as before. Consider the worst possible strategy shown in Table A4, where we make the wrong decision for every sub-period.
+Table A4. Example of worst strategy.
+The return of this worst strategy is easily computed as follows:
+By contrast, consider the ideal strategy, in which we make the best decision in each sub-period. This is shown in Table A5.
+Table A5. An illustration of the ideal strategy.
+The return of the ideal strategy is easily computed as follows:
+Let us compute the return efficiency of the (long, long) strategy. Its return is:
+The return of the (cash, cash) strategy is 0. The return efficiency of (long, long) strategy from Equation (A1) is . By contrast, the return efficiency of the (cash, cash) strategy is . For this particular example, the (cash, cash) strategy is more efficient than the buy-and-hold (long, long) strategy.
+Note that return efficiency tells us more than just which strategy generated a higher return. It shows the performance of each strategy relative to the best possible outcome. This is much more informative.
+In Table A6, we computed the return efficiencies of all strategies for each ETF.
+Table A6. Comparison of strategies by return efficiency (%).
+Appendix D. Analyzing Persistence as Patterns in Machine Learning
+Consider the overnight period. In the ideal case, we would like to invest in security A for the overnight sub-period of day  if the overnight return  is non-negative. Similarly, we would like to invest in a daytime sub-period for the day  if the daytime return for that day is non-negative. Accordingly, we can assign the so-called “True” (the so-called “Ground Truth”) labels  and  to each trading day  as follows:
+1.
+A true label  = “+” for the overnight sub-period of day  means we would like to take a long position in that overnight period.
+2.
+A true label  = “−” for the overnight sub-period of day  means we would like to take a short position for that overnight period.
+3.
+A true label  = “+” for the daytime sub-period of day  means we would like to take a long position in that daytime period.
+4.
+A true label  = “−” for the daytime sub-period of day  means we would like to take a short position for that daytime period.
+For the return example in Table 2, the true labels’ assignment is shown in Table A7.
+Table A7. Example of true label assignments.
+Therefore, a trading strategy can be viewed as that of assigning trading labels (Zhang and Pinsky 2025a). In static strategies, the labels are assigned regardless of previously assigned true labels. By contrast, in dynamic strategies, assignments are made based on true labels from the previous sub-period. In the inertia strategy, we assign a true label from a previous sub-period as a predicted label for the current sub-period. In reversal strategies, we assign the opposite of a true label from a previous sub-period as a predicted label for the current sub-period.
+This is analogous to a nearest neighbor classifier in machine learning with .
+One of the simplest algorithms for classification in machine learning is the so-called k-NN - nearest neighbor classification (Bishop 2006). In this method, we assume that we are given a distance  metric between any two points x and y. To assign a label to any point x, we find the closest k labeled points (the so-called “neighbors”)  of x and assign a label to x based on the majority label among these neighbors. The number k must be odd for the predicted label to be well-defined. The simplest case is : we assign x the label of its closest neighbor.
+An example is illustrated in Figure A1, where we have six true (“Ground Truth”) labels in the training set.
+Figure A1. Example of nearest neighbor classification.
+In this example, we need to assign a label to point A. If we take , then the nearest neighbor is the point 1 with a (Ground Truth) “green” label. In this case, we assign the label “green” to A. If we take  neighbors from the training set, the nearest three neighbors to A are point 1 (“green”), point 2 (“red”), and point 3 (“red”). The majority of these labels are “red” labels and therefore A will be assigned the label “red”. Finally, take . The nearest five neighbors to A are points 1 (“green”), point 2 (“red”), point 3 (“red”), point 4 (“green”), and point 5 (“green”). Most of these five points have the ground-truth label “green,” and, therefore, A will be assigned “green”. This example shows that the final label depends on the value k. This value is computed by experiments.
+Let us consider a trading strategy based on this analogy. Unlike typical supervised machine learning scenarios, where ground-truth labels are known in advance (Bishop 2006), in trading, many algorithms have ground-truth labels available only for historical data. This is illustrated in Figure A1, where we need to make a prediction for A based on historical ground-truth labels .
+By analogy to k-NN in machine learning, for any two days,  and  define the distance as the number of days in between . With this definition, the neighbors of any day  are the previous days. In the simplest case of , the nearest neighbor of any sub-period is the true label of the previous sub-period. This would correspond to the (inertia, inertia) strategy. This is illustrated in Figure A2.
+Figure A2. Next-sub-period label prediction by k-NN analogy.
+In this case, we assign a predicted label  to the Friday daytime sub-period based on the true label of the previous sub-period. Since the ground truth label for the previous sub-period  = “+”, we assign  = “+” for that period.
+In the more general setting of , we assign a predicted label for the sub-period based on the majority of ground truth labels of its k “nearest neighbors”. An example with  is shown in Figure A3.
+Figure A3. Next-sub-period label prediction for .
+In inertia strategy, we assign a predicted label  to the Friday daytime sub-period based on the majority of k true labels of its preceding sub-periods (“neighbors”). Since the three previous neighbors have labels  = “−”,  = “−” and  = “+”, we assign  = “−”. Since most of these three neighbors have the “−” label, we assign the predicted label  = “+” for that period. In the reversal strategy, we would have assigned  = “−”.
+If we consider an even larger number of neighbors , the predicted label  would be assigned as in the case for . This is shown in Figure A4.
+Figure A4. Next-sub-period label prediction for .
+The above example illustrates that the predicted labels and, thus, our trading decisions would depend on the number of neighbors. This is established experimentally (Bishop 2006).
+We can now analyze persistence using machine learning tools to examine patterns. To this end, we can compare the performance of our dynamic strategies for  and . The results are summarized in Table A8.
+Table A8. Comparison of growth for dynamic strategies for  and .
+Appendix E. Statistics of Overnight and Daytime Return Distributions
+Table A9. Summary overnight per ETF and investment sub-period.
+Table A10. Summary daytime statistics per ETF and investment sub-period.
+Table A11. Summary 24 h statistics per ETF and investment sub-period.
+Appendix F. Comparison by Accuracy
+Table A12. Comparison of strategies by label prediction accuracy (%).
+Appendix G. Stationary Bootstrap Analysis
+Appendix G.1. Methodology
+To assess whether the outperformance documented in Section 4, Section 5, Section 6, Section 7, Section 8 and Section 9 is a genuine feature of the return-generating process or merely a property of the particular 27-year historical path, we apply the stationary bootstrap of Politis and Romano (1994) to construct  alternative 27-year return histories for each ETF. The bootstrap resamples blocks of  consecutive trading days with random starting points drawn from the observed data, preserving short-term temporal dependencies. A block length of  is chosen because financial return autocorrelations at the sub-period level decay within 5–15 trading days, as confirmed by the ACF analysis in Section 2. We test robustness by repeating the procedure for  and  for SPY.
+In each bootstrap replication, we compute the gross (0 bps) annual log-return for three strategies: buy-and-hold (Strategy #5: Long, Long), overnight long (Strategy #1: Long, Cash), and the mixed strategy (Strategy #18: Long, Reversal). We record the fraction of replications in which each active strategy’s return exceeds that of the buy-and-hold strategy. A fraction exceeding 95% is interpreted as strong statistical evidence that the strategy’s alpha is robust to alternative historical scenarios.
+Appendix G.2. Results
+Table A13 reports the 2.5th–97.5th percentile confidence interval for the median log-return in each bootstrap distribution, as well as the fraction of replications in which each active strategy beats buy-and-hold.
+Table A13. Stationary bootstrap results (, block length ). Reported intervals are the 2.5th–97.5th percentiles of the bootstrap distribution of median annual log-returns. The final two columns give the fraction of replications in which the active strategy’s return exceeds that of buy-and-hold.
+Long, Cash (Strategy #1): The overnight long strategy outperforms buy-and-hold in >95% of bootstrap replications for three ETFs: XLE (96.9%), XLK (98.2%), and XLU (100.0%). For XLF and XLI, the fraction is close to 90%. The 95% confidence intervals exclude zero from below in eight of ten ETFs, confirming a positive overnight premium in the vast majority of plausible alternative histories.
+Long, Reversal (Strategy #18): The mixed strategy outperforms buy-and-hold in >95% of replications for six ETFs: XLF (95.9%), XLI (99.0%), XLK (99.6%), XLP (99.6%), XLU (100.0%), and XLV (98.8%). The entire 95% bootstrap confidence interval lies above zero for these six ETFs, providing strong evidence that the strategy’s outperformance is not an artifact of the observed historical path. The remaining four ETFs show lower bootstrap percentages, with XLE and XLB showing that Strategy #18 does not robustly dominate buy-and-hold — consistent with the observation in Section 6 that these commodity-linked sectors favor daytime momentum continuation over reversal.
+Sensitivity to block length:Table A14 reports the fraction of SPY replications in which Strategy #18 beats buy-and-hold under block lengths .
+Table A14. Bootstrap sensitivity to block length L (SPY, Strategy #18, ).
+The results are stable across block lengths, with a variation of only 2.3 percentage points between  and  for SPY. This robustness confirms that the conclusions are not sensitive to the specific choice of block length within the range that captures short-term financial dependencies.
+Figure A5. Stationary bootstrap distribution of annual log-returns for SPY under  replications with block length . Left panel: distribution for Strategy #1 (Long, Cash) versus buy-and-hold; right panel: distribution for Strategy #18 (Long, Reversal) versus buy-and-hold. The vertical dashed line marks the observed historical return.
+Interpretation: The bootstrap analysis demonstrates that the outperformance of the overnight sub-period strategies is not reducible to a single lucky historical draw. Strategies #1 and #18 dominate buy-and-hold across the majority of alternative history replications for six of ten ETFs, and the results are insensitive to the block length used to govern the resampling kernel. This provides the inferential foundation necessary to treat the documented performance differentials as reflecting genuine structural features of sector ETF price dynamics rather than in-sample over-fitting.
+Appendix H. Crisis Period Performance and Tail Distribution Analysis
+Appendix H.1. Overnight Return Tail Distributions
+A potential concern with any long-horizon strategy comparison is that abnormal performance during a small number of extreme market episodes could drive the aggregate results. We address this in two ways: first by characterizing the empirical tail distribution of overnight returns directly, and second by examining sub-strategy performance during the four major crisis episodes that fall within the 1999–2025 sample period.
+Table A15 reports the excess kurtosis of the overnight return distribution for each ETF, together with the actual count of days on which  exceeded three standard deviations versus the number expected under a normal distribution with the same mean and variance.
+Table A15. Overnight return tail statistics. “Extreme days” counts observations exceeding 3; “Expected (normal)” is the count implied by a Gaussian distribution with the same moments. Jarque–Bera test rejects normality at the 1% level for all ETFs.
+The excess kurtosis ranges from 17.0 (XLK, XLY) to 45.7 (XLB), confirming that overnight return distributions exhibit extreme fat tails far beyond what a Gaussian model would predict. The actual count of days with  ranges from 100 (XLB) to 124 (XLF), compared to an expected count of only 18 under normality—a ratio of 5.6× to 6.9×. The Jarque–Bera normality test rejects the null for all ten ETFs. Critically, these extreme-gap days are already present in the historical data used to evaluate the strategies in Section 4, Section 5, Section 6, Section 7, Section 8 and Section 9. Because our empirical sample contains 100–124 genuinely extreme overnight events per ETF, Weibull or other parametric tail simulations would offer no additional stress-testing beyond what the observed data already provides. The fat-tail behavior is not a forecasting assumption but an empirically documented property of the existing sample.
+Figure A6. Empirical distribution of overnight returns versus the fitted normal distribution for representative ETFs. The heavy tails and the excess of extreme observations are apparent in all panels.
+Appendix H.2. Crisis Sub-Period Performance
+Table A16 reports the Sharpe ratio, maximum drawdown, and final portfolio value (from $100) for three benchmark strategies — buy-and-hold (Strategy #5), overnight long (Strategy #1), and (Long, Reversal) (Strategy #18) — during four well-defined crisis windows: the dot-com crash (2000–2002), the Global Financial Crisis (GFC) peak (2008–2009), the COVID crash (2020), and the rate-shock episode (2022). Values are averages across all ten ETFs.
+Table A16. Strategy performance during crisis periods (average across all 10 ETFs; $100 initial investment at start of each crisis window).
+Figure A7. Cumulative drawdown paths during four crisis periods for buy-and-hold (Strategy #5), Long + Cash (Strategy #1), and Long + Reversal (Strategy #18), averaged across all ten ETFs.
+GFC 2008–09: Strategy #18 generated a Sharpe ratio of  and grew $100 to $269 on average across ETFs during the deepest market crisis in the sample. By contrast, buy-and-hold suffered a  maximum drawdown and a Sharpe ratio of . Strategy #1 also performed strongly (Sharpe , final value $117). The crisis-period outperformance is consistent with the mechanism documented throughout this paper: when equity markets sell off sharply during trading hours, overnight gaps still capture information arrival and positive drift, while the reversal component of Strategy #18 profits from the intraday mean reversion that follows panic-driven opening auctions.
+COVID 2020: Strategy #18 continued to outperform markedly, reaching a Sharpe ratio of  versus  for buy-and-hold. The extreme overnight volatility during the March 2020 period (already captured in the fat-tail counts of Table A15) translated into large sub-period return differences that the strategy systematically exploited.
+Dot-com crash (2000–02): This is the one episode in which both active strategies underperformed relative to their typical advantage: Strategy #1 remained close to par ($98.80), while Strategy #18 lost money ($84.02). The prolonged bear market in technology-heavy sectors produced sustained negative overnight gaps that temporarily disrupted the positive overnight drift on which Strategy #1 relies. The episode is instructive precisely because it was already present in the full-sample analysis of Section 4, Section 5, Section 6, Section 7, Section 8 and Section 9, and strategies were not fitted to exclude it.
+Rate shock 2022: All three strategies lost money in this period, reflecting the unusually rapid interest-rate tightening cycle. Strategy #18’s Sharpe ratio () was, however, modestly less negative than buy-and-hold (), and its final value ($94.79) was the highest of the three. The worst-performing active strategy during this episode was Strategy #1, which was hurt by a compression of the overnight risk premium as short-rate expectations rose continuously.
+The crisis analysis confirms that the strategies documented in this paper have been evaluated on a sample that already contains the most severe stress episodes in modern U.S. equity market history. The tail events are not hypothetical; they are empirically present and contribute to the distributional fat tails reported in Table A15. The strategies’ performance during these episodes is therefore an integral part of the overall 27-year track record presented in the main text.
+Appendix I. Sub-Period Sign Pair Analysis and kNN Sensitivity
+Appendix I.1. Sub-Period Sign Pair Frequencies
+The performance of the (Long, Reversal) strategy (Strategy #18) rests on a specific empirical regularity: that overnight and daytime returns within the same 24-h period exhibit a systematic tendency to move in opposite directions more often than in the same direction. To quantify this, we compute the joint frequency of the four possible sign combinations of  for each ETF:  both positive;  overnight up, daytime down;  overnight down, daytime up; and  both negative.
+Table A17. Sub-period sign pair frequencies (%) and conditional reversal probabilities. P(day − | ON +) is the fraction of days on which daytime was negative given overnight was positive. Values > 50% in the conditional columns indicate a systematic reversal tendency.
+Figure A8. Sub-period sign pair frequencies for all ten ETFs. Each bar chart shows the fraction of 6782 trading days falling into each of the four  sign combinations. The horizontal dashed line marks the 25% level expected under independence. Across all ETFs,  is the most common pair (28–30%) while  is the least common (19–22%).
+Several regularities emerge from Table A17. First, the  pair is the most frequent category (28.2–30.0%), while  is the least frequent (19.6–22.3%). This asymmetry implies that overnight positive days are considerably more likely to be followed by a daytime gain than overnight negative days are to be followed by a daytime loss. The pattern is consistent with the positive overnight drift documented in Table A9: markets open higher more often than lower, and on days when they do, the daytime session generally sustains the gain. Second, the conditional probability P(daytime + | overnight −) ranges from 49.7% (XLB) to 55.6% (XLP), meaning that when the overnight period is negative, the daytime is more likely than not to reverse. This cross-period reversal effect is the direct empirical foundation for the daytime reversal component of Strategy #18: conditioning on a negative overnight gap, a long daytime position earns positive expected returns. Third, the column P(day − | ON +) is below 50% for nine of ten ETFs (the sole exception being XLU at 50.6%), meaning that after a positive overnight gap, a short daytime position would not be directionally favourable in expectation. Strategy #18’s return advantage therefore comes not from shorting the day after positive overnights, but from capturing the excess return when the daytime follows a negative overnight.
+Appendix I.2. kNN Reversal Signal Sensitivity
+The dynamic strategies analyzed in the body of this paper use a single-lag signal (): the overnight position is conditioned on the previous daytime return, and the daytime position is conditioned on the same day’s overnight return. To assess whether the signal is robust to extending the lookback window, we implement a k-nearest-neighbor (kNN) version of the overnight reversal strategy (Strategy #12 analog for varying k), in which the position is determined by the majority sign among the k most recent sub-period returns. Values of  are evaluated.
+Table A18.  reversal strategy final portfolio value ($100 initial, 0 bps TC) for . The overnight reversal signal is the majority sign among the previous k overnight returns.
+The results in Table A18 and Figure A9 confirm the single-lag nature of the reversal signal. At , the strongest reversal ETFs are SPY ($499), XLF ($494), and XLK ($485). Performance degrades sharply as k increases: by , SPY has fallen to $170 and XLK to $73, and by , almost all ETFs have converged to values well below $100. The exception is XLY, which shows some signal persistence to  ($327), but also decays by . This decay pattern establishes that the reversal signal is exploited at the single-period lag and is not a multi-period momentum or contrarian effect. The finding is consistent with the ACF analysis in Section 2, where the significant negative autocorrelation was concentrated at lag 1 with rapid decay to noise levels at lags 2 and beyond.
+Figure A9. kNN reversal strategy performance as k increases from 1 to 9 for all ten ETFs (0 bps TC). Lines represent the final portfolio value from a $100 initial investment. The decay in value as k grows confirms that the exploitable reversal signal is concentrated at a single lag () rather than a persistent multi-lag pattern.
+The practical implication for strategy implementation is that the overnight reversal component of Strategy #18 should be applied strictly at the one-period lag. Extending the lookback to three or more periods progressively dilutes the signal by averaging in lags with negligible predictive content, reducing final portfolio values by a factor of 5–10 relative to the single-lag implementation.
+References
+Althelaya, Khairi Ali, El-Sayed M. El-Alfy, and Saeed Mohammed. 2018. Evaluation of bidirectional lstm for short- and long-term stock market prediction. Procedia Computer Science 140: 85–92. [Google Scholar] [CrossRef] [Scilit]
+Amihud, Yakov. 2002. Illiquidity and stock returns: Cross-section and time-series effects. Journal of Financial Markets 5: 31–56. [Google Scholar] [CrossRef] [Scilit]
+Andersen, Torben G. 1996. Return volatility and trading volume: An information flow interpretation of stochastic volatility. The Journal of Finance 51: 169–204. [Google Scholar] [CrossRef]
+Ariyo, Adebiyi A., Adewumi O. Adewumi, and Charles K. Ayo. 2014. Stock price prediction using the Arima model. Paper presented at the 2014 UKSim-AMSS 16th International Conference on Computer Modeling and Simulation, Cambridge, UK, March 26–28; pp. 106–12. [Google Scholar] [CrossRef] [Scilit]
+Arratia, Argimiro, and Albert Dorador. 2019. On the efficacy of stop-loss rules in the presence of overnight gaps. Quantitative Finance 19: 1857–73. [Google Scholar] [CrossRef] [Scilit]
+Ben-David, Itzhak, Francesco Franzoni, and Rabih Moussawi. 2018. Do etfs increase volatility? The Journal of Finance 73: 2471–535. [Google Scholar] [CrossRef] [Scilit]
+Berkman, Henk, Paul D. Koch, Laura Tuttle, and Ying J. Zhang. 2012. Paying attention: Overnight returns and the hidden cost of buying at the open. Journal of Financial and Quantitative Analysis 47: 715–41. [Google Scholar] [CrossRef] [Scilit]
+Bishop, Christopher M. 2006. Pattern Recognition and Machine Learning. Cham: Springer. [Google Scholar]
+Cao, Ruixun. 2024. Stock price prediction using deep-learning models: Cnn, rnn, and lstm. SHS Web Conference 196: 02004. [Google Scholar] [CrossRef] [Scilit]
+Carhart, Mark M. 1997. On persistence in mutual fund performance. The Journal of Finance 52: 57–82. [Google Scholar] [CrossRef]
+Cooper, Michael J., Huseyin Gullen, and Michael J. Shill. 2008. Asset Growth and the Cross-Section of Stock Returns. The Journal of Finance 63: 1609–51. [Google Scholar] [CrossRef] [Scilit]
+Daniel, Kent, and Tobias J. Moskowitz. 2016. Momentum crashes. Journal of Financial Economics 122: 221–47. [Google Scholar] [CrossRef] [Scilit]
+De Bondt, Werner F. M., and Richard Thaler. 1985. Does the stock market overreact? The Journal of Finance 40: 793–805. [Google Scholar] [CrossRef]
+de Faria, E. L., Marcelo P. Albuquerque, J. J. Gonzalez, J. T. P. Cavalcante, and Marcio P. Albuquerque. 2009. Predicting the Brazilian stock market through neural networks and adaptive exponential smoothing methods. Expert Systems with Applications 36: 12506–509. [Google Scholar] [CrossRef] [Scilit]
+Dobrynskaya, Victoria. 2019. Avoiding momentum crashes: Dynamic momentum and contrarian trading. Journal of International Financial Markets, Institutions and Money 63: 101141. [Google Scholar] [CrossRef] [Scilit]
+Fama, Eugene F. 1970. Efficient capital markets: A review of theory and empirical work. The Journal of Finance 25: 383–417. [Google Scholar] [CrossRef] [Scilit]
+Fama, Eugene F., and Kenneth R. French. 1997. Industry Costs of Equity. Journal of Financial Economics 43: 153–93. [Google Scholar] [CrossRef] [Scilit]
+Fischer, Thomas, and Christopher Krauss. 2017. Deep learning with long short-term memory networks for financial market predictions. European Journal of Operational Research 270: 654–69. [Google Scholar] [CrossRef] [Scilit]
+Frazzini, Andrea, Ronen Israel, and Tobias J. Moscowitz. 2018. Trading Costs. Journal of Financial Economics 130: 74–94. [Google Scholar] [CrossRef] [Scilit]
+Gallego-Alvarez, Isabel, Jennifer Martínez-Ferrero, and Beatriz Cuadrado-Ballesteros. 2016. Accounting treatment for carbon emission rights. Systems 4: 12. [Google Scholar] [CrossRef] [Scilit]
+Hanauer, Matthias X., and Steffen Windmüller. 2023. Enhanced momentum strategies. Journal of Banking & Finance 148: 106712. [Google Scholar] [CrossRef] [Scilit]
+Hong, Harrison, and Jeremy C. Stein. 1999. A unified theory of underreaction, momentum trading, and overreaction in asset markets. The Journal of Finance 54: 2143–84. [Google Scholar] [CrossRef] [Scilit]
+Israeli, Doron, Carles M. C. Lee, and Suhas A. Sridharan. 2017. Is there a dark side to exchange traded funds? an information perspective. Review of Accounting Studies 22: 1048–83. [Google Scholar] [CrossRef] [Scilit]
+Jegadeesh, Narasimhan, and Sheridan Titman. 1993. Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency. The Journal of Finance 48: 65–91. [Google Scholar] [CrossRef]
+Jegadeesh, Narasimhan, and Sheridan Titman. 2001. Profitability of Momentum Strategies: An Evaluation of Alternative Explanations. The Journal of Finance 56: 699–720. [Google Scholar] [CrossRef] [Scilit]
+Jegadeesh, Narasimhan, and Sheridan Titman. 2011. Momentum. Annual Review Financial Economics 3: 493–509. [Google Scholar] [CrossRef] [Scilit]
+Kelly, Bryan T., Tobias J. Moskowitz, and Seth Pruitt. 2021. Understanding momentum and reversal. Journal of Financial Economics 140: 726–43. [Google Scholar] [CrossRef] [Scilit]
+Kelly, Michael L., and Steven P. Clark. 2011. Returns in trading versus non-trading hours: The difference is day and night. Journal of Asset Management 12: 132–45. Available online: https://ideas.repec.org/a/pal/assmgt/v12y2011i2d10.1057_jam.2011.2.html (accessed on 10 March 2026). [CrossRef] [Scilit]
+Korajczyk, Robert A., and Ronnie Sadka. 2004. Are Momentum Profits Robust to Trading Costs? The Journal of Finance 59: 103–39. [Google Scholar] [CrossRef] [Scilit]
+Kundu, Triparna, and Abirani Sasinthiran. 2024. Enhancing deep neural network architecture in spatio-temporal forecasting through neural architecture search. Paper presented at the 2024 International Conference on Recent Advances in Electrical, Electronics, Ubiquitous Communication, and Computational Intelligence (RAEEUCCI), Chennai, India, April 17–18; pp. 1–5. [Google Scholar] [CrossRef] [Scilit]
+Kundu, Triparna, and Eugene Pinsky. 2025. Predicting Daily Stock Movements with Deep Learning Models. Machine Learning and Applications 22: 100744. [Google Scholar] [CrossRef] [Scilit]
+Lesmond, David A., Michael J. Schill, and Chunsheng Zhou. 2004. The illusory nature of momentum profits. Journal of Financial Economics 71: 349–80. [Google Scholar] [CrossRef] [Scilit]
+Lettau, Martin, and Ananth Madhavan. 2018. Exchange-traded funds 101 for economists. Journal of Economic Perspectives 32: 135–54. [Google Scholar] [CrossRef] [Scilit]
+Li, Zhixi, and Vincent Tam. 2018. A machine learning view on momentum and reversal trading. Algorithms 11: 170. [Google Scholar] [CrossRef] [Scilit]
+Lou, Dong, and Christopher Polk. 2022. Comomentum: Inferring arbitrage activity from return correlations. The Review of Financial Studies 35: 3272–302. [Google Scholar] [CrossRef] [Scilit]
+Lou, Dong, Christopher Polk, and Spyros Skouras. 2019. A tug of war: Overnight versus intraday expected returns. Journal of Financial Economics 134: 192–213. [Google Scholar] [CrossRef] [Scilit]
+Magdon Ismail, Malik, Amir F. Atiya, Amrit Pratap, and Yasser S. Abu-Mostafa. 2004. Maximum Drawdown. Journal of Risk 6: 1–26. [Google Scholar]
+Moskowitz, Tobias J., and Mark Grinblatt. 1999. Do industries explain momentum? The Journal of Finance 54: 1249–90. [Google Scholar] [CrossRef] [Scilit]
+Novy-Marx, Robert, and Mihail Velikov. 2016. A taxonomy of anomalies and their trading costs. The Review of Financial Studies 29: 104–47. [Google Scholar] [CrossRef] [Scilit]
+Politis, Dimitris N., and Joseph P. Romano. 1994. The stationary bootstrap. Journal of the American Statistical Association 89: 1303–313. [Google Scholar] [CrossRef]
+Rokhsatyazdi, Reza, and Abidin Zainal. 2020. Optimizing LSTM based network for forecasting stock market. Journal of Financial Markets 12: 213–21. [Google Scholar] [CrossRef] [Scilit]
+Sharpe, William F. 1966. Mutual Fund Performance. The Journal of Business 39: 119–38. [Google Scholar] [CrossRef] [Scilit]
+Siew, Han L., and Jan M. Nordon. 2012. Regression techniques for the prediction of stock price trend. Paper presented at the 2012 International Conference on Statistics in Science, Business and Engineering (ICSSBE), Langkawi, Malaysia, September 10–12; pp. 1–5. [Google Scholar] [CrossRef] [Scilit]
+Sortino, Frank A., and Lee N. Price. 1994. Performance Measurement in a Downside Risk Framework. The Journal of Investing 3: 59–64. [Google Scholar] [CrossRef] [Scilit]
+Valath, Sree Kumar, and Eugene Pinsky. 2023. Sell the losers? Keep the winners? None of the above—Focus on the median! Algorithmic Finance 10: 115–35. [Google Scholar] [CrossRef] [Scilit]
+Wang, Wenhao, Qingyi Zhang, Pengda An, and Feifei Cai. 2024. Momentum and reversal strategies with low uncertainty. Finance Research Letters 68: 105970. [Google Scholar] [CrossRef] [Scilit]
+Wharton School. 2024. Wharton Research Data Services (WRDS). Available online: https://wrds-www.wharton.upenn.edu/ (accessed on 10 March 2026).
+Zhang, Xiang, and Eugene Pinsky. 2025a. Comparing Algorithmic Trading Strategies by Analogies to Machine Learning. Algorithmic Finance, 1–33. [Google Scholar] [CrossRef] [Scilit]
+Zhang, Xiang, and Eugene Pinsky. 2025b. S&P-500 vs. Nasdaq-100 price movement prediction with lstm for different daily periods. Machine Learning with Applications 19: 100617. [Google Scholar] [CrossRef] [Scilit]
+	
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to people or property resulting from any ideas, methods, instructions or products referred to in the content.
+
+© 2026 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access article distributed under the terms and conditions of the Creative Commons Attribution (CC BY) license.
+Article Metrics
+Citations
+Google Scholar
+
+1
+
+Scopus
+
+1
+
+Web of Science
+
+3
+
+Crossref
+Article Access Statistics
+Journal Statistics
+Multiple requests from the same IP address are counted as one view.
+A First Step Toward a CAT Model Framework: An ODE-Based Risk Analysis of Urban Floods Triggered by Meteorological Events
+Previous
+Risk-Sensitive Performance Evaluation of Life Insurance Markets in EU and EEA Countries: A MPSI–CoCoSo Approach
+Next
+Risks - ISSN 2227-9091
+Imprint
+RSS
+Download RSS feed
+Download Flyer
+
+Discover
+
+Articles
+Journals
+Research Awards
+Open Access Policy
+
+Services
+
+Author Services
+Conferences
+Societies
+Products & Solutions
+Books
+
+Guidelines
+
+For Authors
+For Reviewers
+For Editors
+For Librarians
+
+Company
+
+About Us
+Careers
+Press Office
+Blog
+
+Support
+
+Pay an Invoice
+Processing Charges
+Discount Policy
+Contact Us
+© 2026 MDPI (Basel, Switzerland) unless otherwise stated.
+Accessibility
+Terms and Conditions
+Terms of Use
+Legal Notice
+Privacy Policy
+Privacy Settings
+Disclaimer

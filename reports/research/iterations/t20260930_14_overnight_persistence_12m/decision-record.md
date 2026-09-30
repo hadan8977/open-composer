@@ -1,12 +1,17 @@
 # Decision Record: t20260930_14_overnight_persistence_12m
 
-TODO: At the end of the round, record each path's continue/pivot/stop decision,
-evidence, rejected variants, next action, and whether ML or AI-information
-round entry conditions are met.
+## Path
 
-## P1
+overnight_persistence_oos_band (C2a-prime)
 
-- Path:
-- Decision: pending
-- Reason:
-- Next iteration suggestion:
+## Decision
+
+pending
+
+## Reason
+
+Preregistered; no pool B or official-price number computed yet.
+
+## Next iteration suggestion
+
+Run scripts/run_t20260930_14_overnight_12m.py band, official, diag; gates are computed mechanically and reviewed by the lead.
