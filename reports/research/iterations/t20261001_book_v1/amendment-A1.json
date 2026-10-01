@@ -1,0 +1,204 @@
+{
+  "amendment": "A1",
+  "iter_id": "t20261001_book_v1",
+  "written_at_utc": "2026-10-01T13:23:00Z",
+  "written_by": "lead round 2026-10-01 13:07 UTC (Opus 5.5)",
+  "stage2_result_files_present_when_written": false,
+  "doc": "reports/research/iterations/t20261001_book_v1/amendment-A1.md",
+  "thresholds_changed": false,
+  "rule_changes": [
+    {
+      "field": "exec_price",
+      "prereg": "open",
+      "a1": "close",
+      "meaning": "signal at the close of t, fill at the close of t+1, close-snapshot spread costs",
+      "basis": "D4 cost measurement only (open half spread ~4.1x the 15:45 one); announced in docs/research-program.zh.md at 07:50 UTC before any Stage 2 number and before T-11",
+      "verdict_uses": "close only (a swap, not a second chance)"
+    }
+  ],
+  "run_config": {
+    "freq": "W",
+    "offsets": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "exec_price": "close",
+    "cost_fn": "optimize.book_config(spec, attrs, exec_price=...) -> costfn.make_cost_fn(snapshot_for(exec_price))",
+    "initial_equity": 1000000.0,
+    "initial_weights": {
+      "TBILL": 1.0
+    },
+    "first_trade_session": "2017-10-02",
+    "verdict_end": "2026-09-17",
+    "delist_long_haircut": 0.0,
+    "borrow_bp_per_year": {
+      "A": 25.0,
+      "B": 0.0,
+      "C": 25.0
+    },
+    "margin_rate": 0.065,
+    "tbill_symbols": [
+      "SGOV",
+      "BIL"
+    ]
+  },
+  "opt_config": {
+    "source": "optimize.OptConfig defaults at the bound commit",
+    "overrides": {
+      "beta_method": "ewma",
+      "snapshot": "same as exec_price",
+      "ic": "IC_t per rebalance (section ic_scaling)"
+    },
+    "failure": "every step of the retry ladder failed or max constraint violation > 1e-4; gate on this final failure rate (median over offsets < 2%)",
+    "also_report": [
+      "first_attempt_failure_rate",
+      "rescues_by_step",
+      "scs_rescue_share (flag if > 1% of solves)"
+    ]
+  },
+  "ic_scaling": {
+    "formation_dates": "last session of each calendar month (session calendar)",
+    "lag_rule": "pos(d) <= pos(t) - 22",
+    "window": {
+      "max": 36,
+      "min": 12
+    },
+    "prior": 0.03,
+    "formula": "IC_t = max(0, 0.5 * mean_rank_ic + 0.5 * 0.03); IC_t = 0.03 when fewer than 12 formation dates",
+    "apply": "decider.spec = BookSpec(name, opt.with_(ic=IC_t)) before each decide call"
+  },
+  "m1": {
+    "theme_ic_window": {
+      "max": 60,
+      "min": 24
+    },
+    "weights": "proportional to max(0, mean_ic / sd_ic); fall back to M0 equal weights if < 24 obs or all zero",
+    "update": "first rebalance after each month end",
+    "ic_universe": {
+      "A": "in_u3000",
+      "B": "in_u3000",
+      "C": "in_p1000"
+    }
+  },
+  "target_y": "returns.forward_open_to_open over t+1..t+22 opens minus sum_{k=t+1}^{t+21} X_t' f_k (risk/factor_returns_<year>.parquet, X_t at the month-end storage date)",
+  "composite": {
+    "themes": {
+      "value": [
+        "bm",
+        "ep",
+        "sp",
+        "cfp"
+      ],
+      "quality": [
+        "gp_at",
+        "roe",
+        "op_at",
+        "neg_accruals"
+      ],
+      "investment_issuance": [
+        "neg_asset_growth",
+        "neg_nsi_12m"
+      ],
+      "momentum": [
+        "mom_12_1",
+        "ind_mom_12_1",
+        "resid_mom_12_1"
+      ],
+      "low_risk": [
+        "neg_beta_252",
+        "neg_idio_vol_63"
+      ],
+      "earnings": [
+        "sue_eps",
+        "sue_rev"
+      ],
+      "insider": [
+        "cmp_opp_buy_60d",
+        "nonplan_buy_mcap_60d"
+      ],
+      "short_info": [
+        "neg_short_vol_ratio_21",
+        "neg_si_shares"
+      ],
+      "seasonality": [
+        "seas_5y"
+      ]
+    },
+    "theme_score": "mean of the processed z columns of the theme, missing = 0",
+    "score": "M0: equal-weight mean of 9 theme scores; M1: IC-IR weights; then optimize.rank_normal inside the decider's universe"
+  },
+  "replays": {
+    "same_weight_path": true,
+    "decision_cost": "1x model cost",
+    "items": {
+      "cost2x": "spread, impact, fees x2; borrow 100 bp/yr on all shorts",
+      "fix10": "BookConfig(cost_fn=None, cost_bp_per_side=10), borrow as main",
+      "fix20": "BookConfig(cost_fn=None, cost_bp_per_side=20), borrow as main",
+      "delist30": "delist_long_haircut=-0.30, model cost"
+    }
+  },
+  "sensitivity_runs": {
+    "open_exec": {
+      "variants": [
+        "M0_A",
+        "M0_B",
+        "M0_C"
+      ],
+      "offsets": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "exec_price": "open",
+      "snapshot": "open"
+    },
+    "timing_flag": "close gross Sharpe < 0.5 x open gross Sharpe (anchor or stress) -> 'timing sensitive', lead review before any forward shadow"
+  },
+  "tiers": {
+    "research_pass": "hypotheses.md preregistration section 5, unchanged",
+    "watch_recent": "no research_pass AND anchor: median net Sharpe >= 1.19, 2x-cost annual excess > 0, daily beta and Dimson beta within +-0.15, median failure rate < 2%, placebo beat >= 0.80 on both net and gross Sharpe",
+    "forward_rules": "runbook section 5 (3 months forward Sharpe < 0.5 or forward max drawdown > 1.5x anchor drawdown -> remove); program stop rule (63 sessions, Sharpe < 0 and below the placebo median -> review)"
+  },
+  "placebo": {
+    "scope": "variants passing condition (1) and variants with anchor median net Sharpe >= 1.19",
+    "seeds": "s = 0..99, rng seed 20261001 + s, offset = s mod 5",
+    "permutation": "within each rebalance date, inside the variant's universe, before alpha scaling; IC_t series, risk, cost, constraints, short sets as in the real run",
+    "beat": "real Sharpe on the same offset > seed Sharpe, computed separately on net and gross Sharpe; both must meet: full sample >= 0.95, stress >= 0.80, anchor >= 0.80 (watch_recent: anchor only)"
+  },
+  "reporting_only": [
+    "T-11 phases (data/research/equity_book/regimes/phases.json phases_recent and phases_hist) on the offset-blend",
+    "last 63 sessions",
+    "Reg T days (L+S+Q > 2.02E)",
+    "forward segment from 2026-09-18 after the data refresh",
+    "DSR with 77 trials (open-exec runs are sensitivity, not trials)",
+    "leave-one-theme-out diagnostic (prereg section 7): M0_A offset 0, 9 paths, other 8 themes equal weight, IC_t = M0_A's real series, no replays, not trials"
+  ],
+  "binding_rule": {
+    "precondition": "queue status of T-20261001-05 and T-20261001-06 starts with 'done'",
+    "code_files": [
+      "open_composer/research/equity_book/risk.py",
+      "open_composer/research/equity_book/costs.py",
+      "open_composer/research/equity_book/cost_model_v1.json",
+      "open_composer/research/equity_book/costfn.py",
+      "open_composer/research/equity_book/borrow.py",
+      "open_composer/research/equity_book/optimize.py",
+      "open_composer/research/equity_book/etf_risk.py",
+      "open_composer/research/equity_book/signals.py",
+      "open_composer/research/equity_book/backtest.py",
+      "open_composer/research/equity_book/evaluate.py",
+      "open_composer/research/equity_book/returns.py",
+      "open_composer/research/equity_book/panel.py",
+      "scripts/build_equity_book_signals.py"
+    ],
+    "data_files": [
+      "data/research/equity_book/risk/meta.json"
+    ],
+    "method": "git status --porcelain must be empty for every code file; record git log -1 --format=%H and sha256sum per file; record sha256 of data files; any later change voids T-08/T-13/T-14 results"
+  },
+  "binding": null
+}

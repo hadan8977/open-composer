@@ -1200,7 +1200,7 @@
 ### T-20261001-08 组合线 Stage 2a 运行：M0、M1 × A/B/C（6 个变体）
 - status: ready
 - priority: 1
-- not_before: T-20261001-05、-06、-07 都完成，并且主审已写修正案 A1（`reports/research/iterations/t20261001_book_v1/amendment-A1.md`，只绑定风险、成本、借券、优化器、信号模块的版本哈希）；简报由主审在那之后写
+- not_before: T-20261001-05 和 T-20261001-06 的状态都以 done 开头（交互会话核验并提交 S1、D5）。修正案 A1 的规则部分已由 13:07 主审轮写好（`reports/research/iterations/t20261001_book_v1/amendment-A1.md`、`amendment-A1.json`），版本绑定表由本任务第 0 步按 A1 第 8 节机械填写
 - goal: 第一次用完整管道检验"多信号组合"在两窗扣成本后能不能过冻结门槛。M0 是所有 ML 方法必须超过的基线。
 - plan: 按 T-07 的预注册执行。
   - 用 `run_book`，周频调仓，5 个偏移；成本模型 v1，同时报告固定 10 bp 和 20 bp 两档对照；
@@ -1216,8 +1216,10 @@
   - 迭代 `--stage final` 通过；
   - `results.json` 里的每条门槛都有数字；
   - 状态写"done（待主审）"，不写结论。
+- brief: reports/research/control/briefs/T-20261001-08.md
 - notes:
   - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
+  - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）：写修正案 A1（成交改为 t+1 收盘，依据只有 D4 成本测量，07:50 纲领已预告；记账规模 $1,000,000，否则冲击成本按 1 美元计；IC_t 和 M1 按预注册定义实现；watch_recent 分档；安慰剂净、毛两种口径都要达标，比预注册更严）和简报。范围缩为"跑出 54 条路径的原始结果"（45 条主路径加预注册第 7 节的 9 条去掉一个主题的诊断）：评估拆到 T-20261001-13，安慰剂拆到 T-20261001-14。本轮没有任何 Stage 2 数字。执行轮在 T-05、T-06 标 done 之前不要取本任务。
 
 ### T-20261001-09 组合线 Stage 2b：M2（GBDT 集成）和 M3（随机傅里叶特征岭回归），Modal
 - status: ready
@@ -1284,3 +1286,25 @@
 - done_when: `reports/research/program/prior-work-audit-2026-10-01/` 有 audit.json 和 report.zh.md，主审核对后写结论。
 - notes:
   - 2026-10-01 10:18 UTC 交互会话（Opus）写入。
+
+### T-20261001-13 组合线 Stage 2a 评估：45 条路径的全部指标和机械条件（接 T-20261001-08）
+- status: ready
+- priority: 1
+- not_before: T-20261001-08 的状态以 done 开头
+- goal: 把 T-08 的原始结果算成预注册第 5、7 节和修正案 A1 要求的全部数字，机械给出每个变体的条件真假，以及哪些变体要做安慰剂。判定由主审做。
+- plan: 见简报。用 `evaluate.py` 的现成函数：K1、K2 两种口径都按 5 个偏移的中位数判；另报 Dimson beta、失败率、成本分项、DSR、T-11 分阶段表现、成交时点对比、去掉一个主题的诊断。
+- done_when: `reports/research/iterations/t20261001_book_v1/results.json` 和 `report.md` 已提交，含 `checks`、`placebo_needed`、`mechanical_status`；不写结论，标"待主审"。
+- brief: reports/research/control/briefs/T-20261001-13.md
+- notes:
+  - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）写入。
+
+### T-20261001-14 组合线 Stage 2a 安慰剂：需要的变体各 100 个种子，净、毛两种口径（接 T-20261001-13）
+- status: ready
+- priority: 1
+- not_before: T-20261001-13 的状态以 done 开头，且 `results.json` 的 `mechanical_status` 为 `pending_placebo`；为 `no_variant_reaches_cond1_or_anchor_1_19` 时本任务取消，由主审改状态
+- goal: 预注册第 6 节加 A1 第 6 节：每个调仓日内打乱合成分，真实书要在净夏普和毛夏普两种口径上都打赢安慰剂（全样本 ≥ 0.95、两窗各 ≥ 0.80；watch_recent 只看对标窗 ≥ 0.80）。research_pass 和 watch_recent 都离不开这一步。
+- plan: 见简报。用 Modal，每个变体 100 个分片。Stage 2 的 Modal 累计超过 $7 时停在变体之间，留 $3 给 Stage 2b。
+- done_when: `results.json` 每个需要的变体都有 `placebo` 块和两个 mechanical 字段，`mechanical_status` 为 `placebo_done`；标"待主审"。
+- brief: reports/research/control/briefs/T-20261001-14.md
+- notes:
+  - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）写入。
