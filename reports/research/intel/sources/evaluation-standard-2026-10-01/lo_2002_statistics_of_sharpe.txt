@@ -1,0 +1,1130 @@
+                       The Statistics of Sharpe Ratios
+                                                  Andrew W. Lo
+                   The building blocks of the Sharpe ratio—expected returns and volatilities—
+                   are unknown quantities that must be estimated statistically and are,
+                   therefore, subject to estimation error. This raises the natural question: How
+                   accurately are Sharpe ratios measured? To address this question, I derive
+                   explicit expressions for the statistical distribution of the Sharpe ratio using
+                   standard asymptotic theory under several sets of assumptions for the
+                   return-generating process—independently and identically distributed
+                   returns, stationary returns, and with time aggregation. I show that
+                   monthly Sharpe ratios cannot be annualized by multiplying by 12 except
+                   under very special circumstances, and I derive the correct method of
+                   conversion in the general case of stationary returns. In an illustrative
+                   empirical example of mutual funds and hedge funds, I find that the annual
+                   Sharpe ratio for a hedge fund can be overstated by as much as 65 percent
+                   because of the presence of serial correlation in monthly returns, and once
+                   this serial correlation is properly taken into account, the rankings of hedge
+                   funds based on Sharpe ratios can change dramatically.
+
+
+
+
+O
+           ne of the most commonly cited statistics in        show that confidence intervals, standard errors,
+           financial analysis is the Sharpe ratio, the        and hypothesis tests can be computed for the esti-
+           ratio of the excess expected return of an          mated Sharpe ratio in much the same way that they
+investment to its return volatility or standard devi-         are computed for regression coefficients such as
+ation. Originally motivated by mean–variance                  portfolio alphas and betas.
+analysis and the Sharpe–Lintner Capital Asset Pric-                The accuracy of Sharpe ratio estimators hinges
+ing Model, the Sharpe ratio is now used in many               on the statistical properties of returns, and these
+different contexts, from performance attribution to           properties can vary considerably among portfolios,
+tests of market efficiency to risk management.1               strategies, and over time. In other words, the
+Given the Sharpe ratio’s widespread use and the               Sharpe ratio estimator’s statistical properties typi-
+myriad interpretations that it has acquired over the          cally will depend on the investment style of the
+years, it is surprising that so little attention has been     portfolio being evaluated. At a superficial level, the
+paid to its statistical properties. Because expected          intuition for this claim is obvious: The performance
+returns and volatilities are quantities that are gen-         of more volatile investment strategies is more dif-
+erally not observable, they must be estimated in              ficult to gauge than that of less volatile strategies.
+some fashion. The inevitable estimation errors that           Therefore, it should come as no surprise that the
+arise imply that the Sharpe ratio is also estimated           results derived in this article imply that, for exam-
+with error, raising the natural question: How accu-           ple, Sharpe ratios are likely to be more accurately
+rately are Sharpe ratios measured?                            estimated for mutual funds than for hedge funds.
+     In this article, I provide an answer by deriving              A less intuitive implication is that the time-
+the statistical distribution of the Sharpe ratio using        series properties of investment strategies (e.g.,
+standard econometric methods under several dif-               mean reversion, momentum, and other forms of
+ferent sets of assumptions for the statistical behav-         serial correlation) can have a nontrivial impact on
+ior of the return series on which the Sharpe ratio is         the Sharpe ratio estimator itself, especially in com-
+based. Armed with this statistical distribution, I            puting an annualized Sharpe ratio from monthly
+                                                              data. In particular, the results derived in this article
+                                                              show that the common practice of annualizing
+Andrew W. Lo is Harris & Harris Group Professor at            Sharpe ratios by multiplying monthly estimates by
+the Sloan School of Management, Massachusetts Insti-            12 is correct only under very special circum-
+tute of Technology, Cambridge, and chief scientific officer   stances and that the correct multiplier—which
+for AlphaSimplex Group, LLC, Cambridge.                       depends on the serial correlation of the portfolio’s
+
+
+36                                                                                                   ©2002, AIMR®
+                                                                                     The Statistics of Sharpe Ratios
+
+returns—can yield Sharpe ratios that are consider-           data, a more general distribution is derived in the
+ably smaller (in the case of positive serial correla-        “Non-IID Returns” section, one that applies to
+tion) or larger (in the case of negative serial              returns with serial correlation, time-varying condi-
+correlation). Therefore, Sharpe ratio estimators             tional volatilities, and many other characteristics of
+must be computed and interpreted in the context of           historical financial time series. In the “Time Aggre-
+the particular investment style with which a port-           gation” section, I develop explicit expressions for
+folio’s returns have been generated.                         “time-aggregated’’ Sharpe ratio estimators (e.g.,
+     Let Rt denote the one-period simple return of           expressions for converting monthly Sharpe ratio
+a portfolio or fund between dates t – 1 and t and            estimates to annual estimates) and their distribu-
+denote by µ and σ2 its mean and variance:                    tions. To illustrate the practical relevance of these
+      µ ≡ E(Rt),                                      (1a)   estimators, I apply them to a sample of monthly
+                                                             mutual fund and hedge fund returns and show that
+and                                                          serial correlation has dramatic effects on the annual
+      σ2 ≡ Var(Rt).                                  (1b)    Sharpe ratios of hedge funds, inflating Sharpe ratios
+                                                             by more than 65 percent in some cases and deflating
+Recall that the Sharpe ratio (SR) is defined as the          Sharpe ratios in other cases.
+ratio of the excess expected return to the standard
+deviation of return:                                         IID Returns
+           µ – Rf                                            To derive a measure of the uncertainty surrounding
+      SR ≡ -------------- ,                            (2)
+                 σ                                           the estimator SR , we need to specify the statistical
+where the excess expected return is usually com-             properties of Rt because these properties determine
+puted relative to the risk-free rate, Rf. Because µ and      the uncertainty surrounding the component estima-
+σ are the population moments of the distribution of          tors µ̂ and σ̂ 2 . Although this may seem like a theo-
+Rt , they are unobservable and must be estimated             retical exercise best left for statisticians—not unlike
+using historical data.                                       the specification of the assumptions needed to yield
+      Given a sample of historical returns (R1, R2, . . .,   well-behaved estimates from a linear regression—
+RT), the standard estimators for these moments are           there is often a direct connection between the invest-
+the sample mean and variance:                                ment management process of a portfolio and its
+                                                             statistical properties. For example, a change in the
+           1 T                                               portfolio manager’s style from a small-cap value
+      µ̂ = --- ∑ R t                                  (3a)
+           T                                                 orientation to a large-cap growth orientation will
+                 t =1
+                                                             typically have an impact on the portfolio’s volatility,
+and                                                          degree of mean reversion, and market beta. Even for
+                                                             a fixed investment style, a portfolio’s characteristics
+           1 T
+      σ̂ = --- ∑ ( R t – µ̂ ) ,
+        2                    2
+                                                     (3b)    can change over time because of fund inflows and
+           T
+                   t =1                                      outflows, capacity constraints (e.g., a microcap fund
+from which the estimator of the Sharpe ratio (SR)            that is close to its market-capitalization limit),
+follows immediately:                                         liquidity constraints (e.g., an emerging market or
+                                                             private equity fund), and changes in market condi-
+           µ̂ – R f                                          tions (e.g., sudden increases or decreases in volatil-
+      SR = -------------- .                            (4)
+                 σ̂                                          ity, shifts in central banking policy, and
+Using a set of techniques collectively known as              extraordinary events, such as the default of Russian
+“large-sample’’ or “asymptotic’’ statistical theory          government bonds in August 1998). Therefore, the
+in which the Central Limit Theorem is applied to             investment style and market environment must be
+estimators such as µ̂ and σ̂ 2 , the distribution of SR      kept in mind when formulating the assumptions for
+and other nonlinear functions of µ̂ and σ̂ 2 can be          the statistical properties of a portfolio’s returns.
+easily derived.                                                   Perhaps the simplest set of assumptions that we
+     In the next section, I present the statistical dis-     can specify for Rt is that they are independently and
+tribution of SR under the standard assumption that           identically distributed. This means that the proba-
+returns are independently and identically distrib-           bility distribution of Rt is identical to that of Rs for
+uted (IID). This distribution completely character-          any two dates t and s and that Rt and Rs are statisti-
+izes the statistical behavior of SR in large samples         cally independent for all t ≠ s. Although these con-
+and allows us to quantify the precision with which           ditions are extreme and empirically implausible—
+SR estimates SR. But because the IID assumption is           the probability distribution of the monthly return of
+extremely restrictive and often violated by financial        the S&P 500 Index in October 1987 is likely to differ
+
+
+July/August 2002                                                                                                  37
+Financial Analysts Journal
+
+from the probability distribution of the monthly                        is reminiscent of the expression for the variance of
+return of the S&P 500 in December 2000—they pro-                        the weighted sum of two random variables, except
+vide an excellent starting point for understanding                      that in Equation 7, there is no covariance term. This
+the statistical properties of Sharpe ratios. In the next                is due to the fact that µ̂ and σ̂ 2 are asymptotically
+section, these assumptions will be replaced with a                      independent, thanks to our simplifying assump-
+more general set of conditions for returns.                             tion of IID returns. In the next sections, the IID
+     Under the assumption that returns are IID and                      assumption will be replaced by a more general set
+have finite mean µ and variance σ2, it is well                          of conditions on returns, in which case, the covari-
+known that the estimators µ̂ and σ̂ 2 in Equation 3                     ance between µ̂ and σ̂ 2 will no longer be zero and
+have the following normal distributions in large                        the corresponding expression for the asymptotic
+samples, or “asymptotically,” due to the Central                        variance of the Sharpe ratio estimator will be some-
+Limit Theorem:2                                                         what more involved.
+              a                                         a                    The asymptotic variance of SR given in Equa-
+ T ( µ̂ – µ ) ∼ N ( 0, σ 2 ), T ( σ̂ 2 – σ 2 ) ∼ N ( 0, 2σ 4 ),   (5)
+                                                                        tion 7 can be further simplified by evaluating the
+         a
+where ∼ denotes the fact that this relationship is an                   sensitivities explicitly—∂g/∂µ = 1/σ and ∂g/∂σ2 =
+asymptotic one [i.e., as T increases without bound,                     –(µ – Rf )/(2σ3)—and then combining terms to yield
+the probability distributions of T ( µ̂ – µ ) and
+  T ( σ̂ 2 – σ 2 ) approach the normal distribution, with                               ( µ – Rf )2
+                                                                            V IID = 1 + ---------------------
+                                                                                                            -
+mean zero and variances σ2 and 2σ4, respectively].                                            2σ 2                                                         (8)
+These asymptotic distributions imply that the esti-                                          1
+mation error of µ̂ and σ̂ 2 can be approximated by                                     = 1 + --- SR2 .
+                                                                                             2
+
+                a σ
+                      2
+                                        a 2σ
+                                                 4                      Therefore, standard errors (SEs) for the Sharpe ratio
+     Var ( µ̂ ) = ------ , Var ( σ̂ 2 ) = --------- ,             (6)   estimator SR can be computed as
+                   T                         T
+         a
+where = indicates that these relations are based on
+                                                                            SE(SR) =
+                                                                                               a      1 + 1--- SR 2 /T,                                  (9)
+asymptotic approximations. Note that in Equation                                                           2       
+6, the variances of both estimators approach zero as
+T increases, reflecting the fact that the estimation                    and this quantity can be estimated by substituting
+errors become smaller as the sample size grows. An                      SR for SR. Confidence intervals for SR can also be
+additional property of µ̂ and σ̂ in the special case                    constructed from Equation 9; for example, the 95
+of IID returns is that they are statistically indepen-                  percent confidence interval for SR around the esti-
+dent in large samples, which greatly simplifies our                     mator SR is simply
+analysis of the statistical properties of functions of
+                                                                             SR ± 1.96 ×  1 + --- SR  /T.
+                                                                                               1 2
+these estimators (e.g., the Sharpe ratio).                                                                                                                (10)
+                                                                                              2      
+      Now, denote by the function g(µ, σ 2) the
+Sharpe ratio defined in Equation 2; hence, the                               Table 1 reports values of Equation 9 for vari-
+Sharpe ratio estimator is simply g ( µ̂, σ̂ 2 ) = SR.                   ous combinations of Sharpe ratios and sample
+When the Sharpe ratio is expressed in this form, it                     sizes. Observe that for any given sample size T,
+is apparent that the estimation errors in µ̂ and σ̂ 2                   larger Sharpe ratios imply larger standard errors.
+will affect g ( µ̂, σ̂ 2 ) and that the nature of these                 For example, in a sample of 60 observations, the
+effects depends critically on the properties of the                     standard error of the Sharpe ratio estimator is 0.188
+function g. Specifically, in the “IID Returns” sec-                     when the true Sharpe ratio is 1.50 but is 0.303 when
+tion of Appendix A, I show that the asymptotic                          the true Sharpe ratio is 3.00. This implies that the
+distribution of the Sharpe ratio estimator is                           performance of investments such as hedge funds,
+  T ( SR – SR ) ~a N ( 0, V IID ), where the asymp-                     for which high Sharpe ratios are one of the primary
+totic variance is given by the following weighted                       objectives, will tend to be less precisely estimated.
+average of the asymptotic variances of µ̂ and σ̂ 2 :                    However, as a percentage of the Sharpe ratio, the
+                                                                        standard error given by Equation 9 does approach
+                        2                 2
+              ∂g            ∂g                                      a finite limit as SR increases since
+     V IID =  ------ σ 2 +  --------2- 2σ 4 .                 (7)
+               ∂µ
+                            ∂σ 
+                                                                            SE(SR)                 1 + ( 1/2 ) SR 2                       1-
+The weights in Equation 7 are simply the squared                            ------------------ =   ---------------------------------- → ------            (11)
+                                                                                  SR                         T SR2                      2T
+sensitivities of g with respect to µ and σ2, respec-
+tively: The more sensitive g is to a particular param-                  as SR increases without bound. Therefore, the
+eter, the more influential its asymptotic variance                      uncertainty surrounding the IID Sharpe ratio esti-
+will be in the weighted average. This relationship                      mator will be approximately the same proportion
+
+
+38                                                                                                                                               ©2002, AIMR®
+                                                                                                                                                    The Statistics of Sharpe Ratios
+
+                          Table 1. Asymptotic Standard Errors of Sharpe Ratio Estimators for
+                                   Combinations of Sharpe Ratio and Sample Size
+                                                                                                         Sample Size, T
+                          SR                                12                      24      36            48               60           125         250          500
+                          0.50                           0.306                     0.217   0.177         0.153        0.137             0.095       0.067        0.047
+                          0.75                           0.327                     0.231   0.189         0.163        0.146             0.101       0.072        0.051
+                          1.00                           0.354                     0.250   0.204         0.177        0.158             0.110       0.077        0.055
+                          1.25                           0.385                     0.272   0.222         0.193        0.172             0.119       0.084        0.060
+                          1.50                           0.421                     0.298   0.243         0.210        0.188             0.130       0.092        0.065
+                          1.75                           0.459                     0.325   0.265         0.230        0.205             0.142       0.101        0.071
+                          2.00                           0.500                     0.354   0.289         0.250        0.224             0.155       0.110        0.077
+                          2.25                           0.542                     0.384   0.313         0.271        0.243             0.168       0.119        0.084
+                          2.50                           0.586                     0.415   0.339         0.293        0.262             0.182       0.128        0.091
+                          2.75                           0.631                     0.446   0.364         0.316        0.282             0.196       0.138        0.098
+                          3.00                           0.677                     0.479   0.391         0.339        0.303             0.210       0.148        0.105
+                                                                                                                                    2
+                          Note: Returns are assumed to be IID, which implies VIID = 1 + 1/2SR .
+
+
+
+
+of the Sharpe ratio for higher Sharpe ratio invest-                                                              returns satisfy the assumption of “stationarity,”
+ments with the same number of observations T.                                                                    then a version of the Central Limit Theorem still
+     We can develop further intuition for the impact                                                             applies to most estimators and the corresponding
+of estimation errors in µ̂ and σ̂ 2 on the Sharpe ratio                                                          asymptotic distribution can be derived. The formal
+by calculating the proportion of asymptotic vari-                                                                definition of stationarity is that the joint probability
+ance that is attributable to µ̂ versus σ̂ 2 . From Equa-                                                         distribution F ( R t , R t , …, R t ) of an arbitrary col-
+                                                                                                                                      1    2        n
+tion 7, the fraction of VIID due to estimation error                                                             lection of returns R t , R t , …, R t does not change
+in µ̂ versus σ̂ 2 is simply                                                                                                              1     2        n
+                                                                                                                 if all the dates are incremented by the same number
+      ( ∂g/∂µ ) 2 σ 2                                                                                            of periods; that is,
+                                                        1
+      ------------------------------- = ----------------------------------                       (12a)
+                V IID                   1 + ( 1/2 ) SR2                                                          F ( R t + k, R t + k, …, R t + k ) = F ( Rt , Rt , …, Rt )    (13)
+                                                                                                                       1        2               n            1      2    n
+
+and                                                                                                              for all k. Such a condition implies that mean µ and
+      ( ∂g/∂σ ) 2 2σ 4                            ( 1/2 ) SR 2                                                   variance σ2 (and all higher moments) are constant
+      ---------------------------------- = ----------------------------------2 .                 (12b)           over time but otherwise allows for quite a broad set
+                  VIID                     1 + ( 1/2 ) SR
+                                                                                                                 of dynamics for Rt , including serial correlation,
+For a small Sharpe ratio, such as 0.25, this                                                                     dependence on such factors as the market portfolio,
+proportion—which depends only on the true Sharpe                                                                 time-varying conditional volatilities, jumps, and
+ratio—is 97.0 percent, indicating that most of the                                                               other empirically relevant phenomena.
+variability in the Sharpe ratio estimator is a result of                                                              Under the assumption of stationarity,4 a ver-
+variability in µ̂ . However, for higher Sharpe ratios,                                                           sion of the Central Limit Theorem can still be
+the reverse is true: For SR = 2.00, only 33.3 percent                                                            applied to the estimator SR . However, in this case,
+of the variability of SR comes from µ̂ , and for a                                                               the expression for the variance of SR is somewhat
+Sharpe ratio of 3.00, only 18.2 percent of the estima-                                                           more complex because of the possibility of depen-
+tor error of SR is attributable to µ̂ .                                                                          dence between the components µ̂ and σ̂ 2 . In the
+                                                                                                                 “Non-IID Returns” section of Appendix A, I show
+Non-IID Returns                                                                                                  that the asymptotic distribution can be derived by
+Many studies have documented various violations                                                                  using a “robust’’ estimator—an estimator that is
+of the assumption of IID returns for financial secu-                                                             effective under many different sets of assumptions
+rities;3 hence, the results of the previous section                                                              for the statistical properties of returns—to estimate
+may be of limited practical value in certain circum-                                                             the Sharpe ratio.5 In particular, I use a generalized
+stances. Fortunately, it is possible to derive similar                                                           method of moments (GMM) estimator to estimate µ̂
+results under more general conditions, conditions                                                                and σ̂ 2 , and the results of Hansen (1982) can be used
+that allow for serial correlation, conditional het-                                                              to obtain the following asymptotic distribution:
+eroskedasticity, and other forms of dependence                                                                                  a                         ∂g ∂g
+                                                                                                                  T ( SR – SR ) ~ N ( 0, V GMM ), V GMM = ------  -------- , (14)
+and heterogeneity in returns. In particular, if                                                                                                           ∂ ∂′
+
+
+July/August 2002                                                                                                                                                                39
+Financial Analysts Journal
+
+where the definitions of ∂g/∂ and  and a method                    numerator increases linearly with aggregation
+for estimating them are given in the second section                  value q whereas the denominator increases as the
+of Appendix A. Therefore, for non-IID returns, the                   square root of q under IID returns; hence, the ratio
+standard error of the Sharpe ratio can be estimated by               will increase as the square root of q, making a longer-
+                        a
+                                                                     horizon investment seem more attractive. This
+     SE[SR] =                    V̂ GMM /T                    (15)   interpretation is highly misleading and should not
+and confidence intervals for SR can be constructed                   be taken at face value. Indeed, the Sharpe ratio is not
+in a similar fashion to Equation 10.                                 a complete summary of the risks of a multiperiod
+                                                                     investment strategy and should never be used as the
+                                                                     sole criterion for making an investment decision.8
+Time Aggregation                                                          The asymptotic distribution of SR (q) follows
+In many applications, it is necessary to convert                     directly from Equation 17 because SR (q) is propor-
+Sharpe ratio estimates from one frequency to                         tional to SR:
+another. For example, a Sharpe ratio estimated from
+                                                                                                      a
+monthly data cannot be directly compared with one                                T [ SR ( q ) – qSR ] ~ N 0, VIID ( q ) ,
+estimated from annual data; hence, one statistic                                                                                                                 (18)
+                                                                                                            1 2
+must be converted to the same frequency as the other                          V IID ( q ) = qV IID = q  1 + --- SR  .
+to yield a fair comparison. Moreover, in some cases,                                                        2      
+it is possible to derive a more precise estimator of an
+annual quantity by using monthly or daily data and                        Non-IID Returns. The relationship between
+then performing time aggregation instead of esti-                    SR and SR(q) is somewhat more involved for non-
+mating the quantity directly using annual data.6                     IID returns because the variance of Rt (q) is not just
+      In the case of Sharpe ratios, the most common                  the sum of the variances of component returns but
+method for performing such time aggregation is to                    also includes all the covariances. Specifically, under
+multiply the higher-frequency Sharpe ratio by the                    the assumption that returns Rt are stationary,
+square root of the number of periods contained in                                                        q –1 q –1
+the lower-frequency holding period (e.g., multiply a                         Var [ Rt ( q ) ] = ∑ ∑ Cov ( R t – i , Rt – j )
+monthly estimator by 12 to obtain an annual esti-                                                        i =0 j =0
+                                                                                                                                                                 (19)
+mator). In this section, I show that this rule of thumb                                                                     q –1
+is correct only under the assumption of IID returns.                                                = qσ 2 + 2σ 2 ∑ ( q – k )ρk ,
+For non-IID returns, an alternative procedure must                                                                          k =1
+be used, one that accounts for serial correlation in                 where ρk ≡ Cov(Rt , Rt–k)/Var(Rt) is the kth-order
+returns in a very specific manner.                                   autocorrelation of Rt.9 This yields the following
+                                                                     relationship between SR and SR(q):
+    IID Returns. Consider first the case of IID
+                                                                                                                                q
+returns. Denote by Rt (q) the following q-period                     SR ( q ) = η ( q ) SR, η ( q ) ≡ ------------------------------------------------------ ,   (20)
+return:                                                                                                   q + 2 ∑ q –1 ( q – k )ρk
+                                                                                                                                     k =1
+     R t ( q ) ≡ Rt + Rt –1 + … + R t – q + 1 ,               (16)   Note that Equation 20 reduces to Equation 17 if all
+where I have ignored the effects of compounding                      autocorrelations ρk are zero, as in the case of IID
+for computational convenience.7 Under the IID                        returns. However, for non-IID returns, the adjust-
+assumption, the variance of Rt (q) is directly propor-               ment factor for time-aggregated Sharpe ratios is
+tional to q; hence, the Sharpe ratio satisfies the                   generally not q but a more complicated function
+simple relationship:                                                 of the first q – 1 autocorrelations of returns.
+
+                E [ Rt ( q ) ] – Rf ( q )                                 Example: First-Order Autoregressive
+     SR ( q ) = -------------------------------------------          Returns. To develop some intuition for the
+                         Var [ Rt ( q ) ]
+                                                                     potential impact of serial correlation on the Sharpe
+                     q ( µ – Rf )                             (17)   ratio, consider the case in which returns follow a
+                   = ----------------------
+                               qσ                                    first-order autoregressive process or “AR(1)”:
+                   =        qSR.                                             Rt = µ + ρ(Rt–1 – µ) + εt , –1 < ρ < 1,                                             (21)
+      Despite the fact that the Sharpe ratio may seem                where εt is IID with mean zero and variance σε2.
+to be “unitless’’ because it is the ratio of two quan-               In this case, the return in period t can be forecasted
+tities with the same units, it does depend on the                    to some degree by the return in period t – 1, and
+timescale with respect to which the numerator and                    this “autoregression’’ leads to serial correlation at
+denominator are defined. The reason is that the                      all lags. In particular, Equation 21 implies that the
+
+
+40                                                                                                                                             ©2002, AIMR®
+                                                                                                                          The Statistics of Sharpe Ratios
+
+kth-order autocorrelation coefficient is simply ρk;                                         scale factor is 3.46 in the IID case and 2.88 when the
+hence, the scale factor in Equation 20 can be eval-                                         monthly first-order autocorrelation is 20 percent.
+uated explicitly as                                                                              These patterns are summarized in Figure 1, in
+                                                               –1/2
+                                                                                            which η(q) is plotted as a function of q for five
+                       2ρ                1–ρ 
+                                                      q                                     values of ρ. The middle (ρ = 0) curve corresponds
+    η(q ) =   q 1 + ------------  1 – --------------------        .        (22)           to the standard scale factor q , which is the correct
+                    1–ρ               q ( 1 – ρ )
+
+      Table 2 presents values of η(q) for various
+values of ρ and q; the row corresponding to ρ = 0                                           Figure 1. Scale Factors of Time-Aggregated
+percent is the IID case in which the scale factor is                                                  Sharpe Ratios When Returns Follow
+simply q. Note that for each holding-period q,                                                        an AR(1) Process: For  = –0.50, –0.25,
+positive serial correlation reduces the scale factor                                                  0, 0.25, and 0.50
+below the IID value and negative serial correlation                                          Scale Factor, η(q)
+increases it. The reason is that positive serial corre-                                      30
+lation implies that the variance of multiperiod
+returns increases faster than holding-period q;                                              25
+                                                                                                                                                        ρ = 0.50
+hence, the variance of Rt (q) is more than q times the
+                                                                                             20
+variance of Rt, yielding a larger denominator in the
+                                                                                                                                                        ρ = 0.25
+Sharpe ratio than the IID case. For returns with                                             15
+negative serial correlation, the opposite is true: The                                                                                                  ρ=0
+variance of Rt (q) is less than q times the variance of                                      10                                                        ρ = 0.25
+Rt , yielding a smaller denominator in the Sharpe                                                                                                      ρ = 0.50
+ratio than the IID case. For returns with significant                                         5
+serial correlation, this effect can be substantial. For
+                                                                                              0
+example, the annual Sharpe ratio of a portfolio with                                              0        50        100           150           200          250
+a monthly first-order autocorrelation of –20 percent
+                                                                                                                  Aggregation Value, q
+is 4.17 times the monthly Sharpe ratio, whereas the
+
+
+
+              Table 2. Scale Factors for Time-Aggregated Sharpe Ratios When Returns
+                       Follow an AR(1) Process for Various Aggregation Values and First-
+                       Order Autocorrelations
+                                                                               Aggregation Value, q
+               ρ
+              (%)                 2               3             4        6           12           24      36       48        125          250
+               90               1.03            1.05           1.07     1.10         1.21         1.41    1.60     1.77      2.67         3.70
+               80               1.05            1.10           1.14     1.21         1.43         1.81    2.14     2.42      3.79         5.32
+               70               1.08            1.15           1.21     1.33         1.65         2.19    2.62     3.00      4.75         6.68
+               60               1.12            1.21           1.30     1.46         1.89         2.55    3.08     3.53      5.63         7.94
+               50               1.15            1.28           1.39     1.60         2.12         2.91    3.53     4.06      6.49         9.15
+               40               1.20            1.35           1.49     1.75         2.36         3.27    3.98     4.58      7.35        10.37
+               30               1.24            1.43           1.60     1.91         2.61         3.65    4.44     5.12      8.23        11.62
+               20               1.29            1.52           1.73     2.07         2.88         4.04    4.93     5.68      9.14        12.92
+               10               1.35            1.62           1.86     2.25         3.16         4.45    5.44     6.28     10.12        14.31
+
+                 0              1.41            1.73           2.00     2.45         3.46         4.90    6.00     6.93     11.18        15.81
+
+              –10               1.49            1.85           2.16     2.66         3.80         5.39    6.61     7.64     12.35        17.47
+              –20               1.58            1.99           2.33     2.90         4.17         5.95    7.31     8.45     13.67        19.35
+              –30               1.69            2.13           2.53     3.17         4.60         6.59    8.10     9.38     15.20        21.52
+              –40               1.83            2.29           2.75     3.48         5.09         7.34    9.05    10.48     17.01        24.11
+              –50               2.00            2.45           3.02     3.84         5.69         8.26   10.21    11.84     19.26        27.31
+              –60               2.24            2.61           3.37     4.30         6.44         9.44   11.70    13.59     22.19        31.50
+              –70               2.58            2.76           3.86     4.92         7.45     11.05      13.77    16.04     26.33        37.43
+              –80               3.16            2.89           4.66     5.91         8.96     13.50      16.98    19.88     32.96        47.02
+              –90               4.47            2.97           6.47     8.09        12.06     18.29      23.32    27.61     46.99        67.65
+
+
+
+
+July/August 2002                                                                                                                                                41
+Financial Analysts Journal
+
+factor when the correlation coefficient is zero. The               where ν3 ≡ E[(Rt – µ)3] and ν4 ≡ E[(Rt – µ)4] are the
+curves above the middle one correspond to positive                 return’s third and fourth moments, respectively.
+values of ρ, and those below the middle curve                      Now suppose that returns are normally distributed.
+correspond to negative values of ρ. It is apparent                 In that case, ν3 = 0 and ν4 = 3σ4, which implies that
+that serial correlation has a nontrivial effect on the                                                                                         q –1            2
+                                                                                                                                                          j
+time aggregation of Sharpe ratios.
+                                                                                                                                               ∑  1 – --q
+                                                                                                                                           2
+                                                                        V GMM ( q ) = V IID ( q ) + ( qSR )
+                                                                                                                                                                    (26)
+                                                                                                                                               j =1
+      The General Case. More generally, using the
+                                                                                               ≥ V IID ( q ).
+expression for SR (q) in Equation 20, we can con-
+struct an estimator of SR(q) from estimators of the                The second term on the right side of Equation 26
+first q – 1 autocorrelations of Rt under the assump-               represents the additional estimation error intro-
+tion of stationary returns. As in the “Non-IID                     duced by the estimated autocovariances in the
+Return” section, we can use GMM to estimate these                  more general estimator given in Equation A18 in
+autocorrelations as well as their asymptotic joint                 Appendix A. By setting q = 1 so that no time aggre-
+distribution, which can then be used to derive the                 gation is involved in the Sharpe ratio estimator
+following limiting distribution of SR (q):                         (hence, no autocovariances enter into the estima-
+                                                                   tor), the expression in Equation 26 reduces to the
+       T [ SR ( q ) – SR ( q ) ] ~a N 0, V GMM ( q ) ,             IID case given in Equation 18.
+                                                            (23)
+                   ∂g ∂g                                                The asymptotic relative efficiency of SR (q) can
+     V GMM ( q ) = ------  -------- ,                             be evaluated explicitly by computing the ratio of
+                   ∂ ∂′
+                                                                   VGMM (q) to VIID (q) in the case of IID normal returns:
+where the definitions of ∂g/∂ and  and formulas
+for estimating them are given in the “Time Aggre-                      V GMM ( q )                     2 ∑ qj =1     –1
+                                                                                                                          ( 1 – j/q ) 2
+gation” section of Appendix A. The standard error                      ------------------------- = 1 + -------------------------------------------
+                                                                                                                                                 -,                 (27)
+                                                                          V IID ( q )                           1 + 2/SR 2
+of SR (q) is then given by
+                                                                   and Table 3 reports these ratios for various combi-
+                       a
+     SE [ SR ( q ) ] =        V̂GMM ( q )/T                 (24)   nations of Sharpe ratios and aggregation values q.
+                                                                   Even for small aggregation values, such as q = 2,
+and confidence intervals can be constructed as in
+                                                                   asymptotic variance VGMM (q) is significantly higher
+Equation 10.
+                                                                   than VIID (q)—for example, 33 percent higher for a
+                                                                   Sharpe ratio of 2.00. As the aggregation value
+     Using V GMM ( q ) When Returns Are IID.                       increases, the asymptotic relative efficiency becomes
+Although the robust estimator for SR (q) is the                    even worse as more estimation error is built into the
+appropriate estimator to use when returns are                      time-aggregated Sharpe ratio estimator. Even with
+serially correlated or non-IID in other ways, there                a monthly Sharpe ratio of only 1.00, the annualized
+is a cost: additional estimation error induced by                  (q = 12) robust Sharpe ratio estimator has an asymp-
+the autocovariance estimator, γ̂ k, which manifests                totic variance that is 334 percent of VIID (q).
+itself in the asymptotic variance, V̂ GM M ( q ), of                    The values in Table 3 suggest that, unless
+SR (q). To develop a sense for the impact of esti-                 there is significant serial correlation in return
+mation error on V̂ GM M ( q ), consider the robust                 series Rt , the robust Sharpe ratio estimator should
+estimator when returns are, in fact, IID. In that                  not be used. A useful diagnostic to check for the
+case, γk = 0 for all k > 0 but because the robust                  presence of serial correlation is the Ljung–Box
+estimator is a function of estimators γ̂ k , the estima-           (1978) Q-statistic:
+tion errors of the autocovariance estimators will                                           q –1 ρ̂ 2
+have an impact on V̂ GM M ( q ) . In particular, in the                Q q –1 = T ( T + 2 ) ∑ ------------ ,
+                                                                                                     k
+                                                                                                                                                                    (28)
+                                                                                                T–k
+“Using V̂ GM M ( q ) When Returns Are IID” section                                                          k =1
+of Appendix A, I show that for IID returns, the
+                                                                   which is asymptotically distributed as χ 2q –1 under
+asymptotic variance of robust estimator SR (q) is
+                                                                   the null hypothesis of no serial correlation.10 If
+given by
+                                                                   Qq – 1 takes on a large value—for example, if it
+                      ν 3 SR                      SR2              exceeds the 95 percent critical value of the χ 2q –1
+     VGMM ( q ) = 1 – ------------
+                                 - + ( ν   – σ  )
+                                               4 --------
+                                                        -          distribution—this signals significant serial corre-
+                          σ3             4        4σ 4
+                                                            (25)
+                                                                   lation in returns and suggests that the robust
+                                         q –1 
+                                           j
+                                                   2               Sharpe ratio, SR (q), should be used instead of
+                        + ( qSR ) ∑  1 – -- ,
+                                     2
+                                          q                         qSR for estimating the Sharpe ratio of q-period
+                                    
+                                         j =1                      returns.
+
+
+42                                                                                                                                                    ©2002, AIMR®
+                                                                                                  The Statistics of Sharpe Ratios
+
+             Table 3. Asymptotic Relative Efficiency of Robust Sharpe Ratio Estimator
+                      When Returns Are IID
+                                                          Aggregation Value, q
+             SR          2        3         4        6        12       24          36      48     125       250
+             0.50       1.06     1.12     1.19     1.34      1.78     2.67         3.56    4.45   10.15    19.41
+             0.75       1.11     1.24     1.38     1.67      2.54     4.30         6.05    7.81   19.07    37.37
+             1.00       1.17     1.37     1.58     2.02      3.34     6.00         8.67   11.34   28.45    56.22
+             1.25       1.22     1.49     1.77     2.34      4.08     7.59    11.09       14.60   37.11    73.66
+             1.50       1.26     1.59     1.93     2.62      4.72     8.95    13.18       17.42   44.59    88.71
+             1.75       1.30     1.67     2.06     2.85      5.25    10.08    14.92       19.76   50.81   101.22
+             2.00       1.33     1.74     2.17     3.04      5.69    11.01    16.34       21.67   55.89   111.45
+             2.25       1.36     1.80     2.25     3.19      6.04    11.76    17.49       23.23   60.02   119.75
+             2.50       1.38     1.84     2.33     3.31      6.32    12.37    18.43       24.49   63.38   126.51
+             2.75       1.40     1.88     2.38     3.42      6.56    12.87    19.20       25.52   66.12   132.02
+             3.00       1.41     1.91     2.43     3.50      6.75    13.28    19.83       26.37   68.37   136.55
+             Note: Asymptotic relative efficiency is given by VGMM (q)/VIID (q).
+
+
+
+
+An Empirical Example                                                annual Sharpe ratio, qSR (in Table 4, 12SR ), and
+                                                                    the robust estimator that accounts for serial
+To illustrate the potential impact of estimation error
+                                                                    correlation, SR (12). For example, even in the case
+and serial correlation in computing Sharpe ratios, I
+                                                                    of the Fidelity Magellan Fund, which has the
+apply the estimators described in the preceding sec-
+                                                                    highest first-order autocorrelation among the 10
+tions to the monthly historical total returns of the 10
+                                                                    mutual funds, the difference between a qSR of
+largest (as of February 11, 2001) mutual funds from
+                                                                    0.73 and a SR (12) of 0.66 is not substantial (and
+various start dates through June 2000 and 12 hedge
+                                                                    certainly not statistically significant). Note that the
+funds from various inception dates through Decem-
+                                                                    robust estimator is marginally lower than the IID
+ber 2000. Monthly total returns for the mutual funds
+                                                                    estimator, indicating the presence of positive
+were obtained from the University of Chicago’s Cen-                 serial correlation in the monthly returns of the
+ter for Research in Security Prices. The 12 hedge                   Magellan Fund. In contrast, for Washington
+funds were selected from the Altvest database to                    Mutual Investors, the IID estimate of the annual
+yield a diverse range of annual Sharpe ratios (from                 Sharpe ratio is qSR = 0.60 but the robust estimate
+1.00 to 5.00) computed in the standard way ( qSR ,                  is larger, SR (12) = 0.65, because of negative serial
+where SR is the Sharpe ratio estimator applied to                   correlation in the fund’s monthly returns (recall
+monthly returns), with the additional requirement                   that negative serial correlation implies that the
+that the funds have a minimum five-year history of                  variance of the sum of 12 monthly returns is less
+returns. The names of the hedge funds have been                     than 12 times the variance of monthly returns).
+omitted to maintain their privacy, and I will refer to                   The robust standard errors SE3(12) with m = 3
+them only by their investment styles (e.g., relative                for SR (12) for the mutual funds range from 0.17
+value fund, risk arbitrage fund).11                                 (Janus) to 0.47 (Fidelity Growth and Income) and
+      Table 4 shows that the 10 mutual funds have                   take on similar values when m = 6, which indicates
+little serial correlation in returns, with p-values of              that the robust estimator is reasonably well behaved
+Q-statistics ranging from 13.2 percent to 80.2                      for this dataset. The magnitudes of the standard
+percent.12 Indeed, the largest absolute level of                    errors yield 95 percent confidence intervals for
+autocorrelation among the 10 mutual funds is the                    annual Sharpe ratios that do not contain 0 for any
+12.4 percent first-order autocorrelation of the                     of the 10 mutual funds. For example, the 95 percent
+Fidelity Magellan Fund. With a risk-free rate of 5/                 confidence interval for the Vanguard 500 Index
+12 percent per month, the monthly Sharpe ratios                     fund is 0.85 ± (1.96 × 0.26), which is (0.33, 1.36).
+of the 10 mutual funds range from 0.14 (Growth                      These results indicate Sharpe ratios for the 10
+Fund of America) to 0.32 (Janus Worldwide), with                    mutual funds that are statistically different from 0
+robust standard errors of 0.05 and 0.11, respec-                    at the 95 percent confidence level.
+tively. Because of the lack of serial correlation in                     The results for the 12 hedge funds are different
+the monthly returns of these mutual funds, there                    in several respects. The mean returns are higher and
+is little difference between the IID estimator for the              the standard deviations lower, implying much
+
+
+July/August 2002                                                                                                              43
+Financial Analysts Journal
+
+Table 4. Monthly and Annual Sharpe Ratio Estimates for a Sample of Mutual Funds and Hedge Funds
+                                                                                 p-Value   Monthly                     Annual
+                           Start           µ̂     σ̂      ρ̂ 1    ρ̂ 2    ρ̂ 3    of Q11
+Fund                       Date     T     (%)    (%)     (%)     (%)     (%)       (%)     SR   SE3       12SR    SR(12) SE3(12)      SE6(12)
+Mutual funds
+Vanguard 500 Index         10/76    286 1.30     4.27    –4.0    –6.6    –4.9     64.5     0.21 0.06      0.72      0.85     0.26      0.25
+Fidelity Magellan           1/67    402 1.73     6.23    12.4    –2.3    –0.4     28.6     0.21 0.06      0.73      0.66     0.20      0.21
+Investment Company
+  of America                1/63    450 1.17     4.01     1.8    –3.2    –4.5     80.2     0.19 0.05      0.65      0.71     0.22      0.22
+Janus                       3/70    364 1.52     4.75    10.5    –0.0    –3.7     58.1     0.23 0.06      0.81      0.80     0.17      0.17
+Fidelity Contrafund         5/67    397 1.29     4.97     7.4    –2.5    –6.8     58.2     0.18 0.05      0.61      0.67     0.23      0.23
+Washington
+ Mutual Investors           1/63    450 1.13     4.09    –0.1    –7.2    –2.6     22.8     0.17 0.05      0.60      0.65     0.20      0.20
+Janus Worldwide             1/92    102 1.81     4.36    11.4     3.4    –3.8     13.2     0.32 0.11      1.12      1.29     0.46      0.37
+Fidelity Growth and
+  Income                    1/86    174 1.54     4.13     5.1    –1.6    –8.2     60.9     0.27 0.09      0.95      1.18     0.47      0.40
+American Century
+ Ultra                     12/81    223 1.72     7.11     2.3     3.4     1.4     54.5     0.18 0.07      0.64      0.71     0.27      0.25
+Growth Fund of
+ America                    7/64    431 1.18     5.35     8.5    –2.7    –4.1     45.4     0.14 0.05      0.50      0.49     0.19      0.20
+
+Hedge funds
+Convertible/option
+ arbitrage                  5/92    104 1.63     0.97    42.6    29.0    21.4      0.0     1.26 0.28      4.35      2.99     1.04      1.11
+Relative value             12/92     97 0.66     0.21    25.9    19.2    –2.1      4.5     1.17 0.17      4.06      3.38     1.16      1.07
+Mortgage-backed
+ securities                 1/93     96 1.33     0.79    42.0    22.1    16.7      0.1     1.16 0.24      4.03      2.44     0.53      0.54
+High-yield debt             6/94     79 1.30     0.87    33.7    21.8    13.1      5.2     1.02 0.27      3.54      2.25     0.74      0.72
+Risk arbitrage A            7/93     90 1.06     0.69    –4.9 –10.8       6.9     30.6     0.94 0.20      3.25      3.83     0.87      0.85
+Long–short equities         7/89    138 1.18     0.83 –20.2      24.6     8.7      0.1     0.92 0.06      3.19      2.32     0.35      0.37
+Multistrategy A             1/95     72 1.08     0.75    48.9    23.4     3.3      0.3     0.89 0.40      3.09      2.18     1.14      1.19
+Risk arbitrage B           11/94     74 0.90     0.77    –4.9     2.5    –8.3     96.1     0.63 0.14      2.17      2.47     0.79      0.77
+Convertible arbitrage A     9/92    100 1.38     1.60    33.8    30.8     7.9      0.8     0.60 0.18      2.08      1.43     0.44      0.45
+Convertible arbitrage B     7/94     78 0.78     0.62    32.4     9.7    –4.5     23.4     0.60 0.18      2.06      1.67     0.68      0.62
+Multistrategy B             6/89    139 1.34     1.63    49.0    24.6    10.6      0.0     0.57 0.16      1.96      1.17     0.25      0.25
+Fund of funds              10/94     75 1.68     2.29    29.7    21.1     0.9     23.4     0.56 0.19      1.93      1.39     0.67      0.70
+Note: For the mutual fund sample, monthly total returns from various start dates through June 2000; for the hedge fund sample, various
+start dates through December 2000. The term ρ̂ k denotes the kth autocorrelation coefficient, and Q11 denotes the Ljung–Box Q-statistic,
+which is asymptotically χ 211 under the null hypothesis of no serial correlation. SR denotes the usual Sharpe ratio estimator, ( µ̂ – R f )/σ̂,
+which is based on monthly data; Rf is assumed to be 5/12 percent per month; and SR (12) denotes the annual Sharpe ratio estimator
+that takes into account serial correlation in monthly returns. All standard errors are based on GMM estimators using the Newey–West
+(1982) procedure with truncation lag m = 3 for entries in the SE3 and SE3 (12) columns and m = 6 for entries in the SE6 (12) column.
+
+
+
+
+higher Sharpe ratio estimates for hedge funds than                          correlation: All but 5 of the 12 hedge funds have
+for mutual funds. The monthly Sharpe ratio esti-                            p-values less than 5 percent, and several are less than
+mates, SR , range from 0.56 (“Fund of funds”) to 1.26                       1 percent.
+(“Convertible/option arbitrage”), in contrast to the                             The impact of serial correlation on the annual
+range of 0.14 to 0.32 for the 10 mutual funds. How-                         Sharpe ratios of hedge funds is dramatic. When the
+ever, the serial correlation in hedge fund returns is                       IID estimator, 12SR , is used for the annual Sharpe
+also much higher. For example, the first-order auto-                        ratio, the “Convertible/option arbitrage” fund has
+correlation coefficient ranges from –20.2 percent to                        a Sharpe ratio estimate of 4.35, but when serial
+49.0 percent among the 12 hedge funds, whereas the                          correlation is properly taken into account by
+highest first-order autocorrelation is 12.4 percent                         SR (12), the estimate drops to 2.99, implying that the
+among the 10 mutual funds. The p-values provide a                           IID estimator overstates the annual Sharpe ratio by
+more complete summary of the presence of serial                             45 percent. The annual Sharpe ratio estimate for the
+
+
+
+44                                                                                                                         ©2002, AIMR®
+                                                                                  The Statistics of Sharpe Ratios
+
+“Mortgage-backed securities” fund drops from 4.03         Conclusion
+to 2.44 when serial correlation is taken into account,    Although the Sharpe ratio has become part of the
+implying an overstatement of 65 percent. However,         canon of modern financial analysis, its applications
+the annual Sharpe ratio estimate for the “Risk arbi-      typically do not account for the fact that it is an
+trage A” fund increases from 3.25 to 3.83 because of      estimated quantity, subject to estimation errors that
+negative serial correlation in its monthly returns.       can be substantial in some cases. The results pre-
+     The sharp differences between the annual IID         sented in this article provide one way to gauge the
+and robust Sharpe ratio estimates underscore the          accuracy of these estimators, and it should come as
+importance of correctly accounting for serial cor-        no surprise that the statistical properties of Sharpe
+relation in analyzing the performance of hedge            ratios depend intimately on the statistical proper-
+funds. Naively estimating the annual Sharpe ratios        ties of the return series on which they are based.
+by multiplying SR by 12 will yield the rank               This suggests that a more sophisticated approach
+ordering given in the SR 12 column of Table 4,            to interpreting Sharpe ratios is called for, one that
+but once serial correlation is taken into account, the    incorporates information about the investment
+                                                          style that generates the returns and the market
+rank ordering changes to 3, 2, 5, 7, 1, 6, 8, 4, 10, 9,
+                                                          environment in which those returns are generated.
+12, and 11.
+                                                          For example, hedge funds have very different
+     The robust standard errors for the annual            return characteristics from the characteristics of
+robust Sharpe ratio estimates of the 12 hedge funds       mutual funds; hence, the comparison of Sharpe
+range from 0.25 to 1.16, which although larger than       ratios between these two investment vehicles can-
+those in the mutual fund sample, nevertheless             not be performed naively. In light of the recent
+imply 95 percent confidence intervals that gener-         interest in alternative investments by institutional
+ally do not include 0. For example, even in the case      investors—investors that are accustomed to stan-
+of the “Multistrategy B” fund, which has the lowest       dardized performance attribution measures such
+robust Sharpe ratio estimate (1.17), its 95 percent       as the annualized Sharpe ratio—there is an even
+confidence interval is 1.17 ± 1.96 × 0.25, which is       greater need to develop statistics that are consistent
+(0.68, 1.66). These statistically significant Sharpe      with a portfolio’s investment style.
+ratios are consistent with previous studies that doc-          The empirical example underscores the practi-
+ument the fact that hedge funds do seem to exhibit        cal relevance of proper statistical inference for
+statistically significant excess returns.13 The simi-     Sharpe ratio estimators. Ignoring the impact of serial
+larity of the standard errors between the m = 3 and       correlation in hedge fund returns can yield annual-
+m = 6 cases for the hedge fund sample indicates that      ized Sharpe ratios that are overstated by more than
+the robust estimator is also well behaved in this         65 percent, understated Sharpe ratios in the case of
+                                                          negatively serially correlated returns, and inconsis-
+case, despite the presence of significant serial cor-
+                                                          tent rankings across hedge funds of different styles
+relation in monthly returns.
+                                                          and objectives. By using the appropriate statistical
+     In summary, the empirical examples illustrate        distribution for quantifying the performance of each
+the potential impact that serial correlation can have     return history, the Sharpe ratio can provide a more
+on Sharpe ratio estimates and the importance of           complete understanding of the risks and rewards of
+properly accounting for departures from the stan-         a broad array of investment opportunities.
+dard IID framework. Robust Sharpe ratio estima-
+tors contain significant additional information           I thank Nicholas Chan, Arnout Eikeboom, Jim Holub,
+about the risk–reward trade-offs for active invest-       Chris Jakob, Laurel Kenner, Frank Linet, Jon Markman,
+ment products, such as hedge funds; more detailed         Victor Niederhoffer, Dan O’Reilly, Bill Sharpe, and
+analysis of the risks and rewards of hedge fund           Jonathan Taylor for helpful comments and discussion.
+investments is performed in Getmansky, Lo, and            Research support from AlphaSimplex Group is grate-
+Makarov (2002) and Lo (2001).                             fully acknowledged.
+
+
+
+
+July/August 2002                                                                                              45
+Financial Analysts Journal
+
+Appendix A. Asymptotic Distributions of Sharpe Ratio Estimators
+The first section of this appendix presents results for IID returns, and the second section presents
+corresponding results for non-IID returns. Results for time-aggregated Sharpe ratios are reported in the
+third section, and in the final section, the asymptotic variance, VGMM (q), of the time-aggregated robust
+estimator, SR (q), is derived for the special case of IID returns.
+     Throughout the appendix, the following conventions are maintained: (1) all vectors are column vectors
+unless otherwise indicated; (2) vectors and matrixes are always typeset in boldface (i.e., X and µ are scalars
+and X and  are vectors or matrixes).
+
+IID Returns
+To derive an expression for the asymptotic distribution of SR , we must first obtain the asymptotic joint
+distribution of µ̂ and σ̂ 2 . Denote by ˆ the column vector ( µ̂ σ̂ 2 )′ and let  denote the corresponding
+column vector of population values ( µ σ 2 )′. If returns are IID, it is a well-known consequence of the Central
+Limit Theorem that the asymptotic distribution of ˆ is given by (see White):
+
+                                             2    
+                                              σ  0 
+                     a
+        T ( ˆ –  ) ~ N ( 0 , V θ ), V θ ≡         ,                                                         (A1)
+                                                 4
+                                             0 2σ 
+where the notation ~a indicates that this is an asymptotic approximation. Because the Sharpe ratio estimator
+SR can be written as a function g ( ˆ ) of ˆ , its asymptotic distribution follows directly from Taylor’s theorem
+or the so-called delta method (see, for example, White):
+
+                                a                     ∂g          ∂g
+       T [ g ( ˆ ) – g (  ) ] ~ N ( 0, V g ), V g ≡ ------ V θ -------- .                                    (A2)
+                                                      ∂         ∂′
+In the case of the Sharpe ratio, g(.) is given by Equation 2; hence,
+
+       ∂g                1/σ
+      -------- =                         ,                                                                     (A3)
+      ∂′        – ( µ – R f )/ ( 2σ 3 )
+
+which yields the following asymptotic distribution for SR :
+
+                     a                             ( µ – Rf )                 2
+                                                                                1
+       T ( SR – SR ) ~ N ( 0, V IID ), V IID = 1 + ---------------------- = 1 + --- SR 2 .                     (A4)
+                                                         2σ      2              2
+
+
+Non-IID Returns
+Denote by Xt the vector of period-t returns and lags ( Rt Rt–1 . . . Rt–q+1 )′ and let (Xt ) be a stochastic process
+that satisfies the following conditions:
+      H1: {Xt : t ∈ (–∞, ∞)} is stationary and ergodic;
+      H2: 0 ∈ ,  is an open subset of ℜk;
+      H3: ∀ ∈ , (., ) and θ (., ) are Borel measurable and θ {X, .} is continuous on  for all X;
+      H4: θ is first-moment continuous at 0; E[θ (X, .)] exists, is finite, and is of full rank.
+      H5: Let t ≡ (Xt , 0)
+and
+      vj ≡ E[0| – 1,  – 2 , . . .] – E[0| – j – 1 ,  – j – 2 , . . .]
+
+
+
+
+46                                                                                                    ©2002, AIMR®
+                                                                                 The Statistics of Sharpe Ratios
+
+and assume
+    (i):     E[0′0] exists and is finite,
+    (ii): vj converges in mean square to 0, and
+               ∞
+    (iii):
+              ∑ E (v′j vj )1/2 is finite,
+             j=0
+which implies E[(Xt , 0)] = 0.
+                                        T
+
+                                       ∑  ( Xt,  ) = 0.
+                     1
+    H6: Let ˆ solve ---
+                     T
+                                       t =1
+Then, Hansen shows that
+                                            –1  – 1′
+     T ( ˆ –  0 ) ~a N ( 0, V θ ), V θ ≡ H                                                             (A5)
+
+where
+
+              1 T
+    H ≡ lim E --- ∑   ( X t,  0 ) ,                                                                     (A6)
+        T→∞ T
+                           t =1
+
+
+              1 T T
+     ≡ lim E --- ∑ ∑  ( X t,  0 ) ( X s,  0 )′ ,                                                      (A7)
+        T→∞ T
+                           t =1 s =1
+
+and θ (Rt, ) denotes the derivative of (Rt, ) with respect to .14 Specifically, let (Rt , ) denote the
+following vector function:
+
+                               Rt – µ
+     ( R t,  ) ≡                            .                                                            (A8)
+                       ( Rt – µ ) 2 – σ 2
+
+The GMM estimator of , denoted by ˆ , is given implicitly by the solution to
+    1 T
+    --- ∑  ( Rt,  ) = 0,                                                                                 (A9)
+    T
+      t =1
+
+which yields the standard estimators µ̂ and σ̂ 2 given in Equation 3. For the moment conditions in Equation
+A8, H is given by:
+              T                   
+             1         –1       0 
+       T → ∞  T ∑ 2 ( µ – Rt ) –1 
+    H≡ lim E  ---                  = –I .                                                               (A10)
+                  t =1
+                                   
+Therefore, V =  and the asymptotic distribution of the Sharpe ratio estimator follows from the delta
+method as in the first section:
+                                              ∂g ∂g
+     T ( SR – SR ) ~a N ( 0, V GMM ), V GMM = ------  -------- ,                                         (A11)
+                                              ∂ ∂′
+where ∂g/∂ is given in Equation A3. An estimator for ∂g/∂ may be obtained by substituting ˆ into
+Equation A3, and an estimator for  may be obtained by using Newey and West’s (1987) procedure:
+                       m
+          0 ∑ ω ( j, m ) (  j + ′j ), m « T,
+    ˆ = 
+       ˆ +                ˆ     ˆ                                                                        (A12)
+                     j =1
+
+                   T
+    ˆ ≡ --1-
+        T ∑
+     j       ( R t, ˆ ) ( R t – j , ˆ )′,                                                            (A13)
+                t = j+1
+
+                           j
+    ω ( j, m ) ≡ 1 – -------------- ,                                                                     (A14)
+                     m+1
+
+
+July/August 2002                                                                                             47
+Financial Analysts Journal
+
+and m is the truncation lag, which must satisfy the condition m/T → ∞ as T increases without bound to
+ensure consistency. An estimator for VSR can then be constructed as
+              ∂g ( ˆ ) ˆ ∂g ( ˆ )
+     V̂ GMM = --------------  -------------- .                                                           (A15)
+                  ∂              ∂′
+
+
+Time Aggregation
+Let  ≡ [µ σ2 γ1 … γq–1]′ denote the vector of parameters to be estimated, where γk is the kth-order
+autocovariance of Rt , and define the following moment conditions:
+         ϕ1 ( Xt ,  ) = Rt – µ
+
+         ϕ2 ( Xt ,  ) = ( Rt – µ )2 – σ2
+         ϕ 3 ( X t ,  ) = ( R t – µ ) ( R t –1 – µ ) – γ1
+         ϕ 4 ( X t ,  ) = ( R t – µ ) ( R t –2 – µ ) – γ2                                                (A16)
+                             ⯗
+     ϕ q + 1 ( X t ,  ) = ( R t – µ ) ( R t – q +1 – µ ) – γq –1
+
+          ( Xt ,  ) ≡           ϕ 1 ϕ 2 ϕ 3 … ϕ q +1 ′ ,
+
+where X t ≡ R t R t –1 … R t – q +1 ′ . The GMM estimator ˆ is defined by Equation A9, which yields the
+standard estimators µ̂ and σ̂ 2 in Equation 3 as well as the standard estimators for the autocovariances:
+
+                        T
+            1
+     γ̂ k = ---
+            T       ∑ ( Rt – µ̂ ) ( Rt – k – µ̂ ).                                                        (A17)
+                  t = k +1
+
+The estimator for the Sharpe ratio then follows directly:
+                                                                  q
+     SR ( q ) = η̂ ( q ) SR, η̂ ( q ) ≡ ------------------------------------------------------ ,          (A18)
+                                             q + 2∑              q –1
+                                                                         ( q – k )ρ̂ k
+                                                                        k =1
+
+where
+
+             γ̂k
+     ρ̂ k = -----2- .
+            σ̂
+As in the first two sections of this appendix, the asymptotic distribution of SR (q) can be obtained by applying
+the delta method to g ( ˆ ) where the function g(.) is now given by Equation 20. Recall from Equation A5 that
+the asymptotic distribution of the GMM estimator ˆ is given by
+                    a                                            –1         –1
+       T ( ˆ –  ) ~ N ( 0, V θ ), V θ ≡ H H ′                                                          (A19)
+
+
+               1 T T
+      ≡ lim E --- ∑ ∑  ( X t,  ) ( X s,  )′ .                                                        (A20)
+         T→∞ T
+                             t =1 s =1
+
+For the moment conditions in Equation A16, H is
+
+                              –1             0 0 … 0 
+                                                       
+                T        2 ( µ – Rt )       –1 0 … 0 
+               1                                       
+     H = lim E  --- ∑ 2µ – R t – R t –1 0 – 1 … 0  = – I;                                               (A21)
+         T → ∞ T                                       
+                t =1           ⯗             ⯗ ⯗ ... ⯗ 
+                      2µ – R t – R t – q +1 0 … 0 – 1 
+               
+
+
+
+
+48                                                                                                 ©2002, AIMR®
+                                                                                                              The Statistics of Sharpe Ratios
+
+hence, V = . The asymptotic distribution of SR (q) then follows from the delta method:
+
+                                   a                                  ∂g ∂g
+         T [ SR ( q ) – SR ( q ) ] ~ N 0, V GMM ( q ) , V GMM ( q ) = ------  -------- ,                                              (A22)
+                                                                      ∂ ∂′
+
+where the components of ∂g/∂ are
+      ∂g                                   q
+      ------ = ----------------------------------------------------------                                                              (A23)
+      ∂µ
+                 σ q + 2 ∑ k = 1 ( q – k )ρ k
+                                             q –1
+
+
+
+        ∂g                                         q 2 SR
+      --------- = – -------------------------------------------------------------------------- ,                                       (A24)
+      ∂σ     2                                                                         3/2
+                    2σ 2 q + 2 q –1 ( q – k )ρ   ∑ k =2                          k
+
+
+       ∂g                                q ( q – k ) SR
+      -------- = – ----------------------------------------------------------------------- , k =1, …, q –1,                            (A25)
+      ∂γ k                                                                         3/2
+                   σ 2 q + 2 ∑ q –1 ( q – k )ρ k
+                                                   k =1
+
+and
+
+      ∂g       ∂g ∂g ∂g                         ∂g
+      ------ = ------ --------2- -------- … ------------- .                                                                            (A26)
+      ∂       ∂µ ∂σ ∂γ 1 ∂γ q –1
+
+Substituting ˆ into Equation A26, estimating  according to Equation A12, and forming the matrix product
+∂g ( ˆ )/∂∂g ( ˆ )/∂′ yields an estimator for the asymptotic variance of SR (q).
+
+
+
+Using V GMM ( q ) When Returns Are IID
+For IID returns, it is possible to evaluate  in Equation A20 explicitly as
+           2                     
+           σ    v3    0 0 … 0 
+                                 
+           v3 v4 – σ4 0 0 … 0 
+                                           
+                      σ 4 0 … ⯗  =   1 0  ,
+       =  0     0
+                                                                                                                                     (A27)
+           0     0    0 σ 4 … 0     0 2 
+          
+           0     0    ⯗ ⯗ ... ⯗ 
+                                 
+           0     0    0 0 … σ4 
+                                 
+
+where ν3 ≡ E [(Rt – µ)3], ν4 ≡ E[(Rt – µ)4], and  is partitioned into a block-diagonal matrix with a (2 × 2)
+matrix 1 and a diagonal (q – 1) × (q – 1) matrix 2 = σ4I along its diagonal. Because γk = 0 for all k > 0,
+∂g/∂ simplifies to
+
+      ∂g           q
+      ------ = ------ ,                                                                                                                (A28)
+      ∂µ         σ
+
+        ∂g              qSR
+      --------- = – -------------
+                                -,                                                                                                     (A29)
+      ∂σ 2            2σ 2
+
+       ∂g          q ( q – k ) SR
+                                            - , k =1, …, q –1,
+      -------- = – --------------------------                                                                                          (A30)
+      ∂γk               σ 2 q 3/2
+
+and
+
+      ∂g        ∂g ∂g ∂g                         ∂g 
+      ------ =  ------ ---------- -------- … ------------- = [ a b ],                                                                (A31)
+      ∂        ∂µ ∂σ2 ∂γ 1 ∂γq –1
+
+
+July/August 2002                                                                                                                          49
+Financial Analysts Journal
+
+where ∂g/∂ is also partitioned to conform to the partitioned matrix  in Equation A27. Therefore, the
+asymptotic variance of the robust estimator SR (q) is given by
+                   ∂g ∂g
+     V GMM ( q ) = ------  -------- = a  1 a′ + b 2 b′
+                   ∂ ∂′
+                                                                             q –1     2           (A32)
+                          ν 3 SR                       SR 2                          j
+                                     - + ( ν 4 – σ 4 ) --------4- + ( qSR ) ∑  1 – -- .
+                                                                           2
+                  = q 1 – ------------
+                              σ  3                     4σ                          q 
+                                                                            j =1
+
+If Rt is normally distributed, then ν3 = 0 and ν4 = 3σ4; hence,
+                                                              q –1                2
+                                        SR2                            j
+     V GMM ( q ) = q 1 + ( 3σ 4 – σ 4 ) --------4- + ( qSR ) ∑  1 – --q
+                                                            2
+                                        4σ                             
+                                                                     j =1
+
+                                                   q –1             2
+                                                            j
+                   = q  1 + --- SR2 + ( qSR ) ∑  1 – -q-
+                              1                  2
+                                                                                                   (A33)
+                              2                             
+                                                          j =1
+
+                                                 q –1           2
+                                                            j
+                                                 ∑  1 – --q ≥ VIID ( q ).
+                                             2
+                   = V IID ( q ) + ( qSR )
+                                                 j =1
+
+
+
+
+50                                                                                          ©2002, AIMR®
+                                                                                                          The Statistics of Sharpe Ratios
+
+Notes
+1.   See Sharpe (1994) for an excellent review of its many appli-    8.    See Bodie (1995) and the ensuing debate regarding risks in
+     cations, as well as some new extensions.                              the long run for further evidence of the inadequacy of the
+2.   The Central Limit Theorem is a remarkable mathematical                Sharpe ratio—or any other single statistic—for delineating
+     discovery on which much of modern statistical inference is            the risk–reward profile of a dynamic investment policy.
+     based. It shows that under certain conditions, the probabil-    9.    The kth-order autocorrelation of a time series Rt is defined
+     ity distribution of a properly normalized sum of random               as the correlation coefficient between Rt and Rt –k , which is
+     variables must converge to the standard normal distribu-              simply the covariance between Rt and Rt–k divided by the
+     tion, regardless of how each of the random variables in the           square root of the product of the variances of Rt and Rt –k.
+     sum is distributed. Therefore, using the normal distribution          But because the variances of Rt and Rt–k are the same under
+     for calculating significance levels and confidence intervals          our assumption of stationarity, the denominator of the
+     is often an excellent approximation, even if normality does           autocorrelation is simply the variance of Rt.
+     not hold for the particular random variables in question. See   10.   See, for example, Harvey (1981, Ch. 6.2).
+     White (1984) for a rigorous exposition of the role of the       11.   These are the investment styles reported in the Altvest
+     Central Limit Theorem in modern econometrics.                         database; no attempt was made to verify or to classify the
+3.   See, for example, Lo and MacKinlay (1999) and their cita-             hedge funds independently.
+     tions.                                                          12.   The p-value of a statistic is defined as the smallest level of
+4.   Additional regularity conditions are required; see Appen-             significance for which the null hypothesis can be rejected
+     dix A, Hansen (1982), and White for further discussion.               based on the statistic’s value. In particular, the p-value of
+5.   The term “robust’’ is meant to convey the ability of an               16.0 percent for the Q-statistic of Washington Mutual
+     estimator to perform well under various sets of assump-               Investors in Table 4 implies that the null hypothesis of no
+     tions. Another commonly used term for such estimators is              serial correlation can be rejected only at the 16.0 percent
+     “nonparametric,” which indicates that an estimator is not             significance level; at any lower level of significance—say,
+                                                                           5 percent—the null hypothesis cannot be rejected. There-
+     based on any parametric assumption, such as normally
+                                                                           fore, smaller p-values indicate stronger evidence against
+     distributed returns. See Randles and Wolfe (1979) for fur-
+                                                                           the null hypothesis and larger p-values indicate stronger
+     ther discussion of nonparametric estimators and Hansen
+                                                                           evidence in favor of the null. Researchers often report
+     for the generalized method of moments estimator.
+                                                                           p-values instead of test statistics because p-values are easier
+6.   See, for example, Campbell, Lo, and MacKinlay (1997,                  to interpret. To interpret a test statistic, one must compare
+     Ch. 9), Lo and MacKinlay (Ch. 4), Merton (1980), and                  it with the critical values of the appropriate distribution.
+     Shiller and Perron (1985).                                            This comparison is performed in computing the p-value.
+7.   The exact expression is, of course,                                   For further discussion of p-values and their interpretation,
+                  q –1                                                     see, for example, Bickel and Doksum (1977, Ch. 5.2.B).
+     Rt ( q ) ≡
+                  ∏ ( 1 + Rt –j ) – 1.                               13.   See, for example, Ackermann, McEnally, and Ravenscraft
+                  j =0                                                     (1999), Brown, Goetzmann, and Ibbotson (1999), Brown,
+     For most (but not all) applications, Equation 16 is an excel-         Goetzmann, and Park (2001), Fung and Hsieh (1997a, 1997b,
+     lent approximation. Alternatively, if Rt is defined to be the         2000), and Liang (1999, 2000, 2001).
+     continuously compounded return [i.e., Rt ≡ log (Pt /Pt – 1),    14.   See Magnus and Neudecker (1988) for the specific defini-
+     where Pt is the price or net asset value at time t], then             tions and conventions of vector and matrix derivatives of
+     Equation 16 is exact.                                                 vector functions.
+
+
+
+
+References
+Ackermann, C., R. McEnally, and D. Ravenscraft. 1999. “The           ———. 1997b. “Investment Style and Survivorship Bias in the
+Performance of Hedge Funds: Risk, Return, and Incentives.”           Returns of CTAs: The Information Content of Track Records.”
+Journal of Finance, vol. 54, no. 3 (June):833–874.                   Journal of Portfolio Management, vol. 24, no. 1 (Fall):30–41.
+Bickel, P., and K. Doksum. 1977. Mathematical Statistics: Basic      ———. 2000. “Performance Characteristics of Hedge Funds and
+Ideas and Selected Topics. San Francisco, CA: Holden-Day.            Commodity Funds: Natural versus Spurious Biases.” Journal of
+Bodie, Z. 1995. “On the Risk of Stocks in the Long Run.” Financial   F i n a nc i a l a n d Q u a n t i t a t i v e A n a l y s i s, v o l . 3 5 , n o . 3
+Analysts Journal, vol. 51, no. 3 (May/June):18–22.                   (September):291–307.
+
+Brown, S., W. Goetzmann, and R. Ibbotson. 1999. “Offshore            Getmansky, M., A. Lo, and I. Makarov. 2002. “An Econometric
+Hedge Funds: Survival and Performance 1989–1995.” Journal of         Model of Illiquidity and Performance Smoothing in Hedge Fund
+Business, vol. 72, no. 1 (January):91–118.                           Returns.” Unpublished manuscript, MIT Laboratory for
+                                                                     Financial Engineering.
+Brown, S., W. Goetzmann, and J. Park. 1997. “Careers and
+Survival: Competition and Risks in the Hedge Fund and CTA            Hansen, L. 1982. “Large Sample Properties of Generalized
+Industry.” Journal of Finance, vol. 56, no. 5 (October):1869–86.     Method of Moments Estimators.” Econometrica, vol. 50, no. 4
+                                                                     (July):1029–54.
+Campbell, J., A. Lo, and C. MacKinlay. 1997. The Econometrics of
+Financial Markets. Princeton, NJ: Princeton University Press.        Harvey, A. 1981. Time Series Models. New York: John Wiley &
+                                                                     Sons.
+Fung, W., and D. Hsieh. 1997a. “Empirical Characteristics of
+Dynamic Trading Strategies: The Case of Hedge Funds.” Review         Liang, B. 1999. “On the Performance of Hedge Funds.” Financial
+of Financial Studies, vol. 10, no. 2 (April):75–302.                 Analysts Journal, vol. 55, no. 4 (July/August):72–85.
+
+
+July/August 2002                                                                                                                                     51
+Financial Analysts Journal
+
+———. 2000. “Hedge Funds: The Living and the Dead.” Journal          Merton, R. 1980. “On Estimating the Expected Return on the
+of Financial and Quantitative Analysis, vol. 35, no. 3              Market: An Exploratory Investigation.” Journal of Financial
+(September):309–326.                                                Economics, vol. 8, no. 4 (December):323–361.
+———. 2001. “Hedge Fund Performance: 1990–1999.” Financial           Newey, W., and K. West. 1987. “A Simple Positive Definite
+Analysts Journal, vol. 57, no. 1 (January/February):11–18.          Heteroscedasticity and Autocorrelation Consistent Covariance
+Ljung, G., and G. Box. 1978. “On a Measure of Lack of Fit in Time   Matrix.” Econometrica, vol. 55, no. 3:703–705.
+Series Models.” Biometrika, vol. 65, no. 1: 297–303.                Randles, R., and D. Wolfe. 1979. Introduction to the Theory of
+                                                                    Nonparametric Statistics. New York: John Wiley & Sons.
+Lo, A. 2001. “Risk Management for Hedge Funds: Introduction
+and Overview.” Financial Analysts Journal, vol. 57, no. 6           Sharpe, W. 1994. “The Sharpe Ratio.” Journal of Portfolio
+(November/December):16–33.                                          Management, vol. 21, no. 1 (Fall):49–58.
+Lo, A., and C. MacKinlay. 1999. A Non-Random Walk Down Wall         Shiller, R., and P. Perron. 1985. “Testing the Random Walk
+Street. Princeton, NJ: Princeton University Press.                  Hypothesis: Power versus Frequency of Observation.”
+Magnus, J., and H. Neudecker. 1988. Matrix Differential Calculus:   Economics Letters, vol. 18, no. 4:381–386.
+With Applications in Statistics and Economics. New York: John       White, H. 1984. Asymptotic Theory for Econometricians. New York:
+Wiley & Sons.                                                       Academic Press.
+
+
+
+
+52                                                                                                               ©2002, AIMR®
+

@@ -1,0 +1,36 @@
+{
+  "version": "v2",
+  "effective_utc": "2026-10-01 18:16",
+  "doc": "docs/evaluation-standard.zh.md",
+  "recent_window_start": "2024-01-08",
+  "offsets_blend": "equal-weight 5 rebalance offsets",
+  "excess_over": "BIL",
+  "vetoes": {
+    "cost2x_recent_ann_excess_le": 0.0,
+    "stress_window": ["2017-10-02", "2023-08-31"],
+    "stress_21d_loss_sigma_veto": 5.0,
+    "stress_63d_loss_sigma_veto": 4.0,
+    "stress_21d_loss_sigma_warn": 4.0,
+    "stress_63d_loss_sigma_warn": 3.0,
+    "recent_break_z_veto": -3.0,
+    "max_participation_adv": 0.01
+  },
+  "dsr": {"n_eff_rule": "1 + (N-1)(1-mean_pairwise_corr)", "var_sr": "cross-variant variance of annual Sharpe"},
+  "robustness_checks": {
+    "a_cost2x_sharpe_ratio_min": 0.5,
+    "b_current_state_conditional_sharpe_gt": 0.0,
+    "c_max_single_phase_share_of_recent_pnl": 0.5,
+    "d_min_positive_offsets": 4,
+    "e_recent_consistency_z_min": -2.0,
+    "f_gross_placebo_pct_min": 0.95
+  },
+  "tiers": {
+    "P1_paper_incubation": {"dsr_min": 0.70, "placebo_net_pct_min": 0.90, "robustness_min": 3},
+    "P2_live_candidate": {"dsr_min": 0.80, "signal_t_min": 3.0, "placebo_net_pct_min": 0.95, "placebo_gross_pct_min": 0.95, "robustness_min": 5},
+    "L1_live_pilot_proposal": {"requires": "P2", "paper_sessions_min": 20, "forward_z_min": -2.0, "pilot_size_share_of_target": [0.10, 0.20]},
+    "L2_scale_up": {"forward_months_min": 6, "posterior_p_sr_gt_0_min": 0.90}
+  },
+  "execution_acceptance": {"order_accept_rate": 1.0, "reconciliation_match_rate": 1.0, "realized_to_model_cost": [0.5, 1.5], "tracking_error_share_of_target_vol_max": 0.25},
+  "forward_monitoring": {"halve_dd_percentile": 0.95, "stop_dd_percentile": 0.99, "beta_21d_abs_max": 0.25, "cost_overrun_ratio": 2.0, "cost_overrun_weeks": 2, "stop_posterior_p_sr_gt_0_below": 0.5},
+  "calibration": "reports/research/program/evaluation-standard-2026-10-01/calibration.json"
+}

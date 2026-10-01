@@ -1,0 +1,1868 @@
+                     When Do Stop-Loss Rules Stop Losses?✩
+                             Kathryn M. Kaminski1,∗, Andrew W. Lo2,∗
+
+
+
+
+Abstract
+We propose a simple analytical framework to measure the value added or subtracted by stop-
+loss rules—predetermined policies that reduce a portfolio’s exposure after reaching a certain
+threshold of cumulative losses—on the expected return and volatility of an arbitrary port-
+folio strategy. Using daily futures price data, we provide an empirical analysis of stop-loss
+policies applied to a buy-and-hold strategy using index futures contracts. At longer sam-
+pling frequencies, certain stop-loss policies can increase expected return while substantially
+reducing volatility, consistent with their objectives in practical applications.
+Keywords: Investments; Portfolio Management; Risk Management; Asset Allocation;
+Performance Attribution; Behavioral Finance
+JEL Classification: G11, G12
+
+
+
+
+  ✩
+     The views and opinions expressed in this article are those of the authors, and do not necessarily represent
+the views and opinions of AlphaSimplex Group, MIT, or any of their affiliates or employees. The authors
+make no representations or warranty, either expressed or implied, as to the accuracy or completeness of the
+information, nor are they recommending that this article serve as the basis for any investment decision—
+this article is for information purposes only. We thank Dimitris Bertsimas, Margret Bjarnadottir, Michael
+Brennan, Tom Brennan, Florian Ederer, Mike Epstein, Jasmina Hasanhodzic, Dirk Jenter, Carola Frydman,
+Leonid Kogan, Gustavo Manso, Stewart Myers, Bernhard Nietert, Jun Pan, Sebastian Pokutta, Michael
+Stutzer, Svetlana Sussman, and participants at the EURO2006 Conference, the INFORMS 2006 Annual
+Meeting, the MIT Sloan Finance Lunch, the MIT Sloan Finance Seminar, and SSgA for helpful comments and
+discussion. Research support from the MIT Laboratory for Financial Engineering is gratefully acknowledged.
+   ∗
+     Please direct all correspondence to: Andrew W. Lo, MIT Sloan School of Management, 100 Main Street,
+E62–618, Cambridge, MA 02142.
+   1
+     Alpha K Capital LLC.
+   2
+     Harris & Harris Group Professor, MIT Sloan School of Management; director, Laboratory for Financial
+Engineering; and Chief Investment Strategist, AlphaSimplex Group, LLC.
+
+Preprint submitted to Journal of Financial Markets                                               June 28, 2013
+1. Introduction
+
+
+       Thanks to the overwhelming dominance of the mean-variance portfolio optimization
+
+framework pioneered by Markowitz (1952), Tobin (1958), Sharpe (1964), and Lintner (1965),
+
+much of the investments literature—both in academia and in industry—has focused on con-
+
+structing well-diversified static portfolios using low-cost index funds. With little use for
+
+active trading or frequent rebalancing, this passive perspective comes from the recognition
+
+that individual equity returns are difficult to forecast and trading is not costless. The ques-
+
+tionable benefits of day-trading are unlikely to outweigh the very real costs of changing
+
+one’s portfolio weights. It is, therefore, no surprise that a “buy-and-hold” philosophy has
+
+permeated the mutual-fund industry and the financial planning profession.3
+
+       However, this passive approach to investing is often contradicted by human behavior,
+
+especially during periods of market turmoil.4 behavioral biases sometimes lead investors
+
+astray, causing them to shift their portfolio weights in response to significant swings in
+
+market indexes, often “selling at the low” and “buying at the high.” On the other hand,
+
+some of the most seasoned investment professionals routinely make use of systematic rules
+
+for exiting and re-entering portfolio strategies based on cumulative losses, gains, and other
+
+“technical” indicators.
+
+       In this paper, we investigate the efficacy of such behavior in the narrow context of stop-
+
+   3
+     This philosophy has changed slightly with the recent innovation of a slowly varying asset allocation that
+changes according to one’s age (e.g., a “lifecycle” fund).
+   4
+     For example, psychologists and behavioral economists have documented the following systematic biases
+in the human decisionmaking process: overconfidence (Fischoff and Slovic, 1980; Barber and Odean, 2001;
+Gervais and Odean, 2001), overreaction (DeBondt and Thaler, 1986), loss aversion (Kahneman and Tver-
+sky, 1979; Shefrin and Statman, 1985; Kahneman and Tversky, 1992; Odean, 1998), herding (Huberman
+and Regev, 2001), psychological accounting (Kahneman and Tversky, 1981), miscalibration of probabilities
+(Lichtenstein, Fischoff, and Phillips, 1982), hyperbolic discounting (Laibson, 1997), and regret (Bell, 1982a,b;
+Clarke, Krase, and Statman, 1994).
+
+                                                       2
+loss rules (i.e., rules for exiting an investment after some threshold of loss is reached and
+
+re-entered after some level of gains is achieved). We wish to identify the economic motivation
+
+for stop-loss policies so as to distinguish between rational and behavioral explanations for
+
+these rules. While certain market conditions may encourage irrational investor behavior
+
+(e.g., large rapid market declines) stop-loss policies are sufficiently ubiquitous that their use
+
+cannot always be irrational.
+
+   This raises the question we seek to answer in this paper: When do stop-loss rules stop
+
+losses? In particular, because a stop-loss rule can be viewed as an overlay strategy for a
+
+specific portfolio, we can derive the impact of that rule on the return characteristics of the
+
+portfolio. The question of whether or not a stop-loss rule stops losses can then be answered
+
+by comparing the expected return of the portfolio with and without the stop-loss rule. If the
+
+expected return of the portfolio is higher with the stop-loss rule than without it, we conclude
+
+that the stop-loss rule does, indeed, stop losses.
+
+   Using simple properties of conditional expectations, we are able to characterize the
+
+marginal impact of stop-loss rules on any given portfolio’s expected return, which we define
+
+as the “stopping premium.” We show that the stopping premium is inextricably linked to
+
+the stochastic process driving the underlying portfolio’s return. If the portfolio follows a
+
+random walk (i.e., independently and identically distributed returns) the stopping premium
+
+is always negative. This may explain why the academic and industry literature has looked
+
+askance at stop-loss policies to date. If returns are unforecastable, stop-loss rules simply
+
+force the portfolio out of higher-yielding assets on occasion, thereby lowering the overall
+
+expected return without adding any benefits. In such cases, stop-loss rules never stop losses.
+
+
+
+                                               3
+   However, for non-random-walk portfolios, we find that stop-loss rules can stop losses. For
+
+example, if portfolio returns are characterized by “momentum” or positive serial correlation,
+
+we show that the stopping premium can be positive and is directly proportional to the
+
+magnitude of return persistence. Not surprisingly, if conditioning on past cumulative returns
+
+changes the conditional distribution of a portfolio’s return, it should be possible to find a
+
+stop-loss policy that yields a positive stopping premium. We provide specific guidelines for
+
+finding such policies under several return specifications: mean reversion, momentum, and
+
+Markov regime-switching processes. In each case, we are able to derive explicit conditions
+
+for stop-loss rules to stop losses.
+
+   Of course, focusing on expected returns does not account for risk in any way. It may
+
+be the case that a stop-loss rule increases the expected return but also increases the risk
+
+of the underlying portfolio, yielding ambiguous implications for the risk-adjusted return of
+
+a portfolio with a stop-loss rule. To address this issue, we compare the variance of the
+
+portfolio with and without the stop-loss rule and find that, in cases where the stop-loss rule
+
+involves switching to a lower-volatility asset when the stop-loss threshold is reached, the
+
+unconditional variance of the portfolio return is reduced by the stop-loss rule. A decrease in
+
+the variance coupled with the possibility of a positive stopping premium implies that, within
+
+the traditional mean-variance framework, stop-loss rules may play an important role under
+
+certain market conditions.
+
+   To illustrate the empirical relevance of our analysis, we apply a simple stop-loss rule to
+
+a standard asset-allocation problem of stocks versus bonds using daily futures data from
+
+January 1993 to November 2011. We find that stop-loss rules exhibit positive stopping
+
+
+
+                                              4
+premiums over longer sampling frequencies over larger range of threshold values. These
+
+policies also provide substantial reduction in volatility creating larger Sharpe ratios as a
+
+result. This is a remarkable feat for a buy-high/sell-low strategy. For example in one
+
+calibration, using stop loss over monthly intervals in daily data can increase the return by
+
+1.5% and decrease the volatility by 5% causing an increase in the Sharpe Ratio by as much
+
+as 20%. These results suggest that stop-loss rules may exploit conditional momentum effects
+
+following periods of losses in equities. These results suggest that the random walk model is a
+
+particularly poor approximation to U.S. stock returns and may improperly value the use of
+
+non-linear policies such as stop-loss rules. This is consistent with Lo and MacKinlay (1999)
+
+and others using various methods to examine limitations of the random walk.
+
+2. Literature Review
+
+
+      Before presenting our framework for examining the performance impact of stop-loss rules,
+
+we provide a brief review of the relevant portfolio-choice literature, and illustrate some of its
+
+limitations to underscore the need for a different approach.
+
+      The standard approach to portfolio choice is to solve an optimization problem in a multi-
+
+period setting, for which the solution is contingent on two important assumptions: the
+
+choice of objective function and the specification of the underlying stochastic process for
+
+asset returns. The problem was first posed by Samuelson (1969) in discrete time and Merton
+
+(1969) in continuous time, and solved in both cases by stochastic dynamic programming.
+
+As the asset-pricing literature has grown, this paradigm has been extended in a number of
+
+important directions.5
+
+  5
+      For a comprehensive summary of portfolio choice see Brandt (2004). Recent extensions include pre-
+
+
+                                                   5
+    However, in practice, household investment behavior seems to be at odds with finance
+
+theory. In particular, Ameriks and Zeldes (2004) observe that most observed variation in an
+
+individuals portfolio is attributed to a small number of significant decisions they make as
+
+opposed to marginal adjustments over time. Moreover, other documented empirical charac-
+
+teristics of investor behavior include non-participation (Calvet, Campbell, and Sodini 2006);
+
+under-diversification (Calvet, Campbell, and Sodini 2006); limited monitoring frequency and
+
+trading (Ameriks and Zeldes 2004); survival-based selling decisions or a “flight to safety”
+
+(Agnew 2003); an absence of hedging strategies (Massa and Simonov, 2004); and concen-
+
+tration in simple strategies through mutual-fund investments (Calvet, Campbell, and Sodini
+
+2006). Variations in investment policies due to characteristics such as age, wealth, and
+
+profession have been examined as well.6
+
+    In fact, in contrast to the over-trading phenomenon documented by Odean (1999) and
+
+Barber and Odean (2000), Agnew (2003) asserts that individual investors actually trade
+
+infrequently. By examining asset-class flows, she finds that investors often shift out of
+
+equities after extremely negative asset returns into fixed-income products, and concludes
+
+that in retirement accounts, investors are more prone to exhibit a “flight to safety” instead
+
+of explicit return chasing. Given that one in three of the workers in the United States
+
+participate in 401(k) programs, it is clear that this flight to safety could have a significant
+
+dictability and autocorrelation in asset returns (Kim and Omberg, 1996; Liu, 1999; Campbell and Viceria,
+1999; Brennan and Xia, 2001; Xia, 2001; and Wachter, 2002), model uncertainty (Barberis, 2000), transac-
+tion costs (Balduzzi and Lynch, 1999), stochastic opportunity sets (Brennan, Schwartz, and Lagnado, 1997;
+Campbell, Chan, and Viceria, 2003; and Brandt, Goyal, Santa-Clara, and Stroud, 2005), and behavioral
+finance (see the references in footnote 4).
+   6
+     For example, lack of age-dependence in allocation, lower wealth and lower education with greater non-
+participation and under-diversification, and greater sophistication in higher wealth investors have all been
+considered (see Ameriks and Zeldes, 2004).
+
+
+
+                                                     6
+impact on market prices as well as demand. Consistent with Agnew’s flight-to-safety in
+
+the empirical application of stop-loss, we find momentum in long-term bonds as a result of
+
+sustained periods of loss in equities. This suggests conditional relationships between stocks
+
+and bonds, an implication that is also confirmed by our empirical results.7
+
+   Although stop-loss rules are widely used, the corresponding academic literature is rather
+
+limited. The market microstructure literature contains a number of studies about limit
+
+orders and optimal order selection algorithms (Easley and O’Hara, 1991; Biais, Hillion,
+
+and Spatt, 1995; Chakravarty and Holden, 1995; Handa and Schwartz, 1996; Harris and
+
+Hasbrouck, 1996; Seppi, 1997; and Lo, MacKinlay, and Zhang, 2002). Carr and Jarrow
+
+(1990) investigate the properties of a particular trading strategy that employs stop-loss
+
+orders, and Shefrin and Statman (1985) and Tschoegl (1988) consider behavioral patterns
+
+that may explain the popularity of stop-loss rules. However, to date, there has been no
+
+systematic analysis of the impact of a stop-loss rule on an existing investment policy, an
+
+oversight that we remedy in this paper.
+
+3. A Framework for Analyzing Stop-Loss Rules
+
+
+   In this section, we outline a framework for measuring the impact of stop-loss policies on
+
+investment performance. In Section 3.1, we begin by specifying a simple stop-loss policy
+
+and deriving some basic statistics for its effect on an existing portfolio strategy. We describe
+
+several generalizations and qualifications of our framework in Section 3.2, and then apply
+
+our framework in Section 4 to various return-generating processes including the Random
+
+   7
+     Although excess performance in long-term bonds may seem puzzling, from a historical perspective, the
+deregulation of long-term government fixed-income products in the 1950s could provide motivation for the
+existence of these effects.
+
+
+                                                   7
+Walk Hypothesis, momentum and mean-reversion models, and regime-switching models.
+
+3.1. Assumptions and definitions
+
+       Consider any arbitrary portfolio strategy P with returns {rt } that satisfy the following
+
+assumptions:
+
+
+(A1) The returns {rt } for the portfolio strategy P are stationary with finite mean µ and
+
+         variance σ 2 .
+
+
+(A2) The expected return µ of P is greater than the risk-free rate rf , and let π ≡ µ − rf
+
+         denote the risk premium of P .
+
+
+Our use of the term “portfolio strategy” in Assumption (A1) is meant to underscore the
+
+possibility that P is a complex dynamic investment policy, not necessarily a static basket of
+
+securities. Assumption (A2) simply rules out perverse cases where stop-loss rules add value
+
+because the “safe” asset has a higher expected return than the original strategy itself.
+
+       Now suppose an investor seeks to impose a stop-loss policy on a portfolio strategy. This
+
+typically involves tracking the cumulative return Rt (J) of the portfolio over a window of J
+
+periods, where:8
+
+                                                           J
+                                                           X
+                                          Rt (J) ≡               rt−j+1                                     (1)
+                                                           j=1
+
+
+
+and when the cumulative return crosses some lower boundary, reducing the investment in
+
+P by switching into cash or some other safer asset. This heuristic approach motivates the
+
+   8
+    For simplicity, we ignore compounding effects and define cumulative returns by summing simple returns rt
+instead of multiplying (1+rt ). For purposes of defining the trigger of our stop-loss policy, this approximation
+does not have significant impact. However, we do take compounding into account when simulating the
+investment returns of a portfolio with and without a stop-loss policy.
+
+
+                                                       8
+following definition:
+
+
+Definition 1. A simple stop-loss policy S(γ, δ, J) for a portfolio strategy P with returns
+
+{rt } is a dynamic binary asset-allocation rule {st } between P and a risk-free asset F with
+
+return rf , where st is the proportion of assets allocated to P , and:
+                     
+                     
+                      0     if   Rt−1 (J)   < − γ and st−1 = 1          (exit)
+                       1     if   rt−1       ≥   δ and st−1 = 0          (re-enter)
+                     
+              st   ≡                                                                         (2)
+                     
+                      1     if   Rt−1 (J)   ≥ − γ and st−1 = 1          (stay in)
+                       0     if   rt−1       <   δ and st−1 = 0          (stay out)
+                     
+
+
+for γ ≥ 0. Denote by rst the return of portfolio strategy S, which is the combinaton of portfolio
+
+strategy P and the stop-loss policy S, hence:
+
+
+                                  rst   ≡ st rt + (1 − st )rf .                              (3)
+
+
+Definition 1 describes a 0/1 asset-allocation rule between P and the risk-free asset F , where
+
+100% of the assets are withdrawn from P and invested in F as soon as the J-period cumula-
+
+tive return Rt1 (J) reaches some loss threshold γ at t1 . The stop-loss rule stays in place until
+
+some future date t2 −1 > t1 when P realizes a return rt2 −1 greater than δ, at which point
+
+100% of the assets are transferred from F back to P at date t2 . Therefore, the stop-loss pol-
+
+icy S(γ, δ, J) is a function of three parameters: the loss threshold γ, the re-entry threshold
+
+δ, and the cumulative-return window J. Of course, the performance of the stop-loss policy
+
+also depends on the characteristics of F —lower risk-free rates imply a more significant drag
+
+on performance during periods when the stop-loss policy is in effect.
+
+   Note that the specification of the loss and re-entry mechanisms are different; the exit
+
+decision is a function of the cumulative return Rt−1 (J), whereas the re-entry decision involves
+
+
+                                                9
+only the one-period Return, rt−1 . This is intentional, and motivated by two behavioral
+
+biases. The first is loss aversion and the disposition effect, in which an individual becomes
+
+less risk-averse when facing mounting losses. The second is the “snake-bite” effect, in which
+
+an individual is more reluctant to re-enter a portfolio after experiencing losses from that
+
+strategy. The simple stop-loss policy in Definition 1 is meant to address both of these
+
+behavioral biases in a systematic fashion.
+
+   To gauge the impact of the stop-loss policy S on performance, we define the following
+
+metric:
+
+
+Definition 2. The stopping premium ∆µ (S) of a stop-loss policy S is the expected return
+
+difference between the stop-loss policy S and the portfolio strategy P :
+
+
+                                                                      
+                         ∆µ ≡ E[rst ] − E[rt ] = po rf − E[rt |st = 0] ,                  (4)
+
+                  where po ≡ Prob(st = 0)                                                 (5)
+
+
+and the stopping ratio is the ratio of the stopping premium to the probability of stopping
+
+out:
+
+
+                                 ∆µ
+                                    = rf − E[rt |st = 0] .                                (6)
+                                 po
+
+
+Note that the difference of the expected returns of rst and rt reduces to the product of the
+
+probability of a stop-loss po and the conditional expectation of the difference between rf and
+
+rt , conditioned on being stopped out. The intuition for this expression is straightforward:
+
+the only times rst and rt differ are during periods when the stop-loss policy has been trig-
+
+
+
+                                              10
+gered. Therefore, the difference in expected return should be given by the difference in the
+
+conditional expectation of the portfolio with and without the stop-loss policy—conditioned
+
+on being stopped out—weighted by the probability of being stopped out.
+
+   The stopping premium (4) measures the expected-return difference per unit time between
+
+the stop-loss policy S and the portfolio strategy P , but this metric may yield misleading
+
+comparisons between two stop-loss policies that have very different parameter values. For
+
+example, for a given portfolio strategy P , suppose S1 has a stopping premium of 1% and
+
+S2 has a stopping premium of 2%; this suggests that S2 is superior to S1 . But suppose the
+
+parameters of S2 implies that S2 is active only 10% of the time (i.e., one month out of every
+
+10 on average), whereas the parameters of S1 implies that it is active 25% of the time. On
+
+a total-return basis, S1 is superior, even though it yields a lower expected-return difference
+
+per-unit-time. The stopping ratio ∆µ /po given in (6) addresses this scale issue directly by
+
+dividing the stopping premium by the probability po . The reciprocal of po is the expected
+
+number of periods that st = 0 or the expected duration of the stop-loss period. Multiplying
+
+the per-unit-time expected-return difference ∆µ by this expected duration 1/po then yields
+
+the total expected-return difference ∆µ /po between rf and rt .
+
+   The probability po of a stop-loss is of interest in its own right because more frequent
+
+stop-loss events imply more trading and, consequently, more transactions costs. Although
+
+we have not incorporated transactions costs explicitly into our analysis, this can be done
+
+easily by imposing a return penalty in (3):
+
+
+                         rst ≡ st rt + (1 − st )rf − κ |st − st−1 |,                       (7)
+
+
+
+
+                                              11
+where κ > 0 is the one-way transactions cost of a stop-loss event. For expositional simplicity,
+
+we shall assume κ = 0 for the remainder of this paper.
+
+   Using the metrics proposed in Definition 2, we now have a simple way to answer the
+
+question posed in our title: stop-loss policies can be said to stop losses when the correspond-
+
+ing stopping premium is positive. In other words, a stop-loss policy adds value if and only
+
+if its implementation leads to an improvement in the overall expected return of a portfolio
+
+strategy.
+
+   Of course, this simple interpretation of a stop-loss policy’s efficacy is based purely on
+
+expected return, and ignores risk. Risk matters because it is conceivable that a stop-loss
+
+policy with a positive stopping premium generates so much additional risk that the risk-
+
+adjusted expected return is less attractive with the policy in place than without it. This
+
+may seem unlikely because by construction, a stop-loss policy involves switching out of
+
+P into a risk-free asset, implying that P spends more time in higher-risk assets than the
+
+combination of P and S. However, it is important to acknowledge that P and S are dynamic
+
+strategies and static measures of risk such as standard deviation are not sufficient statistics
+
+for the intertemporal risk/reward trade-offs that characterize a dynamic rational expectations
+
+equilibrium (e.g., Merton, 1973; Lucas, 1978). Nevertheless, it is still useful to gauge the
+
+impact of a stop-loss policy on volatility of a portfolio strategy P , as only one of possibly
+
+many risk characteristics of the combined strategy. To that end, we have:
+
+
+
+
+                                              12
+Definition 3. Let the variance difference ∆σ2 of a stopping strategy be given by:
+
+
+            ∆σ2 ≡ Var[rst ] − Var[rt ]                                                       (8)
+                                                                                 
+                   = E Var[rst |st ] + Var E[rst |st ] − E Var[rt |st ] − Var E[rt |st ]     (9)
+
+
+                   = − po Var[rt |st = 0] +
+                                                                              2 
+                                                         2   µ − E[rt |st = 0]
+                          po (1 − po ) rf − E[rt |st = 0] −                                 (10)
+                                                                  1 − po
+
+
+From an empirical perspective, standard deviations are often easier to interpret, hence we
+                                    p
+also define the quantity ∆σ ≡           Var[rst ] − σ.
+
+      Given that a stop-loss policy can affect both the mean and standard deviation of the
+
+portfolio strategy P , we can also define the difference between the Sharpe ratios of P with
+
+and without S:
+
+
+                                                E[rst ] − rf   µ − rf
+                                   ∆SR ≡                     −        .                     (11)
+                                                    σs           σ
+
+
+However, given the potentially misleading interpretations of the Sharpe ratio for dynamic
+
+strategies such as P and S, we refrain from using this metric for evaluating the efficacy of
+
+stop-loss policies.9
+
+3.2. Generalizations and Qualifications
+
+      The basic framework outlined in Section 3.1 can be generalized in many ways. For
+
+example, instead of switching out of P and into a completely risk-free asset, we can allow
+
+F to be a lower-risk asset but with some non-negligible volatility. More generally, instead
+
+  9
+      See Sharpe (1994), Spurgin (2001), and Lo (2002) for details.
+
+
+
+                                                         13
+of focusing on binary asset-allocation policies, we can consider a continuous function ω(·) ∈
+
+[0, 1] of cumulative returns that declines with losses and rises with gains. Also, instead of a
+
+single “safe” asset, we might consider switching into multiple assets when losses are realized,
+
+or incorporate the stop-loss policy directly into the portfolio strategy P itself so that the
+
+original strategy is affected in some systematic way by cumulative losses and gains. Finally,
+
+there is nothing to suggest that stop-loss policies must be applied at the portfolio level—such
+
+rules can be implemented security-by-security or asset-class by asset-class.
+
+   Of course, with each generalization, the gains in flexibility must be traded off against
+
+the corresponding costs of complexity and analytic intractability. These trade-offs can only
+
+be decided on a case-by-case basis, and we leave it to the reader to make such trade-offs
+
+individually. Our more modest objective in this paper is to provide a complete solution for
+
+the leading case of the simple stop-loss policy in Definition (1). From our analysis of this
+
+simple case, a number of generalizations should follow naturally, some of which are explored
+
+in Kaminski (2006).
+
+   However, an important qualification regarding our approach is the fact that we do not
+
+derive the simple stop-loss policy from any optimization problem—it is only a heuristic,
+
+albeit a fairly popular one among many institutional and retail investors. This is a distinct
+
+departure from much of the asset-pricing literature in which investment behavior is modelled
+
+as the outcome of an optimizing individual seeking to maximize his expected lifetime utility
+
+by investing in a finite set of securities subject to a budget constraint (e.g., Merton, 1971).
+
+While such a formal approach is certainly preferable if the consumption/investment problem
+
+is well posed. For example, if preferences are given and the investment opportunity set is
+
+
+
+                                              14
+completely specified, the simple stop-loss policy can still be studied in the absence of such
+
+structure.
+
+   Moreover, from a purely behavioral perspective, it is useful to consider the impact of a
+
+stop-loss heuristic even if it is not derived from optimizing behavior, precisely because we
+
+seek to understand the basis of such behavior. Of course, we can ask the more challenging
+
+question of whether the stop-loss heuristic can be derived as the optimal portfolio rule for
+
+a specific set of preferences, but such inverse-optimal problems become intractable very
+
+quickly (e.g., Chang, 1988). Instead, we have a narrower set of objectives in this paper:
+
+to investigate the basic properties of simple stop-loss heuristics without reference to any
+
+optimization problem, and with as few restrictions as possible on the portfolio strategy P
+
+to which the stop-loss policy is applied. The benefits of our narrower focus are the explicit
+
+analytical results described in Section 4, and the intuition that they provide for how stop-loss
+
+mechanisms add or subtract value from an existing portfolio strategy.
+
+   Although this approach may be more limited in the insights it can provide to the invest-
+
+ment process, the siren call of stop-loss rules seems so universal that we hope to derive some
+
+useful implications for optimal consumption and portfolio rules from our analysis. Moreover,
+
+the idea of overlaying one set of heuristics on top of an existing portfolio strategy has a cer-
+
+tain operational appeal that many institutional investors have found so compelling recently
+
+(e.g., so-called “portable alpha” strategies). Overlay products can be considered a general
+
+class of “superposition strategies,” which is explored in more detail in Kaminski (2006).
+
+
+
+
+                                              15
+4. Analytical Results
+
+
+   Having defined the basic framework in Section 3 for evaluating the performance of simple
+
+stop-loss rules, we now apply them to several specific return-generating processes for {rt },
+
+including the Random Walk Hypothesis in Section 4.1, mean-reversion and momentum pro-
+
+cesses in Section 4.2, and a statistical regime-switching model in Section 4.3. The simplicity
+
+of our stop-loss heuristic will allow us to derive explicit conditions under which stop-loss
+
+policies can stop losses in each of these cases.
+
+4.1. The Random Walk Hypothesis
+
+   Since the Random Walk Hypothesis is one of the most widely used return-generating
+
+processes in the finance literature, any analysis of stop-loss policies must consider this leading
+
+case first. Given the framework proposed in Section 3, we are able to derive a surprisingly
+
+strong conclusion about the efficacy of stop-loss rules:
+
+
+Proposition 1. If {rt } satisfies the Random Walk Hypothesis so that:
+
+
+                                                   IID
+                        rt   = µ + t , t ∼ White Noise(0, σ2 ),                           (12)
+
+
+then the stop-loss policy has the following properties:
+
+
+                                ∆µ = po (rf − µ) = − po π.                                  (13a)
+                                ∆µ
+                                   = − π.                                                   (13b)
+                                po
+                               ∆σ2 = −po σ 2 + po (1 − po )π 2 .                            (13c)
+                                            π    ∆µ + π
+                               ∆SR = −        + √           .                               (13d)
+                                            σ     ∆σ2 + σ 2
+
+
+                                               16
+Proof: See Appendix A.1.
+
+   Proposition 1 shows that, for any portfolio strategy with an expected return greater
+
+than the risk-free rate rf , the Random Walk Hypothesis implies that the stop-loss policy
+
+will always reduce the portfolio’s expected return since ∆µ ≤ 0. In the absence of any
+
+predictability in {rt }, whether or not the stop-loss is activated has no informational content
+
+for the portfolio’s returns; hence, the only effect of a stop-loss policy is to replace the portfolio
+
+strategy P with the risk-free asset when the strategy is stopped out, thereby reducing the
+
+expected return by the risk premium of the original portfolio strategy P . If the stop-loss
+
+probability po is large enough and the risk premium is small enough, (13) shows that the
+
+stop-loss policy can also reduce the volatility of the portfolio.
+
+   The fact that there are no conditions under which the simple stop-loss policy can add
+
+value to a portfolio with IID returns may explain why stop-loss rules have been given so little
+
+attention in the academic finance literature. The fact that the Random Walk Hypothesis
+
+was widely accepted in the 1960s and 1970s, and considered to be synonymous with market
+
+efficiency and rationality, eliminated the motivation for stop-loss rules altogether. In fact, our
+
+simple stop-loss policy may be viewed as a more sophisticated version of the “filter rule” that
+
+was tested extensively by Alexander (1961) and Fama and Blume (1966). Their conclusion
+
+that such strategies did not produce any excess profits was typical of the outcomes of many
+
+similar studies during this period.
+
+   However, despite the lack of interest in stop-loss rules in academic studies, investment
+
+professionals have been using such rules for many years, and part of the reason for this di-
+
+chotomy may be the fact that the theoretical motivation for the Random Walk Hypothesis is
+
+
+
+                                                 17
+stronger than the empirical reality. In particular, Lo and MacKinlay (1988) presented com-
+
+pelling evidence against the Random Walk Hypothesis for weekly U.S. stock-index returns
+
+from 1962 to 1985, which has subsequently been confirmed and extended to other markets
+
+and countries by a number of other authors. In the next section, we shall see that, if asset-
+
+returns do not follow random walks, there are several situations in which stop-loss policies
+
+can add significant value to an existing portfolio strategy.
+
+4.2. Mean Reversion and Momentum
+
+   In the 1980s and 1990s, several authors documented important departures from the Ran-
+
+dom Walk Hypothesis for U.S. equity returns (e.g., Fama and French,1988; Lo and MacKin-
+
+lay, 1988, 1990, 1999; Poterba and Summers, 1988; Jegadeesh, 1990; Lo, 1991; and Jegadeesh
+
+and Titman, 1993) and, in such cases, the implications for the stop-loss policy can be quite
+
+different than in Proposition 1. To see how, consider the simplest case of a non-random-walk
+
+return-generating process, the AR(1):
+
+
+                                                IID
+        rt = µ + ρ(rt−1 − µ) + t , t ∼ White Noise(0, σ2 ) , ρ ∈ (−1, 1)                   (14)
+
+
+where the restriction that ρ lies in the open interval (−1, 1) is to ensure that rt is a stationary
+
+process (see Hamilton, 1994).
+
+   This simple process captures a surprisingly broad range of behavior depending on the
+
+single parameter ρ, including the Random Walk Hypothesis (ρ = 0), mean reversion (ρ ∈
+
+(−1, 0)), and momentum (ρ = (0, 1)). However, the implications of this return-generating
+
+process for our stop-loss rule are not trivial to derive because the conditional distribution of
+
+rt , conditioned on Rt−1 (J), is quite complex. For example, according to Definition (4), the
+
+
+                                                18
+expression for the stopping premium ∆µ is given by:
+
+
+                                ∆µ = po (rf − E[rt |st = 0])                             (15)
+
+
+but the conditional expectation E[rt |st = 0] is not easy to evaluate in closed-form for an
+
+AR(1). For ρ 6= 0, the conditional expectation is likely to differ from the unconditional mean
+
+µ since past returns do contain information about the future, but the exact expression is
+
+not easily computable. Fortunately, we are able to obtain a good first-order approximation
+
+under certain conditions, yielding the following result:
+
+
+Proposition 2. If {rt } satisfies an AR(1) (14), then the stop-loss policy (2) has the follow-
+
+ing properties:
+
+
+                              ∆µ
+                                 = − π + ρσ + η(γ, δ, J)                                 (16)
+                              po
+
+
+and for ρ > 0 and reasonable stop-loss parameters, it can be shown that η(γ, δ, J) ≥ 0, which
+
+yields the following lower bound:
+
+
+                                     ∆µ
+                                        ≥ − π + ρσ,                                      (17)
+                                     po
+
+
+Proof: See Appendix A.2.
+
+   Proposition 2 shows that the impact of the stop-loss rule on expected returns is the sum
+
+of three terms: the negative of the risk premium, a linear function of the autoregressive
+
+parameter ρ, and a remainder term. For a mean-reverting portfolio strategy, ρ < 0; hence,
+
+the stop-loss policy hurts expected returns to a first-order approximation. This is consistent
+
+
+                                              19
+with the intuition that mean-reversion strategies benefit from reversals, thus a stop-loss
+
+policy that switches out of the portfolio after certain cumulative losses will miss the reversal
+
+and lower the expected return of the portfolio. On the other hand, for a momentum strategy,
+
+ρ > 0, in which case there is a possibility that the second term dominates the first, yielding a
+
+positive stopping premium. This is also consistent with the intuition that in the presence of
+
+momentum, losses are likely to persist, therefore, switching to the risk-free asset after certain
+
+cumulative losses can be more profitable than staying fully invested.
+
+       In fact, (17) implies that a sufficient condition for a stop-loss policy with reasonable
+
+parameters to add value for a momentum-AR(1) return-generating process is:
+
+
+                                                 π
+                                         ρ ≥           ≡ SR,                                       (18)
+                                                 σ
+
+
+where SR is the usual Sharpe ratio of the portfolio strategy. In other words, if the return-
+
+generating process exhibits enough momentum, then the stop-loss rule will indeed stop losses.
+
+This may seem like a rather high hurdle, especially for hedge-fund strategies that have Sharpe
+
+ratios in excess of 1.00. However, note that (18) assumes that the Sharpe ratio is calibrated
+
+at the same sampling frequency as ρ. Therefore, if we are using monthly returns in (14), the
+
+Sharpe ratio in (18) must also be monthly. A portfolio strategy with an annual Sharpe ratio
+                                                                                                  √
+of 1.00, annualized in the standard way by multiplying the monthly Sharpe ratio by                    12,
+
+implies a monthly Sharpe ratio of 0.29, which is still a significant hurdle for ρ but not quite
+
+as imposing as 1.00.10
+
+  10
+                                                                                                    √
+    Of course, the assumption that returns follow an AR(1) makes the usual annualization factor of 12
+incorrect, which is why we use the phrase “annualized in the standard way.” See Lo (2002) for the proper
+method of annualizing Sharpe ratios in the presence of serial correlation.
+
+
+
+                                                  20
+4.3. Regime-Switching Models
+
+   Statistical models of changes in regime, such as the Hamilton (1989) model, are parsimo-
+
+nious ways to capture apparent nonstationarities in the data, such as sudden shifts in means
+
+and variances. Although such models are, in fact, stationary, they do exhibit time-varying
+
+conditional means and variances, conditioned on the particular state that prevails. Moreover,
+
+by assuming that transitions from one state to another follow a time-homogenous Markov
+
+process, regime-switching models exhibit rich time-series properties that are surprisingly dif-
+
+ficult to replicate with traditional linear processes. Regime-switching models are particularly
+
+relevant for stop-loss policies because one of the most common reasons investors put forward
+
+for using a stop-loss rule is to deal with a significant change in market conditions, such as
+
+October 1987 or August 1998. To the extent that this motivation is genuine and appropriate,
+
+we should see significant advantages to using stop-loss policies when the portfolio return {rt }
+
+follows a regime-switching process.
+
+   More formally, let rt be given by the following stochastic process:
+
+
+                                                            IID
+                rt = It r1t + (1 − It )r2t      ,     rit   ∼     N (µi , σi2 ) , i = 1, 2       (19a)
+                                  I = 1 It+1 = 0
+                                  t+1           
+                          It = 1      p11          p12     
+                A ≡              
+                                 
+                                                            
+                                                                                               (19b)
+                          It = 0       p21          p22
+
+where It is an indicator function that takes on the value 1 when state 1 prevails and 0
+
+when state 2 prevails, and A is the Markov transition probabilities matrix that governs the
+
+transitions between the two states. The parameters of (19) are the means and variances of
+
+the two states, (µ1 , µ2 , σ12 , σ22 ), and the transition probabilities (p11 , p22 ). Without any loss
+
+                                                    21
+in generality, we adopt the convention that state 1 is the higher-mean state so that µ1 > µ2 .
+
+Given assumption (A2), this convention implies that µ1 > rf , which is an inequality we will
+
+use below. The six parameters of (19) may be estimated numerically via maximum likelihood
+
+(Hamilton, 1994).
+
+   Despite the many studies in the economics and finance literatures that have implemented
+
+the regime-switching model (19), the implications of regime-switching returns for the invest-
+
+ment process has only recently been considered (see Ang and Bekaert, 2004). This is due,
+
+in part, to the analytical intractability of (19)—while the specification may seem simple, it
+
+poses significant challenges for even the simplest portfolio optimization process. However,
+
+numerical results can easily be obtained via Monte Carlo simulation, and we provide such
+
+results in Sections 5.
+
+   In this section, we investigate the performance of our simple stop-loss policy for this
+
+return-generating process. Because of the relatively simple time-series structure of returns
+
+within each regime, we are able to characterize the stopping premium explicitly:
+
+
+Proposition 3. If {rt } satisfies the two-state Markov regime-switching process (19), then
+
+the stop-loss policy (2) has the following properties:
+
+
+                         ∆µ = po,1 (rf − µ1 ) + po,2 (rf − µ2 )                          (20)
+                         ∆µ
+                            = (1 − p̃o,2 )(rf − µ1 ) + p̃o,2 (rf − µ2 )                  (21)
+                         po
+
+
+
+
+                                              22
+where:
+
+
+                            po,1 ≡ Prob ( st = 0, It = 1 ).                                 (22a)
+
+                            po,2 ≡ Prob ( st = 0, It = 0 ).                                 (22b)
+                                      po,2
+                            p̃o,2 ≡          = Prob (It = 0 | st = 0) .                     (22c)
+                                       po
+
+
+If the risk-free rate rf follows the same two-state Markov regime-switching process (19), with
+
+expected returns rf 1 and rf 2 in states 1 and 2, respectively, then the stop-loss policy has the
+
+following properties:
+
+
+                        ∆µ = po,1 (rf 1 − µ1 ) + po,2 (rf 2 − µ2 ).                          (23)
+                        ∆µ
+                           = (1 − p̃o,2 )(rf 1 − µ1 ) + p̃o,2 (rf 2 − µ2 ) .                 (24)
+                        po
+
+
+The conditional probability p̃o,2 can be interpreted as the accuracy of the stop-loss policy in
+
+anticipating the low-mean regime. The higher is this probability, the more likely it is that
+
+the stop-loss policy triggers during low-mean regimes (regime 2), which should add value to
+
+the expected return of the portfolio as long as the risk-free asset-return rf is sufficiently high
+
+relative to the low-mean expected return µ2 .
+
+   In particular, we can use our expression for the stopping ratio ∆µ /po to provide a bound
+
+on the level of accuracy required to have a non-negative stopping premium. Consider first the
+
+case where the risk-free asset rf is the same across both regimes. For levels of p̃o,2 satisfying
+
+the inequality:
+
+
+                                                  µ 1 − rf
+                                       p̃o,2 ≥                                               (25)
+                                                  µ1 − µ2
+
+                                                 23
+the corresponding stopping premium ∆µ will be non-negative. By convention, µ1 > µ2 , and
+
+by assumption (A2), µ1 > rf , therefore the sign of the right side of (25) is positive. If rf is less
+
+than µ2 , then the right side of (25) is greater than 1, and no value of p̃o,2 can satisfy (25).
+
+If the expected return of equities in both regimes dominates the risk-free asset, then the
+
+simple stop-loss policy will always decrease the portfolio’s expected return, regardless of how
+
+accurate it is. To see why, recall that returns are independently and identically distributed
+
+within each regime, and we know from Section 4.1 that our stop-loss policy never adds value
+
+under the Random Walk Hypothesis. Therefore, the only source of potential value-added
+
+for the stop-loss policy under a regime-switching process is if the equity investment in the
+
+low-mean regime has a lower expected return than the risk-free rate (i.e., µ2 < rf ). In this
+
+case, the right side of (25) is positive and less than 1, implying that sufficiently accurate
+
+stop-loss policies will yield positive stopping premia.
+
+   Note that the threshold for positive stopping premia in (25) is decreasing in the spread
+
+µ1 −µ2 . As the difference between expected equity returns in the high-mean and low-mean
+
+states widens, less accuracy is needed to ensure that the stop-loss policy adds value. This
+
+may be an important psychological justification for the ubiquity of stop-loss rules in practice.
+
+If an investor possesses a particularly pessimistic view of the low-mean state, implying a large
+
+spread between µ1 and µ2 , then our simple stop-loss policy may appeal to him even if its
+
+accuracy is not very high.
+
+5. Empirical Analysis
+
+
+   To illustrate the potential relevance of our framework for analyzing stop-loss rules, we
+
+consider the performance of the simple stop-loss rule when applied to equity portfolios.
+
+
+                                                 24
+Given that most financial hedging is done in the futures markets, we apply stop-loss rules
+
+on equities using daily futures prices from January 5, 1993 until November 7, 2011. Similar
+
+to how a futures position would be held, the futures prices represent a weighted basket of
+
+prices over various maturities shorter in the curve, which are rolled over to avoid jumps in
+
+prices near maturity. The IMM S&P futures contract is used for a position in U.S. Equities
+
+and the 10-year CBT Treasury note futures contract. In this given sample period, the two
+
+portfolios have a negative correlation of -17.29%. In Table 1, the basic statistical properties
+
+of the two return series is detailed. In Table 2, the parameter estimates for a two-state
+
+regime-switching model are also detailed.
+
+   Despite the net positive serial autocorrelation in the IMM S&P contract, over smaller
+
+time intervals the serial autocorrelation seems to be time varying. In Figures 1 and 2, rolling
+
+point estimates of serial autocorrelation are plotted using both a 150-day and a 75-day
+
+window. These graphs suggests that there are periods when stocks can be either momentum
+
+driven or mean reverting. Given the theoretical analysis in this paper, during periods of
+
+sufficient momentum stop-loss policies might provide a stopping premium. In the same
+
+vein, during periods of mean reversion stop-loss policies may produce negative stopping
+
+premiums. When a simple regime-switching model is applied to the IMM S&P contract
+
+basket, the estimates also suggest that there are two regimes: one positive low volatility
+
+regime and one negative higher volatility regime, which occurs less often. Given the analytic
+
+results in Section 4, these parameter estimates indicate stopping rules, which can accurately
+
+determine low performance regimes in stocks may add stopping premium.
+
+
+
+
+                                              25
+5.1. Basic Results
+
+   To examine the performance of stop-loss rules, the approach can be applied from short-
+
+term to longer time where the strategy can be applied daily (1 day), weekly (5 days), monthly
+
+(20 days), and quarterly (60 days). For each frequency, the stopping windows will be mul-
+
+tiples of 3, 5, and 10 times the length of the data frequency (daily, weekly, monthly, and
+
+quarterly). The different strategy combinations include daily (3,1), (5,1), (10,1), weekly
+
+(15,5), (25,5), (50,5), monthly (60,20), (100,20), (200,20), and quarterly (180,60), (300,60),
+
+(600,60). Consistent with our theoretical framework, (i,j) represent the size of the stop-
+
+ping window and the re-entry window is one period for each time frequency. The stopping
+
+thresholds, (γ), will vary from -1.5 to -0.5 standard deviations from the mean at the relevant
+
+frequency. For example, if the stopping window is three months long the stops will be set
+
+relative to deviations from -1.5 to -0.5 standard deviations. To avoid data selection bias,
+
+we review a large range of stops to demonstrate how the performance depends on threshold
+
+choices. The re-entry threshold, (δ), will also be modulated to the data frequency and will
+
+simply vary between -0.5 to 1 standard deviation from the mean. This approach is used to
+
+allow for comparison across different frequencies of time. For example, a one standard devia-
+
+tion stop-loss in weekly versus a one standard deviation stop-loss quarterly can be compared
+
+to see how the time frequency impacts the results.
+
+   Given the large set of parameters we analyze in this experiment, it is not surprising
+
+that the performance of these strategies varies. There are a few key trends in the results.
+
+First, shorter term, lower frequency stop-loss policies have negative stopping premiums over
+
+large ranges of parameters. Longer term stop-loss at frequencies above one month perform
+
+
+
+                                             26
+better and can achieve positive stopping premiums. In Figure 3, the stopping premium
+
+for all frequencies and combinations of threshold parameters is plotted as a function of the
+
+stopping threshold with delta the re-entry threshold at a 0 standard deviation threshold.
+
+In Figures 4 and 5, the empirical results for the change in Sharpe Ratio and change in
+
+standard deviation demonstrate how for longer term stop-loss strategies the Sharpe ratio
+
+can improve as standard deviation decreases. Second, the decision to exit and the stopping
+
+threshold seems to have a larger impact on the variation in results than the re-entry threshold.
+
+Putting these results together, the empirical results suggest that the use of longer term stop-
+
+loss strategies might have improved performance consistent with anecdotal discussion of the
+
+strategy in practice.
+
+6. Conclusion
+
+
+   In this paper, we provide a concrete answer to the question of when do stop-loss rules stop
+
+losses? The answer depends, of course, on the return-generating process of the underlying
+
+investment for which the stop-loss policy is implemented, as well as the particular dynamics
+
+of the stop-loss policy itself. If “stopping losses” is interpreted as having a higher expected
+
+return with the stop-loss policy than without it, then for a specific binary stop-loss policy,
+
+we derive various conditions under which the expected-return difference, which we call the
+
+stopping premium, is positive. We show that under the most common return-generating
+
+process, the Random Walk Hypothesis, the stopping premium is always negative. The
+
+widespread cultural affinity for the Random Walk Hypothesis, despite empirical evidence
+
+to the contrary, may explain the general indifference to stop-loss policies in the academic
+
+finance literature.
+
+
+                                              27
+   However, under more empirically plausible return-generating processes such as momen-
+
+tum or regime-switching models, we show that stop-loss policies can generate positive stop-
+
+ping premia. When applied to a standard buy-and-hold strategy using daily U.S. futures
+
+contracts from January 1993 to November 2011 where the stop-loss asset is U.S. long-term
+
+bonds futures, we find that at longer sampling frequencies, certain stop-loss policies add
+
+value over a buy-and-hold portfolio while substantially reducing risk by reducing strategy
+
+volatility, consistent with their objectives in practical applications. These empirical results
+
+suggest important nonlinearities in aggregate stock and bond returns that have not been
+
+fully explored in the empirical finance literature.
+
+   Our analytical and empirical results contain several points of intersection with the be-
+
+havioral finance literature. First, the flight-to-safety phenomena, which is best illustrated
+
+by events surrounding the default of Russian government debt in August 1998, may create
+
+momentum in equity returns and increase demand for long-term bonds, creating positive
+
+stopping premia as a result. Second, systematic stop-loss policies may profit from the dis-
+
+position effect and loss aversion, the tendency to sell winners too soon and hold on to losers
+
+too long. Third, if investors are ambiguity-averse, large negative returns may cause them to
+
+view equities as more ambiguous which, in relative terms, will make long-term bonds seem
+
+less ambiguous. This may cause investors to switch to bonds to avoid uncertainty about
+
+asset returns.
+
+   More generally, there is now substantial evidence from the cognitive sciences literature
+
+that losses and gains are processed by different components of the brain. These different
+
+components provide a partial explanation for some of the asymmetries observed in exper-
+
+
+
+                                              28
+imental and actual markets. In particular, in the event of a significant drop in aggregate
+
+stock prices, investors who are generally passive will become motivated to trade because
+
+mounting losses will cause them to pay attention when they ordinarily would not. This
+
+influx of uninformed traders, who have less market experience and are more likely to make
+
+irrational trading decisions, can have a significant impact on equilibrium prices and their
+
+dynamics. Therefore, even if markets are usually efficient, on occasions where a significant
+
+number of investors experience losses simultaneously, markets may be dominated temporarily
+
+by irrational forces. The mechanism for this coordinated irrationality is cumulative loss.
+
+   Of course, our findings shed little light on the controversy between market efficiency and
+
+behavioral finance. The success of our simple stop-loss policy may be due to certain nonlinear
+
+aspects of stock and bond returns from which our strategy happens to benefit (e.g., avoiding
+
+momentum on the downside and exploiting asymmetries in asset returns following periods
+
+of negative cumulative returns). And from the behavioral perspective, our stop-loss policy is
+
+just one mechanism for avoiding or anticipating the usual pitfalls of human judgment (e.g.,
+
+the disposition effect, loss aversion, ambiguity aversion, and flight-to-safety).
+
+   In summary, both behavioral finance and rational asset-pricing models may be used to
+
+motivate the apparent effectiveness of stop-loss policies, in addition to the widespread use
+
+of such policies in practice. This underscores the importance of learning how to deal with
+
+loss as an investor, of which a stop-loss rule is only one dimension. As difficult as it may be
+
+to accept, for the many investors who lamented, after the subprime mortgage meltdown of
+
+2007–2008, that “if only I had gotten out sooner, I wouldn’t have lost so much,” they may
+
+have been correct.
+
+
+
+                                               29
+                                                         75 day Rolling Serial Autocorrelation Estimates
+                                               0.3
+
+
+                                               0.2
+
+
+                                               0.1
+
+
+                                                0
+                            Autocorrelation
+
+
+
+
+                                              −0.1
+
+
+                                              −0.2
+
+
+                                              −0.3
+
+
+                                              −0.4
+
+
+                                              −0.5
+                                                     0   1000         2000           3000          4000    5000
+                                                                              time
+
+
+
+
+Fig. 1. Rolling serial autocorrelation coefficient estimates for the IMM S&P contact with a 75-day
+Window
+
+
+
+
+                                                                             30
+                                                          150 day Rolling Serial Autocorrelation Estimates
+                                                0.3
+
+
+                                                0.2
+
+
+                                                0.1
+                             Autocorrelation
+
+
+
+
+                                                 0
+
+
+                                               −0.1
+
+
+                                               −0.2
+
+
+                                               −0.3
+
+
+                                               −0.4
+                                                      0   1000          2000          3000           4000    5000
+                                                                               time
+
+
+
+
+Fig. 2. Rolling serial autocorrelation coefficient estimates for the IMM S&P contact with a 150-day
+Window
+
+
+
+
+                                                                               31
+                                                                              Δµ
+              0.04
+
+
+
+
+              0.02
+
+
+
+
+                 0
+                      3,1   5,1   10,1   15,5   25,5          50,5    60,20   100,20   200,20     180,60    300,60   600,60   360,120 600,120 1200, 120
+
+
+
+              -0.02
+
+
+
+
+              -0.04
+
+
+
+
+              -0.06
+
+
+
+
+              -0.08
+
+
+
+
+               -0.1
+
+                                                       -1.5          -1.2       -1.0       -0.8            -0.5
+
+
+
+
+Fig. 3. Stopping premium, (∆µ ), from short-term (3,1) stop-loss strategies to longer-term
+(1200,120) stop-loss strategies with exit thresholds, (γ), of 1.5, 1.2, 1, 0.8, and 0.5 standard devia-
+tions from the mean with a 0 standard deviation re-entry threshold, (δ)
+
+
+
+
+                                                                              32
+              0.4
+                                                                        ΔSh
+
+              0.3
+
+
+
+              0.2
+
+
+
+              0.1
+
+
+
+                0
+                     3,1   5,1   10,1   15,5   25,5      50,5   60,20    100,20   200,20     180,60     300,60   600,60   360,120 600,120 1200, 120
+
+
+              -0.1
+
+
+
+              -0.2
+
+
+
+              -0.3
+
+
+
+              -0.4
+
+
+
+              -0.5
+
+                                                      -1.5      -1.2        -1        -0.8            -0.5
+
+
+
+
+Fig. 4. Change in Sharpe Ratio, (∆SR ), from short-term (3,1) stop-loss strategies to longer-term
+(1200,120) stop-loss strategies with exit thresholds, (γ), of 1.5, 1.2, 1, 0.8, and 0.5 standard devia-
+tions from the mean with a 0 standard deviation re-entry threshold, (δ)
+
+
+
+
+                                                                        33
+                                                                         Δσ
+                 0
+                      3,1   5,1   10,1   15,5   25,5   50,5   60,20   100,20   200,20   180,60   300,60   600,60 360,120 600,120   1200,
+                                                                                                                                    120
+
+
+              -0.01
+
+
+
+
+              -0.02
+
+
+
+
+              -0.03                                                                                                                        -1.5000
+                                                                                                                                           -1.2000
+                                                                                                                                           -1.0000
+                                                                                                                                           -0.8000
+              -0.04                                                                                                                        -0.5000
+
+
+
+
+              -0.05
+
+
+
+
+              -0.06
+
+
+
+
+              -0.07
+
+
+
+
+Fig. 5. Change in standard deviation, (∆σ ), from short-term (3,1) stop-loss strategies to longer-
+term (1200,120) stop-loss strategies with exit thresholds, (γ), set at 1.5, 1.2, 1, 0.8, and 0.5 standard
+deviations from the mean with a 0 standard deviation re-entry threshold, (δ)
+
+
+
+
+                                                                          34
+                    Ann.        Ann.       ρ        Skew    Kurt   Min Max    Ann.     MDD
+                   Mean (%)    SD (%)                              (%)   (%) Sharpe     (%)
+   IMM S&P          7.295      19.499    -0.06      0.12    14.24 -9.88 14.12 0.37     26.62
+ CBT 10YR TN        1.181       6.331    0.02       -0.09    6.11 -2.43 3.61  0.19     5.25
+
+                                          Table 1
+
+Summary statistics for U.S. Equities (IMM S&P) and long-term U.S. Government Bonds (CBT 10
+
+YR) from January 5, 1993 to November 7,2011. Statistics are annualized assuming 250 days per
+
+year.
+
+
+
+
+                                               35
+                                   µ0    µ1     σ0    σ1    p
+                    IMM S&P      22.3% -39.0% 10.3% 33.0% 0.72
+
+                                          Table 2
+
+Annualized parameter estimates for a two-state Hamilton model estimated via the EM Algorithm
+
+on the IMM S&P Futures Contracts from January 5, 1993 to November 7, 2011.
+
+
+
+
+                                            36
+Appendix
+
+In this Appendix, we provide proofs of Propositions 1 and 2 in Sections A.1 and A.2.
+
+A.1. Proof of Proposition 1
+
+   The conclusion follows almost immediately from the observation that the conditional ex-
+
+pectations in (4) and (6) are equal to the unconditional expectations because of the Random
+
+Walk Hypothesis (conditioning on past returns provides no incremental information), hence:
+
+
+                                    ∆µ = − po π ≤ 0                                     (.1)
+                                   ∆µ
+                                      = −π ≤ 0                                          (.2)
+                                   po
+
+
+and the other relations follow in a similar manner.
+
+A.2. Proof of Proposition 2
+
+   Let rt be a stationary AR(1) process:
+
+
+                                              IID
+          rt = µ + ρ(rt−1 − µ) + t , t ∼ White Noise(0, σ2 ), ρ ∈ (−1, 1)            (.3)
+
+
+We seek the conditional expectation of rt given that the process is stopped out. If we let
+
+J be sufficiently large and δ = −∞, st = 0 is equivalent to Rt−1 (J) < − γ and st−1 = 1 with
+
+Rt−2 (J) ≥ − γ. Using log returns, we have:
+
+
+          E[rt |st = 0] = E[rt |Rt−1 (J) < − γ, Rt−2 (J) ≥ − γ]                         (.4)
+
+                       = µ(1 − ρ) + ρE[rt−1 + t |Rt−1 (J) < − γ, Rt−2 (J) ≥ − γ]       (.5)
+
+                       = µ(1 − ρ) + ρE[rt−1 |Rt−1 (J) < − γ, Rt−2 (J) ≥ − γ].           (.6)
+
+
+
+
+                                              37
+By definition Rt−1 (J) ≡ rt−1 + · · · + rt−J and Rt−2 (J) = rt−2 + · · · + rt−J−1 . Setting
+
+y ≡ rt−2 + · · · + rt−J then yields:
+
+
+         E[rt |st = 0] = µ(1 − ρ) + ρE[rt−1 |Rt−1 (J) < − γ, Rt−2 (J) ≥ − γ]            (.7)
+                                                                                 
+                        = µ(1 − ρ) + ρEy E[rt−1 |rt−1 < − γ − y, rt−J−1 ≥ − γ − y] .    (.8)
+
+
+For J large enough, the dependence between rt−J−1 and rt−1 is of order o(ρJ ) ≈ 0, hence:
+
+
+                                                                           
+                 Ey E[rt−1 |rt−1 < − γ − y] ≤ Ert−J −1 E[rt−1 |rt−1 < rt−J−1 ]          (.9)
+
+                                             ≤ µ − σ,                                  (.10)
+
+
+which implies:
+
+
+                            E[rt |st = 0] ≤ µ(1 − ρ) + ρ(µ − σ).                       (.11)
+
+                                         ≤ µ − ρσ.                                     (.12)
+
+
+
+
+                                              38
+                                     References
+
+Agnew, J., 2003. An analysis of how individuals react to market returns in one 401(K)
+   plan. Working paper, The College of William and Mary.
+Alexander, S., 1961. Price movements in speculative markets: Trends or random walks.
+    Industrial Management Review 2, 7–26.
+Ameriks, J., Zeldes, S., 2004. How do household portfolio shares vary with age?. Working
+   paper, Columbia University.
+Ang, A., Bekaert, G., 2004. How regimes affect asset allocation. Financial Analysts Journal
+    60, 86–99.
+Balduzzi, P., Lynch, A., 1999. Transaction costs and predictability: Some utility cost
+    calculations. Journal of Financial Economics 52, 47–78.
+Barber, B., Odean, T., 2000. Trading is hazardous to your wealth: The common stock
+    investment performance of individual investors. Journal of Finance 55, 773–806.
+Barber, B., Odean, T., 2001. Boys will be boys: Gender, overconfidence, and common
+    stock investment. Quarterly Journal of Economics 116, 261–292.
+Barberis, N., 2000. Investing in the long run when returns are predictable. Journal of
+    Finance 55, 225–264.
+Bell, D., 1982a. Regret in decision making under uncertainty. Operations Research 30,
+     961–981.
+Bell, D., 1982b. Risk premiums for decision regret. Management Science 29, 1156–1166.
+Biais, B., Hillion, P., Spatt, C., 1995. An empirical analysis of the limit order book and
+     the order flow in the Paris Bourse. Journal of Finance 50, 1655–1689.
+Brandt, M., 2010. Portfolio Choice Problems. In: Ait-Sahalia, Y., Hansen, L. (Eds.),
+    Handbook of Financial Econometrics, Volume 1: Tools and Techniques. Elsevier,
+    North Holland, pp. 269–336.
+Brandt, M., Goyal, A., Santa-Clara, P., Stroud, J., 2005. A Simulation approach to dynamic
+    portfolio choice with an application to learning about return predictability. Review of
+    Financial Studies 18, 831–873.
+Brennan, M., Xia, Y., 2001. Persistence, predictability, and portfolio planning. Working
+    paper.
+Brennan, M., Schwartz, E., Lagnado, R., 1997. Strategic Asset Allocation. Journal of
+    Economic Dynamics and Control 21, 1377–1403.
+Calvet, L., Campbell, J., Sodini, P., 2006. Down or out: Assesing the welfare costs of
+    household investment mistakes. Working Paper No. 12030, NBER.
+Campbell, J., Chan, Y., Viceira, L., 2003. A multivariate model of strategic asset allocation.
+   Journal of Financial Economics 67, 41–80.
+
+
+
+                                             39
+Campbell, J., Lo, A., MacKinlay, C., 1997. The Econometrics of Financial Markets. Prince-
+   ton University Press, Princeton.
+Campbell, J., Viceira, L., 1999. Consumption and portfolio decisions when expected returns
+   are time-varying. Quarterly Journal of Economics 114, 433–495.
+Carr, P., Jarrow, R., 1990. The stop-loss start-gain paradox and option valuation: A new
+    decomposition into intrinsic and time value. Review of Financial Studies 3, 469–492.
+Chakravarty, S., Holden, C., 1995. An integrated model of market and limit orders. Journal
+   of Financial Intermediation 4, 213–241.
+Chang, F., 1988. The inverse optimal problem: A dynamic programming approach. Econo-
+   metrica 56, 147–172.
+Clarke, R., Krase, S., Statman, M., 1994. Tracking errors, regret, and tactical asset alloca-
+    tion. Journal of Portfolio Management 20, 16–24.
+DeBondt, W., Thaler, R., 1986. Does the stock market overreact?. Journal of Finance 40,
+   793–807.
+Easley, D., O’Hara, M., 1991. Order form and information in securities markets. Journal
+    of Finance 46, 905–927.
+Fama, E., Blume, M., 1966. Filter rules and stock market trading profits. Journal of
+   Business 39, 226–241.
+Fama, E., French, K., 1988. Permanent and temporary components of stock prices. Journal
+   of Political Economy 96, 246–273.
+Fischoff, B., Slovic, P., 1980. A little learning...: Confidence in multicue judgment tasks.
+    In: Nickerson, R. (Eds.), Attention and Performance, VIII. Erlbaum, Hillsdale, pp.
+    779–800.
+Gervais, S., Odean, T., 2001. Learning to be overconfident. Review of Financial Studies
+    14, 1–27.
+Hamilton, J., 1989. A new approach to the economic analysis of nonstationary time series
+   and the business cycle. Econometrica 57, 357–384.
+Hamilton, J., 1994. Time Series Analysis. Princeton University Press, Princeton.
+Handa, P., Schwartz, R., 1996. Limit order trading. Journal of Finance 51, 1835–1861.
+Harris, L., Hasbrouck, J.,1996. Market vs. limit-orders: The SuperDot evidence on order
+    submission strategy. Journal of Financial and Quantitative Analysis 31, 213–231.
+Huberman, G., Regev, T., 2001. Contagious speculation and a cure for cancer: A nonevent
+   that made stock prices soar. Journal of Finance 56, 387–396.
+Jegadeesh, N., 1990. Evidence of predictable behavior of security returns. Journal of
+    Finance 45, 881–898.
+Jegadeesh, N., Titman, S., 1993. Returns to buying winners and selling losers: Implications
+    for stock market efficiency. Journal of Finance 48, 65–91.
+
+
+
+                                            40
+Kahneman, D., Tversky, A., 1979. Prospect theory: An analysis of decision under risk.
+   Econometrica 47, 263–291.
+Kahneman, D., Tversky, A., 1981. The framing of decisions and the psychology of choice.
+   Science 211, 453—458.
+Kahneman, D., Tversky, A., 1992. Advances in prospect theory: Cumulative representation
+   of uncertainty. Journal of Risk and Uncertainty 5, 297–323.
+Kaminski, K., 2006. General Superposition Strategies. unpublished manuscript.
+Kim, T., Omberg, E., 1996. Dynamic non-myopic portfolio behavior. Review of Financial
+   Studies 9, 141–161.
+Laibson, D., 1997. Golden eggs and hyperbolic discounting. Quarterly Journal of Eco-
+    nomics 62, 443–477.
+Lichtenstein, S., Fischoff, B., Phillips, L., 1982. Calibration of Probabilities: The State
+    of the Art to 1980. In: Kahneman, D., Slovic, P., Tversky, A. (Eds.), Judgment
+    Under Uncertainty: Heuristics and Biases. Cambridge University Press, New York,
+    pp. 306–334.
+Lintner, J., 1965. The valuation of risk assets and the selection of risky investments in
+    stock portfolios and capital budgets. Review of Economics and Statistics 47, 13–37.
+Liu, J., 1999. Portfolio selection in stochastic environments. unpublished working paper,
+     University of California, Los Angeles.
+Lo, A., 1991. Long-term memory in stock market prices. Econometrica 59, 1279–1313.
+Lo, A., 2002. The statistics of Sharpe ratios. Financial Analysts Journal 58, 36–50.
+Lo, A. and C. MacKinlay, 1988. Stock market prices do not follow random walks: Evidence
+    from a simple specification test. Review of Financial Studies 1, 41–66.
+Lo, A., MacKinlay, C., 1990. An econometric analysis of nonsynchronous trading. Journal
+    of Econometrics 45, 181–212.
+Lo, A., MacKinlay, C., 1999. A Non-Random Walk Down Wall Street. Princeton University
+    Press, Princeton.
+Lo, A., MacKinlay, C., Zhang, J., 2002. Econometric models of limit-order executions.
+    Journal of Financial Economics 65, 31–71.
+Lucas, R., 1978. Asset pricing in an exchange economy. Econometrica 46, 1429–1446.
+Markowitz, H., 1952. Portfolio selection. Journal of Finance 7, 77–91.
+Massa, M., Simonov, A., 2004. Hedging, familiarity and portfolio choice. CEPR Discussion
+   Paper No. 4789.
+Merton, R. 1969. Lifetime portfolio selection under uncertainty; The continuous-time case.
+    Review of Economics & Statistics 51, 247–257.
+Merton, R., 1971. Optimum consumption and portfolio rules in a continuous-time model.
+    Journal of Economic Theory 3, 373–413.
+
+
+                                           41
+Merton, R., 1973. An intertemporal capital asset pricing model. Econometrica 41, 867–887.
+Odean, T., 1998. Are investors reluctant to realize their losses?. Journal of Finance 53,
+   1775–1798.
+Odean, T., 1999. Do investors trade too much. American Economic Review 89, 1279–1298.
+Poterba, J., Summers, L., 1988. Mean reversion in stock returns: Evidence and implica-
+    tions. Journal of Financial Economics 22, 27–60.
+Samuelson, P. 1969. Lifetime portfolio selection by dynamic stochastic programming. Re-
+   view of Economics and Statistics 51, 239–246.
+Seppi, D., 1997. Liquidity provision with limit orders and a strategic specialist. Review of
+    Financial Studies 10, 103–150.
+Sharpe, W., 1964. Capital asset prices: A theory of market equilibrium under conditions
+    of risk. Journal of Finance 19, 425–442.
+Sharpe, W., 1994. The Sharpe ratio. Journal of Portfolio Management Fall, 49–58.
+Shefrin, M., Statman, M., 1985. The disposition to sell winners too early and ride losers
+    too long: Theory and evidence. Journal of Finance 40, 777–790.
+Spurgin, R., 2001. How to game your Sharpe ratio. The Journal of Alternative Investments
+    4, 38–46.
+Tobin, J., 1958. Liquidity preference as behavior towards risk. Review of Economic Studies
+    25, 65–86.
+Tschoegl, A., 1988. The source and consequences of stop orders: A conjecture. Managerial
+    and Decision Economics 9, 83–85.
+Wachter, J., 2002. Portfolio and consumption decisions under mean-reverting returns: An
+   exact solution for complete markets. Journal of Financial and Quantitative Analysis
+   37, 63–91.
+Xia, Y., 2001. Learning about predictability: The effects of parameter uncertainty on
+    dynamic asset allocation. Journal of Finance 56, 205–246.
+
+
+
+
+                                            42
+

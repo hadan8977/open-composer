@@ -1,0 +1,1452 @@
+      On the Maximum Drawdown of a Brownian Motion
+         Malik Magdon-Ismail                                        Amir F. Atiya
+       Department of Computer Science,                      Department of Computer Engineering,
+       Rensselaer Polytechnic Institute,                             Cairo University,
+           Rm. 207 Lally Building,                                         Giza,
+     110 8th Street, Troy, NY 12180, USA.                                 Egypt.
+               magdon@rpi.edu                                      amiratiya@link.net
+
+               Amrit Pratap                                     Yaser S. Abu-Mostafa
+       Department of Computer Science,                          Departments of EE and CS,
+                  Caltech,                                              Caltech,
+                MC 136-93,                                             MC 136-93,
+         Pasadena, CA 91125, USA.                               Pasadena, CA 91125, USA.
+           apratap@caltech.edu                                     yaser@caltech.edu
+
+                                      September 1, 2003
+
+
+                                             Abstract
+If X(t) is a random process on [0, T ], the maximum drawdown at time T , D̄(T ), is defined by
+                                             "               #
+                              D̄(T ) = sup         sup X(s) − X(t) .
+                                       t∈[0,T ]   s∈[0,t]
+
+
+Informally, this is the largest drop from a peak to a bottom. In this paper, we investigate the
+behavior of this statistic for a Brownian motion with drift. In particular, we give an infinite
+series representation of its distribution, and consider its expected value. When the drift is zero,
+we give an analytic expression for the expected value, and for non-zero drift, we give an infinite
+series representation. For all cases, we compute the limiting (T → ∞) behavior, which can be
+logarithmic (µ > 0), square root (µ = 0), or linear (µ < 0).
+
+Keywords: Random Walk, Asymptotic Distribution, Expected Maximum Drawdown.
+
+2000 Mathematical Subject Classification: 60G50/60G51.
+
+
+
+
+                                                    1
+1    Introduction
+
+The maximum drawdown is a commonly used in finance as a measure of risk for a stock that follows
+
+a particular random process. Here we consider the maximum drawdown of a Brownian motion.
+
+Let W (t), 0 ≤ t ≤ T , be a standard Wiener process, and let X(t) be the Brownian motion given by
+
+X(t) = σW (t) + µt, where µ ∈ R is the drift and σ ≥ 0 is the diffusion parameter. The maximum
+
+drawdown is defined by
+                                                      "                    #
+                              D̄(T ; µ, σ) = sup          sup X(s) − X(t) .                            (1)
+                                           t∈[0,T ]   s∈[0,t]
+
+
+(we will supress the T, µ, σ dependence). Denote the distribution function for D̄ by GD̄ (h) = P [D̄ ≥
+
+h]. We find that
+
+
+                              ∞
+                                                                                            !
+                                    θn sin θn        µh                    σ 2 θn
+                                                                                2T
+                                                                                     µ2 T
+                          4
+                              X                    −                   −           −
+             GD̄ (h) = 2σ       4 2    2  2   2
+                                                  e σ2              1−e      2h2 e 2σ2          + L,   (2)
+                          n=1
+                              (σ θn + µ h − σ µh)
+
+
+Here, {θn } are the positive solutions of the eigenvalue condition
+
+
+                                                          σ2
+                                           tan θn =          θn ,                                      (3)
+                                                          µh
+
+
+
+
+                                                      2
+and L is given by
+
+                 
+                 
+                                                                             σ2
+                   0                                                     µ<      ,
+                 
+                 
+                                                                              h
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                               µ2 T                                           σ2
+                                  
+              L = 3 1 − e− 2σ2                                           µ=      ,   (4)
+                 
+                 
+                  e                                                          h
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                                      µh
+                 
+                 
+                        4 η sinh η e− σ2        µ2 T σ2 η2 T                  σ2
+                                                           
+                     2σ
+                 
+                                              − 2       2
+                                            1−e 2σ  e 2h                 µ>      ,
+                 
+                 
+                  4 2
+                   (σ η − µ2 h2 + σ 2 µh)                                     h
+
+
+where η is the unique positive solution of
+
+
+                                                        σ2
+                                             tanh η =      η.                        (5)
+                                                        µh
+
+
+                       R∞                               p
+Using the identity, E D̄ = 0 dh GD̄ (h) and defining α = µ T /2σ 2 , we find that
+
+
+                                          2σ 2
+                                       E D̄ =    Q (α2 ),                            (6)
+                                              µ D̄
+
+
+where                                  
+                                       
+                                       
+                                         Qp (x)                 µ > 0,
+                                       
+                                       
+                                       
+                                       
+                                       
+                                       
+                                       
+                              QD̄ (x) = γ √2x
+                                       
+                                                                µ = 0,               (7)
+                                       
+                                       
+                                       
+                                       
+                                       
+                                       
+                                       
+                                       −Qn (x)                 µ < 0,
+                                       
+                                       
+
+
+
+
+                                                   3
+      p
+γ =       π/8 ≈ 0.6267 is a constant, and Qp , Qn are functions whose exact expressions are given
+
+in (19) and (28). These functions can be numerically evaluated (a comprehensive list of values is
+
+given in appendix B), and their asymptotic behavior is given by
+
+                                                                     
+               
+                √                                                    
+                                                                       √
+               γ 2x                   x → 0+ ,                       γ 2x       x → 0+ ,
+               
+                                                                     
+                                                                      
+    Qp (x) →                                               Qn (x) →                            (8)
+                                                                     
+                41 log x + 0.49088                                   x + 12
+                                                                     
+                                       x → ∞,                                    x → ∞.
+               
+                                                                     
+                                                                      
+
+
+The asymptotic behavior is logarithmic for µ > 0, linear for µ < 0 and square root for µ = 0. A
+
+similar result in the asymptotic case was obtained by Berger and Whitt [Berger and Whitt, 1995].
+
+For positive µ, by considering a reflected Brownian motion [Graversen and Shiryaev, 2000], they
+
+consider the asymptotic distribution of queuing processes, and obtain a Gumbel distribution, which
+
+is consistent with our findings. Douady, Shiryaev and Yor, [Douady et al., 2000], consider the
+
+maximum drawdown for a Brownian motion when the drift is zero and obtain similar results to
+
+ours in this special case. The behavior of QD̄ (x) is shown in Figure 1.
+
+
+
+2     Derivations
+
+Let D(t) be the random process defined by
+
+
+
+                                      D(t) = sup X(s) − X(t).                                  (9)
+                                            s∈[0,t]
+
+
+
+
+                                                  4
+                                           Comparison of QMDD(x) for Different µ
+                                      6
+
+
+                                      5
+
+
+                                      4
+
+
+
+                               Q(x)
+                                      3
+                                                µ<0
+                                      2
+                                                               µ=0
+
+                                      1
+                                                                         µ>0
+                                      0
+                                       0    1          2             3           4         5
+                                                               x
+
+
+              Figure 1: Behavior of the Q(·) functions for positive, negative and zero µ.
+
+
+
+D(t) is the drawdown from the previous maximum value at time t. It is well known that D(t) is a
+
+reflected Brownian motion1 on [0, T ],
+
+                                           
+                                           
+                                           
+                                           −dX(t)                             D(t) > 0
+                                           
+                                           
+                               dD(t) =                                                                         (10)
+                                           
+                                              
+                                           max 0, −dX(t)                      D(t) = 0.
+                                           
+                                           
+
+
+
+The rigorous justification of this fact can be found in [Graversen and Shiryaev, 2000]. From D(t),
+
+we can get the maximum drawdown, D̄ = supt≤T D(t). Let h > 0 be an absorbing barrier, let τ
+
+be the absorbtion time, and let fτ be the absorbtion time density, i.e., fτ (t|h)dt is the probability
+
+   1
+    If X(t) has drift and diffusion parameters µX and σ, then D(t) is a Brownian motion with drift −µX and diffusion
+parameter σ; D(0) = 0, and D(t) has a reflective barrier at 0.
+
+
+
+
+                                                           5
+that τ ∈ [t, t + dt]. Let GD̄ (h) be the probability that D̄ ≥ h in the interval [0, T ]. Then,
+
+
+                                                          Z T
+                                              GD̄ (h) =         dt fτ (t|h).                      (11)
+                                                           0
+
+
+
+fτ (t|h) can be computed from a more general result for a Brownian motion between two partially
+
+absorbing barriers given in [Dominé, 1996], and is given by
+
+                                       "       ∞                                      2 2
+                                                                                             #
+                                µ2 t       σ 2 X (σ 4 θn2 + µ2 h2 )θn sin θn − µh2 − σ θn2 t
+                            −
+                fτ (t|h) = e    2σ2                                         e σ e 2h + K ,        (12)
+                                           h2    (σ 4 θn2 + µ2 h2 − σ 2 µh)
+                                              n=0
+
+
+
+where {θn } are the positive solutions to the eigenvalue condition (3), K is given by
+
+                      
+                                                                                     σ2
+                      
+                      
+                        0                                                       µ<      ,
+                      
+                      
+                                                                                     h
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                       2
+                   K = 3σ                                                            σ2           (13)
+                                                                                µ=      ,
+                      
+                      
+                       2eh2                                                         h
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                                                              2 2
+                        σ 2 (µ2 h2 − σ 4 η 2 )η sinh η − µh2 σ η2 t                  σ2
+                      
+                      
+                      
+                                                      e  σ  e 2h                µ>      ,
+                      
+                      
+                       2 4 2
+                        h (σ η − µ2 h2 + σ 2 µh)                                     h
+
+
+and η is the unique positive solution to the eigenvalue condition (5). Alternatively, in Section 3,
+
+we obtain the same result by taking the continuous limit of the discrete random walk. Using (12)
+
+in (11), and after an integration, we arrive at (2). To get the expectation, we use the identity
+   R∞
+E D̄ = 0 dh GD̄ (h), which is valid for positive valued random variables.
+
+
+
+
+                                                           6
+2.1   µ=0
+
+The eigenvalue condition (3) is solved by θn = (n − 12 )π. Thus, we have that
+
+
+                                                ∞
+                                                                                                        !
+                                                X sin(n − 1 )π                     σ2 (n− 12 )2 π 2 T
+                                                              2                −
+                            GD̄ (h) = 2                                 1−e               2h2               ,                (14)
+                                             n=1
+                                                   (n − 21 )π
+                                                         
+                                            2        h
+                                      =       g      √      ,                                                                (15)
+                                            π     πσ T
+
+               ∞                      (n+ 12 )2 
+                 (−1)n
+                       
+               P                  −
+where g(x) =         (n+ 12 )
+                                1−e       2x2     . The expected value of D̄ is then given by
+               n=0
+
+
+                                      Z ∞                         Z ∞                                 √
+                                                                                            
+                                                       2                           h
+                     E D̄ =                 dh GD̄ (h) =                dh g         √           = 2γσ T ,                   (16)
+                                      0                  π        0                πσ T
+
+                                                       R∞                  pπ
+where we have defined the constant γ =                      dh g(h) =              8   ≈ 0.6267. The exact computation
+                                                       0
+
+of γ from this integral is challenging. An alternate route to the same expression using reflected
+                                                                                                                p
+Brownian motion was obtained by Greg Bond, [Bond, 2003], who showed that γ =                                        π/8. A useful
+
+comparison is to the expected value of the range R (the difference between the two extrema of the
+
+motion), which is computed for µ = 0 in [Feller, 1951], and the generalization to non-zero µ can be
+
+obtained from equation (66) in appendix A and the identity E [R] = E [H|µ] + E [H| − µ], where
+                                                      q √           q
+H is the maximum of the motion. For µ = 0, E [R] = 2 π2 σ T , and π2 ≈ 0.798 > γ, thus the
+
+expected range is considerably larger than the expected maximum drawdown for µ = 0.
+
+
+
+
+                                                              7
+2.1.1    µ<0
+
+
+After applying the eigenvalue conditions and taking the integral of GD̄ (h) to get the expectation,
+
+we arrive at
+
+
+                                                         ∞
+                                                                                                                  !
+                                                                                                     µ2 T
+                                                              sin3 θn
+                 Z ∞                    Z ∞           µh X
+                                                  −                                          −
+                                                                                                 2σ2 cos2 θ
+          
+        E D̄ =         dh GD̄ (h) = 2         dh e    σ2                           1−e                        n       .   (17)
+                 0                      0                 θ − cos θn sin θn
+                                                       n=1 n
+
+
+
+Making a change of variables to u = −µh/σ 2 , we find that
+
+
+                                                     σ2
+                                            E D̄ = −2 Qn α2 ,
+                                                         
+                                                                                                                          (18)
+                                                     µ
+
+
+where, for x > 0, we have defined Qn (x) by
+
+
+                                                  ∞
+                                                    sin3 θn
+                                  Z ∞                                                x
+                                                                                             
+                                              u
+                                                  X                            −
+                       Qn (x) =         du e                                1−e    cos2 θn       .                        (19)
+                                  0             θ − cos θn sin θn
+                                             n=1 n
+
+
+                                                      p
+Here, {θn } satisfy tan θn = −θn /u and α = µ             T /2σ 2 . The numerical computation of Qn (x) is not
+
+a straightforward task. The summation in the integrand is a function of u that decreases faster than
+
+e−u . Since the magnitude of the nth term in the summation is approximately 1/n, we need to take
+
+Ω(eu ) terms in the summation to make sure that the next term left out has magnitude less than the
+
+size of the sum. Thus the efficient computation of this integral is computationally non trivial. The
+
+table in Appendix B gives approximate values of Qn (x) for various values of x, computed using an
+
+extensive numerical integration. Intermediate values can be obtained using interpolation and the
+
+asymptotic behavior is discussed below.
+
+
+
+                                                           8
+                           √
+   When x → 0+ , Qn (x) → γ 2x, since in this limit, we must recover the µ → 0 behavior. We
+
+get the behavior in the x → ∞ limit by noting that R ≥ D̄ ≥ −L where L is the low and R is the
+
+range (high minus low). Taking expectations, and using (66), we see that for all α,
+
+
+                                     α2 QR (−α)
+                                       +        ≤ Qn (α2 ) ≤ QR (−α).                          (20)
+                                     2     2
+
+
+                        1                       2
+                             2       + √1π xe−x . Asymptotically, as α → −∞, this yields
+                                 
+where QR (x) = erf(x)   2 +x
+
+
+
+                                               1                  1
+                                        α2 +     ≤ Qn (α2 ) ≤ α2 + ,                           (21)
+                                               4                  2
+
+
+from which we deduce that Qn (x) → x+(x) where 41 ≤ (x) ≤ 21 . We now argue that asymptoticaly
+  
+E D̄ = E [R] when µ < 0. By definition of D̄, when the high occurs before the low, D̄ =
+        
+R, so E D̄ ≥ E [R|H → L]P [H → L], where A → B is used to denote the event “A occurs
+
+before B”. Since µ < 0, P [H → L] → 1 as T → ∞. Considering the range, we have E [R] =
+
+E [R|H → L]P [H → L] + E [R|L → H]P [L → H]. E [R|L → H] is slowly growing with T , but for
+
+µ < 0, P [L → H] → 0 exponentially fast, hence the second term asymptotically approaches 0, and
+                                                                            
+so we conclude that E [R] → E [R|H → L]. Thus we see that asymptotically, E D̄ ≥ E [R], and
+
+hence that E D̄ = E [R], and so limx→∞ (x) = 21 . Collecting the results together, we have,
+             
+
+
+                                               
+                                               
+                                                √
+                                               γ 2x          x → 0+ ,
+                                               
+                                               
+                                 Qn (x) →                                                      (22)
+                                               
+                                               x + 21
+                                               
+                                                              x → ∞.
+                                               
+                                               
+
+
+
+The asymptotic behavior is illustrated in Figure 2 which shows the numerical computation of Qn (x)
+
+                                                         9
+                                                  Asymptotic Behavior of QMDD(x) for µ<0
+                                       3
+                                                 numerical
+                                                 asymptotic
+                                   2.5
+
+
+                                       2
+
+
+
+                            Q(x)
+                                   1.5
+                                                  x+0.5
+                                       1
+
+
+                                   0.5
+
+
+                                       0
+                                        0          0.5            1        1.5      2           2.5
+                                                                       x
+
+
+                                   Figure 2: Asymptotic behavior of Qn (x).
+
+
+
+along with the asymptote.
+
+
+2.1.2   µ>0
+
+
+In this case, for h > σ 2 /µ in the integral, the third case for L adds another term. Thus we find
+
+that
+
+
+                             Z ∞
+                 
+               E D̄ =                       dh GD̄ (h),                                                                     (23)
+                                   0
+                                                          ∞
+                                                                                                                        !
+                                                                                                         µ2 T
+                                                                   sin3 θn
+                                   Z ∞                 µh X
+                                                   −                                             −
+                       = 2                   dh e      σ2                                  1−e        2σ2 cos2 θ   n
+                                       0                       θ − cos θn sin θn
+                                                            n=1 n
+                                                                                                      µ2 T
+                                                                                                                !
+                                                                     sinh3 η
+                                        Z ∞                µh
+                                                       −                                    −
+                             −2                  dh e      σ2                       1−e         2σ2 cosh2 η         .       (24)
+                                            σ2                  η − cosh η sinh η
+                                            µ
+
+
+
+
+                                                                      10
+The second integral can be reduced by a change of variables u = η(h) as follows. Since tanh u =
+
+σ 2 u/µh we find that
+                                          dh   σ 2 cosh u sinh u − u
+                                             =                       ,                               (25)
+                                          du   µ        sinh2 u
+
+hence, the second integral reduces to
+
+                                                                                     !
+                            σ2                                            µ2 T
+                                   Z ∞
+                                             −     u               −
+                          −              du e    tanh u sinh u   1−e   2σ2 cosh2 u       .           (26)
+                            µ      0
+
+
+
+Changing variable in the first integral to u = µh/σ 2 , we arrive at
+
+
+                                               2σ 2
+                                                      Qp α2 ,
+                                                           
+                                            E D̄ =                                                   (27)
+                                                   µ
+
+                         p
+where once again α = µ       T /2σ 2 , and for x > 0, Qp (x) is given by
+
+
+                           Z ∞ "     ∞
+                                                       sin3 θn                        x
+                                                                                            
+                                  −u
+                                     X                                         −
+                   Qp (x) =   du e                                         1−e     cos2 θn       +
+                               0                   θ − cos θn sin θn
+                                                n=0 n
+                                              u               −   x   i
+                                         e− tanh u sinh u 1 − e cosh2 u .                            (28)
+
+
+
+Here, {θn } satisfy tan θn = θn /u. The bound (20) is still valid, but not very useful. The numerical
+
+computation of Qp (x) is relatively straightforward, as the e−u term in the integrand makes it well
+                                                                          √
+behaved for the purposes of numerical integration. We know that Qp (x) → γ 2x when x → 0+ . We
+
+now consider the other asymptotic limit, namely α → ∞. We will evaluate the two contributions
+
+
+
+
+                                                         11
+to Qp (x) separately. Consider the first term in (28), which we denote by I1 (x),
+
+
+                                                ∞
+                                                              sin3 θn
+                               Z ∞                                                                x
+                                                                                                          
+                                         −u
+                                                X                                           −
+                    I1 (x) =         du e                                                 1−e   cos2 θn       .   (29)
+                               0                         θn − cos θn sin θn
+                                                n=0
+
+
+
+Since 0 ≤ cos2 θn ≤ 1 and x → ∞, the term in brackets is rapidly approaching 1. Since e−u is
+
+rapidly decreasing, we interchange the summation with the integration and after changing variables
+
+in the integral to v = θn (u) and using the identity
+
+
+                                                         cos v sin v − v
+                                            du =                         dv,                                      (30)
+                                                              sin2 v
+
+
+we arrive at
+                                     ∞ Z n+ 1 π
+                                            2                    v              − x
+                                     X                                                
+                         I1 (x) =                        dv e− tan v sin v 1 − e cos2 v .                         (31)
+                                     n=0 nπ
+
+
+After translating each integral by nπ and bringing the summation back into the integral, the
+
+summation is a geometric progression which results in
+
+                                                              v              − x
+                                                                                    
+                                       Z π
+                                            2            e− tan v sin v 1 − e cos2 v
+                            I1 (x) =            dv                                π             .                 (32)
+                                        0                              1 + e− tan v
+
+
+Thus, (1 − e−x )β1 ≤ I1 (x) ≤ β1 where β1 is given by
+
+
+                                                 Z π                     v
+                                                         2         e− tan v sin v
+                                        β1 =                 dv               π       ,                           (33)
+                                                     0             1 + e− tan v
+
+
+
+
+                                                                  12
+and so we see that I1 (x) rapidly converges to the constant β1 . β1 can be evaluated numerically to
+
+give β1 = 0.4575. Now consider the second term in (28), which we denote by by I2 (x),
+
+
+                                        Z ∞                                      x
+                                                            u               −
+                                                                                     
+                             I2 (x) =               du e− tanh u sinh u 1 − e cosh2 u .           (34)
+                                            0
+
+
+
+When x is large, the second term in the integrand (in parentheses) is very close to 1 until u gets
+
+large enough so that cosh u ∼ x, from which point this term rapidly decreases to 0. The first term
+
+in the integrand is always less than 21 and rapidly increases from 0 to 12 . Thus we write
+
+
+                            Z ∞                               
+                                                                            x
+                                                −     u             1 1 −
+                                                                                 
+               I2 (x) =       du e                  tanh u sinh u −1 − e cosh2 u
+                                                                     +
+                         0                               2 2
+                          Z ∞                   x
+                                                          Z ∞                            
+                        1          
+                                          −       2
+                                                                    1    − u
+                      =         du 1 − e     cosh   u   −      du      −e   tanh u sinh u
+                        2 0                                0         2
+                           Z ∞          x
+                                                                     
+                                    −           1          u
+                        +       du e cosh2 u        − e− tanh u sinh u .                          (35)
+                            0                   2
+
+
+We first show that the third integral approaches zero as x → ∞. Since this integral is monotonically
+                                                                                          u
+decreasing in x, it suffices to consider the integral for x ∈ N . Let g(u) = 21 − e− tanh u sinh u, and
+                  −      n
+let fn (u) = g(u)e    cosh2 u . Then |fn | < g a.e. and fn → 0 a.e, therefore by the Lebesgue dominated
+
+
+convergence theorem, the third integral converges to 0. The second integral is a constant β2 ,
+
+independent of x and can be evaluated numerically to give β2 = 0.4575, which apparently is
+
+(numerically) equal to β1 . We suspect that β2 = β1 but the proof has been elusive.
+
+   We get bounds for the first integral using the inequalities cosh u ≥ 21 eu , and for u ≥ A, cosh u ≤
+
+1 λ(A)u
+2e      where λ(A) = 1 + e−2A /A. Denoting the first integral in (34) by F (x), we immediately get
+
+
+
+
+                                                             13
+                                                  Asymptotic Behavior of QMDD(x) for µ>0
+
+                                                 numerical
+                                  2.5
+                                                 asymptotic
+
+                                   2
+
+
+                                  1.5
+
+                           Q(x)
+                                   1
+
+
+                                  0.5
+                                                                  0.25 log x +0.49088
+
+                                   0
+                                        −6        −4     −2      0      2      4        6       8
+                                                                  log x
+
+
+                                  Figure 3: Asymptotic behavior of Qp (x).
+
+
+
+the following bounds.
+
+
+               x    Z ∞                                 Z ∞                 
+            −
+                          du 1 − e−4xe                          du 1 − e−4xe
+                                       −2λ(A)u                               −2u
+     A 1 − e cosh2 A +                           ≤ 2F (x) ≤                        ,                                      (36)
+                            A                                                               0
+
+
+
+which holds for arbitrary fixed A. A change of variables to v = xe−2λ(A)u in the lower bound and
+
+v = xe−2u in the upper bound then leads to the following bounds,
+
+
+                        x
+                                         Z xe−2λA                                                Z x
+           
+                 −
+                                    1                   du                     1                         du
+                                                            1 − e−4u ≤ 2F (x) ≤                              1 − e−4u .
+                                                                                                                    
+         A 1−e       cosh2 A +                                                                                            (37)
+                                    2λ       0           u                      2                    0     u
+
+
+We can get an asymptotic form as follows. Suppose z > 1, then the following identity holds,
+
+
+                 Z z                                   Z 1                                      Z z
+                        du                                    du                                         du −4u
+                           1 − e−4u =                            1 − e−4u + log z −
+                                                                        
+                                                                                                            e .           (38)
+                  0      u                               0    u                                  1        u
+
+
+
+
+                                                                14
+The first term is a constant, and when z → ∞, the third term converges to Ei(−4) (see for example
+
+[Gradshteyn and Ryzhik, 1980]). Thus, for z → ∞,
+
+
+                                  Z z
+                                        du
+                                           1 − e−4u → log z + C,
+                                                   
+                                                                                                 (39)
+                                   0     u
+
+
+            R 1 du
+                     1 − e−4u + Ei(−4) ≈ 1.9635. Using (39) in (37), for fixed A, we arrive at
+                             
+where C =    0 u
+
+
+
+                          1                   −   x              1       C
+                              (log x + C) − Ae cosh2 A ≤ 2F (x) ≤ log x + .                      (40)
+                        2λ(A)                                    2       2
+
+
+Since A is arbitrary, it can be chosen to grow with x, for example 21 (1 + ) log x, in which case
+
+λ(A) → 1 and the second term goes to 0, so the upper and lower bounds approach each other.
+
+Thus we conclude that as x → ∞,
+                                                    1
+                                          F (x) →     log x + D,                                 (41)
+                                                    4
+
+where D = C4 . Collecting the results, and remembering that Qp (x) = I1 (x) + I2 (x), we have
+
+                                         
+                                         
+                                          √
+                                         γ 2x                     x → 0+ ,
+                                         
+                                         
+                              Qp (x) →                                                           (42)
+                                         
+                                          41 log x + D
+                                         
+                                                                   x → ∞.
+                                         
+                                         
+
+
+where D =≈ 0.49088, and we have used the fact that β1 ≈ β2 . The asymptotic behavior is
+
+illustrated in Figure 3.
+
+
+
+
+                                                    15
+3    Discrete Random Walk
+
+We model the Brownian motion as a discrete random walk at the times ti = i∆t, where ∆t = T /n
+
+and i = 0, 1, . . . , n. Define Xi = X(ti ), the position of the random walk at time ti . We assume that
+
+Xi has the following dynamics
+
+                                            
+                                            
+                                            
+                                            Xi + δ       with prob p,
+                                            
+                                            
+                                   Xi+1 =                                                                             (43)
+                                            
+                                            
+                                            Xi − δ       with prob q = 1 − p.
+                                            
+                                            
+
+
+Defining
+
+                                                        √           !                             √           !
+           p                            1              µ ∆t                    1                 µ ∆t
+      δ=       σ 2 ∆t + µ2 ∆t2 ,     p=       1+ p                      ,   q=         1− p                       ,   (44)
+                                        2             σ 2 + µ2 ∆t              2                σ 2 + µ2 ∆t
+
+
+in the limit ∆t → 0, the random walk converges in distribution to a Brownian motion on [0, T ]
+
+with drift µ and diffusion parameter σ.
+
+    Analogous to D(t) in Section 2, define Dt to be the drawdown from the previous max at time
+
+step t, with D0 = 0. The maximum drawdown is given by D̄ = maxt Dt . Dt is a random walk with
+
+probability p̃ = 1 − p and a reflective barrier at 0. Let h > 0 be an absorbing barrier and let f (i|h)
+
+be the probability that the random walk gets absorbed at time step i. Then,
+
+
+                                                                             T /∆t
+                                                                             X
+                             P [D̄ > h] = P [absorbtion ∈ [0, T ]] =                 f (i|h).                         (45)
+                                                                             i=0
+
+
+
+f (i|h) was initially computed in [Weesakul, 1961] for p/q < (1 + 1/N )2 , the more general case being
+
+
+
+                                                         16
+given in [Blasi, 1976], which after the correction of some typographic errors is given by
+
+            
+                                                                                                     p         1 2,
+                                                                                                               
+              f˜(1)
+            
+                                                                                                       <   1 +
+            
+                                                                                                     q
+            
+            
+            
+            
+                                                                                                              N
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+                        i 1 (i−N ) 21 (i+N )
+            
+   f (i|h) = f˜(2) + 3 2 p 2       q                                                                 p        1 2,
+                                                                                                               
+                    2 (N + 1)(N + 12 )                                                              q =  1 + N
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+                           1          1          1
+                       2i p 2 (i−N ) q 2 (i+N ) q 2 coshi−1 β sinh2 β                                          1 2,
+            
+                                                                                                     p
+                                                                                                               
+            
+              ˜
+            f (2) +                                                                                   >   1 +
+                                1                           1                                       q         N
+                     (N + 1)q 2 cosh(N + 1)β − N p 2 cosh N β
+                                                                                                                      (46)
+
+where N = h/δ, and
+
+
+                                                     N                    1
+                            1          1                                 q 2 cosi−1 αv sin2 αv
+              f˜(k) = −2i p 2 (i−N ) q 2 (i+N )
+                                                     X
+                                                                     1                           1         ,          (47)
+                                                     v=k (N + 1)q        cos(N + 1)αv − N p 2 cos N αv
+                                                                     2
+
+
+
+                                    
+                       vπ   (v+1)π
+and where αv ∈        N −1 , N −1        satisfies
+
+
+                                           1                     1
+                                         q 2 sin(N + 1)αv − p 2 sin N αv = 0,                                         (48)
+
+
+
+and β satisfies
+                                           1                     1
+                                         q 2 sinh(N + 1)β − p 2 sinh N β = 0.                                         (49)
+
+
+Using (46) and (47) in (45) gives the distribution function in the discrete case.
+
+   Using δ and p given in (44), and taking the limit ∆t → 0 gives the continuous case as follows.
+                                                                                        RT
+The sum in (45) is the Riemann sum approximation to the integral                         0   dt fτ (t|h), where fτ (t|h) is
+
+
+
+                                                            17
+the absorbtion time density given by the limit of f (i|h)/∆t where i∆t = t. It thus remains to take
+                                                                √               √
+the ∆t → 0 limit of f (i|h)/∆t. Since p = 21 (1 + λ) where λ → µ σ∆t , and δ → σ ∆t, the three
+
+cases in (46) reduce to µ < σ 2 /h, µ = σ 2 /h, and µ > σ 2 /h in the limit, analogous to the three
+
+cases in (13). Using the identity limx→∞ (1 + x1 )x = e, we find that
+
+
+                                                                                N            µ2 t   µh
+                         i   1
+                               (i−N )       1
+                                              (i+N )               i       1−λ     2       −        −
+                        2p   2          q   2          = (1 − λ2 ) 2                   →e      2σ2 e σ2 .   (50)
+                                                                           1+λ
+
+
+Expanding the eigenvalue condition for αv in (48) to first order in λ, and using some trigonometric
+
+identities gives
+                                                           
+                                                    1                            2    αv
+                                            tan N +             αv cos αv =        sin .                    (51)
+                                                    2                            λ    2
+                              
+                  vπ (v+1)π
+Since αv ∈       N −1 , N −1    , let θv = (N + 1/2)αv . For fixed v, αv → 0, so we take the first order
+
+expansion in αv to get
+                                                                       σ2
+                                                          tan θv =        θv ,                              (52)
+                                                                       µh
+
+             N+ 1             N+ 1
+                                  
+with θv ∈ vπ N −12 , (v + 1)π N −12 → (vπ, (v + 1)π]. In an identical manner, we can analyse the
+
+eigenvalue condition for β to get
+
+
+                                                            
+                                                     1                           2     β
+                                            tanh N +             β cosh β =        sinh .                   (53)
+                                                     2                           λ     2
+
+
+Defining η = (N + 12 )β, and taking the limit, we find
+
+
+                                                                       σ2
+                                                           tanh η =       η.                                (54)
+                                                                       µh
+
+
+
+                                                                  18
+We now analyse the summand in f˜. Since sin αv → θv /(N + 12 ), the summand becomes
+
+
+                                               θv2 cosi−1 αv
+                                                                                  ,                               (55)
+                          (N + 21 )2 (N + 1) cos(θv + 21 αv ) − A cos(θv − 21 αv )
+                                                  
+
+
+
+                   1/2                                                                                      σ2 θv2 t
+                                                                                                        −
+where A = (1+(1+λ)
+                                                             2
+              1
+                )(1−λ)1/2
+                          . The identity lim cos1/x x = e−1/2 gives that cosi−1 αv → e                       2h2 . Thus,
+               N                                x→0
+
+after using some double angle formulae and taking the limit, we have for the summand in f˜
+
+                                              σ2 θv2 t
+                                            −
+                     ∆tσ 2               2
+                                        θv e 2h2                      −θv sin θv [σ 4 θv2 + µ2 h2 ]
+                                                                  =                                 ,              (56)
+                         h2   (1 − µh ) cos θv − θv sin θv            [σ 4 θv2 + µ2 h2 − µhσ 2 ]
+                                   σ2
+
+
+
+where the second equality follows by use of (52) and some trigonometric identities. Plugging all
+
+these results back into (47) and dividing by ∆t, we finally arrive at the continuous limit of f˜,
+
+                                                                                        σ2 θv2 t
+                                      µ2 t   µh σ 2 X∞
+                                                        θ   sin θ   [σ 4 θ 2 + µ2 h2 ]e− 2h2
+                                  −        −              v       v
+                         f˜(t) → e    2σ2 e σ2                            v
+                                                                                                 ,                 (57)
+                                                h2           [σ 4 θv2 + µ2 h2 − µhσ 2 ]
+                                                    v=k
+
+
+
+where θv are the positive solutions to the eigenvalue condition tan θv = σ 2 θv /µh. The remaining
+
+two cases are handled in exactly analogous ways. For the second case, pq = (1 + N1 )2 , the additional
+
+term can be computed using (50), and on dividing by ∆t we get
+
+
+                                               µ2 t   3σ 2                   σ2
+                                           −
+                                          e    2σ2                     µ=       .                                  (58)
+                                                      2eh2                   h
+
+
+                                                                                                        2
+For the third case, pq > (1 + N1 )2 , define η = (N + 21 )β. The identity limx→0 cosh1/x x = e1/2 , so
+
+
+
+
+                                                             19
+                                 2 2
+we get that coshi−1 β → exp( σ2hη2 t ). Thus, as with (55), we get for the additional term in (46),
+
+
+                                                          σ2 η2 t
+                       ∆tσ 2                    η 2 e 2h2
+                                                                                   ,              (59)
+                        h2 N (1 − A) cosh η cosh 21 β − N (1 + A) sinh η sinh 12 β
+
+
+which upon using manipulations similar to those that led to (56), we finally arrive at
+
+
+                                         η sinh η(µ2 h2 − σ 4 η 2 )
+                                                                    .                             (60)
+                                         (σ 4 η 2 − µ2 h2 + σ 2 µh)
+
+
+Using (50) and dividing by ∆t, this additional term then becomes
+
+
+                                                      2             2 2
+                    σ 2 (µ2 h2 − σ 4 η 2 )η sinh η − µ 2t − µh2 σ η2 t           σ2
+                                                  e 2σ e σ e 2h             µ>      .             (61)
+                    h2 (σ 4 η 2 − µ2 h2 + σ 2 µh)                                h
+
+
+Using (57), (58) and (61) in (46), we arrive at the continuous limit of the discrete time density, in
+
+agreement with (12).
+
+
+
+Acknowledgements
+
+We thank Greg C. Bond at the Baker Investment Group for some useful comments and discussion.
+
+
+
+
+                                                     20
+A     Expected Value of the High, Low and Range
+
+The high H, low L and the range R are defined by
+
+
+
+                        H = sup X(t),                   L = inf X(t),                 R = H − L.               (62)
+                             t∈[0,T ]                            t∈[0,T ]
+
+
+
+
+We will derive the expected value of R. We have not been able to find this explicit result in the
+
+literature for the general asymmetric Brownian motion, though for the symmetric case, [Feller, 1951]
+
+gives the result. Consider the Brownian motion with an absorbing barrier at h. The probability
+
+density for the absorbtion time λ is known (see for example [Dominé, 1996]) and is given by the
+
+inverse Gaussian distribution
+                                                                       (h−µt)    2
+                                                          h          −
+                                            fλ (t) =                e    2σ2 t .                               (63)
+                                                     (2πσ 2 t3 )1/2
+
+Thus, GH (h) = P [H ≥ h] is given by
+
+
+                                      Z T                        Z T                     (h−µt)      2
+                                                                       dt    1         −
+                       GH (h) =              dt fλ (t) = h                            e    2σ2 t .             (64)
+                                        0                         0    t (2πσ 2 t)1/2
+
+
+                                                             R∞
+The expected value of H is given by E [H] =                  0    dh GH (h), so we find (after a change of variables
+
+to u = (h − µt)/(2σ 2 t)1/2 ) that
+
+
+                           Z T                 1/2                             Z T        Z α(t)
+                                          σ2
+                                      
+                      1                                  2            µT   µ                              2
+             E [H] = √           dt                   e−α (t) +          +√           dt            du e−u ,   (65)
+                       π    0             2t                           2    π     0         0
+
+
+
+
+                                                                 21
+where α(t) = µt1/2 /(2σ 2 )1/2 . The following identity is useful in evaluating the second integral,
+
+
+                         Z A          Z x              √               
+                                               −u2       π         2  1    A   2
+                               dx x         du e     =     erf(A) A −     + e−A ,
+                          0            0                4             2    4
+
+
+                                    √ Rx       2
+where the error function erf(x) = 2/ π 0 du e−u . The first integral (after a change of variables)
+                     2
+can be reduced to σµ erf(α(T )). The final result is then given by
+
+                                              "                       2
+                                                                        #
+                                           σ2                    αe−α
+                                                              
+                                      µT                 1   2
+                              E [H] =    +      erf(α)     +α + √         ,                        (66)
+                                       2   µ             2          π
+
+
+where α = α(T ). Expectations for the low and the range can be obtained from the identi-
+
+ties E [L] = −E [H| − µ] and E [R] = E [H|µ] + E [H| − µ]. Using asymptotic forms for erf(x)
+                                                                 p
+[Gradshteyn and Ryzhik, 1980], we find that when µ = 0, E [R] = 2 2σ 2 T /π, reproducing the
+
+result in [Feller, 1951]. Asymptotically, we get
+
+                           
+                             2σ 2 2α      2α3
+                                                
+                                    √ + √ + ···                           α → 0,
+                           
+                           
+                           
+                            µ        π     π
+                   E [R] =                      2
+                                                    !                                              (67)
+                            2σ 2       1 e−α
+                                    2
+                           
+                                   α + − 3 + ···                         α → ∞.
+                              µ         2     α
+                           
+
+
+Thus two different kinds of behavior emerge at the different limits.
+
+
+
+
+                                                         22
+B   Table of Numerical Values for Q(·)
+                  x        Qp (x),
+                                 √µ>0           x     Qn (x),
+                                                           √µ<0
+                x→0            γ 2x          x→0          γ 2x
+               0.0005        0.019690        0.0005    0.019965
+               0.0010        0.027694        0.0010    0.028394
+               0.0015        0.033789        0.0015    0.034874
+               0.0020        0.038896        0.0020    0.040369
+               0.0025        0.043372        0.0025    0.045256
+               0.0050        0.060721        0.0050    0.064633
+               0.0075        0.073808        0.0075    0.079746
+               0.0100        0.084693        0.0100    0.092708
+               0.0125        0.094171        0.0125    0.104259
+               0.0150        0.102651        0.0150    0.114814
+               0.0175        0.110375        0.0175    0.124608
+               0.0200        0.117503        0.0200    0.133772
+               0.0225        0.124142        0.0225    0.142429
+               0.0250        0.130374        0.0250    0.150739
+               0.0275        0.136259        0.0275    0.158565
+               0.0300        0.141842        0.0300    0.166229
+               0.0325        0.147162        0.0325    0.173756
+               0.0350        0.152249        0.0350    0.180793
+               0.0375        0.157127        0.0375    0.187739
+               0.0400        0.161817        0.0400    0.194489
+               0.0425        0.166337        0.0425    0.201094
+               0.0450        0.170702        0.0450    0.207572
+               0.0500        0.179015        0.0475    0.213877
+               0.0600        0.194248        0.0500    0.220056
+               0.0700        0.207999        0.0550    0.231797
+               0.0800        0.220581        0.0600    0.243374
+               0.0900        0.232212        0.0650    0.254585
+               0.1000        0.243050        0.0700    0.265472
+               0.2000        0.325071        0.0750    0.276070
+               0.3000        0.382016        0.0800    0.286406
+               0.4000        0.426452        0.0850    0.296507
+               0.5000        0.463159        0.0900    0.306393
+               1.5000        0.668992        0.0950    0.316066
+               2.5000        0.775976        0.1000    0.325586
+               3.5000        0.849298        0.1500    0.413136
+               4.5000        0.905305        0.2000    0.491599
+               10.0000       1.088998        0.2500    0.564333
+               20.0000       1.253794        0.3000    0.633007
+               30.0000       1.351794        0.3500    0.698849
+               40.0000       1.421860        0.4000    0.762455
+               50.0000       1.476457        0.5000    0.884593
+              150.0000       1.747485        1.0000    1.445520
+              250.0000       1.874323        1.5000    1.970740
+              350.0000       1.958037        2.0000    2.483960
+              450.0000       2.020630        2.5000    2.990940
+             1000.0000       2.219765        3.0000    3.492520
+             2000.0000       2.392826        3.5000    3.995190
+             3000.0000       2.494109        4.0000    4.492380
+             4000.0000       2.565985        4.5000    4.990430
+             5000.0000       2.621743        5.0000    5.498820
+                         1
+               x→∞       4 log x + 0.49088   x→∞          x + 21
+References
+[Berger and Whitt, 1995] Arthur W. Berger and Ward Whitt. Maximum values in queueing pro-
+  cesses. Probability in the Engineering and Informational Sciences, 9:375–409, 1995.
+
+[Blasi, 1976] A. Blasi. On a random walk between a reflecting and an absorbing barrier. Annals of
+  Probability, 4(4):695–696, 1976.
+
+[Bond, 2003] Greg C. Bond. Green’s function for a zero drift reflected Brownian motion and the
+  expected maximum drawdown. Private communication. Note Submitted to Baker Investment
+  Group, 2003.
+
+[Dominé, 1996] M. Dominé. First passage time distribution of a Wiener process with drift concern-
+  ing two elastic barriers. Journal of Applied Probability, 33:164–175, 1996.
+
+[Douady et al., 2000] R. Douady, A. Shiryaev, and M. Yor. On probability characteristics of down-
+  falls in a standard Brownian motion. Siam, Theory Probability Appl, 44(1):29–38, 2000.
+
+[Feller, 1951] W. Feller. The asymptotic distribution of the range of sums of independent random
+  variables. Annals of Mathematical Statistics, 22:427–432, 1951.
+
+[Gradshteyn and Ryzhik, 1980] I. S. Gradshteyn and I. M. Ryzhik. Table of Integrals, Series and
+  Products, Corrected and Enlarged Edition. Academic Press, San Diego, CA, 1980.
+
+[Graversen and Shiryaev, 2000] S.E. Graversen and A. Shiryaev. An extension of P. Lévy’s dis-
+  tributional properties to the case of a brownian motion with drift. Bernoulli, 6(4):615–620,
+  2000.
+
+[Weesakul, 1961] B. Weesakul. The random walk between a reflecting and an absorbing barrier.
+  Annals of Mathematical Statistics, 32(3):765–769, 1961.
+
+
+
+
+                                                24
+
