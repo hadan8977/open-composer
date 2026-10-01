@@ -1198,7 +1198,7 @@
   - 2026-10-01 07:31 UTC 07:07 主审轮（Opus）完成：`reports/research/iterations/t20261001_book_v1/`（hypotheses.md 第"预注册全文"节、direction-review.json、candidate-manifest.json 12 条、search-space、data-feasibility、cost-table、lightweight-config），草稿规格 `strategy_specs/drafts/t20261001_book_v1.yaml`（oc spec validate ok），来源卡 `reports/harness/source_cards/t20261001_book_v1.jsonl`（8 张，引文都在快照里核对过），登记簿新增 `dir:multi_signal_risk_controlled_equity_book`（queued）。门槛逐字沿用设计第 10 节，另加三条只会更严的条件：K2 还要在现金对齐口径（净收益 − BIL + SHY）下成立（主审用零 α 空书测出 BIL 对 SHY 的利差在冻结口径下白送 +0.03 / +0.09）；实现 beta 还要过 Dimson beta；2 倍成本重放同一条权重路径。M2、M3 的超参数现在就固定（防止看到 2a 后再调）。安慰剂按种子轮换偏移，只对过了 K1/K2 的变体做。DSR 试验数 77。
 
 ### T-20261001-08 组合线 Stage 2a 运行：M0、M1 × A/B/C（6 个变体）
-- status: ready
+- status: done（待主审；执行轮 16:08–16:42 UTC，不含结论）
 - priority: 1
 - not_before: T-20261001-05 和 T-20261001-06 的状态都以 done 开头（交互会话核验并提交 S1、D5）。修正案 A1 的规则部分已由 13:07 主审轮写好（`reports/research/iterations/t20261001_book_v1/amendment-A1.md`、`amendment-A1.json`），版本绑定表由本任务第 0 步按 A1 第 8 节机械填写
 - goal: 第一次用完整管道检验"多信号组合"在两窗扣成本后能不能过冻结门槛。M0 是所有 ML 方法必须超过的基线。
@@ -1220,7 +1220,7 @@
 - notes:
   - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）：写修正案 A1（成交改为 t+1 收盘，依据只有 D4 成本测量，07:50 纲领已预告；记账规模 $1,000,000，否则冲击成本按 1 美元计；IC_t 和 M1 按预注册定义实现；watch_recent 分档；安慰剂净、毛两种口径都要达标，比预注册更严）和简报。范围缩为"跑出 54 条路径的原始结果"（45 条主路径加预注册第 7 节的 9 条去掉一个主题的诊断）：评估拆到 T-20261001-13，安慰剂拆到 T-20261001-14。本轮没有任何 Stage 2 数字。执行轮在 T-05、T-06 标 done 之前不要取本任务。
-
+  - 2026-10-01 16:42 UTC 执行轮（Sonnet 5.5 子代理）：54/54 条路径在 Modal 跑完（45 主路径各 6 个文件，9 条诊断各 5 个）；A1 binding 填写于 16:07:48Z，提交 eaffba6；清单 `reports/research/iterations/t20261001_book_v1/stage2a-manifest.json`（提交 3154bec，all_binding_true=true，bound_before_all_files=true）；原始输出在 `.../cache/stage2a/shard_<i>/<path_id>/`（不提交）。本机管道检查 12 次调仓 0 失败，重放恒等最大差 0.0，测试 10 个通过，ETF 缓存预热 27 s；Modal 花费约 $0.88（账单 status 显示 $0.7055）。待主审：(1) 缺陷（受 A1 绑定，未修）：`RiskModel.at()` 不跨年回看，1 月初在当年第一个存盘日之前的调仓报 no_risk_model，占 45 条主路径 190 次最终失败中的 189 次（另 1 次 violation）；子代理预先计数偏移 0–4 失败率 0%、1.07%、1.28%、1.71%、0.43%，T-13 要对照 2% 门槛说明；(2) A1 未规定的实现选择：M1 主题 IC 窗口跳过未定义的 IC，主题有效 IC 不足 24 个时权重为 0（seasonality 18 个月未定义、short_info 6 个）；每月更新取日历月与上次更新不同的第一个调仓；主题名按 signals.THEMES（investment 不是 investment_issuance）；(3) 形成日有 6 个因 no_risk_model 被跳过（2017-01..06，风险模型始于 2017-07）；SCS 阶梯救回 0 次；容器内峰值内存为 nan；Modal 命令用了 --no-etf-flush。安慰剂计划已实现并测试、未运行。下一步：T-20261001-13（评估）读清单路径。
 ### T-20261001-09 组合线 Stage 2b：M2（GBDT 集成）和 M3（随机傅里叶特征岭回归），Modal
 - status: ready
 - priority: 2
