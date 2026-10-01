@@ -1,0 +1,276 @@
+{
+  "iter_id": "t20261001_book_v1",
+  "strategy_name": "t20261001_book_v1",
+  "representative_spec_path": "strategy_specs/drafts/t20261001_book_v1.yaml",
+  "path_name": "multi_signal_equity_book_v1",
+  "hypothesis_id": "T-20261001-07",
+  "objective": "Main line 1: does a multi-signal, risk-controlled, cost-aware US equity book (U3000, F1 dollar- and beta-neutral with T-bills) pass K1 or K2 together with the placebo, beta, solver and 2x-cost conditions in both the stress and anchor windows, and does ML (M2/M3) add over the equal-weight composite M0?",
+  "benchmark_family": [
+    "cash_proxy_bil_excess_return",
+    "s3_vol_matched_incumbent_k2",
+    "s3_vol_matched_incumbent_k2_cash_matched",
+    "within_date_alpha_permutation_placebo_100_seeds",
+    "m0_equal_weight_composite_for_ml_contribution",
+    "spy_buy_and_hold_reported"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "M0_A",
+      "parameters": {
+        "combination": "M0_theme_equal_weight",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2a",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M0_B",
+      "parameters": {
+        "combination": "M0_theme_equal_weight",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2a",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M0_C",
+      "parameters": {
+        "combination": "M0_theme_equal_weight",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2a",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M1_A",
+      "parameters": {
+        "combination": "M1_rolling_ic_weight",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2a",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M1_B",
+      "parameters": {
+        "combination": "M1_rolling_ic_weight",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2a",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M1_C",
+      "parameters": {
+        "combination": "M1_rolling_ic_weight",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2a",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M2_A",
+      "parameters": {
+        "combination": "M2_gbdt_ensemble",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2b",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M2_B",
+      "parameters": {
+        "combination": "M2_gbdt_ensemble",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2b",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M2_C",
+      "parameters": {
+        "combination": "M2_gbdt_ensemble",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2b",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M3_A",
+      "parameters": {
+        "combination": "M3_random_fourier_ridge",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2b",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M3_B",
+      "parameters": {
+        "combination": "M3_random_fourier_ridge",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2b",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    },
+    {
+      "candidate_id": "M3_C",
+      "parameters": {
+        "combination": "M3_random_fourier_ridge",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2b",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E",
+        "fixed": "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25",
+        "windows": "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+      }
+    }
+  ],
+  "cost_table": {
+    "base_cost_bps": 10,
+    "stress_cost_bps": 20,
+    "judged_cost": "cost model v1: open-window half-spread from Alpaca NBBO calibration + square-root impact Y = 0.5 at E = $1M + fees 0.5 bp per side + borrow 25 bp a year on all short notional",
+    "two_x_cost_check": "same target-weight path replayed with 2x half-spread, impact and fees and borrow 100 bp a year on all shorts",
+    "fixed_comparison": "10 and 20 bp per side replayed on the same path, reported only"
+  },
+  "sources": [
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf",
+      "published_or_updated_at": "2022-09-30",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version."
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot."
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf",
+      "published_or_updated_at": "2023-05-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month."
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf",
+      "published_or_updated_at": "2018-08-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date."
+    },
+    {
+      "claim_id": "cmp_2012_opportunistic_insiders",
+      "url": "https://dash.harvard.edu/bitstream/handle/1/33785679/cohen,malloy,pomorski_decoding-inside-information.pdf?sequence=1&isAllowed=y",
+      "published_or_updated_at": "2012-06-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Cohen, Malloy and Pomorski (JF 2012): classifying insiders as routine or opportunistic over 1986-2007, a portfolio of opportunistic insiders' trades yields value-weighted abnormal returns of 82 bp per month, while routine insiders' trades earn essentially zero.",
+      "project_applicability": "Defines the insider theme (cmp_opportunistic_buy_60d) of signal library v1.",
+      "reflection": "Pre-2008 evidence and post-publication decay likely; the repo's standalone insider-cluster strategy was refuted and the signal now enters only as a book input; the date is the issue month."
+    },
+    {
+      "claim_id": "dkkm_2023_complexity_random_features",
+      "url": "https://www.nber.org/system/files/working_papers/w31689/w31689.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Didisheim, Ke, Kelly and Malamud (NBER w31689): expected out-of-sample SDF performance improves with model complexity; random-feature regressions built from about 130 stock characteristics, with very many random features, beat simpler factor models in the US cross-section.",
+      "project_applicability": "Basis for M3 (random Fourier features, P = 4,000, ridge penalty chosen on validation folds).",
+      "reflection": "Gross returns; SDF framing, not a cost-aware book; heavy compute; Afsharhajari and Li (2026) argue sparsity matters inside complexity; the snapshot does not print the issue date."
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date."
+    },
+    {
+      "claim_id": "gkx_2020_ml_return_prediction_trees_nets",
+      "url": "https://dachxiu.chicagobooth.edu/download/ML.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Gu, Kelly and Xiu (RFS 2020): trees and neural networks are the best-performing return predictors in the US cross-section, their gains come from nonlinear predictor interactions, and all methods agree on a dominant signal set that includes variations on momentum, liquidity and volatility.",
+      "project_applicability": "Basis for M2 (GBDT ensemble on all features, fast signals included).",
+      "reflection": "Gross of costs; long-short deciles are tilted to small caps; the repo's own pure price-volume model books (T-17/T-19) failed after costs; the snapshot does not print the issue date."
+    }
+  ],
+  "topic_coverage": [
+    "professional_longshort_net_sharpe_benchmarks",
+    "anomaly_net_of_cost_decay",
+    "cost_aware_portfolio_ml",
+    "trading_cost_square_root_impact",
+    "factor_replication_themes",
+    "ml_return_prediction_gbdt",
+    "random_feature_complexity",
+    "insider_opportunistic_trades",
+    "easy_to_borrow_short_constraints",
+    "risk_model_beta_neutrality"
+  ],
+  "hypothesis": {
+    "statement": "H1: combining the slow themes (value, quality, investment/issuance, momentum, low risk, earnings, insider, short information, seasonality) under a factor risk model, modelled costs and an easy-to-borrow constraint gives an F1 book whose median-offset net Sharpe passes K1 (anchor >= 1.19, stress >= 0.65, 2x-cost excess > 0) or K2 (edge >= 0.05 over vol-matched S3 in both windows, raw and cash-matched), with placebo beat >= 0.95 overall and >= 0.80 per window, realised beta within +-0.15 (daily and Dimson) and solver failures < 2%. H2 (ml_contribution_pass): M2 or M3 beats M0 in net Sharpe in both windows in the same universe set-up.",
+    "failure_mode": "Signals too weak or regime-flipping in the liquid pool (Stage 0: P1000 8-book combo stress -0.23); edge concentrated in hard-to-borrow microcaps that SE_t excludes; costs at the open eat the turnover; the risk model fails to neutralise beta (D3 interim check shows realised book beta 0.3-0.7 for Stage 0 books); B infeasible under the industry constraint with ETF-only shorts.",
+    "measurement": "evaluate.window_metrics (excess over BIL), k1_check, k2_edges on the model-cost series and on the cash-matched series, Dimson beta, solver failure counts, 2x-cost replay, 100-seed placebo for K1/K2 passers, DSR with 77 trials; per-variant turnover, cost share, exposures, leave-one-theme-out (M0_A offset 0) and fixed stress days.",
+    "stop_pivot": "All 12 fail research_pass: book v1 refuted, infrastructure kept, expand the signal library (no parameter tuning); if M0's anchor residual IC also has NW t < 2, add signals before a v2 contract. Any pass: open the D6 forward shadow, propose a paper sleeve to the owner after 20 clean forward sessions."
+  },
+  "decision": {
+    "path": "multi_signal_equity_book_v1",
+    "decision": "pending",
+    "reason": "Preregistered 2026-10-01 by the 07:07 lead round from the design frozen 06:32 UTC, before any Stage 2 output.",
+    "next_iteration_suggestion": "T-20261001-05 (signal library) and T-20261001-06 (optimizer) after D2-D4/D7 acceptance; then the version amendment and T-20261001-08 (Stage 2a), then T-20261001-09 (Stage 2b)."
+  },
+  "source_cards_path": "reports/harness/source_cards/t20261001_book_v1.jsonl"
+}

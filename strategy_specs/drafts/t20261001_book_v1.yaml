@@ -1,0 +1,117 @@
+name: t20261001_book_v1
+description: 'Preregistered Stage 2 of the equity book (main line 1, research program 2026-10-01; design docs/equity-book-design.zh.md, grid and gates frozen 06:32 UTC): a multi-signal, risk-controlled, cost-aware US equity book on U3000. Twelve variants = four alpha combinations (M0 theme equal weight, M1 rolling IC weight, M2 GBDT ensemble, M3 random Fourier feature ridge) x three universe/short set-ups (A U3000 with easy-to-borrow single-name and ETF shorts, B U3000 longs with ETF shorts only, C P1000 only), weekly rebalancing judged at the median of 5 offsets, F1 dollar- and beta-neutral structure with T-bills. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- IWM
+- IJR
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3000
+  max_position_weight: 0.01
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3000
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.01
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261001_book_v1:multi_signal_equity_book
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/research/equity_book/panel
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_book_alpha:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Signals come from open_composer/research/equity_book/signals.py (T-20261001-05), alpha combinations M0-M3 and the optimizer from optimize.py (T-20261001-06), the book from backtest.run_book and the verdict from evaluate.py, all as preregistered in reports/research/iterations/t20261001_book_v1/hypotheses.md.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- events.sec_filings
+- events.sec_form4_insider
+- market.finra_short_interest
+- reference.sec_sic_industry
+research_design:
+  iter_id: t20261001_book_v1
+  candidate_manifest_path: reports/research/iterations/t20261001_book_v1/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261001_book_v1/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261001_book_v1.jsonl
+  source_card_claim_ids:
+  - jkmp_2022_implementable_efficient_frontier
+  - aqr_2023_longshort_manager_sharpe_percentiles
+  - chen_velikov_2023_anomaly_net_returns
+  - fim_2018_trading_costs_square_root_impact
+  - cmp_2012_opportunistic_insiders
+  - dkkm_2023_complexity_random_features
+  - jkp_2023_replication_153_factors_13_themes
+  - gkx_2020_ml_return_prediction_trees_nets
+  parameter_space:
+    combination:
+    - M0_theme_equal_weight
+    - M1_rolling_ic_weight
+    - M2_gbdt_ensemble
+    - M3_random_fourier_ridge
+    universe_short_setup:
+    - A_u3000_se_single_name_and_etf_shorts
+    - B_u3000_etf_shorts_only
+    - C_p1000_only
+  candidate_budget: 12
+  selection_objective: Not a return search. The 12 variants, the fixed parameters (risk model v1, cost model v1, borrow proxy v1, ex-ante vol 5%, gross 1.0, single name 1%) and the gates are frozen in docs/equity-book-design.zh.md sections 9-10 (06:32 UTC) and in hypotheses.md before any Stage 2 output. Any variant that passes is reported; no variant is tuned after results.
+  candidate_budget_note: 12 grid cells; the DSR trial count is 77 (12 cells plus the 65 Stage 0 cells already seen).
+  anti_overfit_notes:
+  - Stage 0 diagnostics were computed on the same history and were used for design only; they are counted in the DSR trial number and none of their cells is a candidate.
+  - Every gate is judged at the median over 5 weekly rebalance offsets; the placebo pairs each seed with the real run on the same offset.
+  - Versions of the risk, cost and borrow models are bound by hash in an amendment written after their acceptance and before T-20261001-08 runs; no Stage 2 number may exist when that amendment is written.
+  validation_plan:
+  - evaluate.window_metrics on stress 2017-10-02..2023-08-31 and anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone
+  - K1 and K2 (raw and cash-matched) at the median offset, 2x-cost replay, realised beta (daily and Dimson), solver failure rate
+  - 100-seed within-date permutation placebo for variants that pass K1 or K2; DSR with 77 trials; ML contribution of M2/M3 over M0 per universe
+notes:
+  intent: Test the main-line hypothesis that many weak signals, combined under a risk model, cost model and borrow constraint, give a book whose net Sharpe adds to S3 or stands alone.
+  hypothesis_id: T-20261001-07
+  previous_link: dir:multi_signal_risk_controlled_equity_book
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

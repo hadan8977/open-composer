@@ -1,0 +1,63 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261001_book_v1/candidate-manifest.json",
+  "candidate_manifest_sha256": "6ffde66cd20cf5c549b9908f81c74efa9baa9515fb7b8415082ef170176c3163",
+  "cost_table_path": "reports/research/iterations/t20261001_book_v1/cost-table.json",
+  "created_at": "2026-10-01T07:29:09.487596+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261001_book_v1/data-feasibility.json",
+  "data_feasibility_sha256": "47b52c5d258a264b20d6a21d7d0bee6b6748d9a554b9c16e948c205695cb6a11",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261001_book_v1",
+  "paths": [
+    {
+      "benchmark_family": [
+        "cash_proxy_bil_excess_return",
+        "s3_vol_matched_incumbent_k2",
+        "s3_vol_matched_incumbent_k2_cash_matched",
+        "within_date_alpha_permutation_placebo_100_seeds",
+        "m0_equal_weight_composite_for_ml_contribution",
+        "spy_buy_and_hold_reported"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "T-20261001-07"
+      ],
+      "name": "multi_signal_equity_book_v1",
+      "parameters": {
+        "combination": [
+          "M0_theme_equal_weight",
+          "M1_rolling_ic_weight",
+          "M2_gbdt_ensemble",
+          "M3_random_fourier_ridge"
+        ],
+        "fixed": [
+          "risk model v1, cost model v1, borrow proxy v1 (hashes bound by amendment before T-20261001-08), ex-ante vol 5%, single name 1%, industry 0.01, size 0.10, other styles 0.25"
+        ],
+        "rebalance": [
+          "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median"
+        ],
+        "stage": [
+          "2a",
+          "2b"
+        ],
+        "structure": [
+          "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E"
+        ],
+        "universe_short_setup": [
+          "A_u3000_se_single_name_and_etf_shorts",
+          "B_u3000_etf_shorts_only",
+          "C_p1000_only"
+        ],
+        "windows": [
+          "stress 2017-10-02..2023-08-31, anchor 2024-01-08..2026-09-17, gap 2023-09..2023-12 reported alone"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261001_book_v1.yaml",
+  "spec_hash": "0daf83d9382c1d9cf793f49ceeb815e33bf6fe5d76dbdc78d05a5ab9cf2c3cd8",
+  "strategy_name": "t20261001_book_v1",
+  "total_candidate_budget": 12,
+  "trial_ledger_paths": []
+}

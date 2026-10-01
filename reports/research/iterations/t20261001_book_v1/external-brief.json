@@ -1,0 +1,162 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "multi_signal_equity_book_v1",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261001_book_v1.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261001-07",
+      "source_urls": [
+        "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261001_book_v1",
+  "objective": "Main line 1: does a multi-signal, risk-controlled, cost-aware US equity book (U3000, F1 dollar- and beta-neutral with T-bills) pass K1 or K2 together with the placebo, beta, solver and 2x-cost conditions in both the stress and anchor windows, and does ML (M2/M3) add over the equal-weight composite M0?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "claim_id": "cmp_2012_opportunistic_insiders",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://dash.harvard.edu/bitstream/handle/1/33785679/cohen,malloy,pomorski_decoding-inside-information.pdf?sequence=1&isAllowed=y"
+    },
+    {
+      "claim_id": "dkkm_2023_complexity_random_features",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://www.nber.org/system/files/working_papers/w31689/w31689.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "gkx_2020_ml_return_prediction_trees_nets",
+      "source_card_path": "reports/harness/source_cards/t20261001_book_v1.jsonl",
+      "source_url": "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261001_book_v1.yaml",
+  "sources": [
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "published_or_updated_at": "2018-08-01",
+      "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+      "source_type": "paper",
+      "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "claim_id": "cmp_2012_opportunistic_insiders",
+      "core_claim": "Cohen, Malloy and Pomorski (JF 2012): classifying insiders as routine or opportunistic over 1986-2007, a portfolio of opportunistic insiders' trades yields value-weighted abnormal returns of 82 bp per month, while routine insiders' trades earn essentially zero.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Defines the insider theme (cmp_opportunistic_buy_60d) of signal library v1.",
+      "published_or_updated_at": "2012-06-01",
+      "reflection": "Pre-2008 evidence and post-publication decay likely; the repo's standalone insider-cluster strategy was refuted and the signal now enters only as a book input; the date is the issue month.",
+      "source_type": "paper",
+      "url": "https://dash.harvard.edu/bitstream/handle/1/33785679/cohen,malloy,pomorski_decoding-inside-information.pdf?sequence=1&isAllowed=y"
+    },
+    {
+      "claim_id": "dkkm_2023_complexity_random_features",
+      "core_claim": "Didisheim, Ke, Kelly and Malamud (NBER w31689): expected out-of-sample SDF performance improves with model complexity; random-feature regressions built from about 130 stock characteristics, with very many random features, beat simpler factor models in the US cross-section.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Basis for M3 (random Fourier features, P = 4,000, ridge penalty chosen on validation folds).",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross returns; SDF framing, not a cost-aware book; heavy compute; Afsharhajari and Li (2026) argue sparsity matters inside complexity; the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w31689/w31689.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "gkx_2020_ml_return_prediction_trees_nets",
+      "core_claim": "Gu, Kelly and Xiu (RFS 2020): trees and neural networks are the best-performing return predictors in the US cross-section, their gains come from nonlinear predictor interactions, and all methods agree on a dominant signal set that includes variations on momentum, liquidity and volatility.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Basis for M2 (GBDT ensemble on all features, fast signals included).",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross of costs; long-short deciles are tilted to small caps; the repo's own pure price-volume model books (T-17/T-19) failed after costs; the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+    }
+  ],
+  "spec_hash": "0daf83d9382c1d9cf793f49ceeb815e33bf6fe5d76dbdc78d05a5ab9cf2c3cd8",
+  "strategy_name": "t20261001_book_v1",
+  "topic_coverage": [
+    "professional_longshort_net_sharpe_benchmarks",
+    "anomaly_net_of_cost_decay",
+    "cost_aware_portfolio_ml",
+    "trading_cost_square_root_impact",
+    "factor_replication_themes",
+    "ml_return_prediction_gbdt",
+    "random_feature_complexity",
+    "insider_opportunistic_trades",
+    "easy_to_borrow_short_constraints",
+    "risk_model_beta_neutrality"
+  ]
+}
