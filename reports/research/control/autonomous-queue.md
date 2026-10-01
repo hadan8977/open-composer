@@ -1324,6 +1324,14 @@
 - notes:
   - 2026-10-01 14:20 UTC 交互会话（Opus）写入。机主 10-01 原话："如果前向测试只是确认执行和数据没问题，那么两周就足够了，或者说这个可以直接用模拟盘测试，我多开几个模拟盘账户给你就行了"。开账户和批准具体策略都由机主做。
 
+### T-20261001-20 评判标准 v2 的计分代码（scorecard），并对 v1 做参考核算
+- status: ready（18:18 UTC 交互会话写简报；交互会话在子代理名额空出后自己派，定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: 机主 10-01 要求整体判断、加权考量，标准由研究者定。标准见 `docs/evaluation-standard.zh.md`，阈值在 `config/evaluation-standard-v2.json`。以后每次判定都由代码输出计分 JSON，不靠手算。v1.1 合同直接用它。
+- done_when: `open_composer/research/scorecard_v2.py`、测试、v1 参考计分（`reports/research/program/evaluation-standard-2026-10-01/v1-reference-scorecard.json`）已提交。
+- brief: reports/research/control/briefs/T-20261001-20.md
+
 ### T-20261001-19 组合线 v1 事后诊断：构造阶梯（风格上限、开盘成交、成本）、传导系数、收益归因
 - status: running（交互会话子代理 R1001-1755-T19，17:55 UTC 启动；定时轮不要取）
 - priority: 1
