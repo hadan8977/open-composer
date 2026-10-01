@@ -1307,9 +1307,10 @@
   - 2026-10-01 14:17 UTC 交互会话（Opus）写入。合同冻结时 v1 档案下没有任何 Stage 2 结果文件。
 
 ### T-20261001-16 组合线：支持做空的组合下单引擎（模拟盘前置，机主 10-01 同意多开模拟账户）
-- status: ready（简报由 19:07 主审轮写；交互会话 14:20 写入）
+- status: running（交互会话子代理 R1001-1735-T16，17:33 UTC 启动；简报 `reports/research/control/briefs/T-20261001-16.md`；只做 dry-run，不下单；定时轮不要碰）
 - priority: 1
-- not_before: 无，代码可以先写；任何下单都要等机主批准具体策略和账户
+- not_before: 无，代码可以先写。机主 10-01 约 17:30 已开 quant1、quant2（各 $1M）并授权细节由主审决定（`reports/research/control/owner-authorization-2026-10-01-book-paper-accounts.md`）；下单仍要变体达到 watch_recent 并通过 dry-run 检查表
+- brief: reports/research/control/briefs/T-20261001-16.md
 - goal: 组合线不管是 RF1 还是 v1 + A1 过线，都要上模拟盘，前向两周只验证执行。现有 `open_composer/paper_rehearsal.py` 第 296 行硬性要求 `position_direction == "long_only"`，只能跑 ETF sleeve，不能跑 100–250 只股票的多空中性组合。
 - plan（主审写简报时细化）：
   - **输入**：每天由 `optimize.py` 生成的目标权重（含 TBILL 腿），先记信号日志，再生成订单。
