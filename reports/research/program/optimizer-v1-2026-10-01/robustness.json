@@ -1,0 +1,703 @@
+{
+ "meta": {
+  "coordinator": "R1001-1035-D5FIX",
+  "note": "robustness of the solve path; not a performance claim",
+  "keys": [
+   "anchor_2024|A|vasicek",
+   "anchor_2024|A|model",
+   "anchor_2024|A|ewma21",
+   "anchor_2024|C|model",
+   "anchor_2024|C|ewma21",
+   "stress_2019|A|ewma",
+   "anchor_2024|A|ewma"
+  ],
+  "reference_options": {
+   "max_iter": 5000,
+   "tol_gap_abs": 1e-09,
+   "tol_gap_rel": 1e-09,
+   "tol_feas": 1e-09,
+   "reduced_tol_gap_abs": 1e-08,
+   "reduced_tol_gap_rel": 1e-08,
+   "reduced_tol_feas": 1e-08
+  },
+  "opt_defaults": {
+   "sigma_annual": 0.05,
+   "horizon_days": 21,
+   "ic": 0.03,
+   "kappa": 1.0,
+   "beta_cap": 0.02,
+   "beta_method": "ewma",
+   "industry_cap": 0.01,
+   "size_cap": 0.1,
+   "style_cap": 0.25,
+   "name_cap": 0.01,
+   "etf_cap": 0.5,
+   "gross_cap": 1.0,
+   "dollar_neutral": true,
+   "allow_stock_shorts": true,
+   "equity": 100000.0,
+   "e_cap": 1000000.0,
+   "participation": 0.01,
+   "snapshot": "close",
+   "impact_y": 0.5,
+   "impact_mode": "exact",
+   "impact_ref_dw": 0.003,
+   "borrow_bp": 25.0,
+   "etf_half_spread_bp": 1.0,
+   "tail_frac": 0.35,
+   "solver": "CLARABEL",
+   "max_iter": 200,
+   "clean_tol": 1e-06,
+   "retry_ladder": true,
+   "retry_max_iter": 2000,
+   "retry_relaxed_tol": 1e-06,
+   "retry_scs_max_iters": 20000,
+   "retry_scs_eps": 1e-05,
+   "max_violation_tol": 0.0001
+  },
+  "timestamp_utc": "2026-10-01T11:02:58Z"
+ },
+ "configs": {
+  "anchor_2024|A|vasicek": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 4,
+   "reproduced_n_failed_ladder_off": 4,
+   "failure_rate_before": 0.07692307692307693,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 48,
+    "solver_error": 4
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal_inaccurate": 48,
+    "solver_error": 4
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 51,
+    "1": 1,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 50,
+    "optimal": 2
+   },
+   "rescues": [
+    {
+     "rebalance": 16,
+     "date": "2024-04-26",
+     "n_assets": 1270,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 5.942418632097542,
+     "iters": 29
+    },
+    {
+     "rebalance": 21,
+     "date": "2024-05-31",
+     "n_assets": 1298,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 4.218396979849786,
+     "iters": 31
+    },
+    {
+     "rebalance": 26,
+     "date": "2024-07-05",
+     "n_assets": 1293,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 2.2103807092644274,
+     "iters": 28
+    },
+    {
+     "rebalance": 33,
+     "date": "2024-08-23",
+     "n_assets": 1316,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 4.025892798323184,
+     "iters": 30
+    }
+   ],
+   "solve_s_before": {
+    "p50": 1.1069252786692232,
+    "p90": 1.294544983934611,
+    "p95": 2.1884022125042906,
+    "p99": 4.441168011501436,
+    "p100": 5.462211561854929
+   },
+   "solve_s_ladder_on": {
+    "p50": 1.065814022673294,
+    "p90": 1.190308338450268,
+    "p95": 1.4496309187728906,
+    "p99": 3.903369159041913,
+    "p100": 6.295891001820564
+   },
+   "max_violation_before": 2.5236735942540944e-06,
+   "max_violation_ladder_on": 2.253712836866595e-06,
+   "wall_s": 237.44376349449158
+  },
+  "anchor_2024|A|model": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 1,
+   "reproduced_n_failed_ladder_off": 1,
+   "failure_rate_before": 0.019230769230769232,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 51,
+    "solver_error": 1
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal_inaccurate": 51,
+    "solver_error": 1
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 51,
+    "1": 1,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 51,
+    "optimal": 1
+   },
+   "rescues": [
+    {
+     "rebalance": 15,
+     "date": "2024-04-19",
+     "n_assets": 1275,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal"
+     ],
+     "final_status": "optimal",
+     "wall_s": 2.5544773382134736,
+     "iters": 27
+    }
+   ],
+   "solve_s_before": {
+    "p50": 1.120073391823098,
+    "p90": 1.2564893634058534,
+    "p95": 1.3032042427454142,
+    "p99": 1.7239663934707647,
+    "p100": 1.8998346677981317
+   },
+   "solve_s_ladder_on": {
+    "p50": 1.0671026771888137,
+    "p90": 1.183772590989247,
+    "p95": 1.2101011272752655,
+    "p99": 1.7162558376370018,
+    "p100": 2.217976341024041
+   },
+   "max_violation_before": 6.140158399448037e-06,
+   "max_violation_ladder_on": 1.980960710357138e-06,
+   "wall_s": 208.88848686218262
+  },
+  "anchor_2024|A|ewma21": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 1,
+   "reproduced_n_failed_ladder_off": 1,
+   "failure_rate_before": 0.019230769230769232,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 51,
+    "solver_error": 1
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal_inaccurate": 51,
+    "solver_error": 1
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 51,
+    "1": 1,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 52
+   },
+   "rescues": [
+    {
+     "rebalance": 50,
+     "date": "2024-12-20",
+     "n_assets": 1288,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 2.6796631473116577,
+     "iters": 30
+    }
+   ],
+   "solve_s_before": {
+    "p50": 1.059384596068412,
+    "p90": 1.2501994853373617,
+    "p95": 1.3203712878748775,
+    "p99": 1.4114856779528784,
+    "p100": 1.436924094799906
+   },
+   "solve_s_ladder_on": {
+    "p50": 1.1403999412432313,
+    "p90": 1.3555728340055793,
+    "p95": 1.409905098727904,
+    "p99": 2.6782363577978687,
+    "p100": 2.781527418177575
+   },
+   "max_violation_before": 3.135616129083113e-06,
+   "max_violation_ladder_on": 3.135616129083113e-06,
+   "wall_s": 206.9720983505249
+  },
+  "anchor_2024|C|model": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 1,
+   "reproduced_n_failed_ladder_off": 1,
+   "failure_rate_before": 0.019230769230769232,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 15,
+    "solver_error": 1,
+    "optimal": 36
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal": 36,
+    "optimal_inaccurate": 15,
+    "solver_error": 1
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 51,
+    "1": 1,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 12,
+    "optimal": 40
+   },
+   "rescues": [
+    {
+     "rebalance": 21,
+     "date": "2024-05-31",
+     "n_assets": 575,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 1.0723083829507232,
+     "iters": 36
+    }
+   ],
+   "solve_s_before": {
+    "p50": 0.5402989040594548,
+    "p90": 1.5907064063940197,
+    "p95": 1.7186386022251097,
+    "p99": 1.944653372392059,
+    "p100": 2.0911635062657297
+   },
+   "solve_s_ladder_on": {
+    "p50": 0.4805066219996661,
+    "p90": 1.5581029925029724,
+    "p95": 1.6679948119679466,
+    "p99": 1.8299146271450448,
+    "p100": 1.8893024590797722
+   },
+   "max_violation_before": 2.9674916712796318e-06,
+   "max_violation_ladder_on": 3.27618757822723e-06,
+   "wall_s": 154.5928726196289
+  },
+  "anchor_2024|C|ewma21": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 1,
+   "reproduced_n_failed_ladder_off": 1,
+   "failure_rate_before": 0.019230769230769232,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 23,
+    "solver_error": 1,
+    "optimal": 28
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal": 28,
+    "optimal_inaccurate": 23,
+    "solver_error": 1
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 51,
+    "1": 1,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 17,
+    "optimal": 35
+   },
+   "rescues": [
+    {
+     "rebalance": 18,
+     "date": "2024-05-10",
+     "n_assets": 574,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 1.9117176248691976,
+     "iters": 25
+    }
+   ],
+   "solve_s_before": {
+    "p50": 0.48781085293740034,
+    "p90": 1.4731833075173197,
+    "p95": 1.650856773066334,
+    "p99": 1.853629584317096,
+    "p100": 1.9612228232435882
+   },
+   "solve_s_ladder_on": {
+    "p50": 0.5166818981524557,
+    "p90": 2.083654444059357,
+    "p95": 2.7074352180352435,
+    "p99": 3.110534717049451,
+    "p100": 3.4358227839693427
+   },
+   "max_violation_before": 1.2334294591798134e-06,
+   "max_violation_ladder_on": 1.2334294591798134e-06,
+   "wall_s": 165.113379240036
+  },
+  "anchor_2024|A|ewma": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 0,
+   "reproduced_n_failed_ladder_off": 0,
+   "failure_rate_before": 0.0,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 51,
+    "optimal": 1
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal_inaccurate": 51,
+    "optimal": 1
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 52,
+    "1": 0,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 51,
+    "optimal": 1
+   },
+   "rescues": [],
+   "solve_s_before": {
+    "p50": 1.0939001038204879,
+    "p90": 1.2122317579574884,
+    "p95": 1.2302517876727506,
+    "p99": 1.282392122708261,
+    "p100": 1.3223428977653384
+   },
+   "solve_s_ladder_on": {
+    "p50": 1.0713365580886602,
+    "p90": 1.198951723286882,
+    "p95": 1.2471281151520088,
+    "p99": 1.3420484871463854,
+    "p100": 1.418951456900686
+   },
+   "max_violation_before": 2.8979971804753146e-06,
+   "max_violation_ladder_on": 2.8979971804753146e-06,
+   "wall_s": 196.83034801483154
+  },
+  "stress_2019|A|ewma": {
+   "n_rebalances": 52,
+   "smoke_run_n_failed": 1,
+   "reproduced_n_failed_ladder_off": 1,
+   "failure_rate_before": 0.019230769230769232,
+   "failure_rate_after_same_problems": 0.0,
+   "failure_rate_after_own_trajectory": 0.0,
+   "status_counts_before": {
+    "optimal_inaccurate": 29,
+    "solver_error": 1,
+    "optimal": 22
+   },
+   "status_counts_first_attempt_max_iter_500": {
+    "optimal_inaccurate": 29,
+    "optimal": 22,
+    "solver_error": 1
+   },
+   "failures_rescued_by_max_iter_500": 0,
+   "ladder_on_attempt_counts_own_trajectory": {
+    "0": 51,
+    "1": 1,
+    "2": 0,
+    "3": 0
+   },
+   "ladder_on_status_counts_own_trajectory": {
+    "optimal_inaccurate": 30,
+    "optimal": 22
+   },
+   "rescues": [
+    {
+     "rebalance": 48,
+     "date": "2019-12-06",
+     "n_assets": 1257,
+     "first_status": "solver_error",
+     "ok": true,
+     "attempt": 1,
+     "attempt_name": "clarabel_max_iter",
+     "attempt_log": [
+      "first:solver_error",
+      "clarabel_max_iter:optimal_inaccurate"
+     ],
+     "final_status": "optimal_inaccurate",
+     "wall_s": 2.281217801850289,
+     "iters": 27
+    }
+   ],
+   "solve_s_before": {
+    "p50": 2.8006469518877566,
+    "p90": 4.764493410661816,
+    "p95": 5.6878760987659875,
+    "p99": 7.388052472500132,
+    "p100": 7.793648805934936
+   },
+   "solve_s_ladder_on": {
+    "p50": 3.0874762474559247,
+    "p90": 4.875368694867938,
+    "p95": 5.124293249752372,
+    "p99": 6.225499635618182,
+    "p100": 6.757230940274894
+   },
+   "max_violation_before": 1.9740583136057532e-06,
+   "max_violation_ladder_on": 1.8316184355327003e-06,
+   "wall_s": 450.8688585758209
+  }
+ },
+ "solve_time_s_all": {
+  "before_ladder_off_max_iter_200": {
+   "p50": 1.0779890012927353,
+   "p90": 1.7877988202031696,
+   "p95": 3.5841852772282388,
+   "p99": 5.313140274141916,
+   "p100": 7.793648805934936
+  },
+  "first_attempt_max_iter_500": {
+   "p50": 1.080944252666086,
+   "p90": 1.8260808822233225,
+   "p95": 3.536782997031693,
+   "p99": 4.83054929216858,
+   "p100": 5.311581852380186
+  },
+  "ladder_on_max_iter_200": {
+   "p50": 1.0740721139591187,
+   "p90": 2.503098604362457,
+   "p95": 3.579820948303673,
+   "p99": 5.122437204625458,
+   "p100": 6.757230940274894
+  }
+ },
+ "reference_comparison": {
+  "summary": {
+   "n_sampled": 20,
+   "n_reference_optimal": 0,
+   "objective_gap_bp": {
+    "p50": NaN,
+    "p90": NaN,
+    "p100": NaN
+   },
+   "max_abs_dw": {
+    "p50": NaN,
+    "p90": NaN,
+    "p100": NaN
+   },
+   "vol_change": {
+    "p0": NaN,
+    "p50": NaN,
+    "p100": NaN
+   },
+   "abs_beta_change": {
+    "p0": NaN,
+    "p50": NaN,
+    "p100": NaN
+   }
+  },
+  "rows": [
+   {
+    "config": "anchor_2024|A|vasicek",
+    "rebalance": 7,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|vasicek",
+    "rebalance": 23,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|model",
+    "rebalance": 33,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|model",
+    "rebalance": 2,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|model",
+    "rebalance": 21,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|ewma21",
+    "rebalance": 15,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|ewma21",
+    "rebalance": 27,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|ewma21",
+    "rebalance": 20,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|C|model",
+    "rebalance": 17,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|C|model",
+    "rebalance": 5,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|C|model",
+    "rebalance": 48,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|C|ewma21",
+    "rebalance": 4,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|C|ewma21",
+    "rebalance": 44,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|C|ewma21",
+    "rebalance": 21,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|ewma",
+    "rebalance": 28,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|ewma",
+    "rebalance": 8,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "anchor_2024|A|ewma",
+    "rebalance": 42,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "stress_2019|A|ewma",
+    "rebalance": 0,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "stress_2019|A|ewma",
+    "rebalance": 6,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   },
+   {
+    "config": "stress_2019|A|ewma",
+    "rebalance": 15,
+    "first_ok": true,
+    "ref": "error SolverError(\"Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information.\")"
+   }
+  ]
+ }
+}
