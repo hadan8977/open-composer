@@ -322,7 +322,7 @@
   - 2026-09-28 20:1x UTC 结果（自动轮已对照 results.json 核对）：否定，0/3，第一段即停，未做第二段。15 个 bootstrap LightGBM 在 Modal 走步训练（2018 起样本外，花费 $0.04）。U1（高不确定时半仓）AUROC 0.522、对标窗夏普 1.136 对同波动对照 1.086（+0.050，线 0.10）、低于安慰剂 90 分位 1.177；U2（极高不确定时空仓）夏普差 −0.219；U3（剔除分歧最大的股票）夏普差 −0.324，低于随机剔除安慰剂。集成分歧不预测账本回撤。产物：`reports/research/iterations/h20260928_14b_uncertainty_gate/`，卡片 `H-20260928-31`，登记簿 `dir:regime_trust_uncertainty_gate_momentum_ranker` refuted。
 
 ### T-20260928-12 Modal：股票层面批量筛选（依赖 08 和批量通道 SELF_CHECK_OK）
-- status: blocked
+- status: superseded（2026-10-01：股票层面的批量筛选由组合线取代）
 - priority: 2
 - not_before:
 - goal: 批量通道（T-20260928-03，交互会话在做）只覆盖 ETF。T-20260928-06 重判出的股票层面方向（几百到几千只股票的截面规则）本机内存放不下，在 Modal 上用同一套判定（偏移中位数夏普、同波动 S3 对比、DSR）分片并行跑。
@@ -330,6 +330,7 @@
 - done_when: 每批一个迭代档案，`--stage final` 通过；保留的写进 `reports/research/screens/kept.jsonl`。
 - notes:
   - 2026-09-28 03:20 UTC 交互会话（研究）：批量通道已上线（`reports/research/screens/SELF_CHECK_OK`）。股票层面的 25 个方向正由迭代 `h20260928_06_registry_stock_batch3` 在本机测（最大 500 只、20 日重叠持仓，复用 `open_composer.research.signal_card`）；需要更大股票池、本机内存放不下的候选会在它的报告里标 `needs_modal`，本任务只接这些，不重复测本机已测的。
+  - 2026-10-01 06:42 UTC 交互会话（Opus）：组合线（`docs/equity-book-design.zh.md`）用统一的面板、风险模型和优化器评估信号，不再做股票层面的单独批量筛选。
 
 ### T-20260928-03 批量筛选通道
 - status: done
@@ -827,7 +828,7 @@
   - 2026-09-30 01:07 自动轮（R0930-0107-B）：done，refuted，新股日历窗口收口。过滤后 399 个 IPO（2024 起 88 个，达不到 n≥100）；FINRA 2241 在 2015-12 把静默期缩到 10 天，第 25 天在全样本里已不是规则日期。A 族 QP-3→QP+2 合并扣成本 −1.40%（t −2.21），2024 起 −3.84%；B 族 2024 起做空 20 会话 +10.55%（n=13，t 0.70），去掉最大 3 笔后 −11.75%。候选实际定义 10 条（plan 写 12，DSR 按 12 次，未用到）。产物 `reports/research/iterations/h20260929_81_ipo_aftermarket/`、`scripts/run_h20260929_81_ipo_aftermarket.py`。
 
 ### T-20260929-82 拆股公告后的漂移（美股，2016-2026，只做多，免费 EDGAR 8-K 文本建事件表）
-- status: ready
+- status: superseded（2026-10-01：拆股漂移进组合信号库候选清单 v2）
 - priority: 3
 - not_before:
 - goal: 拆股公告有文献支持的价格效应，但大小有争议：Titman、Wei & Zhao（2016 工作论文，已打开）美国 1998 年后样本，公告 3 日收益 3.32%，公告后前 60 日异常收益 3.21%（t=4.71），12 个月 DGTW 4.20%（t=3.16，约为 Ikenberry-Ramnath 早期样本 9% 的一半），作者提示与动量重叠（公司在上涨后拆股）。GitHub 上一个学生级 CRSP 复现（NathanArimilli24/stock-split-event-study，已打开，未评审）2000-2024 年公告日平均异常收益 +1.26%（t=13.2，N=3,076），第 6 个交易日左右就消失，除权日只有 +0.63% 且当天结束；2010 年代后每年不足 80 个，拆股公司中位市值到 2024 年约 $200 亿，2020/2022/2024 有苹果、特斯拉、亚马逊、英伟达等超大盘拆股。也就是说次日开盘买入大概率错过公告日反应，问题是公告后是否还有漂移。本仓库没有测过（登记簿没有拆股方向，只有别的异象 `nominal_price_anomaly_pwb`）。低换手、只做多、无借券成本，最便宜的否定测试半小时内。优先级 3：证据互相矛盾、样本每年只有几十个。
@@ -835,6 +836,7 @@
 - done_when: 事件表建好并有抽样核对记录（误判率、事件数按年）；两张 signal card 或 CAR 表（20 日、60 日；全样本、2019 起、2024 起；安慰剂和动量匹配对照）写入 `reports/research/iterations/h20260929_82_stock_split_drift/results.json`；登记簿 `dir:stock_split_announcement_drift_recent` 更新终态并 validate ok；`direction-check` 与 `iteration validate` 通过。
 - notes:
   - 2026-09-29 缺口搜索（gap-search-2026-09-29-22，协调者任务代码 R0929-2207-D）添加。原文核对：Titman-Wei-Zhao PDF 全文（已打开，数字来自摘要与正文）、GitHub 复现 README（已打开，学生项目，数字只当方向）；Gharghori & Nguyen（澳大利亚样本）页面被验证码拦截，只见搜索片段，claim_only，数字不引用。
+  - 2026-10-01 06:42 UTC 交互会话（Opus）：方向大改后不再单独做成只做多策略；作为信号卡候选，组合 v1 跑通后按边际贡献判。
 
 ### T-20260930-01 机构 60/40 再平衡的抢跑信号：用 SPY 对 10 年债的收益推算再平衡压力，只交易股票腿（低 Beta，机制是被迫的资金流）
 - status: done
@@ -848,7 +850,7 @@
   - 2026-09-30 01:07 自动轮（R0930-0107-C）：done，refuted（回归闸门）。SPY 日内段对 Threshold 信号：全样本系数 −0.52（HC3 t −2.84）、压力窗 t −2.68，对标窗 t −0.84（要求 |t|≥2）；价差诊断版对标窗 t −1.15。回归隐含毛收益 1.36 bp/日，10 bp 成本约 2.47 bp/日。非闸门观察：组合 W 与 CalMod 对标窗 t +1.99/+2.09——已在对标窗上看过，只能用 2026-09-18 以后的新留出另立合同。本机 SIP 日线已是分红复权。产物 `reports/research/iterations/h20260930_01_rebalancing_front_run/`、`scripts/run_h20260930_01_rebalancing.py`。
 
 ### T-20260930-02 行业相对信号批量：用免费 SEC SIC 建行业表，测行业动量、行业中性股票动量和同行业财报溢出（个股，ADV 前 1,500，多空、行业中性）
-- status: ready
+- status: superseded（2026-10-01：数据部分由组合线 D1 完成，信号部分进候选清单 v2）
 - priority: 2
 - not_before:
 - goal: 覆盖地图 `trend_momentum.stock_momentum` 写着"行业相对动量从未在本地测过，卡在没有行业分类"；本轮确认分类可以免费拿：SEC `company_tickers.json` 今天返回 200、10,431 行，`data.sec.gov/submissions/CIK0001045810.json`（NVDA）返回 sic 3674。文献（只有 Springer 综述转述，原论文没读，数字标 claim_only）：Moskowitz-Grinblatt 1999 行业动量 0.43%/月（1963-1995），扣掉行业后的个股动量只剩 0.13%/月；Grundy-Martin 加 1 个月间隔后降到不显著的 0.16%/月；Grobys-Kolari 2020（48 个行业，1926-2018）0.62%（1-0-1）、0.57%（6-1-1）、0.80%（12-1-1）/月，月度 alpha 0.56%，没有动量崩盘的期权性。Hou 2007（摘要已打开）：大公司领先小公司主要发生在行业内，由对负面信息的迟缓调整驱动，小型、竞争弱、被忽视的行业更明显，和大公司财报后小公司漂移相关；Baker 等 2019（摘要已打开，1996-2015）：同行业同行的财报新闻和本公司在其公告日的收益正相关。反面证据：Arnott 等（因子动量，摘要已打开）说行业动量在一个月周期最强但被因子动量吸收，不是独立来源；Management Science 的"Tail Wags the Dog"称跨行业扩散可能是假象（只读到标题和页眉，claim_only）；ETF 层面的行业轮动（`dir:narrow_industry_etf_momentum_rotation`）已被否定，但那是纯多头 top-N，不是行业中性多空。文献的量级（约 0.4-0.8%/月，总的）只略高于个股层面月度双腿成本，所以先验偏低，价值在于一次建好行业表，同时解锁其他行业中性方向。
@@ -856,6 +858,7 @@
 - done_when: `data/features/sic_map/sic_map.parquet` + 抓取脚本和单测（ruff/pytest 通过）+ 缺失占比表；IC 表（信号族 × 窗口，含 t、安慰剂分位、毛价差）写入 `reports/research/iterations/h20260930_02_industry_relative/results.json`；过关族的 10 条候选分档、DSR、K2；登记簿 `dir:industry_relative_momentum_and_peer_earnings_spillover` 更新终态且 `oc research directions validate` 通过；`direction-check` 和 `iteration validate` 两个阶段通过；覆盖地图 `trend_momentum.stock_momentum` 的"行业相对"一行由协调者更新。
 - notes:
   - 2026-09-30 缺口搜索（gap-search-2026-09-30-01，协调者任务代码 R0930-0107-G）添加。原文核对：Springer 综述（已打开，Moskowitz-Grinblatt、Grundy-Martin、Grobys-Kolari 的数字是综述转述）、Hou 2007 摘要、Baker 等摘要、Arnott 等摘要与引言均已打开；Hong-Torous-Valkanov 的说明是行业对大盘的领先，不是本任务的信号，未采用；"Tail Wags the Dog"只读到页眉，claim_only。exa 检索的 6 页里只有摘要，原论文全文多数付费墙。
+  - 2026-10-01 06:42 UTC 交互会话（Opus）：方向大改后取代。行业表已由 D1 建成（`data/features/sic_map/sic_map.parquet`，`scripts/build_sec_sic_map.py`，P1000 任意时期覆盖 99.1%）；行业动量、行业中性动量、同行财报溢出不再单独测，作为组合信号库 v2 的候选，按边际贡献判（`docs/research-program.zh.md` 最后一节）。
 
 ### T-20260930-03 年末税损卖出后的反弹：年内跌幅最大的股票 12 月中旬买入、持有到 1 月底，和市场对冲后的超额（十个 12 月窗口，几乎零换手）
 - status: done
@@ -1060,3 +1063,170 @@
   - 2026-10-01 01:40 UTC 01:07 主审轮（Opus）写简报。M1 过的先验约 60%（论文 2002–2025 β2 -8.5 bp，t -2.2；S&P 500 成分更强）。读全市场日线，run_capped 1.8G，90 分钟上限；与 T-01 并行时等 T-01 的 screen_batch 跑完再读数据。
   - 2026-10-01 04:10 UTC 04:07 执行轮（Sonnet）开始执行。
   - 2026-10-01 04:40 UTC 执行轮（子代理 claude-sonnet-5-5）跑完（panel 在 04:31 开始，等待 T-01 leaderboard 超 25 分钟）。results_xs.json：n_months 115（2017-02→2026-08），P500 池中位 500，曾出现退市股 219。M1 d1_dv 系数 -7.66bp/天 NW t -0.86，m1_pass=false（改革前 -9.57 t -0.88，改革后 -1.75 t -0.12）；M2 后窗 +10.86bp t 2.02（改革前 +10.22 t 1.70，后 +13.20 t 1.12）；M3 θ4−θ3：overlap_2024_2025 127.78bp t 3.00，out_of_paper_2026 120.70bp t 1.58（8 个改革后月），combined 125.68bp t 3.05（θ4 +81.66，θ3 -44.03）。交易（era 口径）d1_dv net10 月均：压力期 113.58bp 夏普 0.70、对标窗 99.17bp 夏普 0.60；d1_dv_minus_spy 压力期 32.17bp 夏普 0.27、对标窗 48.91bp 夏普 0.39。偏离：日历自 2016-01 起，首个可形成月 2017-01，压力期实际自 2017-02；_load_spy 只返回隔夜收益，改写了开收盘读取；组别在 τ_f+4 到 τ_{f+1}+3 冻结（简报未定）；剔除疑似拆股日；退市后缺失收益剔除（偏向做多输家，已写入报告）。产物：scripts/run_t20261001_02_dfc_cross_section.py、tests/test_t20261001_02_dfc_cross_section.py（6 个通过）、iterations/t20261001_01_dash_for_cash_settlement/{results_xs.json,report_xs.md}、cache/、logs/t20261001-02.log。待主审。
+
+### T-20261001-03 组合线 D2+D3：面板、唯一收益口径、回测核心、评估、风险模型
+- status: running（交互会话，子代理 R1001-0635-D23）
+- priority: 1
+- not_before:
+- goal: 搭 `docs/equity-book-design.zh.md` 第 3、6、13 节的基础：所有组合实验共用一套面板、一种收益口径、一个回测核心和一个风险模型。H-20260929-12（唯一一次对冲多因子尝试）死于口径错位，Stage 0 的 252 日 beta 对冲又留下 0.5–0.9 的实现 beta。这两件事都要在这里解决。
+- plan: 交互会话已派子代理执行，代码在 `open_composer/research/equity_book/`（`panel.py`、`returns.py`、`backtest.py`、`evaluate.py`、`risk.py`）和 `scripts/build_equity_book_panel.py`。数据写到 `data/research/equity_book/`，验证报告写到 `reports/research/program/risk-model-v1-2026-10-01/`。定时轮不要碰这些文件。
+- done_when:
+  - 四项口径单元测试通过：SPY 复现、两股合成、融资公式、标签和持仓收益一致；
+  - Stage 0 的 LS_RAW MOM_12_1 P1000 对齐回归误差 ≤1e-6；
+  - 风险模型偏差统计在 0.8–1.2，预测 beta 中性化后实现 |β| 均值 < 0.15，做了 PCA 交叉核对；
+  - 主审逐条核对。
+- notes:
+  - 2026-10-01 06:33 UTC 交互会话派 Sonnet 子代理开始，预算约 2.5 小时。
+
+### T-20261001-04 组合线 D4+D7：成本模型（Alpaca NBBO 抽样校准）+ 易借代理
+- status: running（交互会话，子代理 R1001-0640-D47）
+- priority: 1
+- not_before:
+- goal: 设计第 7 节和第 2 节的 SE_t。
+  - 用实测价差替换固定 10 bp 和日线 AR 价差（后者偏高 20–60 倍，见数据坑 #58）。
+  - 用 Alpaca 当天的 easy_to_borrow 标记，标定个股空头的资格规则。Stage 0 在次流动池的强结果全来自做空稀释型小微盘，借券是关键约束。
+- plan: 交互会话已派子代理执行，代码在 `open_composer/research/equity_book/costs.py`、`borrow.py`、`cost_model_v1.json`，以及 `scripts/sample_equity_book_spreads.py`、`scripts/snapshot_alpaca_assets.py`。资产接口只读，不碰任何下单接口。定时轮不要碰这些文件。
+- done_when:
+  - 半价差模型的留出误差和分十分位校准表，开盘段、午间、收盘段各一套；
+  - 易借代理按 ADV 分档报告精确率和召回率，并推荐 v1 规则（精确率目标 ≥0.97）；
+  - 主审核对。
+- notes:
+  - 2026-10-01 06:34 UTC 交互会话派 Sonnet 子代理开始，预算约 2 小时。
+
+### T-20261001-05 组合线 S1：信号库 v1（10 个主题，时点正确，U3000 每日）
+- status: ready
+- priority: 1
+- not_before: T-20261001-03 的 D2 部分交付并提交（面板 `data/research/equity_book/panel/` 存在，`returns.py` 测试通过）
+- goal: 设计第 4 节。按文献方向，把价值、质量/盈利、投资/发行、动量、低风险、盈余、内部人、卖空信息、季节性、快信号做成统一处理的截面分数，供 M0–M3 合成。证据（`reports/research/intel/pro-equity-evidence-2026-10-01.md` 第 3 节）：扣成本后靠得住的是慢信号；快信号只进 ML。
+- plan:
+  - **代码和数据**：`open_composer/research/equity_book/signals.py` 和 `scripts/build_equity_book_signals.py`，输出 `data/research/equity_book/signals/<year>.parquet`。长表，(trade_date, symbol)，只含 U3000 成员，每个信号一列原始值、一列处理后的 z，float32，按年分块。
+  - **处理流程**（按日截面）：
+    1. 1%/99% 截尾；
+    2. 秩转换成正态分数；
+    3. 价值和质量类在 FF48 行业内去均值，行业取面板的 ff48；
+    4. 缺失记 0；
+    5. 每个信号另存覆盖标记。
+  - **信号清单**，严格按设计第 4 节的表：
+    - bm、ep、sp、cfp。市值 = close × shares_outstanding。净利润、毛利、经营现金流是年报口径，见 `scripts/build_sec_xbrl_fundamentals.py` 的文档字符串；
+    - gp_at、roe、op_at、−accruals；
+    - −asset_growth、−nsi_12m；
+    - mom_12_1、ind_mom_12_1、resid_mom_12_1；
+    - −beta_252（Vasicek 收缩）、−idio_vol_63；
+    - sue_eps、sue_rev；
+    - cmp_opportunistic_buy_60d、net_buy_usd_nonplan_60d / 市值；
+    - −short_volume_ratio_mean_21、−SI/股本；
+    - 同月季节性：过去 5 年同一日历月的平均月收益，Heston-Sadka；
+    - 快信号：行业调整的 21 日反转、ON252（`intraday_daily` 或日线 open/close 计算）、alpha101/alpha191 中覆盖完整的列、news_attention（2024 起）。
+  - **时点检查**，必须写测试：
+    - 基本面按 `sec_fundamentals_daily` 已对齐的日期用；
+    - 内部人用 `visible_at`；
+    - 空头成交用 `visible_date`；
+    - 任何信号都不能用到 t 日收盘以后的信息。
+  - **度量报告**：`reports/research/program/signals-v1-2026-10-01/`。这些数字只是对看过的数据做度量，不用来挑信号；M0 预注册用全部慢信号。报告内容：
+    - 每个信号按年的覆盖率；
+    - 对未来 21 日开盘到开盘收益（原始收益和行业调整收益两种）的秩 IC，压力期和对标窗分开报，带 NW t；
+    - 信号之间的相关矩阵；
+    - 月度秩自相关。证据给的量级是价值、质量、动量 0.87–0.94，可以用来核对。
+  - **内存**：用 duckdb 按年处理，跑 `scripts/run_capped.sh --mem 1.8G`。
+- done_when:
+  - 代码、测试（ruff 和 pytest）、信号 parquet、度量报告都完成；
+  - 不改动 `equity_book` 里别的模块，只新增 `signals.py`；
+  - 主审核对时点测试和覆盖率。
+- notes:
+  - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
+
+### T-20261001-06 组合线 D5：优化器（cvxpy + Clarabel）
+- status: ready
+- priority: 1
+- not_before: T-20261001-03（D3 风险模型）和 T-20261001-04（D4 成本模型、D7 易借代理）都交付并提交
+- goal: 设计第 8 节。把 α、风险模型、成本和借券放进同一个优化，得到满足中性和容量约束的目标持仓。这是组合线最核心的一块，传导系数主要由它决定。
+- plan:
+  - **加依赖**：`uv add cvxpy`，钉住工具调研实测过的 1.9.x，Clarabel 随 cvxpy 一起装。先看 `reports/research/intel/pro-equity-2026-10-01.md` 第 5 节的共存性证据。提交说明里写明 pyproject 和 uv.lock 的改动。
+  - **`open_composer/research/equity_book/optimize.py`**，按设计第 8 节实现：
+    - 目标：α'w − 风险项 − 半价差 × |Δw| − 冲击 × |Δw|^1.5 − 借券；
+    - 约束：
+      - 美元中性，ETF 对冲也计在内；
+      - |β'w| ≤ 0.02，β 取风险模型的预测 beta；
+      - 每个行业 ≤ 0.01；
+      - 规模 ≤ 0.10，其他风格 ≤ 0.25；
+      - 单名 |w| ≤ 0.01；
+      - 总敞口 ≤ 1.0；
+      - 空头只允许 SE_t 内的个股或 ETF，F1b 只允许 ETF；
+      - 整股：空头价格 ≤ 0.01E；
+      - E = $100 万时，单笔参与率 ≤ 1% ADV；
+      - 事前年化波动 ≤ 5%，用风险约束表达，不手调 γ。
+    - 风险项用因子形式（y = X'w），不要构造 N×N 矩阵。
+    - 尽量用 cvxpy Parameter（DPP），避免每个日期重新编译。
+    - 求解失败时沿用上期持仓，并记录失败。
+  - **接口**：给 `backtest.run_book` 提供 `decide()` 适配器，参数是 α 来源、宇宙和形态（A、B、C 三种宇宙/空头配置）。
+  - **测试**：
+    - 无成本、无约束时与闭式均值方差解一致；
+    - 所有约束在解里成立；
+    - 失败时回退；
+    - 整股和空头资格过滤生效。
+  - **冒烟测试**：只验证管道能跑通，不做任何判定，结论不进任何报告的结论段。用 Stage 0 缓存里的 MOM_12_1 分数当 α，跑 2024 年一年的周频回测，报告：
+    - 求解时间、峰值内存、失败率；
+    - 事前与实现的 beta 和波动。
+- done_when:
+  - 代码、测试和冒烟报告 `reports/research/program/optimizer-v1-2026-10-01/` 都完成；
+  - 冒烟中 N=3000 单次求解 < 10 s、峰值 < 1 GB；
+  - 主审核对。
+- notes:
+  - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
+
+### T-20261001-07 组合线 Stage 2a 预注册（主审写）
+- status: ready
+- priority: 1
+- not_before:
+- goal: 在任何 Stage 2 结果出来之前，把设计第 9 节的 12 个变体和第 10 节的门槛写成机器可读的预注册，接上 v3 迭代的标准入口。
+- plan: 主审（Opus）自己写，执行轮不做。
+  1. 登记簿新增 `dir:multi_signal_risk_controlled_equity_book`。依据见 `reports/research/program/review-2026-10-01.zh.md` 和 `reports/research/intel/pro-equity-evidence-2026-10-01.md`。写明它和已否定的单独异象方向的区别：判法是组合层面的净夏普，宇宙和空头受易借约束。
+  2. `uv run oc research iteration init t20261001_book_v1`。
+  3. 写 `direction-review.json`，以及含 12 条的候选清单。条目是 M0–M3 × A/B/C，周频，5 个偏移按中位数判。参数固定为设计第 9 节的值；成本模型和风险模型的版本号在 D3、D4 交付后填入，填入前不运行。
+  4. 跑 `uv run oc research direction-check <path>` 和 `uv run oc research iteration validate t20261001_book_v1 --stage pre-backtest`。
+  5. DSR 的试验数写 77，即 12 个变体加 Stage 0 的 65 格。
+- done_when:
+  - 两道检查都通过；
+  - 候选清单的门槛与设计第 10 节逐字一致；
+  - 已提交。
+- notes:
+  - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
+
+### T-20261001-08 组合线 Stage 2a 运行：M0、M1 × A/B/C（6 个变体）
+- status: ready
+- priority: 1
+- not_before: T-20261001-05、-06、-07 都完成
+- goal: 第一次用完整管道检验"多信号组合"在两窗扣成本后能不能过冻结门槛。M0 是所有 ML 方法必须超过的基线。
+- plan: 按 T-07 的预注册执行。
+  - 用 `run_book`，周频调仓，5 个偏移；成本模型 v1，同时报告固定 10 bp 和 20 bp 两档对照；
+  - 安慰剂：每个日期内打乱 α，100 个种子，构建方式不变。本机太慢就上 Modal，启动前先过 `scripts/modal_budget.py check`；
+  - DSR 的试验数用 77。
+  - 每个变体报告：
+    - 净夏普、K1、K2 增量；
+    - 实现 beta、行业和风格暴露；
+    - 换手、成本占比；
+    - 按主题去掉一个的边际贡献；
+    - 固定压力日的表现。
+- done_when:
+  - 迭代 `--stage final` 通过；
+  - `results.json` 里的每条门槛都有数字；
+  - 状态写"done（待主审）"，不写结论。
+- notes:
+  - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
+
+### T-20261001-09 组合线 Stage 2b：M2（GBDT 集成）和 M3（随机傅里叶特征岭回归），Modal
+- status: ready
+- priority: 2
+- not_before: T-20261001-08 完成
+- goal: 设计第 5 节。检验 ML 合成在同数据、同成本、同组合构建下，能不能超过 M0（ml_contribution_pass）。
+- plan:
+  - **M2**：复用 T-17 的 Modal 管道。
+    - 目标：21 日残差收益的截面秩。
+    - 每年重训，训练和预测之间间隔 ≥21 个会话。
+    - 特征：信号库全部列，含快信号。
+  - **M3**：约 100 个特征生成 4,000 个随机傅里叶特征，做岭回归；惩罚在验证折上从 {1e-3 … 1e3} 选。
+  - 两者预测完都按 T-08 的同一管道和门槛评估，变体是 M2、M3 × A/B/C，共 6 个。
+  - 每次启动都先过 `scripts/modal_budget.py check`。
+- done_when: 同 T-08。另外单独报告 ML 贡献。
+- notes:
+  - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
