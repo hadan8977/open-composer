@@ -1,0 +1,103 @@
+name: t20261001_01_dash_for_cash_settlement
+description: 'Preregistered T-20261001-01 (main line A, calendar and fund flow): month-end institutional cash demand ("dash for cash", Etula et al. RFS 2020; Nathan, Suominen and Tasa 2026). SPY is held from the open after the settlement-implied marginal cash-raising day b (tau-4 before 2024-05-28, tau-3 from the T+1 reform on) to the open after tau+3, unconditionally or only after a negative six-day pre-window. Two fixed-tau-4 controls test the settlement timing. T-20261001-02 is a cross-sectional mechanism measurement on P500 momentum losers and is not a candidate. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261001_01:dash_for_cash_settlement
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  dash_for_cash_window:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The settlement-timed window (b = tau-4 before 2024-05-28, tau-3 after; hold from the open of b+1 to the open of tau+4) and the six-day pre-window condition are built in scripts/screen_batches/t20261001_01_dash_for_cash.py.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: t20261001_01_dash_for_cash_settlement
+  candidate_manifest_path: reports/research/iterations/t20261001_01_dash_for_cash_settlement/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261001_01_dash_for_cash_settlement/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl
+  source_card_claim_ids:
+  - etula_2020_dash_for_cash_month_end_reversal
+  - nathan_suominen_tasa_2026_intramonth_momentum_t1_shift
+  - hartzmark_solomon_2022_dividend_payment_price_pressure
+  parameter_space:
+    boundary:
+    - era_aligned_tau4_then_tau3
+    - fixed_tau4_control
+    condition:
+    - unconditional
+    - pre_window_return_below_zero
+  candidate_budget: 4
+  selection_objective: Mechanism test, not a return search. The window, the 2024-05-28 boundary switch, the six-day pre-window and the replacement rule against E0 are fixed by the two papers and by hypotheses.md before any number is computed. The fixed-tau-4 controls cannot be adopted.
+  candidate_budget_note: 4 trials in this batch plus the E0 reference (reproduction, not a trial). Family count for reporting is 13 (E0-E7, TOM_SPY and these 4).
+  anti_overfit_notes:
+  - No free parameter is tuned. The boundary days come from settlement mechanics (Etula et al. 2020; Nathan et al. 2026 Table 7), the six-day pre-window from Nathan et al.'s PreTOM width, and the exit at tau+3 from both papers' Post window.
+  - SPY calendar windows from 2016 to 2026 were seen in TOM_SPY and E0-E7 (contaminated). The judged quantities here (the pre-month-end window starting at b+1 and the 2024 boundary shift) were never computed in this repository.
+  - The P500 cross-sectional measurement (T-20261001-02) reports mechanism gates M1-M3 and does not select or alter any candidate.
+  validation_plan:
+  - screen_batch K1, K2 and DSR on select, anchor, stress and the contaminated 2026 window
+  - Four-part replacement rule against E0, plus a 100-seed random-entry placebo (beat rate >= 0.90) for any positive verdict
+  - SPY day-position profile by settlement era and the pre-window/post-window correlation, reported only
+notes:
+  intent: Test whether settlement-timed month-end reversal beats the current C2 E leg (E0), and whether it stands on its own under K1 or K2.
+  hypothesis_id: T-20261001-01
+  previous_link: dir:end_of_month_reversal_effect
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

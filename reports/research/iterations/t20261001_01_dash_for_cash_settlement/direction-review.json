@@ -1,0 +1,128 @@
+{
+  "cheapest_decisive_test": {
+    "action": "scripts/screen_batch.py --batch t20261001_01_dash_for_cash --iteration t20261001_01_dash_for_cash_settlement on local SPY daily bars (DFC_U, DFC_C, two fixed-tau-4 controls, E0_REF reproduction), then scripts/run_t20261001_01_dfc_placebo.py (100-seed random-entry placebo, SPY day-position profile by settlement era, pre/post window correlation, approximate 50/50 blends with S0). Separately T-20261001-02 measures M1-M3 on P500 12-1 momentum losers.",
+    "pass_condition": "DFC_U or DFC_C (era-aligned only) passes the four-part replacement rule against E0 (select 10 bp Sharpe >= 1.439; 2026 contaminated Sharpe >= -0.674; select 20 bp Sharpe >= 1.271; stress Sharpe >= 0.584) with placebo beat >= 0.90 in select and stress, or passes K1 (anchor >= 1.19 and stress >= 0.65 at 10 bp, 20 bp CAGR > 0 in both) or K2 (S3 edge >= +0.05 in anchor and stress) with placebo beat >= 0.90 in anchor and stress.",
+    "falsification_condition": "Both era-aligned candidates fail the replacement rule, K1 and K2 (or fail the placebo where they pass) -> the index-level settlement-timed window is closed and E0 stays. If T-20261001-02 also fails M1 (no PreTOM loser underperformance in 2016-2026 P500 data, NW t > -2), the dash-for-cash line is closed for this repository.",
+    "max_compute_minutes": 60
+  },
+  "cost_and_execution_assumptions": "Frozen contract: signal at the close, fill at the next open, 10 bp per side judged and 20 bp per side stress; long-only SPY, cash otherwise (same cash convention as E0 in screen_batch). About 12 round trips a year for DFC_U (2.4%/yr at 10 bp). Real SPY spread is about 0.3 bp, so the frozen cost is conservative by design; the frozen numbers decide.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Existing local work: TOM_SPY (close tau -> close tau+4, H-20260928-05) refuted at anchor Sharpe -0.69 / stress -0.10; E0 (4th Friday -> month end < 0 -> hold next month) is the C2 E leg at select 1.34 / anchor 1.24 / stress 0.58 / 2026 -0.57, and its 7 variants (E1-E7, H-20260928-20) all enter at the month-end close; sectoral intramonth momentum (T-20260929-37) is a different high-turnover composite. None tests the pre-month-end window after the settlement-implied cash-raising day or the 2024 T+1 boundary shift. Public evidence: Etula et al. 2020 (US to 2013, T+3) and Nathan et al. 2026 (to 2025, T+1 DiD +85.9 bp, t 2.68); Quantseeker (practitioner) finds [0,+3] dead after 2015 and [-3,+3] alive but weakening. No public live record of a settlement-timed index rule was found. Reuse: screen_batch/screen_lane engine, E0 and S0 builders and returns; nothing new is built beyond the date logic. Practitioner evidence (Quantseeker, Hull Tactical) and the E0 sources (Graziani 2024, Harbourfront) are listed in external-brief.json, not here, because direction-check accepts only primary sources opened this round.",
+  "iter_id": "t20261001_01_dash_for_cash_settlement",
+  "negative_experiments_checked": "oc research directions check 'turn of month', 'month end', 'dash for cash', 'dividend', 'settlement' (2026-10-01 01:10 UTC): dir:turn_of_month_equity_seasonality refuted 2026-09-28 (TOM_SPY anchor -0.69, stress -0.10; its reopen_if asks for new evidence on the SPY-level effect, which the settlement-timed pre-month-end window and the T+1 reform provide); dir:end_of_month_reversal_effect partial (E0 kept as watch_recent, E1-E7 none replace); dir:sectoral_intramonth_momentum refuted (turnover). 'settlement' and 'dash for cash' have no prior direction. The program note of 2026-09-30 19:07 calling the TOM direction 'harvested, never tested' was wrong: it was refuted on 09-28.",
+  "objective": "Main line A deep dive (research program, calendar and fund flow): retime the C2 E leg by the month-end cash-demand mechanism with settlement-fixed dates, and check the mechanism in our own cross-section.",
+  "queries": [
+    {
+      "query": "Etula Rinne Suominen Vaittinen \"Dash for Cash\" monthly market impact institutional liquidity needs settlement",
+      "searched_at": "2026-10-01T01:12:00Z",
+      "opened_urls": [
+        "http://wp.lancs.ac.uk/fofi2018/files/2018/03/FoFI-2018-0169-Kalle-Rinne.pdf"
+      ]
+    },
+    {
+      "query": "Hartzmark Solomon \"Predictable Price Pressure\" dividend reinvestment market returns",
+      "searched_at": "2026-10-01T01:12:00Z",
+      "opened_urls": [
+        "https://www.nber.org/system/files/working_papers/w30688/w30688.pdf"
+      ]
+    },
+    {
+      "query": "\"dash for cash\" turn of the month effect T+1 settlement 2024 month-end returns shift replication",
+      "searched_at": "2026-10-01T01:15:00Z",
+      "opened_urls": [
+        "https://danielrnathan.com/assets/pdf/The_Intramonth_Momentum_Cycle.pdf",
+        "https://www.quantseeker.com/p/turn-of-the-month-strategies-do-they"
+      ]
+    },
+    {
+      "query": "SEC T+1 settlement final rule compliance date (direct page)",
+      "searched_at": "2026-10-01T01:26:00Z",
+      "opened_urls": [
+        "https://www.sec.gov/newsroom/press-releases/2023-29"
+      ]
+    }
+  ],
+  "remaining_evidence_gap": "Whether the post-reform shift persists in 2026 (outside Nathan et al.'s sample; 9 month-ends) and whether any index-level window pays after 10 bp per side; the mid-month payday and dividend-payment flows are not tested.",
+  "reviewed_at": "2026-10-01T01:28:40Z",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "Fixes the trade window: enter after the marginal cash-raising day b, exit after tau+3; motivates the conditional (negative pre-window) variant.",
+      "claim": "Etula, Rinne, Suominen, Vaittinen (RFS 2020, 33(1):75-111): institutions raise cash for month-end payments by selling equities until the settlement-implied deadline (T-4 under T+3, T = last trading day). US CRSP VW return 1995-2013: -17 bp over T-8..T-4 and +77 bp over T-3..T+3 (abnormal -37 / +48 bp); corr(T-3..T-1, T-8..T-4) = -0.54 in 2003-2013; 22 of 25 markets show significant reversals; the 2014 European T+3->T+2 change moved the reversal closer to month end (DiD -0.776, t -3.70).",
+      "claim_id": "etula_2020_dash_for_cash_month_end_reversal",
+      "core_claim": "Etula, Rinne, Suominen, Vaittinen (RFS 2020, 33(1):75-111): institutions raise cash for month-end payments by selling equities until the settlement-implied deadline (T-4 under T+3, T = last trading day). US CRSP VW return 1995-2013: -17 bp over T-8..T-4 and +77 bp over T-3..T+3 (abnormal -37 / +48 bp); corr(T-3..T-1, T-8..T-4) = -0.54 in 2003-2013; 22 of 25 markets show significant reversals; the 2014 European T+3->T+2 change moved the reversal closer to month end (DiD -0.776, t -3.70).",
+      "credibility": "rfs_peer_reviewed",
+      "fetched_at": "2026-10-01T01:12:52Z",
+      "independent_replication": "Nathan, Suominen and Tasa (2026) extend the sample to 2025 and add the 2024 US T+1 reform (shares an author, Suominen). Quantseeker (practitioner, read via summarizer only) finds the [-3,+3] ETF window still significant after 2015 but declining, and [0,+3] insignificant.",
+      "limitations": "Working-paper version dated 2017-12-28 (the RFS 2020 version is behind a paywall; the Aalto reprint returned 403). US evidence ends 2013, all under T+3; no trading-rule net returns for an index window.",
+      "market_and_period": "US CRSP VW 1980-2013 (T+3 since 1995) plus 24 other equity markets",
+      "project_applicability": "Fixes the trade window: enter after the marginal cash-raising day b, exit after tau+3; motivates the conditional (negative pre-window) variant.",
+      "published_or_updated_at": "2017-12-28",
+      "reflection": "Working-paper version dated 2017-12-28 (the RFS 2020 version is behind a paywall; the Aalto reprint returned 403). US evidence ends 2013, all under T+3; no trading-rule net returns for an index window.",
+      "sha256": "3f34863c28bed3933301adf2678d06083f1649d9b40e01d890bd5e66a6aef376",
+      "snapshot_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/sources/etula-rinne-suominen-vaittinen-dash-for-cash-wp-2017-12-28-extracted.txt",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_type": "paper",
+      "url": "http://wp.lancs.ac.uk/fofi2018/files/2018/03/FoFI-2018-0169-Kalle-Rinne.pdf"
+    },
+    {
+      "applicability": "Sets b = tau-4 before 2024-05-28 and tau-3 after, the six-day pre-window width, and the P500 loser measurement (T-20261001-02).",
+      "claim": "Nathan, Suominen, Tasa, \"The Intramonth Momentum Cycle\" (2026-06-08 working paper): over 1980-2025 US momentum concentrates in PreTOM [tau-9, tau-4]; bottom-decile losers trail the market by 7.9 bp/day there (VW), about 70% of it reverses in Post [tau-3, tau+3]; the May 2024 T+1 reform moved the marginal cash-raising day from tau-4 to tau-3: D1 loser mean at tau-4 -6.9 -> +51.4 bp, at tau-3 -3.7 -> -31.4 bp, DiD +85.9 bp (t 2.68), loser-vs-winner triple difference +196 bp (t 2.20). Net of quoted spreads the PreTOM-only WML earns 14.9 bp/month (2001-2025).",
+      "claim_id": "nathan_suominen_tasa_2026_intramonth_momentum_t1_shift",
+      "core_claim": "Nathan, Suominen, Tasa, \"The Intramonth Momentum Cycle\" (2026-06-08 working paper): over 1980-2025 US momentum concentrates in PreTOM [tau-9, tau-4]; bottom-decile losers trail the market by 7.9 bp/day there (VW), about 70% of it reverses in Post [tau-3, tau+3]; the May 2024 T+1 reform moved the marginal cash-raising day from tau-4 to tau-3: D1 loser mean at tau-4 -6.9 -> +51.4 bp, at tau-3 -3.7 -> -31.4 bp, DiD +85.9 bp (t 2.68), loser-vs-winner triple difference +196 bp (t 2.20). Net of quoted spreads the PreTOM-only WML earns 14.9 bp/month (2001-2025).",
+      "credibility": "working_paper_2026",
+      "fetched_at": "2026-10-01T01:16:21Z",
+      "independent_replication": "None independent; builds on Etula et al. 2020 (shared author). Our 2026-01..09 months are outside its sample.",
+      "limitations": "Unrefereed working paper; post-reform sample 19 months (June 2024-2025), individual day effects not significant; the authors say the result describes when momentum is realized, not a within-month trading rule; cross-sectional evidence uses CRSP market caps and delisting returns that we lack.",
+      "market_and_period": "US CRSP common stocks 1980-2025, 19 developed markets; US T+1 post-reform June 2024-2025",
+      "project_applicability": "Sets b = tau-4 before 2024-05-28 and tau-3 after, the six-day pre-window width, and the P500 loser measurement (T-20261001-02).",
+      "published_or_updated_at": "2026-06-08",
+      "reflection": "Unrefereed working paper; post-reform sample 19 months (June 2024-2025), individual day effects not significant; the authors say the result describes when momentum is realized, not a within-month trading rule; cross-sectional evidence uses CRSP market caps and delisting returns that we lack.",
+      "sha256": "6fd11a7c5ea52dc72e6f800b4e11a58cb31f6d407e1a558b38872b28fe333f43",
+      "snapshot_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/sources/nathan-suominen-tasa-2026-06-08-intramonth-momentum-cycle-extracted.txt",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_type": "paper",
+      "url": "https://danielrnathan.com/assets/pdf/The_Intramonth_Momentum_Cycle.pdf"
+    },
+    {
+      "applicability": "Not a candidate. Recorded as not executable standalone; possible later conditioning variable for the dash-for-cash window only if that window survives.",
+      "claim": "Hartzmark and Solomon, \"Predictable Price Pressure\" (NBER w30688, 2022): VW market returns rise with predictable aggregate dividend payments, about 8 bp/day in the top quintile of abnormal payment days against about 2 bp in the lowest two; investing in the top 2 weeks earns about 1.4% a year; effects survive day-of-week and turn-of-month controls.",
+      "claim_id": "hartzmark_solomon_2022_dividend_payment_price_pressure",
+      "core_claim": "Hartzmark and Solomon, \"Predictable Price Pressure\" (NBER w30688, 2022): VW market returns rise with predictable aggregate dividend payments, about 8 bp/day in the top quintile of abnormal payment days against about 2 bp in the lowest two; investing in the top 2 weeks earns about 1.4% a year; effects survive day-of-week and turn-of-month controls.",
+      "credibility": "nber_working_paper",
+      "fetched_at": "2026-10-01T01:16:02Z",
+      "independent_replication": "International evidence in the paper itself; no independent trading replication opened.",
+      "limitations": "Index-level daily edge (about 8 bp on top-quintile days) is below one 20 bp round trip under the frozen 10 bp/side contract; needs payable dates for all US payers, which we do not hold.",
+      "market_and_period": "US VW market with CRSP dividend payment dates (paper sample), international markets",
+      "project_applicability": "Not a candidate. Recorded as not executable standalone; possible later conditioning variable for the dash-for-cash window only if that window survives.",
+      "published_or_updated_at": "2022-11-01",
+      "reflection": "Index-level daily edge (about 8 bp on top-quintile days) is below one 20 bp round trip under the frozen 10 bp/side contract; needs payable dates for all US payers, which we do not hold.",
+      "sha256": "a9536c05b55d95d54036382ef9728f4104d5f4c92c59d1658f6dd2c97c55c9c5",
+      "snapshot_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/sources/hartzmark-solomon-2022-predictable-price-pressure-nber-w30688-extracted.txt",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w30688/w30688.pdf"
+    },
+    {
+      "applicability": "Fixes the boundary switch date: b = tau-3 for months with tau >= 2024-05-28.",
+      "claim": "SEC final rule (press release 2023-29, 2023-02-15): standard settlement for most broker-dealer securities transactions shortened from T+2 to T+1; compliance date May 28, 2024.",
+      "claim_id": "sec_2023_t1_settlement_compliance_2024_05_28",
+      "core_claim": "SEC final rule (press release 2023-29, 2023-02-15): standard settlement for most broker-dealer securities transactions shortened from T+2 to T+1; compliance date May 28, 2024.",
+      "credibility": "official_regulator",
+      "fetched_at": "2026-10-01T01:26:00Z",
+      "independent_replication": "Nathan et al. 2026 use the same date.",
+      "limitations": "Verbatim sentences via WebFetch; sec.gov served a bot page to curl, so no full-page snapshot.",
+      "market_and_period": "US broker-dealer securities transactions",
+      "project_applicability": "Fixes the boundary switch date: b = tau-3 for months with tau >= 2024-05-28.",
+      "published_or_updated_at": "2023-02-15",
+      "reflection": "Verbatim sentences via WebFetch; sec.gov served a bot page to curl, so no full-page snapshot.",
+      "sha256": "5d4166a65b33e6a88cc94e604295bc23c43d3ae4b1c3d48c5acfc1cd6c13c331",
+      "snapshot_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/sources/sec-2023-02-15-t1-final-rule-press-release-webfetch.txt",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_type": "regulatory_docs",
+      "url": "https://www.sec.gov/newsroom/press-releases/2023-29"
+    }
+  ],
+  "stop_condition": "Close the index window if DFC_U and DFC_C fail the replacement rule, K1 and K2; close the whole dash-for-cash line if T-20261001-02 also fails M1. A pass of the replacement rule is a proposal to the owner (C2 runs on paper under a frozen rule), never an automatic swap.",
+  "target_regime_and_horizon": "US large-cap index (SPY), a 6-7 trading-day window around month end; regime = the current T+1 settlement era from 2024-05-28, with the stress window 2016-05..2023-09 under T+3/T+2 for the pre-reform boundary."
+}

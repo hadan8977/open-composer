@@ -1,0 +1,70 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/candidate-manifest.json",
+  "candidate_manifest_sha256": "ccd9c3f48aeb55acc3b6a4195624d7bef125c3c7d358e132fd2b9821424a33ae",
+  "cost_table_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/cost-table.json",
+  "created_at": "2026-10-01T01:28:06.484686+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/data-feasibility.json",
+  "data_feasibility_sha256": "3628b5712fb7960c904bda39c0a980b053da9f990a788bf037a6e71a35025f25",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261001_01_dash_for_cash_settlement",
+  "paths": [
+    {
+      "benchmark_family": [
+        "same_symbol_buy_and_hold_spy",
+        "cash_proxy_bil",
+        "e0_eom_reversal_incumbent",
+        "s3_vol_matched_incumbent_k2",
+        "random_entry_placebo_100_seeds",
+        "fixed_tau4_timing_control"
+      ],
+      "candidate_count": 5,
+      "hypothesis_refs": [
+        "T-20261001-01"
+      ],
+      "name": "dash_for_cash_settlement_timing",
+      "parameters": {
+        "boundary": [
+          "era_aligned: b = tau-4 if tau < 2024-05-28 else tau-3",
+          "fixed: b = tau-4 for all months"
+        ],
+        "cash": [
+          "same cash convention as E0 in screen_batch"
+        ],
+        "condition": [
+          "unconditional",
+          "SPY close(b-6)->close(b) return < 0"
+        ],
+        "cost": [
+          "10 bp/side judged, 20 bp/side stress"
+        ],
+        "exit": [
+          "open of tau+4"
+        ],
+        "must_match": [
+          "select 1.339 / anchor 1.241 / stress 0.584 / 2026 -0.574 within 0.01"
+        ],
+        "role": [
+          "judged",
+          "control_not_adoptable",
+          "reference_reproduction_not_adoptable"
+        ],
+        "rule": [
+          "E0 as in h20260928_20 (4th-Friday-to-month-end SPY return < 0 -> long next month), built with the existing E0 builder"
+        ],
+        "signal": [
+          "close of b (entry) and close of tau+3 (exit), fill at next open"
+        ],
+        "symbol": [
+          "SPY"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+  "spec_hash": "1d24369d6ad4c097c7c3d179ccdf19a4cc038be154f3e2099c4fda94848d321c",
+  "strategy_name": "t20261001_01_dash_for_cash_settlement",
+  "total_candidate_budget": 5,
+  "trial_ledger_paths": []
+}

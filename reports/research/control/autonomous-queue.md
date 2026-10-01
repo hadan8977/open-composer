@@ -1022,7 +1022,7 @@
 
 
 ### T-20260930-19 模型族扫描阶段 2：三个 WX_H63 格做成只做多月度组合，固定 10/20 bp 下判 K1/K2（接 T-20260930-17）
-- status: done
+- status: done（已主审 2026-10-01 01:30：refuted；parity_failed 由主审裁定为不影响判决，不重跑）
 - priority: 2
 - not_before:
 - goal: 回答机主 09-29「XGBoost 等其他模型不行吗」的赚钱部分：阶段 1 选出的 XGB/LGBM/CAT_WX_H63 做成 V1（全池前 50）/ V2（流动性最差三分位前 50）组合后，能不能在固定成本下过 K1 或 K2？B0 的书（T-28-30）对标窗 flat10 只有 0.33。
@@ -1033,3 +1033,26 @@
   - 2026-09-30 19:25 UTC 19:07 主审轮（Opus）写预注册和简报。先验：任何一本书过 K1 的概率 <5%（阶段 1 的 IC 在成本最高的股票里，K2 要在 S3 最强的 2024–26 年加分）。Modal 最坏约 $1.3，本月已用 $5.09。22:07 执行轮做。
   - 2026-09-30 22:08 UTC 22:07 执行轮（Sonnet）开始，交给一个 sonnet-high 子代理。
   - 2026-09-30 23:10 UTC 22:07 执行轮（Sonnet 5.5，子代理 52 次调用）跑完，待主审。results.json：verdict=parity_failed（`parity.all_ok` false）。阶段 2 对阶段 1 的 RankIC 差（容差 0.002）：XGB_WX_H63 0.0018 ok、LGBM_WX_H63 0.0037 fail、CAT_WX_H63 0.0051 fail、复现格 LGBM_W3_H21 0.0017 ok；B0 组合核对 ok（压力期 0.4621 对 0.462，对标窗 0.3266 对 0.327）。阶段 2 验证形成日比阶段 1 多 2 个（2023-07-31、08-31；74 对 72），在 72 个共同日上均值仍差 0.0008–0.0021（逐日差最大 0.037），多出的日子解释不了差距。六本书 K1、K2 全为 false（对标窗 flat10 夏普：XGB V1 0.163 / V2 -0.172、LGBM V1 0.333 / V2 0.267、CAT V1 0.239 / V2 0.422；压力期 0.300–0.662；K2 对标窗 -0.39 到 -0.66），DSR（试验 30）0.009–0.083，安慰剂对标窗打赢比例 0.00–1.00。Modal 实际 $0.345（烟测两次共 $0.091，本月投影 $8.55）。偏离简报：`--data` 加了 results_stage1.json；首次烟测 20 分钟超时，改 4 核 45 分钟重跑；`--stage cost` 额外写花费。`iteration validate --stage final` 余三项拦截（trial_ledger、evaluation_report、decision_record），留给主审填。产物：`scripts/run_t20260930_17b_model_family_book.py`、`tests/test_t20260930_17b_model_family_book.py`（9 测试过）、`reports/research/iterations/t20260930_17b_model_family_book/{results.json,report.md,results_smoke.json,report_smoke.md}`（results/report/smoke 已 git add -f），日志 `logs/modal-t20260930-19-*.log`。子代理 model 字段核对为 claude-sonnet-5-5。需主审决定：parity_failed（两格 RankIC 偏差超容差）按简报一字不改的规则处理，是调查原因后重跑还是按预注册视为核对失败。
+  - 2026-10-01 01:30 UTC 01:07 主审轮（Opus）对照 results.json 审核：六本书 K1、K2 全不过，数字核对无误（对标窗 flat10 最好 CAT V2 0.422，门槛 1.19；K2 对标窗 -0.389 到 -0.664，压力期 +0.003 到 +0.192；DSR 0.009–0.083）。安慰剂：压力期六本全部 1.00；对标窗 LGBM V2、CAT V2 1.00，LGBM V1 0.80，其余 0.00–0.30。池内排序是真的，但流动性最差的小盘池在 2024–26 整体太弱，赚不到钱。parity_failed 的裁定：B0 组合引擎复现一致（0.4621 对 0.462、0.3266 对 0.327）；RankIC 偏差 0.0037/0.0051 都是阶段 2 偏高；书离 K1 差 ≥0.77 夏普，离 K2 差 ≥0.44，0.005 的 RankIC 差改变不了判决。可能原因（推断）：多了 2 个边界形成日，且正式跑换了核数，LightGBM/CatBoost 直方图累加顺序随线程数变，XGBoost hist 不变（XGB 正好是过的那格）。结论 refuted：纯量价排序不再加格子、不再换模型族（预注册写死）。档案 `--stage final` ok（补了 trial-ledger.jsonl、decision-record.md、search-space 的台账路径）。
+
+### T-20261001-01 纲领 A：按结算周期定时的月末现金需求窗口（SPY），能否替换 C2 的 E 腿（Etula 等 RFS 2020；Nathan-Suominen-Tasa 2026）
+- status: ready
+- priority: 1
+- not_before:
+- goal: C2 的 E 腿 E0 很脆（2026 污染窗夏普 -0.57）。月末现金需求给出一个由结算规则决定、没有自由参数的时点：边际卖出日 b（2024-05-28 前为 τ−4，改 T+1 后为 τ−3）之后买 SPY，持有到下月第 3 个交易日。能否按机主的替换规则替换 E0，或单独过 K1/K2？
+- plan: 预注册 `reports/research/iterations/t20261001_01_dash_for_cash_settlement/hypotheses.md`（direction-check、pre-backtest ok，01:29:25Z）。4 个候选（DFC_U、DFC_C 判定；两个固定 τ−4 的对照不可采用）加 E0_REF 复现。screen_batch 一次评估，100 种子随机入场安慰剂，日位置剖面与换窗诊断。替换 E0 四条：选择窗 10 bp ≥1.439、2026 ≥ -0.674、选择窗 20 bp ≥1.271、压力期 ≥0.584，加安慰剂 ≥0.90；过了只是给机主的提议。
+- done_when: results.json（parity、candidates、replacement、k1、k2、diagnostics、verdict）+ report.md + leaderboard；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20261001-01.md
+- notes:
+  - 2026-10-01 01:40 UTC 01:07 主审轮（Opus）写预注册和简报。先验：K1 <10%，替换 E0 约 20%。本地 SPY 日线，很轻，60 分钟上限。04:07 执行轮做。
+
+### T-20261001-02 纲领 A：月末现金需求在我们数据里的横截面痕迹（P500 动量输家；机制测量 M1–M3，不是候选）
+- status: ready
+- priority: 1
+- not_before:
+- goal: Nathan 等 2026 说机构为月末现金卖出动量输家，[τ−9, τ−4] 落后大盘约 7.9 bp/天，改 T+1 后边际卖出日从 τ−4 移到 τ−3（DiD +85.9 bp，t 2.68）。在我们 2016–2026 的 P500（含退市股）上测：M1 前窗输家落后（门槛 NW t ≤ -2），M2 后窗反弹，M3 换窗（含论文样本外的 2026 年 9 个月末），并报只做多输家反弹的扣成本收益。决定 T-01 的时点有没有机制支撑、要不要做横截面阶段 2。
+- plan: 同一预注册的"横截面机制测量"一节。读数照 T-35（`t35.load_wide_float32` + `price_hygiene`），P500 按 63 日成交额中位数，12-1 动量十分组，成交额加权为主。
+- done_when: results_xs.json（m1、m1_pass、m2、m3 三个版本、trade）+ report_xs.md；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20261001-02.md
+- notes:
+  - 2026-10-01 01:40 UTC 01:07 主审轮（Opus）写简报。M1 过的先验约 60%（论文 2002–2025 β2 -8.5 bp，t -2.2；S&P 500 成分更强）。读全市场日线，run_capped 1.8G，90 分钟上限；与 T-01 并行时等 T-01 的 screen_batch 跑完再读数据。

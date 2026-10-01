@@ -1,0 +1,158 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "dash_for_cash_settlement_timing",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261001-01",
+      "source_urls": [
+        "http://wp.lancs.ac.uk/fofi2018/files/2018/03/FoFI-2018-0169-Kalle-Rinne.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261001_01_dash_for_cash_settlement",
+  "objective": "Main line A deep dive: does a settlement-timed month-end reversal window on SPY (Etula et al. 2020; Nathan et al. 2026) beat the C2 E leg (E0) under the owner's replacement rule, or pass K1/K2 on its own?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "etula_2020_dash_for_cash_month_end_reversal",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "http://wp.lancs.ac.uk/fofi2018/files/2018/03/FoFI-2018-0169-Kalle-Rinne.pdf"
+    },
+    {
+      "claim_id": "nathan_suominen_tasa_2026_intramonth_momentum_t1_shift",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://danielrnathan.com/assets/pdf/The_Intramonth_Momentum_Cycle.pdf"
+    },
+    {
+      "claim_id": "hartzmark_solomon_2022_dividend_payment_price_pressure",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://www.nber.org/system/files/working_papers/w30688/w30688.pdf"
+    },
+    {
+      "claim_id": "sec_2023_t1_settlement_compliance_2024_05_28",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://www.sec.gov/newsroom/press-releases/2023-29"
+    },
+    {
+      "claim_id": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://papers.ssrn.com/"
+    },
+    {
+      "claim_id": "graziani2024_eom_reversal_harbourfrontquant_summary",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://harbourfrontquant.substack.com/"
+    },
+    {
+      "claim_id": "quantseeker_tom_post_2015_decay",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://www.quantseeker.com/p/turn-of-the-month-strategies-do-they"
+    },
+    {
+      "claim_id": "hulltactical2024_turn_of_month_spy_captures_44pct",
+      "source_card_path": "reports/harness/source_cards/t20261001_01_dash_for_cash_settlement.jsonl",
+      "source_url": "https://www.hulltactical.com/2024/05/17/the-turn-of-the-month-effect/"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+  "sources": [
+    {
+      "claim_id": "etula_2020_dash_for_cash_month_end_reversal",
+      "core_claim": "Month-end cash demand: selling until the settlement deadline (T-4 under T+3), reversal T-3..T+3; US 1995-2013 -17 bp T-8..T-4, +77 bp T-3..T+3; corr -0.54; 2014 EU settlement change moved the reversal (DiD -0.776, t -3.70).",
+      "credibility": "rfs_peer_reviewed (published RFS 2020; working-paper text read)",
+      "project_applicability": "Defines the window and the conditional variant for the C2 E leg retiming.",
+      "published_or_updated_at": "2017-12-28",
+      "reflection": "US evidence ends 2013 under T+3; trading costs not netted for an index window; post-2015 practitioner evidence says the [-3,+3] window weakened.",
+      "source_type": "paper",
+      "url": "http://wp.lancs.ac.uk/fofi2018/files/2018/03/FoFI-2018-0169-Kalle-Rinne.pdf"
+    },
+    {
+      "claim_id": "nathan_suominen_tasa_2026_intramonth_momentum_t1_shift",
+      "core_claim": "Losers sold for month-end liquidity in PreTOM [tau-9, tau-4]; ~70% reverses in [tau-3, tau+3]; the May 2024 T+1 reform moved the marginal day from tau-4 to tau-3 (DiD +85.9 bp, t 2.68).",
+      "credibility": "working_paper_2026",
+      "project_applicability": "Sets b = tau-4 before 2024-05-28 and tau-3 after; basis for the P500 mechanism measurement.",
+      "published_or_updated_at": "2026-06-08",
+      "reflection": "Unrefereed, 19-month post-reform sample, shared author with Etula et al.; our 2026 months are outside its sample.",
+      "source_type": "paper",
+      "url": "https://danielrnathan.com/assets/pdf/The_Intramonth_Momentum_Cycle.pdf"
+    },
+    {
+      "claim_id": "hartzmark_solomon_2022_dividend_payment_price_pressure",
+      "core_claim": "Top-quintile dividend payment days: VW market about 8 bp/day vs about 2 bp in the lowest two quintiles; survives turn-of-month controls.",
+      "credibility": "nber_working_paper",
+      "project_applicability": "Not a candidate: about 8 bp/day is below a 20 bp round trip under the frozen contract.",
+      "published_or_updated_at": "2022-11-01",
+      "reflection": "Could condition the dash-for-cash window later if it survives; needs payable dates we do not hold.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w30688/w30688.pdf"
+    },
+    {
+      "claim_id": "sec_2023_t1_settlement_compliance_2024_05_28",
+      "core_claim": "SEC final rule (press release 2023-29, 2023-02-15): standard settlement for most broker-dealer securities transactions shortened from T+2 to T+1; compliance date May 28, 2024.",
+      "credibility": "official",
+      "project_applicability": "Fixes the boundary switch date: b = tau-3 for months with tau >= 2024-05-28.",
+      "published_or_updated_at": "2023-02-15",
+      "reflection": "Verbatim sentences via WebFetch; sec.gov served a bot page to curl, so no full-page snapshot.",
+      "source_type": "official_regulator",
+      "url": "https://www.sec.gov/newsroom/press-releases/2023-29"
+    },
+    {
+      "claim_id": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+      "core_claim": "Graziani (2024, SSRN job-market paper \"Time Series Reversal: An End-of-the-Month Perspective\"): the S&P 500 return from the fourth Friday to month end predicts next-month returns with a negative sign; basis of E0 in C2.",
+      "credibility": "working_paper",
+      "project_applicability": "Incumbent E0 that the replacement rule compares against.",
+      "published_or_updated_at": "2024-11-01",
+      "reflection": "Snapshot taken by the 2026-09-28 round (h20260928_20); not re-read this round beyond the incumbent rule.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/"
+    },
+    {
+      "claim_id": "graziani2024_eom_reversal_harbourfrontquant_summary",
+      "core_claim": "Harbourfront Quant newsletter summary of Graziani (2024): end-of-month S&P 500 returns from the fourth Friday reverse in the next month; practitioner restatement of the E0 rule.",
+      "credibility": "practitioner_post",
+      "project_applicability": "Context for the incumbent only.",
+      "published_or_updated_at": "2025-01-01",
+      "reflection": "Practitioner summary; snapshot from the 2026-09-28 round.",
+      "source_type": "post",
+      "url": "https://harbourfrontquant.substack.com/"
+    },
+    {
+      "claim_id": "quantseeker_tom_post_2015_decay",
+      "core_claim": "Quantseeker practitioner test: after 2015 the [0,+3] turn-of-month window is not significant in US ETFs; the [-3,+3] window is still significant (5-12 bp/day higher) but has declined over the past decade.",
+      "credibility": "practitioner_post_via_summarizer",
+      "project_applicability": "Sets the prior that only the pre-month-end part of the window can still pay.",
+      "published_or_updated_at": "2025-01-01",
+      "reflection": "Read through the WebFetch summarizer only; not load-bearing. Publication date not checked (placeholder 2025-01-01).",
+      "source_type": "post",
+      "url": "https://www.quantseeker.com/p/turn-of-the-month-strategies-do-they"
+    },
+    {
+      "claim_id": "hulltactical2024_turn_of_month_spy_captures_44pct",
+      "core_claim": "Hull Tactical (2024-05-17): buying SPY at the last trading day close and selling at the 4th trading day close captured 44% of total return while invested about 20% of days.",
+      "credibility": "practitioner_post",
+      "project_applicability": "Negative evidence: the classic post-month-end window is not the trade.",
+      "published_or_updated_at": "2024-05-17",
+      "reflection": "Harvest excerpt only (2026-09-23); the same rule (TOM_SPY) failed our frozen screen.",
+      "source_type": "post",
+      "url": "https://www.hulltactical.com/2024/05/17/the-turn-of-the-month-effect/"
+    }
+  ],
+  "spec_hash": "1d24369d6ad4c097c7c3d179ccdf19a4cc038be154f3e2099c4fda94848d321c",
+  "strategy_name": "t20261001_01_dash_for_cash_settlement",
+  "topic_coverage": [
+    "month_end_institutional_cash_demand",
+    "settlement_cycle_t1_reform_2024",
+    "turn_of_month_post_2015_decay",
+    "c2_e_leg_eom_reversal_incumbent",
+    "momentum_loser_selling_pressure",
+    "dividend_reinvestment_price_pressure"
+  ]
+}

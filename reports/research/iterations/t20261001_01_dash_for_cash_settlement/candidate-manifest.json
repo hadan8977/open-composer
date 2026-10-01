@@ -1,0 +1,165 @@
+{
+  "candidate_count": 5,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DFC_U",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dash_for_cash_settlement_timing",
+      "parameters": {
+        "boundary": "era_aligned: b = tau-4 if tau < 2024-05-28 else tau-3",
+        "cash": "same cash convention as E0 in screen_batch",
+        "condition": "unconditional",
+        "cost": "10 bp/side judged, 20 bp/side stress",
+        "exit": "open of tau+4",
+        "role": "judged",
+        "signal": "close of b (entry) and close of tau+3 (exit), fill at next open",
+        "symbol": "SPY"
+      },
+      "path": "dash_for_cash_settlement_timing",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DFC_C",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dash_for_cash_settlement_timing",
+      "parameters": {
+        "boundary": "era_aligned: b = tau-4 if tau < 2024-05-28 else tau-3",
+        "cash": "same cash convention as E0 in screen_batch",
+        "condition": "SPY close(b-6)->close(b) return < 0",
+        "cost": "10 bp/side judged, 20 bp/side stress",
+        "exit": "open of tau+4",
+        "role": "judged",
+        "signal": "close of b (entry) and close of tau+3 (exit), fill at next open",
+        "symbol": "SPY"
+      },
+      "path": "dash_for_cash_settlement_timing",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DFC_U_FIX4",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dash_for_cash_settlement_timing",
+      "parameters": {
+        "boundary": "fixed: b = tau-4 for all months",
+        "cash": "same cash convention as E0 in screen_batch",
+        "condition": "unconditional",
+        "cost": "10 bp/side judged, 20 bp/side stress",
+        "exit": "open of tau+4",
+        "role": "control_not_adoptable",
+        "signal": "close of b (entry) and close of tau+3 (exit), fill at next open",
+        "symbol": "SPY"
+      },
+      "path": "dash_for_cash_settlement_timing",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "DFC_C_FIX4",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dash_for_cash_settlement_timing",
+      "parameters": {
+        "boundary": "fixed: b = tau-4 for all months",
+        "cash": "same cash convention as E0 in screen_batch",
+        "condition": "SPY close(b-6)->close(b) return < 0",
+        "cost": "10 bp/side judged, 20 bp/side stress",
+        "exit": "open of tau+4",
+        "role": "control_not_adoptable",
+        "signal": "close of b (entry) and close of tau+3 (exit), fill at next open",
+        "symbol": "SPY"
+      },
+      "path": "dash_for_cash_settlement_timing",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "E0_REF",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "dash_for_cash_settlement_timing",
+      "parameters": {
+        "must_match": "select 1.339 / anchor 1.241 / stress 0.584 / 2026 -0.574 within 0.01",
+        "role": "reference_reproduction_not_adoptable",
+        "rule": "E0 as in h20260928_20 (4th-Friday-to-month-end SPY return < 0 -> long next month), built with the existing E0 builder",
+        "symbol": "SPY"
+      },
+      "path": "dash_for_cash_settlement_timing",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-01T01:28:06.483255+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261001_01_dash_for_cash_settlement",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261001_01_dash_for_cash_settlement.yaml": "1d24369d6ad4c097c7c3d179ccdf19a4cc038be154f3e2099c4fda94848d321c"
+  }
+}
