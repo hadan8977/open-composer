@@ -6,12 +6,31 @@ multi_signal_equity_book_rf1
 
 ## Decision
 
-pending
+stop（12 个变体都没有达到观察档：6 个已算，6 个未运行，理由见下）→ 与 v1 一起转入构造诊断 T-20261001-19
 
 ## Reason
 
-Preregistered 2026-10-01 by the interactive lead (Opus) after the owner's recent-fit instruction, before any Stage 2 output; inherits amendment A1 run conventions of t20261001_book_v1.
+2026-10-01 17:53 UTC，交互会话主审（Opus）。数字见 `results.json`、`report.md`，由 `scripts/eval_book_rf1.py` 从 T-20261001-08 的收盘路径计算。合同第 2 节规定这 6 个变体不重跑。
+
+1. **RF_M0、RF_M1 × A/B/C 的 R1 都低于观察档 0.87。**
+   - A 窗净夏普：0.743、−0.529、0.557、0.306、0.248、0.687。
+   - 所以按合同第 5 节不做安慰剂，状态全部是 none。
+   - 另有两项也不过：
+     - M0_A、M0_C、M1_C 的 B 窗年化净超额为负（R2）；
+     - 四个变体的压力期最大回撤超过 20%，会触发 R8 降级。
+
+2. **RF_M0V、RF_M0X × A/B/C 没有运行。** T-20261001-15 原定的 30 条路径取消，判断依据如下。
+   - **M0V**：
+     - B 窗 VIX 只有 2026-07-29（20.66）一天高于 20.60，这天是周三，只影响一个偏移。
+     - M0_A、M0_C 的 5 个偏移 B 窗净超额全部为负，所以 M0V_A、M0V_C 的 R2 中位数仍为负。
+     - M0_B 的 5 个偏移 A 窗夏普在 −0.87..−0.44 之间，M0V_B 不可能靠高 VIX 周减半升到 0.87。
+   - **M0X**：第 10 个主题只占 1/10 权重。要让 A、C 的 B 窗翻正，或让 B 的 A 窗从 −0.53 升到 0.87，这个倾斜单独需要年化夏普约 3 以上。这是估计，不是证明；主审判断概率低于 5%。
+   - 省下约 2–3 小时子代理和约 0.5 美元 Modal，用于构造诊断。
+   - 这 6 个试验仍计入 DSR 的 83 次。
+   - 机器学习主题和波动择时在 v1.1 的新构造下重新检验，届时另计试验。
+
+3. **v1 与 RF1 的共同死因**：组合构造（风格上限截断 α、收盘延迟、成本），不是信号层失效。证据见 `t20261001_book_v1/decision-record.md` 第 2 条。
 
 ## Next iteration suggestion
 
-Run RF_M0V and RF_M0X x A/B/C (30 close paths) with the T-20261001-08 runner; RF_M0/RF_M1 reuse the T-08 close paths; evaluate RF1 gates after T-20261001-13; placebo via T-20261001-14 rules.
+T-20261001-19：构造诊断。之后另立 v1.1 合同，按机主 10-01 的要求，以近期窗口为主判定。

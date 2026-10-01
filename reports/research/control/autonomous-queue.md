@@ -1222,7 +1222,7 @@
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）：写修正案 A1（成交改为 t+1 收盘，依据只有 D4 成本测量，07:50 纲领已预告；记账规模 $1,000,000，否则冲击成本按 1 美元计；IC_t 和 M1 按预注册定义实现；watch_recent 分档；安慰剂净、毛两种口径都要达标，比预注册更严）和简报。范围缩为"跑出 54 条路径的原始结果"（45 条主路径加预注册第 7 节的 9 条去掉一个主题的诊断）：评估拆到 T-20261001-13，安慰剂拆到 T-20261001-14。本轮没有任何 Stage 2 数字。执行轮在 T-05、T-06 标 done 之前不要取本任务。
   - 2026-10-01 16:42 UTC 执行轮（Sonnet 5.5 子代理）：54/54 条路径在 Modal 跑完（45 主路径各 6 个文件，9 条诊断各 5 个）；A1 binding 填写于 16:07:48Z，提交 eaffba6；清单 `reports/research/iterations/t20261001_book_v1/stage2a-manifest.json`（提交 3154bec，all_binding_true=true，bound_before_all_files=true）；原始输出在 `.../cache/stage2a/shard_<i>/<path_id>/`（不提交）。本机管道检查 12 次调仓 0 失败，重放恒等最大差 0.0，测试 10 个通过，ETF 缓存预热 27 s；Modal 花费约 $0.88（账单 status 显示 $0.7055）。待主审：(1) 缺陷（受 A1 绑定，未修）：`RiskModel.at()` 不跨年回看，1 月初在当年第一个存盘日之前的调仓报 no_risk_model，占 45 条主路径 190 次最终失败中的 189 次（另 1 次 violation）；子代理预先计数偏移 0–4 失败率 0%、1.07%、1.28%、1.71%、0.43%，T-13 要对照 2% 门槛说明；(2) A1 未规定的实现选择：M1 主题 IC 窗口跳过未定义的 IC，主题有效 IC 不足 24 个时权重为 0（seasonality 18 个月未定义、short_info 6 个）；每月更新取日历月与上次更新不同的第一个调仓；主题名按 signals.THEMES（investment 不是 investment_issuance）；(3) 形成日有 6 个因 no_risk_model 被跳过（2017-01..06，风险模型始于 2017-07）；SCS 阶梯救回 0 次；容器内峰值内存为 nan；Modal 命令用了 --no-etf-flush。安慰剂计划已实现并测试、未运行。下一步：T-20261001-13（评估）读清单路径。
 ### T-20261001-09 组合线 Stage 2b：M2（GBDT 集成）和 M3（随机傅里叶特征岭回归），Modal
-- status: ready
+- status: cancelled（17:55 UTC 交互会话主审：v1 在 Stage 2a 机械否定，死因是组合构造，换合成器解决不了；ML 合成器在 v1.1 的构造下再测，见 `t20261001_book_v1/decision-record.md`）
 - priority: 2
 - not_before: T-20261001-08 完成
 - goal: 设计第 5 节。检验 ML 合成在同数据、同成本、同组合构建下，能不能超过 M0（ml_contribution_pass）。
@@ -1288,7 +1288,7 @@
   - 2026-10-01 10:18 UTC 交互会话（Opus）写入。
 
 ### T-20261001-15 组合线 RF1（机主 10-01 近期适配合同）：M0V、M0X 的 30 条新路径和 RF1 逐条判定
-- status: ready（合同 14:17 由交互会话冻结；简报 17:44 UTC 由交互会话写好：`reports/research/control/briefs/T-20261001-15.md`。交互会话在 T-13 完成后自己派子代理执行，定时轮不要取；19:07 主审轮可以复核简报和合同，只能改得更严或更清楚）
+- status: done（17:55 UTC 交互会话主审自己算完并判定，不派子代理：RF_M0、RF_M1 用 T-08 的收盘路径算出 6 个变体 R1 都低于 0.87，全部 none；RF_M0V、RF_M0X 的 30 条路径取消，约束事实写在 `t20261001_book_rf1/report.md` 第 2 节和 `decision-record.md`；脚本 `scripts/eval_book_rf1.py`）
 - priority: 1
 - not_before: T-20261001-08 完成（共用运行器和 A1 的版本绑定）；判定部分在 T-20261001-13、T-20261001-14 之后
 - goal: 机主 10-01 要求筛选看是否适合现在，通过后直接上模拟盘（前向两周只验证执行）。独立合同 `reports/research/iterations/t20261001_book_rf1/` 按这个标准判定同一组合：
@@ -1324,8 +1324,19 @@
 - notes:
   - 2026-10-01 14:20 UTC 交互会话（Opus）写入。机主 10-01 原话："如果前向测试只是确认执行和数据没问题，那么两周就足够了，或者说这个可以直接用模拟盘测试，我多开几个模拟盘账户给你就行了"。开账户和批准具体策略都由机主做。
 
+### T-20261001-19 组合线 v1 事后诊断：构造阶梯（风格上限、开盘成交、成本）、传导系数、收益归因
+- status: running（交互会话子代理 R1001-1755-T19，17:55 UTC 启动；定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: v1、RF1 都在组合层失败，信号层是好的（M0 信号层 A 窗毛 1.68、B 窗 3.06；组合 M0_A 收盘 A 窗毛 1.10、B 窗 −0.80）。量化损失在哪里，作为 v1.1 合同的依据：风格上限一直顶格（M0_A 投资 85%、动量 45%、价值 37% 的调仓顶到 0.25），收盘比开盘差（对标窗毛 0.876 对 1.155），成本每年 172 bp。
+- plan: 先检索原文（Lee-Stefek 2008、Ceria-Saxena-Stubbs 2012、Clarke-de Silva-Thorley 2002、开盘竞价成本、Alpaca opg/cls），在任何新数字之前写预注册和决策规则 D1–D3；L1 去掉风格上限、L2c 开盘按开盘成本、L2a 开盘按收盘成本，各 M0_A、M1_C × 5 个偏移，共 30 条 Modal 路径（≤ $2）；传导系数和按风险模型的收益归因。
+- done_when: `reports/research/iterations/t20261001_book_v1/postmortem/` 下 prereg、results、report、run-manifest 已提交，D1–D3 机械给出；"v1.1 设计由主审决定"。
+- brief: reports/research/control/briefs/T-20261001-19.md
+- notes:
+  - 新增试验 6 个（3 种构造 × 2 个变体），以后 DSR 的试验数累计 89。
+
 ### T-20261001-13 组合线 Stage 2a 评估：45 条路径的全部指标和机械条件（接 T-20261001-08）
-- status: running（交互会话子代理 R1001-1736-T13，17:36 UTC 按 13:07 主审轮的简报原样执行；定时轮不要取；结果出来后由主审判定）
+- status: done（17:44 子代理提交 dc8b756；17:55 UTC 主审已判定：6 个变体都没过冻结门槛，`mechanical_status = no_variant_reaches_cond1_or_anchor_1_19`，v1 停止，见 `decision-record.md`）
 - priority: 1
 - not_before: T-20261001-08 的状态以 done 开头
 - goal: 把 T-08 的原始结果算成预注册第 5、7 节和修正案 A1 要求的全部数字，机械给出每个变体的条件真假，以及哪些变体要做安慰剂。判定由主审做。
@@ -1336,7 +1347,7 @@
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）写入。
 
 ### T-20261001-14 组合线 Stage 2a 安慰剂：需要的变体各 100 个种子，净、毛两种口径（接 T-20261001-13）
-- status: ready
+- status: cancelled（17:55 UTC：T-13 的 `mechanical_status` 为 `no_variant_reaches_cond1_or_anchor_1_19`，按本任务前置条件取消）
 - lead_note: 17:44 UTC 交互会话：T-08 实测每条路径 Modal 墙钟中位 8.2 分钟、最长 11.5 分钟（meta 的 timing_s），预算检查和函数 `timeout=` 改用 20 分钟（简报写的 60 分钟会把最坏情况估成三倍，月度 $25 上限下第二个变体就会被拦）。RF1 需要的额外安慰剂由 T-15 自己跑，不并入本任务。
 - priority: 1
 - not_before: T-20261001-13 的状态以 done 开头，且 `results.json` 的 `mechanical_status` 为 `pending_placebo`；为 `no_variant_reaches_cond1_or_anchor_1_19` 时本任务取消，由主审改状态
