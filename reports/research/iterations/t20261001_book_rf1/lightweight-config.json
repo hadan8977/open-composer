@@ -1,0 +1,300 @@
+{
+  "iter_id": "t20261001_book_rf1",
+  "strategy_name": "t20261001_book_rf1",
+  "representative_spec_path": "strategy_specs/drafts/t20261001_book_rf1.yaml",
+  "path_name": "multi_signal_equity_book_rf1",
+  "hypothesis_id": "T-20261001-15",
+  "objective": "Independent recent-fit contract (owner 2026-10-01): does the same multi-signal, risk-controlled, cost-aware U3000 book (A1 conventions: next-close fill, $1M accounting) reach a median-offset net Sharpe >= 1.19 (research_pass) or >= 0.87 (watch_recent) in window A 2024-01-08..2026-06-30, stay positive in 2026-07-01..09-17, survive leave-one-phase-out, beat the within-date placebo on net and gross Sharpe, and keep beta, solver and 2x-cost conditions; does volatility-state timing (M0V) or the T-19 model theme (M0X) add over M0?",
+  "benchmark_family": [
+    "cash_proxy_bil_excess_return",
+    "cash_matched_excess_return_net_minus_bil_plus_shy",
+    "within_date_alpha_permutation_placebo_100_seeds_net_and_gross",
+    "m0_equal_weight_composite_for_timing_and_ml_contribution",
+    "leave_one_phase_out_p01_p10",
+    "frozen_v1_gates_dual_reported",
+    "spy_buy_and_hold_reported"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "RF_M0_A",
+      "parameters": {
+        "combination": "M0_theme_equal_weight (identical to t20261001_book_v1 M0)",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0_B",
+      "parameters": {
+        "combination": "M0_theme_equal_weight (identical to t20261001_book_v1 M0)",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0_C",
+      "parameters": {
+        "combination": "M0_theme_equal_weight (identical to t20261001_book_v1 M0)",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M1_A",
+      "parameters": {
+        "combination": "M1_rolling_ic_weight (identical to t20261001_book_v1 M1)",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M1_B",
+      "parameters": {
+        "combination": "M1_rolling_ic_weight (identical to t20261001_book_v1 M1)",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M1_C",
+      "parameters": {
+        "combination": "M1_rolling_ic_weight (identical to t20261001_book_v1 M1)",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0V_A",
+      "parameters": {
+        "combination": "M0 with VIX-state timing: VIXCLS at the close of t > 20.60 halves gross cap and ex-ante vol target for that rebalance",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0V_B",
+      "parameters": {
+        "combination": "M0 with VIX-state timing: VIXCLS at the close of t > 20.60 halves gross cap and ex-ante vol target for that rebalance",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0V_C",
+      "parameters": {
+        "combination": "M0 with VIX-state timing: VIXCLS at the close of t > 20.60 halves gross cap and ex-ante vol target for that rebalance",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0X_A",
+      "parameters": {
+        "combination": "M0 plus a 10th theme ml_pv: mean percentile rank of the T-19 LGBM/XGB/CAT WX_H63 walk-forward predictions within the long universe, to normal scores",
+        "universe_short_setup": "A_u3000_se_single_name_and_etf_shorts",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0X_B",
+      "parameters": {
+        "combination": "M0 plus a 10th theme ml_pv: mean percentile rank of the T-19 LGBM/XGB/CAT WX_H63 walk-forward predictions within the long universe, to normal scores",
+        "universe_short_setup": "B_u3000_etf_shorts_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    },
+    {
+      "candidate_id": "RF_M0X_C",
+      "parameters": {
+        "combination": "M0 plus a 10th theme ml_pv: mean percentile rank of the T-19 LGBM/XGB/CAT WX_H63 walk-forward predictions within the long universe, to normal scores",
+        "universe_short_setup": "C_p1000_only",
+        "stage": "2a-rf1",
+        "rebalance": "weekly, backtest.signal_positions('W', offset) for offsets 0-4, judged at the median",
+        "structure": "F1: dollar neutral, |beta'w| <= 0.02, gross <= 1.0, T-bills 1.0E; fill at the close of t+1 (amendment A1)",
+        "fixed": "as t20261001_book_v1 plus amendment A1 (versions bound by A1 section 8; initial_equity 1,000,000; beta EWMA-63; IC_t and M1 as preregistered)",
+        "windows": "judged: A 2024-01-08..2026-06-30; not-broken: B 2026-07-01..2026-09-17; phases P01..P10 for leave-one-out; stress 2017-10-02..2023-08-31 crash diagnostic only"
+      }
+    }
+  ],
+  "cost_table": {
+    "base_cost_bps": 10,
+    "stress_cost_bps": 20,
+    "judged_cost": "cost model v1 at the close snapshot (15:45 NBBO half-spread) + square-root impact Y = 0.5 at E = $1M + fees 0.5 bp per side + borrow 25 bp a year on all short notional; accounting at initial_equity $1M (A1)",
+    "two_x_cost_check": "same target-weight path replayed with 2x half-spread, impact and fees and borrow 100 bp a year on all shorts",
+    "fixed_comparison": "10 and 20 bp per side replayed on the same path, reported only"
+  },
+  "sources": [
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf",
+      "published_or_updated_at": "2022-09-30",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version."
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot."
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf",
+      "published_or_updated_at": "2023-05-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month."
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf",
+      "published_or_updated_at": "2018-08-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date."
+    },
+    {
+      "claim_id": "cmp_2012_opportunistic_insiders",
+      "url": "https://dash.harvard.edu/bitstream/handle/1/33785679/cohen,malloy,pomorski_decoding-inside-information.pdf?sequence=1&isAllowed=y",
+      "published_or_updated_at": "2012-06-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Cohen, Malloy and Pomorski (JF 2012): classifying insiders as routine or opportunistic over 1986-2007, a portfolio of opportunistic insiders' trades yields value-weighted abnormal returns of 82 bp per month, while routine insiders' trades earn essentially zero.",
+      "project_applicability": "Defines the insider theme (cmp_opportunistic_buy_60d) of signal library v1.",
+      "reflection": "Pre-2008 evidence and post-publication decay likely; the repo's standalone insider-cluster strategy was refuted and the signal now enters only as a book input; the date is the issue month."
+    },
+    {
+      "claim_id": "dkkm_2023_complexity_random_features",
+      "url": "https://www.nber.org/system/files/working_papers/w31689/w31689.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Didisheim, Ke, Kelly and Malamud (NBER w31689): expected out-of-sample SDF performance improves with model complexity; random-feature regressions built from about 130 stock characteristics, with very many random features, beat simpler factor models in the US cross-section.",
+      "project_applicability": "Basis for M3 (random Fourier features, P = 4,000, ridge penalty chosen on validation folds).",
+      "reflection": "Gross returns; SDF framing, not a cost-aware book; heavy compute; Afsharhajari and Li (2026) argue sparsity matters inside complexity; the snapshot does not print the issue date."
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date."
+    },
+    {
+      "claim_id": "gkx_2020_ml_return_prediction_trees_nets",
+      "url": "https://dachxiu.chicagobooth.edu/download/ML.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Gu, Kelly and Xiu (RFS 2020): trees and neural networks are the best-performing return predictors in the US cross-section, their gains come from nonlinear predictor interactions, and all methods agree on a dominant signal set that includes variations on momentum, liquidity and volatility.",
+      "project_applicability": "Basis for M2 (GBDT ensemble on all features, fast signals included).",
+      "reflection": "Gross of costs; long-short deciles are tilted to small caps; the repo's own pure price-volume model books (T-17/T-19) failed after costs; the snapshot does not print the issue date."
+    },
+    {
+      "claim_id": "fan_2022_factor_momentum_reexamination",
+      "url": "https://pureadmin.qub.ac.uk/ws/portalfiles/portal/532038294/A_reexamination_of_factor_momentum.pdf",
+      "published_or_updated_at": "2022-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Fan, Liu et al. (Financial Review 57, 2022, 585-615): on the 22-factor Ehsani-Linnainmaa set and the 187-factor Hou-Xue-Zhang set, factor momentum is concentrated in 22-27% of factors and the factor momentum strategy does not outperform a buy-and-hold portfolio of the same factors (EL sample 4.07% vs 4.26% a year).",
+      "project_applicability": "No recency tilt beyond the preregistered M1; timing in RF1 is volatility-state based (M0V), not factor momentum.",
+      "reflection": "Factor portfolios, not a risk-controlled stock book; sample ends before 2024; trailing-return weighting of themes may still help in persistent regimes (our 2024-26 cross-sectional check t 3.4) while hurting at turning points."
+    },
+    {
+      "claim_id": "nrrz_2023_timing_the_factor_zoo",
+      "url": "https://afajof.org/management/viewp.php?n=32508",
+      "published_or_updated_at": "2023-03-15",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+      "project_applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+      "reflection": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version."
+    }
+  ],
+  "topic_coverage": [
+    "professional_longshort_net_sharpe_benchmarks",
+    "anomaly_net_of_cost_decay",
+    "cost_aware_portfolio_ml",
+    "trading_cost_square_root_impact",
+    "factor_replication_themes",
+    "ml_return_prediction_gbdt",
+    "random_feature_complexity",
+    "insider_opportunistic_trades",
+    "easy_to_borrow_short_constraints",
+    "risk_model_beta_neutrality",
+    "factor_timing_volatility_state",
+    "factor_momentum_decay",
+    "recent_regime_evaluation"
+  ],
+  "hypothesis": {
+    "statement": "H1 (RF1): under amendment A1 conventions the book reaches median-offset net Sharpe >= 1.19 in window A 2024-01-08..2026-06-30 (watch_recent >= 0.87), positive net excess in 2026-07-01..09-17, leave-one-phase-out minimum >= 0.87 (watch 0.60), placebo beat >= 0.95 (watch 0.90) on net and gross Sharpe, daily and Dimson beta within +-0.15, solver failures < 2% and 2x-cost excess > 0 in window A; a stress max drawdown > 20% or stress net Sharpe < -0.5 downgrades a pass to watch_recent. H2 (timing_contribution): M0V beats M0 in window A vol-matched. H3 (ml_contribution): M0X beats M0 in window A with NW t >= 2.",
+    "failure_mode": "Signals too weak or regime-flipping in the liquid pool (Stage 0: P1000 8-book combo stress -0.23); edge concentrated in hard-to-borrow microcaps that SE_t excludes; costs at the open eat the turnover; the risk model fails to neutralise beta (D3 interim check shows realised book beta 0.3-0.7 for Stage 0 books); B infeasible under the industry constraint with ETF-only shorts.",
+    "measurement": "evaluate.window_metrics (excess over BIL), k1_check, k2_edges on the model-cost series and on the cash-matched series, Dimson beta, solver failure counts, 2x-cost replay, 100-seed placebo for K1/K2 passers, DSR with 77 trials; per-variant turnover, cost share, exposures, leave-one-theme-out (M0_A offset 0) and fixed stress days.",
+    "stop_pivot": "All 12 fail research_pass: book v1 refuted, infrastructure kept, expand the signal library (no parameter tuning); if M0's anchor residual IC also has NW t < 2, add signals before a v2 contract. Any pass: open the D6 forward shadow, propose a paper sleeve to the owner after 20 clean forward sessions."
+  },
+  "decision": {
+    "path": "multi_signal_equity_book_rf1",
+    "decision": "pending",
+    "reason": "Preregistered 2026-10-01 by the interactive lead (Opus) after the owner's recent-fit instruction, before any Stage 2 output; inherits amendment A1 run conventions of t20261001_book_v1.",
+    "next_iteration_suggestion": "Run RF_M0V and RF_M0X x A/B/C (30 close paths) with the T-20261001-08 runner; RF_M0/RF_M1 reuse the T-08 close paths; evaluate RF1 gates after T-20261001-13; placebo via T-20261001-14 rules."
+  },
+  "source_cards_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl"
+}

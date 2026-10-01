@@ -1287,6 +1287,25 @@
 - notes:
   - 2026-10-01 10:18 UTC 交互会话（Opus）写入。
 
+### T-20261001-15 组合线 RF1（机主 10-01 近期适配合同）：M0V、M0X 的 30 条新路径和 RF1 逐条判定
+- status: ready（合同 14:17 由交互会话冻结；简报由 19:07 主审轮写，写之前执行轮不要取）
+- priority: 1
+- not_before: T-20261001-08 完成（共用运行器和 A1 的版本绑定）；判定部分在 T-20261001-13、T-20261001-14 之后
+- goal: 机主 10-01 要求筛选看是否适合现在，通过后直接上模拟盘（前向两周只验证执行）。独立合同 `reports/research/iterations/t20261001_book_rf1/` 按这个标准判定同一组合：
+  - A 窗 2024-01-08..2026-06-30 定通过（净夏普 ≥1.19 研究通过，≥0.87 观察档）；
+  - B 窗 2026-07-01..09-17 查没坏；
+  - 去掉任一阶段的稳健性；
+  - 安慰剂净、毛两种口径；
+  - 2017–2023 只做崩溃诊断。
+- plan:
+  1. 用 T-08 的同一个运行器和 A1 绑定的版本，跑 RF_M0V_{A,B,C} 和 RF_M0X_{A,B,C}，各 5 个偏移，收盘口径，加四种记账重放，共 30 条主路径。Modal 在纲领 $10 总额内。
+  2. **M0V**：t 日收盘的 VIXCLS（`data/research/vix/VIXCLS.csv`，缺值沿用前值、最多 3 天）> 20.60 时，该次调仓的总敞口上限和事前波动目标都乘 0.5，否则不变。
+  3. **M0X**：`reports/research/iterations/t20260930_17b_model_family_book/cache/predictions_{LGBM,XGB,CAT}_WX_H63.parquet` 三个模型在当日多头宇宙内各取百分位秩，取平均后转正态分，作为第 10 个主题 `ml_pv`，与 9 个慢主题等权。只用 trade_date ≤ 决策日 t 的预测。
+  4. **RF1 判定**：按合同 hypotheses.md 第 5 节 R1–R8 逐条计算。RF_M0、RF_M1 直接用 T-08 的收盘路径；阶段取 `data/research/equity_book/regimes/phases.json` 的 phases_recent（P01..P10 在 A 窗内）；安慰剂按 T-14 的做法，只对 A 窗净夏普 ≥0.87 的变体做。
+- done_when: 合同目录下有逐条判定的 results.json 和 report.md；状态写 done（待主审）。
+- notes:
+  - 2026-10-01 14:17 UTC 交互会话（Opus）写入。合同冻结时 v1 档案下没有任何 Stage 2 结果文件。
+
 ### T-20261001-13 组合线 Stage 2a 评估：45 条路径的全部指标和机械条件（接 T-20261001-08）
 - status: ready
 - priority: 1

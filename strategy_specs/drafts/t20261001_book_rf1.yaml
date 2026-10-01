@@ -1,0 +1,119 @@
+name: t20261001_book_rf1
+description: 'Independent recent-fit contract RF1 (owner instruction 2026-10-01 ~09:55 UTC: screen for fitness to the current market, 2024-01..2026-06 and 2026-07..now or market phases) for the same multi-signal, risk-controlled, cost-aware US equity book as t20261001_book_v1, inheriting amendment A1 run conventions (fill at the close of t+1, $1M accounting, IC_t and M1 as preregistered). Twelve variants = M0, M1, M0V (VIX-state gross halving) and M0X (T-19 walk-forward predictions as a 10th theme) x universe/short set-ups A, B, C; weekly, 5 offsets, judged at the median on window A 2024-01-08..2026-06-30 with a not-broken check on 2026-07..09, leave-one-phase-out, placebo, beta, solver and 2x-cost conditions; the 2017-2023 stress window is a crash diagnostic only. The spec execution block cannot express a next-close fill; the binding execution is in the manifest and hypotheses.md. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- IWM
+- IJR
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3000
+  max_position_weight: 0.01
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3000
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.01
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261001_book_rf1:multi_signal_equity_book
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/research/equity_book/panel
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_book_alpha:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Signals come from open_composer/research/equity_book/signals.py (T-20261001-05), alpha combinations M0-M3 and the optimizer from optimize.py (T-20261001-06), the book from backtest.run_book and the verdict from evaluate.py, all as preregistered in reports/research/iterations/t20261001_book_rf1/hypotheses.md.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- events.sec_filings
+- events.sec_form4_insider
+- market.finra_short_interest
+- reference.sec_sic_industry
+research_design:
+  iter_id: t20261001_book_rf1
+  candidate_manifest_path: reports/research/iterations/t20261001_book_rf1/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261001_book_rf1/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261001_book_rf1.jsonl
+  source_card_claim_ids:
+  - jkmp_2022_implementable_efficient_frontier
+  - aqr_2023_longshort_manager_sharpe_percentiles
+  - chen_velikov_2023_anomaly_net_returns
+  - fim_2018_trading_costs_square_root_impact
+  - cmp_2012_opportunistic_insiders
+  - dkkm_2023_complexity_random_features
+  - jkp_2023_replication_153_factors_13_themes
+  - gkx_2020_ml_return_prediction_trees_nets
+  - fan_2022_factor_momentum_reexamination
+  - nrrz_2023_timing_the_factor_zoo
+  parameter_space:
+    combination:
+    - M0_theme_equal_weight
+    - M1_rolling_ic_weight
+    - M0V_vix_state_gross_halving
+    - M0X_t19_model_theme
+    universe_short_setup:
+    - A_u3000_se_single_name_and_etf_shorts
+    - B_u3000_etf_shorts_only
+    - C_p1000_only
+  candidate_budget: 12
+  selection_objective: Not a return search. Independent recent-fit contract RF1 (owner 2026-10-01). The 12 variants, the fixed run conventions (t20261001_book_v1 preregistration plus amendment A1) and the gates are frozen in reports/research/iterations/t20261001_book_rf1/hypotheses.md before any Stage 2 output. Any variant that passes is reported; no variant is tuned after results.
+  candidate_budget_note: 12 grid cells; the DSR trial count is 83 (the 77 of t20261001_book_v1 plus the 6 new M0V and M0X cells; RF_M0 and RF_M1 reuse the v1 close paths and add no trials).
+  anti_overfit_notes:
+  - Window A and the signal-level phase analysis (reports/research/program/regimes-2026-10-01) were seen before this contract; thresholds are the frozen v1 levels (1.19, 0.87) and were not chosen from those numbers; M0V and M0X are partly motivated by in-sample analysis and are labelled lower-weight evidence.
+  - Every gate is judged at the median over 5 weekly rebalance offsets; the placebo pairs each seed with the real run on the same offset and must be beaten on net and gross Sharpe.
+  - Versions are those bound by amendment A1 section 8 of t20261001_book_v1; any change to a bound file voids the runs.
+  validation_plan:
+  - evaluate.window_metrics on window A 2024-01-08..2026-06-30 (judged), B 2026-07-01..2026-09-17 (not-broken), stress 2017-10-02..2023-08-31 (crash diagnostic)
+  - leave-one-phase-out over P01..P10 from data/research/equity_book/regimes/phases.json; placebo 100 seeds net and gross; daily and Dimson beta; solver failures; 2x-cost replay
+  - timing_contribution (M0V vs M0, vol-matched) and ml_contribution (M0X vs M0, NW t) per universe; frozen v1 gates dual-reported
+notes:
+  intent: Judge the same equity book on the owner's recent-fit standard (2024-01..2026-06 decides, 2026-07..now must not be broken, old data is a crash diagnostic) so a passing book can go to a paper proposal.
+  hypothesis_id: T-20261001-15
+  previous_link: dir:multi_signal_risk_controlled_equity_book
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

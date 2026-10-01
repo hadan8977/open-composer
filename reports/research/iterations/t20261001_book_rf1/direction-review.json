@@ -1,0 +1,302 @@
+{
+ "schema_version": 1,
+ "iter_id": "t20261001_book_rf1",
+ "reviewed_at": "2026-10-01T14:16:58Z",
+ "decision": "proceed",
+ "objective": "Independent recent-fit contract RF1 for main line 1 (owner instruction 2026-10-01 ~09:55 UTC: screen for fitness to the current market; 2024-01..2026-06 and 2026-07..now, or market phases; passing strategies go to paper, two weeks confirm execution). Judge the same multi-signal, risk-controlled, cost-aware U3000 book as t20261001_book_v1 under amendment A1 run conventions on window A 2024-01-08..2026-06-30 (research_pass >= 1.19, watch_recent >= 0.87 median-offset net Sharpe), a not-broken check on 2026-07-01..09-17, leave-one-phase-out, net-and-gross placebo, beta, solver and 2x-cost conditions, with the 2017-2023 stress window as a crash diagnostic; and test whether volatility-state timing (M0V) or the cached T-19 model theme (M0X) adds over M0.",
+ "target_regime_and_horizon": "US equities U3000/P1000 per t20261001_book_v1; weekly rebalancing, 5 offsets, median; fill at the close of t+1. Target regime: the 2024-01..2026-09 market (11 phases from SPY >= 7% drawdown cuts, reports/research/program/regimes-2026-10-01), currently up_mid (SPY above its 200-day mean, VIX 14.46-20.60). Validity to 2026-12-31, then forward review; failure signals and exit rules in hypotheses.md section 7.",
+ "existing_solution_comparison": "Professional systematic long/short equity funds net Sharpe median 0.51 and 90th percentile 1.18 (AQR/HFR 1996-2023); JKMP Portfolio-ML net 1.38 for a $10B large-cap investor; Chen-Velikov: single anomalies net about 4 bp/month post-2005, combinations about 20 bp. Off-the-shelf tooling is reused (cvxpy + Clarabel; skfolio only as a cross-check; JKMP's code is too heavy at about 75 GB, so a reduced version). No public record covers this universe, cost model and the 2024-26 window, so the run is needed. Our standalone long-only anomaly tests (263 directions, 3 passed) and the T-19 model books are the negative baseline; the Stage 0 hedged books (P1000 8-book combo anchor 0.58, stress -0.23) are contaminated diagnostics, not results. Factor timing evidence: Fan et al. 2022 (Financial Review) find factor momentum does not beat buy-and-hold of the same factors; Neuhierl-Randl-Reschenhofer-Zechner 2023 find timing gains of about 2% a year per factor, with past returns and volatility the best single predictors -- hence a volatility-state variant, not a recency tilt.",
+ "remaining_evidence_gap": "Whether the book-level net Sharpe (after the optimizer's transfer loss, weekly trading and the close-snapshot cost model) keeps the signal-level strength measured for the equal-theme composite (window A gross 1.68, net 1.39 at 8 bp per side; 10 of 11 recent phases positive; stress 0.48), whether it is spread across phases, and whether M0V or M0X add to M0. No public record covers this universe, cost model and window.",
+ "negative_experiments_checked": "Registry check (263 directions): standalone refutations of earnings drift, insider clusters, net issuance, short volume, overnight persistence, intraday families and pure price-volume ranking (T-17/T-19) are readmitted only as book inputs. H-20260929-12, the only earlier hedged multi-factor attempt, died of a label/holding-return mismatch, fixed by the single return implementation (D2 unit test 4). The Stage 0 252-day beta hedge left realised beta 0.5-0.9, hence the risk model and the beta constraint. The Q2 strength came from shorting dilutive microcaps with borrow unmodelled, hence SE_t and borrow costs. Prior-work audit 2026-10-01 (reports/research/program/prior-work-audit-2026-10-01): 28 directions had a real long-short or same-pool effect killed by the standalone long-only unit; the T-19 GBDT ranking (stress RankIC t 3.1, illiquid tercile t 5.75) is the only directly reusable model asset, used here as M0X. Time-series factor momentum added nothing in our 2017-2026 data (difference t -1.4..0.1).",
+ "cost_and_execution_assumptions": "As t20261001_book_v1 with amendment A1: signal after the close of t, fill at the close of t+1 (Alpaca time_in_force=cls, submitted before 15:50 ET); half-spread from cost model v1 at the 15:45 snapshot (open half-spreads are ~4.1x), square-root impact Y = 0.5 with accounting at initial_equity $1M, fees 0.5 bp per side, borrow 25 bp a year on all shorts (100 bp in the 2x check); F1 L = S <= 0.5E plus T-bills 1.0E; whole-share shorts on easy-to-borrow names or hedge ETFs. The closing auction has no quoted spread but has auction impact; the 15:45 proxy is checked in the two-week paper shakedown.",
+ "stop_condition": "All 12 RF1 variants fail watch_recent: RF1 is refuted, no parameter is tuned, the next step is book v1.1 with the audit's S2 signals (MAX, 52-week high, Alpha158 FDR set, return-earnings-gap reversal, 13D) or the v2 text layer under a new contract. A paper or forward book stops on the hypotheses.md section 7 exit rules (63-session net Sharpe < -1.0, drawdown > 4.3% halves gross; drawdown > 8% or beta out of control for 5 sessions stops it).",
+ "queries": [
+  {
+   "query": "Jensen Kelly Malamud Pedersen \"Machine Learning and the Implementable Efficient Frontier\" Portfolio-ML net Sharpe",
+   "searched_at": "2026-10-01T07:17:00Z",
+   "opened_urls": [
+    "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "AQR \"Key Design Choices in Long/Short Equity\" Alternative Thinking 2023 systematic hedge fund Sharpe percentiles",
+   "searched_at": "2026-10-01T07:17:00Z",
+   "opened_urls": [
+    "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "Chen Velikov \"Zeroing in on the Expected Returns of Anomalies\" JFQA 2023 post-2005 4 bps per month",
+   "searched_at": "2026-10-01T07:17:00Z",
+   "opened_urls": [
+    "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "Frazzini Israel Moskowitz \"Trading Costs\" 2018 price impact square root anomalies capacity",
+   "searched_at": "2026-10-01T07:17:00Z",
+   "opened_urls": [
+    "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "Cohen Malloy Pomorski \"Decoding Inside Information\" opportunistic insiders 82 basis points",
+   "searched_at": "2026-10-01T07:18:00Z",
+   "opened_urls": [
+    "https://dash.harvard.edu/bitstream/handle/1/33785679/cohen,malloy,pomorski_decoding-inside-information.pdf?sequence=1&isAllowed=y"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "Didisheim Ke Kelly Malamud \"Complexity in Factor Pricing Models\" random features NBER w31689",
+   "searched_at": "2026-10-01T07:18:00Z",
+   "opened_urls": [
+    "https://www.nber.org/system/files/working_papers/w31689/w31689.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "Jensen Kelly Pedersen \"Is There a Replication Crisis in Finance\" 153 factors 93 countries",
+   "searched_at": "2026-10-01T07:18:00Z",
+   "opened_urls": [
+    "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "Gu Kelly Xiu \"Empirical Asset Pricing via Machine Learning\" trees neural networks",
+   "searched_at": "2026-10-01T07:18:00Z",
+   "opened_urls": [
+    "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+   ],
+   "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+  },
+  {
+   "query": "factor momentum out-of-sample post-publication performance Ehsani Linnainmaa Gupta Kelly time-series factor momentum recent evidence",
+   "searched_at": "2026-10-01T10:19:00Z",
+   "opened_urls": [
+    "https://pureadmin.qub.ac.uk/ws/portalfiles/portal/532038294/A_reexamination_of_factor_momentum.pdf",
+    "https://afajof.org/management/viewp.php?n=32508"
+   ],
+   "note": "Opened and snapshotted by the interactive lead; quotes verified in reports/research/intel/sources/regime-2026-10-01/."
+  },
+  {
+   "query": "Alpaca multiple paper trading accounts per user API keys how many paper accounts",
+   "searched_at": "2026-10-01T10:19:00Z",
+   "opened_urls": [
+    "https://docs.alpaca.markets/us/docs/paper-trading"
+   ],
+   "note": "Paper fills at NBBO, no impact, borrow fees or dividends; new paper accounts need their own keys; the 3-account limit is only in forum posts (unverified)."
+  },
+  {
+   "query": "Alpaca time_in_force cls market on close order paper trading short selling support",
+   "searched_at": "2026-10-01T10:19:00Z",
+   "opened_urls": [
+    "https://docs.alpaca.markets/us/docs/orders-at-alpaca"
+   ],
+   "note": "CLS orders execute only in the closing auction and are rejected between 15:50 and 19:00 ET; paper handling of CLS is not documented."
+  }
+ ],
+ "sources": [
+  {
+   "applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+   "claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+   "claim_id": "jkmp_2022_implementable_efficient_frontier",
+   "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:06:00Z",
+   "independent_replication": "Authors' code is public (github theisij/ml-and-the-implementable-efficient-frontier); AQR Alternative Thinking 2024 Q4 reports gains from ML-built stock portfolios; no independent academic replication was read.",
+   "limitations": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+   "market_and_period": "US stocks, out of sample 1981-2020, price-impact costs for a $10 billion investor",
+   "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+   "published_or_updated_at": "2022-09-30",
+   "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+   "sha256": "8d482fb0eb156efbf9a0e75be6eefb64270ea5d693e6d7ece9e95c244df77db5",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/01_jkmp_implementable_frontier_SFI22-63_2022version.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+  },
+  {
+   "applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+   "claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+   "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+   "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+   "credibility": "manager_white_paper_with_hfr_data",
+   "fetched_at": "2026-10-01T06:14:03Z",
+   "independent_replication": "Consistent with the HFRX and BarclayHedge equity-market-neutral index snapshots in the same 2026-10-01 intel folder; no academic replication.",
+   "limitations": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+   "market_and_period": "HFR long/short equity funds, May 1996 - August 2023, monthly, net of fees",
+   "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+   "published_or_updated_at": "unknown",
+   "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+   "sha256": "811545a0e2d8b8f7bf77111197be0b23fe009101b89d4910e2300c85b135e339",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/B_aqr_key_design_choices_longshort_2023.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "industry_standard",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+  },
+  {
+   "applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+   "claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+   "claim_id": "chen_velikov_2023_anomaly_net_returns",
+   "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:09:00Z",
+   "independent_replication": "Consistent with Jensen-Kelly-Pedersen (JF 2023) on replication versus profitability; not re-run here.",
+   "limitations": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+   "market_and_period": "US stocks, published cross-sectional anomalies, with a post-2005 subsample",
+   "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+   "published_or_updated_at": "2023-05-01",
+   "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+   "sha256": "30e153be6b4769ac9b6df25f37961728f44c3ce1eb16920b639f8cba18374288",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/06_chen_velikov_zeroing_in_JFQA2023.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+  },
+  {
+   "applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+   "claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+   "claim_id": "fim_2018_trading_costs_square_root_impact",
+   "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:10:30Z",
+   "independent_replication": "The square-root shape matches the Toth-Bouchaud and Almgren lines cited in the snapshot; no replication on our data.",
+   "limitations": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+   "market_and_period": "Live executions of one large manager, 21 developed equity markets, 1998-2016",
+   "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+   "published_or_updated_at": "2018-08-01",
+   "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+   "sha256": "045785a8b3bfd49f9c852e8fa2b2bf24386cff4e77880b3aa79986f8bdfbe67e",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/B_aqr_fim_trading_costs_2018.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+  },
+  {
+   "applicability": "Defines the insider theme (cmp_opportunistic_buy_60d) of signal library v1.",
+   "claim": "Cohen, Malloy and Pomorski (JF 2012): classifying insiders as routine or opportunistic over 1986-2007, a portfolio of opportunistic insiders' trades yields value-weighted abnormal returns of 82 bp per month, while routine insiders' trades earn essentially zero.",
+   "claim_id": "cmp_2012_opportunistic_insiders",
+   "core_claim": "Cohen, Malloy and Pomorski (JF 2012): classifying insiders as routine or opportunistic over 1986-2007, a portfolio of opportunistic insiders' trades yields value-weighted abnormal returns of 82 bp per month, while routine insiders' trades earn essentially zero.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:12:00Z",
+   "independent_replication": "Zhao (2026, arXiv 2602.06198, abstract only) reports insider-purchase returns concentrated in microcaps; no full replication read.",
+   "limitations": "Pre-2008 evidence and post-publication decay likely; the repo's standalone insider-cluster strategy was refuted and the signal now enters only as a book input; the date is the issue month.",
+   "market_and_period": "US insider trades, 1986-2007",
+   "project_applicability": "Defines the insider theme (cmp_opportunistic_buy_60d) of signal library v1.",
+   "published_or_updated_at": "2012-06-01",
+   "reflection": "Pre-2008 evidence and post-publication decay likely; the repo's standalone insider-cluster strategy was refuted and the signal now enters only as a book input; the date is the issue month.",
+   "sha256": "ca6744e5c3ea13453fcab6b177b6a286480ff37e936c18e858d28e2b02482236",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/17_cohen_malloy_pomorski_decoding_inside_information_JF2012.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://dash.harvard.edu/bitstream/handle/1/33785679/cohen,malloy,pomorski_decoding-inside-information.pdf?sequence=1&isAllowed=y"
+  },
+  {
+   "applicability": "Basis for M3 (random Fourier features, P = 4,000, ridge penalty chosen on validation folds).",
+   "claim": "Didisheim, Ke, Kelly and Malamud (NBER w31689): expected out-of-sample SDF performance improves with model complexity; random-feature regressions built from about 130 stock characteristics, with very many random features, beat simpler factor models in the US cross-section.",
+   "claim_id": "dkkm_2023_complexity_random_features",
+   "core_claim": "Didisheim, Ke, Kelly and Malamud (NBER w31689): expected out-of-sample SDF performance improves with model complexity; random-feature regressions built from about 130 stock characteristics, with very many random features, beat simpler factor models in the US cross-section.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:09:00Z",
+   "independent_replication": "Revisited by Afsharhajari and Li (arXiv 2604.17166) in the same intel folder; no replication on our data.",
+   "limitations": "Gross returns; SDF framing, not a cost-aware book; heavy compute; Afsharhajari and Li (2026) argue sparsity matters inside complexity; the snapshot does not print the issue date.",
+   "market_and_period": "US stocks, monthly characteristics panel (paper sample)",
+   "project_applicability": "Basis for M3 (random Fourier features, P = 4,000, ridge penalty chosen on validation folds).",
+   "published_or_updated_at": "unknown",
+   "reflection": "Gross returns; SDF framing, not a cost-aware book; heavy compute; Afsharhajari and Li (2026) argue sparsity matters inside complexity; the snapshot does not print the issue date.",
+   "sha256": "0f876b74f153e82fce0fd872e08c60a20472cdd46c5135e10317ca598801ea54",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/11_didisheim_ke_kelly_malamud_complexity_in_factor_pricing_NBER31689.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://www.nber.org/system/files/working_papers/w31689/w31689.pdf"
+  },
+  {
+   "applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+   "claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+   "claim_id": "jkp_2023_replication_153_factors_13_themes",
+   "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:09:00Z",
+   "independent_replication": "Chen and Zimmermann's open-source asset pricing (FEDS 2021-037) independently reproduces most US predictors.",
+   "limitations": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+   "market_and_period": "153 factors, 93 countries, the paper's global sample",
+   "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+   "published_or_updated_at": "unknown",
+   "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+   "sha256": "438dfb4877f896bed4c4214e017408e9363ff2352a429a11b8fc791a38a021d4",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/10_jensen_kelly_pedersen_replication_crisis_JF2023.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+  },
+  {
+   "applicability": "Basis for M2 (GBDT ensemble on all features, fast signals included).",
+   "claim": "Gu, Kelly and Xiu (RFS 2020): trees and neural networks are the best-performing return predictors in the US cross-section, their gains come from nonlinear predictor interactions, and all methods agree on a dominant signal set that includes variations on momentum, liquidity and volatility.",
+   "claim_id": "gkx_2020_ml_return_prediction_trees_nets",
+   "core_claim": "Gu, Kelly and Xiu (RFS 2020): trees and neural networks are the best-performing return predictors in the US cross-section, their gains come from nonlinear predictor interactions, and all methods agree on a dominant signal set that includes variations on momentum, liquidity and volatility.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T06:07:00Z",
+   "independent_replication": "Widely re-used (Chen-Pelger-Zhu, Azevedo-Hoegner-Velikov in the same intel folder); no replication on our data.",
+   "limitations": "Gross of costs; long-short deciles are tilted to small caps; the repo's own pure price-volume model books (T-17/T-19) failed after costs; the snapshot does not print the issue date.",
+   "market_and_period": "US stocks (CRSP), the paper's multi-decade sample",
+   "project_applicability": "Basis for M2 (GBDT ensemble on all features, fast signals included).",
+   "published_or_updated_at": "unknown",
+   "reflection": "Gross of costs; long-short deciles are tilted to small caps; the repo's own pure price-volume model books (T-17/T-19) failed after costs; the snapshot does not print the issue date.",
+   "sha256": "d475525661ae12dce22f904edcb4ad75e324d0bbd9d6e596d773b500bea555ab",
+   "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/04_gu_kelly_xiu_2020_empirical_asset_pricing_ML.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://dachxiu.chicagobooth.edu/download/ML.pdf"
+  },
+  {
+   "applicability": "No recency tilt beyond the preregistered M1; timing in RF1 is volatility-state based (M0V), not factor momentum.",
+   "claim": "Fan, Liu et al. (Financial Review 57, 2022, 585-615): on the 22-factor Ehsani-Linnainmaa set and the 187-factor Hou-Xue-Zhang set, factor momentum is concentrated in 22-27% of factors and the factor momentum strategy does not outperform a buy-and-hold portfolio of the same factors (EL sample 4.07% vs 4.26% a year).",
+   "claim_id": "fan_2022_factor_momentum_reexamination",
+   "core_claim": "Fan, Liu et al. (Financial Review 57, 2022, 585-615): on the 22-factor Ehsani-Linnainmaa set and the 187-factor Hou-Xue-Zhang set, factor momentum is concentrated in 22-27% of factors and the factor momentum strategy does not outperform a buy-and-hold portfolio of the same factors (EL sample 4.07% vs 4.26% a year).",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T10:20:00Z",
+   "independent_replication": "This paper is itself a re-examination of Ehsani-Linnainmaa and Arnott et al.; Neuhierl et al. 2023 find modest timing gains with many predictors.",
+   "limitations": "Factor portfolios, not a risk-controlled stock book; sample ends before 2024; trailing-return weighting of themes may still help in persistent regimes (our 2024-26 cross-sectional check t 3.4) while hurting at turning points.",
+   "market_and_period": "US factor portfolios: 22 Ehsani-Linnainmaa factors and 187 Hou-Xue-Zhang factors, monthly, samples ending before 2024",
+   "project_applicability": "No recency tilt beyond the preregistered M1; timing in RF1 is volatility-state based (M0V), not factor momentum.",
+   "published_or_updated_at": "2022-01-01",
+   "reflection": "Factor portfolios, not a risk-controlled stock book; sample ends before 2024; trailing-return weighting of themes may still help in persistent regimes (our 2024-26 cross-sectional check t 3.4) while hurting at turning points.",
+   "sha256": "1ebf7e4bfabd9e5f9f86cc025b3d0edaffe17bdf1144626a8db2fc4da06001b8",
+   "snapshot_path": "reports/research/intel/sources/regime-2026-10-01/fan2022_reexamination_factor_momentum.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://pureadmin.qub.ac.uk/ws/portalfiles/portal/532038294/A_reexamination_of_factor_momentum.pdf"
+  },
+  {
+   "applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+   "claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+   "claim_id": "nrrz_2023_timing_the_factor_zoo",
+   "core_claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "fetched_at": "2026-10-01T10:20:00Z",
+   "independent_replication": "Not read; consistent with Moreira-Muir 2017 volatility-managed portfolios and Barroso-Santa-Clara 2015 momentum volatility scaling (not opened this round).",
+   "limitations": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version.",
+   "market_and_period": "US equity factor zoo (over 300 factors, 39 timing predictors), monthly, sample to about 2020",
+   "project_applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+   "published_or_updated_at": "2023-03-15",
+   "reflection": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version.",
+   "sha256": "a5422dd5d4eb7d7e8bae91bdcdbe67fa00126d0a7f5c6e798a4663705b6a1104",
+   "snapshot_path": "reports/research/intel/sources/regime-2026-10-01/neuhierl_randl_reschenhofer_timing_factor_zoo.txt",
+   "source_card_path": "reports/harness/source_cards/t20261001_book_rf1.jsonl",
+   "source_type": "paper",
+   "url": "https://afajof.org/management/viewp.php?n=32508"
+  }
+ ],
+ "cheapest_decisive_test": {
+  "action": "Reuse the T-20261001-08 close paths for RF_M0 and RF_M1 (no rerun); T-20261001-15 runs RF_M0V and RF_M0X x A/B/C x 5 offsets with the same runner and accounting replays, then evaluates every RF1 condition on window A, window B, phases P01..P10 and the stress diagnostic from the same daily series; placebo (100 seeds, net and gross) only for variants whose window-A median-offset net Sharpe is >= 0.87.",
+  "pass_condition": "Any RF1 variant meets every research_pass row (R1-R7) of hypotheses.md section 5 at the median offset (watch_recent rows for the lower tier), with R8 applied as a downgrade.",
+  "falsification_condition": "No RF1 variant reaches watch_recent; then RF1 is refuted and book v1.1 or v2 needs a new contract.",
+  "max_compute_minutes": 600
+ }
+}
