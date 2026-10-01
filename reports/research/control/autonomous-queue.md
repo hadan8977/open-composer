@@ -1036,7 +1036,7 @@
   - 2026-10-01 01:30 UTC 01:07 主审轮（Opus）对照 results.json 审核：六本书 K1、K2 全不过，数字核对无误（对标窗 flat10 最好 CAT V2 0.422，门槛 1.19；K2 对标窗 -0.389 到 -0.664，压力期 +0.003 到 +0.192；DSR 0.009–0.083）。安慰剂：压力期六本全部 1.00；对标窗 LGBM V2、CAT V2 1.00，LGBM V1 0.80，其余 0.00–0.30。池内排序是真的，但流动性最差的小盘池在 2024–26 整体太弱，赚不到钱。parity_failed 的裁定：B0 组合引擎复现一致（0.4621 对 0.462、0.3266 对 0.327）；RankIC 偏差 0.0037/0.0051 都是阶段 2 偏高；书离 K1 差 ≥0.77 夏普，离 K2 差 ≥0.44，0.005 的 RankIC 差改变不了判决。可能原因（推断）：多了 2 个边界形成日，且正式跑换了核数，LightGBM/CatBoost 直方图累加顺序随线程数变，XGBoost hist 不变（XGB 正好是过的那格）。结论 refuted：纯量价排序不再加格子、不再换模型族（预注册写死）。档案 `--stage final` ok（补了 trial-ledger.jsonl、decision-record.md、search-space 的台账路径）。
 
 ### T-20261001-01 纲领 A：按结算周期定时的月末现金需求窗口（SPY），能否替换 C2 的 E 腿（Etula 等 RFS 2020；Nathan-Suominen-Tasa 2026）
-- status: ready
+- status: done（待主审）
 - priority: 1
 - not_before:
 - goal: C2 的 E 腿 E0 很脆（2026 污染窗夏普 -0.57）。月末现金需求给出一个由结算规则决定、没有自由参数的时点：边际卖出日 b（2024-05-28 前为 τ−4，改 T+1 后为 τ−3）之后买 SPY，持有到下月第 3 个交易日。能否按机主的替换规则替换 E0，或单独过 K1/K2？
@@ -1045,9 +1045,11 @@
 - brief: reports/research/control/briefs/T-20261001-01.md
 - notes:
   - 2026-10-01 01:40 UTC 01:07 主审轮（Opus）写预注册和简报。先验：K1 <10%，替换 E0 约 20%。本地 SPY 日线，很轻，60 分钟上限。04:07 执行轮做。
+  - 2026-10-01 04:10 UTC 04:07 执行轮（Sonnet）开始执行。
+  - 2026-10-01 04:40 UTC 执行轮（子代理 claude-sonnet-5-5）跑完。results.json：parity.all_ok=true（E0_REF 1.339/1.241/0.584/-0.574 复现）；机械 verdict=refuted。DFC_U 选择窗10bp -0.765、20bp -1.329、对标窗 -0.500、压力期 0.112、2026 0.787，K2 -0.554/-0.252，安慰剂 beat 0.03/0.16/0.77；DFC_C -0.379/-0.633/-0.104/0.359/1.230，K2 -0.349/-0.082，beat 0.14/0.60/0.94。替换四条仅 b（2026）过，a/c/d 和 placebo_ok 不过，replacement.pass 两者皆 false。诊断：换窗 post-pre -9.39bp NW t -0.42（27/100 月）；前后窗相关 改革前 -0.293(100月) 改革后 +0.035(28月)；C2 近似 50/50 混合 DFC_U 选择窗 0.284、DFC_C 0.557 对 E0 1.076。偏离：不完整的 2026-09 月不入；换窗 t 用 OLS+HAC(3)而非 newey_west_t。`iteration validate --stage final` 有 3 个拦截项（search_space 的 trial ledger / evaluation report 路径为空、decision record 缺 continue/pivot/stop），执行轮未动，留主审。产物：scripts/screen_batches/t20261001_01_dash_for_cash.py、scripts/run_t20261001_01_dfc_placebo.py、tests/test_t20261001_01_dash_for_cash.py（7 个通过）、reports/research/screens/t20261001_01_dash_for_cash/、iterations/t20261001_01_dash_for_cash_settlement/{results.json,report.md}。待主审。
 
 ### T-20261001-02 纲领 A：月末现金需求在我们数据里的横截面痕迹（P500 动量输家；机制测量 M1–M3，不是候选）
-- status: ready
+- status: done（待主审）
 - priority: 1
 - not_before:
 - goal: Nathan 等 2026 说机构为月末现金卖出动量输家，[τ−9, τ−4] 落后大盘约 7.9 bp/天，改 T+1 后边际卖出日从 τ−4 移到 τ−3（DiD +85.9 bp，t 2.68）。在我们 2016–2026 的 P500（含退市股）上测：M1 前窗输家落后（门槛 NW t ≤ -2），M2 后窗反弹，M3 换窗（含论文样本外的 2026 年 9 个月末），并报只做多输家反弹的扣成本收益。决定 T-01 的时点有没有机制支撑、要不要做横截面阶段 2。
@@ -1056,3 +1058,5 @@
 - brief: reports/research/control/briefs/T-20261001-02.md
 - notes:
   - 2026-10-01 01:40 UTC 01:07 主审轮（Opus）写简报。M1 过的先验约 60%（论文 2002–2025 β2 -8.5 bp，t -2.2；S&P 500 成分更强）。读全市场日线，run_capped 1.8G，90 分钟上限；与 T-01 并行时等 T-01 的 screen_batch 跑完再读数据。
+  - 2026-10-01 04:10 UTC 04:07 执行轮（Sonnet）开始执行。
+  - 2026-10-01 04:40 UTC 执行轮（子代理 claude-sonnet-5-5）跑完（panel 在 04:31 开始，等待 T-01 leaderboard 超 25 分钟）。results_xs.json：n_months 115（2017-02→2026-08），P500 池中位 500，曾出现退市股 219。M1 d1_dv 系数 -7.66bp/天 NW t -0.86，m1_pass=false（改革前 -9.57 t -0.88，改革后 -1.75 t -0.12）；M2 后窗 +10.86bp t 2.02（改革前 +10.22 t 1.70，后 +13.20 t 1.12）；M3 θ4−θ3：overlap_2024_2025 127.78bp t 3.00，out_of_paper_2026 120.70bp t 1.58（8 个改革后月），combined 125.68bp t 3.05（θ4 +81.66，θ3 -44.03）。交易（era 口径）d1_dv net10 月均：压力期 113.58bp 夏普 0.70、对标窗 99.17bp 夏普 0.60；d1_dv_minus_spy 压力期 32.17bp 夏普 0.27、对标窗 48.91bp 夏普 0.39。偏离：日历自 2016-01 起，首个可形成月 2017-01，压力期实际自 2017-02；_load_spy 只返回隔夜收益，改写了开收盘读取；组别在 τ_f+4 到 τ_{f+1}+3 冻结（简报未定）；剔除疑似拆股日；退市后缺失收益剔除（偏向做多输家，已写入报告）。产物：scripts/run_t20261001_02_dfc_cross_section.py、tests/test_t20261001_02_dfc_cross_section.py（6 个通过）、iterations/t20261001_01_dash_for_cash_settlement/{results_xs.json,report_xs.md}、cache/、logs/t20261001-02.log。待主审。
