@@ -1198,7 +1198,7 @@
   - 2026-10-01 07:31 UTC 07:07 主审轮（Opus）完成：`reports/research/iterations/t20261001_book_v1/`（hypotheses.md 第"预注册全文"节、direction-review.json、candidate-manifest.json 12 条、search-space、data-feasibility、cost-table、lightweight-config），草稿规格 `strategy_specs/drafts/t20261001_book_v1.yaml`（oc spec validate ok），来源卡 `reports/harness/source_cards/t20261001_book_v1.jsonl`（8 张，引文都在快照里核对过），登记簿新增 `dir:multi_signal_risk_controlled_equity_book`（queued）。门槛逐字沿用设计第 10 节，另加三条只会更严的条件：K2 还要在现金对齐口径（净收益 − BIL + SHY）下成立（主审用零 α 空书测出 BIL 对 SHY 的利差在冻结口径下白送 +0.03 / +0.09）；实现 beta 还要过 Dimson beta；2 倍成本重放同一条权重路径。M2、M3 的超参数现在就固定（防止看到 2a 后再调）。安慰剂按种子轮换偏移，只对过了 K1/K2 的变体做。DSR 试验数 77。
 
 ### T-20261001-08 组合线 Stage 2a 运行：M0、M1 × A/B/C（6 个变体）
-- status: done（待主审；执行轮 16:08–16:42 UTC，不含结论）
+- status: done（已主审 2026-10-01 19:25：路径完整；交互会话 17:55 的否定判定经原始 JSON 复核成立；三项待主审事项都不改判决，跨年缺陷交 T-20261001-22 修）
 - priority: 1
 - not_before: T-20261001-05 和 T-20261001-06 的状态都以 done 开头（交互会话核验并提交 S1、D5）。修正案 A1 的规则部分已由 13:07 主审轮写好（`reports/research/iterations/t20261001_book_v1/amendment-A1.md`、`amendment-A1.json`），版本绑定表由本任务第 0 步按 A1 第 8 节机械填写
 - goal: 第一次用完整管道检验"多信号组合"在两窗扣成本后能不能过冻结门槛。M0 是所有 ML 方法必须超过的基线。
@@ -1221,6 +1221,7 @@
   - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）：写修正案 A1（成交改为 t+1 收盘，依据只有 D4 成本测量，07:50 纲领已预告；记账规模 $1,000,000，否则冲击成本按 1 美元计；IC_t 和 M1 按预注册定义实现；watch_recent 分档；安慰剂净、毛两种口径都要达标，比预注册更严）和简报。范围缩为"跑出 54 条路径的原始结果"（45 条主路径加预注册第 7 节的 9 条去掉一个主题的诊断）：评估拆到 T-20261001-13，安慰剂拆到 T-20261001-14。本轮没有任何 Stage 2 数字。执行轮在 T-05、T-06 标 done 之前不要取本任务。
   - 2026-10-01 16:42 UTC 执行轮（Sonnet 5.5 子代理）：54/54 条路径在 Modal 跑完（45 主路径各 6 个文件，9 条诊断各 5 个）；A1 binding 填写于 16:07:48Z，提交 eaffba6；清单 `reports/research/iterations/t20261001_book_v1/stage2a-manifest.json`（提交 3154bec，all_binding_true=true，bound_before_all_files=true）；原始输出在 `.../cache/stage2a/shard_<i>/<path_id>/`（不提交）。本机管道检查 12 次调仓 0 失败，重放恒等最大差 0.0，测试 10 个通过，ETF 缓存预热 27 s；Modal 花费约 $0.88（账单 status 显示 $0.7055）。待主审：(1) 缺陷（受 A1 绑定，未修）：`RiskModel.at()` 不跨年回看，1 月初在当年第一个存盘日之前的调仓报 no_risk_model，占 45 条主路径 190 次最终失败中的 189 次（另 1 次 violation）；子代理预先计数偏移 0–4 失败率 0%、1.07%、1.28%、1.71%、0.43%，T-13 要对照 2% 门槛说明；(2) A1 未规定的实现选择：M1 主题 IC 窗口跳过未定义的 IC，主题有效 IC 不足 24 个时权重为 0（seasonality 18 个月未定义、short_info 6 个）；每月更新取日历月与上次更新不同的第一个调仓；主题名按 signals.THEMES（investment 不是 investment_issuance）；(3) 形成日有 6 个因 no_risk_model 被跳过（2017-01..06，风险模型始于 2017-07）；SCS 阶梯救回 0 次；容器内峰值内存为 nan；Modal 命令用了 --no-etf-flush。安慰剂计划已实现并测试、未运行。下一步：T-20261001-13（评估）读清单路径。
+  - 2026-10-01 19:25 UTC 19:07 主审轮（Opus）复核：`results.json` 6 个变体的偏移中位数净夏普，对标窗 −0.325（M0_B）..0.700（M1_C），压力期 −0.335..0.210，没有一个达到 K1（1.19/0.65），K2 两种口径全 false，与交互会话 17:55 的判定一致。待主审三项：(1) 失败率偏移中位数 1.07%、最大 1.71%，都低于 2% 门槛，`failure_ok` 全 true；189 次 `no_risk_model` 是 `RiskModel.resolve()` 只查当年存盘日造成的（risk.py 第 350 行，读代码确认），离门槛最近的 M1_C 也差 0.49，所以不改判决，修复交给 T-20261001-22，v1.1 绑定新的哈希；(2) M1 的实现选择（IC 至少 24 个、按日历月更新、主题名）都写在 `scripts/build_book_v1_alpha.py` 的文档字符串里，v1.1 的预注册要把它们写成明文；(3) 2017-01..06 跳过的 6 个形成日是数据起点决定的，不是缺陷：风险模型 2017-07 才有，之前算不出残差目标；书的压力窗从 2017-10 起。另做了预注册停止条件的核对：M0 残差 IC 在对标窗 t = 1.16（U3000）、0.91（P1000），小于 2，条件成立（`scripts/summarize_book_residual_ic.py` → `t20261001_book_v1/residual-ic-summary.json`），结论写进纲领主线 1。
 ### T-20261001-09 组合线 Stage 2b：M2（GBDT 集成）和 M3（随机傅里叶特征岭回归），Modal
 - status: cancelled（17:55 UTC 交互会话主审：v1 在 Stage 2a 机械否定，死因是组合构造，换合成器解决不了；ML 合成器在 v1.1 的构造下再测，见 `t20261001_book_v1/decision-record.md`）
 - priority: 2
@@ -1365,3 +1366,25 @@
 - brief: reports/research/control/briefs/T-20261001-14.md
 - notes:
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）写入。
+
+### T-20261001-21 组合线数据：上游特征表增量刷新到最近交易日，并做时点不变性检验
+- status: ready
+- priority: 1
+- not_before: 无。本任务不改代码，研究快照只读。每个重步骤开始前先确认别的会话没有在跑重任务（简报第 0 步）
+- brief: reports/research/control/briefs/T-20261001-21.md
+- goal: 特征库停在 09-16/17（新闻停在 09-09），SIP 日线已到 09-30。RF1 的真正样本外影子从 09-18 起算，D6 前向影子和下单引擎（T-16）要求目标日是上一交易日，所以不刷新就没有任何前向证据。顺带检验构建脚本的时点正确性：多给数据重建后，09-17 以前的行必须一条不变。
+- plan: 先做清单（每张表的增量采集和只建 2026 的命令，参数照抄构建清单），再备份，然后按依赖顺序逐个采集、重建；新写 `scripts/check_feature_invariance.py`，对比 cut 之前的行；检验不过就恢复备份，标 `restated`，交主审决定。全程算研究快照的哈希守护。
+- done_when: `reports/research/program/data-refresh-2026-10-01/{inventory.json,invariance.json,freshness.json,report.md}` 已提交；每张表要么通过检验并刷新到 D，要么已恢复备份、写明原因；结果标"待主审"。
+- notes:
+  - 2026-10-01 19:25 UTC 19:07 主审轮（Opus）写入。按纲领"两周优先级第 2"和 13:07 主审轮的安排写简报。设计上的取舍：`data/features` 是只追加的时点特征库，原地追加，由备份和不变性检验把关；被 A1 哈希绑定的研究快照 `data/research/equity_book/` 不动，组合层另建 live 目录，交给 T-20261001-22 做（current-view 17:55："研究快照保持冻结，实盘数据另放一个目录"）。交互会话要自己做，就先把本任务标 `running（交互会话）`。
+
+### T-20261001-22 组合线数据：live 目录（组合层逐行对齐研究快照）、风险模型跨年修复、每日驱动脚本
+- status: ready
+- priority: 1
+- not_before: T-20261001-21 以 done 开头（或 partial，但组合用到的表全部通过不变性检验）；T-20261001-19 以 done 或 cancelled 开头；没有 `running（交互会话）` 的任务在改 `panel.py`、`risk.py`、`build_equity_book_panel.py`（简报第 0 步）
+- brief: reports/research/control/briefs/T-20261001-22.md
+- goal: 给 D6 前向影子和 quant1/quant2 的模拟盘目标提供每天更新的组合层数据，保证和研究口径逐行一致；同时修好 `RiskModel.resolve()` 的跨年缺陷（v1 中 190 次最终失败里占 189 次；不修的话，2027 年 1 月实盘也会撞上）。
+- plan: 两处小改动加测试：`OC_EQUITY_BOOK_DIR` 目录覆盖，不设时目录常量不变；`resolve()` 回看上一年。然后用 `cp` 建 live 目录，重建 2026 年的面板、信号、风险和主题分，和研究快照对比 09-17 以前的行，研究快照前后算两次 sha256。最后写每日驱动脚本，只给出建议的 crontab 行，不安装。
+- done_when: `live-parity.json` 各阶段全部通过，研究快照哈希前后一致，测试通过，驱动的 `--dry-run` 能打印计划，已提交；结果标"待主审"。
+- notes:
+  - 2026-10-01 19:25 UTC 19:07 主审轮（Opus）写入。改动的组合层模块归交互会话管，所以前置条件要求 T-19 先结束，而且没有交互会话在改这几个文件。v1.1 的设计如果已经包含这次修复，交互会话可以把本任务标 cancelled 并注明。
