@@ -1,0 +1,1573 @@
+URL: https://skfolio.org/user_guide/optimization.html
+FETCHED_UTC: 2026-10-01T06:15:40Z
+----
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="../_static/favicon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="../_static/favicon-48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="../_static/favicon-96.png">
+    <link rel="icon" type="image/png" sizes="144x144" href="../_static/favicon-144.png">
+    <link rel="shortcut icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="../_static/apple-touch-icon.png" type="image/png"><meta property="og:title" content="Optimization" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://skfolio.org/user_guide/optimization.html" />
+<meta property="og:site_name" content="skfolio" />
+<meta property="og:image" content="https://skfolio.org/_static/expo.jpg" />
+<meta property="og:image:alt" content="skfolio" />
+<meta property="article:modified_time" content="2026-09-08T07:46:32+00:00" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://skfolio.org/user_guide/optimization.html#article",
+      "headline": "Optimization",
+      "url": "https://skfolio.org/user_guide/optimization.html",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://skfolio.org#website"
+      },
+      "about": {
+        "@id": "https://github.com/skfolio/skfolio#code"
+      },
+      "publisher": {
+        "@id": "https://skfoliolabs.com#organization"
+      },
+      "author": {
+        "@type": "Organization",
+        "@id": "https://skfoliolabs.com#organization",
+        "name": "Skfolio Labs",
+        "url": "https://skfoliolabs.com"
+      },
+      "copyrightHolder": {
+        "@id": "https://skfoliolabs.com#organization"
+      },
+      "mainEntityOfPage": "https://skfolio.org/user_guide/optimization.html",
+      "datePublished": "2023-12-18",
+      "dateModified": "2026-09-08"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://skfolio.org/user_guide/optimization.html#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Docs Home",
+          "item": "https://skfolio.org/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "User Guide",
+          "item": "https://skfolio.org/user_guide/index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Optimization",
+          "item": "https://skfolio.org/user_guide/optimization.html"
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<link rel="alternate" type="text/markdown" href="optimization.html.md">
+<link rel="describedby" href="llms.txt">
+<meta name="description" content="The optimization module provides scikit-learn-compatible estimators for constructing portfolio weights from asset returns." />
+<meta property="og:description" content="The optimization module provides scikit-learn-compatible estimators for constructing portfolio weights from asset returns." />
+<meta name="twitter:description" content="The optimization module provides scikit-learn-compatible estimators for constructing portfolio weights from asset returns." />
+
+  <title>Optimization - skfolio</title>
+
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyterlite_sphinx.css?v=f676e775" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=0f345a63" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=64cc4de3f052d77215f0"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
+
+    <script src="../_static/documentation_options.js?v=38182739"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
+    <script src="../_static/jupyterlite_sphinx.js?v=96e329c5"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/optimization';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="canonical" href="https://skfolio.org/user_guide/optimization.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Portfolio" href="portfolio.html" />
+    <link rel="prev" title="Installation" href="install.html" />
+  
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="2026-09-08"/>
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="dark">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="/">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/favicon.svg" class="logo__image only-dark" alt="skfolio documentation - Home"/>
+    <img src="../_static/favicon.svg" class="logo__image only-light pst-js-only" alt="skfolio documentation - Home"/>
+  
+  
+    <p class="title logo__title">skfolio</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+     User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auto_examples/index.html">
+     Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+     API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://skfoliolabs.com/">
+     Enterprise Support
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/skfolio/skfolio" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+     User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auto_examples/index.html">
+     Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+     API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://skfoliolabs.com/">
+     Enterprise Support
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/skfolio/skfolio" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="portfolio.html">Portfolio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="population.html">Population</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prior.html">Prior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="expected_returns.html">Expected Returns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="variance.html">Variance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="covariance.html">Covariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factor_models.html">Factor Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distance.html">Distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainty_set.html">Uncertainty Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pre_selection.html">Pre-Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cross_sectional_transformers.html">Cross-Sectional Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_selection.html">Model Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="backtesting_and_evaluation.html">Backtesting and Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hyper_parameters_tuning.html">Hyper-Parameters Tuning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="online_learning.html">Online Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metadata_routing.html">Metadata Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_preparation.html">Data Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_representation.html">Asset Data Representation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration Guide</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="/" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">User Guide</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Optimization</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="optimization">
+<span id="id1"></span><h1>Optimization<a class="headerlink" href="#optimization" title="Link to this heading">#</a></h1>
+<p>The optimization module implements a set of methods intended for portfolio optimization.
+They follow the same API as scikit-learn’s <code class="docutils literal notranslate"><span class="pre">estimator</span></code>: the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method takes <code class="docutils literal notranslate"><span class="pre">X</span></code> as
+the assets returns and stores the portfolio weights in its <code class="docutils literal notranslate"><span class="pre">weights_</span></code> attribute.</p>
+<p><code class="docutils literal notranslate"><span class="pre">X</span></code> can be any array-like structure (numpy array, pandas DataFrame, etc.)</p>
+<p>All optimization inputs (expected returns, covariance, return scenarios) are expressed
+in the periodicity of <code class="docutils literal notranslate"><span class="pre">X</span></code>: with daily returns, the optimizer works with daily moments
+and scenarios rather than annualized ones. Parameters that share the unit of expected
+returns, such as <code class="docutils literal notranslate"><span class="pre">transaction_costs</span></code> and <code class="docutils literal notranslate"><span class="pre">management_fees</span></code>, must be expressed in the
+same periodicity. See <a class="reference internal" href="data_preparation.html#periodicity-convention"><span class="std std-ref">Periodicity Convention</span></a> for the
+rationale and the cost conversion rules.</p>
+<section id="naive-allocation">
+<h2>Naive Allocation<a class="headerlink" href="#naive-allocation" title="Link to this heading">#</a></h2>
+<p>The naive module implements a set of naive allocations commonly used as benchmarks for
+comparing different models:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="../generated/skfolio.optimization.EqualWeighted.html#skfolio.optimization.EqualWeighted" title="skfolio.optimization.EqualWeighted"><code class="xref py py-class docutils literal notranslate"><span class="pre">EqualWeighted</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.optimization.InverseVolatility.html#skfolio.optimization.InverseVolatility" title="skfolio.optimization.InverseVolatility"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseVolatility</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.optimization.Random.html#skfolio.optimization.Random" title="skfolio.optimization.Random"><code class="xref py py-class docutils literal notranslate"><span class="pre">Random</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>Example:</strong></p>
+<p>Naive inverse-volatility allocation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseVolatility</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">InverseVolatility</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="mean-risk-optimization">
+<h2>Mean-Risk Optimization<a class="headerlink" href="#mean-risk-optimization" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.MeanRisk.html#skfolio.optimization.MeanRisk" title="skfolio.optimization.MeanRisk"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeanRisk</span></code></a> estimator can solve the below 4 objective functions:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Minimize Risk:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{cases}
+\begin{aligned}
+&amp;\min_{w} &amp; &amp; risk_{i}(w) \\
+&amp;\text{s.t.} &amp; &amp; w^T\mu \ge min\_return \\
+&amp; &amp; &amp; A w \ge b \\
+&amp; &amp; &amp; risk_{j}(w) \le max\_risk_{j} \quad \forall \; j \ne i
+\end{aligned}
+\end{cases}\end{split}\]</div>
+<ul class="simple">
+<li><p>Maximize Expected Return:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{cases}
+\begin{aligned}
+&amp;\max_{w} &amp; &amp; w^T\mu \\
+&amp;\text{s.t.} &amp; &amp; risk_{i}(w) \le max\_risk_{i} \\
+&amp; &amp; &amp; A w \ge b \\
+&amp; &amp; &amp; risk_{j}(w) \le max\_risk_{j} \quad \forall \; j \ne i
+\end{aligned}
+\end{cases}\end{split}\]</div>
+<ul class="simple">
+<li><p>Maximize Utility:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{cases}
+\begin{aligned}
+&amp;\max_{w} &amp; &amp; w^T\mu - \lambda \times risk_{i}(w)\\
+&amp;\text{s.t.} &amp; &amp; risk_{i}(w) \le max\_risk_{i} \\
+&amp; &amp; &amp; w^T\mu \ge min\_return \\
+&amp; &amp; &amp; A w \ge b \\
+&amp; &amp; &amp; risk_{j}(w) \le max\_risk_{j} \quad \forall \; j \ne i
+\end{aligned}
+\end{cases}\end{split}\]</div>
+<ul class="simple">
+<li><p>Maximize Ratio:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{cases}
+\begin{aligned}
+&amp;\max_{w} &amp; &amp; \frac{w^T\mu - r_{f}}{risk_{i}(w)}\\
+&amp;\text{s.t.} &amp; &amp; risk_{i}(w) \le max\_risk_{i} \\
+&amp; &amp; &amp; w^T\mu \ge min\_return \\
+&amp; &amp; &amp; A w \ge b \\
+&amp; &amp; &amp; risk_{j}(w) \le max\_risk_{j} \quad \forall \; j \ne i
+\end{aligned}
+\end{cases}\end{split}\]</div>
+</div></blockquote>
+<p>With <span class="math notranslate nohighlight">\(risk_{i}\)</span> a risk measure among:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Variance</p></li>
+<li><p>Semi-Variance</p></li>
+<li><p>Standard-Deviation</p></li>
+<li><p>Semi-Deviation</p></li>
+<li><p>Mean Absolute Deviation</p></li>
+<li><p>First Lower Partial Moment</p></li>
+<li><p>CVaR (Conditional Value at Risk)</p></li>
+<li><p>EVaR (Entropic Value at Risk)</p></li>
+<li><p>Worst Realization (worst return)</p></li>
+<li><p>CDaR (Conditional Drawdown at Risk)</p></li>
+<li><p>Maximum Drawdown</p></li>
+<li><p>Average Drawdown</p></li>
+<li><p>EDaR (Entropic Drawdown at Risk)</p></li>
+<li><p>Ulcer Index</p></li>
+<li><p>Gini Mean Difference</p></li>
+</ul>
+</div></blockquote>
+<p>It supports the following parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Weight Constraints</p></li>
+<li><p>Budget Constraints</p></li>
+<li><p>Group Constraints</p></li>
+<li><p>Transaction Costs</p></li>
+<li><p>Management Fees</p></li>
+<li><p>L1 and L2 Regularization</p></li>
+<li><p>Turnover Constraint</p></li>
+<li><p>Tracking Error Constraint</p></li>
+<li><p>Uncertainty Set on Expected Returns</p></li>
+<li><p>Uncertainty Set on Covariance</p></li>
+<li><p>Expected Return Constraints</p></li>
+<li><p>Risk Measure Constraints</p></li>
+<li><p>Custom Objective</p></li>
+<li><p>Custom Constraints</p></li>
+<li><p>Prior Estimator</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Example:</strong></p>
+<p>Maximum Sharpe Ratio portfolio:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">ObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">objective_function</span><span class="o">=</span><span class="n">ObjectiveFunction</span><span class="o">.</span><span class="n">MAXIMIZE_RATIO</span><span class="p">,</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">VARIANCE</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="prior-estimator">
+<h3>Prior Estimator<a class="headerlink" href="#prior-estimator" title="Link to this heading">#</a></h3>
+<p>Every portfolio optimization has a parameter named <code class="docutils literal notranslate"><span class="pre">prior_estimator</span></code>.
+The <a class="reference internal" href="prior.html#prior"><span class="std std-ref">prior estimator</span></a> fits a <a class="reference internal" href="../generated/skfolio.prior.ReturnDistribution.html#skfolio.prior.ReturnDistribution" title="skfolio.prior.ReturnDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReturnDistribution</span></code></a> containing
+estimates of expected asset returns, covariance matrix, returns and Cholesky
+decomposition of the covariance. It represents the investor’s prior beliefs about the
+model used to estimate such distribution.</p>
+<p>When the prior follows the native NaN-aware convention, compatible optimizers solve the
+optimization problem on the investable subset and expand <code class="docutils literal notranslate"><span class="pre">weights_</span></code> back to the full
+input universe. See <a class="reference internal" href="data_representation.html#missing-data"><span class="std std-ref">Missing Data and Changing Universes</span></a> for
+details.</p>
+<p>The available prior estimators are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="../generated/skfolio.prior.EmpiricalPrior.html#skfolio.prior.EmpiricalPrior" title="skfolio.prior.EmpiricalPrior"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmpiricalPrior</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.prior.BlackLitterman.html#skfolio.prior.BlackLitterman" title="skfolio.prior.BlackLitterman"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlackLitterman</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.prior.TimeSeriesFactorModel.html#skfolio.prior.TimeSeriesFactorModel" title="skfolio.prior.TimeSeriesFactorModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesFactorModel</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>Example:</strong></p>
+<p>Minimum Variance portfolio using a Factor Model:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_factors_dataset</span><span class="p">,</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.prior</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeSeriesFactorModel</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">factor_prices</span> <span class="o">=</span> <span class="n">load_factors_dataset</span><span class="p">()</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">factors</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">factor_prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">factors_train</span><span class="p">,</span> <span class="n">factors_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span><span class="n">prior_estimator</span><span class="o">=</span><span class="n">TimeSeriesFactorModel</span><span class="p">())</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">factors</span><span class="o">=</span><span class="n">factors_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="combining-prior-estimators">
+<h3>Combining Prior Estimators<a class="headerlink" href="#combining-prior-estimators" title="Link to this heading">#</a></h3>
+<p>Prior estimators can be combined together, making it possible to design complex models:</p>
+<p><strong>Example:</strong></p>
+<p>This example is <strong>purposely complex</strong> to demonstrate how multiple estimators can be
+combined.</p>
+<p>The model below is a Maximum Sharpe Ratio optimization using a Factor Model for the
+estimation of the <strong>assets</strong> expected returns and covariance matrix. A Black &amp; Litterman
+model is used for the estimation of the <strong>factors</strong> expected returns and covariance matrix,
+incorporating the analysts’ views on the factors. Finally, the Black &amp; Litterman prior
+expected returns are estimated using an equal-weighted market equilibrium with a risk
+aversion of 2 and a denoised prior covariance matrix:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_factors_dataset</span><span class="p">,</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.moments</span><span class="w"> </span><span class="kn">import</span> <span class="n">DenoiseCovariance</span><span class="p">,</span> <span class="n">EquilibriumMu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">ObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.prior</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlackLitterman</span><span class="p">,</span> <span class="n">EmpiricalPrior</span><span class="p">,</span> <span class="n">TimeSeriesFactorModel</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">factor_prices</span> <span class="o">=</span> <span class="n">load_factors_dataset</span><span class="p">()</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">factors</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">factor_prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">factors_train</span><span class="p">,</span> <span class="n">factors_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">factor_views</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MTUM - QUAL == 0.0003 "</span><span class="p">,</span>
+                <span class="s2">"SIZE - USMV == 0.0004"</span><span class="p">,</span>
+                <span class="s2">"VLUE == 0.0006"</span><span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">objective_function</span><span class="o">=</span><span class="n">ObjectiveFunction</span><span class="o">.</span><span class="n">MAXIMIZE_RATIO</span><span class="p">,</span>
+    <span class="n">prior_estimator</span><span class="o">=</span><span class="n">TimeSeriesFactorModel</span><span class="p">(</span>
+        <span class="n">factor_prior_estimator</span><span class="o">=</span><span class="n">BlackLitterman</span><span class="p">(</span>
+            <span class="n">prior_estimator</span><span class="o">=</span><span class="n">EmpiricalPrior</span><span class="p">(</span>
+                <span class="n">mu_estimator</span><span class="o">=</span><span class="n">EquilibriumMu</span><span class="p">(</span><span class="n">risk_aversion</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                <span class="n">covariance_estimator</span><span class="o">=</span><span class="n">DenoiseCovariance</span><span class="p">()</span>
+            <span class="p">),</span>
+            <span class="n">views</span><span class="o">=</span><span class="n">factor_views</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">factors</span><span class="o">=</span><span class="n">factors_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-estimator">
+<h3>Custom Estimator<a class="headerlink" href="#custom-estimator" title="Link to this heading">#</a></h3>
+<p>It is very common to use a custom implementation for the moments estimators. For
+example, you may want to use an in-house estimation for the covariance or a predictive
+model for the expected returns.</p>
+<p>Below is a simple example of how you would implement a custom covariance estimator.
+For more complex cases and estimators, check the <a class="reference internal" href="../api.html#api"><span class="std std-ref">API Reference</span></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.moments</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseCovariance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.prior</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpiricalPrior</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyCustomCovariance</span><span class="p">(</span><span class="n">BaseCovariance</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">my_param</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">my_param</span> <span class="o">=</span> <span class="n">my_param</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_data</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># Your custom implementation goes here</span>
+        <span class="n">covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">my_param</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_covariance</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">prior_estimator</span><span class="o">=</span><span class="n">EmpiricalPrior</span><span class="p">(</span><span class="n">covariance_estimator</span><span class="o">=</span><span class="n">MyCustomCovariance</span><span class="p">(</span><span class="n">my_param</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="worst-case-optimization">
+<h3>Worst-Case Optimization<a class="headerlink" href="#worst-case-optimization" title="Link to this heading">#</a></h3>
+<p>With the <code class="docutils literal notranslate"><span class="pre">mu_uncertainty_set_estimator</span></code> parameter, the expected returns of the assets
+are modeled with a <a class="reference internal" href="uncertainty_set.html#uncertainty-set-estimator"><span class="std std-ref">norm-ball uncertainty set</span></a>. This
+approach is known as worst-case optimization and falls under the class of robust
+optimization. It mitigates the instability that arises from estimation errors of the
+expected returns.</p>
+<p><strong>Example:</strong></p>
+<p>Worst-case maximum Mean/CDaR ratio (Conditional Drawdown at Risk) with an ellipsoidal
+uncertainty set for the expected returns of the assets:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">ObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.uncertainty_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">BootstrapMuUncertaintySet</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">objective_function</span><span class="o">=</span><span class="n">ObjectiveFunction</span><span class="o">.</span><span class="n">MAXIMIZE_RATIO</span><span class="p">,</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CDAR</span><span class="p">,</span>
+    <span class="n">mu_uncertainty_set_estimator</span><span class="o">=</span><span class="n">BootstrapMuUncertaintySet</span><span class="p">(</span><span class="n">confidence_level</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">cdar_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Covariance uncertainty is configured with <code class="docutils literal notranslate"><span class="pre">covariance_uncertainty_set_estimator</span></code>.
+It is applied to the variance risk measure or a <code class="docutils literal notranslate"><span class="pre">max_variance</span></code> constraint. Generic
+estimators use a lifted semidefinite formulation, while
+<a class="reference internal" href="../generated/skfolio.uncertainty_set.OrthogonalCovarianceUncertaintySet.html#skfolio.uncertainty_set.OrthogonalCovarianceUncertaintySet" title="skfolio.uncertainty_set.OrthogonalCovarianceUncertaintySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalCovarianceUncertaintySet</span></code></a> uses a compact
+representation in the factor model’s orthogonal space.</p>
+</section>
+<section id="going-further">
+<h3>Going Further<a class="headerlink" href="#going-further" title="Link to this heading">#</a></h3>
+<p>You can explore the remaining parameters (constraints, L1 and L2 regularization, costs,
+turnover, tracking error, etc.) with the
+<a class="reference internal" href="../auto_examples/mean_risk/index.html#mean-risk-examples"><span class="std std-ref">Mean-Risk examples</span></a> and the <a class="reference internal" href="../generated/skfolio.optimization.MeanRisk.html#skfolio.optimization.MeanRisk" title="skfolio.optimization.MeanRisk"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeanRisk</span></code></a> API.</p>
+</section>
+</section>
+<section id="risk-budgeting">
+<h2>Risk Budgeting<a class="headerlink" href="#risk-budgeting" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.RiskBudgeting.html#skfolio.optimization.RiskBudgeting" title="skfolio.optimization.RiskBudgeting"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskBudgeting</span></code></a> solves the below convex problem:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\begin{split}\begin{cases}
+\begin{aligned}
+&amp;\min_{w} &amp; &amp; risk_{i}(w) \\
+&amp;\text{s.t.} &amp; &amp; b^T log(w) \ge c \\
+&amp; &amp; &amp; w^T\mu \ge min\_return \\
+&amp; &amp; &amp; A w \ge b \\
+&amp; &amp; &amp; w \ge0
+\end{aligned}
+\end{cases}\end{split}\]</div>
+</div></blockquote>
+<p>with <span class="math notranslate nohighlight">\(b\)</span> the risk budget vector and <span class="math notranslate nohighlight">\(c\)</span> an auxiliary variable of the log
+barrier.</p>
+<p>And <span class="math notranslate nohighlight">\(risk_{i}\)</span> a risk measure among:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Variance</p></li>
+<li><p>Semi-Variance</p></li>
+<li><p>Standard-Deviation</p></li>
+<li><p>Semi-Deviation</p></li>
+<li><p>Mean Absolute Deviation</p></li>
+<li><p>First Lower Partial Moment</p></li>
+<li><p>CVaR (Conditional Value at Risk)</p></li>
+<li><p>EVaR (Entropic Value at Risk)</p></li>
+<li><p>Worst Realization (worst return)</p></li>
+<li><p>CDaR (Conditional Drawdown at Risk)</p></li>
+<li><p>Maximum Drawdown</p></li>
+<li><p>Average Drawdown</p></li>
+<li><p>EDaR (Entropic Drawdown at Risk)</p></li>
+<li><p>Ulcer Index</p></li>
+<li><p>Gini Mean Difference</p></li>
+<li><p>First Lower Partial Moment</p></li>
+</ul>
+</div></blockquote>
+<p>It supports the following parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Weight Constraints</p></li>
+<li><p>Budget Constraints</p></li>
+<li><p>Group Constrains</p></li>
+<li><p>Transaction Costs</p></li>
+<li><p>Management Fees</p></li>
+<li><p>Expected Return Constraints</p></li>
+<li><p>Custom Objective</p></li>
+<li><p>Custom constraints</p></li>
+<li><p>Prior Estimator</p></li>
+</ul>
+</div></blockquote>
+<p>Limitations are imposed on certain constraints, such as long-only weights, to ensure the
+problem remains convex.</p>
+<p><strong>Example:</strong></p>
+<p>CVaR (Conditional Value at Risk) Risk Parity portfolio:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskBudgeting</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">RiskBudgeting</span><span class="p">(</span><span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio_train</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio_train</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio_train</span><span class="o">.</span><span class="n">contribution</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">))</span>
+
+<span class="n">portfolio_test</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio_test</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio_test</span><span class="o">.</span><span class="n">contribution</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="maximum-diversification">
+<h2>Maximum Diversification<a class="headerlink" href="#maximum-diversification" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.MaximumDiversification.html#skfolio.optimization.MaximumDiversification" title="skfolio.optimization.MaximumDiversification"><code class="xref py py-class docutils literal notranslate"><span class="pre">MaximumDiversification</span></code></a> maximizes the diversification ratio, which is the
+ratio of the weighted volatilities over the total volatility.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaximumDiversification</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MaximumDiversification</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">diversification</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="distributionally-robust-cvar">
+<h2>Distributionally Robust CVaR<a class="headerlink" href="#distributionally-robust-cvar" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.DistributionallyRobustCVaR.html#skfolio.optimization.DistributionallyRobustCVaR" title="skfolio.optimization.DistributionallyRobustCVaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistributionallyRobustCVaR</span></code></a> constructs a Wasserstein ball in the space of
+multivariate and non-discrete probability distributions centered at the uniform
+distribution on the training samples and finds the allocation that minimizes the CVaR
+of the worst-case distribution within this Wasserstein ball.
+Esfahani and Kuhn proved that for piecewise linear objective functions,
+which is the case of CVaR, the distributionally robust optimization problem
+over a Wasserstein ball can be reformulated as finite convex programs.</p>
+<p>A solver like <code class="docutils literal notranslate"><span class="pre">Mosek</span></code> that can handle a high number of constraints is preferred.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">DistributionallyRobustCVaR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">"2020"</span><span class="p">:]</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">DistributionallyRobustCVaR</span><span class="p">(</span><span class="n">wasserstein_ball_radius</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">cvar</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="hierarchical-risk-parity">
+<h2>Hierarchical Risk Parity<a class="headerlink" href="#hierarchical-risk-parity" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.HierarchicalRiskParity.html#skfolio.optimization.HierarchicalRiskParity" title="skfolio.optimization.HierarchicalRiskParity"><code class="xref py py-class docutils literal notranslate"><span class="pre">HierarchicalRiskParity</span></code></a> (HRP) is a portfolio optimization method developed
+by Marcos Lopez de Prado.</p>
+<p>This algorithm uses a distance matrix to compute hierarchical clusters using the
+Hierarchical Tree Clustering algorithm then employs seriation to rearrange the assets
+in the dendrogram, minimizing the distance between leaves.
+in the dendrogram, minimizing the distance between leaves.</p>
+<p>The final step is the recursive bisection where each cluster is split between two
+sub-clusters by starting with the topmost cluster and traversing in a top-down
+manner. For each sub-cluster, we compute the total cluster risk of an inverse-risk
+allocation. A weighting factor is then computed from these two sub-cluster risks,
+which is used to update the cluster weight.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The original paper uses the variance as the risk measure and the single-linkage
+method for the Hierarchical Tree Clustering algorithm. Here we generalize it to
+multiple risk measures and linkage methods.
+The default linkage method is set to the Ward
+variance minimization algorithm, which is more stable and has better properties
+than the single-linkage method.</p>
+</div>
+<p>It supports all <a class="reference internal" href="prior.html#prior"><span class="std std-ref">prior estimators</span></a> and <a class="reference internal" href="../api.html#measures-ref"><span class="std std-ref">risk measures</span></a>
+as well as weight constraints.</p>
+<p>It also supports all <a class="reference internal" href="distance.html#distance"><span class="std std-ref">distance estimators</span></a> through the
+<code class="docutils literal notranslate"><span class="pre">distance_estimator</span></code> parameter. It fits a distance model for the
+estimation of the codependence and the distance matrix used to compute the linkage
+matrix:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="../generated/skfolio.distance.PearsonDistance.html#skfolio.distance.PearsonDistance" title="skfolio.distance.PearsonDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">PearsonDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.KendallDistance.html#skfolio.distance.KendallDistance" title="skfolio.distance.KendallDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">KendallDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.SpearmanDistance.html#skfolio.distance.SpearmanDistance" title="skfolio.distance.SpearmanDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpearmanDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.CovarianceDistance.html#skfolio.distance.CovarianceDistance" title="skfolio.distance.CovarianceDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">CovarianceDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.DistanceCorrelation.html#skfolio.distance.DistanceCorrelation" title="skfolio.distance.DistanceCorrelation"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistanceCorrelation</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.MutualInformation.html#skfolio.distance.MutualInformation" title="skfolio.distance.MutualInformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutualInformation</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>Example:</strong></p>
+<p>Hierarchical Risk Parity with semi (downside) standard-deviation as the risk measure and
+mutual information as the distance estimator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.distance</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutualInformation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">HierarchicalRiskParity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">HierarchicalRiskParity</span><span class="p">(</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">SEMI_DEVIATION</span><span class="p">,</span> <span class="n">distance_estimator</span><span class="o">=</span><span class="n">MutualInformation</span><span class="p">()</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">contribution</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">SEMI_DEVIATION</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="hierarchical-equal-risk-contribution">
+<h2>Hierarchical Equal Risk Contribution<a class="headerlink" href="#hierarchical-equal-risk-contribution" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.HierarchicalEqualRiskContribution.html#skfolio.optimization.HierarchicalEqualRiskContribution" title="skfolio.optimization.HierarchicalEqualRiskContribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">HierarchicalEqualRiskContribution</span></code></a> (HERC) is a portfolio optimization method
+developed by Thomas Raffinot.</p>
+<p>This algorithm uses a distance matrix to compute hierarchical clusters using the
+Hierarchical Tree Clustering algorithm. It then computes, for each cluster, the total
+cluster risk of an inverse-risk allocation.</p>
+<p>The final step is the top-down recursive division of the dendrogram, where the assets
+weights are updated using a naive risk parity within clusters.</p>
+<p>It differs from the Hierarchical Risk Parity by exploiting the dendrogram shape
+during the top-down recursive division instead of bisecting it.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The default linkage method is set to the Ward
+variance minimization algorithm, which is more stable and has better properties
+than the single-linkage method.</p>
+</div>
+<p>It supports all <a class="reference internal" href="prior.html#prior"><span class="std std-ref">prior estimators</span></a> and <a class="reference internal" href="../api.html#measures-ref"><span class="std std-ref">risk measures</span></a>
+as well as weight constraints.</p>
+<p>It also supports all <a class="reference internal" href="distance.html#distance"><span class="std std-ref">distance estimators</span></a> through the
+<code class="docutils literal notranslate"><span class="pre">distance_estimator</span></code> parameter. It fits a distance model for the
+estimation of the codependence and the distance matrix used to compute the linkage
+matrix:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="../generated/skfolio.distance.PearsonDistance.html#skfolio.distance.PearsonDistance" title="skfolio.distance.PearsonDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">PearsonDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.KendallDistance.html#skfolio.distance.KendallDistance" title="skfolio.distance.KendallDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">KendallDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.SpearmanDistance.html#skfolio.distance.SpearmanDistance" title="skfolio.distance.SpearmanDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpearmanDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.CovarianceDistance.html#skfolio.distance.CovarianceDistance" title="skfolio.distance.CovarianceDistance"><code class="xref py py-class docutils literal notranslate"><span class="pre">CovarianceDistance</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.DistanceCorrelation.html#skfolio.distance.DistanceCorrelation" title="skfolio.distance.DistanceCorrelation"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistanceCorrelation</span></code></a></p></li>
+<li><p><a class="reference internal" href="../generated/skfolio.distance.MutualInformation.html#skfolio.distance.MutualInformation" title="skfolio.distance.MutualInformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutualInformation</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>Example:</strong></p>
+<p>Hierarchical Equal Risk Contribution with CVaR (Conditional Value at Risk) as the risk
+measure and mutual information as the distance estimator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.distance</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutualInformation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">HierarchicalEqualRiskContribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">HierarchicalEqualRiskContribution</span><span class="p">(</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">,</span>
+    <span class="n">distance_estimator</span> <span class="o">=</span> <span class="n">MutualInformation</span><span class="p">()</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">contribution</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="nested-clusters-optimization">
+<h2>Nested Clusters Optimization<a class="headerlink" href="#nested-clusters-optimization" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.optimization.NestedClustersOptimization.html#skfolio.optimization.NestedClustersOptimization" title="skfolio.optimization.NestedClustersOptimization"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedClustersOptimization</span></code></a> (NCO) is a portfolio optimization method
+developed by Marcos Lopez de Prado.</p>
+<p>It uses a distance matrix to compute clusters using a clustering algorithm (
+Hierarchical Tree Clustering, KMeans, etc.). For each cluster, the inner-cluster
+weights are computed by fitting the inner-estimator on each cluster using the whole
+training data. Then the outer-cluster weights are computed by training the
+outer-estimator using out-of-sample estimates of the inner-estimators with
+cross-validation. Finally, the final assets weights are the dot-product of the
+inner-weights and outer-weights.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The original paper uses KMeans as the clustering algorithm, minimum Variance for
+the inner-estimator and equal-weighted for the outer-estimator. Here we generalize
+it to all <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> and <code class="docutils literal notranslate"><span class="pre">skfolio</span></code> clustering algorithms (Hierarchical Tree
+Clustering, KMeans, etc.), all portfolio optimizations (Mean-Variance, HRP, etc.)
+and risk measures (variance, CVaR, etc.).
+To avoid data leakage at the outer-estimator, we use out-of-sample estimates to
+fit the outer estimator.</p>
+</div>
+<p>It supports all <a class="reference internal" href="distance.html#distance"><span class="std std-ref">distance estimators</span></a>
+and <a class="reference internal" href="cluster.html#cluster"><span class="std std-ref">clustering estimator</span></a> (both <code class="docutils literal notranslate"><span class="pre">skfolio</span></code> and <code class="docutils literal notranslate"><span class="pre">sklearn</span></code>)</p>
+<p><strong>Example:</strong></p>
+<p>Nested Clusters Optimization with KMeans as the clustering algorithm, Kendall Distance
+as the distance estimator, Minimum Semi-Variance as the inner estimator, and CVaR Risk
+Parity as the outer (meta) estimator trained on the out-of-sample estimates from the
+KFold cross-validation and run with parallelization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.distance</span><span class="w"> </span><span class="kn">import</span> <span class="n">KendallDistance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">NestedClustersOptimization</span><span class="p">,</span> <span class="n">RiskBudgeting</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">NestedClustersOptimization</span><span class="p">(</span>
+    <span class="n">inner_estimator</span><span class="o">=</span><span class="n">MeanRisk</span><span class="p">(</span><span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">SEMI_VARIANCE</span><span class="p">),</span>
+    <span class="n">outer_estimator</span><span class="o">=</span><span class="n">RiskBudgeting</span><span class="p">(</span><span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">),</span>
+    <span class="n">distance_estimator</span><span class="o">=</span><span class="n">KendallDistance</span><span class="p">(),</span>
+    <span class="n">clustering_estimator</span><span class="o">=</span><span class="n">KMeans</span><span class="p">(</span><span class="n">n_init</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">),</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">KFold</span><span class="p">(),</span>
+    <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">contribution</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">cv</span></code> parameter can also be a combinatorial cross-validation, such as
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code>, in which case each cluster’s
+out-of-sample outputs are a collection of multiple paths instead of one single path.
+The selected out-of-sample path among this collection of paths is chosen according to
+the <code class="docutils literal notranslate"><span class="pre">quantile</span></code> and <code class="docutils literal notranslate"><span class="pre">quantile_measure</span></code> parameters.</p>
+</section>
+<section id="stacking-optimization">
+<h2>Stacking Optimization<a class="headerlink" href="#stacking-optimization" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="../generated/skfolio.optimization.StackingOptimization.html#skfolio.optimization.StackingOptimization" title="skfolio.optimization.StackingOptimization"><code class="xref py py-class docutils literal notranslate"><span class="pre">StackingOptimization</span></code></a> is an ensemble method that consists of stacking the outputs
+of individual portfolio optimizations with a final portfolio optimization.</p>
+<p>The final weights are the dot product of the individual optimizations’ weights and the final
+optimization’s weights.</p>
+<p>Stacking leverages the strengths of each individual portfolio optimization by
+using their outputs as inputs to a final portfolio optimization.</p>
+<p>To avoid data leakage, out-of-sample estimates are used to fit the outer
+optimization.</p>
+<p><strong>Example:</strong></p>
+<p>Stacking Optimization with Minimum Semi-Variance and CVaR Risk Parity
+stacked together using Minimum Variance as the final (meta) estimator.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">RiskBudgeting</span><span class="p">,</span> <span class="n">StackingOptimization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">estimators</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">'model1'</span><span class="p">,</span> <span class="n">MeanRisk</span><span class="p">(</span><span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">SEMI_VARIANCE</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s1">'model2'</span><span class="p">,</span> <span class="n">RiskBudgeting</span><span class="p">(</span><span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">))</span>
+<span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">StackingOptimization</span><span class="p">(</span>
+    <span class="n">estimators</span><span class="o">=</span><span class="n">estimators</span><span class="p">,</span>
+    <span class="n">final_estimator</span><span class="o">=</span><span class="n">MeanRisk</span><span class="p">(),</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">KFold</span><span class="p">(),</span>
+    <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">cv</span></code> parameter can also be a combinatorial cross-validation, such as
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code>, in which case each out-of-sample outputs are a
+collection of multiple paths instead of one single path. The selected out-of-sample path
+among this collection of paths is chosen according to the <code class="docutils literal notranslate"><span class="pre">quantile</span></code> and
+<code class="docutils literal notranslate"><span class="pre">quantile_measure</span></code> parameters.</p>
+</section>
+<section id="tracking-error-optimization">
+<span id="id2"></span><h2>Tracking Error Optimization<a class="headerlink" href="#tracking-error-optimization" title="Link to this heading">#</a></h2>
+<p>Tracking error measures the deviation between a portfolio’s performance and a benchmark.
+<code class="docutils literal notranslate"><span class="pre">skfolio</span></code> provides three approaches for tracking error optimization:</p>
+<ol class="arabic simple">
+<li><p><strong>Return-based tracking error constraint</strong> (via <code class="docutils literal notranslate"><span class="pre">max_tracking_error</span></code>):
+Constrains the tracking error while optimizing another objective (e.g., minimize CVaR).</p></li>
+<li><p><strong>Weight-based target</strong> (via <code class="docutils literal notranslate"><span class="pre">target_weights</span></code>):
+Minimizes tracking error by finding weights that minimize deviation from a target
+portfolio allocation.</p></li>
+<li><p><strong>Return-based target</strong> (via <a class="reference internal" href="../generated/skfolio.optimization.BenchmarkTracker.html#skfolio.optimization.BenchmarkTracker" title="skfolio.optimization.BenchmarkTracker"><code class="xref py py-class docutils literal notranslate"><span class="pre">BenchmarkTracker</span></code></a>):
+Minimizes tracking error by optimizing on excess returns (portfolio returns
+minus benchmark returns).</p></li>
+</ol>
+<p><strong>Example 1: Return-based tracking error constraint</strong></p>
+<p>Minimize CVaR while constraining the tracking error to 0.30% vs a benchmark:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span><span class="p">,</span> <span class="n">load_sp500_index</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">ObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">spx_prices</span> <span class="o">=</span> <span class="n">load_sp500_index</span><span class="p">()</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">spx_prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">factors_train</span><span class="p">,</span> <span class="n">factors_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">objective_function</span><span class="o">=</span><span class="n">ObjectiveFunction</span><span class="o">.</span><span class="n">MINIMIZE_RISK</span><span class="p">,</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">CVAR</span><span class="p">,</span>
+    <span class="n">max_tracking_error</span><span class="o">=</span><span class="mf">0.003</span><span class="p">,</span>  <span class="c1"># 0.30% tracking error constraint</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">factors</span><span class="o">=</span><span class="n">factors_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">cvar</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example 2: Weight-based target</strong></p>
+<p>Minimize tracking error vs an equal-weighted target portfolio:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">ObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Define target portfolio (e.g., equal-weighted)</span>
+<span class="n">n_assets</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">target_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_assets</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_assets</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">objective_function</span><span class="o">=</span><span class="n">ObjectiveFunction</span><span class="o">.</span><span class="n">MINIMIZE_RISK</span><span class="p">,</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">STANDARD_DEVIATION</span><span class="p">,</span>
+    <span class="n">target_weights</span><span class="o">=</span><span class="n">target_weights</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example 3: Return-based target</strong></p>
+<p>Minimize tracking error vs a benchmark’s returns:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span><span class="p">,</span> <span class="n">load_sp500_index</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">BenchmarkTracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">benchmark_prices</span> <span class="o">=</span> <span class="n">load_sp500_index</span><span class="p">()</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">benchmark_prices</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">factors_train</span><span class="p">,</span> <span class="n">factors_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="s2">"SP500"</span><span class="p">],</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">BenchmarkTracker</span><span class="p">(</span>
+    <span class="n">risk_measure</span><span class="o">=</span><span class="n">RiskMeasure</span><span class="o">.</span><span class="n">STANDARD_DEVIATION</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">factors</span><span class="o">=</span><span class="n">factors_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="c1"># Compare portfolio returns to benchmark</span>
+<span class="n">excess_returns</span> <span class="o">=</span> <span class="n">portfolio</span><span class="o">.</span><span class="n">returns</span> <span class="o">-</span> <span class="n">y_test</span><span class="o">.</span><span class="n">values</span>
+<span class="n">tracking_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">excess_returns</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Tracking Error: </span><span class="si">{</span><span class="n">tracking_error</span><span class="si">:</span><span class="s2">0.2%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="fallbacks">
+<h2>Fallbacks<a class="headerlink" href="#fallbacks" title="Link to this heading">#</a></h2>
+<p>Optimization can sometimes fail during a given rebalancing. For example, a convex
+mean-variance problem with strict risk or sector constraints may become infeasible on
+specific dates.</p>
+<p>All optimization estimators accept a <code class="docutils literal notranslate"><span class="pre">fallback</span></code> parameter that can be either a single
+estimator or a list of estimators. When the primary optimization raises during <code class="docutils literal notranslate"><span class="pre">fit</span></code>,
+the models in <code class="docutils literal notranslate"><span class="pre">fallback</span></code> are tried in order until one succeeds. The fitted weights and
+core fitted attributes are copied back to the original estimator so you can keep a
+single reference in your workflow. Fallbacks can also be set to the string
+<code class="docutils literal notranslate"><span class="pre">previous_weights</span></code> to reuse the latest available allocation when the primary fit fails.</p>
+<p>Each attempt is recorded in <code class="docutils literal notranslate"><span class="pre">fallback_chain_</span></code>, and the successful estimator is available
+through <code class="docutils literal notranslate"><span class="pre">fallback_</span></code>.</p>
+<p>This mechanism is critical in automated production, where optimization failures
+shouldn’t interrupt pipelines and where you need reproducibility and auditability.
+It can also be used to loosen optimization constraints gradually.</p>
+<p>Example: The primary model is a minimum-variance optimization made intentionally
+infeasible (the assets’ minimum weights are set to 10%, which exceeds the feasible
+upper bound of 1/n_assets = 5%). As a fallback, we provide a feasible minimum-variance
+model with a 2% minimum weight constraint:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+<span class="n">min_weights</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># intentionally infeasible</span>
+<span class="n">fallback</span><span class="o">=</span><span class="n">MeanRisk</span><span class="p">(</span><span class="n">min_weights</span><span class="o">=</span><span class="mf">0.02</span><span class="p">),</span>  <span class="c1"># feasible fallback</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span>
+
+<span class="c1"># Let's retrieve the fitted fallback that produced the final result:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">fallback_</span><span class="p">)</span>
+<span class="c1"># Let's display the sequence of attempts and their outcomes:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">fallback_chain_</span><span class="p">)</span>
+<span class="c1"># The fallback audit trail is also propagated to the predicted portfolio:</span>
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">portfolio</span><span class="o">.</span><span class="n">fallback_chain</span> <span class="o">==</span> <span class="n">model</span><span class="o">.</span><span class="n">fallback_chain_</span>
+</pre></div>
+</div>
+<p>When calling <code class="docutils literal notranslate"><span class="pre">predict</span></code>, the selected fallback and the full attempt log are propagated
+to the resulting portfolio via <code class="docutils literal notranslate"><span class="pre">fallback_chain</span></code>.</p>
+<p>For a step-by-step tutorial and more details, see
+<a class="reference internal" href="../auto_examples/mean_risk/plot_17_failure_and_fallbacks.html#sphx-glr-auto-examples-mean-risk-plot-17-failure-and-fallbacks-py"><span class="std std-ref">Failure and Fallbacks</span></a>.</p>
+</section>
+<section id="failure-handling">
+<h2>Failure Handling<a class="headerlink" href="#failure-handling" title="Link to this heading">#</a></h2>
+<p>In research, cross-validation and hyperparameter tuning (e.g., walk-forward, multiple
+randomized cross-validation), it’s often useful to let all runs complete while keeping
+a full record of failures instead of stopping on the first failed rebalancing.</p>
+<p>The behavior on optimization failure is controlled by the <code class="docutils literal notranslate"><span class="pre">raise_on_failure</span></code>
+parameter.</p>
+<ul class="simple">
+<li><p>If <code class="docutils literal notranslate"><span class="pre">raise_on_failure=True</span></code> (default): any error raised by the primary estimator is
+re-raised after fallbacks are exhausted. No <code class="docutils literal notranslate"><span class="pre">weights_</span></code> are set, and calling
+<code class="docutils literal notranslate"><span class="pre">predict</span></code> before a successful <code class="docutils literal notranslate"><span class="pre">fit</span></code> raises a <code class="docutils literal notranslate"><span class="pre">NotFittedError</span></code>.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">raise_on_failure=False</span></code>: errors are not raised. Instead, a warning is
+emitted, <code class="docutils literal notranslate"><span class="pre">weights_</span></code> is set to <code class="docutils literal notranslate"><span class="pre">None</span></code>, and <code class="docutils literal notranslate"><span class="pre">predict</span></code> returns a
+<a class="reference internal" href="../generated/skfolio.portfolio.FailedPortfolio.html#skfolio.portfolio.FailedPortfolio" title="skfolio.portfolio.FailedPortfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">FailedPortfolio</span></code></a> that carries diagnostics.</p></li>
+</ul>
+<p>Diagnostics are exposed via:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">error_</span></code>: the stringified error of the failed fit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fallback_chain_</span></code>: a sequence of attempts with outcomes (<code class="docutils literal notranslate"><span class="pre">&quot;success&quot;</span></code> or the
+error message), starting from the primary estimator.</p></li>
+</ul>
+<p>For online workflows based on <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code>, the estimator first updates its stateful
+components, such as the prior and moment estimators, then solves the next portfolio.
+The <code class="docutils literal notranslate"><span class="pre">raise_on_failure</span></code> policy applies to solver failures at that rebalance. Errors raised
+while updating stateful components are still raised because the estimator state may be
+incomplete. The only fallback supported by <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> is
+<code class="docutils literal notranslate"><span class="pre">fallback=&quot;previous_weights&quot;</span></code>, which reuses the latest valid allocation. Estimator
+fallbacks are reserved for regular <code class="docutils literal notranslate"><span class="pre">fit</span></code>, where each fallback can be fitted on the
+complete training window.</p>
+<p>Example: proceed without raising and retrieve failure diagnostics</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span><span class="p">,</span> <span class="n">ObjectiveFunction</span>
+
+<span class="c1"># Configure an intentionally infeasible problem</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">MeanRisk</span><span class="p">(</span>
+    <span class="n">min_weights</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">raise_on_failure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># do not raise; collect diagnostics instead</span>
+<span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>  <span class="c1"># does not raise; weights_ is None on failure</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">error_</span><span class="p">)</span>          <span class="c1"># stringified error message</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">fallback_chain_</span><span class="p">)</span> <span class="c1"># attempts and outcomes</span>
+
+<span class="n">ptf</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># returns a FailedPortfolio sentinel</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ptf</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>    <span class="c1"># "FailedPortfolio"</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ptf</span><span class="o">.</span><span class="n">optimization_error</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ptf</span><span class="o">.</span><span class="n">fallback_chain</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For a complete tutorial illustrating failure handling and fallbacks, see
+<a class="reference internal" href="../auto_examples/mean_risk/plot_17_failure_and_fallbacks.html#sphx-glr-auto-examples-mean-risk-plot-17-failure-and-fallbacks-py"><span class="std std-ref">Failure and Fallbacks</span></a>.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="install.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Installation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="portfolio.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Portfolio</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#naive-allocation">Naive Allocation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-Risk Optimization</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prior-estimator">Prior Estimator</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-prior-estimators">Combining Prior Estimators</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-estimator">Custom Estimator</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#worst-case-optimization">Worst-Case Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#going-further">Going Further</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#risk-budgeting">Risk Budgeting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-diversification">Maximum Diversification</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#distributionally-robust-cvar">Distributionally Robust CVaR</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hierarchical-risk-parity">Hierarchical Risk Parity</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hierarchical-equal-risk-contribution">Hierarchical Equal Risk Contribution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nested-clusters-optimization">Nested Clusters Optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stacking-optimization">Stacking Optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tracking-error-optimization">Tracking Error Optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fallbacks">Fallbacks</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#failure-handling">Failure Handling</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, skfolio developers (BSD License).
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.22.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

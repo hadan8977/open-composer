@@ -1,0 +1,79 @@
+URL: https://arxiv.org/pdf/1404.4798 (Bruno Durin, Capital Fund Management, 'Signal-wise performance attribution for constrained portfolio optimisation', arXiv 2014)
+Fetched UTC: 2026-10-01 06:19:36
+Source: open arXiv, practitioner (CFM) methodology paper: exact attribution of an optimised book to individual predictive signals incl. constraint effects = way a pro shop measures marginal contribution of a signal inside the optimiser. No numeric thresholds. Paper claim (method).
+
+                                                   Signal-wise performance attribution for
+                                                      constrained portfolio optimisation
+                                                                              Bruno Durin1
+arXiv:1404.4798v2 [q-fin.PM] 6 Aug 2014
+
+
+
+
+                                                   1 Capital Fund Management, 23-25 rue de l’Université, Paris, France
+
+
+                                                                                  Abstract
+                                                   Performance analysis, from the external point of view of a client who would
+                                               only have access to returns and holdings of a fund, evolved towards exact at-
+                                               tribution made in the context of portfolio optimisation, which is the internal
+                                               point of view of a manager controlling all the parameters of this optimisation.
+                                               Attribution is exact, that-is-to-say no residual “interaction” term remains, and
+                                               various contributions to the optimal portfolio can be identified: predictive sig-
+                                               nals, constraints, benchmark. However constraints are identified as a separate
+                                               portfolio and attribution for each signal that are used to predict future re-
+                                               turns thus corresponds to unconstrained signal portfolios. We propose a novel
+                                               attribution method that put predictive signals at the core of attribution and
+                                               allows to include the effect of constraints in portfolios attributed to every sig-
+                                               nal. We show how this can be applied to various trading models and portfolio
+                                               optimisation frameworks and explain what kind of insights such an attribution
+                                               provides.
+
+
+                                          1    Introduction
+                                          Performance analysis is at the core of investment process. The pioneering ap-
+                                          proaches, be they return-based or portfolio-based, took a external stance, aiming at
+                                          explaining performance with the same data that an investor would have from a fund
+                                          manager: returns and holdings. These are the long-standing models of performance
+                                          analysis (Sharpe, 1966; Jensen, 1968; see also references in Grinold & Kahn, 1999)
+                                          and of factor models (Fama-French, 1993, and subsequent works) using only time se-
+                                          ries of returns on the one hand, and the more recent approaches of performance attri-
+                                          bution pioneered by Brinson, Hood & Beebower (1986); Brinson, Singer & Beebower
+                                          (1991) using both returns and holdings on the other hand.
+                                              Return based analysis can be summarised as a regression of fund returns over
+                                          well chosen and meaningful time series of returns. The coefficients of the regression
+                                          provide an quantitative assessment of what the manager is doing. As a very simple
+                                          example, we can check that an index tracker does not have a large cap bias by
+                                          checking its exposure to the size factor or that a global fund whose prospectus claims
+                                          balanced exposures to developed markets does not show any oversized exposure to,
+                                          say, US markets.
+
+                                                                                       1
+    Holding based analysis in principle allows for a finer understanding of what the
+manager is doing. The Brinson et al. model decomposes the active return1 along
+categories, which originally were sectors, into three components: the allocation part,
+which corresponds to a strategy that trades benchmark sectors as a whole, the
+selection part, which corresponds to stock weighting inside a given sector and an
+interaction part, which simply is the unexplained part. This methodology can be
+extended to several layers of decision making according to various categories as can
+be exemplified by industry implementation such as Morningstar’s one (Morningstar,
+2011, 2013). However as it is difficult to extend to several categories, a more general
+framework for performance attribution may be preferred: we regress over portfolio
+characteristics that can be anything relevant for the analysis, predictive signals as
+in (Grinold, 2006) or various factor scores2 for example. In (Grinold, 2006) these
+characteristics are translated into portfolios, which allows to express the results in
+term of risks, correlations and (co-)variances. As it has been noted that Brinson
+model can be seen as a regression (Lu & Kane, 2013), we shall consider the various
+holding-based analyses as regressions.
+    At this point, whatever the level of details at which we perform our analysis, we
+are basically doing regressions, which have a major drawback: the residual unex-
+plained part may be large. Furthermore, adding many factors to reduce it may lead
+to in-sample bias and may reduce the explanatory power of the analysis. As shown
+in the example given in (Grinold, 2006), a portfolio built from three signals, a fast
+one, an intermediate one and a slow one, while taking into account transaction costs,
+can be explained with a R2 of 87%. Of course in this case the residual variance is
+small enough for the analysis to be valuable: it is clear that the portfolio overweights
+intermediate and slow signals with respect to the ideal, no-cost portfolio, in order
+to reduce costs as expected. But in the general case the unexplained part can be so
+large that it is barely possible to conclude anything. Namely this is the case when
+constraints are imposed on the portfolio and we cannot enlarge them to come to a

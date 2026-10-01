@@ -1,0 +1,179 @@
+URL: https://arxiv.org/pdf/2105.10306 (Zhang, Wang, Cao, Wells Fargo, 'Turnover-Adjusted Information Ratio', Mar 2021). Simulation/theory; Table 3 collects IC/decay values from OTHER studies [9][10][17][18] (second-hand).
+Fetched UTC: 2026-10-01 06:12:44
+Source type: open-access PDF (arXiv), text via pdftotext -layout (/tmp/B/tair.txt). Excerpted line ranges: 1,60 225,250 270,295 395,450
+
+----- lines 1,60 -----
+                                      Turnover-Adjusted Information Ratio
+
+                                        Feng Zhang, Xi Wang and Honggao Cao1
+                                               Wells Fargo & Company
+                                                   March 31, 2021
+
+                                                          Abstract
+
+    In this paper, we study the behavior of information ratio (IR) as determined by the fundamental law of
+    active investment management. We extend the classic relationship between IR and its two determinants
+    (i.e., information coefficient and investment “breadth”) by explicitly and simultaneously taking into
+    account the volatility of IC and the cost from portfolio turnover. Through mathematical derivations and
+    simulations, we show that – for both mean-variance and quintile portfolios – a turnover-adjusted IR is
+    always lower than an IR that ignores the cost from turnover; more importantly, we find that, contrary to
+    the implication from the fundamental law but consistent with available empirical evidence, investment
+    managers may improve their investment performance or IR by limiting/optimizing trade or portfolio
+    turnover.
+
+
+Keywords: information ratio, information coefficient, portfolio turnover, signal decay, the fundamental law of
+active management
+
+
+
+1. Introduction
+
+An investment manager’s performance is often evaluated by two interrelated metrics. The first is about the
+efficacy of the stock2 selection model (or alpha model) that the manager uses to support her investment choices.
+In this, the ability of the model to distinguish between good and bad stocks, or between stocks with positive
+(higher) and negative (lower) excess return, is measured as information coefficient (IC). Determined cross-
+sectionally at a given point of time across the stocks in a targeted investment universe, IC is the correlation
+between the predicted excess returns and the subsequently realized excess returns of the stocks. The higher IC,
+the more powerful the alpha model.
+
+The manager uses the alpha model to execute her investment strategies across time, taking into account market
+and non-market-related constraints, while also complementing the model-based investment decisions with
+qualitative judgment and discretions. The performance of the resulting investment portfolio is measured across
+time as the ratio between the portfolio excess return and volatility of the excess returns. This second measure is
+termed Information Ratio (IR). Figure 1 illustrates the mechanical relationship between IC and IR.
+
+The relationship between IC and IR has been well studied. The best known relationship has been expressed as an
+element in the Fundamental Law of Active Investment Management [1]. According to this “law”, IR is connected
+to IC through a term called “breadth” (BR), which is the number of independent forecasts of exceptional returns
+made by the manager each year. Specifically, the law states:
+
+         𝐼𝑅 = 𝐼𝐶 ∗ √𝐵𝑅                                                                                      (1)
+
+In this classic, theoretical relationship, the performance of an investment portfolio depends on not only the
+power of the stock selection model used to support the investment strategies, but also the extent of portfolio
+“turnover”, as independent forecasts typically imply investment actions or portfolio calibrations, which in turn
+
+
+1 Opinions expressed in this paper do not necessarily reflect those of Wells Fargo & CO. Correspondence should be addressed
+to Honggao Cao at honggao.cao@wellsfargo.com.
+2 In this paper, we use a generic term “stocks” to indicate securities covered in an alpha model, and the terms “stock” and
+
+“security” are used interchangeably.
+
+                                                           1
+involve moving investments into and/or out of the portfolio. In order to win in the investment management
+
+----- lines 225,250 -----
+demonstrate this.
+
+The following procedures are used for the simulation:
+
+
+
+
+                                                         4
+    1.  Simulate a normally distributed data series for information coefficient (𝐼𝐶𝑡 ). This data series
+        covers 600 time periods (for 𝑡 =1, 2, …, 600), with both the mean and the standard deviation of
+        the 𝐼𝐶𝑡 set at 0.05.
+    2. Simulate a log-normally distributed data set for security-specific volatilities (𝜎𝑖 ). This data set
+        covers a cross-section of 5000 securities (for i = 1, 2 … 5000), and forms the target investment
+        universe. These same security-specific volatilities will be used across time t.
+     2a. Based on the security-specific volatility data, construct a transformed data series for inverse
+                   1
+         volatility .
+                   𝜎𝑖
+    3. Simulate alpha signal (𝑥𝑖,𝑡 ) for each of the securities in the target investment universe. This is
+        done for each of the 600 time periods via the following scheme.
+     3a. For 𝑡=0, simulate a standard normal data set of the alpha signal for each of the 5000 securities.
+     3b. For 𝑡=1 t0 600, simulate the alpha signal data set with period-to-period autocorrelations (1 −
+        𝑑𝑒𝑐𝑎𝑦) ranging from 0.6 t0 0.95 with a 0.05 interval. The signal at 𝑡 + 1 is generated based on
+        the Equation 𝑥𝑖,𝑡+1 = (1 − decay) ∗ 𝑥𝑖,𝑡 + 𝜁𝑖,𝑡 . Here, 𝜁𝑖,𝑡 is drawn from a random normal
+        distribution with mean of zero and variance of 1 − (1 − 𝑑𝑒𝑐𝑎𝑦)2 .
+    4. For each time period from 𝑡=1 t0 600 and each security from 𝑖 =1 to 5000, generate the realized
+
+----- lines 270,295 -----
+always lower than the unadjusted IR, due to transaction cost.
+
+                          Table 1. Theoretical and simulated portfolio Information Ratio
+
+
+                                            Theoretical values                               Simulated values
+
+ Autocorrelation        Decay         IR               𝑰𝑹′                 TR                  IR        𝑰𝑹′              TR
+
+                0.6       0.4          0.962            0.666            0.741              0.964         0.668         0.741
+               0.65      0.35          0.962            0.685           0.693               0.964         0.687         0.693
+                0.7       0.3          0.962            0.706            0.641              0.964         0.707         0.641
+               0.75      0.25          0.962            0.728           0.586               0.963         0.729         0.586
+                0.8       0.2          0.962            0.753            0.524              0.964         0.754         0.524
+               0.85       0.15         0.962             0.781           0.454              0.962          0.781        0.454
+                0.9        0.1         0.962            0.814            0.370              0.962         0.814         0.370
+               0.95      0.05          0.962            0.858           0.262               0.962         0.857         0.262
+
+
+                                                          5
+3. Turnover-Adjusted Information Ratio for Quintile Portfolios
+
+We now extend our discussion to the quintile portfolios. Here we focus on a long-short quintile portfolio. In this
+investment strategy, the portfolio is constructed by longing the top 20% and shorting the bottom 20% of
+securities from a target investment universe, based on the alpha signal 𝑥𝑖,𝑡 . Securities whose alpha signals are in
+the middle 60% of the distribution is not shorted or longed. The security weight in the portfolio is 5/N for each
+
+----- lines 395,450 -----
+
+To compare the turnover-adjusted IR between mean-variance portfolios and quintile portfolios, we calculate the
+turnover-adjusted IRs at different decay factor levels for both types of portfolios. In this comparison, we assume
+𝑇𝑐𝑜𝑠𝑡=1%, 𝜇𝐼𝐶 =0.05, 𝑉𝐼𝐶 =0.05, and 𝑁=5000. In addition, we assumed that log(σi ) has a normal distribution with
+mean -0.722 and standard deviation of 0.306. Figure 3 displays the turnover-adjusted IR as a function of decay
+for the two types of portfolios. It shows that the mean-variance portfolio has a slightly larger turnover-adjusted
+
+
+
+                                                                         7
+IR when decay is small (<0.09 in this case); and the quintile portfolio has a higher turnover-adjusted IR when
+decay is large.
+
+                               Figure 3. Turnover-adjusted IR as a function of decay
+
+
+
+
+5. Signal decay in Turnover-adjusted Information Ratio
+
+As discussed previously, signal decay is defined as one minus the signal autocorrelation. Signals from different
+alpha models can have different decay rates. Momentum factors can decay very quickly. Portfolios based on such
+factors tend to have high turnover. Valuation factors generally decay slowly; valuation-based portfolios tend to
+have low turnover. Table 3 below collects the signal decays for some factors/models based on publicly available
+data. It shows that most factors/models decay slowly (decay<=0.1) with the exception of momentum factors.
+
+                             Table 3. Alpha signal decay for Selected Industry Studies
+
+                                     Average Signal              Investment               Study           Model
+    Factor/Model
+                                     IC           decay          Universe                 period          frequency
+    9-month momentum                 0.073        0.32           Russell 3000             1987-2004       Quarterly
+    E/P                              0.043        0.06           Russell 3000             1987-2004       Quarterly
+    B/P                              0.029        0.06           Russell 3000             1979-2018       Monthly
+    C/P                              0.032        0.07           Russell 3000             1979-2018       Monthly
+    D/P                              0.029        0.03           Russell 3000             1979-2018       Monthly
+    E/P                              0.031        0.07           Russell 3000             1979-2018       Monthly
+    FE/P                             0.034        0.06           Russell 3000             1979-2018       Monthly
+    S/P                              0.020        0.03           Russell 3000             1979-2018       Monthly
+    MOM                              0.025        0.13           Russell 3000             1979-2018       Monthly
+    SHORT                            0.036        0.07           Russell 3000             1979-2018       Monthly
+    Growth Benchmark Model           0.024        0.09           Russell 3000 Growth      2018            Monthly
+    Value Benchmark Model            0.017        0.08           Russell 3000 Value       2018            Monthly
+    Quality Model                    0.040        0.10           Russell 3000             2018            Monthly
+    Price Momentum Model             0.009        0.39           Russell 3000             2018            Monthly
+    Growth Benchmark Model           0.011        0.08           Russell 3000 Growth      2016            Monthly
+    Value Benchmark Model            0.017        0.08           Russell 3000 Value       2016            Monthly
+    Quality Model                    0.005        0.10           Russell 3000             2016            Monthly
+    Price Momentum Model             -0.001       0.38           Russell 3000             2016            Monthly
+   Note: Data from [9], [10] [17] [18] Signal decays from [17] [18] are based on rank correlation; B/P = book to price, C/P =
+   cash flow to price, D/P = dividend yield to price, E/P =earnings to price, FE/P = forward earnings to price, S/P = sales to
+   price, MOM = cumulative 11-month return from t-12 to t-2, SHORT = short as a percent of total shares float
+
+
+
+

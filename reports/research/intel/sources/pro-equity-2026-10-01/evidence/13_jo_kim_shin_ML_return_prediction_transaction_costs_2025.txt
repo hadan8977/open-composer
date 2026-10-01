@@ -1,0 +1,1100 @@
+URL: https://iksa.or.kr/file/download/9320
+Fetched (UTC): 2026-10-01T06:10Z
+Note: working paper June 30 2025; pdftotext
+-----
+   Stock Return Predictability and Machine Learning:
+
+                      Incorporating Transaction Costs
+
+           Yonghwan Jo∗             Yonghwi Kim†               Sang-Ook (Simon) Shin‡
+
+                                           June 30, 2025
+
+
+
+                                                Abstract
+
+       We propose a machine learning model that incorporates transaction costs into return
+
+       prediction using high-dimensional stock-level characteristics. Building on the condi-
+
+       tional autoencoder of Gu, Kelly and Xiu (2021), our transaction cost-adjusted model
+
+       penalizes costly-to-trade stocks during estimation. We show that this approach im-
+
+       proves out-of-sample predictive power and portfolio performance, particularly when
+
+       microcaps are excluded. In the nonmicrocap sample, the our model delivers a 40%
+
+       higher Sharpe ratio and substantially larger alpha than the plain model, suggesting
+
+       that accounting for transaction costs enhances signal quality and economic relevance.
+
+
+
+Keywords: Stock Return, Transaction Cost, Machine Learning, Conditional Autoencoder, Neural
+
+Networks
+
+
+JEL Classification: G10, G11, G12, C45
+
+   ∗
+     Research Fellow, Housing Finance Research Institute, Korea Housing-Finance Corporation. Email:
+yhjo@hf.go.kr
+   †
+     Senior Researcher, IT Convergence System Research Center, Korea Electronics Technology Institute.
+Email: yonghwi@keti.re.kr
+   ‡
+     Assistant Professor of Finance, School of Business Administration, Ulsan National Institute of Science
+and Technology. Email: simonshin@unist.ac.kr
+1         Introduction
+
+Empirical studies in asset pricing have identified numerous characteristic-based anomalies
+that explain cross-sectional variations in stock returns. Collectively, these characteristics
+exhibit predictive power for stock returns, as demonstrated by Green, Hand and Zhang
+(2017) and Kelly, Pruitt and Su (2019). This predictability is further enhanced with the
+application of machine learning models. Specifically, portfolios constructed using machine
+learning signals, such as those developed by Gu, Kelly and Xiu (2020, 2021), tend to achieve
+higher Sharpe ratios than portfolios based on linear models.
+        However, these portfolios are often criticized for including many costly-to-trade stocks and
+having high turnover, both of which lead to substantial transaction costs. While they may
+achieve high ex post Sharpe ratios, their profitability can be eroded as trading costs outweigh
+the incremental gains in returns. More importantly, high transaction costs involved in these
+models raise the concern that their enhanced predictability may stem from capturing trading
+frictions rather than genuine relationships between characteristics and expected returns.1
+        Indeed, the key characteristics identified by Gu, Kelly and Xiu (2020) or Gu, Kelly
+and Xiu (2021) as most predictive of stock returns—such as 1-month momentum, size, and
+idiosyncratic volatility—are also closely linked to trading frictions, as classified by Hou, Xue
+and Zhang (2020), and often entail high transaction costs. Furthermore, Avramov, Cheng
+and Metzker (2023) show that the predictive power of machine learning models is largely
+concentrated in small stocks, with portfolio profitability declining sharply once those are
+excluded.
+        This concentration on small stocks is problematic. As of 2021, microcaps—defined as
+stocks below the 20th percentile of NYSE market capitalization—accounted for less than 1%
+of market capitalization but nearly half of all stocks. Their prevalence biases machine learn-
+ing models that use standard loss functions treating all stocks equally, regardless of economic
+    1
+    Consistent with this argument, Hou, Xue and Zhang (2020) document that 96% of the anomalies in the
+trading friction category (including liquidity, market microstructure, etc.) fail to pass 95% significance test
+after controlling for microcaps, which are associated with higher transaction costs.
+
+
+                                                      2
+significance. As a result, the long-lived return predictability documented in these models
+tends to reflect microcap characteristics—stocks that are often illiquid, hard to short, and
+less relevant for practical investing—rather than the larger, more economically meaningful
+securities that dominate institutional portfolios. Thus, ignoring transaction costs when es-
+timating these models not only undermines signal reliability but also limits their real-world
+applicability and their ability to identify meaningful risk–return tradeoffs.
+   To examine in detail how transaction costs influence estimation, consider the simple
+return-beta relationship:
+                                               ′
+                                       ri,t = βi,t−1 ft + εi,t ,                               (1)
+
+where ri,t represents the return on stock i, and βi,t−1 captures its exposure to factor ft . Stocks
+with high βi,t−1 are predicted to have higher returns, signaling a potential buy. However, if
+transaction costs are prohibitive, investors are less likely to purchase these stocks, leading
+to underpricing and subsequently higher returns than would occur in a low transaction cost
+environment. Conversely, stocks with low βi,t−1 indicate a sell signal. In the presence of
+high transaction costs, investors are less inclined to short sell, resulting in overpricing and
+generally lower returns. If a machine learning model predominantly learns the return-beta
+relationship by minimizing mean squared errors from stocks with high transaction costs in-
+sample, to the extent this mispricing persists, the model’s predictive power out-of-sample
+may be driven by such frictions.
+   To address this concern, we propose a novel machine learning model that incorporates
+transaction costs as a central component. Our approach involves developing an objective
+function that systematically accounts for transaction costs by penalizing stocks that are
+costly to trade. The model thus places greater emphasis on stocks with lower transaction
+costs and reduces focus on those with higher costs. Unlike prior studies that account for
+transaction costs only after portfolio formation (e.g., Novy-Marx and Velikov, 2016; Det-
+zel, Novy-Marx and Velikov, 2023), our approach incorporates these frictions from the out-
+set by embedding them directly into the model’s optimization. This framework enables a
+
+                                                  3
+more robust assessment of the predictive power of machine learning signals by incorporating
+transaction costs, aiming to enhance the model’s effectiveness in linking characteristics with
+returns.
+   We employ the conditional autoencoder (CA) model proposed by Gu, Kelly and Xiu
+(2021) to predict expected returns for individual U.S. stocks. This model is highly flexible,
+effectively capturing the nonlinear relationship between stock characteristics and factor ex-
+posures (i.e., βi,t ), while constructing factors linearly from individual returns. It has been
+shown to outperform both linear models, such as Instrumented Principal Component Anal-
+ysis (IPCA) by Kelly, Pruitt and Su (2019), and nonlinear models, such as the deep neural
+network (DNN) approach in Gu, Kelly and Xiu (2020). Additionally, Avramov, Cheng
+and Metzker (2023) find that the CA model exhibits low time-series variation and performs
+particularly well in low market states.
+   Building on this framework, we introduce a penalty term that forces the estimation of
+βi,t to approach zero for stocks with high transaction costs. If the penalty is overly stringent,
+it effectively excludes high-transaction-cost stocks from the learning process, forfeiting the
+opportunity to capture the pricing relationship between returns and betas for these stocks.
+Conversely, if the penalty is too lenient, the estimation closely resembles that of Gu, Kelly
+and Xiu (2021). In this way, our approach generalizes machine learning models by explicitly
+incorporating transaction costs, offering a flexible framework that balances penalization with
+the retention of valuable information from high-cost stocks.
+   Using a sample of U.S stocks listed on the NYSE, AMEX, and NASDAQ, we examine
+the performance of a transaction cost-adjusted conditional autoencoder (TC model), which
+modifies the original CA model of Gu, Kelly and Xiu (2021) by incorporating transaction
+costs into the optimization. We evaluate how well 94 stock-level characteristics—originally
+used in Gu, Kelly and Xiu (2020)—predict stock returns under this modified framework,
+and compare its performance to the original CA model (hereafter, plain model). Our empir-
+ical tests show that the TC model consistently delivers higher out-of-sample predictability.
+
+
+                                               4
+Specifically, the out-of-sample predictive R2 is 0.44% in the TC model, compared to 0.27%
+in the plain model. The improvement becomes more pronounced when microcap stocks are
+excluded: the TC model achieves an R2 of 0.27%, while the plain model yields only 0.03%.
+   This enhanced return–beta relationship translates into improved ex post portfolio per-
+formance. We sort stocks based on expected returns and construct zero-cost portfolios by
+taking long positions in the top decile and short positions in the bottom decile. In the full
+sample, the TC model delivers a modest improvement in the Sharpe ratio relative to the plain
+model (1.512 vs. 1.442). Consistent with the R2 results, the performance gap widens sig-
+nificantly in the nonmicrocap sample, where the TC model achieves a Sharpe ratio of 1.071
+compared to 0.758 for the plain model—representing a more than 40% improvement. To
+assess whether the superior performance of the TC model is due to greater exposure to sys-
+tematic risk, we compare abnormal returns relative to the Fama-French six-factor model. In
+the full sample, the TC model yields a slightly higher monthly alpha (2.86%) than the plain
+model (2.83%). However, in the nonmicrocap sample, the difference becomes substantial:
+the TC model produces an alpha of 1.10%, compared to 0.66% for the plain model. These
+findings suggest that the improved performance is driven by better return predictability, not
+higher risk exposure.
+   While overall portfolio performance is higher in the full sample—even after accounting
+for transaction costs—the TC model performs particularly well in the nonmicrocap sample.
+Microcap stocks are notoriously difficult to arbitrage due to high trading frictions. As shown
+in Avramov, Cheng and Metzker (2023), the predictive power of machine learning models
+diminishes substantially when microcaps are excluded. However, by incorporating “economic
+restrictions” such as transaction costs into the model, we effectively restore a significant
+portion of the performance drop.
+   Next, we examine whether the observed performance gains stem from improvements
+at the characteristic level. Specifically, we seek to identify which characteristics are most
+important in explaining the cross-section of stock returns. To this end, we employ two
+
+
+                                              5
+complementary approaches: absolute partial derivatives and the reduction in out-of-sample
+performance (i.e., risk-adjusted returns). Compared to the plain model, the predictability of
+the TC model is less reliant on a small subset of characteristics, most of which are related to
+trading frictions. Specifically, the average importance of the top five characteristics decreases
+from 0.75 in the plain model to 0.50 in the TC model using the full sample. Focusing on
+out-of-sample performance measured by FF6 alpha, the average percentage reduction of the
+top five characteristics declines from 24% in the plain model to 20% in the TC model. A
+similar pattern is observed in the nonmicrocap sample.
+   Unlike Gu, Kelly and Xiu (2020), which focus on reductions in in-sample R2 , we doc-
+ument that a substantial number of characteristics exhibit negative contributions to out-
+of-sample performance. However, when transaction cost constraints are incorporated into
+the optimization process, the number of such negatively contributing characteristics declines
+significantly—from 36 to 28 in the full sample, and from 37 to 9 in the non-microcap sam-
+ple. Negative contributions may arise for several reasons, including spurious relationships,
+high covariance among characteristics, and overfitting to noise. Our attempt to address the
+issue of high transaction costs appears effective in mitigating these problems. As a result,
+the TC model enhances the quality of signal processing, leading to improved out-of-sample
+performance.
+
+
+Related Literature
+
+Traditionally, empirical asset pricing studies that aim to explain cross-sectional differences
+in asset returns begin with a small set of characteristics motivated by theory or economic
+reasoning. The significance of these characteristics is typically tested using characteristic-
+sorted portfolios or cross-sectional regressions (e.g., the Fama–MacBeth method).
+   Recently, a growing literature applies machine learning to empirical asset pricing. Gu,
+Kelly and Xiu (2020) implement various machine learning methods on a comprehensive
+dataset that includes all traded stocks. Building on this, Gu, Kelly and Xiu (2021) propose a
+
+
+                                               6
+conditional autoencoder model, while Chen, Pelger and Zhu (2024) incorporate no-arbitrage
+constraints into neural network architectures such as feedforward networks, recurrent long
+short-term memory (LSTM) networks, and generative adversarial networks (GANs). Cong,
+Tang, Wang and Zhang (2021) adopt reinforcement learning algorithms to directly optimize
+portfolios. Jiang, Kelly and Xiu (2023) introduce a novel approach that uses image-based
+features extracted from stock price charts to identify predictive patterns.
+       These machine learning methods adopt a data-driven approach to uncover nonlinear
+relationships directly from the data. However, this strength also makes them sensitive to
+the composition of the input sample. Despite their strong performance in return prediction,
+machine learning models often overfit to stocks that dominate the sample size but are difficult
+to trade (i.e., microcaps) undermining the implementability of the resulting strategies.
+       One potential solution is to exclude microcaps from the training sample. However, this
+introduces both theoretical and practical concerns. Theoretically, if nonmicrocaps do not
+span the payoff space required to construct the pricing kernel, training the model on this
+subsample alone can lead to biased estimates of expected returns. Empirically, given that
+microcaps constitute a large portion of the cross-section by count, excluding them substan-
+tially reduces the number of observations relative to the number of parameters. As a result,
+the characteristic space becomes sparse and training efficiency deteriorates.2 In contrast,
+we incorporate transaction costs directly into the machine learning objective function while
+retaining the entire universe of stocks during training. This approach reweights the opti-
+mization process, emphasizing more economically significant and implementable securities.3
+       Historically, empirical asset pricing studies have largely ignored transaction costs, as-
+suming frictionless markets. This approach emphasizes statistical significance over economic
+relevance. However, transaction costs can substantially reduce portfolio profitability and
+   2
+     In Table ??, the Sharpe ratio of portfolios trained only on nonmicrocaps using the plain model performs
+no better than portfolios of nonmicrocaps from our transaction cost-adjusted model.
+   3
+     Avramov, Cheng and Metzker (2023) employ a value-weighted loss function to address the small-stock
+bias, yet report similar performance to equal-weighted alternatives.
+
+
+
+
+                                                     7
+challenge the interpretation of return predictability.4 Some studies attempt to mitigate
+this issue by forming value-weighted portfolios and/or sorting by NYSE breakpoints. Yet,
+as shown by Novy-Marx and Velikov (2016), many anomalies—particularly those involving
+high turnover or difficult-to-trade stocks—become statistically insignificant after adjusting
+for transaction costs.
+       While most of these studies adjust for costs after constructing signals to sort assets, oth-
+ers explicitly incorporate frictions during optimization. For instance, Gârleanu and Pedersen
+(2013) and Jensen, Kelly, Malamud and Pedersen (2024) account for transaction costs when
+constructing optimal portfolios. In a similar spirit, we optimize the model by embedding
+transaction costs into the loss function. However, our objective is not just to improve port-
+folio choice, but to correct the biases in return predictability caused by these frictions. We
+directly penalize costly-to-trade stocks during training, so that return predictability is based
+on net, rather than gross, returns.
+       Beyond improving overall predictability, it is equally important to understand which
+characteristics drive the performance. Identifying key predictors helps distinguish between
+anomalies that reflect genuine risk–return relationships and those that merely capture short-
+lived mispricings that persist because they are too costly to be arbitraged away. Green,
+Hand and Zhang (2017) consider 94 characteristics and find that only a small subset offers
+independent explanatory power. Gu, Kelly and Xiu (2020, 2021) rank the importance of
+characteristics by assessing the reduction in total in-sample R2 when each characteristic is
+excluded.
+       We extend their approach by measuring characteristic importance based on the out-
+of-sample reduction in portfolio performance (e.g., FF6 alpha, Sharpe ratio, or predictive
+R2 ). This method enables us to quantify the magnitude of each characteristic’s impact
+on out-of-sample performance, including those with negative effects. To the extent that
+   4
+    For example, Detzel, Novy-Marx and Velikov (2023) demonstrate that asset pricing models that ignore
+transaction costs fail to span the achievable mean-variance efficient frontier. They provide empirical evidence
+that high transaction costs create a substantial gap between the gross and net maximum squared Sharpe
+ratios, particularly for factor models with high turnover.
+
+
+                                                      8
+in-sample importance does not translate to out-of-sample settings, our results may diverge
+from theirs. While we confirm that characteristics identified as important by Gu, Kelly and
+Xiu (2020, 2021) remain influential in our model, their dominance is less pronounced, and
+fewer characteristics exhibit negative predictive power. By incorporating transaction costs
+into model estimation, we reduce biases in return prediction and improve both out-of-sample
+performance and the economic relevance of machine learning signals.
+    The rest of the paper is organized as follows. Section 2 outlines the methodology for
+estimating the transaction cost-adjusted model. Section 3 presents the empirical results.
+Section 4 concludes.
+
+
+
+2     Methodology
+
+In this section, we first outline the approach used to measure transaction costs. Next,
+we derive the objective function that incorporates transaction costs. Lastly, we provide an
+overview of the conditional autoencoder model employed in our study and then the estimation
+procedure.
+
+
+2.1    Measuring Transaction Costs
+
+To measure transaction costs, we follow an approach similar to Brandt, Santa-Clara and
+Valkanov (2009), Hand and Green (2011), and DeMiguel, Martı́n-Utrera, Nogales and Uppal
+(2020). Specifically, to capture cross-sectional variation, transaction costs ci,t are modeled
+as inversely proportional to stock value, while their time-series variation is captured by a
+gradual decline over time:
+                                ci,t = yt max (ζi,t−1 , 0.04%) ,                          (2)
+
+
+
+
+                                               9
+where yt captures the time-series variation, decreasing linearly from 5.82 in 1957 to 1 in
+2002 and remaining constant thereafter.5 The cross-sectional component is given by ζi,t−1 =
+0.2253% − 0.2712% × vi,t−1 , where vi,t−1 is the normalized log market value of stocks, scaled
+such that its minimum is zero and its maximum is one.6 The coefficients for ζi,t−1 are chosen
+to yield a median transaction cost of approximately 10 basis points (bps),7 with the 25th and
+75th percentiles at 6 bps and 14 bps, respectively. Since this formulation allows transaction
+costs to be too low or even negative, a minimum transaction cost of 4 bps is imposed. As a
+result, in 2002 or later, the smallest stocks have transaction costs of 23 bps, while the largest
+stocks have costs of 4 bps.
+       Figure ?? illustrates the distribution of monthly transaction costs from 1957 to 2021. The
+solid line represents the median, with other percentiles also displayed. Notably, from 2002
+onward, the 5th percentile is bounded at a minimum of 4 bps. Our specification effectively
+captures the downward trend in transaction costs over time while maintaining sufficient
+cross-sectional variation.
+
+
+2.2       Objective Function Adjusted for Transaction Costs
+
+Following Kelly, Pruitt and Su (2019) and Gu, Kelly and Xiu (2021), the excess returns on
+stocks can be represented using a K-factor structure:
+
+
+                                                   ′
+                                           ri,t = βi,t−1 ft + εi,t ,                                      (3)
+
+
+where ft is the K × 1 vector of factors, and βi,t−1 is the K × 1 vector of factor loadings.
+When transaction costs are incorporated, the net return realized by investors is adjusted
+   5
+      This ensures that transaction costs in 1974 are four times higher than in 2002, consistent with Brandt,
+Santa-Clara and Valkanov (2009).
+    6
+      Brandt, Santa-Clara and Valkanov (2009) assume ζi,t−1 = 0.60% − 0.25% × vi,t−1 . We modify their
+model to better align the distribution with Frazzini, Israel and Moskowitz (2018), who estimate transaction
+costs based on live trade execution data.
+    7
+      According to Frazzini, Israel and Moskowitz (2018), the average one-way transaction cost for U.S. stocks
+is approximately 10 bps.
+
+
+
+                                                     10
+accordingly: it decreases by ci,t for long positions and increases by ci,t for short positions.
+Thus, the net return is given by ri,t − c̃i,t , where c̃i,t represents the signed transaction cost,
+defined as:                    
+                               
+                               ci,t ,
+                                          if stock i is held in a long position,
+                     c̃i,t =                                                                   (4)
+                               
+                               −ci,t , if stock i is held in a short position.
+                               
+
+   Transaction costs systematically introduce a bias in the returns described in Equation
+(3), causing them to deviate from the components attributed to stock characteristics (i.e.,
+ ′
+βi,t−1 ft ). In particular, even when stocks exhibit higher expected returns, investors may
+postpone purchasing until the price declines sufficiently to compensate these costs in the
+presence of significant transaction costs. Similarly, high transaction costs deter investors
+                                                                                 ′
+from short selling stocks with lower expected returns. As a result, stocks with βi,t−1 ft > 0
+(< 0) tend to be underpriced (overpriced), leading to higher (lower) realized returns.
+   To address this issue, we extend Equation (3) to account for transaction costs as follows:
+
+
+                                                 ′
+                                         ri,t = βi,t−1 ft + c̃i,t + εi,t .                     (5)
+
+
+By using net returns, which incorporate transaction costs, this formulation accurately reflects
+investors’ real-world economic outcomes and thus provides a more precise representation of
+the risk-reward trade-off. Accordingly, our goal is to adjust the estimation framework to
+properly incorporate these effects into the optimization process. At time t, in a reference
+case where c̃i,t = 0 for all stock i, a factor-mimicking portfolio ft and its exposure βi,t−1 can
+be estimated by minimizing the mean squared errors (MSEs), following Kelly, Pruitt and Su
+(2019) and Gu, Kelly and Xiu (2021):
+
+                                                  N
+                                             1 X
+                                                   (ri,t − r̃i,t )2 ,                          (6)
+                                             N n=1
+
+                                                           ′
+where r̃i,t denotes the expected return, given by r̃i,t ≡ βi,t−1 ft . When transaction costs are
+
+
+
+                                                       11
+present, the objective function is modified as follows:
+
+                                            N
+                                       1 X
+                                             (ri,t − r̃i,t − c̃i,t )2 .                                     (7)
+                                       N n=1
+
+                                          PN                    2    PN                             PN 2
+Equation (7) can be rewritten as N1                                2
+                                             n=1 (ri,t − r̃i,t ) − N
+                                                                                                  1
+                                                                      n=1 c̃i,t (ri,t − r̃i,t ) + N  n=1 c̃i,t ,
+
+using Equation (6). By suppressing terms unrelated to cross-sectional differences, the objec-
+tive function simplifies to:
+
+                                 N                       N
+                              1 X                  2  2 X          ′
+                                                                           
+                                    (ri,t − r̃i,t ) +       c̃i,t βi,t−1 ft ,                               (8)
+                              N n=1                   N n=1
+
+where the second term is positive, reflecting the positive covariance between signed transac-
+                                           ′
+tion costs (c̃i,t ) and expected returns (βi,t−1 ft ), as discussed earlier.
+       When transaction costs are high, the absolute value of ci,t is large, but its sign remains
+uncertain since stocks have not yet been classified as long or short during estimation. To
+address this, as outlined in Section 2.1, we model transaction costs as inversely proportional
+to stock value: ci,t = g(vi,t−1 ), where g(·) is a monotonically decreasing function that ensures
+positivity, as defined in Equation (2). To maintain the positivity of the second term in
+Equation (8), we replace c̃i,t with g(vi,t−1 ) and take the absolute values of the elements in
+βi,t−1 . Additionally, we simplify the vector of factors ft to 1K×1 , where 1K×1 represents a
+K × 1 vector of ones.8 Consequently, in our empirical analysis, we modify the second term
+in Equation (8) as N2 N                ′
+                     P
+                       i=1 g(vi,t−1 ) βi,t−1 1K×1 .
+
+       We then aggregate the objective function at time t over T periods, resulting in the
+following objective function:
+
+                         T   N                          T   N
+                     1 XX                           2 XX
+                                (ri,t − r̃i,t )2 +                         ′
+                                                               g(vi,t−1 ) βi,t−1 1K×1 ,                     (9)
+                    N T t=1 n=1                    N T t=1 n=1
+   8
+    This implies that each factor imposes an equal penalty on beta estimation. Another key reason for this
+simplification is that, while all elements of ft should theoretically be positive—indicating a positive risk
+premium—they may empirically take negative values. In this case, the cost function decreases, potentially
+exacerbating the bias introduced by transaction costs.
+
+
+                                                     12
+The first term in Equation (9) corresponds to the standard objective function for minimizing
+MSEs. In contrast, the second term serves as a penalty on the estimation of βi,t−1 , driving
+it closer to zero for stocks with higher transaction costs. This adjustment ensures that
+the model places greater emphasis on stocks with lower transaction costs while giving less
+weight to those with higher transaction costs. Ignoring the second term would lead to a
+biased estimation of r̃i,t , particularly in the presence of substantial cross-sectional variation
+in transaction costs, as proxied by g(vi,t−1 ).
+
+
+2.3    Conditional Autoencoder Model
+
+We adopt the conditional beta pricing model proposed by Gu, Kelly and Xiu (2021) as our
+benchmark model. This model extends dimension reduction techniques such as IPCA by
+recursively identifying a latent factor structure from stock returns. The beta pricing model
+is formulated as a K-factor structure:
+
+
+                                    ri,t = β (zi,t−1 )′ ft + εi,t ,                           (10)
+
+
+where β (zi,t−1 ) represents the conditional factor exposure based on firm characteristics zi,t−1 ,
+and ft is the K-dimensional latent factors.
+   Building on this K-factor structure, we implement a conditional autoencoder following
+Gu, Kelly and Xiu (2021). This approach utilizes two feed-forward neural networks, where
+the output layer reconstructs stock returns ri,t as the dot product of β (zi,t−1 ) and ft . Within
+the autoencoder framework, the two neural networks serve as non-linear estimators: one for
+the conditional beta exposures and the other for the K-dimensional latent factors.
+   For implementation, we use a 5-factor model with two hidden layers for the β (zi,t−1 )
+estimator. To ensure that our model replicates not only the structure but also the perfor-
+mance of Gu, Kelly and Xiu (2021), we match the hypothesis space by aligning hyperpa-
+rameters, activation functions, training scheme, regularization techniques, and optimization
+
+
+                                                  13
+algorithms. Specifically, we employ the ReLU activation function with batch normalization
+for the β (zi,t−1 ) estimator. During training, we incorporate three regularization techniques:
+early stopping, a penalty function, and an ensemble approach.
+       We incorporate a regularization technique to mitigate overfitting and introduce a param-
+eter to control the penalization of transaction costs. This leads to the following regularized
+objective function:
+
+                        T   N                         T   N
+                    1 XX                      2   λ XX                   ′
+        L (θ; ·) =             (ri,t − r̃i,t ) +             g(vi,t−1 ) βi,t−1 1K×1 + ϕ (θ; ·) ,      (11)
+                   N T t=1 n=1                   N T t=1 n=1
+
+where λ > 0 is a tuning parameter, θ denotes the weight parameters of the neural networks,
+and ϕ (θ; ·) corresponds the LASSO penalization following Gu, Kelly and Xiu (2021). Since
+transaction costs are estimated rather than directly observed, the degree to which beta
+estimation is penalized for stocks with high transaction costs remains uncertain. Therefore,
+λ functions as a hyperparameter that regulates the overall magnitude of the penalty term
+for transaction costs. We examine various values for this parameter, and our empirical tests
+indicate that setting λ = 1e − 1 (i.e., with the penalty term contributing 10% to the cost
+function) yields the best performance.9
+       Our study examines 65 years of monthly individual stock returns, spanning from January
+1957 to December 2021, combined with time-lagged firm characteristics. Monthly stock
+return data is collected from the Center for Research in Securities Prices (CRSP) for all
+firms listed on the NYSE, AMEX, and NASDAQ. The time-lagged firm characteristics are
+constructed from 94 stock return predictors documented in the appendix of Gu, Kelly and
+Xiu (2020).10 Since these characteristics are known to be highly skewed and leptokurtic,
+we apply rank normalization to transform them into the interval (-1, 1) for each month.
+For our analysis, the 65-year dataset is divided into three periods: an 18-year training
+period (1957–1974), a 12-year validation period (1975–1986), and a 35-year out-of-sample
+   9
+     Other choices of λ include 1e − 0, 1e − 2, 1e − 3, and 1e − 4. Results based on these values exhibit a
+similar pattern.
+  10
+     We download the firm characteristics from Dacheng Xiu’s website.
+
+
+                                                    14
+test period (1987–2021). During the out-of-sample test, we implement a recursive re-training
+approach, where each model is re-trained annually with an expanding training sample while
+maintaining a fixed validation sample size.11
+
+
+
+3      Empirical Results
+
+This section presents our main empirical findings, comparing the performance of our trans-
+action cost-adjusted model (TC model) with the standard conditional autoencoder model
+(plain model). We first examine the predictive power of the two models, followed by an eval-
+uation of portfolio performance metrics. Finally, we investigate which stock characteristics
+drive these results.
+
+
+3.1     Predictive Power of Alternative CA Models
+
+We evaluate the predictive performance of the conditional autoencoder model under both
+the plain model and the transaction cost-adjusted model. The objective is to assess whether
+incorporating transaction costs directly into the estimation process enhances predictive ac-
+curacy. While machine learning models are often criticized for deriving predictive power
+primarily from microcap stocks, integrating transaction costs enables the model to more
+effectively filter out transient and high-cost signals, which in turn enhances robustness and
+yields economically meaningful predictions. For assessing predictive performance, we use the
+out-of-sample predictive R2 methodology following Campbell and Thompson (2008):
+
+                                                                                     2
+                                               P
+                                 2                 (i,t)∈ttest (ri,t+1 − r̂i,t+1 )
+                                ROOS =1− P                                           2
+                                                                                                         (12)
+                                                   (i,t)∈ttest (ri,t+1 − r̃i,t+1 )
+
+
+
+where ttest represents the test dataset spanning from January 1987 to December 2021, ri,t+1
+denotes the realized excess return for stock i at month t+1, r̂i,t+1 is the predicted excess return
+  11
+    That is, instead of extending the validation period, it is shifted forward by one year for each successive
+out-of-sample test.
+
+
+
+                                                      15
+from a machine learning model, and r̃i,t+1 is the predicted excess return from a benchmark
+model. Following Gu, Kelly and Xiu (2020), we use a benchmark of 0 (i.e., r̃i,t+1 = 0), which
+                                                                                        2
+implies the model is evaluated against a prediction of zero excess returns. A positive ROOS
+indicates that the predictive model outperforms the benchmark in terms of out-of-sample
+                                                                                     2
+predictive accuracy (lower average mean-squared prediction error), while a negative ROOS
+implies the benchmark performs better.
+   Table 1 reports the predictive R2 statistics, showing that the TC model consistently
+outperforms the plain model across all sample specifications. In the full sample, the overall
+predictive R2 improves from 0.27% to 0.44%. Although the predictive R2 is generally higher
+in the full sample, the relative improvement is particularly striking for the nonmicrocap
+stocks, where the predictive R2 increases ninefold, from 0.03% to 0.27%. These results
+indicate that the plain model is primarily optimized to identify predictive patterns driven by
+microcap stocks, whereas incorporating transaction costs penalizes high-cost stocks—mostly
+microcaps—leading the model to shift its focus towards nonmicrocap stocks, where signals
+are more stable and implementable.
+   We further analyze the results by trading direction, based on the sign of predicted returns.
+The evidence indicates that predictive power is considerably higher for stocks with positive
+predicted returns (long positions) than for those with negative predicted returns (short
+positions), possibly reflecting the impact of short-sale constraints. More importantly, the
+TC model significantly enhances prediction accuracy across both long and short positions.
+This improvement is particularly pronounced for nonmicrocap stocks with positive predicted
+returns, where the difference in predictive R2 reaches 0.43%, suggesting that incorporating
+transaction costs is especially effective for stocks that are more liquid and less constrained
+by short-selling limitations.
+   Figure 2 reports the predictive R2 across transaction cost quintiles. Stocks are sorted
+by transaction costs, and the average R2 is computed within each quintile. As expected,
+predictive performance is generally higher for stocks with greater transaction costs, consistent
+
+
+                                              16
+with the pattern in Table 1 in that the full sample exhibits higher R2 than the nonmicrocap
+sample.
+   More importantly, the TC model exhibits consistently higher predictive R2 across all
+transaction cost quintiles, with the most pronounced improvement in the lowest transaction
+cost quintile (from 0.06% to 0.36%). By adjusting the objective function to place greater
+weight on stocks with lower transaction costs, our model has successfully improved its ability
+to capture predictive patterns—whether risk-based or behavioral—in these more economi-
+cally significant stocks. This aligns with the evidence from Table 1 that the nonmicrocap
+sample experiences more substantial improvements than the full sample. Notably, although
+modest, the improvement in the highest transaction cost quintile (from 0.60% to 0.63%)
+confirms that the model benefits all stocks—not just those with low transaction costs. This
+suggests that the model does not enhance predictive power for low-cost stocks at the ex-
+pense of high-cost ones. Rather, by accounting for economically motivated constraints, the
+TC model improves predictive accuracy across the entire cross-section.
+
+
+3.2    Portfolio Performance under Alternative CA Models
+
+Table 2 reports the performance of portfolios sorted in decile by predicted returns estimated
+from the conditional autoencoder models. Specifically, we employ a CA model with five
+factors and two hidden layers (CAE5(2)). In the plain model, portfolio returns are highly
+profitable, generating a monthly return of 3.1% in the full sample (Panel A). This aligns with
+the high-minus-low (H−L) portfolio results reported by Gu, Kelly and Xiu (2021). When
+the sample is restricted to nonmicrocap stocks, the return decreases to 1.3% (Panel B).
+   We also report portfolio returns net of transaction costs. Following DeMiguel, Garlappi
+and Uppal (2009) and Detzel, Novy-Marx and Velikov (2023), we define the net return for
+high-decile portfolios as:
+
+                                                     N
+                                                     X
+                          net
+                         rp,t = rp,t − (1 + rp,t )         |ωi,t − ωi,t− | ci,t−1 ,      (13)
+                                                     i=1
+
+
+                                                17
+where rp,t represents the gross return of the portfolio, ωi,t denotes the weight of stock i in
+                                              ω          (1+rp,t )
+month t after rebalancing, and ωi,t− = PN i,t−1
+                                            ω
+                                                                       is the corresponding weight before
+                                              j=1    j,t−1 (1+rp,t )
+
+rebalancing. The transaction cost for stock i at month t − 1 is denoted by ci,t−1 , as estimated
+in Section 2. For low-decile portfolios, the net return is given by:
+
+                                                     N
+                                                     X
+                          net
+                         rp,t = rp,t + (1 + rp,t )          |ωi,t − ωi,t− | ci,t−1 .                 (14)
+                                                     i=1
+
+
+In this way, the net return of the hedge portfolio is computed as the difference between
+the net returns of the high- and low-decile portfolios. Considering transaction costs reduces
+portfolio performance similarly across models: net returns are lower than gross returns by
+0.33% in the full sample and by 0.16% in the nonmicrocap sample. Nevertheless, the net
+returns remain economically and statistically significant.
+   To assess whether the improvement in predictive power of our transaction cost-adjusted
+model, as shown in Table 1, translates into better portfolio performance, we compare the re-
+turns of portfolios constructed using the plain model and the TC model. Imposing economic
+restrictions—such as transaction costs—can deteriorate in-sample performance by limiting
+the model’s flexibility to fit the data. However, when such restrictions reflect economically
+meaningful signals and help prevent overfitting, they may lead to improved performance
+out-of-sample.
+   In Panel A, we compare the performance of the TC model to the plain model using
+the full sample. The hedge portfolio delivers approximately 5% higher monthly returns
+(3.25% vs. 3.10%) and a higher Sharpe ratio (1.51 vs. 1.44) under the TC model. The
+advantage of the TC model becomes significantly more pronounced in Panel B, which focuses
+on nonmicrocap stocks. While the performance of the plain model deteriorates markedly
+once microcaps are excluded, the TC model maintains relatively strong performance, with
+the H–L portfolio generating substantially higher gross monthly returns (1.75% vs. 1.29%).
+The Sharpe ratio also improves markedly—by more than 40%—rising from 0.76 to 1.07.
+
+
+
+                                                    18
+These findings are consistent with the evidence in Table 1, where the predictive power of the
+TC model improves considerably in the nonmicrocap sample, translating into a substantial
+enhancement in portfolio performance.
+       The outperformance of the TC model relative to the plain model can be decomposed into
+two components: the return attributable to systematic risk (risk premium) and the abnormal
+return. In Panel B, both the low and high decile portfolios in the TC model exhibit lower
+exposure to systematic risk compared to their counterparts in the plain model,12 suggesting
+that some of the Fama-French six factors tend to load on stocks with higher transaction
+costs. The reduction in systematic risk is comparable across the two portfolios, resulting in
+only a slight difference in the risk premium of the hedge portfolio: 0.65% (= 1.75 − 1.10) in
+the TC model versus 0.63% (= 1.29 − 0.66) in the plain model. Accordingly, approximately
+95% of the improvement in portfolio performance in the nonmicrocap sample is attributable
+to abnormal returns.13
+       Moreover, although the increase in abnormal return arises from both the long and short
+positions, it is primarily driven by the long leg. Specifically, 74% of the abnormal return
+improvement comes from the long position.14 This finding aligns with Table 1, which shows
+that the TC model significantly improves predictability for stocks with positive expected
+returns. Overall, these results indicate that the superior performance of the TC model is
+not simply due to increased exposure to common risk factors (e.g., Fama-French factors),
+nor is it predominantly driven by short positions, which are often constrained by short-sale
+limitations.15
+  12
+     The low (high) decile portfolio earns a risk premium of 0.39% (1.02%) in the plain model, compared to
+0.15% (0.80%) in the TC model.
+  13          1.10−0.661
+     That is, 1.751−1.288 = 95%.
+  14
+     This corresponds to 0.683−0.359
+                           1.10−0.661 = 74%.
+  15
+     Our approach does not directly accommodate short-sale constraints. However, this evidence suggests
+that the TC model does not improve predictability primarily by capturing prevalent overpricing in stock
+markets, as documented by Stambaugh, Yu and Yuan (2012). Related studies, such as Drechsler and
+Drechsler (2016), Engelberg, Reed and Ringgenberg (2018), and Patton and Weller (2020), emphasize the
+impact of short-sale constraints on limiting arbitrage.
+
+
+
+
+                                                   19
+3.3        Characteristic Importance Analysis
+
+Our TC model enhances portfolio performance by recalibrating the optimization process to
+account for trading frictions. We examine these adjustments at the characteristic level using
+two approaches. First, we analyze the gradient of each characteristic during optimization to
+understand the model’s in-sample mechanics. Second, we assess each characteristic’s out-of-
+sample contribution by setting its values to zero across all stocks while keeping the others
+unchanged.
+
+
+3.3.1       Importance Based on Absolute Partial Derivatives
+
+We first measure characteristic influence using the partial derivatives of the loss function
+with respect to each input variable, following Dimopoulos, Bourret and Lek (1995). This ap-
+proach captures the model’s internal decision-making process and helps determine whether
+the TC model’s superior performance arises from systematically different valuations of spe-
+cific characteristics. Specifically, the absolute values of the partial derivatives (referred to as
+saliency values) with respect to characteristic j are aggregated across stock-month observa-
+tions within each training sample as follows:
+
+                                                         T   N
+                                                   1 X X ∂L (θ; ·)
+                                      SADj,t =                                                              (15)
+                                                  N T t=1 i=1 ∂z j
+
+
+The sum of absolute partial derivatives (SAD) varies substantially over time, so we normalize
+it by scaling the maximum value to one within each training sample.16 The normalized SAD
+thus reflects the relative importance of each characteristic within the sample.
+       Figure 3 presents the average values of SADj,t across training samples for both the plain
+and TC models. Panel A, which reports results for the full sample, shows that the plain
+model (light blue) exhibits a strong concentration in a few characteristics. In particular, 1-
+month momentum (mom1m) dominates, followed by market equity (mvel1), return volatility
+  16
+       This implies that the most influential characteristic in each training sample is assigned a value of one.
+
+
+
+                                                        20
+(retvol), illiquidity (ill), and bid-ask spread (baspread). The TC model (dark blue) also
+identifies similar characteristics as important (i.e., those with high gradients), such as market
+value (mvel1), 1-month momentum (mom1m), market beta (beta), illiquidity (ill), and
+return volatility (retvol). Indeed, 18 of the top 20 characteristics overlap between the two
+models.
+       However, the TC model systematically reduces reliance on a few characteristics—particularly
+those classified as trading frictions by Hou, Xue and Zhang (2015), which exhibit a remark-
+able decline in importance. The most prominent characteristics in this category include 1-
+month momentum (mom1m, importance drops from 0.97 to 0.54), return volatility (retvol,
+0.71 to 0.44), bid-ask spread (baspread, 0.64 to 0.40), dollar trading volume (dolvol, 0.61 to
+0.40), and market equity (mvel1, 0.78 to 0.58).17
+       Panel B presents results based on the nonmicrocap sample. The characteristics deemed
+important in the full sample remain similarly important in the nonmicrocap sample. For
+instance, under the TC (plain) model, 20 (18) of the top 20 characteristics in the full sample
+also appear in the nonmicrocap sample. Again, many of these influential characteristics are
+classified as trading frictions and show a substantial decline in their importance.
+       When a model relies heavily on a few characteristics to capture return predictability,
+it risks overfitting, which can harm out-of-sample performance. By shifting its focus from
+costly-to-trade stocks to more implementable ones, the TC model reduces dependence on a
+narrow set of highly predictive characteristics, thereby enhancing its predictive power.
+       Moreover, as shown in Figure IA.1, the difference in characteristic importance between
+the full and nonmicrocap samples is more pronounced in the plain model. This substantial
+gap suggests that the asset pricing relationships may not hold consistently across samples,
+which is undesirable. In contrast, the TC model exhibits minimal differences, indicating that
+it largely preserves the relationship between characteristics and expected returns for more
+economically significant stocks.
+  17
+     The bid-ask spread is not included in Hou, Xue and Zhang (2015), but it is widely considered a proxy
+for trading frictions, as a wider spread is associated with higher transaction costs.
+
+
+                                                   21
+3.3.2      Importance Based on Risk-Adjusted Returns
+
+Kelly, Pruitt and Su (2019) and Gu, Kelly and Xiu (2020) propose measuring the incremental
+contribution of each characteristic by evaluating the reduction in total R2 when the values
+of a given characteristic are set to zero, holding all others constant. However, since this R2
+is computed in-sample and averaged across all stocks, the results may be disproportionately
+influenced by microcap stocks (see Jo and Kim (2025) for details). To address this, we
+modify their approach by evaluating portfolio performance out-of-sample. Specifically, we
+measure the reduction in abnormal returns (relative to the Fama-French six-factor model)
+when the values of each characteristic are set to zero. This method highlights characteristics
+that contribute to return predictability beyond standard risk factors in an out-of-sample
+context.
+   As the abnormal returns of portfolios constructed using the plain and TC models differ,
+Figure 4 presents the percentage reduction in performance relative to each model’s respective
+baseline result to examine the marginal contribution of each characteristic. For the full
+sample (Panel A), the plain model’s performance is heavily influenced by characteristics
+that also rank highly in Figure 3, with 15 of the top 20 characteristics overlapping.
+   Consistent with Figure 3, the TC model reduces reliance on the key characteristics that
+explain abnormal returns. In the plain model, the most influential characteristic—illiquidity
+(ill)—leads to a 34.1% reduction in performance when removed, followed by 1-month mo-
+mentum (mom1m, 31.5%) and 6-month momentum (mom6m, 23.2%). In contrast, the TC
+model’s most significant variables are more modest: illiquidity (ill) with a 25.8% reduc-
+tion, return volatility (retvol) with 23.0%, and 1-month momentum (mom1m) with 22.6%.
+This suggests the TC model spreads predictive power more evenly across characteristics and
+reduces overreliance on a few dominant variables.
+   Panel B based on the nonmicrocap sample reveals a similar contrast between the plain
+and TC models. In the plain model, removing illiquidity (ill) results in the largest per-
+formance drop—54.3%. This is followed by share turnover volatility (std turn) at 33.5%
+
+
+                                             22
+and 6-month momentum (mom6m) at 30.3%. In contrast, the TC model’s most influen-
+tial characteristics exhibit smaller reductions: return volatility (retvol) at 36.9%, 1-month
+momentum (mom1m) at 36.1%, and 6-month momentum (mom6m) at 27.6%.
+    It is worth noting that, in both samples, the plain model tends to include more character-
+istics with negative importance—meaning that their removal actually improves out-of-sample
+performance. Negative importance typically signals overfitting, where a characteristic ap-
+pears predictive in-sample but fails to generalize out-of-sample. In the plain model, 36 and
+37 out of 94 characteristics exhibit negative importance in the full and nonmicrocap sam-
+ples, respectively. In contrast, the TC model shows far fewer such cases—only 28 in the full
+sample and just 9 in the nonmicrocap sample.
+    Together with the evidence based on absolute partial derivatives, this suggests that, by
+directly incorporating transaction costs into the estimation process, the TC model system-
+atically reduces overfitting, likely driven by trading frictions. This effect is particularly
+pronounced in the nonmicrocap sample, where the TC model demonstrates substantial im-
+provements in both predictive power and out-of-sample portfolio performance.
+
+
+
+4     Conclusion
+
+This paper proposes a transaction cost-adjusted machine learning model that enhances the
+economic relevance and robustness of stock return prediction. Building on the conditional
+autoencoder framework of Gu, Kelly and Xiu (2021), we incorporate transaction costs di-
+rectly into the model’s optimization process, penalizing costly-to-trade stocks while retaining
+the full stock universe. Our approach mitigates the small-stock bias and addresses overfit-
+ting to illiquid stocks, which often limits the practical use of standard machine learning
+models in asset pricing. Empirically, we find that the transaction cost-adjusted model (TC
+model) consistently improves the out-of-sample performance of portfolios constructed based
+on machine learning signals, particularly when microcap stocks are excluded. Furthermore,
+
+
+
+                                              23
+the TC model reduces reliance on a narrow set of trading-friction-related characteristics and
+significantly lowers the number of characteristics that detract from out-of-sample perfor-
+mance. By embedding economic frictions into model training, our framework better aligns
+statistical prediction with real-world investment considerations, offering a more practical and
+economically meaningful application of machine learning to asset pricing.
+
+
+
+
+                                              24
+References
+
+Avramov, D., Cheng, S. and Metzker, L. (2023) Machine learning vs. economic restrictions:
+  Evidence from stock return predictability, Management Science, 69, 2587–2619.
+
+Brandt, M. W., Santa-Clara, P. and Valkanov, R. (2009) Parametric portfolio policies: Ex-
+  ploiting characteristics in the cross-section of equity returns, The Review of Financial
+  Studies, 22, 3411–3447.
+
+Campbell, J. Y. and Thompson, S. B. (2008) Predicting excess stock returns out of sample:
+  Can anything beat the historical average?, The Review of Financial Studies, 21, 1509–
+  1531.
+
+Chen, L., Pelger, M. and Zhu, J. (2024) Deep learning in asset pricing, Management Science,
+  70, 714–750.
+
+Cong, L. W., Tang, K., Wang, J. and Zhang, Y. (2021) Alphaportfolio: Direct construction
+  through deep reinforcement learning and interpretable ai, SSRN Electronic Journal.
+
+DeMiguel, V., Garlappi, L. and Uppal, R. (2009) Optimal versus naive diversification: How
+  inefficient is the 1/n portfolio strategy?, The Review of Financial Studies, 22, 1915–1953.
+
+DeMiguel, V., Martı́n-Utrera, A., Nogales, F. J. and Uppal, R. (2020) A transaction-cost
+  perspective on the multitude of firm characteristics, The Review of Financial Studies, 33,
+  2180–2222.
+
+Detzel, A., Novy-Marx, R. and Velikov, M. (2023) Model comparison with transaction costs,
+  The Journal of Finance, 78, 1743–1775.
+
+Dimopoulos, Y., Bourret, P. and Lek, S. (1995) Use of some sensitivity criteria for choosing
+  networks with good generalization ability, Neural Processing Letters, 2, 1–4.
+
+Drechsler, I. and Drechsler, Q. F. (2016) The shorting premium and asset pricing anomalies,
+  Review of Financial Studies, 29, 3466–3501.
+
+                                             25
+Engelberg, J. E., Reed, A. V. and Ringgenberg, M. C. (2018) Short-selling risk, Journal of
+  Finance, 73, 755–786.
+
+Frazzini, A., Israel, R. and Moskowitz, T. J. (2018) Trading costs, SSRN Electronic Journal.
+
+Gârleanu, N. and Pedersen, L. H. (2013) Dynamic trading with predictable returns and
+  transaction costs, The Journal of Finance, 68, 2309–2340.
+
+Green, J., Hand, J. R. and Zhang, X. F. (2017) The characteristics that provide independent
+  information about average u.s. monthly stock returns, The Review of Financial Studies,
+  30, 4389–4436.
+
+Gu, S., Kelly, B. and Xiu, D. (2020) Empirical asset pricing via machine learning, The
+  Review of Financial Studies, 33, 2223–2273.
+
+Gu, S., Kelly, B. and Xiu, D. (2021) Autoencoder asset pricing models, Journal of Econo-
+  metrics, 222, 429–450.
+
+Hand, J. R. and Green, J. (2011) The importance of accounting information in portfolio
+  optimization, Journal of Accounting, Auditing, and Finance, 26, 1–33.
+
+Hou, K., Xue, C. and Zhang, L. (2015) Digesting anomalies: An investment approach, The
+  Review of Financial Studies, 28, 650–705.
+
+Hou, K., Xue, C. and Zhang, L. (2020) Replicating anomalies, The Review of Financial
+  Studies, 33, 2019–2133.
+
+Jensen, T. I., Kelly, B. T., Malamud, S. and Pedersen, L. H. (2024) Machine learning and
+  the implementable efficient frontier, The Review of Financial Studies.
+
+Jiang, J., Kelly, B. and Xiu, D. (2023) (re-)imag(in)ing price trends, The Journal of Finance,
+  78, 3193–3249.
+
+
+
+
+                                              26
+Jo, Y. and Kim, Y. (2025) Rethinking variable importance in machine learning: An economic
+  perspective on empirical asset pricing, Working Paper.
+
+Kelly, B. T., Pruitt, S. and Su, Y. (2019) Characteristics are covariances: A unified model
+  of risk and return, Journal of Financial Economics, 134, 501–524.
+
+Novy-Marx, R. and Velikov, M. (2016) A taxonomy of anomalies and their trading costs,
+  The Review of Financial Studies, 29, 104–147.
+
+Patton, A. J. and Weller, B. M. (2020) What you see is not what you get: The costs of
+  trading market anomalies, Review of Financial Studies, 33, 4069–4117.
+
+Stambaugh, R. F., Yu, J. and Yuan, Y. (2012) The short of it: Investor sentiment and
+  anomalies, Journal of financial economics, 104, 288–302.
+
+
+
+
+                                            27
+Figure 1: Distribution of Transaction Costs
+This figure illustrates the distribution of monthly transaction costs, as described in Section 2.1.
+Transaction costs are assumed to decline linearly over time and inversely with firm size. The solid
+line indicates the median, while additional percentiles are also shown.
+
+
+
+
+                                                28
+Figure 2: Out-of-Sample Predictive R2 Across Transaction Cost Deciles
+This figure illustrates the out-of-sample predictive R2 across transaction cost quintiles for both the
+plain model and the transaction cost model.
+
+
+
+
+                                                 29
+Figure 3: Characteristic Importance Based on Absolute Partial Derivatives
+This figure illustrates the importance of 94 characteristics based on absolute partial derivatives
+from the full sample (Panel A) and the nonmicrocap sample (Panel B). Annual absolute partial
+derivatives are normalized so that the most important characteristic has a value of one and then
+averaged over time. Dark blue bars represent the transaction cost model, and light blue bars
+represent the plain model. Characteristics are ordered by their importance in the TC model, with
+the most important at the top.
+
+
+Panel A. Full Sample
+
+
+
+
+                                               30
+Panel B. Nonmicrocap Sample
+
+
+
+
+                              31
+Figure 4: Characteristic Importance Based on Out-of-Sample Abnormal Returns
+This figure illustrates the importance of 94 characteristics from the full sample (Panel A) and the
+nonmicrocap sample (Panel B). Importance is measured by the percentage reduction in out-of-
+sample abnormal returns of long–short portfolios when the value of a given characteristic is set
+to zero. Abnormal returns are estimated using the Fama-French six-factor model. Dark blue bars
+represent the transaction cost model, and light blue bars represent the plain model. Characteristics
+are ordered by their importance in the TC model, with the most important at the top.
+
+
+Panel A. Full Sample
+
+
+
+
+                                                32
+Panel B. Nonmicrocap Sample
+
+
+
+
+                              33
+Table 1: Out-of-Sample Predictive R2
+This table presents out-of-sample predictive R2 for excess returns on individual stocks, comparing
+the plain model and the TC model. Average R2 values are reported for the full and nonmicrocap
+samples, partitioned by the sign of predicted excess returns (positive or negative).
+
+
+ Sample                       Plain Model               TC Model                Difference
+ Full                            0.27%                    0.44%                  0.16%
+ Full (r̂ > 0)                   1.11%                    1.29%                  0.18%
+ Full (r̂ < 0)                   0.13%                    0.31%                  0.19%
+ Nonmicrocaps                    0.03%                   0.27%                   0.24%
+ Nonmicrocaps (r̂ > 0)           0.64%                    1.08%                  0.43%
+ Nonmicrocaps (r̂ < 0)          -0.69%                   -0.57%                  0.12%
+
+
+
+
+                                               34
+Table 2: Performance of Portfolios Sorted by Returns Predicted by Conditional
+Autoencoder Models
+This table presents the performance of value-weighted portfolios sorted by expected returns from
+conditional autoencoder (CA) models from 1987 to 2021. CA models with five factors and two
+hidden layers (CAE5(2)) are estimated under the plain model and the transaction cost model,
+respectively. At the beginning of each month t, portfolios are formed by sorting into deciles based
+on these predicted returns. Performance is reported as gross returns (before transaction costs) and
+net returns (after transaction costs). FF6 represents the abnormal return relative to the Fama-
+French six-factor model. The Sharpe ratio (SR) is annualized. Panel A uses the full sample, and
+Panel B restricts the sample to nonmicrocaps. t-statistics, adjusted using Newey-West standard
+errors with four lags, are reported in parentheses. ***, **, and * denote significance at the 1%,
+5%, and 10% levels, respectively.
+
+
+Panel A. Full Sample
+
+         Expected                Gross Return                            Net Return
+          Return       Return         FF6            SR       Return         FF6          SR
+                        Portfolio Performance Based on the Plain Model
+ Low       -0.019      -0.745      -1.091***    -0.282      -0.621     -0.967***         -0.235
+                       (-1.61)       (-4.78)                (-1.34)      (-4.27)
+ High      0.033      2.349***     1.740***      0.960     2.148***     1.538***         0.879
+                       (5.42)        (5.33)                 (4.98)       (4.78)
+ H−L       0.052      3.095***      2.831***    1.442      2.769***     2.505***         1.298
+                       (7.56)        (6.28)                 (6.88)       (5.65)
+                  Portfolio Performance Based on the Transaction Cost Model
+ Low       -0.018     -1.077**    -1.196***    -0.337      -0.950**   -1.069***          -0.286
+                       (-2.32)      (-5.09)                 (-2.05)     (-4.60)
+ High       0.032    2.172***      1.668***     0.969     1.964***     1.461***          0.887
+                       (4.84)       (4.03)                  (4.39)      (3.56)
+ H−L       0.050     3.249***      2.864***     1.512     2.914***     2.530***          1.363
+                       (7.30)       (5.01)                  (6.64)      (4.48)
+
+
+
+
+                                                35
+Panel B. Nonmicrocap Sample
+
+       Expected                Gross Return                          Net Return
+        Return        Return       FF6             SR      Return       FF6        SR
+                       Portfolio Performance Based on the Plain Model
+Low     -0.012         0.089       -0.302*     0.039        0.167      -0.226     0.073
+                      (0.22)       (-1.68)                 (0.42)     (-1.25)
+High    0.018        1.378***     0.359***     0.845      1.292***    0.273**     0.793
+                      (4.88)        (2.84)                 (4.59)      (2.18)
+H-L     0.031        1.288***     0.661***     0.758      1.125***    0.499**     0.662
+                      (4.30)        (3.00)                 (3.76)      (2.26)
+                  Portfolio Performance Based on the Transaction Cost Model
+Low     -0.011         -0.271      -0.417**    -0.014       -0.189      -0.335*   0.023
+                      (-0.67)       (-2.36)                (-0.47)      (-1.90)
+High    0.018        1.480***      0.683***     0.989     1.398***     0.601***   0.943
+                       (4.66)       (4.98)                  (4.40)       (4.40)
+H-L     0.029        1.751***      1.100***     1.071     1.587***     0.937***   0.971
+                       (5.65)       (4.37)                  (5.13)       (3.72)
+
+
+
+
+                                              36
+Figure IA.1: Characteristic Importance Based on Absolute Partial Derivatives:
+Comparison between Full and Nonmicrocap Sample
+This figure illustrates differences in the importance of 94 characteristics, measured by absolute
+partial derivatives, between the full and nonmicrocap samples. Annual absolute partial derivatives
+are normalized so that the most important characteristic has a value of one and then averaged
+over time. Dark blue bars represent the transaction cost model, and light blue bars represent the
+plain model. Characteristics are ordered by their importance in the plain model, with the most
+important at the top.
+
+
+
+
+                                               37
+

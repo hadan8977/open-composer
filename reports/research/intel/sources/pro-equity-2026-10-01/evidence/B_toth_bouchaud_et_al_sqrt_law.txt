@@ -1,0 +1,113 @@
+URL: https://arxiv.org/pdf/1105.1694 (Toth, Lemperiere, Deremble, de Lataillade, Kockelkoren, Bouchaud, CFM, 'Anomalous price impact and the critical nature of liquidity', PRX 2011); square-root formula Delta(Q)=Y*sigma*sqrt(Q/V), Y order unity; also https://arxiv.org/pdf/0903.2428 (Bouchaud 'Price Impact', Encyclopedia of Quantitative Finance) pasted at end
+Fetched UTC: 2026-10-01 06:15:50
+Source type: open-access PDF, text via pdftotext -layout (/tmp/B/toth.txt). Excerpted line ranges: 8,24 50,80 120,145
+
+----- lines 8,24 -----
+arXiv:1105.1694v3 [q-fin.TR] 1 Nov 2011
+
+
+
+
+                                                                                           Abstract
+                                                      We propose a dynamical theory of market liquidity that predicts that the average
+                                                  supply/demand profile is V-shaped and vanishes around the current price. This result is
+                                                  generic, and only relies on mild assumptions about the order flow and on the fact that
+                                                  prices are, to a first approximation, diffusive. This naturally accounts for two striking
+                                                  stylized facts: first, large metaorders have to be fragmented in order to be digested by the
+                                                  liquidity funnel, leading to long-memory in the sign of the order flow. Second, the anoma-
+                                                  lously small local liquidity induces a breakdown of linear response and a diverging impact
+                                                  of small orders, explaining the “square-root” impact law, for which we provide additional
+                                                  empirical support. Finally, we test our arguments quantitatively using a numerical model
+                                                  of order flow based on the same minimal ingredients.
+
+
+----- lines 50,80 -----
+futures, FX, etc.), epochs (from the mid-nineties, when liquidity was provided by market mak-
+ers, to present day’s electronic markets), market participants and underlying trading strategies
+(fundamental, technical, etc.) and style of execution (using limit or market orders, with high
+or low participation ratio, etc.), a very similar concave impact law is reported in most studies.
+More precisely, the average relative price change ∆ between the first and the last trade of a
+metaorder of size Q is well described by the so-called “square-root” law:
+                  r
+                     Q
+       ∆(Q) = Y σ       ,                                                                    (1)
+                     V
+where σ is the daily volatility of the asset, and V the daily traded volume, both quantities
+measured contemporaneously to the trade. The numerical constant Y is of order unity. Pub-     √
+lished and unpublished data suggest slightly different versions of this law; in particular the Q
+dependence is more generally described as a power-law relation ∆(Q) ∝ Qδ , with δ in the range
+0.4 to 0.7 [4, 5, 9, 6, 7, 8]. For example, using a large data sample of 700,000 US stock trade
+orders executed by Citigroup Equity Trading, Almgren et al. [4] extract δ ≈ 0.6. Moro et al.
+[9] report δ ≈ 0.5 for trades on the Madrid stock exchange and δ ≈ 0.7 for the London stock
+exchange. We show in Fig. 1 our own proprietary data corresponding to nearly 500,000 trades
+on a variety of futures contracts, which yields δ ≈ 0.5 for small tick contracts and δ ≈ 0.6
+for large tick contracts, for Q/V ranging from a few 10−4 to a few %. Our data on stocks is
+also compatible with δ ≈ 0.5, although more noisy. We note that all these studies differ quite
+significantly in the details of (a) how the price impact ∆ is defined and measured; (b) how
+different assets and periods are collated together in the analysis; (c) how the fit is performed:
+over what range of Q/V , adding an intercept or not, etc. But in spite of all these differences
+and those mentioned above – in particular concerning the strategies motivating the trades –, it
+is quite remarkable that the square-root impact law appears to hold approximately in all cases.
+    The aim of the present paper is to provide a theoretical underpinning for such a universal
+impact law. We first give a general dynamical theory of market liquidity that predicts that the
+average supply/demand profile is V-shaped around the current price. The anomalously small
+local liquidity induces a breakdown of linear response and explains the square-root impact
+law. We then study numerically a stylized model of order flow based on minimal ingredients.
+
+----- lines 120,145 -----
+                                      10                  10                    10
+                                                                        Q/V
+
+Figure 1: The impact of metaorders for CFM proprietary trades on futures markets, in the period June 2007
+– December 2010. Impact is measured here as the average execution shortfall of a metaorder of size Q. The
+data base contains nearly 500,000 trades. We show ∆/σ vs. Q/V on a log-log scale, where σ and V are the
+daily volatility and daily volume measured the day the metaorder is executed. The blue curve is for large tick
+sizes, and the red curve is for small tick sizes. For large ticks, the curve can be well fit with δ = 0.6, while for
+small ticks we find δ = 0.5. For comparison, we also show the lines of slope 0.5 (corresponding to a square-root
+impact) and 1 (corresponding to linear impact). We have removed a small positive intercept ∆/σ = 0.0015 for
+Q = 0, which is probably due to a conditioning effect.
+
+
+
+concavity has almost disappeared, except in rare cases when QT /V is large, in any case much
+larger than the region where Eq. (1) holds.
+    A square-root singularity for small traded volumes is highly non-trivial, and certainly not
+accounted for in Kyle’s classical model of impact [11], which predicts a linear impact ∆ ∝ Q.
+A concave impact function is often thought of as a saturation of impact for large volumes.
+We believe that the emphasis should rather be placed on the anomalous high impact of small
+trades. Numerically, Eq. (1) means that trading one hundredth of the daily volume moves the
+price by a tenth of its daily volatility, which is indeed a huge amplification. Mathematically,
+Eq. (1) implies that marginal impact diverges for small volumes as Q−1/2 , meaning that the
+susceptibility of the market to trades of vanishing size is formally infinite. In most systems,
+the response to a small perturbation is linear, i.e. small disturbances lead to small effects. The
+breakdown of linear response often implies that the system is at, or close to, a critical point,
+
+=== Bouchaud 'Price Impact' (arXiv 0903.2428) lines 195-225: BARRA square-root model ===
+often interpreted in terms of discretionary trading: large market orders are
+only submitted when there is a large prevailing volume at the best quote, a
+conditioning that mitigates the impact of these large orders.
+    The above results are established using the total aggregated signed vol-
+umes, independently of the origin of the trades. Large brokerage or trading
+firms can also measure the price impact of their own trades; a concave impact
+function is usually observed with a value of ψ close to 1/2, see e.g. Almgren
+
+                                       5
+et al. (2005), and Execution Costs. For example, the BARRA price im-
+pact model posits that, on a time interval ∆t needed to complete a typical
+trade,
+                                              v
+                                            r
+                              R(∆t, v) = Aσ     ,                          (9)
+                                              V
+where σ is the volatility and V the traded volume per unit time, and A a
+numerical coefficient of order unity (see BARRA, 1997). Different theoretical
+justifications for this square-root impact law are given in BARRA (1997),
+Grinold & Kahn (1999) and Gabaix et al. (2006).
+    In the case of stocks, one can also study empirically the influence of the
+market capitalisation M. One finds that when ∆t corresponds to a single
+trade, the data can be approximately rescaled as (Lillo et al. 2003):
+                                                   v
+                                                    
+                         R(∆t, v) ≈ M −0.3 F M 0.3     ,                  (10)
+                                                   v
+where v is the average volume per trade for a given stock, and F (.) a master

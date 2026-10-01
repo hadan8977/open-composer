@@ -1,0 +1,66 @@
+URL: https://raw.githubusercontent.com/alexisdpc/WorldQuant-alpha-trading/main/ImprovingAlphas.md (THIRD-PARTY GitHub tutorial on WorldQuant BRAIN; NOT official WorldQuant documentation)
+Fetched UTC: 2026-10-01 06:15:14
+Official BRAIN docs (platform.worldquantbrain.com) are a JS single-page app requiring login: not retrievable. The 'self-correlation > 0.7 fails' and 'subuniverse_sharpe >= 0.75*sqrt(size ratio)*alpha_sharpe' rules appeared only in web-search snippets of third-party repos (deepwiki xiegengcai/world-quant-brain; fetch gave HTTP 429): UNVERIFIED, I did not open the source.
+
+## Improving Alphas
+
+When you build an alpha on BRAIN, the raw signal is rarely submission-ready. Improving an alpha means raising its risk-adjusted performance while keeping its trading cost, concentration, and risk exposures within acceptable bounds. The main levers are **smoothing** (decay), **conditional trading** (`trade_when`), **outlier control** (winsorization/truncation), **normalization** (`rank`, `zscore`, `scale`), and **neutralization** (`group_neutralize`, `regression_neut`). Below we define the key metrics and the operators used to move them.
+
+---
+
+### ▶ Turnover
+
+Turnover of an alpha measures its daily trading activity — how much of the book is bought and sold each day relative to how much is held.
+
+$$
+{\rm Turnover} = \frac{\text{Dollar Trading Value}}{\text{Booksize}} = \frac{\text{Value Traded}}{\text{Value Held}}
+### ▶ Fitness
+
+Fitness combines returns, turnover, and Sharpe into a single quality score. It is defined as:
+
+$$
+\text{Fitness} = \text{Sharpe} \, \sqrt{\frac{\left| {\rm returns} \right|}{\max\!\left[{\rm turnover},\, 0.125\right]}}
+$$
+
+where the Sharpe ratio annualizes the daily mean return over its volatility:
+
+$$
+\text{Sharpe} = \sqrt{252}\,\frac{\overline{r}}{\sigma_r}
+$$
+
+Good alphas generally have high fitness. You can improve fitness by **increasing Sharpe (or returns)** and **reducing turnover**. Note the $\max[\cdot, 0.125]$ floor: once turnover drops below 12.5%, further reductions no longer boost fitness, so over-decaying past that point only sacrifices signal. The passing requirement for fitness on the BRAIN platform is **greater than 1.0**.
+
+---
+
+### ▶ Sharpe and Returns
+
+The Sharpe ratio is the primary measure of risk-adjusted performance. On BRAIN the in-sample passing threshold is typically **Sharpe > 1.25**. Two ways to raise it:
+
+- **Reduce noise** — smoothing (`ts_decay_linear`) and normalization (`rank`, `zscore`) lower volatility without necessarily lowering mean return.
+- **Reduce unwanted risk** — neutralization removes systematic exposures that add volatility but no edge (see below).
+
+---
+---
+
+### ▶ Neutralization Operators
+
+Neutralization removes systematic exposures (to the market, a sector, or a risk factor) so the alpha bets only on the residual idiosyncratic signal. This usually lowers volatility and raises Sharpe.
+
+**Group neutralization** `group_neutralize` subtracts the group mean so each group (e.g. sector, industry) nets to zero:
+
+$$
+\mathrm{GN}(x, g)_i = x_i - \frac{1}{\left| G_i \right|}\sum_{j \in G_i} x_j
+$$
+
+```
+
+$$
+{\rm MaxDD} = \max_{t}\ {\rm DD}_t = \max_{t}\left[\frac{\max_{\tau \le t} C_\tau - C_t}{\max_{\tau \le t} C_\tau}\right]
+$$
+
+A large drawdown signals an alpha that suffers prolonged, painful losing stretches even if its long-run Sharpe is acceptable. On BRAIN the in-sample limit is typically **MaxDrawdown < 50%**. Ways to reduce it:
+
+- **Outlier control** (`winsorize`, `truncate`) caps the damage from any single instrument or extreme day.
+- **Neutralization** (`group_neutralize`, `regression_neut`) removes systematic exposures that cause correlated, simultaneous losses.
+
+--- IQC guidelines (official, https://www.worldquant.com/brain/iqc-guidelines/): alphas 'considered for scoring if they qualify for out-of-sample testing'; no numeric thresholds on page ---

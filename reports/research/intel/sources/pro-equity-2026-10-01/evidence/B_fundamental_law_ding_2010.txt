@@ -1,0 +1,117 @@
+URL: https://math.nyu.edu/inmemoriam/avellaneda/FundamentalLawFT.pdf (Zhuanxin Ding, Fuller & Thaler, rev Feb 2010, 'The Fundamental Law of Active Management: Time Series Dynamics and Cross-Sectional Properties'). SECONDARY source quoting Grinold 1989, Grinold-Kahn 2000, Clarke-de Silva-Thorley 2002 (CdST 2002 FAJ itself is paywalled; SSRN/T&F/CFA copies blocked 'Content Blocked' -> not retrieved). Formulas/quotes are as relayed by Ding.
+Fetched UTC: 2026-10-01 06:12:20
+Source type: open-access PDF, text via pdftotext -layout (/tmp/B/avel.txt). Excerpted line ranges: 12,100 380,400
+
+----- lines 12,100 -----
+
+                               First Draft October 15, 2009
+                                   Revised Feb 24, 2010
+
+                                       ABSTRACT
+
+   I derive a generalized version of the fundamental law of active management under
+   some weak conditions. I show that the original fundamental law of Grinold and
+   various extensions are all special cases of the generalized fundamental law
+   presented in this paper. I also show that cross-sectional ICs are usually different
+   from time series ICs even if the time series ICs are all the same across securities.
+   The fundamental law derived in this paper is quite robust to forecast model
+   specification. Our results show that the variation in IC (IC volatility over time)
+   has a much bigger impact to portfolio IR than the breadth N for a typical
+   investment universe. I extend the fundamental law to models with multiple factors
+   and study the impact of missing one or more return or risk factors to portfolio IR.
+   Our results also show that the transfer coefficient as originally defined by Clarke
+   et al. (2002) is not able to capture the impact of constraints to portfolio IR in the
+   presence of IC variation. I redefine the concept of transfer coefficient using the
+   cross-sectional correlation between the total conditional covariance adjusted
+   active weights and alphas so that the resulting transfer coefficient has the desired
+   property.
+
+
+Since the publication of "The fundamental law of active management" by Grinold (1989)
+two decades ago, it has been widely used in the quantitative investment community as a
+tool to assess a portfolio manager's ability to add value. According to Grinold (1989), the
+fundamental law relates three variables: your skill in forecasting exceptional returns (IC),
+the breadth of your strategy (N), and the value added of your investment strategy (IR).
+Grinold (1989) claims that "based on assumptions that are not quite true and simplified
+with some reasonable approximations" the three variables have the following
+relationship:
+         IR = IC N ,                                                                 (1)
+where IR is the information ratio, IC is the information coefficient, and N is the breadth.
+Even though Grinold (1989) did not give a precise definition of breadth N, portfolio
+
+
+                                                                                           1
+managers or analysts usually use the number of stocks in the investment universe as
+breadth. The derivation of the fundamental law is closely related to another Grinold paper
+(Grinold (1994)) that shows "Alpha is Volatility Times IC Times Score", i.e.,
+       α it = σ ri IC zit −1 ,                                                     (2)
+where σ ri is the residual return (will be defined below) volatility and zit −1 is the
+standardized forecast signal (score) that is known at the end of time t-1. The theoretical
+and empirical development on this line of the fundamental law culminated in the book by
+Grinold and Kahn (2000) titled "Active Portfolio Management." Based on the
+fundamental law, Grinold and Kahn (2000) conclude that "you (portfolio managers) must
+play often and play well to win at the investment management game. It takes only a
+modest amount of skill to win as long as that skill is deployed frequently and across a
+large number of stocks."
+
+Unfortunately, the theoretically calculated IR number from Grinold's fundamental law
+seems to always overestimate the IR a portfolio manager can reach. For example, given a
+forecast signal with a monthly average IC of 0.03 and a selection universe of 1000 stocks,
+the expected annualized IR from Grinold's formula is 3.29 which is beyond even the most
+optimistic portfolio manager's dreams. Portfolio managers are left wondering why
+realized information ratios are only a fraction of their predicted value. Clarke et al. (2002,
+p50) point out "a common rule of thumb in practice is that the theoretical information
+ratio suggested by the fundamental law should be cut in half." However, for the above
+mentioned example, the IR estimate will still be too high even if cut by half (IR=1.64).
+As noted by Grinold (1989, p32) himself "an observed information ratio above 1.5 is rare
+indeed." Of course, it can be the case that the N used in our calculation, which is the
+number of stocks available in the investment universe, is not what meant to be the right
+measure of breadth by Grinold. Grinold (1989) provides a detailed discussion on this
+subject and emphasized the importance of counting only independent bets as breadth.
+Grinold (2007) provides some further discussion on this topic. Unfortunately, it is still
+not a straightforward exercise to determine what breadth should be used in practice.
+
+Clarke et al. (2002) attribute the reduction in performance to the constraints in the
+portfolio construction process and proposed the concept of "the transfer coefficient" to
+account for the leaking of IR from Grinold's original formula. They show that constraints
+in portfolio construction (constraints such as country or sector exposures, long only, etc.),
+leads to suboptimal portfolio weights in terms of alpha generation, thus reducing the
+maximum achievable IR. They developed a framework for measuring the deviation of the
+optimal constrained weights from optimal non-constrained weights and proposed a
+generalized fundamental law as follows:
+         IR = TC IC N ,                                                               (3)
+where TC is the transfer coefficient, defined as the cross-sectional correlation coefficient
+between risk-adjusted expected residual returns and risk-adjusted active weights.
+According to their simulation study, the typical transfer coefficient is in the range of 0.3
+to 0.8. So the original IR calculated from Grinold's formula should be about halved. Even
+so, as discussed above, the TC adjusted IR still appears to be too high.
+
+
+
+
+                                                                                            2
+In order to understand why that happens, we need to examine the assumptions made by
+Grinold in deriving his fundamental law. The original form of the fundamental law by
+
+----- lines 380,400 -----
+where Ecs stands for the cross-sectional expectation operator. In deriving Equation (22)
+we used the assumption that the forecast signal, zit −1 , is cross-sectionally normalized to
+have mean 0 and standard deviation 1. When all the time series ICs are the same, i.e.
+IC ts , i = IC ts for all i, we have
+                    IC ts
+        IR =                        N ≈ IC ts N .                                                (23)
+                1 − IC ts2
+The approximation holds when IC ts is small which is typically the case in empirical work.
+
+Equation (23) proved that the original fundamental law of Grinold (1989) holds
+approximately under the time series model assumption when ICs are the same across all
+the assets and is small. The reason that the original formula of Grinold (1989) needs to be
+adjusted by 1 − IC ts2 is that we used the conditional volatility of the residual return
+instead of the unconditional one. Some interesting observations can be made from
+Equations (22) and (23). When one has the skill to predict some residual returns perfectly
+(some IC ts ,i = 1 ) then the IR shall go to infinity no matter what the breadth is. This makes
+intuitive sense because if one can predict some residual returns perfectly then she/he can
+make a sure bet on these stocks against the rest of the universe to achieve the desired
+excess return. The IR will be infinity since the optimization is set in such a way that one
+can take a leveraged bet. This is not a feature in the original Grinold formula which states
+that the IR will increase with the square root of N even if IC ts = 1 .

@@ -1,0 +1,1772 @@
+URL: https://arxiv.org/pdf/2604.17166
+Fetched (UTC): 2026-10-01T06:09Z
+Note: pdftotext v2 Sep 2026
+-----
+                                              The Virtue of Sparsity in Complexity
+
+                                                            Nima Afsharhajari, Jonathan Yu-Meng Li
+arXiv:2604.17166v2 [q-fin.GN] 21 Sep 2026
+
+
+
+
+                                                                        Telfer School of Management
+
+                                                                            University of Ottawa
+
+                                                         nafsh100@uottawa.ca, jonathan.li@telfer.uottawa.ca
+
+                                                                 This Version: September 14, 2026
+
+
+                                                                                  Abstract
+
+                                               Sparsity or complexity? In modern high-dimensional asset pricing, these are of-
+
+                                            ten viewed as competing principles: recent empirical evidence favors richer models,
+
+                                            while economic intuition has long favored parsimony. We reconcile this tension by
+
+                                            distinguishing capacity sparsity—restrictions on effective model capacity—from factor
+
+                                            sparsity—the parsimonious structure of priced risks. Revisiting the benchmark empir-
+
+                                            ical design of Didisheim et al. (2025), we combine nonlinear feature expansions with
+
+                                            basis pursuit, using column generation and GPU acceleration to scale estimation to
+
+                                            432 million candidate factors. Reaching this scale reveals a reversal in out-of-sample
+
+                                            performance: sparse portfolios trail dense ridgeless benchmarks at lower complexity
+
+                                            but achieve a higher Sharpe ratio and lower pricing error at the largest candidate set.
+
+                                            Capacity expansion and factor sparsity are therefore complements: enlarging the can-
+
+                                            didate space allows a parsimonious pricing kernel to outperform its dense counterpart.
+
+                                            Keywords: Asset pricing, stochastic discount factor, factor models, overparameteri-
+
+                                            zation, basis pursuit, machine learning
+1     Introduction
+
+Recent work (Kelly et al., 2024; Didisheim et al., 2025; Kelly and Malamud, 2025) highlights
+a virtue of complexity in empirical asset pricing: large nonlinear factor sets, when com-
+bined with shrinkage, can outperform traditional parsimonious models. As high-dimensional
+methods become central to machine-learning-based SDF estimation, sparsity—long a guid-
+ing principle in empirical asset pricing and econometrics—appears increasingly marginalized.
+The prevailing message is that richer models dominate simpler ones.
+    Didisheim et al. (2025) illustrate this shift by comparing models built from large factor
+sets with (i) traditional low-dimensional factor models and (ii) models that compress a large
+set of factors into a few principal components (Kozak et al., 2020). They show that high-
+dimensional specifications outperform both alternatives and argue that principal-component
+compression may discard low-variance directions that still contain economically meaningful
+pricing information. Yet the idea that “more is better” remains difficult to reconcile with
+the long-standing economic discipline of parsimony in asset pricing. While large factor sets
+may improve performance, it remains unclear what economic structure an ever-expanding
+set of factors actually captures.
+    We reconcile this tension by distinguishing two notions of sparsity: capacity sparsity and
+factor sparsity. The former concerns restrictions on effective model capacity, whereas the lat-
+ter refers to the parsimonious economic structure of priced risks. In Didisheim et al. (2025),
+the sparsity at issue pertains primarily to capacity sparsity, as their critique is directed at the
+underperformance of approaches that restrict effective model capacity, whether through clas-
+sical low-dimensional asset-pricing structures, dimension reduction such as PCA, or strong
+shrinkage imposed on a rich set of candidate factors. Our key insight is that capacity ex-
+pansion and factor sparsity are complements. Complexity expands the menu of candidate
+components, while sparsity determines which components are selected. A richer candidate
+space can therefore improve the performance of a pricing kernel with few active factors.
+
+
+
+                                                1
+   To operationalize this idea, we estimate conditional stochastic discount factors (SDFs)
+using a rich nonlinear feature expansion together with basis pursuit, the minimum-ℓ1 in-
+terpolating solution. The feature expansion enlarges the candidate factor span, while basis
+pursuit selects a parsimonious pricing kernel within that span. In contrast to approaches
+that discipline complexity by compressing the candidate space itself, our approach retains
+high capacity and imposes parsimony at the level of the selected pricing kernel.
+   To examine the empirical value of factor sparsity, we adopt the “apples-to-apples” em-
+pirical design of Didisheim et al. (2025). Holding the information set fixed, we vary model
+complexity by expanding the number of nonlinear factors P . A key property of basis pursuit
+is that it admits an optimal solution with at most T active factors, where T denotes the
+number of in-sample observations. Consequently, even as the candidate feature space be-
+comes highly overparameterized—particularly in regimes where P ≫ T —the resulting SDF
+remains sparse relative to the large factor models considered in Didisheim et al. (2025).
+   Our main specification uses a rolling training window of T = 180 months and expands the
+candidate set to 432 million factors, or a complexity ratio of c = P/T = 2.4 million. Basis
+pursuit admits an optimal solution with at most 180 active factors. We make estimation
+feasible at this scale by combining column generation with GPU acceleration. At lower
+complexity, the dense SDF outperforms the sparse SDF. As complexity increases, dense
+performance largely plateaus, while sparse performance improves overall. At the largest
+candidate set, the annualized Sharpe ratios are approximately 3.59 for the sparse SDF and
+3.53 for the dense benchmark, and the sparse SDF also attains a lower pricing error. The
+endpoint advantage is modest, but the reversal in ranking is consequential: it occurs well
+beyond the upper complexity ratio of c = 1,000 examined by Didisheim et al. (2025). A
+comparison confined to that range would miss the performance attainable by a sparse pricing
+kernel selected from a much larger candidate space.
+   The return decomposition helps explain this reversal. At high complexity, the dense
+SDF’s mean return and volatility largely stabilize, while the sparse SDF benefits from both
+
+
+                                             2
+higher mean returns and further volatility reduction as the candidate set expands. At the
+largest candidate set, the sparse portfolio earns a higher mean return and a higher Sharpe ra-
+tio despite remaining somewhat more volatile than the dense benchmark. It nearly dominates
+across the four reported return quantiles: its 25th, 75th, and 90th percentiles are higher,
+while its 10th percentile remains slightly lower. After scaling both portfolios to a common
+annualized volatility of 10%, the sparse SDF also delivers a higher certainty-equivalent re-
+turn at the largest candidate set for each of the three risk-aversion coefficients examined,
+γ ∈ {1, 2, 5}. The advantage of sparse selection thus survives a utility-based comparison at
+common volatility.
+   These results reframe the virtue-of-complexity debate. A large candidate factor space
+can support an effective pricing kernel with few active factors. Factor sparsity therefore
+remains an economically useful principle in high-capacity asset pricing.
+
+
+1.1    Related Literature
+
+Our paper contributes to the growing literature that integrates high-capacity machine learn-
+ing methods into empirical asset pricing. Within this literature, two closely related streams
+have emerged. The first focuses on improving return prediction from large sets of firm
+characteristics using flexible nonlinear prediction rules and extensive model comparisons.
+This work primarily addresses the forecasting problem at the level of individual assets or
+characteristic-sorted portfolios (e.g., Gu et al., 2020; see also Feng et al., 2020 for evidence
+on disciplined factor selection in large factor collections). A second stream applies machine
+learning methods to estimate conditional stochastic discount factors (SDFs) or conditional
+factor structures that price the cross-section of assets. Representative examples include
+deep-learning approaches that impose no-arbitrage moment restrictions in the estimation
+of the pricing kernel (e.g., Chen et al., 2024) and latent-factor models with conditioning
+information embedded through modern dimension-reduction architectures (e.g., Kelly et al.,
+2019; Gu et al., 2021). Our paper falls within this second strand. We study conditional
+
+
+                                               3
+SDF estimation in high-capacity settings and examine how model complexity translates into
+economic performance.
+   Our work also contributes to the recent debate on the virtue of complexity in empir-
+ical asset pricing. Recent evidence suggests that increasingly complex models—including
+overparameterized feature expansions paired with shrinkage—can deliver large gains in out-
+of-sample performance in return prediction and in factor pricing models (e.g., Kelly et al.,
+2024; Didisheim et al., 2025). At the same time, recent critiques argue that some apparent
+gains from complexity in return prediction can reflect statistical artifacts or unstable extrap-
+olation in highly flexible specifications (e.g., Nagel, 2025). Related work clarifies why such
+critiques need not overturn the core virtue-of-complexity evidence, while also highlighting
+that complex models can exhibit nuanced behavior that depends on design and estimator
+choice (e.g., Kelly and Malamud, 2025). Our results complement this debate by sharpening
+the mechanism: when the hypothesis class is rich, economic performance depends not only
+on the availability of many candidate components, but also on the selection principle that
+maps complexity into factor exposures.
+   More broadly, our paper relates to the long-standing role of sparsity and parsimony in em-
+pirical asset pricing. Classical practice emphasizes small factor representations, while mod-
+ern high-dimensional approaches often discipline estimation through shrinkage and eigen-
+structure-aware regularization. For example, Kozak et al. (2020) construct robust SDFs in
+large candidate sets by shrinking exposures associated with low-variance principal-component
+directions. In contrast, recent virtue-of-complexity evidence argues that aggressively com-
+pressing large factor sets through dimension reduction can discard economically meaning-
+ful low-variance directions and thereby degrade pricing performance (e.g., Didisheim et al.,
+2025). Our analysis clarifies that these perspectives concern different notions of sparsity. We
+distinguish capacity sparsity, which restricts effective model capacity, from factor sparsity,
+which concerns whether the underlying economic structure of priced risks remains parsimo-
+nious. This distinction allows complexity and sparsity to coexist: complexity expands the
+
+
+                                               4
+hypothesis class, while sparsity governs selection of economically meaningful components
+within it.
+    This perspective also connects to insights from statistical learning theory that emphasize
+the role of inductive bias in overparameterized regimes. When many solutions fit the data
+similarly well, generalization is governed not only by model capacity but also by the esti-
+mator’s implicit preferences over the solution set. Wilson (2025) develops this idea through
+the lens of soft inductive bias, and related work on interpolation, double descent, and benign
+overfitting shows how selection rules within high-capacity classes can produce counterintu-
+itive out-of-sample behavior even when training error is driven to zero (e.g., Hastie et al.,
+2022; Bartlett et al., 2020). Applied to asset pricing, the relevant question is therefore not
+only whether the SDF is estimated in a high-dimensional space, but which pricing kernel is
+selected from a large set of near-equivalent high-dimensional solutions.
+    Finally, our findings provide a complementary perspective on the “factor zoo” in empirical
+asset pricing. The proliferation of proposed factors has long been noted (e.g., Cochrane, 2011)
+and is closely tied to concerns about multiple testing, replication, and post-publication decay
+in characteristic-based predictors (e.g., Harvey et al., 2016; Hou et al., 2020; McLean and
+Pontiff, 2016). At the same time, modern open-data efforts document broad reproducibility
+of many published predictors when construction choices are standardized (e.g., Chen and
+Zimmermann, 2022; Jensen et al., 2023). Our results suggest an additional interpretation
+that is especially salient in high-capacity conditional SDF settings: the challenge is not
+merely that many candidate factors exist, but that identifying the economically relevant
+ones requires a powerful search space combined with an effective selection mechanism.
+
+
+
+2     Empirical Methodology
+
+This section develops the empirical framework for estimating conditional stochastic discount
+factors (SDFs) and introduces the two notions of sparsity that arise in high-capacity asset
+
+
+
+                                              5
+pricing models. We begin with the conditional SDF representation used in modern empirical
+asset pricing. We then distinguish capacity sparsity from factor sparsity and explain how
+increasing model complexity can help reveal sparse economic structure. Next, we present our
+estimation approach, which combines scalable nonlinear feature expansions with basis pursuit
+to identify sparse pricing kernels within a large factor span. Finally, we characterize sparse
+and dense interpolating SDFs, clarifying when and why sparse selection can outperform
+ridgeless estimation.
+
+
+2.1    Conditional SDF Representation
+
+Let Rt+1 ∈ RNt denote the vector of excess returns on the Nt traded assets available at time
+t, and let Ft denote the information set available at time t. Absence of arbitrage implies the
+existence of a stochastic discount factor (SDF) Mt+1 satisfying
+
+
+                                    E[Mt+1 Rt+1 |Ft ] = 0Nt ,                                 (1)
+
+
+where 0Nt denotes the zero vector in RNt .
+   We focus on tradable SDFs. Following Hansen and Richard (1987), we use the normalized
+managed-portfolio representation
+
+
+                                      Mt+1 = 1 − wt′ Rt+1 ,                                   (2)
+
+
+where wt ∈ RNt is Ft -measurable.
+   Let Zi,t ∈ RD denote the characteristic vector of asset i at time t, and let s1 , ..., sP be P
+basis functions of these characteristics. Define the feature matrix
+
+
+                                St ∈ RNt ×P , (St )i,p = sp (Zi,t ).
+
+
+
+
+                                                 6
+We parameterize portfolio weights linearly in these features:
+
+                                                 1
+                                           wt = √ St λ,                                 (3)
+                                                 Nt
+
+where λ ∈ RP is a coefficient vector.
+   This induces the P -dimensional vector of characteristic-managed factor returns
+
+                                            1
+                                   Ft+1 := √ St′ Rt+1 ∈ RP .                            (4)
+                                            Nt
+
+Substituting (3) into (2) gives
+                                         Mt+1 = 1 − λ′ Ft+1 .                           (5)
+
+Thus conditional SDF estimation can be viewed as selecting a portfolio within the span of
+characteristic-managed factors Ft+1 .
+   Taking unconditional expectations in the pricing condition yields the necessary moment
+restriction
+                                    E[(1 − λ′ Ft+1 )Ft+1 ] = 0P .                       (6)
+
+                  ′
+Let Σ := E[Ft+1 Ft+1 ] and µ := E[Ft+1 ]. When Σ is nonsingular, the population coefficient
+vector satisfies
+                                              Σλ∗ = µ.                                  (7)
+
+   Equivalently, λ∗ solves the first and third problems below and, when µ ̸= 0, gives an
+optimal portfolio direction for the second:
+
+
+                                  max µ′ λ − 21 λ′ Σλ,                                  (8)
+                                   λ
+                                           µ′ λ
+                                  max     √       ,                                     (9)
+                                  λ̸=0      λ′ Σλ
+                                  min (µ − Σλ)′ Σ−1 (µ − Σλ).                         (10)
+                                   λ
+
+
+
+
+                                                  7
+Empirically, we estimate conditional SDFs through the equivalent least-squares formulation
+and evaluate performance using Sharpe ratios and pricing errors.1
+
+
+2.2       Two Notions of Sparsity
+
+Recent work on the “virtue of complexity” (Didisheim et al., 2025) studies regimes in which
+the number of candidate factors P is large relative to the time-series sample size T . In such
+settings, estimation is often stabilized through ridge regularization,
+
+
+                                    max µ′ λ − 21 λ′ Σλ − γ∥λ∥22 .
+                                       
+                                                                                                       (11)
+                                      λ
+
+
+       For γ > 0, this formulation introduces ℓ2 -shrinkage into the estimator. For non-negligible
+values of γ, the shrinkage acts as a form of capacity control by disciplining estimation in a
+large candidate factor space. We refer to this broader idea as capacity sparsity. It can also
+arise through ex ante restrictions on the factor span (for example, selecting a small number
+of economically motivated factors), through dimension-reduction methods such as principal
+components, or through shrinkage more broadly.
+       By contrast, our focus is on a different notion of sparsity, which we call factor sparsity.
+Rather than restricting the size of the factor span, factor sparsity concerns the structure of
+the pricing kernel itself. Under this view, the true SDF may depend on only a small subset
+of economically meaningful directions, even when the candidate factor space is large. The
+key difficulty, however, is that this sparse structure is unknown ex ante. Precisely for that
+reason, increasing model complexity can play a constructive role. By enlarging the space
+of candidate factors, richer feature representations expand the set of directions in which
+the true sparse structure may lie. Complexity therefore facilitates discovery, while sparsity
+governs selection within the enlarged space of candidate pricing kernels. Figure 1 provides a
+schematic illustration of these two notions of sparsity and their interplay. In the figure, the
+   1
+                                                                                √
+    Because Σ is a second-moment matrix, the middle objective equals S/ 1 + S 2 for a portfolio with
+positive return variance and conventional Sharpe ratio S. This is a strictly increasing transformation of S.
+The second objective determines portfolio direction; the first and third also fix its normalization.
+
+
+                                                     8
+sparse region can be understood as the set of pricing kernels with at most T active loadings,
+consistent with the later role of basis pursuit when the true SDF is representable in this way.
+   The entire region in Figure 1 represents the candidate space of pricing kernels at a given
+complexity level. The high-pricing-error region contains kernels that fail to price assets well.
+The low-pricing-error, overfitting region contains kernels that fit the data in sample but
+generalize poorly, whereas the low-pricing-error, good out-of-sample region contains kernels
+that both fit well and generalize well. The black dot denotes the true SDF λ∗ . In the right
+panel, overparameterization enlarges the candidate space, but the different regions need not
+expand proportionally, consistent with the intuition in Wilson (2025). The figure is intended
+only as intuition, but it conveys the key idea: with limited capacity, the sparse structure is
+harder to uncover, whereas a richer candidate space increases the chance that economically
+meaningful sparse directions become identifiable. Basis pursuit, introduced below, selects
+a minimum-ℓ1 kernel among exact interpolators. Whether that selection improves out-of-
+sample performance is the empirical question we investigate.
+
+
+
+
+Figure 1: Schematic illustration of the interplay between model capacity and factor sparsity.
+Left: capacity sparsity restricts the candidate space of pricing kernels, making the true sparse
+pricing kernel harder to uncover. Right: increasing capacity enlarges the candidate space in
+which the true sparse pricing kernel may lie, while a sparsity-inducing selection rule favors
+kernels with at most T active loadings within that expanded space.
+
+
+
+
+                                               9
+2.3    Sparse Selection in Expanded Factor Spaces
+
+To operationalize factor sparsity, we retain a large factor span and impose sparse selection
+within it. It is convenient to work with the regression form of conditional SDF estimation,
+because in overparameterized regimes it makes the selection problem especially transparent.
+Let FP ∈ RT ×P denote the in-sample matrix of managed-factor returns at complexity level
+                        ′
+P , whose t-th row is Ft+1 , where Ft+1 is defined in (4). Let 1 ∈ RT denote the unit payoff
+vector. Let P(λ) denote a regularization term. Then SDF estimation can be written as
+
+                                             1
+                             λ̂ ∈ arg min      ∥1 − FP λ∥22 + P(λ).                        (12)
+                                      λ     2T
+
+When P is large relative to T , the system may admit exact interpolating solutions—many
+pricing kernels price the managed factors equally well in sample. The central question
+becomes which SDF is selected from the set of exact interpolating pricing kernels
+
+
+                                 IP := {λ ∈ RP : FP λ = 1}.
+
+
+   A natural selection principle under factor sparsity is the basis-pursuit limit of ℓ1 regular-
+ization.
+
+
+Basis Pursuit With ℓ1 regularization,
+
+
+                                          P(λ) = α∥λ∥1 ,
+
+
+when exact interpolation is feasible, the α ↓ 0 limit of (12) selects a basis-pursuit solution
+
+
+                                     λ̂BP
+                                       P ∈ arg min ∥λ∥1 .                                  (13)
+                                                 λ∈IP
+
+
+
+
+                                                10
+This formulation selects the minimum-ℓ1 pricing kernel among those that exactly price the
+managed factors in sample.2
+       To enrich the candidate factor span without changing the underlying information set, we
+generate nonlinear transformations of the same D base firm characteristics using random
+Fourier features (RFF) (Rahimi and Recht, 2007). Let Zt denote the matrix of standardized
+characteristics, with row i the vector Zi,t ∈ RD for stock i. Following Didisheim et al. (2025),
+each random draw generates a sine–cosine pair of features,
+
+                                                                         
+                         (St )2p−1 (St )2p = sin(γp Zt ω p ) cos(γp Zt ω p ) ,
+                                                                                                     (14)
+                                       ω p ∼ i.i.d. N (0, ID ),     p = 1, . . . , P/2,
+
+
+so that P features are obtained from P/2 draws. The bandwidth γp controls the smoothness
+of the implied Gaussian kernel; as in Didisheim et al. (2025) we draw it for each ω p from the
+grid {0.5, 0.6, 0.7, 0.8, 0.9, 1.0}, which embeds varying degrees of nonlinearity in the generated
+feature set.
+
+
+Scaling basis pursuit. We develop a scalable implementation of basis pursuit for this
+asset-pricing setting by combining its linear-programming formulation with column gener-
+ation and GPU acceleration. This allows us to search 432 million candidate factors and
+reach the complexity range in which the sparse SDF overtakes the dense benchmark in our
+main specification. Ridgeless estimation reduces to a linear system of dimension T once
+the candidate factors have been processed. Basis pursuit instead requires optimization over
+their loadings. We exploit its equivalent linear-programming formulation (Chen et al., 1998):
+   2
+    When exact interpolation is infeasible, the vanishing-ℓ1 -penalty limit selects a minimum-ℓ1 solution
+among least-squares minimizers. If P < T and FP has full column rank, least squares has a unique solution,
+so the vanishing-ℓ1 and vanishing-ℓ2 limits coincide.
+
+
+
+
+                                                     11
+writing λ = u − v, with u, v ∈ RP+ , we solve
+
+
+                                            min      1′P (u + v)
+                                           u,v∈RP
+                                                +
+                                                                                                           (15)
+                                      subject to FP (u − v) = 1T .
+
+
+The objective minimizes the sum of absolute factor loadings, while the T equality constraints
+preserve exact in-sample interpolation. At our largest candidate set, this direct formulation
+has 864 million nonnegative variables but only 180 equality constraints. Repeated estimation
+across rolling windows and random-feature draws compounds the computational burden: a
+sparse solution can still require an enormous search.
+       Our strategy is to keep the optimization focused on a working set while preserving access
+to every candidate factor. We use column generation (Barnhart et al., 1998) to do so.
+Starting from a subset that permits exact interpolation, we solve the smaller LP and obtain
+shadow values for its T equality constraints. We use these values to search the omitted factors
+for opportunities to improve the objective, add promising candidates, and reoptimize all
+loadings in the expanded working set. Previously included factors can receive zero loadings,
+while omitted factors remain eligible for later selection.
+       The dual provides an optimality check for the full candidate space. Let y ∈ RT be
+an optimal dual solution of the working LP, representing the equality constraints’ shadow
+values, and let fj denote column j of FP . An omitted factor with |fj′ y| > 1 is a candidate
+for inclusion. If |fj′ y| ≤ 1 for every candidate, the working solution also solves the full LP.3
+       The candidate search still spans the entire factor universe. We accelerate this step on
+the GPU by evaluating the inner products fj′ y across candidates in parallel, and we also use
+the GPU for feature construction. Column generation reduces the size of the LPs we solve;
+GPU acceleration makes the searches over the expanded candidate space feasible. We also
+   3
+    The full dual is maxy∈RT 1′T y subject to |fj′ y| ≤ 1 for every j. Strong duality gives equal objectives for
+the working primal and dual. If its dual solution is feasible for the full problem, the working primal solution
+attains the full optimum. This is an exact-arithmetic statement; numerical implementations use feasibility
+and optimality tolerances.
+
+
+
+                                                      12
+use GPU acceleration to estimate the dense benchmark. This computational design enables
+the comparison at the scale where the performance ranking reverses, revealing an advantage
+of sparse selection that would be missed at lower complexity.
+
+
+2.4    Sparse versus Dense SDFs
+
+In support of our proposed procedure, we characterize when and why the sparse SDF selected
+by basis pursuit can outperform its dense counterpart given by the ridgeless ℓ2 criterion.
+Consider the limit of the ridge-regularized problem (12) with P(λ) = α∥λ∥22 as α ↓ 0. In
+this subsection, assume FP has full row rank T < P , so exact interpolation is feasible. The
+vanishing-penalty limit selects the minimum-ℓ2 interpolator
+
+
+                                     λ̂RL
+                                       P ∈ arg min ∥λ∥2 ,                               (16)
+                                               λ∈IP
+
+
+
+commonly referred to as ridgeless.
+   The distinction between sparse and dense SDFs is not one of in-sample fit: both inter-
+polate exactly. It is entirely about selection from the same interpolation set. We begin with
+a basic structural property of basis pursuit: even in the overparameterized regime, it admits
+an optimal solution whose support size is bounded by T .
+
+Lemma 1 (Existence of a sparse basis-pursuit solution). There exists an optimal solution
+
+
+                                     λ̂BP
+                                       P ∈ arg min ∥λ∥1
+                                               λ∈IP
+
+
+
+whose support size is at most T .
+
+   For our purposes, the key implication of Lemma 1 is that enlarging the candidate factor
+span need not lead to a commensurate increase in the effective dimension of the selected
+SDF. Thus, basis pursuit can search over a much richer nonlinear span while remaining
+low-dimensional relative to the ambient feature space.
+
+                                             13
+      We next characterize how sparse and dense SDFs can differ in out-of-sample mean return.
+Let
+                                      ΠP := FP′ (FP FP′ )−1 FP
+
+denote the orthogonal projector onto row(FP ), and let
+
+
+                                          MP := I − ΠP
+
+
+denote the orthogonal projector onto ker(FP ). Here row(FP ) is the subspace spanned by the
+rows of the in-sample managed-factor matrix FP , and ker(FP ) is its orthogonal complement.
+           oos
+      Let FP,t+1 ∈ RP denote the out-of-sample managed-factor return vector associated with
+the P -dimensional feature expansion, and define
+
+
+                                                  oos
+                                         µP := E[FP,t+1 ],
+
+
+where the expectation is taken with respect to the data-generating distribution of firm-
+characteristic and next-period-return pairs. Write
+
+
+                                  ∥
+                                 µP := ΠP µP ,        µ⊥
+                                                       P := MP µP ,
+
+
+
+
+so that
+                             ∥              ∥
+                     µP = µP + µ⊥
+                                P,        µP ∈ row(FP ),         µ⊥
+                                                                  P ∈ ker(FP ).
+
+
+This decomposition is natural for comparing sparse and dense SDFs. As shown below, the
+distinction between row(FP ) and ker(FP ) governs exactly how sparse and dense selection
+can differ in mean return.
+      Define
+                                          r̄P (λ) := µ′P λ.
+
+
+
+
+                                                 14
+Proposition 1 (Mean-return gap and the role of complexity). Suppose FP ∈ RT ×P has rank
+T < P and IP ̸= ∅. Then the ridgeless interpolator is
+
+
+                                       λ̂RL   ′      ′ −1
+                                         P = FP (FP FP ) 1,
+
+
+
+
+so λ̂RL
+     P ∈ row(FP ), and every feasible interpolator can be written as
+
+
+
+
+                                 λ = λ̂RL
+                                       P + h,              h ∈ ker(FP ).
+
+
+Let
+                                        hBP     BP    RL
+                                         P := λ̂P − λ̂P .
+
+
+Then hBP
+      P ∈ ker(FP ) and
+
+
+
+                                                  ′
+                      r̄P (λ̂BP           RL     ⊥ BP     ⊥      BP
+                             P ) − r̄P (λ̂P ) = µP hP = ∥µP ∥2 ∥hP ∥2 cos θP ,         (17)
+
+
+where θP is the angle between µ⊥      BP
+                               P and hP  when both vectors are nonzero. If either is zero,
+the mean-return gap is zero and the final expression is interpreted as zero.
+      Suppose that over a range of increasing complexity levels P :
+
+  (i) ∥µ⊥
+        P ∥2 is increasing in P ,
+
+
+ (ii) ∥hBP
+        P ∥2 ≥ h > 0,
+
+
+(iii) cos θP ≥ ρ > 0.
+
+Then
+                                 r̄P (λ̂BP           RL          ⊥
+                                        P ) − r̄P (λ̂P ) ≥ h ρ ∥µP ∥2 ,
+
+
+so the lower bound on the mean-return gap increases with P .
+
+      Proposition 1 makes the mechanism transparent. The ridgeless interpolator is confined
+to row(FP ), whereas any feasible deviation from ridgeless must lie in ker(FP ). From the
+
+                                                      15
+perspective of expected returns, this means that the minimum-ℓ2 rule can exploit only the
+component of population mean structure that projects onto the subspace generated by his-
+torical in-sample pricing relations; any mean-bearing structure orthogonal to that subspace
+is necessarily left unused. Basis pursuit, by contrast, is not confined in this way: its kernel
+displacement can access such directions while preserving exact in-sample fit. The mean-
+return advantage of basis pursuit is therefore governed by three quantities: the magnitude
+of omitted mean-bearing structure ∥µ⊥                                                   BP
+                                    P ∥2 , the size of the sparse kernel displacement ∥hP ∥2 ,
+
+and its alignment with that structure through cos θP . In particular, basis pursuit exceeds
+ridgeless in mean exactly when its kernel displacement is positively aligned with the omitted
+component.
+   The proposition clarifies how complexity can help under three conditions. Condition
+(i) requires the richer candidate space to contain a growing component of mean returns
+outside the ridgeless row space. Condition (ii) requires the basis-pursuit displacement from
+ridgeless to remain bounded away from zero, and condition (iii) requires that displacement
+to remain favorably aligned with the omitted mean component. Together, they yield an
+increasing lower bound on the mean-return advantage. The economic content lies in the
+alignment condition: expanding the candidate space creates scope for improvement, but
+sparse selection must exploit directions that carry population mean returns. This is where
+our hypothesis of the virtue of sparsity in complexity enters.
+   We next examine how the volatility of sparse SDFs behaves as complexity increases. A
+useful benchmark observation is that the scale of the sparse SDF remains controlled. Let
+
+
+                                       vP := min ∥λ∥1 .
+                                             λ∈IP
+
+
+
+Then
+                                   ∥λ̂BP        BP
+                                      P ∥2 ≤ ∥λ̂P ∥1 = vP .
+
+
+
+
+                                              16
+If the feature expansions are nested in P with existing columns unchanged, then vP is
+nonincreasing in P , since the optimizer at a lower complexity level remains feasible after
+padding with zeros. Thus, under nested expansions, the ℓ2 norm of the sparse SDF is
+bounded above by a nonincreasing sequence. If, in addition, the out-of-sample managed-
+                                    oos
+factor covariance matrix VP := Var(FP,t+1 ) satisfies
+
+
+                                       λmax (VP ) ≤ σ̄ 2
+
+
+over the range of interest, then
+
+                             q
+                                                 BP
+                              λ̂BP ′   BP
+                                P VP λ̂P ≤ σ̄ ∥λ̂P ∥2 ≤ σ̄ vP .
+
+
+
+
+    This benchmark argument complements Proposition 1. Under the stated conditions, the
+proposition gives an increasing lower bound on the mean advantage, while the scale argument
+gives a nonincreasing upper bound on volatility. The latter does not imply that portfolio
+volatility must decline monotonically. Together, the arguments describe how an expanding
+candidate space can support higher mean returns without an offsetting increase in volatility,
+providing a possible explanation for the empirical improvement in sparse SDF Sharpe ratios.
+    The economic implication is that exact in-sample fit leaves room for selection to matter
+out of sample. Lemma 1 shows that expanding the candidate set need not increase the
+support bound of the selected kernel; Proposition 1 identifies the alignment needed for a
+sparse interpolator to earn a higher mean return. The empirical analysis asks whether a
+sparse representation can realize this advantage as complexity increases.
+
+
+
+3     Empirical Design and Results
+
+This section presents the empirical design and out-of-sample evidence on how sparse and
+dense SDFs evolve as complexity P increases.
+
+
+                                              17
+3.1      Data Preprocessing and Experimental Setup
+
+Data We use the same data construction and source as Didisheim et al. (2025). The
+underlying dataset is the comprehensive sample of monthly US stock returns and firm char-
+acteristics compiled by Jensen et al. (2023) (JKP); stock-level data and documentation are
+available at https://jkpfactors.com. The universe includes NYSE, AMEX, and NASDAQ
+common stocks (CRSP share codes 10, 11, or 12) excluding nano caps (market cap below
+the first percentile of NYSE market cap). We reduce the 153 JKP characteristics to D = 130
+with the fewest missing values, drop stock-months with more than 30% missing among these
+130, and cross-sectionally rank-standardize each characteristic to [−0.5, 0.5] following Gu
+et al. (2020).
+
+
+Model setup We summarize model complexity by
+
+
+                                          c := P/T,
+
+
+where T denotes the training-window length. In our implementation, we fix T = 180 months
+(fifteen years of training data) and vary P ∈ {18, . . . , 432000000}, which yields complexity
+ratios
+                                   c ∈ {0.1, . . . , 2400000}.                             (18)
+
+This grid spans the underparameterized regime (c < 1), the interpolation threshold (c = 1),
+and the overparameterized regime (c > 1). For each value of c, we generate 30 independent
+random-feature sets using the sine–cosine construction in (14). Each set corresponds to a
+                       P/2
+realization of {ω p , γp }p=1 , with bandwidths drawn from the grid specified in Section 2.3. We
+average the results across these sets to reduce Monte Carlo variation due to any particular
+feature realization.
+
+
+
+
+                                               18
+Evaluation protocol and performance metrics Our evaluation design follows the
+rolling-window framework of Didisheim et al. (2025). Fixing a training-window length of
+T = 180 months (fifteen years), we roll the estimation window forward one month at a time.
+At each formation month t, we estimate λ̂t using the most recent T months of training data.
+Using the characteristics observed at month t and the asset returns realized in month t + 1,
+we form the corresponding managed-factor return vector Ft+1 . The realized out-of-sample
+SDF portfolio return is then
+                                                                  ′
+                                                   r̂t+1 = λ̂t Ft+1 .
+
+Repeating this procedure yields a sequence of N = 360 monthly out-of-sample returns from
+January 1993 through December 2022, denoted by {r̂τ }N
+                                                     τ =1 .
+
+      The primary performance metrics are the annualized out-of-sample Sharpe ratio, com-
+puted from monthly returns,
+
+                                                                           v
+                                                   N                                   N
+                        √
+                                                                           u
+                                  r̄             1 X                       u      1 X
+                 SR
+                 c =        12       ,    r̄ =            r̂τ ,       σ̂ = t
+                                                                        r                  (r̂τ − r̄)2 ,   (19)
+                                 σ̂r             N τ =1                         N − 1 τ =1
+
+
+and the out-of-sample Hansen–Jagannathan distance (HJD),4
+
+                                        h      i′                  h      i
+                                                              +
+                             D̂HJ = ÊOS M̂τ Fτ ÊOS [Fτ Fτ′ ] ÊOS M̂τ Fτ ,                               (20)
+
+
+where
+                                                                                    N
+                                             ′                                 1 X
+                                 M̂τ = 1 − λ̂τ −1 Fτ ,            ÊOS [ · ] =        [ · ],
+                                                                               N τ =1
+
+and (·)+ denotes the Moore–Penrose pseudoinverse. Here Fτ denotes the managed-factor
+excess-return vector in the τ -th out-of-sample month.
+      To characterize the performance comparison more fully, we examine return quantiles
+alongside the mean and volatility. Let {r̂τ (c)}N
+                                                τ =1 denote monthly out-of-sample SDF port-
+
+folio returns at complexity c, and let Qq (c) denote their empirical q-quantile. We report
+  4
+      We retain the quadratic-form (squared-distance) convention used by Didisheim et al. (2025).
+
+
+                                                            19
+q ∈ {0.10, 0.25, 0.75, 0.90} to show how the downside and upside comparisons change with
+complexity. Appendix C complements these quantiles with average returns below the two
+lower cutoffs and above the two upper cutoffs.
+       Finally, to translate statistical outperformance into investor welfare, we compute
+certainty-equivalent (CE) returns for a CRRA investor with relative risk aversion param-
+eter γ. For this comparison, we scale each portfolio to an annualized volatility of 10%. Let
+r̃τ (c) denote the scaled monthly return and Rτ (c) = 1 + r̃τ (c) > 0 its gross return. For γ ̸= 1,
+the CE gross return RCE (c) is the constant gross return that delivers the same average power
+utility as the realized return sequence:
+
+                                           1−γ      N
+                                    RCE (c)       1 X Rτ (c) 1−γ
+                                                =                ,                                    (21)
+                                      1−γ         N τ =1 1 − γ
+
+which implies
+
+                                                           1
+                                     N
+                                                        ! 1−γ
+                                   1 X
+                  RCE (c) =                Rτ (c) 1−γ           ,   CE(c) = RCE (c) − 1.              (22)
+                                  N τ =1
+
+For γ = 1, log utility gives
+
+                                        N
+                                                      !
+                      CE             1 X
+                  R        (c) = exp        log Rτ (c) ,            CE(c) = RCE (c) − 1.              (23)
+                                     N τ =1
+
+
+3.2       Main Results: Virtue of Complexity Curves
+
+Figure 2 presents the main results: virtue-of-complexity curves for out-of-sample mean re-
+turns, volatility, Sharpe ratios, and pricing error as functions of complexity c.5 In the
+overparameterized regime, the dense SDF (ridgeless) plateaus in mean return, whereas the
+sparse SDF (basis pursuit) improves overall as complexity rises. Volatility declines for both
+specifications, with the dense SDF remaining less volatile. Pricing error also falls for both
+   5
+    Because the full complexity grid compresses the low-c region, we report virtue-of-complexity curves for
+c < 10 separately in Appendix B.
+
+
+                                                         20
+models, although the sparse SDF ultimately achieves the lower pricing error. As a result,
+the sparse SDF eventually overtakes the dense SDF in Sharpe ratio.
+   The extent of the complexity grid is consequential for this comparison. In the main 180-
+month specification, stopping at c = 1,000, the upper ratio considered by Didisheim et al.
+(2025), would leave the sparse SDF behind the dense benchmark. Extending the grid to
+c = 2.4 million changes that ordering: the sparse SDF attains both a higher Sharpe ratio
+and a lower pricing error at the largest candidate set. Our scalable implementation described
+in Section 2.3 makes this comparison feasible. Its contribution is to reveal a benefit of sparse
+selection that would be missed by evaluating basis pursuit only at lower complexity.
+
+
+
+
+Figure 2: Virtue-of-complexity curves for the sparse SDF (basis pursuit, green) and the
+dense SDF (ridgeless, blue) as a function of complexity c = P/T . Panel A reports mean
+returns, Panel B volatility, Panel C annualized Sharpe ratios, and Panel D pricing error
+(Hansen–Jagannathan distance). Complexity is on an equally spaced axis.
+
+
+
+
+                                              21
+3.3    Near-Dominance
+
+Despite its higher volatility, the sparse SDF nearly dominates the dense benchmark across the
+four reported return quantiles at the largest candidate set. Figure 3 shows that its 25th, 75th,
+and 90th percentiles are higher, while its 10th percentile is only slightly lower. The gains
+therefore extend to part of the downside distribution as well as the upper tail. This pattern
+emerges as complexity increases: at lower complexity, the sparse SDF already has higher
+upper-tail returns but lower downside quantiles than the dense benchmark. Expanding the
+candidate set substantially improves its downside quantiles, narrowing the shortfall at the
+10th percentile and reversing it at the 25th.
+   The sparse SDF’s average return in the worst 10% of months also improves substantially
+with complexity but remains below that of the dense benchmark. Appendix C reports the
+complete lower- and upper-tail mean comparison.
+   Figure 4 compares cumulative sums of out-of-sample returns after scaling both SDF
+portfolios to a common volatility. Their paths remain close during the first decade, after
+which the sparse SDF pulls ahead. The widening cumulative-return gap complements the
+distributional comparisons above by showing how the performance difference develops over
+the evaluation period.
+
+
+
+
+Figure 3: Monthly out-of-sample return quantiles for the sparse SDF (basis pursuit, green)
+and the dense SDF (ridgeless, blue) across complexity levels. The panels report the 10th,
+25th, 75th, and 90th percentiles. At the largest candidate set, the sparse SDF has higher
+returns at the 25th, 75th, and 90th percentiles and a slightly lower return at the 10th
+percentile. Appendix C reports the corresponding lower- and upper-tail means.
+
+
+                                                22
+                                               Ridgeless
+                                               Basis Pursuit
+                                   10
+
+
+
+                                    8
+
+
+               Cumulative return
+                                    6
+
+
+
+                                    4
+
+
+
+                                    2
+
+
+
+                                    0
+
+                                        1992      1996         2000   2004    2008   2012   2016   2020   2024
+                                                                              Date
+
+
+Figure 4: Cumulative sums of monthly out-of-sample returns for the sparse SDF and the
+dense SDF, after scaling both series to a common volatility.
+
+
+
+3.4      Welfare Gains from Sparsity: Certainty-Equivalent Analysis
+
+To quantify the welfare gains delivered by sparse SDFs, we compute certainty-equivalent
+(CE) returns for a constant relative risk aversion (CRRA) investor. Unlike the Sharpe ratio,
+the CE maps the full distribution of SDF portfolio returns into investor utility and thus
+provides a direct measure of economic value.6
+      Figure 5 shows that the performance reversal between sparse and dense SDFs extends to
+investor welfare. At the highest complexity level, the sparse SDF delivers a higher certainty-
+equivalent return for each of the three risk-aversion coefficients shown, γ ∈ {1, 2, 5}. Greater
+risk aversion lowers the CE of both portfolios, but does not overturn the sparse SDF’s
+advantage at this complexity level. At common volatility, the advantage of sparse selection
+thus extends to the three investor preferences examined.
+  6
+    Before computing CE returns, we scale both SDF portfolios to a common annualized volatility of 10%.
+The unscaled portfolios can lose more than their invested capital in some months; such observations fall
+outside the positive-wealth domain of CRRA utility and prevent a valid CE comparison on the unscaled
+return series.
+
+
+
+
+                                                                             23
+ Certainty equivalent (annual)                            γ=1                                                           γ=2                                                           γ=5
+
+                                                                                                0.34
+                                 0.34                                                                                                                         0.32
+
+                                                                                                0.32
+                                 0.32                                                                                                                         0.30
+
+                                                                                                0.30
+                                 0.30                                                                                                                         0.28
+
+                                                                                                0.28                                                                                    Ridgeless
+                                 0.28                                                                                                                         0.26                      Basis Pursuit
+                                         10
+
+                                              102
+
+                                                    103
+
+                                                          105
+
+                                                                4 × 105
+
+                                                                          8 × 105
+
+                                                                                    2.4 × 106
+
+
+
+
+                                                                                                       10
+
+                                                                                                            102
+
+                                                                                                                  103
+
+                                                                                                                        105
+
+                                                                                                                              4 × 105
+
+                                                                                                                                        8 × 105
+
+                                                                                                                                                  2.4 × 106
+
+
+
+
+                                                                                                                                                                     10
+
+                                                                                                                                                                          102
+
+                                                                                                                                                                                103
+
+                                                                                                                                                                                      105
+
+                                                                                                                                                                                            4 × 105
+
+                                                                                                                                                                                                      8 × 105
+
+                                                                                                                                                                                                                2.4 × 106
+                                                     c = P/T                                                       c = P/T                                                       c = P/T
+
+Figure 5: Certainty-equivalent (CE) returns for CRRA investors with γ ∈ {1, 2, 5}, after
+scaling both portfolios to an annualized volatility of 10%, reported as annual decimal returns.
+The sparse SDF delivers the higher CE at the top of the complexity grid at every risk aversion
+shown.
+
+
+
+3.5                                     Characteristic Importance: Sparse in Factors, Broad in Eco-
+
+                                        nomics
+
+The distinction between capacity sparsity and factor sparsity in Section 2.2 raises a further
+empirical question: does a sparse factor representation also concentrate the pricing kernel’s
+sensitivity on a few underlying characteristics? Following Chen et al. (2024), we measure
+characteristic importance by the average absolute sensitivity of the SDF portfolio weight to
+each characteristic. Within each random-feature draw, we average sensitivities over estima-
+tion windows and normalize across the 130 characteristics to obtain shares that sum to one;
+we then average these shares across draws.
+
+
+
+
+                                                                                                                  24
+                                    Investment            Profitability                               Trading frictions & risk
+                                    Past returns          Quality & accruals                          Value
+                                      Basis Pursuit                                                              Ridgeless
+    zero trades 21d                                                                       ret 1 0
+                  ret 1 0                                                   rmax5 rvol 21d
+    rmax5 rvol 21d                                                                       cash at
+                 cash at                                                                   cop at
+          ebitda mev                                                                   cop atl1
+                sale gr3                                                                   noa at
+  zero trades 126d                                                                ebitda mev
+              saleq gr1                                                                  ival me
+                   niq be                                                              inv gr1a
+          netdebt me                                                                  saleq gr1
+  zero trades 252d                                                                         niq be
+                   noa at                                                   zero trades 21d
+      turnover 126d                                                               netdebt me
+               kz index                                                          oaccruals at
+                 ival me                                                  zero trades 252d
+             cowc gr1a                                                                    ocf me
+           resff3 12 1                                                    zero trades 126d
+               inv gr1a                                                                 sale gr3
+          coskew 21d                                                                 cowc gr1a
+          ocf at chg1                                                              resff3 12 1
+            seas 1 1na                                                    mispricing mgmt
+            rskew 21d                                                             ocf at chg1
+               cop atl1                                                             seas 1 1an
+                   cop at                                                          rmax5 21d
+               debt gr3                                                           coskew 21d
+                  ret 9 1                                                     turnover 126d
+  prc highprc 252d                                                                niq at chg1
+                   niq at                                                                  niq at
+         oaccruals at                                                                      niq su
+                ret 12 1                                                  prc highprc 252d
+               bev mev                                                      iskew hxz4 21d
+                  z score                                                           rskew 21d
+                ret 12 7                                                               capx gr1
+                  ret 3 1                                                 beta dimson 21d
+           rmax5 21d                                                                   kz index
+                       age                                                                ret 3 1
+               emp gr1                                                                  ret 12 7
+                  ocf me                                                                   fcf me
+               ope bel1                                                           chcsho 12m
+           corr 1260d                                                            oaccruals ni
+  beta dimson 21d                                                                  corr 1260d
+ turnover var 126d                                                                        ret 9 1
+          chcsho 12m                                                                  noa gr1a
+    iskew hxz4 21d                                                                         be me
+            seas 1 1an                                                                  ret 12 1
+                   be me                                                         niq be chg1
+          niq at chg1                                                               seas 1 1na
+                   niq su                                                              capx gr2
+           qmj safety                                                              tangibility
+               capx gr2                                                                    ocf at
+          dolvol 126d                                                                          age
+     betabab 1260d                                                                    qmj prof
+                  f score                                                         at turnover
+      market equity                                                           market equity
+                       prc                                               turnover var 126d
+                   fcf me                                                            dgp dsale
+               capx gr1                                                                debt gr3
+    betadown 252d                                                                       fnl gr1a
+             dgp dsale                                                                    z score
+   dolvol var 126d                                                          betadown 252d
+        sale emp gr1                                                            sale emp gr1
+                  o score                                                                 ret 6 1
+            dsale drec                                                               nfna gr1a
+  mispricing mgmt                                                                       saleq su
+               aliq mat                                                          taccruals at
+    ivol capm 252d                                                                     bev mev
+                  ret 6 1                                                               opex at
+         oaccruals ni                                                             dolvol 126d
+             beta 60m                                                        betabab 1260d
+              qmj prof                                                                 emp gr1
+                col gr1a                                                   dolvol var 126d
+                    at be                                                                   op at
+           tangibility                                                                 coa gr1a
+               coa gr1a                                                            qmj safety
+               ebit bev                                                                 col gr1a
+          at turnover                                                                          prc
+              ami 126d                                                             nncoa gr1a
+                  eq dur                                                        bidaskhl 21d
+                   pi nix                                                           dsale drec
+                fnl gr1a                                                                  eq dur
+               ebit sale                                                                sale gr1
+   iskew capm 21d                                                                      debt me
+                 sale me                                                                   pi nix
+     ivol capm 21d                                                                        ope be
+        bidaskhl 21d                                                       iskew capm 21d
+             lnoa gr1a                                                               resff3 6 1
+                  ope be                                                               ope bel1
+               debt me                                                                      at be
+                   ocf at                                                             ami 126d
+            eqnetis at                                                           ppeinv gr1a
+             resff3 6 1                                                          taccruals ni
+           rmax1 21d                                                        ivol capm 252d
+               eqpo me                                                             eqnpo 12m
+           nncoa gr1a                                                                  tax gr1a
+          ivol ff3 21d                                                               beta 60m
+         ppeinv gr1a                                                                 lnoa gr1a
+                saleq su                                                       iskew ff3 21d
+             nfna gr1a                                                                 ebit sale
+         niq be chg1                                                                 ncoa gr1a
+    mispricing perf                                                                 eqnetis at
+                opex at                                                                eqpo me
+           div12m me                                                        mispricing perf
+         taccruals at                                                        ivol capm 21d
+             ncoa gr1a                                                                   sale me
+                    gp at                                                                   ni me
+                     ni be                                                                f score
+       ivol hxz4 21d                                                               rmax1 21d
+                    op at                                                           dbnetis at
+                   at gr1                                                                be gr1a
+                sale gr1                                                               aliq mat
+                 gp atl1                                                           div12m me
+                    at me                                                             ncol gr1a
+                 be gr1a                                                             eqnpo me
+             eqnpo me                                                                  sale bev
+               rvol 21d                                                                   aliq at
+           eqnpo 12m                                                                     op atl1
+         taccruals ni                                                             ivol ff3 21d
+                 op atl1                                                                sti gr1a
+              ncol gr1a                                                        ivol hxz4 21d
+              noa gr1a                                                                  netis at
+                    ni me                                                                   at me
+                netis at                                                                  o score
+               sale bev                                                                    at gr1
+               tax gr1a                                                                     gp at
+                 inv gr1                                                                 inv gr1
+       iskew ff3 21d                                                                         ni be
+                  aliq at                                                              rvol 21d
+            dbnetis at
+                 lti gr1a              equal weight = 0.77%                            ebit bev
+                                                                                         gp atl1
+                sti gr1a                                                                 lti gr1a
+
+
+
+                        0.0   0.5        1.0       1.5        2.0                               0.0     0.5       1.0        1.5   2.0
+                                Importance share (%)                                                      Importance share (%)
+
+Figure 6: Characteristic importance for all 130 characteristics, averaged over 360 out-of-
+sample months. Bars give each characteristic’s share of total sensitivity, in percent; the
+dashed line marks an equal-share reference of 1/130 = 0.77%. Each panel is ordered by its
+own method’s importance. Color denotes the theme grouping obtained by collapsing the
+thirteen clusters of Jensen et al. (2023).
+
+
+
+                                                                    25
+       Figure 6 shows that factor sparsity need not imply concentrated dependence on the
+underlying characteristics. The dense SDF has the more concentrated sensitivity profile:
+one-month reversal accounts for 2.17% of total importance, compared with an equal-share
+reference of 0.77%, while the largest share under basis pursuit is 1.15%. The difference
+extends beyond the leading characteristic. In the averaged profiles shown, the sparse SDF’s
+importance shares are more evenly distributed across the full set of 130 inputs.
+       The two pricing kernels nevertheless share several prominent characteristics. One-month
+reversal and cash holdings rank among the leading inputs under both methods. The one-
+month zero-trading measure ranks first under basis pursuit, whereas one-month reversal
+ranks first under ridgeless estimation. The contrast therefore concerns how the pricing kernels
+distribute their dependence on familiar characteristics, as well as which characteristics receive
+the greatest emphasis.
+       Each random Fourier factor combines the underlying characteristics nonlinearly, so a
+pricing kernel with few active factors can remain sensitive to a broad set of firm attributes.
+Both estimators use this feature construction; the figure shows that sparse factor loadings can
+coexist with a more even distribution of characteristic sensitivity. Selecting few composite
+factors therefore need not confine the pricing kernel to a narrow set of economic inputs.7
+
+
+3.6       Sensitivity to Sample Size
+
+The training-window length affects both the information available for estimation and the
+support bound for basis pursuit: an optimal basic solution has at most T active factors.
+Figure 7 therefore asks whether the high-complexity advantage of sparse selection persists
+when both the estimation sample and this support bound change. We compare rolling
+windows of T = 12 and 60 months with the T = 180 specification used in the main analysis.
+   7
+    Derivative-based measures of variable importance are developed by Rosasco et al. (2013). Following
+Chen et al. (2024), we use absolute derivatives evaluated out of sample. The normalized averages describe
+relative sensitivity; they do not identify its sign, compare absolute sensitivity across methods, or establish
+stability across windows.
+
+
+
+
+                                                     26
+                                                                                T = 12                                                                                               T = 60
+                                                                                                                                                                   3.2
+                                 2.1
+
+                                 2.0                                                                                                                               3.0
+                  Sharpe ratio
+
+
+
+                                 1.9                                                                                                                               2.8
+
+                                 1.8
+                                                                                                                                                                   2.6
+                                 1.7
+                                                                                                                                                                   2.4                           Ridgeless
+                                 1.6                                                                                                                                                             Basis Pursuit
+
+
+
+                       0.775
+ Pricing error (HJD)
+
+
+
+
+                                                                                                                                                                  0.65
+                       0.750
+
+                       0.725                                                                                                                                      0.60
+
+                       0.700
+
+                                                                                                                                                                  0.55
+                       0.675
+                                       10
+
+                                            102
+
+                                                  5 × 102
+
+                                                            103
+
+                                                                  2 × 104
+
+                                                                            3 × 104
+
+                                                                                      4 × 104
+
+                                                                                                5 × 104
+
+                                                                                                          6 × 104
+
+                                                                                                                    7 × 104
+
+                                                                                                                              2 × 105
+
+                                                                                                                                        5 × 105
+
+                                                                                                                                                  106
+
+                                                                                                                                                        5 × 106
+
+
+
+
+                                                                                                                                                                         10
+
+
+
+
+                                                                                                                                                                              102
+
+
+
+
+                                                                                                                                                                                    103
+
+
+
+
+                                                                                                                                                                                           104
+
+
+
+
+                                                                                                                                                                                                   105
+
+
+
+
+                                                                                                                                                                                                            1.5 × 106
+                                                                               c = P/T
+                                                                                                                                                                                     c = P/T
+
+Figure 7: Annualized out-of-sample Sharpe ratio (top row) and pricing error (HJD, bottom
+row) against complexity for the sparse SDF (basis pursuit, green) and the dense SDF (ridge-
+less, blue), at training windows of T = 12 and 60 months. A lower pricing error is better.
+
+
+                       The same qualitative reversal appears in both shorter windows. At lower complexity,
+the dense SDF performs better. As the candidate set expands, sparse performance improves
+overall; at the top of each grid, the sparse SDF has a higher Sharpe ratio and a lower pricing
+error. Its peak annualized Sharpe ratio is approximately 2.1 for T = 12 and 3.2 for T = 60,
+compared with 3.6 in the main analysis. Within each window, these gains are obtained by
+enlarging the candidate set while the theoretical support bound remains fixed.
+                       The crossovers occur at different points on the three complexity grids, and the T = 12
+performance ordering fluctuates at high complexity. A longer estimation sample can en-
+rich the span of observed factor returns available to the ridgeless interpolator, potentially
+strengthening the dense benchmark; it also raises the support bound for basis pursuit. These
+changes provide possible explanations for differences across windows, although the figures do
+
+
+                                                                                                                                                         27
+not isolate their effects. Moreover, because c = P/T , a common complexity ratio across win-
+dows corresponds to different numbers of candidate factors. The robust finding is that sparse
+selection eventually outperforms the dense benchmark in all three specifications, rather than
+that the reversal occurs at a universal complexity threshold.
+
+
+
+4     Conclusion
+
+This paper studies how complexity and parsimony interact in empirical asset pricing. We
+argue that the apparent tension between them reflects a distinction between two different
+notions of sparsity: capacity sparsity, which restricts effective model capacity, and factor
+sparsity, which concerns the parsimonious structure of priced risks within an expanded
+candidate space. Our results support the view that richer candidate spaces can improve
+asset-pricing performance by creating more scope for informative sparse selection.
+    Empirically, we show that when the information set is held fixed and model complexity
+is increased through richer nonlinear feature expansions, sparse and dense selection produce
+distinct performance paths. The sparse SDF selected by basis pursuit improves overall in the
+high-complexity regime, whereas the dense ridgeless benchmark plateaus. Our scalable im-
+plementation of basis pursuit reaches the complexity range in which the relative performance
+of sparse and dense SDFs reverses. The computational extension changes the empirical as-
+sessment of sparsity: a comparison confined to lower complexity would miss the performance
+attainable by a sparse pricing kernel drawn from a much larger candidate space. The sparse
+SDF nearly dominates across the four reported return quantiles at the largest candidate set,
+with a small remaining shortfall at the 10th percentile. At a common annualized volatility
+of 10%, it also delivers a higher CE for each of the three risk-aversion coefficients examined.
+These findings support the economic value of a sparse factor representation.
+    Our analysis helps clarify why this pattern can arise. In overparameterized settings where
+many pricing kernels fit the data equally well in sample, performance depends not only on
+
+
+
+                                              28
+the richness of the factor space but also on the selection rule used to choose among admissible
+kernels. Sparse selection can outperform dense interpolation when it moves toward econom-
+ically relevant directions that the minimum-ℓ2 rule does not exploit, and that advantage can
+become larger as complexity increases.
+   Taken together, our results reframe the virtue-of-complexity debate. A richer candidate
+space can improve the performance of a pricing kernel with few active factors. Capacity
+expansion and factor sparsity can therefore work together in empirical asset pricing.
+
+
+
+Appendix A.
+
+This appendix proves the results in Section 2.4. Throughout, let
+
+
+                                    IP := {λ ∈ RP : FP λ = 1},
+
+
+where FP ∈ RT ×P has rank T < P and IP ̸= ∅.
+
+
+A.1 Proof of Lemma 1
+
+Proof. Write
+                                          λ = λ + − λ− ,
+
+with λ+ , λ− ∈ RP+ . Then the basis-pursuit problem is equivalent to the linear program
+
+
+                         min       1′ (λ+ + λ− ) s.t. FP (λ+ − λ− ) = 1.
+                       λ+ ,λ− ≥0
+
+
+
+This linear program has T equality constraints. By the fundamental theorem of linear
+programming, there exists an optimal basic feasible solution. Any basic feasible solution has
+at most T basic variables among the 2P nonnegative variables (λ+ , λ− ). Therefore at most
+
+
+
+
+                                                29
+T indices can contribute a nonzero entry to
+
+
+                                            λ = λ + − λ− .
+
+
+Hence there exists an optimal basis-pursuit solution with support size at most T .
+
+
+A.2 Proof of Proposition 1
+
+Proof. The ridgeless interpolator solves
+
+
+                                   min ∥λ∥2      s.t. FP λ = 1.
+                                   λ∈RP
+
+
+
+The first-order conditions yield
+
+
+                                       λ̂RL   ′      ′ −1
+                                         P = FP (FP FP ) 1.
+
+
+
+
+Since λ̂RL
+        P is a linear combination of the rows of FP , it belongs to row(FP ).
+
+   Now let λ ∈ IP . Since both λ and λ̂RL
+                                       P are feasible,
+
+
+
+
+                                          FP (λ − λ̂RL
+                                                    P ) = 0,
+
+
+
+
+so λ − λ̂RL
+         P ∈ ker(FP ). Hence every feasible interpolator can be written as
+
+
+
+
+                               λ = λ̂RL
+                                     P + h,           h ∈ ker(FP ).
+
+
+   By definition of the projection operators,
+
+
+                                   ∥
+                               µP = ΠP µP ,           µ⊥
+                                                       P = MP µP ,
+
+
+
+
+                                                 30
+so
+                           ∥                  ∥
+                    µP = µP + µ⊥
+                               P,        µP ∈ row(FP ),         µ⊥
+                                                                 P ∈ ker(FP ).
+
+
+     Then
+                               r̄P (λ) − r̄P (λ̂RL     ′        RL
+                                                P ) = µP (λ − λ̂P ).
+
+
+            ∥
+Because µP ∈ row(FP ) and λ − λ̂RL
+                                P ∈ ker(FP ), orthogonality implies
+
+
+
+                                         ∥′
+                                       µP (λ − λ̂RL
+                                                 P ) = 0.
+
+
+
+
+Therefore
+                                                       ′
+                               r̄P (λ) − r̄P (λ̂RL     ⊥        RL
+                                                P ) = µP (λ − λ̂P ).
+
+
+     Applying this to λ = λ̂BP
+                            P  gives
+
+
+                                                            ′
+                                r̄P (λ̂BP           RL     ⊥ BP
+                                       P ) − r̄P (λ̂P ) = µP hP ,
+
+
+
+
+where
+                                hBP     BP    RL
+                                 P := λ̂P − λ̂P ∈ ker(FP ).
+
+
+The cosine representation follows from
+
+
+                                   ′
+                                µ⊥  BP    ⊥      BP
+                                 P hP = ∥µP ∥2 ∥hP ∥2 cos θP .
+
+
+
+
+     The second part is immediate from (17).
+
+
+
+
+Appendix B. Low-c virtue-of-complexity curves
+
+This appendix reports the low-complexity counterparts of the main-text figures, restricted to
+c < 10 so that behavior in the underparameterized and near-interpolation regimes is visible.
+
+                                                  31
+Figure 8: Low-complexity counterpart of Figure 2, restricted to c < 10. Sharpe ratios are
+annualized.
+
+
+
+
+                                           32
+                                                               (a) Return quantiles across complexity levels
+
+
+
+
+                                              (b) Expected Shortfall (ES) and upper-tail mean across complexity levels
+
+Figure 9: Low-complexity counterparts of the quantiles in Figure 3 and the tail means in
+Figure 11, restricted to c < 10.
+
+
+
+                                                     γ=1                                     γ=2                                  γ=5
+ Certainty equivalent (annual)
+
+
+
+
+                                                                                                               0.30
+                                 0.30                                    0.30
+                                                                                                               0.25
+                                 0.25                                    0.25
+                                                                                                               0.20
+                                 0.20                                    0.20
+                                                                                                               0.15
+                                 0.15                                    0.15
+                                                                                                               0.10
+                                 0.10                                    0.10
+                                                                                                               0.05                   Ridgeless
+                                 0.05                                    0.05
+                                                                                                               0.00                   Basis Pursuit
+                                 0.00                                    0.00
+                                        0.1
+
+
+                                               0.5
+
+
+                                                     1
+
+
+                                                         2
+
+
+                                                               5
+
+
+                                                                    10
+
+
+
+
+                                                                                0.1
+
+
+                                                                                      0.5
+
+
+                                                                                             1
+
+
+                                                                                                 2
+
+
+                                                                                                      5
+
+
+                                                                                                          10
+
+
+
+
+                                                                                                                      0.1
+
+
+                                                                                                                            0.5
+
+
+                                                                                                                                  1
+
+
+                                                                                                                                       2
+
+
+                                                                                                                                            5
+
+
+                                                                                                                                                  10
+
+
+
+
+                                                     c = P/T                                c = P/T                               c = P/T
+
+                                          Figure 10: Low-complexity counterpart of Figure 5, restricted to c < 10.
+
+
+
+
+                                                                                            33
+Appendix C. Lower- and upper-tail mean returns
+
+This appendix complements the return quantiles in Section 3.3. Let Qq (c) denote the em-
+pirical q-quantile of monthly out-of-sample returns at complexity c. For the lower cutoffs,
+we report the average return in the corresponding downside tail,
+
+                                 P
+                                     τ :r̂τ (c)≤Qq (c) r̂τ (c)
+                   ESq (c) :=                                      ,       q ∈ {0.10, 0.25}.    (24)
+                                #{τ : r̂τ (c) ≤ Qq (c)}
+
+For the upper cutoffs, we report
+
+                                   P
+                                       τ :r̂τ (c)≥Qq (c) r̂τ (c)
+                  UTMq (c) :=                                          ,    q ∈ {0.75, 0.90}.   (25)
+                                 #{τ : r̂τ (c) ≥ Qq (c)}
+
+ES is expressed as a return, rather than a loss, so a higher value indicates better downside
+performance. Unlike a quantile cutoff, a tail mean also reflects the severity of outcomes
+beyond that cutoff.
+   Figure 11 shows that the sparse SDF’s average return in the worst 10% of months im-
+proves substantially with complexity but remains below that of the dense benchmark. Its
+average return in the worst quartile overtakes the dense benchmark at the largest candidate
+set, while its upper-tail means remain higher. The remaining worst-decile shortfall qualifies
+the favorable quantile pattern in the main text.
+
+
+
+
+                                                      34
+Figure 11: Lower- and upper-tail mean monthly out-of-sample returns for the sparse SDF
+(basis pursuit, green) and the dense SDF (ridgeless, blue). The panels report average returns
+below the 10th and 25th percentiles and above the 75th and 90th percentiles.
+
+
+
+References
+
+Barnhart, Cynthia, Ellis L. Johnson, George L. Nemhauser, Martin W. P. Savelsbergh, and
+  Pamela H. Vance, 1998, Branch-and-price: Column generation for solving huge integer
+  programs, Operations Research 46, 316–329.
+
+Bartlett, Peter L., Philip M. Long, Gabor Lugosi, and Alexander Tsigler, 2020, Benign over-
+  fitting in linear regression, Proceedings of the National Academy of Sciences 117, 30063–
+  30070.
+
+Chen, Andrew Y., and Tom Zimmermann, 2022, Open source cross-sectional asset pricing,
+  Critical Finance Review 11, 207–264.
+
+Chen, Luyang, Markus Pelger, and Jason Zhu, 2024, Deep learning in asset pricing, Man-
+  agement Science 70, 714–750.
+
+Chen, Scott Shaobing, David L. Donoho, and Michael A. Saunders, 1998, Atomic decompo-
+  sition by basis pursuit, SIAM Journal on Scientific Computing 20, 33–61.
+
+Cochrane, John H., 2011, Presidential address: Discount rates, The Journal of Finance 66,
+  1047–1108.
+
+                                             35
+Didisheim, Antoine, Shikun Barry Ke, Bryan T. Kelly, and Semyon Malamud, 2025, APT or
+  “AIPT”? the surprising dominance of large factor models, Working Paper 33012, National
+  Bureau of Economic Research.
+
+Feng, Guanhao, Stefano Giglio, and Dacheng Xiu, 2020, Taming the factor zoo: A test of
+  new factors, The Journal of Finance 75, 1327–1370.
+
+Gu, Shihao, Bryan T. Kelly, and Dacheng Xiu, 2020, Empirical asset pricing via machine
+  learning, The Review of Financial Studies 33, 2223–2273.
+
+Gu, Shihao, Bryan T. Kelly, and Dacheng Xiu, 2021, Autoencoder asset pricing models,
+  Journal of Econometrics 222, 429–450.
+
+Hansen, Lars Peter, and Scott F. Richard, 1987, The role of conditioning information in
+  deducing testable restrictions implied by dynamic asset pricing models, Econometrica 55,
+  587–613.
+
+Harvey, Campbell R., Yan Liu, and Heqing Zhu, 2016, . . . and the cross-section of expected
+  returns, The Review of Financial Studies 29, 5–68.
+
+Hastie, Trevor, Andrea Montanari, Saharon Rosset, and Robert J. Tibshirani, 2022, Surprises
+  in high-dimensional ridgeless least squares interpolation, The Annals of Statistics 50, 949–
+  986.
+
+Hou, Kewei, Chen Xue, and Lu Zhang, 2020, Replicating anomalies, The Review of Financial
+  Studies 33, 2019–2133.
+
+Jensen, Theis Ingerslev, Bryan T. Kelly, and Lasse Heje Pedersen, 2023, Is there a replication
+  crisis in finance?, The Journal of Finance 78, 2465–2518.
+
+Kelly, Bryan T., and Semyon Malamud, 2025, Understanding the virtue of complexity, Work-
+  ing paper. SSRN Working Paper 5346842.
+
+
+
+                                             36
+Kelly, Bryan T., Semyon Malamud, and Kangying Zhou, 2024, The virtue of complexity in
+  return prediction, The Journal of Finance 79, 459–503.
+
+Kelly, Bryan T., Seth Pruitt, and Yinan Su, 2019, Characteristics are covariances: A unified
+  model of risk and return, Journal of Financial Economics 134, 501–524.
+
+Kozak, Serhiy, Stefan Nagel, and Shrihari Santosh, 2020, Shrinking the cross-section, Journal
+  of Financial Economics 135, 271–292.
+
+McLean, R. David, and Jeffrey Pontiff, 2016, Does academic research destroy stock return
+  predictability?, The Journal of Finance 71, 5–32.
+
+Nagel, Stefan, 2025, Seemingly virtuous complexity in return prediction, Working Paper
+  34104, National Bureau of Economic Research.
+
+Rahimi, Ali, and Benjamin Recht, 2007, Random features for large-scale kernel machines, in
+  Advances in Neural Information Processing Systems, volume 20.
+
+Rosasco, Lorenzo, Silvia Villa, Sofia Mosci, Matteo Santoro, and Alessandro Verri, 2013,
+  Nonparametric sparsity and regularization, Journal of Machine Learning Research 14,
+  1665–1714.
+
+Wilson, Andrew Gordon, 2025, Deep learning is not so mysterious or different, arXiv preprint
+  arXiv:2503.02113 [cs.LG].
+
+
+
+
+                                             37
+

@@ -1,0 +1,31 @@
+Computed locally (no external URL). Run UTC: 2026-10-01 06:17 via scripts/run_capped.sh --mem 1.8G -- uv run python (script /tmp/A/disp.py, not saved in repo). Input: data/sip/daily/2016..2026 parquet shards (symbol,timestamp,close,volume), last date 2026-09-30.
+METHOD: per day, close-to-close simple return per symbol; keep prior close >= 5 USD and |r| < 50% (drops split-like/bad prints; price_hygiene.sanitize_price_matrices NOT used - cheaper filter); universe = top 500 (or 1000) symbols by PRIOR-day dollar volume (close*volume) each day; dispersion = cross-sectional std of returns (and IQR/1.349 robust). Annual number = mean of daily values, in %.
+CAVEATS: the SIP parquet is not an S&P 500 list - it contains ETFs including leveraged single-stock ETFs (e.g. AAPB), which are liquid and raise dispersion, most in 2025-26; top-500-by-dollar-volume is a large/liquid-universe proxy, not the S&P 500 or Russell 1000. Dispersion also rises mechanically with market volatility. Treat the level trend 2023 -> 2026 as indicative only.
+
+== universe top500: daily cross-sectional std of close-to-close returns (%), mean over days; IQR/1.349 robust version; avg stocks/day; ew = equal-weight mean return
+2016: days 251 last 2016-12-30 | mean sd 2.022 median sd 2.007 | mean iqr_sd 1.052 | avg n 500
+2017: days 250 last 2017-12-29 | mean sd 1.747 median sd 1.690 | mean iqr_sd 0.868 | avg n 500
+2018: days 250 last 2018-12-31 | mean sd 1.944 median sd 1.847 | mean iqr_sd 1.115 | avg n 500
+2019: days 251 last 2019-12-31 | mean sd 1.902 median sd 1.847 | mean iqr_sd 1.027 | avg n 500
+2020: days 252 last 2020-12-31 | mean sd 3.192 median sd 3.044 | mean iqr_sd 1.813 | avg n 500
+2021: days 251 last 2021-12-31 | mean sd 3.042 median sd 2.923 | mean iqr_sd 1.496 | avg n 500
+2022: days 250 last 2022-12-30 | mean sd 2.821 median sd 2.746 | mean iqr_sd 1.627 | avg n 500
+2023: days 249 last 2023-12-29 | mean sd 2.328 median sd 2.299 | mean iqr_sd 1.214 | avg n 500
+2024: days 251 last 2024-12-31 | mean sd 2.737 median sd 2.613 | mean iqr_sd 1.228 | avg n 500
+2025: days 249 last 2025-12-31 | mean sd 3.137 median sd 3.043 | mean iqr_sd 1.486 | avg n 500
+2026: days 186 last 2026-09-30 | mean sd 3.476 median sd 3.375 | mean iqr_sd 1.930 | avg n 500
+monthly mean sd % 2024+: 24-01:2.12 24-02:3.02 24-03:2.52 24-04:2.37 24-05:2.66 24-06:2.36 24-07:2.69 24-08:2.78 24-09:2.39 24-10:3.06 24-11:3.45 24-12:3.36 25-01:3.41 25-02:3.39 25-03:2.92 25-04:3.53 25-05:3.00 25-06:2.89 25-07:3.10 25-08:2.87 25-09:2.94 25-10:3.75 25-11:3.10 25-12:2.72 26-01:3.21 26-02:3.49 26-03:3.04 26-04:3.49 26-05:3.93 26-06:4.16 26-07:3.75 26-08:3.48 26-09:2.73
+== universe top1000: daily cross-sectional std of close-to-close returns (%), mean over days; IQR/1.349 robust version; avg stocks/day; ew = equal-weight mean return
+2016: days 251 last 2016-12-30 | mean sd 2.047 median sd 1.995 | mean iqr_sd 1.107 | avg n 1000
+2017: days 250 last 2017-12-29 | mean sd 1.773 median sd 1.717 | mean iqr_sd 0.898 | avg n 1000
+2018: days 250 last 2018-12-31 | mean sd 2.020 median sd 1.955 | mean iqr_sd 1.157 | avg n 1000
+2019: days 251 last 2019-12-31 | mean sd 1.961 median sd 1.909 | mean iqr_sd 1.071 | avg n 1000
+2020: days 252 last 2020-12-31 | mean sd 3.164 median sd 2.952 | mean iqr_sd 1.872 | avg n 1000
+2021: days 251 last 2021-12-31 | mean sd 2.910 median sd 2.750 | mean iqr_sd 1.487 | avg n 1000
+2022: days 250 last 2022-12-30 | mean sd 2.773 median sd 2.679 | mean iqr_sd 1.587 | avg n 1000
+2023: days 249 last 2023-12-29 | mean sd 2.324 median sd 2.310 | mean iqr_sd 1.226 | avg n 1000
+2024: days 251 last 2024-12-31 | mean sd 2.679 median sd 2.581 | mean iqr_sd 1.229 | avg n 1000
+2025: days 249 last 2025-12-31 | mean sd 3.080 median sd 2.988 | mean iqr_sd 1.463 | avg n 1000
+2026: days 186 last 2026-09-30 | mean sd 3.422 median sd 3.294 | mean iqr_sd 1.864 | avg n 1000
+monthly mean sd % 2024+: 24-01:2.17 24-02:2.91 24-03:2.43 24-04:2.41 24-05:2.65 24-06:2.36 24-07:2.68 24-08:2.70 24-09:2.42 24-10:2.89 24-11:3.38 24-12:3.09 25-01:3.25 25-02:3.34 25-03:2.92 25-04:3.41 25-05:2.99 25-06:2.83 25-07:2.95 25-08:2.88 25-09:2.90 25-10:3.66 25-11:3.18 25-12:2.67 26-01:3.21 26-02:3.54 26-03:3.09 26-04:3.37 26-05:3.92 26-06:4.01 26-07:3.67 26-08:3.36 26-09:2.66
+Per-day series: A_xsection_dispersion_daily.csv (columns d,sd,iqr_sd,ew,n,u).

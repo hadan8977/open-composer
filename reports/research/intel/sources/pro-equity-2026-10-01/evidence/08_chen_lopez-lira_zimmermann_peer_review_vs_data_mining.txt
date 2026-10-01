@@ -1,0 +1,2411 @@
+URL: https://arxiv.org/pdf/2212.10317
+Fetched (UTC): 2026-10-01T06:09Z
+Note: pdftotext, v7 Dec 2025
+-----
+                                             Does Peer-Reviewed Research Help Predict Stock Returns?
+
+                                                        Andrew Y. Chen1 , Alejandro Lopez-Lira2 , and Tom Zimmermann3
+
+                                                                                  1 Federal Reserve Board
+                                                                                   2 University of Florida
+arXiv:2212.10317v7 [q-fin.GN] 29 Dec 2025
+
+
+
+
+                                                              3 University of Cologne and Centre for Financial Research
+
+
+
+
+                                                                                       December 2025
+
+
+                                                                                           Abstract
+
+
+                                                  Mining 29,000 accounting ratios for t-statistics > 2.0 leads to cross-sectional return
+                                                  predictability similar to the peer review process. For both, ≈ 50% of predictability
+                                                  remains after the original sample periods. This finding holds for many categories
+                                                  of research, including research with risk or equilibrium foundations. Only research
+                                                  agnostic about the theoretical explanation for predictability shows signs of outper-
+                                                  formance. Our results imply that inferences about post-sample performance depend
+                                                  little on whether the predictor is peer-reviewed or data mined. They also have impli-
+                                                  cations for the importance of empirical vs theoretical evidence, investors’ learning
+                                                  from academic research, and the effectiveness of data mining.
+
+                                            JEL Classification: B4, G0, G1
+                                            Keywords: peer review, data mining, stock market anomalies, economic theory
+
+                                                First posted to arxiv.org: December 2022. E-mails: andrew.y.chen@frb.gov, Alejandro.Lopez-
+                                            Lira@warrington.ufl.edu, tom.zimmermann@uni-koeln.de.                  Code:     https://github.com/
+                                            chenandrewy/flex-mining. Data: https://sites.google.com/site/chenandrewy/. We
+                                            thank Alec Erb for excellent research assistance. Initial drafts of this paper relied on data provided by
+                                            Sterling Yan and Lingling Zheng, to whom we are grateful. For helpful comments, we thank discussants:
+                                            Leland Bybee, Yufeng Han, Theis Jensen, Jeff Pontiff, Shri Santosh, and Yinan Su. For helpful comments
+                                            we also thank Svetlana Bryzgalova, Charlie Clarke, Mike Cooper, Albert Menkveld, Ben Knox, Emilio
+                                            Osambela, Dino Palazzo, Matt Ringgenberg, Dacheng Xiu, Lingling Zheng, and seminar participants
+                                            at Auburn, Baruch, Emory, the Fed Board, Georgetown, Louisiana State, Universitat Pompeu Fabra,
+                                            University of Kentucky, University of Utah, University of Wisconsin-Milwaukee, Virginia Tech, MSU FCU,
+                                            AFA, Arrowstreet Capital, NBER SI, and Stanford. The views in this paper are not necessarily those of the
+                                            Federal Reserve Board or the Federal Reserve System.
+1     Introduction
+Academic finance has documented more than 200 cross-sectional stock return predictors
+(Chen and Zimmermann 2022). The peer review process ensures these findings are
+supported by high quality evidence. It involves professors from prestigious universities
+and requires roughly five years to complete on average.
+   This paper compares the post-sample performance of peer-reviewed predictors with
+data-mined benchmarks. Our goal is to estimate
+
+    E [Post-Sample Performance | In-Sample t-stat > 2.0, Predictor Origin, Controls] , (1)
+
+and measure how Predictor Origin (e.g. peer-reviewed vs data-mined) affects this
+conditional expectation. Estimates of Equation (1) are important to investors. They are
+also important to academics who care about post-sample robustness.
+    To data mine, we search 29,000 accounting ratios for statistical evidence of predictive
+power. These ratios include all simple ratios and scaled first differences of variables
+that satisfy data availability requirements. Despite its naivete, this process generates
+out-of-sample returns of similar magnitude to those of the academic literature. This result
+replicates Yan and Zheng (2017), though our functional forms are not drawn from the
+modern predictability literature.
+    In fact, data mining uncovers many of the same themes as peer-reviewed research.
+Mining the 1963-1980 sample, the most statistically-significant accounting ratios are
+related to investment (Titman, Wei, and Xie 2004), debt issuance (Spiess and Affleck-
+Graves 1999), equity issuance (Loughran and Ritter 1995), accruals (Sloan 1996), inventory
+growth (Thomas and Zhang 2002), and earnings surprise (Watts 1978). Notably, data
+mining could have uncovered most of these themes before they were published, sometimes
+long before.
+    For a rigorous comparison, we construct data-mined benchmarks that control for
+sample periods and details of the performance measurement. Figure 1 illustrates the
+result. The solid line plots the trailing 5-year long-short returns of published predictors
+from the Chen and Zimmermann (2022) (CZ) dataset in event time, where the event is
+the end of the original sample period. The dashed line plots data-mined benchmarks. All
+strategies are normalized to have 100 bps mean return in the original samples, so both
+lines hover around 100 before the original samples end.
+    Post-sample, the performance of both types of predictors decays to about 50% of the
+original sample means. Data-mined returns decay a bit more than the published returns
+but the difference is small, both economically and statistically. For most of the plot, the
+
+                                             1
+                Figure 1: Does Peer-Reviewed Research Help Predict Returns?
+
+                                                   125
+
+
+
+                 Trailing 5−Year Return (bps pm)   100
+
+
+                                                   75
+
+
+                                                   50
+
+
+                                                   25
+                                                                Published (and Peer Reviewed)
+                                                                Data−Mined for |t|>2.0 in Original Sample
+                                                    0
+                                                         −360−300−240−180−120 −60      0   60 120 180 240 300
+                                                              Months Since Original Sample Ended
+
+
+data-mined benchmark is within one standard error of the published predictors (shaded
+area, clustered by calendar time and predictor). We find similar results controlling for
+CAPM and Fama-French 3 (FF3) + momentum exposure, among many other controls.
+Overall, the post-sample performance of peer-reviewed and data-mined predictors is
+remarkably similar.
+    Figure 1 compares the average publication to data mining. But peer-reviewed research
+is heterogeneous in many dimensions, including theoretical foundations, academic dis-
+cipline (finance or accounting), and journal ranking. Could this heterogeneity lead to
+heterogeneous outperformance compared to data mining?
+    To answer this question, we categorize research along the theoretical explanation for
+predictability (risk, mispricing, or agnostic), equilibrium modeling (no model, stylized,
+dynamic, or quantitative), academic discipline (finance or accounting), and journal
+ranking (top 3 finance, top 3 accounting, other). These categorizations are made manually,
+by reading the papers. Quotes that justify our classifications are in our GitHub repository.1
+    Based on manual reading, peer review attributes 60% of findings to mispricing and 20%
+to risk. For the remaining 20%, peer review is agnostic about the theoretical explanation.
+
+   1 Research
+           categories and justifications are found at https://github.com/chenandrewy/
+flex-mining/blob/main/DataInput/SignalsTheoryChecked.csv.
+
+
+
+                                                                                2
+The low prevalence of equilibrium modeling is consistent with mispricing being the most
+common explanation. 15% of peer-reviewed predictability findings are supported with
+an equilibrium model of any sort.
+    Of the 11 research categories, only research that is agnostic about the theoretical origin
+of predictability shows consistent outperformance compared to data mining. But even
+for this category, the outperformance is sensitive to the performance metric and modest
+overall. In terms of post-sample FF3 + momentum alphas, agnostic research retains an
+additional 31 percentage points of its original-sample performance compared to data
+mining. But this improvement falls to 9 p.p. when using raw long-short returns. While 31
+p.p. may appear notable, it is the largest outperformance out of 33 estimates, and should
+be shrunk toward the average of about zero to account for multiple comparisons (e.g.
+Chen and Zimmermann 2020).
+    Research that takes a stand on the theoretical origin of predictability shows little, if
+any, outperformance. In half of our tests, research that takes a stand underperforms data
+mining.
+    Additionally, we investigate whether predictability studied in Fama and French (1992)
+(B/M), Jegadeesh and Titman (1993) (momentum), and Banz (1981) (size) outperform
+data mining. These findings are not only among the most renowned, but are arguably
+the ones with the strongest supporting evidence, both theoretical (e.g., Gomes, Kogan,
+and Zhang 2003; Hong and Stein 1999; Berk 1995), and empirical (e.g., Fama and French
+1993; Asness, Moskowitz, and Pedersen 2013). Despite this supporting evidence, the
+post-sample performance of these findings is on average similar to data mining.
+    The remainder of this section discusses implications and related literature. Section
+2 characterizes the data mining process. Section 3 compares the average peer-reviewed
+predictor with data-mining. Section 4 examines heterogeneity in research methods,
+including theoretical foundations. Section 5 compares Fama and French (1992), Jegadeesh
+and Titman (1993), and Banz (1981) with data mining. Section 6 concludes. Robustness is
+in the Appendix.
+
+
+Implications and Relation to Literature
+The statistical implication is straightforward: Whether a trading strategy is found in a jour-
+nal or is data mined has little effect on mean inferences about post-sample performance
+(Equation (1)). But a closer look leads to four deeper implications.
+   1. Predictive Content of Empirical vs Theoretical Evidence. While the peer-reviewed
+predictors are supported by modern empirical and theoretical evidence, the data-mined
+
+
+                                              3
+predictors combine modern empirical evidence with the most basic of financial theories:
+that accounting ratios may predict firm performance. This idea goes back to the 1930s
+(Horrigan 1968),2 decades before the modern ideas of risk, psychology, and frictions
+that inform the peer-reviewed predictors. Comparing the post-sample performance of
+peer-reviewed and data-mined predictors, then, gives a sense of the relative importance
+of the two types of evidence. We provide a model of this comparison in Appendix A.
+    Our estimates imply that empirical evidence is more informative than theoretical evi-
+dence for identifying stable cross-sectional predictability. Having the support of modern,
+peer-reviewed theory does not predict higher post-sample performance compared to
+using the most basic of financial theories. This result applies to all types of theory in the
+CZ dataset, including quantitative equilibrium models, which are typically considered the
+gold standard. In contrast, modern empirical evidence appears to be a requirement for
+post-sample robustness. Indeed, the only type of research that consistently outperforms
+data mining is atheoretical research, which likely provides unusually strong empirical
+evidence, to make up for the lack of theory.
+    A priori, the importance of empirics vs theory is unclear. Some argue that theory is
+important (Cochrane 2009; Harvey 2017; Fama and French 2018), motivated by concerns
+about data mining bias. This concern is compelling given the volatility of stock returns
+and the vast number of potential predictors. However, the flexibility of theory and “model
+dredging” may limit the helpfulness of theory (Sonnenschein 1972; Fama 1991). Even if
+theory does identify true predictors, it may identify unstable disequilibrium phenomena
+that decay with investor learning (Cochrane 1999; McLean and Pontiff 2016). These
+previous works discuss the question theoretically, but they do not empirically compare
+predictors with varying amounts of theoretical support.
+    2. Investors’ Learning from Academic Research. Previous papers suggest that investors
+learn about mispricing from academic research. If this were the case, then investors
+would respond to academic findings by trading on academic strategies, decreasing
+predictability post-sample. Consistent with this hypothesis, McLean and Pontiff (2016)
+find predictability does decay, and more so than could be explained by statistical artifacts.
+Post-sample changes in trading activity also support this hypothesis (McLean and Pontiff
+2016; Calluzzo, Moneta, and Topaloglu 2019; McLean, Pontiff, and Reilly 2020). These
+findings beg the question of whether investors learn about risk.
+    Our results suggest that learning is asymmetric: while investors learn about mispricing
+
+    2 Some accounting ratios go back to the 1890s, but Horrigan (1968) credits Wall (1919) for inspiring a
+
+“virtual explosion of publications on the subject of ratio analysis.” By the 1930s, there were several studies
+of ratios’ predictive content, including Smith and Winakor’s (1935) study of 21 ratios.
+
+
+                                                      4
+from academic research, they do not seem to learn about risk. Following the logic of
+McLean and Pontiff (2016), if investors learn about risk, one would see the opposite
+post-sample effect: investors would avoid academic risk-based strategies, increasing
+predictability post-publication. We find no evidence supporting this hypothesis and
+strong evidence against it.
+    It is possible that investors do learn about risk from academic research, but that
+these risks decay post-sample in a manner similar to mispricing-based and data-mined
+predictors. In our view, the simpler explanation is that the risks identified by academic
+research are not considered risks by investors. This explanation is consistent with survey
+evidence (Doran and Wright 2007; Mukhlynina and Nyborg 2020; Chinco, Hartzmark,
+and Sussman 2022; Bender et al. 2022).
+    3. Effectiveness of Data Mining. Our findings imply that data mining is surprisingly
+effective for identifying true cross-sectional predictability. Indeed, data mining is compet-
+itive with the peer-review process in terms of effectiveness.
+    These results add to the debate that began with Yan and Zheng’s (2017) pioneering
+study of 18,000 accounting ratios and 4,000 past return signals.3 Yan and Zheng reject
+the null of no predictability based on both bootstrap and out-of-sample tests. However,
+followups to Yan and Zheng come to contradictory conclusions, based on technical
+statistical methods (Chordia, Goyal, and Saretto 2020; Harvey and Liu 2020; Chen
+Forthcoming; Goto and Yamada 2025). Our simple data mining process and straightforward
+out-of-sample tests help provide clarity to this debate.
+    More broadly, the literature on data mining goes back to Jensen and Benington (1970).
+Earlier studies focused on statistical theory (Lo and MacKinlay 1990) or market timing
+(Sullivan, Timmermann, and White 1999, 2001), and found mixed results regarding
+effectiveness. Other recent studies examine cross-sectional predictability indirectly, using
+published predictors. Most of these studies find that data mining biases are small (McLean
+and Pontiff 2016; Chen and Zimmermann 2020; Jacobs and Müller 2020; Jensen, Kelly,
+and Pedersen 2022; Chen 2025), though a few argue for sizeable biases (Harvey, Liu, and
+Zhu 2016; Hasler 2023). By directly examining data-mined predictors, we obtain cleaner
+inferences. Following up on our paper, Chen and Dim (2025) and Marrow and Nagel
+(2024) use empirical Bayes to mine data more rigorously.
+    4. Risk vs Mispricing in the Cross-Section. Our findings are consistent with the view that
+mispricing is the primary driver of cross-sectional stock return predictability. We find
+
+   3 Earlier studies by Ou and Penman (1989), Abarbanell and Bushee (1998), and Haugen and Baker (1996)
+
+successfully predict cross-sectional returns using many accounting signals. But they consider far fewer
+signals (up to 68) and do not focus on data mining bias.
+
+
+                                                  5
+that peer review is three times more likely to attribute predictability to mispricing than to
+risk. Moreover, predictors attributed to risk decay post-sample.
+    These findings complement recent papers that also point toward mispricing as the
+primary driver. These papers use a wide range of methods, including announcement
+effects (Engelberg, McLean, and Pontiff 2018; Frey 2023), stochastic dominance (Holcblat,
+Lioui, and Weber 2022), machine learning (Bali, Beckmeyer, and Wiedemann 2023), and
+subjective expectations data (Jensen 2024).
+
+
+2     Data-Mined Predictability
+We describe our data mining procedure and the predictability it uncovers.
+
+
+2.1    Data Mining Procedure
+We begin with 241 Compustat annual accounting variables used in Yan and Zheng (2017).
+Yan and Zheng select these variables to (1) ensure non-missing values in at least 20
+years and (2) that the average number of firms with non-missing values is at least 1,000
+per year. We add CRSP market equity, leading to 242 “ingredient” variables. A more
+sophisticated selection would filter on data availability in real time. But given that data
+availability changes in large, positive, and permanent jumps (Easterwood 2024), the more
+complicated procedure would likely yield similar results.
+    We then generate 29,315 accounting ratios (signals) using two functional forms: simple
+ratios (X/Y) and first differences scaled by a lagged denominator (∆X/lag(Y )). The
+numerator can use any of the 242 ingredients. The denominator is restricted to the 65
+ingredients that are not zero for at least 25% of firms in 1963 with matched CRSP data.
+This procedure leads to ≈ 242 × 65 × 2 = 31, 460 ratios, but we drop 2,145 ratios that are
+redundant in “unsigned” portfolio sorts.4
+    We lag each signal by six months relative to the fiscal year end, and then form long-
+short decile strategies by sorting stocks on the lagged signals in each June. Delisting
+returns and other data handling methods follow Chen and Zimmermann (2022). For
+further details, please see https://github.com/chenandrewy/flex-mining.
+    This procedure aims to be the simplest possible data mining benchmark for peer-
+reviewed predictors. Accounting data is the modal data source for peer-reviewed pre-
+
+    4 For the 65 × 65 = 4, 225 ratios where the numerator is also a valid denominator, there are only 65
+
+choose 2 = 2,080 ratios that are in a sense distinct.
+
+
+
+                                                        6
+dictors, representing roughly 50% of the CZ dataset. The second most common data
+source is past returns, which represents only 20%. While it is possible to data mine both
+accounting data and past returns simultaneously (e.g. Chen and Dim 2025), it requires
+several additional design choices and significantly complicates the analysis.
+    Alternatively, one can motivate this procedure as a data mining benchmark that could
+have been constructed before the bulk of the modern literature. The idea that accounting
+ratios may be informative about firm value goes back to the 1930s: 17 of the 26 chapters
+on stock selection in Graham and Dodd (1934) focus on accounting statements. Smith
+and Winakor (1935) examine 21 accounting ratios for their ability to predict financial
+distress (see also Ramser and Foster 1931; Fitzpatrick 1932; and Merwin 1942). These
+works were available decades before Fama and MacBeth (1973). By the 50th anniversary
+of Graham and Dodd (1934), the book had become quite influential, and was celebrated
+in Warren Buffett’s (1984) popular speech and article. Thus, one well could have decided
+to search accounting ratios in 1984, when only 9 of the 212 predictors in the CZ dataset
+had been published. Indeed, Ou and Penman (1989) propose selecting stocks based on “a
+large number of financial statement attributes,” using a process in which “[n]o conscious
+attempt is made to assess predictive ability on the basis of what we think should work.”
+    Our selection of accounting ratios contrasts with Yan and Zheng (2017), who use
+functional forms inspired, in part, by the asset pricing literature. Our procedure avoids the
+concern that such inspiration induces look-ahead bias. Nevertheless, previous versions of
+this paper used Yan and Zheng’s data and found similar results.
+
+
+2.2   Out-of-Sample Returns from Data Mining
+Our data mining procedure generates notable out-of-sample returns, as seen in Panel (a)
+of Table 1. Each June, we sort the 29,000 accounting ratios into five bins based on their
+mean long-short returns over the past 30 years (in-sample) and compute the mean return
+over the next year within each bin (out-of-sample). We then average these statistics across
+each year.
+    Using equal-weighted strategies, the in-sample returns of the first bin are on average
+-59 bps per month, with an average t-stat of -4.2. These statistics are similar to those of
+the typical published predictor (Chen and Zimmermann (2022)). Out-of-sample, the first
+bin returns -47 bps per month, implying a decay of only 20%, once again resembling
+published predictability (McLean and Pontiff (2016)). Since investors can flip the long
+and short legs of these strategies, these statistics imply substantial out-of-sample returns.
+Similar predictability is seen in bin 5, which decays by 32%.
+
+
+                                             7
+          Table 1: Descriptive Statistics of Data-Mined Accounting Strategies
+The table describes data-mined accounting strategies using “out-of-sample” portfolio
+sorts (Panel (a)) and PCA (Panel (b)). Panel (a) sorts all ratios each June into 5 bins
+based on past 30-year long-short returns (in-sample) and computes the mean return
+over the next year within each bin (out-of-sample). Statistics are calculated by strategy,
+then averaged within bins, then averaged across sorting years. Decay is the percentage
+decrease in mean return out-of-sample relative to in-sample. We omit decay for bin 4
+because the mean return in-sample is negligible. Panel (b) applies PCA to ratios that
+have t-statistics greater than 2.0 in at least 10% of the in-sample periods from Panel
+(a). Data-mined predictors resemble published ones in terms of in-sample performance,
+out-of-sample performance, and covariance structure.
+
+                 Panel (a): “Out-of-Sample” Returns of All Ratios 1994-2020
+   In-       Equal-Weighted Long-Short Deciles                  Value-Weighted Long-Short Deciles
+ Sample     Past 30 Years (IS)          Next Year (OOS)        Past 30 Years (IS)          Next Year (OOS)
+   Bin       Return                      Return Decay           Return                      Return Decay
+            (bps pm)    t-stat          (bps pm) (%)           (bps pm)      t-stat        (bps pm) (%)
+    1           -59.0       -4.20            -47.3    19.8           -37.7    -2.05           -16.0         57.7
+    2           -29.1       -2.45            -18.4    36.8           -15.9    -1.03            -5.8         63.5
+    3           -13.5       -1.23             -4.6    65.9            -5.4    -0.37            -3.0         43.4
+    4            -0.8       -0.09              3.7                     4.6     0.31            -1.0
+    5            21.3        1.40             14.6    31.5            24.6     1.31             6.2         74.7
+
+                        Panel (b): PCA Explained Variance of Predictive Ratios (%)
+     Number of PCs      1           5   10    20     30   40    50     60    70       80     90       100
+     Equal-Weighted     23       50     58    67     72   75    78     81    83       84     86       87
+     Value-Weighted     16       41     50    61     68   73    77     80    82       85     87       88
+
+
+
+    Out-of-sample predictability is also seen in value-weighted strategies but with smaller
+magnitudes. Still, the out-of-sample returns monotonically increase in the in-sample
+return, indicating the presence of true predictability. Moreover, the roughly 60% decay is
+far from 100%, and is in the ballpark of the post-sample decay for published predictors.
+Similarly, out-of-sample predictability is much weaker post-2004, though it still exists
+(see Appendix Table IA.1). The concentration of predictability in small stocks and the
+pre-2004 sample is also found in published predictors (Chen and Velikov 2022).
+
+
+
+
+                                                      8
+2.3   Data-Mined Predictability Themes
+Since there are 29,000 data-mined signals, Panel (a) of Table 1 implies thousands of
+strategies with notable out-of-sample predictability. But how many distinct themes are in
+these strategies?
+    Panel (b) of Table 1 helps address this question. It applies PCA to the predictive ratios:
+ratios that have t-statistics greater than 2.0 in at least 10% of the 30-year in-sample periods
+from Panel (a).
+    PCA results in a non-trivial factor structure: the first five PCs explain about 50% of
+total variance. However, many dozens of PCs are required to span 80% of total variance.
+A similar variance decomposition is seen in published predictors (Kozak, Nagel, and
+Santosh 2018; Bessembinder, Burt, and Hrdlicka 2023; Chen and McCoy 2023). Pairwise
+correlations lead to a similar conclusion (Internet Appendix Table IA.2).
+    One can alternatively examine the themes by examining the numerators that generate
+the very largest t-statistics. Table 2 does this by reporting the 20 numerator and stock
+weight (equal- or value-) combinations that produce the largest mean t-stats, where the
+mean is taken across the 65 possible denominators. The table uses the 1963-1980 sample,
+but similar themes are found in other samples (Internet Appendix IA.2).
+    All of the top 20 numerators fit into themes from the cross-sectional literature. These
+themes include investment (Titman, Wei, and Xie (2004)), debt issuance (Spiess and
+Affleck-Graves (1999)), share issuance (Loughran and Ritter (1995)), accruals (Sloan
+(1996)), inventory growth (Thomas and Zhang (2002)), and earnings surprise (Watts
+(1978)). For all of these themes, the sign of predictability obtained from data mining is
+the same as the sign from the literature (e.g. short stocks with high investment). Notably,
+most of these themes are published after 1980, sometimes long after.
+    The predictive power of these themes persists out-of-sample (“OOS/IS” columns).
+All data-mined numerators produce positive mean returns after 1980. In fact, the return
+decay in the 1981-2004 out-of-sample period is on average zero.
+    Taken together, these results hint at our main finding. Data-mined predictability
+resembles that of peer-reviewed research. This resemblance is seen in performance both
+in- and out-of-sample (Table 1, Panel (a)), covariance structure (Table 1, Panel (b)), and
+themes (Table 2).
+
+
+3     Research vs Data Mining
+We compare in detail the post-sample returns of peer-reviewed research to data mining.
+
+
+                                              9
+                  Table 2: Themes from Mining Accounting Ratios in 1980
+Table reports the 20 accounting ratio numerator and stock weight (equal- or value-) combinations
+with the largest mean t-stats using returns in the years 1963-1980 (IS). ‘ew’ is equal-weight, ‘vw’
+is value-weight. We manually group numerators into themes from the literature. Strategies are
+signed to have positive mean returns IS. ‘Pct Short’ is the share of strategies that short stocks with
+high ratios. ‘t-stat’ and ‘Mean Return’ are averages across the 65 possible denominators. ‘Mean
+Return’ is in bps per month. ‘Mean return OOS/IS’ is the mean in either 1981-2004 or 2005-2022
+(OOS), divided by the mean IS. Data mining can uncover themes from the literature before they
+are published.
+
+                                            1963-1980 (IS)              1981-2004     2005-2023
+   Numerator (Stock Weight)          Pct                 Mean                Mean Return
+                                               t-stat
+                                    Short                Return               OOS / IS
+   Investment / Investment Growth (Titman-Wei-Xie 2004; Cooper-Gulen-Schill 2008)
+   ∆Assets (ew)                    100        4.0      0.86             1.05                0.32
+   ∆PPE net (ew)                    98        4.0      0.79             1.08                0.20
+   ∆Intangible assets (ew)         100        4.0      0.52             1.04                0.26
+   ∆PPE gross (ew)                  98        3.8      0.76             1.00                0.14
+   ∆Invested capital (ew)          100        3.5      0.73             1.35                0.34
+   ∆Capital expenditure (ew)       100        3.2      0.43             1.54                0.46
+   External Financing (Loughran and Ritter 1995; Spiess and Affleck-Graves 1999)
+   ∆Common stock (ew)              100        5.1      0.81             0.66                0.34
+   ∆Liabilities (ew)               100        4.7      0.80             0.79                0.28
+   ∆Capital surplus (ew)           100        4.2      0.61             1.19                0.99
+   ∆Long-term debt (ew)            100        3.6      0.47             1.43                0.23
+   ∆Capital surplus (vw)            98        3.0      0.54             0.93                0.54
+   Accruals / Inventory Growth (Sloan 1996; Thomas and Zhang 2002)
+   ∆Inventories (ew)               100        4.2      0.66             1.22                0.22
+   ∆Notes payable st (ew)          100        3.8      0.44             0.57                0.25
+   ∆Receivables (ew)               100        3.7      0.67             0.59                0.33
+   ∆Debt in current liab (ew)      100        3.7      0.43             0.73                0.28
+   ∆Current liabilities (ew)       100        3.7      0.51             1.32                0.22
+   Earnings Surprise (Watts 1978; Foster, Olsen, and Shevlin 1984)
+   ∆Cost of goods sold (ew)        100        3.7      0.60             0.87                0.23
+   ∆Operating expenses (ew)        100        3.5      0.58             0.99                0.35
+   ∆SG&A (ew)                      100        3.3      0.62             1.04                0.25
+   ∆Interest expense (ew)           98        3.3      0.47             1.38                0.73
+
+
+
+
+                                                  10
+3.1   Peer-Reviewed Predictor Data
+Peer-reviewed predictors come from the October 2024 release of the Chen and Zimmer-
+mann (2022) (CZ) dataset. This dataset is built from 212 firm-level variables that were
+shown to predict returns cross-sectionally in academic journals. It covers the vast majority
+of firm-level predictors that can be created from widely-available data and were published
+before 2016. The CZ data is a uniquely accurate representation of the literature: unlike
+other large-scale replications, CZ show that their t-stats are generally a good match for
+the t-stats in the original papers.
+    CZ select their predictors to provide comprehensive coverage of predictors examined
+in previous meta-studies (McLean and Pontiff 2016; Harvey, Liu, and Zhu 2016; Green,
+Hand, and Zhang 2017; Hou, Xue, and Zhang 2020). These meta-studies, in turn, aim for
+comprehensive coverage of academic cross-sectional stock return predictors.
+    We drop five predictors that have fewer than 9 years of post-sample returns. These
+predictors use specialized data sources that have been discontinued (e.g., the Gompers,
+Ishii, and Metrick (2003) governance index). This restriction makes our charts easier to
+interpret.
+    We drop an additional 29 predictors to ensure each paper is represented by at most 2
+predictors. For papers that present more than 2 predictors, we only include the two predic-
+tors with the largest in-sample t-statistics. This filter ensures our results are representative
+of the literature, and do not over-weight papers that present numerous implementations
+of the same theme (e.g., Heston and Sadka’s (2008) seasonal momentum).5
+
+
+3.2   Post-Sample Performance: Research vs Data Mining
+We can now answer the question posed on page 1. Does peer-reviewed research help
+predict cross-sectional returns compared to data mining?
+    In our first test, we measure performance using the mean long-short return of strategies
+formed following the “original paper” specifications from CZ. These specifications match
+the original papers’ predictability tests in terms of stock weighting and portfolio sorting
+(e.g., equal-weighted quintiles). We keep only predictors that produce mean long-short
+return t-stats > 2.0 in the original samples. All strategies are signed to be positive and
+normalized to have 100 bps mean return in the original samples for ease of interpretation.
+    For each of these published strategies, we construct a data-mined benchmark by
+applying the same statistical treatment to the 29,000 accounting ratios. For each ratio,
+
+   5 Previous versions of our study without this filter show very similar results.
+
+
+
+
+                                                    11
+we construct t-stats based on the original papers’ stock weighting and sample periods,
+filter for t-stats > 2.0, sign and normalize to have +100 bps mean return in the original
+samples. Since finding t-stats > 2.0 is rather common (Table 1), on average, this process
+selects roughly 6,000 data-mined strategies for each published predictor.
+    Figure 1 compares the post-sample performance of the published strategies to their
+data-mined benchmarks. It plots trailing 5-year mean returns in event time, where the
+event is the end of the original sample periods.
+    Post-sample, peer-reviewed (solid line) and data-mined (long-dash) predictors perform
+similarly. This similarity is seen both in the average post-sample performance, as well
+as in the event-time decay patterns. This result suggests that peer-reviewed research
+provides limited additional information about post-sample performance compared to
+data mining.
+                                                                                      a of
+    Figure 2 shows robustness to factor exposure. We calculate the abnormal return ri,t
+strategy i in month t:
+
+                                      a               (s)
+                                     ri,t = ri,t − β̂ i f t ,                             (2)
+
+                                                                                 (s)
+where ri,t is the raw long-short return, f t is a vector of factor returns, and β̂ i is a row
+vector of betas estimated using sample s. The sample s is either the original sample or the
+post-sample period. This separation ensures our t-stat filters do not produce look-ahead
+bias, but using full-sample betas leads to similar results (Internet Appendix IA.3). We
+then repeat the test in Figure 1 using abnormal returns in place of the raw returns. This
+replacement is made throughout the analysis, implying that the t-stat > 2.0 filters also
+use abnormal rather than raw returns.
+    Panel (a) of Figure 2 shows that published predictors exhibit some outperformance
+relative to data-mined benchmarks in terms of CAPM-adjusted returns. However, the
+outperformance is modest. Post-sample, published predictors retain 60% of their original-
+sample performance, compared to 52% for data-mined benchmarks. Indeed, Panel (b)
+shows that if we measure abnormal returns relative to the Fama-French three factors +
+momentum, data mining slightly outperforms research. Overall, post-sample alphas are
+similar for published and data-mined predictors.
+    Further robustness is seen using many other controls. These include controls for
+research methods and quality (Sections 4 and 5), in-sample mean returns, in-sample t-
+statistics, and data sources (Appendix B). We also find robustness to excluding data-mined
+predictors that are highly correlated with published predictors (Appendix B.3).
+
+
+
+
+                                               12
+                                              Figure 2: Factor Adjustments and Alternative Data Mining Methods
+                                                             a = r − β̂                                                                                                    (s)                  (s)
+Top panels repeat Figure 1 using abnormal returns ri,t             i,t    i f t , where β̂ i is
+estimated using sample-specific periods (in-sample or post-sample) and f t is the return
+of either the market less risk-free rate (CAPM) or the Fama-French three factors plus
+momentum (FF4). Bottom panels use alternative data mining methods: mining 3,000
+ticker-based strategies (dashed line) or filtering for the top 5% of t-stats (Panel (d)). Each
+predictor is normalized so that its mean original-sample return is 100 bps per month.
+Shaded area shows one standard error for the published predictors, clustered by calendar
+month and predictor. Figure 1 is robust to factor adjustments. The statistical screen and
+number of strategies used for data-mining are unimportant but the type of data being
+mined is critical.
+                                                          (a) CAPM                                                                                     (b) FF3+Momentum
+
+                                    125                                                                                                 125
+  Trailing 5−Year CAPM Alpha
+
+
+
+
+                                                                                                      Trailing 5−Year FF4 Alpha
+                                    100                                                                                                 100
+
+
+                                    75                                                                                                  75
+
+
+                                    50                                                                                                  50
+
+
+                                    25                                                                                                  25
+                                                Published (CAPM Alpha, t>2)                                                                          Published (FF4 Alpha, t>2)
+                                                Data−Mined (CAPM Alpha, t>2)                                                                         Data−Mined (FF4 Alpha, t>2)
+
+                                     0                                                                                                   0
+                                          −360−300−240−180−120 −60     0    60 120 180 240 300                                                −360−300−240−180−120 −60      0     60 120 180 240 300
+                                               Months Since Original Sample Ended                                                                  Months Since Original Sample Ended
+
+                                               (c) Mining for t-stats > 2.0                                                                      (d) Mining for top 5% of t-stats
+  Trailing 5−Year Return (bps pm)
+
+
+
+
+                                                                                                      Trailing 5−Year Return (bps pm)
+
+
+
+
+                                    125                                                                                                 125
+
+                                    100                                                                                                 100
+
+                                     75                                                                                                  75
+
+                                     50                                                                                                  50
+
+                                     25                                                                                                  25
+
+                                      0                                                                                                   0
+
+                                    −25         Published                                                                               −25        Published
+                                                |t|>2.0 Mining Accounting                                                                          top 5% |t| Mining Accounting
+                                                |t|>2.0 Mining Tickers                                                                             top 5% |t| Mining Tickers
+                                    −50                                                                                                 −50
+                                          −360−300−240−180−120 −60     0    60 120 180 240 300                                                −360−300−240−180−120 −60      0     60 120 180 240 300
+                                               Months Since Original Sample Ended                                                                  Months Since Original Sample Ended
+
+
+
+
+                                                                                                 13
+3.3   Alternative Data Mining Methods
+Our data mining process (Section 2.1) searches accounting ratios for t-stats > 2.0. This
+method avoids look-ahead bias and is arguably the most straightforward way to mine
+data. However, one can think of alternative data mining methods, and use these to inspect
+the mechanism behind Figure 1.
+    For example, one could use the data mining method proposed in Harvey (2017).
+Harvey asks his research assistant to “form portfolios based on the first, second, and
+third letters of the ticker symbol,” leading to 3,160 long-short portfolios. We interpret
+his instructions as follows: Generate 26 portfolios by going long all stocks with a first
+ticker letter of “A,” “B,” “C,” ..., and “Z.” Generate 26 portfolios by doing the same for
+the second ticker letter, and add a 27th portfolio for tickers that have no second ticker
+letter. Apply the same to the third ticker. This process results in 26 + 27 + 27 = 80 long
+portfolios. Finally, form (80
+                            2 ) = 3, 160 long-short portfolios by selecting all distinct pairs of
+the 80 long portfolios.
+    The bottom panels of Figure 2 compare published strategies to strategies based on
+ticker mining. Panel (c) applies the same predictability screen as in Figure 1: we screen
+for t-stats > 2.0 in the original sample periods. Post-sample, the mean returns from
+mining tickers (short-dash line) are approximately zero. Thus, peer-reviewed research
+(solid line) is much more helpful for predicting returns than mining tickers.
+    Panel (d) applies an alternative predictability screen: we screen for the top 5% of
+t-stats in the original sample periods. Screening accounting ratios this way still leads
+to very similar returns to research. Screening tickers this way still leads to post-sample
+returns of around zero.
+    Figure 2 illustrates two lessons about data mining. The first is that the data being
+mined is important. Accounting data are helpful for predicting returns, while ticker data
+are not. The second lesson is that mining more data does not necessarily mean worse
+out-of-sample performance. The accounting dataset is almost 10 times as large as the
+ticker dataset, yet it produces much stronger post-sample returns. This result is consistent
+with false discovery controls, which typically depend on the distribution of test statistics
+rather than the number of tests (Benjamini and Hochberg 1995; Chen 2025).
+    In summary, the average peer-reviewed publication leads to post-sample returns that
+are similar to those of a simple data mining process.
+
+
+
+
+                                               14
+4     Heterogeneous Research and Outperformance
+Peer-reviewed publications differ in many dimensions, including theoretical foundations,
+discipline of origin, and outlet quality. This section examines these differences and
+whether they matter for predictive outperformance compared to data mining.
+
+
+4.1    Research Categorization Methods
+We categorize research at the predictor-paper level, along four dimensions:
+
+    1. Theoretical foundation: is the theoretical explanation for the predictor risk or
+       mispricing? Or is there no clear theoretical explanation (agnostic)?
+
+    2. Equilibrium modeling: is the theoretical explanation supported by a stylized model,
+       dynamic model, or quantitative model?
+
+    3. Academic Discipline: is the paper published in a finance, accounting, or other
+       discipline’s journal?
+
+    4. Quality: is the research published in a top-3 finance or top-3 accounting journal?
+
+These dimensions are key characteristics of asset pricing research. Conferences and
+societies are organized around the first three. Journal quality is important for tenure.
+    We apply these classifications based on manual reading of the original papers. All
+classifications can be found at https://github.com/chenandrewy/flex-mining/
+blob/main/DataInput/SignalsTheoryChecked.csv, which also contains quotes
+justifying classifications for the first two dimensions (theory and equilibrium modeling).
+    We categorize predictor-papers, rather than papers, because similar predictors appear
+across multiple papers, and the peer review process sometimes arrives at different
+theoretical foundations. Similar predictors appear in the CZ dataset, on occasion, due
+to their goal of comprehensive coverage and the fact that it’s difficult to judge if two
+predictors are indeed duplicates.
+    For example, predictors related to profitability appear in both Fama and French (2006)
+and Balakrishnan, Bartov, and Faurel (2010). Fama and French use annual earnings
+and scale by book equity, while Balakrishnan et al. use quarterly earnings and scale by
+total assets.6 Fama and French provide an agnostic explanation: “We take no stance
+
+    6While one might argue that these predictors are duplicates, Balakrishnan et al say their predictor is
+
+“incremental to, and more pronounced than previously documented earnings-related anomalies.”
+
+
+
+                                                   15
+on whether the patterns in average returns observed here are rational or irrational.” In
+contrast, Balakrishnan et al. argue for mispricing: “We document a market failure to
+fully respond to loss/profit quarterly announcements.” Thus, the broader concept of
+profitability appears as both agnostic and mispricing in our analysis, and is evaluated at
+the predictor-paper level.
+    In rare instances, predictors from the same paper may have distinct theoretical foun-
+dations. Ang et al. (2006) provide a risk-based explanation for the predictive power of the
+VIX beta (“innovations in aggregate volatility carry a statistically significant negative price
+of risk”), but are agnostic about why idiosyncratic volatility predicts returns (“our results
+on idiosyncratic volatility represent a substantive puzzle”). Thus, the Ang et al. paper
+appears as both risk-based and agnostic, and one needs to delve into the predictor-paper
+level to have a clean description of the theoretical ideas.
+    As these quotes illustrate, categorizing predictor-papers into risk, mispricing, and
+agnostic is typically straightforward. However, a handful of predictor-papers focus on
+liquidity mechanisms. We categorize these predictor-papers as mispricing if the argument
+focuses on stock-specific measures of liquidity (Amihud 2002) and risk if the argument
+focuses on a market-wide component (Pástor and Stambaugh 2003). This method gives
+the risk category the best chance at finding post-sample returns, since idiosyncratic
+liquidity has improved over time (Chen and Velikov 2022). Nevertheless, this issue affects
+only seven predictor-papers, and has little impact on our main results.
+
+
+4.2   The Distribution of Research Categories
+Table 3 illustrates the distribution of predictor-papers across the four categories. Among
+the 173 predictor-papers we examine, 20% (34/173) are attributed to risk by the peer
+review process, 61% (105/173) are attributed to mispricing, and 20% (34/173) have
+uncertain or agnostic origins. Top finance journals show a similar pattern, with 22%
+(23/105) of predictors attributed to risk. Interestingly, accounting journals rarely attribute
+predictability to risk. A detailed breakdown by journal is in the Internet Appendix (Table
+IA.8).
+    This distribution suggests a consensus about the origins of cross-sectional predictabil-
+ity: peer review attributes little of this predictability to risk. We emphasize that this
+attribution is chosen not only by the authors, but also by the editors and referees. This
+consensus is consistent with factor model measures of risk (Appendix IA.4.2). It contrasts
+with recent reviews of empirical asset pricing, which are typically agnostic about the
+origins of predictability (e.g. Bali, Engle, and Murray 2016; Zaffaroni and Zhou 2022).
+
+
+                                              16
+              Table 3: Research Categories in Cross-Sectional Predictability
+We categorize predictor-papers by reading the original papers. Justification for each
+“Theoretical Explanation” is at https://github.com/chenandrewy/flex-mining/
+blob/main/DataInput/SignalsTheoryChecked.csv. “JF, JFE, RFS” includes only
+predictors published in the Journal of Finance, Journal of Financial Economics, or Review
+of Financial Studies. “AR, JAE, JAR” includes only predictors published in the Accounting
+Review, the Journal of Accounting and Economics or the Journal of Accounting Research.
+Peer review attributes little cross-sectional predictability to risk. Few predictor-papers are
+explained with an equilibrium model.
+
+              Category                           Journal Category
+                           Any    JF, JFE, RFS   AR, JAE, JAR   Finance   Accounting
+              Theoretical Explanation
+              Risk            34           23               0        28            1
+              Mispricing     105           59              24        68           32
+              Agnostic        34           23               5        23            5
+              Equilibrium Modeling
+              No Model       148           87              29        98           38
+              Stylized        14           10               0        12            0
+              Dynamic          5            4               0         5            0
+              Quantitative     6            4               0         4            0
+              Total         173           105              29       119           38
+
+
+
+
+   The distribution also shows that relatively few predictor-papers are justified with an
+equilibrium model. Only 14.5% of the predictors-papers have a mathematical theory of
+any sort. And among these models, most are stylized. This result may be related to the
+high prevalence of mispricing explanations, which can be thought of as disequilibrium
+phenomena. Indeed, of the 25 papers with a mathematical theory, only five are theories
+of mispricing, and most of these center around trading frictions. Alternatively, this
+result may be due to the technical challenges around solving equilibrium models with a
+cross-section of stocks under uncertainty.
+   The papers that lack a mathematical theory vary in the assertiveness of their theoretical
+explanations. Some papers begin with a verbal theory of investor behavior (sometimes
+with citations to mathematical theories), and then present empirical evidence consistent
+with the theory (e.g. Sloan 1996; Asquith, Pathak, and Ritter 2005; Bali, Cakici, and
+Whitelaw 2011; Eberhart, Maxwell, and Siddique 2004). Others take a more agnostic
+stance, discussing several possible theories, and then use empirical evidence to argue for
+one of the theories (Spiess and Affleck-Graves 1999; Titman, Wei, and Xie 2004; Chan,
+Jegadeesh, and Lakonishok 1996). 80% of predictor-papers end up with a stance on the
+theoretical origin of predictability, as seen in Table 4.
+
+                                                 17
+4.3   Post-Sample Outperformance by Theoretical Support
+Table 4 repeats the post-sample analysis from Figures 1 and 2, applied to subsets of
+predictor-papers based on their theoretical foundation and equilibrium modeling.
+
+             Table 4: Post-Sample Outperformance by Theoretical Support
+ Strategies are normalized to have 100 bps per month performance in-sample. ‘Post-
+ Sample’ is the performance of predictor-papers in bps per month. ‘Versus Data Mining’ is
+‘Post-Sample’ minus the performance of data-mined benchmarks. ‘Theoretical Foundation’
+ and ‘Equilibrium Modeling’ are determined by reading the papers (see Table 3). CAPM-
+ and FF3+momentum-alphas use regressions specific to the sample periods (in-sample or
+post-sample). Standard errors (parentheses) are clustered by calendar month and predictor.
+ Research that is agnostic on the origin of predictability shows signs of outperformance
+ relative to data mining. Research that takes a stand on the theory does not.
+
+                   Long-Short Return         CAPM Alpha            FF3 + Mom Alpha
+                  Post-       Versus       Post-     Versus       Post-     Versus
+                 Sample     Data Mining   Sample   Data Mining   Sample   Data Mining
+   Theoretical Foundation
+   Agnostic        65            9         79          23         110          31
+                   (8)          (8)        (8)         (8)        (8)         (9)
+   Mispricing      55            4         60           6         59          -17
+                   (4)          (4)        (4)         (4)        (4)         (5)
+   Risk            43            5         38          -4         49          -21
+                   (8)          (8)        (8)         (8)        (6)         (9)
+   Equilibrium Modeling
+   No Model       56             5          62          9          71          -4
+                  (3)           (3)         (3)        (3)         (3)         (4)
+   Stylized       63            15          49         -5          51         -42
+                 (12)          (13)        (13)       (14)         (7)        (11)
+   Dynamic or     34            -2          50          4          39         -54
+   Quantitative  (14)          (14)        (14)       (19)        (14)        (28)
+   Overall         56            5         60           8          68          -8
+                   (3)          (3)        (3)         (3)         (3)         (4)
+
+
+
+    The top panel shows that research with agnostic theoretical foundations has the
+strongest post-sample performance. As seen in the ‘Post-Sample’ columns, agnostic
+research produces 65 to 110 bps per month post-sample, depending on the performance
+metric. In comparison, mispricing foundations produce 55 to 60 bps per month post-
+sample, and risk foundations produce 38 to 49 bps.
+    The “Versus Data Mining” columns report the difference between the post-sample
+
+                                            18
+performance of the predictor-papers and their data-mined benchmarks, and thereby
+address our main question: does peer-reviewed research with a particular theoretical
+foundation outperform data mining?
+    Research with theoretical foundations in mispricing or risk show little to no outper-
+formance. Predictor-papers with mispricing foundations outperform their data-mined
+benchmarks by only 4 bps per month in terms of long-short returns and 6 bps in terms of
+CAPM alphas. In terms of FF3 + momentum alphas, mispricing foundations underperform
+data mining, by 17 bps per month. The performance of predictor-papers with risk foun-
+dations is even worse. By most metrics, risk-based predictor-papers underperform data
+mining.
+    Agnostic theoretical foundations show some signs of outperformance, but the mag-
+nitudes are modest. Agnostic predictor-papers outperform data mining by 9 to 31 bps
+per month, depending on the performance metric. Since performance is normalized
+to 100 bps in-sample, this means agnostic predictors retain up to an additional 31 per-
+centage points of their original-sample performance, compared to data mining. While
+31 percentage points may appear notable, it is the largest estimate out of many, and
+should be shrunk toward the average of about zero to account for multiple comparisons
+(e.g. Chen and Zimmermann 2020). This finding, that agnostic research outperforms
+somewhat while risk-based and mispricing-based research do not, is robust to alternative
+construction methods of the data-mined benchmarks, including directly controlling for
+t-stats and mean returns of published strategies (Appendix B).
+    Grouping research by equilibrium modeling leads to a similar pattern, as seen in
+the bottom panel of Table 4. By most metrics, predictor-papers with no equilibrium
+model have stronger post-sample performance than predictor-papers with equilibrium
+modeling. The performance of model-free research is not as strong as research with
+agnostic theoretical foundations, however. Predictor-papers with no model produce 56
+to 71 bps per month post-sample, compared to 65 to 110 bps per month for agnostic
+predictor-papers. Indeed, when compared to data mining, model-free research shows
+minimal outperformance.
+    Notably, Table 4 implies that the support of a stylized or dynamic equilibrium model
+leads to little if any outperformance relative to data mining. Additional robustness checks
+are in the Internet Appendix (IA.4 and IA.5).
+
+
+
+
+                                            19
+4.4   Post-Sample Outperformance by Discipline and Journal Ranking
+Table 5 examines how discipline and journal ranking affect outperformance. The top panel
+shows that predictor-papers in finance journals have stronger post-sample performance
+compared to accounting journals. Finance predictor-papers produce 59 to 76 bps per
+month post-sample, compared to 43 to 56 bps per month for accounting journals.
+
+        Table 5: Post-Sample Outperformance by Discipline and Journal Ranking
+ Strategies are normalized to have 100 bps per month performance in-sample. ‘Post-
+ Sample’ is the performance of predictor-papers in bps per month. ‘Versus Data Mining’ is
+‘Post-Sample’ minus the performance of data-mined benchmarks. ‘Discipline’ categorizes
+ the journal of publication. ‘JF,’ ‘JFE,’ and ‘RFS’ includes papers in the Journal of Finance,
+Journal of Financial Economics, and Review of Financial Studies. ‘AR,’ ‘JAR,’ and ‘JAE’
+ includes papers in the Accounting Review, Journal of Accounting Research, and Journal
+ of Accounting and Economics. CAPM and FF3 + momentum alphas use regressions
+ specific to the sample periods (in-sample or post-sample). Standard errors (parentheses)
+ are clustered by calendar month and predictor. Finance, and particularly top-ranked
+ finance journals show some signs of outperformance relative to data mining, but the
+ improvement is modest.
+
+                     Long-Short Return            CAPM Alpha          FF3 + Mom Alpha
+                    Post-     Versus        Post-       Versus       Post-      Versus
+                   Sample   Data Mining    Sample     Data Mining   Sample    Data Mining
+   Discipline
+   Finance           59           8           65          12          76            -2
+                     (4)         (4)          (4)         (4)         (4)          (5)
+   Accounting        43          -6           45          -8          43           -27
+                     (6)         (7)          (6)         (6)         (5)          (7)
+   Journal Rank
+   JF, JFE, RFS      60           8           68          16          81            3
+                     (4)         (4)          (4)         (5)         (4)          (5)
+   AR, JAR, JAE      43          -6           45          -8          43           -27
+                     (6)         (7)          (6)         (6)         (5)          (7)
+   Other             53           8           55           2          61           -20
+                     (6)         (6)          (6)         (7)         (7)          (9)
+
+
+
+   This performance is less impressive when compared to data mining, however. Predictor-
+papers in finance journals outperform data mining by between -2 and +12 bps per month.
+Predictor-papers in accounting journals underperform data mining, regardless of the
+performance metric.
+   The top 3 finance journals (Journal of Finance, Journal of Financial Economics, Review
+
+                                             20
+of Financial Studies) perform a bit better than finance journals overall. Nevertheless, the
+outperformance relative to data mining is small. Predictor-papers in these top journals
+outperform data mining by 3 to 16 bps per month, depending on the performance metric.
+Given the normalization, this means top finance journals retain an additional 3 to 16
+percentage points of their original-sample performance, relative to simple data mining.
+
+
+5     The Most Renowned Research vs Data Mining
+Section 4 showed that journal ranking has relatively little effect. But perhaps one needs
+to go beyond journal ranking, and focus on the very best research, to find notable
+outperformance relative to data mining.
+   To examine this possibility, we take a closer look at the predictability studied in Fama
+and French (1992), Jegadeesh and Titman (1993), and Banz (1981). These papers are
+renowned for studying the predictive power of B/M, momentum, and size, respectively.
+These findings are not only among the most renowned, but are arguably the ones with
+the strongest supporting evidence, both theoretical and empirical.
+   Theoretical foundations for B/M include Berk, Green, and Naik (1999), Gomes, Kogan,
+and Zhang (2003), Campbell and Vuolteenaho (2004), Zhang (2005), and Lettau and
+Wachter (2007). Many of these papers also provide a theoretical foundation for size
+(see also Berk 1995). Theoretical foundations for momentum include Hong and Stein
+(1999), Brav and Heaton (2002), Holden and Subrahmanyam (2002), and Da, Gurun, and
+Warachka (2014).7 Many of these theories are themselves award-winning and renowned
+papers.
+   Almost all of these theories provide equilibrium foundations—that is, stable rela-
+tionships between firm characteristics and expected returns. One might argue that the
+behavioral equilibria are unstable, but others will argue that psychological biases are
+fundamental, as are limits to arbitrage. And while the multiplicity of theories could
+be viewed as “model dredging,” it could also be viewed as robustness. Theoretical
+robustness is a feature of physics and statistics, in which core phenomena can be derived
+from multiple perspectives.8
+
+    7 Other theoretical foundations for B/M and size include Gabaix (2008), Papanikolaou (2011), and Chen
+
+(2018). For other theoretical foundations for momentum, see Subrahmanyam 2018.
+    8Thermodynamic phenomena (e.g. ideal gas law) can be derived from the laws of thermodynamics,
+
+classical mechanics, or quantum mechanics. Core statistical formulas (e.g. regression coefficients), can be
+derived from method of moments, maximum likelihood, Bayesian assumptions, or data fitting.
+
+
+
+                                                    21
+    These renowned papers provide robust empirical evidence. Indeed, Fama and French
+(1992) is in essence a robustness check on Stattman (1980) and Banz (1981). But other
+empirical papers provide even more robustness (e.g., Fama and French 1993; Lakonishok,
+Shleifer, and Vishny 1994; Chan, Jegadeesh, and Lakonishok 1996; Asness, Moskowitz,
+and Pedersen 2013).
+    Tables 6-8 compare these renowned findings to data-mined alternatives. The alterna-
+tives come from searching the 29,000 accounting ratios for t-stats and mean returns that
+are within 10% and 30% of the original findings. This filtering ensures the alternatives
+are similar to the original findings in terms of statistical support. As before, data-mined
+t-stats and mean returns use the original papers’ stock weighting and sample periods.
+    Table 6 applies this exercise to Fama and French’s (1992) B/M. It lists 20 of the 163 data-
+mined predictors that performed similarly to B/M in Fama and French’s (1992) 1963-1990
+sample period. The predictors are sorted by the absolute difference in the original sample
+mean return. By this metric, the most similar predictor to B/M is ∆[PPE net]/lag [Sales],
+which can be thought of as a measure of investment. This predictor earned 96 bps per
+month in the original sample period, identical to B/M. The ‘1991-2023’ column shows
+that ∆[PPE net]/lag [Sales] slightly outperforms B/M post-sample, earning 73 bps per
+month compared to 61 bps for B/M.
+    Other data-mined alternatives to B/M include those related to equity issuance ([Stock
+issuance]/ [Debt in current liab]) and accruals (∆ [Receivables]/ lag [Assets]). The post-
+sample performance of these data-mined alternatives varies. But on average, they are
+quite similar to Fama and French (1992). Trading on Fama and French’s finding would
+have earned 61 bps per month post-sample, compared to 65 bps for the typical data
+mined alternative.
+    Table 7 applies the same exercise to Jegadeesh and Titman’s (1993) 12-month momen-
+tum. Since momentum has a much higher mean return, only 44 data-mined alternatives
+are found. Here, data mining underperforms on average, earning 52 bps compared to
+72 bps for Jegadeesh and Titman’s (1993) finding. However, Table 8 shows data mining
+outperforming, earning 42 bps compared to 15 bps for Banz’s (1981) size.
+    Averaging across the three tables, data mining performs similarly to these renowned
+findings. Though the samples are small, they suggest that focusing on the best research
+does not significantly affect our results.
+
+
+
+
+                                              22
+Table 6: Data-Mined Predictors that Performed Similarly to Fama-French’s B/M (1992)
+Table lists 20 of the 163 data-mined predictors that performed similarly to Fama and
+French’s (1992) B/M in the original sample period. It includes predictors with t-stats
+within 10% and mean returns within 30% of the original findings. Signals are ranked by
+the absolute difference in mean return. Sign = -1 indicates that a high signal implies a
+lower mean return in-sample. Data mining performs similarly to trading on Fama and
+French’s (1992) B/M.
+
+    Similarity                                                         Mean Return (% p.m.)
+      Rank     Signal                                             Sign 1963-1990 1991-2023
+
+    Peer-Reviewed
+                 Book / Market (Fama-French 1992)                   1       0.96       0.61
+    Data-Mined
+            1    ∆[PPE net]/lag[Sales]                              -1      0.96       0.73
+            2    ∆[Assets]/lag[Cost of goods sold]                  -1      0.95       0.80
+            3    ∆[Assets]/lag[Operating expenses]                  -1      0.95       0.84
+            4    [Depreciation (CF acct)]/[Capex PPE sch V]          1      0.97       0.68
+            5    [Stock issuance]/[Debt in current liab]            -1      0.94       0.73
+            6    ∆[Assets]/lag[SG&A]                                -1      0.94       0.78
+            7    ∆[PPE net]/lag[Gross profit]                       -1      0.98       0.45
+            8    ∆[PPE net]/lag[Current liabilities]                -1      0.94       0.85
+            9    [Stock issuance]/[Capex PPE sch V]                 -1      0.94       1.00
+           10    ∆[PPE (gross)]/lag[Gross profit]                   -1      0.93       0.33
+                 ...
+          101    ∆[Assets]/lag[Assets other sundry]                 -1      0.75       0.95
+          102    ∆[Liabilities]/lag[Invest tax credit inc ac]       -1      0.74       0.14
+          103    ∆[PPE net]/lag[Capital expenditure]                -1      0.74       0.79
+          104    ∆[PPE net]/lag[Interest expense]                   -1      0.75       0.63
+          105    ∆[Receivables]/lag[Assets]                         -1      0.74       0.59
+                 ...
+          159    ∆[Assets]/lag[IB adjusted for common s]            -1      0.67      -0.02
+          160    ∆[Assets]/lag[Income bf extraordinary]             -1      0.67      -0.03
+          161    ∆[Assets]/lag[Net income]                          -1      0.67      -0.01
+          162    ∆[Cost of goods sold]/lag[Current liabilities]     -1      0.67       0.65
+          163    ∆[Inventories]/lag[Curr assets other sundry]       -1      0.67       0.63
+                 Mean Data-Mined                                            0.83       0.65
+
+
+
+
+                                                23
+Table 7: Data-Mined Predictors That Performed Similarly to Jegadeesh and Titman’s
+12-Month Momentum (1993)
+Table lists 20 of the 44 data-mined predictors that performed similarly to Jegadeesh and
+Titman’s (1993) 12-month momentum in the original sample period. It includes predictors
+with t-stats within 10% and mean returns within 30% of the original findings. Signals
+are ranked by the absolute difference in mean return. Sign = -1 indicates that a high
+signal implies a lower mean return in-sample. Data mining somewhat underperforms
+Jegadeesh and Titman’s (1993) momentum.
+
+ Similarity                                                           Mean Return (% p.m.)
+   Rank     Signal                                               Sign 1964-1989 1990-2023
+
+ Peer-Reviewed
+           12-Month Momentum (Jegadeesh-Titman 1993)               1       1.36       0.72
+ Data-Mined
+         1 [Retained earnings unadj]/[Liabilities other]           1       1.37       0.21
+         2 [Retained earnings unadj]/[Market equity FYE]           1       1.38      -0.02
+         3 [Retained earnings unadj]/[Assets other sundry]         1       1.40       0.20
+         4 [PPE and machinery]/[Current liabilities]               1       1.42       0.46
+         5 [Retained earnings unadj]/[Cash & ST investments]       1       1.42       0.31
+         6 [PPE and machinery]/[Capital expenditure]               1       1.50       0.69
+         7 [Retained earnings unadj]/[Invest & advances other]     1       1.51       0.08
+         8 [Income taxes paid]/[PPE net]                           1       1.22       0.22
+         9 [Current assets]/[Market equity FYE]                    1       1.19       0.84
+        10 [Investing activities oth]/[Nonop income]               1       1.53       0.08
+           ...
+        21 ∆[PPE (gross)]/lag[Operating expenses]                  -1      1.09       0.62
+        22 [Operating expenses]/[Market equity FYE]                 1      1.08       0.83
+        23 ∆[PPE (gross)]/lag[Num employees]                       -1      1.07       0.66
+        24 [Sales]/[Market equity FYE]                              1      1.08       0.88
+        25 [SG&A]/[Market equity FYE]                               1      1.07       0.84
+           ...
+        40 [Income taxes paid]/[Debt in current liab]               1      1.75       0.29
+        41 ∆[Invested capital]/lag[Current assets]                 -1      0.97       1.19
+        42 ∆[PPE net]/lag[Num employees]                           -1      0.96       0.83
+        43 ∆[PPE net]/lag[Operating expenses]                      -1      0.96       0.74
+        44 ∆[Assets]/lag[Operating expenses]                       -1      0.96       0.84
+           Mean Data-Mined                                                 1.26       0.52
+
+
+
+
+                                            24
+     Table 8: Data-Mined Predictors That Performed Similarly to Banz’s Size (1981)
+Table lists 20 of the 220 data-mined predictors that performed similarly to Banz’s (1981)
+size in the original sample period. It includes predictors with t-stats within 10% and
+mean returns within 30% of the original findings. Signals are ranked by the absolute
+difference in mean return. Sign = -1 indicates that a high signal implies a lower mean
+return in-sample. Data mining outperforms Banz’s (1981) size.
+
+ Similarity                                                                 Mean Return (% Monthly)
+   Rank       Signal                                                 Sign   1926-1975    1976-2023
+ Peer-Reviewed
+              Size (Banz 1981)                                         -1        0.50          0.15
+ Data-Mined
+         1    ∆[Equity liq value]/lag[Sales]                           -1        0.50          0.72
+         2    [Invested capital]/[Market equity FYE]                    1        0.50          0.83
+         3    ∆[Assets]/lag[Pref stock liq value]                      -1        0.49          0.18
+         4    ∆[Equity liq value]/lag[Current liabilities]             -1        0.48          0.79
+         5    ∆[Receivables]/lag[Pref stock redemp val]                -1        0.48          0.10
+         6    ∆[Current assets]/lag[Invest tax credit inc ac]          -1        0.52          0.35
+         7    ∆[Assets]/lag[Pref stock redemp val]                     -1        0.47          0.23
+         8    ∆[Equity liq value]/lag[Curr assets other sundry]        -1        0.48          0.69
+         9    ∆[Common equity tangible]/lag[SG&A]                      -1        0.47          0.40
+        10    ∆[Invested capital]/lag[PPE (gross)]                     -1        0.47          0.90
+              ...
+       101    ∆[Depreciation & amort]/lag[Common equity tangible]      -1        0.39          0.40
+       102    ∆[Depreciation & amort]/lag[Invest & advances other]     -1        0.38          0.52
+       103    ∆[Depreciation depl amort]/lag[Interest expense]         -1        0.39          0.07
+       104    ∆[Num employees]/lag[Long-term debt]                     -1        0.39          0.55
+       105    ∆[Num employees]/lag[Invest & advances other]            -1        0.39          0.45
+              ...
+       216    ∆[Pref stock nonredeemable]/lag[PPE (gross)]             -1        0.35          0.69
+       217    ∆[Receivables]/lag[Curr assets other sundry]             -1        0.35          0.60
+       218    ∆[Operating expenses]/lag[Invested capital]              -1        0.35          0.62
+       219    [Acquisitions]/[Nonop income]                            -1        0.65          0.15
+       220    [Acquisitions]/[Operating expenses]                      -1        0.64          0.34
+              Mean Data-Mined                                                    0.44          0.42
+
+
+
+
+                                                 25
+6    Conclusion and Limitations
+We show that the post-sample performance of published cross-sectional return predictors
+is remarkably similar to that of data-mined benchmarks. This result holds for most types
+of research we examine, including research that is risk-based or includes the support
+of a mathematical equilibrium model. Research that is agnostic about the theoretical
+foundation for predictability shows some signs of outperformance, but the magnitude is
+modest. The statistical implication is that whether a predictor is found in a journal or is
+data mined has little effect on mean inferences about post-sample performance (Equation
+(1)).
+    Beyond statistical inference, our findings suggest four deeper implications about
+cross-sectional stock return predictability: (1) empirical evidence is more informative
+than theoretical evidence for post-sample prediction, (2) investors do not learn about risk
+from academic research, (3) data mining is effective, and (4) mispricing is the primary
+driver. These implications come from analyzing the theoretical foundations of published
+predictors and their relationship with post-sample performance.
+    A limitation of our study is that we cannot identify the economic mechanism behind
+the lack of outperformance. The noisiness of predictor returns makes it difficult to
+determine the exact timing of decay, and thus makes it hard to separate publication effects
+(McLean and Pontiff 2016) from technological changes (Chordia, Subrahmanyam, and
+Tong 2014). We illustrate this difficulty in the Internet Appendix IA.6.
+    A second limitation is that we study single-predictor strategies. For strategies that use
+many predictors, the factor structure and spanning are central questions. Table 2 suggests
+that data-mined accounting predictors are to a significant extent spanned by the ideas in
+the CZ dataset, but a more systematic investigation is needed.
+    Last, our study is limited to the peer review process as characterized by the CZ
+dataset. This dataset is composed of papers that study cross-sectional return predictability,
+published between the years 1973 and 2016. Each literature has its own norms and
+practices, which evolve over time. The extent to which our findings generalize is an
+important question for future research.
+
+
+
+
+                                             26
+Appendix A                   A Model of Post-Sample Performance
+We present a simple model for interpreting our results. D is a set of data-mined return
+signals (e.g. 29,000 accounting ratios). For signal i ∈ D , the in-sample and post-sample
+returns follow
+
+                                                  r̄iIS = µi + ε̄ IS
+                                                                  i                                 (3)
+                                                  r̄iPS = µi + ∆µi + ε̄ PS
+                                                                        i ,                         (4)
+
+where µi is the stable component of expected returns, ∆µi is an unstable component of
+expected returns, and ε̄ IS         PS
+                         i and ε̄ i are unpredictable.
+   Peer review replaces D with a different set P (e.g. signals consistent with neoclassical
+Q-theory). Controlling for r̄iIS , the expected post-sample returns differ by:
+                                                                             
+           E       r̄iPS | i ∈ P , r̄iIS       −E       r̄iPS | i ∈ D , r̄iIS                       (5)
+                                                                                      
+                                               = E µi | i ∈ P , r̄iIS − E µi | i ∈ D , r̄iIS        (6)
+                                                                                             
+                                                                      IS                     IS
+                                                + E ∆µi | i ∈ P , r̄i − E ∆µi | i ∈ D , r̄i ,       (7)
+
+where the ε̄ PS
+             i terms vanish because they are unpredictable.
+    Thus, there are two reasons why P may have stronger post-sample performance than
+D : (1) P finds a larger stable expected return component µi or (2) P finds a more positive
+unstable expected return component ∆µi .
+    Ideally, the modern theoretical evidence in the peer review process helps with both.
+When researchers observe r̄iIS , theory should help determine whether it reflects stable
+expected returns µi or unpredictable noise ε̄ IS i . The core of modern theory is finding
+equilibrium, which means solving for µi in a model market. Theory should also predict
+how expected returns change. For example, if returns compensate for risk, we may
+expect ∆µi ≥ 0 as investors will either not adjust their portfolios or adjust to reduce
+risk exposure. This potential of theory is described in Chapter 7 of Cochrane (2009),
+which states “In my opinion, the best hope for finding pricing factors that are robust
+out of sample and across different markets, is to try to understand the fundamental
+macroeconomic sources of risk.”
+    However, there are reasons why peer-reviewed theoretical evidence may not help. If
+the theory is so flexible that it can accommodate any potential predictor, then it cannot
+separate µi from ε̄ IS
+                     i (Fama 1991). This problem can be formalized as P = D , in which
+case expected post-sample returns are identical. But even if P is in some sense smaller
+
+                                                                  27
+than D , there is the chance that theory is unable to separate µi from ε̄ IS
+                                                                          i . If the theoretical
+investors are concerned about risks that are irrelevant to real-world investors, then the
+theory may mistake µi for ε̄ ISi , or incorrectly predict ∆µi ≥ 0.
+    Perhaps most importantly, the peer-reviewed process may lead to a more negative ∆µi
+by publicizing mispricing. In contrast, data-mined predictors may avoid this effect, if
+information about the mispricing must diffuse from the data directly to investors, without
+the assistance of academics.
+    Overall, the model suggests that the relative importance of theoretical evidence is
+unclear, a priori. Thus, it is important to conduct an empirical analysis.
+
+
+Appendix B            Robustness
+
+B.1    Controlling for Data Source
+The data-mined predictors use annual accounting data. A natural question is whether
+Equation (1) is affected by controlling for this data source. Figure B.1 limits the published
+predictors to those that use annual accounting data. This filter drops roughly 50% of the
+published predictors. The post-sample patterns are similar to our baseline Figures 1 and
+2.
+
+
+B.2    Controlling for Sample Mean Returns, and t-stats
+Predictors with stronger statistical evidence may have stronger post-sample performance.
+Additionally, our normalization to 100 bps per month in-sample may fail to control for
+leverage effects.
+   The long-dash lines in Figure B.2 control for these issues. These lines include only
+data-mined predictors with t-statistics within 10% and mean returns within 30% of the
+published predictors. Figure B.3 uses a tighter mean return filter of 10%. This analysis
+requires dropping published predictors, as some published predictors lack data-mined
+counterparts that meet this filter. Figure B.2 drops 12 published predictors, while Figure
+B.3 drops 33. Overall, the patterns are similar to those in Sections 3 and 4.
+
+
+B.3    Removing Correlated Data-Mined Predictors
+One may be interested in whether our results are robust to excluding data-mined pre-
+dictors that are highly correlated with published predictors. This question is perhaps
+natural given the central role of correlations in classical asset pricing theory.
+
+                                              28
+ Figure B.1: Published annual accounting predictors against data-mined benchmarks
+We repeat Figures 1 and 2 but now limit published predictors to those that use annual
+accounting data.
+                                                    (a) Raw Returns, |t| > 2                                                                             (b) Raw Returns, Top 5% |t|
+
+                                       125                                                                                                    125
+ Trailing 5−Year Return (bps pm)
+
+
+
+
+                                                                                                         Trailing 5−Year Return (bps pm)
+                                       100                                                                                                    100
+
+
+                                       75                                                                                                     75
+
+
+                                       50                                                                                                     50
+
+
+                                       25                                                                                                     25
+                                                    Pub Compustat Annual                                                                                 Pub Compustat Annual
+                                                    Data−Mined for |t|>2.0 in Original Sample                                                            Data−Mined for Top 5% |t| in Original Sample
+                                        0                                                                                                      0
+                                             −360−300−240−180−120 −60      0   60 120 180 240 300                                                   −360−300−240−180−120 −60     0    60 120 180 240 300
+                                                  Months Since Original Sample Ended                                                                     Months Since Original Sample Ended
+
+                                                   (c) CAPM Alpha, |t| > 2                                                                                  (d) FF4 Alpha, |t| > 2
+ Trailing 5−Year CAPM Alpha (bps pm)
+
+
+
+
+                                       125                                                                                                    125
+                                                                                                         Trailing 5−Year FF4 Alpha (bps pm)
+
+
+
+
+                                       100                                                                                                    100
+
+
+                                       75                                                                                                     75
+
+
+                                       50                                                                                                     50
+
+
+                                       25                                                                                                     25
+                                                     Pub Compustat Annual (CAPM Alpha)                                                                       Pub Compustat Annual (FF4 Alpha)
+                                                     Data−Mined for |t|>2.0 (CAPM Alpha)                                                                     Data−Mined for |t|>2.0 (FF4 Alpha)
+                                        0                                                                                                      0
+                                             −360−300−240−180−120 −60      0   60 120 180 240 300                                                   −360−300−240−180−120 −60     0    60 120 180 240 300
+                                                  Months Since Original Sample Ended                                                                     Months Since Original Sample Ended
+
+
+
+
+   However, excluding highly correlated data-mined predictors is not important for our
+main question. Equation (1) implies matching covariance patterns across data-mined and
+published predictors—that is, we should exclude data-mined predictors that have low
+correlation with published predictors.
+   The short-dash lines of Figures B.2 and B.3 exclude data-mined predictors that have
+pairwise correlations of more than 0.10 with the published predictor in question (short-
+dash). The results are very similar to the main results.
+   Figure B.4 aims to remove data-mined predictors that are highly correlated with all
+
+
+                                                                                                    29
+                                                    Figure B.2: Controlling for Sample Mean Returns, t-stats, Correlations
+We repeat Figure 1 but now we drop data-mined predictors if they have t-stats that
+differ by more than 10% or mean returns that differ by more than 30% (long-dash). We
+additionally drop data-mined strategies that are more than 10% correlated with published
+strategies in the original sample (short-dash).
+
+                                                                         (a) All                                                                                                            (b) Risk-based
+                                              175                                                                                                                      175
+    Trailing 5−Year Mean Return (bps p.m.)
+
+
+
+
+                                                                                                                             Trailing 5−Year Mean Return (bps p.m.)
+                                              150                                                                                                                      150
+
+                                              125                                                                                                                      125
+
+                                              100                                                                                                                      100
+
+                                               75                                                                                                                       75
+
+                                               50                                                                                                                       50
+
+                                               25           Published                                                                                                   25      Published
+                                                            Matched on t−stat and mean return                                                                                   Matched on in−sample t−stat and mean return
+                                                            Matched and excluding correlated                                                                                    Matched and excluding correlated
+                                                0                                                                                                                        0
+
+                                             −25                                                                                                                      −25
+
+                                             −50                                                                                                                      −50
+
+                                             −75                                                                                                                      −75
+
+                                             −100                                                                                                                     −100
+                                                    −360 −300 −240 −180 −120 −60     0     60   120   180   240   300                                                        −360 −300 −240 −180 −120 −60     0    60   120   180   240   300
+                                                             Months Since Original Sample Ended                                                                                       Months Since Original Sample Ended
+
+
+                                                             (c) Mispricing-based                                                                                                            (d) Agnostic
+                                              175                                                                                                                      175
+    Trailing 5−Year Mean Return (bps p.m.)
+
+
+
+
+                                                                                                                             Trailing 5−Year Mean Return (bps p.m.)
+
+
+
+
+                                              150                                                                                                                      150
+
+                                              125                                                                                                                      125
+
+                                              100                                                                                                                      100
+
+                                               75                                                                                                                       75
+
+                                               50                                                                                                                       50
+
+                                               25      Published                                                                                                        25      Published
+                                                       Matched on in−sample t−stat and mean return                                                                              Matched on in−sample t−stat and mean return
+                                                       Matched and excluding correlated                                                                                         Matched and excluding correlated
+                                                0                                                                                                                        0
+
+                                             −25                                                                                                                      −25
+
+                                             −50                                                                                                                      −50
+
+                                             −75                                                                                                                      −75
+
+                                             −100                                                                                                                     −100
+                                                    −360 −300 −240 −180 −120 −60     0     60   120   180   240   300                                                        −360 −300 −240 −180 −120 −60     0    60   120   180   240   300
+                                                             Months Since Original Sample Ended                                                                                       Months Since Original Sample Ended
+
+
+
+
+previously-published predictors, defined by sample end dates. Panel (a) measures this
+idea using the data-mined return’s maximum pairwise correlation with any previously-
+published predictor. Panel (b) uses the R2 from regressing the data-mined return on the
+first five factors extracted from previously-published returns via probabilistic principal
+component analysis (PPCA, Roweis (1997); Chen and McCoy 2023). For signals with low
+correlation, we further separate data-mined returns based on their in-sample t-stats.
+    Excluding data-mined predictors that are highly correlated with all previously-
+published predictors leads to slightly worse post-sample performance. A worsening
+
+
+                                                                                                                        30
+                                                    Figure B.3: Controlling for Sample Mean Returns, t-stats, Correlations
+We repeat Figure 1 but now we drop data-mined predictors if they have t-stats that
+differ by more than 10% or mean returns that differ by more than 10% (long-dash). We
+additionally drop data-mined strategies that are more than 10% correlated with published
+strategies in the original sample (short-dash).
+
+                                                                          (a) All                                                                                                             (b) Risk-based
+                                              175                                                                                                                        175
+    Trailing 5−Year Mean Return (bps p.m.)
+
+
+
+
+                                                                                                                               Trailing 5−Year Mean Return (bps p.m.)
+                                              150                                                                                                                        150
+
+                                              125                                                                                                                        125
+
+                                              100                                                                                                                        100
+
+                                               75                                                                                                                         75
+
+                                               50                                                                                                                         50
+
+                                               25          Published                                                                                                      25          Published
+                                                           Matched data−mined (excl correlated)                                                                                       Matched data−mined (excl correlated)
+                                                           Matched data−mined (all)                                                                                                   Matched data−mined (all)
+                                                0                                                                                                                          0
+
+                                             −25                                                                                                                        −25
+
+                                             −50                                                                                                                        −50
+
+                                             −75                                                                                                                        −75
+
+                                             −100                                                                                                                       −100
+                                                    −360 −300 −240 −180 −120 −60      0    60     120   180   240   300                                                        −360 −300 −240 −180 −120 −60      0    60     120   180   240   300
+                                                             Months Since Original Sample Ended                                                                                         Months Since Original Sample Ended
+
+
+                                                              (c) Mispricing-based                                                                                                              (d) Agnostic
+                                              175                                                                                                                        175
+    Trailing 5−Year Mean Return (bps p.m.)
+
+
+
+
+                                                                                                                               Trailing 5−Year Mean Return (bps p.m.)
+
+
+
+
+                                              150                                                                                                                        150
+
+                                              125                                                                                                                        125
+
+                                              100                                                                                                                        100
+
+                                               75                                                                                                                         75
+
+                                               50                                                                                                                         50
+
+                                               25          Published                                                                                                      25          Published
+                                                           Matched data−mined (excl correlated)                                                                                       Matched data−mined (excl correlated)
+                                                           Matched data−mined (all)                                                                                                   Matched data−mined (all)
+                                                0                                                                                                                          0
+
+                                             −25                                                                                                                        −25
+
+                                             −50                                                                                                                        −50
+
+                                             −75                                                                                                                        −75
+
+                                             −100                                                                                                                       −100
+                                                    −360 −300 −240 −180 −120 −60      0    60     120   180   240   300                                                        −360 −300 −240 −180 −120 −60      0    60     120   180   240   300
+                                                             Months Since Original Sample Ended                                                                                         Months Since Original Sample Ended
+
+
+
+
+is natural, as over time the published literature will capture more and more of the strong
+predictive components of the data, of which there is a finite number (Table 1, Panel (b)).
+The magnitude of the effect is modest, however, and is only noticeable if we focus on
+data-mined predictors with low in-sample t-stats. Overall, the similarity in post-sample
+performance of published and data-mined predictors is robust, and holds even if we
+purposefully make the data-mined predictors less similar to published ones.
+    An interesting feature of Figure B.4 is that the trailing 5-year returns are correlated,
+even across groups of returns that have low monthly return correlations. Given the
+
+
+                                                                                                                          31
+ Figure B.4: Excluding Data-Mined Predictors Correlated with Any Existing Research
+We compare published predictors (solid) to data-mined predictors made with t-stats
+> 2.0, but separate predictors by correlation and in-sample t-stats. Panel (a) uses the
+maximum pairwise correlation with any existing published predictor. Panel (b) uses
+the R2 from regressing the data-mined return on 5 principal components of existing
+predictors computed using probabilistic PCA.
+
+                                                  (a) Any Correlation                                                                                (b) PPCA
+  Trailing 5−Year Return (bps pm)
+
+
+
+
+                                                                                               Trailing 5−Year Return (bps pm)
+                                    125                                                                                          125
+
+
+                                    100                                                                                          100
+
+
+                                     75                                                                                           75
+
+
+                                     50         Published                                                                         50         Published
+                                                Cor > 0.50                                                                                   Adj. R2 > 0.25
+                                                Cor < 0.50                                                                                   Adj. R2 < 0.25
+                                     25         & t−stat > t pub                                                                  25         & t−stat > t pub
+                                                Cor < 0.50                                                                                   Adj. R2 < 0.25
+                                                & t−stat <= t pub                                                                            & t−stat <= t pub
+                                      0                                                                                            0
+                                          −360−300−240−180−120 −60   0   60 120 180 240                                                −360−300−240−180−120 −60   0   60 120 180 240
+                                            Months Since Original Sample Ended                                                           Months Since Original Sample Ended
+
+
+
+near-zero autocorrelation in monthly returns, this is likely due to slow movements in
+long-run expected returns like the post-2004 decay in Appendix Table IA.1 (see also
+Stambaugh, Yu, and Yuan 2012; Yan and Zheng 2017; Chen and Velikov 2022).
+
+
+
+
+                                                                                          32
+References
+Abarbanell, Jeffery S and Brian J Bushee (1998). “Abnormal returns to a fundamental
+   analysis strategy”. Accounting Review, pp. 19–45.
+Amihud, Yakov (2002). “Illiquidity and stock returns: cross-section and time-series effects”.
+   Journal of financial markets 5.1, pp. 31–56.
+Ang, Andrew, Robert J Hodrick, Yuhang Xing, and Xiaoyan Zhang (2006). “The cross-
+   section of volatility and expected returns”. The journal of finance 61.1, pp. 259–299.
+Asness, Clifford S, Tobias J Moskowitz, and Lasse Heje Pedersen (2013). “Value and
+   momentum everywhere”. The journal of finance 68.3, pp. 929–985.
+Asquith, Paul, Parag A Pathak, and Jay R Ritter (2005). “Short interest, institutional
+   ownership, and stock returns”. Journal of Financial Economics 78.2, pp. 243–276.
+Bai, Jushan and Pierre Perron (1998). “Estimating and testing linear models with multiple
+   structural changes”. Econometrica, pp. 47–78.
+Balakrishnan, Karthik, Eli Bartov, and Lucile Faurel (2010). “Post loss/profit announce-
+   ment drift”. Journal of Accounting and Economics 50.1, pp. 20–41.
+Bali, Turan G, Heiner Beckmeyer, and Timo Wiedemann (2023). “Expected Mispricing”.
+   Available at SSRN.
+Bali, Turan G, Nusret Cakici, and Robert F Whitelaw (2011). “Maxing out: Stocks as
+   lotteries and the cross-section of expected returns”. Journal of Financial Economics 99.2,
+   pp. 427–446.
+Bali, Turan G, Robert F Engle, and Scott Murray (2016). Empirical asset pricing: The cross
+   section of stock returns. John Wiley & Sons.
+Banz, Rolf W (1981). “The relationship between return and market value of common
+   stocks”. Journal of financial economics 9.1, pp. 3–18.
+Bender, Svetlana, James J Choi, Danielle Dyson, and Adriana Z Robertson (2022). “Mil-
+   lionaires speak: What drives their personal investment decisions?” Journal of Financial
+   Economics 146.1, pp. 305–330.
+Benjamini, Yoav and Yosef Hochberg (1995). “Controlling the false discovery rate: a
+   practical and powerful approach to multiple testing”. Journal of the Royal statistical
+   society: series B (Methodological) 57.1, pp. 289–300.
+Berk, Jonathan B (1995). “A critique of size-related anomalies”. The review of financial
+   studies 8.2, pp. 275–286.
+Berk, Jonathan B, Richard C Green, and Vasant Naik (1999). “Optimal investment, growth
+   options, and security returns”. The Journal of finance 54.5, pp. 1553–1607.
+
+
+
+
+                                             33
+Bessembinder, Hendrik, Aaron Burt, and Christopher M Hrdlicka (2023). “Time Series
+   Variation in the Factor Zoo”. Aaron Paul and Hrdlicka, Christopher M., Time Series
+   Variation in the Factor Zoo.
+Brav, Alon and John B Heaton (2002). “Competing theories of financial anomalies”. The
+   Review of Financial Studies 15.2, pp. 575–606.
+Buffett, Warren E (1984). “The superinvestors of Graham-and-Doddsville”. Hermes 17.
+Calluzzo, Paul, Fabio Moneta, and Selim Topaloglu (2019). “When anomalies are publi-
+   cized broadly, do institutions trade accordingly?” Management Science 65.10, pp. 4555–
+   4574.
+Campbell, John Y and Tuomo Vuolteenaho (2004). “Bad beta, good beta”. American
+   Economic Review 94.5, pp. 1249–1275.
+Chan, Louis KC, Narasimhan Jegadeesh, and Josef Lakonishok (1996). “Momentum
+   strategies”. The Journal of Finance 51.5, pp. 1681–1713.
+Chen, Andrew Y (2018). “A general equilibrium model of the value premium with
+   time-varying risk premia”. The Review of Asset Pricing Studies 8.2, pp. 337–374.
+— (2025). “Do t-statistic hurdles need to be raised?” Management Science 71.7, pp. 5830–
+   5848.
+— (Forthcoming). “Most claimed statistical findings in cross-sectional return predictability
+   are likely true”. Journal of Finance: Insights and Perspectives.
+Chen, Andrew Y and Chukwuma Dim (2025). “High-Throughput Asset Pricing”. arXiv
+   preprint arXiv:2311.10685.
+Chen, Andrew Y and Mihail Velikov (2022). “Zeroing in on the Expected Returns of
+   Anomalies”. Journal of Financial and Quantitative Analysis.
+Chen, Andrew Y and Tom Zimmermann (2020). “Publication bias and the cross-section
+   of stock returns”. The Review of Asset Pricing Studies 10.2, pp. 249–289.
+Chen, Andrew Y. and Jack McCoy (2023). Missing Values Handling for Machine Learning
+   Portfolios. arXiv: 2207.13071 [stat.ME].
+Chen, Andrew Y. and Tom Zimmermann (2022). “Open Source Cross Sectional Asset
+   Pricing”. Critical Finance Review.
+Chinco, Alex, Samuel M Hartzmark, and Abigail B Sussman (2022). “A new test of risk
+   factor relevance”. The Journal of Finance 77.4, pp. 2183–2238.
+Chordia, Tarun, Amit Goyal, and Alessio Saretto (2020). “Anomalies and false rejections”.
+   The Review of Financial Studies 33.5, pp. 2134–2179.
+Chordia, Tarun, Avanidhar Subrahmanyam, and Qing Tong (2014). “Have capital market
+   anomalies attenuated in the recent era of high liquidity and trading activity?” Journal
+   of Accounting and Economics 58.1, pp. 41–58.
+
+
+                                            34
+Cochrane, John H (1999). “Portfolio advice for a multifactor world”. Economic Perspectives:
+    Federal Reserve Bank of Chicago 23, pp. 59–78.
+— (2009). Asset pricing: Revised edition. Princeton university press.
+Cooper, Michael J, Huseyin Gulen, and Michael J Schill (2008). “Asset growth and the
+    cross-section of stock returns”. the Journal of Finance 63.4, pp. 1609–1651.
+Da, Zhi, Umit G Gurun, and Mitch Warachka (2014). “Frog in the pan: Continuous
+    information and momentum”. The review of financial studies 27.7, pp. 2171–2218.
+Doran, James and Colbrin Wright (2007). “What Really Matters When Buying and Selling
+    Stocks?” Financial Education 8.1, pp. 35–61.
+Easterwood, Sara (2024). “Do Investors Have Data Blind Spots? The Role of Data Vendors
+    in Capital Markets”. SSRN Electronic Journal. Available at SSRN: https://ssrn.
+    com/abstract=4940766.
+Eberhart, Allan C, William F Maxwell, and Akhtar R Siddique (2004). “An examination
+    of long-term abnormal stock returns and operating performance following R&D
+    increases”. The Journal of Finance 59.2, pp. 623–650.
+Engelberg, Joseph, R David McLean, and Jeffrey Pontiff (2018). “Anomalies and news”.
+    The Journal of Finance 73.5, pp. 1971–2001.
+Fama, Eugene F (1991). “Efficient capital markets: II”. The journal of finance 46.5, pp. 1575–
+    1617.
+Fama, Eugene F and Kenneth R French (1992). “The cross-section of expected stock
+    returns”. the Journal of Finance 47.2, pp. 427–465.
+— (1993). “Common risk factors in the returns on stocks and bonds”. Journal of financial
+    economics 33.1, pp. 3–56.
+— (2006). “Profitability, investment and average returns”. Journal of financial economics
+    82.3, pp. 491–518.
+— (2015). “A five-factor asset pricing model”. Journal of financial economics 116.1, pp. 1–22.
+— (2018). “Choosing factors”. Journal of financial economics 128.2, pp. 234–252.
+Fama, Eugene F and James D MacBeth (1973). “Risk, return, and equilibrium: Empirical
+    tests”. Journal of political economy 81.3, pp. 607–636.
+Fitzpatrick, Paul J. (1932). A Comparison of the Ratios of Successful Industrial Enterprises with
+    Those of Failed Companies. Reprint of articles appearing in The Certified Public Accountant,
+    October, November and December 1932. Washington: The Accountants Publishing
+    Company.
+Foster, George, Chris Olsen, and Terry Shevlin (1984). “Earnings releases, anomalies, and
+    the behavior of security returns”. Accounting Review, pp. 574–603.
+Frey, Jonas (2023). “Which stock return predictors reflect mispricing?” Available at SSRN.
+
+
+                                              35
+Gabaix, Xavier (2008). “Variable rare disasters: A tractable theory of ten puzzles in
+   macro-finance”. American Economic Review 98.2, pp. 64–67.
+Gomes, Joao, Leonid Kogan, and Lu Zhang (2003). “Equilibrium cross section of returns”.
+   Journal of Political Economy 111.4, pp. 693–732.
+Gompers, Paul, Joy Ishii, and Andrew Metrick (2003). “Corporate governance and equity
+   prices”. The quarterly journal of economics 118.1, pp. 107–156.
+Goto, Shingo and Toru Yamada (2025). “False Alpha and Missed Alpha: An Out-of-Sample
+   Mining Expedition”. Working Paper.
+Graham, Benjamin and David L. Dodd (1934). Security Analysis. English. United States:
+  Whittlesey House, McGraw-Hill Book Co., p. 725. isbn: 0-07-144820-9.
+Green, Jeremiah, John RM Hand, and X Frank Zhang (2017). “The characteristics that
+   provide independent information about average US monthly stock returns”. The Review
+   of Financial Studies 30.12, pp. 4389–4436.
+Harvey, Campbell R (2017). “Presidential address: The scientific outlook in financial
+   economics”. The Journal of Finance 72.4, pp. 1399–1440.
+Harvey, Campbell R and Yan Liu (2020). “False (and missed) discoveries in financial
+   economics”. The Journal of Finance 75.5, pp. 2503–2553.
+Harvey, Campbell R, Yan Liu, and Heqing Zhu (2016). “... and the cross-section of expected
+   returns”. The Review of Financial Studies 29.1, pp. 5–68.
+Hasler, Mathias (2023). “Looking under the hood of data-mining”. Available at SSRN
+   4279944.
+Haugen, Robert A and Nardin L Baker (1996). “Commonality in the determinants of
+   expected stock returns”. Journal of financial economics 41.3, pp. 401–439.
+Heston, Steven L and Ronnie Sadka (2008). “Seasonality in the cross-section of stock
+   returns”. Journal of Financial Economics 87.2, pp. 418–445.
+Holcblat, Benjamin, Abraham Lioui, and Michael Weber (2022). “Anomaly or possible
+   risk factor? Simple-to-use tests”. Simple-To-Use Tests (April 3, 2022).
+Holden, Craig W and Avanidhar Subrahmanyam (2002). “News events, information
+   acquisition, and serial correlation”. The Journal of Business 75.1, pp. 1–32.
+Hong, Harrison and Jeremy C Stein (1999). “A unified theory of underreaction, momen-
+   tum trading, and overreaction in asset markets”. The Journal of finance 54.6, pp. 2143–
+   2184.
+Horrigan, James O (1968). “A short history of financial ratio analysis”. The accounting
+   review 43.2, pp. 284–294.
+Hou, Kewei, Chen Xue, and Lu Zhang (2020). “Replicating anomalies”. The Review of
+   Financial Studies 33.5, pp. 2019–2133.
+
+
+                                           36
+Jacobs, Heiko and Sebastian Müller (2020). “Anomalies across the globe: Once public, no
+   longer existent?” Journal of Financial Economics 135.1, pp. 213–230.
+Jegadeesh, Narasimhan and Sheridan Titman (1993). “Returns to buying winners and
+   selling losers: Implications for stock market efficiency”. The Journal of finance 48.1,
+   pp. 65–91.
+Jensen, Michael C. and George A. Benington (1970). “Random Walks and Technical
+   Theories: Some Additional Evidence”. The Journal of Finance 25.2, pp. 469–482.
+Jensen, Theis Ingerslev (2024). “Subjective Risk and Return”. Available at SSRN 4276760.
+Jensen, Theis Ingerslev, Bryan Kelly, and Lasse Heje Pedersen (2022). “Is there a replication
+   crisis in finance?” The Journal of Finance.
+Kozak, Serhiy, Stefan Nagel, and Shrihari Santosh (2018). “Interpreting factor models”.
+   The Journal of Finance 73.3, pp. 1183–1223.
+Lakonishok, Josef, Andrei Shleifer, and Robert W Vishny (1994). “Contrarian investment,
+   extrapolation, and risk”. The journal of finance 49.5, pp. 1541–1578.
+Lettau, Martin and Jessica A Wachter (2007). “Why is long-horizon equity less risky? A
+   duration-based explanation of the value premium”. The journal of finance 62.1, pp. 55–
+   92.
+Lo, Andrew W and A Craig MacKinlay (1990). “Data-snooping biases in tests of financial
+   asset pricing models”. The Review of Financial Studies 3.3, pp. 431–467.
+Loughran, Tim and Jay R Ritter (1995). “The new issues puzzle”. The Journal of finance
+   50.1, pp. 23–51.
+Marrow, Benjamin and Stefan Nagel (2024). Real-Time Discovery and Tracking of Return-Based
+   Anomalies. Tech. rep. Working Paper.
+McLean, R David and Jeffrey Pontiff (2016). “Does academic research destroy stock return
+   predictability?” The Journal of Finance 71.1, pp. 5–32.
+McLean, R David, Jeffrey Pontiff, and Christopher Reilly (2020). “Taking sides on return
+   predictability”. Georgetown McDonough School of Business Research Paper 3637649.
+Merwin, Charles L. (1942). Financing Small Corporations: In Five Manufacturing Industries,
+   1926–36. New York: National Bureau of Economic Research. isbn: 0-87014-130-9.
+Mukhlynina, Liliya and Kjell G Nyborg (2020). “The Choice of Valuation Techniques in
+   Practice: Education Versus Profession”. Critical Finance Review 9.1-2, pp. 201–265.
+Ou, Jane A and Stephen H Penman (1989). “Financial statement analysis and the predic-
+   tion of stock returns”. Journal of accounting and economics 11.4, pp. 295–329.
+Papanikolaou, Dimitris (2011). “Investment shocks and asset prices”. Journal of Political
+   Economy 119.4, pp. 639–685.
+
+
+
+                                             37
+Pástor, L’uboš and Robert F Stambaugh (2003). “Liquidity risk and expected stock returns”.
+   Journal of Political economy 111.3, pp. 642–685.
+Ramser, J. R. and Louis O. Foster (1931). A Demonstration of Ratio Analysis. Bulletin 40.
+   Urbana, IL: University of Illinois, Bureau of Business Research.
+Roweis, Sam (1997). “EM algorithms for PCA and SPCA”. Advances in neural information
+   processing systems 10.
+Sloan, Richard G (1996). “Do stock prices fully reflect information in accruals and cash
+   flows about future earnings?” Accounting review, pp. 289–315.
+Smith, Raymond F. and Arthur H. Winakor (1935). Changes in the Financial Structure
+   of Unsuccessful Industrial Corporations. Tech. rep. Bulletin No. 51. Urbana, Illinois:
+   University of Illinois, Bureau of Business Research.
+Sonnenschein, Hugo (1972). “Market excess demand functions”. Econometrica: Journal of
+   the Econometric Society, pp. 549–563.
+Spiess, D Katherine and John Affleck-Graves (1999). “The long-run performance of stock
+   returns following debt offerings”. Journal of Financial Economics 54.1, pp. 45–73.
+Stambaugh, Robert F, Jianfeng Yu, and Yu Yuan (2012). “The short of it: Investor sentiment
+   and anomalies”. Journal of financial economics 104.2, pp. 288–302.
+Stattman, Dennis (1980). “Book values and stock returns”. The Chicago MBA: A journal of
+   selected papers 4.1, pp. 25–45.
+Subrahmanyam, Avanidhar (2018). “Equity market momentum: A synthesis of the lit-
+   erature and suggestions for future work”. Pacific-Basin Finance Journal 51, pp. 291–
+   296.
+Sullivan, Ryan, Allan Timmermann, and Halbert White (1999). “Data-snooping, technical
+   trading rule performance, and the bootstrap”. The journal of Finance 54.5, pp. 1647–1691.
+— (2001). “Dangers of data mining: The case of calendar effects in stock returns”. Journal
+   of Econometrics 105.1, pp. 249–286.
+Thomas, Jacob K and Huai Zhang (2002). “Inventory changes and future returns”. Review
+   of Accounting Studies 7.2, pp. 163–187.
+Titman, Sheridan, KC John Wei, and Feixue Xie (2004). “Capital investments and stock
+   returns”. Journal of financial and Quantitative Analysis 39.4, pp. 677–700.
+Wall, Alexander (Mar. 1919). “Study of Credit Barometrics”. Federal Reserve Bulletin,
+   pp. 229–243.
+Watts, Ross L (1978). “Systematic ‘abnormal’ returns after quarterly earnings announce-
+   ments”. Journal of financial Economics 6.2-3, pp. 127–150.
+
+
+
+
+                                            38
+Yan, Xuemin Sterling and Lingling Zheng (2017). “Fundamental analysis and the cross-
+   section of stock returns: A data-mining approach”. The Review of Financial Studies 30.4,
+   pp. 1382–1423.
+Zaffaroni, Paolo and Guofu Zhou (2022). “Asset Pricing: Cross-section Predictability”.
+   Available at SSRN 4111428.
+Zhang, Lu (2005). “The value premium”. The Journal of Finance 60.1, pp. 67–103.
+
+
+
+
+                                            39
+Internet Appendix for “Does Peer-Reviewed Research Help
+                 Predict Stock Returns”
+
+IA.1       Additional Results on Data-Mined Predictability
+
+        Table IA.1: Out-of-Sample Returns from Mining Accounting Data: 2004-2020
+We sort 29,000 accounting ratios each June into 5 bins based on past 30-year long-short
+returns (in-sample) and compute the mean return over the next year within each bin
+(out-of-sample). Statistics are calculated by strategy, then averaged within bins, then
+averaged across sorting years. Decay is the percentage decrease in mean return out-of-
+sample relative to in-sample. We omit decay for bin 4 because the mean return in-sample
+is negligible. Out-of-sample returns are calculated using only data from 2004-2020.
+
+   In-           Equal-Weighted Long-Short Deciles                      Value-Weighted Long-Short Deciles
+ Sample       Past 30 Years (IS)      Next Year (OOS)                  Past 30 Years (IS)        Next Year (OOS)
+   Bin         Return                 Return          Decay             Return                 Return       Decay
+              (bps pm)     t-stat    (bps pm)          (%)             (bps pm)    t-stat     (bps pm)       (%)
+    1              -59.2   -3.99             -24.9         57.9            -37.3    -1.88            -4.2    88.7
+    2              -28.1   -2.29              -9.6         65.8            -14.6    -0.91            -1.1    92.5
+    3              -11.7   -1.01               0.1        100.9             -4.2    -0.28            -2.6    38.7
+    4                1.8    0.14               6.7                           5.5     0.36            -3.7
+    5               23.9    1.48              16.3         31.8             25.8     1.31             0.6    97.8
+
+
+
+
+                 Table IA.2: Pairwise Correlations of Data-Mined Predictors
+Data-mined predictors are represented by strategies with t-statistics greater than 2.0 in at
+least 10% of the in-sample periods from Table 1. The table reports percentiles of Pearson
+correlation coefficients computed over pairwise-complete return observations.
+
+                                    Panel (a): Pairwise correlations
+    Percentile                1        5             10           25       50      75       90        95      99
+ Equal-Weighted             -0.40    -0.23       -0.15         -0.04      0.06     0.18     0.31     0.41    0.61
+ Value-Weighted             -0.33    -0.20       -0.14         -0.06      0.02     0.11     0.21     0.30    0.57
+
+
+
+
+                                                          40
+IA.2      Data-Mined Themes in Other Samples
+
+               Table IA.3: Themes from Mining Accounting Ratios in 1990
+Table reports the 20 accounting ratio numerator and stock weight (equal- or value-) combinations
+with the largest mean t-stats using returns in the years 1963-1990 (IS). ‘ew’ is equal-weight, ‘vw’
+is value-weight. Strategies are signed to have positive mean returns IS. ‘Pct Short’ is the share
+of strategies that short the ratio. ‘t-stat’ and ‘Mean Return’ are averages across the 65 possible
+denominators.
+
+                                               1963-1990 (IS)         1991-2004 1991-2022
+     Numerator (Stock Weight)                Pct         Mean             Mean Return
+                                                  t-stat
+                                            Short        Return            OOS / IS
+     ∆Capital surplus (ew)                    100    5.8     0.67           1.04        0.94
+     ∆Common stock (ew)                       100    5.8     0.69           0.80        0.55
+     ∆Liabilities (ew)                        100    5.7     0.74           0.87        0.56
+     ∆Inventories (ew)                        100    5.4     0.65           1.44        0.79
+     ∆Current liabilities (ew)                100    5.4     0.60           1.04        0.56
+     ∆Debt in current liab (ew)               100    5.2     0.48           0.30        0.31
+     Stock issuance (ew)                      100    5.2     0.89           1.03        0.80
+     ∆Long-term debt (ew)                     100    5.1     0.53           1.31        0.75
+     ∆Notes payable st (ew)                   100    5.1     0.46           0.17        0.25
+     ∆Interest expense (ew)                   100    5.1     0.58           1.01        0.80
+     ∆PPE net (ew)                            100    4.8     0.73           1.41        0.75
+     ∆PPE gross (ew)                          100    4.7     0.73           1.15        0.61
+     Retained earnings restatement (ew)       100    4.6     0.54           1.38        0.70
+     ∆Assets (ew)                             100    4.5     0.73           1.63        0.94
+     Stock repurchases (ew)                     0    4.4     0.38           0.27        0.63
+     ∆Convertible debt and stock (ew)         100    4.1     0.42           1.47        1.18
+     ∆Capital surplus (vw)                    100    4.0     0.57           0.72        0.64
+     ∆Cost of goods sold (ew)                 100    3.9     0.49           1.41        0.84
+     Long-term debt issuance (ew)              88    3.9     0.48           1.30        0.71
+     ∆Invested capital (ew)                   100    3.9     0.63           2.16        1.20
+
+
+
+
+                                                41
+               Table IA.4: Themes from Mining Accounting Ratios in 2000
+Table reports the 20 accounting ratio numerator and stock weight (equal- or value-) combinations
+with the largest mean t-stats using returns in the years 1963-2000 (IS). ‘ew’ is equal-weight, ‘vw’
+is value-weight. Strategies are signed to have positive mean returns IS. ‘Pct Short’ is the share
+of strategies that short the ratio. ‘t-stat’ and ‘Mean Return’ are averages across the 65 possible
+denominators.
+
+                                                1963-2000 (IS)         2001-2004 2001-2022
+    Numerator (Stock Weight)                 Pct         Mean              Mean Return
+                                                  t-stat
+                                            Short        Return             OOS / IS
+    ∆Inventories (ew)                         100     6.9     0.77           0.72        0.33
+    ∆Long-term debt (ew)                      100     6.4     0.60           0.81        0.37
+    ∆Common stock (ew)                        100     6.3     0.66           0.81        0.46
+    ∆PPE net (ew)                             100     6.3     0.82           1.10        0.37
+    ∆Current liabilities (ew)                 100     6.1     0.61           0.94        0.33
+    ∆Interest expense (ew)                    100     6.1     0.61           0.45        0.58
+    ∆Liabilities (ew)                         100     6.0     0.71           0.87        0.44
+    ∆PPE gross (ew)                           100     5.9     0.78           0.87        0.30
+    ∆Debt subordinated convertible (ew)       100     5.4     0.71           1.15        0.62
+    ∆Debt convertible (ew)                    100     5.4     0.61           1.72        0.74
+    Retained earnings restatement (ew)        100     5.4     0.61           1.07        0.29
+    ∆Invested capital (ew)                    100     5.3     0.83           1.55        0.56
+    Merger sales contrib (ew)                 100     5.2     0.53           0.93        0.51
+    ∆Assets (ew)                              100     5.2     0.86           1.33        0.53
+    ∆Capital surplus (ew)                     100     5.2     0.69           0.86        0.85
+    ∆Capital expenditure (ew)                 100     5.2     0.53           1.67        0.64
+    ∆Cost of goods sold (ew)                  100     5.1     0.58           0.66        0.40
+    ∆Num employees (ew)                       100     5.0     0.59           1.42        0.52
+    ∆Intangible assets (ew)                   100     5.0     0.49           1.89        0.61
+    ∆Debt in current liab (ew)                100     4.9     0.40           0.03        0.32
+
+
+
+
+                                                42
+               Table IA.5: Themes from Mining Accounting Ratios in 2010
+Table reports the 20 accounting ratio numerator and stock weight (equal- or value-) combinations
+with the largest mean t-stats using returns in the years 1963-2010 (IS). ‘ew’ is equal-weight, ‘vw’
+is value-weight. Strategies are signed to have positive mean returns IS. ‘Pct Short’ is the share
+of strategies that short the ratio. ‘t-stat’ and ‘Mean Return’ are averages across the 65 possible
+denominators.
+
+                                                1963-2010 (IS)         2011-2014 2011-2022
+    Numerator (Stock Weight)                 Pct         Mean              Mean Return
+                                                  t-stat
+                                            Short        Return             OOS / IS
+    ∆Long-term debt (ew)                      100     6.5     0.54           0.64        0.24
+    ∆Inventories (ew)                         100     6.5     0.65           0.47        0.46
+    ∆Liabilities (ew)                         100     6.4     0.68           0.52        0.14
+    ∆Common stock (ew)                        100     6.3     0.60           0.24        0.40
+    ∆Interest expense (ew)                    100     6.3     0.57           0.61        0.51
+    ∆PPE net (ew)                             100     6.1     0.72           0.58        0.37
+    ∆Current liabilities (ew)                 100     5.8     0.54           0.17        0.24
+    ∆Debt convertible (ew)                    100     5.7     0.60           0.80        0.60
+    Merger sales contrib (ew)                 100     5.5     0.47           0.16        0.52
+    ∆Assets (ew)                              100     5.5     0.81           0.40        0.35
+    ∆Invested capital (ew)                    100     5.5     0.78           0.43        0.47
+    ∆Intangible assets (ew)                   100     5.4     0.50           0.30        0.23
+    ∆PPE gross (ew)                           100     5.3     0.65           0.52        0.45
+    ∆Convertible debt and stock (ew)          100     5.0     0.47           1.05        0.89
+    Retained earnings restatement (ew)        100     5.0     0.51           0.53        0.19
+    ∆Num employees (ew)                       100     4.9     0.54           0.25        0.53
+    ∆Capital surplus (ew)                     100     4.8     0.65           0.54        0.97
+    ∆Debt subordinated convertible (ew)       100     4.8     0.63           0.34        0.86
+    ∆Debt in current liab (ew)                100     4.8     0.35           0.32        0.25
+    ∆Capital expenditure (ew)                 100     4.7     0.47           0.36        0.89
+
+
+
+
+                                                43
+IA.3                                    Full Sample Risk Adjustments
+As a robustness check, we present results using full sample risk adjustments instead of
+sample-specific alphas. In the full sample approach, betas are estimated over the entire
+available period from the sample start date onwards, rather than separately for in-sample
+and out-of-sample periods.
+
+                                 Figure IA.1: Research vs Data-Mining: Full Sample Factor-Adjusted Returns
+
+We repeat Figure 2 using full sample risk adjustments, where β̂ i is estimated using all
+available data from the sample start date onwards. Shaded area shows one standard error
+for the published predictors, clustered by calendar month and predictor.
+                                              (a) CAPM-Adjusted                                                                            (b) FF3-Adjusted
+
+                               125                                                                                        125
+  Trailing 5−Year CAPM Alpha
+
+
+
+
+                               100                                                            Trailing 5−Year FF3 Alpha   100
+
+
+                               75                                                                                         75
+
+
+                               50                                                                                         50
+
+
+                               25                                                                                         25
+                                           Published (CAPM Alpha, t>2)                                                                 Published (FF3 Alpha, t>2)
+                                           Data−Mined (CAPM Alpha, t>2)                                                                Data−Mined (FF3 Alpha, t>2)
+
+                                0                                                                                          0
+                                     −360−300−240−180−120 −60   0   60 120 180 240 300                                          −360−300−240−180−120 −60    0   60 120 180 240 300
+                                          Months Since Original Sample Ended                                                         Months Since Original Sample Ended
+
+
+
+
+                                                                                         44
+Table IA.6: Full Sample Risk-Adjusted Returns: Theoretical Explanation and Modeling
+Formalism
+
+                                               Raw             CAPM                  FF3
+        Group                          Return Outperf. Return Outperf. Return Outperf.
+        Theoretical Explanation
+        Risk                            43            5     42        0       53            -1
+                                        (8)          (8)    (8)      (8)      (7)          (8)
+        Mispricing                      55            4     57        4       57            -3
+                                        (4)          (4)    (3)      (4)      (3)          (4)
+        Agnostic                        65            9     82       25       89           18
+                                        (8)          (8)    (9)      (9)      (7)          (8)
+        Modeling Formalism
+        No Model                         56        5         60        8       63             3
+                                         (3)      (3)        (3)      (3)      (3)          (3)
+        Stylized                         63       15         57        1       68            -9
+                                        (12)     (13)       (13)     (13)     (12)         (13)
+        Dynamic or Quantitative          34       -2         55       17       44           -12
+                                        (14)     (14)       (13)     (15)     (13)         (16)
+        Overall
+        All                             56            5     60        8       63            1
+                                        (3)          (3)    (3)      (3)      (3)          (3)
+
+
+
+
+     Table IA.7: Full Sample Risk-Adjusted Returns: Discipline and Journal Rank
+
+                           Raw                             CAPM                       FF3
+    Group          Return Outperformance Return Outperformance Return Outperformance
+    Discipline
+    Finance          59           8              63            12           67               6
+                     (4)         (4)             (4)           (4)          (3)             (4)
+    Accounting       43          -6              46            -6           45              -19
+                     (6)         (7)             (5)           (6)          (5)             (6)
+    Journal Rank
+    JF, JFE, RFS     60           8              66            14           70               8
+                     (4)         (4)             (4)           (5)          (4)             (4)
+    AR, JAR, JAE     43          -6              46            -6           45              -19
+                     (6)         (7)             (5)           (6)          (5)             (6)
+    Other            53           8              57             5           62               1
+                     (6)         (6)             (6)           (6)          (6)             (7)
+
+
+
+                                                     45
+IA.4      Alternative Measures of Risk
+
+IA.4.1     Risk vs Mispricing Words
+In Section 4.1, the risk vs mispricing categorization is binary. To make a more continuous
+measure, we count risk and mispricing words in the published papers. We remove
+stopwords, lowercase and lemmatize all words using standard methods.
+    We consider as risk words the following terms and their grammatical variations: "util-
+ity," "maximize," "minimize," "optimize," "premium," "premia," "premiums," "consume,"
+"marginal," "equilibrium," "sdf," "investment-based," and "theoretical." We also count as
+risk words appearances of “risk” that are not preceded by “lower,” and appearances of
+“aversion,” “rational,” and “risky” that are not preceded by “not.”
+    The mispricing words consist of " "anomaly," "behavioral," "optimistic," "pessimistic,"
+"sentiment," "underreact," "overreact," "failure," "bias," "overvalue," "misvalue," "under-
+value," "attention," "underperformance," "extrapolate," "underestimate," "misreaction,"
+"inefficiency," "delay," "suboptimal," "mislead," "overoptimism," "arbitrage," "factor un-
+likely," and their grammatical variations. We further count as mispricing the terms "not
+rewarded," "little risk," "risk cannot [explain]," " low [type of] risk," "unrelated [to the type
+of] risk," "fail [to] reflect," and "market failure," where the terms in brackets are captured
+using regular expressions or correspond to stopwords.
+    Figure IA.2 plots post-sample returns against the ratio of risk words (e.g., “utility,”
+“equilibrium”) to mispricing words (e.g., “sentiment,” “underreact”) in the published
+papers. The relationship is negative, consistent with Table 4.
+
+
+
+
+                                               46
+                  Figure IA.2: Post-Sample Returns vs Risk to Mispricing Words
+Each marker represents one published predictor’s mean return. The regression line is
+fitted with OLS. The full reference for each acronym can be found at https://github.
+com/OpenSourceAP/CrossSection/blob/master/SignalDoc.csv. The relation-
+ship between risk words and post-sample returns is negative.
+
+                                            3
+                                                     ExchSwitch
+
+                                                     OrderBacklogChg
+             [Post−Sample] / [In−Sample]
+
+
+
+
+                                            2              EarnSupBig
+                                                     cfp
+
+                                                     DebtIssuance
+                                                     ShareRepurchase                           CoskewACX
+
+                                            1                                                   OPLeverage
+                                                            sfe                      OScore
+                                                               ChInvIA                         Coskewness
+                                                     RevenueSurprise              SmileSlope     hire BetaTailRisk
+                                                     ChInv IndRetBig               InvGrowth    OrgCap realestate
+                                            0                                                  Beta tang
+                                                                                         Cash
+                                                       GrSaleToGrInv
+                                                                                           Herf
+                                           −1        CustomerMomentum
+                                                                                                HerfBE
+
+                                                     SurpriseRD RDS
+
+                                                −4                −2          0                 2                4
+                                                           Log ([Risk Words]/[Mispricing Words])
+
+
+
+IA.4.2    Factor Model Measures of Risk
+One can alternatively measure risk using factor models, as follows. For each published
+long-short portfolio i, we estimate exposure to factor k using time-series regressions
+on the original papers’ sample periods. According to the factor models, the estimated
+expected return is ∑k β̂ k,i f¯k , where f¯k is the original-sample mean return of factor k. Fama
+and French (1993) state that β̂ i,k with respect to their SMB and HML factors have “a clear
+interpretation as risk-factor sensitivities.” If this interpretation is both correct and stable,
+then the estimated expected return should remain post-sample.
+    Figure IA.3 plots the post-sample mean return against the factor model expected
+returns, using the CAPM, Fama-French 3 (FF3), or Fama-French 5 (FF5) models. We
+normalize by the original-sample mean return for ease of interpretation. With this nor-
+malization, the position on the x-axis ([Predicted by Risk Model]/[In-Sample]) represents
+the share of predictability due to risk.
+
+                                                                         47
+                                       Figure IA.3: Mean Returns Post-Sample vs Factor Model Predictions
+Each marker is one published long-short strategy. [Post-Sample]/[In-Sample] is the mean
+return post-sample divided by the mean return in-sample. [Predicted by Risk Model]
+is ∑k β̂ k,i f¯k , where f¯k is the in-sample mean return of factor k and β̂ k,i comes from an
+in-sample time series regression of long-short returns on factor realizations. FF3 and FF5
+are the Fama-French 3- and 5-factor models. The blue line is the OLS fit. The axes zoom
+in on the interpretable region of the chart and omits outliers. Factor models attribute a
+minority of in-sample predictability to risk, at best. Post-sample decay is the distance
+between the horizontal line at 1.0 and the regression line, and this decay is near 50%
+even for predictors that are entirely due to risk according to the CAPM and FF3. For FF5,
+decay is smaller for predictors that are more than 75% due to risk, but these predictors
+are rare.
+             (a) Post-Sample Return vs CAPM Prediction                                                                                                (b) Post-Sample Return vs FF3 Prediction
+
+                                 2                                                                                                                     2
+    [Post−Sample]/[In−Sample]
+
+
+
+
+                                                                                                                          [Post−Sample]/[In−Sample]
+                                 1                                                                                                                     1
+
+
+
+
+                                 0                                                                                                                     0
+
+
+
+
+                                −1                                                                                                                    −1
+                                     −0.5            0.0                                       0.5             1.0                                         −0.5            0.0             0.5            1.0
+                                            [Predicted by Risk Model]/[In−Sample]                                                                                 [Predicted by Risk Model]/[In−Sample]
+
+
+                                                                                         (c) Post-Sample Return vs FF5 Prediction
+
+                                                                                          2
+                                                             [Post−Sample]/[In−Sample]
+
+
+
+
+                                                                                          1
+
+
+
+
+                                                                                          0
+
+
+
+
+                                                                                         −1
+                                                                                              −0.5            0.0                                           0.5             1.0
+                                                                                                     [Predicted by Risk Model]/[In−Sample]
+
+
+
+
+    The figure shows that a minority of in-sample predictability is attributed to risk, at
+best. Using the CAPM (Panel (a)), nearly all predictability is less than 25% due to risk
+(to the left of the vertical line at 0.25), and many predictors have a negative risk share.
+
+                                                                                                                     48
+FF3 (Panel (b)) implies more predictability is due to risk, but still the vast majority of
+predictors lie to the left of 0.50.
+    Fama and French (2015) are more cautious than Fama and French (1993), and describe
+the risk-based ICAPM as “the more ambitious interpretation” of the five factor model.
+Under the more ambitious interpretation, FF5 implies that most predictors are less than
+50% due to risk. These results are consistent with our manual reading of the papers,
+which typically attribute predictability to mispricing (Table 3).
+    The regression lines in Figure IA.3 show negative or mildly positive relationships
+between factor model risk and post-sample returns. The regression fits for the CAPM and
+FF3 models never stray far from 50%, implying that even predictors that are entirely due to
+risk are little different than the typical predictor in terms of post-sample robustness. FF5
+risk shows a stronger relationship with post-sample returns, but even the rare predictors
+that are 75% due to risk decay by roughly 40% post-sample. Moreover, the Fama and
+French (2015) model may have the benefit of hindsight, as the median publication year
+for the Chen and Zimmermann (2022) predictors is 2006.
+
+
+
+
+                                            49
+IA.5     Additional Results on Published Predictors
+
+                 Table IA.8: Signals by Theory and Published Journal
+This table lists the number of signals by theory and published journal. Finance journals
+find risk explanations more frequently than accounting journals, but risk explanations
+still account for a small minority of predictors in finance journals.
+
+                                   Agnostic    Mispricing   Risk
+                        AR                1           14      0
+                        BAR               0            1      0
+                        Book              2            0      0
+                        CAR               0            1      0
+                        FAJ               1            1      0
+                        JAE               2            8      0
+                        JAR               2            2      0
+                        JBFA              0            1      0
+                        JEmpFin           0            1      0
+                        JF               12           34     10
+                        JFE              11           19      6
+                        JFM               0            2      0
+                        JFQA              0            3      2
+                        JFR               0            0      1
+                        JOIM              0            1      0
+                        JPE               0            0      3
+                        JPM               1            0      0
+                        MS                0            2      2
+                        Other             1            1      0
+                        RAS               0            5      1
+                        RED               0            0      1
+                        RFQA              0            1      0
+                        RFS               0            6      7
+                        ROF               0            1      1
+                        WP                1            1      0
+
+
+
+
+                                          50
+                                                       Figure IA.4: Decay vs Journal
+Plot shows the ratio of post-sample to in-sample returns for each predictor, grouped
+by journal type. Journal types are Top 5 Economics (QJE, JPE), Top 3 Finance (JF, JFE,
+RFS), Top 3 Accounting (JAR, JAE, AR), and Other journals. Each point represents one
+predictor. The blue diamonds show the mean ratio within each journal group. The
+horizontal gray lines show ratios of 0 and 1. A ratio of 1 means the predictor maintains
+its full predictive power out-of-sample, while a ratio of 0 means the predictor completely
+fails out-of-sample. Text labels identify notable predictors and the top performers within
+each journal group. The blue line connects group means to highlight the pattern across
+journal types.
+
+
+                                                                                                                AccrualsBM
+                                                                            CBOperProf
+
+                                                                                                                        ChInv
+                                           2
+            [Post−Sample] / [In−Sample]
+
+
+
+
+                                                                            AM
+                                                                                                                ChEQ
+                                                                           AnnouncementReturn
+                                                                                              AnalystValue
+                                                        hire
+                                                                                             ChInvIA            AnalystRevision
+                                           1                               BMdec
+                                                                                             ChTax
+                                                        BetaLiquidityPS                                         BM
+                                                                           AdExp             DelFINL
+                                                                                                                CPVolSpread
+                                                        Beta               AgeIPO
+                                           0                                                 Accruals
+                                                                                                                ChForecastAccrual
+                                                                            BetaTailRisk   ChAssetTurnover
+
+                                                                                             ChNNCOA            ChNAnalyst
+                                                                           BookLeverage
+                                          −1                                                         AOP
+                                                                            AssetGrowth                              CashProd
+                                                                                                 DelNetFin
+
+                                                                           BidAskSpread      AbnormalAccruals   BrandInvest
+
+
+                                               Top 5 Econ      Top 3 Fin         Top 3 Acct             Other
+
+
+
+
+                                                                           51
+ Table IA.9: Regression Estimates of Risk vs Mispricing Effects on Predictability Decay
+We regress monthly long-short returns on indicator variables to quantify the effects of
+peer-reviewed risk vs mispricing explanations on predictability decay. “Post-Sample” is 1
+if the month occurs after the predictor’s sample ends and is zero otherwise. “Post-Pub”
+is defined similarly. “Risk” is 1 if peer review argues for a risk-based explanation (Table
+3) and 0 otherwise. “Mispricing” and “Post-2004” are defined similarly. Parentheses
+show standard errors clustered by month. “Null: Risk No Decay” shows the p-value
+that tests whether risk-based returns do not decrease post-sample ((1) and (3)) or post-
+publication ((2) and (4)). Risk-based predictors decay more than other predictors, but the
+difference is only marginally significant. The decay in risk-based predictors overall is
+highly significant.
+
+                                   LHS: Long-Short Strategy Return (bps pm, scaled)
+     RHS Variables                  (1)       (2)          (3)        (4)        (5)
+     Intercept                     71.4      71.4         71.4      71.4        73.0
+                                  (3.7)      (3.7)       (3.7)      (3.7)      (3.9)
+     Post-Sample                  -28.9     -25.4        -25.5      -22.9       -5.6
+                                  (5.6)      (7.1)       (6.6)     (10.7)      (8.2)
+     Post-Pub                                -4.2                    -3.0
+                                             (7.8)                 (12.5)
+     Post-Sample x Risk           -19.1      -7.6        -22.5      -10.1      -15.6
+                                  (7.7)     (10.2)       (8.5)     (12.9)      (7.6)
+     Post-Pub x Risk                        -15.2                   -16.4
+                                            (13.3)                 (15.9)
+     Post-Sample x Mispricing                             -4.5       -3.2
+                                                         (5.8)     (11.0)
+     Post-Pub x Mispricing                                           -1.8
+                                                                   (12.0)
+     Post-2004                                                                 -33.7
+                                                                               (9.9)
+     Null: Risk No Decay         < 0.1%    < 0.1%      < 0.1%     < 0.1%      < 0.1%
+
+
+
+
+                                            52
+                             Table IA.10: Model vs No Model
+This table compares predictors with any mathematical model (stylized, dynamic, or quan-
+titative) versus those without formal models. ‘Raw’ shows unadjusted returns. ‘CAPM’
+and ‘FF4’ adjust for the CAPM and Fama-French three-factor model plus momentum,
+respectively, using sample-specific alphas. All returns are normalized to have a mean of
+100 bps per month in the original papers’ samples. Numbers in parentheses are standard
+errors clustered by calendar month and predictor.
+
+                             Raw                  CAPM                   FF4
+                   Return      Outperf.   Return     Outperf.   Return         Outperf.
+     No Model         56             5      62             9       71             -4
+                      (3)           (3)     (3)           (3)      (3)            (4)
+     Any Model        49             7      50             0       45            -48
+                     (13)          (13)    (14)          (17)     (11)           (22)
+
+
+
+
+      Table IA.11: Full Sample Risk-Adjusted Returns: Any Model vs No Model
+
+                             Raw                  CAPM                   FF3
+      Group         Return     Outperf.   Return    Outperf.    Return     Outperf.
+
+
+      No Model        56             5      60             8      63              3
+                      (3)           (3)     (3)           (3)     (3)            (3)
+      Any Model       49             7      56             9      56             -11
+                     (13)          (13)    (13)          (14)    (13)           (15)
+
+
+
+
+                                           53
+IA.6      Why Do Published Predictors Decay?
+Table IA.12 illustrates two methods for documenting peer-reviewed predictability decay:
+
+   1. Split at the end of the publication’s sample period, following McLean and Pontiff
+      (2016)
+
+   2. Split in 2004 when high-speed internet became widely available, consistent with
+      Chordia, Subrahmanyam, and Tong (2014) and Chen and Velikov (2022)
+
+Both approaches yield similar empirical results: a mean split date around 2000, a decay
+of about 50%, with 85% of predictors showing reduced effectiveness after the split.
+
+                   Table IA.12: Why Do Peer-Reviewed Returns Decay?
+Table compares splitting samples using various methods: (1) the end of the original sample period,
+(2) when high speed internet became widely available, and (3) by minimizing the mean squared
+residual a la Bai and Perron (1998). Each method leads to a similar average break date, magnitude
+of decay, and frequency of decay. It is unclear which sample split best explains why peer-reviewed
+predictability decays.
+
+                      Event              Mean        Return (bps p.m.) % of Signals
+                                         Date        Before    After    w/ Decay
+             1. Paper’s Sample Ends Feb 2000          72        37          85
+             2. High Speed Internet Dec 2004          71        31          88
+             3. Data-Driven Break   Mar 2001          80        25          82
+
+
+    Which split best explains why peer-reviewed predictability decays? To examine this,
+we compute data driven breaks for each predictor by minimizing the mean squared
+residual (as in Bai and Perron (1998)). We then compare the data-driven breaks with the
+breaks specified by the two methods above.
+    Figure IA.5 shows the result. The scatter shows at best a mild relationship between
+the data-driven breaks and the papers’ sample ends. Similarly, there is some clustering
+around the 2004 break, but the evidence is far from definitive.
+    This result is natural given the noise in long-short returns. The typical monthly
+volatility is 350 bps, implying the standard error of a 60-month mean is 45 bps, making it
+impossible to tell if a predictor decays in a particular 5-year period.
+    Thus, it is difficult to determine the fundamental cause of the relative decay of peer-
+reviewed and data-mined predictors. This observation leads to our focus on making
+inferences about post-sample performance.
+
+
+
+                                                54
+                Figure IA.5: Data-Driven Breaks vs Paper Sample Ends
+Each marker is one published predictor. Data-driven breaks split the predictor’s sample
+into two periods to minimize the mean squared residual (as in Bai and Perron (1998)).
+
+                                           2020
+
+
+
+
+                                                    2. High Speed Internet
+                    3. Data-Driven Break
+
+
+
+
+                                           2000
+
+
+
+
+                                           1980
+
+
+
+
+                                           1960
+
+                                                  1960                  1980             2000    2020
+                                                                        1. Paper's Sample Ends
+
+
+
+
+                                                                               55
+

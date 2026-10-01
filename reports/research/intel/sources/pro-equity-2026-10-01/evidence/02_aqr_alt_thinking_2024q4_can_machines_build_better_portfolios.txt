@@ -1,0 +1,892 @@
+URL: https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/Alternative-Thinking-2024-Issue-4-Can-Machines-Build-Better-Stock-Portfolios.PDF
+Fetched (UTC): 2026-10-01T06:06Z
+Note: pdftotext
+-----
+                      Alternative Thinking 2024 | Issue 4
+
+
+
+                      Can Machines Build
+                      Better Stock Portfolios?
+                      The Virtue of Complexity in the
+                      Cross-Section of Stocks
+
+
+
+                      Executive Summary
+                      In the second issue of our 2024          nonlinearities, more “complex”
+                      Alternative Thinking series, we          models—those with a large
+                      showed that machine learning             number of predictor variables,
+                      techniques can be used to                which may exceed the number of
+                      help improve market timing               observations—have greater efficacy.
+                      strategies. We now extend these
+                                    1
+
+
+                      concepts to constructing stock           More complex models can better
+                      selection strategies following           identify true nonlinear relationships
+                      a similar framework.                     and, thus, produce better stock
+                                                               selection strategy performance.
+                      The relation between predictor           This "virtue of complexity" result is
+                      variables (i.e., signals) and stock      validated in practical multi-factor
+                      returns is a complicated, unknown,       stock selection applications in
+                      and complex function. Recovering it      which long/short optimal portfolios
+                      from simple linear approximations        are formed using three signal sets:
+                      is likely to be very limited.            value and momentum, Fama-French
+                                                               5-factor model plus momentum,
+                      One way machine learning                 and a suite of defensive-oriented
+                      techniques can be used to help           signals. Our results indicate
+                      improve stock selection strategies       performance improvements relative
+                      is by picking up nonlinearities          to a simple, linear approach in the
+                      between the predictor variables          range of 50-100%, suggesting that
+                      and returns in the cross-section.        machine learning can help to build
+                      Given the unknown nature of              better stock selection portfolios.
+
+
+
+PSG
+Portfolio Solutions
+Group                 1   Alternative Thinking 2024 Issue 2.
+Contents
+Introduction                                                                                   
+
+What Are Some Possible Nonlinearities in Expected Returns                                      4
+and Optimal Portfolio Weights?
+
+Why Do More Complex Models Perform Better?                                                     
+
+Testing the Theory in Three Multi-Factor Contexts                                              6
+
+The Virtue of Complexity Is Not a License for Data Mining                                      
+
+Concluding Thoughts                                                                          10
+
+References and Further Reading                                                               11
+
+Disclosures                                                                                  12
+
+
+
+
+About the Portfolio Solutions Group
+
+The Portfolio Solutions Group (PSG) provides thought leadership to the broader investment
+community and custom analyses to help AQR clients achieve better portfolio outcomes.
+
+
+We thank Alfie Brixton, Jeff Cao, Pete Hecht, and Bryan Kelly for their work on this paper. We also
+thank Jordan Brooks, Jorge Fernandez-Cuervo, Antti Ilmanen, Thom Maloney, Toby Moskowitz, and
+Dan Villalon for helpful comments.
+
+Table of Contents
+                                             Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?                       3
+
+
+
+
+Introduction
+Finance naturally has low predictability and                              relationship. Large, complex models are able
+small numbers of time series observations,2                               to pick up the nonlinearities and produce
+suggesting small, simple models—not complex                               better market timing performance. In fact,
+machine learning models—are best suited                                   more complex models perform better out-of-
+for investment applications. However, new3
+                                                                          sample—a so-called "virtue of complexity."
+research is challenging this principle of                                 The virtue of complexity holds for timing
+parsimony.4 The Alternative Thinking 2024                                 traditional markets, such as stocks and bonds,
+Issue 2 showed that expected returns are                                  and timing long/short factors, such as value,
+likely nonlinear in the underlying predictor                              momentum, and low beta; see Exhibit 1 for
+variables (i.e., signals), and small, simple                              US equities timing strategy performance.5
+market timing models miss this important
+
+
+Exhibit 1: Hypothetical Out-of-Sample Equity Market Timing Performance Using
+Well-Documented Predictors
+January 1, 1927 – December 31, 2020
+
+We use 15 predictor variables from Goyal-Welch (2008): default-yield spread, inflation, stock
+variance, dividend payout ratio, long-term gov bond yield, term spread, t-bill rate, pure credit return,
+dividend-price ratio, dividend yield, long-term gov bond return, earnings-price ratio, book-to-price,
+net equity expansion, and lagged market return.
+
+                                            US Stocks                         Simple Linear                     Complex Nonlinear
+                                          Excess Return                  Timing Strategy Return               Timing Strategy Return
+
+ Sharpe Ratio                                   0.51                                 -0.12                                0.47
+ Appraisal Ratio                                                                     -0.19                                0.31
+ Alpha t-Stat                                                                        -1.74                                2.88
+ Skew                                           -0.41                                -1.29                                2.54
+Source: AQR. https://papers.ssrn.com/sol3/papers.cfm?abstract_id=517667. Results are gross of transaction costs. The above complex
+results use T=12, P=12,000 and the variables do not have lookahead bias. The dependent variable is the excess return of the S&P 500 index.
+The statistics reported are for static exposure to the U.S. stock market return, the simple timing strategy, and the nonlinear timing strategy.
+Please read the disclosures in the Appendix for a description of the investment universe and the allocation methodology used to construct the
+Hypothetical Simple and Complex U.S. Equity Timed Market Returns backtest. Hypothetical data has certain inherent limitations, some of which
+are disclosed in the Appendix hereto. No representation is being made that any investment will achieve performance similar to those shown. For
+illustrative purposes only and not representative of a portfolio AQR currently manages.
+
+
+While the previous paper focused on a time                                can be constructed with these two factors, and
+series, market timing application, the virtue                             can we materially improve upon this result
+of complexity also holds cross-sectionally                                by constructing additional factors which are
+when forming stock selection portfolios. For                              nonlinear combinations of the original two
+example, consider the following two popular                               signals? The answer to the latter question is
+stock selection factors: value and momentum.                              yes—a cross-sectional variation of the virtue
+What's the highest Sharpe ratio portfolio that                            of complexity.6
+
+
+2   See Israel, Kelly, Moskowitz (2020).
+3   See Asness, Ilmanen, Maloney (2015).
+4   See Kelly, Malamud, and Zhou (2021).
+5   Please refer to the Alternative Thinking 2024 Issue 2.
+6   See Didisheim et al. (2023, 2024).
+4                              Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?
+
+
+
+
+What Are Some Possible Nonlinearities
+in Expected Returns and Optimal
+Portfolio Weights?
+Let’s start with a concrete example demon-                                               there is an additional expected return impact
+strating how a simple linear portfolio rule may                                          when valuations are at extremes—so called
+differ from a more complex nonlinear one.                                                "deep value"?7 This would impact the optimal
+                                                                                         portfolio weight in a nonlinear manner as
+Assume a stock’s optimal portfolio weight is                                             highlighted in Exhibit 2 Figure B. Additional
+driven by two signals, valuations (i.e., value)                                          nonlinearities between the signals and returns
+and relative short-term performance (i.e.,                                               can be incorporated, such as having an
+momentum). When valuations are low (i.e.,                                                outsized impact on return (and, thus, optimal
+cheap) and short-term relative performance                                               portfolio weight) when extreme valuations and
+has been good, the stock’s optimal portfolio                                             momentum are aligned, i.e., when the stock is
+weight is positive. In contrast, when valuations                                         extremely cheap with unusually high relative
+are high and short-term relative performance                                             short-term performance (Exhibit 2 Figure C).
+is poor, the stock’s optimal portfolio weight
+is negative. Exhibit 2 Figure A depicts this
+relationship in a linear manner. But what if
+
+Exhibit 2: Nonlinearity Examples in Expected Stock Return
+Hypothetical Optimal Portfolio Weight of an Example Stock
+
+                                                                                                             Figure C: Deep Value
+                                        Figure A: Linear             Figure B: Deep Value
+                                                                                                                 with Val/Mom
+                           5.0%                                          Nonlinearity
+                                                                                                                Interactions in               1
+                                                                                                                                           (Biggest
+                                                                                                                   Extremes
+Optimal Portfolio Weight
+
+
+
+
+                                                                                                                                            Winner)
+                           2.5%
+                                                                                                                                              2
+                                                                                                                                                      Momentum Metric
+
+                           0.0%                                                                                                               3
+
+
+                           -2.5%                                                                                                              4
+
+
+
+                           -5.0%                                                                                                             5
+                                                                                                                                           (Biggest
+                                    1      2      3   4   5         1     2       3     4    5           1      2     3   4      5          Loser)
+
+
+                              (Cheapest)                (Most      (Cheapest)                 (Most          (Cheapest)         (Most
+                                                      Expensive)                            Expensive)                        Expensive)
+                                                                                Value Metric
+
+Source: AQR. Market returns, “value metric,” and “momentum metric” data are hypothetical and for illustrative purposes only. The value metric is a
+generic example metric of valuation, and the momentum metric is a generic metric of short-term relative performance. The x-axis plots the level of
+the value metric, the y-axis plots the optimal portfolio weight, and the 5 different lines indicate differing levels of the momentum metric as shown
+in the key on the right. Hypothetical data has certain inherent limitations, some of which are disclosed in the Appendix. Not representative of any
+portfolio that AQR currently manages.
+
+
+
+7                      See Asness et al (2021).
+                                              Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?                     5
+
+
+
+
+Why Do More Complex Models Perform
+Better?
+Complex models better reflect reality by                                   model where P new predictor variables (S) are
+picking up nonlinearities between the signals                              generated by taking nonlinear transformations
+(X) and returns (R) in the cross-section                                   of the original signals (X).8 Since the nonlinear
+(Exhibit 3). In other words, the optimal,                                  predictors (S) can be interpreted as long/
+Sharpe ratio-maximizing, portfolio weight (w)                              short portfolio weights,9 F represents the
+is a nonlinear function of the signals (X), and                            return on a long/short factor based on the
+the complex model captures this relationship.                              nonlinear predictors S. The optimal portfolio
+In practice, the nonlinear relationships are                               is approximated by a linear combination of the
+unknown and must be estimated. This can                                    long/short nonlinear factors (F).
+be done by estimating a large, complex linear
+
+
+Exhibit 3: A Complex Multi-Factor Stock Selection Model
+                                                      True Model
+
+                                             Empirical Model
+
+                                                                    where:
+                w(Xt ) are the weights of the highest Sharpe Ratio portfolio and R are stock returns
+                S are nonlinear functions of X, the original predictors
+                F are long short factors based on the nonlinear predictors, S
+                λ represents the weights on the nonlinear long short factors, F
+
+How many nonlinear transformations of                                      of out-of-sample portfolio returns. This is
+the original signals should be used in the                                 where regularization techniques, such as
+empirical model, i.e. should P be small                                    ridge, help out. As model complexity increases,
+or large? If we first focus on the portfolio                               the regularization techniques of ridge are
+expected return objective, a more complex                                  able to identify a set of lambdas (λ) that fit
+model with higher P would better approximate                               the data and can be estimated with high
+the true, nonlinear portfolio weight function.                             precision (i.e., small variance). As a result, the
+As a result, more complex models with higher                               portfolio Sharpe ratio increases with model
+P deliver higher expected returns. However,                                complexity—the so-called virtue of complexity
+complex models—models with few data points                                 applied to stock selection portfolios. For a
+(T) and many parameters (P)—could be very                                  more detailed discussion on this topic, refer to
+difficult to estimate, increasing the volatility                           the 2024 Alternative Thinking Issue 2.
+
+
+8   How should one create these nonlinear predictors S, i.e., what is an appropriate nonlinear transformation of X? One option is random
+    Fourier features: Si=[sin(γw i'X),cos(γw i'X)]' where w i~i.i.d.N(0,1) are random, normally-distributed weights applied to the original signals
+    X, and γ is a scaling factor. The practitioner can generate as many nonlinear, random Fourier features as they want to best approximate
+    and capture complex nonlinearities. It's important to note there are many other ways to generate nonlinear predictors. We chose
+    random Fourier features because it is a convenient tool for illustrating the broad virtue of complexity principle.
+9   One simple method to create long/short factor portfolio weights from any given predictor signal is as follows: Assume your signal is
+    book-to-price (value). Rank the stocks based on book-to-price. Divide the rank by the number of stocks in the cross-section. Subtract
+    the mean. This leads to a set of portfolio weights between -0.5 (short) and 0.5 (long), which can be scaled to any dollar long/short level
+    the investor wishes.
+6           Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?
+
+
+
+
+Testing the Theory in Three
+Multi-Factor Contexts
+So far, we have been focusing on the theory                             short optimal portfolios using value and
+behind why more complex return models                                   momentum, Fama-French signals plus
+should deliver better stock selection strategy                          momentum, and a suite of defensive-oriented
+performance. Let's now apply the theory                                 signals.10 Can complex models build better
+to three practical examples: forming long/                              multi-factor stock selection portfolios? Yes.11
+
+
+
+Value and Momentum
+
+Our value and momentum US stock selection                               We also construct a “simple” model which
+model uses book-to-price and trailing 12                                uses only two long/short factors based off the
+month return for the raw signals, with data     12
+                                                                        original two raw signals.
+from January 1, 1963 to December 31, 2019.13
+In order to identify nonlinear relationships                            The out-of-sample multi-factor stock selection
+between the signals and portfolio weights,                              performance using our complex model is
+we estimate a 360-month rolling covariance                              reported in Exhibit 4. The complex strategy
+matrix and expected return vector with P =                              generates a 2.1 Sharpe ratio using a complexity
+2 to 36,000 long/short nonlinear factors.14, 15                         of 100 (i.e. 36,000 nonlinear factors divided
+The predictor variables underlying the long/                            by 360 time series observations), which is
+short nonlinear factors are generated by taking                         materially higher than the simple model’s
+nonlinear combinations of the raw signals,                              1.3. The correlation between the complex
+book-to-price and last 12 months returns. The                           and simple (linear) returns is fairly modest
+out-of-sample “complex” portfolio weights                               at 0.5. As a result, the complex model is
+(i.e. lambdas) are estimated using standard                             highly additive on top of the more simple
+Markowitz portfolio results.            16
+                                                                        linear approach (and, given the level of
+                                                                        diversification, this would hold true even if
+                                                                        the complex model yielded a Sharpe ratio
+                                                                        commensurate with the simple one).
+
+10 The Fama-French signals include value, size, investment, and profitability. The defensive-oriented signals include earnings volatility,
+   profitability, financial leverage, and low beta.
+11 Note that the results reported in this paper do not reflect the impact of transaction costs. Other AQR research has validated the virtue
+   of complexity principle in an environment with transaction costs and other market frictions. To learn more about machine learning and
+   transaction costs, please refer to “Machine Learning and the Implementable Efficient Frontier,” Jensen, Kelly, Malamud, Pedersen
+   (2022).
+12 The trailing 12 month return excludes the most recent month.
+13 The 1963 to 2019 time period studied is consistent with Didisheim et al (2023), which is the underlying academic paper motivating
+   the analysis. The spirit of the results does not change using different timeframes.
+14 This corresponds to a complexity (c) ranging from about 0.0056 to 100, where complexity is defined as the number of predictor
+   variables (P) divided by the number of time series observations (T).
+15 It's important to note that both the simple and complex portfolio models use a low frequency, monthly rebalances and b) slow moving,
+   30-year, historical covariance and expected return inputs. These design choices should partially mitigate the impact of transaction
+   costs. Furthermore, the focus of the analysis is on the relative performance improvement from incorporating nonlinearities. While
+   transaction costs degrade absolute performance measures, it's not clear how transaction costs impact relative performance
+   measures. Transaction costs could increase with complexity, but we leave this topic for future research.
+16 We estimate a rolling 360-month ridge regression using a shrinkage parameter (z) of 1. Ridge regression solves for the betas that
+   minimize the following objective function: ∑ Tt=1(yt–∑Pi=1x t,iβi)2+z∑Pi=1β2i . The z parameter penalizes large betas, shrinking the betas
+   towards zero. The dependent variable (y t ) is a vector of ones. It can be shown that the regression betas represent the Sharpe Ratio-
+   maximizing portfolio weights (λ). The choice of a 360-month look-back period is consistent with Didisheim et al (2023, 2024). Refer to
+   Didisheim et al (2023, 2024) for additional robustness analysis.
+                                             Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?                   7
+
+
+
+
+Exhibit 4: Hypothetical Sharpe Ratio of Nonlinear Value and Momentum Model
+January 1, 1963 – December 31, 2019
+
+We use the Fama-French value and momentum raw characteristics to generate nonlinear features.
+
+
+               4.0
+                            Complex Optimal Portfolio
+
+                            Simple Optimal Portfolio
+               3.0
+Sharpe Ratio
+
+
+
+
+               2.0
+                                                                                                                    Assuming a lookback
+                                                                                                                    estimation window of
+                                                                                                                      360 months, this
+               1.0                                                                                                   corresponds to P =
+                                                                                                                     360*100 = 36,000
+                                                                                                                      nonlinear factors
+
+               0.0
+                     0.0   2.5       5.0          7.5          10.0            80.0           90.0         100.0
+                                 Degree of Complexity (c)
+
+
+Source: AQR, https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4388526. The Sharpe ratios are based on the Hypothetical Simple and
+Complex Nonlinear Value and Momentum Models. The red line uses a shrinkage parameter z = 1. The x-axis shows complexity (c = P / T) with
+P ranging from 1 to 36,000 and T = 360 months. In each subsample, the test assets are a set of P factor portfolios managed on the basis of
+nonlinear random Fourier features derived from the Fama-French value and momentum characteristics. Please read the disclosures in the
+Appendix for a description of the investment universe and the allocation methodology used to construct the Hypothetical Simple and Complex
+Nonlinear Value and Momentum Models backtest. Hypothetical data has certain inherent limitations, some of which are disclosed in the Appendix
+hereto. No representation is being made that any investment will achieve performance similar to those shown. For illustrative purposes only and
+not representative of a portfolio AQR currently manages.
+
+
+
+
+Fama-French and Momentum
+
+We repeat the exercise from the previous                                  strategy generates a Sharpe ratio of 2.9 at
+section with one change: in addition to book-                             a complexity of 100 (i.e. 36,000 nonlinear
+to-price (value) and last 12 months return                                factors), which is approximately double that
+(momentum), we include three Fama-French-                                 of the simple linear model.17 Importantly,
+motivated raw signals: market equity (size),                              the complex model produces a diversifying
+operating profit-to-book equity (profitability),                          return stream, and therefore is highly additive,
+and asset growth (investment). The out-                                   relative to the simple model.
+of-sample multi-factor performance using
+our complex model is reported in Exhibit 5.
+Consistent with the previous results, the
+
+
+
+
+17 Repeating this exercise using only liquid, large cap stocks leads to a 65% Sharpe ratio improvement.
+8                     Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?
+
+
+
+
+Exhibit 5: Hypothetical Sharpe Ratio of Nonlinear Fama-French 5-Factor +
+Momentum Model
+January 1, 1963 – December 31, 2019
+
+We use the underlying characteristics of the Fama-French 5-Factor model—excluding excess market
+return and including momentum: value, size, investment, profitability, and momentum to generate
+nonlinear features.
+
+
+               4.0
+                                 Complex Optimal Portfolio
+
+                                 Simple Optimal Portfolio
+               3.0
+Sharpe Ratio
+
+
+
+
+               2.0
+                                                                                                                    Assuming a lookback
+                                                                                                                    estimation window of
+                                                                                                                      360 months, this
+               1.0                                                                                                   corresponds to P =
+                                                                                                                     360*100 = 36,000
+                                                                                                                      nonlinear factors
+
+               0.0
+                     0.0       2.5         5.0         7.5         10.0          80.0         90.0         100.0
+                                       Degree of Complexity (c)
+Source: AQR, https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4388526. The Sharpe ratios are based on the Hypothetical Simple and
+Complex Nonlinear Fama-French 5-Factor + Momentum Models. The red line uses a shrinkage parameter z = 1. The x-axis shows complexity (c
+= P / T) with P ranging from 2 to 36,000 and T = 360 months. In each subsample, the test assets are a set of P factor portfolios managed on the
+basis of nonlinear random Fourier features derived from the five characteristics underlying the Fama-French 5-factor model, including momentum
+and excluding excess market return: size, momentum, value, investment, and profitability. Please read the disclosures in the Appendix for a
+description of the investment universe and the allocation methodology used to construct the Hypothetical Simple and Complex Nonlinear Fama-
+French 5-Factor + Momentum Models backtest. Hypothetical data has certain inherent limitations, some of which are disclosed in the Appendix
+hereto. No representation is being made that any investment will achieve performance similar to those shown. For illustrative purposes only and
+not representative of a portfolio AQR currently manages.
+
+
+
+
+Defensive-Oriented Signals
+
+
+Lastly, we consider a more defensive-oriented                               ratio at a complexity of 100 (i.e. 36,000
+signal set: earnings volatility, profitability,                             nonlinear factors), which is approximately
+financial leverage, and low beta. While the                                 60% higher than the “simple” strategy. Again,
+level of the Sharpe ratios are lower across the                             the complex model produces a diversifying
+board, the spirit of the results in Exhibit 6 are                           return stream, and therefore is highly additive,
+similar to those found earlier.18 The “complex”                             relative to the simple model.
+multi-factor strategy generates a 0.6 Sharpe
+
+
+
+
+18 The level of Sharpe Ratios is lower because the long/short portfolio formation process imposes dollar neutrality, instead of market
+   neutrality. When the signal set includes defensive characteristics such as low beta, this could lead to long/short defensive-oriented
+   portfolios with negative market beta—which could drag down performance. This would not be a problem if the market portfolio were a
+   traded factor in our optimization, but the market portfolio is excluded.
+                                               Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?                         9
+
+
+
+
+Exhibit 6: Hypothetical Sharpe Ratio of Nonlinear Defensive-Oriented Model
+January 1, 1963 – December 31, 2019
+
+For this run, we use defensive signals, including earnings volatility, profitability, financial leverage, and
+low beta.
+
+               2.0           Complex Optimal Portfolio
+
+               1.6           Simple Optimal Portfolio
+
+               1.2
+Sharpe Ratio
+
+
+
+
+               0.8
+
+               0.4                                                                                                        Assuming a lookback
+                                                                                                                          estimation window of
+                                                                                                                            360 months, this
+               0.0                                                                                                         corresponds to P =
+                                                                                                                           360*100 = 36,000
+               -0.4                                                                                                         nonlinear factors
+
+                      0.0   2.5          5.0          7.5          10.0        80.0           90.0          100.0
+
+                                  Degree of Complexity (c)
+
+Source: AQR, https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4388526. The Sharpe ratios are based on the Hypothetical Simple and
+Complex Nonlinear Building a Better Defensive Portfolio Models. The red line uses a shrinkage parameter z = 1. The x-axis shows complexity (c
+= P / T) with P ranging from 2 to 36,000 and T = 360 months. In each subsample, the test assets are a set of P factor portfolios managed on the
+basis of nonlinear random Fourier features derived from the “Building a Better Defensive Portfolio Model”: earnings volatility, profitability, financial
+leverage, and low beta. Please read the disclosures in the Appendix for a description of the investment universe and the allocation methodology
+used to construct the Hypothetical Simple and Complex Nonlinear Building a Better Defensive Portfolio Models backtest. Hypothetical data has
+certain inherent limitations, some of which are disclosed in the Appendix hereto. No representation is being made that any investment will achieve
+performance similar to those shown. For illustrative purposes only and not representative of a portfolio AQR currently manages.
+
+
+
+
+The Virtue of Complexity Is Not a
+License for Data Mining
+Large, complex models can help build better                                   no relationship to the true expected return
+stock selection portfolios.            19
+                                            However, similar                  degrades performance, as seen in Exhibit 7.
+to the market timing problem, this virtue                                     If we use the earlier two signal “value and
+of complexity is not a license for throwing                                   momentum” model, we achieve an out-of-
+any predictor variable into the portfolio                                     sample Sharpe ratio of 2.1. As we include noisy
+optimization. It is critical that the underlying                              predictor variables alongside the original two
+raw signals be related to the true nonlinear                                  signals, strategy performance declines rapidly.
+expected return and, thus, the true nonlinear                                 Including just two noisy predictor variables
+portfolio weight. Including signals with                                      reduces performance by approximately 50%.20
+
+
+
+
+19 See Kelly et al (2022).
+20 Due to sampling variation, the results do not monotonically decline as more noisy predictor variables are included. The reported Sharpe
+   ratios are an average across 20 runs.
+10                    Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?
+
+
+
+
+Exhibit 7: Hypothetical Out-of-Sample Nonlinear Value and Momentum Model
+Performance adding Noise Variables
+January 1, 1963 – December 31, 2019
+
+               2.5                      Original results with 0 noisy
+                                        variables added
+                       2.10
+                                 2.02
+               2.0
+
+                                                                                            Reminder: Here we repeat the original analysis of
+                                                                                            building a multi-factor stock selection portfolio
+               1.5                                                                          using value and momentum, but we add random
+                                                                                            noise variables one at a time
+Sharpe Ratio
+
+
+
+
+                                            1.13
+
+               1.0
+
+                                                                               0.61
+                                                                    0.46
+               0.5                                      0.33                              0.28
+                                                                                                    0.08                               0.08
+               0.0
+                                                                                                                           -0.07
+
+               -0.5                                                                                             -0.31
+                        0          1          2           3             4       5          6          7          8           9          10
+
+                                                                    # of Noisy Random Variables
+Source: AQR, https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4388526. The Sharpe ratios are based on the Hypothetical Complex
+Nonlinear Value and Momentum Model. We use a shrinkage parameter z = 1. We use P = 36,000 and T = 360 months. In each subsample, the
+test assets are a set of P factor portfolios managed on the basis of nonlinear random Fourier features derived from the Fama-French value and
+momentum characteristics and 1 to 10 random normal variables, centered at zero with a standard deviation of 10. Please read the disclosures in
+the Appendix for a description of the investment universe and the allocation methodology used to construct the Hypothetical Simple and Complex
+Nonlinear Value and Momentum Models backtest. Hypothetical data has certain inherent limitations, some of which are disclosed in the Appendix
+hereto. No representation is being made that any investment will achieve performance similar to those shown. For illustrative purposes only and
+not representative of a portfolio AQR currently manages.
+
+
+
+
+Concluding Thoughts
+Using small, simple, linear models to build                                    stock selection applications: forming optimal
+stock selection portfolios misses nonlinear                                    portfolios using value and momentum signals,
+relationships between the predictor variables                                  Fama-French model and momentum signals,
+and returns, leaving money on the table.                                       and a suite of defensive-oriented signals. The
+Large, complex models overcome this                                            out-of-sample “complex model” performance
+limitation, better estimate the nonlinear                                      improvements range from 50 to 100%. Thus,
+relationship between predictors and optimal                                    the potential performance improvements
+portfolio weights, and generate better stock                                   from implementing complex models are
+selection performance—the so-called virtue                                     meaningful.
+of complexity in the cross-section. This virtue
+of complexity principle is validated in three
+                               Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?   11
+
+
+
+
+References and Further Reading
+Asness, C., A. Ilmanen, and T. Maloney, 2015, "Back in the Hunt," Institutional Investor,
+ November 2015.
+
+
+Asness, C., J. Liew, L. Pedersen, and A. Thapar, 2021, “Deep Value,” Journal of Portfolio
+ Management, 47 (4).
+
+
+Cao, J., P. Hecht, B. Kelly, N. McQuinn, 2024, "Can Machines Times Markets? The Virtue of
+ Complexity in Return Prediction," Alternative Thinking, 2024 (Issue 2).
+
+
+Didisheim, A., S. Ke, B. Kelly, and S. Malamud, 2024, ‘APT or “AIPT”? The Surprising
+ Dominance of Large Factor Models,’ (Revised ed.) Swiss Finance Institute Research Paper Series,
+ 23 (19). (Originally published as “Complexity in Factor Pricing Models,” 2023.)
+
+
+Israel, R., B. Kelly, and T. Moskowitz, 2020, “Can Machines ‘Learn’ Finance?” Journal of
+ Investment Management, 18 (2).
+
+
+Jensen, T., B. Kelly, S. Malamud, and L. Pedersen, 2022, “Machine Learning and the
+ Implementable Efficient Frontier,” Swiss Finance Institute Research Paper, 22 (63).
+
+
+Kelly, B., S. Malamud, and K. Zhou, 2021, “The Virtue of Complexity in Return Prediction,”
+ Swiss Finance Institute Research Paper Series, 21 (90), Journal of Finance, forthcoming.
+
+
+Kelly, B., S. Malamud, and K. Zhou, 2022, “The Virtue of Complexity Everywhere," Swiss Finance
+ Institute Research Paper, 22 (57).
+
+
+Welch, I. and A. Goyal, 2008, “A Comprehensive Look at the Empirical Performance of Equity
+ Premium Prediction,” The Review of Financial Studies, 21 (4).
+12          Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?
+
+
+
+
+Disclosures
+This document has been provided to you solely for information purposes and does not constitute an offer or solicitation of an offer or
+any advice or recommendation to purchase any securities or other financial instruments and may not be construed as such. The factual
+information set forth herein has been obtained or derived from sources believed by the author and AQR Capital Management, LLC (“AQR”),
+to be reliable, but it is not necessarily all-inclusive and is not guaranteed as to its accuracy and is not to be regarded as a representation
+or warranty, express or implied, as to the information’s accuracy or completeness, nor should the attached information serve as the basis
+of any investment decision. This document is not to be reproduced or redistributed without the written consent of AQR. The information
+set forth herein has been provided to you as secondary information and should not be the primary source for any investment or allocation
+decision.
+
+Past performance is not a guarantee of future performance.
+
+This paper is not research and should not be treated as research. This paper does not represent valuation judgments with respect to any
+financial instrument, issuer, security, or sector that may be described or referenced herein and does not represent a formal or official view
+of AQR.
+
+The views expressed reflect the current views as of the date hereof, and neither the author nor AQR undertakes to advise you of any
+changes in the views expressed herein. It should not be assumed that the author or AQR will make investment recommendations in the
+future that are consistent with the views expressed herein, or use any or all of the techniques or methods of analysis described herein in
+managing client accounts.
+
+The information contained herein is only as current as of the date indicated and may be superseded by subsequent market events or for
+other reasons. Charts and graphs provided herein are for illustrative purposes only. The information in this paper has been developed
+internally and/or obtained from sources believed to be reliable; however, neither AQR nor the author guarantees the accuracy, adequacy,
+or completeness of such information. Nothing contained herein constitutes investment, legal, tax, or other advice, nor is it to be relied on in
+making an investment or other decision.
+
+There can be no assurance that an investment strategy will be successful. Historic market trends are not reliable indicators of actual
+future market behavior or future performance of any particular investment, which may differ materially, and should not be relied upon as
+such.
+
+The information in this paper might contain projections or other forward-looking statements regarding future events, targets, forecasts, or
+expectations regarding the strategies described herein and is only current as of the date indicated. There is no assurance that such events
+or targets will be achieved and might be significantly different from that shown here. The information in this paper, including statements
+concerning financial market trends, is based on current market conditions, which will fluctuate and may be superseded by subsequent
+market events or for other reasons.
+
+The investment strategy and themes discussed herein may be unsuitable for investors depending on their specific investment objectives
+and financial situation. Please note that changes in the rate of exchange of a currency might affect the value, price, or income of an
+investment adversely. Neither AQR nor the author assumes any duty to, nor undertakes to update forward-looking statements. No
+representation or warranty, express or implied, is made or given by or on behalf of AQR, the author, or any other person as to the
+accuracy and completeness or fairness of the information contained in this paper, and no responsibility or liability is accepted for any
+such information. By accepting this paper in its entirety, the recipient acknowledges its understanding and acceptance of the foregoing
+statement. Diversification does not eliminate the risk of experiencing investment losses.
+
+Broad-based securities indices are unmanaged and are not subject to fees and expenses typically associated with managed accounts or
+investment funds. Investments cannot be made directly in an index.
+
+The S&P 500 Index is the Standard & Poor’s composite index of 500 stocks, a widely recognized, unmanaged index of common stock
+prices.
+
+The Goyal and Welch (2008) variables are from “A Comprehensive Look at The Empirical Performance of Equity Premium Prediction”
+(Goyal and Welch, 2008). Please refer to Goyal and Welch (2008) for detailed descriptions of the variables.
+
+HYPOTHETICAL PERFORMANCE RESULTS HAVE MANY INHERENT LIMITATIONS, SOME OF WHICH, BUT NOT ALL, ARE DESCRIBED
+HEREIN. NO REPRESENTATION IS BEING MADE THAT ANY FUND OR ACCOUNT WILL OR IS LIKELY TO ACHIEVE PROFITS OR
+LOSSES SIMILAR TO THOSE SHOWN HEREIN. IN FACT, THERE ARE FREQUENTLY SHARP DIFFERENCES BETWEEN HYPOTHETICAL
+PERFORMANCE RESULTS AND THE ACTUAL RESULTS SUBSEQUENTLY REALIZED BY ANY PARTICULAR TRADING PROGRAM. ONE
+OF THE LIMITATIONS OF HYPOTHETICAL PERFORMANCE RESULTS IS THAT THEY ARE GENERALLY PREPARED WITH THE BENEFIT
+OF HINDSIGHT. IN ADDITION, HYPOTHETICAL TRADING DOES NOT INVOLVE FINANCIAL RISK, AND NO HYPOTHETICAL TRADING
+RECORD CAN COMPLETELY ACCOUNT FOR THE IMPACT OF FINANCIAL RISK IN ACTUAL TRADING. FOR EXAMPLE, THE ABILITY TO
+WITHSTAND LOSSES OR TO ADHERE TO A PARTICULAR TRADING PROGRAM IN SPITE OF TRADING LOSSES ARE MATERIAL POINTS
+THAT CAN ADVERSELY AFFECT ACTUAL TRADING RESULTS. THERE ARE NUMEROUS OTHER FACTORS RELATED TO THE MARKETS
+IN GENERAL OR TO THE IMPLEMENTATION OF ANY SPECIFIC TRADING PROGRAM, WHICH CANNOT BE FULLY ACCOUNTED FOR
+IN THE PREPARATION OF HYPOTHETICAL PERFORMANCE RESULTS, ALL OF WHICH CAN ADVERSELY AFFECT ACTUAL TRADING
+RESULTS. The hypothetical performance results contained herein represent the application of the quantitative models as currently in effect
+on the date first written above, and there can be no assurance that the models will remain the same in the future or that an application of
+the current models in the future will produce similar results because the relevant market and economic conditions that prevailed during the
+hypothetical performance period will not necessarily recur. Discounting factors may be applied to reduce suspected anomalies.
+                                           Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?                    13
+
+
+
+
+This backtest’s return, for this period, may vary depending on the date it is run. Hypothetical performance results are presented for
+illustrative purposes only. In addition, our transaction cost assumptions utilized in backtests, where noted, are based on AQR Capital
+Management LLC’s, (“AQR’s”) historical realized transaction costs and market data. Certain of the assumptions have been made for
+modeling purposes and are unlikely to be realized. No representation or warranty is made as to the reasonableness of the assumptions
+made or that all assumptions used in achieving the returns have been stated or fully considered. Changes in the assumptions may have a
+material impact on the hypothetical returns presented. Actual advisory fees for products offering this strategy may vary.
+
+There is a risk of substantial loss associated with trading commodities, futures, options, derivatives, and other financial instruments.
+Before trading, investors should carefully consider their financial position and risk tolerance to determine whether the proposed trading
+style is appropriate. Investors should realize that when trading futures, commodities, options, derivatives, and other financial instruments,
+one could lose the full balance of their account. It is also possible to lose more than the initial deposit when trading derivatives or using
+leverage. All funds committed to such a trading strategy should be purely risk capital.
+
+Hypothetical Simple and Complex U.S. Equity Timed Market Returns
+
+The Hypothetical Simple and Complex U.S. Equity Timed Market Return series are based on two predictive regressions from January 1,
+1927 to December 31, 2020. The simple model estimates the rolling market weight (“betas” or “pi”) based on 15 macroeconomic variables
+from Goyal-Welch (2008) using a simple, 12-month rolling OLS regression. The complex model transforms the 15 Goyal-Welch factors
+into 12,000 random Fourier features and uses a rolling 12-month ridge regression (with shrinkage parameter z=1000, gamma/standard
+deviation of 2) to estimate market weight. The estimated betas from these regressions are weighted by the market return (S&P 500 Index)
+which forms the market-timing strategy returns. Returns are gross of fees and transaction costs. For more details on this methodology,
+please refer to “The Virtue of Complexity in Return Prediction”, Kelly, Malamud, Zhou (2021).
+
+Hypothetical Simple and Complex Nonlinear Value and Momentum Models
+
+The Hypothetical Simple and Complex Nonlinear Value and Momentum Models are based on two portfolios formed using value and
+momentum signals. The investment universe is the CRSP NYSE-listed US Stock database. We use book-to-market equity and price
+momentum (t-12 to t-1) data from Jensen, Kelly, and Pedersen (Journal of Finance, 2023) to construct factors; both signals are lagged
+one month to prevent lookahead bias. The simple model constructs long/short value and momentum factors by ranking the signals in the
+cross-section of all stocks; standardizing them by dividing by the sum of ranks, subtracting 0.5, and dividing by the square root of the
+number of stocks in the cross-section per month; and finally computing the final factor return as a weighted sum of the standardized ranks
+and stock returns. The simple model weight in each factor is computed from the rolling 360-month tangency portfolio, which is estimated
+using simple OLS regression. The complex model transforms the two signals into P=2 up to 3,600 random Fourier features (for Fourier
+random weights, the standard deviation is uniform randomly selected from [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]), which are used to form long/
+short factors by the same rank/standardization process. The complex model weight in each factor is estimated using a rolling 360-month
+ridge regression with shrinkage parameter z=1. Finally, the estimated simple and complex factor weights are used to form the simple and
+complex model portfolios. Returns are gross of fees and transaction costs. For more detailed methodology, please refer to “APT or ‘AIPT’?
+The Surprising Dominance of Large Factor Models”, Didisheim, Ke, Kelly, and Malamud (2023).
+
+Hypothetical Simple and Complex Nonlinear Fama-French 5-Factor + Momentum Model
+
+The Hypothetical Simple and Complex Nonlinear Fama-French 5-Factor + Momentum Models are based on two portfolios formed using
+Fama-French 5-Factor Model (excluding the market return) and momentum signals: size, value, investment, profitability, momentum. The
+investment universe is the CRSP NYSE-listed US Stock database. For the underlying signals, we use market equity, book-to-market equity,
+asset growth, operating profits-to-book equity, and price momentum (t-12 to t-1) data, respectively, from Jensen, Kelly, and Pedersen
+(Journal of Finance, 2023) to construct factors; all signals are lagged one month to prevent lookahead bias. The simple model constructs
+five long/short factors (size, value, investment, profitability, and momentum) by ranking the signals in the cross-section of all stocks;
+standardizing them by dividing by the sum of ranks, subtracting 0.5, and dividing by the square root of the number of stocks in the cross-
+section per month; and finally computing the final factor return as a weighted sum of the standardized ranks and stock returns. The simple
+model weight in each factor is computed from the rolling 360-month tangency portfolio, which is estimated using simple OLS regression.
+The complex model transforms the five signals into P=2 up to 3,600 random Fourier features (for Fourier random weights, the standard
+deviation is uniform randomly selected from [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]), which are used to form long/short factors by the same rank/
+standardization process. The complex model weight in each factor is estimated using a rolling 360-month ridge regression with shrinkage
+parameter z=1. Finally, the estimated simple and complex factor weights are used to form the simple and complex model portfolios.
+Returns are gross of fees and transaction costs. For more detailed methodology, please refer to “APT or ‘AIPT’? The Surprising Dominance
+of Large Factor Models”, Didisheim, Ke, Kelly, and Malamud (2023).
+
+Hypothetical Simple and Complex Nonlinear Building a Better Defensive Portfolio Models
+
+The Hypothetical Simple and Complex Nonlinear Building a Better Defensive Portfolio Models are based on two portfolios formed using
+defensive signals: earnings volatility, profitability, financial leverage, and low beta. The investment universe is the CRSP NYSE-listed US
+Stock database. For the underlying signals, we use earnings volatility, operating profits-to-book equity, book leverage, and Frazzini-Pedersen
+market beta data, respectively, from Jensen, Kelly, and Pedersen (Journal of Finance, 2023) to construct factors; all signals are lagged one
+month to prevent lookahead bias. The simple model constructs four long/short factors (earnings volatility, profitability, financial leverage, and
+low beta) by ranking the signals in the cross-section of all stocks; standardizing them by dividing by the sum of ranks, subtracting 0.5, and
+dividing by the square root of the number of stocks in the cross-section per month; and finally computing the final factor return as a weighted
+sum of the standardized ranks and stock returns. The simple model weight in each factor is computed from the rolling 360-month tangency
+portfolio, which is estimated using simple OLS regression. The complex model transforms the four signals into P=2 up to 3,600 random
+Fourier features (for Fourier random weights, the standard deviation is uniform randomly selected from [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]), which
+are used to form long/short factors by the same rank/standardization process. The complex model weight in each factor is estimated using a
+rolling 360-month ridge regression with shrinkage parameter z=1. Finally, the estimated simple and complex factor weights are used to form
+the simple and complex model portfolios. Returns are gross of fees and transaction costs. For more detailed methodology, please refer to
+14          Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?
+
+
+
+
+“APT or ‘AIPT’? The Surprising Dominance of Large Factor Models”, Didisheim, Ke, Kelly, and Malamud (2023).
+
+Regional Disclosures:
+
+Asia
+
+Hong Kong: This presentation may not be copied, reproduced, republished, posted, transmitted, disclosed, distributed or disseminated, in
+whole or in part, in any way without the prior written consent of AQR Capital Management (Asia) Limited (together with its affiliates, “AQR”)
+or as required by applicable law. This presentation and the information contained herein are for educational and informational purposes
+only and do not constitute and should not be construed as an offering of advisory services or as an invitation, inducement or offer to sell or
+solicitation of an offer to buy any securities, related financial instruments or financial products in any jurisdiction. Investments described
+herein will involve significant risk factors which will be set out in the offering documents for such investments and are not described in
+this presentation. The information in this presentation is general only and you should refer to the final private information memorandum
+for complete information. To the extent of any conflict between this presentation and the private information memorandum, the private
+information memorandum shall prevail. The contents of this presentation have not been reviewed by any regulatory authority in Hong
+Kong. You are advised to exercise caution and if you are in any doubt about any of the contents of this presentation, you should obtain
+independent professional advice.
+
+AQR Capital Management (Asia) Limited is licensed by the Securities and Futures Commission ("SFC") in the Hong Kong Special
+Administrative Region of the People's Republic of China ("Hong Kong") pursuant to the Securities and Futures Ordinance (Cap 571) (CE no:
+BHD676).
+
+AQR Capital Management (Asia) Limited Unit 2023, 20/F, One IFC, 1 Harbour View Street, Central Hong Kong, Hong Kong. Licensed and
+regulated by the Securities and Futures Commission of Hong Kong (CE no: BHD676).
+
+China: This document does not constitute a public offer of any fund which AQR Capital Management, LLC (“AQR”) manages, whether by
+sale or subscription, in the People's Republic of China (the "PRC"). Any fund that this document may relate to is not being offered or sold
+directly or indirectly in the PRC to or for the benefit of, legal or natural persons of the PRC.
+
+Further, no legal or natural persons of the PRC may directly or indirectly purchase any shares/units of any AQR managed fund without
+obtaining all prior PRC’s governmental approvals that are required, whether statutorily or otherwise. Persons who come into possession of
+this document are required by the issuer and its representatives to observe these restrictions.
+
+Singapore: This document does not constitute an offer of any fund which AQR Capital Management, LLC (“AQR”) manages. Any fund that
+this document may relate to and any fund related prospectus that this document may relate to has not been registered as a prospectus
+with the Monetary Authority of Singapore. Accordingly, this document and any other document or material in connection with the offer or
+sale, or invitation for subscription or purchase, of shares may not be circulated or distributed, nor may the shares be offered or sold, or be
+made the subject of an invitation for subscription or purchase, whether directly or indirectly, to persons in Singapore other than (i) to an
+institutional investor pursuant to Section 304 of the Securities and Futures Act, Chapter 289 of Singapore (the “SFA”)) or (ii) otherwise
+pursuant to, and in accordance with the conditions of, any other applicable provision of the SFA.
+
+Korea: Neither AQR Capital Management (Asia) Limited or AQR Capital Management, LLC (collectively “AQR”) is making any representation
+with respect to the eligibility of any recipients of this document to acquire any interest in a related AQR fund under the laws of Korea,
+including but without limitation the Foreign Exchange Transaction Act and Regulations thereunder. Any related AQR fund has not been
+registered under the Financial Investment Services and Capital Markets Act of Korea, and any related fund may not be offered, sold
+or delivered, or offered or sold to any person for re-offering or resale, directly or indirectly, in Korea or to any resident of Korea except
+pursuant to applicable laws and regulations of Korea.
+
+Japan: This document does not constitute an offer of any fund which AQR Capital Management, LLC (“AQR”) manages. Any fund that
+this document may relate to has not been and will not be registered pursuant to Article 4, Paragraph 1 of the Financial Instruments and
+Exchange Law of Japan (Law no. 25 of 1948, as amended) and, accordingly, none of the fund shares nor any interest therein may be
+offered or sold, directly or indirectly, in Japan or to, or for the benefit, of any Japanese person or to others for re-offering or resale, directly
+or indirectly, in Japan or to any Japanese person except under circumstances which will result in compliance with all applicable laws,
+regulations and guidelines promulgated by the relevant Japanese governmental and regulatory authorities and in effect at the relevant
+time. For this purpose, a “Japanese person” means any person resident in Japan, including any corporation or other entity organised under
+the laws of Japan.
+
+Australia
+
+AQR Capital Management, LLC, is exempt from the requirement to hold an Australian Financial Services License under the Corporations
+Act 2001, pursuant to ASIC Class Order 03/1100 as continued by ASIC Legislative Instrument 2016/396 (as extended by amendment).
+AQR is regulated by the Securities and Exchange Commission ("SEC") under United States of America laws and those laws may differ from
+Australian laws.
+
+Canada
+
+This material is being provided to you by AQR Capital Management, LLC, which provides investment advisory and management services in
+reliance on exemptions from adviser registration requirements to Canadian residents who qualify as “permitted clients” under applicable
+Canadian securities laws. No securities commission or similar authority in Canada has reviewed this presentation or has in any way passed
+upon the merits of any securities referenced in this presentation and any representation to the contrary is an offence.
+                                             Alternative Thinking 2024 Issue 4: Can Machines Build Better Stock Portfolios?                15
+
+
+
+
+   Information for clients in the Middle East
+
+   AQR Capital Management (Europe) LLP (DIFC Representative Office) is regulated by the Dubai Financial Services Authority of the Dubai
+   International Financial Centre as a Representative Office (firm reference number: F007651). Its principal place of business is Gate Village
+   10, Level 3, Unit 4, DIFC, Dubai, UAE. This marketing communication is distributed on behalf of AQR Capital Management, LLC.
+
+   Information for clients in the United Kingdom
+
+   This product is based overseas and is not subject to UK sustainable investment labelling and disclosure requirements.
+
+   The information set forth herein has been prepared and issued by AQR Capital Management (Europe) LLP, a UK limited liability partnership
+   with its office at 15 Bedford Street, Covent Garden, London, WC2E 9HE, which is authorised and regulated by the UK Financial Conduct
+   Authority (“FCA”).
+
+   Information for clients in the EEA
+
+   AQR in the European Economic Area is AQR Capital Management (Germany) GmbH, a German limited liability company (Gesellschaft
+   mit beschränkter Haftung; “GmbH”), with registered offices at Maximilianstrasse 13, 80539 Munich, authorized and regulated
+   by the German Federal Financial Supervisory Authority (Bundesanstalt für Finanzdienstleistungsaufsicht, „BaFin“), with offices
+   at Marie-Curie-Str. 24-28, 60439, Frankfurt am Main und Graurheindorfer Str. 108, 53117 Bonn, to provide the services of
+   investment advice (Anlageberatung) and investment broking (Anlagevermittlung) pursuant to the German Securities Institutions Act
+   (Wertpapierinstitutsgesetz; “WpIG”). The Complaint Handling Procedure for clients and prospective clients of AQR in the European
+   Economic Area can be found here: https://ucits.aqr.com/Legal-and-Regulatory
+
+   This is a marketing communication in the European Economic Area (“EEA”) and approved as a Financial Promotion in the United
+   Kingdom (“UK”). It is only intended for Professional Clients.
+
+
+
+
+   Request ID: 391026
+
+
+
+
+                                                              www.aqr.com
+
+
+
+AQR Capital Management, LLC             One Greenwich Plaza, Greenwich, CT 06830              P +1.203.742.3600            F +1.203.742.3100
+

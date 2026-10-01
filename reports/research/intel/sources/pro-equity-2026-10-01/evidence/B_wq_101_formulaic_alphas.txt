@@ -1,0 +1,203 @@
+URL: https://arxiv.org/pdf/1601.00991 (Kakushadze 2015/16, '101 Formulaic Alphas'; WorldQuant proprietary data Jan 2010-Dec 2013, 1,006 daily obs). Paper claim, not independently replicated; no per-alpha Sharpe numbers extractable from text (Table 1 is data-only in figure).
+Fetched UTC: 2026-10-01 06:10:59
+Source type: open-access PDF (arXiv), text via pdftotext -layout (/tmp/B/wq101.txt). Excerpted line ranges: 1,26 28,110 176,260
+
+----- lines 1,26 -----
+                                       101 Formulaic Alphas
+                                              Zura Kakushadze§†1
+            §
+                Quantigic® Solutions LLC,2 1127 High Ridge Road, #135, Stamford, CT 06905
+                      †
+                          Free University of Tbilisi, Business School & School of Physics
+                            240, David Agmashenebeli Alley, Tbilisi, 0159, Georgia
+
+                                                December 9, 2015
+
+                                 “There are two kinds of people in this world:
+                                 Those seeking happiness, and bullfighters.”
+                                      (Zura Kakushadze, ca. early ’90s)3
+
+
+                                                      Abstract
+
+                   We present explicit formulas – that are also computer code – for
+                   101 real-life quantitative trading alphas. Their average holding
+                   period approximately ranges 0.6-6.4 days. The average pair-wise
+                   correlation of these alphas is low, 15.9%. The returns are strongly
+                   correlated with volatility, but have no significant dependence on
+                   turnover, directly confirming an earlier result based on a more
+                   indirect empirical analysis. We further find empirically that
+                   turnover has poor explanatory power for alpha correlations.
+
+
+----- lines 28,110 -----
+
+
+1
+ Zura Kakushadze, Ph.D., is the President and a Co-Founder of Quantigic® Solutions LLC and a Full Professor in the
+Business School and the School of Physics at Free University of Tbilisi. Email: zura@quantigic.com
+2
+ DISCLAIMER: This address is used by the corresponding author for no purpose other than to indicate his
+professional affiliation as is customary in publications. In particular, the contents of this paper are not intended as
+an investment, legal, tax or any other such advice, and in no way represent views of Quantigic® Solutions LLC, the
+website www.quantigic.com or any of their other affiliates.
+3
+ Paraphrasing Blondie’s (Clint Eastwood) one-liners from a great 1966 motion picture The Good, the Bad and the
+Ugly (directed by Sergio Leone).
+
+                                                                                                                          1
+1. Introduction
+    There are two complementary – and in some sense even competing – trends in modern
+quantitative trading. On the one hand, more and more market participants (e.g., quantitative
+traders, inter alia) employ sophisticated quantitative techniques to mine alphas.4 This results in
+ever fainter and more ephemeral alphas. On the other hand, technological advances allow to
+essentially automate (much of) the alpha harvesting process. This yields an ever increasing
+number of alphas, whose count can be in hundreds of thousands and even millions, and with
+the exponentially increasing progress in this field will likely be in billions before we know it…
+
+    This proliferation of alphas – albeit mostly faint and ephemeral – allows combining them in
+a sophisticated fashion to arrive at a unified “mega-alpha”. It is then this “mega-alpha” that is
+actually traded – as opposed to trading individual alphas – with a bonus of automatic internal
+crossing of trades (and thereby crucial-for-profitability savings on trading costs, etc.), alpha
+portfolio diversification (which hedges against any subset of alphas going bust in any given time
+period), and so on. One of the challenges in combining alphas is the usual “too many variables,
+too few observations” dilemma. Thus, the alpha sample covariance matrix is badly singular.
+
+   Also, naturally, quantitative trading is a secretive field and data and other information from
+practitioners is not readily available. This inadvertently creates an enigma around modern
+quant trading. E.g., with such a large number of alphas, are they not highly correlated with
+each other? What do these alphas look like? Are they mostly based on price and volume data,
+mean-reversion, momentum, etc.? How do alpha returns depend on volatility, turnover, etc.?
+
+    In a previous paper [Kakushadze and Tulchinsky, 2015] took a step in demystifying the
+realm of modern quantitative trading by studying some empirical properties of 4,000 real-life
+alphas. In this paper we take another step and present explicit formulas – that are also
+computer code – for 101 real-life quant trading alphas. Our formulaic alphas – albeit most are
+not necessarily all that “simple” – serve a purpose of giving the reader a glimpse into what
+some of the simpler real-life alphas look like.5 It also enables the reader to replicate and test
+these alphas on historical data and do new research and other empirical analyses. Hopefully, it
+further inspires (young) researchers to come up with new ideas and create their own alphas.
+4
+  “An alpha is a combination of mathematical expressions, computer source code, and configuration parameters
+that can be used, in combination with historical data, to make predictions about future movements of various
+financial instruments.” [Tulchinsky et al, 2015] Here “alpha” – following the common trader lingo – generally
+means any reasonable “expected return” that one may wish to trade on and is not necessarily the same as the
+“academic” alpha. In practice, often the detailed information about how alphas are constructed may even not be
+available, e.g., the only data available could be the position data, so “alpha” then is a set of instructions to achieve
+certain stock (or other instrument) holdings by some times  ,  , … (e.g., a tickers by holdings matrix for each  ).
+5
+  We picked these alphas largely based on simplicity considerations, so they can be presented within the inherent
+limitations of a paper. There also exist myriad other, “non-formulaic” (coded and too-complex-to-present) alphas.
+
+                                                                                                                        2
+   We discuss some general features of our formulaic alphas in Section 2. These alphas are
+mostly “price-volume” (daily close-to-close returns, open, close, high, low, volume and vwap)
+based, albeit “fundamental” input is used in some of the alphas, including one alpha utilizing
+market cap, and a number of alphas employing some kind of a binary industry classification
+such as GICS, BICS, NAICS, SIC, etc., which are used to industry-neutralize various quantities.6
+
+   We discuss empirical properties of our alphas in Section 3 based on data for individual alpha
+Sharpe ratio, turnover and cents-per-share, and also on a sample covariance matrix. The
+average holding period approximately ranges from 0.6 to 6.4 days. The average (median) pair-
+wise correlation of these alphas is low, 15.9% (14.3%). The returns  are strongly correlated
+with the volatility , and as in [Kakushadze and Tulchinsky, 2015] we find an empirical scaling
+
+                                                         ~                                                        (1)
+
+with  ≈ 0.76 for our 101 alphas. Furthermore, we find that the returns have no significant
+dependence on the turnover . This is a direct confirmation of an earlier result by [Kakushadze
+and Tulchinsky, 2015], which is based on a more indirect empirical analysis.7
+
+    We further find empirically that the turnover per se has poor explanatory power for alpha
+correlations. This is not to say that the turnover does not add value in, e.g., modeling the
+covariance matrix via a factor model.8 A more precise statement is that pair-wise correlations
+ of the alphas (,  = 1, … ,  label the  alphas,  ≠ ) are not highly correlated with the
+product ln(  ) ln(  ), where  =  / ", and " is an a priori arbitrary normalization constant.9
+
+
+----- lines 176,260 -----
+
+                                                                                                                            4
+3. Data and Empirical Properties of Alphas
+   In this section we describe empirical properties of our formulaic alphas based on data
+proprietary to WorldQuant LLC, which is used here with its express permission. We provide as
+many details as possible within the constraints of the proprietary nature of this dataset.
+
+   For our alphas we take the annualized daily Sharpe ratio 3, daily turnover , and cents-per-
+share 4. Let us label our alphas by the index  ( = 1, … , ), where  = 101 is the number of
+alphas. For each alpha, 3 ,  and 4 are defined via
+
+                                                                     7
+                                                     3 = √252                                     (4)
+                                                                     
+
+                                                               9
+                                                         =                                       (5)
+                                                               :
+
+                                                                    7
+                                                     4 = 100                                      (6)
+                                                                    ;
+
+Here: 7 is the average daily P&L (in dollars);  is the daily portfolio volatility; ; is the average
+daily shares traded (buys plus sells) by the -th alpha; 9 is the average daily dollar volume
+traded; and : is the total dollar investment in said alpha (the actual long plus short positions,
+without leverage). More precisely, the principal of : is constant; however, : fluctuates due to
+the daily P&L. So, both 9 and : are adjusted accordingly (such that : is constant) in Equation
+(4). The period of time over which this data is collected is Jan 4, 2010-Dec 31, 2013. For the
+same period we also take the sample covariance matrix < of the realized daily returns for our
+alphas. The number of observations in the time series is 1,006, and < is nonsingular. From <
+we read off the daily return volatility = = < and the correlation matrix  = < / = =
+(where  = 1). Note that  = = : , and the average14 daily return is given by  = 7 / : .
+
+     Table 1 and Figure 1 summarize the data for the annualized Sharpe ratio 3 , daily turnover,
+ , average holding period 1 /  , cents-per-share 4 , daily return volatility = , annualized
+average daily return > = 252  , and ( − 1)/2 pair-wise correlations  with  > .
+
+3.1. Return v. Volatility & Turnover
+
+    We run two cross-sectional regressions, both with the intercept, of ln( ) over i) ln(= ) as
+the sole explanatory variable, and ii) over ln(= ) and ln( ). The results are summarized in
+Tables 2 and 3. Consistently with [Kakushadze and Tulchinsky, 2015], we have no statistically
+
+
+14
+     Here the average is over the time series of the realized daily returns.
+
+
+                                                                                                      5
+significant dependence on the turnover  here, while the average daily return  is strongly
+correlated with the daily return volatility = and we have the scaling property (1) with  ≈ 0.76.
+
+3.2. Does Turnover Explain Correlations?
+
+     If we draw a parallel between alphas and stocks, then alpha turnover is analogous to stock
+liquidity, which is typically measured via an average daily dollar volume (ADDV).15 Log of ADDV
+is routinely used as a style risk factor16 in multifactor risk models17 for approximating stock
+portfolio covariance matrix structure, whose chief goal is to model the off-diagonal elements of
+the covariance matrix, that is, the pair-wise correlation structure.18 Following this analogy, we
+can ask if the turnover – or more precisely its log – has explanatory power for modeling alpha
+correlations.19 It is evident that using the turnover directly (as opposed to its log) would get us
+nowhere due to the highly skewed (roughly log-normal) turnover distribution (see Figure 1).
+
+       To answer this question, recall that in a factor model the covariance matrix is modeled via
+                                                                   G
+
+                                              @ = A B +    D EF JFH EH                                   (7)
+                                                    F,HI
+       
+Here: A is the specific risk; EF is an  × L factor loadings matrix corresponding to L ≪  risk
+factors; and JFH is a factor covariance matrix. In our case, we are interested in modeling the
+correlation matrix  and ascertaining whether the turnover has explanatory power for pair-
+wise correlations. Whether the volatility and turnover are correlated is a separate issue.
+
+    So, our approach is to take one of the columns of the factor loadings matrix as ln( ). More
+precisely, a priori there is no reason why we should pick ln( ) as opposed to ln(  ), where
+  =  / ", and " is some normalization factor. To deal with this, let us normalize  such that
+ln(  ) has zero cross-sectional mean, and let N = 1 be the unit -vector (the intercept). Then
+we can construct three symmetric tensor combinations O = N N , P = N lnQ  R + N ln(  ),
+and S = ln(  ) lnQ  R. Let us now define a composite index TUV = T(, )| > V, which takes
+X = ( − 1)/2 values, i.e., we pull the off-diagonal lower-triangular elements of a general
+
+15
+  Perhaps a more precise analogy would be between the turnover and the ratio of ADDV and market cap;

@@ -1,0 +1,184 @@
+URL: http://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost-of-Asset-Pricing-Anomalies.pdf (Frazzini, Israel, Moskowitz 2015 draft, 'Trading Costs of Asset Pricing Anomalies')
+Fetched UTC: 2026-10-01 06:10:30
+Source type: open-access PDF, text via pdftotext -layout (/tmp/B/fim_anom.txt); page markers in text. Excerpted line ranges: 10,30 90,110 125,135 228,242 780,840 880,895 1036,1056
+NOTE: excerpt only; paper claims (AQR proprietary data, not independently replicated unless stated).
+
+----- lines 10,30 -----
+
+
+
+
+                                                   Abstract
+
+Using over a trillion dollars of live trading data from a large institutional money manager across 21
+developed equity markets over a 16-year period, we measure the real-world transactions costs and
+price impact function facing an arbitrageur and apply them to trading strategies based on empirical
+asset pricing anomalies. We find that actual trading costs are an order of magnitude smaller than
+previous studies suggest. In addition, we show that small portfolio changes to reduce transactions
+costs can increase the net returns and break-even capacities of these strategies substantially, with
+little tracking error. Use of live trading data from a real arbitrageur and portfolios designed to address
+trading costs give a vastly different portrayal of implementation costs than previous studies suggest.
+We conclude that the main capital market anomalies – size, value, and momentum – are robust,
+implementable, and sizable in the face of transactions costs.
+
+
+
+
+
+
+----- lines 90,110 -----
+survive transactions costs at fairly substantial investment sizes.
+     We begin by constructing SMB, HML, and UMD restricting the universe to stocks in our
+execution data and using each stock’s realized market impact to compute portfolio returns net of
+transaction costs. These portfolios have correlations greater than 0.96 with the corresponding
+portfolio constructed over the entire CRSP/Compustat universe, and represent actual traded
+quantities in real time. Aggregating over portfolios, the average volume traded in our data is 9.7, 6.0,
+and 6.2 billion dollars per month in the U.S. (11.8, 7.2, and 8.4 billion dollars per month
+internationally), for SMB, HML, and UMD, respectively. At these trade sizes, average realized costs
+per year are 1.5, 1.4, and 3.0 percent. Given historical return premia of 3, 5, and 8.2 percent per year
+for SMB, HML, and UMD, respectivel, we can safely reject the null hypothsis that net of trading
+costs returns to these portoflios are zero.
+     To give some perspective, the traded quantities in our data correspond to the amount of trading
+required to run a SMB, HML and UMD fund with 18.2, 9.4, and 5.2 billion dollars in assets in U.S.
+equities.3 These fund sizes are themselves larger than the break-even market-wide capacities
+proposed in the literature (Chen, Stanzl, and Watanabe (2002), Lesmond, Schill, and Zhou (2003),
+
+
+2
+ While a few other studies have looked at proprietary trade data from a large institution or set of institutions (e.g.,
+Keim (1995), Keim and Madhavan (1997), Engle, Ferstenberg, and Russell (2008)), the data used in these studies is
+much more limited in breadth and depth, covering only a couple of years of U.S.-only data and a small cross-section
+
+----- lines 125,135 -----
+       We then use the live trading database to estimate a trading cost model based on 1) market
+conditions (e.g., the VIX, time trends), 2) stock characteristics (e.g., market cap, idiosyncratic
+volatility), and most importantly, 3) trade size (the fraction of daily volume traded), where we scale
+up the fraction of daily trading volume (DTV) traded to compute the break-even fund size or capacity
+of each strategy, which is the fund size where trading costs would entirely offset the return premium
+to a strategy. We find that break-even fund sizes for long-short factors of size, value, and momentum
+are more than an order of magnitude greater than capacity sizes suggested in the literature. In the
+U.S. equity market alone, the break-even capacities of SMB, HML, and UMD are $275, $214, and
+$56 billion, respectively.
+       While explicit trading costs, such as commissions and bid/ask spreads, can be measured
+relatively easily and have been studied at length,4 the full costs of trading are dominated by price
+
+----- lines 228,242 -----
+introducing tracking error across the different strategies. We find that for all strategies net returns are
+improved significantly without incurring large tracking error or significant reductions in gross
+returns. The optimizer achieves this by both lowering overall turnover and changing the types of
+stocks traded.
+
+
+
+                              Trading Costs of Asset Pricing Anomalies – Page 6
+     The optimized portfolios further increase the capacity of the portfolio we consider. At less than
+one percent tracking error, optimized versions of size, value, and momentum can reach break-even
+sizes of $1.9 trillion, $1 trillion, and $160 billion among U.S. securities, respectively. These sizes are
+three to six times larger than our base case estimates and several orders of magnitude higher than
+estimates in the literature.
+     Our findings indicate that the three main capital market anomalies related to size, value, and
+momentum, are robust, implementable, and sizable. Again, these conclusions differ significantly
+
+----- lines 780,840 -----
+data. The first row reports the average dollar volume of trades used to estimate trading costs at each
+rebalance. For example, when rebalancing SMB, our trading cost estimate for that month is based on
+an average of 9.69 billion dollars of trades. The second row reports the “implied fund size” from
+these trades. For example, given that turnover (which we report near the bottom of the table as the
+sum of long and short trades per dollar) of SMB is 53% per month, our estimates are based on a fund
+size of 9.69/0.53 = 18.18 billion dollars. In other words, the dollar volume of trades in SMB stocks
+we observe in our data is equivalent to a the amout of trading of an 18.2 billion dollar SMB portfolio.
+We compute these implied fund sizes for HML and UMD as well. Effectively, our data implicitly
+include a 18.2 billion dollar SMB portfolio, a $9.42 billion HML portfolio, and a $5.21 billion UMD
+portfolio in U.S. equities.
+     The fourth row reports the realized trading costs of each strategy at the fund sizes above. For
+SMB, the realized annual trading cost is 1.47 percent. That cost comes from the turnover of the
+strategy (53% per month) times the average market impact per trade in the strategy (22.94 bps), both
+
+
+12
+   Asness, Moskowitz, and Pedersen (2013), Asness and Frazzini (2013), and Daniel and Moskowitz (2015) discuss
+the diversification benefits of combining multiple factors.
+13
+   This calculation produces actual trading costs on a stock-by-stock basis, but assumes that trading costs are the
+same no matter what portfolios the trades belong to. Given the independence between portfolios and trading costs
+we showed earlier, this assumption seems valid. If market makers or other market participants knew the reason
+behind each trade and adjusted prices depending on the type of portfolio being traded (e.g., SMB versus UMD), then
+this assumption would be violated. However, given the anonymity of trading through the trading algorithm and the
+virtual impossibility of knowing which portfolio each trade belongs to, it seems quite reasonable to assume that
+these costs are independent of the portfolio.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 21
+of which are reported in the last two rows of Table IV. HML has a slightly lower realized cost of
+1.35 percent per year despite having higher turnover of 63%, because it has lower average market
+impact costs of 17.7 basis points. UMD has an annual trading cost drag of 3.03 percent per year due
+to its higher   turnover (119%) and an average market impact cost of 21.3 basis points. The
+combination of all three strategies has a realized cost of 1.46 percent per year with turnover of only
+57% since value and momentum trades tend to offset each other, resulting in lower turnover which
+has real transactions costs benefits, with an average price impact of 21.2 basis points.
+    To compare the realized trading costs to the profitability of these strategies, the fifth row of
+Panel A of Table IV reports the break-even cost of each strategy, which we estimate using historical
+data over the largest sample of returns available. For example, for SMB we compute the average
+return in U.S. data from July 1926 to September 2013, which is 2.95 percent. We use the longest
+sample of returns available because estimating mean returns is notoriously difficult and the short
+sample from 1998 to 2013 may provide a distorted view of the true expected return to these
+strategies. For instance, the actual gross average return over the 1998 to 2013 sample period for SMB
+is 7.98 percent, which is about three times larger than its historical average. For completeness, the
+remaining rows report the average gross and net returns of the strategies (and their associated t-
+statistics) for both the full historical sample mean and the shorter trading sample mean. Given the
+1.47 percent trading cost for SMB, this implies that a $18.2 billion SMB portfolio would deliver in
+expectation 1.48 percent per year net of trading costs using the historical mean or 6.52 percent per
+year net using the 1998 to 2013 mean. The former appears to be a much more reasonable and realistic
+expectation of the mean net return to SMB at this size. Hence, we focus on the longer and more
+reliable mean return estimate, which is also the estimate used by other studies (e.g., Korajczyk and
+Sadka (2004)) to which we compare.
+    For HML, using the historical average return from 1926 to 2013 of 4.95 percent, its net return
+(trading on average $6 billion) is 3.61 percent per year (t-statistic of 2.25). For UMD (trading $6.2
+billion), its net expected return is 5.17 percent per year (t-statistic of 3.02). The combination portfolio
+generates a 3.93 percent net expected return (t-statistic of 6.66) at a fund size of nearly $17 billion.
+The net returns are similar even over the shorter 1998 to 2013 trading sample period, with a mean of
+3.58 (t-statistic = 2.23). Hence, although the short sample period can lead to factor realizations quite
+different from their long-run means – being much greater for SMB and much weaker for UMD over
+this sample period – the combination portfolio diversifies these idiosyncratic realizations so that the
+shorter sample delivers similar net returns to the long-run historical mean estimate.
+
+----- lines 880,895 -----
+period and there is no a priori reason why the returns should be different internationally.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 23
+    While the strategies we examine – size, value, and momentum – easily survive trading costs at
+the size traded in our data, not every strategy necessarily would. For example, Table A5 in the
+appendix calculates the trading costs of the one-month reversal strategy (“STR”) of Jegadeesh
+(1990). As the table shows, our data effectively contains $5.16 ($18.24) billion in STR in the U.S.
+(internationally) for an implied fund size of $1.72 ($6.17) billion. At this size, the STR portfolio
+incurred transactions costs that eliminated its gross positive returns. Using the full sample mean of
+STR of 5.65 percent (the largest mean estimate) the strategy realized costs of 6.73 percent, exceeding
+even the largest gross return estimate we could find. The costs on the international STR strategy are
+similar. Hence, for short-term reversals, which require a great deal more trading (turnover equals
+about 300% per month), the realized trading costs rendered the strategy unprofitable at the trade sizes
+in our data. Thus, not every strategy would survive these trading cost estimates.
+
+
+----- lines 1036,1056 -----
+international equity strategies. For break-even calculations we need an estimate of the gross return to
+each strategy. We start by using the most precise expected return estimate we have using the longest
+history of available data (1926 to 2013 in the U.S., 1986 to 2013 internationally). As the first column
+of Panel A of Table VI shows, for SMB, assuming an annual gross return of 2.95 percent, the break-
+even fund size is $275.52 billion. At that size, the average trade would incur 87.85 bps of price
+impact, which at 29% turnover per month would completely wipe out the 3.03 percent SMB
+premium. For HML, the break-even size is $214.28 billion assuming a gross return of 4.95, which is
+its historical average. For UMD, the break-even size is $56.16 billion. Although UMD has more than
+twice the turnover of HML and almost four times that of SMB, momentum also enjoys the largest
+return premium, which historically averages 8.20 percent per year. Finally, the combination portfolio
+of all three has a break-even capacity of just under $100 billion.
+    We also compute break-even capacities of these strategies using a more recent sample period
+from 1980 to 2013 to estimate their premia and to address concerns that the returns to these strategies
+have waned over time (in particular, this may be true for SMB; see Asness, Frazzini, Israel,
+Moskowitz, and Pedersen (2015)). In addition, for the portfolio optimization exercises in the next
+section, we use a “tradable” sample of the largest 2,000 stocks from 1980 to 2013, where we have
+better estimates of their expected trading costs, and hence report their returns and non-optimized
+break-even sizes here for comparison. The returns to all three strategies are lower in the more recent
+sample period and hence break-even sizes are smaller, ranging from $26.6 billion for UMD to $153.8
+billion for HML.
+    Panel B of Table VI reports the break-even sizes for the international sample, which range from

@@ -311,3 +311,27 @@ capabilities:
     caveats:
       - options chains are research-only until provider coverage, greeks, spreads, and broker rules are verified
       - options strategies do not enter automatic paper order flow in this MVP
+
+  - id: reference.sec_sic_industry
+    kind: event
+    status: trial
+    provider: sec
+    use_for: [industry_classification, cross_sectional_feature, risk_model_grouping]
+    reliability: high
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    fixture: data/fixtures/capabilities/sec_sic_industry.jsonl
+    env: [SEC_USER_AGENT]
+    min_score: 0.9
+    source_urls:
+      submissions_bulk: https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip
+      submissions_api: https://data.sec.gov/submissions/CIK{cik:010d}.json
+      french_ff48: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Siccodes48.zip
+      french_ff12: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Siccodes12.zip
+    collector: scripts/build_sec_sic_map.py
+    caveats:
+      - SIC is current, not point-in-time; a company that changed business keeps its latest EDGAR SIC for all of history
+      - the registry has no reference kind, so this static classification table is registered as kind event with a classification fixture; it is not a dated event feed
+      - the symbol-to-CIK link dates come from data/raw/sec_ma/cik_symbol_history.parquet and can start later than the price history of a renamed ticker; use lookup_sic_row and its date_verified flag
+      - reused tickers can map to the wrong company outside verified link dates
+      - "research_only: sample and fixture rows are not paper-ready market evidence"

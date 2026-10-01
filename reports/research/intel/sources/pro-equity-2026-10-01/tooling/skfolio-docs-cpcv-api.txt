@@ -1,0 +1,1284 @@
+URL: https://skfolio.org/generated/skfolio.model_selection.CombinatorialPurgedCV.html
+FETCHED_UTC: 2026-10-01T06:07:43Z
+----
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="../_static/favicon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="../_static/favicon-48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="../_static/favicon-96.png">
+    <link rel="icon" type="image/png" sizes="144x144" href="../_static/favicon-144.png">
+    <link rel="shortcut icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="../_static/apple-touch-icon.png" type="image/png"><meta property="og:title" content="skfolio.model_selection.CombinatorialPurgedCV" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://skfolio.org/generated/skfolio.model_selection.CombinatorialPurgedCV.html" />
+<meta property="og:site_name" content="skfolio" />
+<meta property="og:image" content="https://skfolio.org/_static/expo.jpg" />
+<meta property="og:image:alt" content="skfolio" />
+
+    <meta property="article:modified_time" content="2026-09-27T21:55:46+00:00" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://skfolio.org/generated/skfolio.model_selection.CombinatorialPurgedCV.html#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Docs Home",
+          "item": "https://skfolio.org/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "API Reference",
+          "item": "https://skfolio.org/api.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "skfolio.model_selection.CombinatorialPurgedCV",
+          "item": "https://skfolio.org/generated/skfolio.model_selection.CombinatorialPurgedCV.html"
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<link rel="alternate" type="text/markdown" href="skfolio.model_selection.CombinatorialPurgedCV.html.md">
+<link rel="describedby" href="llms.txt">
+<meta name="description" content="Combinatorial Purged Cross-Validation. API reference for skfolio.model_selection.CombinatorialPurgedCV." />
+<meta property="og:description" content="Combinatorial Purged Cross-Validation. API reference for skfolio.model_selection.CombinatorialPurgedCV." />
+<meta name="twitter:description" content="Combinatorial Purged Cross-Validation. API reference for skfolio.model_selection.CombinatorialPurgedCV." />
+
+  <title>skfolio.model_selection.CombinatorialPurgedCV - skfolio</title>
+
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyterlite_sphinx.css?v=f676e775" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=0f345a63" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=64cc4de3f052d77215f0"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
+
+    <script src="../_static/documentation_options.js?v=38182739"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
+    <script src="../_static/jupyterlite_sphinx.js?v=96e329c5"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'generated/skfolio.model_selection.CombinatorialPurgedCV';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="canonical" href="https://skfolio.org/generated/skfolio.model_selection.CombinatorialPurgedCV.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skfolio.model_selection.MultipleRandomizedCV" href="skfolio.model_selection.MultipleRandomizedCV.html" />
+    <link rel="prev" title="skfolio.model_selection.WalkForward" href="skfolio.model_selection.WalkForward.html" />
+  
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="2026-09-27"/>
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="dark">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="/">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/favicon.svg" class="logo__image only-dark" alt="skfolio documentation - Home"/>
+    <img src="../_static/favicon.svg" class="logo__image only-light pst-js-only" alt="skfolio documentation - Home"/>
+  
+  
+    <p class="title logo__title">skfolio</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/index.html">
+     User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auto_examples/index.html">
+     Examples
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api.html">
+     API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://skfoliolabs.com/">
+     Enterprise Support
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/skfolio/skfolio" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/index.html">
+     User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auto_examples/index.html">
+     Examples
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api.html">
+     API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://skfoliolabs.com/">
+     Enterprise Support
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/skfolio/skfolio" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.BaseMeasure.html">skfolio.measures.BaseMeasure</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.PerfMeasure.html">skfolio.measures.PerfMeasure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.RiskMeasure.html">skfolio.measures.RiskMeasure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.ExtraRiskMeasure.html">skfolio.measures.ExtraRiskMeasure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.RatioMeasure.html">skfolio.measures.RatioMeasure</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.mean.html">skfolio.measures.mean</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.get_cumulative_returns.html">skfolio.measures.get_cumulative_returns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.get_drawdowns.html">skfolio.measures.get_drawdowns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.variance.html">skfolio.measures.variance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.semi_variance.html">skfolio.measures.semi_variance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.standard_deviation.html">skfolio.measures.standard_deviation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.semi_deviation.html">skfolio.measures.semi_deviation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.third_central_moment.html">skfolio.measures.third_central_moment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.fourth_central_moment.html">skfolio.measures.fourth_central_moment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.fourth_lower_partial_moment.html">skfolio.measures.fourth_lower_partial_moment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.skew.html">skfolio.measures.skew</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.kurtosis.html">skfolio.measures.kurtosis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.cvar.html">skfolio.measures.cvar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.mean_absolute_deviation.html">skfolio.measures.mean_absolute_deviation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.value_at_risk.html">skfolio.measures.value_at_risk</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.worst_realization.html">skfolio.measures.worst_realization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.first_lower_partial_moment.html">skfolio.measures.first_lower_partial_moment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.entropic_risk_measure.html">skfolio.measures.entropic_risk_measure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.evar.html">skfolio.measures.evar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.drawdown_at_risk.html">skfolio.measures.drawdown_at_risk</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.cdar.html">skfolio.measures.cdar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.max_drawdown.html">skfolio.measures.max_drawdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.average_drawdown.html">skfolio.measures.average_drawdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.edar.html">skfolio.measures.edar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.ulcer_index.html">skfolio.measures.ulcer_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.gini_mean_difference.html">skfolio.measures.gini_mean_difference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.owa_gmd_weights.html">skfolio.measures.owa_gmd_weights</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.effective_number_assets.html">skfolio.measures.effective_number_assets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.measures.correlation.html">skfolio.measures.correlation</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.portfolio.BasePortfolio.html">skfolio.portfolio.BasePortfolio</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.portfolio.Portfolio.html">skfolio.portfolio.Portfolio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.portfolio.FailedPortfolio.html">skfolio.portfolio.FailedPortfolio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.portfolio.MultiPeriodPortfolio.html">skfolio.portfolio.MultiPeriodPortfolio</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.population.Population.html">skfolio.population.Population</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.AssetPanel.html">skfolio.containers.AssetPanel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.AssetPanelView.html">skfolio.containers.AssetPanelView</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.BaseField.html">skfolio.containers.BaseField</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.Field2D.html">skfolio.containers.Field2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.Field3D.html">skfolio.containers.Field3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.FieldCategorical.html">skfolio.containers.FieldCategorical</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.InactivePolicy.html">skfolio.containers.InactivePolicy</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.containers.concat.html">skfolio.containers.concat</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.base.BaseAssetPanelTransformer.html">skfolio.base.BaseAssetPanelTransformer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.base.BaseComposition.html">skfolio.base.BaseComposition</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.BaseOptimization.html">skfolio.optimization.BaseOptimization</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.EqualWeighted.html">skfolio.optimization.EqualWeighted</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.InverseVolatility.html">skfolio.optimization.InverseVolatility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.Random.html">skfolio.optimization.Random</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.ObjectiveFunction.html">skfolio.optimization.ObjectiveFunction</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.ConvexOptimization.html">skfolio.optimization.ConvexOptimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.MeanRisk.html">skfolio.optimization.MeanRisk</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.BenchmarkTracker.html">skfolio.optimization.BenchmarkTracker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.RiskBudgeting.html">skfolio.optimization.RiskBudgeting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.MaximumDiversification.html">skfolio.optimization.MaximumDiversification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.DistributionallyRobustCVaR.html">skfolio.optimization.DistributionallyRobustCVaR</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.BaseHierarchicalOptimization.html">skfolio.optimization.BaseHierarchicalOptimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.HierarchicalRiskParity.html">skfolio.optimization.HierarchicalRiskParity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.HierarchicalEqualRiskContribution.html">skfolio.optimization.HierarchicalEqualRiskContribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.SchurComplementary.html">skfolio.optimization.SchurComplementary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.NestedClustersOptimization.html">skfolio.optimization.NestedClustersOptimization</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.optimization.StackingOptimization.html">skfolio.optimization.StackingOptimization</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.ReturnDistribution.html">skfolio.prior.ReturnDistribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.FactorModel.html">skfolio.prior.FactorModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.CovarianceSqrt.html">skfolio.prior.CovarianceSqrt</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.BasePrior.html">skfolio.prior.BasePrior</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.EmpiricalPrior.html">skfolio.prior.EmpiricalPrior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.BlackLitterman.html">skfolio.prior.BlackLitterman</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.TimeSeriesFactorModel.html">skfolio.prior.TimeSeriesFactorModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.CharacteristicsFactorModel.html">skfolio.prior.CharacteristicsFactorModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.SyntheticData.html">skfolio.prior.SyntheticData</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.EntropyPooling.html">skfolio.prior.EntropyPooling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.OpinionPooling.html">skfolio.prior.OpinionPooling</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.BaseLoadingMatrix.html">skfolio.prior.BaseLoadingMatrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.prior.LoadingMatrixRegression.html">skfolio.prior.LoadingMatrixRegression</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.BaseDescriptor.html">skfolio.descriptor.BaseDescriptor</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.AccrualsCashFlow.html">skfolio.descriptor.AccrualsCashFlow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.AnalystDispersionToPrice.html">skfolio.descriptor.AnalystDispersionToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.AssetTurnover.html">skfolio.descriptor.AssetTurnover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.AssetsGrowthRate.html">skfolio.descriptor.AssetsGrowthRate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.BookLeverage.html">skfolio.descriptor.BookLeverage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.BookToPrice.html">skfolio.descriptor.BookToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.CapexToAssetsChangeInIntensity.html">skfolio.descriptor.CapexToAssetsChangeInIntensity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.CashFlowToAssets.html">skfolio.descriptor.CashFlowToAssets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.CashFlowToPrice.html">skfolio.descriptor.CashFlowToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ChangeInIntensity.html">skfolio.descriptor.ChangeInIntensity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ChangeToScale.html">skfolio.descriptor.ChangeToScale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.DaysToCover.html">skfolio.descriptor.DaysToCover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.DebtToAssets.html">skfolio.descriptor.DebtToAssets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.DividendToPrice.html">skfolio.descriptor.DividendToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWAmihudIlliquidity.html">skfolio.descriptor.EWAmihudIlliquidity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWDownsideBeta.html">skfolio.descriptor.EWDownsideBeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWDownsideVolatility.html">skfolio.descriptor.EWDownsideVolatility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWMacroSensitivity.html">skfolio.descriptor.EWMacroSensitivity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWMarketBeta.html">skfolio.descriptor.EWMarketBeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWMomentum.html">skfolio.descriptor.EWMomentum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWResidualDownsideVolatility.html">skfolio.descriptor.EWResidualDownsideVolatility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWResidualVolatility.html">skfolio.descriptor.EWResidualVolatility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWShareTurnover.html">skfolio.descriptor.EWShareTurnover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EWVolatility.html">skfolio.descriptor.EWVolatility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EarningsChangeToPrice.html">skfolio.descriptor.EarningsChangeToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EarningsToPrice.html">skfolio.descriptor.EarningsToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.EbitdaToEnterpriseValue.html">skfolio.descriptor.EbitdaToEnterpriseValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ForwardDividendToPrice.html">skfolio.descriptor.ForwardDividendToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ForwardEarningsToPrice.html">skfolio.descriptor.ForwardEarningsToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.GrossMargin.html">skfolio.descriptor.GrossMargin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.GrossProfitability.html">skfolio.descriptor.GrossProfitability</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.GrowthRate.html">skfolio.descriptor.GrowthRate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.IssuanceGrowthRate.html">skfolio.descriptor.IssuanceGrowthRate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.LogMarketCap.html">skfolio.descriptor.LogMarketCap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.MarketLeverage.html">skfolio.descriptor.MarketLeverage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.MaxReturn.html">skfolio.descriptor.MaxReturn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.Passthrough.html">skfolio.descriptor.Passthrough</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ReturnOnAssets.html">skfolio.descriptor.ReturnOnAssets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ReturnOnEquity.html">skfolio.descriptor.ReturnOnEquity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.Reversal.html">skfolio.descriptor.Reversal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.RollingMomentum.html">skfolio.descriptor.RollingMomentum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.SalesGrowthRate.html">skfolio.descriptor.SalesGrowthRate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.SalesToEnterpriseValue.html">skfolio.descriptor.SalesToEnterpriseValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.SalesToPrice.html">skfolio.descriptor.SalesToPrice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ShareholderYield.html">skfolio.descriptor.ShareholderYield</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.descriptor.ShortInterest.html">skfolio.descriptor.ShortInterest</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.factor_exposure.BaseFactorExposure.html">skfolio.factor_exposure.BaseFactorExposure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.factor_exposure.DerivedFactor.html">skfolio.factor_exposure.DerivedFactor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.factor_exposure.FixedWeightedFactor.html">skfolio.factor_exposure.FixedWeightedFactor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.factor_exposure.GlobalFactor.html">skfolio.factor_exposure.GlobalFactor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.factor_exposure.OneHotCategoricalFactors.html">skfolio.factor_exposure.OneHotCategoricalFactors</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.BaseAlpha.html">skfolio.alpha.BaseAlpha</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.EWSharpeOptimalAlpha.html">skfolio.alpha.EWSharpeOptimalAlpha</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.FixedWeightedAlpha.html">skfolio.alpha.FixedWeightedAlpha</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.PredictorAlpha.html">skfolio.alpha.PredictorAlpha</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.AlphaForecastComparison.html">skfolio.alpha.AlphaForecastComparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.AlphaForecastEvaluation.html">skfolio.alpha.AlphaForecastEvaluation</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.alpha_forecast_evaluation.html">skfolio.alpha.alpha_forecast_evaluation</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.alpha.ForecastUnit.html">skfolio.alpha.ForecastUnit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.CSWeighting.html">skfolio.utils.stats.CSWeighting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.CorrelationMethod.html">skfolio.utils.stats.CorrelationMethod</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.Attribution.html">skfolio.attribution.Attribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.AssetBreakdown.html">skfolio.attribution.AssetBreakdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.AssetByFactorContribution.html">skfolio.attribution.AssetByFactorContribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.BaseBreakdown.html">skfolio.attribution.BaseBreakdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.Component.html">skfolio.attribution.Component</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.FactorBreakdown.html">skfolio.attribution.FactorBreakdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.FamilyBreakdown.html">skfolio.attribution.FamilyBreakdown</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.predicted_factor_attribution.html">skfolio.attribution.predicted_factor_attribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.realized_factor_attribution.html">skfolio.attribution.realized_factor_attribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.attribution.rolling_realized_factor_attribution.html">skfolio.attribution.rolling_realized_factor_attribution</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.BaseMu.html">skfolio.moments.BaseMu</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EmpiricalMu.html">skfolio.moments.EmpiricalMu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EWMu.html">skfolio.moments.EWMu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.ShrunkMu.html">skfolio.moments.ShrunkMu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EquilibriumMu.html">skfolio.moments.EquilibriumMu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.ShrunkMuMethods.html">skfolio.moments.ShrunkMuMethods</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.BaseVariance.html">skfolio.moments.BaseVariance</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EmpiricalVariance.html">skfolio.moments.EmpiricalVariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EWVariance.html">skfolio.moments.EWVariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.RegimeAdjustedEWVariance.html">skfolio.moments.RegimeAdjustedEWVariance</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.BaseCovariance.html">skfolio.moments.BaseCovariance</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.GeodesicShrinkageTarget.html">skfolio.moments.GeodesicShrinkageTarget</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.RegimeAdjustmentMethod.html">skfolio.moments.RegimeAdjustmentMethod</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.RegimeAdjustmentTarget.html">skfolio.moments.RegimeAdjustmentTarget</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EmpiricalCovariance.html">skfolio.moments.EmpiricalCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.EWCovariance.html">skfolio.moments.EWCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.GerberCovariance.html">skfolio.moments.GerberCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.DenoiseCovariance.html">skfolio.moments.DenoiseCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.DetoneCovariance.html">skfolio.moments.DetoneCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.LedoitWolf.html">skfolio.moments.LedoitWolf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.OAS.html">skfolio.moments.OAS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.ShrunkCovariance.html">skfolio.moments.ShrunkCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.GeodesicShrinkageCovariance.html">skfolio.moments.GeodesicShrinkageCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.GraphicalLassoCV.html">skfolio.moments.GraphicalLassoCV</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.ImpliedCovariance.html">skfolio.moments.ImpliedCovariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.moments.RegimeAdjustedEWCovariance.html">skfolio.moments.RegimeAdjustedEWCovariance</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.BaseDistance.html">skfolio.distance.BaseDistance</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.PearsonDistance.html">skfolio.distance.PearsonDistance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.KendallDistance.html">skfolio.distance.KendallDistance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.SpearmanDistance.html">skfolio.distance.SpearmanDistance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.CovarianceDistance.html">skfolio.distance.CovarianceDistance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.DistanceCorrelation.html">skfolio.distance.DistanceCorrelation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distance.MutualInformation.html">skfolio.distance.MutualInformation</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.cluster.HierarchicalClustering.html">skfolio.cluster.HierarchicalClustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.cluster.LinkageMethod.html">skfolio.cluster.LinkageMethod</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.UncertaintySet.html">skfolio.uncertainty_set.UncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.CompactCovarianceUncertaintySet.html">skfolio.uncertainty_set.CompactCovarianceUncertaintySet</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.BaseMuUncertaintySet.html">skfolio.uncertainty_set.BaseMuUncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.BaseCovarianceUncertaintySet.html">skfolio.uncertainty_set.BaseCovarianceUncertaintySet</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.EmpiricalMuUncertaintySet.html">skfolio.uncertainty_set.EmpiricalMuUncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.EmpiricalCovarianceUncertaintySet.html">skfolio.uncertainty_set.EmpiricalCovarianceUncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.BootstrapMuUncertaintySet.html">skfolio.uncertainty_set.BootstrapMuUncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.BootstrapCovarianceUncertaintySet.html">skfolio.uncertainty_set.BootstrapCovarianceUncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.OrthogonalMuUncertaintySet.html">skfolio.uncertainty_set.OrthogonalMuUncertaintySet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.uncertainty_set.OrthogonalCovarianceUncertaintySet.html">skfolio.uncertainty_set.OrthogonalCovarianceUncertaintySet</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.pre_selection.DropCorrelated.html">skfolio.pre_selection.DropCorrelated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.pre_selection.DropZeroVariance.html">skfolio.pre_selection.DropZeroVariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.pre_selection.SelectKExtremes.html">skfolio.pre_selection.SelectKExtremes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.pre_selection.SelectNonDominated.html">skfolio.pre_selection.SelectNonDominated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.pre_selection.SelectComplete.html">skfolio.pre_selection.SelectComplete</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.pre_selection.SelectNonExpiring.html">skfolio.pre_selection.SelectNonExpiring</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.linear_model.BaseCSLinearModel.html">skfolio.linear_model.BaseCSLinearModel</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.linear_model.CSLinearRegression.html">skfolio.linear_model.CSLinearRegression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.linear_model.CSLinearRegressorWrapper.html">skfolio.linear_model.CSLinearRegressorWrapper</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.BaseCombinatorialCV.html">skfolio.model_selection.BaseCombinatorialCV</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.WalkForward.html">skfolio.model_selection.WalkForward</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">skfolio.model_selection.CombinatorialPurgedCV</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.MultipleRandomizedCV.html">skfolio.model_selection.MultipleRandomizedCV</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.OnlineGridSearch.html">skfolio.model_selection.OnlineGridSearch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.OnlineRandomizedSearch.html">skfolio.model_selection.OnlineRandomizedSearch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.CovarianceForecastEvaluation.html">skfolio.model_selection.CovarianceForecastEvaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.CovarianceForecastComparison.html">skfolio.model_selection.CovarianceForecastComparison</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.cross_val_predict.html">skfolio.model_selection.cross_val_predict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.online_predict.html">skfolio.model_selection.online_predict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.online_score.html">skfolio.model_selection.online_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.online_covariance_forecast_evaluation.html">skfolio.model_selection.online_covariance_forecast_evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.covariance_forecast_evaluation.html">skfolio.model_selection.covariance_forecast_evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.model_selection.optimal_folds_number.html">skfolio.model_selection.optimal_folds_number</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.make_scorer.html">skfolio.metrics.make_scorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.diagonal_calibration_loss.html">skfolio.metrics.diagonal_calibration_loss</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.diagonal_calibration_ratio.html">skfolio.metrics.diagonal_calibration_ratio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.exceedance_rate.html">skfolio.metrics.exceedance_rate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.mahalanobis_calibration_loss.html">skfolio.metrics.mahalanobis_calibration_loss</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.mahalanobis_calibration_ratio.html">skfolio.metrics.mahalanobis_calibration_ratio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.portfolio_variance_calibration_loss.html">skfolio.metrics.portfolio_variance_calibration_loss</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.portfolio_variance_calibration_ratio.html">skfolio.metrics.portfolio_variance_calibration_ratio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.portfolio_variance_qlike_loss.html">skfolio.metrics.portfolio_variance_qlike_loss</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.metrics.qlike_loss.html">skfolio.metrics.qlike_loss</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.load_sp500_dataset.html">skfolio.datasets.load_sp500_dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.load_sp500_index.html">skfolio.datasets.load_sp500_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.load_factors_dataset.html">skfolio.datasets.load_factors_dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.load_ftse100_dataset.html">skfolio.datasets.load_ftse100_dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.load_nasdaq_dataset.html">skfolio.datasets.load_nasdaq_dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.load_sp500_implied_vol_dataset.html">skfolio.datasets.load_sp500_implied_vol_dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.datasets.make_synthetic_characteristics.html">skfolio.datasets.make_synthetic_characteristics</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.BaseCSTransformer.html">skfolio.preprocessing.BaseCSTransformer</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.CSGaussianRankScaler.html">skfolio.preprocessing.CSGaussianRankScaler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.CSPercentileRankScaler.html">skfolio.preprocessing.CSPercentileRankScaler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.CSStandardScaler.html">skfolio.preprocessing.CSStandardScaler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.CSTanhShrinker.html">skfolio.preprocessing.CSTanhShrinker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.CSWinsorizer.html">skfolio.preprocessing.CSWinsorizer</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.preprocessing.prices_to_returns.html">skfolio.preprocessing.prices_to_returns</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.AutoEnum.html">skfolio.utils.tools.AutoEnum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.cached_property_slots.html">skfolio.utils.tools.cached_property_slots</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.apply_window_size.html">skfolio.utils.tools.apply_window_size</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.args_names.html">skfolio.utils.tools.args_names</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.bisection.html">skfolio.utils.tools.bisection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.cache_method.html">skfolio.utils.tools.cache_method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.check_estimator.html">skfolio.utils.tools.check_estimator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.deduplicate_names.html">skfolio.utils.tools.deduplicate_names</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.default_asset_names.html">skfolio.utils.tools.default_asset_names</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.fit_and_predict.html">skfolio.utils.tools.fit_and_predict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.fit_single_estimator.html">skfolio.utils.tools.fit_single_estimator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.format_measure.html">skfolio.utils.tools.format_measure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.get_feature_names.html">skfolio.utils.tools.get_feature_names</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.half_life_to_decay_factor.html">skfolio.utils.tools.half_life_to_decay_factor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.input_to_array.html">skfolio.utils.tools.input_to_array</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.optimal_rounding_decimals.html">skfolio.utils.tools.optimal_rounding_decimals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.safe_indexing.html">skfolio.utils.tools.safe_indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.safe_split.html">skfolio.utils.tools.safe_split</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.tools.validate_input_list.html">skfolio.utils.tools.validate_input_list</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.NBinsMethod.html">skfolio.utils.stats.NBinsMethod</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.assert_is_distance.html">skfolio.utils.stats.assert_is_distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.assert_is_square.html">skfolio.utils.stats.assert_is_square</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.assert_is_symmetric.html">skfolio.utils.stats.assert_is_symmetric</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.combination_by_index.html">skfolio.utils.stats.combination_by_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.commutation_matrix.html">skfolio.utils.stats.commutation_matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.compute_optimal_n_clusters.html">skfolio.utils.stats.compute_optimal_n_clusters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.corr_to_cov.html">skfolio.utils.stats.corr_to_cov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.cov_nearest.html">skfolio.utils.stats.cov_nearest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.cov_to_corr.html">skfolio.utils.stats.cov_to_corr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.cs_pearson_correlation.html">skfolio.utils.stats.cs_pearson_correlation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.cs_rank.html">skfolio.utils.stats.cs_rank</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.cs_spearman_correlation.html">skfolio.utils.stats.cs_spearman_correlation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.inverse_multiply.html">skfolio.utils.stats.inverse_multiply</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.inverse_volatility_weights.html">skfolio.utils.stats.inverse_volatility_weights</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.safe_cholesky.html">skfolio.utils.stats.safe_cholesky</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.is_cholesky_dec.html">skfolio.utils.stats.is_cholesky_dec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.minimize_relative_weight_deviation.html">skfolio.utils.stats.minimize_relative_weight_deviation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.multiply_by_inverse.html">skfolio.utils.stats.multiply_by_inverse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.n_bins_freedman.html">skfolio.utils.stats.n_bins_freedman</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.n_bins_knuth.html">skfolio.utils.stats.n_bins_knuth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.rand_weights.html">skfolio.utils.stats.rand_weights</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.rand_weights_dirichlet.html">skfolio.utils.stats.rand_weights_dirichlet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.sample_unique_subsets.html">skfolio.utils.stats.sample_unique_subsets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.squared_mahalanobis_dist.html">skfolio.utils.stats.squared_mahalanobis_dist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.squared_standardized_euclidean_dist.html">skfolio.utils.stats.squared_standardized_euclidean_dist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.symmetric_step_up_matrix.html">skfolio.utils.stats.symmetric_step_up_matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.stats.symmetrize.html">skfolio.utils.stats.symmetrize</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.validation.validate_asset_panel.html">skfolio.utils.validation.validate_asset_panel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.utils.validation.validate_cross_sectional_data.html">skfolio.utils.validation.validate_cross_sectional_data</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.BaseDistribution.html">skfolio.distribution.BaseDistribution</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.SelectionCriterion.html">skfolio.distribution.SelectionCriterion</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.BaseUnivariateDist.html">skfolio.distribution.BaseUnivariateDist</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.Gaussian.html">skfolio.distribution.Gaussian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.StudentT.html">skfolio.distribution.StudentT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.JohnsonSU.html">skfolio.distribution.JohnsonSU</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.NormalInverseGaussian.html">skfolio.distribution.NormalInverseGaussian</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.select_univariate_dist.html">skfolio.distribution.select_univariate_dist</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.BaseMultivariateDist.html">skfolio.distribution.BaseMultivariateDist</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.VineCopula.html">skfolio.distribution.VineCopula</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.DependenceMethod.html">skfolio.distribution.DependenceMethod</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.BaseBivariateCopula.html">skfolio.distribution.BaseBivariateCopula</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.GaussianCopula.html">skfolio.distribution.GaussianCopula</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.StudentTCopula.html">skfolio.distribution.StudentTCopula</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.ClaytonCopula.html">skfolio.distribution.ClaytonCopula</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.GumbelCopula.html">skfolio.distribution.GumbelCopula</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.JoeCopula.html">skfolio.distribution.JoeCopula</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.IndependentCopula.html">skfolio.distribution.IndependentCopula</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.compute_pseudo_observations.html">skfolio.distribution.compute_pseudo_observations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.empirical_tail_concentration.html">skfolio.distribution.empirical_tail_concentration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.plot_tail_concentration.html">skfolio.distribution.plot_tail_concentration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.select_bivariate_copula.html">skfolio.distribution.select_bivariate_copula</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="skfolio.distribution.CopulaRotation.html">skfolio.distribution.CopulaRotation</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="/" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API Reference</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">skfolio.model_selection.CombinatorialPurgedCV</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="skfolio-model-selection-combinatorialpurgedcv">
+<h1>skfolio.model_selection.CombinatorialPurgedCV<a class="headerlink" href="#skfolio-model-selection-combinatorialpurgedcv" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">skfolio.model_selection.</span></span><span class="sig-name descname"><span class="pre">CombinatorialPurgedCV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_test_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">purged_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embargo_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV" title="Link to this definition">#</a></dt>
+<dd><p>Combinatorial Purged Cross-Validation.</p>
+<p>Provides train/test indices to split time series data samples based on
+Combinatorial Purged Cross-Validation <a class="reference internal" href="#re93330c75414-1" id="id1">[1]</a>.</p>
+<p>Compared to <code class="docutils literal notranslate"><span class="pre">KFold</span></code>, which splits the data into <code class="docutils literal notranslate"><span class="pre">k</span></code> folds with <code class="docutils literal notranslate"><span class="pre">1</span></code> fold for the test
+set and <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">-</span> <span class="pre">1</span></code> folds for the training set, <code class="docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code> uses <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">-</span> <span class="pre">p</span></code>
+folds for the training set with <code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">&gt;</span> <span class="pre">1</span></code> being the number of test folds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">KFold</span></code> can recombine one single testing path while <code class="docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code> can
+recombine multiple testing paths from the combinations of the train/test sets.</p>
+<p>To avoid data leakage, purging and embargoing can be performed.</p>
+<p>Purging consists of removing from the training set all observations whose labels
+overlapped in time with those labels included in the testing set.</p>
+<p>Embargoing consists of removing from the training set all observations that
+immediately follow an observation in the testing set, since financial features
+often incorporate series that exhibit serial correlation (like ARMA processes).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_folds</strong><span class="classifier">int, default=10</span></dt><dd><p>Number of folds. Must be at least 3.</p>
+</dd>
+<dt><strong>n_test_folds</strong><span class="classifier">int, default=8</span></dt><dd><p>Number of test folds. Must be at least 2.
+For only one test fold, use <code class="docutils literal notranslate"><span class="pre">sklearn.model_validation.KFold</span></code>.</p>
+</dd>
+<dt><strong>purged_size</strong><span class="classifier">int, default=0</span></dt><dd><p>Number of observations to exclude from the start of each train set that are
+after a test set <strong>and</strong> the number of observations to exclude from the end of
+each training set that are before a test set.</p>
+</dd>
+<dt><strong>embargo_size</strong><span class="classifier">int, default=0</span></dt><dd><p>Number of observations to exclude from the start of each training set that are
+after a test set.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>index_train_test_</strong><span class="classifier">ndarray of shape (n_observations, n_splits)</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#skfolio.model_selection.CombinatorialPurgedCV.get_n_splits" title="skfolio.model_selection.CombinatorialPurgedCV.get_n_splits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_n_splits</span></code></a>([X, y, groups])</p></td>
+<td><p>Return the number of splitting iterations in the cross-validator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#skfolio.model_selection.CombinatorialPurgedCV.get_path_ids" title="skfolio.model_selection.CombinatorialPurgedCV.get_path_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_path_ids</span></code></a>()</p></td>
+<td><p>Return the path id of each test sets in each split.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_folds" title="skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_folds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_train_test_folds</span></code></a>()</p></td>
+<td><p>Plot the train/test fold locations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_index" title="skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_train_test_index</span></code></a>(X)</p></td>
+<td><p>Plot the training and test indices for each combinations by assigning <code class="docutils literal notranslate"><span class="pre">0</span></code> to training, <code class="docutils literal notranslate"><span class="pre">1</span></code> to test and <code class="docutils literal notranslate"><span class="pre">-1</span></code> to both purge and embargo indices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#skfolio.model_selection.CombinatorialPurgedCV.split" title="skfolio.model_selection.CombinatorialPurgedCV.split"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split</span></code></a>(X[, y, groups])</p></td>
+<td><p>Generate indices to split data into training and test set.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#skfolio.model_selection.CombinatorialPurgedCV.summary" title="skfolio.model_selection.CombinatorialPurgedCV.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>(X)</p></td>
+<td><p>Return a summary of the cross-validation configuration for <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="re93330c75414-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>“Advances in Financial Machine Learning”,
+Marcos López de Prado (2018)</p>
+</div>
+</div>
+<p class="rubric">Examples</p>
+<dl class="simple">
+<dt>Tutorials using <code class="docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code>:</dt><dd><ul class="simple">
+<li><p><a class="reference internal" href="../auto_examples/pre_selection/plot_1_drop_correlated.html#sphx-glr-auto-examples-pre-selection-plot-1-drop-correlated-py"><span class="std std-ref">Drop Highly Correlated Assets</span></a></p></li>
+<li><p><a class="reference internal" href="../auto_examples/clustering/plot_3_hrp_vs_herc.html#sphx-glr-auto-examples-clustering-plot-3-hrp-vs-herc-py"><span class="std std-ref">HRP vs HERC</span></a></p></li>
+<li><p><a class="reference internal" href="../auto_examples/clustering/plot_5_nco_grid_search.html#sphx-glr-auto-examples-clustering-plot-5-nco-grid-search-py"><span class="std std-ref">NCO - Combinatorial Purged CV</span></a></p></li>
+</ul>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinatorialPurgedCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cv</span> <span class="o">=</span> <span class="n">CombinatorialPurgedCV</span><span class="p">(</span><span class="n">n_folds</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_test_folds</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">train_index</span><span class="p">,</span> <span class="n">tests</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">)):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Split </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Train: index=</span><span class="si">{</span><span class="n">train_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">test_index</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tests</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Test </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">:  index=</span><span class="si">{</span><span class="n">test_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="go">Split 0:</span>
+<span class="go">  Train: index=[ 8  9 10 11]</span>
+<span class="go">  Test 0:  index=[0 1 2 3]</span>
+<span class="go">  Test 1:  index=[4 5 6 7]</span>
+<span class="go">Split 1:</span>
+<span class="go">  Train: index=[4 5 6 7]</span>
+<span class="go">  Test 0:  index=[0 1 2 3]</span>
+<span class="go">  Test 1:  index=[ 8  9 10 11]</span>
+<span class="go">Split 2:</span>
+<span class="go">  Train: index=[0 1 2 3]</span>
+<span class="go">  Test 0:  index=[4 5 6 7]</span>
+<span class="go">  Test 1:  index=[ 8  9 10 11]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cv</span> <span class="o">=</span> <span class="n">CombinatorialPurgedCV</span><span class="p">(</span><span class="n">n_folds</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_test_folds</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">purged_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">train_index</span><span class="p">,</span> <span class="n">tests</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">)):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Split </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Train: index=</span><span class="si">{</span><span class="n">train_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">test_index</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tests</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Test </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">:  index=</span><span class="si">{</span><span class="n">test_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="go">Split 0:</span>
+<span class="go">  Train: index=[ 9 10 11]</span>
+<span class="go">  Test 0:  index=[0 1 2 3]</span>
+<span class="go">  Test 1:  index=[4 5 6 7]</span>
+<span class="go">Split 1:</span>
+<span class="go">  Train: index=[5 6]</span>
+<span class="go">  Test 0:  index=[0 1 2 3]</span>
+<span class="go">  Test 1:  index=[ 8  9 10 11]</span>
+<span class="go">Split 2:</span>
+<span class="go">  Train: index=[0 1 2]</span>
+<span class="go">  Test 0:  index=[4 5 6 7]</span>
+<span class="go">  Test 1:  index=[ 8  9 10 11]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cv</span> <span class="o">=</span> <span class="n">CombinatorialPurgedCV</span><span class="p">(</span><span class="n">n_folds</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_test_folds</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">embargo_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">train_index</span><span class="p">,</span> <span class="n">tests</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">)):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Split </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Train: index=</span><span class="si">{</span><span class="n">train_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">test_index</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tests</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Test </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">:  index=</span><span class="si">{</span><span class="n">test_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="go">Split 0:</span>
+<span class="go">  Train: index=[ 9 10 11]</span>
+<span class="go">  Test 0:  index=[0 1 2 3]</span>
+<span class="go">  Test 1:  index=[4 5 6 7]</span>
+<span class="go">Split 1:</span>
+<span class="go">  Train: index=[5 6 7]</span>
+<span class="go">  Test 0:  index=[0 1 2 3]</span>
+<span class="go">  Test 1:  index=[ 8  9 10 11]</span>
+<span class="go">Split 2:</span>
+<span class="go">  Train: index=[0 1 2 3]</span>
+<span class="go">  Test 0:  index=[4 5 6 7]</span>
+<span class="go">  Test 1:  index=[ 8  9 10 11]</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.binary_train_test_sets">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">binary_train_test_sets</span></span><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.binary_train_test_sets" title="Link to this definition">#</a></dt>
+<dd><p>Identify training and test folds for each combinations by assigning <code class="docutils literal notranslate"><span class="pre">0</span></code> to
+training folds and <code class="docutils literal notranslate"><span class="pre">1</span></code> to test folds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.get_n_splits">
+<span class="sig-name descname"><span class="pre">get_n_splits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV.get_n_splits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.get_n_splits" title="Link to this definition">#</a></dt>
+<dd><p>Return the number of splitting iterations in the cross-validator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">None</span></dt><dd><p>Always ignored, exists for compatibility.</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">None</span></dt><dd><p>Always ignored, exists for compatibility.</p>
+</dd>
+<dt><strong>groups</strong><span class="classifier">None</span></dt><dd><p>Always ignored, exists for compatibility.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>n_splits</strong><span class="classifier">int</span></dt><dd><p>Number of splitting iterations in the cross-validator.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.get_path_ids">
+<span class="sig-name descname"><span class="pre">get_path_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV.get_path_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.get_path_ids" title="Link to this definition">#</a></dt>
+<dd><p>Return the path id of each test sets in each split.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.n_splits">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_splits</span></span><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.n_splits" title="Link to this definition">#</a></dt>
+<dd><p>Number of splits.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.n_test_paths">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_test_paths</span></span><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.n_test_paths" title="Link to this definition">#</a></dt>
+<dd><p>Number of test paths that can be reconstructed from the train/test
+combinations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_folds">
+<span class="sig-name descname"><span class="pre">plot_train_test_folds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV.plot_train_test_folds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_folds" title="Link to this definition">#</a></dt>
+<dd><p>Plot the train/test fold locations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_index">
+<span class="sig-name descname"><span class="pre">plot_train_test_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV.plot_train_test_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.plot_train_test_index" title="Link to this definition">#</a></dt>
+<dd><p>Plot the training and test indices for each combinations by assigning <code class="docutils literal notranslate"><span class="pre">0</span></code> to
+training, <code class="docutils literal notranslate"><span class="pre">1</span></code> to test and <code class="docutils literal notranslate"><span class="pre">-1</span></code> to both purge and embargo indices.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.recombined_paths">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">recombined_paths</span></span><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.recombined_paths" title="Link to this definition">#</a></dt>
+<dd><p>Recombine each test path by returning the test set location in each split.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.split">
+<span class="sig-name descname"><span class="pre">split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV.split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.split" title="Link to this definition">#</a></dt>
+<dd><p>Generate indices to split data into training and test set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">array-like of shape (n_samples, n_features)</span></dt><dd><p>Training data, where <code class="docutils literal notranslate"><span class="pre">n_samples</span></code> is the number of samples and <code class="docutils literal notranslate"><span class="pre">n_features</span></code>
+is the number of features.</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">array-like of shape (n_samples,), optional</span></dt><dd><p>The (multi-)target variable</p>
+</dd>
+<dt><strong>groups</strong><span class="classifier">array-like of shape (n_samples,), optional</span></dt><dd><p>Group labels for the samples used while splitting the dataset into
+train/test set.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>train</strong><span class="classifier">ndarray</span></dt><dd><p>The training set indices for that split.</p>
+</dd>
+<dt><strong>test</strong><span class="classifier">ndarray</span></dt><dd><p>The testing set indices for that split.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.summary">
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/skfolio/model_selection/_combinatorial.html#CombinatorialPurgedCV.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.summary" title="Link to this definition">#</a></dt>
+<dd><p>Return a summary of the cross-validation configuration for <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">array-like of shape (n_observations, n_assets)</span></dt><dd><p>Data to split. Only its number of observations (rows) is used.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>summary</strong><span class="classifier">pandas.Series</span></dt><dd><p>Number of observations, total number of folds, number of test folds,
+purge size, embargo size, average training size, number of test paths
+and number of training combinations.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="skfolio.model_selection.CombinatorialPurgedCV.test_set_index">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">test_set_index</span></span><a class="headerlink" href="#skfolio.model_selection.CombinatorialPurgedCV.test_set_index" title="Link to this definition">#</a></dt>
+<dd><p>Location of each test set.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="skfolio.model_selection.WalkForward.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">skfolio.model_selection.WalkForward</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="skfolio.model_selection.MultipleRandomizedCV.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">skfolio.model_selection.MultipleRandomizedCV</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, skfolio developers (BSD License).
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.22.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,145 @@
+URL: https://pages.stern.nyu.edu/~lpederse/papers/DynamicTrading.pdf (Garleanu & Pedersen, J. Finance 68(6) 2013). Theory + commodity-futures implementation; paper claim.
+Fetched UTC: 2026-10-01 06:15:50
+Source type: open-access PDF, text via pdftotext -layout (/tmp/B/gp13.txt). Excerpted line ranges: 8,24 55,100
+
+----- lines 8,24 -----
+                 NICOLAE GÂRLEANU and LASSE HEJE PEDERSEN∗
+
+                                           ABSTRACT
+      We derive a closed-form optimal dynamic portfolio policy when trading is costly and
+      security returns are predictable by signals with different mean-reversion speeds. The
+      optimal strategy is characterized by two principles: (1) aim in front of the target,
+      and (2) trade partially toward the current aim. Specifically, the optimal updated
+      portfolio is a linear combination of the existing portfolio and an “aim portfolio,” which
+      is a weighted average of the current Markowitz portfolio (the moving target) and
+      the expected Markowitz portfolios on all future dates (where the target is moving).
+      Intuitively, predictors with slower mean-reversion (alpha decay) get more weight in
+      the aim portfolio. We implement the optimal strategy for commodity futures and find
+      superior net returns relative to more naive benchmarks.
+
+
+
+
+
+----- lines 55,100 -----
+2310                           The Journal of FinanceR
+
+   This paper addresses how the optimal trading strategy depends on securities’
+current expected returns, the evolution of expected returns in the future, se-
+curities’ risks and return correlations, and their transaction costs. We present
+a closed-form solution for the optimal dynamic portfolio strategy, giving rise to
+two principles: (1) aim in front of the target, and (2) trade partially toward the
+current aim.
+   To see the intuition for these portfolio principles, note that the investor
+would like to keep his portfolio close to the optimal portfolio in the absence
+of transaction costs, which we call the “Markowitz portfolio.” The Markowitz
+portfolio is a moving target, since the return-predicting factors change over
+time. Due to transaction costs, it is obviously not optimal to trade all the
+way to the target all the time. Hence, transaction costs make it optimal to
+slow down trading and, interestingly, to modify the aim, and thus not to trade
+directly toward the current Markowitz portfolio. Indeed, the optimal strategy
+is to trade toward an “aim portfolio,” which is a weighted average of the current
+Markowitz portfolio (the moving target) and the expected Markowitz portfolios
+on all future dates (where the target is moving).
+   Panel A of Figure 1 illustrates the construction of the optimal portfolio of two
+securities.1 The solid line illustrates the expected path of the Markowitz portfo-
+lio, starting with large positions in both security 1 and security 2, and gradually
+converging toward its long-term mean (for example, the market portfolio). The
+aim portfolio is a weighted average of the current and future Markowitz port-
+folios so it lies in the “convex hull” of the solid line. The optimal new position is
+achieved by trading partially toward this aim portfolio. Another way to state
+our portfolio principle is that the best new portfolio is a combination of (1) the
+current portfolio (to reduce turnover), (2) the Markowitz portfolio (to partly get
+the best current risk-return trade-off), and (3) the expected optimal portfolio
+in the future (a dynamic effect).
+   While new to finance, these portfolio principles have close analogues in other
+fields such as the guidance of missiles toward moving targets, hunting, and
+sports. The most famous example from the sports world is perhaps the following
+quote, illustrated in Panel D of Figure 1:
+
+   “A great hockey player skates to where the puck is going to be, not where it
+   is.” — Wayne Gretzky
+
+  Similarly, hunters are reminded to “lead the duck” when aiming their
+weapon, as seen in Panel E.2
+  Panel B of Figure 1 illustrates the expected trade at the next trading date,
+and Panel C shows how the optimal position is expected to chase the Markowitz
+portfolio over time. The expected path of the optimal portfolio resembles that of
+
+
+  1 Panels A–C of the figure are based on simulations of our model. We are grateful to Mikkel
+
+----- lines 200-215 (headline implementation result) -----
+   Finally, we illustrate our results empirically in the context of commodity
+futures markets. We use returns over the past 5 days, 12 months, and 5 years to
+predict returns. The 5-day signal is quickly mean-reverting (fast alpha decay),
+the 12-month signal mean-reverts more slowly, whereas the 5-year signal is
+the most persistent. We calculate the optimal dynamic trading strategy taking
+transaction costs into account and compare its performance to both the optimal
+portfolio ignoring transaction costs and a class of strategies that perform static
+(one-period) transaction cost optimization. Our optimal portfolio performs the
+best net of transaction costs among all the strategies that we consider. Its net
+Sharpe ratio is about 20% better than that of the best strategy among all the
+static strategies. Our strategy’s superior performance is achieved by trading
+at an optimal speed and by trading toward an aim portfolio that is optimally
+tilted toward the more persistent return predictors.
+   We also study the impulse-response of the security positions following a
+shock to return predictors. While the no-transaction-cost position immediately
+jumps up and mean-reverts with the speed of the alpha decay, the optimal
+----- lines 1070-1120 (Sharpe gross/net table, commodity futures) -----
+optimization”). The static portfolio optimization results in trading partially
+toward the Markowitz portfolio (as opposed to an aim portfolio that depends
+on signals’ alpha decays), and we consider 10 different trading speeds as seen
+in Table II. Hence, under the static optimization, the updated portfolio is a
+weighted average of the Markowitz portfolio (with weight denoted “weight on
+Markowitz”) and the current portfolio.
+   Table II reports the performance of each strategy as measured by, respec-
+tively, its gross Sharpe ratio and its net Sharpe ratio (i.e., its Sharpe ratio
+after accounting for transaction costs). Panel A reports these numbers using
+our base-case transaction cost estimate (discussed earlier), while Panel B uses
+our high transaction cost estimate. We see that, naturally, the highest Sharpe
+ratio before transaction costs is achieved by the Markowitz strategy. The op-
+timal and static portfolios have similar drops in gross Sharpe ratio due to
+their slower trading. After transaction costs, however, the optimal portfolio
+is the best, significantly better than the best possible static strategy, and the
+Markowitz strategy incurs enormous trading costs.
+   It is interesting to consider the driver of the superior performance of the
+optimal dynamic trading strategy relative to the best possible static strategy.
+The key to the outperformance is that the dynamic strategy gives less weight
+to the 5-day signal because of its fast alpha decay. The static strategy simply
+tries to control the overall trading speed, but this is not sufficient: it either
+incurs large trading costs due to its “fleeting” target (because of the significant
+reliance on the 5-day signal), or trades so slowly that it is difficult to capture
+the return. The dynamic strategy overcomes this problem by trading somewhat
+fast, but trading mainly according to the more persistent signals.
+   To illustrate the difference in the positions of the different strategies, Figure 3
+depicts the positions over time of two of the commodity futures, namely, Crude
+2330                                        The Journal of FinanceR
+
+                                                          Table II
+       Performance of Trading Strategies before and after Transaction
+                                   Costs
+This table shows the annualized Sharpe ratio gross (“Gross SR”) and net (“Net SR”) of trading costs
+for the optimal trading strategy in the absence of trading costs (“Markowitz”), our optimal dynamic
+strategy (“Dynamic”), and a strategy that optimizes a static one-period problem with trading costs
+(“Static”). Panel A illustrates these results for a low transaction cost parameter, while Panel B uses
+a high one. We highlight in bold the performance of our dynamic strategy (which has the highest
+net SR among all strategies considered) and that of the static strategy with the highest net SR
+among the static ones.
+
+                                                   Panel A: Benchmark                                Panel B: High
+                                                    Transaction Costs                              Transaction Costs
+
+                                                Gross SR                    Net SR           Gross SR              Net SR
+
+Markowitz                                          0.83                     −9.84                  0.83            −10.11
+Dynamic optimization                               0.62                      0.58                  0.58              0.53
+Static optimization
+  Weight on Markowitz = 10%                        0.63                     −0.41                  0.63              −1.45
+  Weight on Markowitz = 9%                         0.62                     −0.24                  0.62              −1.10
+  Weight on Markowitz = 8%                         0.62                     −0.08                  0.62              −0.78
+  Weight on Markowitz = 7%                         0.62                      0.07                  0.62              −0.49
+  Weight on Markowitz = 6%                         0.62                      0.20                  0.62              −0.22
+  Weight on Markowitz = 5%                         0.61                      0.31                  0.61               0.00
+  Weight on Markowitz = 4%                         0.60                      0.40                  0.60               0.19
+  Weight on Markowitz = 3%                         0.58                      0.46                  0.58               0.33

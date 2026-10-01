@@ -1,0 +1,132 @@
+URL: https://arxiv.org/pdf/1509.08110 (Kakushadze & Tulchinsky, WorldQuant CEO, 'Performance v. Turnover: A Story by 4,000 Alphas', J. Investment Strategies 2016)
+Fetched UTC: 2026-10-01 06:15:14
+Source: open arXiv PDF; WorldQuant proprietary alpha data (U.S. equities, overnight holdings). Paper claim, not independently replicated.
+
+                WorldQuant LLC, 1700 East Putnam Ave, Third Floor, Old Greenwich, CT 06870
+
+                                                  September 7, 2015
+
+                                                        Abstract
+
+                       We analyze empirical data for 4,000 real-life trading portfolios
+                       (U.S. equities) with holding periods of about 0.7-19 trading days.
+                       We find a simple scaling  ~ 1 / , where  is cents-per-share,
+                       and  is the portfolio turnover. Thus, the portfolio return  has
+                       no statistically significant dependence on the turnover . We also
+                       find a scaling  ~  , where  is the portfolio volatility, and the
+                       power is around 0.8-0.85 for holding periods up to 10 days or
+                       so. To our knowledge, this is the only publicly available empirical
+                       study on such a large number of real-life trading portfolios/alphas.
+
+
+
+
+1
+ Zura Kakushadze, Ph.D., is the President and a Co-Founder of Quantigic® Solutions LLC and a Full Professor in the
+Business School and the School of Physics at Free University of Tbilisi. Email: zura@quantigic.com
+2
+    Igor Tulchinsky, M.S., MBA, is the Founder and CEO of WorldQuant LLC. Email: igort.only@worldquant.com
+3
+ DISCLAIMER: This address is used by the corresponding author for no purpose other than to indicate his
+professional affiliation as is customary in publications. In particular, the contents of this paper are not intended as
+an investment, legal, tax or any other such advice, and in no way represent views of Quantigic® Solutions LLC, the
+website www.quantigic.com or any of their other affiliates.
+
+                                                                                                                          1
+1. Introduction
+    The stock market provides a wide array of opportunities for investing. Investment
+strategies vary by a number of important characteristics, such as long-only vs. dollar-neutral
+and in between, average holding period (or, equivalently, turnover), portfolio return, volatility,
+Sharpe ratio, etc. Holding periods (or horizons) can range from multi-year (e.g., mutual funds
+and pension funds) to intraday and even sub-(milli)second (high frequency trading, or HFT).
+
+    It is natural to ask, how do portfolio return4 and Sharpe ratio depend on turnover? In long-
+only strategies with long holding periods5 we can take, say, monthly returns. For mutual funds,
+Carhart [1997] finds6 that turnover negatively impacts the funds’ annual abnormal returns and
+interprets this as owing to the net cost of trading, i.e., turnover does not aid performance.
+
+    In this paper, among other things, we address the question of turnover dependence in the
+context of dollar-neutral quantitative trading strategies with shorter horizons, with holding
+periods of roughly from intraday to about 20 trading days. By some estimates (see Salmon and
+Stoke [2010]), about 70% of total trading volume is driven and executed by computer code.
+Algorithmic trading encompasses most medium frequency trading and all of HFT worldwide.
+
+   We analyze empirical data for 4,000 real-life trading portfolios, or alphas,7 for U.S. equities.
+To our knowledge, our analysis is the only publicly available empirical study on such a large
+number of real-life alphas. We attribute this, in part, to the proprietary nature of such data.
+
+   In the realm of quantitative trading strategies, a useful performance characteristic is cents-
+per-share (CPS), which is profit (in cents as opposed to dollars) per share traded. Shorter-
+horizon quantitative traders generally are well-aware of the simple “rule-of-thumb”: the higher
+the turnover , the lower the CPS . However, what is the precise relationship,  ~ 1 / √,
+ ~ 1 /  , … ? Based on our empirical analysis, we find a simple scaling:
+
+4
+ In long-only strategies the return is adjusted for the risk-free rate. In dollar-neutral strategies the stock loan
+rebate is factored in.
+5
+    E.g., mutual fund strategies based on analyzing the companies’ underlying fundamentals.
+6
+ Carhart [1997] takes mutual fund returns in excess of the 1-month T-bill return, estimates performance relative
+to his 4-factor model (which is the 3-factor model of Fama and French [1993] plus the 1-year momentum factor of
+Jegadeesh and Titman [1993]), and studies the relation of this relative performance to 4 explanatory variables, to
+wit, expense ratio, turnover, total net assets and maximum load fees, via the Fama and McBeth [1973] regression.
+7
+  Here “alpha” – following the common trader lingo – generally means any reasonable “expected return” that one
+may wish to trade on and is not necessarily the same as the “academic” alpha. In practice, often the detailed
+information about how alphas are constructed may not be available, e.g., the only data available could be the
+position data, so “alpha” then is a set of instructions to achieve certain stock holdings by some times  ,  , …
+
+
+                                                                                                                      2
+                                                      1
+                                               ~                                                 (1)
+                                                      
+Consequently, we argue below that the portfolio return  has no statistically significant
+dependence on the turnover . We also find a scaling:
+
+                                               ~                                                (2)
+
+where  is the portfolio return, while  is the portfolio volatility, and the power is around
+0.8-0.85 for holding periods up to about 10 trading days. Apparently, for such holding periods
+the return predominantly stems from volatility. For holding periods above 10 trading days the
+power drops, indicating that some additional factor(s) (e.g., momentum) might be at play.
+
+   The remainder of this paper is organized as follow. We discuss our dataset in Section 2.
+Section 3 gives details of our empirical analysis. We briefly conclude in Section 4.
+
+2. Data
+    In this section we describe our dataset. The data is proprietary to WorldQuant LLC and is
+used here with its express permission. We provide as many details as we possibly can within
+the constraints imposed by the proprietary nature of this dataset.
+
+    We start from 4,002 randomly selected alphas from a substantially larger sample (whose
+size is proprietary). All alphas are for trading U.S. equities with overnight holdings. The trading
+universes for individual alphas are proprietary, but in most part overlap with a typical universe
+----
+Tulchinsky [2015]). The number of mutual funds in the U.S. in 2014 was about 9,260 (see,
+Statista [2015]). In contrast, the number of a priori viable alphas for, say, U.S. equities is many
+orders of magnitude larger. This is owing to myriad permutations of individual stock holdings in
+a (dollar-neutral) portfolio of, say, 2,000 most liquid U.S. stocks that can result in a positive
+return on relatively short time horizons. Furthermore, the universe of these alphas constantly
+changes due to their ephemeral nature. As a result, quickly-adaptive, sophisticated and
+technologically well-equipped quantitative trading operations are required to harvest these
+alphas and combine them via nontrivial algorithms into a unified “mega-alpha”, which is then
+traded with an added bonus of substantially saving on transaction costs due to automatic
+internal crossing of trades between the not-too-correlated diverse alphas.
+
+    Our empirical analysis provides the first step in understanding “phenomenological”
+properties of these alphas. E.g., we find a simple scaling given by Equation (1), whereby CPS
+(cents-per-share) scales inversely with the turnover, and consequently the portfolio return does
+not have statistically significant dependence on the turnover. Why is this useful? First, in some
+cases it may help a portfolio manager decide what kind of alphas to trade (based on the
+turnover). Second, once the intercept 2 in our empirical formula ln() ≈ 2 − ln() is
+determined on a large number of diverse alphas, new alphas can be categorized based on their
+CPS as compared to the model fit (e.g., by standard deviations from the fit line given the
+turnover). Similarly, our empirical scaling given by Equation (2) suggests that for holding
+periods of up to 10 trading days or so, the return predominantly stems from volatility. In some
+cases this can be useful in choosing how to combine such alphas into the “mega-alpha”.
+
+    We hope our empirical analysis gives a glimpse into the complex world of the modern and
+ever-evolving quantitative trading. Combining and trading large numbers of alphas is not only
+the future of quantitative trading, but it is in fact the present reality.

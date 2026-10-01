@@ -1,0 +1,864 @@
+URL: https://skfolio.org/user_guide/model_selection.html
+FETCHED_UTC: 2026-10-01T06:07:42Z
+----
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="../_static/favicon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="../_static/favicon-48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="../_static/favicon-96.png">
+    <link rel="icon" type="image/png" sizes="144x144" href="../_static/favicon-144.png">
+    <link rel="shortcut icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="../_static/apple-touch-icon.png" type="image/png"><meta property="og:title" content="Model Selection" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://skfolio.org/user_guide/model_selection.html" />
+<meta property="og:site_name" content="skfolio" />
+<meta property="og:image" content="https://skfolio.org/_static/expo.jpg" />
+<meta property="og:image:alt" content="skfolio" />
+<meta property="article:modified_time" content="2026-09-24T21:38:52+00:00" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://skfolio.org/user_guide/model_selection.html#article",
+      "headline": "Model Selection",
+      "url": "https://skfolio.org/user_guide/model_selection.html",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://skfolio.org#website"
+      },
+      "about": {
+        "@id": "https://github.com/skfolio/skfolio#code"
+      },
+      "publisher": {
+        "@id": "https://skfoliolabs.com#organization"
+      },
+      "author": {
+        "@type": "Organization",
+        "@id": "https://skfoliolabs.com#organization",
+        "name": "Skfolio Labs",
+        "url": "https://skfoliolabs.com"
+      },
+      "copyrightHolder": {
+        "@id": "https://skfoliolabs.com#organization"
+      },
+      "mainEntityOfPage": "https://skfolio.org/user_guide/model_selection.html",
+      "datePublished": "2023-12-18",
+      "dateModified": "2026-09-24"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://skfolio.org/user_guide/model_selection.html#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Docs Home",
+          "item": "https://skfolio.org/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "User Guide",
+          "item": "https://skfolio.org/user_guide/index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Model Selection",
+          "item": "https://skfolio.org/user_guide/model_selection.html"
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<link rel="alternate" type="text/markdown" href="model_selection.html.md">
+<link rel="describedby" href="llms.txt">
+<meta name="description" content="The model-selection module provides portfolio-specific cross-validation and prediction utilities compatible with scikit-learn." />
+<meta property="og:description" content="The model-selection module provides portfolio-specific cross-validation and prediction utilities compatible with scikit-learn." />
+<meta name="twitter:description" content="The model-selection module provides portfolio-specific cross-validation and prediction utilities compatible with scikit-learn." />
+
+  <title>Model Selection - skfolio</title>
+
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyterlite_sphinx.css?v=f676e775" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=0f345a63" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=64cc4de3f052d77215f0"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
+
+    <script src="../_static/documentation_options.js?v=38182739"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
+    <script src="../_static/jupyterlite_sphinx.js?v=96e329c5"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/model_selection';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="canonical" href="https://skfolio.org/user_guide/model_selection.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Backtesting and Evaluation" href="backtesting_and_evaluation.html" />
+    <link rel="prev" title="Cross-Sectional Transformers" href="cross_sectional_transformers.html" />
+  
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="2026-09-24"/>
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="dark">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="/">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/favicon.svg" class="logo__image only-dark" alt="skfolio documentation - Home"/>
+    <img src="../_static/favicon.svg" class="logo__image only-light pst-js-only" alt="skfolio documentation - Home"/>
+  
+  
+    <p class="title logo__title">skfolio</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+     User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auto_examples/index.html">
+     Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+     API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://skfoliolabs.com/">
+     Enterprise Support
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/skfolio/skfolio" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+     User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auto_examples/index.html">
+     Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+     API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://skfoliolabs.com/">
+     Enterprise Support
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/skfolio/skfolio" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimization.html">Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="portfolio.html">Portfolio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="population.html">Population</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prior.html">Prior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="expected_returns.html">Expected Returns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="variance.html">Variance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="covariance.html">Covariance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factor_models.html">Factor Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distance.html">Distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainty_set.html">Uncertainty Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pre_selection.html">Pre-Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cross_sectional_transformers.html">Cross-Sectional Transformers</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Model Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="backtesting_and_evaluation.html">Backtesting and Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hyper_parameters_tuning.html">Hyper-Parameters Tuning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="online_learning.html">Online Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metadata_routing.html">Metadata Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_preparation.html">Data Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_representation.html">Asset Data Representation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration Guide</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="/" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">User Guide</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Model Selection</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="model-selection">
+<span id="id1"></span><h1>Model Selection<a class="headerlink" href="#model-selection" title="Link to this heading">#</a></h1>
+<p>The Model Selection module extends <code class="docutils literal notranslate"><span class="pre">sklearn.model_selection</span></code> by adding additional
+methods tailored for portfolio selection.</p>
+<section id="online-learning">
+<h2>Online Learning<a class="headerlink" href="#online-learning" title="Link to this heading">#</a></h2>
+<p>In addition to fold-based cross-validation utilities,
+<code class="docutils literal notranslate"><span class="pre">skfolio.model_selection</span></code> provides stateful online utilities for estimators
+that support <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code>. These utilities update a single estimator through
+time instead of fitting an independent clone on each split, which is
+particularly useful for exponentially weighted moments and portfolio optimizers
+built on top of them.</p>
+<p>See <a class="reference internal" href="online_learning.html#online-learning"><span class="std std-ref">Online Learning</span></a> for the full workflow and the differences between
+online evaluation and standard cross-validation.</p>
+</section>
+<section id="cross-validation-prediction">
+<span id="cross-validation"></span><h2>Cross-Validation Prediction<a class="headerlink" href="#cross-validation-prediction" title="Link to this heading">#</a></h2>
+<p>Every <code class="docutils literal notranslate"><span class="pre">skfolio</span></code> estimator is compatible with <code class="docutils literal notranslate"><span class="pre">sklearn.model_selection.cross_val_predict</span></code>.
+We also implement our own <a class="reference internal" href="../generated/skfolio.model_selection.cross_val_predict.html#skfolio.model_selection.cross_val_predict" title="skfolio.model_selection.cross_val_predict"><code class="xref py py-func docutils literal notranslate"><span class="pre">cross_val_predict</span></code></a> for enhanced integration
+with <code class="docutils literal notranslate"><span class="pre">Portfolio</span></code> and <code class="docutils literal notranslate"><span class="pre">Population</span></code> objects, as well as compatibility with
+<a class="reference internal" href="../generated/skfolio.model_selection.CombinatorialPurgedCV.html#skfolio.model_selection.CombinatorialPurgedCV" title="skfolio.model_selection.CombinatorialPurgedCV"><code class="xref py py-class docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code></a> and <a class="reference internal" href="../generated/skfolio.model_selection.MultipleRandomizedCV.html#skfolio.model_selection.MultipleRandomizedCV" title="skfolio.model_selection.MultipleRandomizedCV"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleRandomizedCV</span></code></a>.</p>
+<div class="admonition danger" id="data-leakage">
+<p class="admonition-title">Danger</p>
+<p>When using <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code> selection tools like <code class="docutils literal notranslate"><span class="pre">KFold</span></code> or <code class="docutils literal notranslate"><span class="pre">train_test_split</span></code>, ensure
+that the parameter <code class="docutils literal notranslate"><span class="pre">shuffle</span></code> is set to <code class="docutils literal notranslate"><span class="pre">False</span></code> to avoid data leakage. Financial
+features often incorporate series that exhibit serial correlation (like ARMA
+processes) and shuffling the data will lead to leakage from the test set to the
+training set.</p>
+</div>
+<p>In <code class="docutils literal notranslate"><span class="pre">cross_val_predict</span></code>, the data is split according to the <code class="docutils literal notranslate"><span class="pre">cv</span></code> parameter.
+The portfolio optimization estimator is fitted on the training set and portfolios are
+predicted on the corresponding test set.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code> cross-validation methods such as <code class="docutils literal notranslate"><span class="pre">KFold</span></code> and <code class="docutils literal notranslate"><span class="pre">skfolio</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">WalkForward</span></code>, the output is a <a class="reference internal" href="../generated/skfolio.portfolio.MultiPeriodPortfolio.html#skfolio.portfolio.MultiPeriodPortfolio" title="skfolio.portfolio.MultiPeriodPortfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code></a>, where
+each <a class="reference internal" href="../generated/skfolio.portfolio.Portfolio.html#skfolio.portfolio.Portfolio" title="skfolio.portfolio.Portfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">Portfolio</span></code></a> corresponds to the prediction on a single
+train/test split (resulting in K portfolios for <code class="docutils literal notranslate"><span class="pre">KFold</span></code>).</p>
+<p>For combinatorial cross-validation methods such as <a class="reference internal" href="../generated/skfolio.model_selection.CombinatorialPurgedCV.html#skfolio.model_selection.CombinatorialPurgedCV" title="skfolio.model_selection.CombinatorialPurgedCV"><code class="xref py py-class docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code></a> and
+Monte Carlo-style methods such as <a class="reference internal" href="../generated/skfolio.model_selection.MultipleRandomizedCV.html#skfolio.model_selection.MultipleRandomizedCV" title="skfolio.model_selection.MultipleRandomizedCV"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleRandomizedCV</span></code></a>, the output is a
+<a class="reference internal" href="../generated/skfolio.population.Population.html#skfolio.population.Population" title="skfolio.population.Population"><code class="xref py py-class docutils literal notranslate"><span class="pre">Population</span></code></a> containing multiple
+<a class="reference internal" href="../generated/skfolio.portfolio.MultiPeriodPortfolio.html#skfolio.portfolio.MultiPeriodPortfolio" title="skfolio.portfolio.MultiPeriodPortfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code></a>. This is because each test produces a
+collection of multiple paths rather than a single path.</p>
+<p>Portfolio parameters can be set in the portfolio optimizer’s <code class="docutils literal notranslate"><span class="pre">portfolio_params</span></code> or
+passed to <code class="docutils literal notranslate"><span class="pre">cross_val_predict</span></code>. The parameters shared by
+<a class="reference internal" href="../generated/skfolio.portfolio.Portfolio.html#skfolio.portfolio.Portfolio" title="skfolio.portfolio.Portfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">Portfolio</span></code></a> and
+<a class="reference internal" href="../generated/skfolio.portfolio.MultiPeriodPortfolio.html#skfolio.portfolio.MultiPeriodPortfolio" title="skfolio.portfolio.MultiPeriodPortfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code></a> (<code class="docutils literal notranslate"><span class="pre">compounded</span></code>, <code class="docutils literal notranslate"><span class="pre">risk_free_rate</span></code>,
+<code class="docutils literal notranslate"><span class="pre">annualization_factor</span></code>, <code class="docutils literal notranslate"><span class="pre">fitness_measures</span></code> and the risk measure parameters) are applied
+to the resulting <code class="docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code> and to each <code class="docutils literal notranslate"><span class="pre">Portfolio</span></code> it contains. A value
+passed to <code class="docutils literal notranslate"><span class="pre">cross_val_predict</span></code> takes precedence over the optimizer’s <code class="docutils literal notranslate"><span class="pre">portfolio_params</span></code>.
+When omitted, it is inherited from the optimizer’s <code class="docutils literal notranslate"><span class="pre">portfolio_params</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">risk_free_rate</span></code> falls back to the optimizer’s <code class="docutils literal notranslate"><span class="pre">risk_free_rate</span></code> parameter when it has
+one. For example, <code class="docutils literal notranslate"><span class="pre">MeanRisk(portfolio_params={&quot;compounded&quot;:</span> <span class="pre">True})</span></code> produces a
+compounded <code class="docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code> from <code class="docutils literal notranslate"><span class="pre">cross_val_predict</span></code> without repeating the
+setting. These parameters only affect how the portfolios are measured: a
+<code class="docutils literal notranslate"><span class="pre">risk_free_rate</span></code> passed to <code class="docutils literal notranslate"><span class="pre">cross_val_predict</span></code> does not change the optimizer’s own
+<code class="docutils literal notranslate"><span class="pre">risk_free_rate</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">weight_drift</span></code> applies to each <code class="docutils literal notranslate"><span class="pre">Portfolio</span></code> of the path. With <code class="docutils literal notranslate"><span class="pre">weight_drift=True</span></code>, the
+weights held within each test window drift with the asset returns, and the path runs
+sequentially. A value passed to <code class="docutils literal notranslate"><span class="pre">cross_val_predict</span></code> overrides the optimizer’s
+<code class="docutils literal notranslate"><span class="pre">portfolio_params</span></code>. Optimizer parameters such as <code class="docutils literal notranslate"><span class="pre">transaction_costs</span></code>,
+<code class="docutils literal notranslate"><span class="pre">management_fees</span></code> and <code class="docutils literal notranslate"><span class="pre">previous_weights</span></code> are not accepted in the function’s
+<code class="docutils literal notranslate"><span class="pre">portfolio_params</span></code>: set them on the optimizer, which forwards them to the predicted
+<code class="docutils literal notranslate"><span class="pre">Portfolio</span></code> objects. <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">tag</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> and <code class="docutils literal notranslate"><span class="pre">check_observations_order</span></code>
+apply to the resulting <code class="docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code> only.</p>
+<p>By default, the resulting portfolio inherits its children’s sample weights.
+An explicit <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> overrides them (see <a class="reference internal" href="portfolio.html#portfolio"><span class="std std-ref">Portfolio</span></a>).</p>
+<p>For example, to evaluate a drifted, compounded path with transaction costs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span>
+    <span class="n">MeanRisk</span><span class="p">(</span><span class="n">transaction_costs</span><span class="o">=</span><span class="mf">0.001</span> <span class="o">/</span> <span class="mi">5</span><span class="p">),</span>
+    <span class="n">X</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">WalkForward</span><span class="p">(</span><span class="n">test_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="mi">252</span><span class="p">),</span>
+    <span class="n">portfolio_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"weight_drift"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"compounded"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>With a sequential splitter, the <code class="docutils literal notranslate"><span class="pre">ending_weights</span></code> of each portfolio are passed as
+<code class="docutils literal notranslate"><span class="pre">previous_weights</span></code> to the next fit. They equal the target weights when
+<code class="docutils literal notranslate"><span class="pre">weight_drift=False</span></code> and the weights after the last observation when
+<code class="docutils literal notranslate"><span class="pre">weight_drift=True</span></code>, so transaction costs and <code class="docutils literal notranslate"><span class="pre">max_turnover</span></code> are then measured from the
+holdings a fund would trade from. A failed period keeps the last successful ending
+weights. The sequential path requires one portfolio per fold and raises for estimators
+that return a <a class="reference internal" href="../generated/skfolio.population.Population.html#skfolio.population.Population" title="skfolio.population.Population"><code class="xref py py-class docutils literal notranslate"><span class="pre">Population</span></code></a>. With non-sequential splitters
+such as <code class="docutils literal notranslate"><span class="pre">KFold</span></code>, drift is evaluated inside each test fold and is not propagated. See
+<a class="reference internal" href="backtesting_and_evaluation.html#backtesting-and-evaluation"><span class="std std-ref">Backtesting and Evaluation</span></a> for the choice between <code class="docutils literal notranslate"><span class="pre">weight_drift=False</span></code> and
+<code class="docutils literal notranslate"><span class="pre">weight_drift=True</span></code>.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CombinatorialPurgedCV</span><span class="p">,</span>
+    <span class="n">WalkForward</span><span class="p">,</span>
+    <span class="n">cross_val_predict</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+<span class="c1"># KFold</span>
+<span class="c1"># One single path -&gt; pred is a MultiPeriodPortfolio</span>
+<span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">MeanRisk</span><span class="p">(),</span> <span class="n">X</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">KFold</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">sharpe_ratio</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>  <span class="c1"># predicted returns vector</span>
+
+<span class="c1"># WalkForward</span>
+<span class="c1"># One single path -&gt; pred is a MultiPeriodPortfolio</span>
+<span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span>
+    <span class="n">MeanRisk</span><span class="p">(),</span>
+    <span class="n">X</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">WalkForward</span><span class="p">(</span><span class="n">test_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">"WOM-3FRI"</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">sharpe_ratio</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>  <span class="c1"># predicted returns vector</span>
+
+<span class="c1"># CombinatorialPurgedCV</span>
+<span class="c1"># Multiple paths -&gt; pred is a Population of MultiPeriodPortfolio</span>
+<span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">MeanRisk</span><span class="p">(),</span> <span class="n">X</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">CombinatorialPurgedCV</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pred</span><span class="p">))</span>  <span class="c1"># predicted returns matrix</span>
+
+<span class="c1"># MultipleRandomizedCV</span>
+<span class="c1"># Multiple paths -&gt; pred is a Population of MultiPeriodPortfolio</span>
+<span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span>
+    <span class="n">MeanRisk</span><span class="p">(),</span>
+    <span class="n">X</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">MultipleRandomizedCV</span><span class="p">(</span>
+        <span class="n">walk_forward</span><span class="o">=</span><span class="n">WalkForward</span><span class="p">(</span><span class="n">test_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+        <span class="n">n_subsamples</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">asset_subset_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pred</span><span class="p">))</span>  <span class="c1"># predicted returns matrix</span>
+</pre></div>
+</div>
+</section>
+<section id="walk-forward-cross-validation">
+<h2>Walk-Forward Cross-Validation<a class="headerlink" href="#walk-forward-cross-validation" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.model_selection.WalkForward.html#skfolio.model_selection.WalkForward" title="skfolio.model_selection.WalkForward"><code class="xref py py-class docutils literal notranslate"><span class="pre">WalkForward</span></code></a> splitter divides time series data using a walk‑forward approach.
+Unlike <code class="docutils literal notranslate"><span class="pre">sklearn.model_selection.TimeSeriesSplit</span></code>, you specify the number of training
+and test samples rather than the number of splits, making it more suitable for portfolio
+cross‑validation.</p>
+<p>If your data is a DataFrame indexed by a <code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DatetimeIndex</span></code>, you can split it
+using specific datetime frequencies and offsets.</p>
+</section>
+<section id="combinatorial-purged-cross-validation">
+<h2>Combinatorial Purged Cross-Validation<a class="headerlink" href="#combinatorial-purged-cross-validation" title="Link to this heading">#</a></h2>
+<p>Compared to <code class="docutils literal notranslate"><span class="pre">KFold</span></code>, which splits the data into k folds and generates one single testing
+path, the <a class="reference internal" href="../generated/skfolio.model_selection.CombinatorialPurgedCV.html#skfolio.model_selection.CombinatorialPurgedCV" title="skfolio.model_selection.CombinatorialPurgedCV"><code class="xref py py-class docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code></a> uses the combination of multiple
+train/test sets to generate multiple testing paths.</p>
+<p>To avoid data leakage, purging and embargoing can be performed.</p>
+<p>Purging consists of removing from the training set all observations
+whose labels overlapped in time with those labels included in the testing set.
+Embargoing consists of removing from the training set observations that immediately
+follow an observation in the testing set, since financial features often incorporate
+series that exhibit serial correlation (like ARMA processes).</p>
+<p>When used with <a class="reference internal" href="../generated/skfolio.model_selection.cross_val_predict.html#skfolio.model_selection.cross_val_predict" title="skfolio.model_selection.cross_val_predict"><code class="xref py py-func docutils literal notranslate"><span class="pre">cross_val_predict</span></code></a>, the object returned is a
+<a class="reference internal" href="../generated/skfolio.population.Population.html#skfolio.population.Population" title="skfolio.population.Population"><code class="xref py py-class docutils literal notranslate"><span class="pre">Population</span></code></a> of
+<a class="reference internal" href="../generated/skfolio.portfolio.MultiPeriodPortfolio.html#skfolio.portfolio.MultiPeriodPortfolio" title="skfolio.portfolio.MultiPeriodPortfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code></a> representing each prediction path.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">skfolio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RatioMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinatorialPurgedCV</span><span class="p">,</span> <span class="n">cross_val_predict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRisk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+<span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">MeanRisk</span><span class="p">(),</span> <span class="n">X</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">CombinatorialPurgedCV</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RatioMeasure</span><span class="o">.</span><span class="n">SHARPE_RATIO</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The default parameters of the <code class="docutils literal notranslate"><span class="pre">CombinatorialPurgedCV</span></code> are <code class="docutils literal notranslate"><span class="pre">n_folds=10</span></code> and
+<code class="docutils literal notranslate"><span class="pre">n_test_folds=8</span></code>. You may want to choose these parameters to target a number of test
+paths and an average training size. The latter depends on the number of observations.
+For that, you can use the function <a class="reference internal" href="../generated/skfolio.model_selection.optimal_folds_number.html#skfolio.model_selection.optimal_folds_number" title="skfolio.model_selection.optimal_folds_number"><code class="xref py py-func docutils literal notranslate"><span class="pre">optimal_folds_number</span></code></a> as shown in the example
+<a class="reference internal" href="../auto_examples/clustering/plot_3_hrp_vs_herc.html#sphx-glr-auto-examples-clustering-plot-3-hrp-vs-herc-py"><span class="std std-ref">HRP vs HERC</span></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_folds</span><span class="p">,</span> <span class="n">n_test_folds</span> <span class="o">=</span> <span class="n">optimal_folds_number</span><span class="p">(</span>
+    <span class="n">n_observations</span><span class="o">=</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">target_n_test_paths</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">target_train_size</span><span class="o">=</span><span class="mi">252</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">cv</span> <span class="o">=</span> <span class="n">CombinatorialPurgedCV</span><span class="p">(</span><span class="n">n_folds</span><span class="o">=</span><span class="n">n_folds</span><span class="p">,</span> <span class="n">n_test_folds</span><span class="o">=</span><span class="n">n_test_folds</span><span class="p">)</span>
+<span class="n">cv</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multiple-randomized-cross-validation">
+<h2>Multiple Randomized Cross-Validation<a class="headerlink" href="#multiple-randomized-cross-validation" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../generated/skfolio.model_selection.MultipleRandomizedCV.html#skfolio.model_selection.MultipleRandomizedCV" title="skfolio.model_selection.MultipleRandomizedCV"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleRandomizedCV</span></code></a> cross‑validation strategy, based on the
+“Multiple Randomized Backtests” methodology of Palomar, performs a Monte
+Carlo–style evaluation by repeatedly sampling <strong>distinct</strong> asset subsets (without
+replacement) and <strong>contiguous</strong> time windows. It then applies an inner walk‑forward
+split to each subsample, capturing both temporal and cross‑sectional variability in
+performance.</p>
+<p>When used with <a class="reference internal" href="../generated/skfolio.model_selection.cross_val_predict.html#skfolio.model_selection.cross_val_predict" title="skfolio.model_selection.cross_val_predict"><code class="xref py py-func docutils literal notranslate"><span class="pre">cross_val_predict</span></code></a>, the object returned is a
+<a class="reference internal" href="../generated/skfolio.population.Population.html#skfolio.population.Population" title="skfolio.population.Population"><code class="xref py py-class docutils literal notranslate"><span class="pre">Population</span></code></a> of
+<a class="reference internal" href="../generated/skfolio.portfolio.MultiPeriodPortfolio.html#skfolio.portfolio.MultiPeriodPortfolio" title="skfolio.portfolio.MultiPeriodPortfolio"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiPeriodPortfolio</span></code></a> representing each prediction path.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sp500_dataset</span><span class="p">,</span> <span class="n">load_factors_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">WalkForward</span><span class="p">,</span> <span class="n">MultipleRandomizedCV</span><span class="p">,</span> <span class="n">cross_val_predict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skfolio.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prices_to_returns</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">load_sp500_dataset</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">prices_to_returns</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+<span class="n">cv</span> <span class="o">=</span> <span class="n">MultipleRandomizedCV</span><span class="p">(</span>
+    <span class="n">walk_forward</span><span class="o">=</span><span class="n">WalkForward</span><span class="p">(</span><span class="n">test_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">"WOM-3FRI"</span><span class="p">),</span>
+    <span class="n">n_subsamples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">asset_subset_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">window_size</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="mi">252</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">pred</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">MeanRisk</span><span class="p">(),</span> <span class="n">X</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">measure</span><span class="o">=</span><span class="n">RatioMeasure</span><span class="o">.</span><span class="n">SHARPE_RATIO</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">portfolio</span><span class="o">.</span><span class="n">annualized_sharpe_ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="cross_sectional_transformers.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Cross-Sectional Transformers</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="backtesting_and_evaluation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Backtesting and Evaluation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#online-learning">Online Learning</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-validation-prediction">Cross-Validation Prediction</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#walk-forward-cross-validation">Walk-Forward Cross-Validation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combinatorial-purged-cross-validation">Combinatorial Purged Cross-Validation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-randomized-cross-validation">Multiple Randomized Cross-Validation</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, skfolio developers (BSD License).
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.22.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

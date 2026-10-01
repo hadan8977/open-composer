@@ -1,0 +1,203 @@
+URL: https://people.brandeis.edu/~yanzp/Study%20Notes/Active%20Portfolio%20Management.pdf (fetched with curl -k, cert chain invalid)
+Fetched UTC: 2026-10-01 06:18:36
+Source type: SECONDARY: third-party study notes by Zhipeng Yan (Brandeis) summarising Grinold & Kahn, Active Portfolio Management (2nd ed. 2000); the book itself is paywalled/not freely readable. Chapter numbering below is the notes' (Ch.6 Fundamental Law, Ch.10 Forecasting, Ch.13 Transactions costs). Statements are paraphrases by the note-taker; verify against the book before quoting.. Excerpted line ranges: 50,72 326,345 435,480 738,760 846,865 1108,1135 1200,1225
+
+----- lines 50,72 -----
+   3. The relative perspective will focus us on the residual component of return: the
+       return uncorrelated with the benchmark return.
+   4. The information ratio is the ratio of the expected annual residual return to
+       the annual volatility of the residual return. The information ratio defines the
+       opportunities available to the active manager. The larger the information ratio, the
+       larger the possibility for active management.
+   5. Choosing investment opportunities depends on preferences. The preference
+       point toward high residual return and low residual risk. We capture this in a
+       mean/variance style through residual return minus a (quadratic) penalty on
+       residual risk (a linear penalty on residual variance). We interpret this as “risk-
+       adjusted expected return” or “value added.”
+   6. The highest value added achievable is proportional to the squared
+       information ratio. The information ratio measures the active management
+       opportunities, and the squared information ratio indicates our ability to add
+       value.
+   7. According to the fundamental law of active management, there are two sources of
+       information ratio:
+       IR = IC * BR
+   - Information coefficient: a measure of our level of skill, our ability to forecast
+       each asset’s residual return. It is the correlation between the forecasts and the
+       eventual returns.
+   - Breadth: the number of times per year that we can use our skill.
+   8. Return, risk, benchmarks, preferences, and information ratios constitute the
+
+----- lines 326,345 -----
+   III.     Ex-post information ratio: A measure of achievement
+   1. An information ratio is a ratio of (annualized) residual return to (annualized)
+        residual risk.
+   2. A realized information ratio can (and frequently will) be negative.
+   3. The ex-post information ratio is related to the t-statistic one obtains for the
+        alpha in the regression (equation 5.1). If the data in the regression cover Y years,
+        then the information ratio is approximately the alpha’s t-statistic divided by the
+        square root of Y.
+
+   IV.     Ex-ante information ratio: A measure of opportunity
+   1. The information ratio is the expected level of annual residual return per unit of
+       annual residual risk. The more precise definition of the information ratio is the
+       highest ratio of residual risk to residual standard deviation that the manager
+       can obtain.
+   2. Reasonable levels of ex-ante information ratios run from 0.5 to 1.0
+   3. Given alpha and portfolio residual risk, ω, the information ratio for portfolio P is:
+          α
+   IRP = P , ---------------------- (5.5)
+          ωP
+   4. Our personal “information ratio’ is maximum information ratio that we can
+
+----- lines 435,480 -----
+       of each forecast with the actual outcomes. We assume that IC is the same for all
+       forecasts.
+   3. The fundamental law – connects breadth and skill to the information ratio
+       through the (approximately true) formula:
+        IR = IC • BR -------------------------------------------------- (6.1)
+   - The approximation ignores the benefits of reducing risk that our forecasts provide.
+   For relatively low values of IC (below 0.1) this reduction in risk is extremely small.
+                                 IR IC • BR
+   4. By 5.9 and 6.1 Æ ω * =         =
+                                 2λ       2λ
+   - the desired level of aggressiveness will increase directly with the skill level and
+   as the square root of the breadth. The breadth allows for diversification among the
+   active bets so that overall level of aggressiveness, ω* can increase. The skill increases
+   the possibility of success; thus, we are willing to incur more risk since the gains
+   appear to be larger.
+                                             IR 2 IC 2 • BR
+   5. By 5.11 and 6.1 Æ VA* = VA[ω * ] =          =             Æ value added by a strategy
+                                             4λ R       4λR
+      (the risk-adjusted return) will increase with the breadth and with the square
+      of the skill level.
+
+
+
+                                             9
+Notes: Active Portfolio Management                                         By Zhipeng Yan
+
+
+   6. The fundamental law is designed to give us insight into active management; it
+      isn’t an operational tool.
+   7. A manager needs to know the tradeoffs between increasing the breadth of the
+      strategy, - by either covering more stocks or shortening the time horizons of the
+      forecasts – and improving skill, IC.
+
+   II. Additivity - The fundamental law is additive in the square information ratio.
+    IR 2 = BR1 • IC12 + BR2 • IC22
+   -   Can be applied to two different asset categories.
+   -   Can be applied to one asset category + market timing
+   -   We can carry this notion to an international portfolio. The active return of an
+       international portfolio comes from three main sources: active currency positions,
+       active allocations across countries, and active allocations within country markets.
+   -   The additivity holds across managers. In this case we have to assume that the
+       allocation across the managers is the optimal.
+   -   The law’s use in scaling alphas; i.e., making sure that forecasts of exceptional
+       stock return are consistent with the manger’s information ratio.
+
+   III. Assumptions.
+
+----- lines 738,760 -----
+        score.
+
+IV. The forecasting rule of thumb
+Refined forecast = Volatility * IC * Score
+
+V. Refining forecasts: one asset and two forecasts
+φ = STD(r ) • ICg* • z g + STD(r ) • ICg* ' • z g ' , where ICs take into account the correlation
+between the forecasts.
+- A good forecaster has an IC of 0.05, a great forecaster has an IC = 0.1, and a world class
+forecaster has an IC = 0.15. An IC higher than 0.2 usually signals a faulty backtest or
+imminent investigation for insider trading.
+
+VI. Forecasting and risk.
+    1. Forecasts of returns have a negligible effect on forecasts of volatility and
+       correlation. The little effect there is has nothing to do with the forecast and
+       everything to do with the skill of the forecaster. Æ We can concentrate on the
+       expected return part of the problem and not worry about the risk part.
+    2. Let σ PRIOR and σ POST be estimates of volatility without forecast info and with
+       forecast info. The formula relating these is:
+                                           1/ 2
+        σ POST = σ PRIOR • ⎡⎣1 − IC 2 ⎤⎦          (it is derived from conditional variance formula).
+        When IC is small, having info has very little effect on the volatility forecasts.
+
+
+----- lines 846,865 -----
+   1. t-statistics, information ratio, and information coefficients
+   Regress the excess portfolio returns against the excess benchmark returns:
+    rP (t ) = α P + β P • rB (t ) + ε P (t )
+   2. The information ratio is the best single statistic to capture the potential for
+      value added from active management. The t is the ratio of alpha to its
+      standard error. The information ratio is the ratio of annual alpha to its
+      annual risk.
+   3. If we observe returns over a period of T years, the information ratio is
+      approximately the t divided by the square root of the number of years of
+      observations:
+               t − stat
+        IR ≈
+                   T
+   -   the relationship becomes more exact as the number of observations increases.
+   -   The t measures the statistical significance of the return; the information ratio
+       captures the risk-reward tradeoff of the strategy and the manager’s value added.
+       An information ratio of 0.5 observed over five years may be statistically more
+       significantly than an information ratio of 0.5 observed over one year, but
+       their value added will be equal.
+
+
+----- lines 1108,1135 -----
+Chapter 13                    Transactions Costs, Turnover, and
+Trading
+I. Introduction
+   1. Transactions costs include commissions, the bid/ask spread, and market
+       impact.
+   - Commissions are the charge per share paid to the broker for executing the trade.
+       These tend to be the smallest component of the transactions costs and the easiest
+       to measure.
+   - The bid/ask spread is approximately the cost of trading one share of stock.
+   - Market impact is the cost of trading additional shares of stock. It is hard to
+       measure because it is the cost of trading many shares relative to the cost of trading
+       one share. Every trade alters the market.
+   2. A strategic question – how we can reduce transactions costs while preserving
+       as much of the strategy’s value added as possible. We can attack this in two
+       ways: reducing transactions costs by reducing turnover while retaining as
+       much as the value added as possible, and reducing transactions costs through
+       optimal trading.
+   3. Transactions costs increase with trade size and the desire for quick execution,
+       which help identify the manager as an informed trader, and require increased
+       inventory risk by the liquidity provider.
+   4. Transactions costs are difficult to measure.
+   5. Transactions costs lower value added, but you can often achieve at least 75% of
+       the value added with only half the turnover.
+
+
+
+                                            22
+ Notes: Active Portfolio Management                                         By Zhipeng Yan
+
+----- lines 1200,1225 -----
+                                                                    Vdaily
+      stock’s volatility, a risk/return tradeoff, and the conversion from annual to daily units.
+
+IV. Turnover, transactions costs, and value added
+ 1.   VAP = α P − λA •ψ P2 , suppose the manager plans to move from portfolio I to
+    portfolio Q.
+ 2. Purchase turnover: TOP = ∑ Max[0, hP* ,n − hP ,n ]
+                                    n
+
+ 3. sales turnover: TOS = ∑ Max[0, hP , n − hP* ,n ] ,
+                               n
+ 4. TO = min {TOp, TOs}
+                                                         TO      TO 2
+ 5. A lower bound: VA(TO ) ≥ VAI + ΔVAQ [2(                  )−(     ) ]
+                                                         TOQ     TOQ
+ 6. You can achieve at least 75% of the incremental value added with 50% of the
+     turnover.
+ 7. Transactions costs: Max: VAp – TC*TOp Æ when TC = slope of value
+     added/turnover frontier (VA over TO), Æ optimal.
+ 8. Implied transactions costs: we can fix the level of turnover at the required level,
+     TOR, and then find the slope, SLOPE(TOR), of the frontier at TOR. Æ implied
+     transactions costs = the slope.
+ 9. Reasonable levels of round trip costs (2%) do not call for large amounts of turnover
+     and that very low or high restrictions on turnover correspond to unrealistic levels of
+     transactions costs.
+ 10. It is good news for the portfolio manager if the transactions costs differ.

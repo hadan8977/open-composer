@@ -1,0 +1,3275 @@
+URL: https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf
+Fetched (UTC): 2026-10-01T06:06Z
+Note: pdftotext of Sept 30 2022 SFI version (NOT the 2026 RFS version; numbers may differ)
+-----
+Machine Learning and the Implementable Efficient Frontier
+
+Jensen, Theis Ingerslev ; Kelly, Bryan T.; Malamud, Semyon; Pedersen, Lasse Heje
+
+
+
+
+Document Version
+Final published version
+
+
+
+
+Publication date:
+2022
+
+
+License
+Unspecified
+
+
+Citation for published version (APA):
+Jensen, T. I., Kelly, B. T., Malamud, S., & Pedersen, L. H. (2022). Machine Learning and the Implementable
+Efficient Frontier. Swiss Finance Institute. Swiss Finance Institute Research Paper Series No. 22-63
+
+
+
+Link to publication in CBS Research Portal
+
+
+
+
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+
+
+Take down policy
+If you believe that this document breaches copyright please contact us (research.lib@cbs.dk) providing details, and we will remove access to
+the work immediately and investigate your claim.
+
+
+Download date: 01. okt.. 2026
+       Machine Learning and the Implementable Efficient Frontier
+
+       Theis Ingerslev Jensen, Bryan Kelly, Semyon Malamud, and Lasse Heje Pedersen∗
+
+
+
+
+                                          This version: September 30, 2022
+
+
+
+                                                       Abstract
+
+       We propose that investment strategies should be evaluated based on their net-of-
+       trading-cost return for each level of risk, which we term the “implementable efficient
+       frontier.” While numerous studies use machine learning return forecasts to generate
+       portfolios, their agnosticism toward trading costs leads to excessive reliance on fleeting
+       small-scale characteristics, resulting in poor net returns. We develop a framework that
+       produces a superior frontier by integrating trading-cost-aware portfolio optimization
+       with machine learning. The superior net-of-cost performance is achieved by learning
+       directly about portfolio weights using an economic objective. Further, our model gives
+       rise to a new measure of “economic feature importance.”
+
+
+       Keywords: asset pricing, machine learning, transaction costs, economic significance, investments
+       JEL Codes: C5, C61, G00, G11, G12
+
+
+
+
+   ∗
+    Jensen is at Copenhagen Business School. Kelly is at Yale School of Management, AQR Capital Man-
+agement, and NBER; www.bryankellyacademic.org. Malamud is at Swiss Finance Institute, EPFL, and
+CEPR, and is a consultant to AQR. Pedersen is at AQR Capital Management, Copenhagen Business School,
+and CEPR; www.lhpedersen.com. We are grateful for helpful comments from Cliff Asness, Jules van Bins-
+bergen, Darrell Duffie, Marc Eskildsen, Markus Ibert, Leonid Spesivtsev, and seminar participants at Copen-
+hagen Business School and the NBER Big Data and Securities Markets Conference, Fall 2021. AQR Capital
+Management is a global investment management firm, which may or may not apply similar investment tech-
+niques or methods of analysis as described herein. The views expressed here are those of the authors and not
+necessarily those of AQR. Semyon Malamud gratefully acknowledges financial support of the Swiss Finance
+Institute and the Swiss National Science Foundation, Grant 100018 192692.
+   This paper studies how security information can be used for portfolio selection in a flexible
+and realistic setting with transaction costs. The goal is thus both to provide a powerful tool
+for portfolio choice and to shed new light on which security characteristics are economically
+important drivers of asset pricing.
+   The financial machine learning (ML) literature provides a flexible framework to com-
+bine several characteristics into a single measure of overall expected returns (e.g. Gu et al.,
+2020). The same literature documents the relative “feature importance” of different return
+prediction characteristics (e.g. Chen et al., 2021). These findings suggest that the prediction
+success of ML methods is often driven by short-lived characteristics that work well for small
+and illiquid stocks (e.g. Avramov et al., 2021), suggesting that they might be less important
+for the real economy (e.g. Van Binsbergen and Opp, 2019). The high transaction costs of
+portfolio strategies based on ML imply that these strategies are difficult to implement in
+practice and, more broadly, raise questions about the relevance and interpretation of the
+predictability documented in this literature. Do ML-based expected return estimates merely
+tell us about mispricings that investors don’t bother to arbitrage away because the costs
+are too large, the mispricing too fleeting, and the relevant stocks too small to matter? Or,
+do trading-cost-aware ML-based predictions also work for large stocks, over significant time
+periods, and in a way that it useful for large investors, thus providing information of their
+preferences?
+   This paper seeks to generate predictions that are economically useful. We are interested in
+deriving ML-driven portfolios that can be realistically implemented by market participants
+with a substantial fraction of aggregate assets under management, such as large pension
+funds or other professional asset managers. If a strategy is implementable at scale, then
+the predictive variables that drive such portfolio demands are informative about equilibrium
+discount rates of major companies (Koijen and Yogo (2019)).
+   While ML with transaction costs is challenging to attack with brute force, we deliver a
+tractable solution through the help of economic theory. Specifically, we show how to inte-
+grate the ML problem into a generalized version of the optimal portfolio selection framework
+of Gârleanu and Pedersen (2013). The main thrust of our approach is to feed the objective
+function explicit knowledge of implementability, so it knows to search for perhaps subtle but
+“usable” predictive patterns, while discarding more prominent but very costly predictive
+patterns. That is, we develop a ML method designed to produce optimal portfolios while
+
+
+                                               1
+taking into account realistic frictions from transaction costs of the securities that it trades.
+Our solution also gives rise to a new measure of “economic feature importance” that captures
+which characteristics provide the most investment value. In other words, which characteris-
+tics contribute the most to the overall portfolio’s risk-adjusted returns after trading costs.
+       Our approach generalizes Gârleanu and Pedersen (2013) in three important ways. First,
+while Gârleanu and Pedersen (2013) assume that expected price changes are linear functions
+of a set of signals, we allow expected returns to be a fully general function of the signals, open-
+ing the door for flexible non-linear ML. Second, our setting is based on stationary returns,
+not stationary price changes, solving a vexing problem in the portfolio choice literature and
+providing new coherence to empirical analysis over long horizons.1 Third, while Gârleanu
+and Pedersen (2013) take the data generating process as given, we integrate the estimation
+process into the optimization process via ML, showing the practical and empirical power of
+our method.
+       To understand the difference between our approach and a typical use of ML in finance,
+note that the latter takes a two-step approach: First, find a function of characteristics
+that predicts gross returns; and, second, use the resulting forecasts to build portfolios. This
+typical approach abstracts from transaction costs and turnover, and the resultant investment
+strategies produce negative returns net of transaction costs.
+       Our approach builds transaction costs directly into the objective function, thus ensuring
+that the algorithm learns about usable predictability. One element of usable predictability
+is that it is relevant for large stocks with low transaction costs. Another important element
+is alpha decay, that is, how persistent a predictor is. With transaction costs, whatever you
+buy today you will likely own for a while because the trading costs encourage as you to only
+slowly enter or exit positions. Naturally then, understanding the expected return both now
+and in the further into the future is relevant.
+       Empirically, we find that the optimal ML predictor of near-term returns is indeed different
+from the optimal ML predictor of returns far into the future. In other words, if fh is the
+   1
+    Gârleanu and Pedersen (2013) show that the portfolio problem simplifies by looking at numbers of
+shares and price changes because this sidesteps the issue of portfolio growth that has plagued the literature.
+Portfolio growth is the issue that, if you put 10% of your wealth in IBM stock today, then you will not have
+10% of your wealth in IBM next period before trading – because of the price change of IBM and other stocks.
+Working with numbers of shares sidesteps this issue (number of shares only changes when you trade), but
+the cost is that profit is shares times price changes, so the model cannot be specified in terms of percentage
+returns, making empirical analysis difficult. We have found a way to work with the empirically relevant units
+and preserve tractability via an approximately optimal solution.
+
+
+                                                      2
+function that best predicts returns h months into the future, Et [ri,t+h ] = fh (sit ), then this
+function is different across h. Given that the standard ML approach uses only f1 , we see
+that it misses the information contained in fh at other horizons, h > 1.
+    One way to implement our approach is to forecast returns across many time horizons
+h = 1, 2, ..., then to use all of the predictive functions, fh , appropriately discounted given
+risk, risk aversion, and the form of the trading cost function. However, this approach requires
+a highly complex ML formulation to accommodate all predictive functions at once. Using
+this approach either leads to serious technical challenges (like massive computing costs) or
+requires cutting important corners.
+    Our preferred approach instead learns directly about portfolio weights instead of expected
+returns.2 This approach is simple and delivers an essentially closed-form solution to the
+highly complex portfolio problem in a single step!
+    To evaluate the performance of our method, we propose that portfolio choice methods and
+ML predictions are evaluated based on the net-of-cost investment opportunities that they
+produce. Indeed, a fundamental insight in portfolio choice is that investors can depict their
+investment opportunity set as all the achievable combinations of risk and expected return,
+giving rise to the “efficient frontier” depicted in most finance textbooks as the tangency
+line to the hyperbola generated by risky investments. The textbook frontier is drawn in
+a frictionless setting that abstracts from trading costs, but real-world investors care about
+their net return. What does the frontier look like when we take trading costs into account?
+    Panel A of Figure 1 illustrates frontiers for various methods that we study. The baseline
+for comparison is the cost-agnostic Markowitz-ML solution and the hyperbola of risky invest-
+ments – both in gross terms– that is, our implementation of the textbook frontier using ML.
+Specifically, these portfolios use ML to build stock-level expected returns, use the academic
+analogue of Barra to build a covariance matrix, and then forms ex ante efficient portfolios
+from these two inputs. Figure 1.A plots the portfolios’ realized out-of-sample performance.
+As seen in the figure, while the Markowitz solution is tangent to the hyperbola in a textbook
+analysis with known means and variances, the Markowitz solution is not exactly tangent in
+our out-of-sample analysis. In any event, the Markowitz portfolio performs very well out-of-
+sample, delivering a Sharpe ratio of roughly 2.0 per annum. But this is in gross terms. The
+   2
+     This idea builds on Brandt et al. (2009) who propose using portfolio weights that are parametric (linear)
+functions of characteristics in a setting without trading costs. We extend their idea to handle the much more
+complex portfolio problem with transaction costs and by using ML to learn about the optimal weights.
+
+
+                                                      3
+                                                     Panel A: The Implementable Efficient Frontier: By Portfolio Method
+                                                             Portfolio−ML       Static−ML*          Portfolio Sort         Markowitz−ML          Markowitz−ML (gross)
+                                                    0.5
+
+
+
+            Excess returns (net of trading cost)
+                                                    0.4
+
+
+                                                    0.3
+                                                              Without TC
+                                                                                                                           Static−ML (one layer)
+                                                    0.2
+
+
+                                                    0.1
+
+
+                                                    0.0
+
+
+                                                   −0.1
+                                                       0.0            0.1                     0.2                    0.3                   0.4                   0.5
+                                                                                                        Volatility
+
+                                Panel B: The Implementable Efficient Frontier: By the Size of the Investor
+                                                   1.00
+                                                                            Wealth by 2020:         0       1e+09           1e+10      1e+11
+            Excess returns (net of trading cost)
+
+
+
+
+                                                   0.75
+
+
+
+
+                                                   0.50
+
+
+
+
+                                                   0.25
+
+
+
+
+                                                   0.00
+                                                       0.0            0.1                     0.2                    0.3                   0.4                   0.5
+                                                                                                        Volatility
+
+  Figure 1: The Implementable Efficient Frontier: Risk vs. Return Net of Trading Costs
+Note: Panel A shows the implementable efficient frontier for different portfolio methods with a wealth of
+$10B by 2020. The dashed lines show indifference curves. The dotted hyperbola is the mean-variance frontier
+of risky assets without trading costs, implemented by estimating risk and expected return separately, out-
+of-sample. The grey line is the Markowitz-ML efficient frontier before trading cost. After trading costs,
+Markowitz-ML and portfolio sort have downward bending frontiers as these methods are not implementable.
+Static-ML produces a positive net Sharpe, but negative utility, but it works well with an extra tuning
+layer, denoted Static-ML∗ . Our Portfolio-ML works significantly better, out-of-sample. Panel B shows the
+implementable efficient frontier at different wealth levels. The dotted hyperbola is the same mean-variance
+frontier as in Panel A. The blue line is the optimal portfolio of risky and risk-free assets for an investor with
+zero wealth, corresponding to no trading costs, estimated using our Portfolio-ML method for different relative
+risk aversions. The blue line would be the tangency line to the hyperbola in a standard in-sample textbook
+analysis, but it is not exactly tangent out-of-sample. The lower lines illustrate the mean-variance frontiers
+with larger wealth levels, also estimated using Portfolio-ML. In both panels, the relative risk aversions are
+1 (circle), 5 (triangle), 10 (square), 20 (plus), and 100 (boxed cross) and the sample period is 1981-2020.
+Further details are provided in Section 5.2.
+
+
+
+
+                                                                                                        4
+portfolio’s turnover is enormous and the textbook frontier is non-implementable in practice.
+   The other lines in Figure 1 show our concept of an “implementable efficient frontier,”
+that is, the achievable combinations of risk and expected return, net of trading costs. Fo-
+cusing first on the Markowitz portfolio, we see that its net-of-cost, implementable frontier
+immediately dives into negative expected return territory as soon as it moves away from a
+100% risk-free allocation, as seen in the bottom curve in Panel A. The shape of the imple-
+mentable efficient frontier may be surprising: Whereas the textbook frontier is a straight line
+when increasing the allocation to the risky securities while reducing the risk-free allocation
+(or applying leverage), the true implementable frontier bends down because larger positions
+incur larger transaction costs. Said differently, we show that the net-of-cost Sharpe ratio
+declines along the implementable efficient frontier.
+   To understand the source of the problem for Markowitz-ML at a deeper level, the fea-
+ture importance of this portfolio reveals the culprit: excessive reliance on fleeting small-scale
+characteristics (e.g., 1-month reversal for small stocks), which bear high turnover, high trad-
+ing costs, and result in poor net returns. Further, Panel A of Figure 1 also shows that a
+standard “portfolio sort” used in the literature is also not implementable.
+   The difficulty of the standard portfolios from the literature is noteworthy, but it is also
+interesting to compare our approach to a more sophisticated alternative that may be used by
+some large investors. This sophisticated alternative first uses ML to build expected returns
+(agnostic of trading costs), then in an auxiliary second-stage optimization takes transaction
+costs into account to build portfolios. This “Static-ML” approach delivers a positive net
+Sharpe, but delivers a lower utility than putting all the money in the risk-free asset, as seen
+from the indifference curves in Figure 1.A.
+   To create a more difficult benchmark to beat for our preferred method (Portfolio-ML), we
+further enhance the standard approach by adding a number of extra hyper-parameters that
+improve performance by adjusting its scale in various ways. We refer to this approach as
+Static-ML∗ , where the “∗ ” indicates that we use an extra tuning stage. Static-ML∗ performs
+well, delivering high utility as seen in Figure 1.
+   Despite that Static-ML∗ is a sophisticated multi-stage approach that is much more highly
+parameterized than our Portfolio-ML method, our Portfolio-ML method nevertheless signifi-
+cantly outperforms Static-ML∗ . To understand why Static-ML∗ underperforms our approach,
+note that the first-stage ML procedure produces expected returns that are dominated by
+
+
+                                               5
+short-term signals, and this method does not take into account which predictors are per-
+sistent and which have quick alpha decay. The second-stage optimization reduces turnover,
+especially for small stocks, which leads to a much better performance than portfolios that
+ignore transaction costs. However, this static approach can nevertheless be improved by
+recognizing the dynamic nature of the portfolio using a method that is sensitive to how
+expected returns vary across several return horizons (i.e., alpha decay).
+       In other words, our Portfolio-ML method delivers out-of-sample net-of-cost returns that
+outperform a highly sophisticated alternative by roughly 20% in Sharpe ratio terms and
+60% in utility terms. Further, the feature importance across signals changes when we take
+transaction costs into account. While naive methods are highly influenced by short-term
+reversal signals, our method seeks to optimally blend return predictability across multiple
+future horizons, especially for liquid stocks, which leads to value and quality earning the
+highest feature importance.
+       Panel B of Figure 1 draws the implementable efficient frontier using our Portfolio-ML
+at different levels of wealth or asset under management (AUM). Interestingly, while the
+textbook efficient frontier is the same for all investors, the implementable efficient frontier
+depends on the investor’s size via the implied trading costs. Indeed, we see that larger
+investors face worse (i.e., lower) efficient frontiers that “cut into” the hyperbola.
+       As an interesting benchmark, the top line shows the Portfolio-ML strategy when trading
+costs are nearly zero since the investor has an AUM near zero. This implementable frontier
+is obviously good due to the near-zero trading costs, but we note that such a sophisticated
+ML-based trading is hardly feasible for small investors in the real world.3
+       The frontier at each wealth level shows that the set of optimal implementable portfolios
+is strictly worse for higher AUM investors. This degradation happens for two reasons. First,
+trading a larger portfolio simply incurs higher market impact cost. However, the investor can
+partly mitigate direct transaction costs by trading less, but this increases opportunity costs.
+Indeed, an investor with larger AUM internalizes price impact from their trades, and this
+leads the investor to tilt away from highly predictive but costly-to-trade stocks and signals.
+   3
+     The strategies that we develop would be difficult to implement for small investors as they require real-time
+data on many characteristics across more a thousand stocks, computation of predictive signals, implemen-
+tation of ML models, and infrastructure for continual updating and trading of these models. Hence, the
+methods are most relevant for investors large enough to have a staff that can perform these tasks, but, given
+such capabilities, the implementable investment opportunity set is worse for larger AUM as shown in Figure
+1.B.
+
+
+                                                       6
+Large cost-aware investors opt to forego some predictability in order to hold trading costs
+at bay.
+   Our paper is related to several large literatures. The first applies machine learning meth-
+ods to enhance return prediction and enhance portfolio performance, including Gu et al.
+(2020), Freyberger et al. (2020), Chen et al. (2021), Kelly et al. (2019), Gu et al. (2021),
+Jensen et al. (2022), and Han et al. (2021) in US equity markets; Choi et al. (2021), Leip-
+pold et al. (2022), and Cakici and Zaremba (2022) in international equity markets; and Kelly
+et al. (2022), Bali et al. (2022), and Bali et al. (2021) in bond and derivative markets. Re-
+cent empirical papers point out that trading strategies based on these factors, as well as the
+literature on machine learning in asset pricing cited above, involves large transaction costs
+in practice. This literature includes Li et al. (2020), Chen and Velikov (2021), and Detzel
+et al. (2021). Motivated by these papers, we develop a flexible method of portfolio optimiza-
+tion that lends itself to ML while directly confronting the implementability challenge and
+explicitly incorporating transaction costs into the ML-based portfolio optimization problem.
+   The second related literature extends the frictionless paradigm of Markowitz (1952) to
+study portfolio choice in the presence of transaction costs. Constantinides (1986) and Davis
+and Norman (1990) analyze settings with a single security, where returns are not predictable.
+Balduzzi and Lynch (1999) and Lynch and Balduzzi (2000) numerically study a security with
+predictable returns and transaction costs. Gârleanu and Pedersen (2013) derive an explicit
+portfolio solution with multiple assets with predictable returns and transaction costs when
+returns are driven by a factor model. Gârleanu and Pedersen (2016) extend this to more
+general dynamics in continuous time and Collin-Dufresne et al. (2020) extend the model to
+include different liquidity regimes. Our contribution is to derive optimal portfolio rules based
+on stationary dynamics of returns (rather than dynamic programming with stationary price
+changes, as in the literature) and fully general functional forms for return predictability,
+while incorporating an arbitrarily large set of predictors.
+   In summary, we provide a theoretical bridge between portfolio optimization and machine
+learning with powerful empirical results.
+
+
+
+
+                                               7
+1     Model and the Implementable Efficient Frontier
+We consider an economy with N securities traded in discrete time indexed by t = ..., −2, −1,
+                                                                      f                     f
+0, 1, 2, .... The return of asset n from time t to t + 1 is given by rt+1 + rn,t+1 , where rt+1 is
+risk-free rate and rn,t+1 is the asset’s excess return. The vector of all assets’ excess returns
+is denoted rt+1 .
+    An investor observes a number of characteristics (or signals) for each security, denoted
+sn,t ∈ RK , for example each asset’s valuation ratio, momentum, size, and so on. The
+characteristics of all assets are collected in the matrix st ∈ RN ×K , and we assume that st
+and rt are stationary and ergodic. The signals st fully characterize the investor’s information
+about returns in the sense that
+
+
+    rt+1 = µ(st ) + εt+1                                                                              (1)
+
+
+where the conditional mean µ(st ) = Et [rt+1 ] and variance Σ(st ) = Vart [rt+1 ] = Vart [εt+1 ] are
+bounded Borel-measurable functions of st with Σ being positive definite.
+    The investor can be seen as a professional asset manager such as a hedge fund. The
+investor has wealth or assets under management (AUM) given by wt at time t. The asset
+                                                                        w
+manager’s AUM grows at a stochastic rate, gtw , so that wt+1 = wt (1 + gt+1 ), which generally
+depends on performance and on how clients take money in and out of the fund, as specified
+                                                            $
+in Section 1.2. The investor must choose how much capital, πn,t , to invest in each asset or,
+                                                                                 $
+equivalently, choose the fraction of the capital invested in each asset, πn,t = πn,t /wt . This
+portfolio choice implies a dollar profit before transaction costs at time t + 1 of
+
+
+    dollar profit before t-costst+1 = (rtf + rt+1 )′ πt$ + (wt − 1′N πt$ )rtf = wt (rtf + rt+1
+                                                                                           ′
+                                                                                               πt )   (2)
+
+
+where wt − 1′N πt$ is the amount of money in the risk-free money market account and 1N is
+a vector of ones. The corresponding return before trading costs, net of the risk-free rate is
+
+     π,gross     dollar profit before t-costst+1
+    rt+1     =                                   − rtf = rt+1
+                                                          ′
+                                                              πt                                      (3)
+                               wt
+
+
+
+
+                                                     8
+1.1          Trading Costs, Net Returns, and Portfolio Growth
+The investor faces transaction costs due to her market impact. Specifically, if the investor
+chooses to trade dollar values given by τt ∈ RN at any time t, then this trade leads to a market
+impact of 21 Λt τt , where Λt ∈ RN ×N is a multivariate version of “Kyle’s Lambda,” which is
+symmetric and positive semi-definite such that transaction costs are non-negative and it may
+vary as a function of time and the state st of the market.4 The resulting transaction cost is
+the product of the trade size and its market impact, that is,
+
+                          1
+         dollar t-costst = τt′ Λt τt .                                                                (4)
+                          2
+
+                                                            $
+To determine the trade size, note that the dollar position πn,t−1 bought at time t − 1 has
+                   $
+grown in value to πn,t−1 (1 + rtf + rn,t ). The old dollar position has grown due to the return
+of the asset (or, said differently, the price change). Hence, the vector of all dollar trade sizes
+is
+
+         τt = πt$ − diag(1 + rtf + rt )πt−1
+                                        $
+
+
+           = wt πt − wt−1 diag(1 + rtf + rt )πt−1                                                     (5)
+
+           = wt (πt − gt πt−1 ) ,
+
+where diag(v) is a diagonal matrix with the vector v in the diagonal and
+                                     !
+                      1 + rtf + rt
+         gt = diag                                                                                    (6)
+                        1 + gtw
+
+is the growth of portfolio weights at time t. Combining equations (2)–(6), we see that the
+return as a fraction of wealth in excess of the risk-free rate and trading costs is
+
+                                                 wt
+          π,net
+         rt+1      π,gross
+                = rt+1                ′
+                           − T Ctπ = rt+1 πt −      (πt − gt πt−1 )′ Λt (πt − gt πt−1 ) .             (7)
+                                                 2
+
+where T Ctπ = dollarwt-costs
+                      t
+                             t
+                               . The portfolio’s return naturally depends on the portfolio weights,
+π, but it also depends on the wealth wt even though return is measured in percent of wealth.
+This is because trading costs increase by the square of wealth, such that a larger wealth
+     4
+   The symmetry of Λ is without loss of generality since, if we start with non-symmetric Λ̃, we can define
+Λ = 12 (Λ̃ + Λ̃′ ) and note that τ ′ Λτ = τ ′ Λ̃τ for any τ .
+
+
+                                                          9
+leads to lower portfolio returns after transaction costs. Said differently, a larger investor has
+a larger market impact (for the same portfolio weights π), thus receiving lower net returns.
+
+
+1.2     Objective Function
+The investor maximizes her expected mean-variance utility of portfolio excess returns with
+relative risk aversion γt :
+
+                     π,net            π,net
+                                            
+    utility = E Et [rt+1   ] − Vart [rt+1   ]
+               h              wt                                      γt           i           (8)
+            = E µ(st )′ πt −     (πt − gt πt−1 )′ Λt (πt − gt πt−1 ) − πt′ Σ(st )πt .
+                              2                                       2
+
+We make the following assumptions to keep the problem tractable and stationary. First, the
+investor has constant risk aversion γt = γ and the risk Σ is constant over time. Second,
+the investor’s wealth (or AUM) grows at an exogenous rate (controlled by how clients take
+money in and out), such that the wealth remains a stationary part of the overall market.
+Specifically, wt Λt = wΛ such that the investor faces constant transaction costs relative to
+her wealth. Under these assumptions, the objective function simplifies as follows
+               h            w                                    γ       i
+    utility = E µ(st )′ πt − (πt − gt πt−1 )′ Λ (πt − gt πt−1 ) − πt′ Σπt .                    (9)
+                            2                                    2
+
+where the investor chooses πt while st and gt are exogenous. In summary, the investor’s
+objective is to maximize utility by choosing her portfolio weights πt = π(⃗st ) at each time t
+as a function of all the signals received up until that time, ⃗s = (..., st−2 , st−1 , st ).
+   This setting is ideally suited for a flexible ML implementation for two reasons: First,
+expected returns are driven by a fully general function, µ. Second, the problem is specified
+in terms of stationary units, namely percentage returns and portfolio weights as fractions of
+wealth, and a stationary objective function.
+
+
+1.3     The Implementable Efficient Frontier
+The utility function depends on risk and expected returns net of trading costs, which gives
+rise to the implementable efficient frontier as illustrated in Figure 1 in the introduction.
+Specifically, we define the implementable efficient frontier as the combination of volatilities
+and expected net returns, (σ, k(σ))σ≥0 , such that the expected net return is as high as possible
+
+
+                                                   10
+for that level of risk:
+
+                π,net 
+   k(σ) = max E rt+1     s.t. E [πt′ Σπt ] = σ 2                                             (10)
+            πt ∈Π
+
+
+We are mainly interested in the implementable efficient frontier when taking the maximum
+among all possible portfolios Π, but, as seen in Figure 1, we also consider the frontier among
+subsets such as standard portfolio sorts.
+   As an alternative way to compute the implementable efficient frontier, we can derive the
+optimal portfolio, π γ , for any level of risk aversion, γ. Based on all these optimal portfolios,
+we then compute the corresponding combinations of risk and expected net return:
+
+                           π γ ,net
+    p
+   ( E [(πtγ )′ Σπtγ ], E[rt+1      ])γ>0                                                    (11)
+
+
+This generates part of the same implementable efficient frontier, as we show in Appendix B.1.
+The only difference is that, while (10) can generate a downward-sloping curve as seen in
+Figure 1, (11) only produces a part of the frontier that ends before the downward sloping
+part, since an investor never wants the dominated portfolios on the downward-sloping part.
+The next result characterizes the frontier.
+
+Proposition 1 (Implementable efficient frontier) (i) The net Sharpe ratio, k(σ)/σ, is
+decreasing in σ along the implementable efficient frontier for any level of wealth, w > 0,
+when transaction costs are positive, Λ > 0; (ii) There exists a critical σ∗ such that k(σ) is
+increasing and concave for σ < σ∗ ; (iii) The part of the frontier σ ∈ (0, σ∗ ) is generated by
+(11) as E [(πtγ )′ Σπtγ ] decreases in γ and converges to σ∗ when γ → 0; (iv) If w1 < w2 , then
+        p
+
+the implementable efficient frontier corresponding to a wealth of w1 is above that of w2 .
+
+Interestingly, the implementable efficient frontier has a declining net Sharpe ratio – it is not
+a straight line with a constant Sharpe ratio as in the textbook frontier without trading costs.
+The declining net Sharpe ratio reflects that investors cannot freely leverage their portfolio
+to the desired risk in the presence of trading costs – because more leveraged positions are
+larger and incur larger trading costs. Further, a larger investor faces larger trading costs,
+leading to a lower frontier. Propositions 2–5 characterize the implementable efficient frontier
+at a deeper level via the properties of the underlying portfolios.
+
+
+                                               11
+1.4     Empirical Assessments of Portfolios with Trading Costs
+The implementable efficient frontier can be compute in-sample or out-of-sample, where the
+latter provides a more realistic view of investors’ experience, as discussed in our empirical
+analysis. More broadly, the empirical counterpart of our utility function provides a useful
+way to evaluate the implementability and economic benefit of any trading strategy:
+
+                              T
+                        1 X h π,gross       γ       i
+   utility(empirical) =       rt+1 − T Ctπ − πt′ Σπt .                                           (12)
+                        T t=1               2
+
+The first part of the sum, rtπ,gross = rt+1
+                                        ′
+                                            πt , is simply the average return of the strategy before
+trading costs. This is the standard metric by which most papers in the literature evaluates
+trading strategies.
+   However, real-world trading involves trading costs, so the second term computes the
+average trading cost over time, T Ctπ = w2 (πt − gt πt−1 )′ Λ (πt − gt πt−1 ). This term is a bit
+more complex since it involves both the portfolio weights in the last time period, πt−1 , and
+the portfolio this time period, πt . Specifically, the trading cost is the cost of moving from
+the grown old portfolio, gt πt−1 , to the new portfolio. So the first two terms together yield
+the average return net of trading costs.
+   Lastly, we need to account for the fact that investors are risk averse. In particular,
+two trading strategies that have delivered the same net returns are not the same if one of
+them did so at much higher risk. Hence, the last term computes the average disutility of
+risk. Rather than looking at the ex ante risk, we can also evaluate the ex post realized
+                  π,net
+risk, T1 t=1 γ2 (rt+1   − r̄π,net )2 , where r̄π,net is the average net return. Therefore, our utility
+        P
+
+function suggests that the main object of interest is the average return net of trading cost
+and risk, which can be seen as the utility flow each time period:
+
+    π,util    π,gross          γ π,net
+   rt+1    = rt+1     − T Ctπ − (rt+1  − r̄π,net )2                                              (13)
+                               2
+
+   So, when we evaluate trading strategies empirically, we start with each strategy’s return
+                 π,gross                                                  π,net    π,gross
+gross of costs, rt+1     , then compute its return net of trading costs, rt+1   = rt+1     − T Ctπ ,
+                                                                π,util
+and finally focus on the return net of trading costs and risk, rt+1    .
+   Recall that the net Sharpe ratio declines along implementable efficient frontier. This
+result means that an investor cannot just maximize her Sharpe ratio net of trading costs and
+
+                                                 12
+then choose her risk level – as she could in the standard mean-variance analysis. Instead,
+she must directly maximize the return net of trading costs and risk, thus jointly considering
+risk, return, and trading costs. Hence, our framework provides useful tools to evaluate the
+implementability of trading strategies in general – namely the concepts of the implementable
+                                                                 π,util
+efficient frontier and the return net of trading cost and risk, rt+1    .
+
+
+
+2        Solution
+We seek to find the optimal portfolio πt that maximizes average returns net of trading
+costs and risk (9) or its empirical counterpart (12). The problem is too complex and too
+high-dimensional to attack by brute force ML of a general function πt = π(⃗s) since ⃗s =
+(..., st−2 , st−1 , st ) is simply of too high dimension. So, we need help from economic theory
+before we turn to ML.
+
+
+2.1       Optimal Dynamic Portfolio Choice
+To solve for the optimal portfolio strategy, we use the “discount factor” m defined in the next
+lemma. To define this discount factor, we use the notation ḡ = E[gt ] for the mean portfolio
+growth rate as defined in (6), and G ∈ RN ×N for the second moments, Gij = E[git gjt ].
+
+Lemma 1 The fixed point equation
+                                                                                     −1
+        m̃ =       w−1 Λ−1/2 γΣΛ−1/2 + I + Λ−1/2 ((Λ1/2 (I − m̃)Λ1/2 ) ◦ G)Λ−1/2                          (14)
+
+
+has a unique, symmetric, positive-definite solution m̃ ∈ S(0, 1).5 For this solution, all eigen-
+values of Λ−1/2 m̃Λ−1/2 ḡΛ are between zero and one. Furthermore, m = Λ−1/2 m̃Λ1/2 is such
+that all eigenvalues of mΛ−1 ḡΛ are between zero and one.
+
+We explain in Appendix A.1 how to calculate m, but, for now, let us treat it as a known
+constant that depends on the exogenous parameters of the model. Based on this known
+constant, we can compute the optimal portfolio strategy. We start with a simpler case,
+    5
+   The discount factor m is defined by an equation involving the symbol “◦,” which is an element-wise
+matrix product. The element-wise product is also called the Hadamard product, and, for any two matrices
+A and B, it is computed as the matrix (A ◦ B)i,j = Ai,j Bi,j . Further, S(0, 1) is the set of positive-definite
+matrix-valued functions with eigenvalues between zero and one.
+
+
+
+                                                      13
+namely where expected returns are constant. Even in this case, the solution is non-trivial,
+as is shown by the following proposition.
+
+Proposition 2 (Optimal dynamic strategy: constant expected returns) Let m̃ be the
+unique solution to (14) in S(0, 1), and let m = Λ−1/2 m̃Λ1/2 . When expected returns, µ(st ) =
+µ̄ ∈ RN , as well as gtw , rtf are constant, then the optimal portfolio is given by
+
+              ∞ θ
+                                       !
+              X Y                          1
+       πt =                m gt−τ +1         (I − mΛ−1 ḡΛ)−1 mΛ−1 µ̄                                  (15)
+              θ=0   τ =1
+                                           w
+
+Furthermore, it is the unique L2 -solution to the stochastic difference equation
+
+                             1
+       πt = m gt πt−1 +        (I − mΛ−1 ḡΛ)−1 mΛ−1 µ̄ .                                              (16)
+                             w
+
+To understand the intuition for this proposition, note that the optimal portfolio starts with
+the old grown position, gt πt−1 , and then trades toward a fixed portfolio. To understand the
+direction of the trade, it is useful to write the optimal portfolio as
+
+
+       πt = m gt πt−1 + (I − m)A = gt πt−1 + (I − m)(A − gt πt−1 ) ,                                   (17)
+
+
+where A is the “aim” portfolio. The aim portfolio has the property that, if the investor holds
+this portfolio, then the investor optimally does not trade, and otherwise the investor trades
+in the direction of the aim with trading speed I − m. We see from Proposition 2 that the
+aim portfolio is
+
+                                                   1 −1
+       A = (I − m)−1 (I − mΛ−1 ḡΛ)−1 c              Σ µ̄ ,                                            (18)
+                                                   γ
+                                                   | {z }
+                                                   Markowitz
+
+
+where the matrix c is given by
+
+            γ
+       c=     mΛ−1 Σ                                                                                   (19)
+            w
+
+So we see that the aim portfolio is related to the Markowitz portfolio, but adjusted to account
+for transaction costs.6
+  We note that, under certain conditions, there is little adjustment in the sense that (I − m)−1 (I −
+   6
+
+mΛ ḡΛ)−1 c is close to I. For example, this happens in the limit when G is close to 11′ . As we show in the
+   −1
+
+
+
+                                                          14
+    We next present a tractable approximation of the optimal portfolio when the expected
+returns are not too large. Specifically, we write expected returns as µ(st ) = ϵµ̃(st ), where µ̃
+is a given function and ϵ is a small number that measures the magnitude of expected returns.
+
+Proposition 3 (Optimal dynamic strategy) Let m̃ be the unique solution to (14) in
+S(0, 1) and let m = Λ−1/2 m̃Λ1/2 . With expected returns µ(st ) = ϵµ̃(st ) and gtw = g w +
+O(ϵ), rtf = rf + O(ϵ), the optimal portfolio is
+
+
+    πt = m gt πt−1 + (I − m)At + O(ϵ2 ) ,                                                                  (20)
+
+
+where the aim portfolio At at time t is
+
+                           ∞                          
+                      −1
+                           X
+                                   −1     τ  1 −1
+    At = (I − m)                (mΛ ḡΛ) cEt Σ µ(st+τ ) .                                                  (21)
+                           τ =0
+                                             γ
+                                            |    {z  }
+                                                    Markowitzt+τ
+
+
+This key theoretical result of the paper shows how to choose the optimal portfolio in two
+surprisingly simple and intuitive equations. The first equation (20) says that one should
+always start from the grown position inherited from last period, and then trade toward an
+aim portfolio.
+    The second equation (21) shows how the aim portfolio depends the current and future
+Markowitz portfolios, thus providing an optimal risk-return tradeoff along the path where
+these stocks are expected to remain in the portfolio while simultaneously economizing trans-
+action costs.7 Proposition 3 generalizes the Gârleanu and Pedersen (2013) portfolio opti-
+mization principle, “aim in front of the target,” when facing trading cost frictions. Unlike
+Gârleanu and Pedersen (2013), we do not require specific assumptions on return dynamics,
+but, instead, allow a general function µ(·) that predicts returns.
+    The proposition also leads to several economically intuitive properties as shown next.
+
+Proposition 4 (Trading speed) The eigenvalues of the matrix m are monotone decreas-
+ing in G, Σ and γ and increasing in w, in the sense of positive semi-definite order.8
+Appendix, when G = 11′ , we have ḡ = diag(1), and c = (I − m)2 .
+    7
+      For the convergence of the series (21), it is important that mḡ has all eigenvalues below one in absolute
+value. As we show in the Appendix, a stronger claim holds and Λ1/2 ḡ 1/2 mḡ 1/2 Λ−1/2 is a symmetric, positive
+semi-definite matrix with all eigenvalues between zero and one.
+    8
+      Given two symmetric matrices A, B, we write A ≥ B in the sense of positive semi-definite order if A − B
+is positive semi-definite.
+
+
+                                                      15
+To understand the intuition behind these results, recall from (20) that m is the persistence
+of the optimal portfolio, or, equivalently, I − m is the trading speed toward the aim. At the
+same time, m also determines how much the aim portfolio weights near-time performance
+versus long-term returns, as seen in (21). So, consider what happens when we move to the
+right in the implementable efficient frontier in Figure 1 by decreasing risk aversion. This
+decreasing risk aversion means that m increases, thus reducing trading speed and making
+the aim more focused on persistent signals. In other words, as the investor takes more risk,
+trading costs increase, but the investor compensates by trading more slowly toward a more
+stable aim. Likewise, an investor with larger wealth w has a lower trading speed because of
+larger market impact costs, providing economic intuition for Figure 1.B.
+   The next proposition considers the limiting portfolios with small are large wealth.
+
+Proposition 5 (Small and large investors) When wealth approaches zero such that trans-
+action costs become negligible, w → 0, the discount factor converges as m → 0 and the
+optimal portfolio policy converges to the Markowitz portfolio, πt → γ1 Σ−1 µt .
+   When wealth grows large, w → ∞, the optimal portfolio diminishes, πt → 0, but the
+discount factor m and rescaled portfolio, wπt , and aim portfolio, wAt , converge to finite
+                                     f
+limits if Λ is diagonal and ḡi = 1+r +µi
+                                   1+g w
+                                          > 1 for all i.
+
+Naturally, a tiny investor holds a portfolio close to the Markowitz portfolio because of the
+low market impact costs. The limiting behavior as wealth goes to infinity is less obvious:
+As wealth growth infinite, the investor ultimately holds almost all wealth in the risk-free
+asset as trading a meaningful proportion of wealth in illiquid assets becomes too costly.
+However, this result does not mean that the portfolio in dollar terms is not large. Instead,
+what happens is that the portfolio measured in dollar terms grows toward a finite limit. In
+other words, there is a maximum amount of money that can be made in the market, and, as
+wealth growth, the investors ultimately holds this “maximum dollar portfolio.”
+
+
+2.2    Implementing the Solution with Machine Learning
+From a machine learning perspective, Proposition 3 is a powerful result if we assume that
+st is Markovian. To see the power of this result, note that the proposition transfers the
+ML problem from looking for a general function π all current and past signals to a problem
+of looking for a function A(st ) of only the current signals. This enormous reduction in
+
+                                               16
+dimension vastly simplifies the problem. There are dual ways of using machine learning to
+implement Proposition 3, which we call “Multiperiod-ML” and “Portfolio-ML,” respectively.
+These approaches are designed to find the dynamic optimal portfolio while being aware of
+transaction costs in a theoretically consistent manner. We describe each approach in turn.
+
+
+Multiperiod-ML: Machine Learning about Expected Returns across Horizons
+
+The first approach to apply Proposition 3 empirically is to compute the aim portfolio
+using the expected returns across multiple future time periods. To understand this ap-
+proach, recall first that µt = Et (rt+1 ) is the short-term expected return, so that Et [µt+τ ] =
+Et [Et+τ [rt+τ +1 ]] = Et [rt+τ +1 ] is the current expectation about returns τ periods in the future.
+Using this identity, the aim portfolio can be written as
+
+                            ∞
+                       −1
+                            X            1
+   A(st ) = (I − m)              (mḡ)τ c Σ−1 Et [rt+1+τ ]                                       (22)
+                            τ =0
+                                         γ
+
+So, interestingly, the aim portfolio depends on expected returns across all future time hori-
+zons.
+   One approach to apply Proposition 3 empirically is to first use standard ML techniques
+to predict returns, but do this for a range of forecasting horizons, thus producing proxies for
+Et [rt+1+τ ] for all τ . Using these forecasts, the aim portfolio is given by (22). The resulting
+portfolio can be computed recursively using (20), which we call π Multiperiod-ML as it is based
+on expected returns over multiple time periods.
+   While there exist many ML methods that can be used to forecast returns, we focus on a
+single method throughout the paper for its unique combination of flexibility and simplicity
+(the appendix contains robustness analysis). Specifically, we use random features (RF)
+method of Rahimi and Recht (2007) and analyzed in the context of return prediction and
+portfolio choice by Kelly et al. (2022). This method is based in the insight that any function
+can be approximated arbitrarily well by a linear combination of known auxiliary functions. In
+other words, we can write Et [ri,t+1+τ ] = f (si,t )bτ , where f is a known family of functions of the
+signals and bτ is a parameter to be estimated (Section 4.2 details our empirical methodology).
+The RF method is both powerful to predict returns and easily adaptable to our second
+method, discussed next.
+
+
+
+                                                    17
+Portfolio-ML: Machine Learning directly about Portfolio Weights
+
+The disadvantage of Multiperiod-ML is that we need to a return prediction model for all fu-
+ture return horizons, not just one period ahead. An alternative, and our preferred approach,
+learns directly about portfolio weights, rather than the two-step procedure of first predicting
+returns and then constructing portfolios. We thus refer to this approach as “Portfolio-ML.”
+   We use (12) directly as our ML objective, where the optimal portfolio π depends on the
+aim A, and then search for the function A that maximizes this objective. This method uses
+the insights that (i) we can focus on the aim portfolio A which only depends on current
+signals, and (ii) the objective should penalize transaction costs.
+   To see how this works, note that Proposition 3 shows that the optimal portfolio is a
+weighted average of the inherited position and the current aim portfolio via (20). We can
+express this result as saying that the current optimal portfolio depends on the current and
+past aim portfolios and their growth over time:
+
+          ∞ θ
+                                 !
+          X Y
+   πt =                  m gt−τ +1 (I − m)A(st−θ ) .                                       (23)
+          θ=0     τ =1
+
+
+So, we can replace π by this expression in the objective function (12), which leaves us the
+task of finding the best aim portfolio, A(·), based on an economic objective function.
+   In other words, we need to find a general function A(st ) that maximizes expected utility.
+To do this, we again use the ML insight that any function can be approximated arbitrarily
+well by a linear combination of known auxiliary functions. Specifically, we write At = f (st )β,
+where f is a set of known functions (random features) of the signals and β ∈ Rp is an unknown
+vector of parameters. For example, if portfolio weights were linear in the signals, we could
+simply take f to be the identity such that At = st β. In fact, we take f to be to a set of
+random features, just like we did for predicting returns (detailed are in Section 4.2).
+   So we have boiled the portfolio choice problem down to finding the parameter β, and we
+next show how to do that in closed form. Plugging A(st ) = f (st )β into equation (23), we
+see that the optimal portfolio depends on known elements and the unknown parameter β:
+          "∞ θ
+                                  !                    #
+           X Y
+   πt =                   m gt−τ +1 (I − m)f (st−θ ) β ≡ Πt β                              (24)
+            θ=0    τ =1
+
+
+
+
+                                                  18
+where Πt is defined by the last equation. Using this formulation for πt in the objective (9),
+we have
+
+            1 Xh ′         γ        w                                  i
+   utility =     rt+1 πt − πt′ Σπt − (πt − gt πt−1 )′ Λ (πt − gt πt−1 )
+            T t            2          2
+            1X ′h            γ ′ ′       w                     ′
+                                                                                 i
+          =      rt+1 Πt β − β Πt ΣΠt β − (Πt β − gt Πt−1 β) Λ (Πt β − gt Πt−1 β)
+            T t              2           2
+                                                                                           (25)
+                                                                              
+            1 X ′            1 ′   ′                        ′
+          =     rt+1 Πt β − β [γΠt ΣΠt + w(Πt − gt Πt−1 ) Λ(Πt − gt Πt−1 )] β 
+                                                                               
+            T     | {z }
+                  t
+                              2 |                     {z                   }
+                           ′
+                        ≡r̃t+1                            ≡Σ̃t
+
+                  ′       1
+          ≡ ET [r̃t+1 ]β − β ′ ET [Σ̃t ]β
+                          2
+
+So we can maximize utility by maximizing this quadratic equation in the unknown parameter
+β. To ensure a robust solution, we add ridge penalty −λβ ′ β, yielding the following solution:
+
+Proposition 6 (Portfolio-ML) The aim portfolio can be estimated as A(st ) = f (st )βT ,
+and the corresponding optimal portfolio, π Portfolio-ML , is given by (24), where
+
+
+   βT = (ET [Σ̃t ] + λI)−1 ET [r̃t+1 ]                                                     (26)
+
+
+Amazingly, this approach delivers a closed-form solution for the optimal dynamic portfolio
+in light of transaction costs. To find the optimal portfolio, we simply compute the two
+“expectations” on the right-hand side of (26) as their sample counterparts seen in (25).
+These sample counterparts depend only on data (rt+1 , st ), known parameters, and the ridge
+parameter λ, which is chosen via ML validation as discussed in Section 4.2. With enough
+random features and enough time, the estimated portfolio in Proposition 6 asymptotically
+recovers the optimal portfolio, as discussed in more detail in appendix (Proposition 9).
+
+
+2.3    Economic Feature Importance
+It is important to determine which characteristics are economically important. To address
+this issue, we consider the value function V (s), that is, the maximum utility for a given set
+of signals s. We define the importance of any feature n as
+
+
+   ιn = V (s) − V (s−n )                                                                   (27)
+
+
+                                               19
+where s−n is the set of signals s, except that we drop feature n at all times. In other words,
+the importance in feature n is the drop in utility when the investor no longer has access to
+this information. The following results provides an intuitive characterization of the drivers
+of feature importance.
+
+Proposition 7 In the limit when Λ is small, the investor’s steady-state optimal utility is
+V (s) = v(s) − c(s) + O(∥Λ∥2 ), where
+
+          1
+    v(s) = E[Markowitz′t Σ Markowitzt ] ,                                                       (28)
+          2
+
+is the value function without transaction costs, and c measures the cost of time-variation in
+the Markowitz portfolio:
+
+          1
+    c(s) = E[(Markowitzt+1 − gt+1 Markowitzt )′ Λ (Markowitzt+1 − gt+1 Markowitzt )] .          (29)
+          2
+
+The importance, ιn , of feature n is
+
+    ιn = v(s) − v(s−n ) − (c(s) − c(s−n )) + O(∥Λ∥2 ) .
+         |     {z    } |         {z      }                                                      (30)
+           efficiency loss   cost reduction
+
+
+    We see that a feature is more important if it is an important contributor to the Markowitz
+portfolio (the first term in (30)) and if it is a persistent signal such that it reduces the turnover
+and, hence, the transaction costs (the second term in (30)).
+    This result provides intuition on economic feature importance based on an approximation.
+Empirically, we do not rely on this approximation, but, instead, use ML tools to characterize
+the economic feature importance (27) as described in Section 5.3.
+
+
+
+3     Benchmarks based on Standard Approaches
+
+3.1    Standard Approach: Predicting Returns without T-Costs
+The standard approach in the literature is to assume away transaction costs, that is, setting
+Λ = 0. In this case, the portfolio problem (9) becomes static in the sense that we can choose
+the optimal portfolio πt at time t without regard to what happens at other time periods.
+Hence, the standard approach is focused on finding methods to predict returns, and then
+
+                                                 20
+use these return predictions to form a portfolio. For example, we can write the standard ML
+prediction problem as seeking to find a function f of stock characteristics sn,t that minimizes
+the mean-squared forecast errors for future 1-period (say, 1-month) excess returns rn,t+1 :
+
+              1 X
+      min            [rn,t+1 − f (sn,t )]2 .                                                       (31)
+    f :RK →R T N
+                 n,t
+
+
+This standard approach generates a function that approximates the conditional mean, f (si,t ) ∼
+                                                                                              =
+E[ri,t+1 |si,t ], when returns are stationary across time and assets, and the number of obser-
+vations is large. The standard approach to turn such predictions into portfolio weights is to
+make factor, π factor-ML , by going long a value-weighted average of the top 10% of the assets
+with the highest predicted returns f (si,t ) while shorting the bottom 10% of the assets.
+   This simple factor approach ignores risk and transaction costs, but a more sophisticated
+method maximizes (9) while assuming zero transaction costs. Using the vector of expected
+excess returns µ(st ) = (f (s1,t ), ..., f (sN,t ))′ , the solution to (9) without transaction costs is
+
+                        1 −1
+    πtMarkowitz-ML =      Σ µ(st ) .                                                               (32)
+                        γ
+
+which is an ML-based version of the Markowitz portfolio.
+
+
+3.2     Static Transaction Cost Optimization
+A more sophisticated method is to first estimate the vector of expected excess returns µ(st )
+via (31) and then account for a transaction costs in a second step. While this two-step
+procedure does not fully account for the dynamic nature of the problem, it serves as an
+interesting benchmark for our fully dynamic method. To see how this works, consider the
+problem of choosing an optimal portfolio πt given the existing portfolio gt πt−1 :
+                                                        
+             ′ γ ′      w               ′
+    max πt µt − πt Σπt − (πt − gt πt−1 ) Λ(πt − gt πt−1 ) .                                        (33)
+    πt ∈RN     2        2ϕ
+
+Here, the transaction costs are divided by a “transaction-cost amortisation parameter” ϕ
+to account for the static nature of the problem in an ad-hoc manner. A naive choice of
+this parameter is ϕ = 1, which would mean that the objective (33) compares the returns
+earned over the next time period (a “flow” variable) with the transaction costs (a “stock”
+
+
+                                                  21
+variable) paid today. This comparison is problematic if the portfolio is expected to be held
+for many time periods, so having the fudge factor ϕ is a simple way to address this problem.
+In particular, if the portfolio is expected to be held for ϕ = 6 time periods, say, then we can
+amortize the trading cost over these 6 time periods, thus dividing the current transaction
+cost by 6.
+    The solution to the static objective (33) is:
+
+                           w −1      w
+    πtstatic-ML = (γΣ +      Λ) (µt + Λgt πt−1 )
+                           ϕ         ϕ                                                                (34)
+                  static                  static
+             =m            gt πt−1 + (I − m        ) πtMarkowitz-ML
+
+where mstatic = (γΣ + wϕ Λ)−1 wϕ Λ. So we see that this strategy is a weighted average of the
+inherited grown position, gt πt−1 , and the current Markowitz portfolio. Said differently, this
+strategy always trades in the direction of the current Markowitz portfolio — so Markowitz
+is the “aim portfolio” in this static trading cost formulation. This solution is similar to our
+optimal portfolio with two exceptions. First, the aim portfolio in the fully dynamic model
+is more forward looking, distinguishing persistent signals from those with fast alpha decay.
+Second, the dynamic solution uses the utility optimal discount factor, m, rather than mstatic .
+
+
+
+4     Data and Empirical Methodology
+
+4.1    Data and Inputs to the Portfolio Choice
+Returns and Investment Universe
+
+We use the dataset from Jensen et al. (2022), a publicly available dataset and replication code
+of stock returns and characteristics, with the underlying return data sourced from CRSP and
+accounting data from Compustat.9 We restrict our sample to US common stocks (shrcd: 10,
+11, and 12) traded on AMEX, NASDAQ or NYSE (exchcd: 1, 2, or 3) with a market cap
+above the 50th percentile of NYSE stocks (denoted as large-cap stocks). For example, the
+group of large-cap stocks consists of the largest 1204 stocks at the end of 2020. This sample
+is deliberately conservative; the effects of trading cost optimization will be magnified among
+small, micro, and nano cap stocks which are subject to notably larger trading costs. Our
+   9
+     The data, code, and documentation are                 available   at   https://github.com/bkelly-lab/
+ReplicationCrisis/tree/master/GlobalFactors.
+
+
+                                                      22
+sample runs from 1952 to 2020, where the first part of the sample is used only for estimation
+and our out-of-sample backtests run from 1981 to 2020.
+
+
+Signals
+
+To predict returns, covariances, and portfolio weights, we use 115 stocks characteristics (or
+features) studied in Jensen et al. (2022).10 We standardize each feature in each month by
+mapping the cross-sectional rank into the [0,1] interval. We set missing values to 0.5 but
+require at least 57 non-missing features and non-missing market equity at the beginning of
+the month.
+
+
+Investor Wealth and Optimization Methods
+
+We assume that the investor wealth grows according to the realized market return, wt =
+wt−1 (1 + Rm,t ), such that the size of the investor is a stable share of the market. This
+assumption means that the investor withdraws money when the portfolio has outperformed
+the market and vice versa when the portfolio has underperformed. For interpretability, we
+label each investor size by the corresponding wealth level by the end of 2020. In our baseline
+specification, the investor’s wealth evolves with the market return such that the final wealth
+by 2020 is $10 billion.
+       We assume that the investor optimizes the portfolio each month using either Portfolio-
+ML, Multiperiod-ML, Static-ML, portfolio sort, or Markowitz-ML, as described below in
+Sections 4.2–4.3. These portfolio choice methods depend on trading costs and risks, which
+we estimate each month as described next. We note that, while we re-estimate trading costs
+and risks each month, the investor behaves as if trading costs and risk are constant over
+time. This assumption simplifies the ML problem and, while it may hurt out-of-sample
+performance that trading costs and risk do change over time, we find that the methods
+perform well nevertheless.
+
+
+Trading Cost Matrix
+
+Trading cost measured in dollars are given TCt = 21 τt′ Λτt for any vector of dollar trades,
+τt . In our empirical analysis, we let the trading cost matrix be diagonal and calibrate it
+  10
+    Jensen et al. (2022) studies 153 features. However, here we exclude features with poor coverage early in
+the sample. Table C.1 shows an overview of the features.
+
+
+                                                    23
+based on the estimates in Frazzini et al. (2018). Specifically, we assume that the (expected
+and realized) market impact, 12 Λτt , is 0.1%, when trading 1% of the daily dollar volume in
+a stock. This assumption means that the ith diagonal entry in Λt , denoted Λi,t , satisfies
+0.001 = 21 Λi,t 0.01Vi,t , which means that
+
+                0.2
+       Λi,t =        ,                                                                               (35)
+                Vi,t
+
+where Vi,t is the expected daily dollar volume of stock i at time t. For example, trading
+$5 million over a day, in a stock with a daily volume of $500 million moves the price by
+1 0.2
+2 $500m
+        × $5m = 0.1%, leading to a transaction cost of of 12 $500m
+                                                               0.2
+                                                                   × ($5m)2 =$5000. We follow
+Frazzini et al. (2018) and assume that the expected daily volume is equal to the average
+daily dollar volume over the last six months.
+
+
+Variance-Covariance Matrix
+
+We need to estimate of the variance-covariance matrix, Σt = Vart (rt+1 ), at each time in a
+way that guarantees it to be positive definite and is broadly consistent with our estimates
+of expected returns. To accomplish these goals, we use a factor model similar to the MSCI
+Barra risk model. Specifically, security characteristics are used as observable factor load-
+ings and latent factor returns are estimated via a simple regression (MSCI Barra, 2007).11
+Specifically, each trading day, we estimate a cross-sectional regression of stock returns on
+stock characteristics
+
+                 ′ ˆ
+       ri,t+1 = Si,t ft+1 + ϵi,t+1 ,                                                                 (36)
+
+
+and the regression coefficients, fˆt+1 , are the estimated factor returns. Here, the observed
+characteristics, Si,t , consist of a constant (the number one) and the 13 cluster characteristics
+from Jensen et al. (2022). These cluster factors capture the main features of return predict-
+ing factors, but does so in a simplified way to have a tractable variance-covariance matrix
+(simplified by reducing more than 100 factors to 13 clusters and by using a linear factor
+model rather than ML). Specifically, each stock’s cluster characteristic, Si,t , is its average
+rank of the characteristics in the cluster, standardized by subtracting the mean and dividing
+  11
+    The procedure of fixing factor loadings and estimating factor returns differs from models such as Fama
+and French (1993), that fix factor returns and estimate loadings.
+
+
+                                                   24
+by the standard deviation, each month. This standardization implies that the associated
+factors are long-short and dollar neutral and, at the same time, the constant corresponds to
+an equal-weighted market factor. This structure means that the variance-covariance matrix
+is:
+
+
+       Σ̂t = St Vart (fˆt+1 )St′ + diag (Vart (ε̂i,t+1 )) .                                                   (37)
+
+
+Here, Vart (fˆt+1 ) is estimated as the exponentially-weighted sample covariance matrix of fac-
+tor returns over the past ten years of daily observations. We weight observations with expo-
+nential decays to put more weight on recent observations and, since correlations move slower
+than variances, we use a half-life of 378 days for correlations and 126 days for variances.12
+       Lastly, each stock’s idiosyncratic variance, Vart (ε̂i,t+1 ), is estimated using an exponentially-
+weighted moving average of squared residuals, ϵi,s , from (36) with a half-life of 126 days. We
+require at least 200 non-missing observations within the last 252 trading days, and we use the
+median idiosyncratic variance within size groups to impute missing observations for stocks
+with less than 200 valid observations.
+
+
+4.2        Machine Learning Methodology
+Machine Learning via Random Fourier Features
+
+We use the machine learning method called random feature (RF) regression from Rahimi
+and Recht (2007).13 To understand the intuition behind this method, note that any function
+f (st ) can be approximated as
+
+
+       f (si,t ) ≈ RF (si,t )β,                                                                               (38)
+
+
+where β ∈ Rp is a vector of parameters and RF consists of random features. The RF method
+transforms the original features using random weights and a non-linear activation function.
+There are several ways to generate random features, but we use so-called random Fourier
+  12
+     Specifically, observations j days from t gets a weight of wt−j = c0.5j/half-life where c is a constant ensuring
+that the weights sum to one.
+  13
+     See Kelly et al. (2022) for a detailed analysis of the theoretical properties of this RF methodology in the
+context of return prediction.
+
+
+
+
+                                                              25
+features, which essentially approximates a function via its Fourier transformation.14 While
+this may sound complicated, it is straightforward to do in practice. We first simply draw
+some random Normal vectors, wj ∈ R115 ∼ iidN (0, η 2 I) for j = 1, ..., p/2. Then, for each
+j, we create a pair of new features, sin(s′i,t wj ) and cos(s′i,t wj ), where the sine and cosine
+functions can capture non-linearities. We finally collect all these p random features:
+
+
+       RF (si,t ) = [sin(s′i,t w1 ), cos(s′i,t w1 ), . . . , sin(s′i,t wp/2 ), cos(s′i,t wp/2 )]′ .
+
+
+The RF method thus involves a vector parameters β, estimated via a ridge regression, and
+two hyper-parameters, namely the number of random features p and the standard deviation
+of the random weights, η. We describe below how we choose these hyper-parameters via
+tuning.
+
+
+Machine Learning about Expected Returns: Multiperiod-ML
+
+We estimate expected returns using a ridge regression on the RF transformed features. The
+resulting model can be viewed as a two-layer neural network with non-optimized weights in
+the first layer (the random features) and optimized weights in the final layer (the betas). We
+predict returns over three different horizons. The first model predicts excess returns over
+month t + 1, the second model predicts the average excess return over month t + 2 to t + 6,
+and the third model predicts the average excess return over month t + 7 to t + 12.
+
+
+Machine Learning Directly about the Optimal Portfolio: Portfolio-ML
+
+Our Portfolio-ML learns about the aim portfolio via the relation
+                                            
+                                       1
+       At = f (st )β = diag                      RF (st )β,                                              (39)
+                                      σi,t
+                                                                                                      p
+where β ∈ RK is a parameter, we scale each asset’s position by its volatility, σi,t =                  Σt,ii ,
+and RF consists of random Fourier features as described above. Note the objective for
+estimation is no longer return prediction, but utility maximization, and the solution is given
+in Proposition 6.
+  14
+   The approach we use to generate random features is motivated by Sutherland and Schneider (2015),
+who find that it is preferable to alternative schemes with Gaussian weights.
+
+
+
+                                                                 26
+                                        Table 1: Hyper-Parameters
+
+  Hyper-parameter                                                               Method
+
+  First tuning layer, h               Portfolio-ML                       Multiperiod-ML                          Static-ML
+  Ridge penalty, λ                 {0, e4 , e5 , . . . e8 }        {0, e , e−9.8 , . . . e10 }
+                                                                        −10                              −10
+                                                                                                    {0, e , e    −9.8
+                                                                                                                     , . . . e10 }
+  #random features, p                {26 , 27 , 28 , 29 }                {21 , 22 , . . . , 210 }         {21 , 22 , . . . , 210 }
+  Std of weights, η                       {e−3 , e−2 }                  −4 −3 −2 −1
+                                                                     {e , e , e , e }                    −4 −3 −2 −1
+                                                                                                      {e , e , e , e }
+
+  Second tuning layer, h∗                                                Multiperiod-ML∗                        Static-ML∗
+  Adjustment to mean, u                                                  {0.25, 0.50, 1.00}                {0.25, 0.50, 1.00}
+  Adjustment to variance, v                                                        {1, 2, 3}                         {1, 2, 3}
+  Adjustment to t-cost, k                                                          {1, 2, 3}                        { 11 , 13 , 15 }
+Note: The table shows the hyper-parameter space we use for portfolio tuning. For Portfolio-ML, λ is a
+ridge penalty, p is the number of random features, and η is the standard deviation of random weights. For
+Multiperiod-ML∗ and Static-ML∗ we add a second tuning layer; u shrinks the expected return vectors as
+Et [rt+τ ]∗ = uEt [rt+τ ], v increases stock variances as Σ∗t = Σt + v diag(σt ), and k controls trading cost as
+Λ∗t = kΛt .
+
+
+4.3     Portfolio Tuning
+The empircal implementation relies on several hyper-parameters as summarized in Table 1.
+Consider first how we tune our Portfolio-ML method. This method runs a ridge regression
+on RF transformed features, so we need to find the ridge parameter λ, the number of random
+features p, and the standard deviation of random weights η, collected in h = (λ, p, η).
+    We tune h as follows. For each h, we compute a “validation backtest” in each year
+starting in 1971. Specifically, in each year y ≥ 1971, we compute the optimal beta (26) for
+that h using monthly data from 1952 to y − 1. Using this beta, we compute the optimal
+portfolio for each month in year y, and repeat this process each year until the end of our
+sample. This process creates – for each h – a backtest from 1971 onwards. These validation
+backtests are out-of-sample with respect to beta, but we still need to pick h.
+    Our “actual backtest” starts in 1981. In each year from 1981 onwards, we pick the hyper-
+parameter h with the highest realized utility in the validation backtest up until now (i.e.,
+from 1971 until the previous year). Using this h and the corresponding beta, we compute
+the optimal portfolio over the next year, which is therefore truly out-of-sample with respect
+to both h and beta.
+    For the other methods (Multiperiod-ML, Static-ML, Markowitz-ML, portfolio sort), we
+first fit a model that predicts return, and then compute the optimal portfolio. We predict
+
+
+                                                              27
+returns using a similar ML method based on random features using the tuning parameters
+h shown in Table 1.
+   We show in the next section that Portfolio-ML outperforms Multiperiod-ML and Static-
+ML. In fact, the latter methods in fact deliver negative utility to the investor, out of sample.
+This disappointing performance happens even though the ML model to predict returns works
+reasonably well in terms of how it ranks stocks. The problem is that the resulting portfolios
+tend to be poorly scaled because out-of-sample returns and risks for optimized portfolios
+do not match the scale of their ex ante expected versions. So, this finding already shows
+the power of the Portfolio-ML method, namely its focus on the economic objective and on
+directly choosing portfolio weights, which immediately leads to a reasonable scaling of the
+portfolio with strong performance.
+   Nevertheless, we want to give the other methods a chance to compete with the Portfolio-
+ML method. To make these alternative methods better, we add an additional layer of
+portfolio tuning to Multiperiod-ML and Static-ML, where we add three additional tuning
+parameters: u, v, k. In particular, u shrinks the expected return vector towards zero, v
+increases the diagonal of the covariance matrix, and k increases the trading cost matrix:
+
+   Et∗ [rt+τ ] = uEt [rt+τ ],
+         Σ∗t = Σt + v diag(σt ),                                                           (40)
+
+         Λ∗t = kΛt .
+
+To estimate two layers of hyper-parameters, we proceed in the following way (which is rather
+involved, but, again, Portfolio-ML avoids this complexity). In the first layer, we produce a
+time series of out-of-sample expected returns based on h = (λ, p, η) and, in the second layer,
+we produce optimal portfolios based on h∗ = (u, v, k). For the first layer, we update the RF
+models based on h each decade using the past 30 years of data. We estimate the random
+features models with each set of hyper-parameters over the first 20 years and pick the ones
+that lead to the lowest mean squared error over the last 10 years. After finding the optimal
+hyper-parameters h, we re-train the model using all 30 years of data.
+   In the second layer of portfolio tuning, we update the hyper parameters h∗ each year
+starting in 1981 by choosing the hyper-parameters that led to the highest utility since 1971.
+This two-layer approach is based on some experimentation to make these methods work,
+
+
+                                              28
+which gives these methods an advantage, but, again, our main finding is that Portfolio-ML
+nevertheless performs even better. Figure C.1 in appendix shows the optimal parameters
+over time.
+
+
+
+5     Empirical Results
+This section reports our empirical results for each of our methods of portfolio choice. In our
+baseline specification, we consider an investor with a wealth of $10 billion by the end of 2020
+and a relative risk aversion of 10, but we also consider other levels of wealth for comparison.
+
+
+5.1    Out-of-Sample Portfolio Performance
+Table 2 shows the out-of-sample performance for each method from 1981 to 2020. Judged by
+the performance before trading cost, the Markowitz-ML method is the clear winner with an
+impressive gross Sharpe ratio of 2.00. This finding shows that our methods for predicting risk
+and return perform well out-of-sample. The gross performance of the trading cost-aware port-
+folio choice methods (Portfolio-ML, Multiperiod-ML, Static-ML, Multiperiod-ML∗ , Static-
+ML∗ ) is substantially lower than that of Markowitz-ML because these methods exploit fewer
+and less extreme trading opportunities to save on trading costs. Interestingly, several of
+these methods nevertheless realize a higher gross Sharpe ratio than the standard portfolio
+sort, presumably because they utilize information about risk as well as return.
+    After accounting for trading cost, the net return (and net Sharpe ratio) of the Markowitz-
+ML and portfolio sort methods are highly negative. Both methods trade too aggressively
+and are infeasible for the investor that we consider. In contrast, the trading cost-aware
+methods still deliver positive net Sharpe ratios, reaching 1.38 for Portfolio-ML, an impressive
+performance given that we report out-of-sample results and account for the trading cost of
+a large investor with $10 billion invested.
+    Turning to our main objective, which is to maximize the realized utility (12), Table 2
+shows that the Portfolio-ML approach delivers the highest realized utility. In contrast, the
+methods in the top panel deliver negative realized utility. This top panel shows our results
+when all methods are fitted with a single layer of tuning (estimating portfolio weights or
+expected returns via random feature ML). While Porfolio-ML performs well with a single
+layer of tuning, the other methods deliver negative utility.
+
+                                              29
+                           Table 2: Out-of-Sample Performance Statistics
+
+ Method                     R    Vol.   SRgross      TC     R-TC      SRnet    Utility    Turnover      Lev.
+ One tuning layer
+ Portfolio-ML            0.20   0.14       1.43    0.008      0.19     1.38      0.095         0.32     3.60
+ Multiperiod-ML          0.32   0.34       0.95    0.182      0.14     0.41     -0.437         1.47    12.70
+ Static-ML               0.28   0.27       1.06    0.033      0.25     0.94     -0.106         0.76    11.21
+ Portfolio Sort          0.17   0.15       1.10    1.972     -1.81   -11.87     -1.921         2.60     2.00
+ Markowitz-ML            3.12   1.56       2.00       +          -        -          -        56.33    53.15
+ Two tuning layers
+ Multiperiod-ML∗         0.11   0.08       1.33    0.014      0.09      1.16     0.060         0.40     2.50
+ Static-ML∗              0.13   0.10       1.36    0.024      0.11      1.11     0.060         0.61     3.22
+Note: The table shows the out-of-sample performance of the various portfolio choice methods, rebalanced
+monthly 1981–2020. Here, R is excess return; Vol. is volatility, SRgross is the Sharpe ratio before trading
+cost; TC is trading cost, R-TC is excess return minus trading cost; SRnet is the Sharpe ratio after trading
+cost; Utility is the realized utility computed as the excess return after trading cost minus one-half times the
+assumed risk aversion of 10 times the realized portfolio variance; Turnover is the monthly average of the sum
+of absolute changes in portfolio weights; and Lev. is the portfolio leverage computed as the monthly average
+of the sum of absolute portfolio weights. All items except turnover and leverage are annualized. Portfolio-ML
+and Multiperiod-ML are the two dynamic trading cost optimization methods motivated by Proposition 3,
+Static-ML is the static trading cost optimization method from (34), Portfolio sort goes long/short the 10% of
+stocks with the highest/lowest 1-month expected return, and Markowitz-ML is the optimal portfolio absent
+trading cost from (32). For methods with one tuning layers, we search for the optimal hyper-parameters for
+a ridge regression implemented on RF transformed features. For Multiperiod-ML∗ and Static-ML∗ , we add
+a second tuning layer where we modify expected return, covariance, and trading cost inputs. An entry of
+“+” or “−” reflects an extremely high or low value.
+
+
+    It is instructive to consider why Static-ML with a single layer of tuning delivers a negative
+utility despite its positive net Sharpe ratios. Figure 1.A shows that the indifference curve
+corresponding to Static-ML goes below the origin, thus yielding a negative utility. This
+happens because this method realizes too high risk relative to its ex ante risk estimate. This
+is seen in Figure 1.A from the fact that the indifference curve crosses the frontier, rather
+than being tangent (we note that the Static-ML frontier is not drawn, but has similar shape
+as that of Static-ML∗ ). In other words, two factors determine the realized utility (i.e., the
+return net of trading costs and risk), out of sample: (i) how good the implementable efficient
+frontier is, and (ii) whether the method places the investor correctly on the frontier based on
+the investor’s risk aversion. While Static-ML produces a frontier that could deliver positive
+utility, it places the investor too far to the right on the frontier, thus realizing a negative
+utility.
+    To test Portfolio-ML even further, we also compare its performance to versions of the
+other methods where we give these other methods an extra “advantage” via a second layer
+of tuning as described in the Section 4.3. This second layer of tuning is designed to improve
+
+                                                      30
+the scaling of the portfolio, thus helping these methods to place the investor more correctly
+on the implementable efficient frontier.
+   Table 2 shows that the two-layer versions outperform the one-layer versions across all
+performance statistics. This result highlight that the second tuning layer is crucial for these
+methods based on ML about expected returns. Nevertheless, our Portfolio-ML continues to
+outperform these methods. This outperformance of Portfolio-ML relative to the two-layer
+methods shows a benefit of learning directly about portfolio weights, namely that the ML
+algorithm immediately searches for a well-scaled portfolio that delivers high utility – so no
+additional tuning layer is needed.
+   As seen from the notation in Table 2, we add a superscript “∗” to the implementations
+with two tuning layers. In the remainder of this section, we focus on the comparison between
+Portfolio-ML and the two-layers alternatives, Multiperiod-ML∗ and Static-ML∗ , studying
+their performance over time and the statistical significance of their performance differences.
+   Figure 2 shows that the outperformance of Portfolio-ML in terms of net returns and
+realized utility is consistent over time. The outperformance of Portfolio-ML is all the more
+remarkable when considering that the other methods were given the advantage of a second
+level of tuning to make them perform better. Figure 2 also shows some interesting time-series
+patterns in performance. For example, we see that several of these methods have relatively
+lower performance during the dot-com bubble in 2000, the global financial crisis in 2008, and
+the COVID-19 crash in 2020.
+   One of the reasons behind the outperformance of Portfolio-ML is that this method keeps
+trading costs lower. This lower trading cost is achieved via a lower monthly turnover of 32%
+relative to 40% and 61% for Multiperiod-ML∗ and Static-ML∗ , respectively, as seen from
+Table 2. Figure 3 shows how the ex-ante volatility, leverage, and turnover evolve over time,
+again showing that Portfolio-ML tends to have a lower turnover.
+   To visualize an example of some specific portfolio weights over time, Figure 4 depicts
+how the portfolio weights for Apply and Xerox stocks evolve for each method. Portfolio-ML
+adjusts its positions more slowly than the other methods, especially for the less liquid stock
+(Xerox).
+   Table 3 reports the statistical significance of the relative performance differences across
+portfolio choice methods. Specifically, the table reports the Bayesian probability that each
+method outperforms any of the other methods. To compute these pairwise probabilities of
+
+
+                                              31
+                               Portfolio−ML        Multiperiod−ML*       Static−ML*     Portfolio Sort     Markowitz−ML
+
+                                    Gross return                     Return net of TC           Return net of TC and Risk
+                           8                                                               4
+ Cummulative performance
+
+
+
+
+                           6                               6
+                                                                                           3
+
+
+                           4                               4                               2
+
+
+                           2                               2                               1
+
+
+                           0                               0                               0
+                           1980 1990 2000 2010 2020         1980 1990 2000 2010 2020        1980 1990 2000 2010 2020
+
+                                                       Figure 2: Performance over Time
+                                                                                       π,gross
+Note: The left panel shows the cumulative sum of returns before trading cost, rt+1             , for each portfolio
+                                                                                                  π,net
+method. The middle panel shows the cumulative sum of returns net of trading cost, rt+1                  . The right
+panel shows the cumulative return net of trading cost (T C) and net of disutility from risk, computed as
+ π,util    π,gross                π,net     π,net 2
+rt+1    = rt+1     − T Ctπ − γ2 (rt+1   − r̄t+1  ) , corresponding to the realized utility. We assume that the
+investors has a relative risk aversion of 10 and invested wealth of $10 billion by the end of 2020.
+
+
+one method outperforming another, we first compute the utility flow (return net of trading
+                                                   π,util    π,gross                π,net     π,net 2
+costs and risk) of each method π at time t + 1 as rt+1    = rt+1     − T Ctπ − γ2 (rt+1   − r̄t+1  ),
+where the relative risk aversion is γ = 10 as before. We then compute the utility difference
+                                                           π,util    π̃,util
+between any two methods, say π and π̃, as dπ,π̃,t+1 = rt+1        − rt+1     . The posterior of the true
+utility difference is then normally distributed with mean d¯π,π̃ = T1 Tt=1 dπ,π̃,t and variance
+                                                                               P
+
+  1
+     PT                ¯ 2
+T −1    t=1 (dπ,π̃,t − dπ,π̃ ) assuming that the difference is normally distributed with a non-
+
+informative prior about the mean and a known variance. Based on these calculations, Table
+3 reports the posterior probability that dπ,π̃ > 0, that is, the posterior probability that the
+first portfolio choice method, π, delivers a higher average utility than the second method, π̃.
+                           Table 3 shows that the probability that Portfolio-ML delivers a higher expected utility
+than Multiperiod-ML∗ , Static-ML∗ , Portfolio sort, and Markowitz-ML are, respectively, 95%,
+96%, 100%, and 100%, suggesting that the superiority of Portfolio-ML is not just random
+noise.
+                           Alternatively, we can think of the probabilities in Table 3 as being approximately the
+p-value of a one-sided test that the realized utility of i is greater than j. Hence, we see that
+
+
+                                                                         32
+                Portfolio−ML       Multiperiod−ML*         Static−ML*     Portfolio Sort     Markowitz−ML
+
+
+                                                  Ex−ante Volatility
+  0.30
+
+  0.10
+
+  0.03
+
+  0.01
+
+                                                      Leverage
+   100
+
+
+    10
+
+
+     1
+
+                                                      Turnover
+ 100.0
+
+  10.0
+
+   1.0
+
+   0.1
+         1980                  1990                   2000                   2010                   2020
+
+
+                               Figure 3: Portfolio Statistics over Time
+Note: The top panel shows the ex-ante volatility of each portfolio method based on a monthly updated
+covariance matrix. The middle panel shows portfolio leverage defined as P        the sum of absolute portfolio
+weights. The lower panel shows the monthly portfolio turnover defined as i |(πt − gt πt−1 )i |, the sum of
+absolute differences between the current portfolio weight, πt , and the grown portfolio weight from last month,
+gt πt−1 . We use a logarithmic scale for the y-axis because of large differences across methods.
+
+
+we can reject that Portfolio-ML delivers a lower realized utility than the other methods at
+conventional levels of significance.
+    Lastly, Table 4 reports the return correlations of the various portfolio choice methods.
+We see that all methods are positively correlated, but the correlations tend to be modest
+in size. In addition to showing the relative connection across these methods of portfolio
+choice, these findings may also be informative about asset pricing more generally. Indeed,
+the Markowitz-ML portfolio return can be viewed as an estimate of the minimum-variance
+stochastic discount factor (SDF) in a frictionless market as shown by Hansen and Jagan-
+nathan (1991). Since risk adjustments depend on covariance with the SDF, a natural ques-
+
+
+
+                                                      33
+                                                                  Apple (liquid)     Xerox (illiquid)
+
+
+                                   Portfolio−ML                        Multiperiod−ML*                         Static−ML*
+                     0.03
+                                                          0.010                                 0.015
+
+                     0.02                                                                       0.010
+                                                          0.005
+                     0.01                                                                       0.005
+
+                                                          0.000                                 0.000
+                     0.00
+ Portfolio weight
+
+
+
+
+                                                                                               −0.005
+                    −0.01                                −0.005
+                                                                                                        2016     2018       2020
+                               Portfolio Sort                           Markowitz−ML
+
+
+                      0.3                                  0.10
+
+                                                           0.05
+                      0.2
+                                                           0.00
+                      0.1
+                                                          −0.05
+
+                      0.0                                 −0.10
+                            2016      2018        2020              2016      2018   2020
+
+
+                                             Figure 4: Portfolio Weights: Apple vs. Xerox
+Note: The figure shows the portfolio weights of Apple and Xerox for each of the five portfolio choice methods,
+2015–2020. Apple is chosen as an example of a relatively liquid stock and Xerox as a relatively illiquid stock
+over this time period. By the end of 2020, the average daily dollar volume over the past six months was
+$16.39B for Apple and $0.06B for Xerox.
+
+
+tion is how closely SDF aligns with the corresponding measure designed for a market with
+frictions. The correlation between Portfolio-ML and Markowitz-ML is only 0.17, indicating
+that the marginal utility of an investor with $10 billion using Portfolio-ML could be very
+different from risk adjustments in a frictionless market.
+                    In summary, this section shows that Portfolio-ML outperforms the other methods, de-
+livering a high net Sharpe ratio and high utility. While this strong performance suggests
+that Portfolio-ML works well, a few words of warning are in order. First, while the net
+performance is extremely good in our simulation, real-world investors seeking to achieve this
+performance must often pay fees to a an asset manager (e.g., a hedge fund) running such
+strategies and face other real-world complications, potentially reducing performance. Sec-
+
+
+                                                                         34
+                          Table 3: Relative Probability of Outperformance
+                       Portfolio-ML Multiperiod-ML∗ Static-ML∗ Portfolio Sort Markowitz-ML
+ Portfolio-ML                                   95%        96%          100%          100%
+ Multiperiod-ML∗                 5%                        51%          100%          100%
+ Static-ML∗                      4%             49%                     100%          100%
+ Portfolio Sort                  0%              0%         0%                        100%
+ Markowitz-ML                    0%              0%         0%            0%
+Note: The table shows the probability of the row method having a higher average utility than the column
+method. The probability is computed via an uninformative prior assuming that the difference in utility is
+                                                                          π,util    π,gross                π,net
+normally distributed. The utility flow of any method π at time t + 1 is rt+1     = rt+1     − T Ctπ − γ2 (rt+1   −
+  π,net 2
+r̄t+1 ) . One can also think of each number as the p-value in the test of whether the average utility of the
+portfolio choice method in the row is greater than the average utility of the method in the column.
+
+
+ond, investors might not have been able to realize this performance in real time due to more
+limited computing power and a less developed ML methodology in the early sample. In any
+case, this warning applies to any simulation, and the statistically significant outperformance
+of Portfolio-ML relative to other methods is an encouraging apples-to-apples test.
+
+
+5.2     Evidence on the Implementable Efficient Frontier
+Textbooks and real-world investors often depict their investment opportunities in terms of
+the achievable combinations of risk and expected return. This illustration highlights that
+investors seek a portfolio on the efficient frontier with the highest expected return for any
+level of risk. The textbook version of the efficient frontier – without trading costs – is a
+straight line that is tangent to the hyperbola of risky investments. However, we propose
+that investors should focus on what we call the implementable efficient frontier, namely the
+efficient frontier net of trading costs.
+    Figure 1 illustrates our estimated implementable efficient frontier, out-of-sample. To
+understand how we have generated this plot, we start by describing the two benchmarks
+
+                                     Table 4: Portfolio Correlations
+
+                              Portfolio-ML       Multiperiod-ML∗         Static-ML∗       Portfolio Sort
+      Multiperiod-ML∗             0.51
+      Static-ML∗                  0.55                   0.80
+      Portfolio Sort              0.24                   0.46                 0.53
+      Markowitz-ML                0.17                   0.50                 0.59              0.56
+Note: The table shows the time-series correlation of the returns before trading costs for the various portfolio
+choice methods, 1981-2020.
+
+
+
+                                                       35
+for a world without trading costs. The hyperbola is a mean-variance frontier of risky assets
+inspired by Markowitz (1952, 1959). We generate the points on the frontier by minimizing
+variance for a given mean and requiring that portfolio weights sum to 1:
+
+
+       min        πt′ Σt πt ,
+       πt ∈RN
+
+         s.t. πt′ µt = k,
+                  πt′ 1N = 1,
+
+
+where k is the required mean return, and 1N is a vector of ones. The solution is given by
+
+                ct k − bt −1      (at − bt k) −1
+       πt =              Σ t µt +            Σt 1N ,                                                        (41)
+                    dt                dt
+
+where at = µ′t Σ−1           ′  −1           ′  −1                       2
+                t µt , bt = 1N Σt µt , ct = 1N Σt 1N , and dt = at ct − bt are constants. Imple-
+
+menting this solution for a range of k’s generates the hyperbola. A standard presentation of
+the frontier uses one cross-section of stocks (i.e., one µt and one Σt ) and presents the ex-ante
+expected frontier. In contrast, we show the realized frontier out-of-sample. Specifically, for
+each k, we update portfolio weights each month using (41). We then record the realized
+return and volatility before trading cost over the sample, 1981-2020. In contrast to the stan-
+dard textbook presentation, the efficient frontier of risky assets in Figure 1 also accounts for
+out-of-sample performance decay. As such, it gives a more realistic picture of what investors
+could achieve absent trading costs.
+       The second benchmark for the case without trading cost is the Markowitz-ML portfolio.
+In a standard presentation, the line from this portfolio would be tangent to the hyperbola.
+However, because our analysis is out-of-sample, this outcome is not ensured. In fact, the
+Markowitz-ML portfolio lies above the hyperbola.15
+       Next, we shift the attention from the frictionless benchmarks to our main focus, namely
+  15
+     This result might be surprising since the Markowitz-ML portfolio in a given period is proportional to
+the tangency portfolio of risky assets. Specifically, the tangency portfolio is π TPF = b1t Σ−1 t µt , while the
+Markowitz-ML portfolio is πtMarkowitz-ML = γ1 Σ−1
+                                                t µt . However, the scaling constant  for Markowitz-ML,     γ −1 ,
+is fixed across time periods, while the scaling constant for the tangency portfolio, b−1t , varies significantly
+over time and even turns negative during a minority of periods. So the Markowitz portfolio can dominate the
+hyperbola for two reasons. First, when bt is negative, the Markowitz portfolio shorts the tangency portfolio
+(which is on the lower branch of the hyperbola during such times) and the efficient frontier lies strictly above
+the hyperbola. Second, the differing time-varying scales of πtMarkowitz-ML and π TPF (i.e., the differing timing
+of the common underlying portfolio) turns out to work in favor of the Markowitz portfolio.
+
+
+
+                                                       36
+the implementable efficient frontier. These are computed via equation (11). Figure 1.A shows
+the efficient frontier after trading cost for an investor using different portfolio methods. We
+implement each method assuming an investor with a wealth that reaches $10b by 2020.
+   We illustrate the performance of Markowitz-ML and portfolio sort with trading cost by
+scaling each portfolio to ex-post volatilities ranging from 0 to 10% in increments of 1%. We
+see that their returns after trading cost are negative, except at very low volatilities. Hence,
+implementable efficient frontiers of these standard methods show that an investor maximizes
+utility by putting almost all wealth into the risk-free asset, thus choosing to hardly trade on
+these standard methods.
+   Turning to the trading-cost-aware methods, Portfolio-ML and Static-ML∗ , we see that
+their performance is much better. Instead of varying the ex-post volatilities, we implement
+the methods under five different relative risk aversions, γ ∈ {1, 5, 10, 20, 100} and interpo-
+lating between their realized performance to plot an efficient frontier. Comparing the two
+implied frontiers, we see that Portfolio-ML leads to a higher achievable return for the same
+volatility. More generally, the figure shows that it is feasible for a large investor to generate
+an attractive implementable efficient frontier, even net of trading costs.
+   Panel B of Figure 1 shows how the implementable efficient frontier varies by investor size.
+Specifically, we implement the Portfolio-ML method for the same relative risk aversions as
+above, but now we also vary the investor wealth, w2020 ∈ {0, 109 , 1010 , 1011 }. Such a plot
+is not interesting without trading cost since the efficient frontier is the same regardless of
+investor size. With trading costs, this is no longer the case. Price impact is increasing in
+trade size, so a larger investor must trade more slowly and focus more on liquid stocks.
+Naturally, these effects imply that larger investors have a worse risk-return tradeoff. The
+results in Figure 1.B quantifies how much worse. The figure shows the substantial cost of
+being a large investor. For example, an investor with $10B and a relative risk aversion of
+10, gets a net excess return of 19% at 14% volatility. If the same investor had $1B, a 14%
+volatility would provide a net return of 22%. In summary, once we introduce trading costs,
+we no longer have a unique efficient frontier. Instead, the implementable efficient frontier
+depends on the size of the investor and the method of portfolio choice.
+   Finally, Figure 5 shows how the efficient frontier depends on access to certain features.
+We use a methodology known as permutation feature importance to assess this dependence.
+We provide a detailed description of this methodology in Section 5.3. Briefly, for a specific
+
+
+                                               37
+           Panel A: Counterfactual Implementable Efficient Frontiers: With Trading Cost
+                                                              Theme permuted:         None    Quality     Value   Short−Term Reversal
+
+
+
+            Excess returns (net of trading cost)
+                                                   0.3
+
+
+
+
+                                                   0.2
+
+
+
+
+                                                   0.1
+
+
+
+
+                                                   0.0
+                                                      0.0                       0.1                        0.2                          0.3
+                                                                                             Volatility
+
+                                                         Panel B: Counterfactual Efficient Frontiers: Without Trading Cost
+                                                               Theme permuted         None    Quality     Value   Short−Term Reversal
+
+                                                   0.6
+            Excess returns
+
+
+
+
+                                                   0.4
+
+
+
+
+                                                   0.2
+
+
+
+
+                                                   0.0
+                                                      0.0                       0.1                        0.2                          0.3
+                                                                                             Volatility
+
+      Figure 5: Feature Importance: Counterfactual Implementable Efficient Frontiers
+Note: Panel A shows the implementable efficient frontier with trading costs for an investor with a wealth of
+$10B by 2020. We implement the Portfolio-ML method using a counterfactual data set, where we permute
+all feature values related to either quality, value, or short-term reversal. The solid blue line shows the frontier
+using the actual data. Panel B shows the same analysis without trading cost, now using the Markowitz-ML
+method. In both panels, the relative risk aversions are 1 (circle), 5 (triangle), 10 (square), 20 (plus), and
+100 (boxed cross) and the sample period is 1981-2020.
+
+
+theme, say quality, we randomly shuffle (permute) all features related to this theme, effec-
+tively breaking their informational content. We then implement Portfolio-ML (Panel A) or
+Markowitz-ML (Panel B) using this counterfactual data. If the theme is important, breaking
+its informational content should lead to a worse risk-return tradeoff. In other words, destroy-
+ing important features leads to a less desirable efficient frontier. We build counterfactual
+data sets by permuting quality, value, and short-term reversal signals separately. The solid
+
+
+
+                                                                                             38
+blue line shows the efficient frontier with the original data.
+   Panel A shows the impact on the efficient frontier generated by Portfolio-ML, after trading
+cost, for an investor with $10B in wealth. We see that quality and value signals are crucial
+for the implementable frontier. In contrast, destroying the informational content in short-
+term reversal signals barely changes the achievable frontier because these trading-cost-aware
+portfolio choice methods hardly use this signal anyway.
+   Panel B shows the impact on the efficient frontier generated by Markowitz-ML before
+trading cost. Here, all three themes are important. Interestingly, while short-term reversal
+has a minor impact on the implementable frontier with trading costs in Panel A, it has a
+large impact on the frontier without trading cost in Panel B.
+   In summary, looking at the efficient frontier without trading cost suggest that value,
+quality, and short-term reversal signals are all important for the efficient frontier. However,
+looking at the implementable efficient frontier of a large investor, value and quality remain
+important while short-term reversal does not. These results highlight that feature importance
+can change drastically when accounting for trading costs, and we explore this finding further
+in the next section.
+
+
+5.3     Economic Feature Importance
+Following the theoretical discussion in Section 2.3, we define economic feature importance as
+the drop in realized utility when excluding a feature from the information set of the investor.
+To implement this idea, we use the concept of permutation feature importance, introduced by
+Breiman (2001), which is a standard model-agnostic method for assessing feature importance
+of machine learning models (Molnar, 2022). The basic idea behind permutation feature
+importance is to permute features randomly and assess the decline in a user-defined value
+function. As such, we do not exclude the feature from the information set but, instead,
+destroy any predictive relationship between the feature and the outcome variable.
+   To compute economic feature importance for any portfolio choice method i, say Portfolio-
+ML, we first compute the baseline realized utility, utility[π i (sorig )], of the portfolio, π i , com-
+puted based on the original features, sorig . Next, for each feature j, we randomly per-
+mute its associated values at each given time, while keeping all other features at their
+actual values. We then implement the portfolio method using the same parameters as
+in the original specification, but now with the permuted features, sperm,j , as inputs. Fi-
+
+                                                  39
+nally, we compute the economic feature importance as the resulting drop in utility, FIij =
+utility[π i (sorig )] − utility[π i (sperm,j )]. In other words, a feature j is economically important
+for method i if destroying its informational content leads to a large drop in realized utility,
+that is, a large FIij .
+       A potential issue with permuting each feature separately is that substitution effects can
+distort the inference. For example, we include many different value features, so the effect of
+permuting a specific feature such as book-to-market is muted because the method can rely
+on other value features such as assets-to-market or earnings-to-price. To handle substitu-
+tion effects, we permute all features within a specific theme (or cluster) and record feature
+importance at the theme level. We use the 13 themes from Jensen et al. (2022), shown in
+Table C.1 in appendix.
+       Figure 6 shows features importance for three different methods. The left and middle
+panels show feature importance after trading costs for a large investor with a wealth of $10b
+by 2020 for, respectively, Portfolio-ML and Multiperiod-ML∗ . The right panel shows feature
+importance without trading costs for Markowitz-ML, where we ignore trading costs because
+this method does not work after trading costs, making it meaningless to discuss net-of-cost
+feature importance. As such, the right panel serves as the benchmark of a frictionless market.
+       Looking at the frictionless benchmark in right panel of Figure 6, we see that the important
+feature themes before trading costs are value, short-term reversal, and low risk. Turning to
+the net-of-cost feature importance in the left and middle panels, we see that value remains
+important for a large investor. In contrast, short-term and low risk are far less important
+due to the high turnover of many of the factors within these themes (see figure C.2). This
+finding is consistent with the theoretical results of Section 2.3, namely that high-frequency
+features are less important in the presence of trading costs.
+       For example, the short-term reversal theme includes the short-term reversal factor, which
+has a monthly autocorrelation of −0.04. This autocorrelation is not just low, but actually
+negative, giving rise to large portfolio turnover.16 For a large investor, the predictive ability
+of short-term reversal is not enough to overcome the cost of trading it. Similarly, the low-risk
+theme includes features such as the past-month volatility or the maximum return over the
+past month, where the predictive ability is short-lived. (We note that some of the factors in
+  16
+    The autocorrelation of a feature is computed as the average autocorrelation across all stocks with at
+least five years of monthly observations.
+
+
+
+                                                   40
+                                 Portfolio−ML                 Multiperiod−ML*                Markowitz−ML
+               Quality
+                Value
+          Momentum
+          Investment
+             Accruals
+       Debt Issuance
+                 Size
+        Profit Growth
+            Leverage
+          Seasonality
+ Short−Term Reversal
+          Profitability
+            Low Risk
+                          0.00   0.02     0.04   0.06 0.00 0.01 0.02 0.03 0.04 0.05   0.00    0.02   0.04   0.06
+                                        Drop in realized utility from permuting theme features
+
+                                 Figure 6: Economic Feature Importance
+Note: The figure shows a utility-based feature importance measure for Portfolio-ML and Multiperiod-ML∗ ,
+the two trading cost-aware methods motivated by Proposition 3, and Markowitz-ML, which is the optimal
+solution absent trading cost from (32). We randomly shuffle the associated features for each theme while
+keeping all other features at their actual value. We then implement each method based on this counterfactual
+data and measure feature importance as the difference in realized utility relative to the implementation that
+uses the actual data. For Markowitz-ML, we assume that the investor can trade without incurring trading
+cost.
+
+
+these themes have low turnover, e.g. market beta, and may individually have a meaningful
+feature importance, but our results indicate that the overall themes are less importance net
+of trading costs.) In comparison, book-to-market has a monthly autocorrelation of 0.94,
+indicating that it is a highly persistent feature, thus economizing on trading cost.
+    For Portfolio-ML, quality emerges as the most important theme. The median monthly
+autocorrelation of quality features is 0.93, so the result is again consistent with the theoretical
+findings. Perhaps surprisingly, momentum, generally considered a “fast” signal, is one of the
+most important themes for a large investor. However, several momentum features actually
+do exhibit a meaningful persistence; for example, 12-month return momentum has a monthly
+autocorrelation of 0.87. Furthermore, momentum and value are negatively correlated, which
+leads to less trading because the two signals offset each other.
+    In summary, value, quality, and momentum are the economically important feature
+themes for a large investor facing trading costs. Before trading costs, high-frequency signals
+such as short-term reversal are the most important.
+
+
+                                                         41
+6     Conclusion
+We develop a bridge between ML and portfolio choice with trading costs. To accomplish
+this bridge, we solve the optimal portfolio problem with transaction costs when returns
+are predictable via an arbitrary function of security characteristics, and then show how the
+solution can be computed in a tractable way via machine learning directly about portfolio
+weights.
+    To evaluate the usefulness of our method – and, in fact, any method of portfolio choice
+– we propose that investors should focus on the implementable efficient frontier, not the
+standard cost-agnostic efficient frontier. We show empirically that our method expands
+the implementable efficient frontier relative to other methods of portfolio choice. In other
+words, we find significant out-of-sample gains from our method even relative to sophisticated
+and more highly parameterized alternatives. We also consider several comparative statics,
+showing how the implementable efficient frontier contracts for larger investors facing higher
+market impact costs.
+    Finally, the method implies a novel view of which securities are important. Indeed,
+while standard methods that ignore transaction costs focus on transient features that work
+well on paper for small stocks, our method naturally selects persistent features of economic
+importance.
+
+
+
+
+                                             42
+References
+Avramov, D., S. Cheng, and L. Metzker (2021). Machine learning versus economic restrictions:
+  Evidence from stock return predictability. Management Science, forthcoming.
+
+Balduzzi, P. and A. W. Lynch (1999). Transaction costs and predictability: some utility cost
+  calculations. Journal of Financial Economics 52 (1), 47–78.
+
+Bali, T. G., H. Beckmeyer, M. Moerke, and F. Weigert (2021). Option return predictability with
+  machine learning and big data. Available at SSRN 3895984 .
+
+Bali, T. G., A. Goyal, D. Huang, F. Jiang, and Q. Wen (2022). Predicting corporate bond re-
+  turns: Merton meets machine learning. Georgetown McDonough School of Business Research
+  Paper (3686164), 20–110.
+
+Brandt, M. W., P. Santa-Clara, and R. Valkanov (2009). Parametric portfolio policies: Exploiting
+  characteristics in the cross-section of equity returns. The Review of Financial Studies 22 (9),
+  3411–3447.
+
+Breiman, L. (2001). Random forests. Machine learning 45 (1), 5–32.
+
+Cakici, N. and A. Zaremba (2022). Empirical asset pricing via machine learning: The global edition.
+  Available at SSRN 4028525 .
+
+Chen, A. Y. and M. Velikov (2021). Zeroing in on the expected returns of anomalies. Working
+  paper, Federal Reserve Board .
+
+Chen, L., M. Pelger, and J. Zhu (2021). Deep learning in asset pricing. Available at SSRN 3350138 .
+
+Choi, D., W. Jiang, and C. Zhang (2021). Alpha go everywhere: Machine learning and international
+  stock returns. Available at SSRN 3489679 .
+
+Collin-Dufresne, P., K. Daniel, and M. Sağlam (2020). Liquidity regimes and optimal dynamic
+  asset allocation. Journal of Financial Economics 136 (2), 379–406.
+
+Constantinides, G. M. (1986). Capital market equilibrium with transaction costs. Journal of
+  Political Economy 94, 842–862.
+
+Davis, M. and A. Norman (1990). Portfolio selection with transaction costs. Mathematics of
+  Operations Research 15, 676–713.
+
+Detzel, A. L., R. Novy-Marx, and M. Velikov (2021). Model selection with transaction costs.
+  Available at SSRN 3805379 .
+
+Fama, E. F. and K. R. French (1993). Common risk factors in the returns on stocks and bonds.
+  Journal of Financial Economics 33 (1), 3–56.
+
+Frazzini, A., R. Israel, and T. J. Moskowitz (2018). Trading costs. Available at SSRN 3229719 .
+
+Freyberger, J., A. Neuhierl, and M. Weber (2020). Dissecting characteristics nonparametrically.
+  The Review of Financial Studies 33 (5), 2326–2377.
+
+Gârleanu, N. and L. H. Pedersen (2013). Dynamic trading with predictable returns and transaction
+  costs. The Journal of Finance 68 (6), 2309–2340.
+
+Gârleanu, N. and L. H. Pedersen (2016). Dynamic portfolio choice with frictions. Journal of
+  Economic Theory 165, 487–516.
+
+                                                43
+Gu, S., B. Kelly, and D. Xiu (2020). Empirical asset pricing via machine learning. The Review of
+  Financial Studies 33 (5), 2223–2273.
+
+Gu, S., B. Kelly, and D. Xiu (2021). Autoencoder asset pricing models. Journal of Economet-
+  rics 222 (1), 429–450.
+
+Han, Y., A. He, D. Rapach, and G. Zhou (2021). Expected stock returns and firm characteristics:
+  E-lasso, assessment, and implications. Assessment, and Implications (September 10, 2021).
+
+Hansen, L. P. and R. Jagannathan (1991). Implications of security market data for models of
+  dynamic economies. Journal of political economy 99 (2), 225–262.
+
+Jensen, T. I., B. T. Kelly, and L. H. Pedersen (2022). Is there a replication crisis in finance? Journal
+  of Finance, forthcoming.
+
+Kelly, B. T., S. Malamud, and K. Zhou (2022). The virtue of complexity in return prediction.
+
+Kelly, B. T., D. Palhares, and S. Pruitt (2022). Modeling corporate bond returns. Journal of
+  Finance.
+
+Kelly, B. T., S. Pruitt, and Y. Su (2019). Characteristics are covariances: A unified model of risk
+  and return. Journal of Financial Economics 134 (3), 501–524.
+
+Koijen, R. S. and M. Yogo (2019). A demand system approach to asset pricing. Journal of Political
+  Economy 127 (4), 1475–1515.
+
+Krein, M. G. and M. Rutman (1950). Linear operators leaving invariant a cone in a Banach space.
+  Number 26. American Mathematical Society.
+
+Leippold, M., Q. Wang, and W. Zhou (2022). Machine learning in the chinese stock market. Journal
+  of Financial Economics 145 (2), 64–82.
+
+Li, S. A., V. DeMiguel, and A. Martin-Utrera (2020). Which factors with price-impact costs?
+   Victor and Martin-Utrera, Alberto, Which Factors with Price-Impact Costs.
+
+Lynch, A. W. and P. Balduzzi (2000). Predictability and transaction costs: the impact on rebal-
+  ancing rules and behavior. Journal of Finance 55, 2285–2309.
+
+Markowitz, H. M. (1952). Portfolio selection. The Journal of Finance 7 (1), 77–91.
+
+Markowitz, H. M. (1959). Portfolio Selection: Efficient Diversification of Investments. Yale Uni-
+ versity Press.
+
+Molnar, C. (2022). Interpretable Machine Learning (2 ed.).
+
+MSCI Barra (2007). Barra Risk Model Handbook.
+
+Rahimi, A. and B. Recht (2007). Random features for large-scale kernel machines. Advances in
+  neural information processing systems 20.
+
+Sutherland, D. J. and J. Schneider (2015). On the error of random fourier features. arXiv preprint
+  arXiv:1506.02785 .
+
+Van Binsbergen, J. H. and C. C. Opp (2019). Real anomalies. The Journal of finance 74 (4),
+  1659–1706.
+
+
+
+                                                  44
+                                            Appendix
+    The appendix is organized as follows. Appendix A presents implementation details,
+including how to compute the discount factor m (section A.1) and details on Multiperiod-
+ML (A.2).
+    Appendix B contains proofs, including a key technical lemma for verifying optimality of
+policies (B.2), properties of m used in the proofs (B.3), proofs of Propositions 2 and 3 (B.4),
+proofs of Propositions 4 and 5 (B.5), the optimality of Portfolio ML (B.6), and economic
+feature importance (B.7).
+    Appendix C contains further empirical information, including an overview of the secu-
+rity characteristics used empirically (C.1), the estimated hyper-parameters over time (C.2),
+and the autocorrelation of the features and their importance for different return prediction
+horizons (C.3).
+
+
+A         Implementation Details
+A.1         Computing the Discount Factor m
+Lemma 2 Suppose that Λ and Σ are both diagonal. Let Λ−1/2 ΣΛ−1/2 = diag(qi,i ) is diagonal,
+then there exists a unique diagonal solution m̃ to (B.58) such that Λ−1/2 m̃Λ1/2 ḡ has all
+eigenvalues below one in absolute value. It is given by
+                                         2
+       mi,i =                         p                                                      (A.1)
+                w−1 γqi,i + Gi,i + 1 + (w−1 γqi,i + Gi,i + 1)2 − 4Gi,i
+
+Proof of Lemma 2. The proof follows by direct calculation.                                       □
+
+    Another special case with a closed-form solution is when G has a rank of one, which is
+not a realistic case, but turns out to be a useful approximation. Specifically, we have that
+G = ḡḡ ′ + (1+rf1+µ̄)2 Σ ∼
+                           = ḡḡ ′ , where17 ḡ = (1+rf + µ̄)−1 (1+rf +E[µ]) and the approximation
+is based on the idea that ḡ is a vector of numbers close to one, whereas Σ is much smaller
+with numbers of the order of 0.102 when monthly volatility is around 10%.
+
+Lemma 3 Suppose that Λ is diagonal. In the case when G = ξξ ′ for some vector ξ > 0,
+then the unique solution m to (B.46) such that m diag(ξ) has all eigenvalues below one in
+absolute value and m̃ ∈ S(0, 1) given by m = Λ−1/2 m̃Λ1/2 where
+                                         1/2
+       m̃ = diag(ξ)−1/2 0.5(Σ̂ − Σ̂2 − 4I      ) diag(ξ)−1/2                                 (A.2)
+                                                                                   1/2
+and Σ̂ = diag(ξ)−1/2 (w−1 Λ−1/2 γΣΛ−1/2 + diag((ξi2 + 1))) diag(ξ)−1/2 and Σ̂2 − 4I      is
+the unique positive-definite square root.
+  17
+       We abuse the notation and use ḡ to denote both the vector and the diagonal matrix.
+
+
+
+
+                                                      45
+Proof of Lemma 3. We have that (B.58) takes the form
+                                                                        −1
+  m̃ = Λ−1/2 ΣΛ−1/2 + I + Λ−1/2 diag(ξ)(Λ1/2 (I − m̃)Λ1/2 ) diag(ξ)Λ−1/2     .                (A.3)
+
+and the assumption of a diagonal Λ implies
+                                                    −1
+            −1/2   −1/2
+   m̃ = Λ        ΣΛ     + I + diag(ξ)(I − m̃) diag(ξ)    .                                    (A.4)
+
+We abuse the notation and use ξ to denote diag(ξ). Let Σ̃ = Λ−1/2 ΣΛ−1/2 + I + ξ 2 . Then,
+(A.4) takes the form
+                   −1
+   m̃ = Σ̃ − ξ m̃ξ      .                                                            (A.5)
+
+Define
+   Σ̂ = ξ −1/2 Σ̃ξ −1/2 = ξ −1/2 Λ−1/2 ΣΛ−1/2 ξ −1/2 + ξ −1 + ξ > 2I ,
+where the last inequality follows because ξ + ξ −1 ≥ 2 for any positive number ξ. Let also
+m̂ = ξ 1/2 m̃ξ 1/2 . Then, we get
+
+   m̂2 − Σ̂m̂ + I = 0                                                                         (A.6)
+which has 2N solutions. The smallest solution is given by
+
+   m̂ = 0.5(Σ̂ − (Σ̂2 − 4I)1/2 ) .                                                            (A.7)
+
+The function f (x) = 0.5(x − (x2 − 4)1/2 ) = 2/(x + (x2 − 4)1/2 ) < 1 for all x > 2, and the
+claim follows.                                                                            □
+
+    Starting with this approximation, we can compute the exact m stepwise, as follows. Note
+first that the set S of symmetric, positive definite matrices is a partially-ordered set with
+respect to the positive semi-definite order: We say that m1 ≤ m2 if m2 − m1 is positive semi-
+definite. Further, we let S(0, 1) be the set of positive semi-definite matrices with eigenvalues
+between zero and one.
+    Suppose for simplicity that Λ is diagonal. Since the optimum is unique, the proof of
+Proposition 2 implies that (B.58) has a unique solution m̃ ∈ S(0, 1). Remarkably, this so-
+lution automatically satisfies the transversality condition ḡ 1/2 m̃ḡ 1/2 ∈ S(0, 1). The following
+lemma shows how to construct this unique solution.
+
+Lemma 4 The unique solution m̃ ∈ S(0, 1) to (B.58) can be computed as follows: m =
+Λ−1/2 m̃Λ1/2 , where m̃ can be found by iterating the mapping F :
+                                                                          −1
+                  −1 −1/2      −1/2        −1/2    1/2        1/2     −1/2
+   F (m̃) = w Λ           γΣΛ       +I +Λ       ((Λ (I − m̃)Λ ) ◦ G)Λ          . (A.8)
+
+Indeed, F maps S(0, 1) into itself, is monotonic with respect to the positive semi-definite
+order. Furthermore, it has a unique fixed point m̃∗ ∈ S(0, 1), and its iterations converge to
+this unique fixed point from any starting point m0 in S(0, 1) satisfying either m0 ≤ F (m0 ) or
+
+
+                                                46
+m0 ≥ F (m0 ). In particular, it converges upward from the smallest starting point 0 ∈ S(0, 1) :
+   F (0) ≤ F (F (0)) ≤ · · · ≤ F (· · · (F (0))) → m̃∗
+Furthermore, the map F is monotone decreasing in the matrix G in the sense of positive semi-
+definite order: m̃(G1 ) ≤ m̃(G2 ) whenever G1 ≥ G2 . In particular, if G = ḡḡ ′ + (1+rf1+µ̄)2 Σ
+with ḡ = (1 + rf + µ̄)−1 (1 + rf + E[µ]), and if Λ is diagonal, then it also converges downward
+from the starting point m̃(ḡ) from Lemma 3:
+   F (m̃(ḡ)) ≥ F (F (m̃(ḡ))) ≥ · · · ≥ F (· · · (F (m̃(ḡ)))) → m̃∗                                 (A.9)
+so the first iterations of these provide lower and upper bounds:
+                                           −1
+      w−1 Λ−1/2 γΣΛ−1/2 + diag((Gi,i + 1))
+                                                          −1                                      (A.10)
+    ≤ m̃∗ ≤ w−1 Λ−1/2 γΣΛ−1/2 + I + ((I − m̃(ḡ)) ◦ G)         .
+
+Proof. The only claim that requires proof is the fact that m̃(ḡ) ≥ F (m̃(ḡ); G). Indeed, by
+the monotonicity of F in G we have
+   m̃(ḡ) = F (m̃(ḡ); ḡḡ ′ ) ≥ F (m̃(ḡ); G)
+and the claim follows. This inequality combined with monotonicity implies the required
+sequence of inequalities (A.9).                                                     □
+
+A.2     Implementation Details for Multiperiod-ML
+Suppose that Λ is diagonal. While formula (21) requires an infinite sum, in our numerical
+implementation we use the approximation
+                                                                   ∞
+                                                                   X
+                     −1                                       −2
+                                            2
+   At = (I − m) (I − (m diag(ḡ))) (I − (m diag(ḡ)))                     (m diag(ḡ))τ cΣ−1 Et [rt+1+τ ]
+                                                                   τ =0
+                                  ∞
+                                  X
+             −1
+    = (I − m) (I − (m diag(ḡ)))2
+                                    (m diag(ḡ))τ (I − (m diag(ḡ)))−2 cΣ−1 Et [rt+1+τ ]
+                                          τ =0
+                                                       ∞
+                                                       X
+    = (I − m)−1 (I − (m diag(ḡ)))(I − (m diag(ḡ)))                        c Σ−1 Et [rt+1+τ ]
+                                                              (m diag(ḡ))τ e
+                                                       τ =0
+                                                                   k
+                                                                   X
+                −1                                     k+1 −1
+                                      2
+    ≈ (I − m) (I − (m diag(ḡ))) (I − (m diag(ḡ))        )                        c Σ−1 Et [rt+1+τ ]
+                                                                     (m diag(ḡ))τ e
+                                                                   τ =0
+                                                                                                    (A.11)
+where we have defined
+   c = (I − (m diag(ḡ)))−2 c .
+   e                                                                                                (A.12)
+
+
+
+
+                                                  47
+B        Proofs
+B.1      Properties of the Implementable Efficient Frontier
+We note that the textbook efficient frontier is usually defined in terms of a risk-minimization
+problem, rather than the return-maximization in (10). Hence, we could consider the corre-
+sponding definition of the implementable efficient frontier as the combination of volatilities
+and expected net returns, (σ(k), k)k≥0 , such that risk is minimal for that level of net return:
+
+                                    π,net 
+    σ(k)2 = min E [πt′ Σπt ] s.t. E rt+1     =k                                             (B.1)
+              πt
+
+However, this definition is less helpful for two reasons. First, no solution exists for large
+enough k. Second, this definition cannot produce the downward-sloping portion of the
+frontier seen in Figure 1.
+
+Proof of Proposition 1. (i) We first show that the net Sharpe ratio is decreasing along
+the frontier. To see that, consider two risk levels, σ1 < σ2 . Let π 2 be the frontier portfolio
+corresponding to σ2 . This portfolio has the highest expected net return for this level of risk,
+therefore also the highest net Sharpe ratio. If we scale down this portfolio to π 1 = σσ21 π 2
+(putting the rest of the money in the risk-free asset), then the risk becomes σσ21 σ 2 = σ1 . Then
+we have:
+
+                                              h 1 i σ h 2 i
+                                 π,net        π ,net   1  π ,net
+           max′               E  r t+1    ≥ E  rt+1    > E rt+1                             (B.2)
+    πt ∈Π s.t. E[πt Σπt ]=σ12                           σ2
+
+Here, the first inequality follows from the definition of the frontier as the maximum. The
+second inequality follows from the fact that gross returns are linear, but transaction costs
+are quadratic and σσ12 < 1. Dividing both sides of (B.7) by σ1 , we see that the net Sharpe
+ratio is decreasing in σ.
+    (vi) Consider the implementable efficient frontier corresponding to a wealth of w1 and
+w2 , where w1 < w2 . Take a point on the frontier of w2 corresponding the a risk of σ and
+a portfolio π 2 . Then with wealth w1 , the portfolio π 2 delivers a higher net return with the
+same risk (and there may exist another portfolio with even higher net return for this level
+of wealth), so the frontier of w1 must be above that of w2 .
+    (ii)–(iii) To prove concavity of the implementable efficient frontier, consider two risk
+levels, σ1 , σ2 . Let π(σ) be the frontier portfolio corresponding to σ, and let
+                                    π,net 
+    R(σ) =            max′      E rt+1                                                    (B.3)
+              πt ∈Π s.t. E[πt Σπt ]=σ
+
+Define
+    π̃ = 0.5(π(σ1 ) + π(σ2 )) .                                                             (B.4)
+Then,
+    E[π̃ ′ Σπ̃] = E[0.25((π(σ1 )′ Σπ(σ1 ) + (π(σ2 )′ Σπ(σ2 ) + 2(π(σ1 )′ Σπ(σ2 ))]
+                                                                                            (B.5)
+    ≤ 0.25(σ12 + σ22 + 2σ1 σ2 ) = (0.5(σ1 + σ2 ))2 ,
+
+
+                                                  48
+where we have used a modified Cauchy-Schwarz inequality
+
+   E[(π(σ1 )′ Σπ(σ2 )] ≤ E[((π(σ1 )′ Σπ(σ1 ))1/2 ((π(σ2 )′ Σπ(σ2 ))1/2 ]
+                                                                                           (B.6)
+    ≤ E[((π(σ1 )′ Σπ(σ1 ))]1/2 E[((π(σ2 )′ Σπ(σ2 ))]1/2 ≤ σ1 σ2
+
+Therefore,
+                                   h           i     h           i
+                                     π(σ ),net         π(σ ),net
+   0.5(R(σ1 ) + R(σ2 )) = 0.5(E rt+11             + E rt+11       )
+          ′                                                                               (B.7)
+              π̃ − 0.5(T C π(σ1 ) + T C π(σ2 ) ) .
+                                                
+    = E rt+1
+
+Since transaction costs are convex in πt , we have
+
+   −0.5(T C π(σ1 ) + T C π(σ2 ) ) ≤ −T C π̃ .
+Thus,
+    h        i
+      π̃,net
+   E rt+1      ≥ 0.5(R(σ1 ) + R(σ2 )) ,
+
+while
+   σ(π̃) = (E[π̃ ′ Σπ̃])1/2 ≤ 0.5(σ1 + σ2 ) .
+Thus, we get R(σ(π̃)) ≥ 0.5(R(σ1 ) + R(σ2 )), and hence, the required concavity follows if
+R(σ) is increasing on [0.5(σ1 + σ2 ), σ(π̃)] .
+    Now, pick a γ > 0. Then, clearly, π γ belongs to the efficient frontier, corresponding to
+some σ(γ) : Otherwise, we could increase net expected return keeping the variance fixed.
+We also note that for large γ, the effect of transaction costs is negligible and, hence, the
+efficient frontier for σ ≈ 0 approximately coincides with the frictionless one, and hence k(σ)
+is monotone increasing for σ ≈ 0.
+    The set of eligible portfolios (adapted, square-integrable processes) is a Hilbert space H
+we can define operators A, B and a vector x ∈ H so that E[rπ,net ] = ⟨x, π⟩ − 0.5⟨Ax, x⟩
+and E[π ′ Σπ] = ⟨πB, π⟩, where ⟨·, ·⟩ is the inner product in the Hilbert space. We consider
+finite-dimensional approximations of the quadratic problem and thus assume that A, B are
+finite-dimensional matrices. Then, the first order condition is
+   x − Aπ = λ Bπ                                                                           (B.8)
+where λ is the Lagrange multiplier of the constraint ⟨π, Bπ⟩ = σ 2 . Now,
+
+   π = (A + λB)−1 x ,                                                                      (B.9)
+and we need to solve the equation
+   ⟨(A + λB)−1 B(A + λB)−1 x, x⟩ = σ 2                                                    (B.10)
+For the increasing part of the frontier, the constraint ⟨π, Bπ⟩ ≤ σ 2 is binding and λ > 0.
+This defines σ∗2 = ⟨A−1 BA−1 x, x⟩.
+   Beyond that we need to use the eigen-decomposition of B −1/2 AB −1/2 and define x̃ =
+B −1/2 x. Then, if νi are the eigenvalues of BB −1/2 AB −1/2 and x̃i are the coordinates of x̃ in
+
+
+                                                 49
+the eigen-basis, we get that we need to maximize
+
+   ⟨x, (A + λB)−1 x⟩ − 0.5⟨(A + λB)−1 (A + λB − λB)x, (A + λB)−1 x⟩
+      = 0.5⟨x, (A + λB)−1 x⟩ + 0.5λσ 2
+            X                                                                      (B.11)
+      = 0.5     x̃2i (1 + λνi )−1 + 0.5λσ 2
+              i
+
+under the constraint
+   X
+       x̃2i (1 + λνi )−2 = σ 2 .                                                   (B.12)
+      i
+
+This function (as a function of λ) explodes for λ = −1/νi .
+   Now, for the mean-variance optimization problem, the solution is
+   π = (A + γB)−1 x                                                                (B.13)
+and the variance
+   ⟨(A + γB)−1 x, B(A + γB)−1 x⟩                                                   (B.14)
+is monotone decreasing in γ and converges to σ∗2 when γ → 0. At the same time,
+
+   R(γ) = ⟨(A + γB)−1 x, x⟩                                                        (B.15)
+is also monotone decreasing in γ.                                                       □
+
+B.2       Verification Lemma
+Our proofs are based on the following auxiliary result.
+
+Lemma 5 For simplicity, we normalize γ/w = 1. Let Λ̄t = Et [gt+1 Λgt+1 ]. For any solution
+mt to
+                                                !
+   mt = (Σ + Λ + Λ̄t )−1 Et [gt+1 Λmt+1 gt+1 ]mt + Λ ,                             (B.16)
+
+define
+                  θ
+                  Y
+   Nt,t+τ =              mt−τ +1 gt−τ +1                                           (B.17)
+                  τ =1
+
+and
+                  θ
+                  Y
+   Ñt,t+τ =             mt−τ +1 Λ−1 gt−τ +1 Λ .                                   (B.18)
+                  τ =1
+
+
+
+
+                                                   50
+Suppose that
+   ∞
+   X
+                   ′
+             ∥Et [Nt,t+τ Nt,t+τ ]∥1/2 < ∞                                             (B.19)
+      τ =1
+
+and
+   ∞
+   X
+                    ′
+             ∥Et [Ñt,t+τ Ñt,t+τ ]∥1/2 < ∞                                           (B.20)
+      τ =1
+
+Define
+   ct = mt Λ−1 Σ                                                                      (B.21)
+and
+                   " ∞                                       #
+                    X
+   Qt = Et                   Ñt,t+τ ct+τ M arkowitzt+τ                               (B.22)
+                      τ =0
+
+and let
+                                  ∞
+                                  X
+   πt = π(st , st− ) =                   Nt−θ,t Q(st−θ ) .                            (B.23)
+                                   θ=0
+
+Then, all series converge in L2 and πt is optimal among all bounded stationary processes πt .
+Furthermore, it satisfies the recursive relationship
+   π(st , st− ) = Q(st ) + mt gt π(st−1 , st−1− )                                     (B.24)
+
+Proof of Lemma 5. Due to the strict convexity of the objective, it suffices to verify the
+first order conditions. Let
+     O(π) = min E −2µ(st )′ πt + πt′ Σπt + (πt − gt πt−1 )′ Λ (πt − gt πt−1 )
+                                                                            
+             π∈L2
+                                                                                  (B.25)
+
+Standard convexity arguments imply that it suffices to derive and verify the first order
+conditions for our candidate solution.
+   Let st− denote the history of st and πt = π(st , st− ) be a candidate optimal policy and
+Then, by direct calculation, using the ergodicity property, we get while the law of iterated
+expectations implies that
+      ′
+   E[πt−1 gt Λgt πt−1 ] = E[πt′ gt+1 Λgt+1 πt ] = E[πt′ Λ̂t πt ] ,
+where
+   Λ̄t = Et [gt+1 Λgt+1 ] .                                                           (B.26)
+
+
+
+
+                                                                 51
+Therefore,
+   O(π)
+          "                                                                   #
+    = E − 2 µ(st )′ π(st , st− ) + π(st , st− )′ (Σ + Λ + Λ̄t )π(st , st− )                (B.27)
+
+    − 2E[π(st , st− )′ gt+1 Λπ(st+1 , st+1− )] ,
+
+In order to compute the first order conditions, we need to calculate the Frechet derivative
+of (B.27) with respect to π. To this end, we consider a small perturbation π → π + εY and
+calculate the first order term in ε, so that
+   O(πt + εYt ) = O(πt ) + ε E[D(πt )′ Yt ] + O(ε2 )                                       (B.28)
+and D(π) is the Frechet derivative. To this end, we compute
+
+   E[µ(st )′ (π(st , st− ) + εYt )] = E[µ(st )′ π(st , st− )] + εE[µ(st )′ Yt ]
+   E[(π(st , st− ) + εYt )′ (Σ + Λ + Λ̄t )(π(st , st− ) + εYt )]
+   = E[π(st , st− )′ (Σ + Λ + Λ̄t )π(st , st− )]
+   + 2ε E[π(st , st− )′ (Σ + Λ + Λ̄)Yt ] + O(ε2 )
+                                                                                           (B.29)
+   E[(π(st , st− ) + Yt )′ gt+1 Λ(π(st+1 , st+1− ) + Yt+1 )]
+   = E[π(st , st− )′ gt+1 Λπ(st+1 , st+1− )]
+                                                                             !
+    + ε E[Yt′ Et [gt+1 Λπ(st+1 , st+1− )]] + E[π(st , st− )′ gt+1 ΛYt+1 ]
+
+Furthermore, by ergodicity,
+   E[π(st , st− )Yt+1 ] = E[π(st−1 , st−1− )Yt ] .
+and and we conclude that the Frechet derivative is given by
+   D(π) = −2µ(st ) + 2(Σ + Λ + Λ̄)π(st , st− )
+                                                                                           (B.30)
+   − 2Et [gt+1 Λπ(st+1 , st+1− )] − 2Λgt π(st−1 , st−1− ) ,
+
+where Λ̄(st ) = Et [Λ(st+1 )], implying that a bounded π is optimal if it satisfies the integral
+equation
+                                                                                           !
+   π(st , st− ) = (Σ + Λ + Λ̄t )−1 µ(st ) + Et [gt+1 Λπ(st+1 , st+1− )] + Λgt π(st−1 , st−1− ) .
+
+                                                                                           (B.31)
+Substituting the Ansatz
+   πt = Qt + mgt πt−1                                                                      (B.32)
+
+
+
+
+                                                     52
+into this equation, we get
+   Qt + mt gt πt−1
+
+    = (Σ + Λ + Λ̄t )−1 µ(st )
+                                                                                            (B.33)
+                                                                           !
+    + Et [gt+1 Λ(Qt+1 + mt+1 gt+1 Qt + mt+1 gt+1 mt gt πt−1 )] + Λgt πt−1 .
+
+Equating the coefficients on πt−1 gives an integral equation for mt :
+                                                           !
+   mt gt = (Σ + Λ + Λ̄t )−1 Et [gt+1 Λmt+1 gt+1 mt gt ] + Λgt ,                             (B.34)
+
+and (B.33) turns into an integral equation for Qt :
+                                                                          !
+   Qt = (Σ + Λ + Λ̄t )−1 µ(st ) + Et [gt+1 Λ(Qt+1 + mt+1 gt+1 Qt )] .                       (B.35)
+
+Dividing by gt , we get that (B.34) turns into the required equation (B.16). Furthermore, we
+can rewrite (B.36) as
+
+   (I − (Σ + Λ + Λ̄t )−1 Et [gt+1 Λmt+1 gt+1 )mt = (Σ + Λ + Λ̄t )−1 Λ ,                     (B.36)
+which implies
+   (I − (Σ + Λ + Λ̄t )−1 Et [gt+1 Λmt+1 gt+1 ]) = (Σ + Λ + Λ̄t )−1 Λm−1
+                                                                     t                      (B.37)
+After a few algebraic transformations, that (B.35) is equivalent to
+                                                                                                  !
+                      −1                                          −1
+   (I − (Σ + Λ + Λ̄t ) Et [gt+1 Λmt+1 gt+1 ])Qt = (Σ + Λ + Λ̄t )          µ(st ) + Et [gt+1 ΛQt+1 ] .
+
+                                                                                            (B.38)
+Substituting from (B.37), we can rewrite (B.38) as
+                                          !
+   Qt = mt Λ−1 µ(st ) + Et [gt+1 ΛQt+1 ] .                                                  (B.39)
+
+Defining
+   ct = Mt Λ−1
+            t Σt ,                                                                          (B.40)
+we get
+   Qt = ct M arkowitzt + Et [mt Λ−1 gt+1 ΛQt+1 ] .                                          (B.41)
+Iterating this equation, we get the required, modulo the convergence statement. Convergence
+
+                                               53
+in L2 follows directly from the made assumptions. Indeed,
+   E[Et [X]2 ] ≤ E[X 2 ]                                                                    (B.42)
+and hence we can ignore Et [] when proving convergence. Furthermore, by the made uniform
+boundedness assumptions and the uniform positive-definiteness of Σt , we have
+   ∥qt+τ ∥ = ∥ct+τ M arkowitzt+τ ∥ ≤ K
+for some K > 0, almost surely. Since
+                " ∞                          #
+                 X                                X
+    ∥Qt ∥ = ∥Et     Nt,t+τ ct+τ M arkowitzt+τ ∥ ≤   ∥Nt,t+τ qt+τ ∥ ,                        (B.43)
+                           τ =0                               τ
+
+to prove the convergence of Qt it suffices to show that
+    X
+           ′    ′
+       E[qt+τ Nt,t+τ Nt,t+τ qt+τ ]1/2 < ∞                                                   (B.44)
+       τ
+
+which follows from the made assumptions. Convergence of the series representation for πt
+also follows from the made assumptions.                                               □
+   Recall that gt is the diagonal matrix of vec(gt ) on the diagonal. For the case when µ is
+constant, we have that
+
+   Gt = Et [vac(gt+1 )vec(gt+1 )′ ] = (1 + gtw )−2 (Σ + (1 + rtf + µt )(1 + rtf + µt )′ )   (B.45)
+
+When gtw , rtf , and µt are all constant, we get that Gt = G is also constant, and we arrive at
+the following result, which is a direct consequence of Lemma 5.
+Lemma 6 For simplicity, we normalize γ/w = 1. Suppose that µt = µ, gtw , rtf are constant.
+Let Λ̄ = Λ ◦ G. For any solution m to
+                                       !
+   m = (Σ + Λ + Λ̄)−1 ((Λm) ◦ G)m + Λ ,                                                     (B.46)
+
+define
+                    θ
+                    Y
+   Nt,t+τ =                m gt−τ +1                                                        (B.47)
+                    τ =1
+
+and
+                    θ
+                    Y
+   Ñt,t+τ =               m Λ−1 gt−τ +1 Λ .                                                (B.48)
+                    τ =1
+
+Suppose that
+   ∞
+   X
+                   ′
+             ∥Et [Nt,t+τ Nt,t+τ ]∥1/2 < ∞                                                   (B.49)
+      τ =1
+
+
+                                                  54
+and
+   ∞
+   X
+                    ′
+             ∥Et [Ñt,t+τ Ñt,t+τ ]∥1/2 < ∞                                           (B.50)
+      τ =1
+
+Define
+   c = mΛ−1 Σ                                                                         (B.51)
+and
+   Qt = (I − mΛ−1 ḡΛ)−1 cM arkowitz                                                  (B.52)
+and let
+                                ∞
+                                X
+   πt = π(st , st− ) =                Nt−θ,t Q(st−θ ) .                               (B.53)
+                                θ=0
+
+Then, all series converge in L2 and πt is optimal among all bounded stationary processes πt .
+Furthermore, it satisfies the recursive relationship
+   π(st , st− ) = Q(st ) + mgt π(st−1 , st−1− )                                       (B.54)
+
+B.3          Properties the Discount Factor m
+This section shows some useful properties of the discount factor m solving (B.46). We start
+with the following observation
+Lemma 7 For simplicity, we normalize γ/w = 1. A matrix function m(st ) = mt solves
+                                               !
+   mt = (Σ + Λ + Λ̄t )−1 Et [gt+1 Λmt+1 gt+1 ]mt + Λ ,                                (B.55)
+
+
+if and only if m̃t = Λ1/2 mt Λ−1/2 solves
+                                                                            −1
+               −1/2   −1/2        −1/2           1/2           1/2      −1/2
+    m̃t = Λ         ΣΛ     +I +Λ       Et [gt+1 Λ (I − m̃t+1 )Λ gt+1 ]Λ          .    (B.56)
+
+In particular, if Gt is constant, then matrix m solves
+                                              !
+   m = (Σ + Λ + Λ̄)−1 ((Λm) ◦ G)m + Λ                                                 (B.57)
+
+
+if and only if the matrix m̃ = Λ1/2 mΛ−1/2 solves
+                                                                 −1
+    m̃ = Λ−1/2 ΣΛ−1/2 + I + Λ−1/2 (G ◦ (Λ1/2 (I − m̃)Λ1/2 ))Λ−1/2     .               (B.58)
+
+
+
+
+                                                          55
+Proof of Lemma 7. We have
+                                                                      !
+   (Σ + Λ + Λ̄t )mt =            Et [gt+1 Λmt+1 gt+1 ]mt + Λ .                                                                  (B.59)
+
+
+Writing mt = Λ−1/2 m̃t Λ1/2 , we get
+                                                                                                                            !
+                      −1/2           1/2                      −1/2             1/2             −1/2           1/2
+   (Σ + Λ + Λ̄t )Λ           m̃t Λ         =    Et [gt+1 ΛΛ          m̃t+1 Λ         gt+1 ]Λ          m̃t Λ         +Λ .        (B.60)
+
+
+Multiplying by Λ−1/2 m̃−1
+                       t  from the right and by Λ−1/2 from the left, we get
+                                                                                                                    !
+   Λ−1/2 (Σ + Λ + Λ̄t )Λ−1/2 =                 Λ−1/2 Et [gt+1 Λ1/2 m̃t+1 Λ1/2 gt+1 ]Λ−1/2 + m̃−1
+                                                                                              t                         .       (B.61)
+
+This is equivalent to
+
+   m̃−1
+     t  = Λ−1/2 (Σ + Λ + Λ̄t − Et [gt+1 Λ1/2 m̃t+1 Λ1/2 gt+1 ])Λ−1/2 ,                                                          (B.62)
+which is in turn equivalent to
+                                                                            −1
+   m̃t = Λ−1/2 ΣΛ−1/2 + I + Λ−1/2 Et [gt+1 Λ1/2 (I − m̃t+1 )Λ1/2 gt+1 ]Λ−1/2     .                                              (B.63)
+
+In the case when mt = m is constant and Gt = G is constant, we get
+
+   Et [gt+1 Λ1/2 (I − m̃)Λ1/2 gt+1 ] = G ◦ (Λ1/2 (I − m̃)Λ1/2 )
+and we get the required .                                                                                                           □
+
+Proposition 8 Let m̃ ∈ S(0, 1) be a solution to (B.58). Let q∗ < 1 be the largest eigenvalue
+of m̃. Let m = Λ−1/2 m̃Λ1/2 and
+                θ
+                            !
+               Y
+    Πt−θ,t =       m gt−τ +1 .                                                        (B.64)
+                 τ =1
+
+Then,
+    lim q∗−θ E[∥Πt−θ,t (ν)∥2 ] = 0 .                                                                                            (B.65)
+   θ→∞
+
+Similarly, if we define
+               θ
+               Y
+   Π̂t,t+θ =          mΛ−1 gt+τ −1 Λ .
+               τ =1
+
+then
+    lim q∗−θ E[∥Π̂t,t+θ ∥2 ] = 0 .                                                                                              (B.66)
+   θ→∞
+
+
+
+                                                           56
+Proof of Proposition 8. For simplicity, we normalize γ/w = 1. Recall that S is the set of
+symmetric matrices, and S(a, b) is the set of positive semi-definite matrices with eigenvalues
+between a and b.
+   Equation (B.58) can be rewritten as
+                                                                        
+   m̃ Λ−1/2 ΣΛ−1/2 + I + Λ−1/2 Et [gt+1 Λ1/2 (I − m̃t+1 )Λ1/2 gt+1 ]Λ−1/2 m̃ = m̃ .     (B.67)
+
+Define the map
+
+   Ξ(Z) = m̃Λ−1/2 Et [gt+1 Λ1/2 ZΛ1/2 gt+1 ]Λ−1/2 m̃                                     (B.68)
+mapping the cone of positive semi-definite matrices into itself. Then, (B.67) implies that
+
+   Ξ(I − m̃) = m̃ − m̃2 − m̃Λ−1/2 ΣΛ−1/2 m̃ < m̃(I − m̃) ≤ q∗ (I − m̃) .                 (B.69)
+Now, the map Ξ leaves the proper cone S(0, +∞) invariant and hence, by the Krein and
+Rutman (1950) theorem, its spectral radius corresponds to a strictly positive eigenvalue
+λ∗ > 0. Let Z ∈ S(0, +∞) be the corresponding eigenvector. Then,
+   Ξ(Z) = λ∗ Z .
+Since I − m̃ is strictly positive definite, there exists a constant a∗ > 0 such that aZ ≤ I − m̃
+if and only if a ≤ a∗ . Then,
+   λa∗ Z = Ξ(a∗ Z) ≤ Ξ(I − m̃) < q∗ (I − m̃)
+Thus, (λa∗ /q∗ )Z ≤ I − m̃ implying that, by the definition of a∗ , we must have λ/q∗ < 1.
+  Note also that a transformation
+   Ξ̂(Z) = A−1 m̃Et [Λ−1/2 gt+1 Λ1/2 AZA′ Λ1/2 gt+1 Λ−1/2 ]m̃(A′ )−1
+
+is similar to Ξ for any invertible matrix A. Hence, Ξ and Ξ̂ have the same spectral radius.
+Pick A = m̃Λ−1/2 . Then,
+
+   Ξ̂(Z) = Et [gt+1 Λ1/2 m̃Λ−1/2 ZΛ−1/2 m̃Λ1/2 gt+1 ] = Et [gt+1 m′ Zmgt+1 ] .
+By direct calculation,
+
+   E[Π′t−θ,t Πt−θ,t ] = Ξ̂θ (I) ,
+and
+   E[Π̂t,t+θ Π̂′t,t+θ ] = Ξθ (I) ,
+and the claim follows.                                                                        □
+
+
+
+
+                                               57
+B.4      Proofs of Propositions 2 and Proposition 3
+Lemma 8 For simplicity, we normalize γ/w = 1. Consider the map F mapping the convex
+set of S(0, 1)-valued matrix functions into itself and defined via
+                                                                                −1
+                   −1/2   −1/2        −1/2           1/2           1/2      −1/2
+    F (m̃t ) = Λ        ΣΛ     +I +Λ       Et [gt+1 Λ (I − m̃t+1 )Λ gt+1 ]Λ          . (B.70)
+
+This map is strictly monotone increasing in the positive semi-definite order and hence has
+at least one fixed point in S(0, 1). The set of fixed points has a unique maximal and a unique
+minimal element. The minimal element is obtained by iterating F on 0. The maximal element
+is obtained by iterating F on I.
+
+Proof of Lemma 8. The proof follows directly from the fact that the map A → A−1 is
+monotone decreasing in the positive semi-definite order, and the same is true for the map
+m̃t+1 → Et [gt+1 Λ1/2 (I − m̃t+1 )Λ1/2 gt+1 ].                                          □
+
+   In the case when µ is stochastic, things are a bit more tricky, as is shown by the following
+lemma.
+
+Lemma 9 Suppose that µ(st ) = ϵµ̃(st ), gtw = g w + O(ε), rtf = rf + O(ε). Then,
+   Gt = G + O(ϵ)                                                                        (B.71)
+where G = E[vec(gt )vec(gt )′ ] and hence, for every solution m̃ ∈ S(0, 1) to (B.58) and any
+sufficiently small ϵ > 0 there exists a unique solution m̃t to (B.56) satisfying
+   m̃t = m̃ + O(ε) .                                                                    (B.72)
+
+Proof of Lemma 9. The proof follows directly from the implicit function theorem and the
+fact that the map F from Lemma 8 is strictly monotone on S(0, 1) and (by direct calculation)
+has a non-degenerate Jacobian.                                                            □
+
+Proof of Proposition 2. By Lemma 8, there exists a m̃ ∈ S(0, 1) solving (B.58). By
+Proposition 8, the technical conditions (B.49) and (B.50) are satisfied. Lemma 7 implies
+that m solves (B.46) and hence Lemma 6 implies that the policy π is optimal. Its uniqueness
+follows from the strict concavity of the objective.                                      □
+
+Proof of Proposition 3. By Lemma 8, there exists a m̃ ∈ S(0, 1) solving (B.58). By
+Lemma 9, there exists a m̃t solving (B.56) satisfying mt = m̃ + O(ε). By a small modification
+of the proof of Lemma 8, the technical conditions (B.19) and (B.20) are satisfied. Lemma 7
+implies that mt solves (B.55) and hence Lemma 5 implies that the policy
+                            ∞
+                            X
+   πt∗   = π(st , st− ) =         Nt−θ,t Q(st−θ ) .                                     (B.73)
+                            θ=0
+
+is optimal with
+             " ∞                            #
+               X
+    Qt = Et      Ñt,t+τ ct+τ M arkowitzt+τ                                             (B.74)
+                 τ =0
+
+
+
+                                                      58
+and
+               θ
+               Y
+   Nt,t+τ =           mt−τ +1 gt−τ +1                                                  (B.75)
+               τ =1
+
+and
+               θ
+               Y
+   Ñt,t+τ =          mt−τ +1 Λ−1 gt−τ +1 Λ .                                          (B.76)
+               τ =1
+
+and ct = mt Λ−1 Σ. Its uniqueness follows from the strict concavity of the objective. Now,
+substituting mt = m + O(ε) into these equations, we get that πt∗ differs from (20) by O(ϵ)
+(technical conditions (B.19)-(B.20) ensure that the infinite sum also is O(ϵ).) The proof is
+complete.                                                                                 □
+
+B.5     Proofs of Propositions 4 and 5
+We have m = Λ−1/2 m̃Λ1/2 and hence m and m̃ have identical eigenvalues, and the claim of
+Proposition 4 follows from Lemma 4 and the monotonicity of the map F.
+    The convergence of m to zero when w → 0 follows directly from (B.58). When w → ∞,
+to prove convergence we need to show that the technical conditions (B.49) and (B.50) hold
+uniformly when w → ∞. By Proposition 8, to this end we need to show that q∗ , the maximal
+eigenvalue of m̃ stays uniformly bounded away from 1. This follows from Lemma 4: Since
+m̃ ≤ m̃(ḡ), it suffices to establish this fact for m̃(ḡ). From the proof of Lemma 3, we have
+
+   m̃(ξ) = ξ −1/2 m̂ξ −1/2
+where
+   m̂ = 0.5(Σ̂ − (Σ̂2 − 4I)1/2 ) = 2(Σ̂ + (Σ̂2 − 4I)1/2 )−1                            (B.77)
+and
+   Σ̂ = ξ −1/2 Σ̃ξ −1/2 = γw−1 ξ −1/2 Λ−1/2 ΣΛ−1/2 ξ −1/2 + ξ −1 + ξ .
+
+and hence Σ̂ → ξ −1 + ξ when w → ∞. Thus,
+   m̃ → 0.5ξ −1 (ξ −1 + ξ − |ξ − ξ −1 |)
+Suppose that ξ > 1. Then, we get m̃ = ξ −2 < 1. If ξ < 1, then we get m̃ → 1.
+
+B.6     On the Optimality of Portfolio-ML
+Given a function A(·), denote
+                        ∞ θ
+                                             !
+                        X Y
+   Π∗t (A(·), ⃗s) =                  m gt−τ +1 (I − m)A(st−θ ) .                       (B.78)
+                        θ=0   τ =1
+
+We formalize the above observations in the following lemma.
+
+
+                                                    59
+Lemma 10 Suppose that µ(st ) = εµ̃(st ) where ε is a small number. Then, the solution to
+the aim optimization problem
+          "
+    max E µ(st )′ Π∗t (A(·), ⃗s)
+    A(·)
+
+     w ∗                                      ′                                        
+    −  Πt (A(·), ⃗st ) − gt Π∗t (A(·), ⃗st−1 ) Λ Π∗t (A(·), ⃗st ) − gt Π∗t (A(·), ⃗st−1 )     (B.79)
+     2                                        #
+     γ ∗
+    − (Πt (A(·), ⃗st ))′ Σ (Π∗t (A(·), ⃗st ))
+     2
+
+coincides with (21) up to terms of the order ε2 .
+
+Lemma 10 reduces the infeasible (due to infinite history dependence) portfolio optimization
+problem (9) to a feasible aim optimization problem (B.79), where only the function A(st )
+of the current state needs to be optimized. As we now show, it is possible to use machine
+learning methods to further reduce (B.79) to a linear-quadratic problem that can be solved
+analytically. We will need the following assumption.
+
+Assumption 1 Let s−i denote the vector of signals for all stocks except i. There exists a
+function a(si , s−i ) such that (A(st ))i = ai (si,t , s−i,t ).
+
+   Assumption 1 is not restrictive and naturally holds whenever Λi,j and Σi,j only depend
+on si , sj for any pair of stocks i, j. It ensures that the dependence of the aim on signals is
+the same for all stocks.
+
+Assumption 2 Suppose that a family of functions {fk (s)}k≥1 has the universal approxima-
+tion property: For any ϵ > 0 there exists a P > 0 and a vector β ∈ RP such that
+            X
+    ∥a(s) −     βk fk (s)∥2 ≤ ϵ .                                                 (B.80)
+              k
+
+
+   Let now F (s) = (fk (si , s−i ))n,P
+                                   i,k=1 . Then, Assumptions 1 and 2 imply the existence of a
+vector β such that
+   ∥A(s) − F (s)β∥2 ≤ ϵ ,                                                                     (B.81)
+and hence we can rewrite (B.78) as
+   πt = Xt β + O(ϵ) ,                                                                         (B.82)
+where
+           "∞ θ
+                                   !                    #
+            X Y
+   Xt ≡                   m gt−τ +1 (I − m)f (st−θ ) .                                        (B.83)
+             θ=0   τ =1
+
+
+
+
+                                                   60
+Using this formulation for πt in the objective (B.79), we can rewrite it as
+     h
+       ′         γ ′ ′            w                 ′
+                                                                         i
+   E rt+1 Xt β − β Xt ΣXt β − (Xt β − gt Xt−1 β) Λ (Xt β − gt Xt−1 β)
+                2                2                                        
+        1  ′           1
+    =     E rt+1 Xt β − β ′ [γXt′ ΣXt + w(Xt − gt Xt−1 )′ Λ(Xt − gt Xt−1 )] β 
+                                                                               
+                                                                                         (B.84)
+        T    | {z }     2 |                      {z                        }
+                   ′
+                ≡r̃t+1                               ≡Σ̃t
+
+          ′       1
+    ≡ E[r̃t+1 ]β − β ′ E[Σ̃t ]β .
+                  2
+and the optimal β is given by
+
+   β ∗ = E[Σ̃t ]−1 E[r̃t+1 ]                                                             (B.85)
+Uniform boundedness of all coefficients implies that the solution to the approximate opti-
+mization problem achieves approximate optimum in (B.79). Thus, we can maximize utility
+by maximizing this quadratic equation in the unknown parameter vector β.
+
+Proposition 9 (Portfolio-ML) Suppose that µ(st ) = εµ̃(st ) where ε is a small number.
+Let βT be a finite sample counter-part of (B.85). Then, in the limit as T → ∞, βT converges
+to β ∗ . Furthermore, the optimal portfolio (24) achieves the optimal utility (9) up to an error
+of the order ε2 + ϵ, where ϵ is defined in (B.80).
+
+B.7      Proofs related to Economic Feature Importance
+The optimal portfolio admits a simpler analytical expression when transaction costs are small
+as seen in the following result.
+Proposition 10 Suppose that ∥Λ∥ is small and Λ is diagonal. Then, the aim portfolio At
+is given by
+   At = M arkowitzt
+                                                                                         (B.86)
+    + Σ−1 Et [Λgt+1 M arkowitzt+1 − gt+1 Λgt+1 M arkowitzt )] + O(∥Λ∥2 ) ,
+
+while investor’s utility is given by the same expression as in Proposition 7 .
+
+Proof of Proposition 7 and Proposition 10. Under the made assumption, we have
+   mt = Σ−1 Λ − Σ−1 (Λ + Et [gt+1 Λgt+1 ])Σ−1 Λ + O(ε3 )
+and therefore
+   ct = mt Λ−1 Σt . = I − Σ−1 (Λ + Et [gt+1 Λgt+1 ]) + O(ε2 ) .
+
+
+
+
+                                                61
+Let νt = M arkowitzt . Then,
+                            ∞
+                            X
+                       −1
+    At = (I − mt )                 Et [Mt,t+τ ct+τ M arkowitzt+τ ]
+                            τ =0
+      = (I − mt )−1 (ct νt + Et [mt Λ−1 Λgt+1 ct+1 νt+1 ]) + O(ε2 )
+                                                            
+               −1                    −1    −1
+      = (I + Σ Λ) ct νt + Et [Σ ΛΛ Λgt+1 ct+1 νt+1 ] + O(ε2 )
+                                                                                            (B.87)
+      = (I + Σ−1 Λ) I − Σ−1 (Λ + Et [gt+1 Λgt+1 ]) νt
+                                                                  
+      + Et [Σ−1 ΛΛ−1 Λgt+1 I − Σ−1 (Λ + Et [gt+1 Λgt+1 ]) νt+1 ] + O(ε2 )
+      = (I − Σ−1 Et [gt+1 Λgt+1 ])νt + Et [Σ−1 Λgt+1 νt+1 ] + O(ε2 )
+      = νt + Σ−1 Et [Λgt+1 νt+1 − gt+1 Λgt+1 νt )] + O(ε2 ) .
+
+and
+    πt = mt gt πt−1 + (I − mt )At
+      = mt gt νt−1 + (I − mt )(νt + Σ−1 Et [Λgt+1 (νt+1 − gt+1 νt )]) + O(ε2 )
+                                                                                               (B.88)
+      = νt + Σ−1 Et [Λgt+1 (νt+1 − gt+1 νt )] + Σ−1 Λ(gt νt−1 − νt ) + O(ε2 )
+      = νt + ξt + O(ε2 ) .
+Hence
+    E[µ(xt )′ πt − 0.5πt′ Σπt − 0.5(πt − gt πt−1 )′ Λ(πt − πt−1 )]
+    = E[µ(xt )′ πt − 0.5πt′ (Σ + Λ + Et [gt+1 Λgt+1 ])πt + πt−1
+                                                              ′
+                                                                   gt Λπt ]
+    = E[µ′t (νt + ξt )
+    − 0.5(νt + ξt )′ (Σ + Λ + Et [gt+1 Λgt+1 ])(νt + ξt )
+    + (νt−1 + ξt−1 )′ gt Λ(νt + ξt )]
+      = 0.5E[µ′t Σ−1 µt ] + E[µ′t (Σ−1 Et [Λgt+1 (νt+1 − gt+1 νt )] + Σ−1 Λ(gt νt−1 − νt ))]
+      − E[νt′ Σξt ] − 0.5E[νt′ (Λ + Et [gt+1 Λgt+1 ]))νt ]
+            ′
+      + E[νt−1 gt Λνt−1 ]
+      = 0.5E[µ′t Σ−1 µt ] − 0.5E[νt′ (Λ + Et [gt+1 Λgt+1 ]))νt ] + E[νt′ gt+1 Λνt+1 ]
+      = 0.5E[µ′t Σ−1 µt ] − 0.5E[(νt − gt νt−1 )′ Λ(νt − gt νt−1 )] + O(ε2 ) .
+                                                                                                   □
+
+
+C       Data and Empirical Results
+C.1       Information of Stock Characteristics (Features)
+Table C.1 shows the security characteristics that we use as features for all portfolio methods.
+The features are a subset of the 153 characteristics used in Jensen et al. (2022) plus 1-year
+
+
+
+
+                                                       62
+trailing volatility (rvol 252d),18 where the subset is chosen to have sufficient coverage in the
+early parts of our sample. Specifically, we select all features with a non-missing value for at
+least 70% of our sample by the end of 1952. The cluster assignments in Table C.1 are also
+from Jensen et al. (2022) except rvol 252d which we assign to the low risk cluster.
+
+                                         Table C.1: Feature Information
+       Characteristic    Cluster               Characteristic      Cluster               Characteristic   Cluster
+ 1     cowc gr1a         accruals         40   ivol capm 252d      low risk        79    opex at          quality
+ 2     oaccruals at      accruals         41   ivol ff3 21d        low risk        80    qmj prof         quality
+ 3     oaccruals ni      accruals         42   rmax1 21d           low risk        81    qmj safety       quality
+ 4     taccruals at      accruals         43   rmax5 21d           low risk        82    sale bev         quality
+ 5     taccruals ni      accruals         44   rvol 21d            low risk        83    corr 1260d       seasonality
+ 6     fnl gr1a          debt issuance    45   turnover 126d       low risk        84    coskew 21d       seasonality
+ 7     ncol gr1a         debt issuance    46   zero trades 126d    low risk        85    dbnetis at       seasonality
+ 8     nfna gr1a         debt issuance    47   zero trades 21d     low risk        86    kz index         seasonality
+ 9     noa at            debt issuance    48   zero trades 252d    low risk        87    lti gr1a         seasonality
+ 10    aliq at           investment       49   rvol 252d           low risk        88    pi nix           seasonality
+ 11    at gr1            investment       50   prc highprc 252d    momentum        89    seas 11 15an     seasonality
+ 12    be gr1a           investment       51   ret 12 1            momentum        90    seas 11 15na     seasonality
+ 13    capx gr1          investment       52   ret 3 1             momentum        91    seas 2 5an       seasonality
+ 14    coa gr1a          investment       53   ret 6 1             momentum        92    seas 6 10an      seasonality
+ 15    col gr1a          investment       54   ret 9 1             momentum        93    ami 126d         size
+ 16    emp gr1           investment       55   seas 1 1na          momentum        94    dolvol 126d      size
+ 17    inv gr1           investment       56   ocf at chg1         profit growth   95    market equity    size
+ 18    inv gr1a          investment       57   ret 12 7            profit growth   96    prc              size
+ 19    lnoa gr1a         investment       58   sale emp gr1        profit growth   97    iskew capm 21d   short-term reversal
+ 20    mispricing mgmt   investment       59   seas 1 1an          profit growth   98    iskew ff3 21d    short-term reversal
+ 21    ncoa gr1a         investment       60   tax gr1a            profit growth   99    ret 1 0          short-term reversal
+ 22    nncoa gr1a        investment       61   dolvol var 126d     profitability   100   rmax5 rvol 21d   short-term reversal
+ 23    noa gr1a          investment       62   ebit bev            profitability   101   rskew 21d        short-term reversal
+ 24    ppeinv gr1a       investment       63   ebit sale           profitability   102   at me            value
+ 25    ret 60 12         investment       64   intrinsic value     profitability   103   be me            value
+ 26    sale gr1          investment       65   ni be               profitability   104   bev mev          value
+ 27    seas 2 5na        investment       66   o score             profitability   105   chcsho 12m       value
+ 28    age               leverage         67   ocf at              profitability   106   debt me          value
+ 29    aliq mat          leverage         68   ope be              profitability   107   div12m me        value
+ 30    at be             leverage         69   ope bel1            profitability   108   ebitda mev       value
+ 31    bidaskhl 21d      leverage         70   turnover var 126d   profitability   109   eq dur           value
+ 32    cash at           leverage         71   at turnover         quality         110   eqnpo 12m        value
+ 33    netdebt me        leverage         72   cop at              quality         111   fcf me           value
+ 34    tangibility       leverage         73   cop atl1            quality         112   ni me            value
+ 35    beta 60m          low risk         74   gp at               quality         113   ocf me           value
+ 36    beta dimson 21d   low risk         75   gp atl1             quality         114   sale me          value
+ 37    betabab 1260d     low risk         76   mispricing perf     quality         115   seas 6 10na      value
+ 38    betadown 252d     low risk         77   op at               quality
+ 39    ivol capm 21d     low risk         78   op atl1             quality
+Note: The table shows the security characteristics we use as features for the portfolio methods. The char-
+acteristics are from Jensen et al. (2022), and we refer to this paper for details about the construction
+methodology.
+
+
+
+C.2       Portfolio Tuning
+Panel A shows the optimal hyper-parameters for the RF method that predicts expected
+returns. The 1 month model is used by all methods except Portfolio-ML, while the expected
+return over 2-6 and 7-12 months is only used by Multiperiod-ML and Multiperiod-ML∗ . Panel
+  18
+     We add 1-year trailing volatility, because of its close connection to the covariance matrix. For example,
+if volatility is unrelated to expected returns, the optimal portfolio should have a higher allocation to low
+volatility assets all else equal.
+
+
+                                                          63
+B shows the optimal hyper-parameters for Portfolio-ML and the second layer of portfolio
+tuning used by Multiperiod-ML∗ and Static-ML∗ . Section 4.3 describes how we choose
+hyper-parameters and table 1 the range of possible hyper-parameters.
+
+                                                          Panel A: Expected Return Tuning
+                                           1 month: λ                           1 month: p                              1 month: η
+                                                                 1000                                    0.05
+                             4
+                             3                                    750                                    0.04
+                             2                                    500                                    0.03
+ Optimal hyper−parameter
+
+
+
+
+                             1                                    250                                    0.02
+
+                                        2−6 months: λ                        2−6 months: p                          2−6 months: η
+                                                                 1000
+                            15                                    900                                     0.3
+                            10                                    800                                     0.2
+                                                                  700
+                             5                                    600                                     0.1
+                                                                  500
+                                       7−12 months: λ                       7−12 months: p                          7−12 months: η
+                           10.0                                  1000
+                                                                                                          0.3
+                            7.5                                   750
+                                                                  500                                     0.2
+                            5.0
+                            2.5                                   250                                     0.1
+
+                                    1980       2000       2020           1980        2000         2020           1980        2000       2020
+
+                                                                 Panel B: Portfolio Tuning
+                                      Portfolio−ML: λ                           Portfolio−ML: p                     Portfolio−ML: η
+
+                           900                               512.025                                     0.12
+                           600                               512.000                                     0.10
+                                                                                                         0.08
+                           300
+ Optimal hyper−parameter
+
+
+
+
+                                                             511.975                                     0.06
+                                                             511.950
+                                     Multiperiod−ML*: k                     Multiperiod−ML*: u                     Multiperiod−ML*: v
+                           3.0                                     1.0                                   2.00
+                           2.5                                     0.9                                   1.75
+                           2.0                                     0.8                                   1.50
+                                                                   0.7
+                           1.5                                     0.6                                   1.25
+                           1.0                                     0.5                                   1.00
+                                       Static−ML*: k                            Static−ML*: u                           Static−ML*: v
+                           1.0                                     1.0                                   2.00
+                           0.8                                     0.8                                   1.75
+                           0.6                                     0.6                                   1.50
+                                                                   0.4                                   1.25
+                           0.4                                                                           1.00
+                                  1980 1990 2000 2010 2020               1980 1990 2000 2010 2020               1980 1990 2000 2010 2020
+
+
+                                                 Figure C.1: Optimal Portfolio Hyper-parameters
+Note: Panel A shows the optimal hyper-parameters used for predicting expected returns via. ridge regression
+of RF transformed features. Panel B shows the optimal hyper-parameters for selecting portfolio weights for
+Portfolio-ML, Multiperiod-ML∗ and Static-ML∗ . We show the range of possible hyper-parameters in table
+1.
+
+
+
+
+                                                                                64
+C.3     Feature Persistence and Importance across Return Horizons
+Figure C.2 shows the monthly autocorrelation of all prediction features. Features grouped
+into themes following Jensen et al. (2022). We see that most features are highly persistent
+from month to month but that we also include a substantial amount of fast-moving predictors.
+These high-frequency predictors are particularly present in the low risk, seasonality, and
+short-term reversal themes. Figure C.3 shows a measure of feature importance for each of
+the three models that predicts future returns. The short-term model that predicts returns one
+month ahead is used by all portfolio methods except Portfolio-ML, while only Multiperiod-
+ML uses the two other longer-term models. Notably, feature importance for the short-term
+model differs from the others by distributing importance more evenly across themes. In
+contrast, the two longer-term models mainly use value and momentum features.
+
+
+
+
+                                             65
+             ami_126d
+          dolvol_126d
+        market_equity
+                       prc
+           div12m_me
+       intrinsic_value
+                sale_me
+               debt_me
+                   at_me
+               bev_mev
+                  be_me
+                   ni_me
+           ebitda_mev
+          eqnpo_12m
+                  fcf_me
+                  eq_dur
+         chcsho_12m
+                 ocf_me
+            qmj_safety
+               sale_bev
+           at_turnover
+                 op_atl1
+                 opex_at
+                    op_at
+               qmj_prof
+                 gp_atl1
+                  cop_at
+                    gp_at
+                                                                                 Theme
+                cop_atl1
+      mispricing_perf
+               ebit_sale
+                ebit_bev
+                    ni_be
+                                                                                     Size
+              ope_bel1
+                 ope_be
+                o_score
+ turnover_var_126d
+                   ocf_at                                                            Value
+    dolvol_var_126d
+             ret_60_12
+               sale_gr1
+               emp_gr1
+    mispricing_mgmt
+                                                                                     Quality
+         ppeinv_gr1a
+                be_gr1a
+              capx_gr1
+                  aliq_at                                                            Profitability
+             lnoa_gr1a
+                   at_gr1
+            ncoa_gr1a
+          nncoa_gr1a
+              noa_gr1a
+                                                                                     Investment
+               inv_gr1a
+                 inv_gr1
+              coa_gr1a
+               col_gr1a
+         seas_2_5na
+                                                                                     Debt Issuance
+                  noa_at
+             ncol_gr1a
+                fnl_gr1a
+             nfna_gr1a                                                               Accruals
+         oaccruals_ni
+         oaccruals_at
+            cowc_gr1a
+          taccruals_at
+          taccruals_ni
+                                                                                     Low Leverage
+                      age
+              tangibility
+          netdebt_me
+                    at_be
+                aliq_mat
+                                                                                     Momentum
+                 cash_at
+        bidaskhl_21d
+               ret_12_1
+         seas_1_1na                                                                  Profit Growth
+                 ret_9_1
+                 ret_6_1
+  prc_highprc_252d
+                 ret_3_1
+               tax_gr1a
+                                                                                     Low Risk
+       sale_emp_gr1
+         ocf_at_chg1
+               ret_12_7
+         seas_1_1an
+  zero_trades_252d
+                                                                                     Seasonality
+      betabab_1260d
+             rvol_252d
+             beta_60m
+    ivol_capm_252d
+       turnover_126d
+                                                                                     Short−Term Reversal
+  zero_trades_126d
+     betadown_252d
+        seas_6_10na
+    zero_trades_21d
+               rvol_21d
+      ivol_capm_21d
+          ivol_ff3_21d
+           rmax5_21d
+           rmax1_21d
+  beta_dimson_21d
+           corr_1260d
+               kz_index
+                 lti_gr1a
+                    pi_nix
+             dbnetis_at
+       seas_11_15na
+         coskew_21d
+         seas_2_5an
+        seas_6_10an
+       seas_11_15an
+     rmax5_rvol_21d
+   iskew_capm_21d
+            rskew_21d
+       iskew_ff3_21d
+                 ret_1_0
+
+
+                             0.00      0.25        0.50         0.75      1.00
+                                    Average Monthly Autocorrelation
+
+                                          Figure C.2: Feature Autocorrelation
+Note: The figure shows the monthly autocorrelation for each feature in our sample. We first compute each
+feature’s monthly autocorrelation for all stocks with at least 5 years of monthly data. Next, we average the
+stock-level autocorrelations to arrive at the final estimate. The features are grouped by theme and sorted
+by average theme autocorrelation.
+
+
+
+
+                                                           66
+                               Horizon: 1 month           Horizon: 2−6 months         Horizon: 7−12 months
+                Value
+               Quality
+            Low Risk
+ Short−Term Reversal
+          Momentum
+          Seasonality
+          Investment
+        Profit Growth
+            Leverage
+             Accruals
+          Profitability
+                 Size
+       Debt Issuance
+                           0   25    50     75    100 0     25    50    75      100   0   25    50    75     100
+                                    Drop in MSE from permuting theme features (% of max)
+
+                          Figure C.3: Feature Importance across Return Horizons
+Note: The figure shows feature importance for the three random feature based models that predict returns in
+month t+1, the average return over month t+2 to t+6, and the average return over month t+7 to t+12. For
+each model, we randomly permute the associated features for each theme while keeping all other features at
+their actual value. We then implement each method based on this counterfactual data and measure feature
+importance as the difference in the mean-squared error relative to the implementation that uses the actual
+data. For comparability, we re-scale the difference by scaling all differences by the largest difference. Hence,
+feature importance is measured relative to the best feature theme within a specific horizon.
+
+
+
+
+                                                      67
+

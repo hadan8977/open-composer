@@ -1,0 +1,108 @@
+URL: https://www.cis.upenn.edu/~mkearns/finread/costestim.pdf (Almgren, Thum, Hauptmann, Li 2005, Citigroup US equity desk; published Risk 2005). Paper claim on 700k orders, large caps only; note: they find 3/5 temporary-impact exponent and 1/4 permanent-impact (Theta/V) form, not pure square root.
+Fetched UTC: 2026-10-01 06:15:50
+Source type: open-access PDF, text via pdftotext -layout (/tmp/B/almgren.txt). Excerpted line ranges: 1,30 875,945
+
+----- lines 1,30 -----
+                        Direct Estimation of
+                       Equity Market Impact∗
+                     Robert Almgren†, Chee Thum‡,
+                   Emmanuel Hauptmann‡, and Hong Li‡
+
+                                  May 10, 2005§
+
+
+
+                                      Abstract
+
+      The impact of large trades on market prices is a widely discussed
+      but rarely measured phenomenon, of essential importance to sell-
+      and buy-side participants. We analyse a large data set from the
+      Citigroup US equity trading desks, using a simple but realistic the-
+      oretical framework. We fit the model across a wide range of stocks,
+      determining the dependence of the coefficients on parameters such
+      as volatility, average daily volume, and turnover. We reject the com-
+      mon square-root model for temporary impact as function of trade
+      rate, in favor of a 3/5 power law across the range of order sizes
+      considered. Our results can be directly incorporated into optimal
+      trade scheduling algorithms and pre- and post-trade cost estima-
+      tion.
+
+
+
+
+  ∗
+     We are grateful to Stavros Siokos of Citigroup Equity Trading Strategy and to Neil
+Chriss of SAC Capital Management for helpful feedback and perspective.
+
+----- lines 875,945 -----
+described in the literature for both theoretical and empirical reasons.
+
+
+4.3   Determination of coefficients
+After fixing the exponent values, we determine the values of γ and η
+by linear regression of the models (7,8), using the heteroskedastic error
+Equity Market Impact                     May 10, 2005                     21
+
+
+estimates given in (1,2). We find
+
+                     γ = 0.314 ± 0.041        (t = 7.7)
+                     η = 0.142 ± 0.0062 (t = 23).
+
+The t statistic given here is computed under the assumption that the
+Gaussian model expressed in (1,2) is valid; the error estimates are the
+value divided by the t statistic. Although the actual residuals are fat-
+tailed as we discuss below, these estimates indicate that the coefficient
+values are highly significant.
+    The R 2 values for these regressions are typically less than one percent,
+indicating that only a small part of the value of the dependent variables
+I and J is explained by the model in terms of the independent variables.
+This is precisely what is expected, given the small size of the permanent
+impact term relative to the random motion of the price due to volatility
+during the trade execution.
+    This persistent cost, though small, is of major importance since it is in
+average the cost incurred while trading by fund managers. Furthermore,
+since most orders are part of large portfolio trades, the volatility cost
+actually experienced on the portfolio level is considerably lower than
+exhibited in the stock-level analysis, increasing the significance of the
+fraction of impact cost estimated. As previously mentioned, the non-
+linear optimization of the volatility versus impact cost trade-off at the
+portfolio level is a subject of current work.
+    The dimensionless numbers γ and η are the “universal coefficients of
+market impact:” according to our model they apply to every order and
+every asset in the entire data set. To summarize, they are to be inserted
+into the equations
+
+                              X Θ 1/4
+                                  
+                                  
+                     I = γσ           + hnoisei
+                              V V
+                         I               X 3/5
+                     J =   + sgn(X) η σ         + hnoisei
+                         2              VT
+giving the expectation of impact costs; in any particular order the realized
+values will vary greatly due to volatility. Recall that I is not a cost, but
+is simply the net price motion from pre-trade to post-trade. The actual
+cost experienced on the order is J.
+    We have chosen these simple forms in order to have a single model
+that applies reasonably well across the entire data set, which consists
+entirely of large-cap stocks in the US markets. More detailed models
+Equity Market Impact                    May 10, 2005                    22
+
+
+                                                IBM                      DRI
+ Average daily volume             V           6.561 M                  1.929 M
+ Shares outstanding               Θ           1728 M                    168 M
+ Inverse turnover                Θ/V            263                       87
+ Daily volatility (%)             σ             1.57                     2.26
+ Normalized trade size           X/V             0.1                      0.1
+ Normalized permanent            I/σ           0.126                    0.096
+ Permanent price impact (bp)      I              20                       22
+ Trade duration (days)            T      0.1     0.2  0.5         0.1     0.2  0.5
+ Normalized temporary            K/σ    0.142 0.094 0.054        0.142 0.094 0.054
+ Temporary impact cost (bp)       K       22     15    8          32      21   12
+ Realized cost (bp)               J       32     25   18          43      32   23
+
+
+Table 3: Example of permanent and temporary impact costs, for a pur-

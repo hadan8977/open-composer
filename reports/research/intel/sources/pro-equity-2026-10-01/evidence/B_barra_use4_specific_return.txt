@@ -1,0 +1,58 @@
+URL: https://www.top1000funds.com/wp-content/uploads/2011/09/USE4_Methodology_Notes_August_2011.pdf (MSCI Barra USE4 Methodology Notes, Aug 2011) and http://index.cslt.org/mediawiki/images/4/47/MSCI-USE4-201109.pdf (USE4 Empirical Notes, Sep 2011; hosted mirror of MSCI document)
+Fetched UTC: 2026-10-01 06:17:05
+Source type: open-access PDF, text via pdftotext -layout (/tmp/B/use4e.txt). Excerpted line ranges: 1294,1312
+
+----- lines 1294,1312 -----
+            The explanatory power of the factors, as measured by R-squared, is a key metric of model quality. The
+            value of R-squared, however, can depend sensitively on the regression weighting scheme, the
+            estimation universe, and the time period under consideration. Caution must be exercised, therefore,
+            when comparing R-squared values across different models. Nevertheless, if each of these variables is
+            carefully controlled, then a meaningful apples-to-apples comparison between models is possible.
+            In Figure 4.1, we report the trailing 12-month R-squared for the USE3 and USE4 models. In order to
+            ensure a fair comparison, the estimation universe (MSCI USA IMI Index) and regression weighting
+            scheme (square root of market capitalization) were identical for the two sets of regressions. Clearly,
+            both models track each other closely in terms of explanatory power. The R-squared of both models
+            varied from just under 30 percent in the mid 1990s to slightly above 50 percent in 2009.
+
+
+Figure 4.1
+            Trailing 12-month total R-squared for USE4 and USE3 models. Results were computed based on monthly
+            cross-sectional regressions using a common estimation universe (MSCI USA IMI) and regression weighting
+            scheme (square root of market capitalization). The difference is also plotted, with the scale indicated on the
+            right axis.
+
+
+
+=== USE4 Methodology Notes (use4m.txt) lines 665-675, 726-732, 1488-1500 ===
+                                                             rn  fc   X ni fi   X ns f s  un ,                   (3.1)
+                                                                             i          s
+
+
+            where f c is the return of the Country factor, f i is the return of industry factor i , f s is the return of
+            style factor s , X ni and X ns are the exposures of stock n to industry i and style s , respectively, and
+            u n is the specific return. Factor returns in USE4 are estimated using weighted least-squares regression,
+            assuming that the variance of specific returns is inversely proportional to the square root of total market
+            capitalization. This regression-weighting scheme reflects the empirical observation that the idiosyncratic
+            risk of a stock decreases as the market capitalization of the firm increases.
+            In Equation 3.1, we see that every stock has an exposure of 1 to the Country factor. Country exposure,
+
+            where X sE is exposure of the cap-weighted estimation universe to style s . Note, however, by Equation
+            3.3, the sum over industries must equal zero. Similarly, since style factors are standardized to be cap-
+            weighted mean zero (i.e., X sE  0 ), the second summation in Equation 3.4 also vanishes. The final sum
+            in Equation 3.4 corresponds to the specific return of a broadly diversified portfolio, and is therefore
+            approximately zero (note that it would be exactly zero had we used regression weights instead of
+            capitalization weights). Thus, to an excellent approximation, Equation 3.4 reduces to
+            European Equity Model (EUE3), as described by Briner, Smith, and Ward (2009). The EUE3 model utilizes
+            daily observations to provide timely estimates of specific risk directly from the time series of specific
+            returns. A significant benefit of this approach is that specific risk is estimated individually for every stock,
+            thus reflecting the idiosyncratic nature of this risk source.
+            The specific returns are obtained from daily cross-sectional regressions,
+                                                                    rnt   X nk fkt  unt ,                           (5.1)
+                                                                           k
+
+
+            where rnt is the return of stock n on day t , X nk is the stock exposure to factor k , f kt is factor return,
+            and unt is the specific return of the stock. It is understood that although the factor exposure matrix
+            varies slowly with time, the t subscript is suppressed for notational simplicity.
+            Asset-level specific risk is computed directly from the time series of specific returns,
+NOTE: total cross-sectional R-squared of USE4 = 'just under 30 percent in the mid 1990s to slightly above 50 percent in 2009' (Empirical Notes sec. 4, Figure 4.1) => roughly 50-70% of monthly stock return variance is stock-specific (u_n), which is what a stock-selection alpha has to forecast.

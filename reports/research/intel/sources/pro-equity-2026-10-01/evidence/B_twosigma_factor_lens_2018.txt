@@ -1,0 +1,58 @@
+URL: https://www.twosigma.com/wp-content/uploads/Introducing-the-Two-Sigma-Factor-Lens.10.18.pdf (Two Sigma, 'Introducing the Two Sigma Factor Lens', June 2018)
+Fetched UTC: 2026-10-01 06:19:10
+RELEVANCE: LOW. This is a multi-asset allocation/risk lens built from liquid asset-class proxy indices (Venn product), NOT Two Sigma's equity alpha process. Two Sigma's internal signal-evaluation (marginal contribution, correlation caps, t-stat thresholds, capacity, paper trading) is NOT publicly described anywhere I could open: 'not found'. Venn web pages (venn.twosigma.com) unreachable from this host (DNS failure).
+
+different asset classes within a portfolio was an effective way to
+maximize risk-adjusted returns. A key issue with that assumption,
+however, is that different asset classes may be exposed to the same
+systematic sources of risk, or risk factors, which may lead an investor
+to believe they are more diversified than is actually the case. In
+contrast, examining a portfolio through a risk factor lens may allow
+investors to better understand overlapping sources of risk across
+multiple asset classes and more efficiently manage their portfolios’
+overall risk exposures and expected return.
+
+In this paper, we provide an overview of the Two Sigma Factor Lens, designed for
+analyzing multi-asset portfolios and derived from returns of broad, liquid asset class
+proxy indexes. This lens is intended to be:
+
+         • Holistic, by capturing the large majority of cross-sectional and
+         time-series risk for typical institutional portfolios;
+
+         • Parsimonious, by using as few factors as possible;
+
+         • Orthogonal, with each risk factor capturing a statistically
+         uncorrelated risk across assets;
+
+         • Actionable, such that desired changes to factor exposure can
+         be readily translated into asset allocation changes.
+
+...
+inflation uncertainty, respectively. Returns from asset classes with more complex
+underlying drivers, such as corporate bonds, may be decomposed into the
+components that appear statistically driven by exposure to the more liquid asset
+class risk factors and an orthogonal component representing the unique, marginal
+risk factor related to that asset class. Highlights of the Two Sigma Factor Lens
+construction are provided in the next section.
+
+III. Construction of the Two Sigma Factor Lens
+The Two Sigma Factor Lens seeks to capture the common risk factors driving
+returns across the majority of global assets, with a hierarchy that starts from
+the more liquid and high capacity factors that form the foundation of most
+institutional investors’ portfolios. We denote the most prevalent risk factors, which
+stem from holding globally diversified long positions in equities, sovereign bonds,
+corporate credit, and commodities, as the “Core Macro” factors in our lens. To
+these, we add four “Secondary Macro” factors that can cut across multiple asset
+classes to explain additional concentrated risks that frequently arise in diversified
+...
+
+                                                                       5
+to fundamental drivers such as changes in risk-free discount rates and aggregate
+investor risk aversion, resulting in a purified Commodities risk factor reflecting
+exposure to the particular supply and demand characteristics of this asset class.16
+Since exposures of less liquid assets to our primary risk factors can vary over
+time, this residualization process is performed on a rolling basis using three years
+of daily returns data with an exponentially-weighted regression that emphasizes
+recent performance. To account for daily short-term lead-lag effects across the
+asset classes, the exposures to more liquid risk factors are calculated using five-
+day rolling returns, with Newey-West (1987) adjustments to the estimated beta

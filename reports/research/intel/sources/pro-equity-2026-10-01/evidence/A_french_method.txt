@@ -1,0 +1,44 @@
+URL base: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/ (F-F_Research_Data_5_Factors_2x3[_daily]_CSV.zip, F-F_Momentum_Factor[_daily]_CSV.zip, F-F_ST_Reversal_Factor[_daily]_CSV.zip)
+Fetched UTC: Thu Oct 1 06:09 2026 (date -u 06:09:00)
+Data created from 202608 CRSP; last daily date 2026-08-31, last monthly 202608.
+
+METHOD: annual return = compounded daily factor returns (prod(1+r/100)-1) per calendar year, in %. 'Mkt' = Mkt-RF + RF daily. Monthly rows compound the monthly files. Vol = stdev(daily)*sqrt(252) in % ; Sharpe = mean/stdev*sqrt(252) of the factor's daily (excess/zero-cost) return, no RF subtraction for long-short factors; for Mkt-RF it is an excess-return Sharpe; Mkt and RF rows have no vol/Sharpe. FF factors are zero-cost long-short portfolios, value-weight, gross of trading costs and shorting fees, NYSE/AMEX/NASDAQ.
+NOTE: the daily ST_Rev/UMD factor files are built from daily-rebalanced portfolios; the monthly ST_Rev file is monthly-rebalanced - so daily-compounded vs monthly-compounded ST_Rev differ materially (2025: +10.99% daily vs -18.04% monthly; the French file's own annual section says -20.84%). 2024 UMD: 20.61 daily-compounded vs 18.47 monthly-compounded (French annual section 19.72). Always state which construction is used.
+2026 is Jan-Aug only (166 trading days).
+
+Max drawdown (compounded daily, from 2024-01-01 start): Mkt -19.56% 2025-02-19->2025-04-08; Mkt-RF -20.24% 2024-12-06->2025-04-08; SMB -19.93% 2024-01-02->2025-11-17; HML -10.37% 2024-01-05->2024-12-26; RMW -26.82% 2024-08-07->2026-06-30; CMA -14.14% 2024-01-02->2025-10-29; UMD -17.63% 2026-06-22->2026-08-31; ST_Rev(daily) -12.36% 2025-04-28->2026-06-25.
+Worst single days since 2024: Mkt-RF 2025-04-04 -5.92 and 2025-04-03 -5.13; UMD 2026-07-01 -3.66, 2026-02-04 -3.60, 2025-01-27 -3.29; ST_Rev 2026-07-28 -3.46, 2026-06-25 -3.45, 2025-04-03 -3.37; HML 2025-04-09 -3.00; RMW 2026-07-30 -2.23; CMA 2026-07-31 -2.90.
+
+Monthly (monthly files) 2024-01..2026-08: month Mkt-RF SMB HML RMW CMA UMD STREV
+202401 0.73 -5.69 -2.37 0.66 -1.01 5.46 2.23
+202402 5.07 -0.83 -3.43 -2.02 -2.28 5.01 -1.6
+202403 2.84 -1.2 4.16 1.33 1.04 -0.32 0.15
+202404 -4.65 -2.58 -0.45 1.16 -0.38 -0.43 -3.8
+202405 4.32 0.58 -1.33 3.2 -2.98 1.45 -1.71
+202406 2.8 -4.33 -3.36 0.55 -1.69 0.86 -1.87
+202407 1.22 8.33 5.57 0.26 0.27 -2.36 3.51
+202408 1.61 -3.57 -1.13 0.75 0.79 4.86 0.12
+202409 1.73 -0.91 -2.73 0.19 -0.25 -0.6 0.57
+202410 -1.0 -0.86 0.91 -1.49 1.02 2.98 -1.49
+202411 6.49 4.63 0.38 -2.27 -1.93 0.81 -4.8
+202412 -3.16 -3.82 -2.97 1.88 -1.2 -0.3 0.35
+202501 2.8 -1.23 1.76 -2.35 -3.22 1.01 2.63
+202502 -2.43 -4.88 4.84 1.07 3.09 -0.86 3.28
+202503 -6.39 -1.47 2.87 2.09 -0.46 -2.64 -3.5
+202504 -0.84 -1.83 -3.29 -2.83 -2.59 5.01 2.35
+202505 6.06 -0.77 -2.81 1.29 2.48 2.25 -5.05
+202506 4.86 -0.08 -1.43 -3.19 1.38 -2.65 -5.6
+202507 1.98 -0.12 -1.34 -0.25 -2.0 -0.94 -5.2
+202508 1.84 4.82 4.37 -0.69 1.97 -3.61 1.17
+202509 3.39 -2.17 -1.05 -2.01 -2.27 4.62 -2.37
+202510 1.96 -1.35 -3.18 -5.25 -4.07 0.16 -7.8
+202511 -0.13 1.48 3.76 1.43 0.64 -1.72 -0.18
+202512 -0.36 -0.2 2.4 0.32 0.4 -2.4 1.35
+202601 1.03 3.26 3.8 1.89 1.84 5.03 -0.3
+202602 -1.18 0.64 2.8 1.67 5.04 1.31 -6.73
+202603 -5.18 0.67 3.29 -2.03 -0.12 1.56 0.32
+202604 9.95 0.46 -1.37 -4.15 -3.8 9.51 -1.36
+202605 4.91 -2.65 -2.31 -8.16 -1.46 1.39 -6.34
+202606 -1.07 4.36 3.58 -5.07 3.45 4.62 0.03
+202607 -0.61 -0.09 2.11 11.07 2.26 -12.2 9.5
+202608 2.56 -0.53 -3.54 -4.08 -2.01 -5.7 -1.98

@@ -1,0 +1,137 @@
+URL: https://arxiv.org/pdf/2110.15239 (M. Isichenko, 'Costly Trading', arXiv q-fin.PM 7 Oct 2021)
+Fetched UTC: 2026-10-01 06:11:43
+Source: open arXiv PDF, author of the book; short theoretical note (9 pp), no empirical Sharpe/capacity tables. Paper claim (theory).
+
+                                                                          Costly Trading
+                                                                              Michael Isichenko∗
+arXiv:2110.15239v1 [q-fin.PM] 7 Oct 2021
+
+
+
+
+                                                                                    Abstract
+                                                          We revisit optimal execution of an active portfolio in the presence
+                                                     of slippage (aka linear, proportional, or absolute-value) costs. Market
+                                                     efficiency implies a close balance between active alphas and trading
+                                                     costs, so even small changes to trading optimization can make a big
+                                                     difference. It has been observed for some time that optimal trading
+                                                     involves a pattern of a no-trade zone with width ∆ increasing with the
+                                                     slippage cost c. In a setting of a reasonably stable (non-stochastic)
+                                                     forecast of future returns and a quadratic risk aversion, it is shown
+                                                     that ∆ ∼ c1/2 , which differs from the ∆ ∼ c1/3 scaling reported for
+                                                     stochastic settings. Analysis of optimal trading employs maximization
+                                                     of a utility including projected alpha-based profits, slippage costs, and
+                                                     risk aversion and borrows from a physical analogy of forced motion in
+                                                     the presence of dry friction.
+
+
+                                           1        Introduction.             Trading costs and market effi-
+                                                    ciency
+                                           Trading in financial markets involves costs with security-dependent struc-
+                                           ture. One normally distinguishes between trading costs proportional to the
+                                           absolute value of the trade size and those increasing nonlinearly with the
+                                           trade size. The former type includes fees, taxes, and bid-ask spread and is
+                                           here referred to as slippage. The latter, impact cost is due to a sizable trade
+                                           affecting security price. Empirical measurement of the trading costs is an
+                                           important part of active portfolio management and is generally complicated
+                                           by the market noise and the difficulty of attribution of price changes to spe-
+                                           cific trades. It generally takes a large database of orders and executions to
+                                           run a statistically meaningful trading cost analysis [1].
+                                                Given the scale of alpha-based portfolios deployed in financial markets,
+                                           trading costs are not only significant in quantitative terms but also bear
+                                               ∗
+                                                   michael.isichenko@gmail.com
+
+
+                                                                                        1
+on qualitative concepts including market efficiency. The venerable teaching
+of efficient markets [2] has been under renewed pressure, at least at the
+aggregate equity market level [3, 4]. At a micro, or security-specific level,
+efficiency would mean a poor predictability of future returns such that, for
+a regular investor, timing the market is never worth the risk. Empirical
+observations, however, indicate the existence of thousands of hedge funds,
+many of them systematic quants ostensibly knowing what they are doing.
+By some estimates [5], the cost of trading in the US markets, defined as
+profits and wages in the financial industry, can be as high as 9% of the
+GDP.
+     The persistent presence of actively managed portfolios means that mar-
+kets are inefficient at the micro level in the sense that skilled traders, dis-
+cretionary or quantitative, are able to generate alphas, or reasonably per-
+forming forecasts of future returns for specific securities. The definition of
+market efficiency should then be adjusted to account for the presence of al-
+phas and competing alpha-based traders. An efficient market can be defined
+as one in which tradable predictability of security prices is balanced by trad-
+ing costs. Such a balance is typical for mid-frequency statistical arbitrage
+where the forecasts and the costs are of the same order of magnitude [6]. It
+is then the subtle difference between the forecast performance1 and the cost
+of trading, which separates success from failure. Not surprisingly, the most
+successful quantitative funds appear to have a good understanding of their
+trading costs [7] and, by extension, a fairly optimal portfolio construction
+accounting for these costs.
+     The subject of this paper is optimal trading with slippage, which is the
+dominant cost for small- to medium-size active equity portfolios. The prob-
+lem was considered in a number of papers starting with Constantinides [8],
+who showed that slippage must drastically reduce the frequency and volume
+of optimal trades. The resulting trading pattern involves a no-trade zone
+(NTZ) in terms of position for each security, so it is provably detrimental to
+trade while within the NTZ.
+     The case of slippage is different from impact costs. The latter disappear
+in the limit of a vanishing trading rate and therefore do not impose a no-
+trade zone [9, 6].
+     Formal optimization in the presence of slippage involves some mathe-
+matical challenges due to an absolute-value-type nonlinearity present in the
+problem. Analytical solutions were developed for stochastic models with
+  1
+    Performance seems a better term than accuracy: it is hard to call accurate forecasts
+whose typical correlation with realized returns is of order 1%.
+
+
+
+                                           2
+security price following a random walk with a mean-reverting-type drift
+[10, 11, 12]. Stochastic treatment of slippage optimization uses mathemat-
+ical methods such as Itô algebra or Bellman’s optimal control theory. The
+results of these analyses indicate that the width of the NTZ is proportional
+to the cubic root of slippage, meaning a strong effect of even a small cost
+on optimal execution. An interesting approach based on heuristics of track-
+ing a cost-free portfolio, but leading to a computationally expensive Hidden
+Markov Model, was proposed in [13].
+    The approach adopted in this paper is non-stochastic. The nonlinear
+problem of optimal continuous-time trading with slippage (but no price im-
+pact) and with quadratic risk penalties is solved in a closed form for a fairly
+general profile of predicted future returns. The solution depends on the
+convexity properties of the forecast profile. The scaling for the NTZ width
+is found to be a square root of slippage, which is different from the results
+...
+For this profile, the lower bound of the NTZ is
+                        γ  1/2         2
+                 P∗ =      f∞ − (2c)1/2          for f∞ > 2c.                (12)
+                        2k
+For f∞ ≤ 2c, P ∗ = 0. This example shows that the NTZ width scales as
+square root of slippage:
+
+                  f˙0      f˙0 2c 1/2
+                                
+                        ∗
+           ∆(c) =     −P =            + O(c)            for c  f∞ .         (13)
+...
+     Slippage costs are also subject to fluctuations and could benefit from
+a stochastic treatment. A simpler approach is to distinguish between the
+mean slippage c applicable to future trades and the current (initial) slip-
+page c0 which can be predicted with a higher accuracy. This amounts to
+replacing 2c in (10) by c0 +c and thereby gauging the NTZ depending on cur-
+rent execution opportunities, e.g., by combining active orders with liquidity
+provision.
+     Optimal trading of a portfolio, i.e., multiple securities interacting via risk
+factors, also involves no-trade zones due to slippage costs, because the inter-
+action of securities in a portfolio utility function acts like a “risk pressure”
+correction to the forecast [6]. Even in continuous time, portfolio trading pat-
+tern will generate discrete events of position adjustment. Qualitatively, one
+can imagine a particle in an evolving multi-dimensional potential well. The
+particle (a vector of portfolio positions) is drawn to the bottom of the well
+but is also subject to a slippage stiction which is only occasionally overcome
+when and where the slope of the well exceeds a threshold.
+     The effect of even small slippage costs is significant for an actively man-
+aged portfolio unless a sufficiently strong and low-turnover alpha is used.
+It is fair to assume that most alpha-driven portfolios underestimate market
+friction (or its implications for portfolio construction) and trade too much.
