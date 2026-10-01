@@ -1094,7 +1094,7 @@
   - 2026-10-01 06:34 UTC 交互会话派 Sonnet 子代理开始，预算约 2 小时。
 
 ### T-20261001-05 组合线 S1：信号库 v1（10 个主题，时点正确，U3000 每日）
-- status: ready
+- status: running（交互会话，子代理 R1001-0725-S1）
 - priority: 1
 - not_before: T-20261001-03 的 D2 部分交付并提交（面板 `data/research/equity_book/panel/` 存在，`returns.py` 测试通过）
 - goal: 设计第 4 节。按文献方向，把价值、质量/盈利、投资/发行、动量、低风险、盈余、内部人、卖空信息、季节性、快信号做成统一处理的截面分数，供 M0–M3 合成。证据（`reports/research/intel/pro-equity-evidence-2026-10-01.md` 第 3 节）：扣成本后靠得住的是慢信号；快信号只进 ML。
@@ -1134,6 +1134,7 @@
   - 主审核对时点测试和覆盖率。
 - notes:
   - 2026-10-01 06:43 UTC 交互会话（Opus）写入。
+  - 2026-10-01 07:21 UTC 交互会话派 Sonnet 子代理执行（D2/D3 已在 12d9cef 交付）。定时轮不要碰。
 
 ### T-20261001-06 组合线 D5：优化器（cvxpy + Clarabel）
 - status: ready
