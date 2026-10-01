@@ -1380,7 +1380,7 @@
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）写入。
 
 ### T-20261001-21 组合线数据：上游特征表增量刷新到最近交易日，并做时点不变性检验
-- status: ready
+- status: partial（执行轮 2026-10-01 22:08–23:55 UTC，待主审）
 - priority: 1
 - not_before: 无。本任务不改代码，研究快照只读。每个重步骤开始前先确认别的会话没有在跑重任务（简报第 0 步）
 - brief: reports/research/control/briefs/T-20261001-21.md
@@ -1389,6 +1389,7 @@
 - done_when: `reports/research/program/data-refresh-2026-10-01/{inventory.json,invariance.json,freshness.json,report.md}` 已提交；每张表要么通过检验并刷新到 D，要么已恢复备份、写明原因；结果标"待主审"。
 - notes:
   - 2026-10-01 19:25 UTC 19:07 主审轮（Opus）写入。按纲领"两周优先级第 2"和 13:07 主审轮的安排写简报。设计上的取舍：`data/features` 是只追加的时点特征库，原地追加，由备份和不变性检验把关；被 A1 哈希绑定的研究快照 `data/research/equity_book/` 不动，组合层另建 live 目录，交给 T-20261001-22 做（current-view 17:55："研究快照保持冻结，实盘数据另放一个目录"）。交互会话要自己做，就先把本任务标 `running（交互会话）`。
+  - 2026-10-01 执行轮（sonnet-high 子代理 a3b1bab75c10cda65，112 次调用，模型核对 claude-sonnet-5-5）：D=2026-10-01，提交 4c9fa1e。通过并已原地换入：insider_broad（至 10-01，changed 0）、short_volume_broad（至 10-02 次日行，changed 0）、news_attention（至 10-01，changed 0）、窄 universe 2026 分区（0.054%）。未过 max_changed_share ≤0.001（候选在 data/features/_t21_tmp/，未换入，原文件未动）：universe_broad 1.106%（FGC 新增 2 键）、daily_broad 1.677%、daily 窄 1.701%（子代理称 09-15..09-17 三个交易日的收盘变了，疑似归档按新复权口径刷新，BBY 09-14 收盘 93.85 vs 94.83，推断未核实）、alpha101_broad 4.12%、alpha191_broad 0.66%、SEC facts（值未变但旧键 17 个消失，已从备份恢复，sha 核对一致）。跳过（依赖未换入的日线表）：sec_fundamentals_daily、nsi、short_interest（原始 FINRA 已采至 09-15 结算，特征表未重建）。研究快照 2511 文件前后哈希一致（snapshot_sha_before/after 已 cmp 核对）。8 个测试和 ruff 通过。产物：reports/research/program/data-refresh-2026-10-01/{report.md,inventory.json,invariance.json,freshness.json}、scripts/check_feature_invariance.py、tests/test_check_feature_invariance.py；备份 data/live/backup-20261001/。待主审决定：最后 3 个交易日边界怎么处理（只追加切点之后的新行 / 门槛忽略末 3 日）；决定前换入价格类表会违反冻结门槛，我没有改。决定后依次：把 _t21_tmp 候选换入 → sec_fundamentals_daily → nsi → short_interest。待主审。
 
 ### T-20261001-22 组合线数据：live 目录（组合层逐行对齐研究快照）、风险模型跨年修复、每日驱动脚本
 - status: ready
