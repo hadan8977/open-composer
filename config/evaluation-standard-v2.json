@@ -1,5 +1,5 @@
 {
-  "version": "v2.0.1",
+  "version": "v2.0.2",
   "effective_utc": "2026-10-01 18:16",
   "doc": "docs/evaluation-standard.zh.md",
   "recent_window_start": "2024-01-08",
@@ -81,5 +81,11 @@
     "note": "SE at the observed short-window Sharpe bounds |z| below ~0.77"
   },
   "contribution_min_t": 2.0,
-  "state_lag_sessions": 1
+  "state_lag_sessions": 1,
+  "placebo": {
+    "seeds": 100,
+    "gross": "re-permute the composite within the universe at every rebalance",
+    "net": "quarter-fixed random ranks from hash(seed, quarter, symbol); real composite order statistics assigned by those ranks at every rebalance; entrants inserted by hash (v2.0.2)",
+    "since": "2026-10-02 06:39 UTC"
+  }
 }

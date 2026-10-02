@@ -1326,13 +1326,21 @@
   - 2026-10-01 14:20 UTC 交互会话（Opus）写入。机主 10-01 原话："如果前向测试只是确认执行和数据没问题，那么两周就足够了，或者说这个可以直接用模拟盘测试，我多开几个模拟盘账户给你就行了"。开账户和批准具体策略都由机主做。
 
 ### T-20261002-26 组合线 v1.2：账户层（F1/F2、整股、Reg T）、安慰剂、按评判标准 v2 定档
-- status: running（10-02 05:36 UTC 交互会话派子代理 R1002-0535-T26；定时轮不要取）
+- status: done（fde6843 代码和 identity、412ef13 结果；06:39 UTC 主审复核：逐项对过 results.json 的分档条件，final 校验和 direction-check 都 ok，hypotheses.md 无改动）。M0_U3000 到 P1，是主变体：family DSR 0.912，全项目 DSR 0.662，毛口径安慰剂 1.00，稳健性 5/6，无否决；只差 P2 的信号层 t（2.94 < 3）。M1_U3000、M1_P1000 到 P1；M0_P1000 无档（DSR 0.680）。F1 账户近期年化 9.5%，超出 BIL 5.3%，波动 5.2%，夏普 1.03；F2 超出 SPY 4.0%，IR 1.36；保证金违规 0 次。收益来源：A 窗主要是低残差波动风格（+12.7%/年），B 窗主要是低 beta 风格（+23%/年）和特质收益（+6%/年）；最坏的 63 个会话是 2021-02。净口径安慰剂原定义退化 → 评判标准 v2.0.2；复核登记为 T-20261002-29
 - priority: 1
 - not_before: 无（合同 `reports/research/iterations/t20261002_book_v12/hypotheses.md` 05:31 UTC 冻结，direction-check、iteration validate 均 ok）
 - goal: T-25 的 R6 在 k = 1 时 SPY 对冲平均占权益 0.68–0.84、最高 1.27，总敞口约 3 倍，超过 Reg T 上限（Alpaca 文档：隔夜 2 倍，收盘不满足次日追保）。所以要回答三个问题：在 $1M 账户里，按 F1（k 0.5 加 T-bill 腿，总敞口 ≤ 1.8）和 F2（SPY 1.0 加 0.3 叠加层），在整股、引擎 $100 最小单、退市下界的约束下还剩多少；安慰剂分位多少；按诚实的试验数能不能到 P1。
 - plan: Stage A 先逐位复现 R6，再跑账户层；Stage B 跑 100 个种子的日内打乱安慰剂；Stage C 用 scorecard_v2 记分（10 变体族的 DSR，并披露全项目 111 个试验）、做因子 ETF 张成和风格归因，最后定档。纯逻辑写进 `open_composer/research/equity_book/book_v12.py`，给生产端复用。
 - done_when: `t20261002_book_v12/` 下的 results、report、identity、placebo、account-summary 已提交，decision-record 已更新。
 - brief: reports/research/control/briefs/T-20261002-26.md
+
+### T-20261002-29 组合线 v1.2：按评判标准 v2.0.2 复核净口径安慰剂（只作记录，不改判定）
+- status: ready（定时执行轮可取，排在 T-20261002-02 之后）
+- priority: 2
+- not_before: 无（本机有超过 1 GB 的进程在跑时等它结束）
+- goal: 原定义的净口径安慰剂每个调仓日都重新打乱，随机组合每周整本换手，净夏普 −1.9 到 −4.7，没有信息量。按 v2.0.2 的季度内固定随机名次，给 M0_U3000 和 M1_U3000 重算净、毛分位，并比较真实组合和安慰剂的换手。
+- done_when: `t20261002_book_v12/placebo-persistent.json` 已提交；默认模式的结果逐位不变。
+- brief: reports/research/control/briefs/T-20261002-29.md
 
 ### T-20261002-28 组合线 v1.2：生产端目标生成器、引擎历史回放、每日驱动（不下单、不装定时任务）
 - status: running（10-02 05:47 UTC 交互会话派子代理 R1002-0541-T28，前置已满足：fde6843 提交了 book_v12 模块，identity 最大差 0.0；定时轮不要取）
