@@ -1342,6 +1342,21 @@
 - done_when: `t20261002_book_v12/placebo-persistent.json` 已提交；默认模式的结果逐位不变。
 - brief: reports/research/control/briefs/T-20261002-29.md
 
+### T-20261002-43 组合配置：最大回撤约 30%、收益优先下的引擎权重（S3、C2、v1.2 F1/F2）
+- status: running（交互会话 Opus 自己做，10-02 13:11 UTC 开始；定时轮不要碰）
+- priority: 1
+- not_before: 无（等 T-20261002-01 换入后用总收益口径的归档算 S3）
+- goal: 机主 10-02 12:45："最大回撤30吧，你来看着配，不用很严格，追求收益优先"。在 S3、C2、v1.2 F1、F2 和现金之间定权重：近期窗口（2024-01-08 起）收益最大，全历史（含 2018、2020、2022）最大回撤不超过约 -30%。先写预注册（迭代 `h20261002_program_dd30_allocation`），再算。产物：权重、前沿表、各窗口和按调仓日偏移的稳健性，组合层的模拟盘前向记账口径。
+- done_when: 预注册、结果和决定记录已提交；current-view 写入结论。
+
+### T-20261002-44 预测市场：Kalshi 隐含的宏观发布不确定性与公告日溢价（Polymarket/Kalshi 线第一步）
+- status: running（交互会话，10-02 13:11 UTC 派子代理 R1002-1311-T44；定时轮不要碰）
+- priority: 1
+- not_before: 无
+- goal: 机主 10-02 12:45 要求用 Polymarket 等预测市场的实时赔率做模型/策略/因子并不断迭代。主审查证后定的第一个机制（不是领先-滞后，登记簿里那条仍是 evidence_too_weak）：股市在 CPI、非农、GDP 发布日的公告溢价应随发布的不确定性变大；Kalshi 前一天下午的隐含分布标准差是唯一免费的、按发布分别的时点不确定性度量（FEDS 2026-010；Ai/Bansal/Guo NBER w31923）。设计已冻结在 `reports/research/iterations/h20261002_pm_macro_uncertainty/hypotheses.md`。本任务：补齐迭代文件、建 Kalshi 数据和不确定性表、能力登记、每小时前向采集脚本（cron 由主审装），冻结后跑 H0/H1（H2 视共识数据可得性）。
+- done_when: 简报验收全部满足；results.json 机械判定 continue_rule；登记簿新增一行。
+- brief: reports/research/control/briefs/T-20261002-44.md
+
 ### T-20261002-42 下单引擎：book_paper 的撤单和清仓命令（紧急停止路径，只用假客户端）
 - status: done（a7e6e39；10-02 13:03 UTC 交互会话主审。子代理 R1002-1251-T42B 从暂存补丁接着做完）
   - 已核对：提交只含范围内 3 个文件，948 行全是新增、0 行删除，`build_plan`、`submit_plan`、`RiskLimits` 和已有检查没动；新测试 19 个，`tests/test_book_paper*.py tests/test_book_v12_targets.py` 共 129 个通过。
