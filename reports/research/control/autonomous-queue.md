@@ -1334,6 +1334,14 @@
 - done_when: `t20261002_book_v12/` 下的 results、report、identity、placebo、account-summary 已提交，decision-record 已更新。
 - brief: reports/research/control/briefs/T-20261002-26.md
 
+### T-20261002-28 组合线 v1.2：生产端目标生成器、引擎历史回放、每日驱动（不下单、不装定时任务）
+- status: ready（交互会话负责：等 T-26 提交 book_v12 模块和 identity.json 后由交互会话派子代理 R1002-0605-T28；定时轮不要取）
+- priority: 1
+- not_before: git log 里有 T-20261002-26 的代码提交（含 `open_composer/research/equity_book/book_v12.py` 和通过的 identity.json）
+- goal: 模拟盘的第 3 个前置条件是生产端目标与合同账户目标逐位一致，本任务实现它，另做 60 个会话的引擎检查回放和每日驱动，为"连续 2 个会话 dry-run 全绿"做准备。生成器是无状态的：每天从数据重算 5 档，与 T-26 的模拟器状态一致。
+- done_when: 3 个历史日期 × 2 种形式逐位一致；engine-replay.json 里每个失败的检查都有解释；驱动在没有环境变量时拒绝 --submit；已提交。
+- brief: reports/research/control/briefs/T-20261002-28.md
+
 ### T-20261002-27 下单引擎：对冲腿和可变 T-bill 腿（v1.2 的 F1/F2 形式，只 dry-run）
 - status: done（9eed9d4，05:39 UTC；05:58 主审复核：75 个测试通过（原 57 + 新 18）；v1 目标的哈希不变，因为 v1 载荷里不含新字段；beta 检查 = 股票 beta + 1.0 × 实际对冲权重；F1/F2 v2 的 dry-run 13 项检查全过）。下一步：生产端目标生成器 T-20261002-28，等 T-26 的 book_v12 模块提交后开始
 - priority: 1
@@ -1461,7 +1469,7 @@
     - 前置加了 T-20261002-02。
 
 ### T-20261002-01 数据：修 SIP 日线归档的复权接缝，并一次性修复（拆股假收益、分红漏出总收益）
-- status: running（执行轮 04:08 UTC 开始，子代理 sonnet-high）
+- status: partial（执行轮 04:08–05:41 UTC，待主审）
 - priority: 1
 - not_before: 无（简报第 0 步：不在 20:30–01:00 UTC 运行修复）
 - brief: reports/research/control/briefs/T-20261002-01.md
@@ -1477,6 +1485,8 @@
   - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）写入。根因和证据见 T-20261001-21 的审核。
   - 只修当年是错的，会在 2025/2026 交界造出新接缝；简报已写死全历史重抓。
   - 修复会改变四条 ETF 模拟盘下一次运行读到的历史价格水平（改成总收益口径，和它们回测时用的一致），规则不变。
+  - 2026-10-02 05:41 UTC 执行轮（Sonnet 5.5，子代理 a84014510d059df67，待主审）：代码+测试已提交 874a52a（29 测试过、ruff 过；检测/全历史改写/25 分钟预算+pending/--repair-full-window/分钟只检测；新增 check_sip_seams.py、verify_sip_repair.py）。修复跑了 29 分钟、949 次 API，6952 个 symbol 被判重述（whole-year 比较 rtol 1e-6，4535 个 >1e-3，1405 个 >1e-2），改写 49906 个 symbol-年。V3 过：APH 08-27 收盘比 0.5001→1.0002，9 月接缝 22→6（1–8 月最大 9），VRME/KUST/ZCSH/UNX/TANH 不再列出。**V1 不过**（11,513,316 条违反；简报容差按 4 位小数写，实测供应商价格是 2 位小数，如 AAA 22.63→22.55；按 0.02/价格容差放宽后约 2500 个 symbol 仍有 188 条违反，疑似供应商改历史/代码复用如 NIVF）；**V2 不过**（6188，严格 1e-6 为 7779）；**V4 不过**（200 个未替换里 116 个不同；抽查 20 个只是 2026-10-01 末行的 volume/trade_count 被更正）。按简报恢复：data/sip/daily 已从 data/live/backup-sip-daily-20261002 恢复，sha256 0 不一致；修复后的树留在 data/live/failed-sip-daily-20261002（含 _restatements.jsonl）。因此归档目前仍是修复前状态，**今晚 22:00 定时任务会用新代码跑在未修复归档上**（检测到重述的 symbol 按 25 分钟预算改写，其余入 pending）。模拟盘标的 63/252 日收益变化（百分点）：SHY +0.60/+0.59、QQQ +0.11/+0.13、SPY +0.25/+0.29、GLD、SMH 0。夜间成本估算 0.86 分钟/平均夜，峰值周（1175 symbol）4.1 分钟，均 <25。未测：按"含取整容差"的完整 V1 全量；超 90 分钟上限约 3 分钟（验证器 OOM 一次需拆分）。主审要定：V1 容差口径（价格取整）、V4 是否排除最后一个会话，然后用 --repair-full-window 重做（约 35 分钟，不在 20:30–01:00 UTC）。产物：reports/research/program/data-refresh-2026-10-01/{archive-repair.json,seams-before.json,seams-after.json,sip-daily-backup-sha256.json,report.md}。data/live 下现有 3 份归档副本，磁盘剩 9.4G。
+
 
 ### T-20261002-02 数据：从修好的归档重建价格类特征表（两区不变性检验），接着刷新依赖表
 - status: blocked（等 T-20261002-01 完成并经主审审核；简报由 07:07 或之后的主审轮按 T-01 的实际结果写，范围取决于被替换的 symbol 数）
