@@ -907,3 +907,378 @@ def _optional_float(value: Any) -> float | None:
         return None if value is None else float(value)
     except (TypeError, ValueError):
         return None
+
+
+# --------------------------------------------------------------------------------------
+# emergency stop: cancel the book's open orders, flatten the book (T-20261002-42)
+# --------------------------------------------------------------------------------------
+
+BOOK_ORDER_PREFIX = "bk1-"
+FLATTEN_ORDER_PREFIX = "bk1-flat-"
+FLATTEN_MODES = ("close", "market")
+# a re-run of a flatten whose orders were cancelled needs a new attempt number (new client ids)
+_TERMINAL_UNFILLED = frozenset({"canceled", "cancelled", "expired", "rejected", "done_for_day"})
+
+
+def cancel_receipt_path(root: Path, account: str, execution_date: date, now: datetime) -> Path:
+    stamp = now.astimezone(UTC).strftime("%H%M%S")
+    return book_dir(root, account) / "orders" / f"cancel-{execution_date.isoformat()}-{stamp}.json"
+
+
+def flatten_receipt_path(root: Path, account: str, execution_date: date, now: datetime) -> Path:
+    stamp = now.astimezone(UTC).strftime("%H%M%S")
+    return book_dir(root, account) / "orders" / f"flatten-{execution_date.isoformat()}-{stamp}.json"
+
+
+def read_kill_switch_state(root: Path) -> dict[str, Any]:
+    """Kill-switch state for a receipt; never raises (a missing or invalid file is recorded)."""
+    from open_composer.paper_controls import load_paper_kill_switch
+
+    try:
+        state = load_paper_kill_switch(root, require_control_file=True)
+    except FileNotFoundError:
+        return {"enabled": None, "state": "control_file_missing", "reason": ""}
+    except (OSError, ValueError) as exc:
+        return {"enabled": None, "state": f"unreadable:{exc.__class__.__name__}", "reason": ""}
+    return {"enabled": bool(state.enabled), "state": "read", "reason": state.reason}
+
+
+def read_open_orders(client: Any) -> list[Any]:
+    """Broker orders that are still open (read-only)."""
+    from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
+
+    return list(
+        client.get_orders(
+            filter=GetOrdersRequest(status=QueryOrderStatus.OPEN, limit=ORDER_PAGE_LIMIT)
+        )
+    )
+
+
+def _require_verified_client(client: Any) -> None:
+    from open_composer.adapters.broker.alpaca_paper import (
+        PaperOrderError,
+        _require_verified_paper_client,
+    )
+
+    try:
+        _require_verified_paper_client(client)
+    except PaperOrderError as exc:
+        raise BookEngineError(str(exc)) from exc
+
+
+def _order_row(order: Any) -> dict[str, str]:
+    return {
+        "symbol": str(getattr(order, "symbol", "")),
+        "client_order_id": str(getattr(order, "client_order_id", "") or ""),
+        "broker_order_id": str(getattr(order, "id", "")),
+        "status": _text(getattr(order, "status", "")),
+    }
+
+
+def cancel_open_orders(
+    client: Any,
+    *,
+    account: str,
+    execution_date: date | None = None,
+    plan: OrderPlan | None = None,
+    reason: str,
+    now: datetime,
+    settle_seconds: float = 0.0,
+) -> dict[str, Any]:
+    """Cancel this book's open ``bk1-`` orders; every other order is left alone.
+
+    With ``plan`` only open orders whose ``client_order_id`` is in that plan are cancelled
+    (scope ``plan``); without a plan every open order whose id starts with ``bk1-`` is
+    (scope ``all_book``).  Cancelling reduces risk, so the kill switch does not gate it.  The
+    receipt lists the ids asked, the broker answer per id and the orders still open after a
+    re-read (for example ones the exchange no longer accepts cancels for).
+    """
+    if not reason.strip():
+        raise BookEngineError("cancel needs a reason")
+    if now.tzinfo is None:
+        raise BookEngineError("cancel time must be timezone-aware")
+    _require_verified_client(client)
+    scope = "plan" if plan is not None else "all_book"
+    day = execution_date or (plan.execution_date if plan is not None else None)
+    if day is None:
+        day = now.astimezone(NEW_YORK).date()
+    plan_ids = {o["client_order_id"] for o in plan.orders} if plan is not None else None
+
+    before = read_open_orders(client)
+    requested: list[dict[str, Any]] = []
+    untouched: list[dict[str, str]] = []
+    for order in before:
+        row = _order_row(order)
+        in_scope = row["client_order_id"].startswith(BOOK_ORDER_PREFIX) and (
+            plan_ids is None or row["client_order_id"] in plan_ids
+        )
+        if not in_scope:
+            untouched.append(row)
+            continue
+        try:
+            client.cancel_order_by_id(row["broker_order_id"])
+            row["response"] = "cancel_requested"
+        except Exception as exc:
+            code = getattr(exc, "status_code", None)
+            row["response"] = f"error:{exc.__class__.__name__}" + (f":{code}" if code else "")
+        requested.append(row)
+    if settle_seconds > 0 and requested:
+        import time as _time
+
+        _time.sleep(settle_seconds)
+    after = read_open_orders(client)
+    requested_ids = {r["client_order_id"] for r in requested}
+    still_open = [_order_row(o) for o in after]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "cancel",
+        "account": account,
+        "scope": scope,
+        "execution_date": day.isoformat(),
+        "reason": reason.strip(),
+        "cancelled_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "plan_sha256": plan.payload.get("plan_sha256") if plan is not None else None,
+        "requested": requested,
+        "n_requested": len(requested),
+        "n_request_errors": sum(1 for r in requested if r["response"].startswith("error")),
+        "untouched_open_orders": untouched,
+        "still_open_after": still_open,
+        "still_open_requested": [r for r in still_open if r["client_order_id"] in requested_ids],
+        "n_open_after": len(still_open),
+        "truncated": len(before) >= ORDER_PAGE_LIMIT or len(after) >= ORDER_PAGE_LIMIT,
+    }
+
+
+def flatten_client_order_id(
+    account: str,
+    execution_date: date,
+    symbol: str,
+    side: str,
+    qty: int,
+    mode: str,
+    attempt: int = 1,
+) -> str:
+    raw = f"flatten|{account}|{execution_date.isoformat()}|{symbol}|{side}|{qty}|{mode}"
+    if attempt > 1:
+        raw += f"|attempt{attempt}"
+    return FLATTEN_ORDER_PREFIX + hashlib.sha256(raw.encode()).hexdigest()[:36]
+
+
+def flatten_plan(
+    state: AccountState,
+    *,
+    account: str,
+    execution_date: date,
+    reason: str,
+    mode: str = "close",
+    asset_lookup: Callable[[str], AssetInfo | None],
+    kill_switch: Mapping[str, Any] | None = None,
+    attempt: int = 1,
+) -> OrderPlan:
+    """Whole-share orders that close every position: longs sell, shorts buy to cover.
+
+    Pure given the broker snapshot and the asset lookup; sends nothing.  Positions in assets that
+    cannot trade (unknown, inactive, not tradable) are listed in ``skipped`` and get no order;
+    fractional remainders (below one share, or the part after whole shares) go to
+    ``residual_fractional``.  Raises while any open order remains: cancel first.
+    """
+    if mode not in FLATTEN_MODES:
+        raise BookEngineError(f"flatten mode must be one of {FLATTEN_MODES}, got {mode!r}")
+    if not reason.strip():
+        raise BookEngineError("flatten needs a reason")
+    if attempt < 1:
+        raise BookEngineError("attempt must be >= 1")
+    if state.open_orders:
+        names = ", ".join(sorted({f"{s}:{c[:12]}" for s, c in state.open_orders}))
+        raise BookEngineError(
+            f"refusing to flatten with {len(state.open_orders)} open orders ({names}); "
+            "run `oc book-paper cancel` first"
+        )
+    tif = "cls" if mode == "close" else "day"
+    orders: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    residual: list[dict[str, Any]] = []
+    for symbol in sorted(state.positions):
+        qty = state.positions[symbol]
+        if abs(qty) <= 1e-9:
+            continue
+        price = _valid_price(state.position_prices.get(symbol))
+        reason_skipped = _frozen_reason(asset_lookup(symbol))
+        if reason_skipped:
+            skipped.append(
+                {
+                    "symbol": symbol,
+                    "qty": qty,
+                    "price": price,
+                    "value": None if price is None else round(abs(qty) * price, 2),
+                    "reason": reason_skipped,
+                }
+            )
+            continue
+        whole = int(math.floor(abs(qty) + 1e-9))
+        fraction = round(abs(qty) - whole, 9)
+        if fraction > 1e-9:
+            residual.append({"symbol": symbol, "qty": math.copysign(fraction, qty)})
+        if whole == 0:
+            continue
+        side = "sell" if qty > 0 else "buy"
+        orders.append(
+            {
+                "symbol": symbol,
+                "side": side,
+                "qty": whole,
+                "position_qty": qty,
+                "time_in_force": tif,
+                "reference_price": price,
+                "notional": None if price is None else round(whole * price, 2),
+                "client_order_id": flatten_client_order_id(
+                    account, execution_date, symbol, side, whole, mode, attempt
+                ),
+            }
+        )
+    orders.sort(key=lambda o: (o["side"] != "sell", o["symbol"]))
+    payload: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "flatten",
+        "account": account,
+        "execution_date": execution_date.isoformat(),
+        "mode": mode,
+        "time_in_force": tif,
+        "attempt": attempt,
+        "reason": reason.strip(),
+        "kill_switch": dict(kill_switch) if kill_switch is not None else None,
+        "account_status": state.status,
+        "status": "ok" if orders else "nothing_to_close",
+        "orders": orders,
+        "skipped": skipped,
+        "residual_fractional": residual,
+        "summary": {
+            "n_orders": len(orders),
+            "n_sell": sum(1 for o in orders if o["side"] == "sell"),
+            "n_buy": sum(1 for o in orders if o["side"] == "buy"),
+            "n_skipped": len(skipped),
+            "n_residual_fractional": len(residual),
+        },
+    }
+    payload["plan_sha256"] = _plan_hash(payload)
+    return OrderPlan(payload)
+
+
+def require_flatten_window(now: datetime, execution_date: date, mode: str) -> None:
+    """``close``: the CLS submission window.  ``market``: regular hours (09:30 ET to the close)."""
+    if mode == "close":
+        require_submission_window(now, execution_date)
+        return
+    if mode != "market":
+        raise BookEngineError(f"flatten mode must be one of {FLATTEN_MODES}, got {mode!r}")
+    if now.tzinfo is None:
+        raise BookEngineError("submission time must be timezone-aware")
+    local = now.astimezone(NEW_YORK)
+    close = us_equity_session_close(execution_date)
+    if close is None:
+        raise BookEngineError("execution date is not a US equity session")
+    if local.date() != execution_date:
+        raise BookEngineError(
+            f"market flatten only on the session day {execution_date.isoformat()} "
+            f"(ET date is {local.date().isoformat()})"
+        )
+    if local < datetime.combine(execution_date, MARKET_OPEN, NEW_YORK):
+        raise BookEngineError("market flatten is refused before 09:30 ET (regular hours only)")
+    if local >= datetime.combine(execution_date, close, NEW_YORK):
+        raise BookEngineError(
+            "market flatten is refused at or after the close (regular hours only)"
+        )
+
+
+def flatten_dry_run_receipt(plan: OrderPlan, *, now: datetime) -> dict[str, Any]:
+    """Receipt of a flatten that sent nothing; records whether the window would allow it now."""
+    try:
+        require_flatten_window(now, plan.execution_date, plan.payload["mode"])
+        window: dict[str, Any] = {"open_now": True, "detail": ""}
+    except BookEngineError as exc:
+        window = {"open_now": False, "detail": str(exc)}
+    return {
+        "dry_run": True,
+        "generated_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "window": window,
+        "plan": plan.to_dict(),
+        "sent": [],
+        "skipped_existing": [],
+        "failed": [],
+    }
+
+
+def submit_flatten(client: Any, plan: OrderPlan, *, now: datetime) -> dict[str, Any]:
+    """Send a flatten plan.  Allowed with the kill switch on (it only reduces risk).
+
+    Needs the mode's window, a client from the strict paper factory and no open order at the
+    broker; idempotent through the deterministic ``bk1-flat-`` client order ids.
+    """
+    from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.trading.requests import MarketOrderRequest
+
+    if plan.payload.get("kind") != "flatten":
+        raise BookEngineError("not a flatten plan")
+    mode = plan.payload["mode"]
+    day = plan.execution_date
+    require_flatten_window(now, day, mode)
+    _require_verified_client(client)
+    open_now = read_open_orders(client)
+    if open_now:
+        raise BookEngineError(
+            f"refusing to flatten with {len(open_now)} open orders at the broker; "
+            "run `oc book-paper cancel` first"
+        )
+    tif = TimeInForce.CLS if mode == "close" else TimeInForce.DAY
+    lookup = OrderLookup(client, day)
+    sent: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+    for order in plan.orders:
+        cid = order["client_order_id"]
+        existing = lookup.find(cid)
+        if existing is not None:
+            status = _text(getattr(existing, "status", ""))
+            skipped.append(
+                {
+                    "symbol": order["symbol"],
+                    "client_order_id": cid,
+                    "reason": "already at broker",
+                    "status": status,
+                    "hint": "terminal unfilled: re-plan with --attempt N+1"
+                    if status in _TERMINAL_UNFILLED
+                    else "",
+                }
+            )
+            continue
+        request = MarketOrderRequest(
+            symbol=order["symbol"],
+            qty=order["qty"],
+            side=OrderSide.BUY if order["side"] == "buy" else OrderSide.SELL,
+            time_in_force=tif,
+            client_order_id=cid,
+        )
+        try:
+            result = client.submit_order(request)
+        except Exception as exc:
+            failed.append(
+                {"symbol": order["symbol"], "client_order_id": cid, "error": exc.__class__.__name__}
+            )
+            continue
+        sent.append(
+            {
+                "symbol": order["symbol"],
+                "client_order_id": cid,
+                "broker_order_id": str(getattr(result, "id", "")),
+                "status": _text(getattr(result, "status", "")),
+            }
+        )
+    return {
+        "dry_run": False,
+        "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "plan": plan.to_dict(),
+        "sent": sent,
+        "skipped_existing": skipped,
+        "failed": failed,
+    }

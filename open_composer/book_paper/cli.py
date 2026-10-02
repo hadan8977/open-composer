@@ -286,4 +286,143 @@ def book_paper_status(account: str = ACCOUNT_OPTION) -> None:
     )
 
 
+@book_paper_app.command("cancel")
+def book_paper_cancel(
+    account: str = ACCOUNT_OPTION,
+    date_: str | None = typer.Option(
+        None, "--date", help="execution date of the plan to cancel (default: today, ET)"
+    ),
+    reason: str = typer.Option(..., "--reason", help="why; copied into the receipt"),
+    all_book: bool = typer.Option(
+        False, "--all-book", help="cancel every open bk1- order, not only this date's plan"
+    ),
+) -> None:
+    """Cancel this book's open orders (never other orders; allowed with the kill switch on)."""
+    from open_composer.book_paper.plan import (
+        BookEngineError,
+        cancel_open_orders,
+        cancel_receipt_path,
+        load_plan_file,
+        plan_path,
+        write_json_atomic,
+    )
+
+    root = project_root()
+    now = datetime.now(UTC)
+    day = _parse_date(date_) or now.astimezone(NEW_YORK).date()
+    try:
+        plan = None
+        if not all_book:
+            path = plan_path(root, account, day)
+            if not path.is_file():
+                raise typer.BadParameter(
+                    f"no plan file for {account} {day}: pass --date, or --all-book to cancel "
+                    "every open bk1- order"
+                )
+            plan = load_plan_file(path)
+        client = make_trading_client(account)
+        receipt = cancel_open_orders(
+            client,
+            account=account,
+            execution_date=day,
+            plan=plan,
+            reason=reason,
+            now=now,
+            settle_seconds=2.0,
+        )
+    except (BookAccountError, BookEngineError) as exc:
+        raise _fail(exc) from exc
+    path = write_json_atomic(cancel_receipt_path(root, account, day, now), receipt)
+    console.print(
+        f"cancel scope={receipt['scope']} requested={receipt['n_requested']} "
+        f"errors={receipt['n_request_errors']} open_after={receipt['n_open_after']} "
+        f"(requested ids still open: {len(receipt['still_open_requested'])}) receipt={path}"
+    )
+    for row in receipt["still_open_after"]:
+        console.print(f"  STILL OPEN {row['symbol']} {row['client_order_id'][:16]} {row['status']}")
+    if receipt["n_request_errors"]:
+        raise typer.Exit(1)
+
+
+@book_paper_app.command("flatten")
+def book_paper_flatten(
+    account: str = ACCOUNT_OPTION,
+    reason: str = typer.Option(..., "--reason", help="why; copied into the receipt"),
+    mode: str = typer.Option(
+        "close", "--mode", help="close: closing-auction (CLS) orders; market: DAY market orders"
+    ),
+    attempt: int = typer.Option(
+        1, "--attempt", help="raise to 2, 3 ... to re-send after the earlier orders were cancelled"
+    ),
+    confirm_flatten: bool = typer.Option(
+        False, "--confirm-flatten", help="required to send; without it this is a dry run"
+    ),
+) -> None:
+    """Close every position with whole-share orders (dry run unless --confirm-flatten).
+
+    Refuses while any order is open (run `cancel` first).  Allowed with the kill switch on; the
+    receipt records its state.  Untradable positions are listed and skipped.
+    """
+    from open_composer.book_paper.plan import (
+        BookEngineError,
+        flatten_dry_run_receipt,
+        flatten_plan,
+        flatten_receipt_path,
+        make_asset_lookup,
+        read_account_state,
+        read_kill_switch_state,
+        submit_flatten,
+        write_json_atomic,
+    )
+
+    root = project_root()
+    now = datetime.now(UTC)
+    day = now.astimezone(NEW_YORK).date()
+    try:
+        client = make_trading_client(account)
+        state = read_account_state(client)
+        plan = flatten_plan(
+            state,
+            account=account,
+            execution_date=day,
+            reason=reason,
+            mode=mode,
+            asset_lookup=make_asset_lookup(client),
+            kill_switch=read_kill_switch_state(root),
+            attempt=attempt,
+        )
+        receipt = (
+            submit_flatten(client, plan, now=now)
+            if confirm_flatten
+            else flatten_dry_run_receipt(plan, now=now)
+        )
+    except (BookAccountError, BookEngineError) as exc:
+        raise _fail(exc) from exc
+    path = write_json_atomic(flatten_receipt_path(root, account, day, now), receipt)
+    p = plan.payload
+    s = p["summary"]
+    console.print(
+        f"flatten {'SENT' if confirm_flatten else 'DRY RUN'} account={account} mode={mode} "
+        f"orders={s['n_orders']} (sell {s['n_sell']}, buy {s['n_buy']}) skipped={s['n_skipped']} "
+        f"residual_fractional={s['n_residual_fractional']} kill_switch={p['kill_switch']}"
+    )
+    for o in p["orders"]:
+        console.print(f"  {o['side']:4} {o['symbol']} {o['qty']} {o['time_in_force']}")
+    for row in p["skipped"]:
+        console.print(f"  SKIPPED {row['symbol']} qty={row['qty']:g} ({row['reason']})")
+    if confirm_flatten:
+        console.print(
+            f"sent={len(receipt['sent'])} skipped_existing={len(receipt['skipped_existing'])} "
+            f"failed={len(receipt['failed'])}"
+        )
+    else:
+        console.print(
+            f"window open now: {receipt['window']['open_now']} {receipt['window']['detail']}"
+        )
+        console.print("dry run: nothing sent; add --confirm-flatten to send")
+    console.print(f"receipt: {path}")
+    if confirm_flatten and receipt["failed"]:
+        raise typer.Exit(1)
+
+
 __all__ = ["book_paper_app", "credential_variable_names"]
