@@ -1,0 +1,1902 @@
+{
+ "config_version": "v2",
+ "config_effective_utc": "2026-10-01 18:16",
+ "family": {
+  "n_variants": 6,
+  "n_trials": 6,
+  "mean_pairwise_corr": 0.42362038104863475,
+  "n_eff": 3.881898094756826,
+  "var_sr_annual": 0.17504903190639595,
+  "expected_max_null_sr_annual": 0.4319462229826531,
+  "recent_window": [
+   "2024-01-08",
+   "2026-09-17"
+  ],
+  "recent_sessions": 676
+ },
+ "method": {
+  "offset_blend": "equal-weight 5 rebalance offsets",
+  "excess_over": "BIL",
+  "short_window_sessions": 63,
+  "min_window_sessions": 20,
+  "newey_west_lag": 5,
+  "state_lag_sessions": 1,
+  "dsr_units": "per-period SR, sample skew and Pearson kurtosis of excess daily",
+  "annual_excess": "mean daily excess * 252"
+ },
+ "variants": {
+  "M0_A": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 676,
+     "sharpe": 0.6661410182148562,
+     "se": 0.6749005250772442,
+     "ann_mean": 0.04347852386897692
+    },
+    "gross_excess_sharpe": 0.9285055272904927,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-17"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 0.6484484920623534,
+    "psr0": 0.8608389498022281,
+    "sr_annual": 0.6661410182148562,
+    "sr0_annual": 0.4319462229826531,
+    "skew": -0.23573281260774218,
+    "kurtosis": 4.303283697918164,
+    "sessions": 676,
+    "n_eff": 3.881898094756826,
+    "var_sr_annual": 0.17504903190639595,
+    "n_trials": 6,
+    "expected_max_null_sr_annual": 0.4319462229826531
+   },
+   "signal": {
+    "status": "evaluated",
+    "t_iid": 2.958467442456925,
+    "t_newey_west": 3.033193818095838,
+    "mean_daily": 0.0008927984294549831,
+    "sessions": 674
+   },
+   "placebo": {
+    "net_pct": null,
+    "gross_pct": null,
+    "n_net": 0,
+    "n_gross": 0,
+    "status": "missing"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": null,
+     "attested": null
+    },
+    "V2": {
+     "triggered": null,
+     "attested": null
+    },
+    "V3": {
+     "annual_excess": 0.024191527187675657,
+     "threshold": 0.0,
+     "sessions": 676,
+     "triggered": false
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.004044663031789013,
+     "windows": {
+      "21": {
+       "worst_sum": -0.06513541189805788,
+       "worst_end": "2020-02-04",
+       "sigma": 0.01853497450376273,
+       "loss_in_sigma": 3.5141894522074977,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": false,
+       "warn": false
+      },
+      "63": {
+       "worst_sum": -0.14118160120135462,
+       "worst_end": "2020-03-27",
+       "sigma": 0.032103517557510786,
+       "loss_in_sigma": 4.3976988175342315,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": true,
+       "warn": false
+      }
+     },
+     "triggered": true,
+     "warn": false
+    },
+    "V5": {
+     "z_min": -0.771139100594011,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": -1.0422120451734238,
+       "z": -0.7390705893783529
+      },
+      "current_phase": {
+       "sessions": 55,
+       "sharpe": -1.2312193913922003,
+       "z": -0.771139100594011
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [
+    "V4"
+   ],
+   "vetoes_unassessed": [
+    "V1",
+    "V2"
+   ],
+   "robustness": {
+    "a_cost2x": {
+     "value": 0.5562234255878905,
+     "cost2x_sharpe": 0.37052323907607265,
+     "base_sharpe": 0.6661410182148562,
+     "threshold": 0.5,
+     "pass": true
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-17",
+     "sessions": 433,
+     "sharpe": 0.7173803640315894,
+     "pass": true
+    },
+    "c_single_phase": {
+     "value": 0.5902295619732097,
+     "total_pnl": 0.11663286561677938,
+     "phases": {
+      "P01": {
+       "pnl": 0.06884016518467193,
+       "share": 0.5902295619732097
+      },
+      "P02": {
+       "pnl": 0.017923744420990293,
+       "share": 0.15367661873182764
+      },
+      "P03": {
+       "pnl": -0.00820478452171938,
+       "share": -0.07034710566640659
+      },
+      "P04": {
+       "pnl": 0.02891337159780742,
+       "share": 0.24790072202125332
+      },
+      "P05": {
+       "pnl": 0.03555813353211866,
+       "share": 0.30487233031684247
+      },
+      "P06": {
+       "pnl": -0.02814756990806417,
+       "share": -0.24133480523876213
+      },
+      "P07": {
+       "pnl": 0.002309211209142223,
+       "share": 0.019798975159622662
+      },
+      "P08": {
+       "pnl": 0.01990682246410171,
+       "share": 0.17067935661899586
+      },
+      "P09": {
+       "pnl": 0.0170983640690848,
+       "share": 0.14659987970513302
+      },
+      "P10": {
+       "pnl": -0.017107632792848774,
+       "share": -0.1466793489329099
+      },
+      "P11": {
+       "pnl": -0.020456959638505356,
+       "share": -0.17539618468880624
+      }
+     },
+     "threshold": 0.5,
+     "pass": false,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 5,
+     "offset_sharpes": {
+      "0": 0.5690256622010308,
+      "1": 0.6692897689763923,
+      "2": 0.6155863584854396,
+      "3": 0.8882559775011039,
+      "4": 0.5160727180620812
+     },
+     "threshold": 4,
+     "pass": true
+    },
+    "e_recent_consistency": {
+     "value": -0.771139100594011,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": null,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "missing"
+    }
+   },
+   "robustness_score": 4,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.6484484920623534,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 4,
+       "threshold": 3,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V4"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.6484484920623534,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": 2.958467442456925,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 4,
+       "threshold": 5,
+       "met": false
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V4"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": null,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2"
+  },
+  "M0_B": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 676,
+     "sharpe": -0.39619899045514034,
+     "se": 0.6340658210712897,
+     "ann_mean": -0.013753674731001192
+    },
+    "gross_excess_sharpe": -0.1611559843501203,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-17"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 0.08892713776378336,
+    "psr0": 0.25958827621038155,
+    "sr_annual": -0.39619899045514034,
+    "sr0_annual": 0.4319462229826531,
+    "skew": 0.4316648727603698,
+    "kurtosis": 8.101928045870647,
+    "sessions": 676,
+    "n_eff": 3.881898094756826,
+    "var_sr_annual": 0.17504903190639595,
+    "n_trials": 6,
+    "expected_max_null_sr_annual": 0.4319462229826531
+   },
+   "signal": {
+    "status": "evaluated",
+    "t_iid": 2.958467442456925,
+    "t_newey_west": 3.033193818095838,
+    "mean_daily": 0.0008927984294549831,
+    "sessions": 674
+   },
+   "placebo": {
+    "net_pct": null,
+    "gross_pct": null,
+    "n_net": 0,
+    "n_gross": 0,
+    "status": "missing"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": null,
+     "attested": null
+    },
+    "V2": {
+     "triggered": null,
+     "attested": null
+    },
+    "V3": {
+     "annual_excess": -0.02687087175081549,
+     "threshold": 0.0,
+     "sessions": 676,
+     "triggered": true
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.0014422175660314578,
+     "windows": {
+      "21": {
+       "worst_sum": -0.021408340659780076,
+       "worst_end": "2020-09-09",
+       "sigma": 0.006609071164934127,
+       "loss_in_sigma": 3.239235911600818,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": false,
+       "warn": false
+      },
+      "63": {
+       "worst_sum": -0.0246876608947856,
+       "worst_end": "2022-01-27",
+       "sigma": 0.011447247048504337,
+       "loss_in_sigma": 2.1566461167631754,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": false,
+       "warn": false
+      }
+     },
+     "triggered": false,
+     "warn": false
+    },
+    "V5": {
+     "z_min": 0.27601767261697346,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": 0.2032098963598881,
+       "z": 0.27601767261697346
+      },
+      "current_phase": {
+       "sessions": 55,
+       "sharpe": 0.985309353783915,
+       "z": 0.5976429836043061
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [
+    "V3"
+   ],
+   "vetoes_unassessed": [
+    "V1",
+    "V2"
+   ],
+   "robustness": {
+    "a_cost2x": {
+     "value": null,
+     "cost2x_sharpe": -0.7744823477139329,
+     "base_sharpe": -0.39619899045514034,
+     "threshold": 0.5,
+     "pass": false
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-17",
+     "sessions": 433,
+     "sharpe": -0.2013498436576543,
+     "pass": false
+    },
+    "c_single_phase": {
+     "value": null,
+     "total_pnl": -0.03689477824665399,
+     "phases": {
+      "P01": {
+       "pnl": 0.01873788390280244,
+       "share": null
+      },
+      "P02": {
+       "pnl": 0.0014859313687857428,
+       "share": null
+      },
+      "P03": {
+       "pnl": -0.010733615876343541,
+       "share": null
+      },
+      "P04": {
+       "pnl": 0.027175137508403727,
+       "share": null
+      },
+      "P05": {
+       "pnl": 0.015547883652163863,
+       "share": null
+      },
+      "P06": {
+       "pnl": -0.016255717119379808,
+       "share": null
+      },
+      "P07": {
+       "pnl": -0.03981702980167001,
+       "share": null
+      },
+      "P08": {
+       "pnl": -0.025591544465397336,
+       "share": null
+      },
+      "P09": {
+       "pnl": 0.005534340702629236,
+       "share": null
+      },
+      "P10": {
+       "pnl": -0.01949339109268031,
+       "share": null
+      },
+      "P11": {
+       "pnl": 0.006515342974032023,
+       "share": null
+      }
+     },
+     "threshold": 0.5,
+     "pass": false,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 0,
+     "offset_sharpes": {
+      "0": -0.32536537942022453,
+      "1": -0.2917720879217289,
+      "2": -0.43685161452502047,
+      "3": -0.6488461952476552,
+      "4": -0.20205480059691527
+     },
+     "threshold": 4,
+     "pass": false
+    },
+    "e_recent_consistency": {
+     "value": 0.27601767261697346,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": null,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "missing"
+    }
+   },
+   "robustness_score": 1,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.08892713776378336,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 1,
+       "threshold": 3,
+       "met": false
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V3"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.08892713776378336,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": 2.958467442456925,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 1,
+       "threshold": 5,
+       "met": false
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V3"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": null,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2"
+  },
+  "M0_C": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 676,
+     "sharpe": 0.4817280485171828,
+     "se": 0.645007913583569,
+     "ann_mean": 0.03299955443372829
+    },
+    "gross_excess_sharpe": 0.6326139817560521,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-17"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 0.532382569424853,
+    "psr0": 0.7841656976788792,
+    "sr_annual": 0.4817280485171828,
+    "sr0_annual": 0.4319462229826531,
+    "skew": -0.14849151009061443,
+    "kurtosis": 4.359940940026237,
+    "sessions": 676,
+    "n_eff": 3.881898094756826,
+    "var_sr_annual": 0.17504903190639595,
+    "n_trials": 6,
+    "expected_max_null_sr_annual": 0.4319462229826531
+   },
+   "signal": {
+    "status": "evaluated",
+    "t_iid": 2.958467442456925,
+    "t_newey_west": 3.033193818095838,
+    "mean_daily": 0.0008927984294549831,
+    "sessions": 674
+   },
+   "placebo": {
+    "net_pct": null,
+    "gross_pct": null,
+    "n_net": 0,
+    "n_gross": 0,
+    "status": "missing"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": null,
+     "attested": null
+    },
+    "V2": {
+     "triggered": null,
+     "attested": null
+    },
+    "V3": {
+     "annual_excess": 0.02024746274546165,
+     "threshold": 0.0,
+     "sessions": 676,
+     "triggered": false
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.0038938926571233947,
+     "windows": {
+      "21": {
+       "worst_sum": -0.06498765104749642,
+       "worst_end": "2020-06-08",
+       "sigma": 0.017844057849300682,
+       "loss_in_sigma": 3.6419771554396365,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": false,
+       "warn": false
+      },
+      "63": {
+       "worst_sum": -0.1279388739583569,
+       "worst_end": "2020-06-08",
+       "sigma": 0.03090681480818701,
+       "loss_in_sigma": 4.139503690443919,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": true,
+       "warn": false
+      }
+     },
+     "triggered": true,
+     "warn": false
+    },
+    "V5": {
+     "z_min": -0.7120263989740263,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": -1.0912153072242439,
+       "z": -0.7120263989740263
+      },
+      "current_phase": {
+       "sessions": 55,
+       "sharpe": -1.1004228105302318,
+       "z": -0.6728302435139519
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [
+    "V4"
+   ],
+   "vetoes_unassessed": [
+    "V1",
+    "V2"
+   ],
+   "robustness": {
+    "a_cost2x": {
+     "value": 0.613409139029088,
+     "cost2x_sharpe": 0.29549638748708784,
+     "base_sharpe": 0.4817280485171828,
+     "threshold": 0.5,
+     "pass": true
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-17",
+     "sessions": 433,
+     "sharpe": 0.6529218464120614,
+     "pass": true
+    },
+    "c_single_phase": {
+     "value": 0.3512861608945782,
+     "total_pnl": 0.08852261427460446,
+     "phases": {
+      "P01": {
+       "pnl": 0.01669785832861021,
+       "share": 0.18862816541784538
+      },
+      "P02": {
+       "pnl": 0.01788151976402741,
+       "share": 0.20199945415707513
+      },
+      "P03": {
+       "pnl": 0.012560243374916326,
+       "share": 0.1418873976761849
+      },
+      "P04": {
+       "pnl": 0.018156948364841063,
+       "share": 0.20511084668734147
+      },
+      "P05": {
+       "pnl": 0.01325645053185634,
+       "share": 0.14975213554734992
+      },
+      "P06": {
+       "pnl": -0.008790267398236427,
+       "share": -0.0992996814460121
+      },
+      "P07": {
+       "pnl": 0.030682705699292823,
+       "share": 0.34660867113698807
+      },
+      "P08": {
+       "pnl": 0.03109676932087739,
+       "share": 0.3512861608945782
+      },
+      "P09": {
+       "pnl": 0.023180401535688365,
+       "share": 0.2618585287571924
+      },
+      "P10": {
+       "pnl": -0.04698518374853273,
+       "share": -0.5307704040775479
+      },
+      "P11": {
+       "pnl": -0.019214831498736266,
+       "share": -0.21706127475099493
+      }
+     },
+     "threshold": 0.5,
+     "pass": true,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 5,
+     "offset_sharpes": {
+      "0": 0.43980953865971073,
+      "1": 0.48764777978923896,
+      "2": 0.40963389435033515,
+      "3": 0.5229232484905104,
+      "4": 0.5030520746818256
+     },
+     "threshold": 4,
+     "pass": true
+    },
+    "e_recent_consistency": {
+     "value": -0.7120263989740263,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": null,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "missing"
+    }
+   },
+   "robustness_score": 5,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.532382569424853,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 5,
+       "threshold": 3,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V4"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.532382569424853,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": 2.958467442456925,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 5,
+       "threshold": 5,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V4"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": null,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2"
+  },
+  "M1_A": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 676,
+     "sharpe": 0.4942365983135055,
+     "se": 0.6467693916784361,
+     "ann_mean": 0.035343345049438986
+    },
+    "gross_excess_sharpe": 0.638055669056049,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-17"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 0.5406207920175153,
+    "psr0": 0.790826150174536,
+    "sr_annual": 0.4942365983135055,
+    "sr0_annual": 0.4319462229826531,
+    "skew": 0.047686582309954505,
+    "kurtosis": 2.9808008926442118,
+    "sessions": 676,
+    "n_eff": 3.881898094756826,
+    "var_sr_annual": 0.17504903190639595,
+    "n_trials": 6,
+    "expected_max_null_sr_annual": 0.4319462229826531
+   },
+   "signal": {
+    "status": "missing",
+    "t_iid": null
+   },
+   "placebo": {
+    "net_pct": null,
+    "gross_pct": null,
+    "n_net": 0,
+    "n_gross": 0,
+    "status": "missing"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": null,
+     "attested": null
+    },
+    "V2": {
+     "triggered": null,
+     "attested": null
+    },
+    "V3": {
+     "annual_excess": 0.022654505931426185,
+     "threshold": 0.0,
+     "sessions": 676,
+     "triggered": false
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.0044516862321501045,
+     "windows": {
+      "21": {
+       "worst_sum": -0.09838424201136407,
+       "worst_end": "2020-06-08",
+       "sigma": 0.02040018912902061,
+       "loss_in_sigma": 4.822712249829391,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": false,
+       "warn": true
+      },
+      "63": {
+       "worst_sum": -0.13613942989837075,
+       "worst_end": "2021-03-17",
+       "sigma": 0.03533416405547798,
+       "loss_in_sigma": 3.852912147139493,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": false,
+       "warn": true
+      }
+     },
+     "triggered": false,
+     "warn": true
+    },
+    "V5": {
+     "z_min": -0.01834220458912631,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": 0.45360602630451113,
+       "z": -0.01834220458912631
+      },
+      "current_phase": {
+       "sessions": 55,
+       "sharpe": 1.3473733776531136,
+       "z": 0.36181941125003847
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [],
+   "vetoes_unassessed": [
+    "V1",
+    "V2"
+   ],
+   "robustness": {
+    "a_cost2x": {
+     "value": 0.6408186172737363,
+     "cost2x_sharpe": 0.31671601353733564,
+     "base_sharpe": 0.4942365983135055,
+     "threshold": 0.5,
+     "pass": true
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-17",
+     "sessions": 433,
+     "sharpe": 0.995284804651464,
+     "pass": true
+    },
+    "c_single_phase": {
+     "value": 0.39931762713049135,
+     "total_pnl": 0.09480992560881252,
+     "phases": {
+      "P01": {
+       "pnl": 0.0172041033629966,
+       "share": 0.18145888473724833
+      },
+      "P02": {
+       "pnl": 0.03157117451631916,
+       "share": 0.3329944023643938
+      },
+      "P03": {
+       "pnl": -0.012612339593953423,
+       "share": -0.1330276288370077
+      },
+      "P04": {
+       "pnl": 0.0133506412768113,
+       "share": 0.14081480595076395
+      },
+      "P05": {
+       "pnl": 0.03785927452252942,
+       "share": 0.39931762713049135
+      },
+      "P06": {
+       "pnl": -0.020785545126694397,
+       "share": -0.21923385123679914
+      },
+      "P07": {
+       "pnl": -0.02698126182828138,
+       "share": -0.2845826705909101
+      },
+      "P08": {
+       "pnl": 0.03401047891313436,
+       "share": 0.358722767629438
+      },
+      "P09": {
+       "pnl": 0.01104807735982001,
+       "share": 0.11652869980517208
+      },
+      "P10": {
+       "pnl": -0.011157920319682078,
+       "share": -0.1176872595145772
+      },
+      "P11": {
+       "pnl": 0.021303242525812966,
+       "share": 0.22469422256178676
+      }
+     },
+     "threshold": 0.5,
+     "pass": true,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 5,
+     "offset_sharpes": {
+      "0": 0.46852347151231133,
+      "1": 0.44078639463610125,
+      "2": 0.381427005579699,
+      "3": 0.6674597484168222,
+      "4": 0.4894993101190122
+     },
+     "threshold": 4,
+     "pass": true
+    },
+    "e_recent_consistency": {
+     "value": -0.01834220458912631,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": null,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "missing"
+    }
+   },
+   "robustness_score": 5,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.5406207920175153,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 5,
+       "threshold": 3,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [],
+       "met": true
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.5406207920175153,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": null,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 5,
+       "threshold": 5,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [],
+       "met": true
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": null,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2"
+  },
+  "M1_B": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 676,
+     "sharpe": 0.6410947835621298,
+     "se": 0.6703641129641382,
+     "ann_mean": 0.01891259024416163
+    },
+    "gross_excess_sharpe": 0.8066079576200708,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-17"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 0.6345375961829844,
+    "psr0": 0.8540881863162676,
+    "sr_annual": 0.6410947835621298,
+    "sr0_annual": 0.4319462229826531,
+    "skew": 0.26672052473961644,
+    "kurtosis": 4.707587626333812,
+    "sessions": 676,
+    "n_eff": 3.881898094756826,
+    "var_sr_annual": 0.17504903190639595,
+    "n_trials": 6,
+    "expected_max_null_sr_annual": 0.4319462229826531
+   },
+   "signal": {
+    "status": "missing",
+    "t_iid": null
+   },
+   "placebo": {
+    "net_pct": null,
+    "gross_pct": null,
+    "n_net": 0,
+    "n_gross": 0,
+    "status": "missing"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": null,
+     "attested": null
+    },
+    "V2": {
+     "triggered": null,
+     "attested": null
+    },
+    "V3": {
+     "annual_excess": 0.008986298030353577,
+     "threshold": 0.0,
+     "sessions": 676,
+     "triggered": false
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.001180071791502134,
+     "windows": {
+      "21": {
+       "worst_sum": -0.01871547227288135,
+       "worst_end": "2018-03-09",
+       "sigma": 0.005407768310040675,
+       "loss_in_sigma": 3.460849503876134,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": false,
+       "warn": false
+      },
+      "63": {
+       "worst_sum": -0.026215412118555447,
+       "worst_end": "2020-06-08",
+       "sigma": 0.009366529468551333,
+       "loss_in_sigma": 2.798839442781365,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": false,
+       "warn": false
+      }
+     },
+     "triggered": false,
+     "warn": false
+    },
+    "V5": {
+     "z_min": 0.4707050224995679,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": 1.7218106651794547,
+       "z": 0.4707050224995679
+      },
+      "current_phase": {
+       "sessions": 55,
+       "sharpe": 2.51515339519997,
+       "z": 0.766822890953781
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [],
+   "vetoes_unassessed": [
+    "V1",
+    "V2"
+   ],
+   "robustness": {
+    "a_cost2x": {
+     "value": 0.4748908104250021,
+     "cost2x_sharpe": 0.3044500213250611,
+     "base_sharpe": 0.6410947835621298,
+     "threshold": 0.5,
+     "pass": false
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-17",
+     "sessions": 433,
+     "sharpe": 1.2361664575018885,
+     "pass": true
+    },
+    "c_single_phase": {
+     "value": 0.47327389480984816,
+     "total_pnl": 0.05073377382957643,
+     "phases": {
+      "P01": {
+       "pnl": 0.012942133484391837,
+       "share": 0.2550989707145917
+      },
+      "P02": {
+       "pnl": -0.0009210257944006542,
+       "share": -0.018154095878901894
+      },
+      "P03": {
+       "pnl": 0.001384347460313884,
+       "share": 0.027286506715706735
+      },
+      "P04": {
+       "pnl": 0.024010970738725584,
+       "share": 0.47327389480984816
+      },
+      "P05": {
+       "pnl": 0.009232146893491144,
+       "share": 0.1819724060840325
+      },
+      "P06": {
+       "pnl": -0.0090974545324882,
+       "share": -0.17931752057412745
+      },
+      "P07": {
+       "pnl": 0.006041162381277967,
+       "share": 0.11907575418243638
+      },
+      "P08": {
+       "pnl": 0.0013857402410805133,
+       "share": 0.027313959449093136
+      },
+      "P09": {
+       "pnl": 0.0006786469178460936,
+       "share": 0.013376629937401989
+      },
+      "P10": {
+       "pnl": -0.01377375938932699,
+       "share": -0.2714909290129972
+      },
+      "P11": {
+       "pnl": 0.018850865428665275,
+       "share": 0.37156442357291636
+      }
+     },
+     "threshold": 0.5,
+     "pass": true,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 5,
+     "offset_sharpes": {
+      "0": 0.625222131802679,
+      "1": 0.41950409650824405,
+      "2": 0.6539068684445177,
+      "3": 0.702634970105982,
+      "4": 0.7384052789856667
+     },
+     "threshold": 4,
+     "pass": true
+    },
+    "e_recent_consistency": {
+     "value": 0.4707050224995679,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": null,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "missing"
+    }
+   },
+   "robustness_score": 4,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.6345375961829844,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 4,
+       "threshold": 3,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [],
+       "met": true
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.6345375961829844,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": null,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 4,
+       "threshold": 5,
+       "met": false
+      },
+      "no_veto_triggered": {
+       "triggered": [],
+       "met": true
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": null,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2"
+  },
+  "M1_C": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 676,
+     "sharpe": 0.7226798559409717,
+     "se": 0.6856577392727488,
+     "ann_mean": 0.04925330330326363
+    },
+    "gross_excess_sharpe": 0.8383946975768388,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-17"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 0.6820485911488459,
+    "psr0": 0.8803668914336027,
+    "sr_annual": 0.7226798559409717,
+    "sr0_annual": 0.4319462229826531,
+    "skew": -0.19544694215292915,
+    "kurtosis": 3.3590919539347204,
+    "sessions": 676,
+    "n_eff": 3.881898094756826,
+    "var_sr_annual": 0.17504903190639595,
+    "n_trials": 6,
+    "expected_max_null_sr_annual": 0.4319462229826531
+   },
+   "signal": {
+    "status": "missing",
+    "t_iid": null
+   },
+   "placebo": {
+    "net_pct": null,
+    "gross_pct": null,
+    "n_net": 0,
+    "n_gross": 0,
+    "status": "missing"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": null,
+     "attested": null
+    },
+    "V2": {
+     "triggered": null,
+     "attested": null
+    },
+    "V3": {
+     "annual_excess": 0.03889498296513768,
+     "threshold": 0.0,
+     "sessions": 676,
+     "triggered": false
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.003922732801611924,
+     "windows": {
+      "21": {
+       "worst_sum": -0.08989058669507086,
+       "worst_end": "2020-06-08",
+       "sigma": 0.017976219994472832,
+       "loss_in_sigma": 5.000527737350211,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": true,
+       "warn": false
+      },
+      "63": {
+       "worst_sum": -0.13330294591547698,
+       "worst_end": "2020-06-08",
+       "sigma": 0.03113572635846247,
+       "loss_in_sigma": 4.281350124316152,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": true,
+       "warn": false
+      }
+     },
+     "triggered": true,
+     "warn": false
+    },
+    "V5": {
+     "z_min": -0.22696608075033106,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": 0.1896883533220427,
+       "z": -0.22696608075033106
+      },
+      "current_phase": {
+       "sessions": 55,
+       "sharpe": 0.20687152378808277,
+       "z": -0.20634959799059585
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [
+    "V4"
+   ],
+   "vetoes_unassessed": [
+    "V1",
+    "V2"
+   ],
+   "robustness": {
+    "a_cost2x": {
+     "value": 0.7895309852044168,
+     "cost2x_sharpe": 0.5705781386484614,
+     "base_sharpe": 0.7226798559409717,
+     "threshold": 0.5,
+     "pass": true
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-17",
+     "sessions": 433,
+     "sharpe": 0.9906277648018295,
+     "pass": true
+    },
+    "c_single_phase": {
+     "value": 0.3738005948499359,
+     "total_pnl": 0.1321239406071675,
+     "phases": {
+      "P01": {
+       "pnl": 0.04756423304067499,
+       "share": 0.35999708169538736
+      },
+      "P02": {
+       "pnl": 0.022414623155974776,
+       "share": 0.16964846077833998
+      },
+      "P03": {
+       "pnl": 0.007731538002091254,
+       "share": 0.0585173131119269
+      },
+      "P04": {
+       "pnl": 0.030666437969212947,
+       "share": 0.2321035675161307
+      },
+      "P05": {
+       "pnl": 0.020992753555889924,
+       "share": 0.15888682595613637
+      },
+      "P06": {
+       "pnl": -0.018451269380179085,
+       "share": -0.13965121911583475
+      },
+      "P07": {
+       "pnl": -0.020390315571557766,
+       "share": -0.15432718308169824
+      },
+      "P08": {
+       "pnl": 0.049388007592876815,
+       "share": 0.3738005948499359
+      },
+      "P09": {
+       "pnl": 0.010435461382162892,
+       "share": 0.07898236560465398
+      },
+      "P10": {
+       "pnl": -0.0216541566061183,
+       "share": -0.16389275483767698
+      },
+      "P11": {
+       "pnl": 0.003426627466139044,
+       "share": 0.02593494752269866
+      }
+     },
+     "threshold": 0.5,
+     "pass": true,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 5,
+     "offset_sharpes": {
+      "0": 0.6345285058157621,
+      "1": 0.3686610906422257,
+      "2": 0.6995936874736752,
+      "3": 1.0672646827375254,
+      "4": 0.7992151233034022
+     },
+     "threshold": 4,
+     "pass": true
+    },
+    "e_recent_consistency": {
+     "value": -0.22696608075033106,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": null,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "missing"
+    }
+   },
+   "robustness_score": 5,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.6820485911488459,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 5,
+       "threshold": 3,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V4"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 0.6820485911488459,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": null,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": null,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 5,
+       "threshold": 5,
+       "met": true
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V4"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [
+        "V1",
+        "V2"
+       ],
+       "met": false
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": null,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2"
+  }
+ },
+ "label": "REFERENCE ONLY (T-20261001-20): v2 recompute of the frozen v1 variants; changes no verdict",
+ "inputs": {
+  "paths": "reports/research/iterations/t20261001_book_v1/cache/stage2a",
+  "variants": [
+   "M0_A",
+   "M0_B",
+   "M0_C",
+   "M1_A",
+   "M1_B",
+   "M1_C"
+  ],
+  "signal": "M0 composite long-short (signal_ls_daily.parquet) for M0_*; none for M1_*",
+  "placebo": "missing (none was run for v1)",
+  "attestations": "V1 and V2 not attested"
+ },
+ "generated_at_utc": "2026-10-02T04:05:48Z"
+}
