@@ -1343,7 +1343,10 @@
 - brief: reports/research/control/briefs/T-20261002-29.md
 
 ### T-20261002-42 下单引擎：book_paper 的撤单和清仓命令（紧急停止路径，只用假客户端）
-- status: running（交互会话；10-02 12:51 UTC 重派子代理 R1002-1251-T42B，机主 12:45 授权"其他的不用问我同意"。从 `/tmp/lead/t42_partial.patch` 接着做；08:16 的第一次派发 R1002-0816-T42 于 08:48 被机主消息打断。定时轮不要取）
+- status: done（a7e6e39；10-02 13:03 UTC 交互会话主审。子代理 R1002-1251-T42B 从暂存补丁接着做完）
+  - 已核对：提交只含范围内 3 个文件，948 行全是新增、0 行删除，`build_plan`、`submit_plan`、`RiskLimits` 和已有检查没动；新测试 19 个，`tests/test_book_paper*.py tests/test_book_v12_targets.py` 共 129 个通过。
+  - 读过的逻辑：`cancel` 只碰 `bk1-` 开头的单（`bk1-flat-` 也算），默认只撤当天计划里的 id，`--all-book` 撤全部本书单，其他单原样列在回执里；撤单不受 kill switch 限制；回执写重读后仍未成交的单。`flatten` 默认只演练，确认后才发；有未成交单就拒绝；先卖多头再买回空头；不可交易的持仓跳过并列出；订单号 `bk1-flat-` + sha256 前 36 位（共 45 字符，Alpaca 上限 48），被撤后重发要 `--attempt 2`。
+  - 真实撤单测试（quant1，模拟盘）：手工挂 1 股远离市价的 `bk1-` 限价单，然后 `uv run oc book-paper cancel --account quant1 --all-book --reason "live cancel test"`，回执应为 n_requested=1、n_open_after=0。默认范围（不带 --all-book）只认当天计划文件里的 id，所以手工单要用 --all-book。挂单需要一个小脚本，交互会话在开盘时段做。
 - priority: 1
 - not_before: 无
 - goal: 合同第 6 节要求首单前测过开关和撤单，第 7 节的停止规则也要有办法真正停下来。`oc book-paper` 目前没有撤单，也没有清仓。新增两个命令：`cancel` 只撤本书（`bk1-`）当天的未成交单，撤单不受 kill switch 限制；`flatten` 默认只演练、需要显式确认，按收盘竞价或盘中市价整股平掉全部持仓，跳过不可交易的持仓，有未成交单时拒绝。quant1 上的真实撤单测试在机主对检查表点头后由主审做，不在本任务内。
