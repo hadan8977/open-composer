@@ -1574,7 +1574,10 @@
   - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）：简报末尾加了"主审修正 10-02 第二次"。供应商价格取整到分，严格区改用两种判据：原始收益列用价格感知容差 0.04/close；信号、暴露、主题分用逐日秩相关 ≥ 0.999。每日驱动先对照 T-28 的 `scripts/run_book_v12_daily.py`，不重复实现，冲突就标 blocked。
 
 ### T-20261002-01 数据：修 SIP 日线归档的复权接缝，并一次性修复（拆股假收益、分红漏出总收益）
-- status: running（交互会话；10-02 12:53 UTC 派子代理 R1002-1253-T01，按简报末尾"主审修正 10-02（07:07）"做；v1.2 模拟盘开始的关键路径，不等 16:07 执行轮。定时轮不要取。T-02 仍由执行轮按 not_before 取）（原状态：ready（07:07 主审轮审核：修复逻辑正确，V3 过；V1/V2/V4 不过源于验收口径，不在代码。简报末尾加了"主审修正 10-02（07:07）"：按新口径验证已修好的那份归档，通过就换入，不重跑修复））
+- status: done（b766faf；10-02 13:22 UTC 交互会话主审）
+  - 已核对 archive-repair.json：前置 sha256 3741 个文件全一致（没重跑修复）；v1p_unexplained_symbols 0（上限 69）；v1p_factor_revision_symbols 53（55 行，上限 695）；bar_correction 6 行、date_set 1 行；v2p_unexplained 0；v4p_identical_before_window true；verify_v2_pass true；swap_done true，swap_utc 2026-10-02T13:19:55Z（不在禁用时段）。换入方式：先拷到 `data/sip/daily.staging-r1253` 校验 sha256，再两次 mv，避免目录空窗。V3 复查：APH 收盘比 1.00025，9 月接缝 6 个（1–8 月最多 9）。提交只含 5 个范围内文件；测试 40 个通过。
+  - 待留意（不影响验收）：验证器报告修复后的归档相对旧归档少 1100 个、多 1475 个（symbol, 日期）行，子代理没拆分；V1′ 里只归出 1 条 date_set。T-02 的两区不变性检验会覆盖这类差异，T-02 报告里要写这两个数的来源。
+  - 旧归档在 `data/live/backup-sip-daily-preswap-20261002`（553 MB），T-02 关闭前不清理。
 - priority: 1
 - not_before: 无（不在 20:30–01:00 UTC 验证或换入）
 - brief: reports/research/control/briefs/T-20261002-01.md
@@ -1600,7 +1603,7 @@
 
 
 ### T-20261002-02 数据：从修好的归档重建价格类特征表（两区不变性检验），接着刷新依赖表
-- status: ready（07:07 主审轮写好简报；前置见 not_before，同一执行轮可接在 T-01 后面做）
+- status: running（交互会话；10-02 13:22 UTC 派子代理 R1002-1322-T02，T-01 已 done 并换入；v1.2 关键路径。定时轮不要取）
 - 交互会话注（10-02 05:40 UTC）：T-20261002-26（交互会话子代理）在 10:00 UTC 前后可能跑 1.5–2.2 GB 的重任务。本任务每个重步骤开始前用 `ps aux --sort=-rss | head` 确认；有超过 1 GB 的进程就等它结束，不要并行（本机 3.9 GB）
 - priority: 1
 - not_before: T-20261002-01 以 done 开头，并且 archive-repair.json 里 `verify_v2_pass` 和 `swap_done` 都为 true（07:07 主审轮预先授权，不必等主审审核）；第 1 步（代码和测试）可以和 T-01 并行
