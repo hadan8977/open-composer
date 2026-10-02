@@ -1342,8 +1342,41 @@
 - done_when: `t20261002_book_v12/placebo-persistent.json` 已提交；默认模式的结果逐位不变。
 - brief: reports/research/control/briefs/T-20261002-29.md
 
+### T-20261002-40 下单引擎：持仓里停牌、退市、被收购的股票不再卡住整份计划（frozen 持仓）
+- status: running（10-02 07:36 UTC 交互会话派子代理 R1002-0736-T40；定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: T-28 回放里，主变体 60 个会话有 18 个被 `reference_prices_complete` 卡住，两个账户都是。原因是持仓里有 23 次"当天没有收盘价"的情况，其中 22 次是股票已停止交易（现金收购、合并、退市），1 次（ARTL）是某天缺价后来又交易。引擎只要有一个持仓没有参考价就整份拒绝，所以生产上每次收购都会卡 1 天或更多。改法：`AccountState` 带上券商的持仓现价；持仓里不可交易的股票记为 frozen，不下单，按券商现价计入杠杆，不进股票层检查；新增检查 `frozen_positions`，frozen 总敞口不超过权益的 2%；可交易但缺参考价、目标权重为 0 的持仓按券商现价整笔平仓；目标里有权重却缺价的照旧拒绝。回放改成带价格和可交易标记的假状态后重跑。
+- done_when: 旧测试原样通过，新测试通过；主变体重跑回放 0 天被卡，或每个被卡的日子都有解释；没有放宽任何已有限额；已提交。
+- brief: reports/research/control/briefs/T-20261002-40.md
+
+### T-20261002-41 下单引擎：收盘后对账用的价格文件（官方收盘价 + 15:45 快照）
+- status: running（10-02 07:36 UTC 交互会话派子代理 R1002-0736-T41；定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: `oc book-paper` 的收盘后对账要一个 `--prices-file`，内容是 `{"official_close": …, "snapshot_1545": …}`，目前没有生成它的脚本（T-28 报告）。第一笔模拟单之前必须有，否则成交质量和影子成本算不出来。收盘后从 SIP 数据取：官方收盘价用日线，15:45 快照用分钟线（只用于事后成交分析，不需要实时）。
+- done_when: 生成脚本、测试和对账驱动接入已提交；用一个历史执行日对计划里的全部股票试跑，缺价的个数和原因写进报告。
+- brief: reports/research/control/briefs/T-20261002-41.md
+
 ### T-20261002-28 组合线 v1.2：生产端目标生成器、引擎历史回放、每日驱动（不下单、不装定时任务）
-- status: running（10-02 05:47 UTC 交互会话派子代理 R1002-0541-T28，前置已满足：fde6843 提交了 book_v12 模块，identity 最大差 0.0；定时轮不要取）
+- status: done（6014b82；10-02 07:36 UTC 交互会话主审）
+  - 已核对：
+    - `engine-replay.json` 与报告一致；115 个测试通过。
+    - 逐位一致：M0_U3000 在 2025-04-10、2026-03-18、2026-09-10 三天、两种形式都一致，另加 M1_P1000 的一天。
+  - 主变体回放（60 个会话）：
+    - 唯一失败的检查是 `reference_prices_complete`，两个账户各 18 天，都是持仓里的股票停止交易（22 次）或某天缺价（ARTL，1 次）。
+    - |beta| 最大值：quant1 0.037、quant2 0.020（上限 0.05）；没有一天超过 0.04。
+    - 杠杆最大值：1.82 和 1.80（上限 1.98）。
+    - 每天订单数中位数：quant1 165.5、quant2 77；p95 分别是 716、432，高峰在月度刷新那一周。
+    - 每天低于 $100、被舍弃的订单中位数约 690 笔，合同模拟同样有这个限制。
+  - 遗留问题：
+    - 引擎卡单 → T-20261002-40。
+    - 对账价格文件 → T-20261002-41。
+    - M1_P1000 有一天 beta 0.0516 超限，原因是对冲按固定股数持有，市场一动就漂移；主变体余量够，先记录不改。
+    - 生成器丢掉了当天没收盘价的目标股票（40/60 天有，每天最多 4 只），合同模拟器则继续持有；影响待 T-30 回放一并量化。
+  - 下一步：
+    - T-22 的 live 目录建好后，连续 2 个会话 dry-run；
+    - 拟议的定时任务（不安装）：目标 23:15 UTC，计划 18:30 UTC，提交 18:45 UTC（要机主批准），对账在 21:30 UTC 以后；11-01 夏令时结束后，18:xx 的两条改为 19:xx。
 - priority: 1
 - not_before: git log 里有 T-20261002-26 的代码提交（含 `open_composer/research/equity_book/book_v12.py` 和通过的 identity.json）
 - goal: 模拟盘的第 3 个前置条件是生产端目标与合同账户目标逐位一致，本任务实现它，另做 60 个会话的引擎检查回放和每日驱动，为"连续 2 个会话 dry-run 全绿"做准备。生成器是无状态的：每天从数据重算 5 档，与 T-26 的模拟器状态一致。
@@ -1477,9 +1510,9 @@
     - 前置加了 T-20261002-02。
 
 ### T-20261002-01 数据：修 SIP 日线归档的复权接缝，并一次性修复（拆股假收益、分红漏出总收益）
-- status: partial（执行轮 04:08–05:41 UTC，待主审）
+- status: ready（07:07 主审轮审核：修复逻辑正确，V3 过；V1/V2/V4 不过源于验收口径，不在代码。简报末尾加了"主审修正 10-02（07:07）"：按新口径验证已修好的那份归档，通过就换入，不重跑修复）
 - priority: 1
-- not_before: 无（简报第 0 步：不在 20:30–01:00 UTC 运行修复）
+- not_before: 无（不在 20:30–01:00 UTC 验证或换入）
 - brief: reports/research/control/briefs/T-20261002-01.md
 - goal: 归档的不变式改为"每只股票的全部年份都等于供应商当前给出的复权历史"。否则：
   - 前向影子、组合模拟盘和四条 ETF 模拟盘读到的价格，每次拆股都有假的 −50%/+900% 收益（APH 08-27 ×0.500）；
@@ -1497,10 +1530,11 @@
 
 
 ### T-20261002-02 数据：从修好的归档重建价格类特征表（两区不变性检验），接着刷新依赖表
-- status: blocked（等 T-20261002-01 完成并经主审审核；简报由 07:07 或之后的主审轮按 T-01 的实际结果写，范围取决于被替换的 symbol 数）
+- status: ready（07:07 主审轮写好简报；前置见 not_before，同一执行轮可接在 T-01 后面做）
 - 交互会话注（10-02 05:40 UTC）：T-20261002-26（交互会话子代理）在 10:00 UTC 前后可能跑 1.5–2.2 GB 的重任务。本任务每个重步骤开始前用 `ps aux --sort=-rss | head` 确认；有超过 1 GB 的进程就等它结束，不要并行（本机 3.9 GB）
 - priority: 1
-- not_before: T-20261002-01 以 done 开头，并且主审已审核
+- not_before: T-20261002-01 以 done 开头，并且 archive-repair.json 里 `verify_v2_pass` 和 `swap_done` 都为 true（07:07 主审轮预先授权，不必等主审审核）；第 1 步（代码和测试）可以和 T-01 并行
+- brief: reports/research/control/briefs/T-20261002-02.md
 - goal: 把组合线用到的价格类特征表接到修好的归档上，延伸到最近交易日。表包括 daily_broad、窄 daily、universe_broad、alpha101/191_broad，然后是 sec_fundamentals_daily、nsi、short_interest 和 SEC facts。给 T-22 的 live 目录和 D6 前向影子用。
 - plan（主审 10-02 已定的口径，简报照此写）：
   - 价格类表是归档的派生缓存，从归档重建，不只追加。
@@ -1508,13 +1542,14 @@
     - 严格区 ≤ 2026-08-21：ret_*、vol_*、max_ret_1_21、momentum_252_21、dist_from_252d_high 必须逐位不变，阈值沿用 T-21 的 max_changed_share ≤ 0.001；
     - 价格水平列（open、close、dollar_adv、amihud）、截面列（`*_rel`、adv_rank、宇宙成员）、依赖 SPY 的列（beta_252_spy、idio_vol_63），以及 08-24 之后的日期，只做诊断，按 `_restatements.jsonl` 和并集增长归因。
   - daily_broad 的往年分区是否重建：看 T-01 的被替换 symbol 数和磁盘（剩 11 GB）再定。T-21 的事件类表不动。SEC facts 换新文件：17 个旧键被 SEC 删除，值没变，记录下来。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）：简报末尾加了"主审修正 10-02 第二次"。供应商价格取整到分，严格区改用两种判据：原始收益列用价格感知容差 0.04/close；信号、暴露、主题分用逐日秩相关 ≥ 0.999。每日驱动先对照 T-28 的 `scripts/run_book_v12_daily.py`，不重复实现，冲突就标 blocked。
   - `_t21_tmp` 作废。
 - done_when: 各表在严格区通过，并刷新到 D；`freshness.json` 更新；研究快照哈希前后一致；已提交，标"待主审"。
 - notes:
   - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）登记；简报故意不提前写，等 T-01 的数字。
 
 ### T-20261002-03 信号库：10-K 文本变化数据（Lazy Prices，U3000，2014-07..2026-09，EDGAR 主文档）
-- status: partial（执行轮 05:42–06:26 UTC，待主审）
+- status: running（07:07 主审轮审核后，在本轮后台续跑抓取，07:15 开始，上限 80 分钟；本轮结束前改回 ready 并写断点）
 - priority: 2
 - not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 运行；和 T-20261002-01 不并行，T-01 先做）
 - brief: reports/research/control/briefs/T-20261002-03.md
@@ -1527,12 +1562,20 @@
   - 2026-10-02 01:38 UTC 01:07 主审轮（Opus）写入。direction-check 已 ok。预注册写在任何数据之前，三个候选、方向、判定都已冻结。
   - 预计 4–6 万份 10-K，抓取受 SEC 限速约束，大约要 2–3 个小时，可能跨两个执行轮。
   - 2026-10-02 06:26 UTC 执行轮（Sonnet 5.5，子代理 a18426ca2c34bca4f，待主审）：脚本+测试已提交 6ae7a01（16 测试过、ruff 过）。只抓了 218/4023 个 CIK：2428 份 10-K、2204 对，抓取失败 0、解析失败 0；2016 年后 rf_found 0.957、mda_found 0.947；cos_full 分位 5/25/50/75/95 = 0.9947/0.9979/0.9987/0.9992/0.9996（中位在 [0.80,0.999] 内但贴近上沿），cos_rf 中位 0.9979，cos_mda 中位 0.9945。**一条验收不过**：2 对的 visible_day 比 filing_date 早 >1 天（CIK 36047：filing 2021-03-01、visible 02-26；CIK 47518：filing 2018-11-19、visible 11-16；SEC acceptanceDateTime 早于 filingDate），按预注册未改，主审要定怎么处理。解析器改动（首轮 20 CIK 试跑 mda_found 0.867，因为不少申报把 Item 标题排成单行表格）：整表文本只是短的 "Item N" 标题时留标记、分词前剔除，其余表格文字仍整表剔除，这是对"剔除所有表格"的小解释，主审要确认。首轮抓取（06:03–06:15）内存每分钟涨约 100 MB，已停并修（不影响产出）；首轮请求数/用时计数丢失，summary.json 只含第二轮（1383 次、481 秒），合计约 2428 次。速度约 80 份/分钟，剩余约 3.32 万份约需 7 小时（多个 120 分钟轮）。产物：scripts/build_10k_text_similarity.py、scripts/summarize_10k_text_similarity.py、tests/test_build_10k_text_similarity.py、reports/research/program/text-similarity-2026-10-02/{report.md,summary.json}；数据在 data/features/text_similarity/（不提交；_trial/、_trial2/ 是子代理自己的试跑目录，删除被权限拒绝）。续跑命令：`setsid nohup scripts/run_capped.sh --mem 1.8G -- uv run python scripts/build_10k_text_similarity.py fetch --resume --max-minutes 120 > logs/t20261002_03_fetch3.log 2>&1 &`，之后 `merge`，再 `scripts/summarize_10k_text_similarity.py --snippets data/features/text_similarity/_trial2/_snippets.json data/features/text_similarity/_snippets_extra.json`。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）审核：
+    - 读了 archive-repair.json、`/tmp/t01_scan_r1.pkl`、`r2.pkl` 和 `verify_sip_repair.py`。V3 全过，修复逻辑正确。
+    - V1/V2 不过：简报假设复权价有 4 位小数，实际供应商取整到分，两份归档的收益差最大约 0.02/价格。放宽后剩下的差异是同一天开盘、收盘收益平移相同的量（ACES 2021-03-29 都是 −0.23%，AER 2026-08-12 都是 −0.107%，OXLCM、OMFL/OMFS），即供应商修订了分红或复权因子；归档本来就应该跟随供应商当前的历史。
+    - V4 不过：修复后那次常规更新会重抓最后几个交易日，差异只在 10-01 这一行的 volume/trade_count。
+    - 决定：新口径写在任何新验证运行之前（按价格精度推导的容差；date_set / bar_correction / factor_revision / unexplained 四类；V4 只比重抓窗口之前的行）。验证已修好的 `data/live/failed-sip-daily-20261002`，通过就换入，同一执行轮接着做 T-20261002-02。这是数据质量检验口径的更正，不涉及研究门槛。
+    - 磁盘现在剩 51G（df），不是 9.4G。
 
 
 ### T-20261002-04 信号库：Lazy Prices 残差 IC 入库检验（3 个候选、安慰剂、和 M1 的相关）
-- status: blocked（等 T-20261002-03 完成。简报由主审轮写，写的人不许看过任何相似度值或 IC）
+- status: ready（简报 07:07 主审轮已写；按 not_before，T-03 以 done 开头之后执行轮才能取）
+- brief: reports/research/control/briefs/T-20261002-04.md
+- 主审注（2026-10-02 07:32 UTC，07:07 主审轮）：T-03 的执行轮 notes 写了 cos_full/rf/mda 的分位数，所以读过队列的人都看过边际分布。这条规则按"不许看过任何 IC、收益相关统计，也不许看过和收益对齐的逐份相似度"执行：边际分布不带收益信息，候选、方向和门槛 01:38 已冻结，写简报时不能再改。
 - priority: 2
-- not_before: T-20261002-03 以 done 开头
+- not_before: T-20261002-03 以 done 开头，并且 text-similarity-2026-10-02/summary.json 的验收全部为真（含可见日下限 100%）
 - goal: 按 `t20261002_lazy_prices_ic/hypotheses.md` 第 4–5 节，机械判 PASS、WATCH 或 FAIL。PASS 的才进组合合同，预注册边际净夏普的检验。
 - plan:
   - 形成日和目标收益与 `t20261001_book_v1/formation_ic.parquet` 完全相同；
@@ -1541,3 +1584,28 @@
 - done_when: `t20261002_lazy_prices_ic/results.json` 有三个候选的数字和机械判定，已提交，标"待主审"。
 - notes:
   - 2026-10-02 01:38 UTC 01:07 主审轮（Opus）登记。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）写简报。和 01:07 的计划不同的三处：
+    - 严格区不再要求逐位不变：供应商价格取整到分，被替换的 6952 个 symbol 的收益必然有取整差。改为按价格感知的容差 0.04/close，排除 T-01 归为供应商修订的 symbol；alpha 表看组合用到的列的逐日秩相关 ≥ 0.99；依赖表要求变化全部能归到被替换的 symbol 或 SEC 删除键的 CIK。
+    - 只重建 2026 分区，往年分区不动（差别只有取整噪声，重建 alpha 表约 2 小时，对前向无用）。
+    - 宇宙成员按时点记录处理：2026-08-31 以前各月不改，只追加 09-30。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）审核：
+    - **可见时间有缺陷，已修（aad93b8）**。SEC 的 acceptanceDateTime 是混合口径：大部分是真 UTC，少数是美东时间带了假的 "Z"。主审抓了 8 份申报的 EDGAR 索引页 "Accepted" 字段核对：CIK 36047、47518、6769 是美东时间；1750、23217、4457、56047 是 UTC。按 UTC 解析会让美东口径记录里的盘后申报早一天可见。
+    - 修法：一律按美东墙钟时间解析，这样绝不早于真实时间（真 UTC 的记录会推后 4–5 小时）；再加一条下限，可见日不早于申报日当天或之后的第一个交易日。
+    - 对已抓的 2428 份：727 份可见日推后 1 个交易日（跨周末显示为 3–4 天），没有一份提前；可见日早于申报日的从 16 份降到 0。原验收只抓到 2 份，因为它允许早 1 天。验收改为：可见日不早于申报日当天或之后第一个交易日，必须 100% 满足。18 个测试通过。
+    - 其他 SEC 管道：`build_earnings_events.py` 已经把全部记录当美东时间读，同样保守，不会前视；13D、并购管道属于已关闭方向。组合主题不用这几个管道。
+    - 解析器的改动（只有 "Item N" 标题的表格留作分节标记，分词前剔除）认可：比较的文字不变，只影响分节定位。
+    - cos 中位数贴近 1 是冻结定义造成的（不去停用词、原始词频），不是实现错误。候选秩 IC 不受单调变换影响。
+  - 2026-10-02 07:42 UTC 07:07 主审轮（Opus）写简报。同时在 hypotheses.md 末尾追加了修正案 01：可见时间按美东墙钟时间解析，并加申报日下限，只会推后、不会提前；另加校验器要的四个英文标记的对照。
+    - pre-backtest 闸门现在是 blocked：外部简报、搜索空间、决策记录还是模板，外部简报只有 5 个来源（要 ≥ 8，其中论文 ≥ 3）。简报第 1 步要求先补齐、两道检查 ok，才能把相似度和收益对齐。
+    - 机制复用 T-24 的 `screen_book_signal_candidates.py`，并先做 1e-9 的身份核对。
+
+### T-20261002-30 账户层复盘：四条 ETF sleeve 和 v1.2 的相关、风险集中、一起亏、前向对账、去一和加 v1.2 的夏普（11-01 续期依据）
+- status: ready
+- priority: 3
+- not_before: 无（不和 T-20261002-01/02 的重任务并行；22:07 执行轮不能跑 T-01 换入和 T-03 抓取，适合做这个）
+- goal: 纲领两周优先级第 5 项，10-25 前交机主。四条 sleeve 同在一个模拟账户，S2 和 S3 日收益相关 0.83；v1.2 准备开新账户。要知道哪条是重复下注，以及加入 v1.2 后账户夏普在同波动口径下怎么变。只出数字，续期建议由主审写。
+- plan: 复用 `run_h20260927_01_sleeve_combination.sleeve_returns()`、C2 lane 的日收益、v1.2 的账户序列和模拟盘成交记录。三个窗口算相关；按 2026-09-30 算 63 日风险贡献和持仓重叠；算去一组合和加 v1.2 组合的夏普，各配同波动的 S3 对照，另报 20 bp；报最差 21/63 日窗口；做前向对账。
+- done_when: `reports/research/program/account-review-2026-10/account-review.json` 含简报列出的六个键，report.md 已写，已提交，标"待主审"。
+- brief: reports/research/control/briefs/T-20261002-30.md
+- notes:
+  - 2026-10-02 07:35 UTC 07:07 主审轮（Opus）登记并写简报。这是描述性分析，不涉及策略选择，不需要预注册；结论和续期建议由主审在结果出来后写。
