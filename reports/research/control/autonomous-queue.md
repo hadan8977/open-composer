@@ -1362,6 +1362,14 @@
 - done_when: 简报验收全部满足；results.json 机械判定 continue_rule；登记簿新增一行。
 - brief: reports/research/control/briefs/T-20261002-44.md
 
+### T-20261002-45 预测市场：H1 前向影子记录、每日赔率摘要、Polymarket 观察单自动更新
+- status: running（交互会话，10-02 14:00 UTC 派子代理 R1002-1400-T45；定时轮不要碰）
+- priority: 2
+- not_before: 无
+- goal: T-44 的 H1（Kalshi 隐含发布不确定性放大公告日溢价）样本不够、判 parked，重开条件是再积累约 60 个发布日的前向 U_rel。本任务让前向证据自动、正确地积累（T−1 日 15:00–15:50 ET 窗口内按回测同一套代码算 U_rel 并只追加记录，次日补实现收益），并给机主每天一份赔率摘要（Polymarket 观察单 + 未来 10 个交易日的 Kalshi 宏观发布隐含均值和标准差），观察单每周自动换掉已结算的市场。只做研究和决策参考，不触发任何下单。
+- done_when: 三个脚本和测试已提交；摘要真实跑过一次；cron 行写进报告（主审安装）。
+- brief: reports/research/control/briefs/T-20261002-45.md
+
 ### T-20261002-42 下单引擎：book_paper 的撤单和清仓命令（紧急停止路径，只用假客户端）
 - status: done（a7e6e39；10-02 13:03 UTC 交互会话主审。子代理 R1002-1251-T42B 从暂存补丁接着做完）
   - 已核对：提交只含范围内 3 个文件，948 行全是新增、0 行删除，`build_plan`、`submit_plan`、`RiskLimits` 和已有检查没动；新测试 19 个，`tests/test_book_paper*.py tests/test_book_v12_targets.py` 共 129 个通过。
