@@ -201,3 +201,180 @@ def test_null_key_component_matches_itself(tmp_path: Path) -> None:
     assert result["keys_equal"] is True
     assert result["rows_joined"] == 2
     assert result["pass"] is True
+
+
+def _price_frames() -> tuple[pl.DataFrame, pl.DataFrame]:
+    days = [datetime(2026, 1, 2), datetime(2026, 1, 5)]
+    rows = []
+    for day in days:
+        for symbol, close, ret in (("AAA", 10.0, 0.01), ("BBB", 100.0, 0.02), ("CCC", 50.0, 0.03)):
+            rows.append({"symbol": symbol, "trade_date": day, "close": close, "ret_1": ret})
+    old = pl.DataFrame(rows)
+    return old.clone(), old
+
+
+def test_price_aware_tolerance_absorbs_rounding_only(tmp_path: Path) -> None:
+    new, old = _price_frames()
+    # AAA close 10 -> price_tol/close = 0.004: a 0.003 move is rounding, 0.006 is a change.
+    new = new.with_columns(
+        pl.when(pl.col("symbol") == "AAA")
+        .then(
+            pl.when(pl.col("trade_date") == datetime(2026, 1, 2))
+            .then(pl.col("ret_1") + 0.003)
+            .otherwise(pl.col("ret_1") + 0.006)
+        )
+        .otherwise(pl.col("ret_1"))
+        .alias("ret_1")
+    )
+    plain = _run(tmp_path, new, old)
+    assert plain["columns"]["ret_1"]["changed_rows"] == 2
+    aware = _run(tmp_path, new, old, price_col="close", price_tol=0.04, price_aware_spec=["ret_1"])
+    assert aware["columns"]["ret_1"]["changed_rows"] == 1
+    assert aware["columns"]["ret_1"]["price_aware"] is True
+    # BBB close 100 -> price_tol/close = 0.0004, tighter than the 1e-9 floor? no: larger, so
+    # a 0.0003 move on BBB is still rounding.
+    new2 = old.with_columns(
+        pl.when(pl.col("symbol") == "BBB")
+        .then(pl.col("ret_1") + 0.0003)
+        .otherwise(pl.col("ret_1"))
+        .alias("ret_1")
+    )
+    ok = _run(tmp_path, new2, old, price_col="close", price_tol=0.04, price_aware_spec=["ret_1"])
+    assert ok["columns"]["ret_1"]["changed_rows"] == 0
+
+
+def test_exclude_and_attribute_symbols(tmp_path: Path) -> None:
+    new, old = _price_frames()
+    new = new.with_columns(
+        pl.when(pl.col("symbol").is_in(["AAA", "BBB"]))
+        .then(pl.col("ret_1") + 0.5)
+        .otherwise(pl.col("ret_1"))
+        .alias("ret_1")
+    )
+    result = _run(tmp_path, new, old, exclude_symbols={"AAA"}, attribute_symbols={"BBB"})
+    assert result["rows_joined"] == 6
+    assert result["excluded_rows"] == 2
+    assert result["excluded_changed_rows"] == 2
+    assert result["rows_evaluated"] == 4
+    assert result["columns"]["ret_1"]["changed_rows"] == 2
+    assert abs(result["columns"]["ret_1"]["changed_share"] - 0.5) < 1e-12
+    assert result["unattributed_changed_rows"] == 0
+    assert result["attributed_changed_rows"] == 2
+    other = _run(tmp_path, new, old, attribute_symbols={"CCC"})
+    assert other["unattributed_changed_rows"] == 4
+
+
+def test_columns_exclude_cols_and_start_window(tmp_path: Path) -> None:
+    new, old = _price_frames()
+    new = new.with_columns(
+        pl.when(pl.col("trade_date") == datetime(2026, 1, 2))
+        .then(pl.col("close") + 1.0)
+        .otherwise(pl.col("close"))
+        .alias("close")
+    )
+    only_ret = _run(tmp_path, new, old, columns_spec=["re:^ret_"])
+    assert list(only_ret["columns"]) == ["ret_1"]
+    assert only_ret["pass"] is True
+    no_close = _run(tmp_path, new, old, exclude_cols_spec=["close"])
+    assert "close" not in no_close["columns"]
+    windowed = _run(tmp_path, new, old, start=date(2026, 1, 5))
+    assert windowed["rows_joined"] == 3
+    assert windowed["columns"]["close"]["changed_rows"] == 0
+    full = _run(tmp_path, new, old)
+    assert full["columns"]["close"]["changed_rows"] == 3
+
+
+def test_allowed_only_new_and_only_old_keys(tmp_path: Path) -> None:
+    new, old = _price_frames()
+    new = pl.concat(
+        [
+            new.filter(
+                ~((pl.col("symbol") == "CCC") & (pl.col("trade_date") == datetime(2026, 1, 5)))
+            ),
+            pl.DataFrame(
+                {
+                    "symbol": ["NEW"],
+                    "trade_date": [datetime(2026, 1, 2)],
+                    "close": [5.0],
+                    "ret_1": [0.0],
+                }
+            ),
+        ]
+    )
+    bad = _run(tmp_path, new, old)
+    assert bad["keys_equal"] is False and bad["keys_ok"] is False
+    assert bad["n_keys_only_new_unallowed"] == 1
+    assert bad["n_keys_only_old_unallowed"] == 1
+    good = _run(
+        tmp_path,
+        new,
+        old,
+        allow_only_new=({"NEW"}, set()),
+        allow_only_old=(set(), {("CCC", "2026-01-05")}),
+    )
+    assert good["keys_equal"] is False
+    assert good["keys_ok"] is True
+    assert good["pass"] is True
+    partial = _run(tmp_path, new, old, allow_only_new=({"NEW"}, set()))
+    assert partial["keys_ok"] is False
+
+
+def test_rank_parity_and_rank_gate(tmp_path: Path) -> None:
+    day = datetime(2026, 1, 2)
+    symbols = [f"S{i}" for i in range(20)]
+    old = pl.DataFrame(
+        {
+            "symbol": symbols * 2,
+            "trade_date": [day] * 20 + [datetime(2026, 1, 5)] * 20,
+            "a": [float(i) for i in range(20)] * 2,
+            "b": [float(i) for i in range(20)] * 2,
+        }
+    )
+    # a: monotone transform (rank identical) but every value changes; b: reversed on day 2.
+    new = old.with_columns((pl.col("a") * 3.0 + 1.0).alias("a")).with_columns(
+        pl.when(pl.col("trade_date") == datetime(2026, 1, 5))
+        .then(19.0 - pl.col("b"))
+        .otherwise(pl.col("b"))
+        .alias("b")
+    )
+    result = _run(
+        tmp_path,
+        new,
+        old,
+        rank_parity_spec=["a", "b"],
+        rank_min=0.99,
+        columns_spec=["a"],
+        gate="rank",
+    )
+    assert result["rank_cells"] == 4
+    assert abs(result["rank_parity_share"] - 0.75) < 1e-12
+    assert result["rank_parity_share_by_column"] == {"a": 1.0, "b": 0.5}
+    assert result["rank_parity_worst"][0]["column"] == "b"
+    assert abs(result["rank_parity_worst"][0]["rho"] + 1.0) < 1e-9
+    assert result["pass"] is False
+    only_a = _run(tmp_path, new, old, rank_parity_spec=["a"], columns_spec=["a"], gate="rank")
+    assert only_a["rank_parity_share"] == 1.0
+    assert only_a["max_changed_share"] == 1.0  # values did change
+    assert only_a["pass"] is True  # the rank gate ignores the value-change share
+
+
+def test_main_accepts_new_options(tmp_path: Path) -> None:
+    new, old = _price_frames()
+    new_path = _write(tmp_path, "n.parquet", new)
+    old_path = _write(tmp_path, "o.parquet", old)
+    excl = tmp_path / "excl.txt"
+    excl.write_text("AAA\n# comment\n\n")
+    out = tmp_path / "r.json"
+    code = mod.main(
+        [
+            "--new", str(new_path), "--old", str(old_path), "--date-col", "trade_date",
+            "--cut", "2026-01-05", "--keys", "symbol,trade_date", "--out", str(out),
+            "--price-col", "close", "--price-aware-cols", "re:^ret_",
+            "--exclude-symbols", str(excl),
+            "--attribute-symbols", str(excl), "--rank-parity-cols", "ret_1", "--gate", "both",
+        ]
+    )  # fmt: skip
+    payload = json.loads(out.read_text())
+    assert code == 0
+    assert payload["excluded_rows"] == 2
+    assert payload["rank_parity_share"] == 1.0
