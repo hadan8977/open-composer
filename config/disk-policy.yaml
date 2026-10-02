@@ -1,5 +1,6 @@
 # Disk policy for this box (root partition /dev/vda1, 217 GB).
-# Enforced by scripts/disk_guard.py (hourly cron); rules in docs/runbook-disk.zh.md.
+# Enforced by scripts/disk_guard.py (hourly cron, nice/ionice); rules in docs/runbook-disk.zh.md.
+# Owner 2026-10-02: keep it light -- registering paths here is optional; research tasks have no disk steps.
 #
 # Why: the root partition also carries the owner's live service /opt/quantcheck, and
 # /opt/gdrive-agent/README.md: a full root partition kills it. On 2026-10-02 the disk
@@ -20,7 +21,7 @@ thresholds:
   act_pct: 80          # hourly run acts at or above this usage
   target_pct: 75       # actions stop once usage is at or below this
   emergency_pct: 90    # warm datasets may be archived and removed
-  min_free_gb_heavy_job: 15   # scripts/run_capped.sh --min-free-gb default for research jobs
+  min_free_gb_heavy_job: 15   # optional scripts/run_capped.sh --min-free-gb value (not required)
   report_unregistered_gb: 1.0 # status lists unregistered dirs under data/ above this
   backup_max_age_days: 7
   tmp_max_age_days: 7

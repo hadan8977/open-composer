@@ -4,14 +4,18 @@ Why: the root partition also carries the owner's live service /opt/quantcheck, a
 disk kills it (/opt/gdrive-agent/README.md). On 2026-10-02 it reached 96%. Rules and the
 escalation ladder are in docs/runbook-disk.zh.md.
 
+Light by design (owner 2026-10-02: disk care must not cost research time): below the action
+threshold a run is one statvfs call; research tasks and rounds have no disk duties.
+
 Subcommands:
-    status                  usage, managed paths, holds, unregistered large dirs
-                            (writes reports/ops/disk-status.json)
+    status                  on demand only: usage, managed paths, holds, unregistered large
+                            dirs, watch list (du over ~100 GB; writes reports/ops/disk-status.json)
     run [--force] [--dry-run] [--all]
                             act only at or above thresholds.act_pct (or --force) and stop
-                            at target_pct; --all (daily hygiene) clears every eligible item.
+                            at target_pct; --all (manual hygiene) clears every eligible item.
                             Order: caches -> old /tmp entries -> expired backups (archive to
-                            Drive, verify, delete) -> warm datasets (emergency only)
+                            Drive, verify, delete) -> warm datasets (emergency only).  Ends with
+                            a light status (usage only, no du sweep).
     archive PATH --remote REL
                             upload to Drive and verify, no deletion
 
@@ -22,9 +26,8 @@ Safety rules enforced in code, not only in the policy file:
   `rclone check --one-way` reported 0 differences; a held task blocks deletion;
 * every action is appended to reports/ops/disk-ledger.jsonl.
 
-Cron (the lock file makes overlapping runs exit at once):
-    17 * * * *  ... scripts/disk_guard.py run          (threshold-driven)
-    40 6 * * *  ... scripts/disk_guard.py run --all    (daily hygiene, then status)
+Cron (lowest CPU/IO priority; the lock file makes overlapping runs exit at once):
+    17 * * * *  ... nice -n 19 ionice -c3 .venv/bin/python scripts/disk_guard.py run
 """
 
 from __future__ import annotations
@@ -626,8 +629,26 @@ def cmd_run(policy: dict[str, Any], force: bool, dry: bool, all_items: bool = Fa
     u2 = disk_usage("/")
     print(f"{now_utc()} after: usage {u2['pct']:.1f}% free {u2['free_gb']:.1f} GB")
     if not dry:
-        cmd_status(policy)
+        write_light_status(policy, u, u2)
     return 0 if dry or u2["pct"] < th["emergency_pct"] else 3
+
+
+def write_light_status(
+    policy: dict[str, Any], before: dict[str, float], after: dict[str, float]
+) -> None:
+    """Usage before/after an acting run; the full du sweep is `status`, run on demand."""
+    th = policy["thresholds"]
+    pct = after["pct"]
+    state = "emergency" if pct >= th["emergency_pct"] else "act" if pct >= th["act_pct"] else "ok"
+    STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STATUS_PATH.write_text(
+        json.dumps(
+            {"generated_at": now_utc(), "state": state, "usage_before": before, "usage": after},
+            indent=1,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 def cmd_archive(policy: dict[str, Any], path: str, remote: str) -> int:
