@@ -140,3 +140,8 @@ The iteration validator looks for these four markers literally. Each line points
 - Failure mode: the "Failure modes" bullets under H1 above.
 - Measurement: the "Primary statistic" and "Secondary statistics" bullets under H1, the H0 table, the H2 continue-rule inputs, the three placebos and the per-candidate statistics above.
 - Stop/Pivot criterion: the "Continue rule" and "Stop rule" under H1, the "Continue rule" under H2 and the placebo thresholds above.
+
+## Outcome (appended after the run; preregistration above unchanged)
+
+- H1: not supported, not refuted. D = +13.93 bp, permutation p 0.413, anchor D +26.12 bp: the continue rule fails on the first two conditions and the stop rule is not triggered (D above +5 bp). See `report.md`.
+- H2 (CPI days only, Cleveland Fed nowcast as the consensus proxy): not supported; hit rate 0.55 (bar 0.60), binomial p 0.41 (bar 0.10).
