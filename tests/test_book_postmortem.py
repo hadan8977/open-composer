@@ -129,3 +129,38 @@ def test_ladder_decisions_thresholds() -> None:
 def test_median_blocks_nests_and_ignores_bools() -> None:
     blocks = [{"a": {"x": 1.0, "ok": True}}, {"a": {"x": 3.0, "ok": False}}, {"a": {"x": 2.0}}]
     assert ep.median_blocks(blocks) == {"a": {"x": 2.0}}
+
+
+def test_style_vs_specific_sums_styles(tmp_path, monkeypatch) -> None:
+    from scripts import report_book_postmortem as rep
+
+    idx = pd.bdate_range("2024-01-08", periods=60)
+    rng = np.random.default_rng(0)
+    cols = {
+        c: rng.normal(0.0005, 0.01, len(idx))
+        for c in (
+            "market",
+            "industry",
+            "style_a",
+            "style_b",
+            "specific",
+            "etf_leg",
+            "tbill_leg",
+            "costs",
+            "unreconciled",
+            "gross_reported",
+            "net_reported",
+        )
+    }
+    df = pd.DataFrame(cols, index=idx)
+    for rung in ("L0", "L1"):
+        for v in ep.VARIANTS:
+            df.to_parquet(tmp_path / f"attrib_{rung}_{v}.parquet")
+    monkeypatch.setattr(rep, "PM_DIR", tmp_path)
+    out = rep.style_vs_specific(["a", "b"])
+    got = out["L1_M0_A"]["A"]["style_total"]["ann_contribution"]
+    want = float((df["style_a"] + df["style_b"]).mean() * 252)
+    assert abs(got - want) < 1e-12
+    assert (
+        abs(out["L0_M1_C"]["A"]["style_a"]["ann_contribution"] - df["style_a"].mean() * 252) < 1e-12
+    )

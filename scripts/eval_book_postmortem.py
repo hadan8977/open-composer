@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -51,6 +52,11 @@ WINDOWS = {
 }
 VARIANTS = ("M0_A", "M1_C")
 OFFSETS = (0, 1, 2, 3, 4)
+# debugging only: PM_DEBUG="L0:0" restricts the tc/attrib stages to one rung and offset and
+# writes nothing
+DEBUG = os.environ.get("PM_DEBUG")
+LIN_RUNGS = (DEBUG.split(":")[0],) if DEBUG else ("L0", "L1")
+LIN_OFFSETS = (int(DEBUG.split(":")[1]),) if DEBUG else OFFSETS
 RUNGS = ("L0", "L1", "L2c", "L2a")
 REF_CAPS = {"size": 0.10}  # every other style: 0.25 (the L0 cap)
 REF_STYLE_CAP = 0.25
@@ -358,7 +364,7 @@ def run_tc() -> None:
 
     non_stock = set(HEDGE_ETFS) | set(TBILL_SYMBOLS) | {TBILL}
     panel = PricePanel.from_dir(
-        start=LOAD_START, end=DEFAULT_END, symbols=[], include_etfs=False, load_open=False
+        start=LOAD_START, end=DEFAULT_END, symbols=["AAPL"], include_etfs=False, load_open=False
     )
     rm = RiskModel()
     attrs = PanelAttributes()
@@ -371,12 +377,12 @@ def run_tc() -> None:
 
     rows: list[dict[str, Any]] = []
     cache_m0: dict[tuple[str, pd.Timestamp], tuple[pd.Series, pd.Series]] = {}
-    for rung in ("L0", "L1"):
+    for rung in LIN_RUNGS:
         for v in VARIANTS:
             method, config = v.split("_")
             uni_name = UNIVERSE_OF[config]
             ucol = "in_p1000" if config == "C" else "in_u3000"
-            for k in OFFSETS:
+            for k in LIN_OFFSETS:
                 d = path_dir(rung, v, k)
                 tg = pd.read_parquet(d / "targets.parquet")
                 tg["decision_date"] = pd.to_datetime(tg["decision_date"])
@@ -408,7 +414,7 @@ def run_tc() -> None:
         "n_rebalances": int(len(df)),
         "median": {},
     }
-    for rung in ("L0", "L1"):
+    for rung in LIN_RUNGS:
         for v in VARIANTS:
             sub = df[(df["rung"] == rung) & (df["variant"] == v)]
             res["median"][f"{rung}_{v}"] = {
@@ -421,7 +427,10 @@ def run_tc() -> None:
                 }
                 for w, (a, b) in WINDOWS.items()
             }
-    write_section("tc", res)
+    if DEBUG:
+        print("debug: not written")
+    else:
+        write_section("tc", res)
     print(json.dumps(ev.clean(res["median"]), ensure_ascii=False))
 
 
@@ -449,9 +458,9 @@ def run_attrib() -> None:
 
     paths: dict[str, dict[str, Any]] = {}
     symbols: set[str] = set()
-    for rung in ("L0", "L1"):
+    for rung in LIN_RUNGS:
         for v in VARIANTS:
-            for k in OFFSETS:
+            for k in LIN_OFFSETS:
                 d = path_dir(rung, v, k)
                 tg = pd.read_parquet(d / "targets.parquet")
                 tg["decision_date"] = pd.to_datetime(tg["decision_date"])
@@ -543,9 +552,9 @@ def run_attrib() -> None:
         "blended": {},
         "reconciliation": {},
     }
-    for rung in ("L0", "L1"):
+    for rung in LIN_RUNGS:
         for v in VARIANTS:
-            sel = [frames[f"{rung}_{v}_o{k}"] for k in OFFSETS]
+            sel = [frames[f"{rung}_{v}_o{k}"] for k in LIN_OFFSETS]
             blend = sum(s[comps + ["gross_reported", "net_reported"]] for s in sel) / len(sel)
             blend["unreconciled"] = blend["gross_reported"] - (
                 blend[[c for c in comps if c != "costs"]].sum(axis=1)
@@ -564,7 +573,10 @@ def run_attrib() -> None:
                     for c in [*comps, "unreconciled", "gross_reported", "net_reported"]
                 }
             res["blended"][f"{rung}_{v}"] = block
-    write_section("attrib", res)
+    if DEBUG:
+        print("debug: not written")
+    else:
+        write_section("attrib", res)
     for key, block in res["blended"].items():
         top = sorted(
             ((c, block["A"][c]["ann_contribution"]) for c in comps if c != "costs"),
