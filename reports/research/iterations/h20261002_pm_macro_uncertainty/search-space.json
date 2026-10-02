@@ -1,14 +1,81 @@
 {
-  "cost_table_path": "",
-  "created_at": "2026-10-02T13:07:41.754719+00:00",
-  "data_feasibility_path": "",
-  "evaluation_report_paths": [],
   "iter_id": "h20261002_pm_macro_uncertainty",
-  "paths": [],
+  "strategy_name": "h20261002_pm_macro_uncertainty",
+  "source_spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+  "spec_hash": "5382f5571f0ac62a46416db0ab69571eafd67d55ce04c13eb3fe64bb002bb8b4",
   "schema_version": 3,
-  "source_spec_path": null,
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "total_candidate_budget": 80,
-  "trial_ledger_paths": []
+  "created_at": "2026-10-02T13:46:11Z",
+  "objective": "Preregistered test of the Kalshi-implied release-uncertainty premium (H1) and the Kalshi minus Cleveland nowcast expectation gap on CPI days (H2); nine candidates, no parameter search.",
+  "total_candidate_budget": 9,
+  "cost_assumptions": "QQQ SPY TLT 2 bp, IWM 3 bp, TQQQ 5 bp per side, stress doubles; TLT and QQQ shorts 0.5 percent per year borrow",
+  "go_no_go_band": "H1 continues only if D >= +15 bp, permutation p <= 0.10 and anchor D > 0; D < +5 bp or wrong-signed refutes; H2 needs hit rate >= 0.60, binomial p <= 0.10 and the same direction in the anchor sample",
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20261002_pm_macro_uncertainty/candidate-manifest.json",
+  "candidate_manifest_sha256": "cc0066c0a613cf81cbba42b663480c12247e7152699419dde2d00cb92baea3ab",
+  "data_feasibility_path": "reports/research/iterations/h20261002_pm_macro_uncertainty/data-feasibility.json",
+  "data_feasibility_sha256": "8c928dd2f3c872cf3b74d9212cceac656b5fbc6aab6c6fd4de468e3f094ca569",
+  "cost_table_path": "reports/research/iterations/h20261002_pm_macro_uncertainty/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20261002_pm_macro_uncertainty/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20261002_pm_macro_uncertainty/results.json"
+  ],
+  "paths": [
+    {
+      "name": "release_day_overlay",
+      "candidate_count": 9,
+      "hypothesis_refs": [
+        "H1",
+        "H2"
+      ],
+      "parameters": {
+        "series": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP",
+          "KXFED (reported separately)"
+        ],
+        "assets": [
+          "QQQ",
+          "SPY",
+          "IWM",
+          "TLT",
+          "TQQQ"
+        ],
+        "rules": [
+          "u_rel_gt_1",
+          "every_release_day",
+          "u_rel_weight",
+          "expectation_gap_sign"
+        ],
+        "u_rel_window_events": 12,
+        "warmup_prior_events": 6,
+        "min_usable_strikes": 4,
+        "signal_time": "15:00 ET on T-1",
+        "samples": {
+          "full": [
+            "first valid U_rel event",
+            "2026-09-17"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "2026-09-17"
+          ]
+        },
+        "permutation": {
+          "shuffles": 1000,
+          "seed": 20261002
+        },
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "unconditional_non_fomc_release_day_baseline_U4",
+        "within_series_shuffle_placebo",
+        "t_plus_1_placebo",
+        "random_session_matched_placebo"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,25 @@
+{
+  "iter_id": "h20261002_pm_macro_uncertainty",
+  "cost_v1_h20261002_pm_macro": {
+    "primary_bps_per_side": {
+      "QQQ": 2.0,
+      "SPY": 2.0,
+      "TLT": 2.0,
+      "IWM": 3.0,
+      "TQQQ": 5.0
+    },
+    "stress_bps_per_side": {
+      "QQQ": 4.0,
+      "SPY": 4.0,
+      "TLT": 4.0,
+      "IWM": 6.0,
+      "TQQQ": 10.0
+    },
+    "sides_per_round_trip": 2,
+    "borrow_annual_tlt_short": 0.005,
+    "borrow_note": "TLT shorts (G1 only) add 0.5 percent per year pro rata for the holding period (easy to borrow). QQQ, SPY, IWM and TQQQ are long-only and need no borrow.",
+    "fill_rule": "signal known by 15:00 ET on T-1, entry at the T-1 closing auction (MOC), exit at the T closing auction (R_cc candidates) or the T opening auction (G1 and G2, R_co). No limit orders, no price improvement assumed.",
+    "note": "Costs are those frozen in hypotheses.md (Candidates, Costs per side); stress doubles each figure. The repository-wide 10 bp per side convention is reported as an informational sensitivity only (informational_sensitivity_bps_per_side) and does not enter any decision.",
+    "informational_sensitivity_bps_per_side": 10.0
+  }
+}

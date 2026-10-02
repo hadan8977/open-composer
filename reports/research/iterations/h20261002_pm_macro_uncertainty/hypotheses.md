@@ -131,3 +131,12 @@ An hourly point-in-time collector stores snapshots of:
 - a short curated Polymarket list: Fed decisions, recession, CPI, tariffs and shutdown.
 
 They go to append-only parquet with `fetched_at_utc`. The lead installs the cron after review. A forward record starts now whatever the backtest says.
+
+## Validator index (added by T-20261002-44; no rule, number or threshold above is changed)
+
+The iteration validator looks for these four markers literally. Each line points at the existing frozen text above.
+
+- Hypothesis: H1 (uncertainty scales the announcement premium) and H2 (expectation gap), stated above.
+- Failure mode: the "Failure modes" bullets under H1 above.
+- Measurement: the "Primary statistic" and "Secondary statistics" bullets under H1, the H0 table, the H2 continue-rule inputs, the three placebos and the per-candidate statistics above.
+- Stop/Pivot criterion: the "Continue rule" and "Stop rule" under H1, the "Continue rule" under H2 and the placebo thresholds above.

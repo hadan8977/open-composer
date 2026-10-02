@@ -1,0 +1,113 @@
+name: h20261002_pm_macro_uncertainty
+description: 'Preregistered T-20261002-44 test (dir:prediction_market_macro_release_uncertainty_premium). Does the Kalshi-implied standard deviation of a scheduled US macro release (CPI, payrolls, GDP; PCE does not exist on Kalshi) the afternoon before it scale the equity announcement premium on the release day? Signal U_rel = U / median(U of the previous 12 events of the same series), known by 15:00 ET on T-1; entry MOC T-1, exit MOC T (R_cc) or MOO T (R_co). Nine preregistered candidates U1-U7 (long QQQ/SPY/IWM/TQQQ on U_rel > 1 or all release days or U_rel-weighted) and G1-G2 (H2 expectation gap vs the Cleveland Fed CPI nowcast, TLT/QQQ, CPI days only). No broker write and no paper order in this step.'
+timeframe: daily
+universe:
+- QQQ
+- SPY
+- IWM
+- TLT
+- TQQQ
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20261002_pm_macro:release_day_overlay
+costs:
+  commission_pct: 0.0
+  slippage_bps: 2.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  release_uncertainty_rel:
+    source: expression
+    expression: close / lag(close, 12) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal U_rel is the standard deviation of the Kalshi-implied distribution of the release (middle-out cleaned threshold markets, hourly candle ending at or before 15:00 America/New_York on the previous NYSE session) divided by the median of the previous 12 events of the same series, built by scripts/build_kalshi_release_uncertainty.py and not expressible in the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- macro.kalshi_public
+research_design:
+  iter_id: h20261002_pm_macro_uncertainty
+  candidate_manifest_path: reports/research/iterations/h20261002_pm_macro_uncertainty/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20261002_pm_macro_uncertainty/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20261002_pm_macro_uncertainty.jsonl
+  source_card_claim_ids:
+  - feds_2026_010_kalshi_macro
+  - ai_bansal_guo_2023_announcement_premium
+  - macro_kalshi_replication_code
+  - amburgey_2025_election_shocks_sectors
+  - kalshi_public_api_probe_2026_10_02
+  parameter_space:
+    release_series:
+    - KXCPI
+    - KXPAYROLLS
+    - KXGDP
+    - KXFED
+    asset:
+    - QQQ
+    - SPY
+    - IWM
+    - TLT
+    - TQQQ
+    rule:
+    - u_rel_gt_1
+    - every_release_day
+    - u_rel_weight
+    - expectation_gap_sign
+  candidate_budget: 9
+  selection_objective: One preregistered statistic D = mean(QQQ R_cc | U_rel > 1) - mean(QQQ R_cc | U_rel <= 1) over non-FOMC release days, with a 1000-shuffle within-series permutation p. Continue only if D >= +15 bp, p <= 0.10 in the full sample and D > 0 in the anchor sample 2024-01-08 .. 2026-09-17; stop and refute if D < +5 bp or wrong-signed. Candidates are scored for adoption only after H1 continues.
+  anti_overfit_notes:
+  - The nine candidates, the U_rel definition (previous 12 events, 6 warm-up, 4 strikes minimum), the signal time, costs (2/3/5 bp per side, double for stress) and the continue and stop rules are frozen in candidate-manifest.json and hypotheses.md before any return grouped by U_rel is computed.
+  - Three placebos (within-series shuffle of U_rel, the same signal on T+1, random non-release sessions matched on weekday and month) and a DSR over all nine candidates are part of the contract.
+  validation_plan:
+  - sample_full_first_valid_event_to_2026_09_17
+  - sample_anchor_2024_01_08_to_2026_09_17
+  - placebo_shuffle_u_rel_within_series_1000_seed_20261002
+  - placebo_t_plus_1_session
+  - placebo_random_sessions_matched_weekday_month

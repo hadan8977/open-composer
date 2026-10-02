@@ -1,0 +1,467 @@
+{
+  "schema_version": 1,
+  "report_type": "h20261002_pm_macro_uncertainty_historical_evaluation_authorization",
+  "iter_id": "h20261002_pm_macro_uncertainty",
+  "generated_at": "2026-10-02T13:46:11Z",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 9,
+    "evaluation_authorized_count": 9,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "release_day_overlay": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "U1",
+        "U2",
+        "U3",
+        "U4",
+        "U5",
+        "U6",
+        "U7",
+        "G1",
+        "G2"
+      ],
+      "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present"
+    }
+  },
+  "candidate_authorization": {
+    "candidate_count": 9,
+    "rows": [
+      {
+        "candidate_id": "U1",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "0b6797ae08342517546095980dc6ec3634a45c69a3f58b6979253b22e2454627"
+      },
+      {
+        "candidate_id": "U2",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "12bec1953dccce30239c4def634b086e084b873e3b18e5d82e781382c85ec408"
+      },
+      {
+        "candidate_id": "U3",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "991a6d3b1afe090f7a4cdd6934612c424d024bf437abe0f4f5601e77d8bcdfc1"
+      },
+      {
+        "candidate_id": "U4",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "1e223d818fa6f131527db0fc0cc0b225da2522ff2215112416016a764c5a9645"
+      },
+      {
+        "candidate_id": "U5",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "9d275874dbbbf8b1ba35def2ac58c9685d118f3c8f7e54a91b43801eab441b85"
+      },
+      {
+        "candidate_id": "U6",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "3fe8e58eff542fceb0c05029e45232b5f8889a07672619ae09f37e8c45f38348"
+      },
+      {
+        "candidate_id": "U7",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_and_sip_daily_present",
+        "candidate_binding_sha256": "a7fcd4167370ae6142ea2b0890a0ee6495d1006ead0bbede84c92b3a2e3f2d08"
+      },
+      {
+        "candidate_id": "G1",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_cleveland_nowcast_cpi_only_sip_daily_present",
+        "candidate_binding_sha256": "6014d627d13506410dda2459a85e330f22770ede750280d6a1f38a7890754eeb"
+      },
+      {
+        "candidate_id": "G2",
+        "path": "release_day_overlay",
+        "action": "evaluate",
+        "reason_code": "kalshi_hourly_candles_built_cleveland_nowcast_cpi_only_sip_daily_present",
+        "candidate_binding_sha256": "bc139674ec97ceb7775f1b3a593b561c0fb336f86e6d6754f5bb14372da99b90"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "cost_contract"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20261002_pm_macro_uncertainty/cost-contract.json",
+      "sha256": "4098bb7079ad307abb4e5dbdf11b0bc7e5438059ddd4f38d0f4074a9aa5ab8cb"
+    }
+  },
+  "notes": "Data feasibility written before any equity return grouped by U_rel or by the expectation gap was computed. Kalshi hourly candles for KXCPI, KXPAYROLLS, KXGDP, KXFED (required) and KXCPICOREYOY, KXU3 (diagnostic only) were fetched 2026-10-02 and turned into release_uncertainty.parquet; SIP daily was read for its trading calendar only.",
+  "kalshi": {
+    "api": "https://api.elections.kalshi.com/trade-api/v2 (public, no key); live candlesticks use field names with the suffix _dollars/_fp, historical ones do not, both mapped to one schema",
+    "historical_cutoff_market_settled_ts": "2026-08-03T00:00:00Z",
+    "series_probe": {
+      "KXCPI": {
+        "events": 67,
+        "first_listed": "CPI-21JUN",
+        "frequency": "monthly",
+        "last_listed": "KXCPI-26DEC",
+        "title": "CPI"
+      },
+      "KXCPICOREYOY": {
+        "events": 48,
+        "first_listed": "CPICOREYOY-22DEC",
+        "frequency": "monthly",
+        "last_listed": "KXCPICOREYOY-26DEC",
+        "title": "Core inflation"
+      },
+      "KXFED": {
+        "events": 52,
+        "first_listed": "FED-21JUL",
+        "frequency": "custom",
+        "last_listed": "KXFED-28JAN",
+        "title": "Fed funds rate"
+      },
+      "KXGDP": {
+        "events": 25,
+        "first_listed": "GDP-21JUN30",
+        "frequency": "custom",
+        "last_listed": "KXGDP-27JUL29",
+        "title": "US GDP growth"
+      },
+      "KXPAYROLLS": {
+        "events": 45,
+        "first_listed": "PROLLS-23MAR",
+        "frequency": "monthly",
+        "last_listed": "KXPAYROLLS-26NOV",
+        "title": "Jobs numbers"
+      },
+      "KXPCE": null,
+      "KXPCECORE": {
+        "events": 28,
+        "first_listed": "PCECORE-22NOV",
+        "frequency": "monthly",
+        "last_listed": "KXPCECORE-26NOV",
+        "title": "US Core PCE inflation"
+      },
+      "KXU3": {
+        "events": 65,
+        "first_listed": "U3-21JUL",
+        "frequency": "monthly",
+        "last_listed": "KXU3-26NOV",
+        "title": "Unemployment"
+      }
+    },
+    "series_exist": {
+      "KXCPI": true,
+      "KXPAYROLLS": true,
+      "KXGDP": true,
+      "KXFED": true,
+      "KXPCE": false,
+      "KXCPICOREYOY": true,
+      "KXU3": true
+    },
+    "pce_note": "KXPCE returns 404, so the frozen PCE series has no events; KXPCECORE (core PCE, 28 events) exists but is not part of the frozen design and was not fetched",
+    "older_ticker_prefixes": "CPI-*, PROLLS-* (payrolls), GDP-*, FED-* are returned under the KX series and fetched with it",
+    "per_series": {
+      "KXCPI": {
+        "events_listed": 67,
+        "events_by_reason": {
+          "ok": 45,
+          "no_threshold_markets": 18,
+          "future_beyond_calendar": 4
+        },
+        "events_by_release_year_with_threshold_markets": {
+          "2023": 12,
+          "2024": 12,
+          "2025": 12,
+          "2026": 12,
+          "2027": 1
+        },
+        "diagnostic_only": false,
+        "share_excluded_of_events_with_release_date_in_calendar": 0.0,
+        "share_without_threshold_markets_of_all_listed": 0.26865671641791045,
+        "first_event_with_valid_U": "CPI-22DEC 2023-01-12",
+        "first_event_with_valid_U_rel": "CPI-23JUN 2023-07-12",
+        "events_with_valid_U_rel_through_2026_09_17": 39,
+        "usable_strikes_at_signal": {
+          "min": 5.0,
+          "p25": 7.0,
+          "median": 8.0,
+          "p75": 9.0,
+          "max": 15.0
+        },
+        "signal_candle_median_spread_across_events": {
+          "median": 0.020000000000000018,
+          "p90": 0.04000000000000002,
+          "max": 0.06999999999999998
+        },
+        "strike_price_rule_counts": {
+          "mid": 385,
+          "last_trade": 1,
+          "missing": 1
+        },
+        "signal_candle_age_hours": {
+          "median_of_event_medians": 0.5,
+          "share_events_with_any_strike_older_than_24h": 0.5111111111111111
+        }
+      },
+      "KXFED": {
+        "events_listed": 52,
+        "events_by_reason": {
+          "ok": 29,
+          "no_threshold_markets": 12,
+          "future_beyond_calendar": 11
+        },
+        "events_by_release_year_with_threshold_markets": {
+          "2023": 8,
+          "2024": 8,
+          "2025": 7,
+          "2026": 8,
+          "2027": 8,
+          "2028": 1
+        },
+        "diagnostic_only": false,
+        "share_excluded_of_events_with_release_date_in_calendar": 0.0,
+        "share_without_threshold_markets_of_all_listed": 0.23076923076923078,
+        "first_event_with_valid_U": "FED-23FEB 2023-02-01",
+        "first_event_with_valid_U_rel": "FED-23NOV 2023-11-01",
+        "events_with_valid_U_rel_through_2026_09_17": 23,
+        "usable_strikes_at_signal": {
+          "min": 5.0,
+          "p25": 10.0,
+          "median": 11.0,
+          "p75": 15.0,
+          "max": 15.0
+        },
+        "signal_candle_median_spread_across_events": {
+          "median": 0.010000000000000009,
+          "p90": 0.010000000000000009,
+          "max": 0.03
+        },
+        "strike_price_rule_counts": {
+          "mid": 321,
+          "last_trade": 1,
+          "missing": 3
+        },
+        "signal_candle_age_hours": {
+          "median_of_event_medians": 35.0,
+          "share_events_with_any_strike_older_than_24h": 0.5862068965517241
+        }
+      },
+      "KXGDP": {
+        "events_listed": 25,
+        "events_by_reason": {
+          "ok": 14,
+          "no_threshold_markets": 7,
+          "future_beyond_calendar": 4
+        },
+        "events_by_release_year_with_threshold_markets": {
+          "2023": 4,
+          "2024": 4,
+          "2025": 3,
+          "2026": 4,
+          "2027": 3
+        },
+        "diagnostic_only": false,
+        "share_excluded_of_events_with_release_date_in_calendar": 0.0,
+        "share_without_threshold_markets_of_all_listed": 0.28,
+        "first_event_with_valid_U": "GDP-232022 Q4 2023-01-26",
+        "first_event_with_valid_U_rel": "GDP-24JUL25 2024-07-25",
+        "events_with_valid_U_rel_through_2026_09_17": 8,
+        "usable_strikes_at_signal": {
+          "min": 8.0,
+          "p25": 9.25,
+          "median": 10.5,
+          "p75": 13.0,
+          "max": 16.0
+        },
+        "signal_candle_median_spread_across_events": {
+          "median": 0.02999999999999997,
+          "p90": 0.05350000000000001,
+          "max": 0.07000000000000003
+        },
+        "strike_price_rule_counts": {
+          "mid": 151,
+          "last_trade": 6,
+          "missing": 3
+        },
+        "signal_candle_age_hours": {
+          "median_of_event_medians": 1.0,
+          "share_events_with_any_strike_older_than_24h": 0.42857142857142855
+        }
+      },
+      "KXPAYROLLS": {
+        "events_listed": 45,
+        "events_by_reason": {
+          "ok": 41,
+          "future_beyond_calendar": 3,
+          "no_threshold_markets": 1
+        },
+        "events_by_release_year_with_threshold_markets": {
+          "2023": 9,
+          "2024": 12,
+          "2025": 11,
+          "2026": 12
+        },
+        "diagnostic_only": false,
+        "share_excluded_of_events_with_release_date_in_calendar": 0.0,
+        "share_without_threshold_markets_of_all_listed": 0.022222222222222223,
+        "first_event_with_valid_U": "PROLLS-23MAR 2023-04-07",
+        "first_event_with_valid_U_rel": "PROLLS-23SEP 2023-10-06",
+        "events_with_valid_U_rel_through_2026_09_17": 35,
+        "usable_strikes_at_signal": {
+          "min": 6.0,
+          "p25": 7.0,
+          "median": 8.0,
+          "p75": 10.0,
+          "max": 19.0
+        },
+        "signal_candle_median_spread_across_events": {
+          "median": 0.020000000000000018,
+          "p90": 0.03499999999999996,
+          "max": 0.065
+        },
+        "strike_price_rule_counts": {
+          "mid": 371,
+          "last_trade": 4,
+          "missing": 0
+        },
+        "signal_candle_age_hours": {
+          "median_of_event_medians": 0.0,
+          "share_events_with_any_strike_older_than_24h": 0.21951219512195122
+        }
+      }
+    },
+    "full_window_without_returns": {
+      "full_start": "2023-07-12",
+      "sample_end": "2026-09-17",
+      "non_fomc_events_with_valid_U_rel": 82,
+      "non_fomc_release_days_after_day_level_dedupe": 82,
+      "days_with_max_U_rel_gt_1": 34,
+      "days_with_max_U_rel_le_1": 48,
+      "anchor_start": "2024-01-08",
+      "anchor_days": 72,
+      "anchor_days_gt_1": 32,
+      "by_series": {
+        "KXCPI": 39,
+        "KXPAYROLLS": 35,
+        "KXGDP": 8
+      },
+      "years_in_full_sample": [
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "contains_2022": false,
+      "fomc_events_with_valid_U_rel_in_window": 23
+    },
+    "fomc_decision_day_verification": {
+      "events_with_release_date": 40,
+      "calendar_match": 31,
+      "title_month_match": 40,
+      "calendar_mismatch_events": [
+        "KXFED-27JAN",
+        "KXFED-27MAR",
+        "KXFED-27APR",
+        "KXFED-27JUN",
+        "KXFED-27JUL",
+        "KXFED-27SEP",
+        "KXFED-27OCT",
+        "KXFED-27DEC",
+        "KXFED-28JAN"
+      ],
+      "note": "mismatches are 2027+ meetings absent from the hard-coded 2021-2026 Fed calendar; all 2021-2026 decision days match"
+    },
+    "close_time_et_hhmm_by_series_top4": {
+      "KXCPI": {
+        "08:25": 41,
+        "08:29": 8
+      },
+      "KXFED": {
+        "13:55": 40
+      },
+      "KXGDP": {
+        "08:29": 9,
+        "08:25": 8,
+        "10:01": 1
+      },
+      "KXPAYROLLS": {
+        "08:25": 27,
+        "08:29": 16,
+        "10:00": 1
+      }
+    },
+    "bracket_format_note": "Events before about December 2022 (CPI), the first FED events, early GDP and one payrolls event list bracket or one-sided markets without a threshold strike_type; they are not threshold markets, give no usable strikes and are counted as excluded (no_threshold_markets). Because six prior valid events are needed, the first valid U_rel arrives in 2023-2024 and the sample is shorter than the 2021 start of Kalshi.",
+    "u_truncation_caveat": "U is the standard deviation of a distribution truncated to the listed strike range; for FOMC the number of listed strikes changes between 7 and 15 and moves U mechanically, so FOMC U_rel is reported separately and never enters the primary statistic.",
+    "signal_candle_rule": "per strike the last hourly candle ending at or before 15:00 ET on T-1 (Kalshi emits a candle whenever the book or a trade changes, so the last candle is the book at that time); candle age travels with the row"
+  },
+  "h2_consensus_probe": {
+    "verdict": "partial_usable_cpi_only",
+    "summary": "The Cleveland Fed headline CPI MoM nowcast history is usable as a free point-in-time consensus proxy for CPI days only. No free consensus history exists for payrolls (Trading Economics guest account discontinued; FXStreet data need a key and its terms forbid copying). H2 therefore runs on CPI days only, which is the closest literal reading of the frozen \"CPI and payrolls pooled\" rule, and G1 and G2 are scoped to CPI days.",
+    "sources": {
+      "trading_economics_guest_api": {
+        "verdict": "not usable",
+        "url_probed": "https://api.tradingeconomics.com/calendar?c=guest:guest&f=json",
+        "probed_at": "2026-10-02T13:21Z",
+        "availability": "guest account discontinued",
+        "response_quote": "We are sorry, but the guest account has been discontinued.",
+        "history_depth": "none without a paid plan",
+        "recorded_before_release": "unknown",
+        "terms": "a paid subscription is required (https://tradingeconomics.com/api/pricing.aspx); not purchased (owner: no bought data)",
+        "evidence_files": [
+          "reports/research/iterations/h20261002_pm_macro_uncertainty/sources/h2-consensus/tradingeconomics-guest-calendar-response.txt",
+          "reports/research/iterations/h20261002_pm_macro_uncertainty/sources/h2-consensus/tradingeconomics-api-page.html"
+        ]
+      },
+      "fxstreet_calendar": {
+        "verdict": "not usable",
+        "url_probed": "https://calendar-api.fxstreet.com/en/api/v1/eventDates/2023-01-01/2023-01-31",
+        "probed_at": "2026-10-02T13:21Z",
+        "availability": "HTTP 401 without a key; no public history export",
+        "history_depth": "not accessible",
+        "recorded_before_release": "unknown",
+        "terms_url": "https://www.fxstreet.com/info/terms-conditions",
+        "terms_quote": "the reproduction, retransmission, copying, transfer, or redistribution, in whole or in part, of the information contained on the Page, regardless of its purpose and the means used for it, is prohibited without prior authorization from the Company.",
+        "evidence_files": [
+          "reports/research/iterations/h20261002_pm_macro_uncertainty/sources/h2-consensus/fxstreet-terms-conditions.html"
+        ]
+      },
+      "cleveland_fed_inflation_nowcast": {
+        "verdict": "usable for research, CPI headline MoM only",
+        "url": "https://www.clevelandfed.org/-/media/files/webcharts/inflationnowcasting/nowcast_month.json",
+        "fetched_at": "2026-10-02T13:21:51Z",
+        "local_copy": "data/research/prediction_markets/cleveland_fed/nowcast_month.json",
+        "local_copy_sha256": "ce875bad6db100512dbcd629c50bed0e66d2bdffb778dd80e5c5bc026fe66f2b",
+        "availability": "public JSON behind the nowcasting page, 160 monthly charts from the 2013-07 target month to 2026-12, each with daily nowcasts of headline CPI, core CPI, PCE and core PCE (month over month); no payrolls or unemployment",
+        "history_depth": "target months 2013-07 onward; covers every Kalshi CPI event",
+        "update_frequency": "FAQ: estimates are updated every business day around 10:00 a.m. Eastern",
+        "recorded_before_release": "the file holds one value per date per target month, dated before the release; point-in-time status is the publisher claim plus one spot check: the copy archived by the Wayback Machine on 2026-03-25 (web.archive.org/web/20260325052951id_/...) holds the same headline CPI values for 153 target months, 4494 daily values compared, 0 differences, max absolute difference 0 (so no revision of old rows in the last 6 months); the model is a nowcast, not a survey consensus",
+        "october_november_2025": "no CPI was published for October 2025; the chart for target month 2025-10 is odd and that event is skipped when no nowcast dated before the release exists",
+        "terms_url": "https://www.clevelandfed.org/privacy",
+        "terms_quote": "you are authorized to reproduce Federal Reserve Bank of Cleveland publications, or portions thereof, appearing on the Bank\u2019s Website without limitation as to number so long as both of the following apply: The information is used for noncommercial, personal, or educational purposes only ( i.e. , not for private gain) The information is appropriately credited to the Federal Reserve Bank of Cleveland and/or the respective publication",
+        "terms_assessment": "a historical research test on a personal workbench is personal and educational use and is credited here; using the nowcast as a live trading input for private gain could fall outside the \"not for private gain\" clause and needs the owner\u2019s decision before any paper or live use; the local copy is not redistributed",
+        "evidence_files": [
+          "reports/research/iterations/h20261002_pm_macro_uncertainty/sources/h2-consensus/clevelandfed-privacy-terms-of-use.html",
+          "reports/research/iterations/h20261002_pm_macro_uncertainty/sources/h2-consensus/clevelandfed-inflation-nowcasting-page.html"
+        ]
+      }
+    },
+    "sign_convention_caveat": "Kalshi CPI thresholds are on the single-decimal published value, so the bin-midpoint mean is biased by about -0.05 percentage points relative to the published value; this constant offset is part of the frozen construction and shifts gap = Kalshi mean - nowcast. It is reported, not corrected."
+  }
+}

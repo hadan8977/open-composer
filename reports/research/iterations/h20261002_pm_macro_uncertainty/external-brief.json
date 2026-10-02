@@ -1,14 +1,219 @@
 {
-  "candidate_matrix_revisions": [],
-  "current_source_card_paths": [],
-  "hypothesis_links": [],
-  "iter_id": "h20261002_pm_macro_uncertainty",
-  "objective": "US minute momentum round 1",
   "schema_version": 3,
-  "source_evidence_bindings": [],
-  "source_spec_path": null,
-  "sources": [],
-  "spec_hash": null,
-  "strategy_name": "us_minute_momentum",
-  "topic_coverage": []
+  "iter_id": "h20261002_pm_macro_uncertainty",
+  "strategy_name": "h20261002_pm_macro_uncertainty",
+  "source_spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+  "spec_hash": "5382f5571f0ac62a46416db0ab69571eafd67d55ce04c13eb3fe64bb002bb8b4",
+  "objective": "Test whether the Kalshi-implied standard deviation of a scheduled US macro release the afternoon before it scales the equity announcement premium on the release day (H1), and, where a free point-in-time consensus proxy exists, whether the Kalshi-minus-consensus gap predicts the release reaction (H2); start a forward point-in-time collector regardless of the result.",
+  "topic_coverage": [
+    "kalshi_implied_distributions_for_macro_releases_feds_2026",
+    "macro_announcement_premium_ai_bansal_guo",
+    "uncertainty_scaling_of_announcement_returns_hu_pan_wang_zhu_jacobs_ke_pan",
+    "middle_out_monotone_cleaning_macro_kalshi_replication",
+    "kalshi_public_api_candlestick_routing_and_cutoff",
+    "lead_lag_use_of_odds_is_weak_amburgey_and_foresightflow",
+    "polymarket_history_datasets_for_later_steps",
+    "consensus_proxy_feasibility_cleveland_fed_nowcast_fxstreet_tradingeconomics"
+  ],
+  "sources": [
+    {
+      "url": "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf",
+      "published_or_updated_at": "2026-02-12",
+      "source_type": "paper",
+      "credibility": "federal_reserve_board_staff_working_paper_pdf_text_snapshot",
+      "core_claim": "Kalshi distributions for FOMC, CPI, core CPI, PCE, unemployment, payrolls, GDP, recession are well-behaved and respond sharply to news; variance of the fed funds distribution falls after data releases (2022-2025); Kalshi mode matched every FOMC decision on the day before since 2022 (significantly better than fed funds futures); headline CPI forecasts significantly better than the Bloomberg consensus; core CPI and unemployment similar to consensus. No asset-return test.",
+      "project_applicability": "Direct basis of the data and mechanism: Kalshi distributions are well-behaved, respond to news and their variance falls after releases, so the standard deviation of the distribution the afternoon before a release is a usable release-specific uncertainty measure. No asset-return result, which is what this iteration tests.",
+      "reflection": "Accuracy and news-response evidence, not an asset-return test; Kalshi was thin in 2021-2022 and the first valid events here start in 2023. Overfit risk is low (no fitting) but the sample is only 82 non-FOMC release days, so a 15 bp difference has little power.",
+      "claim_id": "feds_2026_010_kalshi_macro"
+    },
+    {
+      "url": "https://www.nber.org/system/files/working_papers/w31923/w31923.pdf",
+      "published_or_updated_at": "2023-12-01",
+      "source_type": "paper",
+      "credibility": "nber_working_paper_pdf_text_snapshot",
+      "core_claim": "1961-2023: 10.68 bp/day excess return on announcement days (FOMC, payrolls, GDP, ISM, earlier of CPI/PPI; t 5.36) vs 0.93 bp otherwise; FOMC 17.61 bp, non-FOMC 8.65 bp (t 3.71); Jan 2020-Aug 2023 16.33 bp per announcement; FOMC premium low 2016-2019 (Kurov-Wolfe-Gilbert 2021). Reviews evidence that pre-announcement uncertainty (Hu-Pan-Wang-Zhu 2022), option-implied volatility (Jacobs-Ke-Pan 2022; Liu-Tang-Zhou 2022 R2 7.51%) and realized variance (Gafka-Savor-Wilson 2021) predict announcement returns; counter-evidence Zhang-Zhao 2022 (premium low when information uncertainty is high).",
+      "project_applicability": "Gives the prior that announcement days carry a premium (non-FOMC 8.65 bp, t 3.71) that was larger in 2020-2023 and reviews predictors of it (pre-announcement uncertainty, option-implied and realized variance). The iteration tests whether a prediction-market uncertainty measure scales it.",
+      "reflection": "The long-run premium is a prior; the 2021-2026 premium and its scaling with uncertainty are exactly what is untested. 8.65 bp per non-FOMC announcement is smaller than the 15 bp bar frozen for D, so a pass needs a conditional effect, not just a premium. Costs of 2 to 5 bp per side matter at this size.",
+      "claim_id": "ai_bansal_guo_2023_announcement_premium"
+    },
+    {
+      "url": "https://github.com/WillBtK/macro_kalshi",
+      "published_or_updated_at": "2026-08-28",
+      "source_type": "platform_docs",
+      "credibility": "open_source_repository_readme_mit_licence_single_maintainer",
+      "core_claim": "MIT-licensed fork of the FEDS replication package: Kalshi series KXFED, KXCPIYOY, KXCPICOREYOY, KXCPI, KXACPI, KXU3, KXGDP, KXGDPYEAR, KXPAYROLLS; public candlesticks; middle-out no-arbitrage cleaning of threshold CDFs.",
+      "project_applicability": "Source of the middle-out monotone cleaning and of the series and threshold conventions; code is ported (credited in the docstring) rather than rebuilt.",
+      "reflection": "Reuse of the cleaning avoids a home-grown variant; the bin-midpoint pmf is hypotheses.md specific. Decay risk: the construction is simple and cannot overfit but thin tail strikes can dominate U.",
+      "claim_id": "macro_kalshi_replication_code"
+    },
+    {
+      "url": "https://arxiv.org/abs/2504.02731",
+      "published_or_updated_at": "2025-04-03",
+      "source_type": "paper",
+      "credibility": "arxiv_preprint_abstract_read_locally_snapshotted",
+      "core_claim": "High-frequency election-probability shocks move energy, defense and clean-energy stocks contemporaneously; no measurable lag (evidence against odds-to-equity lead-lag).",
+      "project_applicability": "Evidence that equities react to prediction-market probability shocks contemporaneously, so a lead-lag use of odds is not supported; this iteration therefore tests a risk-compensation mechanism instead and keeps the lead-lag row evidence_too_weak.",
+      "reflection": "Argues against lead-lag use of odds; the iteration uses a different mechanism. Election shocks differ from scheduled releases, so this is context, not support.",
+      "claim_id": "amburgey_2025_election_shocks_sectors"
+    },
+    {
+      "url": "https://arxiv.org/abs/2606.04217",
+      "published_or_updated_at": "2026-06-02",
+      "source_type": "paper",
+      "credibility": "arxiv_preprint_abstract_read_locally_snapshotted",
+      "core_claim": "Complete on-chain trade archive of Polymarket's first-generation CTF Exchange, 2022-11-21..2026-04-28, 1.20B trade records, 1.30M markets, with ground-truth aggressor direction; candidate data source for later Polymarket steps (licence and hosting to be checked at use).",
+      "project_applicability": "Candidate archive for later Polymarket history work; not used in this iteration, which relies on Kalshi candlesticks and a forward collector for Polymarket.",
+      "reflection": "Not used here. Licence and size to be checked before any download; the 2022-2026 window overlaps the Kalshi sample.",
+      "claim_id": "polymarket_v1_database"
+    },
+    {
+      "url": "https://arxiv.org/abs/2604.20421",
+      "published_or_updated_at": "2026-04-22",
+      "source_type": "paper",
+      "credibility": "arxiv_preprint_abstract_read_locally_snapshotted",
+      "core_claim": "Polymarket-focused dataset suite from October 2020: more than 3.29M market records, over 1.90B order execution records, nearly 21M oracle events; the paper demonstrates CPI expectation reconstruction for economists.",
+      "project_applicability": "Second possible Polymarket history source and evidence that CPI expectations can be reconstructed from Polymarket prices; informs a later step, not this one.",
+      "reflection": "Not used here; a second source of Polymarket history for a later step. Suggests CPI expectations can be recovered from Polymarket prices.",
+      "claim_id": "forecasting_economy_datasets_2026"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.00493",
+      "published_or_updated_at": "2026-05-01",
+      "source_type": "paper",
+      "credibility": "arxiv_preprint_abstract_read_locally_snapshotted",
+      "core_claim": "Information Leakage Score framework on a 911,237-market Polymarket corpus; the publicly documented insider cases are systematically deadline-resolved (0 of 24 FFIC inventory markets satisfy the original scope conditions); the abstract links them to no traded financial asset.",
+      "project_applicability": "Shows the documented informed-trading cases on Polymarket are deadline-resolved markets with no tie to traded financial assets, so they give no basis for an odds-to-equity signal; keeps that use out of scope.",
+      "reflection": "Cautions that informed trading in Polymarket is concentrated in deadline markets; no basis for an equity signal from those markets.",
+      "claim_id": "foresightflow_2026_leakage"
+    },
+    {
+      "url": "https://api.elections.kalshi.com/trade-api/v2/historical/cutoff",
+      "published_or_updated_at": "2026-10-02",
+      "source_type": "exchange_official_docs",
+      "credibility": "exchange_public_api_probe_written_by_us",
+      "core_claim": "Probed 2026-10-02 from this box without a key: series KXCPI returns 67 events (oldest listed CPI-21JUN), KXFED 52 (FED-21JUL), KXPAYROLLS 45 (PROLLS-23MAR), KXU3 65; KXPCE does not exist while KXPCECORE does (28 events); CPI markets close 08:25 ET on release day; historical cutoff for settled markets 2026-08-03.",
+      "project_applicability": "Confirms the series, the event counts, the historical/live split date and the 08:25 ET close of data-release markets that the data build relies on.",
+      "reflection": "A live probe, so counts will drift; the pipeline records endpoint, cutoff and fetch time per event. PCE has no threshold series, so the frozen design has no PCE events.",
+      "claim_id": "kalshi_public_api_probe_2026_10_02"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20261002_pm_macro_uncertainty.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "U1",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "U2",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "U3",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "U4",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "U5",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "U6",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "U7",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "G1",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    },
+    {
+      "candidate_id": "G2",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "macro_kalshi_replication_code",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "feds_2026_010_variance_falls_after_releases_and_kalshi_beats_consensus_on_headline_cpi",
+      "effect": "Made the standard deviation of the implied distribution at 15:00 ET on T-1 the conditioning variable (U_rel), and added the expectation-gap candidates G1 and G2 for CPI and payrolls conditional on a free consensus history."
+    },
+    {
+      "driver": "ai_bansal_guo_non_fomc_premium_8_65bp_and_fomc_17_61bp",
+      "effect": "Excluded FOMC days from the primary statistic (the plain pre-FOMC drift was refuted locally) and reported them separately; set the 15 bp continue bar above the unconditional non-FOMC premium so a pass needs a conditional effect."
+    },
+    {
+      "driver": "amburgey_and_foresightflow_no_lead_lag",
+      "effect": "Kept generic odds-to-equity lead-lag out of scope; the registry row dir:prediction_market_crypto_as_equity_signal stays evidence_too_weak."
+    },
+    {
+      "driver": "kalshi_api_probe_2026_10_02_pce_missing_and_bracket_events_before_2023",
+      "effect": "No PCE events (KXPCE does not exist). Events before about December 2022 list bracket markets, not threshold markets, so they give no usable strikes and are counted as excluded (18 of 67 CPI events); with six prior valid events needed the first valid U_rel arrives in July 2023 and the full sample has 82 non-FOMC release days instead of the 2021 start the design assumed. The brief's anchor sample (2024-01-08..) holds 72 of them."
+    }
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "H1",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "ai_bansal_guo_2023_announcement_premium",
+        "macro_kalshi_replication_code"
+      ]
+    },
+    {
+      "hypothesis_id": "H2",
+      "claim_ids": [
+        "feds_2026_010_kalshi_macro",
+        "kalshi_public_api_probe_2026_10_02"
+      ]
+    }
+  ]
 }

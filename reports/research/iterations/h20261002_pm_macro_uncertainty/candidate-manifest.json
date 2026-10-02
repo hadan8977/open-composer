@@ -1,0 +1,415 @@
+{
+  "iter_id": "h20261002_pm_macro_uncertainty",
+  "generated_at": "2026-10-02T13:46:11Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20261002_pm_macro_uncertainty",
+  "objective": "Preregistered nine candidates U1-U7 and G1-G2 for the Kalshi macro-release uncertainty premium; H1 decides whether U candidates are scored for adoption, H2 whether G candidates are.",
+  "candidate_count": 9,
+  "candidates": [
+    {
+      "candidate_id": "U1",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "primary_qqq",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "QQQ",
+        "rule": "long when U_rel > 1, non-FOMC release days",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": 1.0,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "U2",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "asset_spy",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "SPY",
+        "rule": "same as U1",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": 1.0,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "U3",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "asset_iwm",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "IWM",
+        "rule": "same as U1",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 3.0,
+        "cost_bp_per_side_stress": 6.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": 1.0,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "U4",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "unconditional_baseline",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "QQQ",
+        "rule": "long every non-FOMC release day with a valid U_rel (unconditional baseline for U1)",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": null,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "U5",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "asset_tqqq",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "TQQQ",
+        "rule": "same as U1",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 5.0,
+        "cost_bp_per_side_stress": 10.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": 1.0,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "U6",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "continuous_weight",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "QQQ",
+        "rule": "weight min(U_rel, 2) / 2, non-FOMC release days",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": null,
+        "weight_cap": 2.0,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "U7",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "kalshi_implied_uncertainty_u_rel_overlay",
+      "ablation": "fomc_included",
+      "feature_contract": "feature_v1_h20261002_u_rel",
+      "parameters": {
+        "asset": "QQQ",
+        "rule": "same as U1 with FOMC decision days included",
+        "fill": "MOC T-1 -> MOC T",
+        "return_basis": "R_cc excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.0,
+        "u_rel_threshold": 1.0,
+        "weight_cap": null,
+        "fomc_days_included": true,
+        "releases": [
+          "KXCPI",
+          "KXPAYROLLS",
+          "KXGDP"
+        ],
+        "h2_scope_note": null,
+        "decision_eligible": true,
+        "decision_eligible_condition": "H1 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "G1",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "expectation_gap_sign_vs_cleveland_nowcast",
+      "ablation": "gap_sign_tlt",
+      "feature_contract": "feature_v1_h20261002_expectation_gap",
+      "parameters": {
+        "asset": "TLT",
+        "rule": "short TLT if gap > 0, long TLT if gap < 0, CPI days (payrolls consensus does not exist)",
+        "fill": "MOC T-1 -> MOO T",
+        "return_basis": "R_co excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.005,
+        "u_rel_threshold": null,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI"
+        ],
+        "h2_scope_note": "CPI only: no free point-in-time payrolls consensus exists; closest literal reading of \"CPI and payrolls\"",
+        "decision_eligible": true,
+        "decision_eligible_condition": "H2 continue rule passes"
+      }
+    },
+    {
+      "candidate_id": "G2",
+      "path": "release_day_overlay",
+      "role": "decision_signal",
+      "spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261002_kalshi_hourly_sipdaily",
+      "label_contract": "label_v1_h20261002_release_day_returns",
+      "validation_contract": "validation_v1_h20261002_h1_h2_continue_rules",
+      "cost_contract": "cost_v1_h20261002_pm_macro",
+      "benchmark_contract": "benchmark_v1_h20261002_three_placebos",
+      "method": "expectation_gap_sign_vs_cleveland_nowcast",
+      "ablation": "gap_sign_qqq",
+      "feature_contract": "feature_v1_h20261002_expectation_gap",
+      "parameters": {
+        "asset": "QQQ",
+        "rule": "the same sign rule on QQQ (short QQQ if gap > 0)",
+        "fill": "MOC T-1 -> MOO T",
+        "return_basis": "R_co excess BIL",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_stress": 4.0,
+        "borrow_annual_on_shorts": 0.005,
+        "u_rel_threshold": null,
+        "weight_cap": null,
+        "fomc_days_included": false,
+        "releases": [
+          "KXCPI"
+        ],
+        "h2_scope_note": "CPI only: no free point-in-time payrolls consensus exists; closest literal reading of \"CPI and payrolls\"",
+        "decision_eligible": true,
+        "decision_eligible_condition": "H2 continue rule passes"
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20261002_kalshi_hourly_sipdaily": {
+        "sources": [
+          "data/research/prediction_markets/kalshi/raw/<series>/<event>.parquet and .markets.json (hourly candlesticks, scripts/fetch_kalshi_macro.py, public API, routed by /historical/cutoff 2026-08-03)",
+          "data/research/prediction_markets/kalshi/release_uncertainty.parquet (scripts/build_kalshi_release_uncertainty.py)",
+          "data/sip/daily SPY QQQ IWM TLT TQQQ BIL open and close (SPY dates are the trading calendar), read with duckdb memory_limit 400MB",
+          "data/research/prediction_markets/cleveland_fed/nowcast_month.json (Cleveland Fed headline CPI MoM nowcast, daily, 2013-07..; H2 only)"
+        ],
+        "join": "release date T = US/Eastern date of the market close_time; T must be a SPY trading date; T-1 = previous SPY trading date"
+      }
+    },
+    "features": {
+      "feature_v1_h20261002_u_rel": {
+        "definition": "per event: last candle of each threshold market ending at or before 15:00 America/New_York on T-1; strike price = yes mid when bid and ask exist and spread <= 0.10, else price.close of that candle, else the strike is missing; middle-out monotone cleaning anchored at the strike closest to 0.5 (port of WillBtK/macro_kalshi adjust_middle_out); differencing into a mass function on bin midpoints (open tails at half a median strike step beyond the outermost strikes); U = standard deviation of the mass function; U_rel = U / median(U of the previous 12 events of the same series with a valid U); events with fewer than 6 prior valid events are warm-up, with fewer than 4 usable strikes excluded; same-day releases take the larger U_rel"
+      },
+      "feature_v1_h20261002_expectation_gap": {
+        "definition": "gap = Kalshi pmf mean (same construction as U) minus the last Cleveland Fed CPI MoM nowcast value dated on or before T-1 (calendar) for the reference month of the CPI event; CPI events only"
+      }
+    },
+    "labels": {
+      "label_v1_h20261002_release_day_returns": {
+        "definition": "R_cc = close(T)/close(T-1)-1, R_co = open(T)/close(T-1)-1, T+1 placebo return = close(T+1)/close(T)-1, each minus BIL over the same interval; SIP daily bars, T-1 = previous SPY trading date"
+      }
+    },
+    "validation": {
+      "validation_v1_h20261002_h1_h2_continue_rules": {
+        "samples": {
+          "full": [
+            "first event with a valid U_rel (non-FOMC, pooled)",
+            "2026-09-17"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "2026-09-17"
+          ]
+        },
+        "H1": {
+          "statistic": "D = mean(QQQ R_cc | U_rel > 1) - mean(QQQ R_cc | U_rel <= 1) over non-FOMC release days (CPI, payrolls, GDP; day-level max U_rel)",
+          "permutation": "1000 shuffles of U_rel across events within each series then day-level max, numpy default_rng seed 20261002; p one-sided = (1 + #{D_perm >= D_real}) / (1 + 1000)",
+          "secondary": [
+            "D for SPY and IWM",
+            "slope b of R_cc on log(U_rel) with HC1 t",
+            "D in the anchor sample",
+            "D using R_co",
+            "FOMC days on their own",
+            "D without 2022 (not applicable when the sample holds no 2022 day)",
+            "leave-one-year-out range of D"
+          ],
+          "continue_rule": "D >= +15 bp and permutation p <= 0.10 in the full sample and D > 0 in the anchor sample",
+          "stop_rule": "D < +5 bp or wrong-signed in the full sample: H1 refuted, candidates reported but not_decision_eligible"
+        },
+        "H2": {
+          "scope": "CPI days only (closest literal reading: no free payrolls consensus exists)",
+          "continue_rule": "events with |gap| >= median |gap|; hit rate of sign(gap) against sign(-TLT R_co) >= 0.60, one-sided binomial p <= 0.10, and hit rate > 0.5 in the anchor sample"
+        },
+        "implementation_choices_frozen_before_any_return": {
+          "H0": "mean R_cc excess BIL on release days of each series and pooled versus all sessions in the full window that are not release days of any listed series (CPI, payrolls, GDP, FOMC), Welch t",
+          "fomc_coincident_days": "a CPI, payrolls or GDP release that falls on an FOMC decision day is an FOMC day and is excluded from the non-FOMC statistics",
+          "U4_universe": "U4 uses the same release days as U1 (valid U_rel), so it is the unconditional baseline on the same sample",
+          "borrow": "0.5 percent per year pro rata (1/252 per overnight) on any short leg (TLT in G1, QQQ in G2)",
+          "DSR": "deflated_sharpe_probability(daily excess net series over all sessions of the full window with zeros on non-invested days, trial_count 9, hac_lag 5)",
+          "annualized_return_on_days_invested": "mean net return per invested day times 252",
+          "strike_price_fallback": "price.close of the signal candle only; a candle without a trade in that hour and a wide spread leaves the strike missing (price.previous is not used)",
+          "bracket_events": "events whose markets are brackets (no threshold strike_type) before 2023 are not threshold markets and are counted as excluded",
+          "candidate_return_net": "weight x R excess BIL minus 2 sides x cost per side x weight (minus borrow for shorts); stress doubles the per-side cost",
+          "random_session_placebo": "for each release day draw a random non-release session in the full window with the same weekday and calendar month and a U_rel drawn with replacement from the empirical day-level U_rel; 1000 draws, seed 20261005",
+          "overlay_scoring": "only if the H1 continue rule passes and reports/research/iterations/h20261002_program_dd30_allocation/program_returns.parquet exists, else the status string pending_allocation or not_scored"
+        }
+      }
+    },
+    "costs": {
+      "cost_v1_h20261002_pm_macro": {
+        "contract_file": "reports/research/iterations/h20261002_pm_macro_uncertainty/cost-contract.json",
+        "primary_bps": "QQQ SPY TLT 2, IWM 3, TQQQ 5 per side; stress doubles"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20261002_three_placebos": {
+        "placebos": [
+          "within-series shuffle of U_rel (real D must exceed the 90th percentile)",
+          "same signal on the session after the release (T+1), expected to show no D",
+          "random non-release sessions matched on weekday and month with U_rel drawn from the empirical distribution, expected to show no D"
+        ],
+        "unconditional_baseline": "U4"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml": "5382f5571f0ac62a46416db0ab69571eafd67d55ce04c13eb3fe64bb002bb8b4"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20261002_pm_macro_uncertainty.yaml",
+  "spec_hash": "5382f5571f0ac62a46416db0ab69571eafd67d55ce04c13eb3fe64bb002bb8b4",
+  "keep_rule": "See contracts.validation.validation_v1_h20261002_h1_h2_continue_rules (H1 and H2 continue rules, stop rule). Frozen before any equity return grouped by U_rel or by the gap was computed. H2 is run on CPI days only because no free payrolls consensus history exists; G1 and G2 carry decision_eligible true on the strength of the Cleveland Fed CPI nowcast feasibility check and still need the H2 continue rule to pass."
+}
