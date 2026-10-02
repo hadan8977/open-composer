@@ -1343,7 +1343,7 @@
 - brief: reports/research/control/briefs/T-20261002-29.md
 
 ### T-20261002-42 下单引擎：book_paper 的撤单和清仓命令（紧急停止路径，只用假客户端）
-- status: stopped（10-02 08:16 UTC 交互会话派子代理 R1002-0816-T42；08:48 被机主消息打断后停止，不会续跑。未完成的改动已存为 `/tmp/lead/t42_partial.patch` 和 `/tmp/lead/t42_partial_test_moved.py`，`plan.py`、`cli.py` 已恢复到 HEAD。重派要机主同意；定时轮不要取）
+- status: running（交互会话；10-02 12:51 UTC 重派子代理 R1002-1251-T42B，机主 12:45 授权"其他的不用问我同意"。从 `/tmp/lead/t42_partial.patch` 接着做；08:16 的第一次派发 R1002-0816-T42 于 08:48 被机主消息打断。定时轮不要取）
 - priority: 1
 - not_before: 无
 - goal: 合同第 6 节要求首单前测过开关和撤单，第 7 节的停止规则也要有办法真正停下来。`oc book-paper` 目前没有撤单，也没有清仓。新增两个命令：`cancel` 只撤本书（`bk1-`）当天的未成交单，撤单不受 kill switch 限制；`flatten` 默认只演练、需要显式确认，按收盘竞价或盘中市价整股平掉全部持仓，跳过不可交易的持仓，有未成交单时拒绝。quant1 上的真实撤单测试在机主对检查表点头后由主审做，不在本任务内。
