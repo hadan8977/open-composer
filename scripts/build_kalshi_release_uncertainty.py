@@ -307,6 +307,8 @@ def build_event_row(
         "event_ticker": meta["event_ticker"],
         "title": meta.get("title"),
         "n_markets": len(markets),
+        "n_markets_total": len(meta["markets"]),
+        "strike_types": ",".join(sorted({str(m.get("strike_type")) for m in meta["markets"]})),
         "is_fomc": series in FOMC_SERIES,
         "diagnostic_only": series in DIAGNOSTIC_SERIES,
     }
@@ -353,6 +355,8 @@ def build_event_row(
         row.update(event_distribution(candles, strike_by_market, end_ts))
     row["excluded"] = int(row.get("n_usable_strikes", 0) or 0) < MIN_USABLE_STRIKES
     if row["excluded"]:
+        if not markets:
+            flags.append("no_threshold_markets")
         row["U"] = np.nan
         row["pmf_mean"] = np.nan
     row["flags"] = ",".join(flags)

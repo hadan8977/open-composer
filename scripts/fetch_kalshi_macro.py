@@ -138,14 +138,31 @@ def _f(value: Any) -> float | None:
         return None
 
 
+def _pick(block: dict[str, Any] | None, key: str) -> float | None:
+    """Value of ``key`` in a candle block; the live endpoint names fields ``<key>_dollars``."""
+    block = block or {}
+    value = block.get(key)
+    if value is None:
+        value = block.get(f"{key}_dollars")
+    return _f(value)
+
+
 def parse_candles(
     raw: list[dict[str, Any]], *, series: str, event: str, ticker: str, endpoint: str
 ) -> list[dict[str, Any]]:
+    """Parse candlesticks from either schema.
+
+    ``/historical/...`` returns ``{"close": "0.4"}`` and ``volume``/``open_interest``;
+    ``/series/.../candlesticks`` (live) returns ``{"close_dollars": "0.4"}`` and
+    ``volume_fp``/``open_interest_fp``. Both are mapped onto the same columns.
+    """
     rows = []
     for c in raw:
         bid = c.get("yes_bid") or {}
         ask = c.get("yes_ask") or {}
         price = c.get("price") or {}
+        volume = c.get("volume", c.get("volume_fp"))
+        interest = c.get("open_interest", c.get("open_interest_fp"))
         rows.append(
             {
                 "series_ticker": series,
@@ -153,22 +170,22 @@ def parse_candles(
                 "market_ticker": ticker,
                 "endpoint": endpoint,
                 "end_period_ts": int(c["end_period_ts"]),
-                "yes_bid_open": _f(bid.get("open")),
-                "yes_bid_high": _f(bid.get("high")),
-                "yes_bid_low": _f(bid.get("low")),
-                "yes_bid_close": _f(bid.get("close")),
-                "yes_ask_open": _f(ask.get("open")),
-                "yes_ask_high": _f(ask.get("high")),
-                "yes_ask_low": _f(ask.get("low")),
-                "yes_ask_close": _f(ask.get("close")),
-                "price_open": _f(price.get("open")),
-                "price_high": _f(price.get("high")),
-                "price_low": _f(price.get("low")),
-                "price_close": _f(price.get("close")),
-                "price_mean": _f(price.get("mean")),
-                "price_previous": _f(price.get("previous")),
-                "volume": _f(c.get("volume")),
-                "open_interest": _f(c.get("open_interest")),
+                "yes_bid_open": _pick(bid, "open"),
+                "yes_bid_high": _pick(bid, "high"),
+                "yes_bid_low": _pick(bid, "low"),
+                "yes_bid_close": _pick(bid, "close"),
+                "yes_ask_open": _pick(ask, "open"),
+                "yes_ask_high": _pick(ask, "high"),
+                "yes_ask_low": _pick(ask, "low"),
+                "yes_ask_close": _pick(ask, "close"),
+                "price_open": _pick(price, "open"),
+                "price_high": _pick(price, "high"),
+                "price_low": _pick(price, "low"),
+                "price_close": _pick(price, "close"),
+                "price_mean": _pick(price, "mean"),
+                "price_previous": _pick(price, "previous"),
+                "volume": _f(volume),
+                "open_interest": _f(interest),
             }
         )
     return rows

@@ -326,3 +326,35 @@ def test_fetch_event_routes_by_cutoff_and_checkpoints(tmp_path):
     before = client.requests
     assert fetch.fetch_event(client, "KXCPI", event, cutoff, tmp_path)["skipped"] is True
     assert client.requests == before
+
+
+def test_parse_candles_reads_both_endpoint_schemas():
+    historical = {
+        "end_period_ts": 1_780_000_000,
+        "yes_bid": {"close": "0.4000"},
+        "yes_ask": {"close": "0.4500"},
+        "price": {"close": "0.4200", "previous": "0.4100"},
+        "volume": "5.00",
+        "open_interest": "9.00",
+    }
+    live = {
+        "end_period_ts": 1_780_000_000,
+        "yes_bid": {"close_dollars": "0.4000"},
+        "yes_ask": {"close_dollars": "0.4500"},
+        "price": {"close_dollars": "0.4200", "previous_dollars": "0.4100"},
+        "volume_fp": "5.00",
+        "open_interest_fp": "9.00",
+    }
+    kwargs = dict(series="KXCPI", event="E", ticker="E-T1")
+    a = fetch.parse_candles([historical], endpoint="historical", **kwargs)[0]
+    b = fetch.parse_candles([live], endpoint="live", **kwargs)[0]
+    for key in (
+        "yes_bid_close",
+        "yes_ask_close",
+        "price_close",
+        "price_previous",
+        "volume",
+        "open_interest",
+    ):
+        assert a[key] == b[key] is not None
+    assert b["yes_ask_close"] == pytest.approx(0.45)
