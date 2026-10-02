@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "iter_id": "t20261002_lazy_prices_ic",
+  "reviewed_at": "2026-10-02T01:36:29Z",
+  "decision": "proceed",
+  "objective": "Signal-library expansion required by book v1's preregistered stop condition (met 2026-10-01 19:25: M0 anchor-window residual IC t 1.16 on U3000, 0.91 on P1000): test whether the year-over-year textual similarity of 10-K filings (Lazy Prices) is an independent, low-turnover residual-return signal for the U3000 book, judged by residual IC before any portfolio test.",
+  "target_regime_and_horizon": "US equities, research-panel U3000 members (P1000 reported), on the monthly formation dates of t20261001_book_v1 formation_ic.parquet; target = the same factor-neutral 21-session forward open-to-open residual return used for the nine themes in residual-ic-summary.json. The anchor window (formation dates 2024-01..2026-08) decides; the stress window (2017-10..2023-08) is a sign check only, per the recent-market rule. Each firm carries its latest 10-K pair for at most 15 months.",
+  "existing_solution_comparison": "Original CMN 1995-2014: value-weighted long-short 34-58 bp/month (t 3.59). The commercial Brain dataset (from 2010) sells the measure; Quantpedia with Brain data, 2007-2020 top 1,000: the sign depends on the tone section. S&P 100 replication 2009-2026: null (-0.9%/yr, t -0.5; full-document cosine saturated at a median 0.996). QuantConnect 2020-2026 top 100, long-only: Sharpe 0.558 vs SPY 0.533 (noise). No public large-universe post-2014 result exists, so our measurement fills the gap. SRAF cleaned files stop in 2024 and are 50 GB, so we build one EDGAR parser for 2014-2026 that also serves the forward feed.",
+  "remaining_evidence_gap": "Whether the signal still carries residual information in the U3000 cross-section after 2015 (post-publication, after commercialization by data vendors), and whether it is independent of the nine existing themes (rank correlation with the M1 composite < 0.5).",
+  "negative_experiments_checked": "Registry: dir:lazy_prices_10k_changes was parked on 2026-09-23 because a standalone unlevered long-short (15-25%/yr family) ranked behind levered ETF directions; that reason no longer applies under the 2026-10-01 program, which judges signals by marginal contribution to the book. Related lines tested a different mechanism: H-20260928-17 filing risk labels (8-K DeepSeek scores) and H-20260916-02 news-attention counts. The prior-work audit of 2026-10-01 ranks this direction S2_CANDIDATE P2 with no data on disk. This repository holds no earlier test of 10-K text change.",
+  "cost_and_execution_assumptions": "The IC stage has no trading. The signal updates once a year per firm (10-K), so its turnover inside the book is far below the 172 bp/yr cost drag measured for v1. Visibility = EDGAR acceptanceDateTime, mapped to the first trading day whose 16:00 ET close is at or after it (attribute_trading_day); the signal enters only at formation dates strictly after that day.",
+  "stop_condition": "FAIL: no primary candidate meets the PASS or WATCH rule in hypotheses.md; close the direction and record the cause as post-publication decay in our universe. WATCH: extend to 10-Q filings (CMN's other half) as the only next step, preregistered before any 10-Q data. Budget: data pipeline at most 2 exec rounds (T-20261002-03), IC test at most 1 exec round, no Modal spend.",
+  "queries": [
+    {
+      "query": "\"Lazy Prices\" 10-K similarity out-of-sample replication post-publication returns",
+      "searched_at": "2026-10-02T01:27:00Z",
+      "opened_urls": [
+        "https://github.com/iqueipopg/lazy-prices",
+        "https://quantpedia.com/the-positive-similarity-of-company-filings-and-the-cross-section-of-stock-returns/"
+      ],
+      "note": "WebSearch by the 01:07 lead round; times are the round clock to within 3 minutes. The GitHub README is snapshotted at reports/research/intel/sources/lazy-prices-2026-10-02/02_iqueipopg_sp100_replication_README.md and used as negative evidence in the text fields; it is not a typed source."
+    },
+    {
+      "query": "10-K textual changes return predictability after 2014 sample \"Lazy Prices\" decline OR decay OR weakened",
+      "searched_at": "2026-10-02T01:28:00Z",
+      "opened_urls": [
+        "https://www.nber.org/system/files/working_papers/w25084/w25084.pdf",
+        "https://arxiv.org/abs/2606.29290"
+      ],
+      "note": "NBER PDF fetched with WebFetch and converted with pdftotext."
+    },
+    {
+      "query": "Brain Language Metrics on Company Filings 10-K 10-Q similarity backtest returns 2010-2024 QuantConnect OR \"out of sample\"",
+      "searched_at": "2026-10-02T01:29:00Z",
+      "opened_urls": [
+        "https://www.quantconnect.com/research/20966/filing-language-stability-as-a-selection-signal"
+      ],
+      "note": "Only recent-window (2020-2026) evidence found."
+    },
+    {
+      "query": "Loughran McDonald Software Repository Stage One 10-X parsed files download 10-K 10-Q cleaned text years",
+      "searched_at": "2026-10-02T01:30:00Z",
+      "opened_urls": [
+        "https://sraf.nd.edu/sec-edgar-data/cleaned-10x-files/"
+      ],
+      "note": "Data-source alternative checked and rejected (ends 2024, 50 GB)."
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "cmn_2018_lazy_prices_vw_ls",
+      "claim": "Cohen, Malloy and Nguyen (NBER w25084, September 2018, revised March 2019; Journal of Finance 2020): on 1995-2014 US 10-K/10-Q filings, a value-weighted portfolio long non-changers and short changers (year-over-year textual similarity) earns 34-58 bp per month (t up to 3.59) over the following year; changes in the Risk Factors section give 5-factor alphas over 188 bp per month (t=2.76); there is no announcement return and the drift accrues over 6-18 months.",
+      "core_claim": "Cohen, Malloy and Nguyen (NBER w25084, September 2018, revised March 2019; Journal of Finance 2020): on 1995-2014 US 10-K/10-Q filings, a value-weighted portfolio long non-changers and short changers (year-over-year textual similarity) earns 34-58 bp per month (t up to 3.59) over the following year; changes in the Risk Factors section give 5-factor alphas over 188 bp per month (t=2.76); there is no announcement return and the drift accrues over 6-18 months.",
+      "url": "https://www.nber.org/system/files/working_papers/w25084/w25084.pdf",
+      "source_type": "paper",
+      "published_or_updated_at": "2019-03-01",
+      "fetched_at": "2026-10-02T01:29:00Z",
+      "snapshot_path": "reports/research/intel/sources/lazy-prices-2026-10-02/01_cmn_lazy_prices_nber_w25084.txt",
+      "sha256": "8453ef2aeb1a15117269a8740e8ded2fad591d78d0488d7caee278b270101adb",
+      "source_card_path": "reports/harness/source_cards/t20261002_lazy_prices_ic.jsonl",
+      "market_and_period": "US CRSP universe, 10-K and 10-Q filings 1995-2014",
+      "applicability": "Defines the signal, the sign (non-changers outperform), the sections to test (full, Risk Factors, MD&A), the slow holding horizon and the prior magnitude (about 4-7% a year long-short before decay).",
+      "project_applicability": "Defines the signal, the sign (non-changers outperform), the sections to test (full, Risk Factors, MD&A), the slow holding horizon and the prior magnitude (about 4-7% a year long-short before decay).",
+      "limitations": "Sample ends 2014 and the working paper circulated from 2010 (SSRN 1658471), so 2015-2026 is post-publication; the 188 bp figure is one section-specific specification, the broad value-weighted effect is 34-58 bp per month; snapshot is pdftotext of the NBER PDF.",
+      "reflection": "Sample ends 2014 and the working paper circulated from 2010 (SSRN 1658471), so 2015-2026 is post-publication; the 188 bp figure is one section-specific specification, the broad value-weighted effect is 34-58 bp per month; snapshot is pdftotext of the NBER PDF.",
+      "independent_replication": "No large-universe post-2014 replication found on 2026-10-02; an S&P 100 replication (github iqueipopg/lazy-prices, March 2009-September 2026) finds -0.9% a year, FF5+MOM alpha t=-0.5, with full-document cosine saturated at a median 0.996.",
+      "credibility": "peer_reviewed_or_working_paper"
+    },
+    {
+      "claim_id": "brain_quantpedia_2020_filing_similarity_by_tone",
+      "claim": "Quantpedia with Brain Company data (blog post 2020-09-10, SSRN 3690461): on about the 1,000 largest US stocks, February 2007 to May 2020, monthly decile sorts on 10-K/10-Q similarity give mixed patterns by language type; uncertainty-language similarity agrees with Lazy Prices, while positive-language similarity reverses it (low similarity outperforms, long-short about 5% a year, Sharpe ratio 0.84).",
+      "core_claim": "Quantpedia with Brain Company data (blog post 2020-09-10, SSRN 3690461): on about the 1,000 largest US stocks, February 2007 to May 2020, monthly decile sorts on 10-K/10-Q similarity give mixed patterns by language type; uncertainty-language similarity agrees with Lazy Prices, while positive-language similarity reverses it (low similarity outperforms, long-short about 5% a year, Sharpe ratio 0.84).",
+      "url": "https://quantpedia.com/the-positive-similarity-of-company-filings-and-the-cross-section-of-stock-returns/",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "2020-09-10",
+      "fetched_at": "2026-10-02T01:31:00Z",
+      "snapshot_path": "reports/research/intel/sources/lazy-prices-2026-10-02/03_quantpedia_brain_positive_similarity.html",
+      "sha256": "280625a86289fe09652bfa464e86907f5b2a8972c68e5ebc8f5b2dd8b9eacada",
+      "source_card_path": "reports/harness/source_cards/t20261002_lazy_prices_ic.jsonl",
+      "market_and_period": "About 1,000 largest US stocks, February 2007 to May 2020",
+      "applicability": "Warns that the sign depends on the section and tone; our preregistration fixes the sign and three sections before any data and counts every variant as a trial.",
+      "project_applicability": "Warns that the sign depends on the section and tone; our preregistration fixes the sign and three sections before any data and counts every variant as a trial.",
+      "limitations": "Vendor-partner research on seven language types and both directions (multiple testing, no deflation); one-month holding; no costs; ends May 2020.",
+      "reflection": "Vendor-partner research on seven language types and both directions (multiple testing, no deflation); one-month holding; no costs; ends May 2020.",
+      "independent_replication": "None; the dataset is commercial (Brain Language Metrics on Company Filings, from 2010, about 5,000 US stocks).",
+      "credibility": "secondary"
+    },
+    {
+      "claim_id": "quantconnect_2026_filing_stability_top100",
+      "claim": "QuantConnect research post (UC San Diego student project, data through June 2026): a long-only portfolio of the 25 most stable filers among the 100 most liquid US stocks, ranked on Brain risk-factor or full-report similarity and weighted for maximum Sharpe, earns a 0.558 Sharpe ratio from January 2020 to June 2026 against 0.533 for SPY; 9 of 25 parameter combinations beat the benchmark.",
+      "core_claim": "QuantConnect research post (UC San Diego student project, data through June 2026): a long-only portfolio of the 25 most stable filers among the 100 most liquid US stocks, ranked on Brain risk-factor or full-report similarity and weighted for maximum Sharpe, earns a 0.558 Sharpe ratio from January 2020 to June 2026 against 0.533 for SPY; 9 of 25 parameter combinations beat the benchmark.",
+      "url": "https://www.quantconnect.com/research/20966/filing-language-stability-as-a-selection-signal",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "unknown",
+      "fetched_at": "2026-10-02T01:31:00Z",
+      "snapshot_path": "reports/research/intel/sources/lazy-prices-2026-10-02/04_quantconnect_filing_language_stability_2020_2026.html",
+      "sha256": "32b4de115de128c700122a7456b5d4e848cd89fd008476a077e7f93124348ba6",
+      "source_card_path": "reports/harness/source_cards/t20261002_lazy_prices_ic.jsonl",
+      "market_and_period": "100 most liquid US stocks, January 2020 to June 2026",
+      "applicability": "The only recent-window (2020-2026) evidence found: no detectable edge in mega caps, consistent with the S&P 100 null; the test must be on the U3000 cross-section, where the original effect was measured.",
+      "project_applicability": "The only recent-window (2020-2026) evidence found: no detectable edge in mega caps, consistent with the S&P 100 null; the test must be on the U3000 cross-section, where the original effect was measured.",
+      "limitations": "Mega-cap universe of 100 stocks, long-only, optimizer weighting, no costs, no long-short or residual measurement; a student project.",
+      "reflection": "Mega-cap universe of 100 stocks, long-only, optimizer weighting, no costs, no long-short or residual measurement; a student project.",
+      "independent_replication": "None.",
+      "credibility": "secondary"
+    },
+    {
+      "claim_id": "sraf_cleaned_10x_1993_2024",
+      "claim": "Notre Dame Software Repository for Accounting and Finance: cleaned (Stage One parse) 10-X files are provided in zipped format for 1993-2024 (about 50 GB), with 10-X summaries through 2025.",
+      "core_claim": "Notre Dame Software Repository for Accounting and Finance: cleaned (Stage One parse) 10-X files are provided in zipped format for 1993-2024 (about 50 GB), with 10-X summaries through 2025.",
+      "url": "https://sraf.nd.edu/sec-edgar-data/cleaned-10x-files/",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "unknown",
+      "fetched_at": "2026-10-02T01:31:00Z",
+      "snapshot_path": "reports/research/intel/sources/lazy-prices-2026-10-02/05_sraf_cleaned_10x_files.html",
+      "sha256": "b44bd5b3176512dafdcb80cb01404ea704723114458d0a74c09b46f5ac80c4aa",
+      "source_card_path": "reports/harness/source_cards/t20261002_lazy_prices_ic.jsonl",
+      "market_and_period": "All EDGAR 10-X filings 1993-2024 (data provider documentation)",
+      "applicability": "Rejected as the primary source: one EDGAR pipeline covers 2014-2026 consistently and keeps the forward feed on the same parser.",
+      "project_applicability": "Rejected as the primary source: one EDGAR pipeline covers 2014-2026 consistently and keeps the forward feed on the same parser.",
+      "limitations": "Ends in 2024, so 2025-2026 filings (the end of the anchor window and the forward period) would still need EDGAR; 50 GB does not fit the 11 GB of free disk.",
+      "reflection": "Ends in 2024, so 2025-2026 filings (the end of the anchor window and the forward period) would still need EDGAR; 50 GB does not fit the 11 GB of free disk.",
+      "independent_replication": "Widely used in accounting research (Loughran-McDonald).",
+      "credibility": "secondary"
+    },
+    {
+      "claim_id": "yilki_2026_supply_chain_text_finbert",
+      "claim": "Yilki (arXiv 2606.29290, June 2026): FinBERT embeddings of 10-K MD&A sections for 255 S&P 500 firms over 2011-2025, propagated over a supply-chain graph, give a long-short portfolio with an annualized Sharpe ratio of 0.86 and a Fama-French five-factor alpha of 7.27% a year (t = 2.30).",
+      "core_claim": "Yilki (arXiv 2606.29290, June 2026): FinBERT embeddings of 10-K MD&A sections for 255 S&P 500 firms over 2011-2025, propagated over a supply-chain graph, give a long-short portfolio with an annualized Sharpe ratio of 0.86 and a Fama-French five-factor alpha of 7.27% a year (t = 2.30).",
+      "url": "https://arxiv.org/abs/2606.29290",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-06-28",
+      "fetched_at": "2026-10-02T01:31:00Z",
+      "snapshot_path": "reports/research/intel/sources/lazy-prices-2026-10-02/06_arxiv_2606.29290_supply_chain_text.html",
+      "sha256": "0e9c437146d78428e5b490d57bfad47bea0d78e90b1406b1a5f78abfafaa6810",
+      "source_card_path": "reports/harness/source_cards/t20261002_lazy_prices_ic.jsonl",
+      "market_and_period": "255 S&P 500 firms, 2011-2025",
+      "applicability": "Only a later extension (embeddings, peer propagation) if the own-firm signal passes; not part of this test.",
+      "project_applicability": "Only a later extension (embeddings, peer propagation) if the own-firm signal passes; not part of this test.",
+      "limitations": "Single-author preprint, 255 firms, a network-propagated variant rather than the own-firm change signal; costs not reported.",
+      "reflection": "Single-author preprint, 255 firms, a network-propagated variant rather than the own-firm change signal; costs not reported.",
+      "independent_replication": "None.",
+      "credibility": "peer_reviewed_or_working_paper"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "T-20261002-03 builds 10-K similarity pairs (full document, Item 1A, Item 7; cosine and Jaccard) for the CIKs of U3000 members from EDGAR primary documents, filings 2014-07..2026-09. T-20261002-04 then computes monthly rank IC for the three preregistered cosine candidates against the book's residual target, with Newey-West t (lag 3), a 100-permutation within-filing-month placebo, and the rank correlation with the M1 composite. Its brief is written by a lead round before any similarity value is read.",
+    "pass_condition": "At least one of the three cosine candidates meets all of: anchor-window mean rank IC > 0 with Newey-West t >= 2.39 (Bonferroni for 3); stress-window mean IC > 0; anchor IC above the 95th percentile of the placebo; median cross-sectional rank correlation with the M1 composite < 0.5.",
+    "falsification_condition": "All three candidates have an anchor-window Newey-West t < 1.5 or a negative mean IC, or the best candidate fails the placebo. Then close the direction, with no 10-Q extension.",
+    "max_compute_minutes": 480
+  }
+}

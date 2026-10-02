@@ -1380,7 +1380,7 @@
   - 2026-10-01 13:29 UTC 13:07 主审轮（Opus）写入。
 
 ### T-20261001-21 组合线数据：上游特征表增量刷新到最近交易日，并做时点不变性检验
-- status: partial（执行轮 2026-10-01 22:08–23:55 UTC，待主审）
+- status: done（已主审 2026-10-02 01:26 UTC：执行正确，交付物齐全；价格类表不过检验的根因是 SIP 归档的复权接缝，不是构建脚本前视，也不按子代理提的两个选项处理；修归档转 T-20261002-01，特征重建转 T-20261002-02）
 - priority: 1
 - not_before: 无。本任务不改代码，研究快照只读。每个重步骤开始前先确认别的会话没有在跑重任务（简报第 0 步）
 - brief: reports/research/control/briefs/T-20261001-21.md
@@ -1390,14 +1390,98 @@
 - notes:
   - 2026-10-01 19:25 UTC 19:07 主审轮（Opus）写入。按纲领"两周优先级第 2"和 13:07 主审轮的安排写简报。设计上的取舍：`data/features` 是只追加的时点特征库，原地追加，由备份和不变性检验把关；被 A1 哈希绑定的研究快照 `data/research/equity_book/` 不动，组合层另建 live 目录，交给 T-20261001-22 做（current-view 17:55："研究快照保持冻结，实盘数据另放一个目录"）。交互会话要自己做，就先把本任务标 `running（交互会话）`。
   - 2026-10-01 执行轮（sonnet-high 子代理 a3b1bab75c10cda65，112 次调用，模型核对 claude-sonnet-5-5）：D=2026-10-01，提交 4c9fa1e。通过并已原地换入：insider_broad（至 10-01，changed 0）、short_volume_broad（至 10-02 次日行，changed 0）、news_attention（至 10-01，changed 0）、窄 universe 2026 分区（0.054%）。未过 max_changed_share ≤0.001（候选在 data/features/_t21_tmp/，未换入，原文件未动）：universe_broad 1.106%（FGC 新增 2 键）、daily_broad 1.677%、daily 窄 1.701%（子代理称 09-15..09-17 三个交易日的收盘变了，疑似归档按新复权口径刷新，BBY 09-14 收盘 93.85 vs 94.83，推断未核实）、alpha101_broad 4.12%、alpha191_broad 0.66%、SEC facts（值未变但旧键 17 个消失，已从备份恢复，sha 核对一致）。跳过（依赖未换入的日线表）：sec_fundamentals_daily、nsi、short_interest（原始 FINRA 已采至 09-15 结算，特征表未重建）。研究快照 2511 文件前后哈希一致（snapshot_sha_before/after 已 cmp 核对）。8 个测试和 ruff 通过。产物：reports/research/program/data-refresh-2026-10-01/{report.md,inventory.json,invariance.json,freshness.json}、scripts/check_feature_invariance.py、tests/test_check_feature_invariance.py；备份 data/live/backup-20261001/。待主审决定：最后 3 个交易日边界怎么处理（只追加切点之后的新行 / 门槛忽略末 3 日）；决定前换入价格类表会违反冻结门槛，我没有改。决定后依次：把 _t21_tmp 候选换入 → sec_fundamentals_daily → nsi → short_interest。待主审。
+  - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）审核：
+    - **核对**：
+      - 原始 JSON：daily_broad 只有 09-15..09-17 三天的行变了，close 变了 142 行、69 只股票，新旧比值全部 < 1，中位 0.9947（FRO 0.9376、WHF 0.966、DX 0.986、UHT 0.981，都是在 09-15..09-22 除息的高股息股）。beta、idio_vol 和 `_rel` 列跟着 SPY 和截面一起变。
+      - 根因读代码确认：`fetch_sip_universe._fetch_batch` 用 `adjustment="all"`；`update_sip_archive.py` 每晚只重抓最后 `REFETCH_LOOKBACK_SESSIONS = 2` 个交易日，以新行为准。供应商在除息或拆股后会给**全部**历史乘复权因子，我们只覆盖了最后 3 天。生效日前 2 天出现接缝，再往前的行仍是旧基准。
+    - **接缝**：
+      - 增量更新从 09-04 首次运行。归档里"整数拆股比例且成交额连续"的跳变 1–8 月每月 1–9 次，9 月 22 次。
+      - APH（P1000）08-27 收盘比 0.500124，是一次没复权的 2:1 拆股。VRME、KUST、ZCSH、UNX、TANH 也是。
+      - 分红接缝把分红漏出总收益，并把跳变提前两天。
+    - **对研究结论的影响**：A 窗（到 06-30）干净。研究面板里接缝期内宇宙中的接缝只有 APH 一次。v1 的 54 条路径在 07-25..08-26 都没有持有 APH（targets.parquet 核对），接缝当天盈亏影响为 0，**v1 和 RF1 的否定不变**。T-19 的 30 条路径同样止于 09-16，没有逐条核对，留给交互会话。
+    - **对前向的影响**：前向数据和四条 ETF 模拟盘都读这个归档（`rotation_target_weights.py` 第 455 行）。26 个模拟盘标的目前只有分红接缝、没有拆股接缝，风险是前瞻性的。
+    - **主审决定**：
+      1. 子代理提的两个选项（只追加切点之后的行 / 门槛忽略末 3 日）都不采用。复权价格水平不能只追加：新旧基准在拼接处会再出一个接缝。
+      2. 先修归档（T-20261002-01）：发现某只股票被改了基准，就重抓它 2016 年至今的全部历史。只修当年会把接缝挪到 2025/2026 年交界。
+      3. 特征库的价格类表当作归档的派生缓存，从修好的归档重建。不可变的时点记录是信号和目标日志（D6），不是特征表。不变性检验改成两区：
+         - 严格区（≤ 2026-08-21）：收益类列必须逐位不变；
+         - 之后的日期和价格水平类列只做诊断，按重述记录归因。
+         - 这条只改数据质量检验的口径，原因是检验的前提被证据推翻，没有放宽任何研究门槛。
+      4. 事件类表（insider、short_volume、news）已按原规则通过并换入，保留。
+    - `_t21_tmp` 的候选是从有接缝的归档建的，作废，不要换入；由 T-20261002-02 按新口径重建。
 
 ### T-20261001-22 组合线数据：live 目录（组合层逐行对齐研究快照）、风险模型跨年修复、每日驱动脚本
 - status: ready
 - priority: 1
-- not_before: T-20261001-21 以 done 开头（或 partial，但组合用到的表全部通过不变性检验）；T-20261001-19 以 done 或 cancelled 开头；没有 `running（交互会话）` 的任务在改 `panel.py`、`risk.py`、`build_equity_book_panel.py`（简报第 0 步）
+- not_before: T-20261002-02 以 done 开头（10-02 01:07 主审轮加：T-21 虽已 done，但价格类表要等归档修好、按新口径重建后才能用）；T-20261001-21 以 done 开头（或 partial，但组合用到的表全部通过不变性检验）；T-20261001-19 以 done 或 cancelled 开头；没有 `running（交互会话）` 的任务在改 `panel.py`、`risk.py`、`build_equity_book_panel.py`（简报第 0 步）
 - brief: reports/research/control/briefs/T-20261001-22.md
 - goal: 给 D6 前向影子和 quant1/quant2 的模拟盘目标提供每天更新的组合层数据，保证和研究口径逐行一致；同时修好 `RiskModel.resolve()` 的跨年缺陷（v1 中 190 次最终失败里占 189 次；不修的话，2027 年 1 月实盘也会撞上）。
 - plan: 两处小改动加测试：`OC_EQUITY_BOOK_DIR` 目录覆盖，不设时目录常量不变；`resolve()` 回看上一年。然后用 `cp` 建 live 目录，重建 2026 年的面板、信号、风险和主题分，和研究快照对比 09-17 以前的行，研究快照前后算两次 sha256。最后写每日驱动脚本，只给出建议的 crontab 行，不安装。
 - done_when: `live-parity.json` 各阶段全部通过，研究快照哈希前后一致，测试通过，驱动的 `--dry-run` 能打印计划，已提交；结果标"待主审"。
 - notes:
   - 2026-10-01 19:25 UTC 19:07 主审轮（Opus）写入。改动的组合层模块归交互会话管，所以前置条件要求 T-19 先结束，而且没有交互会话在改这几个文件。v1.1 的设计如果已经包含这次修复，交互会话可以把本任务标 cancelled 并注明。
+  - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）：SIP 归档有复权接缝，见 T-20261001-21 的审核。简报末尾加了"主审修正 10-02"一节：
+    - 一致性核对改成两区口径：严格区 ≤ 2026-08-21 的收益类列逐位一致；其余只做诊断，按 `_restatements.jsonl` 归因。
+    - 每日驱动整年重建当年分区，不再只追加；被改成拆股基准的 symbol 触发往年 daily_broad 分区重建。
+    - 前置加了 T-20261002-02。
+
+### T-20261002-01 数据：修 SIP 日线归档的复权接缝，并一次性修复（拆股假收益、分红漏出总收益）
+- status: ready
+- priority: 1
+- not_before: 无（简报第 0 步：不在 20:30–01:00 UTC 运行修复）
+- brief: reports/research/control/briefs/T-20261002-01.md
+- goal: 归档的不变式改为"每只股票的全部年份都等于供应商当前给出的复权历史"。否则：
+  - 前向影子、组合模拟盘和四条 ETF 模拟盘读到的价格，每次拆股都有假的 −50%/+900% 收益（APH 08-27 ×0.500）；
+  - 每次除息都把分红漏出总收益，并把跳变提前两天。
+- plan:
+  - `update_sip_archive.py` 加重述检测：尾部重叠行和库里不同，就重抓这只股票 2016 年至今的全部历史，改写各年份的行，记 `_restatements.jsonl`。
+  - 加 `--repair-full-window` 一次性修复，先整体备份归档。
+  - 新写接缝检测和修复验证脚本。V1–V4 见简报：收益除接缝区外逐位不变、跨年不变、接缝消失、没被替换的不受影响。
+- done_when: `archive-repair.json` 的 V1–V4 满足简报的验收标准，测试通过，已提交；结果标"待主审"。
+- notes:
+  - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）写入。根因和证据见 T-20261001-21 的审核。
+  - 只修当年是错的，会在 2025/2026 交界造出新接缝；简报已写死全历史重抓。
+  - 修复会改变四条 ETF 模拟盘下一次运行读到的历史价格水平（改成总收益口径，和它们回测时用的一致），规则不变。
+
+### T-20261002-02 数据：从修好的归档重建价格类特征表（两区不变性检验），接着刷新依赖表
+- status: blocked（等 T-20261002-01 完成并经主审审核；简报由 07:07 或之后的主审轮按 T-01 的实际结果写，范围取决于被替换的 symbol 数）
+- priority: 1
+- not_before: T-20261002-01 以 done 开头，并且主审已审核
+- goal: 把组合线用到的价格类特征表接到修好的归档上，延伸到最近交易日。表包括 daily_broad、窄 daily、universe_broad、alpha101/191_broad，然后是 sec_fundamentals_daily、nsi、short_interest 和 SEC facts。给 T-22 的 live 目录和 D6 前向影子用。
+- plan（主审 10-02 已定的口径，简报照此写）：
+  - 价格类表是归档的派生缓存，从归档重建，不只追加。
+  - 两区检验：
+    - 严格区 ≤ 2026-08-21：ret_*、vol_*、max_ret_1_21、momentum_252_21、dist_from_252d_high 必须逐位不变，阈值沿用 T-21 的 max_changed_share ≤ 0.001；
+    - 价格水平列（open、close、dollar_adv、amihud）、截面列（`*_rel`、adv_rank、宇宙成员）、依赖 SPY 的列（beta_252_spy、idio_vol_63），以及 08-24 之后的日期，只做诊断，按 `_restatements.jsonl` 和并集增长归因。
+  - daily_broad 的往年分区是否重建：看 T-01 的被替换 symbol 数和磁盘（剩 11 GB）再定。T-21 的事件类表不动。SEC facts 换新文件：17 个旧键被 SEC 删除，值没变，记录下来。
+  - `_t21_tmp` 作废。
+- done_when: 各表在严格区通过，并刷新到 D；`freshness.json` 更新；研究快照哈希前后一致；已提交，标"待主审"。
+- notes:
+  - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）登记；简报故意不提前写，等 T-01 的数字。
+
+### T-20261002-03 信号库：10-K 文本变化数据（Lazy Prices，U3000，2014-07..2026-09，EDGAR 主文档）
+- status: ready
+- priority: 2
+- not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 运行；和 T-20261002-01 不并行，T-01 先做）
+- brief: reports/research/control/briefs/T-20261002-03.md
+- goal: 组合 v1 的停止条件已经成立，要先补信号。这个任务建第一个文本信号的数据：每份 10-K 和上一份的相似度，分全文、1A、7 三节，算余弦和 Jaccard，可见时间取 acceptanceDateTime。信号一年只更新一次、换手极低，正好补 v1 每年 172 bp 的成本短板。
+- plan:
+  - 按冻结的预注册 `reports/research/iterations/t20261002_lazy_prices_ic/hypotheses.md` 第 2 节建数据，不算任何 IC。
+  - 复用 `read_bulk_records`、`SecClient`、`attribute_trading_day`，每秒 8 次请求，可断点续跑，每轮最多抓 120 分钟。
+- done_when: `reports/research/program/text-similarity-2026-10-02/summary.json` 满足简报的验收数字，测试通过，已提交；结果标"待主审"。
+- notes:
+  - 2026-10-02 01:38 UTC 01:07 主审轮（Opus）写入。direction-check 已 ok。预注册写在任何数据之前，三个候选、方向、判定都已冻结。
+  - 预计 4–6 万份 10-K，抓取受 SEC 限速约束，大约要 2–3 个小时，可能跨两个执行轮。
+
+### T-20261002-04 信号库：Lazy Prices 残差 IC 入库检验（3 个候选、安慰剂、和 M1 的相关）
+- status: blocked（等 T-20261002-03 完成。简报由主审轮写，写的人不许看过任何相似度值或 IC）
+- priority: 2
+- not_before: T-20261002-03 以 done 开头
+- goal: 按 `t20261002_lazy_prices_ic/hypotheses.md` 第 4–5 节，机械判 PASS、WATCH 或 FAIL。PASS 的才进组合合同，预注册边际净夏普的检验。
+- plan:
+  - 形成日和目标收益与 `t20261001_book_v1/formation_ic.parquet` 完全相同；
+  - 用 Newey-West t（滞后 3）、100 个种子的同月置换安慰剂、和 M1 合成分的秩相关；
+  - 补候选清单，跑 `oc research iteration validate --stage pre-backtest`。
+- done_when: `t20261002_lazy_prices_ic/results.json` 有三个候选的数字和机械判定，已提交，标"待主审"。
+- notes:
+  - 2026-10-02 01:38 UTC 01:07 主审轮（Opus）登记。

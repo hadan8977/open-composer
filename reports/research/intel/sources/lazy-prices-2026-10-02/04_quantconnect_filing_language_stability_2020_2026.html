@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" id="QuantConnect" class="quantconnect" prefix="og: http://ogp.me/ns#" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="fb:app_id" content="147227222023467"> 
+<meta property="og:url" content="https://www.quantconnect.com/research/20966/filing-language-stability-as-a-selection-signal/"> 
+<meta name="twitter:image:alt" content="Filing Language Stability as a Selection Signal"> 
+<meta name="twitter:title" content="Filing Language Stability as a Selection Signal"> 
+<meta property="og:title" content="Filing Language Stability as a Selection Signal"> 
+<meta name="twitter:description" content="10-K/10-Q Textual Changes Predict Post-filing Returns via Cosine Similarity."> 
+<meta property="og:description" content="10-K/10-Q Textual Changes Predict Post-filing Returns via Cosine Similarity."> 
+<meta name="twitter:card" content="summary_large_image"> 
+<meta name="twitter:site" content="@QuantConnect"> 
+<meta name="twitter:image" content="https://cdn.quantconnect.com/i/tu/20966.png"> 
+<meta property="og:image" content="https://cdn.quantconnect.com/i/tu/20966.png"> 
+<meta property="og:image:secure_url" content="https://cdn.quantconnect.com/i/tu/20966.png"> 
+<meta property="og:image:type" content="image/png"> 
+<meta property="og:image:width" content="1200"> 
+<meta property="og:image:height" content="628"> 
+<meta property="og:type" content="website"> 
+<meta property="og:site_name" content="Filing Language Stability as a Selection Signal - QuantConnect.com"> 
+<meta name="description" content="10-K/10-Q Textual Changes Predict Post-filing Returns via Cosine Similarity."> 
+<meta name="keywords" content="10-K,10-Q,textual-change,cosine-similarity,SEC-EDGAR,event-study,abnormal-returns,Fama-French,momentum-adjustment,bootstrap-validation,Spearman-rank,post-filing-window,survivorship-bias,Sharpe-ratio"> 
+<meta name="Content-Type" content="text/html; charset=utf-8"> 
+<meta property="fb:admins" content="551240720"> 
+    <link rel="shortcut icon" type="image/x-icon" href="/qc.ico">
+       <link type="text/css" rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Droid+Sans" />
+   <link type="text/css" rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,600italic,400,600" />
+   <link type="text/css" rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300" />
+   <link type="text/css" rel="stylesheet"  href="https://www.quantconnect.com/forum/css/build/forum.css?tm=1787260274" />
+ <script type="text/javascript" >var IFRAME_SRC = '//cdn.iframe.ly/api/iframe';var IFRAMELY_API_HASH = 'f8666d7571ca543956a0207272c02c4b'; </script>
+ <script type="text/javascript"  src="https://www.quantconnect.com/forum/js/libraries/ckeditor5/ckeditor.js?tm=1787260199"  ></script>
+ <script type="text/javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"  ></script>
+ <script type="text/javascript" >window.addEventListener('load', function(event){ $(document).mouseup(function(e) {
+if(!$('.share-menu').is(e.target) && $('.share-menu').has(e.target).length === 0){ $('.share-menu').hide();}
+if(!$('.extra-btns').is(e.target) && $('.extra-btns').has(e.target).length === 0){ $('.extra-btns').hide();}
+if(!$('.discussion-extra-btns').is(e.target) && $('.discussion-extra-btns').has(e.target).length === 0){ $('.discussion-extra-btns').hide();}
+});  }); </script>
+<link href="https://www.quantconnect.com/research/20966/filing-language-stability-as-a-selection-signal/" rel="canonical"><link rel="prefetch" href="https://cdn.quantconnect.com/i/tu/backtest-icon-v3.png">
+<title>Filing Language Stability as a Selection Signal - QuantConnect.com</title>
+    <script>
+        var lazyLoaderPosthog = function() {
+            window.removeEventListener('scroll', lazyLoaderPosthog);
+            window.removeEventListener('mouseover', lazyLoaderPosthog);
+
+            ! function(t, e) {
+                var o, n, p, r;
+                e.__SV || (window.posthog = e, e._i = [], e.init = function(i, s, a) {
+                    function g(t, e) {
+                        var o = e.split(".");
+                        2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function() {
+                            t.push([e].concat(Array.prototype.slice.call(arguments, 0)))
+                        }
+                    }(p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r);
+                    var u = e;
+                    for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function(t) {
+                            var e = "posthog";
+                            return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e
+                        }, u.people.toString = function() {
+                            return u.toString(1) + ".people (stub)"
+                        }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "), n = 0; n < o.length; n++) g(u, o[n]);
+                    e._i.push([i, s, a])
+                }, e.__SV = 1)
+            }(document, window.posthog || []);
+            posthog.init('phc_8NVGcOFSlRejLd3O4vamJS4vLQrxMnQISsq5Ofdk6Wz', {
+                api_host: '//www.quantconnect.com/api/v2/site-performance',
+                person_profiles: 'identified_only',
+                disable_session_recording: true,
+                autocapture: false
+            });
+        };
+
+        // Check if the domain contains 'quantconnect.com' else is a dev render
+        if (window.location.hostname.includes('quantconnect.com')) {
+            // window.addEventListener('mouseover', lazyLoaderPosthog);
+            // window.addEventListener('scroll', lazyLoaderPosthog);
+        }
+    </script>
+
+</head>
+<body>
+
+    <div class="height-fixer" style="min-height: 100%; position: relative;">
+        <header class="standard desktop-header">
+            <nav class="navbar navbar-inverse navbar-fixed-top">
+                <div class="container-fluid" style="padding: 0 15px;background-color: #1B1B1F;">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#qc-navbar-collapse" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span>
+                            <span class="icon-bar"></span> <span class="icon-bar"></span>
+                        </button>
+                        <a id="header-qc-logo" href="https://www.quantconnect.com" class="logo FL clearfix navbar-brand" title="QuantConnect - Democratizing Finance, Empowering Individuals"> </a>
+                    </div>
+                                            <div id="search-wrapper" onclick="GlobalSearchBox.Initialize();">
+                            <div class="search-input" id="header-search-box">
+                                <form autocomplete="off" style="width: calc(100% - 40px);display: inline-block;">
+                                    <input style="display: none" type="text">
+                                    <input id="auto-complete-input-field" type="text" name="qc-search-box" placeholder="&#xF002;" autocomplete="off">
+                                </form>
+                                <div class="input-icons">
+                                    <i class="fa fa-times" aria-hidden="true" onclick="GlobalSearchBox.OnClearClick();"></i>
+                                </div>
+                            </div>
+                            <div id="header-search-hits">
+                                <div class="instructions">
+                                    &uarr;&darr; to select, press <b>enter</b> to go, use <b>esc</b> to exit
+                                </div>
+                                <div class="hits"></div>
+                            </div>
+                            <div id="header-search-hits-backdrop" onclick="GlobalSearchBox.OnClearClick();"></div>
+                        </div>
+                                        <div class="" id="qc-navbar-collapse">
+                        <ul class="nav navbar-nav">
+                                                        <li class="top">
+                                <a class="top" href="/pricing/" title="Pricing"> Pricing </a>
+                            </li>
+
+                            
+                            <li class="top nav-forum">
+                                <a class="top" href="https://www.quantconnect.com/research/" title="Explore comprehensive financial research, providing insights, analysis, and trends for informed decision-making.">
+                                    Research </a>
+                            </li>
+                            <li class="top nav-strategies hidden-sm">
+                                <a class="top" href="https://www.quantconnect.com/strategies/" title="Jumpstart your algorithm development with a selection of top community strategies that update weekly.">
+                                    Strategies </a>
+                            </li>
+                            <li class="top dataButton hidden-sm hidden-md ">
+                                <a class="top" href="https://www.quantconnect.com/datasets/" title="Download free historical data from our Data Library">
+                                    Data </a>
+                            </li>
+                            <li class="top nav-documentation">
+                                <a href="https://www.quantconnect.com/docs/" class="top" title="Learn more about how to make the most of QuantConnect in the documentation">
+                                    <span class="hidden-sm hidden-md qc-hidden-lg">Documentation</span>
+                                    <span class="visible-sm visible-md">Docs</span>
+                                    <span class="qc-visible-lg-block">Docs</span> </a>
+                            </li>
+                            <li class="top nav-terminal">
+                                <a href="https://www.quantconnect.com/terminal/" class="top" title="Backtest your algorithms on historical data.">
+                                    <span class="hidden-sm hidden-md qc-hidden-lg">Algorithm Lab</span>
+                                    <span class="visible-sm visible-md">Lab</span>
+                                    <span class="qc-visible-lg-block">Lab</span> </a>
+                            </li>
+                                                            <li class="top dropdown">
+                                    <a href="/login/" class="dropdown-toggle top" title="Sign In to QuantConnect" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-lock"></i> Sign In </a>
+                                </li>
+                                                    </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <script>
+    function toggleNavigation() {
+        let mobileNavDropdown = $("#qc-navbar-collapse-mobile");
+        mobileNavDropdown.toggleClass('hidden');
+        if (mobileNavDropdown.hasClass('hidden')) {
+            window.removeEventListener('touchmove', blockNavigationTouchPropagtation, {
+                passive: false
+            });
+        } else {
+            window.addEventListener('touchmove', blockNavigationTouchPropagtation, {
+                passive: false
+            });
+        }
+    }
+
+    function blockNavigationTouchPropagtation(event) {
+        if (!$("#qc-navbar-collapse-mobile").hasClass('hidden')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    }
+</script>
+<header class="thin mobile-header">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid" style="padding: 0 15px;">
+            <div class="navbar-header navbar-header-mobile">
+                <button type="button" class="navbar-toggle collapsed" onclick="toggleNavigation()">
+                    <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span>
+                    <span class="icon-bar"></span> <span class="icon-bar"></span>
+                </button>
+                                <a id="header-qc-logo" href="https://www.quantconnect.com" class="logo FL clearfix navbar-brand" title="QuantConnect - Democratizing Finance, Empowering Individuals"> </a>
+                <span class="service-name hidden-xs hidden-sm hidden-md">Forum</span>
+            </div>
+        </div>
+    </nav>
+</header>
+<div class="navbar-collapse hidden" id="qc-navbar-collapse-mobile">
+    <button class="close-nav" onclick="toggleNavigation()">
+        <img src="https://cdn.quantconnect.com/i/tu/menu-close-icon.svg">
+    </button>
+    <ul class="nav navbar-nav" id="qc-navbar-mobile-list">
+                <span class="nav-heading" style="margin-top: 15px;">Platform</span>
+        <li class="top nav-live-broadcast">
+            <a class="top" href="//www.quantconnect.com/pricing/" title="Pricing">Pricing</a>
+        </li>
+        <li class="divider-vertical top nav-live-broadcast"></li>
+                <li class="top nav-forum">
+            <a class="top" href="//www.quantconnect.com/research/" title="Explore comprehensive financial research, providing insights, analysis, and trends for informed decision-making.">
+                Research </a>
+        </li>
+        <li class="top nav-strategies">
+            <a class="top" href="//www.quantconnect.com/strategies/" title="Jumpstart your algorithm development with a selection of top community strategies that update weekly.">
+                Strategies </a>
+        </li>
+        <li class="divider-vertical top nav-forum"></li>
+
+        <li class="top nav-terminal">
+            <a class="top" href="//www.quantconnect.com/datasets/" title="Download free historical data from our Data Library.">Datasets</a>
+        </li>
+        <li class="divider-vertical top nav-data"></li>
+        <li class="top nav-documentation">
+            <a href="//www.quantconnect.com/docs/" class="top" title="Learn more about how to make the most of QuantConnect in the documentation">Documentation</a>
+        </li>
+        <li class="divider-vertical top nav-research"></li>
+        <li class="top nav-terminal">
+            <a href="//www.quantconnect.com/terminal/" class="top" title="Backtest your algorithms on historical data.">Algorithm Lab</a>
+        </li>
+
+            </ul>
+            <div class="sign-in">
+            <ul class="sign-up-wrapper nav navbar-nav">
+                <h3>SIGN IN</h3>
+                <li class="options">
+                    <a class="option email" title="Sign In with Email" href="https://www.quantconnect.com/login?target=Forum" rel="nofollow">
+                        <span class="option-text">
+                            Sign in
+                        </span> </a>
+                </li>
+                <li class="options">
+                    <p class="join-today">
+                        Don't have an account? Join QuantConnect Today
+                    </p>
+                </li>
+                <li class="options">
+                    <a class="option sign-up" title="Sign up" href="https://www.quantconnect.com/signup" rel="nofollow" style="top: 5px;">
+                        <span class="option-text">
+                            Sign up for Free
+                        </span></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+        <div class="container main-container" data-bind="css:{ 'research-modifier' : QCF.Models.Discussions.OpenDiscussion()?.IsResearch() }">
+<div data-bind="attr:{ class: 'row row-title row-title-forum ' + QCF.Models.Discussions.DataProvider()?.GetHeaderClass() ?? '' }">
+    <div class="left-image">
+        &nbsp;
+    </div>
+    <div class="col-xs-12" style="z-index:10">
+        <div class="row">
+            <div class="col-xs-12 col-md-12 col-lg-10 col-lg-offset-1 col-xl-8 col-xl-offset-2" style="float: unset;margin: 0 auto;">
+                <p class="breadcrumbs" data-bind="if:QCF.Models.Discussions.OpenDiscussion(),">
+                    <img src="https://cdn.quantconnect.com/i/tu/forum-header-back-arrow.svg" alt="back arrow" />
+                    <span data-bind="html:QCF.Models.Discussions.DataProvider()?.GetTitle() ?? 'QUANTCONNECT COMMUNITY' ,click:ControllersDiscussions.Back"></span>
+                </p>
+                                <h1 class="title title-mobile-padding" data-bind="
+                css :{ clickable:  QCF.Models.Discussions.OpenDiscussion() === null },
+                click: function(){ ViewMenu.TittleClickHandler() },
+                html: 
+                ViewsDisplay.GetMainTittleValue(QCF.Models.Discussions.DataProvider(),  QCF.Models.Discussions.OpenDiscussion())
+                " style="margin-top: 0;">Filing Language Stability as a Selection Signal</h1>
+            </div>
+        </div>
+    </div>
+    <div class="right-image">
+        &nbsp;
+    </div>
+</div>
+
+<div data-bind="attr:{ class: 'row main-forum-row ' + QCF.Models.Discussions.DataProvider()?.GetHeaderClass() ?? '' }">
+    <div class="col-xs-12 col-md-12 col-lg-10 col-lg-offset-1 col-xl-8 col-xl-offset-2 main-forum" style="display: none;" data-bind="visible:QCF.Views.Display.Discussions()">
+        <div class="row categories" data-bind="visible: QCF.Models.Discussions.DataProvider().GetName() !='tagged'" style="height: 76px; margin-right: 0;">
+    <div class="col-xs-12 nav-row">
+        <div class="nav-menu">
+                            <a class="" href="#research" role="button" data-bind="click:ControllersDiscussions.SetResearchDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='research'}">Research</a>
+                <a class="hidden-xs" href="#announcements" role="button" data-bind="click:ControllersDiscussions.SetAnnouncementsDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='announcements'}">Announcements</a>
+                <a class="hidden-xs" href="#lean" role="button" data-bind="click:ControllersDiscussions.SetLeanDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='lean'}">Lean</a>
+                    </div>
+        <div class="nav-menu" style="float: right;">
+
+                            <a class="" href="#newest" role="button" data-bind="click:ControllersDiscussions.SetNewestDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='newest'}">
+                    <span class="short-text" style="line-height: 6px;">COMMUNITY</span>
+                    <span class="long-text" style="line-height: 6px;">COMMUNITY FEED</span>
+                </a>
+            
+                        <span style="line-height: 17px;font-size: 10px;margin-right: 10px;margin-left: 10px;">|</span>
+            <button id="more-menu-2" class="more-menu">
+                <div class="read-toggle-dots clickable"></div>
+                <div class="menu-content" style="display: none;">
+                    <a class="hidden-sm hidden-md hidden-lg" href="#competition" role="button" data-bind="click:ControllersDiscussions.SetAnnouncementsDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='announcements'}">Announcements</a>
+                    <a class="hidden-sm hidden-md hidden-lg" href="#lean" role="button" data-bind="click:ControllersDiscussions.SetLeanDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='lean'}">Lean</a>
+                    <a href="/datasets/issues">Data Issues</a>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+<hr class="full-width-hr" />
+<!-- ko if: ControllersDiscussions.isCompetitionDataProvider() -->
+<div class="league-banner">
+    <h3>Quant League Is Moving Forward as Strategies</h3>
+    <p>Quant League is evolving into Strategies, our new home for sharing, discovering, and exploring trading strategies, with improved organization and a better overall experience. Q4-2025 will be the final Quant League.</p>
+    <a href="/strategies" target="_blank">Explore Strategies</a>
+</div>
+<div class="league-tabs">
+    <span class="league-tab open-tab" data-bind="click:function(){ControllersDiscussions.SetCompetitionsDatasource('league')}, css:{active: QCF.Models.Discussions.DataProvider().GetName()=='league'}">OPEN LEAGUE <span class="league-period" data-bind="text:QCF.Views.Competition.SelectedCompetitionTimePeriod()"></span></span>
+    <span class="league-tab pro-tab" data-bind="click:function(){ControllersDiscussions.SetCompetitionsDatasource('pro-league')}, css:{active: QCF.Models.Discussions.DataProvider().GetName()=='pro-league'}">PRO LEAGUE <span class="league-period" data-bind="text:QCF.Views.CompetitionPro.SelectedCompetitionTimePeriod()"></span></span>
+</div>
+<!-- /ko -->
+<div class="row content-wrap">
+    <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8 content-area">
+        <div class="row" data-bind="with:QCF.Models.Discussions.DataProvider()">
+            <div data-bind="if: typeof $data.GetTags !== 'undefined' ">
+                <div class="col-xs-12 tags" style="padding: 30px 10px;" data-bind="foreach:{data:QCF.Models.Discussions.DataProvider().GetTags(), as:'tag'}">
+                    <button type="button" class="btn tag pull-left" style="margin-right:10px;">
+                        <span data-bind="text:tag.Name"></span>
+                        <a href="#" data-bind="click:function(){ControllersTags.OnRemoveClick(tag);}"><i class="fa fa-sm fa-times" aria-hidden="true"></i></a>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12 discussions discussion-search-desktop" data-bind="visible:QCF.Views.Search.Visible()">
+            <div class="search-close clickable" data-bind="click:ViewsSearch.OnSearchClick">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </div>
+        </div>
+
+        <div class="col-xs-12 search-results" data-bind="visible:QCF.Views.Search.Visible()">
+            <!-- ko foreach:{data:QCF.Views.Search.Results(),as:'oResult'} -->
+            <div class="row discussion">
+                <div class="col-xs-2 col-md-2 col-lg-1 col-xl-1">
+                    <div class="search-icon" data-bind="html:oResult.iconHtml"></div>
+                    <div class="search-badge" data-bind="html:oResult.badgeHtml"></div>
+                </div>
+                <div class="col-xs-10 col-md-10 col-lg-11 col-xl-11">
+                    <a href="#" class="title" data-bind="text:oResult.title,attr:{href:oResult.link}"></a>
+                    <span class="description" data-bind="html:oResult.snippet"></span>
+                </div>
+            </div>
+            <!-- /ko -->
+            <div class="row" data-bind="">
+                <div class="col-xs-12" data-bind="visible:QCF.Views.Search.Results().length == 0" style="text-align: center; margin: 13px;">
+                    No Results
+                </div>
+            </div>
+        </div>
+
+        <nav data-bind="visible:QCF.Views.Search.Visible() && QCF.Views.Search.Results().length > 0">
+            <ul class="pagination">
+                <li data-bind="css:{disabled:!QCF.Views.Search.Pagination.PrevEnabled()}">
+                    <a href="#" aria-label="Previous" data-bind="click:function(){ QCF.Views.Search.Pagination.PreviousPage(); }">
+                        <span aria-hidden="true">&laquo;</span> </a>
+                </li>
+                <!-- ko foreach:{data:QCF.Views.Search.Pagination.VisibleNumbers,as:'oNumber'} -->
+                <li data-bind="css:{active:oNumber.active}">
+                    <a href="#" data-bind="click:function(){ QCF.Views.Search.Pagination.SetPage(oNumber.number); }">
+                        <span data-bind="text:oNumber.number">1</span> </a>
+                </li>
+                <!-- /ko -->
+                <li data-bind="css:{disabled:!QCF.Views.Search.Pagination.NextEnabled()}">
+                    <a href="#" aria-label="Next" data-bind="click:function(){ QCF.Views.Search.Pagination.NextPage(); }">
+                        <span aria-hidden="true">&raquo;</span> </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="col-xs-12 discussion-category" data-bind="visible:QCF.Models.Discussions.DataProvider().GetName()=='lean'">
+            <div class="lean-section-banner">
+                <div class="lean-tagline">
+                    <div class="lean-logo">
+                        <img src="https://cdn.quantconnect.com/i/tu/lean-section-banner-logo.svg" alt="LEAN Logo">
+                    </div>
+                    <h3>Radically Open-Source Algorithmic Trading Engine</h3>
+                </div>
+                <div>
+                    <p style="margin: 0;"><a href="https://www.lean.io">LEAN</a> is the open-source algorithmic trading engine powering QuantConnect.
+                        Founded in 2012 LEAN has been built by a global community of 180+                        engineers and powers more than 300+ hedge funds today.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="join-discord" class="col-xs-12 discussion-category join-discord dismissible-discord" data-bind="visible:QCF.Models.Discussions.DataProvider().GetName()=='newest'">
+            <span id="hide-discord" class="hide-discord" onclick="ViewsDismissibleElements.hide('discord')"></span>
+            <span><a class="discord-link" href="/discord"></a></span>
+            <div class="row">
+                <div class="discord-content">
+                    <img src="https://cdn.quantconnect.com/i/tu/discord-icon.svg" class="discord-icon" width="70" style="margin-bottom: 1rem;">
+                    <div class="discord-copy">
+                        <h3>Join Our Discord Channel</h3>
+                        <p>Join QuantConnect's Discord server for real-time support, where a vibrant community of traders and developers awaits to help you with any of your QuantConnect needs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ko if: ControllersDiscussions.isCompetitionDataProvider() -->
+        <div data-bind="template:{name: 'league-chart', data: {
+                id: QCF.Models.Discussions.DataProvider().GetName() + '-line-chart',
+            }}">
+        </div>
+
+        <!-- /ko -->
+
+                    <div class="col-xs-12 discussions discussions_main clickable" data-bind="foreach:{data:QCF.Models.Discussions.PendingResearch, as:'oDiscussion'},visible:!QCF.Views.Search.Visible()">
+                <div class="pending-discussion">
+                    <div class="row ">
+                        <div class="col-xs-12 pending-label">
+                            <label>pending review</label>
+                            <span>This research is under review. To publish this research attract three community upvotes.</span>
+                        </div>
+                    </div>
+                    <div class="row discussion clickable" data-bind="click:function(){ControllersDiscussions.LoadDiscussionById(oDiscussion.Id);}">
+
+                        <div class="col-xs-12 discussions-user-profile">
+                            <a href="#" data-bind="style:{'background-image':oDiscussion.CreatorProfileStyle}, attr:{'data-user-profile':oDiscussion.CreatorBadge.publicId, href:oDiscussion.CreatorProfileUrl}" class="profile-popover thumb clickable" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a>
+                        </div>
+                        <div style="width: calc(100% - 54px);">
+                            <div class="discussions-raw">
+                                <div class="discussions-details">
+                                    <a href="#" class="title" data-bind="html:oDiscussion.Title,attr:{href:oDiscussion.Href,'data-discussion-id' :oDiscussion.Id}"></a>
+                                    <div class="description" data-bind="html:oDiscussion.Description"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+
+
+            <div class="col-xs-12 discussions discussions_main clickable" data-bind="visible:QCF.Models.Discussions.Draft().length > 0">
+                <br>
+                <h4>Draft Discussions</h4>
+                <hr>
+            </div>
+
+            <div class="col-xs-12 discussions discussions_main clickable" data-bind="foreach:{data:QCF.Models.Discussions.Draft, as:'oDiscussion'},visible:!QCF.Views.Search.Visible()">
+                <div class="pending-discussion" style="border-radius: 0;">
+                    <div class="row discussion clickable" data-bind="click:function(){ControllersDiscussions.LoadDiscussionById(oDiscussion.Id);}">
+
+                        <div class="col-xs-12 discussions-user-profile">
+                            <a href="#" data-bind="style:{'background-image':oDiscussion.CreatorProfileStyle}, attr:{'data-user-profile':oDiscussion.CreatorBadge.publicId, href:oDiscussion.CreatorProfileUrl}" class="profile-popover thumb clickable" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a>
+                        </div>
+                        <div style="width: calc(100% - 54px);">
+                            <div class="discussions-raw">
+                                <div class="discussions-details">
+                                    <a href="#" class="title" data-bind="html:oDiscussion.Title,attr:{href:oDiscussion.Href,'data-discussion-id' :oDiscussion.Id}"></a>
+                                    <div class="description" data-bind="html:oDiscussion.Description"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 discussions discussions_main clickable" data-bind="visible:QCF.Models.Discussions.Draft().length > 0">
+                <br>
+                <br>
+                <h4>Bookmarked Discussions</h4>
+                <hr>
+            </div>
+
+            <div class="col-xs-12 discussions" data-bind="template:{name:QCF.Models.Discussions.DataProvider().GetTemplate('list'), foreach: QCF.Models.Discussions.Collection(),as:'discussion'},visible:!QCF.Views.Search.Visible()"></div>
+
+            <div class="col-xs-12" style="text-align: center; padding: 25px 0;" data-bind="visible:QCF.Models.Discussions.Collection().length == 0">
+                <span data-bind="visible:QCF.Models.Discussions.Loading()">Loading...</span>
+            </div>
+            <nav data-bind="visible:!QCF.Views.Search.Visible() && QCF.Models.Discussions.Collection().length > 0">
+                <ul class="pagination">
+                    <li data-bind="css:{disabled:!QCF.Models.Discussions.Pagination.PrevEnabled()}">
+                        <a href="#" aria-label="Previous" data-bind="click:function(){ QCF.Models.Discussions.Pagination.PreviousPage(); }">
+                            <span aria-hidden="true">&laquo;</span> </a>
+                    </li>
+                    <!-- ko foreach:{data:QCF.Models.Discussions.Pagination.VisibleNumbers,as:'oNumber'} -->
+                    <li data-bind="css:{active:oNumber.active}">
+                        <a href="#" data-bind="click:function(){ QCF.Models.Discussions.Pagination.SetPage(oNumber.number); }, text:oNumber.number"> </a>
+                    </li>
+                    <!-- /ko -->
+                    <li data-bind="css:{disabled:!QCF.Models.Discussions.Pagination.NextEnabled()}">
+                        <a href="#" aria-label="Next" data-bind="click:function(){ QCF.Models.Discussions.Pagination.NextPage(); }">
+                            <span aria-hidden="true" style="position: absolute;left: 11px;top: 3px;">&raquo;</span> </a>
+                    </li>
+                </ul>
+            </nav>
+            </div>
+    <div class="col-xs-12 col-md-4 col-lg-4 col-xl-4 menu-area">
+        <div class="new-discussion-btn-holder" style="padding-top:25px;">
+            <a class="new-discussion-btn" href="#" role="button" data-bind="visible:window.login && QCF.Models.Discussions.DataProvider()?.GetName() == 'research' ,click:function(){ControllersNavigation.GoToNewResearch()}">
+                <img src="https://cdn.quantconnect.com/i/tu/plus-icon.svg" width="10" height="10" class="discussion-img" />
+                &nbsp;Share New Research </a>
+
+            <p style="font-size:14px;margin-top:15px;text-align:left;" data-bind="visible:window.login && QCF.Models.Discussions.DataProvider()?.GetName() == 'research'">Refer to our <a href="/docs/v2/cloud-platform/community/research" target="_blank">Research Guidelines</a> for high quality research posts.</p>
+
+            <a class="new-discussion-btn" href="#" role="button" data-bind="visible:window.login && QCF.Models.Discussions.DataProvider()?.GetName() !== 'research' ,  click:function(){ControllersNavigation.GoToNewDiscussion()}">
+                <img src="https://cdn.quantconnect.com/i/tu/plus-icon.svg" width="10" height="10" class="discussion-img" />
+                &nbsp;Start New Discussion </a>
+
+            <a class="new-discussion-btn" href="https://www.quantconnect.com/terminal" role="button" data-bind="visible:!window.login">
+                Sign up </a>
+        </div>
+                <hr class="discussion-btn-hr">
+        <div class="forum-search">
+            <h5 style="margin-bottom: 15px">SEARCH DISCUSSIONS</h5>
+            <div class="discussions discussion-search-desktop">
+                <input type="text" id="discussions-search-box-desktop" class="form-control input-lg" placeholder="Keyword" onkeyup="ViewsSearch.OnSearchKeuUp();">
+                <div class="input-search-icon">
+                    <img src="https://cdn.quantconnect.com/i/tu/search.svg">
+                </div>
+            </div>
+        </div>
+        <hr class="hidden-md hidden-lg hidden-xl mobile-menu-hr">
+        <div class="col-xl-12 menu">
+            <!-- 
+<a href="/pricing"><img src="https://cdn.quantconnect.com/i/tu/bf-forum.gif" class="img-responsive" style="margin-bottom: 20px;"></a> -->
+            <!-- ko if: QCF.Models.Discussions.DataProvider()?.GetName() == 'research' && QCF.Models.Discussions.TopResearch().length > 0 -->
+            <hr class="publications-hr">
+            <h5 style="margin-bottom: 4px;">TOP 5 Research Publications</h5>
+            <div class="top-researches" data-bind="foreach:{data:QCF.Models.Discussions.TopResearch(),as:'topResearch'}">
+                <div class="research">
+                    <p class="research-title">
+                        <span data-bind="text: $index() + 1 + '. '"></span><a target="_blank" data-bind="html: topResearch.Title, attr: { href: topResearch.Url }"></a>
+                    </p>
+                    <p>
+                        <span data-bind="html: topResearch.CreatorName"></span> - <span data-bind="text: topResearch.Votes() + ' Upvotes' "></span>
+                    </p>
+                </div>
+            </div>
+            <!-- /ko -->
+
+            <!-- ko if: QCF.Models.Discussions.DataProvider()?.GetName() === 'league' -->
+
+            <div data-bind="template:{name: 'league-details', data: {
+                dataProviderName: QCF.Models.Discussions.DataProvider().GetName(),
+                leagueMenuName: QCF.Views.Competition.LeagueMenuName,
+                CompetitionTimePeriods: QCF.Views.Competition.CompetitionTimePeriods,
+                selectedCompetitionTimePeriod: QCF.Views.Competition.SelectedCompetitionTimePeriod,
+                onCompetitionTimePeriodChange: QCF.Views.Competition.OnCompetitionTimePeriodChange,
+                returnMenuTittle: QCF.Views.Competition.ReturnMenuTittle()
+                } }">
+            </div>
+
+            <!-- /ko -->
+
+            <!-- ko if: QCF.Models.Discussions.DataProvider()?.GetName() === 'pro-league' -->
+
+            <div data-bind="template:{name: 'league-details', data: {
+                dataProviderName: QCF.Models.Discussions.DataProvider().GetName(),
+                leagueMenuName: QCF.Views.CompetitionPro.LeagueMenuName,
+                CompetitionTimePeriods: QCF.Views.CompetitionPro.CompetitionTimePeriods,
+                selectedCompetitionTimePeriod: QCF.Views.CompetitionPro.SelectedCompetitionTimePeriod,
+                onCompetitionTimePeriodChange: QCF.Views.CompetitionPro.OnCompetitionTimePeriodChange,
+                returnMenuTittle: QCF.Views.CompetitionPro.ReturnMenuTittle()
+                } }">
+            </div>
+
+            <!-- /ko -->
+
+            <!-- ko if: QCF.Models.Discussions.DataProvider()?.GetName() != 'research' -->
+            <div class="users-online">
+                <hr>
+                <h5 style="margin-bottom: 4px;">548,200 Quants.</h5>
+                                    <a class="text-gold" style="margin-top: 4px; font-size:14px" href="/terminal">Become a Quant</a> <br>
+                                <p class="online">Online Now</p>
+                <div class="row" style="margin-bottom: 20px;">
+                    <div data-bind="if: QCF.Models.Metadata.NumUsersOnline() > 20">
+                        <div class="col-xs-12" data-bind="foreach:{ data: QCF.Models.Metadata.UsersOnline.slice(0,19), as:'oUser' }">
+                            <a href="" data-bind="style:{'background-image':'url(\''+oUser.image+'\')' }, attr:{'data-user-profile':oUser.public_id, href:oUser.profileUrl}" class="profile-popover thumb group clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body"></a>
+                            <div data-bind="if: $index() == 18, visible: $index() == 18" class="thumb plus">
+                                <p data-bind="text: '+' + (QCF.Models.Metadata.NumUsersOnline()-19).toString()"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-bind="if: QCF.Models.Metadata.NumUsersOnline() <= 20">
+                        <div class="col-xs-12" data-bind=" foreach:{ data: QCF.Models.Metadata.UsersOnline, as:'oUser' }">
+                            <a href="" target="_blank" data-bind="style:{'background-image':'url(\''+oUser.image+'\')' }, attr:{'data-user-profile':oUser.public_id, href:oUser.profileUrl}" class="profile-popover thumb clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body"></a>
+                        </div>
+                    </div>
+                </div>
+                <a class="code-conduct" href="/codeofconduct">Code of Conduct</a>
+            </div>
+            <!-- /ko -->
+            <div class="vote-features-cta">
+                <hr>
+                <h5 style="margin-bottom: 11px;">VOTE FOR UPCOMING FEATURES</h5>
+                <p style="margin-bottom: 10px;line-height:1.6">Share your input and vote on our future direction.</p>
+                <a href="/roadmap" target="_blank" style="font-size: 13px;">LEAN Roadmap</a>
+            </div>
+            <!-- ko with: QCF.Models.Discussions.DataProvider() -->
+            <div class="research-mailing-list" data-bind="if: $data.GetMailingName() !== null">
+                <hr>
+                                    <h5 style="margin-bottom: 11px" data-bind="text: 'JOIN OUR ' + $data.GetMailingName() + ' MAILING LIST'"></h5>
+                    <p style="margin-bottom:10px">Create an account on QuantConnect for the latest <span data-bind="text:  $data.GetMailingName().toLowerCase()"></span> delivered to your inbox.</p>
+                    <a href="/signup" style="font-size: 13px;">Sign Up Today</a>
+                            </div>
+            <!-- /ko -->
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/html" id="discussion-list-default">
+    <div class="row discussion clickable" data-bind="click:function(){ControllersDiscussions.LoadDiscussionById(discussion.Id);}">
+        <div class="col-xs-12 discussions-user-profile">
+            <a href="#" data-bind="style:{'background-image':discussion.CreatorProfileStyle}, attr:{'data-user-profile':discussion.CreatorBadge.publicId, href:discussion.CreatorProfileUrl}" class="profile-popover thumb clickable" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a>
+        </div>
+        <div style="width: calc(100% - 54px);">
+            <div class="discussions-raw">
+                <div class="discussions-details">
+                    <a href="#" class="title" data-bind="html:discussion.Title,attr:{href:discussion.Href,'data-discussion-id' :discussion.Id}"></a>
+                    <div class="description" data-bind="html:discussion.Description"></div>
+                </div>
+                <div class="announcement-row">
+                    <div class="announcement-image">
+                        <div data-bind="style:{ 'background-image':  'url(\'' + (discussion.ThumbnailSquare ?? discussion.Thumbnail) + '\')' }"></div>
+                    </div>
+                    <div class="announcement-content">
+                        <a href="#" class="announcement-title" data-bind="html:discussion.Title,attr:{href:discussion.Href,'data-discussion-id' :discussion.Id}"></a>
+                        <p data-bind="html:discussion.Summary"></p>
+                        <a href="#" data-bind="attr:{href:discussion.Href}">Continue Reading</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="discussion-list-competition">
+    <div class="row discussion">
+        <div style="width: calc(100%);" data-bind="if:discussion.Competition !== null">
+            <div class="discussions-raw" data-bind="attr: { id: QCF.Views.Competition.GetCompetitionPanelId(discussion) ?? '' }">
+                <div class="competition-row">
+                    <div class="entry-titlebar">
+                        <div class="entry-name clickable" data-bind="click:function(){ControllersDiscussions.LoadDiscussionById(discussion.Id);}">
+                            <span data-bind="text: '#'  + (discussion.Competition.place ?? ''), attr:{ class: 'rank place-' + (discussion.Competition.place ?? '4') }"></span>
+                            <h3 data-bind="html:discussion.Title"></h3>
+                        </div>
+                        <div data-bind="template:{name: 'league-entry-actions', data: {
+                                dataProviderName: QCF.Models.Discussions.DataProvider().GetName(),
+                            }}">
+                        </div>
+                    </div>
+                    <p class="entry-description" data-bind="html:discussion.Summary"></p>
+
+                    <div class="entry-stats" data-bind="foreach:{data:discussion.Competition.statistics,as:'stat'}">
+                        <div class="stat">
+                            <span data-bind="attr:{class:stat.class},text:stat.value"></span>
+                            <span data-bind="text:stat.name"></span>
+                        </div>
+                    </div>
+
+                    <div class="entry-team" data-bind="visible: QCF.Models.Discussions.DataProvider().GetName()=='league'">
+                        <div class="team-logos" data-bind="foreach:{data:discussion.Competition.listingLogos, as: 'logo'}">
+                            <span><img data-bind="attr:{src:logo}"></span>
+                        </div>
+                        <div class="team-members" data-bind="foreach:{data: (discussion.Competition.members ?? [] ).slice(0, 5) , as: 'member'}">
+                            <a data-bind="attr:{ href: '/u/' + member.publicId}" target="_blank"><img class="profile-popover" data-bind="attr:{ src: 'https://cdn.quantconnect.com/web/i/users/thumbnail/100/' + member.profile, alt: member.name, 'data-user-profile':member.publicId}" role="button" data-toggle="popover" data-trigger="hover" data-container="body"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="league-details">
+    <div>
+        <h5 style="margin-bottom: 11px;" data-bind="text: 'About ' + $data.leagueMenuName"></h5>
+        <p data-bind="html: QCF.Models.Discussions.DataProvider().aboutCompetition"></p>
+        <hr>
+    </div>
+
+    <div>
+        <h5 style="margin-bottom: 11px;">competition rules</h5>
+        <p data-bind="text: QCF.Models.Discussions.DataProvider().competitionRules"></p>
+        <a data-bind="attr: {href: QCF.Models.Discussions.DataProvider().competitionRulesURL}" style="font-size:13px">Read Rules</a>
+        <hr>
+    </div>
+
+    <div class="previous-results-section" data-bind="if: $data.selectedCompetitionTimePeriod() !== null">
+        <h5 style="margin-bottom: 11px;">previous competitions</h5>
+        <p>Browse strategies and organization entries from previous quarter's competitions.</p>
+        <div class="quarter-select">
+            <select class="quarter-drp" data-bind="options: $data.CompetitionTimePeriods,
+                value: $data.selectedCompetitionTimePeriod, 
+                event: { change: $data.onCompetitionTimePeriodChange }">
+            </select>
+        </div>
+        <div class="rank-table">
+            <div class="table-header">
+                <span>STRATEGY</span>
+                <span data-bind="text:$data.returnMenuTittle"></span>
+            </div>
+            <div data-bind="foreach:{data: QCF.Models.Discussions.Collection().filter( d => (d.Competition ?? null) !== null ), as: 'discussion', noChildContext : true }">
+                <div class="entry-row" data-bind="click: () => QCF.Views.Competition.ScrollToCompetitionRow(discussion)">
+                    <span data-bind="text: discussion.Competition.place, attr:{class: 'rank place-' + discussion.Competition.place }"></span>
+                    <p><span class="uni-name gray-text" data-bind="text: $data.dataProviderName === 'pro-league' ? discussion.Title : discussion.Competition.name "></span></p>
+                    <p class="return" data-bind="text: discussion.Competition.statistics.find( s => s.name === QCF.Models.Discussions.DataProvider().GetView().CompetitionScoring() )?.value ?? '-'"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="league-chart">
+    <div class="col-xs-12 discussions clickable">
+        <div class="race-chart" data-bind="attr: { id: $data.id }" style="width: 100%; height: 400px;">
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="league-entry-actions">
+    <div class="entry-actions">
+        <a href="#" data-bind="text: $data.dataProviderName == 'league' ? 'View' : 'View Live Results', click:function(){ControllersDiscussions.LoadDiscussionById(discussion.Id);}"></a>
+        <a href="#" data-bind="visible: $data.dataProviderName == 'league', attr:{href: QCF.Views.Competition.GetCloneUrl(discussion) }" target="_BLANK">Clone</a>
+    </div>
+</script>
+
+<div id="popoverTable" style="display:none;">
+    <table cellpadding="0" cellspacing="0" style="width:400px; height:200px;">
+        <tr style="height:80px;">
+            <td style="padding:15px 15px 10px 15px; width:75px;position: relative; ">
+                <img class="popover-profileImg" src="#" alt="profile">
+                <div class="popover-language hidden"></div>
+            </td>
+            <td style="padding:15px 15px 10px 0;">
+                <table cellpadding="0" cellspacing="0" style="width: 100%;">
+                    <tr>
+                        <td>
+                            <p class="popover-userName"></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <p class="popover-userTitle"></p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="border-top:1px solid #EAEFF4;">
+                <table style="padding: 10px; border-collapse: collapse; width:100%;">
+                    <tr>
+                        <td class="popover-sectionCell">
+                            <img class="popover-icon" src="https://cdn.quantconnect.com/web/i/user_popover/popover_answer_rev0.png" alt="Answers">
+                            <p class="popover-answers"></p>
+                            <p class="popover-sectionName">Answers</p>
+                        </td>
+                        <td class="popover-dividerCell">
+                            <span class="popover-verticalDivider">&nbsp;</span>
+                        </td>
+                        <td class="popover-sectionCell">
+                            <img class="popover-icon" src="https://cdn.quantconnect.com/web/i/user_popover/popover_backtests_rev0.png" alt="Backtests">
+                            <p class="popover-backtests"></p>
+                            <p class="popover-sectionName">Backtests</p>
+                        </td>
+                        <td class="popover-dividerCell">
+                            <span class="popover-verticalDivider">&nbsp;</span>
+                        </td>
+                        <td class="popover-sectionCell">
+                            <img class="popover-icon" src="https://cdn.quantconnect.com/web/i/user_popover/popover_comments_rev0.png" alt="Comments">
+                            <p class="popover-comments"></p>
+                            <p class="popover-sectionName">Comments</p>
+                        </td>
+                        <td class="popover-dividerCell">
+                            <span class="popover-verticalDivider">&nbsp;</span>
+                        </td>
+                        <td class="popover-sectionCell">
+                            <img class="popover-icon" src="https://cdn.quantconnect.com/web/i/user_popover/popover_trading_rev0.png" alt="Live Traded">
+                            <p class="popover-livetraded"></p>
+                            <p class="popover-sectionName">Live Traded</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="popoverTableOverlay" style="display:none;">
+    <table cellpadding="0" cellspacing="0" style="width:400px; height:200px;">
+        <tr style="height:80px;">
+            <td style="padding:15px 15px 10px 15px; width:75px;position: relative; ">
+                <div class="popover-profileImg animated-background" style="width:75px; height:75px; border-radius:50%;"></div>
+            </td>
+            <td style="padding:15px 15px 10px 0;">
+                <table cellpadding="0" cellspacing="0" style="width: 100%;">
+                    <tr>
+                        <td>
+                            <p class="top-right animated-background" style="width:80px;"></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <p class="top-right animated-background" style="width:90px;"></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <p class="top-right animated-background" style="width:40px;"></p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <p class="hr animated-background"></p>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <table style="padding: 10px; border-collapse: collapse; width:100%;">
+                    <tr>
+                        <td class="popover-sectionCell">
+                            <div class="popover-icon animated-background"></div>
+                            <p class="popover-sectionValue animated-background"></p>
+                            <p class="popover-sectionName animated-background"></p>
+                        </td>
+                        <td class="popover-dividerCell">
+                            <span class="popover-verticalDivider animated-background">&nbsp;</span>
+                        </td>
+                        <td class="popover-sectionCell">
+                            <div class="popover-icon animated-background"></div>
+                            <p class="popover-sectionValue animated-background"></p>
+                            <p class="popover-sectionName animated-background"></p>
+                        </td>
+                        <td class="popover-dividerCell">
+                            <span class="popover-verticalDivider animated-background">&nbsp;</span>
+                        </td>
+                        <td class="popover-sectionCell">
+                            <div class="popover-icon animated-background"></div>
+                            <p class="popover-sectionValue animated-background"></p>
+                            <p class="popover-sectionName animated-background"></p>
+                        </td>
+                        <td class="popover-dividerCell">
+                            <span class="popover-verticalDivider animated-background">&nbsp;</span>
+                        </td>
+                        <td class="popover-sectionCell">
+                            <div class="popover-icon animated-background"></div>
+                            <p class="popover-sectionValue animated-background"></p>
+                            <p class="popover-sectionName animated-background"></p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+    </div>
+    <div class="col-xs-12 col-md-12 col-lg-10 col-lg-offset-1 col-xl-8 col-xl-offset-2 main-forum" style="" data-bind="visible:QCF.Views.Display.Discussion()">
+        <div class="row categories" data-bind="visible: QCF.Models.Discussions.DataProvider().GetName() !='tagged'" style="height: 76px; margin-right: 0;">
+    <div class="col-xs-12 col-sm-6 col-md-10 nav-row">
+        <div class="nav-menu">
+            <a class="" href="#research" role="button" data-bind="click:ControllersDiscussions.SetResearchDatasource">Research</a>
+            <a class="hidden-xs" href="#announcements" role="button" data-bind="click:ControllersDiscussions.SetAnnouncementsDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='announcements'}">Announcements</a>
+            <a class="hidden-xs" href="#lean" role="button" data-bind="click:ControllersDiscussions.SetLeanDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='lean'}">Lean</a>
+        </div>
+
+        <div class="nav-menu" style="float: right;">
+            <a class="" href="#newest" role="button" data-bind="click:ControllersDiscussions.SetNewestDatasource">
+                <span class="short-text" style="line-height: 6px;">COMMUNITY</span>
+                <span class="long-text" style="line-height: 6px;">COMMUNITY FEED</span>
+            </a>
+                        <span style="line-height: 17px;font-size: 10px;margin-right: 10px;margin-left: 10px;">|</span>
+            <button id="more-menu-1" class="more-menu">
+                <div class="read-toggle-dots clickable"></div>
+                <div class="menu-content" style="display: none;">
+                    <a class="hidden-sm hidden-md hidden-lg" href="#competition" role="button" data-bind="click:ControllersDiscussions.SetAnnouncementsDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='announcements'}">Announcements</a>
+                    <a class="hidden-sm hidden-md hidden-lg" href="#lean" role="button" data-bind="click:ControllersDiscussions.SetLeanDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='lean'}">Lean</a>
+                    <a href="/datasets/issues">Data Issues</a>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+<hr class="full-width-hr" />
+<div class="row">
+
+    <div class="col-md-8 col-lg-8 col-xl-8 content-area">
+        <div class="row" data-bind="with:QCF.Models.Discussions.OpenDiscussion()">
+            <div class="col-xs-12 col-sm-12 content-area main-thread-area" data-bind="let:{discussion:QCF.Models.Discussions.OpenDiscussion()}"  itemscope itemtype="http://schema.org/DiscussionForumPosting" >
+                <div class="col-xs-12 discussions" data-bind="attr:{ id: 'discussion-'+ discussion.Id }">
+                    <div class="pending-discussion detailed-thread" data-bind="visible:discussion?.Status === 'pending' " style="display: none;">
+                        <div class="row ">
+                            <div class="col-xs-12 pending-label">
+                                <label>pending review</label>
+                                <span>This research is under review. To publish this research attract three community upvotes.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pending-discussion detailed-thread" data-bind="visible:discussion?.Status === 'draft' " style="display: none;">
+                        <div class="row ">
+                            <div class="col-xs-12 pending-label">
+                                <label style="min-width: fit-content;">draft post</label>
+                                <span>This discussion is a draft. Click <a href="javascript:void(0)" data-bind="click:function(){ControllersDiscussions.PublishDraft(discussion)}">here</a> to publish this discusison.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row discussion-thread discussion-context" data-bind="template:{afterRender:function(el){ControllersDiscussions.RunCommentProcesses(el)}}">
+
+                        <div class="col-xs-12 col-md-12 col-lg-12 col-xl-12 user-profile" data-bind="template:{name:QCF.Models.Discussions.DataProvider().GetTemplate('tittle-header'),data:discussion,as:'discussion'}">
+                            <!-- WARNING: Any content updated here will be overwritten by the template -->
+                            <div class="name">
+                                <p class='discussion-title' data-bind='html: discussion.Title'>Filing Language Stability as a Selection Signal</p>                            </div>
+                            <hr>
+                        </div>
+
+                        <div class="col-xs-12 content-box main-content" data-bind="template:{name:QCF.Models.Discussions.DataProvider().GetTemplate('content'),data:discussion,as:'discussion'},css:{'show-research-paywall':discussion.ShowResearchBanner}">
+                            <!-- All contents here will be replaces by the template content, this is just a placeholder for web crawlers that do not run javascript -->
+                            <div class="content" data-bind="html:Content" itemprop="articleBody"><p><i>Research conducted by: Emily Xinyu Sun - Mentored by Rudy Osuna - Triton Quantitative Trading @ UC San Diego</i></p><h2>Introduction</h2><p>Every public company files a 10-K with the SEC each year and a 10-Q after each of its first three quarters. These are the audited annual report and the lighter quarterly updates that disclose a firm's financial results and business risks. They draw investor attention to the reported numbers, yet the language of the filing carries information of its own. <i>Cohen, Malloy, and Nguyen </i>(2020) document that firms which barely change their filing language from one year to the next earn higher subsequent returns than firms that substantially rewrite their disclosures, an effect they call <i>Lazy Prices</i>. We turn this finding into a long-only stock-selection strategy on the 100 most liquid US Equities. Each month we rank them on the language similarity of their latest 10-K and 10-Q filings, drawn from the <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/brain/brain-language-metrics-on-company-filings">Brain Language Metrics on Company Filings</a> dataset, and hold a long-only portfolio of the most stable filers, weighted to maximize the portfolio Sharpe ratio. From January 2020 to June 2026, the strategy produced greater risk-adjusted returns than the benchmark SPY ETF.</p><h2>Background&nbsp;</h2><p>A 10-K or 10-Q is mostly boilerplate that management carries forward from the previous period with minor edits. Cohen, Malloy, and Nguyen study what happens in the unusual cases when a firm materially rewrites that language, especially the risk-factors and management-discussion sections. They find that these changes are a strong negative signal for future returns. Firms that change their disclosures, the "changers", go on to earn lower returns, while firms that leave them stable, the "non-changers", earn higher returns. The changes also predict future earnings, news, and even bankruptcies, yet there is no price reaction at the filing date.</p><p>The label "lazy prices" captures the mispricing. Prices are slow to incorporate the information embedded in the presence or absence of textual change, because reading two filings side by side is tedious and few investors do it. We measure filing stability with a textual similarity score, a number between zero and one that captures how much of a filing's language is carried over from the company's previous comparable filing. A score near one marks a filing that closely repeats its predecessor, while a lower score marks one that has been heavily rewritten.&nbsp;</p><p>We read these scores from the Brain Language Metrics on Company Filings dataset, which reports a full-report score and a risk-factors-section score for every 10-K and 10-Q. The strategy ranks the 100 most liquid US Equities on this similarity each month and treats the most similar filers as the most stable, the side of the signal the Lazy Prices effect rewards. We prefer the risk-factors similarity, the section the paper finds most informative, and we fall back to the full-report similarity when the first is unavailable. Ranking the universe by this score and keeping the top stocks selects the laziest, most stable filers.</p><p>Rather than weight the selected stocks equally, we size them to maximize the portfolio's historical Sharpe ratio. The optimizer searches for the weight vector that maximizes</p><p>\[ \frac{w^\top \mu}{\sqrt{w^\top \Sigma w}}\]<br>where \(w\) is the vector of portfolio weights, \(\mu\) is the vector of mean daily returns over the lookback window, and \( \Sigma\) is the covariance matrix of those returns. We constrain the weights to the interval \([0, 1]\), which forces a long-only portfolio that is fully invested across the selected stocks. The lookback window that supplies \(\mu\) and \(\Sigma\) is set to twelve months of daily returns by default.</p><h2>Implementation</h2><p>To implement this strategy, we start by setting the data resolution and scheduling <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/universes/key-concepts">universe selection</a> to run on the first trading day of each month, matching the rebalance cadence. The algorithm adds two universes. A <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/universes/equity/fundamental-universes">fundamental universe</a> narrows the market to the most liquid stocks, and the Brain filing universe then ranks textual similarity within that set.</p><pre><code class="python-code">self.universe_settings.resolution = Resolution.DAILY
+self._date_rule = self.date_rules.month_start("SPY")
+self.universe_settings.schedule.on(self._date_rule)
+self.add_universe(self._fundamental_filter)
+self._universe = self.add_universe(BrainCompanyFilingLanguageMetricsUniverseAll, self._select_assets)</code></pre><p>During <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/initialization">initialization</a> we also create the Sharpe optimizer, giving it a lookback window of twelve months, which supplies a full year of daily returns.</p><pre><code class="python-code">self._optimizer = SharpePortfolioOptimizer()</code></pre><p>The <strong>_fundamental_filter</strong> method stores the 100 stocks with the highest average dollar volume that have fundamental data. It returns an unchanged universe and only caches these symbols, so the Brain filing universe can later rank within this liquid set.</p><pre><code class="python-code">def _fundamental_filter(self, fundamentals: List[Fundamental]) -&gt; Universe.UnchangedUniverse:
+    # Store the 100 most liquid Equities; the Brain filing universe ranks within this set.
+    self._fundamentals = [f.symbol for f in sorted([f for f in fundamentals if f.has_fundamental_data], key=lambda f: f.dollar_volume)[-100:]]
+    return Universe.UNCHANGED</code></pre><p>The <strong>_select_assets</strong> method reads six months of filing history from the <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/brain/brain-language-metrics-on-company-filings#08-Universe-Selection">BrainCompanyFilingLanguageMetricsUniverseAll</a> universe, keeps only the stocks that survived the liquidity filter, and records each one's most recent similarity score, preferring the risk-factors similarity over the full-report similarity.</p><pre><code class="python-code">def _select_assets(self, filings: List[BrainCompanyFilingLanguageMetricsUniverseAll]) -&gt; List[Symbol]:
+    similarity_by_symbol = {}
+    # Scan the past 6 months of 10-K/10-Q filings for similarity scores.
+    history = self.history(self._universe, timedelta(30 * 6), Resolution.DAILY)
+    for daily_filings in history:
+        for filing in daily_filings:
+            if filing.symbol not in self._fundamentals:
+                continue
+            # Prefer risk factors similarity scores, else the full report similarity scores.
+            similarity = filing.risk_factors_statement_sentiment.similarity.all or filing.report_sentiment.similarity.all
+            if similarity:
+                similarity_by_symbol[filing.symbol] = similarity</code></pre><p>It then returns the top 25 stocks by highest similarity.</p><pre><code class="python-code">return sorted(similarity_by_symbol, key=lambda symbol: similarity_by_symbol[symbol])[-25:]</code></pre><p>A <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/scheduled-events">Scheduled Event</a> fires the <strong>_rebalance</strong> method at 8 AM Eastern Time (ET) on the first trading day of each month, the same monthly rule that drives universe selection.</p><pre><code class="python-code">time_rule = self.time_rules.at(8, 0)
+self.schedule.on(self._date_rule, time_rule, self._rebalance)</code></pre><p>The <strong>_rebalance</strong> method passes the current universe constituents to the <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/algorithm-framework/portfolio-construction/supported-optimizers#02-Maximum-Sharpe-Ratio-Optimizer">SharpePortfolioOptimizer</a>, builds a portfolio target for each returned weight, and <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/trading-and-orders/position-sizing">rebalances</a> to those weights while liquidating any holdings that left the selection.</p><pre><code class="python-code">weight_by_symbol = self._optimizer.get_weights(self, list(self._universe.selected))
+targets = [PortfolioTarget(symbol, weight) for symbol, weight in weight_by_symbol.items()]
+self.set_holdings(targets, True)</code></pre><p>The <strong>get_weights</strong> method does the sizing. It requests daily closes over a 12 month lookback window with a <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/historical-data/history-requests">history request</a>, converts them to daily returns, and calls LEAN's <a href="https://www.quantconnect.com/docs/v2/writing-algorithms/algorithm-framework/portfolio-construction/supported-optimizers#02-Maximum-Sharpe-Ratio-Optimizer">MaximumSharpeRatioPortfolioOptimizer</a> to produce the long-only weights.</p><pre><code class="python-code">def get_weights(self, algorithm: QCAlgorithm, symbols: list) -&gt; dict:
+    history = algorithm.history(symbols, self._period + 1, Resolution.DAILY)
+    returns = history["close"].unstack(level=0).pct_change().dropna()
+    # Maximize the portfolio Sharpe ratio using the long-only optimizer.
+    raw_weights = self._optimizer.optimize(returns)
+    return {symbol: float(raw_weights[i]) for i, symbol in enumerate(returns.columns)}</code></pre><h2>Results</h2><p>We backtested the strategy from January 2020 to June 2026. Over that period the strategy earned a <span style="color:rgb(0,0,0);">0.558</span> Sharpe ratio. In contrast, a buy-and-hold position in the SPY over the same time period achieved a 0.533 Sharpe ratio [<a href="https://www.quantconnect.cloud/backtest/3242756d0bc809d2909351af56aee3c8/?theme=chrome">Backtest link</a>]. Therefore, the strategy outperformed the benchmark.</p><p>We ran a <a href="https://www.quantconnect.com/docs/v2/cloud-platform/optimization/getting-started">parameter optimization</a> job to test the sensitivity of the chosen parameters. We tested <strong>lookback_months</strong>, the number of months of return history the optimizer uses to size positions, from 6 to 30 months in steps of 6. We also tested <strong>universe_size</strong>, the number of stocks held, from 10 to 30 in steps of 5. Of the 25 parameter combinations, <strong>9 of 25 (36%)</strong> produced a greater Sharpe ratio than the benchmark. The following image shows the heatmap of Sharpe ratios for the parameter combinations:</p><figure class="image image_resized" style="width:92.53%;"><img src="https://cdn.quantconnect.com/community/i/rudy-osuna_1782430233.jpg"><figcaption>Universe Size: 25 Equities, Lookback Months: 12</figcaption></figure><p>&nbsp;</p><p>The red circle in the image above identifies the parameters we chose as the strategy's default. We chose a <strong>lookback_months </strong>of 12 because a full year of daily returns gives the optimizer a more robust covariance estimate than a shorter window. We chose a <strong>universe_size</strong> of 25 because a broader basket spreads risk across more stocks and reduces concentration risk. The sensitivity analysis shows the result is driven mainly by the optimizer's lookback window rather than the breadth of the basket, and that shorter windows scored higher in sample. Future research could add the short leg of the Lazy Prices anomaly, selling the firms that most rewrote their filings, moving the strategy toward the original long-short design. That extension naturally invites different optimizer constraints, such as dollar neutrality, to balance the long and short books.</p><h2>Conclusion</h2><p>This research turns the Lazy Prices effect into a simple, tradeable strategy. Each month it ranks the 100 most liquid US Equities on the language stability of their latest 10-K and 10-Q filings, drawn from the Brain Language Metrics on Company Filings dataset, and holds the most stable filers in a long-only portfolio weighted to maximize the Sharpe ratio. From January 2020 to June 2026 the strategy produced a 0.558 Sharpe ratio, outperforming a buy-and-hold position in the SPY. The result shows that disclosure-language stability carries tradable information beyond a firm's reported numbers, though the strategy's edge depends on the quality of the filing-similarity scores and warrants further testing across market regimes.</p><h2>References</h2><p><i>Cohen, Lauren, et al. “Lazy Prices.” The Journal of Finance, vol. 75, no. 3, 22 Feb. 2020, pp. 1371–1415, </i><a href="https://doi.org/10.1111/jofi.12885"><i>https://doi.org/10.1111/jofi.12885</i></a><i>.</i></p></div>
+                        </div>
+
+                        <div class="col-xs-12 content-box edit-box">
+                            <textarea data-bind="attr:{ id: 'discussion-editor-'+ discussion.Id }"></textarea>
+                            <a class="btn btn-default no-border" style="margin:15px 0" href="#" role="button" data-bind="click:ViewsAttachBacktest.UpdateBacktest,visible:!QCF.Views.AttachBacktest.UpdatingBacktest() && QCF.Controllers.Update.BacktestUpdatable()">
+                                <i class="fa fa-paperclip" aria-hidden="true"></i> Update Backtest </a>
+                            <div data-bind="visible:QCF.Views.AttachBacktest.UpdatingBacktest()" style="padding-top: 15px">
+                                <form class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="inputPassword" class="col-sm-2 control-label">Project</label>
+                                        <div class="col-sm-10">
+                                            <select data-bind="options:QCF.Views.AttachBacktest.ProjectsAvailable,optionsText:'name', value:QCF.Views.AttachBacktest.SelectedProject,optionsCaption:QCF.Views.AttachBacktest.ProjectMessage()" class="form-control"></select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPassword" class="col-sm-2 control-label">Backtest</label>
+                                        <div class="col-sm-10">
+                                            <select data-bind="options:QCF.Views.AttachBacktest.BacktestsAvailable,optionsText:'name',value:QCF.Views.AttachBacktest.SelectedBacktest,optionsCaption:QCF.Views.AttachBacktest.BacktestMessage(), attr:{ disabled:!QCF.Views.AttachBacktest.BacktestSelectionEnabled()}" class="form-control"></select>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="row" data-bind="visible:QCF.Views.AttachBacktest.UpdatingBacktest()">
+                                <div class="col-xs-12" data-bind="with:QCF.Views.AttachBacktest.SelectedBacktest(),visible:QCF.Views.AttachBacktest.SelectedBacktest() !== null">
+                                    <hr style="margin-top:0;">
+                                    <div data-bind="template: { name: 'ko-template-backtest-embedd', data: {'backtestId': QCF.Views.AttachBacktest.SelectedBacktest().id } }"></div>
+                                </div>
+                            </div>
+                            <hr style="margin-top:0;">
+                            <br>
+                            <button class="btn btn-default pull-left comment-discussion-commands" onclick="ControllersUpdate.Reset();">
+                                Cancel
+                            </button>
+                            <button class="btn btn-default btn-primary pull-right comment-discussion-commands" onclick="ControllersUpdate.SaveDiscussion();" data-bind="text:QCF.Controllers.Update.UpdateText(),visible: QCF.Models.Discussions.OpenDiscussion().Editable()"></button>
+                            <br> <br>
+                        </div>
+                        <div data-bind="with:QCF.Models.Discussions.OpenDiscussion().BacktestId,visible:QCF.Models.Discussions.OpenDiscussion().BacktestId !== null" >
+                            <div data-bind="template: { name: 'ko-template-backtest-thumbnail', data: {'backtestId':QCF.Models.Discussions.OpenDiscussion().BacktestId} }"></div>
+                        </div>
+
+
+                        <div class="text-wrap footer-area" data-bind="with:QCF.Models.Discussions.OpenDiscussion()" style="margin-bottom: -5px;">
+                            <div class="vote" style="margin-left: 0;border-left: none;padding-left: 0;">
+                                <img src="https://cdn.quantconnect.com/i/tu/upvote-icon.svg" width="13" height="11">
+                                <span class="clickable" style="font-weight: 500" data-bind="style:{  color:  $data.UpVoted() ? '#8f9ca3' : ''  },click:function(){ControllersDiscussions.ToggleUpVote($data);}, text: $data.UpVoted() ? 'Upvoted' : 'Upvote' "></span>
+                            </div>
+                            <div class="up-voters" style="top: -6px;">
+                                <!-- ko foreach: {data:$data.Voters(), as: 'voter' } -->
+                                <a href="#" data-bind="attr:{href:voter.profileUrl,'data-user-profile':voter.publicId}" class="profile-popover thumb clickable" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank" style="padding: 0;width: 15px;display: inline-block;"><img data-bind="attr:{src:voter.profile}"></a>
+                                <!-- /ko -->
+                                <!-- ko if: $data.Votes() == 1 -->
+                                <span><span data-bind="text: $data.Votes()"></span> person upvoted this</span>
+                                <!-- /ko -->
+                                <!-- ko if: $data.Votes() > 1 -->
+                                <span><span data-bind="text: $data.Votes()"></span> people upvoted this</span>
+                                <!-- /ko -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="margin-top: 0;">
+
+                    <!-- ko foreach:{data:QCF.Models.Discussions.OpenDiscussion().AcceptedResponse(), as:'oComment'} -->
+                    <div class="row discussion-thread-comment ko-only" data-bind="attr:{ id: 'comment-'+ oComment.Id }, template: {afterRender: function(el){ControllersDiscussions.RunCommentProcesses(el)}}" style="margin-top: 25px;">
+                        <div class="col-xs-12 user-profile">
+
+                            <a href="#" data-bind="style:{ 'background-image':oComment.CreatorProfileStyle}, attr:{'data-user-profile':oComment.CreatorBadge.publicId, href:oComment.CreatorProfileUrl }" class="profile-popover thumb clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body">
+
+                            </a>
+                            <!-- ko if:oComment.CreatorBadge.institutionId !== null -->
+                            <a href="" data-bind="attr:{href: '/institutions/'+ oComment.CreatorBadge.institutionId }">
+                                <div class="institution-logo" data-bind="style:{'background-image' : 'url(\'' + oComment.CreatorBadge.institutionLogo + '\')', opacity:  oComment.CreatorBadge.institutionOpacity }"></div>
+                            </a>
+                            <!-- /ko -->
+                            <!-- ko if:oComment.CreatorBadge.institutionId == null -->
+                            <div class="institution-logo" data-bind="style:{'background-image' : 'url(\'' + oComment.CreatorBadge.institutionLogo + '\')', opacity:  oComment.CreatorBadge.institutionOpacity }"></div>
+                            <!-- /ko -->
+                            <div class="name">
+                                <p style="display:inline; margin-bottom: 0;">
+                                    <a data-bind="html:oComment.CreatorBadge.sUserName,,attr:{href:oComment.CreatorProfileUrl}">Triton Quantitative Trading</a>
+                                </p>
+                                <div class="badge-area comment-meta badge-area-accepted-answer">
+                                    <!-- ko if:oComment.CreatorBadge.preferredOrganization.toLowerCase() !== oComment.CreatorBadge.sUserName.toLowerCase() -->
+                                    <span class="organization" data-bind="html: oComment.CreatorBadge.preferredOrganization"></span>
+                                    &nbsp;|&nbsp;
+                                    <!-- /ko -->
+                                    <span class="" style="margin-left: -3px;" data-bind="text: oComment.UpdatedHumanReadable"></span>
+                                                                                                            <span> | </span>
+                                    <span style="color: #21993d;"><span style="margin-right: 0.2rem;"><img src="https://cdn.quantconnect.com/i/tu/check-circle.svg" alt="accepted answer" width="14"></span>Accepted Answer</span>
+                                </div>
+                                <div class="extra-menu clickable" data-bind="click:function(){ oComment.ToggleBtn(); }">
+                                    <img src="https://cdn.quantconnect.com/i/tu/dots.svg" width="20px" />
+                                    <div class="extra-btns" style="display: none;" data-bind="attr:{id: 'btns-' + oComment.Id}">
+                                        <div class="arrow"></div>
+                                        <a href="#" target="_blank" data-bind="attr:{href:oComment.PermanentLink }" onclick="event.stopPropagation()" title="Link">Permalink</a><br>
+                                                                            </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 content-box comment-content" data-bind="html:oComment.Content" itemprop="text">
+                        </div>
+                        <div class="col-xs-12 content-box edit-box">
+                            <textarea data-bind="attr:{ id: 'comment-editor-'+ oComment.Id }"></textarea>
+                            <a class="btn btn-default no-border" style="margin:15px 0" href="#" role="button" data-bind="click:ViewsAttachBacktest.UpdateBacktest,visible:!QCF.Views.AttachBacktest.UpdatingBacktest() && QCF.Controllers.Update.BacktestUpdatable()">
+                                <i class="fa fa-paperclip" aria-hidden="true"></i> Update Backtest </a>
+                            <div data-bind="visible:QCF.Views.AttachBacktest.UpdatingBacktest()" style="padding-top: 15px">
+                                <form class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="inputPassword" class="col-sm-2 control-label">Project</label>
+                                        <div class="col-sm-10">
+                                            <select data-bind="options:QCF.Views.AttachBacktest.ProjectsAvailable,optionsText:'name', value:QCF.Views.AttachBacktest.SelectedProject,optionsCaption:QCF.Views.AttachBacktest.ProjectMessage()" class="form-control"></select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPassword" class="col-sm-2 control-label">Backtest</label>
+                                        <div class="col-sm-10">
+                                            <select data-bind="options:QCF.Views.AttachBacktest.BacktestsAvailable,optionsText:'name',value:QCF.Views.AttachBacktest.SelectedBacktest,optionsCaption:QCF.Views.AttachBacktest.BacktestMessage(), attr:{ disabled:!QCF.Views.AttachBacktest.BacktestSelectionEnabled()}" class="form-control"></select>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="row" data-bind="visible:QCF.Views.AttachBacktest.UpdatingBacktest()">
+                                <div class="col-xs-12" data-bind="with:QCF.Views.AttachBacktest.SelectedBacktest(),visible:QCF.Views.AttachBacktest.SelectedBacktest() !== null">
+                                    <hr style="margin-top:0;">
+                                    <div data-bind="template: { name: 'ko-template-backtest-embedd', data: {'backtestId': QCF.Views.AttachBacktest.SelectedBacktest().id} }"></div>
+                                </div>
+                            </div>
+                            <hr style="margin-top:0;">
+                            <br>
+                            <button class="btn btn-default pull-left comment-discussion-commands" onclick="ControllersUpdate.Reset();">
+                                Cancel
+                            </button>
+                            <button class="btn btn-default btn-primary pull-right comment-discussion-commands" onclick="ControllersUpdate.SaveComment();" data-bind="text:QCF.Controllers.Update.UpdateText(),visible: oComment.Editable()"></button>
+                            <br> <br>
+                        </div>
+                        <div class="col-xs-12 content-box" data-bind="with:oComment.BacktestId,visible:oComment.BacktestId !== null">
+                            <div data-bind="template: { name: 'ko-template-backtest-thumbnail', data: {'backtestId': oComment.BacktestId} }"></div>
+                        </div>
+
+                        <div class="col-xs-12 content-box" data-bind="with:oComment.NotebookUrl,visible:oComment.NotebookUrl !== null">
+                            <ul class="nav nav-tabs" style="margin-top: 0; background: #efefef;height: 40px;">
+                                <li class="active" style="margin-left:0">
+                                    <a href="#" data-toggle="tab" style="line-height: 18px;">
+                                        <i class="fa fa-book hidden-xl" aria-hidden="true"></i>
+                                        <span class="hidden-xs hidden-sm hidden-md hidden-lg visible-xl"><i class="fa fa-book" aria-hidden="true"></i> Notebook</span>
+                                    </a>
+                                </li>
+                                <li style="float:right">
+                                    <iframe src="" loading="lazy" style="height: 26px;margin-top:6px;margin-right:33px;" allowtransparency="true" frameborder="0" scrolling="0" data-bind="attr:{src:'https://www.quantconnect.com/research/cloneButton/' + oComment.Notebook}"></iframe>
+                                </li>
+                            </ul>
+                            <div data-bind="template: { name: 'ko-template-backtest-thumbnail', data:{'backtestId': oComment.NotebookUrl }}"></div>
+                        </div>
+
+                        <div class="admin-buttons" aria-label="" style="margin-top: 10px">
+
+                            <button type="button" class="btn btn-xs btn-aa text-bold" data-bind="click:function(){ControllersComments.UndoAcceptAnswer(oComment);},visible:oComment.CanBeUnAcceptedResponse">
+                                Remove
+                            </button>
+                        </div>
+
+                        <div class="col-xs-12 content-box disclaimer-box" data-bind="visible:(oComment.CreatorBadge.sType == 'team' || oComment.CreatorBadge.sType == 'admin')" style="color: gray;">
+                            <button class="btn btn-default btn-xs" onclick="$(this).parent().toggleClass('open-disclaimer')">
+                                Disclaimer
+                                <i class="fa fa-angle-down" aria-hidden="true"></i><i class="fa fa-angle-up" aria-hidden="true"></i>
+                            </button>
+                            <p class="disclaimer">The material on this website is provided for informational purposes only and does not constitute an offer to sell, a solicitation to buy, or a recommendation or endorsement for any security or strategy, nor does it constitute an offer to provide investment advisory services by QuantConnect. In addition, the material offers no opinion with respect to the suitability of any security or specific investment. QuantConnect makes no guarantees as to the accuracy or completeness of the views expressed in the website. The views are subject to change, and may have become unreliable for various reasons, including changes in market conditions or economic circumstances. All investments involve risk, including loss of principal. You should consult with an investment professional before making any investment decisions.</p>
+                        </div>
+
+                        <div class="col-xs-12 content-box footer-area" style="min-height: 40px;">
+                            <div class="share-wrap pull-right flex">
+                                <div class="share" style="margin-right: 0;">
+                                    <img src="https://cdn.quantconnect.com/i/tu/share.svg" width="20px" class="clickable" data-bind="click:function(){oComment.ToggleShareMenu();}" />
+                                    <div class="share-menu share-comment" data-bind="attr:{id: 'share-menu-' + oComment.Id}" style="display: none;">
+                                        <div class="arrow"></div>
+                                        <a type="button" class="badge badge-lg badge-share" href="" target="_blank" data-bind="attr:{onclick:ControllersDiscussions.GetTwitterShareHref()}">
+                                            <i class="fa fa-twitter" aria-hidden="true"></i> Twitter</a>
+                                        <a type="button" class="badge badge-lg badge-share" href="" target="_blank" data-bind="attr:{onclick:ControllersDiscussions.GetFacebookShareHref()}">
+                                            <i class="fa fa-facebook-square" aria-hidden="true"></i> Facebook</a>
+                                        <a type="button" class="badge badge-lg badge-share" href="" target="_blank" data-bind="attr:{onclick:ControllersDiscussions.GetLinkedInShareHref()}">
+                                            <i class="fa fa-linkedin-square" aria-hidden="true"></i> LinkedIn</a>
+                                        <a type="button" class="badge badge-lg badge-share" href="javascript:void(0)" data-bind="click:function(){ControllersDiscussions.CopyLink('https://' + 'www.quantconnect.com'+ oComment.PermanentLink)}">
+                                            <i class="fa fa-link" aria-hidden="true"></i> Copy Link</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <meta itemprop="datePublished" content="" data-bind="attr:{content: oComment.Date}" />
+                    </div>
+                    <!-- /ko -->
+                                        <meta itemprop="commentCount" content="0" data-bind="attr:{content: CommentsCount}" />
+                    <meta itemprop="headline" content="Filing Language Stability as a Selection Signal" data-bind="attr:{content: Title}" />
+                    <meta itemprop="image" content="https://cdn.quantconnect.com/i/tu/20966.png" data-bind="attr:{content: Thumbnail}" />
+                    <meta itemprop="datePublished" content="2026-07-10 12:49:06" data-bind="attr:{content: Published}" />
+                    <div  itemscope itemtype="http://schema.org/Person"  itemprop="author" >
+                        <meta itemprop="image" content="https://cdn.quantconnect.com/web/i/users/thumbnail/100/50fede6e9b1ca691718722393.jpg" data-bind="attr:{content: CreatorProfileImage}" />
+                        <meta itemprop="name" content="Triton Quantitative Trading" data-bind="attr:{content: CreatorName}" />
+                        <meta itemprop="url" content="https://www.quantconnect.com/u/triton-quantitative-trading" data-bind="attr:{content: CreatorProfileUrl}" />
+                    </div>
+                </div>
+                <div class="comments-area">
+                    <div class="col-xs-12 discussions" data-bind="let:{ discussion: QCF.Models.Discussions.OpenDiscussion() }">
+    
+    <div id="dicussion-comments-start" class="height:1px;width:100%;display:inline-block"></div>
+
+    <!-- ko foreach:{data: discussion.Comments.Collection(),as: 'page'} -->
+    <!-- ko foreach:{data: page, as:'oComment', afterRender: function(el){ControllersDiscussions.RunCommentProcesses(el)}  } -->
+    <div class="row discussion-thread-comment ko-only" data-bind="attr:{ id: 'comment-'+ oComment.Id }, css: oComment.VotesClass()"  itemscope itemtype="http://schema.org/Comment"  itemprop="comment" >
+        <div class="col-xs-12 user-profile">
+            <a href="#" data-bind="style:{ 'background-image':oComment.CreatorProfileStyle}, attr:{'data-user-profile':oComment.CreatorBadge.publicId, href:oComment.CreatorProfileUrl }" class="profile-popover thumb clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body"> </a>
+            <!-- ko if:oComment.CreatorBadge.institutionId !== null -->
+            <a href="" data-bind="attr:{href: '/institutions/'+ oComment.CreatorBadge.institutionId }">
+                <div class="institution-logo" data-bind="style:{'background-image' : 'url(\'' + oComment.CreatorBadge.institutionLogo + '\')', opacity:  oComment.CreatorBadge.institutionOpacity }"></div>
+            </a>
+            <!-- /ko -->
+            <!-- ko if:oComment.CreatorBadge.institutionId == null -->
+            <div class="institution-logo" data-bind="style:{'background-image' : 'url(\'' + oComment.CreatorBadge.institutionLogo + '\')', opacity:  oComment.CreatorBadge.institutionOpacity }"></div>
+            <!-- /ko -->
+            <div class="name">
+                <p class="creater-name" style="display:inline;margin-bottom: 0;">
+                    <a data-bind="html:oComment.CreatorBadge.sUserName,attr:{href:oComment.CreatorProfileUrl}">Triton Quantitative Trading</a>
+                    <span data-bind="visible:oComment.CreatorBadge.investor" class="investor-badge" style="display:none">INVESTOR</span>
+                </p>
+                <div class="badge-area comment-meta">
+                    <!-- ko if:oComment.CreatorBadge.preferredOrganization.toLowerCase() !== oComment.CreatorBadge.sUserName.toLowerCase() -->
+                    <span class="organization" data-bind="html: oComment.CreatorBadge.preferredOrganization"></span>
+                    &nbsp;|&nbsp;
+                    <!-- /ko -->
+                    <span class="" style="margin-left: -3px;" data-bind="text: oComment.UpdatedHumanReadable"></span>
+                                                        </div>
+            </div>
+            <div class="extra-menu clickable" data-bind="click:function(){ oComment.ToggleBtn(); }">
+                <img src="https://cdn.quantconnect.com/i/tu/dots.svg" width="20px" />
+                <div class="extra-btns" style="display: none;" data-bind="attr:{id: 'btns-' + oComment.Id}">
+                    <div class="arrow"></div>
+                    <a href="#" target="_blank" data-bind="attr:{href:oComment.PermanentLink }" onclick="event.stopPropagation()" title="Link">Permalink</a><br>
+                                    </div>
+            </div>
+        </div>
+        <div class="col-xs-12 content-box comment-content" data-bind="html:oComment.Content" itemprop="text">
+        </div>
+        <div class="col-xs-12 content-box edit-box">
+            <textarea data-bind="attr:{ id: 'comment-editor-'+ oComment.Id }"></textarea>
+            <a class="btn btn-default no-border" style="margin:15px 0" href="#" role="button" data-bind="click:ViewsAttachBacktest.UpdateBacktest,visible:!QCF.Views.AttachBacktest.UpdatingBacktest() && QCF.Controllers.Update.BacktestUpdatable()">
+                <i class="fa fa-paperclip" aria-hidden="true"></i> Update Backtest </a>
+            <div data-bind="visible:QCF.Views.AttachBacktest.UpdatingBacktest()" style="padding-top: 15px">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="inputPassword" class="col-sm-2 control-label">Project</label>
+                        <div class="col-sm-10">
+                            <select data-bind="options:QCF.Views.AttachBacktest.ProjectsAvailable,optionsText:'name', value:QCF.Views.AttachBacktest.SelectedProject,optionsCaption:QCF.Views.AttachBacktest.ProjectMessage()" class="form-control"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPassword" class="col-sm-2 control-label">Backtest</label>
+                        <div class="col-sm-10">
+                            <select data-bind="options:QCF.Views.AttachBacktest.BacktestsAvailable,optionsText:'name',value:QCF.Views.AttachBacktest.SelectedBacktest,optionsCaption:QCF.Views.AttachBacktest.BacktestMessage(), attr:{ disabled:!QCF.Views.AttachBacktest.BacktestSelectionEnabled()}" class="form-control"></select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="row" data-bind="visible:QCF.Views.AttachBacktest.UpdatingBacktest()">
+                <div class="col-xs-12" data-bind="with:QCF.Views.AttachBacktest.SelectedBacktest(),visible:QCF.Views.AttachBacktest.SelectedBacktest() !== null">
+                    <hr style="margin-top:0;">
+                    <div data-bind="template: { name: 'ko-template-backtest-embedd', data: { 'backtestId': QCF.Views.AttachBacktest.SelectedBacktest().id }}"></div>
+                </div>
+            </div>
+            <hr style="margin-top:0;">
+            <br>
+            <div class="edit-comment-btns">
+
+            </div>
+            <button class="btn btn-default pull-left btn-primary comment-discussion-commands" style="color: #8f9ca3 !important;border-color: #d9e1eb;background: white;" onclick="ControllersUpdate.Reset();">
+                Cancel
+            </button>
+            <button class="btn btn-default btn-primary pull-right comment-discussion-commands" onclick="ControllersUpdate.SaveComment();" data-bind="text:QCF.Controllers.Update.UpdateText(),visible: oComment.Editable()"></button>
+            <br> <br>
+        </div>
+
+        <div class="col-xs-12 content-box" data-bind="with:oComment.BacktestId,visible:oComment.BacktestId !== null">
+            <hr>
+            <div data-bind="template: { name: 'ko-template-backtest-thumbnail', data: {'backtestId': oComment.BacktestId} }"></div>
+        </div>
+
+        <div class="col-xs-12 content-box" data-bind="with:oComment.NotebookUrl,visible:oComment.NotebookUrl !== null">
+            <hr>
+            <ul class="nav nav-tabs" style="margin-top: 0; background: #efefef;height: 40px;">
+                <li class="active" style="margin-left:0">
+                    <a href="#" data-toggle="tab" style="line-height: 18px;">
+                        <i class="fa fa-book hidden-xl" aria-hidden="true"></i>
+                        <span class="hidden-xs hidden-sm hidden-md hidden-lg visible-xl"><i class="fa fa-book" aria-hidden="true"></i> Notebook</span>
+                    </a>
+                </li>
+                <li style="float:right">
+                    <iframe src="" loading="lazy" style="height: 26px;margin-top:6px;margin-right:33px;" allowtransparency="true" frameborder="0" scrolling="0" data-bind="attr:{src:'https://www.quantconnect.com/research/cloneButton/' + oComment.Notebook}"></iframe>
+                </li>
+            </ul>
+            <div data-bind="template: { name: 'ko-template-backtest-thumbnail', data: {'backtestId': oComment.NotebookUrl} }"></div>
+        </div>
+
+        <div class="admin-buttons" aria-label="">
+            <button type="button" class="btn btn-xs btn-aa text-bold" data-bind="click:function(){ControllersComments.AcceptAnswer(oComment);},visible:oComment.CanBeAcceptedResponse">
+                Accept Answer
+            </button>
+        </div>
+
+        <div class="col-xs-12 content-box disclaimer-box" data-bind="visible:(oComment.CreatorBadge.sType == 'team' || oComment.CreatorBadge.sType == 'admin')" style="color: gray;">
+            <button class="btn btn-default btn-xs" onclick="$(this).parent().toggleClass('open-disclaimer')">
+                Disclaimer
+                <i class="fa fa-angle-down" aria-hidden="true"></i><i class="fa fa-angle-up" aria-hidden="true"></i>
+            </button>
+            <p class="disclaimer">The material on this website is provided for informational purposes only and does not constitute an offer to sell, a solicitation to buy, or a recommendation or endorsement for any security or strategy, nor does it constitute an offer to provide investment advisory services by QuantConnect. In addition, the material offers no opinion with respect to the suitability of any security or specific investment. QuantConnect makes no guarantees as to the accuracy or completeness of the views expressed in the website. The views are subject to change, and may have become unreliable for various reasons, including changes in market conditions or economic circumstances. All investments involve risk, including loss of principal. You should consult with an investment professional before making any investment decisions.</p>
+        </div>
+        <div class="content-box footer-area">
+            <div class="flex">
+                <div class="reply" data-bind="let:{isClosed : QCF.Models.Discussions.OpenDiscussion().IsClosed}">
+                    <span data-bind="
+                    click: function() {  ControllersComments.ReplyToComment(oComment); },
+                    css: { clickable: isClosed },
+                    style: { color: isClosed ? '#8f9ca3' : '#0072bc', 'font-weight': 500, 'cursor': 'pointer' },
+                    attr: { title: isClosed ? 'Discussion closed' : '' }
+                    ">
+                        Reply
+                    </span>
+                </div>
+                <div class="vote">
+                    <img src="https://cdn.quantconnect.com/i/tu/upvote-icon.svg" width="13" height="11">
+                    <span class="clickable" style="font-weight: 500" data-bind="click:function(){ControllersComments.ToggleUpVote(oComment)}, text: oComment.UpVoted() ? 'Upvoted' : 'Upvote' "></span>
+                </div>
+            </div>
+            <div class="up-voters">
+                <!-- ko foreach: {data:oComment.Voters(), as: 'voter' } -->
+                <a href="#" data-bind="attr:{href:voter.profileUrl,'data-user-profile':voter.publicId}" class="profile-popover thumb clickable" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank" style="padding: 0;width: 15px;display: inline-block;"><img data-bind="attr: {src: voter.profile}"></a>
+                <!-- /ko -->
+                <!-- ko if: oComment.Votes() == 1 -->
+                <span><span data-bind="text: oComment.Votes()"></span> person upvoted this</span>
+                <!-- /ko -->
+                <!-- ko if: oComment.Votes() > 1 -->
+                <span><span data-bind="text: oComment.Votes()"></span> people upvoted this</span>
+                <!-- /ko -->
+            </div>
+            <div class="reply-area">
+                <!-- ko foreach: {data:oComment.Replies, as: 'reply' } -->
+                <div class="reply">
+                    <div class="user">
+                        <a href="#" data-bind="attr:{href:reply.CreatorProfileUrl,'data-user-profile':reply.CreatorBadge.publicId}" class="profile-popover thumb clickable" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank" style="width: 26px;">
+                            <span data-bind="style:{ 'background-image':reply.CreatorProfileStyle}" style="display: inline-block;height: 26px;width: 26px;background-size: cover;border-radius: 50%;"></span>
+                        </a>
+                    </div>
+                    <div class="text-wrap">
+                        <div class="user-name">
+                            <a data-bind="text:reply.CreatorBadge.sUserName,attr:{href:reply.CreatorProfileUrl}"></a>
+                            <div class="badge-area reply-meta">
+                                <!-- ko if : reply.CreatorBadge.preferredOrganization != reply.CreatorName -->
+                                <span class="organization" data-bind="html: reply.CreatorBadge.preferredOrganization"></span><span> |</span>
+                                <!-- /ko -->
+                                <span data-bind="text:reply.UpdatedHumanReadable"></span>
+                            </div>
+                        </div>
+                        <div data-bind="html: reply.Content"></div>
+                        <div class="vote">
+                            <img src="https://cdn.quantconnect.com/i/tu/upvote-icon.svg" width="13" height="11">
+                            <span class="clickable" style="font-weight: 500" data-bind="style:{ color:reply.UpVoted() ? '#8f9ca3' : ''},click:function(){ControllersComments.ToggleUpVote(reply)}, text: reply.UpVoted() ? 'Upvoted' : 'Upvote' "></span>
+                        </div>
+                        <div class="up-voters">
+                            <!-- ko foreach: {data:reply.Voters(), as: 'voter' } -->
+                            <a href="#" data-bind="attr:{href:voter.profileUrl,'data-user-profile':voter.publicId}" class="profile-popover" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank" style="padding: 0;width: 15px;display: inline-block;"><img data-bind="attr:{src:voter.profile}"></a>
+                            <!-- /ko -->
+                            <!-- ko if: reply.Votes() == 1 -->
+                            <span><span data-bind="text: reply.Votes()"></span> person upvoted this</span>
+                            <!-- /ko -->
+                            <!-- ko if: reply.Votes() > 1 -->
+                            <span><span data-bind="text: reply.Votes()"></span> people upvoted this</span>
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <!-- /ko -->
+                <div class="inline-reply" data-bind="visible: oComment.Replying()">
+                    <img class="user-profile-image" src="" alt="Profile Image" />
+                    <div class="inline-reply-form">
+                        <input type="text" data-bind="attr:{ id:'comment-reply-' +oComment.Id } " />
+                        <button class="btn btn-default btn-primary comment-reply pull-right" type="submit" data-bind="click:function(data){  ControllersComments.PublishNewCommentReply( oComment ); }">
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <meta itemprop="datePublished" content="" data-bind="attr:{content: oComment.Date}" />
+        <div  itemscope itemtype="http://schema.org/Person"  itemprop="author" >
+            <meta itemprop="name" content="" data-bind="attr:{content: oComment.CreatorBadge.sUserName}" />
+            <meta itemprop="url" content="" data-bind="attr:{content: oComment.CreatorProfileUrl}" />
+        </div>
+    </div>
+    <!-- /ko -->
+    <!-- /ko -->
+    <div class="col-xs-12 ko-only" style="margin: 25px 0;text-align: center;" data-bind="visible:discussion.Comments.Loading()">
+        Loading...
+    </div>
+</div>
+
+<nav class="no-ko-only">
+    <ul class="pagination">
+        <li class="active"><a href="https://www.quantconnect.com/research/20966/filing-language-stability-as-a-selection-signal/p1"><span>1</span></a></li>
+<li class=""><a href="https://www.quantconnect.com/research/20966/filing-language-stability-as-a-selection-signal/p0"><span>0</span></a></li>
+    </ul>
+</nav>
+
+
+<div class="ko-only" data-bind="let:{discussion:QCF.Models.Discussions.OpenDiscussion()}" style="display: inline-block;width:100%;padding:15px;text-align:center;">
+    <!-- ko with: discussion.Comments.Collection() -->
+    <!-- ko ifnot: discussion.Comments.Loading() -->
+    <!-- ko if: discussion.Comments.page < discussion.Pages -->
+    <a href="javascripts:void(0)" data-bind="click:function(){ discussion.LoadComments(discussion.Comments.page + 1);}">
+        Load More<br>
+        <img src="https://cdn.quantconnect.com/i/tu/upvote-icon.svg" width="13" height="11" style="transform: rotate(180deg);" />
+    </a>
+    <!-- /ko -->
+    <!-- /ko -->
+    <!-- /ko -->
+</div>
+
+<div class="row ko-only" data-bind="visible:window.login">
+            <div class="col-xs-12">
+            <p style="margin-bottom: 100px; padding: 25px; border: solid 1px #e4e7eb; border-radius: 3px;">
+                To unlock posting to the community forums please complete at least 30% of Boot Camp.<br> You can
+                <a href="/learning" target="_blank">continue your Boot Camp training progress</a> from the terminal. We
+                hope to see you in the community soon!
+            </p>
+        </div>
+    </div>                </div>
+                <div id="comments-bottom" style="margin-top: -500px"></div>
+            </div>
+
+                    </div>
+    </div>
+    <!-- ko with:QCF.Models.Discussions.OpenDiscussion() -->
+    <div class="hidden-xs hidden-sm col-md-4 col-lg-4 col-xl-4 menu-area" data-bind="let:{discussion:QCF.Models.Discussions.OpenDiscussion()}">
+        <!-- ko if:discussion.Competition !== null -->
+        <div style="display: none;" data-bind="visible: discussion.Competition.type == 'pro' ">
+            <button class="new-discussion-btn" data-bind="enable: ControllersDiscussions.CanShowCompetitionElement(), text: QCF.Views.CompetitionPro.OnGoingCompetitionId === discussion.Competition.competition ? 'Contact': 'Competition Closed' , click: function(){ControllersCompetition.goToAllocate(discussion)}" role="button"></button>
+            <hr>
+            <div>
+                <h5 style="margin-bottom: 11px;">Allocate to this Strategy</h5>
+                <p style="font-size: 13px; text-align:left">Institutional clients can contact the author and allocate capital to this strategy.</p>
+                <a href="https://www.quantconnect.com/appointments" target="_blank" style="font-size:13px">Learn More</a>
+                <hr>
+            </div>
+        </div>
+        
+        <div class="entry-org-section">
+            <h5 style="margin-bottom: 15px;">Organization</h5>
+            <div class="club-logos">
+                <img class="uni-logo" src="https://cdn.quantconnect.com/i/tu/duke-entry-logo.svg" data-bind="attr:{src:discussion.Competition.detailedLogo,alt:discussion.Competition.name}">
+            </div>
+            <div class="club-decscription" data-bind="visible: ControllersDiscussions.CanShowCompetitionElement()" style="margin-top: 15px;">
+                <p data-bind="html:discussion.Competition.bio"></p>
+                <a data-bind="attr:{href:discussion.Competition.url},visible: discussion.Competition.url !== null" target="_blank" rel="nofollow">Organization Website</a>
+            </div>
+            <hr>
+
+            <!-- ko if : discussion.Competition.team.length > 0 && discussion.Competition.type != 'pro' -->
+            <h5 style="margin-bottom: 15px;">Team</h5>
+            <div class="org-team" data-bind="foreach:{ data:discussion.Competition.team, as :'member'}">
+                <div class="member-row" data-bind="visible: $index() < 10">
+                    <div class="member-photo profile-popover" data-bind="attr:{ 'data-user-profile': member.publicId }" role="button" data-toggle="popover" data-trigger="hover" data-container="body">
+                        <img data-bind="attr:{src:'https://cdn.quantconnect.com/web/i/users/thumbnail/100/' + member.profile, alt: member.name}">
+                    </div>
+                    <p class="member-name"><a data-bind="attr:{ href: '/u/' + member.publicId}" target="_blank"><span data-bind="html:member.name"></span></a><span class="member-role" data-bind="html: member.shortDescription"></span></p>
+                    <a class="in-icon" title="LinkedIn Profile" data-bind="attr:{ href:member.linkedin, ping: ViewsCompetitions.GetLinkedInPingUrl(member) },visible:member.linkedin!== null" target="_blank" rel="nofollow"></a>
+                </div>
+            </div>
+            <a href="javascript:void(0)" data-bind="visible: discussion.Competition.team.length > 10" onclick="$(this).parent().find('.member-row').show();$(this).hide();">Show More</a>
+            <hr>
+            <!-- /ko -->
+        </div>
+
+        <div class="clone-section" data-bind="visible: QCF.Models.Discussions.DataProvider().GetName() == 'league' ">
+            <h5 style="margin-bottom: 15px;">Clone Strategy</h5>
+            <p>Copy this strategy code to your QuantConnect account and deploy it live with your brokerage.</p>
+            <a class="clone-link" data-bind="attr: { href: QCF.Views.Competition.GetCloneUrl(discussion)}" target="_blank">Clone<span class="clone-count" data-bind="text:discussion.Competition.clones"></span></a>
+            <hr>
+        </div>
+
+        <div class="previous-rank-section" data-bind="visible: (discussion.Competition.previousRanking?.length ?? 0) > 0">
+            <h5 style="margin-bottom: 15px;">Previous Ranking</h5>
+            <p>Browse strategies and organization entries from previous quarter's competitions.</p>
+            <div data-bind="foreach:{data:discussion.Competition.previousRanking, as: 'rank'}">
+                <div class="rank-row">
+                    <p data-bind="text: rank.competition" style="text-transform: uppercase;margin-bottom: 0;line-height: 25px;"></p>
+                    <span class="rank" data-bind="attr:{ class: 'rank place-' + rank.place }, text: rank.place"></span>
+                </div>
+            </div>
+            <hr>
+        </div>
+        <!-- end of competition widgets -->
+        <!-- /ko -->
+
+        <div class="announcement-author">
+            <div class="announcement-author-image">
+                <span><a href="#" data-bind="style:{ 'background-image':discussion.CreatorProfileStyle}, attr:{'data-user-profile':discussion.CreatorBadge.publicId, href:CreatorProfileUrl }" class="profile-popover thumb clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body"> </a></span>
+            </div>
+            <div class="announcement-author-details">
+                <span style="color: #979BA3;">Author: </span>
+                <span><a style="width: auto;height: auto;padding: 0;" data-bind="html:$data.CreatorName,attr:{href:$data.CreatorProfileUrl,'data-user-profile':$data.CreatorBadge.publicId}" class="commenter-name profile-popover" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a></span>
+                <p><span style="color: #979BA3" data-bind="text:discussion.UpdatedHumanReadablePublished"></span></p>
+            </div>
+        </div>
+        <hr class="announcement-author-hr">
+
+        <div class="research-sections-menu">
+            <h5 style="margin: 18px 0 15px">IN THIS RESEARCH</h5>
+            <ul data-bind="foreach:{ data:$data.Sections(), as : 'section' }">
+                <li class="research-section-link"><a data-bind="text:section.name, attr:{ href:'#' + section.id }"></a></li>
+            </ul>
+        </div>
+        <hr class="research-sections-menu">
+        <!-- ko with:discussion?.Participants()?.length > 0 -->
+        <div class="participants-section-menu">
+            <h5 style="margin-bottom: 15px">PARTICIPANTS</h5>
+            <!-- ko foreach:{data:discussion.Participants().slice(0, 10), as:'user'} -->
+            <div class="comment-creater">
+                <a href="#" data-bind="attr:{'data-user-profile':user.publicId, href:user.profileUrl }" class="profile-popover thumb clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body"><img data-bind="attr: {src: user.sUserImage}"></a>
+                <a href="#" data-bind="attr:{ href:user.profileUrl }" data-toggle="popover" target="_blank" data-trigger="hover" data-container="body">
+                    <span data-bind="html:user.sUserName"></span>
+                </a>
+            </div>
+            <!-- /ko -->
+        </div>
+        <hr class="participants-section-menu">
+        <!-- /ko -->
+
+        <!-- ko if:discussion?.Awards()?.length > 0 -->
+        <div class="discussion-awards">
+            <h5 style="margin-bottom: 15px">Discussion Awards</h5>
+            <span class="description award-over-wrap" data-bind="visible: ControllersDiscussions.CountAwards(discussion) > 0">
+                <span class="award-wrapper inner-thread ">
+                    <!-- ko template:{name:'template-award-small-icon-list-no-num',foreach:discussion.Awards(),as:'award'} -->
+                    <!-- /ko -->
+                </span>
+            </span>
+        </div>
+        <hr>
+        <!-- /ko -->
+
+        
+        <div class="research-share-menu">
+            <h5 class="research-share-title" style="margin-bottom: 15px">SHARE RESEARCH</h5>
+            <h5 class="discussion-share-title" style="margin-bottom: 15px">SHARE DISCUSSION</h5>
+            <h5 class="announcement-share-title" style="margin-bottom: 15px">SHARE ARTICLE</h5>
+            <h5 class="competition-share-title" style="margin-bottom: 15px">SHARE</h5>
+            <p>
+                <a data-bind="attr:{href:ControllersSharing.DiscussionToFacebook(discussion)}" target="_blank"><img src="https://cdn.quantconnect.com/i/tu/fb-share.svg" /></a>
+                <a data-bind="attr:{href:ControllersSharing.DiscussionToTwitter(discussion)}" target="_blank"><img src="https://cdn.quantconnect.com/i/tu/share-x.svg" /></a>
+                <a data-bind="attr:{href:ControllersSharing.DiscussionToLinkedIN(discussion)}" target="_blank"><img src="https://cdn.quantconnect.com/i/tu/in-share.svg" /></a>
+            </p>
+        </div>
+        <hr class="research-share-menu">
+        <div class="action-buttons">
+            <h5 style="margin-bottom: 15px">Actions</h5>
+            <a class="btn subscribe-button strategy-explorer-btn" href="#" data-bind="visible: discussion.StrategyProjectId !== null,attr:{href: '/explore/' +   discussion.StrategyProjectId }">
+                <img src="https://cdn.quantconnect.com/i/tu/forum-strategy-explorer-icon.svg" valign="middle">
+                <span>View in Strategy Explorer</span>
+            </a>
+
+            <a href="javascript:void(0)" class="btn subscribe-button award-discussion-btn" data-bind="visible: ControllersDiscussions.CanReceiveAward(discussion),click: function() { ViewsAwardModal.AwardDiscussion(discussion); }">
+                <img src="https://cdn.quantconnect.com/i/tu/award-discussion-icon.svg" valign="middle">
+                <span>Award Discussion</span>
+            </a>
+
+            <a class="btn subscribe-button bookmark-discussion-btn" href="#" data-bind="click:ControllersSubscriptions.ToggleDiscussion">
+                <div valign="middle" class="clickable img-wrap" data-bind="css:{'share-fill':QCF.Models.Metadata.SubscribeToDiscussion()}">
+                    <img src="https://cdn.quantconnect.com/i/tu/notifications-on.svg" />
+                    <img src="https://cdn.quantconnect.com/i/tu/forum-bookmark-added.svg" />
+                </div>
+                <span data-bind="text: QCF.Models.Metadata.SubscribeToDiscussion() ? 'Remove Bookmark': 'Add Bookmark' "></span>
+            </a>
+
+            <a class="btn subscribe-button download-research-btn" href="#"
+                data-bind="click: function() { ControllersDiscussions.printResearch(discussion) }, visible: discussion.IsResearch()">
+                <img src="https://cdn.quantconnect.com/i/tu/print-research.svg" valign="middle">
+                <span>Print Research</span>
+            </a>
+
+            <a class="btn subscribe-button upvote-discussion-btn" href="javascript:void(0)" data-bind="click:function(){ControllersDiscussions.ToggleUpVote(discussion);}">
+                <div valign="middle" class="clickable img-wrap" data-bind="css:{'share-fill':discussion.UpVoted()}">
+                    <img src="https://cdn.quantconnect.com/i/tu/sidebar-uptvote-icon.svg" width="14" height="12" valign="middle" style="margin-left:-2px;">
+                    <img src="https://cdn.quantconnect.com/i/tu/forum-upvoted.svg" width="14" height="12" valign="middle" style="margin-left:-2px;">
+                </div>
+                <span data-bind="text:discussion.UpVoted()?'Upvoted':'Upvote'" style="margin-left:4px;"></span>
+            </a>
+
+            <a href="javascript:void(0)" class="btn subscribe-button" onclick="$('html, body').animate({scrollTop: $('#dicussion-comments-start').offset().top - 80}, 300);">
+                <svg width="10px" height="12px" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#0072bc" stroke-width="0.9600000000000002">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"></g>
+                    <g id="SVGRepo_iconCarrier">
+                        <g id="style=stroke">
+                            <g id="comment">
+                                <path id="vector (Stroke)" fill-rule="evenodd" clip-rule="evenodd" d="M1.23621 11.1034C1.23621 5.36133 6.07454 0.763672 11.9862 0.763671C14.2426 0.763671 16.3321 1.4227 18.073 2.58609C20.8865 4.4319 22.7362 7.55126 22.7362 11.1034C22.7362 14.2061 21.3193 16.9815 19.0724 18.8609C19.1676 18.9782 19.2691 19.1076 19.371 19.2448C19.5794 19.5251 19.8007 19.8529 19.9732 20.1857C20.1354 20.4987 20.3019 20.9046 20.3019 21.3173C20.3019 22.0126 19.8872 22.5507 19.4096 22.8608C18.9306 23.1718 18.303 23.3178 17.6892 23.1894C16.4767 22.9358 14.9799 22.4797 13.8035 22.0941C13.2115 21.9001 12.6936 21.7216 12.3236 21.5916C12.1385 21.5265 11.9902 21.4735 11.8878 21.4367L11.8522 21.4238C8.48271 21.3843 5.46883 19.8566 3.55066 17.4735C2.10188 15.7237 1.23621 13.5057 1.23621 11.1034ZM12.2448 19.9706L12.2538 19.9739L12.2827 19.9844L12.3959 20.0254C12.4951 20.0611 12.6398 20.1128 12.8209 20.1764C13.1834 20.3038 13.6909 20.4787 14.2706 20.6687C15.4375 21.0511 16.869 21.4854 17.9963 21.7212C18.1926 21.7623 18.4196 21.7152 18.5926 21.6028C18.767 21.4896 18.8019 21.3739 18.8019 21.3173C18.8019 21.2726 18.7727 21.1292 18.6413 20.8757C18.5202 20.6419 18.3501 20.3858 18.1671 20.1394C17.986 19.8957 17.8031 19.6762 17.6647 19.5169C17.5958 19.4376 17.5388 19.3742 17.4996 19.3313C17.48 19.3098 17.4649 19.2936 17.4551 19.283L17.4444 19.2716L17.4422 19.2693C17.2927 19.1117 17.2188 18.897 17.2397 18.6808C17.2606 18.4646 17.3742 18.2681 17.5511 18.142C19.803 16.5383 21.2362 13.9796 21.2362 11.1034C21.2362 8.08942 19.669 5.42603 17.2477 3.83866L17.242 3.8349C15.7471 2.83523 13.9468 2.26367 11.9862 2.26367C6.84332 2.26367 2.73621 6.24818 2.73621 11.1034C2.73621 13.1396 3.46909 15.0246 4.70907 16.5205L4.71623 16.5292C6.37286 18.5897 9.01179 19.9246 11.9862 19.9246C12.0744 19.9246 12.162 19.9402 12.2448 19.9706C12.2447 19.9706 12.2448 19.9706 12.2448 19.9706Z" fill="#0072bc"></path>
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+                <span>Comments</span>
+            </a>
+        </div>
+    </div>
+    <!-- /ko -->
+</div>
+
+<script type="text/html" id="research-paywall-template">
+    <div class="research-paywall">
+        <div class="paywall-content">
+            <img src="https://cdn.quantconnect.com/i/tu/research-paywall-img.webp" alt="Research" width="100" height="100">
+            <h2>Subscribe Today to Unlock the Latest Quant Research Content</h2>
+            <p>Subscribe to any plan to access new research publications from the QuantConnect Team and Community.</p>
+            <a href="/pricing" class="btn btn-primary">Subscribe</a>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="discussion-content-default">
+    <div class="extra-menu clickable" data-bind="click:function(){ discussion.toggleDotsMenu(); }">
+        <img src="https://cdn.quantconnect.com/i/tu/dots.svg" width="20px">
+        <div class="discussion-extra-btns" style="display: none;">
+            <div class="arrow"></div>
+            <a href="https://www.quantconnect.com/forum/discussion/15237/head-and-shoulders-ta-pattern-detection/" target="_blank" data-bind="attr:{href:discussion.Href }" onclick="event.stopPropagation()" title="Link">Permalink</a><br>
+            <span class="clickable" data-bind="click:function(){ discussion.Update(); }, visible: discussion.Editable()">Edit</span>
+                    </div>
+    </div>
+
+    <div class="content" data-bind="html:Content" itemprop="articleBody"></div>
+    <div class="author">
+        <p><span>Author</span></p>
+        <p><a class="profile-popover" style="width: auto;height: auto;padding: 0;" data-bind="html:$data.CreatorName,attr:{href:$data.CreatorProfileUrl,'data-user-profile':$data.CreatorBadge.publicId}" class="commenter-name profile-popover" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a></p>
+        <p><span data-bind="text:discussion.UpdatedHumanReadablePublished"></span></p>
+    </div>
+</script>
+
+<script type="text/html" id="discussion-content-competition">
+    <!--  ko if: discussion.Competition !== null -->
+<!--  ko if: discussion.Competition.embeddedProjectHtml -->
+<div class="content competition-embeded-project" data-bind="html: discussion.Competition.embeddedProjectHtml"></div>
+<!-- /ko -->
+<!-- ko if: discussion.Competition.type == 'pro' -->
+<div style="background-color: #f3f5f8; border-radius: 3px; padding: 10px 15px;margin-bottom: 15px">
+    This strategy is deployed to <span data-bind="text:discussion.Competition.brokerage"></span>
+    using <span data-bind="text:discussion.Competition.environment == 'live' ? 'live' : 'paper' "></span> capital.
+</div>
+<!-- /ko -->
+<div class="extra-menu clickable" data-bind="visible:discussion.Content, click: function(){ discussion.toggleDotsMenu(); }" style="position:relative;top:-5px;text-align:right;">
+    <img src="https://cdn.quantconnect.com/i/tu/dots.svg" width="20px">
+    <div class="discussion-extra-btns" style="display: none;">
+        <div class="arrow"></div>
+        <a href="https://www.quantconnect.com/forum/discussion/15237/head-and-shoulders-ta-pattern-detection/" target="_blank" data-bind="attr:{href:discussion.Href }" onclick="event.stopPropagation()" title="Link">Permalink</a><br>
+        <span class="clickable" data-bind="click:function(){ discussion.Update(); }, visible: discussion.Editable()">Edit</span>
+            </div>
+</div>
+<div class="content competition-wrapper" data-bind="visible:discussion.Content, html:discussion.Content" itemprop="articleBody"></div>
+
+<div class="author">
+    <p><span>Author</span></p>
+    <p><a class="profile-popover" style="width: auto;height: auto;padding: 0;" data-bind="html:$data.CreatorName,attr:{href:$data.CreatorProfileUrl,'data-user-profile':$data.CreatorBadge.publicId}" class="commenter-name profile-popover" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a></p>
+    <p><span data-bind="text:discussion.UpdatedHumanReadablePublished"></span></p>
+</div>
+<!-- /ko -->
+</script>
+
+<script type="text/html" id="discussion-tittle-header-default">
+    <a href="#" data-bind="style:{ 'background-image':discussion.CreatorProfileStyle}, attr:{'data-user-profile':discussion.CreatorBadge.publicId, href:CreatorProfileUrl }" class="profile-popover thumb clickable" data-toggle="popover" role="button" target="_blank" data-trigger="hover" data-container="body"> </a>
+    <div class="name">
+        <p class="discussion-title" data-bind="html: discussion.Title"></p>
+        <div class="badge-area comment-meta">
+            <p style="color: #979BA3;">
+                <span><a href="#" style="color: #0072bc;" data-bind="html:discussion.CreatorName,attr:{href:discussion.CreatorProfileUrl,'data-user-profile':discussion.CreatorBadge.publicId}" class="commenter-name profile-popover" role="button" data-toggle="popover" data-trigger="hover" data-container="body" target="_blank"></a></span> |
+                <!-- ko if : discussion.CreatorBadge.preferredOrganization != discussion.CreatorName -->
+                <span class="organization" data-bind="html: discussion.CreatorBadge.preferredOrganization"></span> |
+                <!-- /ko -->
+                <span data-bind="text:discussion.UpdatedHumanReadablePublished"></span>
+            </p>
+        </div>
+        <div class="html:discussion.Description()"></div>
+    </div>
+</script>
+
+<script type="text/html" id="discussion-tittle-header-competition">
+    <img data-bind="attr:{src:discussion.Competition?.squareLogo, alt: discussion.Competition?.name}" class="thumb">
+    <div class="name">
+        <p class="discussion-title" data-bind="html: discussion.Title"></p>
+        <div class="badge-area comment-meta" data-bind="visible: ControllersDiscussions.CanShowCompetitionElement()">
+            <p>
+                <span><a href="#" style="color: #0072bc;" data-bind="html:discussion.Competition?.name,attr:{href:discussion.Competition?.url}" class="commenter-name" target="_blank"></a></span>
+            </p>
+        </div>
+    </div>
+    <span data-bind="text:'#'+discussion.Competition?.place,attr:{class:'rank place-'+discussion.Competition?.place},visible:discussion.Competition?.place !== null" style="height:30px;width:30px;"></span>
+</script>
+
+<div class="popover-award" style="display: none;">
+    <div id="awardPopoverTable">
+        <div class="popover-award-card">
+            <div class="popover-award-body">
+                <span style="margin-right: 30px;">
+                    <img class="popover-award-img" alt="award-icon" width="62px;" src="">
+                </span>
+                <div class="popover-award-info">
+                    <p class="popover-award-name"></p>
+                    <p class="popover-award-short-description"></p>
+                    <p class="popover-award-explain">
+                        <a href="https://www.quantconnect.com/blog/recognizing-community-excellence/" target="_blank">
+                            What is an Award? </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><script type="application/json" id="jsonCommentsResult">
+    {"comments":[],"pages":0,"page":1,"sort":null,"success":true,"discussionId":20966}</script>    </div>
+    <div class="col-xs-12 col-md-12 col-lg-10 col-lg-offset-1 col-xl-8 col-xl-offset-2 main-forum" style="display: none;" data-bind="visible:QCF.Views.Display.NewDiscussion()">
+        <div class="row categories" data-bind="visible: QCF.Models.Discussions.DataProvider().GetName() !='tagged'" style="height: 76px; margin-right: 0; margin-bottom: 15px;">
+    <div class="col-xs-12 col-sm-6 col-md-10 nav-row">
+        <div class="nav-menu">
+            <a class="" href="#research" role="button" data-bind="click:ControllersDiscussions.SetResearchDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='research'}">Research</a>
+            <a class="" href="#announcements" role="button" data-bind="click:ControllersDiscussions.SetAnnouncementsDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='announcements'}">Announcements</a>
+            <a class="" href="#lean" role="button" data-bind="click:ControllersDiscussions.SetLeanDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='lean'}">Lean</a>
+        </div>
+        <div class="nav-menu" style="float: right;">
+            <a class="" href="#newest" role="button" data-bind="click:ControllersDiscussions.SetNewestDatasource,css:{selected: QCF.Models.Discussions.DataProvider().GetName()=='newest'}">
+                <span class="short-text" style="line-height: 6px;">COMMUNITY</span>
+                <span class="long-text" style="line-height: 6px;">COMMUNITY FEED</span>
+            </a>
+                        <span style="line-height: 17px;font-size: 10px;margin-right: 10px;margin-left: 10px;">|</span>
+            <button id="more-menu-3" class="more-menu">
+                <div class="read-toggle-dots clickable"></div>
+                <div class="menu-content" style="display: none;">
+                    <a href="/datasets/issues">Data Issues</a>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+<hr class="full-width-hr" />
+<div class="row">
+    </div>
+
+<form id="contactForm" action="/processContact" class="form-horizontal" role="form" method="post" style="visibility: hidden;">
+    <input id="grecaptcha" type="hidden" name="token" value="">
+    <div class="form-group">
+        <div class="col-lg-12">
+            <input type="email" class="form-control required" id="contactEmail" placeholder="Your Email Address" name="contactEmail" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-lg-12">
+            <textarea class="form-control required" rows="8" id="contactMessage" name="contactMessage" placeholder="Your Message"></textarea>
+        </div>
+    </div>
+    <button id="RedirectToSupport" style="float: right;margin-top: 5px;" type="submit" class="btn btn-gold">
+        Send Message
+    </button>
+</form>
+
+<div style="height: 100px;">&nbsp;</div>    </div>
+
+    <!-- Loading dummy  -->
+    <div class="col-xs-12 col-md-12 col-lg-10 col-lg-offset-1 col-xl-8 col-xl-offset-2 main-forum" style="min-height: 100vh;" data-bind="visible:(!QCF.Views.Display.Discussions() && !QCF.Views.Display.Discussion() && !QCF.Views.Display.NewDiscussion())">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8" style="min-height: 99px;">&nbsp;</div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 content-area">
+                <div class="col-xs-12 discussions">
+                    <div class="row discussion discussion-context">
+                        <div class="col-xs-12 col-md-12 col-lg-12 col-xl-12 user-profile"></div>
+                        <div class="col-xs-12 content-box"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 discussion-comments-metadata"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-4 col-xl-4 menu-area">
+                <div class="col-xs-12 menu"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="template-award-small-icon-list">
+    <div class="inner-wrap">
+        <span data-bind="attr:{'award-id':award.id}" class="award-popover-pending award" role="button" data-trigger="hover" data-container="body">
+            <img data-bind="attr:{src:award.smallIcon}" class="award-img" alt="" src="">
+        </span> <span data-bind="text:award.quantity,visible:award.quantity > 1" class="awards-count"></span>
+    </div>
+</script>
+
+<script type="text/html" id="template-award-small-icon-list-no-num">
+    <span data-bind="attr:{'award-id':award.id}" class="award-popover-pending thumb" role="button" data-trigger="hover" data-container="body">
+        <img data-bind="attr:{src:award.smallIcon}" class="award-img-pill" alt="" src="">
+    </span>
+</script>
+
+<script type="text/html" id="ko-template-backtest-embedd">
+    <div class="qc-embed-frame" data-bind="with: $data" style="display: inline-block; position: relative; width: 100%; min-height: 100px; min-width: 300px;">
+        <div class="qc-embed-dummy"></div>
+        <div class="qc-embed-element" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;">
+            <iframe class="qc-embed-backtest" loading="lazy" style="overflow:hidden;max-height: 100vw;" scrolling="no" height="100%" width="100%" data-bind="attr: { src: 'https://www.quantconnect.com/terminal/cache/embedded_backtest_' + $data.backtestId + '.html' }"></iframe>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="ko-template-backtest-thumbnail">
+    <div class="qc-embed-frame" data-bind="with: $data" style="display: inline-block; position: relative; width: 100%; min-height: 100px; min-width: 300px;">
+        <a data-bind="attr: { href: 'https://www.quantconnect.cloud/backtest/' + $data.backtestId }" target="_blank"> <img data-bind="attr: { src: 'https://www.quantconnect.cloud/backtest/thumbnail/' + $data.backtestId + '/rectangle.png' }" alt="Backtest Thumbnail" style="max-width:100%; height:auto;"> </a>
+    </div>
+</script>
+
+<script type="text" id="textBaseUrl">//www.quantconnect.com</script>
+<script type="text" id="textUrlSubFolder">/forum</script>
+<script type="application/json" id="jsonDiscussionsData">
+    []</script>
+<script type="application/json" id="jsonMetaData">
+    {"tags":[{"id":1,"name":"forex","count":682},{"id":2,"name":"equities","count":2015},{"id":3,"name":"futures","count":521},{"id":4,"name":"options","count":670},{"id":5,"name":"seeking help","count":3390},{"id":6,"name":"universes","count":800},{"id":7,"name":"indicators","count":970},{"id":8,"name":"strategy","count":1200},{"id":9,"name":"using data","count":1386},{"id":10,"name":"rest api","count":87}],"numUsersOnline":1531,"usersOnline":[{"id":102366,"public_id":"mislav-sagovac","name":"Mislav Sagovac","time":"1790899802","profileimage":"d301f3f12cf28731631198133.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/d301f3f12cf28731631198133.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/mislav-sagovac"},{"id":373512,"public_id":"michael-strobel","name":"Michael Strobel","time":"1790899796","profileimage":"56ebcedc87b65301749577738.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/56ebcedc87b65301749577738.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/michael-strobel"},{"id":346276,"public_id":"lorenzo_18","name":"Lorenzo","time":"1790899795","profileimage":"378eb622a853b641738588847.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/378eb622a853b641738588847.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/lorenzo_18"},{"id":17984,"public_id":"neil_freebairn","name":"Neil Freebairn","time":"1790899791","profileimage":"8efe084ba08ecff1726933550.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/8efe084ba08ecff1726933550.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/neil_freebairn"},{"id":191655,"public_id":"ryan-hayden","name":"Ryan Hayden","time":"1790899788","profileimage":"b30238c393338101645907074.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/b30238c393338101645907074.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/ryan-hayden"},{"id":397387,"public_id":"jeronimo-osorio","name":"Jeronimo Osorio ","time":"1790899788","profileimage":"78745a4c0209caa1760971983.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/78745a4c0209caa1760971983.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/jeronimo-osorio"},{"id":289423,"public_id":"mccartney-taylor","name":"McCartney Taylor","time":"1790899784","profileimage":"c261747dd3552561740716495.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/c261747dd3552561740716495.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/mccartney-taylor"},{"id":368018,"public_id":"samuel-haines","name":"Samuel Haines","time":"1790899784","profileimage":"8cdcf103f5352f41761117357.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/8cdcf103f5352f41761117357.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/samuel-haines"},{"id":538430,"public_id":"james-cassidy","name":"james cassidy","time":"1790899780","profileimage":"fa0f5a5cb9f3fbd1788818676.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/fa0f5a5cb9f3fbd1788818676.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/james-cassidy"},{"id":197611,"public_id":"tidan888","name":"Tidan888","time":"1790899779","profileimage":"f1353bf91b3f2bd1650988050.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/f1353bf91b3f2bd1650988050.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/tidan888"},{"id":105028,"public_id":"beenunemployed","name":"BeenUnemployed","time":"1790899775","profileimage":"f1ea989620c4d551590325872.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/f1ea989620c4d551590325872.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/beenunemployed"},{"id":7222,"public_id":"nik_milev","name":"nik milev","time":"1790899769","profileimage":"thumb_capture-me-7703141150.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/thumb_capture-me-7703141150.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/nik_milev"},{"id":113444,"public_id":"pro-user","name":"Pro User","time":"1790899766","profileimage":"4d7f03146050bc01753741971.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/4d7f03146050bc01753741971.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/pro-user"},{"id":319284,"public_id":"niko-kastelan_2","name":"Niko Ka\u0161telan","time":"1790899761","profileimage":"edfdcaef9341c911773143745.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/edfdcaef9341c911773143745.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/niko-kastelan_2"},{"id":531390,"public_id":"franz-rothe_1","name":"Franz Rothe","time":"1790899754","profileimage":"f53ef0d0a0862391787321247.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/f53ef0d0a0862391787321247.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/franz-rothe_1"},{"id":411410,"public_id":"xiang-chen_2","name":"Xiang Chen","time":"1790899750","profileimage":"e79417b2a15fb981790561546.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/e79417b2a15fb981790561546.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/xiang-chen_2"},{"id":146669,"public_id":"ben-dressner","name":"Ben Dressner","time":"1790899747","profileimage":"faa79d01f8b421d1683115040.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/faa79d01f8b421d1683115040.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/ben-dressner"},{"id":222485,"public_id":"alex-imbrea","name":"Alex Imbrea","time":"1790899692","profileimage":"562608d5d85ddd31673025078.png","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/562608d5d85ddd31673025078.png","profileUrl":"https:\/\/www.quantconnect.com\/u\/alex-imbrea"},{"id":299855,"public_id":"matthias-gerhards","name":"Matthias Gerhards","time":"1790899226","profileimage":"d5bcffdbb97628b1741900517.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/d5bcffdbb97628b1741900517.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/matthias-gerhards"},{"id":184399,"public_id":"marco-di-prima","name":"Marco Di Prima","time":"1790899204","profileimage":"beb169d549868101684934068.jpg","image":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/beb169d549868101684934068.jpg","profileUrl":"https:\/\/www.quantconnect.com\/u\/marco-di-prima"}],"ambassadorsCount":false,"leanGithubStatistics":{"forks":"5,000","stars":"22,000"},"subscriber":false}</script>
+<script type="application/json" id="jsonDiscussion">
+    {"abstract":"This research investigates whether stability in corporate filing language can serve as a systematic stock-selection signal. Using textual similarity across 10-K and 10-Q filings, the strategy ranks 100 liquid US equities and selects the 25 companies whose disclosures change the least over time. The portfolio is constructed using Sharpe-ratio optimization and compared with SPY from January 2020 through June 2026. Results show a modest improvement in risk-adjusted returns, although parameter testing produced mixed outcomes. The study highlights how alternative data from regulatory filings may reveal information about corporate consistency, while emphasizing the need for validation across periods and market regimes.","acceptedAnswerId":null,"awards":[],"backtest":"7d3913a19ead84bf192783281cb3b3a7","backtestUrl":"https:\/\/www.quantconnect.com\/terminal\/cache\/embedded_backtest_7d3913a19ead84bf192783281cb3b3a7.html","callToActionButton":null,"categories":[{"name":"Research","status":true},{"name":"Announcements","status":false},{"name":"Jobs","status":false},{"name":"Competitions","status":false},{"name":"Data issues","status":false},{"name":"Trending","status":false},{"name":"Interesting","status":false},{"name":"Lean","status":false},{"name":"Hands on trading blog","status":false},{"name":"Newest","status":false}],"closed":false,"comments":0,"commentsText":"","competition":null,"dataIssue":null,"content":"<p><i>Research conducted by: Emily Xinyu Sun - Mentored by Rudy Osuna - Triton Quantitative Trading @ UC San Diego<\/i><\/p><h2>Introduction<\/h2><p>Every public company files a 10-K with the SEC each year and a 10-Q after each of its first three quarters. These are the audited annual report and the lighter quarterly updates that disclose a firm's financial results and business risks. They draw investor attention to the reported numbers, yet the language of the filing carries information of its own. <i>Cohen, Malloy, and Nguyen <\/i>(2020) document that firms which barely change their filing language from one year to the next earn higher subsequent returns than firms that substantially rewrite their disclosures, an effect they call <i>Lazy Prices<\/i>. We turn this finding into a long-only stock-selection strategy on the 100 most liquid US Equities. Each month we rank them on the language similarity of their latest 10-K and 10-Q filings, drawn from the <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/datasets\/brain\/brain-language-metrics-on-company-filings\">Brain Language Metrics on Company Filings<\/a> dataset, and hold a long-only portfolio of the most stable filers, weighted to maximize the portfolio Sharpe ratio. From January 2020 to June 2026, the strategy produced greater risk-adjusted returns than the benchmark SPY ETF.<\/p><h2>Background&nbsp;<\/h2><p>A 10-K or 10-Q is mostly boilerplate that management carries forward from the previous period with minor edits. Cohen, Malloy, and Nguyen study what happens in the unusual cases when a firm materially rewrites that language, especially the risk-factors and management-discussion sections. They find that these changes are a strong negative signal for future returns. Firms that change their disclosures, the \"changers\", go on to earn lower returns, while firms that leave them stable, the \"non-changers\", earn higher returns. The changes also predict future earnings, news, and even bankruptcies, yet there is no price reaction at the filing date.<\/p><p>The label \"lazy prices\" captures the mispricing. Prices are slow to incorporate the information embedded in the presence or absence of textual change, because reading two filings side by side is tedious and few investors do it. We measure filing stability with a textual similarity score, a number between zero and one that captures how much of a filing's language is carried over from the company's previous comparable filing. A score near one marks a filing that closely repeats its predecessor, while a lower score marks one that has been heavily rewritten.&nbsp;<\/p><p>We read these scores from the Brain Language Metrics on Company Filings dataset, which reports a full-report score and a risk-factors-section score for every 10-K and 10-Q. The strategy ranks the 100 most liquid US Equities on this similarity each month and treats the most similar filers as the most stable, the side of the signal the Lazy Prices effect rewards. We prefer the risk-factors similarity, the section the paper finds most informative, and we fall back to the full-report similarity when the first is unavailable. Ranking the universe by this score and keeping the top stocks selects the laziest, most stable filers.<\/p><p>Rather than weight the selected stocks equally, we size them to maximize the portfolio's historical Sharpe ratio. The optimizer searches for the weight vector that maximizes<\/p><p>\\[ \\frac{w^\\top \\mu}{\\sqrt{w^\\top \\Sigma w}}\\]<br>where \\(w\\) is the vector of portfolio weights, \\(\\mu\\) is the vector of mean daily returns over the lookback window, and \\( \\Sigma\\) is the covariance matrix of those returns. We constrain the weights to the interval \\([0, 1]\\), which forces a long-only portfolio that is fully invested across the selected stocks. The lookback window that supplies \\(\\mu\\) and \\(\\Sigma\\) is set to twelve months of daily returns by default.<\/p><h2>Implementation<\/h2><p>To implement this strategy, we start by setting the data resolution and scheduling <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/universes\/key-concepts\">universe selection<\/a> to run on the first trading day of each month, matching the rebalance cadence. The algorithm adds two universes. A <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/universes\/equity\/fundamental-universes\">fundamental universe<\/a> narrows the market to the most liquid stocks, and the Brain filing universe then ranks textual similarity within that set.<\/p><pre><code class=\"python-code\">self.universe_settings.resolution = Resolution.DAILY\nself._date_rule = self.date_rules.month_start(\"SPY\")\nself.universe_settings.schedule.on(self._date_rule)\nself.add_universe(self._fundamental_filter)\nself._universe = self.add_universe(BrainCompanyFilingLanguageMetricsUniverseAll, self._select_assets)<\/code><\/pre><p>During <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/initialization\">initialization<\/a> we also create the Sharpe optimizer, giving it a lookback window of twelve months, which supplies a full year of daily returns.<\/p><pre><code class=\"python-code\">self._optimizer = SharpePortfolioOptimizer()<\/code><\/pre><p>The <strong>_fundamental_filter<\/strong> method stores the 100 stocks with the highest average dollar volume that have fundamental data. It returns an unchanged universe and only caches these symbols, so the Brain filing universe can later rank within this liquid set.<\/p><pre><code class=\"python-code\">def _fundamental_filter(self, fundamentals: List[Fundamental]) -&gt; Universe.UnchangedUniverse:\n    # Store the 100 most liquid Equities; the Brain filing universe ranks within this set.\n    self._fundamentals = [f.symbol for f in sorted([f for f in fundamentals if f.has_fundamental_data], key=lambda f: f.dollar_volume)[-100:]]\n    return Universe.UNCHANGED<\/code><\/pre><p>The <strong>_select_assets<\/strong> method reads six months of filing history from the <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/datasets\/brain\/brain-language-metrics-on-company-filings#08-Universe-Selection\">BrainCompanyFilingLanguageMetricsUniverseAll<\/a> universe, keeps only the stocks that survived the liquidity filter, and records each one's most recent similarity score, preferring the risk-factors similarity over the full-report similarity.<\/p><pre><code class=\"python-code\">def _select_assets(self, filings: List[BrainCompanyFilingLanguageMetricsUniverseAll]) -&gt; List[Symbol]:\n    similarity_by_symbol = {}\n    # Scan the past 6 months of 10-K\/10-Q filings for similarity scores.\n    history = self.history(self._universe, timedelta(30 * 6), Resolution.DAILY)\n    for daily_filings in history:\n        for filing in daily_filings:\n            if filing.symbol not in self._fundamentals:\n                continue\n            # Prefer risk factors similarity scores, else the full report similarity scores.\n            similarity = filing.risk_factors_statement_sentiment.similarity.all or filing.report_sentiment.similarity.all\n            if similarity:\n                similarity_by_symbol[filing.symbol] = similarity<\/code><\/pre><p>It then returns the top 25 stocks by highest similarity.<\/p><pre><code class=\"python-code\">return sorted(similarity_by_symbol, key=lambda symbol: similarity_by_symbol[symbol])[-25:]<\/code><\/pre><p>A <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/scheduled-events\">Scheduled Event<\/a> fires the <strong>_rebalance<\/strong> method at 8 AM Eastern Time (ET) on the first trading day of each month, the same monthly rule that drives universe selection.<\/p><pre><code class=\"python-code\">time_rule = self.time_rules.at(8, 0)\nself.schedule.on(self._date_rule, time_rule, self._rebalance)<\/code><\/pre><p>The <strong>_rebalance<\/strong> method passes the current universe constituents to the <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/algorithm-framework\/portfolio-construction\/supported-optimizers#02-Maximum-Sharpe-Ratio-Optimizer\">SharpePortfolioOptimizer<\/a>, builds a portfolio target for each returned weight, and <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/trading-and-orders\/position-sizing\">rebalances<\/a> to those weights while liquidating any holdings that left the selection.<\/p><pre><code class=\"python-code\">weight_by_symbol = self._optimizer.get_weights(self, list(self._universe.selected))\ntargets = [PortfolioTarget(symbol, weight) for symbol, weight in weight_by_symbol.items()]\nself.set_holdings(targets, True)<\/code><\/pre><p>The <strong>get_weights<\/strong> method does the sizing. It requests daily closes over a 12 month lookback window with a <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/historical-data\/history-requests\">history request<\/a>, converts them to daily returns, and calls LEAN's <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/writing-algorithms\/algorithm-framework\/portfolio-construction\/supported-optimizers#02-Maximum-Sharpe-Ratio-Optimizer\">MaximumSharpeRatioPortfolioOptimizer<\/a> to produce the long-only weights.<\/p><pre><code class=\"python-code\">def get_weights(self, algorithm: QCAlgorithm, symbols: list) -&gt; dict:\n    history = algorithm.history(symbols, self._period + 1, Resolution.DAILY)\n    returns = history[\"close\"].unstack(level=0).pct_change().dropna()\n    # Maximize the portfolio Sharpe ratio using the long-only optimizer.\n    raw_weights = self._optimizer.optimize(returns)\n    return {symbol: float(raw_weights[i]) for i, symbol in enumerate(returns.columns)}<\/code><\/pre><h2>Results<\/h2><p>We backtested the strategy from January 2020 to June 2026. Over that period the strategy earned a <span style=\"color:rgb(0,0,0);\">0.558<\/span> Sharpe ratio. In contrast, a buy-and-hold position in the SPY over the same time period achieved a 0.533 Sharpe ratio [<a href=\"https:\/\/www.quantconnect.cloud\/backtest\/3242756d0bc809d2909351af56aee3c8\/?theme=chrome\">Backtest link<\/a>]. Therefore, the strategy outperformed the benchmark.<\/p><p>We ran a <a href=\"https:\/\/www.quantconnect.com\/docs\/v2\/cloud-platform\/optimization\/getting-started\">parameter optimization<\/a> job to test the sensitivity of the chosen parameters. We tested <strong>lookback_months<\/strong>, the number of months of return history the optimizer uses to size positions, from 6 to 30 months in steps of 6. We also tested <strong>universe_size<\/strong>, the number of stocks held, from 10 to 30 in steps of 5. Of the 25 parameter combinations, <strong>9 of 25 (36%)<\/strong> produced a greater Sharpe ratio than the benchmark. The following image shows the heatmap of Sharpe ratios for the parameter combinations:<\/p><figure class=\"image image_resized\" style=\"width:92.53%;\"><img src=\"https:\/\/cdn.quantconnect.com\/community\/i\/rudy-osuna_1782430233.jpg\"><figcaption>Universe Size: 25 Equities, Lookback Months: 12<\/figcaption><\/figure><p>&nbsp;<\/p><p>The red circle in the image above identifies the parameters we chose as the strategy's default. We chose a <strong>lookback_months <\/strong>of 12 because a full year of daily returns gives the optimizer a more robust covariance estimate than a shorter window. We chose a <strong>universe_size<\/strong> of 25 because a broader basket spreads risk across more stocks and reduces concentration risk. The sensitivity analysis shows the result is driven mainly by the optimizer's lookback window rather than the breadth of the basket, and that shorter windows scored higher in sample. Future research could add the short leg of the Lazy Prices anomaly, selling the firms that most rewrote their filings, moving the strategy toward the original long-short design. That extension naturally invites different optimizer constraints, such as dollar neutrality, to balance the long and short books.<\/p><h2>Conclusion<\/h2><p>This research turns the Lazy Prices effect into a simple, tradeable strategy. Each month it ranks the 100 most liquid US Equities on the language stability of their latest 10-K and 10-Q filings, drawn from the Brain Language Metrics on Company Filings dataset, and holds the most stable filers in a long-only portfolio weighted to maximize the Sharpe ratio. From January 2020 to June 2026 the strategy produced a 0.558 Sharpe ratio, outperforming a buy-and-hold position in the SPY. The result shows that disclosure-language stability carries tradable information beyond a firm's reported numbers, though the strategy's edge depends on the quality of the filing-similarity scores and warrants further testing across market regimes.<\/p><h2>References<\/h2><p><i>Cohen, Lauren, et al. \u201cLazy Prices.\u201d The Journal of Finance, vol. 75, no. 3, 22 Feb. 2020, pp. 1371\u20131415, <\/i><a href=\"https:\/\/doi.org\/10.1111\/jofi.12885\"><i>https:\/\/doi.org\/10.1111\/jofi.12885<\/i><\/a><i>.<\/i><\/p>","creatorBadge":{"bPro":true,"sColor":"badge-bronze","sPoints":"226","sType":"user","sUserImage":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/50fede6e9b1ca691718722393.jpg","sUserName":"Triton Quantitative Trading","profileUrl":"https:\/\/www.quantconnect.com\/u\/triton-quantitative-trading","publicId":"triton-quantitative-trading","preferredLanguage":"Py","preferredOrganization":"Triton Quantitative Trading","investor":0,"returnToday":null,"institutionLogo":"","institutionId":null,"shortLabel":"","institutionOpacity":1,"label":"<b class=\"badge-bronze\"  style='color: #8F9CA3; font-size: 16px; font-weight: normal;' data-toggle=\"tooltip\" data-placement=\"top\" title=\"Points\" >226<\/b> <b style='color: #8F9CA3; font-weight: normal;' class='bronze' data-toggle=\"tooltip\" data-placement=\"top\" title=\"<div class='bronze-badges-list' ><p><span>\u25cf<\/span> Algorithm Sharing<\/p><p><span>\u25cf<\/span> Live Trading<\/p><p><span>\u25cf<\/span> Python Programming<\/p><p><span>\u25cf<\/span> Verified User<\/p><\/div>\" data-html=\"true\" ><span>\u25cf<\/span>4<\/b>"},"descriptionText":"Started by <a href=\"https:\/\/www.quantconnect.com\/u\/triton-quantitative-trading\" data-user-profile=\"triton-quantitative-trading\" class=\"profile-popover clickable\" data-toggle=\"popover\" role=\"button\" target=\"_blank\" data-trigger=\"hover\" data-container=\"body\"> Triton Quantitative Trading<\/a>, ","editedMessage":"Edited by Derek Melchin","encodedTitle":"filing-language-stability-as-a-selection-signal","haveNewContent":false,"id":20966,"isNew":false,"keywords":"10-K,10-Q,textual-change,cosine-similarity,SEC-EDGAR,event-study,abnormal-returns,Fama-French,momentum-adjustment,bootstrap-validation,Spearman-rank,post-filing-window,survivorship-bias,Sharpe-ratio","lastCommenter":[],"meta":null,"notebook":null,"notebookUrl":null,"pages":0,"publicEmbargoLift":null,"published":"2026-07-10 12:49:06","shared_status":"shared","sharedStatus":"shared","shareToActiveSince":null,"showResearchBanner":true,"status":"visible","strategyProjectId":null,"summary":"10-K\/10-Q Textual Changes Predict Post-filing Returns via Cosine Similarity.","tags":[],"thumbnail":"https:\/\/cdn.quantconnect.com\/i\/tu\/20966.png","thumbnailSquare":"https:\/\/cdn.quantconnect.com\/i\/tu\/20966-thumb.png","title":"Filing Language Stability as a Selection Signal","uid":null,"updated":"2026-07-11 12:22:55","url":"https:\/\/www.quantconnect.com\/research\/20966\/filing-language-stability-as-a-selection-signal\/","voters":[{"name":"Rudy Osuna","publicId":"rudy-osuna","profile":"https:\/\/cdn.quantconnect.com\/web\/i\/users\/thumbnail\/100\/97927ec842a5d751775511590.jpg"}],"votes":1,"files":[{"name":"main.py","content":"# region imports\nfrom AlgorithmImports import *\nfrom optimization import SharpePortfolioOptimizer\n# endregion\n\n\nclass LazyPricesStrategy(QCAlgorithm):\n\n    def initialize(self) -> None:\n        self.set_start_date(2020, 1, 1)\n        self.set_end_date(2026, 6, 1)\n        self.set_cash(1_000_000)\n        self.settings.seed_initial_prices = True\n        self.settings.min_absolute_portfolio_target_percentage = 0\n        self._optimizer = SharpePortfolioOptimizer()\n        self._fundamentals = []\n        # Select the universe monthly to match the rebalance cadence.\n        self.universe_settings.resolution = Resolution.DAILY\n        self._date_rule = self.date_rules.month_start(\"SPY\")\n        self.universe_settings.schedule.on(self._date_rule)\n        # Collect the 100 most liquid Equities, then rank them by Brain filing textual similarity.\n        self.add_universe(self._fundamental_filter)\n        self._universe = self.add_universe(BrainCompanyFilingLanguageMetricsUniverseAll, self._select_assets)\n        self.set_warm_up(timedelta(45))\n        \n    def on_warmup_finished(self) -> None:\n        # Rebalance on the last trading day of each month.\n        time_rule = self.time_rules.at(8, 0)\n        self.schedule.on(self._date_rule, time_rule, self._rebalance)\n        # Rebalance today too.\n        if self.live_mode:\n            self._rebalance()\n        else:\n            self.schedule.on(self.date_rules.today, time_rule, self._rebalance)\n\n    def _fundamental_filter(self, fundamentals: List[Fundamental]) -> Universe.UnchangedUniverse:\n        # Store the 100 most liquid Equities; the Brain filing universe ranks within this set.\n        self._fundamentals = [f.symbol for f in sorted([f for f in fundamentals if f.has_fundamental_data], key=lambda f: f.dollar_volume)[-100:]]\n        return Universe.UNCHANGED\n\n    def _select_assets(self, filings: List[BrainCompanyFilingLanguageMetricsUniverseAll])  -> List[Symbol]:\n        similarity_by_symbol = {}\n        # Scan the past 6 months of 10-K\/10-Q filings for similarity scores.\n        history = self.history(self._universe, timedelta(30 * 6), Resolution.DAILY)\n        for daily_filings in history:\n            for filing in daily_filings:\n                if filing.symbol not in self._fundamentals:\n                    continue\n                # Prefer risk factors similarity scores, else the full report similarity scores.\n                similarity = filing.risk_factors_statement_sentiment.similarity.all or filing.report_sentiment.similarity.all\n                if similarity:\n                    similarity_by_symbol[filing.symbol] = similarity\n        # Return the top 10 by highest similarity.\n        return sorted(similarity_by_symbol, key=lambda symbol: similarity_by_symbol[symbol])[-25:]\n\n    def _rebalance(self) -> None:\n        if self.is_warming_up or not self._universe.selected:\n            return\n        # Run portfolio optimization on the selected long-only 10 asset portfolio.\n        weight_by_symbol = self._optimizer.get_weights(self, list(self._universe.selected))\n        if not weight_by_symbol:\n            return\n        # Invest into a long only portfolio with weights optimized for sharpe.\n        targets = [PortfolioTarget(symbol, weight) for symbol, weight in weight_by_symbol.items()]\n        self.set_holdings(targets, True)\n"},{"name":"research.ipynb","content":"{\"cells\":[{\"cell_type\":\"markdown\",\"metadata\":{\"pycharm\":{\"name\":\"#%% md\\n\"}},\"source\":[\"![QuantConnect Logo](https:\/\/cdn.quantconnect.com\/web\/i\/icon.png)\\n\",\"<hr>\"]},{\"cell_type\":\"code\",\"execution_count\":null,\"metadata\":{\"pycharm\":{\"name\":\"#%%\\n\"}},\"outputs\":[],\"source\":[\"# QuantBook Analysis Tool\\n\",\"# For more information see [https:\/\/www.quantconnect.com\/docs\/v2\/our-platform\/research\/getting-started]\\n\",\"qb = QuantBook()\\n\",\"spy = qb.add_equity(\\\"SPY\\\")\\n\",\"history = qb.history(qb.securities.keys(), 360, Resolution.DAILY)\\n\",\"\\n\",\"# Indicator Analysis\\n\",\"bbdf = qb.indicator(BollingerBands(30, 2), spy.symbol, 360, Resolution.DAILY)\\n\",\"bbdf.drop('standarddeviation', axis=1).plot()\"]}],\"metadata\":{\"kernelspec\":{\"display_name\":\"Python 3\",\"language\":\"python\",\"name\":\"python3\"},\"language_info\":{\"codemirror_mode\":{\"name\":\"ipython\",\"version\":3},\"file_extension\":\".py\",\"mimetype\":\"text\/x-python\",\"name\":\"python\",\"nbconvert_exporter\":\"python\",\"pygments_lexer\":\"ipython3\",\"version\":\"3.6.8\"}},\"nbformat\":4,\"nbformat_minor\":2}"},{"name":"optimization.py","content":"# region imports\nfrom AlgorithmImports import *\nfrom Portfolio.MaximumSharpeRatioPortfolioOptimizer import MaximumSharpeRatioPortfolioOptimizer # type: ignore\n# endregion\n\n\nclass SharpePortfolioOptimizer:\n\n    def __init__(self, period: int = 252):\n        self._period = period\n        self._optimizer = MaximumSharpeRatioPortfolioOptimizer(0, 1)\n\n    def get_weights(self, algorithm: QCAlgorithm, symbols: list) -> dict:\n        history = algorithm.history(symbols, self._period + 1, Resolution.DAILY)\n        if history.empty:\n            return {}\n        returns = history[\"close\"].unstack(level=0).pct_change().dropna()\n        if returns.empty or returns.shape[1] < 2:\n            return {}\n        # Maximize the portfolio Sharpe ratio using the long-only optimizer.\n        raw_weights = self._optimizer.optimize(returns)\n        return {symbol: float(raw_weights[i]) for i, symbol in enumerate(returns.columns)}\n"}]}</script>
+<script type="application/javascript">
+    window.SELF_INITIALIZE = true;
+    window.CKEDITOR_BASEPATH = '/forum/js/libraries/ckeditor/';
+</script></div> <!-- End of Container -->
+
+<style>
+    .footer-trap,
+    footer {
+        background-color: #202024;
+        padding: 3rem 0;
+    }
+
+    p {
+        color: #313131;
+    }
+
+    p.header-p {
+        color: #8F9CA3;
+        text-transform: uppercase;
+    }
+
+    .footer-trap .logo-column,
+    footer .logo-column {
+        text-align: left;
+        color: #f5ae29;
+    }
+
+    .footer-trap .logo,
+    footer .logo {
+        height: 4em;
+        padding-bottom: 1em;
+    }
+
+    .footer-trap .links-columns .col,
+    footer .links-columns .col {
+        padding-top: 1.5em;
+    }
+
+    .footer-trap .links-columns a, footer .links-columns a {
+        color: #ffffff;
+        font-weight: normal;
+        text-decoration: none;
+    }
+
+    .footer-trap .links-columns a:hover,
+    footer .links-columns a:hover {
+        text-decoration: none;
+        color: #f5ae29;
+    }
+
+    .footer-trap .links-columns,
+    footer .links-columns {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #707070;
+    }
+
+    .footer-trap .github-column,
+    footer .github-column {
+        padding-top: 2em;
+        background-color: #202024;
+    }
+
+    body {
+        min-height: 100vh;
+    }
+
+    .footer-wrapper {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+
+    }
+
+    .footer-trap {
+        visibility: hidden;
+    }
+
+    .pre-footer {
+        background-size: 100%;
+        background-position: center bottom;
+        min-height: 150px;
+        position: relative;
+    }
+
+    .pre-footer .banner {
+        margin-top: 300px;
+        background-color: #F3F5F8;
+        text-align: center;
+        bottom: 0;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .pre-footer .banner .btn-primary {
+        width: fit-content;
+        padding: 9px 25px 8px;
+        border-radius: 3px;
+        line-height: 1;
+        color: #fff;
+        background: #F5AE29;
+        border-color: #F5AE29;
+        height: 45px;
+        font-size: 18px;
+        font-weight: 300;
+    }
+
+    .pre-footer .banner h2 {
+        font-size: 24px;
+        letter-spacing: 0;
+        color: #313131;
+    }
+
+    @media (max-width: 740px) {
+        .footer-trap .logo,
+        footer .logo {
+            height: 3em;
+        }
+
+        .pre-footer .banner {
+            display: block;
+            padding-bottom: 1rem;
+        }
+
+        .pre-footer .banner h2 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+<div class="row pre-footer">
+            <div class="col-xs-12 banner">
+            <h2>Join QuantConnect for Free</h2>
+            <a href="/login/?target=Forum"><button class="btn btn-primary">Sign Up</button></a>
+        </div>
+    </div>
+<div>
+    <div class="footer-trap">
+        <div class="row"><div class="col-xs-10 col-xs-offset-1 col-lg-8 col-lg-offset-2">
+    <div class="row">
+        <div class="col-xs col-md-4 logo-column">
+            <img src="https://cdn.quantconnect.com/web/i/splash/quantconnect_logo_byw.png" class="logo" alt="QuantConnect Logo">
+            <p style="font-size: 16px; text-align: left;color: #fff">
+                QuantConnect&trade; 2026. All Rights Reserved
+            </p>
+        </div>
+        <div class="col-md-8 links-columns">
+            <div class="row">
+                <div class="col-xs-6 col-md-4 col-md-offset-1 col-lg-offset-1 col">
+                    <p style="font-size: 16px; text-transform: uppercase; color: #8f9ca3;margin-bottom: 1em;">
+                        Technology</p>
+                    <ul class="list-unstyled">
+                        <li style="font-size: 16px;"><a href="/terminal/">Algorithm Lab</a></li>
+                        <li style="font-size: 16px;"><a href="/docs/">Documentation</a></li>
+                        <li style="font-size: 16px;"><a href="/research/">Research</a></li>
+                        <li style="font-size: 16px;"><a href="/buildvsbuy/">Build vs. Buy</a></li>
+                        <li style="font-size: 16px;"><a href="/tutorials/">Tutorials</a></li>
+                        <li style="font-size: 16px;"><a href="/datasets/">Data Library</a></li>
+                        <li style="font-size: 16px;"><a href="/learning/articles/">Learning Articles</a></li>
+                        <li style="font-size: 16px;"><a href="https://status.quantconnect.com">System Status</a></li>
+                        <li style="font-size: 16px;"><a href="/settings/">Settings</a></li>
+                        <li style="font-size: 16px;"><a href="/forum/list/1/community/">Discussions List</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-6 col-md-4 col-lg-4 col">
+                    <p style="font-size: 16px; text-transform: uppercase; color: #8f9ca3;margin-bottom: 1em;">
+                        Company</p>
+                    <ul class="list-unstyled">
+                        <li style="font-size: 16px;"><a href="/about/">About</a></li>
+                        <li style="font-size: 16px;"><a href="/affiliates/">Affiliates</a></li>
+                        <li style="font-size: 16px;"><a href="/blog/">Our Blog</a></li>
+                        <li style="font-size: 16px;"><a href="/contact/">Contact</a></li>
+                        <li style="font-size: 16px;"><a href="/pricing/">Pricing</a></li>
+                        <li style="font-size: 16px;"><a href="/integration-partners/">Integration Partners</a></li>
+                        <li style="font-size: 16px;"><a href="https://quantconnect.printify.me/" target="_blank">QuantConnect Swag</a></li>
+                        <li style="font-size: 16px;"><a href="/terms/">Terms &amp; Conditions</a></li>
+                        <li style="font-size: 16px;"><a href="/privacy/">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="hidden-sm hidden-xs col-md-3 col">
+                    <a href="/lean">
+                        <p style="font-size: 16px; text-transform: uppercase; color: #8f9ca3;margin-bottom: 1em;">
+                            LEAN</p>
+                    </a>
+                    <ul class="list-unstyled github-links">
+                        <li>
+                            <span class="github-btn github-forks">
+                                <a class="gh-btn" href="https://github.com/QuantConnect/Lean/fork" rel="noopener noreferrer" target="_blank" aria-label="Fork QuantConnect/Lean on GitHub">
+                                    <span class="gh-ico" aria-hidden="true"></span>
+                                    <span class="gh-text">Fork</span>
+                                </a>
+                                <a class="gh-count" href="https://github.com/QuantConnect/Lean/network" rel="noopener noreferrer" target="_blank" aria-label="5,000 forks on GitHub" style="display: block;">
+                                    5,000                                </a>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="github-btn github-stargazers">
+                                <a class="gh-btn" href="https://github.com/QuantConnect/Lean" rel="noopener noreferrer" target="_blank" aria-label="Star QuantConnect/Lean on GitHub">
+                                    <span class="gh-ico" aria-hidden="true"></span>
+                                    <span class="gh-text">Star</span>
+                                </a>
+                                <a class="gh-count" href="https://github.com/QuantConnect/Lean/stargazers" rel="noopener noreferrer" target="_blank" aria-label="22,000 stargazers on GitHub" style="display: block;">
+                                    22,000                                </a>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div></div>
+    </div>
+</div>
+
+<div class="footer-wrapper">
+    <footer class="row"><div class="col-xs-10 col-xs-offset-1 col-lg-8 col-lg-offset-2">
+    <div class="row">
+        <div class="col-xs col-md-4 logo-column">
+            <img src="https://cdn.quantconnect.com/web/i/splash/quantconnect_logo_byw.png" class="logo" alt="QuantConnect Logo">
+            <p style="font-size: 16px; text-align: left;color: #fff">
+                QuantConnect&trade; 2026. All Rights Reserved
+            </p>
+        </div>
+        <div class="col-md-8 links-columns">
+            <div class="row">
+                <div class="col-xs-6 col-md-4 col-md-offset-1 col-lg-offset-1 col">
+                    <p style="font-size: 16px; text-transform: uppercase; color: #8f9ca3;margin-bottom: 1em;">
+                        Technology</p>
+                    <ul class="list-unstyled">
+                        <li style="font-size: 16px;"><a href="/terminal/">Algorithm Lab</a></li>
+                        <li style="font-size: 16px;"><a href="/docs/">Documentation</a></li>
+                        <li style="font-size: 16px;"><a href="/research/">Research</a></li>
+                        <li style="font-size: 16px;"><a href="/buildvsbuy/">Build vs. Buy</a></li>
+                        <li style="font-size: 16px;"><a href="/tutorials/">Tutorials</a></li>
+                        <li style="font-size: 16px;"><a href="/datasets/">Data Library</a></li>
+                        <li style="font-size: 16px;"><a href="/learning/articles/">Learning Articles</a></li>
+                        <li style="font-size: 16px;"><a href="https://status.quantconnect.com">System Status</a></li>
+                        <li style="font-size: 16px;"><a href="/settings/">Settings</a></li>
+                        <li style="font-size: 16px;"><a href="/forum/list/1/community/">Discussions List</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-6 col-md-4 col-lg-4 col">
+                    <p style="font-size: 16px; text-transform: uppercase; color: #8f9ca3;margin-bottom: 1em;">
+                        Company</p>
+                    <ul class="list-unstyled">
+                        <li style="font-size: 16px;"><a href="/about/">About</a></li>
+                        <li style="font-size: 16px;"><a href="/affiliates/">Affiliates</a></li>
+                        <li style="font-size: 16px;"><a href="/blog/">Our Blog</a></li>
+                        <li style="font-size: 16px;"><a href="/contact/">Contact</a></li>
+                        <li style="font-size: 16px;"><a href="/pricing/">Pricing</a></li>
+                        <li style="font-size: 16px;"><a href="/integration-partners/">Integration Partners</a></li>
+                        <li style="font-size: 16px;"><a href="https://quantconnect.printify.me/" target="_blank">QuantConnect Swag</a></li>
+                        <li style="font-size: 16px;"><a href="/terms/">Terms &amp; Conditions</a></li>
+                        <li style="font-size: 16px;"><a href="/privacy/">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="hidden-sm hidden-xs col-md-3 col">
+                    <a href="/lean">
+                        <p style="font-size: 16px; text-transform: uppercase; color: #8f9ca3;margin-bottom: 1em;">
+                            LEAN</p>
+                    </a>
+                    <ul class="list-unstyled github-links">
+                        <li>
+                            <span class="github-btn github-forks">
+                                <a class="gh-btn" href="https://github.com/QuantConnect/Lean/fork" rel="noopener noreferrer" target="_blank" aria-label="Fork QuantConnect/Lean on GitHub">
+                                    <span class="gh-ico" aria-hidden="true"></span>
+                                    <span class="gh-text">Fork</span>
+                                </a>
+                                <a class="gh-count" href="https://github.com/QuantConnect/Lean/network" rel="noopener noreferrer" target="_blank" aria-label="5,000 forks on GitHub" style="display: block;">
+                                    5,000                                </a>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="github-btn github-stargazers">
+                                <a class="gh-btn" href="https://github.com/QuantConnect/Lean" rel="noopener noreferrer" target="_blank" aria-label="Star QuantConnect/Lean on GitHub">
+                                    <span class="gh-ico" aria-hidden="true"></span>
+                                    <span class="gh-text">Star</span>
+                                </a>
+                                <a class="gh-count" href="https://github.com/QuantConnect/Lean/stargazers" rel="noopener noreferrer" target="_blank" aria-label="22,000 stargazers on GitHub" style="display: block;">
+                                    22,000                                </a>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div></footer>
+</div>
+
+</div>
+<script type="text/javascript">
+    (function(e, t, o, n, p, r, i) {
+        e.visitorGlobalObjectAlias = n;
+        e[e.visitorGlobalObjectAlias] = e[e.visitorGlobalObjectAlias] || function() {
+            (e[e.visitorGlobalObjectAlias].q = e[e.visitorGlobalObjectAlias].q || []).push(arguments)
+        };
+        e[e.visitorGlobalObjectAlias].l = (new Date).getTime();
+        r = t.createElement("script");
+        r.src = o;
+        r.async = true;
+        i = t.getElementsByTagName("script")[0];
+        i.parentNode.insertBefore(r, i)
+    })(window, document, "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js", "vgo");
+    vgo('setAccount', '800313741');
+    vgo('setTrackByDefault', true);
+    vgo('process');
+</script>
+<script type="application/javascript">
+    window.login = false;
+    window.intercomSettings = {"app_id":"9a05faa80b1df601897603e983f2c594391bd0a0"};
+    window.requiresEmailInteraction = true;
+    window.enableAutomaticBuilding = false;
+
+    var lazyLoaderIntercom = function() {
+
+
+
+        (function() {
+            var w = window;
+            var ic = w.Intercom;
+            if (typeof ic === "function") {
+                ic('reattach_activator');
+                ic('update', intercomSettings);
+            } else {
+                var d = document;
+                var i = function() {
+                    i.c(arguments)
+                };
+                i.q = [];
+                i.c = function(args) {
+                    i.q.push(args)
+                };
+                w.Intercom = i;
+
+                function l() {
+                    var s = d.createElement('script');
+                    s.type = 'text/javascript';
+                    s.async = true;
+                    s.src = 'https://static.intercomcdn.com/intercom.v1.js';
+                    var x = d.getElementsByTagName('script')[0];
+                    x.parentNode.insertBefore(s, x);
+                }
+
+                if (w.attachEvent) {
+                    w.attachEvent('onload', l);
+                } else {
+                    w.addEventListener('load', l, false);
+                }
+            }
+        })();
+        window.removeEventListener('scroll', lazyLoaderIntercom);
+        window.removeEventListener('mouseover', lazyLoaderIntercom);
+    };
+
+    if (window.location.host.endsWith('quantconnect.com')) {
+        window.addEventListener('mouseover', lazyLoaderIntercom);
+        window.addEventListener('scroll', lazyLoaderIntercom)
+    }
+</script> <script type="text/javascript"  src="https://cdn.iframe.ly/embed.js"  ></script>
+ <script type="text/javascript"  src="https://www.quantconnect.com/forum/js/build/forum.js?tm=1787260290"  ></script>
+ <script type="text/javascript"  src="https://cdn.jsdelivr.net/npm/algoliasearch@3/dist/algoliasearchLite.min.js"  ></script>
+</body>
+</html>
