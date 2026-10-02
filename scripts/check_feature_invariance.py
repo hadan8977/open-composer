@@ -27,7 +27,10 @@ T-20261002-02 adds optional modes (the default behaviour is unchanged):
 * price-aware tolerance (``--price-col``, ``--price-tol``, ``--price-aware-cols``):
   for those columns a row is "changed" only when
   ``|new - old| > max(tol * max(1, |old|), price_tol / old[price_col])``, which
-  absorbs the rounding of a vendor's adjusted prices to the cent;
+  absorbs the rounding of a vendor's adjusted prices to the cent; for columns
+  that are a price ratio minus one (``--price-ratio-cols``, a subset of the
+  price-aware columns) the bound is multiplied by ``(1 + |old|)(2 + |old|) / 2``
+  because the base price is ``close / (1 + old)`` and its rounding error counts too;
 * ``--exclude-symbols FILE``: rows of those symbols are left out of every share
   and reported as ``excluded_rows`` / ``excluded_changed_rows``;
 * ``--attribute-symbols FILE`` (``--attribute-col``): ``unattributed_changed_rows``
@@ -87,6 +90,7 @@ def _changed_expr(
     tol: float,
     *,
     price_tol: float | None = None,
+    ratio_scale: bool = False,
 ) -> pl.Expr:
     """Boolean "row changed" expression; ``price_tol`` needs a ``__price_old`` column."""
     new = pl.col(name)
@@ -100,6 +104,10 @@ def _changed_expr(
         if price_tol is not None:
             price = pl.col("__price_old").cast(pl.Float64)
             rounding = pl.when(price > 0).then(price_tol / price).otherwise(0.0).fill_null(0.0)
+            if ratio_scale:
+                # x = P_a / P_b - 1 with P_b = P_a / (1 + x): rounding error of both
+                # endpoints gives (1 + |x|) * (2 + |x|) / 2 times the same-level bound.
+                rounding = rounding * (1.0 + old_f.abs()) * (2.0 + old_f.abs()) / 2.0
             threshold = pl.max_horizontal(threshold, rounding)
         moved = (new_f - old_f).abs() > threshold
         return (new_missing != old_missing) | (~new_missing & ~old_missing & moved.fill_null(False))
@@ -237,6 +245,7 @@ def compare(
     price_col: str | None = None,
     price_tol: float = 0.04,
     price_aware_spec: list[str] | None = None,
+    price_ratio_spec: list[str] | None = None,
     exclude_symbols: set[str] | None = None,
     attribute_symbols: set[str] | None = None,
     attribute_col: str = "symbol",
@@ -319,6 +328,7 @@ def compare(
         if price_col and price_aware_spec
         else set()
     )
+    price_ratio = set(_select_columns(compared, price_ratio_spec)) & price_aware
     if price_aware and price_col not in old_schema:
         raise ValueError(f"price column {price_col!r} missing from the old table")
     rank_cols = _select_columns(all_common, rank_parity_spec)
@@ -393,6 +403,7 @@ def compare(
                         joined.schema[c],
                         tol,
                         price_tol=price_tol if c in price_aware else None,
+                        ratio_scale=c in price_ratio,
                     ).alias(c)
                     for c in todo
                 ]
@@ -405,6 +416,7 @@ def compare(
                     "changed_rows": n_changed,
                     "changed_share": share,
                     "price_aware": c in price_aware,
+                    "price_ratio": c in price_ratio,
                 }
                 max_share_seen = max(max_share_seen, share)
                 any_changed |= col
@@ -568,6 +580,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--price-col", default=None)
     parser.add_argument("--price-tol", type=float, default=0.04)
     parser.add_argument("--price-aware-cols", default=None, help="names or re:<regex>")
+    parser.add_argument("--price-ratio-cols", default=None, help="subset of the price-aware cols")
     parser.add_argument("--exclude-symbols", type=Path, default=None)
     parser.add_argument("--attribute-symbols", type=Path, default=None)
     parser.add_argument("--attribute-col", default="symbol")
@@ -597,6 +610,7 @@ def main(argv: list[str] | None = None) -> int:
         price_col=args.price_col,
         price_tol=args.price_tol,
         price_aware_spec=_split_spec(args.price_aware_cols),
+        price_ratio_spec=_split_spec(args.price_ratio_cols),
         exclude_symbols=(
             read_symbol_file(args.exclude_symbols)[0] if args.exclude_symbols else None
         ),

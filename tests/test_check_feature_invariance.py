@@ -378,3 +378,51 @@ def test_main_accepts_new_options(tmp_path: Path) -> None:
     assert code == 0
     assert payload["excluded_rows"] == 2
     assert payload["rank_parity_share"] == 1.0
+
+
+def test_price_ratio_columns_scale_the_rounding_bound(tmp_path: Path) -> None:
+    new, old = _price_frames()
+    old = old.with_columns(pl.lit(4.0).alias("ret_252"))  # price ratio of 5: base = close / 5
+    # AAA: close 10, plain bound 0.04/10 = 0.004; ratio bound = 0.004 * 5 * 6 / 2 = 0.06.
+    new = old.with_columns(
+        pl.when(pl.col("symbol") == "AAA")
+        .then(pl.col("ret_252") + 0.03)
+        .otherwise(pl.col("ret_252"))
+        .alias("ret_252")
+    )
+    aware = _run(
+        tmp_path,
+        new,
+        old,
+        columns_spec=["ret_252"],
+        price_col="close",
+        price_aware_spec=["ret_252"],
+    )
+    assert aware["columns"]["ret_252"]["changed_rows"] == 2
+    ratio = _run(
+        tmp_path,
+        new,
+        old,
+        columns_spec=["ret_252"],
+        price_col="close",
+        price_aware_spec=["ret_252"],
+        price_ratio_spec=["ret_252"],
+    )
+    assert ratio["columns"]["ret_252"]["changed_rows"] == 0
+    assert ratio["columns"]["ret_252"]["price_ratio"] is True
+    too_big = new.with_columns(
+        pl.when(pl.col("symbol") == "AAA")
+        .then(pl.col("ret_252") + 0.07)
+        .otherwise(pl.col("ret_252"))
+        .alias("ret_252")
+    )
+    still = _run(
+        tmp_path,
+        too_big,
+        old,
+        columns_spec=["ret_252"],
+        price_col="close",
+        price_aware_spec=["ret_252"],
+        price_ratio_spec=["ret_252"],
+    )
+    assert still["columns"]["ret_252"]["changed_rows"] == 2
