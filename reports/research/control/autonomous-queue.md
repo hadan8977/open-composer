@@ -1506,7 +1506,7 @@
   - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）登记；简报故意不提前写，等 T-01 的数字。
 
 ### T-20261002-03 信号库：10-K 文本变化数据（Lazy Prices，U3000，2014-07..2026-09，EDGAR 主文档）
-- status: ready
+- status: partial（执行轮 05:42–06:26 UTC，待主审）
 - priority: 2
 - not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 运行；和 T-20261002-01 不并行，T-01 先做）
 - brief: reports/research/control/briefs/T-20261002-03.md
@@ -1518,6 +1518,8 @@
 - notes:
   - 2026-10-02 01:38 UTC 01:07 主审轮（Opus）写入。direction-check 已 ok。预注册写在任何数据之前，三个候选、方向、判定都已冻结。
   - 预计 4–6 万份 10-K，抓取受 SEC 限速约束，大约要 2–3 个小时，可能跨两个执行轮。
+  - 2026-10-02 06:26 UTC 执行轮（Sonnet 5.5，子代理 a18426ca2c34bca4f，待主审）：脚本+测试已提交 6ae7a01（16 测试过、ruff 过）。只抓了 218/4023 个 CIK：2428 份 10-K、2204 对，抓取失败 0、解析失败 0；2016 年后 rf_found 0.957、mda_found 0.947；cos_full 分位 5/25/50/75/95 = 0.9947/0.9979/0.9987/0.9992/0.9996（中位在 [0.80,0.999] 内但贴近上沿），cos_rf 中位 0.9979，cos_mda 中位 0.9945。**一条验收不过**：2 对的 visible_day 比 filing_date 早 >1 天（CIK 36047：filing 2021-03-01、visible 02-26；CIK 47518：filing 2018-11-19、visible 11-16；SEC acceptanceDateTime 早于 filingDate），按预注册未改，主审要定怎么处理。解析器改动（首轮 20 CIK 试跑 mda_found 0.867，因为不少申报把 Item 标题排成单行表格）：整表文本只是短的 "Item N" 标题时留标记、分词前剔除，其余表格文字仍整表剔除，这是对"剔除所有表格"的小解释，主审要确认。首轮抓取（06:03–06:15）内存每分钟涨约 100 MB，已停并修（不影响产出）；首轮请求数/用时计数丢失，summary.json 只含第二轮（1383 次、481 秒），合计约 2428 次。速度约 80 份/分钟，剩余约 3.32 万份约需 7 小时（多个 120 分钟轮）。产物：scripts/build_10k_text_similarity.py、scripts/summarize_10k_text_similarity.py、tests/test_build_10k_text_similarity.py、reports/research/program/text-similarity-2026-10-02/{report.md,summary.json}；数据在 data/features/text_similarity/（不提交；_trial/、_trial2/ 是子代理自己的试跑目录，删除被权限拒绝）。续跑命令：`setsid nohup scripts/run_capped.sh --mem 1.8G -- uv run python scripts/build_10k_text_similarity.py fetch --resume --max-minutes 120 > logs/t20261002_03_fetch3.log 2>&1 &`，之后 `merge`，再 `scripts/summarize_10k_text_similarity.py --snippets data/features/text_similarity/_trial2/_snippets.json data/features/text_similarity/_snippets_extra.json`。
+
 
 ### T-20261002-04 信号库：Lazy Prices 残差 IC 入库检验（3 个候选、安慰剂、和 M1 的相关）
 - status: blocked（等 T-20261002-03 完成。简报由主审轮写，写的人不许看过任何相似度值或 IC）
