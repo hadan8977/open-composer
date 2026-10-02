@@ -209,7 +209,7 @@ def test_strong_family_reaches_p2_and_has_full_scorecard():
     assert card["tier"] == "P2", card["tier_detail"]
     assert card["vetoes_triggered"] == []
     assert card["robustness_score"] == 6
-    assert card["config_version"] == "v2"
+    assert card["config_version"] == CFG["version"]
     assert out["family"]["n_variants"] == 3
     assert out["family"]["n_eff"] == pytest.approx(
         1 + 2 * (1 - out["family"]["mean_pairwise_corr"])
