@@ -1308,7 +1308,7 @@
   - 2026-10-01 14:17 UTC 交互会话（Opus）写入。合同冻结时 v1 档案下没有任何 Stage 2 结果文件。
 
 ### T-20261001-16 组合线：支持做空的组合下单引擎（模拟盘前置，机主 10-01 同意多开模拟账户）
-- status: running（交互会话子代理 R1001-1735-T16，17:33 UTC 启动；简报 `reports/research/control/briefs/T-20261001-16.md`；只做 dry-run，不下单；定时轮不要碰）
+- status: running（10-02 03:22 UTC 交互会话重启子代理 R1002-0322-T16b。原子代理 R1001-1735-T16 在 10-01 18:05 被机主的会话中断一起停掉，机主 10-02 同意重启；从磁盘上已有的 `open_composer/book_paper/` 继续；只做 dry-run；定时轮不要取）
 - priority: 1
 - not_before: 无，代码可以先写。机主 10-01 约 17:30 已开 quant1、quant2（各 $1M）并授权细节由主审决定（`reports/research/control/owner-authorization-2026-10-01-book-paper-accounts.md`）；下单仍要变体达到 watch_recent 并通过 dry-run 检查表
 - brief: reports/research/control/briefs/T-20261001-16.md
@@ -1346,7 +1346,7 @@
 - brief: reports/research/control/briefs/T-20261001-20.md
 
 ### T-20261001-19 组合线 v1 事后诊断：构造阶梯（风格上限、开盘成交、成本）、传导系数、收益归因
-- status: running（交互会话子代理 R1001-1755-T19，17:55 UTC 启动；定时轮不要取）
+- status: running（10-02 03:22 UTC 交互会话重启子代理 R1002-0322-T19b。原子代理在 10-01 18:05 被一起停掉，机主同意重启；预注册 3911971、身份核对和 30 条 Modal 路径已经在磁盘上，只补分析和报告；定时轮不要取）
 - priority: 1
 - not_before: 无
 - goal: v1、RF1 都在组合层失败，信号层是好的（M0 信号层 A 窗毛 1.68、B 窗 3.06；组合 M0_A 收盘 A 窗毛 1.10、B 窗 −0.80）。量化损失在哪里，作为 v1.1 合同的依据：风格上限一直顶格（M0_A 投资 85%、动量 45%、价值 37% 的调仓顶到 0.25），收盘比开盘差（对标窗毛 0.876 对 1.155），成本每年 172 bp。
