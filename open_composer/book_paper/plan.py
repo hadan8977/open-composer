@@ -43,8 +43,9 @@ class RiskLimits:
     max_abs_net: float = 0.05  # |net dollar| of the stock overlay, fraction of equity
     gross_tolerance: float = 1.05  # post-trade stock gross <= 1.05 x target gross
     max_name_weight: float = 0.0125
-    max_gross_leverage: float = 1.98  # long + short + T-bill/core, Reg T overnight 2x with buffer
-    max_abs_beta: float = 0.05
+    max_gross_leverage: float = 1.98  # long + short + T-bill/core + hedge, Reg T overnight 2x
+    max_abs_beta: float = 0.05  # stock overlay beta + 1.0 x hedge weight
+    core_leg_tolerance: float = 0.02  # schema-2 targets: post-trade core weight vs target
 
 
 @dataclass(frozen=True)
@@ -336,7 +337,9 @@ def build_plan(
     )
     blocked = [c.name for c in checks if not c.passed]
     final_drift = _one_sided_drift(target, post_qty, prices)
-    long_notional, short_notional = _long_short(post_qty, prices, exclude={target.core_symbol})
+    long_notional, short_notional = _long_short(
+        post_qty, prices, exclude=set(target.non_stock_symbols)
+    )
 
     payload: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -458,6 +461,7 @@ def _risk_checks(
 ) -> list[CheckResult]:
     basis = target.equity_basis
     core = target.core_symbol
+    non_stock = target.non_stock_symbols
     results: list[CheckResult] = []
 
     fresh, why = freshness_ok(target.decision_date, target.execution_date, as_of)
@@ -523,7 +527,7 @@ def _risk_checks(
     )
 
     weights = {s: q * prices[s] / basis for s, q in post_qty.items() if s in prices}
-    stock = {s: w for s, w in weights.items() if s != core}
+    stock = {s: w for s, w in weights.items() if s not in non_stock}
     net = sum(stock.values())
     gross = sum(abs(w) for w in stock.values())
     results.append(
@@ -532,7 +536,7 @@ def _risk_checks(
             abs(net) <= limits.max_abs_net + 1e-12,
             round(net, 6),
             limits.max_abs_net,
-            "stock overlay, core leg excluded",
+            "stock overlay, core and hedge legs excluded",
         )
     )
     gross_limit = limits.gross_tolerance * target.target_gross
@@ -563,7 +567,7 @@ def _risk_checks(
             leverage <= limits.max_gross_leverage + 1e-12,
             round(leverage, 6),
             limits.max_gross_leverage,
-            "long + short + core leg, fraction of equity",
+            "long + short + core leg + hedge leg, fraction of equity",
         )
     )
     missing_exposure = sorted(s for s in stock if abs(stock[s]) > 0 and s not in target.exposures)
@@ -576,16 +580,45 @@ def _risk_checks(
             ", ".join(missing_exposure[:10]),
         )
     )
-    beta = sum(target.exposures[s].beta * w for s, w in stock.items() if s in target.exposures)
+    stock_beta = sum(
+        target.exposures[s].beta * w for s, w in stock.items() if s in target.exposures
+    )
+    hedge_symbol = target.hedge_symbol
+    hedge_exec = 0.0
+    if hedge_symbol is not None:
+        # F1: the whole SPY position is the hedge; F2: SPY above the 1.0 core weight is the hedge
+        hedge_exec = weights.get(hedge_symbol, 0.0) - (
+            target.core_weight if hedge_symbol == core else 0.0
+        )
+    beta = stock_beta + 1.0 * hedge_exec
     results.append(
         CheckResult(
             "beta_neutral",
             abs(beta) <= limits.max_abs_beta + 1e-12,
             round(beta, 6),
             limits.max_abs_beta,
-            "sum(beta * weight) over the stock overlay",
+            "sum(beta * weight) over the stock overlay"
+            + (
+                f" + 1.0 x hedge weight ({hedge_symbol} {hedge_exec:+.6f}, as executed); "
+                f"stock beta {stock_beta:+.6f}"
+                if hedge_symbol is not None
+                else ""
+            ),
         )
     )
+    if target.schema_version >= 2:
+        core_post = weights.get(core, 0.0)
+        core_target = target.weights.get(core, 0.0)
+        results.append(
+            CheckResult(
+                "core_leg",
+                abs(core_post - core_target) <= limits.core_leg_tolerance + 1e-12,
+                round(core_post, 6),
+                f"{core_target:.6f} +- {limits.core_leg_tolerance}",
+                f"post-trade {core} weight vs target "
+                f"({'core_weight + hedge_weight' if hedge_symbol == core else 'core_weight'})",
+            )
+        )
     return results
 
 

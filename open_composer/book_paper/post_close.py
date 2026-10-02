@@ -228,11 +228,18 @@ def shadow_costs(
 def realized_exposures(
     target: BookTarget, positions: dict[str, float], close_prices: dict[str, float], equity: float
 ) -> dict[str, Any]:
-    weights = {
+    non_stock = target.non_stock_symbols
+    all_weights = {
         s: q * close_prices[s] / equity
         for s, q in positions.items()
-        if s in close_prices and s != target.core_symbol and equity > 0
+        if s in close_prices and equity > 0
     }
+    weights = {s: w for s, w in all_weights.items() if s not in non_stock}
+    hedge_weight = 0.0
+    if target.hedge_symbol is not None:
+        hedge_weight = all_weights.get(target.hedge_symbol, 0.0) - (
+            target.core_weight if target.hedge_symbol == target.core_symbol else 0.0
+        )
     industry: dict[str, float] = defaultdict(float)
     beta = size = 0.0
     for symbol, w in weights.items():
@@ -242,11 +249,13 @@ def realized_exposures(
         beta += e.beta * w
         size += e.size * w
         industry[e.industry] += w
+    beta += hedge_weight  # SPY hedge, beta 1.0
     missing = sorted(s for s in weights if s not in target.exposures)
     return {
         "net_weight": sum(weights.values()),
         "gross_weight": sum(abs(w) for w in weights.values()),
         "beta": beta,
+        "hedge_weight": hedge_weight,
         "size_weighted": size,
         "industry_net": dict(sorted(industry.items())),
         "names_without_exposure": missing,
