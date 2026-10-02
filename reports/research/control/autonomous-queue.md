@@ -1325,8 +1325,25 @@
 - notes:
   - 2026-10-01 14:20 UTC 交互会话（Opus）写入。机主 10-01 原话："如果前向测试只是确认执行和数据没问题，那么两周就足够了，或者说这个可以直接用模拟盘测试，我多开几个模拟盘账户给你就行了"。开账户和批准具体策略都由机主做。
 
+### T-20261002-26 组合线 v1.2：账户层（F1/F2、整股、Reg T）、安慰剂、按评判标准 v2 定档
+- status: running（10-02 05:45 UTC 交互会话派子代理 R1002-0535-T26；定时轮不要取）
+- priority: 1
+- not_before: 无（合同 `reports/research/iterations/t20261002_book_v12/hypotheses.md` 05:31 UTC 冻结，direction-check、iteration validate 均 ok）
+- goal: T-25 的 R6 在 k = 1 时 SPY 对冲平均占权益 0.68–0.84、最高 1.27，总敞口约 3 倍，超过 Reg T 上限（Alpaca 文档：隔夜 2 倍，收盘不满足次日追保）。所以要回答三个问题：在 $1M 账户里，按 F1（k 0.5 加 T-bill 腿，总敞口 ≤ 1.8）和 F2（SPY 1.0 加 0.3 叠加层），在整股、引擎 $100 最小单、退市下界的约束下还剩多少；安慰剂分位多少；按诚实的试验数能不能到 P1。
+- plan: Stage A 先逐位复现 R6，再跑账户层；Stage B 跑 100 个种子的日内打乱安慰剂；Stage C 用 scorecard_v2 记分（10 变体族的 DSR，并披露全项目 111 个试验）、做因子 ETF 张成和风格归因，最后定档。纯逻辑写进 `open_composer/research/equity_book/book_v12.py`，给生产端复用。
+- done_when: `t20261002_book_v12/` 下的 results、report、identity、placebo、account-summary 已提交，decision-record 已更新。
+- brief: reports/research/control/briefs/T-20261002-26.md
+
+### T-20261002-27 下单引擎：对冲腿和可变 T-bill 腿（v1.2 的 F1/F2 形式，只 dry-run）
+- status: running（10-02 05:45 UTC 交互会话派子代理 R1002-0540-T27；定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: T-16 引擎要求核心腿权重恰好为 1.0，并把 SPY 当股票检查净敞口、单名上限和 beta，表达不了 v1.2 的两种形式：F1 是股票、SPY 对冲加可变 T-bill；F2 是 SPY 1.0 加并入的对冲。本任务把引擎扩成 BookTarget v2：向后兼容，v1 哈希不变，检查分层。生产端目标生成器之后另立任务，复用 T-26 的模块。
+- done_when: 新旧测试全部通过，F1/F2 v2 dry-run 检查表全绿，已提交。
+- brief: reports/research/control/briefs/T-20261002-27.md
+
 ### T-20261002-25 组合线：总收益多空的现实化阶梯（有没有简单构造的书）
-- status: running（10-02 04:30 UTC 交互会话派子代理 R1002-0430-T25；定时轮不要取）
+- status: done（8113bb7 预注册、2959d68 结果；05:20 UTC 主审已复核）。R6 近期净夏普复算为 1.506 / 0.966 / 1.389 / 1.104，与报告一致。主审另外发现两点：R6 在 k = 1 时需要 0.68–0.84 倍（最高 1.27 倍）的多头 SPY 对冲，总敞口约 3 倍，超过 Reg T，所以要有账户层；因子 ETF 只能解释 57–63% 的日波动，U3000 的剩余 α 每年 9–11%（t 约 2.1）。按规则写 v1.2 合同 → T-20261002-26/27
 - priority: 1
 - not_before: 无
 - goal: 残差 α 弱（T-24、残差 IC 核对），优化器传导系数只有 0.4–0.5（T-19）。信号层总收益多空在 2024–26 毛夏普 1.68，但它是每日调仓、开盘成交、做空不受限、8 bp 成本，而且 Stage 0 发现 252 日 beta 对冲会失效。所以要逐级加上现实约束：周频、收盘、只做易借券、真实价差和借券、组合层 beta 中性、VIX 风控。看看还剩多少，决定 v1.2 简单构造合同值不值得写。

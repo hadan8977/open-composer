@@ -1,0 +1,136 @@
+{
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V12_M0_U3000",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "simple_construction_equity_book_v12",
+      "parameters": {
+        "account_forms": "F1 (quant1): k 0.5 x VIX scale, gross incl. hedge and T-bill leg <= 1.8; F2 (quant2): SPY 1.0 + overlay min(0.3, 0.8/(2+|h|)) x VIX scale, hedge merged, 6.50% debit interest",
+        "combination": "M0 (theme equal weight), identical to T-25 R6",
+        "construction": "industry-demeaned rank-normal weights, long 1 / short 1; book-level EWMA SPY hedge; VIX > 20.60 halves weights and hedge; weekly, 5 tranches netted; fill at the close of t+1",
+        "realism": "whole shares round-half-away at E = $1M, orders < $100 dropped, Alpaca margin table checked at every close, delisting bound -30% longs / 0% shorts, borrow 0 bp ETB, cash 0%",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 decides; A and B reported; stress 2017-10-02..2023-08-31 only for V4"
+      },
+      "path": "simple_construction_equity_book_v12",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261002_book_v12.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V12_M0_P1000",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "simple_construction_equity_book_v12",
+      "parameters": {
+        "account_forms": "F1 (quant1): k 0.5 x VIX scale, gross incl. hedge and T-bill leg <= 1.8; F2 (quant2): SPY 1.0 + overlay min(0.3, 0.8/(2+|h|)) x VIX scale, hedge merged, 6.50% debit interest",
+        "combination": "M0 (theme equal weight), identical to T-25 R6",
+        "construction": "industry-demeaned rank-normal weights, long 1 / short 1; book-level EWMA SPY hedge; VIX > 20.60 halves weights and hedge; weekly, 5 tranches netted; fill at the close of t+1",
+        "realism": "whole shares round-half-away at E = $1M, orders < $100 dropped, Alpaca margin table checked at every close, delisting bound -30% longs / 0% shorts, borrow 0 bp ETB, cash 0%",
+        "universe": "P1000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 decides; A and B reported; stress 2017-10-02..2023-08-31 only for V4"
+      },
+      "path": "simple_construction_equity_book_v12",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261002_book_v12.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V12_M1_U3000",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "simple_construction_equity_book_v12",
+      "parameters": {
+        "account_forms": "F1 (quant1): k 0.5 x VIX scale, gross incl. hedge and T-bill leg <= 1.8; F2 (quant2): SPY 1.0 + overlay min(0.3, 0.8/(2+|h|)) x VIX scale, hedge merged, 6.50% debit interest",
+        "combination": "M1 (FormationIC weights re-set monthly), identical to T-25 R6",
+        "construction": "industry-demeaned rank-normal weights, long 1 / short 1; book-level EWMA SPY hedge; VIX > 20.60 halves weights and hedge; weekly, 5 tranches netted; fill at the close of t+1",
+        "realism": "whole shares round-half-away at E = $1M, orders < $100 dropped, Alpaca margin table checked at every close, delisting bound -30% longs / 0% shorts, borrow 0 bp ETB, cash 0%",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 decides; A and B reported; stress 2017-10-02..2023-08-31 only for V4"
+      },
+      "path": "simple_construction_equity_book_v12",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261002_book_v12.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V12_M1_P1000",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "simple_construction_equity_book_v12",
+      "parameters": {
+        "account_forms": "F1 (quant1): k 0.5 x VIX scale, gross incl. hedge and T-bill leg <= 1.8; F2 (quant2): SPY 1.0 + overlay min(0.3, 0.8/(2+|h|)) x VIX scale, hedge merged, 6.50% debit interest",
+        "combination": "M1 (FormationIC weights re-set monthly), identical to T-25 R6",
+        "construction": "industry-demeaned rank-normal weights, long 1 / short 1; book-level EWMA SPY hedge; VIX > 20.60 halves weights and hedge; weekly, 5 tranches netted; fill at the close of t+1",
+        "realism": "whole shares round-half-away at E = $1M, orders < $100 dropped, Alpaca margin table checked at every close, delisting bound -30% longs / 0% shorts, borrow 0 bp ETB, cash 0%",
+        "universe": "P1000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 decides; A and B reported; stress 2017-10-02..2023-08-31 only for V4"
+      },
+      "path": "simple_construction_equity_book_v12",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261002_book_v12.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-02T05:31:30.698480+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261002_book_v12",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261002_book_v12.yaml": "1dbdaff0f8df0a1891b8336e444cc1135d64a8d18763476b62f4374fa549ae77"
+  }
+}

@@ -1,0 +1,113 @@
+name: t20261002_book_v12
+description: 'Equity book v1.2 (simple construction), preregistered 2026-10-02 after T-20261002-25 passed its proceed rule: the T-25 R6 construction (9-theme composite M0/M1, industry-demeaned rank weights, easy-to-borrow shorts, book-level EWMA SPY hedge, VIX > 20.60 halving, weekly 5 tranches netted, fill at the close of t+1) in an Alpaca Reg T account at $1M: F1 neutral (k 0.5, T-bill leg, gross <= 1.8) on quant1 and F2 (SPY 1.0 plus a 0.3 overlay) on quant2, whole shares, engine minimum order, delisting bound, judged by evaluation standard v2.0.1 (tier P1 for paper). The spec execution block cannot express a next-close fill or the account layer; the binding definitions are in the manifest and hypotheses.md. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- IWM
+- IJR
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3000
+  max_position_weight: 0.0125
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3000
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.0125
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261002_book_v12:simple_construction_equity_book
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/research/equity_book/panel
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_book_alpha:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Signals come from themes_<year>.parquet via AlphaSource (scripts/run_book_v1_stage2.py), weights, hedge, VIX rule and costs from scripts/realism_ladder_book_ls.py (T-25 R6), the account layer from the T-20261002-26 simulator, all as preregistered in reports/research/iterations/t20261002_book_v12/hypotheses.md.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- events.sec_filings
+- events.sec_form4_insider
+- market.finra_short_interest
+- reference.sec_sic_industry
+research_design:
+  iter_id: t20261002_book_v12
+  candidate_manifest_path: reports/research/iterations/t20261002_book_v12/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261002_book_v12/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261002_book_v12.jsonl
+  source_card_claim_ids:
+  - aqr_2023_longshort_manager_sharpe_percentiles
+  - chen_velikov_2023_anomaly_net_returns
+  - fim_2018_trading_costs_square_root_impact
+  - jkp_2023_replication_153_factors_13_themes
+  - nrrz_2023_timing_the_factor_zoo
+  - alpaca_2026_regt_margin_short_selling_rules
+  - alpaca_2026_high_yield_cash_non_pdt_only
+  parameter_space:
+    combination:
+    - M0_theme_equal_weight
+    - M1_formation_ic_weight
+    universe:
+    - U3000
+    - P1000
+  candidate_budget: 4
+  selection_objective: Not a return search. The 4 variants are the T-25 R6 variants unchanged; the account layer (F1 k 0.5 with T-bill leg, F2 SPY 1.0 plus 0.3 overlay, G 1.8) and every judgment rule are frozen in hypotheses.md before any v1.2 number. The paper variant is the P1 variant with the highest 10-family DSR; nothing is tuned after results.
+  candidate_budget_note: '4 candidates (no new selectable variants; F1/F2 are account forms of the same candidate). DSR family for tiers: 10 (6 v1 Stage 2a + 4 T-25 R6); program disclosure: 111 trials.'
+  anti_overfit_notes:
+  - T-25 results and the lead spot checks (hedge size, factor-ETF spanning) were seen before this contract and are listed in hypotheses.md section 0; k = 0.5 follows the frozen 5% volatility target of the v1 design, G = 1.8 follows Reg T, neither was searched.
+  - The 2017-2023 window is only used for the crash veto; 2026-07..09 only for the consistency z; forward evidence starts 2026-09-18.
+  - The program-level DSR (111 trials) is disclosed and caps the tier at P1 when below 0.50.
+  validation_plan:
+  - 'Stage A: exact replay of the T-25 R6 daily series (<= 1e-12), then F1/F2 account layer 2017-10..2026-09 with whole shares, engine rules, Alpaca margin table, cash and delisting conventions'
+  - 'Stage B: 100-seed within-date score-permutation placebo through the R6 pipeline, net and gross recent Sharpe percentiles'
+  - 'Stage C: scorecard_v2 (10-variant DSR family, robustness, V1-V5), program DSR disclosure, tier per hypotheses.md section 6; diagnostics: factor-ETF spanning, style/specific attribution'
+notes:
+  intent: Turn the T-25 R6 construction into a paper-ready, Reg T feasible book on quant1/quant2 if it reaches evaluation-standard v2 tier P1.
+  hypothesis_id: T-20261002-26
+  previous_link: dir:multi_signal_risk_controlled_equity_book
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

@@ -1,0 +1,56 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261002_book_v12/candidate-manifest.json",
+  "candidate_manifest_sha256": "6e22ca85a00c2f2afdcdb07d539ea709e36fb92c43eff0872944363e2d77ec8e",
+  "cost_table_path": "reports/research/iterations/t20261002_book_v12/cost-table.json",
+  "created_at": "2026-10-02T05:31:30.700048+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261002_book_v12/data-feasibility.json",
+  "data_feasibility_sha256": "7f7c05f27f261d548ade806274c5bf6338fc40b8e11424898bba525c56f09947",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261002_book_v12",
+  "paths": [
+    {
+      "benchmark_family": [
+        "cash_proxy_bil_excess_return",
+        "within_date_score_permutation_placebo_100_seeds_net_and_gross",
+        "t25_r6_strategy_level_identity",
+        "factor_etf_spanning_regression_reported",
+        "spy_buy_and_hold_reported_for_f2",
+        "dsr_10_variant_family_and_111_trial_program_disclosure"
+      ],
+      "candidate_count": 4,
+      "hypothesis_refs": [
+        "T-20261002-26"
+      ],
+      "name": "simple_construction_equity_book_v12",
+      "parameters": {
+        "account_forms": [
+          "F1 (quant1): k 0.5 x VIX scale, gross incl. hedge and T-bill leg <= 1.8; F2 (quant2): SPY 1.0 + overlay min(0.3, 0.8/(2+|h|)) x VIX scale, hedge merged, 6.50% debit interest"
+        ],
+        "combination": [
+          "M0 (theme equal weight), identical to T-25 R6",
+          "M1 (FormationIC weights re-set monthly), identical to T-25 R6"
+        ],
+        "construction": [
+          "industry-demeaned rank-normal weights, long 1 / short 1; book-level EWMA SPY hedge; VIX > 20.60 halves weights and hedge; weekly, 5 tranches netted; fill at the close of t+1"
+        ],
+        "realism": [
+          "whole shares round-half-away at E = $1M, orders < $100 dropped, Alpaca margin table checked at every close, delisting bound -30% longs / 0% shorts, borrow 0 bp ETB, cash 0%"
+        ],
+        "universe": [
+          "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+          "P1000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t"
+        ],
+        "windows": [
+          "recent 2024-01-08..2026-09-15 decides; A and B reported; stress 2017-10-02..2023-08-31 only for V4"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261002_book_v12.yaml",
+  "spec_hash": "1dbdaff0f8df0a1891b8336e444cc1135d64a8d18763476b62f4374fa549ae77",
+  "strategy_name": "t20261002_book_v12",
+  "total_candidate_budget": 4,
+  "trial_ledger_paths": []
+}

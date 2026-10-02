@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "iter_id": "t20261002_book_v12",
+  "reviewed_at": "2026-10-02T05:31:44Z",
+  "decision": "proceed",
+  "objective": "Equity book v1.2 (simple construction): preregistered after T-20261002-25 passed its mechanical rule. Test whether the T-25 R6 construction (9-theme composite M0/M1, industry-demeaned rank weights, easy-to-borrow shorts, book-level EWMA SPY beta hedge, VIX > 20.60 halving, weekly 5 tranches, fill at the close of t+1) survives an Alpaca Reg T account at $1M -- gross incl. hedge and T-bills <= 1.8x equity, whole shares and the engine minimum order, netted tranches, conservative delisting bound, borrow 0 bp on ETB per Alpaca docs, no interest on cash -- and reaches evaluation-standard v2 tier P1 under a 10-variant DSR family (111-trial program DSR disclosed, < 0.50 caps at P1), with a 100-seed placebo, so that quant1 (F1 neutral, k 0.5 plus T-bill leg) and quant2 (F2 SPY 1.0 plus a 0.3 overlay) can start paper incubation and a forward record from 2026-09-18.",
+  "target_regime_and_horizon": "US equities, research-panel U3000 and P1000 members; weekly rebalancing in 5 tranches, decision at the close of D, fill at the close of D+1. Judged on the recent window 2024-01-08..2026-09-15 (the owner's recent-market rule); 2017-10..2023-08 only for the crash veto V4; 2026-07-01..09-15 only a consistency z. Target regime: the 2024-26 cross-section where industry-relative style and selection themes earn positive premia; current state up_mid (SPY above its 200-day mean, VIX 14.46-20.60); VIX > 20.60 halves the book. Validity to 2026-12-31, then a forward review; failure signals and exits in hypotheses.md section 7.",
+  "existing_solution_comparison": "Professional systematic long/short equity: net Sharpe median 0.51, 90th percentile 1.18 (AQR/HFR 1996-2023). Single anomalies earn about 4 bp/month net after 2005, combinations about 20 bp (Chen-Velikov), so a multi-theme composite with cost-aware weekly trading is the standard form; the JKP themes supply the signal families. Off-the-shelf alternatives were checked on our data before allocating compute: the live anti-beta fund BTAL returned -8.9% a year in 2024-01..2026-09 (beta -0.88) and SPLV minus SPHB -18.7% a year; cap-weighted factor ETFs (SPLV, SPHB, MTUM, QUAL, VLUE, IWM vs SPY) explain 57-63% of the R6 daily variance and leave 4.8-10.9% a year unexplained (Newey-West t up to 2.1 on U3000), so buying factor ETFs does not replicate the book. Our own optimizer book (v1, RF1) lost most of the signal (transfer coefficient 0.4-0.5, T-19), which is why the simple rank-weighted construction is used. Alpaca rules (broker docs): Reg T 2x overnight with next-morning margin calls, $0 borrow on easy-to-borrow shorts, 6.50% debit interest; High-Yield Cash 3.56% APY only for non-pattern-day traders.",
+  "remaining_evidence_gap": "Whether the R6 evidence survives the account layer (the k = 1 R6 book needs a long SPY hedge of 0.68-0.84x equity on average, up to 1.27x, i.e. about 3x gross, above Reg T), whole shares and the $100 minimum order at $1M, a conservative delisting bound and an honest trial count; whether it beats a within-date score-permutation placebo; and forward evidence after 2026-09-18, which no one has seen.",
+  "negative_experiments_checked": "t20261001_book_v1 Stage 2a (6 variants) and RF1 negated mechanically; T-19: removing style caps adds about 0.01-0.02 Sharpe, so the loss was transfer, not caps; T-24: none of ml_pv, low MAX, near-52-week-high or the Alpha158 FDR composite adds residual IC in 2024-26 (v1.1 cancelled); Stage 0: the per-stock 252-day beta hedge left realised beta 0.5-0.9, replaced here by the book-level EWMA SPY hedge (T-25 R5/R6 realised beta <= 0.11); Q2 strength came from shorting dilutive microcaps, hence the easy-to-borrow proxy. The 263 standalone long-only anomaly directions are a different mechanism and are not reopened.",
+  "cost_and_execution_assumptions": "Cost model v1 at the close snapshot through make_cost_fn(\"close\"): half-spread, square-root impact on traded dollars at E = $1M, fees 0.5 bp per side; SPY and the T-bill ETF through the ETF branch; borrow 0 bp on easy-to-borrow shorts (Alpaca docs; 25 bp reported as sensitivity; 2x-cost check uses 2x trading costs plus 100 bp a year on all shorts); Alpaca time_in_force=cls orders before the engine cutoff (close minus 15 minutes); whole shares by round-half-away with reference prices at the close of D, orders below $100 dropped; F1: stock weights and hedge x 0.5 x VIX scale, T-bill leg filling gross to <= 1.8 without debit; F2: SPY 1.0 plus a 0.3 overlay with its hedge merged, 6.50% debit interest; positive cash earns 0 in the main estimate; delisting bound -30% longs / 0% shorts.",
+  "stop_condition": "No variant reaches P1 (hypotheses.md section 6, standard v2.0.1 plus the program-DSR cap): the book line pauses until a new signal is admitted (Lazy Prices T-20261002-03/04, text layer) under a new contract; no parameter of this contract is tuned. A paper book halves or stops on the hypotheses.md section 7 rules (simulated drawdown 95th/99th percentiles, 21-session |beta| > 0.25, cost overrun, merged P(SR > 0) < 0.5).",
+  "queries": [
+    {
+      "query": "Jensen Kelly Malamud Pedersen \"Machine Learning and the Implementable Efficient Frontier\" Portfolio-ML net Sharpe",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+      ],
+      "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "AQR \"Key Design Choices in Long/Short Equity\" Alternative Thinking 2023 systematic hedge fund Sharpe percentiles",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+      ],
+      "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "Chen Velikov \"Zeroing in on the Expected Returns of Anomalies\" JFQA 2023 post-2005 4 bps per month",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+      ],
+      "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "Frazzini Israel Moskowitz \"Trading Costs\" 2018 price impact square root anomalies capacity",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+      ],
+      "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "Jensen Kelly Pedersen \"Is There a Replication Crisis in Finance\" 153 factors 93 countries",
+      "searched_at": "2026-10-01T07:18:00Z",
+      "opened_urls": [
+        "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+      ],
+      "note": "Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "factor momentum out-of-sample post-publication performance Ehsani Linnainmaa Gupta Kelly time-series factor momentum recent evidence",
+      "searched_at": "2026-10-01T10:19:00Z",
+      "opened_urls": [
+        "https://pureadmin.qub.ac.uk/ws/portalfiles/portal/532038294/A_reexamination_of_factor_momentum.pdf",
+        "https://afajof.org/management/viewp.php?n=32508"
+      ],
+      "note": "Opened and snapshotted by the interactive lead; quotes verified in reports/research/intel/sources/regime-2026-10-01/."
+    },
+    {
+      "query": "Alpaca brokerage margin account interest on cash balance short sale proceeds credit interest",
+      "searched_at": "2026-10-02T05:14:00Z",
+      "opened_urls": [
+        "https://alpaca.markets/blog/alpaca-launches-high-yield-cash-program-for-trading-api-users-enabling-growth-on-deposits/"
+      ],
+      "note": "WebSearch by the interactive lead session; times are the session clock to within 3 minutes. Result summary (BrokerChooser review) said 3.6% on uninvested cash, short proceeds not covered; the Alpaca page itself was then opened."
+    },
+    {
+      "query": "Alpaca docs margin and short selling overnight buying power Reg T maintenance margin requirement short positions",
+      "searched_at": "2026-10-02T05:14:30Z",
+      "opened_urls": [
+        "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+      ],
+      "note": "Opened with WebFetch, then snapshotted with curl at 05:19:39Z (HTML stripped to text)."
+    },
+    {
+      "query": "Alpaca \"High Yield Cash\" APY Trading API margin account eligibility sweep",
+      "searched_at": "2026-10-02T05:16:30Z",
+      "opened_urls": [
+        "https://alpaca.markets/blog/alpaca-launches-high-yield-cash-program-for-trading-api-users-enabling-growth-on-deposits/"
+      ],
+      "note": "Eligibility: non-pattern day traders only; short proceeds not addressed."
+    }
+  ],
+  "sources": [
+    {
+      "applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:06:00Z",
+      "independent_replication": "Authors' code is public (github theisij/ml-and-the-implementable-efficient-frontier); AQR Alternative Thinking 2024 Q4 reports gains from ML-built stock portfolios; no independent academic replication was read.",
+      "limitations": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "market_and_period": "US stocks, out of sample 1981-2020, price-impact costs for a $10 billion investor",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "sha256": "8d482fb0eb156efbf9a0e75be6eefb64270ea5d693e6d7ece9e95c244df77db5",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/01_jkmp_implementable_frontier_SFI22-63_2022version.txt",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "fetched_at": "2026-10-01T06:14:03Z",
+      "independent_replication": "Consistent with the HFRX and BarclayHedge equity-market-neutral index snapshots in the same 2026-10-01 intel folder; no academic replication.",
+      "limitations": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "market_and_period": "HFR long/short equity funds, May 1996 - August 2023, monthly, net of fees",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "sha256": "811545a0e2d8b8f7bf77111197be0b23fe009101b89d4910e2300c85b135e339",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/B_aqr_key_design_choices_longshort_2023.txt",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:09:00Z",
+      "independent_replication": "Consistent with Jensen-Kelly-Pedersen (JF 2023) on replication versus profitability; not re-run here.",
+      "limitations": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "market_and_period": "US stocks, published cross-sectional anomalies, with a post-2005 subsample",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "sha256": "30e153be6b4769ac9b6df25f37961728f44c3ce1eb16920b639f8cba18374288",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/06_chen_velikov_zeroing_in_JFQA2023.txt",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:10:30Z",
+      "independent_replication": "The square-root shape matches the Toth-Bouchaud and Almgren lines cited in the snapshot; no replication on our data.",
+      "limitations": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+      "market_and_period": "Live executions of one large manager, 21 developed equity markets, 1998-2016",
+      "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "published_or_updated_at": "2018-08-01",
+      "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+      "sha256": "045785a8b3bfd49f9c852e8fa2b2bf24386cff4e77880b3aa79986f8bdfbe67e",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/B_aqr_fim_trading_costs_2018.txt",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl",
+      "source_type": "paper",
+      "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:09:00Z",
+      "independent_replication": "Chen and Zimmermann's open-source asset pricing (FEDS 2021-037) independently reproduces most US predictors.",
+      "limitations": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "market_and_period": "153 factors, 93 countries, the paper's global sample",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "sha256": "438dfb4877f896bed4c4214e017408e9363ff2352a429a11b8fc791a38a021d4",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/10_jensen_kelly_pedersen_replication_crisis_JF2023.txt",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+      "claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+      "claim_id": "nrrz_2023_timing_the_factor_zoo",
+      "core_claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T10:20:00Z",
+      "independent_replication": "Not read; consistent with Moreira-Muir 2017 volatility-managed portfolios and Barroso-Santa-Clara 2015 momentum volatility scaling (not opened this round).",
+      "limitations": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version.",
+      "market_and_period": "US equity factor zoo (over 300 factors, 39 timing predictors), monthly, sample to about 2020",
+      "project_applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+      "published_or_updated_at": "2023-03-15",
+      "reflection": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version.",
+      "sha256": "a5422dd5d4eb7d7e8bae91bdcdbe67fa00126d0a7f5c6e798a4663705b6a1104",
+      "snapshot_path": "reports/research/intel/sources/regime-2026-10-01/neuhierl_randl_reschenhofer_timing_factor_zoo.txt",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl",
+      "source_type": "paper",
+      "url": "https://afajof.org/management/viewp.php?n=32508"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling",
+      "source_type": "broker_official_docs",
+      "published_or_updated_at": "unknown",
+      "snapshot_path": "reports/research/intel/sources/book-v12-2026-10-02/01_alpaca_margin_and_short_selling.txt",
+      "claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "market_and_period": "Alpaca Securities US equities margin accounts, documentation as served on 2026-10-02",
+      "applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "limitations": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "independent_replication": "Primary broker documentation; the 2x overnight / 4x intraday Reg T limits match FINRA Rule 4210 and Regulation T; no independent replication needed for a broker rule.",
+      "credibility": "primary_broker_documentation",
+      "sha256": "637065a735e7306a90cbe533c8a26be561e8fdc91faed71ea0ce77c3b7b063dc",
+      "fetched_at": "2026-10-02T05:19:39Z",
+      "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "project_applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "reflection": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl"
+    },
+    {
+      "claim_id": "alpaca_2026_high_yield_cash_non_pdt_only",
+      "url": "https://alpaca.markets/blog/alpaca-launches-high-yield-cash-program-for-trading-api-users-enabling-growth-on-deposits/",
+      "source_type": "broker_official_docs",
+      "published_or_updated_at": "2026-09-17",
+      "snapshot_path": "reports/research/intel/sources/book-v12-2026-10-02/02_alpaca_high_yield_cash_trading_api.txt",
+      "claim": "Alpaca blog (last updated 2026-09-17): as of 2026-09-22 eligible Trading API users can earn up to 3.56% APY on uninvested USD balances through the High-Yield Cash program, which is only available to users classified as non-pattern day traders.",
+      "market_and_period": "Alpaca Trading API accounts, rate as of 2026-09-22",
+      "applicability": "Sets the cash convention: the main estimate pays no interest on positive cash (paper pays none and it is unverified whether short-sale proceeds count as uninvested cash); a sensitivity credits BIL on positive cash excluding short proceeds; F1 holds a T-bill ETF leg instead of relying on cash interest.",
+      "limitations": "Marketing blog; rate is variable; does not state whether short-sale proceeds or margin accounts with short positions qualify (to be verified with Alpaca before any live proposal).",
+      "independent_replication": "Consistent with third-party broker reviews (BrokerChooser 2026 lists 3.56% APY on uninvested cash); eligibility for short proceeds not confirmed anywhere.",
+      "credibility": "primary_broker_documentation",
+      "sha256": "63662142372e6811385e9b1e480dc1e895f8efeb81c28ca5d0f532684ccbbd86",
+      "fetched_at": "2026-10-02T05:19:39Z",
+      "core_claim": "Alpaca blog (last updated 2026-09-17): as of 2026-09-22 eligible Trading API users can earn up to 3.56% APY on uninvested USD balances through the High-Yield Cash program, which is only available to users classified as non-pattern day traders.",
+      "project_applicability": "Sets the cash convention: the main estimate pays no interest on positive cash (paper pays none and it is unverified whether short-sale proceeds count as uninvested cash); a sensitivity credits BIL on positive cash excluding short proceeds; F1 holds a T-bill ETF leg instead of relying on cash interest.",
+      "reflection": "Marketing blog; rate is variable; does not state whether short-sale proceeds or margin accounts with short positions qualify (to be verified with Alpaca before any live proposal).",
+      "source_card_path": "reports/harness/source_cards/t20261002_book_v12.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "T-20261002-26 on the frozen research snapshot, local first: (A) reproduce the T-25 R6 daily series exactly, then the F1/F2 account layer with whole shares, the engine rules, margin checks, delisting bound and cash conventions; (B) 100-seed within-date permutation placebo through the R6 pipeline; (C) scorecard_v2 with the 10-variant DSR family, the 111-trial disclosure, robustness, vetoes and the tier per hypotheses.md.",
+    "pass_condition": "At least one variant reaches tier P1 under hypotheses.md section 6 with zero margin violations, and its F1 overlay keeps a recent net Sharpe within 0.25 of the strategy-level R6 (otherwise rescored on the overlay).",
+    "falsification_condition": "No variant reaches P1, or the account layer has margin violations that a k below 0.5 cannot remove, or the rescored overlay misses P1.",
+    "max_compute_minutes": 480
+  }
+}
