@@ -38,3 +38,15 @@ Either accept an append-only policy (keep rows <= old last date, append only row
 - `data/sip-delisted/by_year` is static (last refreshed 2026-09-18); delistings after that are not in the broad tables. New listings without asset metadata (no ETF/fund flag after the cached 2026-09-18 snapshot) were kept by the builder; not counted separately.
 - First insider build at `--swap 1G` was OOM-killed at 1.8 GB; rerun with `--swap 3G` (160 s).
 - `scripts/_t21_inv_driver.py` merges per-year comparisons into `invariance.json`; `scripts/check_feature_invariance.py` is the checker (tests in `tests/test_check_feature_invariance.py`, 8 passing).
+
+## T-20261002-01 archive repair (status partial, archive restored; pending lead review)
+
+- Code: `scripts/update_sip_archive.py` (detect_restated_symbols, rewrite_full_history, process_restatements with `--rewrite-budget-min` 25 and `_restatements_pending.jsonl`, repair_full_window / `--repair-full-window`, minute detect-only), `scripts/check_sip_seams.py`, `scripts/verify_sip_repair.py`; 29 tests in `tests/test_update_sip_archive.py` pass, ruff clean. Order differs from the brief only in that the tail window is merged first and the full-history rewrite follows (same result, newest bar is always in).
+- Run: backup `data/live/backup-sip-daily-20261002` (3741 files, sha256 in `sip-daily-backup-sha256.json`); repair run 29 min, 949 API calls, 6946 symbols found restated by the whole-year compare (+7 in the following update), 49906 symbol-years rewritten, 27107 rows without a shard, 0 empty refetches.
+- Seams (`seams-before.json`, `seams-after.json`): 2026-09 22 -> 6 (Jan-Aug max 9); APH 08-26->08-27 ratio 0.5001 -> 1.0002; VRME, KUST, ZCSH, UNX, TANH no longer listed.
+- V1 failed as specified (11,513,316 violations at 2.5e-4/price): vendor prices are 2-decimal, so old and new bases differ by rounding (AAA 22.63 vs 22.55). With a 0.02/price allowance on two shard slices (about 2,500 symbols) 188 violations remain (vendor history changes, ticker reuse such as NIVF). V2 strict 1e-6 failed for the same reason (7,779 symbol-fields).
+- V4 failed as specified: 116 of 200 unrestated symbols differ; the 20 inspected differ only in the last row (2026-10-01) volume and trade_count, which is the normal tail correction.
+- Per the brief the archive was restored from the backup (sha256 verified, 0 mismatches) and the repaired tree kept in `data/live/failed-sip-daily-20261002`; `_restatements.jsonl` is there too.
+- Sleeve shifts (63d / 252d, pp): see `archive-repair.json` `sleeve_return_shift`; for example SHY +0.60 / +0.59, QQQ +0.11 / +0.13, SPY +0.25 / +0.29, GLD and SMH 0.
+- Nightly cost: 0.21 s per symbol rewritten, plus about 160 s fixed shard-map build; estimate 0.9 min on an average night, 4.1 min for the peak September week (1,175 symbols), below the 25 min budget. Minute archive restatements are only logged (known limit).
+- Needs the lead: V1 tolerance (rounding) and V4 definition (exclude the last session), then a repeat of the repair (about 35 min) or acceptance of the current verdict.

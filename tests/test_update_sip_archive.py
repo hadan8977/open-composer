@@ -314,3 +314,371 @@ def test_refuse_if_bulk_fetch_active_when_pgrep_finds_nothing(
 
     monkeypatch.setattr(update_sip_archive.subprocess, "run", fake_run)
     _refuse_if_bulk_fetch_active()  # must not raise
+
+
+# ---------------------------------------------------------------------------
+# Restatement detection and full-history rewrites (vendor re-based the history)
+# ---------------------------------------------------------------------------
+
+DAYS_2025 = ["2025-12-29", "2025-12-30", "2025-12-31"]
+DAYS_2026 = [
+    "2026-01-02",
+    "2026-01-05",
+    "2026-01-06",
+    "2026-01-07",
+    "2026-01-08",
+    "2026-01-09",
+]
+NOW = datetime(2026, 1, 12, tzinfo=UTC)
+
+
+def _series(values: dict[str, float]) -> list[tuple[str, str, float]]:
+    return [("AAPL", day, value) for day, value in values.items()]
+
+
+class _TruthClient:
+    """Fake vendor: returns the rows of ``truth`` between start and end, newest basis."""
+
+    def __init__(self, truth: dict[str, dict[str, float]]) -> None:
+        self.truth = truth
+        self.calls: list[tuple[tuple[str, ...], datetime, str]] = []
+
+    def fetch(self, data_client, symbols, start, end, kind):
+        self.calls.append((tuple(symbols), start, kind))
+        rows = [
+            (symbol, day, value)
+            for symbol in symbols
+            for day, value in self.truth.get(symbol, {}).items()
+            if start <= pd.Timestamp(day, tz="UTC") <= end
+        ]
+        if not rows:
+            return None
+        return _bars_frame(rows)
+
+    def full_history_calls(self) -> list[tuple[tuple[str, ...], datetime, str]]:
+        return [call for call in self.calls if call[1].year < 2026]
+
+
+def _two_year_archive(tmp_path: Path, old: dict[str, dict[str, float]]) -> Path:
+    out = tmp_path / "sip"
+    for year, days in (("2025", DAYS_2025), ("2026", DAYS_2026)):
+        rows = [
+            (symbol, day, series[day])
+            for symbol, series in old.items()
+            for day in days
+            if day in series
+        ]
+        _write_shard(out / "daily" / year / "shard-0000.parquet", rows)
+    (out / "daily" / "_LAYOUT.json").write_text(
+        json.dumps({"batch_size": 40, "shard_symbols": {"0000": sorted(old)}}), encoding="utf-8"
+    )
+    return out
+
+
+def _closes(out: Path, symbol: str) -> pd.Series:
+    frames = [
+        _read_shard_frame(path) for path in sorted((out / "daily").glob("*/shard-0000.parquet"))
+    ]
+    frame = pd.concat(frames).sort_values("timestamp")
+    frame = frame.loc[frame["symbol"] == symbol]
+    return frame.set_index("timestamp")["close"]
+
+
+def _restatement_lines(out: Path) -> list[dict]:
+    path = out / "daily" / "_restatements.jsonl"
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
+def _patch_fetch(monkeypatch: pytest.MonkeyPatch, client: _TruthClient) -> None:
+    monkeypatch.setattr(update_sip_archive, "_fetch_batch", client.fetch)
+
+
+def _drift_series(scale: float = 1.0) -> dict[str, float]:
+    days = DAYS_2025 + DAYS_2026
+    return {day: round((100.0 + 1.5 * i) * scale, 6) for i, day in enumerate(days)}
+
+
+def test_detect_restated_symbols_flags_only_changed_symbols() -> None:
+    existing = _bars_frame(
+        [("AAPL", "2026-01-02", 100.0), ("MSFT", "2026-01-02", 50.0), ("ZZ", "2026-01-02", 5.0)]
+    ).reset_index()
+    fetched = _bars_frame(
+        [("AAPL", "2026-01-02", 99.0), ("MSFT", "2026-01-02", 50.0), ("NEW", "2026-01-02", 7.0)]
+    ).reset_index()
+
+    result = update_sip_archive.detect_restated_symbols(existing, fetched)
+
+    assert list(result) == ["AAPL"]
+    assert result["AAPL"] == pytest.approx(0.01)
+    assert update_sip_archive.detect_restated_symbols(existing.iloc[0:0], fetched) == {}
+    assert update_sip_archive.detect_restated_symbols(existing, fetched.iloc[0:0]) == {}
+
+
+def test_a_dividend_restatement_rewrites_both_years_and_keeps_returns(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Old archive: AAPL entirely on the old basis; tonight the vendor serves the
+    # whole history x0.99 (an ex-dividend date passed), the tail refetch sees it.
+    old_basis = _drift_series()
+    new_basis = _drift_series(0.99)
+    stored = dict(old_basis)
+    msft = {day: 50.0 for day in DAYS_2025 + DAYS_2026}
+    out = _two_year_archive(tmp_path, {"AAPL": stored, "MSFT": msft})
+    msft_before = _read_shard_frame(out / "daily" / "2026" / "shard-0000.parquet")
+    msft_before = msft_before.loc[msft_before["symbol"] == "MSFT"].reset_index(drop=True)
+    client = _TruthClient({"AAPL": new_basis, "MSFT": msft})
+    _patch_fetch(monkeypatch, client)
+
+    update_existing_shards(
+        data_client=object(),
+        out=out,
+        kind="daily",
+        shard_symbols={0: ["AAPL", "MSFT"]},
+        now=NOW,
+    )
+
+    closes = _closes(out, "AAPL")
+    assert closes.round(6).tolist() == pytest.approx([new_basis[d] for d in sorted(new_basis)])
+    boundary_new = (
+        closes.loc[pd.Timestamp("2026-01-02", tz="UTC")]
+        / closes.loc[pd.Timestamp("2025-12-31", tz="UTC")]
+    )
+    assert boundary_new == pytest.approx(old_basis["2026-01-02"] / old_basis["2025-12-31"])
+    msft_after = _read_shard_frame(out / "daily" / "2026" / "shard-0000.parquet")
+    msft_after = msft_after.loc[msft_after["symbol"] == "MSFT"].reset_index(drop=True)
+    pd.testing.assert_frame_equal(msft_before, msft_after, check_dtype=False)
+    lines = _restatement_lines(out)
+    assert [line["symbol"] for line in lines] == ["AAPL"]
+    assert lines[0]["mode"] == "update"
+    assert lines[0]["years_rewritten"] == [2025, 2026]
+    assert lines[0]["rows_before"] == lines[0]["rows_after"] == len(old_basis)
+    assert lines[0]["rows_without_shard"] == 0
+    assert lines[0]["refetch_empty"] is False
+    assert lines[0]["max_rel_diff"] == pytest.approx(0.01)
+
+
+def test_a_split_restatement_leaves_no_half_price_jump(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    days = DAYS_2025 + DAYS_2026
+    old = {day: 100.0 for day in days[:-3]} | {day: 50.0 for day in days[-3:]}
+    # Old stored rows: unadjusted 100 before the split; the last session is
+    # already post-split (50) and the tail window starts one session earlier.
+    stored = {day: (100.0 if day != days[-1] else 50.0) for day in days}
+    truth = {day: 50.0 for day in days}
+    assert old != truth
+    out = _two_year_archive(tmp_path, {"AAPL": stored})
+    client = _TruthClient({"AAPL": truth})
+    _patch_fetch(monkeypatch, client)
+
+    update_existing_shards(
+        data_client=object(), out=out, kind="daily", shard_symbols={0: ["AAPL"]}, now=NOW
+    )
+
+    ratios = _closes(out, "AAPL").pct_change().dropna() + 1.0
+    assert not ((ratios - 0.5).abs() < 0.05).any()
+    assert ratios.tolist() == pytest.approx([1.0] * len(ratios))
+
+
+def test_identical_overlap_does_not_trigger_a_full_history_refetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    series = _drift_series()
+    out = _two_year_archive(tmp_path, {"AAPL": series})
+    client = _TruthClient({"AAPL": series})
+    _patch_fetch(monkeypatch, client)
+
+    update_existing_shards(
+        data_client=object(), out=out, kind="daily", shard_symbols={0: ["AAPL"]}, now=NOW
+    )
+
+    assert client.calls  # the tail window was fetched
+    assert client.full_history_calls() == []
+    assert _restatement_lines(out) == []
+
+
+def test_empty_full_history_refetch_keeps_every_old_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old_basis = _drift_series()
+    stored = dict(old_basis)
+    out = _two_year_archive(tmp_path, {"AAPL": stored})
+    tail_truth = {day: old_basis[day] * 0.99 for day in DAYS_2026[-3:]}
+
+    def fake_fetch(data_client, symbols, start, end, kind):
+        if start.year < 2026:
+            return None  # the vendor returns nothing for the long window
+        return _bars_frame([("AAPL", day, value) for day, value in tail_truth.items()])
+
+    monkeypatch.setattr(update_sip_archive, "_fetch_batch", fake_fetch)
+    update_existing_shards(
+        data_client=object(), out=out, kind="daily", shard_symbols={0: ["AAPL"]}, now=NOW
+    )
+
+    closes = _closes(out, "AAPL")
+    assert len(closes) == len(old_basis)
+    for day in DAYS_2025 + DAYS_2026[:3]:
+        assert closes.loc[pd.Timestamp(day, tz="UTC")] == pytest.approx(old_basis[day])
+    lines = _restatement_lines(out)
+    assert len(lines) == 1
+    assert lines[0]["refetch_empty"] is True
+    assert lines[0]["years_rewritten"] == []
+    assert lines[0]["rows_before"] == lines[0]["rows_after"] == len(old_basis)
+
+
+def test_repair_full_window_rewrites_only_restated_symbols(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old_basis = _drift_series()
+    new_basis = _drift_series(0.5)
+    msft = {day: 50.0 for day in DAYS_2025 + DAYS_2026}
+    out = _two_year_archive(tmp_path, {"AAPL": old_basis, "MSFT": msft})
+    client = _TruthClient({"AAPL": new_basis, "MSFT": msft})
+    _patch_fetch(monkeypatch, client)
+
+    records = update_sip_archive.repair_full_window(
+        object(), out, {0: ["AAPL", "MSFT"]}, now=NOW, priority=["AAPL"]
+    )
+
+    assert [record["symbol"] for record in records] == ["AAPL"]
+    assert records[0]["mode"] == "repair"
+    assert _closes(out, "AAPL").round(6).tolist() == pytest.approx(
+        [new_basis[d] for d in sorted(new_basis)]
+    )
+    assert _closes(out, "MSFT").tolist() == pytest.approx([50.0] * len(msft))
+    year_windows = [call for call in client.calls if call[1] == datetime(2026, 1, 1, tzinfo=UTC)]
+    assert len(year_windows) == 1  # one full-year request per shard
+    assert _restatement_lines(out)[0]["mode"] == "repair"
+
+
+def test_symbol_without_a_shard_in_a_year_is_not_added(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old_basis = _drift_series()
+    out = _two_year_archive(tmp_path, {"AAPL": old_basis})
+    (out / "daily" / "2025" / "shard-0000.parquet").unlink()
+    _write_shard(out / "daily" / "2025" / "shard-0000.parquet", [("MSFT", "2025-12-31", 9.0)])
+    client = _TruthClient({"AAPL": _drift_series(0.5)})
+    _patch_fetch(monkeypatch, client)
+
+    records = update_sip_archive.rewrite_full_history(
+        object(), out, ["AAPL"], now=NOW, mode="repair"
+    )
+
+    assert records[0]["years_rewritten"] == [2026]
+    assert records[0]["rows_without_shard"] == len(DAYS_2025)
+    assert _read_shard_frame(out / "daily" / "2025" / "shard-0000.parquet")["symbol"].tolist() == [
+        "MSFT"
+    ]
+
+
+def test_minute_restatement_is_logged_but_never_rewrites_history(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    out = tmp_path / "sip"
+    destination = out / "minute" / "2026" / "09" / "shard-0000.parquet"
+    stamps = ["2026-09-10T14:30:00", "2026-09-10T14:31:00", "2026-09-10T14:32:00"]
+    _write_shard(destination, [("AAPL", ts, 100.0) for ts in stamps])
+    calls: list[datetime] = []
+
+    def fake_fetch(data_client, symbols, start, end, kind):
+        calls.append(start)
+        return _bars_frame([("AAPL", ts, 99.0) for ts in stamps[1:]])
+
+    monkeypatch.setattr(update_sip_archive, "_fetch_batch", fake_fetch)
+    update_existing_shards(
+        data_client=object(),
+        out=out,
+        kind="minute",
+        shard_symbols={0: ["AAPL"]},
+        now=datetime(2026, 9, 15, tzinfo=UTC),
+    )
+
+    rows = _read_shard_frame(destination).sort_values("timestamp")
+    assert rows["close"].iloc[0] == pytest.approx(100.0)  # older minute row untouched
+    assert all(start.year == 2026 and start.month == 9 for start in calls)
+    logged = [
+        json.loads(line)
+        for line in (out / "minute" / "_restatements.jsonl").read_text().splitlines()
+    ]
+    assert [item["mode"] for item in logged] == ["minute_detect_only"]
+    assert not (out / "daily" / "_restatements.jsonl").exists()
+
+
+def test_zero_budget_queues_everything_then_the_next_run_drains_the_queue(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old_basis = _drift_series()
+    new_basis = _drift_series(0.99)
+    out = _two_year_archive(tmp_path, {"AAPL": dict(old_basis)})
+    client = _TruthClient({"AAPL": new_basis})
+    _patch_fetch(monkeypatch, client)
+
+    update_existing_shards(
+        data_client=object(),
+        out=out,
+        kind="daily",
+        shard_symbols={0: ["AAPL"]},
+        now=NOW,
+        rewrite_budget_min=0,
+    )
+
+    assert client.full_history_calls() == []
+    pending = [
+        json.loads(line)
+        for line in (out / "daily" / "_restatements_pending.jsonl").read_text().splitlines()
+    ]
+    assert [item["symbol"] for item in pending] == ["AAPL"]
+    # the tail window was merged anyway: the newest bar is on the new basis
+    assert _closes(out, "AAPL").iloc[-1] == pytest.approx(new_basis[DAYS_2026[-1]])
+    assert _closes(out, "AAPL").iloc[0] == pytest.approx(old_basis[DAYS_2025[0]])
+
+    update_existing_shards(
+        data_client=object(), out=out, kind="daily", shard_symbols={0: ["AAPL"]}, now=NOW
+    )
+
+    assert len(client.full_history_calls()) == 1
+    assert _closes(out, "AAPL").iloc[0] == pytest.approx(new_basis[DAYS_2025[0]])
+    assert (out / "daily" / "_restatements_pending.jsonl").read_text() == ""
+    assert [line["symbol"] for line in _restatement_lines(out)] == ["AAPL"]
+
+
+def test_pending_queue_is_drained_in_sleeve_first_then_alphabetical_order(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    out = tmp_path / "sip"
+    for year in ("2025", "2026"):
+        _write_shard(
+            out / "daily" / year / "shard-0000.parquet",
+            [(s, "2025-12-31" if year == "2025" else "2026-01-02", 10.0) for s in "ABZ"],
+        )
+    seen: list[tuple[str, ...]] = []
+
+    def fake_fetch(data_client, symbols, start, end, kind):
+        seen.append(tuple(symbols))
+        return None
+
+    monkeypatch.setattr(update_sip_archive, "_fetch_batch", fake_fetch)
+
+    update_sip_archive.process_restatements(
+        object(),
+        out,
+        {"A": 0.1, "B": 0.1, "Z": 0.1},
+        now=NOW,
+        budget_min=25,
+        priority=["Z"],
+    )
+
+    assert seen == [("Z", "A", "B")]
+    assert {line["symbol"]: line["refetch_empty"] for line in _restatement_lines(out)} == {
+        "Z": True,
+        "A": True,
+        "B": True,
+    }
+
+
+def test_load_sleeve_symbols_reads_the_four_sleeve_specs() -> None:
+    symbols = update_sip_archive.load_sleeve_symbols()
+    assert {"SHY", "XLK", "UPRO", "SPY", "QQQ"} <= set(symbols)

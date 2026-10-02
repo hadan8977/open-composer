@@ -50,11 +50,13 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 import pyarrow.parquet as pq
+import yaml
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -86,6 +88,27 @@ BAR_ROW_COLUMNS = (
 #: yesterday, so a late SIP correction (auction print revised, split applied
 #: after the fact) overwrites rather than sits stale forever.
 REFETCH_LOOKBACK_SESSIONS = 2
+#: The vendor serves ``adjustment="all"`` history: after a split or dividend
+#: takes effect it multiplies the WHOLE history of that symbol by an adjustment
+#: factor. Refetching only the trailing window therefore leaves a seam (old
+#: basis before the window, new basis inside it). A symbol whose overlapping
+#: rows no longer match the archive is "restated" and gets its full history
+#: (every year directory) replaced -- see ``rewrite_full_history``.
+HISTORY_START = datetime(2016, 1, 1, tzinfo=UTC)
+RESTATEMENT_RTOL = 1e-6
+PRICE_COLUMNS = ("open", "high", "low", "close", "vwap")
+REWRITE_BATCH_SIZE = 40
+DEFAULT_REWRITE_BUDGET_MIN = 25.0
+RESTATEMENTS_FILE = "_restatements.jsonl"
+PENDING_FILE = "_restatements_pending.jsonl"
+SLEEVE_SPEC_NAMES = (
+    "us_etf_sector_rotation_252_top2_weekly",
+    "us_etf_growth_rotation_blend_top2_monthly",
+    "us_etf_levered_rotation_63_top2_monthly",
+    "us_etf_eom_sector_blend_monthly",
+)
+#: Number of vendor requests issued by this process (reported at the end of a run).
+API_CALLS = {"n": 0}
 
 
 class UpdateLockedError(RuntimeError):
@@ -189,6 +212,344 @@ def _merge_and_write(existing: pd.DataFrame, fetched: pd.DataFrame, destination:
     combined = combined.sort_values(["symbol", "timestamp"], kind="stable").reset_index(drop=True)
     _atomic_write_parquet(combined, destination)
     return len(fetched)
+
+
+def _fetch(data_client, symbols, start: datetime, end: datetime, kind: str):
+    """``_fetch_batch`` plus a request counter (looked up at call time so tests can patch it)."""
+    API_CALLS["n"] += 1
+    return _fetch_batch(data_client, symbols, start, end, kind)
+
+
+def _as_rows(frame: pd.DataFrame | None) -> pd.DataFrame:
+    """A fetched frame as plain rows: upper-case symbol, UTC timestamp, no index."""
+    if frame is None or len(frame) == 0:
+        return pd.DataFrame(columns=list(BAR_ROW_COLUMNS))
+    if "symbol" not in frame.columns or "timestamp" not in frame.columns:
+        frame = frame.reset_index()
+    frame = frame.copy()
+    frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
+    frame["symbol"] = frame["symbol"].astype("string").str.upper()
+    return frame
+
+
+def detect_restated_symbols(
+    existing: pd.DataFrame, fetched: pd.DataFrame, *, rtol: float = RESTATEMENT_RTOL
+) -> dict[str, float]:
+    """Symbols whose overlapping (symbol, timestamp) rows changed price level.
+
+    Compares open/high/low/close/vwap on the overlap and returns
+    ``{symbol: largest relative difference}`` for symbols above ``rtol``.
+    """
+    if existing is None or fetched is None or len(existing) == 0 or len(fetched) == 0:
+        return {}
+    old = _as_rows(existing)
+    new = _as_rows(fetched)
+    columns = [c for c in PRICE_COLUMNS if c in old.columns and c in new.columns]
+    if not columns:
+        return {}
+    old = old.drop_duplicates(subset=["symbol", "timestamp"], keep="last")
+    new = new.drop_duplicates(subset=["symbol", "timestamp"], keep="last")
+    joined = old[["symbol", "timestamp", *columns]].merge(
+        new[["symbol", "timestamp", *columns]],
+        on=["symbol", "timestamp"],
+        suffixes=("_old", "_new"),
+    )
+    if joined.empty:
+        return {}
+    worst = pd.Series(0.0, index=joined.index)
+    for column in columns:
+        before = joined[f"{column}_old"].astype(float)
+        after = joined[f"{column}_new"].astype(float)
+        scale = before.abs().where(before.abs() > 0, after.abs())
+        diff = ((after - before).abs() / scale).fillna(0.0)
+        worst = worst.where(worst >= diff, diff)
+    per_symbol = worst.groupby(joined["symbol"].astype(str)).max()
+    return {str(sym): float(val) for sym, val in per_symbol.items() if val > rtol}
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + f".tmp{os.getpid()}")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _append_jsonl(path: Path, records: Iterable[dict]) -> None:
+    lines = "".join(json.dumps(record, sort_keys=True) + "\n" for record in records)
+    if not lines:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(lines)
+
+
+def _year_shard_map(out: Path) -> dict[int, dict[str, list[Path]]]:
+    """year -> symbol -> shard files, from each shard's symbol column only."""
+    mapping: dict[int, dict[str, list[Path]]] = {}
+    daily = out / "daily"
+    if not daily.is_dir():
+        return mapping
+    for year_dir in sorted(daily.iterdir()):
+        if not (year_dir.is_dir() and year_dir.name.isdigit()):
+            continue
+        per_symbol: dict[str, list[Path]] = {}
+        for shard_file in sorted(year_dir.glob("shard-*.parquet")):
+            table = pq.read_table(shard_file, columns=["symbol"])
+            for value in table.column("symbol").unique().to_pylist():
+                per_symbol.setdefault(str(value).upper(), []).append(shard_file)
+        mapping[int(year_dir.name)] = per_symbol
+    return mapping
+
+
+def _rewrite_batch(
+    batch: list[str],
+    fetched: pd.DataFrame,
+    shard_map: dict[int, dict[str, list[Path]]],
+    *,
+    mode: str,
+    detected_at: str,
+    max_rel_diff: Mapping[str, float],
+) -> list[dict]:
+    fetched_years = fetched["timestamp"].dt.year if len(fetched) else pd.Series([], dtype="int64")
+    records = {
+        symbol: {
+            "detected_at": detected_at,
+            "mode": mode,
+            "symbol": symbol,
+            "max_rel_diff": float(max_rel_diff.get(symbol, 0.0)),
+            "years_rewritten": [],
+            "rows_before": 0,
+            "rows_after": 0,
+            "rows_without_shard": 0,
+            "refetch_empty": False,
+        }
+        for symbol in batch
+    }
+    by_symbol_year: dict[tuple[str, int], pd.DataFrame] = {}
+    if len(fetched):
+        for (symbol, year), part in fetched.groupby(["symbol", fetched_years], sort=False):
+            by_symbol_year[(str(symbol), int(year))] = part
+    fetched_symbols = {symbol for symbol, _ in by_symbol_year}
+    for symbol in batch:
+        if symbol not in fetched_symbols:
+            records[symbol]["refetch_empty"] = True
+
+    files: dict[tuple[int, Path], set[str]] = {}
+    for year, per_symbol in shard_map.items():
+        for symbol in batch:
+            for shard_file in per_symbol.get(symbol, ()):
+                files.setdefault((year, shard_file), set()).add(symbol)
+    for (symbol, year), part in by_symbol_year.items():
+        if symbol in records and not shard_map.get(year, {}).get(symbol):
+            records[symbol]["rows_without_shard"] += len(part)
+
+    for (year, shard_file), present in sorted(files.items(), key=lambda item: str(item[0][1])):
+        frame = _read_shard_frame(shard_file)
+        frame["symbol"] = frame["symbol"].astype("string").str.upper()
+        replace = {s for s in present if (s, year) in by_symbol_year}
+        for symbol in present:
+            records[symbol]["rows_before"] += int((frame["symbol"] == symbol).sum())
+        if not replace:
+            for symbol in present:
+                records[symbol]["rows_after"] += int((frame["symbol"] == symbol).sum())
+            continue
+        kept = frame.loc[~frame["symbol"].isin(replace)]
+        pieces = [by_symbol_year[(symbol, year)] for symbol in sorted(replace)]
+        new_rows = pd.concat(pieces, ignore_index=True)
+        new_rows = new_rows[[c for c in frame.columns if c in new_rows.columns]]
+        combined = pd.concat([kept, new_rows], ignore_index=True)
+        combined = combined.drop_duplicates(subset=["symbol", "timestamp"], keep="last")
+        combined = combined.sort_values(["symbol", "timestamp"], kind="stable").reset_index(
+            drop=True
+        )
+        _atomic_write_parquet(combined, shard_file)
+        for symbol in present:
+            records[symbol]["rows_after"] += int((combined["symbol"] == symbol).sum())
+            if symbol in replace:
+                records[symbol]["years_rewritten"].append(year)
+    return [records[symbol] for symbol in batch]
+
+
+def rewrite_full_history(
+    data_client,
+    out: Path,
+    symbols: Sequence[str],
+    *,
+    now: datetime,
+    history_start: datetime = HISTORY_START,
+    mode: str,
+    max_rel_diff: Mapping[str, float] | None = None,
+    deadline: float | None = None,
+    batch_size: int = REWRITE_BATCH_SIZE,
+) -> list[dict]:
+    """Replace every year's rows of ``symbols`` with the vendor's current history.
+
+    Returns one record per symbol actually processed (the same record is appended
+    to ``out/daily/_restatements.jsonl``). Symbols not reached before ``deadline``
+    (a ``time.monotonic()`` value) are simply absent from the result and left for
+    the caller to queue. A symbol whose full refetch is empty keeps all its rows.
+    A year the vendor returned rows for but where the symbol has no shard is not
+    created (``rows_without_shard``); a year the vendor returned nothing for keeps
+    its old rows.
+    """
+    ordered = list(dict.fromkeys(str(symbol).upper() for symbol in symbols))
+    if not ordered:
+        return []
+    batch_size = max(1, min(int(batch_size), REWRITE_BATCH_SIZE))
+    detected_at = now.isoformat()
+    shard_map: dict[int, dict[str, list[Path]]] | None = None
+    done: list[dict] = []
+    for offset in range(0, len(ordered), batch_size):
+        if deadline is not None and time.monotonic() >= deadline:
+            break
+        batch = ordered[offset : offset + batch_size]
+        fetched = _as_rows(_fetch(data_client, batch, history_start, now, "daily"))
+        if shard_map is None:
+            shard_map = _year_shard_map(out)
+        records = _rewrite_batch(
+            batch,
+            fetched,
+            shard_map,
+            mode=mode,
+            detected_at=detected_at,
+            max_rel_diff=max_rel_diff or {},
+        )
+        _append_jsonl(out / "daily" / RESTATEMENTS_FILE, records)
+        done.extend(records)
+        LOG.info(
+            "rewrite_full_history[%s]: %d/%d symbol(s) done (last batch %s..%s)",
+            mode,
+            len(done),
+            len(ordered),
+            batch[0],
+            batch[-1],
+        )
+    return done
+
+
+def load_sleeve_symbols(repo_root: Path | None = None) -> list[str]:
+    """Upper-case tickers named by the four ETF paper sleeves (priority for rewrites)."""
+    root = repo_root or Path(__file__).resolve().parents[1]
+    found: set[str] = set()
+
+    def walk(node, key: str | None = None) -> None:
+        if isinstance(node, dict):
+            for child_key, child in node.items():
+                walk(child, str(child_key))
+        elif isinstance(node, list):
+            for child in node:
+                walk(child, key)
+        elif isinstance(node, str) and key in {
+            "universe",
+            "cash_symbol",
+            "signal_symbol",
+            "reversal_symbol",
+        }:
+            if node.isupper() and node.isalpha():
+                found.add(node)
+
+    for name in SLEEVE_SPEC_NAMES:
+        try:
+            walk(yaml.safe_load((root / "strategy_specs" / "drafts" / f"{name}.yaml").read_text()))
+        except (OSError, yaml.YAMLError):
+            continue
+    return sorted(found)
+
+
+def _read_pending(out: Path) -> dict[str, float]:
+    path = out / "daily" / PENDING_FILE
+    pending: dict[str, float] = {}
+    if not path.exists():
+        return pending
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            item = json.loads(line)
+            pending[str(item["symbol"]).upper()] = float(item.get("max_rel_diff", 0.0))
+    return pending
+
+
+def _write_pending(out: Path, pending: Mapping[str, float], *, now: datetime) -> None:
+    lines = "".join(
+        json.dumps(
+            {"symbol": symbol, "max_rel_diff": pending[symbol], "queued_at": now.isoformat()},
+            sort_keys=True,
+        )
+        + "\n"
+        for symbol in pending
+    )
+    _atomic_write_text(out / "daily" / PENDING_FILE, lines)
+
+
+def _priority_order(symbols: Iterable[str], priority: Iterable[str]) -> list[str]:
+    first = {str(symbol).upper() for symbol in priority}
+    return sorted(set(symbols), key=lambda symbol: (0 if symbol in first else 1, symbol))
+
+
+def process_restatements(
+    data_client,
+    out: Path,
+    detected: Mapping[str, float],
+    *,
+    now: datetime,
+    budget_min: float,
+    priority: Iterable[str] = (),
+) -> list[dict]:
+    """Rewrite leftovers from earlier runs first, then this run's detections.
+
+    Whatever does not fit in ``budget_min`` stays in the pending file (its tail
+    window was already merged, so the newest bar is present; only the seam waits).
+    """
+    pending = _read_pending(out)
+    if not pending and not detected:
+        return []
+    priority = list(priority)
+    fresh = {symbol: diff for symbol, diff in detected.items() if symbol not in pending}
+    ordered = _priority_order(pending, priority) + _priority_order(fresh, priority)
+    diffs = {**fresh, **pending}
+    for symbol, diff in detected.items():
+        diffs[symbol] = max(diff, diffs.get(symbol, 0.0))
+    deadline = time.monotonic() + max(0.0, budget_min) * 60.0
+    records = rewrite_full_history(
+        data_client, out, ordered, now=now, mode="update", max_rel_diff=diffs, deadline=deadline
+    )
+    done = {record["symbol"] for record in records}
+    remaining = {symbol: diffs[symbol] for symbol in ordered if symbol not in done}
+    _write_pending(out, remaining, now=now)
+    if remaining:
+        LOG.warning(
+            "%d restated symbol(s) queued in %s for the next run (budget %.1f min): %s",
+            len(remaining),
+            PENDING_FILE,
+            budget_min,
+            ", ".join(list(remaining)[:20]),
+        )
+    return records
+
+
+def repair_full_window(
+    data_client,
+    out: Path,
+    shard_symbols: dict[int, list[str]],
+    *,
+    now: datetime,
+    priority: Iterable[str] = (),
+) -> list[dict]:
+    """Daily only: compare the whole current year against the vendor and fix restated symbols."""
+    year_start = datetime(now.year, 1, 1, tzinfo=UTC)
+    restated: dict[str, float] = {}
+    for shard_index, symbols in sorted(shard_symbols.items()):
+        existing = _read_shard_frame(shard_path(out, "daily", now.year, shard_index))
+        if existing.empty:
+            continue
+        frame = _fetch(data_client, symbols, year_start, now, "daily")
+        if frame is None or len(frame) == 0:
+            continue
+        restated.update(detect_restated_symbols(existing, _as_rows(frame)))
+    LOG.info("repair-full-window: %d restated symbol(s) found", len(restated))
+    ordered = _priority_order(restated, priority)
+    return rewrite_full_history(
+        data_client, out, ordered, now=now, mode="repair", max_rel_diff=restated
+    )
 
 
 def _sessions_back(reference: date, *, sessions: int) -> date:
@@ -300,9 +661,18 @@ def update_existing_shards(
     shard_symbols: dict[int, list[str]],
     *,
     now: datetime,
+    rewrite_budget_min: float = DEFAULT_REWRITE_BUDGET_MIN,
+    priority_symbols: Iterable[str] = (),
 ) -> int:
-    """Top up every frozen shard for every (year, month) in the current window."""
+    """Top up every frozen shard for every (year, month) in the current window.
+
+    Daily: a symbol whose overlapping rows changed price level was restated by
+    the vendor; its tail is merged as always and its full 2016-now history is
+    replaced afterwards (``process_restatements``, time-boxed by
+    ``rewrite_budget_min``). Minute: detection is only logged (known limit).
+    """
     total_rows = 0
+    detected: dict[str, float] = {}
     for year, month in current_window_dirs(kind, now):
         full_start = window_full_start(kind, year, month)
         for shard_index, symbols in sorted(shard_symbols.items()):
@@ -314,10 +684,37 @@ def update_existing_shards(
                 else None
             )
             window_start = refetch_window_start(max_ts, full_window_start=full_start)
-            frame = _fetch_batch(data_client, symbols, window_start, now, kind)
+            frame = _fetch(data_client, symbols, window_start, now, kind)
             if frame is None or frame.empty:
                 continue
-            rows = _merge_and_write(existing, frame.reset_index(), destination)
+            fetched = frame.reset_index()
+            changed = detect_restated_symbols(existing, fetched)
+            if changed and kind == "daily":
+                for symbol, diff in changed.items():
+                    detected[symbol] = max(diff, detected.get(symbol, 0.0))
+            elif changed:
+                LOG.warning(
+                    "%s %04d-%02d shard %04d: %d restated symbol(s), detect only: %s",
+                    kind,
+                    year,
+                    month or 0,
+                    shard_index,
+                    len(changed),
+                    ", ".join(sorted(changed)[:10]),
+                )
+                _append_jsonl(
+                    out / kind / RESTATEMENTS_FILE,
+                    [
+                        {
+                            "detected_at": now.isoformat(),
+                            "mode": "minute_detect_only",
+                            "symbol": symbol,
+                            "max_rel_diff": diff,
+                        }
+                        for symbol, diff in sorted(changed.items())
+                    ],
+                )
+            rows = _merge_and_write(existing, fetched, destination)
             total_rows += rows
         LOG.info(
             "%s %04d%s: updated %d frozen shard(s)",
@@ -325,6 +722,22 @@ def update_existing_shards(
             year,
             f"-{month:02d}" if month else "",
             len(shard_symbols),
+        )
+    if kind == "daily":
+        started = time.time()
+        records = process_restatements(
+            data_client,
+            out,
+            detected,
+            now=now,
+            budget_min=rewrite_budget_min,
+            priority=priority_symbols,
+        )
+        LOG.info(
+            "daily: %d detected, %d full-history rewrite(s) in %.1fs",
+            len(detected),
+            len(records),
+            time.time() - started,
         )
     return total_rows
 
@@ -363,7 +776,7 @@ def append_new_symbols(
         for year, month in current_window_dirs(kind, now):
             full_start = window_full_start(kind, year, month)
             destination = shard_path(out, kind, year, shard_index, month)
-            frame = _fetch_batch(data_client, batch, full_start, now, kind)
+            frame = _fetch(data_client, batch, full_start, now, kind)
             if frame is None or frame.empty:
                 continue
             total_rows += _merge_and_write(
@@ -377,7 +790,15 @@ def append_new_symbols(
     return total_rows
 
 
-def run(*, kind: str, out: Path, now: datetime | None = None, limit: int | None = None) -> int:
+def run(
+    *,
+    kind: str,
+    out: Path,
+    now: datetime | None = None,
+    limit: int | None = None,
+    rewrite_budget_min: float = DEFAULT_REWRITE_BUDGET_MIN,
+    repair: bool = False,
+) -> int:
     _refuse_if_bulk_fetch_active()
     now = now or datetime.now(UTC)
     with _exclusive_lock(out):
@@ -386,17 +807,32 @@ def run(*, kind: str, out: Path, now: datetime | None = None, limit: int | None 
         layout = load_layout(out, kind)
         shard_symbols = freeze_shard_symbols(out, kind, layout, now=now)
         started = time.time()
-        updated_rows = update_existing_shards(data_client, out, kind, shard_symbols, now=now)
+        sleeve_symbols = load_sleeve_symbols()
+        if repair and kind == "daily":
+            repaired = repair_full_window(
+                data_client, out, shard_symbols, now=now, priority=sleeve_symbols
+            )
+            LOG.info("repair-full-window: %d symbol(s) rewritten", len(repaired))
+        updated_rows = update_existing_shards(
+            data_client,
+            out,
+            kind,
+            shard_symbols,
+            now=now,
+            rewrite_budget_min=rewrite_budget_min,
+            priority_symbols=sleeve_symbols,
+        )
         new_rows = append_new_symbols(
             data_client, out, kind, layout, shard_symbols, active_symbols, now=now
         )
         elapsed = (time.time() - started) / 60
         LOG.info(
-            "%s: done -- %d row(s) refreshed, %d row(s) from new listings, %.1fmin",
+            "%s: done -- %d row(s) refreshed, %d row(s) from new listings, %.1fmin, %d api call(s)",
             kind,
             updated_rows,
             new_rows,
             elapsed,
+            API_CALLS["n"],
         )
     return 0
 
@@ -406,6 +842,19 @@ def main() -> int:
     parser.add_argument("--kind", choices=["daily", "minute"], required=True)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--limit", type=int, default=None, help="Only the first N active symbols.")
+    parser.add_argument(
+        "--rewrite-budget-min",
+        type=float,
+        default=DEFAULT_REWRITE_BUDGET_MIN,
+        help="Minutes per run for full-history rewrites of restated symbols (daily); the rest "
+        f"is queued in {PENDING_FILE}.",
+    )
+    parser.add_argument(
+        "--repair-full-window",
+        action="store_true",
+        help="Daily only: refetch the whole current year, find symbols whose stored rows no "
+        "longer match the vendor and rewrite their full history.",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -413,7 +862,13 @@ def main() -> int:
     )
     load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
     try:
-        return run(kind=args.kind, out=args.out, limit=args.limit)
+        return run(
+            kind=args.kind,
+            out=args.out,
+            limit=args.limit,
+            rewrite_budget_min=args.rewrite_budget_min,
+            repair=args.repair_full_window,
+        )
     except UpdateLockedError as exc:
         LOG.error("%s", exc)
         return 1
