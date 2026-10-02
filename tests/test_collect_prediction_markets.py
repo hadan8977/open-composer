@@ -175,7 +175,7 @@ def test_main_exit_code_is_nonzero_on_failure(monkeypatch, tmp_path, capsys):
 def test_real_watchlist_file_is_wellformed():
     wl = collect.load_watchlist()
     ids = [m["id"] for m in wl]
-    assert 10 <= len(wl) <= 20 and len(set(ids)) == len(ids)
+    assert 10 <= len(wl) <= 60 and len(set(ids)) == len(ids)
     groups = {m["group"] for m in wl}
     assert {"recession", "government_shutdown", "midterms_2026"} <= groups
     assert any(g.startswith("fed_") for g in groups) and any(g.startswith("cpi") for g in groups)

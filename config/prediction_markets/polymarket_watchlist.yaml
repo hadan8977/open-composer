@@ -1,28 +1,41 @@
 # Curated Polymarket watchlist for scripts/collect_prediction_markets.py (T-20261002-44).
-# Market ids come from the Gamma API (https://gamma-api.polymarket.com/markets/{id}) and were
-# looked up on 2026-10-02 via /public-search and /events?slug=. Research input only: Polymarket
-# is offshore with a US relaunch, prices are never an order trigger. Replace ids when markets
-# resolve (the collector keeps writing closed markets, flagged, until they are removed here).
+# Maintained by scripts/refresh_polymarket_watchlist.py (T-20261002-45, weekly): it keeps ids
+# that are still active, adds the current markets of each group and drops resolved ones.
+# Market ids come from the Gamma API (https://gamma-api.polymarket.com/markets/{id}).
+# Research input only: Polymarket is offshore with a US relaunch, prices are never an order
+# trigger.
 version: 1
-looked_up_at: "2026-10-02T13:30:00Z"
+looked_up_at: "2026-10-02T14:09:13Z"
 markets:
+  - {id: "2589810", group: fed_october_2026, note: "Fed 50+ bps decrease after the October 2026 meeting"}
   - {id: "2589811", group: fed_october_2026, note: "Fed decrease 25 bps after the October 2026 meeting"}
   - {id: "2589812", group: fed_october_2026, note: "Fed no change after the October 2026 meeting"}
   - {id: "2589813", group: fed_october_2026, note: "Fed increase 25 bps after the October 2026 meeting"}
+  - {id: "2589814", group: fed_october_2026, note: "Fed 50+ bps increase after the October 2026 meeting"}
+  - {id: "3215005", group: fed_december_2026, note: "Fed 50+ bps decrease after the December 2026 meeting"}
   - {id: "3215006", group: fed_december_2026, note: "Fed decrease 25 bps after the December 2026 meeting"}
   - {id: "3215007", group: fed_december_2026, note: "Fed no change after the December 2026 meeting"}
   - {id: "3215008", group: fed_december_2026, note: "Fed increase 25 bps after the December 2026 meeting"}
+  - {id: "3215009", group: fed_december_2026, note: "Fed 50+ bps increase after the December 2026 meeting"}
   - {id: "609655", group: recession, note: "US recession by end of 2026"}
+  - {id: "3407418", group: recession, note: "US recession by end of 2027"}
   - {id: "4469455", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM <= 0.0%"}
+  - {id: "4469456", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.1%"}
+  - {id: "4469457", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.2%"}
   - {id: "4469458", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.3%"}
   - {id: "4469459", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.4%"}
   - {id: "4469460", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.5%"}
   - {id: "4469461", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.6%"}
   - {id: "4469463", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM 0.7%"}
   - {id: "4469465", group: cpi_us_monthly_sep_2026, note: "September US CPI MoM >= 0.8%"}
+  - {id: "4853272", group: tariff_china_rate_end_2026, note: "US tariff rate on China <5% on Dec 31, 2026"}
   - {id: "4853273", group: tariff_china_rate_end_2026, note: "US tariff rate on China 5-15% on Dec 31, 2026"}
+  - {id: "4853274", group: tariff_china_rate_end_2026, note: "US tariff rate on China 15–25% on Dec 31, 2026"}
+  - {id: "4853275", group: tariff_china_rate_end_2026, note: "US tariff rate on China 25–35% on Dec 31, 2026"}
   - {id: "4853276", group: tariff_china_rate_end_2026, note: "US tariff rate on China >= 35% on Dec 31, 2026"}
   - {id: "902977", group: government_shutdown, note: "Another shutdown by Jan 31 and Democrats win House"}
   - {id: "902978", group: government_shutdown, note: "Another shutdown by Jan 31 and Republicans win House"}
   - {id: "562802", group: midterms_2026, note: "Democratic Party controls the House after the 2026 midterms"}
+  - {id: "562803", group: midterms_2026, note: "Will the Republican Party control the House after the 2026 Midterm elections"}
   - {id: "562793", group: midterms_2026, note: "Democratic Party controls the Senate after the 2026 midterms"}
+  - {id: "562794", group: midterms_2026, note: "Will the Republican Party control the Senate after the 2026 Midterm elections"}
