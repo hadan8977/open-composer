@@ -263,3 +263,25 @@ def test_heading_only_tables_keep_section_boundaries_but_no_table_text() -> None
     assert "revenuecell" not in out["full"] and "unresolved" not in out["full"]
     assert "item" not in out["full"]
     assert out["snippets"]["rf"][0].startswith("rkaa")
+
+
+def test_acceptance_read_as_eastern_never_earlier_than_truth() -> None:
+    days = pd.DatetimeIndex(["2021-02-25", "2021-02-26", "2021-03-01", "2021-03-02"])
+    raw = pd.Series(
+        [
+            "2021-02-26T18:15:27.000Z",  # Eastern wall time with a spurious Z (CIK 36047)
+            "2021-02-26T20:31:09.000Z",  # true UTC: 15:31 ET, visible the same day ...
+            "2021-02-26T14:02:08.000Z",  # true UTC 09:02 ET or Eastern 14:02: same day
+        ]
+    )
+    vis = mod.visible_days(mod.acceptance_as_eastern(pd.to_datetime(raw, utc=True)), days)
+    # ... read as Eastern it moves after the close (one day late, never early)
+    assert list(vis.dt.strftime("%Y-%m-%d")) == ["2021-03-01", "2021-03-01", "2021-02-26"]
+
+
+def test_visible_day_floored_at_filing_day() -> None:
+    days = pd.DatetimeIndex(["2018-11-15", "2018-11-16", "2018-11-19", "2018-11-20"])
+    visible = pd.Series(pd.to_datetime(["2018-11-16", "2018-11-19", pd.NaT]))
+    filing = pd.Series(["2018-11-19", "2018-11-19", "2018-11-19"])
+    out = mod.floor_to_filing_day(visible, filing, days)
+    assert list(out.dt.strftime("%Y-%m-%d").fillna("NaT")) == ["2018-11-19", "2018-11-19", "NaT"]

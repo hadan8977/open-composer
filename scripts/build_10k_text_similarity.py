@@ -686,6 +686,36 @@ def visible_days(acceptance: pd.Series, trading_days: pd.DatetimeIndex) -> pd.Se
     return result
 
 
+def acceptance_as_eastern(acceptance: pd.Series) -> pd.Series:
+    """Read every acceptance time as US/Eastern wall-clock time.
+
+    SEC submissions data mixes true-UTC values with Eastern wall-clock values that
+    carry a spurious ``Z`` (checked 2026-10-02 against the "Accepted" field of
+    EDGAR index pages: CIK 36047, 47518 and 6769 were Eastern, 1750, 23217, 4457
+    and 56047 were UTC). Eastern is never earlier than the true time -- true-UTC
+    values move 4-5 hours later -- so visibility cannot leak ahead. Ambiguous and
+    nonexistent DST wall times resolve to the later instant for the same reason.
+    """
+    wall = pd.to_datetime(acceptance, utc=True).dt.tz_convert(None)
+    eastern = wall.dt.tz_localize("America/New_York", ambiguous=False, nonexistent="shift_forward")
+    return eastern.dt.tz_convert("UTC")
+
+
+def floor_to_filing_day(
+    visible: pd.Series, filing_date: pd.Series, trading_days: pd.DatetimeIndex
+) -> pd.Series:
+    """Visible day is never before the first trading day on or after the filing date."""
+    days = pd.DatetimeIndex(sorted(pd.to_datetime(trading_days).unique()))
+    pos = days.searchsorted(pd.to_datetime(filing_date).to_numpy(), side="left")
+    floor = pd.Series(
+        [days[i] if i < len(days) else pd.NaT for i in pos], index=visible.index
+    ).astype("datetime64[ns]")
+    out = visible.copy()
+    later = visible.notna() & floor.notna() & (floor > visible)
+    out.loc[later] = floor.loc[later]
+    return out
+
+
 def _git_hash() -> str:
     try:
         return subprocess.run(
@@ -712,7 +742,10 @@ def cmd_merge(args: argparse.Namespace) -> int:
         )
     )
     df["acceptance_datetime"] = pd.to_datetime(df["acceptance_datetime"], utc=True)
-    df["visible_day"] = visible_days(df["acceptance_datetime"], trading_days)
+    visible = visible_days(acceptance_as_eastern(df["acceptance_datetime"]), trading_days)
+    df["visible_day"] = floor_to_filing_day(visible, df["filing_date"], trading_days)
+    moved = int((visible.notna() & (df["visible_day"] != visible)).sum())
+    log(f"merge: filing-date floor moved {moved} visible days")
     filings = df[FILING_COLS].copy()
     pairs = df[df["has_pair"].astype(bool)][PAIR_COLS].copy()
     filings.to_parquet(out / "10k_filings.parquet", index=False)
