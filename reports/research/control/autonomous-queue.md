@@ -1335,7 +1335,7 @@
 - brief: reports/research/control/briefs/T-20261002-26.md
 
 ### T-20261002-28 组合线 v1.2：生产端目标生成器、引擎历史回放、每日驱动（不下单、不装定时任务）
-- status: ready（交互会话负责：等 T-26 提交 book_v12 模块和 identity.json 后由交互会话派子代理 R1002-0541-T28；定时轮不要取）
+- status: running（10-02 05:47 UTC 交互会话派子代理 R1002-0541-T28，前置已满足：fde6843 提交了 book_v12 模块，identity 最大差 0.0；定时轮不要取）
 - priority: 1
 - not_before: git log 里有 T-20261002-26 的代码提交（含 `open_composer/research/equity_book/book_v12.py` 和通过的 identity.json）
 - goal: 模拟盘的第 3 个前置条件是生产端目标与合同账户目标逐位一致，本任务实现它，另做 60 个会话的引擎检查回放和每日驱动，为"连续 2 个会话 dry-run 全绿"做准备。生成器是无状态的：每天从数据重算 5 档，与 T-26 的模拟器状态一致。
