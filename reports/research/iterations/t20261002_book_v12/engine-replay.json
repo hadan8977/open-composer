@@ -5,16 +5,323 @@
  "first_execution_date": "2026-06-24",
  "last_execution_date": "2026-09-17",
  "sessions": 60,
- "fake_state": "previous day's post-trade whole-share holdings of the replay (day 0: plan of the previous session with min_notional 0), equity fixed at the $1M basis, all names easy to borrow; plans executed whatever the checks say; a held name that lost its price is removed after the day it first appears in the plan",
+ "task_rerun": "T-20261002-40",
+ "fake_state": "previous day's post-trade whole-share holdings of the replay (day 0: plan of the previous session with min_notional 0), equity fixed at the $1M basis, all names easy to borrow; position_prices = last close <= D of every held name; a held name with no close on D that never trades again in the loaded snapshot is untradable and inactive (frozen), one that trades later is tradable (close-out at the broker price); plans executed whatever the checks say",
+ "removal_assumption": "the broker removes a frozen position, converting it to cash at its last close, after 2 sessions frozen (the real removal date is unknown)",
+ "frozen_episodes": {
+  "quant1": [
+   {
+    "symbol": "CNTA",
+    "first_decision_date": "2026-06-24",
+    "sessions": 2,
+    "value_first": 1053.0,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "CWAN",
+    "first_decision_date": "2026-06-25",
+    "sessions": 2,
+    "value_first": 294.72,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "PRA",
+    "first_decision_date": "2026-06-26",
+    "sessions": 2,
+    "value_first": 425.0,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "BLD",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 354.53,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "JHG",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 779.25,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "SEM",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 808.99,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "SILA",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 425.04,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "CPRX",
+    "first_decision_date": "2026-07-15",
+    "sessions": 2,
+    "value_first": 1417.05,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "NUVL",
+    "first_decision_date": "2026-07-15",
+    "sessions": 2,
+    "value_first": 743.76,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "GTLS",
+    "first_decision_date": "2026-07-16",
+    "sessions": 2,
+    "value_first": 1679.2,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "NSA",
+    "first_decision_date": "2026-07-22",
+    "sessions": 2,
+    "value_first": 86.82,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "TMHC",
+    "first_decision_date": "2026-07-24",
+    "sessions": 2,
+    "value_first": 579.6,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "AVNS",
+    "first_decision_date": "2026-07-27",
+    "sessions": 2,
+    "value_first": 824.67,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "SKYT",
+    "first_decision_date": "2026-07-31",
+    "sessions": 2,
+    "value_first": 843.96,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "EA",
+    "first_decision_date": "2026-08-05",
+    "sessions": 2,
+    "value_first": 1048.5,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "AVB",
+    "first_decision_date": "2026-08-17",
+    "sessions": 2,
+    "value_first": 184.06,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "LBRDK",
+    "first_decision_date": "2026-08-20",
+    "sessions": 2,
+    "value_first": 432.24,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "WBS",
+    "first_decision_date": "2026-08-20",
+    "sessions": 2,
+    "value_first": 698.13,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "TWO",
+    "first_decision_date": "2026-08-25",
+    "sessions": 2,
+    "value_first": 682.86,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "FBRX",
+    "first_decision_date": "2026-08-27",
+    "sessions": 2,
+    "value_first": 461.94,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "CRNX",
+    "first_decision_date": "2026-09-01",
+    "sessions": 2,
+    "value_first": 679.6,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "APGE",
+    "first_decision_date": "2026-09-03",
+    "sessions": 2,
+    "value_first": 1080.56,
+    "reason": "asset_not_active"
+   }
+  ],
+  "quant2": [
+   {
+    "symbol": "CNTA",
+    "first_decision_date": "2026-06-24",
+    "sessions": 2,
+    "value_first": 567.0,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "CWAN",
+    "first_decision_date": "2026-06-25",
+    "sessions": 2,
+    "value_first": 147.36,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "PRA",
+    "first_decision_date": "2026-06-26",
+    "sessions": 2,
+    "value_first": 225.0,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "JHG",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 363.65,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "SEM",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 495.3,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "SILA",
+    "first_decision_date": "2026-07-01",
+    "sessions": 2,
+    "value_first": 242.88,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "CPRX",
+    "first_decision_date": "2026-07-15",
+    "sessions": 2,
+    "value_first": 755.76,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "NUVL",
+    "first_decision_date": "2026-07-15",
+    "sessions": 2,
+    "value_first": 371.88,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "GTLS",
+    "first_decision_date": "2026-07-16",
+    "sessions": 2,
+    "value_first": 839.6,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "NSA",
+    "first_decision_date": "2026-07-22",
+    "sessions": 2,
+    "value_first": 86.82,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "TMHC",
+    "first_decision_date": "2026-07-24",
+    "sessions": 2,
+    "value_first": 217.35,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "AVNS",
+    "first_decision_date": "2026-07-27",
+    "sessions": 2,
+    "value_first": 349.86,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "SKYT",
+    "first_decision_date": "2026-07-31",
+    "sessions": 2,
+    "value_first": 389.52,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "EA",
+    "first_decision_date": "2026-08-05",
+    "sessions": 2,
+    "value_first": 419.4,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "AVB",
+    "first_decision_date": "2026-08-17",
+    "sessions": 2,
+    "value_first": 184.06,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "LBRDK",
+    "first_decision_date": "2026-08-20",
+    "sessions": 2,
+    "value_first": 252.14,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "WBS",
+    "first_decision_date": "2026-08-20",
+    "sessions": 2,
+    "value_first": 310.28,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "TWO",
+    "first_decision_date": "2026-08-25",
+    "sessions": 2,
+    "value_first": 335.44,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "FBRX",
+    "first_decision_date": "2026-08-27",
+    "sessions": 2,
+    "value_first": 230.97,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "CRNX",
+    "first_decision_date": "2026-09-01",
+    "sessions": 2,
+    "value_first": 339.8,
+    "reason": "asset_not_active"
+   },
+   {
+    "symbol": "APGE",
+    "first_decision_date": "2026-09-03",
+    "sessions": 2,
+    "value_first": 540.28,
+    "reason": "asset_not_active"
+   }
+  ]
+ },
  "limits": "RiskLimits defaults of open_composer/book_paper/plan.py, not loosened",
  "summary": {
   "quant1": {
    "days": 60,
-   "days_blocked": 18,
-   "days_ok": 42,
-   "check_fail_days": {
-    "reference_prices_complete": 18
-   },
+   "days_blocked": 0,
+   "days_ok": 60,
+   "check_fail_days": {},
    "orders_per_day": {
     "median": 165.5,
     "p95": 715.9499999999999,
@@ -25,18 +332,27 @@
    "final_drift_p95": 0.0485997995,
    "scale_event_days": 0,
    "days_with_unpriced_in_target": 40,
-   "days_with_held_without_price": 18,
+   "days_with_held_without_price": 31,
+   "frozen_events": 22,
+   "frozen_name_days": 44,
+   "days_with_frozen": 30,
+   "max_frozen_gross": 0.00384,
+   "closeout_orders": 1,
+   "closeout_orders_trading_on_d": 1,
+   "dropped_target_weight": {
+    "median": 0.0001826159627573475,
+    "max": 0.0019033022189446824,
+    "days_with_drop": 40
+   },
    "tbill_symbols": [
     "SGOV"
    ]
   },
   "quant2": {
    "days": 60,
-   "days_blocked": 18,
-   "days_ok": 42,
-   "check_fail_days": {
-    "reference_prices_complete": 18
-   },
+   "days_blocked": 0,
+   "days_ok": 60,
+   "check_fail_days": {},
    "orders_per_day": {
     "median": 77.0,
     "p95": 432.15,
@@ -47,12 +363,24 @@
    "final_drift_p95": 0.0463246255,
    "scale_event_days": 0,
    "days_with_unpriced_in_target": 40,
-   "days_with_held_without_price": 18,
+   "days_with_held_without_price": 31,
+   "frozen_events": 21,
+   "frozen_name_days": 42,
+   "days_with_frozen": 30,
+   "max_frozen_gross": 0.001967,
+   "closeout_orders": 1,
+   "closeout_orders_trading_on_d": 1,
+   "dropped_target_weight": {
+    "median": 9.619331401481372e-05,
+    "max": 0.0010149309110074876,
+    "days_with_drop": 40
+   },
    "tbill_symbols": []
   }
  },
  "explanations": {
-  "reference_prices_complete": "REAL ENGINE ISSUE (lead decides). A name held from earlier days has no close on D, and the engine blocks the whole plan while any held or target name lacks a reference price. Checked against prices/2026.parquet for the M0_U3000 run: of 23 name-events 22 stop trading (last close = D-1: cash acquisitions, mergers, delistings) and 1 (ARTL) has a missing close on D but trades later (halt or data gap). The replay assumes the broker removes the position the day after it first blocks the plan; the real removal date is unknown, so an event may block 1 or more sessions. Not a generator error: a name without a close cannot be sized or ordered (the generator drops it and logs it).",
+  "reference_prices_complete": "T-20261002-40: only a target name with a nonzero weight, or a tradable close-out name without a broker position price, still blocks the plan. Names that stopped trading are frozen (see frozen_positions); tradable names with target 0 are closed at the broker position price.",
+  "frozen_positions": "T-20261002-40: held names whose asset is untradable or inactive (cash acquisition, delisting) are valued at the broker position price, get no order, and are limited to 2% of equity in total (limit not loosened).",
   "beta_neutral": "REAL CONTRACT ISSUE (lead decides). The hedge is held in fixed SPY shares per tranche (T-25 R6), while the stock legs drift with prices. After a market move the residual sum(beta x weight) + hedge leaves +-0.03..0.05 (limit 0.05, not loosened). Decomposition on 2026-07-29 (data/research/book_v12_t28/diag_beta.py): stock beta at the sizing prices -0.511, at D -0.456, hedge value at D +0.505, SPY -1.3% over the week."
  },
  "unexplained_failing_checks": [],
@@ -66,296 +394,7 @@
    "F2": 0.00025771
   }
  },
- "failure_events": [
-  {
-   "account": "quant1",
-   "decision_date": "2026-06-24",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "CNTA"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-06-25",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "CWAN"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-06-26",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "PRA"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-01",
-   "check": "reference_prices_complete",
-   "value": 4,
-   "limit": 0,
-   "detail": "BLD, JHG, SEM, SILA"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-07",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "ARTL"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-15",
-   "check": "reference_prices_complete",
-   "value": 2,
-   "limit": 0,
-   "detail": "CPRX, NUVL"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-16",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "GTLS"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-22",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "NSA"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-24",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "TMHC"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-27",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "AVNS"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-07-31",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "SKYT"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-08-05",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "EA"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-08-17",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "AVB"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-08-20",
-   "check": "reference_prices_complete",
-   "value": 2,
-   "limit": 0,
-   "detail": "LBRDK, WBS"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-08-25",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "TWO"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-08-27",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "FBRX"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-09-01",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "CRNX"
-  },
-  {
-   "account": "quant1",
-   "decision_date": "2026-09-03",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "APGE"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-06-24",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "CNTA"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-06-25",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "CWAN"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-06-26",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "PRA"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-01",
-   "check": "reference_prices_complete",
-   "value": 3,
-   "limit": 0,
-   "detail": "JHG, SEM, SILA"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-07",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "ARTL"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-15",
-   "check": "reference_prices_complete",
-   "value": 2,
-   "limit": 0,
-   "detail": "CPRX, NUVL"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-16",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "GTLS"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-22",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "NSA"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-24",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "TMHC"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-27",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "AVNS"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-07-31",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "SKYT"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-08-05",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "EA"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-08-17",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "AVB"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-08-20",
-   "check": "reference_prices_complete",
-   "value": 2,
-   "limit": 0,
-   "detail": "LBRDK, WBS"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-08-25",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "TWO"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-08-27",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "FBRX"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-09-01",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "CRNX"
-  },
-  {
-   "account": "quant2",
-   "decision_date": "2026-09-03",
-   "check": "reference_prices_complete",
-   "value": 1,
-   "limit": 0,
-   "detail": "APGE"
-  }
- ],
+ "failure_events": [],
  "days": {
   "quant1": [
    {
@@ -377,6 +416,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -414,10 +457,8 @@
    {
     "decision_date": "2026-06-24",
     "execution_date": "2026-06-25",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 98,
     "n_buy": 49,
     "n_sell": 49,
@@ -436,6 +477,18 @@
     "held_without_price": [
      "CNTA"
     ],
+    "frozen": [
+     {
+      "symbol": "CNTA",
+      "qty": 26.0,
+      "price": 40.5,
+      "value": 1053.0,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001053,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0006306657304769771,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -454,7 +507,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.794049,
+      "value": 1.795102,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -468,22 +521,13 @@
       "limit": "0.299836 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "CNTA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-06-25",
     "execution_date": "2026-06-26",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 130,
     "n_buy": 55,
     "n_sell": 75,
@@ -501,8 +545,28 @@
      "CWAN"
     ],
     "held_without_price": [
+     "CNTA",
      "CWAN"
     ],
+    "frozen": [
+     {
+      "symbol": "CNTA",
+      "qty": 26.0,
+      "price": 40.5,
+      "value": 1053.0,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "CWAN",
+      "qty": 12.0,
+      "price": 24.56,
+      "value": 294.72,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001348,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0006054179950680667,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -521,7 +585,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.796489,
+      "value": 1.797837,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -535,22 +599,13 @@
       "limit": "0.297107 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "CWAN"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-06-26",
     "execution_date": "2026-06-29",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 161,
     "n_buy": 68,
     "n_sell": 93,
@@ -569,8 +624,28 @@
      "PRA"
     ],
     "held_without_price": [
+     "CWAN",
      "PRA"
     ],
+    "frozen": [
+     {
+      "symbol": "CWAN",
+      "qty": 12.0,
+      "price": 24.56,
+      "value": 294.72,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "PRA",
+      "qty": 17.0,
+      "price": 25.0,
+      "value": 425.0,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00072,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0005732967789712985,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -589,7 +664,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.796132,
+      "value": 1.796852,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -603,14 +678,7 @@
       "limit": "0.290592 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "PRA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-06-29",
@@ -633,7 +701,21 @@
      "CWAN",
      "PRA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "PRA"
+    ],
+    "frozen": [
+     {
+      "symbol": "PRA",
+      "qty": 17.0,
+      "price": 25.0,
+      "value": 425.0,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000425,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002183262740622897,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -652,7 +734,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.796941,
+      "value": 1.797366,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -689,6 +771,10 @@
      "PRA"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 7.938802916996907e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -726,10 +812,8 @@
    {
     "decision_date": "2026-07-01",
     "execution_date": "2026-07-02",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 690,
     "n_buy": 369,
     "n_sell": 321,
@@ -754,6 +838,39 @@
      "SEM",
      "SILA"
     ],
+    "frozen": [
+     {
+      "symbol": "BLD",
+      "qty": 1.0,
+      "price": 354.53,
+      "value": 354.53,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "JHG",
+      "qty": 15.0,
+      "price": 51.95,
+      "value": 779.25,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SEM",
+      "qty": 49.0,
+      "price": 16.51,
+      "value": 808.99,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SILA",
+      "qty": 14.0,
+      "price": 30.36,
+      "value": 425.04,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.002368,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0013592122474029049,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -772,7 +889,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.804578,
+      "value": 1.806945,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -786,14 +903,7 @@
       "limit": "0.326394 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 4,
-      "limit": 0,
-      "detail": "BLD, JHG, SEM, SILA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-02",
@@ -818,7 +928,45 @@
      "SEM",
      "SILA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "frozen": [
+     {
+      "symbol": "BLD",
+      "qty": 1.0,
+      "price": 354.53,
+      "value": 354.53,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "JHG",
+      "qty": 15.0,
+      "price": 51.95,
+      "value": 779.25,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SEM",
+      "qty": 49.0,
+      "price": 16.51,
+      "value": 808.99,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SILA",
+      "qty": 14.0,
+      "price": 30.36,
+      "value": 425.04,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.002368,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0008993198976905211,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -837,7 +985,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.80084,
+      "value": 1.803207,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -877,6 +1025,10 @@
      "SILA"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00045009001564834183,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -914,15 +1066,13 @@
    {
     "decision_date": "2026-07-07",
     "execution_date": "2026-07-08",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
-    "n_orders": 676,
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 677,
     "n_buy": 345,
-    "n_sell": 331,
+    "n_sell": 332,
     "buy_notional": 59255.96,
-    "sell_notional": 70541.02,
+    "sell_notional": 70749.05,
     "n_dropped_min_notional": 540,
     "rounding_drift_one_sided": 0.02757738,
     "final_drift_one_sided": 0.04290923,
@@ -934,6 +1084,19 @@
     "held_without_price": [
      "ARTL"
     ],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [
+     {
+      "symbol": "ARTL",
+      "side": "sell",
+      "qty": 23,
+      "price": 9.045,
+      "notional": 208.03,
+      "trades_on_d": true
+     }
+    ],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -966,14 +1129,7 @@
       "limit": "0.310755 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "ARTL"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-08",
@@ -994,6 +1150,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1047,6 +1207,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1100,6 +1264,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1153,6 +1321,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1206,6 +1378,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1243,10 +1419,8 @@
    {
     "decision_date": "2026-07-15",
     "execution_date": "2026-07-16",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 135,
     "n_buy": 68,
     "n_sell": 67,
@@ -1267,6 +1441,25 @@
      "CPRX",
      "NUVL"
     ],
+    "frozen": [
+     {
+      "symbol": "CPRX",
+      "qty": 45.0,
+      "price": 31.49,
+      "value": 1417.05,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "NUVL",
+      "qty": 6.0,
+      "price": 123.96,
+      "value": 743.76,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.002161,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0013497892005097487,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1285,7 +1478,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.801892,
+      "value": 1.804053,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1299,22 +1492,13 @@
       "limit": "0.307344 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 2,
-      "limit": 0,
-      "detail": "CPRX, NUVL"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-16",
     "execution_date": "2026-07-17",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 177,
     "n_buy": 73,
     "n_sell": 104,
@@ -1333,8 +1517,36 @@
      "NUVL"
     ],
     "held_without_price": [
-     "GTLS"
+     "CPRX",
+     "GTLS",
+     "NUVL"
     ],
+    "frozen": [
+     {
+      "symbol": "CPRX",
+      "qty": 45.0,
+      "price": 31.49,
+      "value": 1417.05,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "GTLS",
+      "qty": 8.0,
+      "price": 209.9,
+      "value": 1679.2,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "NUVL",
+      "qty": 6.0,
+      "price": 123.96,
+      "value": 743.76,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00384,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0019033022189446824,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1353,7 +1565,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.804034,
+      "value": 1.807874,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1367,14 +1579,7 @@
       "limit": "0.316643 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "GTLS"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-17",
@@ -1398,7 +1603,21 @@
      "GTLS",
      "NUVL"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "GTLS"
+    ],
+    "frozen": [
+     {
+      "symbol": "GTLS",
+      "qty": 8.0,
+      "price": 209.9,
+      "value": 1679.2,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001679,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.001135344950921453,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1417,7 +1636,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.802625,
+      "value": 1.804305,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1454,6 +1673,10 @@
      "GTLS"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00033670247107526444,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1507,6 +1730,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1544,10 +1771,8 @@
    {
     "decision_date": "2026-07-22",
     "execution_date": "2026-07-23",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 111,
     "n_buy": 49,
     "n_sell": 62,
@@ -1566,6 +1791,18 @@
     "held_without_price": [
      "NSA"
     ],
+    "frozen": [
+     {
+      "symbol": "NSA",
+      "qty": 2.0,
+      "price": 43.41,
+      "value": 86.82,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 8.7e-05,
+    "closeout_orders": [],
+    "dropped_target_weight": 3.2844550313561012e-06,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1584,7 +1821,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800649,
+      "value": 1.800736,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1598,14 +1835,7 @@
       "limit": "0.312762 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "NSA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-23",
@@ -1627,7 +1857,21 @@
     "unpriced_in_target": [
      "NSA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "NSA"
+    ],
+    "frozen": [
+     {
+      "symbol": "NSA",
+      "qty": 2.0,
+      "price": 43.41,
+      "value": 86.82,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 8.7e-05,
+    "closeout_orders": [],
+    "dropped_target_weight": 3.2844550313561012e-06,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1646,7 +1890,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800023,
+      "value": 1.80011,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1665,10 +1909,8 @@
    {
     "decision_date": "2026-07-24",
     "execution_date": "2026-07-27",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 158,
     "n_buy": 71,
     "n_sell": 87,
@@ -1688,6 +1930,18 @@
     "held_without_price": [
      "TMHC"
     ],
+    "frozen": [
+     {
+      "symbol": "TMHC",
+      "qty": 8.0,
+      "price": 72.45,
+      "value": 579.6,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00058,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00035148698141767036,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1706,7 +1960,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800075,
+      "value": 1.800655,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1720,22 +1974,13 @@
       "limit": "0.321622 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "TMHC"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-27",
     "execution_date": "2026-07-28",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 159,
     "n_buy": 83,
     "n_sell": 76,
@@ -1753,8 +1998,28 @@
      "TMHC"
     ],
     "held_without_price": [
-     "AVNS"
+     "AVNS",
+     "TMHC"
     ],
+    "frozen": [
+     {
+      "symbol": "AVNS",
+      "qty": 33.0,
+      "price": 24.99,
+      "value": 824.67,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "TMHC",
+      "qty": 8.0,
+      "price": 72.45,
+      "value": 579.6,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001404,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0007244534864864957,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1773,7 +2038,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800961,
+      "value": 1.802366,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1787,14 +2052,7 @@
       "limit": "0.312917 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "AVNS"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-28",
@@ -1817,7 +2075,21 @@
      "AVNS",
      "TMHC"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "AVNS"
+    ],
+    "frozen": [
+     {
+      "symbol": "AVNS",
+      "qty": 33.0,
+      "price": 24.99,
+      "value": 824.67,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000825,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.000436349293481057,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1836,7 +2108,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800669,
+      "value": 1.801494,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -1873,6 +2145,10 @@
      "AVNS"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0001583861325896208,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1926,6 +2202,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -1963,10 +2243,8 @@
    {
     "decision_date": "2026-07-31",
     "execution_date": "2026-08-03",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 631,
     "n_buy": 308,
     "n_sell": 323,
@@ -1985,6 +2263,18 @@
     "held_without_price": [
      "SKYT"
     ],
+    "frozen": [
+     {
+      "symbol": "SKYT",
+      "qty": 26.0,
+      "price": 32.46,
+      "value": 843.96,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000844,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00043233888945103983,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2003,7 +2293,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.804819,
+      "value": 1.805663,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2017,14 +2307,7 @@
       "limit": "0.474511 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "SKYT"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-03",
@@ -2046,7 +2329,21 @@
     "unpriced_in_target": [
      "SKYT"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "SKYT"
+    ],
+    "frozen": [
+     {
+      "symbol": "SKYT",
+      "qty": 26.0,
+      "price": 32.46,
+      "value": 843.96,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000844,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00026887044484979425,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2065,7 +2362,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.803067,
+      "value": 1.803911,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2102,6 +2399,10 @@
      "SKYT"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 8.956906897210468e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2139,10 +2440,8 @@
    {
     "decision_date": "2026-08-05",
     "execution_date": "2026-08-06",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 707,
     "n_buy": 381,
     "n_sell": 326,
@@ -2161,6 +2460,18 @@
     "held_without_price": [
      "EA"
     ],
+    "frozen": [
+     {
+      "symbol": "EA",
+      "qty": 5.0,
+      "price": 209.7,
+      "value": 1048.5,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001048,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0006621575169250967,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2179,7 +2490,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.796261,
+      "value": 1.79731,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2193,14 +2504,7 @@
       "limit": "0.283719 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "EA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-06",
@@ -2222,7 +2526,21 @@
     "unpriced_in_target": [
      "EA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "EA"
+    ],
+    "frozen": [
+     {
+      "symbol": "EA",
+      "qty": 5.0,
+      "price": 209.7,
+      "value": 1048.5,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001048,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0004128326468823637,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2241,7 +2559,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.795068,
+      "value": 1.796116,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2278,6 +2596,10 @@
      "EA"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00020684579292507417,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2331,6 +2653,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2384,6 +2710,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2437,6 +2767,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2490,6 +2824,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2543,6 +2881,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2580,10 +2922,8 @@
    {
     "decision_date": "2026-08-17",
     "execution_date": "2026-08-18",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 174,
     "n_buy": 93,
     "n_sell": 81,
@@ -2602,6 +2942,18 @@
     "held_without_price": [
      "AVB"
     ],
+    "frozen": [
+     {
+      "symbol": "AVB",
+      "qty": 1.0,
+      "price": 184.06,
+      "value": 184.06,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000184,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00014038753960072766,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2620,7 +2972,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.801765,
+      "value": 1.801949,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2634,14 +2986,7 @@
       "limit": "0.231690 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "AVB"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-18",
@@ -2663,7 +3008,21 @@
     "unpriced_in_target": [
      "AVB"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "AVB"
+    ],
+    "frozen": [
+     {
+      "symbol": "AVB",
+      "qty": 1.0,
+      "price": 184.06,
+      "value": 184.06,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000184,
+    "closeout_orders": [],
+    "dropped_target_weight": 9.106782924652349e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2682,7 +3041,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.801136,
+      "value": 1.80132,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2719,6 +3078,10 @@
      "AVB"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 4.3033430446947244e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2756,10 +3119,8 @@
    {
     "decision_date": "2026-08-20",
     "execution_date": "2026-08-21",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 156,
     "n_buy": 74,
     "n_sell": 82,
@@ -2780,6 +3141,25 @@
      "LBRDK",
      "WBS"
     ],
+    "frozen": [
+     {
+      "symbol": "LBRDK",
+      "qty": -12.0,
+      "price": 36.02,
+      "value": 432.24,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "WBS",
+      "qty": 9.0,
+      "price": 77.57,
+      "value": 698.13,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00113,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.000622202739684973,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2798,7 +3178,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.799381,
+      "value": 1.800511,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2812,14 +3192,7 @@
       "limit": "0.248502 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 2,
-      "limit": 0,
-      "detail": "LBRDK, WBS"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-21",
@@ -2842,7 +3215,29 @@
      "LBRDK",
      "WBS"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "LBRDK",
+     "WBS"
+    ],
+    "frozen": [
+     {
+      "symbol": "LBRDK",
+      "qty": -12.0,
+      "price": 36.02,
+      "value": 432.24,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "WBS",
+      "qty": 9.0,
+      "price": 77.57,
+      "value": 698.13,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00113,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00042224063261275964,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2861,7 +3256,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.798186,
+      "value": 1.799316,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2899,6 +3294,10 @@
      "WBS"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002131900363945782,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2936,10 +3335,8 @@
    {
     "decision_date": "2026-08-25",
     "execution_date": "2026-08-26",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 170,
     "n_buy": 75,
     "n_sell": 95,
@@ -2958,6 +3355,18 @@
     "held_without_price": [
      "TWO"
     ],
+    "frozen": [
+     {
+      "symbol": "TWO",
+      "qty": 57.0,
+      "price": 11.98,
+      "value": 682.86,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000683,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0004472213394668058,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -2976,7 +3385,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.799039,
+      "value": 1.799722,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -2990,14 +3399,7 @@
       "limit": "0.234778 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "TWO"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-26",
@@ -3019,7 +3421,21 @@
     "unpriced_in_target": [
      "TWO"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "TWO"
+    ],
+    "frozen": [
+     {
+      "symbol": "TWO",
+      "qty": 57.0,
+      "price": 11.98,
+      "value": 682.86,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000683,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0003052226293629015,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3038,7 +3454,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.799337,
+      "value": 1.80002,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3057,10 +3473,8 @@
    {
     "decision_date": "2026-08-27",
     "execution_date": "2026-08-28",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 152,
     "n_buy": 83,
     "n_sell": 69,
@@ -3080,6 +3494,18 @@
     "held_without_price": [
      "FBRX"
     ],
+    "frozen": [
+     {
+      "symbol": "FBRX",
+      "qty": -6.0,
+      "price": 76.99,
+      "value": 461.94,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000462,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00038970925742307604,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3098,7 +3524,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.799664,
+      "value": 1.800126,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3112,14 +3538,7 @@
       "limit": "0.225781 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "FBRX"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-28",
@@ -3141,7 +3560,21 @@
     "unpriced_in_target": [
      "FBRX"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "FBRX"
+    ],
+    "frozen": [
+     {
+      "symbol": "FBRX",
+      "qty": -6.0,
+      "price": 76.99,
+      "value": 461.94,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000462,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00014791787030966376,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3160,7 +3593,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800026,
+      "value": 1.800488,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3197,6 +3630,10 @@
      "FBRX"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 6.525763142471201e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3234,10 +3671,8 @@
    {
     "decision_date": "2026-09-01",
     "execution_date": "2026-09-02",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 663,
     "n_buy": 315,
     "n_sell": 348,
@@ -3256,6 +3691,18 @@
     "held_without_price": [
      "CRNX"
     ],
+    "frozen": [
+     {
+      "symbol": "CRNX",
+      "qty": 8.0,
+      "price": 84.95,
+      "value": 679.6,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00068,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0003946958326775379,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3274,7 +3721,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.80127,
+      "value": 1.801949,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3288,14 +3735,7 @@
       "limit": "0.291932 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "CRNX"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-09-02",
@@ -3317,7 +3757,21 @@
     "unpriced_in_target": [
      "CRNX"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "CRNX"
+    ],
+    "frozen": [
+     {
+      "symbol": "CRNX",
+      "qty": 8.0,
+      "price": 84.95,
+      "value": 679.6,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00068,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00026333013838915673,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3336,7 +3790,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.800993,
+      "value": 1.801673,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3355,10 +3809,8 @@
    {
     "decision_date": "2026-09-03",
     "execution_date": "2026-09-04",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 685,
     "n_buy": 334,
     "n_sell": 351,
@@ -3378,6 +3830,18 @@
     "held_without_price": [
      "APGE"
     ],
+    "frozen": [
+     {
+      "symbol": "APGE",
+      "qty": 8.0,
+      "price": 135.07,
+      "value": 1080.56,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001081,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0007775191189041654,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3396,7 +3860,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.798779,
+      "value": 1.799859,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3410,14 +3874,7 @@
       "limit": "0.276241 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "APGE"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-09-04",
@@ -3439,7 +3896,21 @@
     "unpriced_in_target": [
      "APGE"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "APGE"
+    ],
+    "frozen": [
+     {
+      "symbol": "APGE",
+      "qty": 8.0,
+      "price": 135.07,
+      "value": 1080.56,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001081,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0004908429723498018,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3458,7 +3929,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.795019,
+      "value": 1.7961,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3495,6 +3966,10 @@
      "APGE"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00024490664350506556,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3548,6 +4023,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3601,6 +4080,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3654,6 +4137,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3707,6 +4194,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3760,6 +4251,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3813,6 +4308,10 @@
     "tbill_symbol": "SGOV",
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3868,6 +4367,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3905,10 +4408,8 @@
    {
     "decision_date": "2026-06-24",
     "execution_date": "2026-06-25",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 31,
     "n_buy": 16,
     "n_sell": 15,
@@ -3927,6 +4428,18 @@
     "held_without_price": [
      "CNTA"
     ],
+    "frozen": [
+     {
+      "symbol": "CNTA",
+      "qty": 14.0,
+      "price": 40.5,
+      "value": 567.0,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000567,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00033221315358993313,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -3945,7 +4458,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.784108,
+      "value": 1.784675,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -3959,22 +4472,13 @@
       "limit": "1.269845 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "CNTA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-06-25",
     "execution_date": "2026-06-26",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 43,
     "n_buy": 25,
     "n_sell": 18,
@@ -3992,8 +4496,28 @@
      "CWAN"
     ],
     "held_without_price": [
+     "CNTA",
      "CWAN"
     ],
+    "frozen": [
+     {
+      "symbol": "CNTA",
+      "qty": 14.0,
+      "price": 40.5,
+      "value": 567.0,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "CWAN",
+      "qty": 6.0,
+      "price": 24.56,
+      "value": 147.36,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000714,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0003185096181432457,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4012,7 +4536,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.785652,
+      "value": 1.786366,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4026,22 +4550,13 @@
       "limit": "1.270309 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "CWAN"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-06-26",
     "execution_date": "2026-06-29",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 81,
     "n_buy": 39,
     "n_sell": 42,
@@ -4060,8 +4575,28 @@
      "PRA"
     ],
     "held_without_price": [
+     "CWAN",
      "PRA"
     ],
+    "frozen": [
+     {
+      "symbol": "CWAN",
+      "qty": 6.0,
+      "price": 24.56,
+      "value": 147.36,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "PRA",
+      "qty": 9.0,
+      "price": 25.0,
+      "value": 225.0,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000372,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00030240492089557024,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4080,7 +4615,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.789467,
+      "value": 1.789839,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4094,14 +4629,7 @@
       "limit": "1.268773 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "PRA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-06-29",
@@ -4124,7 +4652,21 @@
      "CWAN",
      "PRA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "PRA"
+    ],
+    "frozen": [
+     {
+      "symbol": "PRA",
+      "qty": 9.0,
+      "price": 25.0,
+      "value": 225.0,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000225,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0001155165475188679,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4143,7 +4685,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.796965,
+      "value": 1.79719,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4180,6 +4722,10 @@
      "PRA"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 4.2171568441254306e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4217,10 +4763,8 @@
    {
     "decision_date": "2026-07-01",
     "execution_date": "2026-07-02",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 411,
     "n_buy": 211,
     "n_sell": 200,
@@ -4244,6 +4788,32 @@
      "SEM",
      "SILA"
     ],
+    "frozen": [
+     {
+      "symbol": "JHG",
+      "qty": 7.0,
+      "price": 51.95,
+      "value": 363.65,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SEM",
+      "qty": 30.0,
+      "price": 16.51,
+      "value": 495.3,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SILA",
+      "qty": 8.0,
+      "price": 30.36,
+      "value": 242.88,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001102,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0007194069085616418,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4262,7 +4832,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.775038,
+      "value": 1.77614,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4276,14 +4846,7 @@
       "limit": "1.271991 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 3,
-      "limit": 0,
-      "detail": "JHG, SEM, SILA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-02",
@@ -4308,7 +4871,37 @@
      "SEM",
      "SILA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "frozen": [
+     {
+      "symbol": "JHG",
+      "qty": 7.0,
+      "price": 51.95,
+      "value": 363.65,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SEM",
+      "qty": 30.0,
+      "price": 16.51,
+      "value": 495.3,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "SILA",
+      "qty": 8.0,
+      "price": 30.36,
+      "value": 242.88,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001102,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.000475675277429331,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4327,7 +4920,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.771029,
+      "value": 1.772131,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4367,6 +4960,10 @@
      "SILA"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00023772149496041012,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4404,15 +5001,13 @@
    {
     "decision_date": "2026-07-07",
     "execution_date": "2026-07-08",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
-    "n_orders": 394,
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 395,
     "n_buy": 196,
-    "n_sell": 198,
+    "n_sell": 199,
     "buy_notional": 34414.12,
-    "sell_notional": 30694.47,
+    "sell_notional": 30803.01,
     "n_dropped_min_notional": 692,
     "rounding_drift_one_sided": 0.02806697,
     "final_drift_one_sided": 0.04632115,
@@ -4424,6 +5019,19 @@
     "held_without_price": [
      "ARTL"
     ],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [
+     {
+      "symbol": "ARTL",
+      "side": "sell",
+      "qty": 12,
+      "price": 9.045,
+      "notional": 108.54,
+      "trades_on_d": true
+     }
+    ],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4456,14 +5064,7 @@
       "limit": "1.267039 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "ARTL"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-08",
@@ -4484,6 +5085,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4537,6 +5142,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4590,6 +5199,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4643,6 +5256,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4696,6 +5313,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4733,10 +5354,8 @@
    {
     "decision_date": "2026-07-15",
     "execution_date": "2026-07-16",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 62,
     "n_buy": 34,
     "n_sell": 28,
@@ -4757,6 +5376,25 @@
      "CPRX",
      "NUVL"
     ],
+    "frozen": [
+     {
+      "symbol": "CPRX",
+      "qty": 24.0,
+      "price": 31.49,
+      "value": 755.76,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "NUVL",
+      "qty": 3.0,
+      "price": 123.96,
+      "value": 371.88,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001128,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0007199602403464897,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4775,7 +5413,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.787782,
+      "value": 1.78891,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4789,22 +5427,13 @@
       "limit": "1.266514 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 2,
-      "limit": 0,
-      "detail": "CPRX, NUVL"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-16",
     "execution_date": "2026-07-17",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 79,
     "n_buy": 31,
     "n_sell": 48,
@@ -4823,8 +5452,36 @@
      "NUVL"
     ],
     "held_without_price": [
-     "GTLS"
+     "CPRX",
+     "GTLS",
+     "NUVL"
     ],
+    "frozen": [
+     {
+      "symbol": "CPRX",
+      "qty": 24.0,
+      "price": 31.49,
+      "value": 755.76,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "GTLS",
+      "qty": 4.0,
+      "price": 209.9,
+      "value": 839.6,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "NUVL",
+      "qty": 3.0,
+      "price": 123.96,
+      "value": 371.88,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.001967,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0010149309110074876,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4843,7 +5500,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.784749,
+      "value": 1.786717,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4857,14 +5514,7 @@
       "limit": "1.264276 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "GTLS"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-17",
@@ -4888,7 +5538,21 @@
      "GTLS",
      "NUVL"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "GTLS"
+    ],
+    "frozen": [
+     {
+      "symbol": "GTLS",
+      "qty": 4.0,
+      "price": 209.9,
+      "value": 839.6,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00084,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0006061577094973867,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4907,7 +5571,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.781417,
+      "value": 1.782256,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -4944,6 +5608,10 @@
      "GTLS"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00017992558878832888,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -4997,6 +5665,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5034,10 +5706,8 @@
    {
     "decision_date": "2026-07-22",
     "execution_date": "2026-07-23",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 73,
     "n_buy": 36,
     "n_sell": 37,
@@ -5056,6 +5726,18 @@
     "held_without_price": [
      "NSA"
     ],
+    "frozen": [
+     {
+      "symbol": "NSA",
+      "qty": 2.0,
+      "price": 43.41,
+      "value": 86.82,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 8.7e-05,
+    "closeout_orders": [],
+    "dropped_target_weight": 1.7588868639932394e-06,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5074,7 +5756,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.791376,
+      "value": 1.791463,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5088,14 +5770,7 @@
       "limit": "1.263922 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "NSA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-23",
@@ -5117,7 +5792,21 @@
     "unpriced_in_target": [
      "NSA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "NSA"
+    ],
+    "frozen": [
+     {
+      "symbol": "NSA",
+      "qty": 2.0,
+      "price": 43.41,
+      "value": 86.82,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 8.7e-05,
+    "closeout_orders": [],
+    "dropped_target_weight": 1.7588868639932394e-06,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5136,7 +5825,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.78573,
+      "value": 1.785817,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5155,10 +5844,8 @@
    {
     "decision_date": "2026-07-24",
     "execution_date": "2026-07-27",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 68,
     "n_buy": 25,
     "n_sell": 43,
@@ -5178,6 +5865,18 @@
     "held_without_price": [
      "TMHC"
     ],
+    "frozen": [
+     {
+      "symbol": "TMHC",
+      "qty": 3.0,
+      "price": 72.45,
+      "value": 217.35,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000217,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00018821092139827662,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5196,7 +5895,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.785292,
+      "value": 1.78551,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5210,22 +5909,13 @@
       "limit": "1.263257 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "TMHC"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-27",
     "execution_date": "2026-07-28",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 76,
     "n_buy": 39,
     "n_sell": 37,
@@ -5243,8 +5933,28 @@
      "TMHC"
     ],
     "held_without_price": [
-     "AVNS"
+     "AVNS",
+     "TMHC"
     ],
+    "frozen": [
+     {
+      "symbol": "AVNS",
+      "qty": 14.0,
+      "price": 24.99,
+      "value": 349.86,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "TMHC",
+      "qty": 3.0,
+      "price": 72.45,
+      "value": 217.35,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000567,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0003878600689960793,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5263,7 +5973,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.789797,
+      "value": 1.790364,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5277,14 +5987,7 @@
       "limit": "1.263902 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "AVNS"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-07-28",
@@ -5307,7 +6010,21 @@
      "AVNS",
      "TMHC"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "AVNS"
+    ],
+    "frozen": [
+     {
+      "symbol": "AVNS",
+      "qty": 14.0,
+      "price": 24.99,
+      "value": 349.86,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00035,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002331730520651525,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5326,7 +6043,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.794174,
+      "value": 1.794523,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5363,6 +6080,10 @@
      "AVNS"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 8.474731818992698e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5416,6 +6137,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5453,10 +6178,8 @@
    {
     "decision_date": "2026-07-31",
     "execution_date": "2026-08-03",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 350,
     "n_buy": 166,
     "n_sell": 184,
@@ -5475,6 +6198,18 @@
     "held_without_price": [
      "SKYT"
     ],
+    "frozen": [
+     {
+      "symbol": "SKYT",
+      "qty": 12.0,
+      "price": 32.46,
+      "value": 389.52,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00039,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002314095109260616,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5493,7 +6228,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.706948,
+      "value": 1.707338,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5507,14 +6242,7 @@
       "limit": "1.242157 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "SKYT"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-03",
@@ -5536,7 +6264,21 @@
     "unpriced_in_target": [
      "SKYT"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "SKYT"
+    ],
+    "frozen": [
+     {
+      "symbol": "SKYT",
+      "qty": 12.0,
+      "price": 32.46,
+      "value": 389.52,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00039,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0001441282385894827,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5555,7 +6297,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.706493,
+      "value": 1.706883,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5592,6 +6334,10 @@
      "SKYT"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 4.833270167595529e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5629,10 +6375,8 @@
    {
     "decision_date": "2026-08-05",
     "execution_date": "2026-08-06",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 395,
     "n_buy": 194,
     "n_sell": 201,
@@ -5651,6 +6395,18 @@
     "held_without_price": [
      "EA"
     ],
+    "frozen": [
+     {
+      "symbol": "EA",
+      "qty": 2.0,
+      "price": 209.7,
+      "value": 419.4,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000419,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00034951701102098944,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5669,7 +6425,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.783322,
+      "value": 1.783742,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5683,14 +6439,7 @@
       "limit": "1.280693 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "EA"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-06",
@@ -5712,7 +6461,21 @@
     "unpriced_in_target": [
      "EA"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "EA"
+    ],
+    "frozen": [
+     {
+      "symbol": "EA",
+      "qty": 2.0,
+      "price": 209.7,
+      "value": 419.4,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000419,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002156862139704303,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5731,7 +6494,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.786684,
+      "value": 1.787104,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -5768,6 +6531,10 @@
      "EA"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00010763930983970048,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5821,6 +6588,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5874,6 +6645,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5927,6 +6702,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -5980,6 +6759,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6033,6 +6816,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6070,10 +6857,8 @@
    {
     "decision_date": "2026-08-17",
     "execution_date": "2026-08-18",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 60,
     "n_buy": 37,
     "n_sell": 23,
@@ -6092,6 +6877,18 @@
     "held_without_price": [
      "AVB"
     ],
+    "frozen": [
+     {
+      "symbol": "AVB",
+      "qty": 1.0,
+      "price": 184.06,
+      "value": 184.06,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000184,
+    "closeout_orders": [],
+    "dropped_target_weight": 7.120935219734638e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6110,7 +6907,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.790156,
+      "value": 1.79034,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6124,14 +6921,7 @@
       "limit": "1.292195 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "AVB"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-18",
@@ -6153,7 +6943,21 @@
     "unpriced_in_target": [
      "AVB"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "AVB"
+    ],
+    "frozen": [
+     {
+      "symbol": "AVB",
+      "qty": 1.0,
+      "price": 184.06,
+      "value": 184.06,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000184,
+    "closeout_orders": [],
+    "dropped_target_weight": 4.617999865225656e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6172,7 +6976,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.780918,
+      "value": 1.781102,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6209,6 +7013,10 @@
      "AVB"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 2.181942875447101e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6246,10 +7054,8 @@
    {
     "decision_date": "2026-08-20",
     "execution_date": "2026-08-21",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 74,
     "n_buy": 32,
     "n_sell": 42,
@@ -6270,6 +7076,25 @@
      "LBRDK",
      "WBS"
     ],
+    "frozen": [
+     {
+      "symbol": "LBRDK",
+      "qty": -7.0,
+      "price": 36.02,
+      "value": 252.14,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "WBS",
+      "qty": 4.0,
+      "price": 77.57,
+      "value": 310.28,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000562,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0003160528867595131,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6288,7 +7113,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.780095,
+      "value": 1.780658,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6302,14 +7127,7 @@
       "limit": "1.289433 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 2,
-      "limit": 0,
-      "detail": "LBRDK, WBS"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-21",
@@ -6332,7 +7150,29 @@
      "LBRDK",
      "WBS"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "LBRDK",
+     "WBS"
+    ],
+    "frozen": [
+     {
+      "symbol": "LBRDK",
+      "qty": -7.0,
+      "price": 36.02,
+      "value": 252.14,
+      "reason": "asset_not_active"
+     },
+     {
+      "symbol": "WBS",
+      "qty": 4.0,
+      "price": 77.57,
+      "value": 310.28,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000562,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00021446235370222079,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6351,7 +7191,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.789424,
+      "value": 1.789986,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6389,6 +7229,10 @@
      "WBS"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00010850989598841182,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6426,10 +7270,8 @@
    {
     "decision_date": "2026-08-25",
     "execution_date": "2026-08-26",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 77,
     "n_buy": 37,
     "n_sell": 40,
@@ -6448,6 +7290,18 @@
     "held_without_price": [
      "TWO"
     ],
+    "frozen": [
+     {
+      "symbol": "TWO",
+      "qty": 28.0,
+      "price": 11.98,
+      "value": 335.44,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000335,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002271657297454244,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6466,7 +7320,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.789342,
+      "value": 1.789678,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6480,14 +7334,7 @@
       "limit": "1.292349 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "TWO"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-26",
@@ -6509,7 +7356,21 @@
     "unpriced_in_target": [
      "TWO"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "TWO"
+    ],
+    "frozen": [
+     {
+      "symbol": "TWO",
+      "qty": 28.0,
+      "price": 11.98,
+      "value": 335.44,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000335,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00015488706906885554,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6528,7 +7389,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.788331,
+      "value": 1.788666,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6547,10 +7408,8 @@
    {
     "decision_date": "2026-08-27",
     "execution_date": "2026-08-28",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 77,
     "n_buy": 30,
     "n_sell": 47,
@@ -6570,6 +7429,18 @@
     "held_without_price": [
      "FBRX"
     ],
+    "frozen": [
+     {
+      "symbol": "FBRX",
+      "qty": -3.0,
+      "price": 76.99,
+      "value": 230.97,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000231,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00019799738234079986,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6588,7 +7459,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.791725,
+      "value": 1.791956,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6602,14 +7473,7 @@
       "limit": "1.295318 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "FBRX"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-08-28",
@@ -6631,7 +7495,21 @@
     "unpriced_in_target": [
      "FBRX"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "FBRX"
+    ],
+    "frozen": [
+     {
+      "symbol": "FBRX",
+      "qty": -3.0,
+      "price": 76.99,
+      "value": 230.97,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.000231,
+    "closeout_orders": [],
+    "dropped_target_weight": 7.512501238529213e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6650,7 +7528,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.78423,
+      "value": 1.784461,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6687,6 +7565,10 @@
      "FBRX"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 3.304701387276133e-05,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6724,10 +7606,8 @@
    {
     "decision_date": "2026-09-01",
     "execution_date": "2026-09-02",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 331,
     "n_buy": 165,
     "n_sell": 166,
@@ -6746,6 +7626,18 @@
     "held_without_price": [
      "CRNX"
     ],
+    "frozen": [
+     {
+      "symbol": "CRNX",
+      "qty": 4.0,
+      "price": 84.95,
+      "value": 339.8,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00034,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00019907245427736953,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6764,7 +7656,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.763913,
+      "value": 1.764253,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6778,14 +7670,7 @@
       "limit": "1.287530 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "CRNX"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-09-02",
@@ -6807,7 +7692,21 @@
     "unpriced_in_target": [
      "CRNX"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "CRNX"
+    ],
+    "frozen": [
+     {
+      "symbol": "CRNX",
+      "qty": 4.0,
+      "price": 84.95,
+      "value": 339.8,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00034,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00013259363079813096,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6826,7 +7725,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.769055,
+      "value": 1.769395,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6845,10 +7744,8 @@
    {
     "decision_date": "2026-09-03",
     "execution_date": "2026-09-04",
-    "status": "blocked",
-    "blocked_by": [
-     "reference_prices_complete"
-    ],
+    "status": "ok",
+    "blocked_by": [],
     "n_orders": 393,
     "n_buy": 182,
     "n_sell": 211,
@@ -6868,6 +7765,18 @@
     "held_without_price": [
      "APGE"
     ],
+    "frozen": [
+     {
+      "symbol": "APGE",
+      "qty": 4.0,
+      "price": 135.07,
+      "value": 540.28,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00054,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.00039964447371253203,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6886,7 +7795,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.780791,
+      "value": 1.781331,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6900,14 +7809,7 @@
       "limit": "1.284609 +- 0.02"
      }
     },
-    "failed_checks": [
-     {
-      "name": "reference_prices_complete",
-      "value": 1,
-      "limit": 0,
-      "detail": "APGE"
-     }
-    ]
+    "failed_checks": []
    },
    {
     "decision_date": "2026-09-04",
@@ -6929,7 +7831,21 @@
     "unpriced_in_target": [
      "APGE"
     ],
-    "held_without_price": [],
+    "held_without_price": [
+     "APGE"
+    ],
+    "frozen": [
+     {
+      "symbol": "APGE",
+      "qty": 4.0,
+      "price": 135.07,
+      "value": 540.28,
+      "reason": "asset_not_active"
+     }
+    ],
+    "frozen_gross": 0.00054,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0002550342711805725,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -6948,7 +7864,7 @@
      },
      "gross_leverage": {
       "passed": true,
-      "value": 1.790824,
+      "value": 1.791364,
       "limit": 1.98
      },
      "beta_neutral": {
@@ -6985,6 +7901,10 @@
      "APGE"
     ],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.000127494320980564,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7038,6 +7958,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7091,6 +8015,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7144,6 +8072,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7197,6 +8129,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7250,6 +8186,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7303,6 +8243,10 @@
     "tbill_symbol": null,
     "unpriced_in_target": [],
     "held_without_price": [],
+    "frozen": [],
+    "frozen_gross": 0.0,
+    "closeout_orders": [],
+    "dropped_target_weight": 0.0,
     "key_checks": {
      "net_dollar": {
       "passed": true,
@@ -7344,11 +8288,9 @@
    "summary": {
     "quant1": {
      "days": 60,
-     "days_blocked": 9,
-     "days_ok": 51,
-     "check_fail_days": {
-      "reference_prices_complete": 9
-     },
+     "days_blocked": 0,
+     "days_ok": 60,
+     "check_fail_days": {},
      "orders_per_day": {
       "median": 155.0,
       "p95": 466.0,
@@ -7359,18 +8301,27 @@
      "final_drift_p95": 0.024745795499999997,
      "scale_event_days": 0,
      "days_with_unpriced_in_target": 24,
-     "days_with_held_without_price": 9,
+     "days_with_held_without_price": 17,
+     "frozen_events": 9,
+     "frozen_name_days": 18,
+     "days_with_frozen": 17,
+     "max_frozen_gross": 0.005448,
+     "closeout_orders": 0,
+     "closeout_orders_trading_on_d": 0,
+     "dropped_target_weight": {
+      "median": 0.0,
+      "max": 0.00325793288391242,
+      "days_with_drop": 24
+     },
      "tbill_symbols": [
       "SGOV"
      ]
     },
     "quant2": {
      "days": 60,
-     "days_blocked": 9,
-     "days_ok": 51,
-     "check_fail_days": {
-      "reference_prices_complete": 9
-     },
+     "days_blocked": 0,
+     "days_ok": 60,
+     "check_fail_days": {},
      "orders_per_day": {
       "median": 79.0,
       "p95": 308.1,
@@ -7381,131 +8332,31 @@
      "final_drift_p95": 0.025009487,
      "scale_event_days": 0,
      "days_with_unpriced_in_target": 24,
-     "days_with_held_without_price": 9,
+     "days_with_held_without_price": 17,
+     "frozen_events": 9,
+     "frozen_name_days": 18,
+     "days_with_frozen": 17,
+     "max_frozen_gross": 0.002891,
+     "closeout_orders": 0,
+     "closeout_orders_trading_on_d": 0,
+     "dropped_target_weight": {
+      "median": 0.0,
+      "max": 0.0016749886809869655,
+      "days_with_drop": 24
+     },
      "tbill_symbols": []
     }
    },
-   "failure_events": [
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-15",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-16",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-05",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-17",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-20",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-03",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-15",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-16",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-05",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-17",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-20",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-03",
-     "check": "reference_prices_complete",
-     "value": 1
-    }
-   ],
+   "failure_events": [],
    "unexplained_failing_checks": []
   },
   "M1_U3000": {
    "summary": {
     "quant1": {
      "days": 60,
-     "days_blocked": 18,
-     "days_ok": 42,
-     "check_fail_days": {
-      "reference_prices_complete": 18
-     },
+     "days_blocked": 0,
+     "days_ok": 60,
+     "check_fail_days": {},
      "orders_per_day": {
       "median": 169.5,
       "p95": 247.6999999999999,
@@ -7516,18 +8367,27 @@
      "final_drift_p95": 0.0484677905,
      "scale_event_days": 0,
      "days_with_unpriced_in_target": 42,
-     "days_with_held_without_price": 18,
+     "days_with_held_without_price": 31,
+     "frozen_events": 21,
+     "frozen_name_days": 42,
+     "days_with_frozen": 30,
+     "max_frozen_gross": 0.001944,
+     "closeout_orders": 1,
+     "closeout_orders_trading_on_d": 1,
+     "dropped_target_weight": {
+      "median": 0.00012336106202172023,
+      "max": 0.0011387845517174722,
+      "days_with_drop": 42
+     },
      "tbill_symbols": [
       "SGOV"
      ]
     },
     "quant2": {
      "days": 60,
-     "days_blocked": 19,
-     "days_ok": 41,
-     "check_fail_days": {
-      "reference_prices_complete": 19
-     },
+     "days_blocked": 0,
+     "days_ok": 60,
+     "check_fail_days": {},
      "orders_per_day": {
       "median": 79.5,
       "p95": 126.14999999999993,
@@ -7538,245 +8398,32 @@
      "final_drift_p95": 0.045393848,
      "scale_event_days": 0,
      "days_with_unpriced_in_target": 42,
-     "days_with_held_without_price": 19,
+     "days_with_held_without_price": 33,
+     "frozen_events": 22,
+     "frozen_name_days": 44,
+     "days_with_frozen": 32,
+     "max_frozen_gross": 0.001077,
+     "closeout_orders": 1,
+     "closeout_orders_trading_on_d": 1,
+     "dropped_target_weight": {
+      "median": 6.168893661059145e-05,
+      "max": 0.0005583484200261886,
+      "days_with_drop": 42
+     },
      "tbill_symbols": []
     }
    },
-   "failure_events": [
-    {
-     "account": "quant1",
-     "decision_date": "2026-06-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-06-25",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-06-26",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-01",
-     "check": "reference_prices_complete",
-     "value": 3
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-07",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-15",
-     "check": "reference_prices_complete",
-     "value": 2
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-16",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-22",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-27",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-31",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-05",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-20",
-     "check": "reference_prices_complete",
-     "value": 2
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-25",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-27",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-03",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-11",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-06-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-06-25",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-06-26",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-01",
-     "check": "reference_prices_complete",
-     "value": 3
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-07",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-15",
-     "check": "reference_prices_complete",
-     "value": 2
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-16",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-22",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-27",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-31",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-05",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-17",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-20",
-     "check": "reference_prices_complete",
-     "value": 2
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-25",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-27",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-03",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-11",
-     "check": "reference_prices_complete",
-     "value": 1
-    }
-   ],
+   "failure_events": [],
    "unexplained_failing_checks": []
   },
   "M1_P1000": {
    "summary": {
     "quant1": {
      "days": 60,
-     "days_blocked": 10,
-     "days_ok": 50,
+     "days_blocked": 1,
+     "days_ok": 59,
      "check_fail_days": {
-      "beta_neutral": 1,
-      "reference_prices_complete": 9
+      "beta_neutral": 1
      },
      "orders_per_day": {
       "median": 183.0,
@@ -7788,18 +8435,27 @@
      "final_drift_p95": 0.025920250500000002,
      "scale_event_days": 0,
      "days_with_unpriced_in_target": 24,
-     "days_with_held_without_price": 9,
+     "days_with_held_without_price": 17,
+     "frozen_events": 9,
+     "frozen_name_days": 18,
+     "days_with_frozen": 17,
+     "max_frozen_gross": 0.002719,
+     "closeout_orders": 0,
+     "closeout_orders_trading_on_d": 0,
+     "dropped_target_weight": {
+      "median": 0.0,
+      "max": 0.0015149697733752114,
+      "days_with_drop": 24
+     },
      "tbill_symbols": [
       "SGOV"
      ]
     },
     "quant2": {
      "days": 60,
-     "days_blocked": 8,
-     "days_ok": 52,
-     "check_fail_days": {
-      "reference_prices_complete": 8
-     },
+     "days_blocked": 0,
+     "days_ok": 60,
+     "check_fail_days": {},
      "orders_per_day": {
       "median": 99.0,
       "p95": 145.2,
@@ -7810,121 +8466,100 @@
      "final_drift_p95": 0.02505999,
      "scale_event_days": 0,
      "days_with_unpriced_in_target": 24,
-     "days_with_held_without_price": 8,
+     "days_with_held_without_price": 15,
+     "frozen_events": 8,
+     "frozen_name_days": 16,
+     "days_with_frozen": 15,
+     "max_frozen_gross": 0.001421,
+     "closeout_orders": 0,
+     "closeout_orders_trading_on_d": 0,
+     "dropped_target_weight": {
+      "median": 0.0,
+      "max": 0.0007657368348155437,
+      "days_with_drop": 24
+     },
      "tbill_symbols": []
     }
    },
    "failure_events": [
     {
      "account": "quant1",
-     "decision_date": "2026-07-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-15",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-16",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-07-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
      "decision_date": "2026-07-29",
      "check": "beta_neutral",
      "value": 0.051595
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-05",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-17",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-08-20",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant1",
-     "decision_date": "2026-09-03",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-15",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-16",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-07-24",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-05",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-17",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-08-20",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-01",
-     "check": "reference_prices_complete",
-     "value": 1
-    },
-    {
-     "account": "quant2",
-     "decision_date": "2026-09-03",
-     "check": "reference_prices_complete",
-     "value": 1
     }
    ],
    "unexplained_failing_checks": []
+  }
+ },
+ "comparison_old_assumption": {
+  "source": "T-20261002-28 engine-replay.json at commit 6014b82: any held name without a close on D blocks the plan, removed by the broker the day after it first blocks",
+  "primary": {
+   "quant1": {
+    "days_blocked": 18,
+    "check_fail_days": {
+     "reference_prices_complete": 18
+    },
+    "days_with_held_without_price": 18
+   },
+   "quant2": {
+    "days_blocked": 18,
+    "check_fail_days": {
+     "reference_prices_complete": 18
+    },
+    "days_with_held_without_price": 18
+   }
+  },
+  "other_variants": {
+   "M0_P1000": {
+    "quant1": {
+     "days_blocked": 9,
+     "check_fail_days": {
+      "reference_prices_complete": 9
+     },
+     "days_with_held_without_price": 9
+    },
+    "quant2": {
+     "days_blocked": 9,
+     "check_fail_days": {
+      "reference_prices_complete": 9
+     },
+     "days_with_held_without_price": 9
+    }
+   },
+   "M1_U3000": {
+    "quant1": {
+     "days_blocked": 18,
+     "check_fail_days": {
+      "reference_prices_complete": 18
+     },
+     "days_with_held_without_price": 18
+    },
+    "quant2": {
+     "days_blocked": 19,
+     "check_fail_days": {
+      "reference_prices_complete": 19
+     },
+     "days_with_held_without_price": 19
+    }
+   },
+   "M1_P1000": {
+    "quant1": {
+     "days_blocked": 10,
+     "check_fail_days": {
+      "beta_neutral": 1,
+      "reference_prices_complete": 9
+     },
+     "days_with_held_without_price": 9
+    },
+    "quant2": {
+     "days_blocked": 8,
+     "check_fail_days": {
+      "reference_prices_complete": 8
+     },
+     "days_with_held_without_price": 8
+    }
+   }
   }
  }
 }

@@ -14,7 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -46,6 +46,7 @@ class RiskLimits:
     max_gross_leverage: float = 1.98  # long + short + T-bill/core + hedge, Reg T overnight 2x
     max_abs_beta: float = 0.05  # stock overlay beta + 1.0 x hedge weight
     core_leg_tolerance: float = 0.02  # schema-2 targets: post-trade core weight vs target
+    max_frozen_gross: float = 0.02  # held names that cannot trade, at broker price, of equity basis
 
 
 @dataclass(frozen=True)
@@ -60,6 +61,8 @@ class AccountState:
     shorting_enabled: bool = True
     trading_blocked: bool = False
     open_orders: tuple[tuple[str, str], ...] = ()  # (symbol, client_order_id)
+    # broker position price per held symbol (``current_price``); empty when unknown
+    position_prices: Mapping[str, float] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -113,11 +116,15 @@ def read_account_state(client: Any) -> AccountState:
 
     account = client.get_account()
     positions: dict[str, float] = {}
+    position_prices: dict[str, float] = {}
     for position in _client_positions(client):
         qty = float(getattr(position, "qty", 0) or 0)
         if _text(getattr(position, "side", "")) == "short" and qty > 0:
             qty = -qty
         positions[str(position.symbol)] = qty
+        price = _position_price(position, qty)
+        if price is not None:
+            position_prices[str(position.symbol)] = price
     open_orders = client.get_orders(
         filter=GetOrdersRequest(status=QueryOrderStatus.OPEN, limit=ORDER_PAGE_LIMIT)
     )
@@ -132,7 +139,19 @@ def read_account_state(client: Any) -> AccountState:
         open_orders=tuple(
             (str(o.symbol), str(getattr(o, "client_order_id", "") or "")) for o in open_orders
         ),
+        position_prices=position_prices,
     )
+
+
+def _position_price(position: Any, qty: float) -> float | None:
+    """Broker price of a position: ``current_price``, else ``|market_value / qty|``."""
+    price = _optional_float(getattr(position, "current_price", None))
+    if price is None or not math.isfinite(price) or price <= 0:
+        market_value = _optional_float(getattr(position, "market_value", None))
+        if market_value is None or not qty:
+            return None
+        price = abs(market_value / qty)
+    return price if math.isfinite(price) and price > 0 else None
 
 
 def make_asset_lookup(client: Any) -> Callable[[str], AssetInfo | None]:
@@ -235,13 +254,21 @@ def build_plan(
     prices = dict(target.reference_prices)
     existing_ids = set(existing_client_order_ids)
     symbols = sorted(set(target.weights) | set(state.positions))
-    unpriced = [s for s in symbols if s not in prices]
-    fractional_held = [s for s, q in state.positions.items() if abs(q - round(q)) > 1e-9]
+    frozen, closeout_prices, unpriced = _classify_unpriced(
+        target, state, symbols, prices, asset_lookup
+    )
+    frozen_symbols = {row["symbol"] for row in frozen}
+    prices.update(closeout_prices)
+    fractional_held = [
+        s
+        for s, q in state.positions.items()
+        if abs(q - round(q)) > 1e-9 and s not in frozen_symbols
+    ]
 
     # 1. whole-share targets and raw deltas
     target_qty: dict[str, int] = {}
     for symbol in symbols:
-        if symbol in unpriced:
+        if symbol in unpriced or symbol in frozen_symbols:
             continue
         weight = target.weights.get(symbol, 0.0)
         target_qty[symbol] = round_half_away(weight * basis / prices[symbol])
@@ -249,7 +276,7 @@ def build_plan(
 
     candidates: list[dict[str, Any]] = []
     for symbol in symbols:
-        if symbol in unpriced or symbol in fractional_held:
+        if symbol in unpriced or symbol in frozen_symbols or symbol in fractional_held:
             continue
         current = int(round(state.positions.get(symbol, 0.0)))
         delta = target_qty[symbol] - current
@@ -320,6 +347,11 @@ def build_plan(
                 "client_order_id": cid,
                 "already_submitted": cid in existing_ids,
             }
+            | (
+                {"reference_price_source": "broker_position"}
+                if row["symbol"] in closeout_prices
+                else {}
+            )
         )
 
     checks = _risk_checks(
@@ -331,6 +363,8 @@ def build_plan(
         existing_ids=existing_ids,
         as_of=as_of,
         unpriced=unpriced,
+        frozen=frozen,
+        closeout_symbols=set(closeout_prices),
         fractional_held=fractional_held,
         limits=limits,
         kill_switch_check=kill_switch_check,
@@ -377,8 +411,75 @@ def build_plan(
         "checks": [asdict(c) for c in checks],
         "post_trade_qty": {s: q for s, q in sorted(post_qty.items()) if q},
     }
+    if frozen:  # key absent otherwise, so a plan without frozen names serializes as before
+        payload["frozen"] = frozen
     payload["plan_sha256"] = _plan_hash(payload)
     return OrderPlan(payload)
+
+
+def _valid_price(value: Any) -> float | None:
+    try:
+        price = float(value)
+    except (TypeError, ValueError):
+        return None
+    return price if math.isfinite(price) and price > 0 else None
+
+
+def _classify_unpriced(
+    target: BookTarget,
+    state: AccountState,
+    symbols: list[str],
+    prices: dict[str, float],
+    asset_lookup: Callable[[str], AssetInfo | None],
+) -> tuple[list[dict[str, Any]], dict[str, float], list[str]]:
+    """Split the names without a reference price into frozen, close-out and unpriced (blocking).
+
+    * frozen: held, target weight 0 or absent, and the broker says the asset cannot trade (unknown,
+      not tradable, not active; cash acquisition or delisting).  No order; valued at the broker
+      position price.
+    * close-out: held, target weight 0 or absent, tradable and active, with a broker position
+      price: the whole position is closed at that price.
+    * unpriced: everything else (a name with a nonzero target weight, a close-out name without a
+      broker price, a name that is not held); blocks the plan as before.
+    """
+    frozen: list[dict[str, Any]] = []
+    closeouts: dict[str, float] = {}
+    unpriced: list[str] = []
+    for symbol in symbols:
+        if symbol in prices:
+            continue
+        qty = state.positions.get(symbol, 0.0)
+        if abs(qty) <= 1e-9 or abs(target.weights.get(symbol, 0.0)) > 0:
+            unpriced.append(symbol)
+            continue
+        asset = asset_lookup(symbol)
+        price = _valid_price(state.position_prices.get(symbol))
+        reason = _frozen_reason(asset)
+        if reason:
+            frozen.append(
+                {
+                    "symbol": symbol,
+                    "qty": qty,
+                    "price": price,
+                    "value": None if price is None else round(abs(qty) * price, 2),
+                    "reason": reason,
+                }
+            )
+        elif price is None:
+            unpriced.append(symbol)
+        else:
+            closeouts[symbol] = price
+    return frozen, closeouts, unpriced
+
+
+def _frozen_reason(asset: AssetInfo | None) -> str:
+    if asset is None:
+        return "asset_not_found"
+    if asset.status.lower() != "active":
+        return "asset_not_active"
+    if not asset.tradable:
+        return "not_tradable"
+    return ""
 
 
 def _borrow_rejection(asset: AssetInfo | None) -> str:
@@ -455,6 +556,8 @@ def _risk_checks(
     existing_ids: set[str],
     as_of: date,
     unpriced: list[str],
+    frozen: list[dict[str, Any]],
+    closeout_symbols: set[str],
     fractional_held: list[str],
     limits: RiskLimits,
     kill_switch_check: Callable[[], None] | None,
@@ -560,17 +663,42 @@ def _risk_checks(
             ", ".join(over[:10]),
         )
     )
-    leverage = sum(abs(w) for w in weights.values())
+    frozen_gross = sum(row["value"] for row in frozen if row["value"] is not None) / basis
+    leverage = sum(abs(w) for w in weights.values()) + frozen_gross
     results.append(
         CheckResult(
             "gross_leverage",
             leverage <= limits.max_gross_leverage + 1e-12,
             round(leverage, 6),
             limits.max_gross_leverage,
-            "long + short + core leg + hedge leg, fraction of equity",
+            "long + short + core leg + hedge leg"
+            + (" + frozen names at broker price" if frozen else "")
+            + ", fraction of equity",
         )
     )
-    missing_exposure = sorted(s for s in stock if abs(stock[s]) > 0 and s not in target.exposures)
+    if frozen:
+        unvalued = [row["symbol"] for row in frozen if row["value"] is None]
+        results.append(
+            CheckResult(
+                "frozen_positions",
+                frozen_gross <= limits.max_frozen_gross + 1e-12 and not unvalued,
+                round(frozen_gross, 6),
+                limits.max_frozen_gross,
+                "; ".join(
+                    f"{row['symbol']} qty {row['qty']:g} price "
+                    f"{'unknown' if row['price'] is None else row['price']} "
+                    f"value {'unknown' if row['value'] is None else row['value']} {row['reason']}"
+                    for row in frozen
+                ),
+            )
+        )
+    # a close-out name has no target, hence no exposure row; it counts once it is still held
+    # after the plan only if its order was dropped (below the minimum notional): beta 0 then
+    missing_exposure = sorted(
+        s
+        for s in stock
+        if abs(stock[s]) > 0 and s not in target.exposures and s not in closeout_symbols
+    )
     results.append(
         CheckResult(
             "exposures_complete",

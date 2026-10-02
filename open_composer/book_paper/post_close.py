@@ -92,6 +92,7 @@ def reconcile(
         )
 
     expected = {s: float(q) for s, q in plan.payload["post_trade_qty"].items()}
+    frozen_names = {row["symbol"] for row in plan.payload.get("frozen", [])}  # T-20261002-40
     drift_rows = []
     basis = target.equity_basis
     for symbol in sorted(set(expected) | set(positions)):
@@ -106,6 +107,7 @@ def reconcile(
                     "drift_qty": act - exp,
                     "drift_weight": (act - exp) * price / basis if price else None,
                 }
+                | ({"frozen": True} if symbol in frozen_names else {})
             )
     weight_gap = 0.0
     for symbol in set(target.weights) | set(positions):
@@ -127,7 +129,7 @@ def reconcile(
         "position_drift_vs_plan": drift_rows,
         "n_position_drift_names": len(drift_rows),
         "realized_vs_target_one_sided_drift": round(weight_gap / 2.0, 8),
-    }
+    } | ({"frozen_names": sorted(frozen_names)} if frozen_names else {})
 
 
 # --------------------------------------------------------------------------------------

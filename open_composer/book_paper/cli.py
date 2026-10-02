@@ -96,6 +96,11 @@ def _print_plan(plan, path: Path) -> None:
         f"rounding_drift={s['rounding_drift_one_sided']:.6f} "
         f"final_drift={s['final_drift_one_sided']:.6f}"
     )
+    for row in p.get("frozen", []):
+        console.print(
+            f"  FROZEN {row['symbol']} qty={row['qty']:g} price={row['price']} "
+            f"value={row['value']} ({row['reason']})"
+        )
     for check in p["checks"]:
         console.print(
             f"  {'PASS' if check['passed'] else 'FAIL'} {check['name']} "
