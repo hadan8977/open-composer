@@ -1308,7 +1308,7 @@
   - 2026-10-01 14:17 UTC 交互会话（Opus）写入。合同冻结时 v1 档案下没有任何 Stage 2 结果文件。
 
 ### T-20261001-16 组合线：支持做空的组合下单引擎（模拟盘前置，机主 10-01 同意多开模拟账户）
-- status: running（10-02 03:22 UTC 交互会话重启子代理 R1002-0322-T16b。原子代理 R1001-1735-T16 在 10-01 18:05 被机主的会话中断一起停掉，机主 10-02 同意重启；从磁盘上已有的 `open_composer/book_paper/` 继续；只做 dry-run；定时轮不要取）
+- status: done（10-02 04:00 UTC 主审核对后提交 e618915。tests/test_book_paper.py 57 passed，全套 4037 passed / 0 failed；quant1 只读 dry-run：数据时效检查按设计拦下，加 --as-of 2026-09-18 后 13 项全过；没有下单。下一步缺的是当天价格，即 T-22 的 live 数据，以及对账要用的收盘和 15:45 价格文件）
 - priority: 1
 - not_before: 无，代码可以先写。机主 10-01 约 17:30 已开 quant1、quant2（各 $1M）并授权细节由主审决定（`reports/research/control/owner-authorization-2026-10-01-book-paper-accounts.md`）；下单仍要变体达到 watch_recent 并通过 dry-run 检查表
 - brief: reports/research/control/briefs/T-20261001-16.md
@@ -1325,8 +1325,17 @@
 - notes:
   - 2026-10-01 14:20 UTC 交互会话（Opus）写入。机主 10-01 原话："如果前向测试只是确认执行和数据没问题，那么两周就足够了，或者说这个可以直接用模拟盘测试，我多开几个模拟盘账户给你就行了"。开账户和批准具体策略都由机主做。
 
+### T-20261002-24 组合线：现有候选信号的残差 IC 批量筛选（v1.1 的输入）
+- status: running（10-02 04:00 UTC 交互会话派子代理 R1002-0400-T24；定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: T-19 和残差 IC 核对都说明瓶颈在信号。一次性筛选磁盘上已有的候选：T-19 模型预测 ml_pv、Alpha158 过 FDR 的合成、低 MAX、接近 52 周新高，以及仓库里已有实现的收益-盈余缺口反转。机制和 formation_ic 完全相同。
+- plan: 预注册候选和入选规则：Bonferroni t、压力期同号、与 M1 相关 < 0.5、增量残差 IC t ≥ 2、安慰剂。先复算一个已有主题，和 formation_ic 对齐到 1e-9；不跑回测。
+- done_when: `reports/research/program/signal-screen-2026-10-02/` 下的 prereg、results、report 已提交。
+- brief: reports/research/control/briefs/T-20261002-24.md
+
 ### T-20261001-23 组合线 v1.1 合同：按 T-19 诊断和评判标准 v2 预注册
-- status: ready（19:27 UTC 交互会话登记；T-19 完成后由交互会话主审写。如果 10-02 01:07 主审轮开始时 T-19 已完成，但本任务仍是 ready，就由主审轮接手）
+- status: ready（04:00 UTC 改：先等 T-20261002-24 的信号筛选。T-19 已说明只改构造不够，v1.1 的输入由 T-24 决定；构造沿用 v1，加成本惩罚的敏感性。01:07 主审轮的接手条件改为 T-24 完成之后）
 - priority: 1
 - not_before: T-20261001-19 以 done 开头
 - goal: 把组合线推到模拟孵化档。用 T-19 的 D1–D3 和 19:07 主审轮的残差 IC 上限（`residual-ic-summary.json`）决定两件事：构造（风格预算还是风格中性）、合成器（M1 型事前 IC 加权）。按评判标准 v2 写分档条件，并把 DSR 档位按试验数换算成所需夏普。
@@ -1338,7 +1347,7 @@
 - done_when: `reports/research/iterations/t20261001_book_v1_1/` 通过两道检查并提交，执行简报写好。
 
 ### T-20261001-20 评判标准 v2 的计分代码（scorecard），并对 v1 做参考核算
-- status: ready（18:18 UTC 交互会话写简报；交互会话在子代理名额空出后自己派，定时轮不要取）
+- status: running（10-02 04:00 UTC 交互会话派子代理 R1002-0400-T20；定时轮不要取）
 - priority: 1
 - not_before: 无
 - goal: 机主 10-01 要求整体判断、加权考量，标准由研究者定。标准见 `docs/evaluation-standard.zh.md`，阈值在 `config/evaluation-standard-v2.json`。以后每次判定都由代码输出计分 JSON，不靠手算。v1.1 合同直接用它。
@@ -1346,7 +1355,7 @@
 - brief: reports/research/control/briefs/T-20261001-20.md
 
 ### T-20261001-19 组合线 v1 事后诊断：构造阶梯（风格上限、开盘成交、成本）、传导系数、收益归因
-- status: running（10-02 03:22 UTC 交互会话重启子代理 R1002-0322-T19b。原子代理在 10-01 18:05 被一起停掉，机主同意重启；预注册 3911971、身份核对和 30 条 Modal 路径已经在磁盘上，只补分析和报告；定时轮不要取）
+- status: done（10-02 03:5x 子代理提交 80a82a6；04:00 UTC 主审已读）。D1 假：去掉风格上限，A 窗毛夏普只多 0.01–0.02。D2 总体假：M0_A 改开盘口径后变好，来自优化器看到更高成本、交易更少。D3 只对 M0_A 成立（成本拖累 0.36）。A 窗收益主要来自风格溢价（低残差波动、动量）；个股部分 A 窗 +0.5–2.2%/年，B 窗为负。结论：瓶颈在信号，不在构造 → T-20261002-24
 - priority: 1
 - not_before: 无
 - goal: v1、RF1 都在组合层失败，信号层是好的（M0 信号层 A 窗毛 1.68、B 窗 3.06；组合 M0_A 收盘 A 窗毛 1.10、B 窗 −0.80）。量化损失在哪里，作为 v1.1 合同的依据：风格上限一直顶格（M0_A 投资 85%、动量 45%、价值 37% 的调仓顶到 0.25），收盘比开盘差（对标窗毛 0.876 对 1.155），成本每年 172 bp。
