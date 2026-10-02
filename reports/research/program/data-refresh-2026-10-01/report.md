@@ -50,3 +50,13 @@ Either accept an append-only policy (keep rows <= old last date, append only row
 - Sleeve shifts (63d / 252d, pp): see `archive-repair.json` `sleeve_return_shift`; for example SHY +0.60 / +0.59, QQQ +0.11 / +0.13, SPY +0.25 / +0.29, GLD and SMH 0.
 - Nightly cost: 0.21 s per symbol rewritten, plus about 160 s fixed shard-map build; estimate 0.9 min on an average night, 4.1 min for the peak September week (1,175 symbols), below the 25 min budget. Minute archive restatements are only logged (known limit).
 - Needs the lead: V1 tolerance (rounding) and V4 definition (exclude the last session), then a repeat of the repair (about 35 min) or acceptance of the current verdict.
+
+## T-20261002-01 swap after precision verification (R1002-1253-T01; pending lead review)
+
+- Precondition: `data/sip/daily` matched `sip-daily-backup-sha256.json` exactly (3741 files, 0 missing/extra/different), so the repair was not rerun.
+- Verifier: `scripts/verify_sip_repair.py --tol-mode precision` (tests: `tests/test_verify_sip_repair.py`, 11 pass). Tolerance 1e-6 + sum 0.5*10^-d(p)/p over the four prices (d = 2/3/4 by price). Classes in order: date_set, bar_correction, factor_revision, unexplained. V4' compares rows before 2026-09-29 (last date 2026-10-01 minus 2 sessions) column by column.
+- Run: 8 scan segments of 50 shards under `run_capped.sh --mem 1.8G` (log `logs/t20261002_01_verify_v2.log`), merged; 6952 restated symbols checked.
+- V1': unexplained 0 rows / 0 symbols (limit 69); factor_revision 55 rows / 53 symbols (limit 695); bar_correction 6 rows / 6 symbols; date_set 1 row / 1 symbol. V2' unexplained 0 (4 factor_revision, 3 bar_correction at the 2025/2026 boundary). V4' identical before the window: true (200 symbols; window-only differences: volume 116 rows, trade_count 116 rows, others 0).
+- `verify_v2_pass` true. Swapped at 2026-10-02T13:19:55Z: `data/sip/daily` is the repaired tree (3743 files, sha256 equal to `data/live/failed-sip-daily-20261002`); the pre-swap archive is `data/live/backup-sip-daily-preswap-20261002`.
+- V3 after the swap (`seams-after-swap.json`): APH 08-27/08-26 close ratio 1.00025; 2026-09 seams 6 (Jan-Aug max 9); VRME, KUST, ZCSH, UNX, TANH not listed; 8 seams since 08-20, none a named symbol (warrants and low-priced names).
+- Not rerun: the repair. The 22:00 cron runs the new update code on the repaired archive.

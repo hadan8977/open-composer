@@ -23,14 +23,18 @@ import pickle
 import random
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from update_sip_archive import load_sleeve_symbols  # noqa: E402
+from update_sip_archive import (  # noqa: E402
+    REFETCH_LOOKBACK_SESSIONS,
+    _sessions_back,
+    load_sleeve_symbols,
+)
 
 COLUMNS = ["symbol", "timestamp", "open", "high", "low", "close", "volume", "trade_count", "vwap"]
 V1_START = pd.Timestamp("2016-01-04")
@@ -38,6 +42,9 @@ V1_END = pd.Timestamp("2026-08-24")
 ROUNDING_ABS = 2.5e-4
 RET_TOL = 1e-6
 VOLUME_RATIO_TOL = 1e-4
+PRECISION_BASE_TOL = 1e-6
+PRECISION_DECIMALS = (2, 3, 4)
+PRECISION_CLASSES = ("date_set", "bar_correction", "factor_revision", "unexplained")
 SPOT = ["APH", "VRME", "KUST", "ZCSH", "UNX", "TANH", "FRO", "WHF", "DX", "UHT", "ESP"]
 SEAM_FREE = ["VRME", "KUST", "ZCSH", "UNX", "TANH"]
 
@@ -125,6 +132,166 @@ def compare_symbol(before: pd.DataFrame, after: pd.DataFrame) -> dict[str, objec
                 }
             )
     return out
+
+
+def price_decimals(prices: np.ndarray) -> np.ndarray:
+    """Decimal places of each price: the smallest d in {2, 3, 4} that fits, else 4."""
+    values = np.asarray(prices, dtype=float)
+    result = np.full(values.shape, PRECISION_DECIMALS[-1], dtype=int)
+    for places in sorted(PRECISION_DECIMALS, reverse=True):
+        scaled = values * 10.0**places
+        fits = np.abs(scaled - np.round(scaled)) < 1e-4
+        result = np.where(fits, places, result)
+    return result
+
+
+def precision_tolerance(*prices: np.ndarray) -> np.ndarray:
+    """1e-6 plus the sum of 0.5 * 10**-d(p) / p over every price that enters a return."""
+    tol = np.full(np.asarray(prices[0]).shape, PRECISION_BASE_TOL, dtype=float)
+    for price in prices:
+        values = np.asarray(price, dtype=float)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            tol = tol + 0.5 * 10.0 ** (-price_decimals(values).astype(float)) / values
+    return tol
+
+
+def classify_precision(
+    window: pd.DataFrame, before_dates: set, after_dates: set
+) -> list[dict[str, object]]:
+    """V1'/V2' events for one symbol: (date, class) for every day outside the tolerance.
+
+    ``window`` is the inner join of the two archives (``*_b`` / ``*_a`` columns, sorted,
+    with a ``date`` column). Each event gets exactly one class, tested in this order:
+    date_set, bar_correction, factor_revision, unexplained.
+    """
+    if len(window) < 2:
+        return []
+    ratio = (window["volume_a"] / window["volume_b"]).replace([np.inf, -np.inf], np.nan)
+    usual = ratio.median()
+    vol_changed = ((ratio / usual - 1).abs() > VOLUME_RATIO_TOL).fillna(False).to_numpy()
+    deltas: dict[str, np.ndarray] = {}
+    tols: dict[str, np.ndarray] = {}
+    bads: dict[str, np.ndarray] = {}
+    for field in ("close", "open"):
+        pb = window[f"{field}_b"].to_numpy(dtype=float)
+        pa = window[f"{field}_a"].to_numpy(dtype=float)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            rb = np.log(pb[1:] / pb[:-1])
+            ra = np.log(pa[1:] / pa[:-1])
+        delta = ra - rb
+        tol = precision_tolerance(pb[1:], pb[:-1], pa[1:], pa[:-1])
+        both_missing = ~np.isfinite(rb) & ~np.isfinite(ra)
+        deltas[field], tols[field] = delta, tol
+        bads[field] = ~(np.abs(delta) <= tol) & ~both_missing
+    bad_idx = np.where(bads["close"] | bads["open"])[0]
+    if not len(bad_idx):
+        return []
+    one_sided = _to_ns(pd.DatetimeIndex(sorted(before_dates ^ after_dates)))
+    stamps = _to_ns(pd.DatetimeIndex(window["timestamp"]))
+    events: list[dict[str, object]] = []
+    for i in bad_idx:
+        gap = int(
+            np.searchsorted(one_sided, stamps[i + 1], side="left")
+            - np.searchsorted(one_sided, stamps[i], side="right")
+        )
+        cd, od = deltas["close"][i], deltas["open"][i]
+        if gap > 0:
+            kind = "date_set"
+        elif vol_changed[i] or vol_changed[i + 1]:
+            kind = "bar_correction"
+        elif (
+            np.isfinite(cd)
+            and np.isfinite(od)
+            and abs(cd - od) <= tols["close"][i] + tols["open"][i]
+        ):
+            kind = "factor_revision"
+        else:
+            kind = "unexplained"
+        events.append(
+            {
+                "class": kind,
+                "date": window["date"].iloc[i + 1].strftime("%Y-%m-%d"),
+                "prev_date": window["date"].iloc[i].strftime("%Y-%m-%d"),
+                "delta_close": float(cd),
+                "delta_open": float(od),
+                "tol_close": float(tols["close"][i]),
+                "tol_open": float(tols["open"][i]),
+                "year_boundary": bool(
+                    window["date"].iloc[i].year == 2025 and window["date"].iloc[i + 1].year == 2026
+                ),
+            }
+        )
+    return events
+
+
+def _to_ns(index: pd.DatetimeIndex) -> np.ndarray:
+    """UTC nanosecond integers of a datetime index (naive values are taken as UTC)."""
+    if index.tz is not None:
+        index = index.tz_convert("UTC").tz_localize(None)
+    return index.to_numpy().astype("datetime64[ns]").astype(np.int64)
+
+
+def compare_symbol_precision(before: pd.DataFrame, after: pd.DataFrame) -> dict[str, object]:
+    """V1'/V2' statistics for one symbol under ``--tol-mode precision``."""
+    joined = before.merge(after, on="timestamp", suffixes=("_b", "_a"))
+    joined["date"] = joined["timestamp"].dt.tz_localize(None).dt.normalize()
+    window = joined[(joined["date"] >= V1_START) & (joined["date"] <= V1_END)].reset_index(
+        drop=True
+    )
+    b_dates = set(before["timestamp"])
+    a_dates = set(after["timestamp"])
+    events = classify_precision(window, b_dates, a_dates)
+    return {
+        "missing_after": len(b_dates - a_dates),
+        "added_after": len(a_dates - b_dates),
+        "events": events,
+    }
+
+
+def compare_sample_precision(
+    before: pd.DataFrame, after: pd.DataFrame, window_start: pd.Timestamp
+) -> dict[str, object]:
+    """V4': rows before the routine re-fetch window must be bit-identical in every column."""
+
+    def split(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+        dates = frame["timestamp"].dt.tz_localize(None).dt.normalize()
+        return (
+            frame[dates < window_start].reset_index(drop=True),
+            frame[dates >= window_start].reset_index(drop=True),
+        )
+
+    b_old, b_win = split(before)
+    a_old, a_win = split(after)
+    merged = b_win.merge(a_win, on="timestamp", how="outer", suffixes=("_b", "_a"), indicator=True)
+    both = merged[merged["_merge"] == "both"]
+    window_diff: dict[str, int] = {}
+    for column in COLUMNS:
+        if column in ("symbol", "timestamp"):
+            continue
+        left, right = both[f"{column}_b"], both[f"{column}_a"]
+        differs = ~((left == right) | (left.isna() & right.isna()))
+        window_diff[column] = int(differs.sum())
+    return {
+        "identical_before_window": bool(b_old.equals(a_old)),
+        "window_diff": window_diff,
+        "window_one_sided_rows": int((merged["_merge"] != "both").sum()),
+    }
+
+
+def archive_window_start(root: Path) -> tuple[pd.Timestamp, pd.Timestamp]:
+    """(last archive date, start of the routine re-fetch window) for the newest year."""
+    year_dirs = [p for p in root.iterdir() if p.is_dir() and p.name.isdigit()]
+    newest = max(year_dirs, key=lambda p: int(p.name))
+    last = None
+    for path in sorted(newest.glob("shard-*.parquet")):
+        stamps = pd.read_parquet(path, columns=["timestamp"])["timestamp"]
+        if len(stamps):
+            top = pd.to_datetime(stamps, utc=True).max().tz_localize(None).normalize()
+            last = top if last is None else max(last, top)
+    if last is None:
+        raise SystemExit(f"no rows found under {newest}")
+    start = _sessions_back(last.date(), sessions=REFETCH_LOOKBACK_SESSIONS)
+    return last, pd.Timestamp(start)
 
 
 def seam_date(before: pd.DataFrame, after: pd.DataFrame) -> pd.Timestamp | None:
@@ -246,6 +413,194 @@ def scan_shards(
     return scan
 
 
+def scan_shards_precision(
+    args, names: list[str], *, restated: set[str], sample: set[str], window_start: pd.Timestamp
+) -> dict[str, object]:
+    """``--tol-mode precision`` scan: V1'/V2' classes for restated symbols, V4' for the sample."""
+    empty = pd.DataFrame(columns=COLUMNS)
+    scan: dict[str, object] = {
+        "tol_mode": "precision",
+        "window_start": str(window_start.date()),
+        "rows": {kind: 0 for kind in PRECISION_CLASSES},
+        "symbols": {kind: set() for kind in PRECISION_CLASSES},
+        "unexplained_by_symbol": {},
+        "samples": {kind: [] for kind in PRECISION_CLASSES},
+        "v2p_rows": {kind: 0 for kind in PRECISION_CLASSES},
+        "v2p_unexplained_symbols": [],
+        "restated_checked": 0,
+        "missing_after": 0,
+        "added_after": 0,
+        "sample_v4": {},
+    }
+    for position, name in enumerate(names):
+        before_groups = dict(tuple(load_shard(args.before, name).groupby("symbol")))
+        after_groups = dict(tuple(load_shard(args.after, name).groupby("symbol")))
+        for symbol in sorted(set(before_groups) | set(after_groups)):
+            b = before_groups.get(symbol, empty)
+            a = after_groups.get(symbol, empty)
+            if symbol in sample and len(b):
+                scan["sample_v4"][symbol] = compare_sample_precision(  # type: ignore[index]
+                    b.reset_index(drop=True), a.reset_index(drop=True), window_start
+                )
+            if symbol not in restated:
+                continue
+            stats = compare_symbol_precision(b, a)
+            scan["restated_checked"] += 1  # type: ignore[operator]
+            scan["missing_after"] += int(stats["missing_after"])  # type: ignore[operator, arg-type]
+            scan["added_after"] += int(stats["added_after"])  # type: ignore[operator, arg-type]
+            for event in stats["events"]:  # type: ignore[union-attr]
+                kind = event["class"]
+                scan["rows"][kind] += 1  # type: ignore[index]
+                scan["symbols"][kind].add(symbol)  # type: ignore[index]
+                if kind == "unexplained":
+                    by_symbol = scan["unexplained_by_symbol"]
+                    by_symbol[symbol] = by_symbol.get(symbol, 0) + 1  # type: ignore[attr-defined]
+                if len(scan["samples"][kind]) < 20:  # type: ignore[index, arg-type]
+                    scan["samples"][kind].append({"symbol": symbol, **event})  # type: ignore[index]
+                if event["year_boundary"]:
+                    scan["v2p_rows"][kind] += 1  # type: ignore[index]
+                    if kind == "unexplained":
+                        scan["v2p_unexplained_symbols"].append(symbol)  # type: ignore[attr-defined]
+        if position % 20 == 0:
+            print(f"shard {position}/{len(names)} compared (precision)", flush=True)
+    return scan
+
+
+def merge_precision_scans(scans: list[dict[str, object]]) -> dict[str, object]:
+    """Combine the per-segment precision scans into one set of totals."""
+    starts = {str(x["window_start"]) for x in scans}
+    if len(starts) != 1:
+        raise SystemExit(f"scan segments disagree on the V4 window start: {sorted(starts)}")
+    merged: dict[str, object] = {
+        "window_start": starts.pop(),
+        "rows": {kind: sum(x["rows"][kind] for x in scans) for kind in PRECISION_CLASSES},  # type: ignore[index]
+        "symbols": {
+            kind: sorted(set().union(*(x["symbols"][kind] for x in scans)))  # type: ignore[index]
+            for kind in PRECISION_CLASSES
+        },
+        "v2p_rows": {kind: sum(x["v2p_rows"][kind] for x in scans) for kind in PRECISION_CLASSES},  # type: ignore[index]
+        "v2p_unexplained_symbols": sorted(
+            {s for x in scans for s in x["v2p_unexplained_symbols"]}  # type: ignore[union-attr]
+        ),
+        "restated_checked": sum(x["restated_checked"] for x in scans),  # type: ignore[misc]
+        "missing_after": sum(x["missing_after"] for x in scans),  # type: ignore[misc]
+        "added_after": sum(x["added_after"] for x in scans),  # type: ignore[misc]
+    }
+    by_symbol: dict[str, int] = {}
+    sample_v4: dict[str, dict[str, object]] = {}
+    samples: dict[str, list] = {kind: [] for kind in PRECISION_CLASSES}
+    for x in scans:
+        for symbol, count in x["unexplained_by_symbol"].items():  # type: ignore[attr-defined]
+            by_symbol[symbol] = by_symbol.get(symbol, 0) + count
+        sample_v4.update(x["sample_v4"])  # type: ignore[arg-type]
+        for kind in PRECISION_CLASSES:
+            samples[kind] += x["samples"][kind]  # type: ignore[index]
+    merged["unexplained_by_symbol"] = by_symbol
+    merged["sample_v4"] = sample_v4
+    merged["samples"] = {kind: samples[kind][:20] for kind in PRECISION_CLASSES}
+    return merged
+
+
+def precision_result(
+    merged: dict[str, object], *, restated_n: int, sample: list[str], sample_size: int
+) -> dict[str, object]:
+    """New archive-repair.json fields for ``--tol-mode precision`` (acceptance, step 4)."""
+    rows = merged["rows"]
+    symbols = merged["symbols"]
+    by_symbol = merged["unexplained_by_symbol"]
+    sample_v4 = merged["sample_v4"]
+    checked = [s for s in sample if s in sample_v4][:sample_size]  # type: ignore[operator]
+    window_diff: dict[str, int] = {}
+    one_sided = 0
+    for symbol in checked:
+        item = sample_v4[symbol]  # type: ignore[index]
+        one_sided += int(item["window_one_sided_rows"])
+        for column, count in item["window_diff"].items():
+            window_diff[column] = window_diff.get(column, 0) + int(count)
+    differing = [s for s in checked if not sample_v4[s]["identical_before_window"]]  # type: ignore[index]
+    unexplained_symbols = len(symbols["unexplained"])  # type: ignore[index]
+    revision_symbols = len(symbols["factor_revision"])  # type: ignore[index]
+    v2p_unexplained = int(merged["v2p_rows"]["unexplained"])  # type: ignore[index]
+    v4p = not differing and len(checked) >= sample_size
+    limit_unexplained = int(0.01 * restated_n)
+    limit_revision = int(0.10 * restated_n)
+    passed = (
+        unexplained_symbols <= limit_unexplained
+        and revision_symbols <= limit_revision
+        and v2p_unexplained == 0
+        and v4p
+    )
+    return {
+        "tol_mode": "precision",
+        "v1p_counts": {
+            kind: {"rows": int(rows[kind]), "symbols": len(symbols[kind])}  # type: ignore[index]
+            for kind in PRECISION_CLASSES
+        },
+        "v1p_unexplained_symbols": unexplained_symbols,
+        "v1p_unexplained_symbols_limit": limit_unexplained,
+        "v1p_factor_revision_symbols": revision_symbols,
+        "v1p_factor_revision_symbols_limit": limit_revision,
+        "v1p_top_unexplained": [
+            {"symbol": s, "rows": c}
+            for s, c in sorted(by_symbol.items(), key=lambda kv: (-kv[1], kv[0]))[:20]  # type: ignore[attr-defined]
+        ],
+        "v1p_samples": merged["samples"],
+        "v1p_restated_symbols_checked": merged["restated_checked"],
+        "v1p_dates_missing_after": merged["missing_after"],
+        "v1p_dates_added_after": merged["added_after"],
+        "v2p_rows": merged["v2p_rows"],
+        "v2p_unexplained": v2p_unexplained,
+        "v2p_unexplained_symbols": merged["v2p_unexplained_symbols"],
+        "v4p_window_start": merged["window_start"],
+        "v4p_checked_symbols": len(checked),
+        "v4p_identical_before_window": v4p,
+        "v4p_differing_symbols": differing[:20],
+        "v4p_window_field_diff_rows": window_diff,
+        "v4p_window_one_sided_rows": one_sided,
+        "verify_v2_pass": passed,
+    }
+
+
+def run_precision(args, restated: list[str], sample: list[str]) -> int:
+    """Segment scan or merge for ``--tol-mode precision``; the merge writes the new fields."""
+    if args.merge_scans:
+        merged = merge_precision_scans([pickle.loads(p.read_bytes()) for p in args.merge_scans])
+        result = precision_result(
+            merged, restated_n=len(restated), sample=sample, sample_size=args.sample
+        )
+        target = args.report_dir / "archive-repair.json"
+        existing = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
+        existing.update(result)
+        existing["tests_passed"] = args.tests_passed == "true"
+        existing["precision_verified_at"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        existing["backup_sha256_ok"] = sha_ok(
+            args.report_dir / "sip-daily-backup-sha256.json", args.before
+        )
+        target.write_text(
+            json.dumps(existing, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8"
+        )
+        print(json.dumps({k: v for k, v in result.items() if k != "v1p_samples"}, default=str))
+        return 0
+    last, window_start = archive_window_start(args.after)
+    names = sorted({p.name for p in args.after.glob("*/shard-*.parquet")})
+    first, stop = (int(x) for x in args.shards.split(":")) if args.shards else (0, len(names))
+    scan = scan_shards_precision(
+        args,
+        names[first:stop],
+        restated=set(restated),
+        sample=set(sample),
+        window_start=window_start,
+    )
+    if not args.scan_out:
+        raise SystemExit("--tol-mode precision needs --scan-out (segment) or --merge-scans")
+    args.scan_out.write_bytes(pickle.dumps(scan))
+    print(
+        f"scan {args.shards} written to {args.scan_out}; "
+        f"last date {last.date()}, window {window_start.date()}"
+    )
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--before", type=Path, required=True)
@@ -264,6 +619,16 @@ def main() -> int:
         default=ROUNDING_ABS,
         help="Absolute price rounding allowance in the V1 tolerance (default 2.5e-4).",
     )
+    parser.add_argument(
+        "--tol-mode",
+        choices=["rounding-abs", "precision"],
+        default="rounding-abs",
+        help=(
+            "rounding-abs: legacy 2.5e-4/price tolerance (reproduces the first run). "
+            "precision: per-price decimals tolerance with date_set/bar_correction/"
+            "factor_revision/unexplained classes (V1', V2', V4')."
+        ),
+    )
     parser.add_argument("--budget-min", type=float, default=25.0)
     args = parser.parse_args()
     report_dir = args.report_dir
@@ -276,6 +641,8 @@ def main() -> int:
     random.Random(args.seed).shuffle(candidates)
     sample = candidates[: args.sample + 60]
 
+    if args.tol_mode == "precision":
+        return run_precision(args, restated, sample)
     sleeve = load_sleeve_symbols()
     globals()["ROUNDING_ABS"] = args.rounding_abs
     if args.merge_scans:
