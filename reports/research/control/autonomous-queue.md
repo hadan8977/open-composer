@@ -1347,7 +1347,7 @@
 - done_when: `reports/research/iterations/t20261001_book_v1_1/` 通过两道检查并提交，执行简报写好。
 
 ### T-20261001-20 评判标准 v2 的计分代码（scorecard），并对 v1 做参考核算
-- status: running（10-02 04:00 UTC 交互会话派子代理 R1002-0400-T20；定时轮不要取）
+- status: done（bf6dbaf，子代理 R1002-0400-T20；04:06 UTC 主审已核对。v1 参考计分：6 个变体都是 none。M1_C 的 DSR 0.682，稳健性 5；M0_A、M0_C、M1_C 触发 V4：压力期 63 个会话亏损 4.1–4.4σ，即崩溃尾部。z 检验的缺陷已修，标准升到 v2.0.1）
 - priority: 1
 - not_before: 无
 - goal: 机主 10-01 要求整体判断、加权考量，标准由研究者定。标准见 `docs/evaluation-standard.zh.md`，阈值在 `config/evaluation-standard-v2.json`。以后每次判定都由代码输出计分 JSON，不靠手算。v1.1 合同直接用它。
