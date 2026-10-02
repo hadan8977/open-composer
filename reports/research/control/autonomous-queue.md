@@ -1552,6 +1552,7 @@
     - 一致性核对改成两区口径：严格区 ≤ 2026-08-21 的收益类列逐位一致；其余只做诊断，按 `_restatements.jsonl` 归因。
     - 每日驱动整年重建当年分区，不再只追加；被改成拆股基准的 symbol 触发往年 daily_broad 分区重建。
     - 前置加了 T-20261002-02。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）：简报末尾加了"主审修正 10-02 第二次"。供应商价格取整到分，严格区改用两种判据：原始收益列用价格感知容差 0.04/close；信号、暴露、主题分用逐日秩相关 ≥ 0.999。每日驱动先对照 T-28 的 `scripts/run_book_v12_daily.py`，不重复实现，冲突就标 blocked。
 
 ### T-20261002-01 数据：修 SIP 日线归档的复权接缝，并一次性修复（拆股假收益、分红漏出总收益）
 - status: ready（07:07 主审轮审核：修复逻辑正确，V3 过；V1/V2/V4 不过源于验收口径，不在代码。简报末尾加了"主审修正 10-02（07:07）"：按新口径验证已修好的那份归档，通过就换入，不重跑修复）
@@ -1571,6 +1572,12 @@
   - 只修当年是错的，会在 2025/2026 交界造出新接缝；简报已写死全历史重抓。
   - 修复会改变四条 ETF 模拟盘下一次运行读到的历史价格水平（改成总收益口径，和它们回测时用的一致），规则不变。
   - 2026-10-02 05:41 UTC 执行轮（Sonnet 5.5，子代理 a84014510d059df67，待主审）：代码+测试已提交 874a52a（29 测试过、ruff 过；检测/全历史改写/25 分钟预算+pending/--repair-full-window/分钟只检测；新增 check_sip_seams.py、verify_sip_repair.py）。修复跑了 29 分钟、949 次 API，6952 个 symbol 被判重述（whole-year 比较 rtol 1e-6，4535 个 >1e-3，1405 个 >1e-2），改写 49906 个 symbol-年。V3 过：APH 08-27 收盘比 0.5001→1.0002，9 月接缝 22→6（1–8 月最大 9），VRME/KUST/ZCSH/UNX/TANH 不再列出。**V1 不过**（11,513,316 条违反；简报容差按 4 位小数写，实测供应商价格是 2 位小数，如 AAA 22.63→22.55；按 0.02/价格容差放宽后约 2500 个 symbol 仍有 188 条违反，疑似供应商改历史/代码复用如 NIVF）；**V2 不过**（6188，严格 1e-6 为 7779）；**V4 不过**（200 个未替换里 116 个不同；抽查 20 个只是 2026-10-01 末行的 volume/trade_count 被更正）。按简报恢复：data/sip/daily 已从 data/live/backup-sip-daily-20261002 恢复，sha256 0 不一致；修复后的树留在 data/live/failed-sip-daily-20261002（含 _restatements.jsonl）。因此归档目前仍是修复前状态，**今晚 22:00 定时任务会用新代码跑在未修复归档上**（检测到重述的 symbol 按 25 分钟预算改写，其余入 pending）。模拟盘标的 63/252 日收益变化（百分点）：SHY +0.60/+0.59、QQQ +0.11/+0.13、SPY +0.25/+0.29、GLD、SMH 0。夜间成本估算 0.86 分钟/平均夜，峰值周（1175 symbol）4.1 分钟，均 <25。未测：按"含取整容差"的完整 V1 全量；超 90 分钟上限约 3 分钟（验证器 OOM 一次需拆分）。主审要定：V1 容差口径（价格取整）、V4 是否排除最后一个会话，然后用 --repair-full-window 重做（约 35 分钟，不在 20:30–01:00 UTC）。产物：reports/research/program/data-refresh-2026-10-01/{archive-repair.json,seams-before.json,seams-after.json,sip-daily-backup-sha256.json,report.md}。data/live 下现有 3 份归档副本，磁盘剩 9.4G。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）审核：
+    - 读了 archive-repair.json、`/tmp/t01_scan_r1.pkl`、`r2.pkl` 和 `verify_sip_repair.py`。V3 全过，修复逻辑正确。
+    - V1/V2 不过：简报假设复权价有 4 位小数，实际供应商取整到分，两份归档的收益差最大约 0.02/价格。放宽后剩下的差异是同一天开盘、收盘收益平移相同的量（ACES 2021-03-29 都是 −0.23%，AER 2026-08-12 都是 −0.107%，OXLCM、OMFL/OMFS），即供应商修订了分红或复权因子；归档本来就应该跟随供应商当前的历史。
+    - V4 不过：修复后那次常规更新会重抓最后几个交易日，差异只在 10-01 这一行的 volume/trade_count。
+    - 决定：新口径写在任何新验证运行之前（按价格精度推导的容差；date_set / bar_correction / factor_revision / unexplained 四类；V4 只比重抓窗口之前的行）。验证已修好的 `data/live/failed-sip-daily-20261002`，通过就换入，同一执行轮接着做 T-20261002-02。这是数据质量检验口径的更正，不涉及研究门槛。
+    - 磁盘现在剩 51G（df），不是 9.4G。
 
 
 ### T-20261002-02 数据：从修好的归档重建价格类特征表（两区不变性检验），接着刷新依赖表
@@ -1586,14 +1593,17 @@
     - 严格区 ≤ 2026-08-21：ret_*、vol_*、max_ret_1_21、momentum_252_21、dist_from_252d_high 必须逐位不变，阈值沿用 T-21 的 max_changed_share ≤ 0.001；
     - 价格水平列（open、close、dollar_adv、amihud）、截面列（`*_rel`、adv_rank、宇宙成员）、依赖 SPY 的列（beta_252_spy、idio_vol_63），以及 08-24 之后的日期，只做诊断，按 `_restatements.jsonl` 和并集增长归因。
   - daily_broad 的往年分区是否重建：看 T-01 的被替换 symbol 数和磁盘（剩 11 GB）再定。T-21 的事件类表不动。SEC facts 换新文件：17 个旧键被 SEC 删除，值没变，记录下来。
-  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）：简报末尾加了"主审修正 10-02 第二次"。供应商价格取整到分，严格区改用两种判据：原始收益列用价格感知容差 0.04/close；信号、暴露、主题分用逐日秩相关 ≥ 0.999。每日驱动先对照 T-28 的 `scripts/run_book_v12_daily.py`，不重复实现，冲突就标 blocked。
   - `_t21_tmp` 作废。
 - done_when: 各表在严格区通过，并刷新到 D；`freshness.json` 更新；研究快照哈希前后一致；已提交，标"待主审"。
 - notes:
   - 2026-10-02 01:26 UTC 01:07 主审轮（Opus）登记；简报故意不提前写，等 T-01 的数字。
+  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）写简报。和 01:07 的计划不同的三处：
+    - 严格区不再要求逐位不变：供应商价格取整到分，被替换的 6952 个 symbol 的收益必然有取整差。改为按价格感知的容差 0.04/close，排除 T-01 归为供应商修订的 symbol；alpha 表看组合用到的列的逐日秩相关 ≥ 0.99；依赖表要求变化全部能归到被替换的 symbol 或 SEC 删除键的 CIK。
+    - 只重建 2026 分区，往年分区不动（差别只有取整噪声，重建 alpha 表约 2 小时，对前向无用）。
+    - 宇宙成员按时点记录处理：2026-08-31 以前各月不改，只追加 09-30。
 
 ### T-20261002-03 信号库：10-K 文本变化数据（Lazy Prices，U3000，2014-07..2026-09，EDGAR 主文档）
-- status: running（07:07 主审轮审核后，在本轮后台续跑抓取，07:15 开始，上限 80 分钟；本轮结束前改回 ready 并写断点）
+- status: ready（07:07 主审轮已审核并修好可见时间缺陷；抓取做到 1334/4023 个 CIK，续跑命令见 notes 最后一条）
 - priority: 2
 - not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 运行；和 T-20261002-01 不并行，T-01 先做）
 - brief: reports/research/control/briefs/T-20261002-03.md
@@ -1607,11 +1617,16 @@
   - 预计 4–6 万份 10-K，抓取受 SEC 限速约束，大约要 2–3 个小时，可能跨两个执行轮。
   - 2026-10-02 06:26 UTC 执行轮（Sonnet 5.5，子代理 a18426ca2c34bca4f，待主审）：脚本+测试已提交 6ae7a01（16 测试过、ruff 过）。只抓了 218/4023 个 CIK：2428 份 10-K、2204 对，抓取失败 0、解析失败 0；2016 年后 rf_found 0.957、mda_found 0.947；cos_full 分位 5/25/50/75/95 = 0.9947/0.9979/0.9987/0.9992/0.9996（中位在 [0.80,0.999] 内但贴近上沿），cos_rf 中位 0.9979，cos_mda 中位 0.9945。**一条验收不过**：2 对的 visible_day 比 filing_date 早 >1 天（CIK 36047：filing 2021-03-01、visible 02-26；CIK 47518：filing 2018-11-19、visible 11-16；SEC acceptanceDateTime 早于 filingDate），按预注册未改，主审要定怎么处理。解析器改动（首轮 20 CIK 试跑 mda_found 0.867，因为不少申报把 Item 标题排成单行表格）：整表文本只是短的 "Item N" 标题时留标记、分词前剔除，其余表格文字仍整表剔除，这是对"剔除所有表格"的小解释，主审要确认。首轮抓取（06:03–06:15）内存每分钟涨约 100 MB，已停并修（不影响产出）；首轮请求数/用时计数丢失，summary.json 只含第二轮（1383 次、481 秒），合计约 2428 次。速度约 80 份/分钟，剩余约 3.32 万份约需 7 小时（多个 120 分钟轮）。产物：scripts/build_10k_text_similarity.py、scripts/summarize_10k_text_similarity.py、tests/test_build_10k_text_similarity.py、reports/research/program/text-similarity-2026-10-02/{report.md,summary.json}；数据在 data/features/text_similarity/（不提交；_trial/、_trial2/ 是子代理自己的试跑目录，删除被权限拒绝）。续跑命令：`setsid nohup scripts/run_capped.sh --mem 1.8G -- uv run python scripts/build_10k_text_similarity.py fetch --resume --max-minutes 120 > logs/t20261002_03_fetch3.log 2>&1 &`，之后 `merge`，再 `scripts/summarize_10k_text_similarity.py --snippets data/features/text_similarity/_trial2/_snippets.json data/features/text_similarity/_snippets_extra.json`。
   - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）审核：
-    - 读了 archive-repair.json、`/tmp/t01_scan_r1.pkl`、`r2.pkl` 和 `verify_sip_repair.py`。V3 全过，修复逻辑正确。
-    - V1/V2 不过：简报假设复权价有 4 位小数，实际供应商取整到分，两份归档的收益差最大约 0.02/价格。放宽后剩下的差异是同一天开盘、收盘收益平移相同的量（ACES 2021-03-29 都是 −0.23%，AER 2026-08-12 都是 −0.107%，OXLCM、OMFL/OMFS），即供应商修订了分红或复权因子；归档本来就应该跟随供应商当前的历史。
-    - V4 不过：修复后那次常规更新会重抓最后几个交易日，差异只在 10-01 这一行的 volume/trade_count。
-    - 决定：新口径写在任何新验证运行之前（按价格精度推导的容差；date_set / bar_correction / factor_revision / unexplained 四类；V4 只比重抓窗口之前的行）。验证已修好的 `data/live/failed-sip-daily-20261002`，通过就换入，同一执行轮接着做 T-20261002-02。这是数据质量检验口径的更正，不涉及研究门槛。
-    - 磁盘现在剩 51G（df），不是 9.4G。
+    - **可见时间有缺陷，已修（aad93b8）**。SEC 的 acceptanceDateTime 是混合口径：大部分是真 UTC，少数是美东时间带了假的 "Z"。主审抓了 8 份申报的 EDGAR 索引页 "Accepted" 字段核对：CIK 36047、47518、6769 是美东时间；1750、23217、4457、56047 是 UTC。按 UTC 解析会让美东口径记录里的盘后申报早一天可见。
+    - 修法：一律按美东墙钟时间解析，这样绝不早于真实时间（真 UTC 的记录会推后 4–5 小时）；再加一条下限，可见日不早于申报日当天或之后的第一个交易日。
+    - 对已抓的 2428 份：727 份可见日推后 1 个交易日（跨周末显示为 3–4 天），没有一份提前；可见日早于申报日的从 16 份降到 0。原验收只抓到 2 份，因为它允许早 1 天。验收改为：可见日不早于申报日当天或之后第一个交易日，必须 100% 满足。18 个测试通过。
+    - 其他 SEC 管道：`build_earnings_events.py` 已经把全部记录当美东时间读，同样保守，不会前视；13D、并购管道属于已关闭方向。组合主题不用这几个管道。
+    - 解析器的改动（只有 "Item N" 标题的表格留作分节标记，分词前剔除）认可：比较的文字不变，只影响分节定位。
+    - cos 中位数贴近 1 是冻结定义造成的（不去停用词、原始词频），不是实现错误。候选秩 IC 不受单调变换影响。
+  - 2026-10-02 08:43 UTC 07:07 主审轮在后台续跑抓取（07:15–08:39，`logs/t20261002_03_fetch3.log`）：本轮 1116 个 CIK，约 11.9k 份，每分钟约 140 份。累计 1334/4023 个 CIK、14,336 份；抓取失败 0；解析失败 11（10 份 too_large、1 份 ValueError）。还剩 2689 个 CIK，约 2.9 万份，按现在的速度约 3.4 小时，也就是两到三次 80–120 分钟的运行。
+    - 续跑：`setsid nohup scripts/run_capped.sh --mem 1.2G -- uv run python scripts/build_10k_text_similarity.py fetch --resume --max-minutes 110 > logs/t20261002_03_fetch4.log 2>&1 < /dev/null &`。这次用 1.2G 上限没有出问题。不在 21:30–00:30 UTC 跑，不和 T-01/T-02 的重任务并行。主审轮的空档也可以续跑。
+    - 全部抓完后：`merge`（会用 aad93b8 的可见时间代码，日志里要有 "filing-date floor moved"），再跑 `scripts/summarize_10k_text_similarity.py --snippets data/features/text_similarity/_trial2/_snippets.json data/features/text_similarity/_snippets_extra.json`。
+    - 验收新增一条：可见日不早于申报日当天或之后的第一个交易日，必须 100% 满足。替代原来"不早于申报日前一天"的口径。
 
 
 ### T-20261002-04 信号库：Lazy Prices 残差 IC 入库检验（3 个候选、安慰剂、和 M1 的相关）
@@ -1628,17 +1643,6 @@
 - done_when: `t20261002_lazy_prices_ic/results.json` 有三个候选的数字和机械判定，已提交，标"待主审"。
 - notes:
   - 2026-10-02 01:38 UTC 01:07 主审轮（Opus）登记。
-  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）写简报。和 01:07 的计划不同的三处：
-    - 严格区不再要求逐位不变：供应商价格取整到分，被替换的 6952 个 symbol 的收益必然有取整差。改为按价格感知的容差 0.04/close，排除 T-01 归为供应商修订的 symbol；alpha 表看组合用到的列的逐日秩相关 ≥ 0.99；依赖表要求变化全部能归到被替换的 symbol 或 SEC 删除键的 CIK。
-    - 只重建 2026 分区，往年分区不动（差别只有取整噪声，重建 alpha 表约 2 小时，对前向无用）。
-    - 宇宙成员按时点记录处理：2026-08-31 以前各月不改，只追加 09-30。
-  - 2026-10-02 07:32 UTC 07:07 主审轮（Opus）审核：
-    - **可见时间有缺陷，已修（aad93b8）**。SEC 的 acceptanceDateTime 是混合口径：大部分是真 UTC，少数是美东时间带了假的 "Z"。主审抓了 8 份申报的 EDGAR 索引页 "Accepted" 字段核对：CIK 36047、47518、6769 是美东时间；1750、23217、4457、56047 是 UTC。按 UTC 解析会让美东口径记录里的盘后申报早一天可见。
-    - 修法：一律按美东墙钟时间解析，这样绝不早于真实时间（真 UTC 的记录会推后 4–5 小时）；再加一条下限，可见日不早于申报日当天或之后的第一个交易日。
-    - 对已抓的 2428 份：727 份可见日推后 1 个交易日（跨周末显示为 3–4 天），没有一份提前；可见日早于申报日的从 16 份降到 0。原验收只抓到 2 份，因为它允许早 1 天。验收改为：可见日不早于申报日当天或之后第一个交易日，必须 100% 满足。18 个测试通过。
-    - 其他 SEC 管道：`build_earnings_events.py` 已经把全部记录当美东时间读，同样保守，不会前视；13D、并购管道属于已关闭方向。组合主题不用这几个管道。
-    - 解析器的改动（只有 "Item N" 标题的表格留作分节标记，分词前剔除）认可：比较的文字不变，只影响分节定位。
-    - cos 中位数贴近 1 是冻结定义造成的（不去停用词、原始词频），不是实现错误。候选秩 IC 不受单调变换影响。
   - 2026-10-02 07:42 UTC 07:07 主审轮（Opus）写简报。同时在 hypotheses.md 末尾追加了修正案 01：可见时间按美东墙钟时间解析，并加申报日下限，只会推后、不会提前；另加校验器要的四个英文标记的对照。
     - pre-backtest 闸门现在是 blocked：外部简报、搜索空间、决策记录还是模板，外部简报只有 5 个来源（要 ≥ 8，其中论文 ≥ 3）。简报第 1 步要求先补齐、两道检查 ok，才能把相似度和收益对齐。
     - 机制复用 T-24 的 `screen_book_signal_candidates.py`，并先做 1e-9 的身份核对。
