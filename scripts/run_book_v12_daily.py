@@ -11,11 +11,17 @@ Modes (exactly one):
 * ``--submit``   the same plans, then ``oc book-paper submit --submit`` (closing-auction orders).
   Refuses (exit 4) unless the environment variable ``OC_BOOK_V12_SUBMIT=1`` is set, which only the
   owner-approved cron entry does.  This task never sets it and never runs this mode.
+* ``--reconcile`` after the evening SIP refresh (proposal: 22:45 UTC weekdays) of the execution date
+  (``--execution-date``, default: today in New York): build ``reports/paper/book/prices/<D>.json``
+  from the local SIP archives (``scripts/build_book_prices_file.py``; no network), then run
+  ``oc book-paper reconcile --prices-file`` for both accounts (read-only broker calls: orders and
+  positions).  A daily record that already exists is not rebuilt.  Exit 2: the archives hold no
+  bar of D yet (the cron retries later); exit 3: no plan file of D.
 
-Exit codes: 0 ok, 2 data not fresh, 3 targets refused, 4 submit not enabled, 5 plan/submit command
-failed, 6 another run holds the lock.  Log: ``logs/book_v12_daily.log``.  Lock:
+Exit codes: 0 ok, 2 data not fresh, 3 targets refused, 4 submit not enabled, 5 plan/submit/reconcile
+command failed, 6 another run holds the lock.  Log: ``logs/book_v12_daily.log``.  Lock:
 ``logs/book_v12_daily.lock``.  The script makes no broker call itself; only the ``oc book-paper``
-commands of ``--plan``/``--submit`` do.
+commands of ``--plan``/``--submit``/``--reconcile`` do.
 """
 
 from __future__ import annotations
@@ -27,7 +33,8 @@ import os
 import subprocess
 import sys
 import time
-from datetime import date
+from collections.abc import Callable
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +43,8 @@ if str(ROOT) not in sys.path:
 
 from open_composer.book_paper import v12_targets as v12  # noqa: E402
 from open_composer.book_paper.accounts import BOOK_ACCOUNTS  # noqa: E402
+from open_composer.book_paper.plan import plan_path  # noqa: E402
+from open_composer.book_paper.post_close import daily_path  # noqa: E402
 from open_composer.book_paper.targets import (  # noqa: E402
     BookTargetError,
     latest_target_path,
@@ -44,6 +53,8 @@ from open_composer.book_paper.targets import (  # noqa: E402
     target_path,
     write_target_file,
 )
+from open_composer.market_sessions import NEW_YORK  # noqa: E402
+from scripts import build_book_prices_file as prices_builder  # noqa: E402
 
 LIVE_ROOT = ROOT / "data/live/equity_book"
 LOG_FILE = ROOT / "logs/book_v12_daily.log"
@@ -141,12 +152,66 @@ def run_plans(root: Path, decision: date | None, *, submit: bool) -> int:
     return 0
 
 
+def run_reconcile(
+    root: Path,
+    execution_date: date,
+    *,
+    sip_root: Path | None = None,
+    runner: Callable[..., subprocess.CompletedProcess] | None = None,
+) -> int:
+    """Prices file of the date from the local SIP archives, then reconcile both accounts."""
+    runner = runner or subprocess.run  # looked up at call time (tests patch it)
+    todo = [a for a in BOOK_ACCOUNTS if not daily_path(root, a, execution_date).exists()]
+    if not todo:
+        log.info("daily records of %s already written: nothing to do", execution_date)
+        return 0
+    for account in todo:
+        if not plan_path(root, account, execution_date).exists():
+            log.error("no plan file for %s on %s", account, execution_date)
+            return EXIT_REFUSED
+    try:
+        path, payload = prices_builder.build_and_write(
+            execution_date, root=root, sip_root=sip_root, now=datetime.now(UTC)
+        )
+    except prices_builder.DataNotFresh as exc:
+        log.error("prices file: %s", exc)
+        return EXIT_FRESH
+    except prices_builder.InputsError as exc:
+        log.error("prices file inputs: %s", exc)
+        return EXIT_REFUSED
+    log.info(prices_builder.summary_line(payload))
+    log.info("prices file %s", path)
+    for account in todo:
+        cmd = [
+            *oc_command(),
+            "book-paper",
+            "reconcile",
+            "--account",
+            account,
+            "--date",
+            execution_date.isoformat(),
+            "--prices-file",
+            str(path),
+        ]
+        log.info("run: %s", " ".join(cmd))
+        proc = runner(cmd, cwd=root, capture_output=True, text=True, check=False)
+        for line in (proc.stdout + proc.stderr).splitlines():
+            log.info("  %s", line)
+        if proc.returncode != 0:
+            log.error("`%s` failed with exit %s", " ".join(cmd[-5:]), proc.returncode)
+            return EXIT_COMMAND
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--targets", action="store_true")
     mode.add_argument("--plan", action="store_true")
     mode.add_argument("--submit", action="store_true")
+    mode.add_argument("--reconcile", action="store_true")
+    ap.add_argument("--execution-date", default=None, help="--reconcile; default: today (New York)")
+    ap.add_argument("--sip-root", default=None, help="--reconcile; default: <root>/data/sip")
     ap.add_argument("--decision-date", default=None)
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
@@ -170,6 +235,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.targets:
             data_root = Path(args.data_root) if args.data_root else LIVE_ROOT
             return run_targets(root, data_root, decision, args.variant)
+        if args.reconcile:
+            day = (
+                date.fromisoformat(args.execution_date)
+                if args.execution_date
+                else datetime.now(UTC).astimezone(NEW_YORK).date()
+            )
+            return run_reconcile(root, day, sip_root=Path(args.sip_root) if args.sip_root else None)
         return run_plans(root, decision, submit=args.submit)
 
 
