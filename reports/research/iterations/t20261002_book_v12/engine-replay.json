@@ -1,0 +1,7930 @@
+{
+ "task": "T-20261002-28",
+ "variant": "M0_U3000",
+ "data_root": "/root/codex-test/open-composer/data/research/equity_book",
+ "first_execution_date": "2026-06-24",
+ "last_execution_date": "2026-09-17",
+ "sessions": 60,
+ "fake_state": "previous day's post-trade whole-share holdings of the replay (day 0: plan of the previous session with min_notional 0), equity fixed at the $1M basis, all names easy to borrow; plans executed whatever the checks say; a held name that lost its price is removed after the day it first appears in the plan",
+ "limits": "RiskLimits defaults of open_composer/book_paper/plan.py, not loosened",
+ "summary": {
+  "quant1": {
+   "days": 60,
+   "days_blocked": 18,
+   "days_ok": 42,
+   "check_fail_days": {
+    "reference_prices_complete": 18
+   },
+   "orders_per_day": {
+    "median": 165.5,
+    "p95": 715.9499999999999,
+    "max": 773,
+    "min": 65
+   },
+   "dropped_min_notional_median": 688.0,
+   "final_drift_p95": 0.0485997995,
+   "scale_event_days": 0,
+   "days_with_unpriced_in_target": 40,
+   "days_with_held_without_price": 18,
+   "tbill_symbols": [
+    "SGOV"
+   ]
+  },
+  "quant2": {
+   "days": 60,
+   "days_blocked": 18,
+   "days_ok": 42,
+   "check_fail_days": {
+    "reference_prices_complete": 18
+   },
+   "orders_per_day": {
+    "median": 77.0,
+    "p95": 432.15,
+    "max": 461,
+    "min": 31
+   },
+   "dropped_min_notional_median": 721.5,
+   "final_drift_p95": 0.0463246255,
+   "scale_event_days": 0,
+   "days_with_unpriced_in_target": 40,
+   "days_with_held_without_price": 18,
+   "tbill_symbols": []
+  }
+ },
+ "explanations": {
+  "reference_prices_complete": "REAL ENGINE ISSUE (lead decides). A name held from earlier days has no close on D, and the engine blocks the whole plan while any held or target name lacks a reference price. Checked against prices/2026.parquet for the M0_U3000 run: of 23 name-events 22 stop trading (last close = D-1: cash acquisitions, mergers, delistings) and 1 (ARTL) has a missing close on D but trades later (halt or data gap). The replay assumes the broker removes the position the day after it first blocks the plan; the real removal date is unknown, so an event may block 1 or more sessions. Not a generator error: a name without a close cannot be sized or ordered (the generator drops it and logs it).",
+  "beta_neutral": "REAL CONTRACT ISSUE (lead decides). The hedge is held in fixed SPY shares per tranche (T-25 R6), while the stock legs drift with prices. After a market move the residual sum(beta x weight) + hedge leaves +-0.03..0.05 (limit 0.05, not loosened). Decomposition on 2026-07-29 (data/research/book_v12_t28/diag_beta.py): stock beta at the sizing prices -0.511, at D -0.456, hedge value at D +0.505, SPY -1.3% over the week."
+ },
+ "unexplained_failing_checks": [],
+ "newest_tranche_fill_mask_effect": {
+  "mean_names_differ": {
+   "F1": 0.31666666666666665,
+   "F2": 0.5166666666666667
+  },
+  "max_abs_dollar_diff_over_equity": {
+   "F1": 0.0004198,
+   "F2": 0.00025771
+  }
+ },
+ "failure_events": [
+  {
+   "account": "quant1",
+   "decision_date": "2026-06-24",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "CNTA"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-06-25",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "CWAN"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-06-26",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "PRA"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-01",
+   "check": "reference_prices_complete",
+   "value": 4,
+   "limit": 0,
+   "detail": "BLD, JHG, SEM, SILA"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-07",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "ARTL"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-15",
+   "check": "reference_prices_complete",
+   "value": 2,
+   "limit": 0,
+   "detail": "CPRX, NUVL"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-16",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "GTLS"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-22",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "NSA"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-24",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "TMHC"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-27",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "AVNS"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-07-31",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "SKYT"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-08-05",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "EA"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-08-17",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "AVB"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-08-20",
+   "check": "reference_prices_complete",
+   "value": 2,
+   "limit": 0,
+   "detail": "LBRDK, WBS"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-08-25",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "TWO"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-08-27",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "FBRX"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-09-01",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "CRNX"
+  },
+  {
+   "account": "quant1",
+   "decision_date": "2026-09-03",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "APGE"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-06-24",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "CNTA"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-06-25",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "CWAN"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-06-26",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "PRA"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-01",
+   "check": "reference_prices_complete",
+   "value": 3,
+   "limit": 0,
+   "detail": "JHG, SEM, SILA"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-07",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "ARTL"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-15",
+   "check": "reference_prices_complete",
+   "value": 2,
+   "limit": 0,
+   "detail": "CPRX, NUVL"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-16",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "GTLS"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-22",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "NSA"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-24",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "TMHC"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-27",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "AVNS"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-07-31",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "SKYT"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-08-05",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "EA"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-08-17",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "AVB"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-08-20",
+   "check": "reference_prices_complete",
+   "value": 2,
+   "limit": 0,
+   "detail": "LBRDK, WBS"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-08-25",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "TWO"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-08-27",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "FBRX"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-09-01",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "CRNX"
+  },
+  {
+   "account": "quant2",
+   "decision_date": "2026-09-03",
+   "check": "reference_prices_complete",
+   "value": 1,
+   "limit": 0,
+   "detail": "APGE"
+  }
+ ],
+ "days": {
+  "quant1": [
+   {
+    "decision_date": "2026-06-23",
+    "execution_date": "2026-06-24",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 65,
+    "n_buy": 29,
+    "n_sell": 36,
+    "buy_notional": 16634.32,
+    "sell_notional": 5470.76,
+    "n_dropped_min_notional": 416,
+    "rounding_drift_one_sided": 0.02807203,
+    "final_drift_one_sided": 0.03266325,
+    "n_target_names": 1698,
+    "vix": 19.49,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.005128,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.982564,
+      "limit": 1.042171
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003447,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.795466,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.012734,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.30453,
+      "limit": "0.304529 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-06-24",
+    "execution_date": "2026-06-25",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 98,
+    "n_buy": 49,
+    "n_sell": 49,
+    "buy_notional": 10826.38,
+    "sell_notional": 14506.41,
+    "n_dropped_min_notional": 564,
+    "rounding_drift_one_sided": 0.02791367,
+    "final_drift_one_sided": 0.03678658,
+    "n_target_names": 1696,
+    "vix": 18.63,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CNTA"
+    ],
+    "held_without_price": [
+     "CNTA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.0045,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.983121,
+      "limit": 1.044333
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003164,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.794049,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.022788,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.29986,
+      "limit": "0.299836 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "CNTA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-06-25",
+    "execution_date": "2026-06-26",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 130,
+    "n_buy": 55,
+    "n_sell": 75,
+    "buy_notional": 9421.09,
+    "sell_notional": 14202.64,
+    "n_dropped_min_notional": 627,
+    "rounding_drift_one_sided": 0.02816287,
+    "final_drift_one_sided": 0.04051463,
+    "n_target_names": 1691,
+    "vix": 18.89,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CNTA",
+     "CWAN"
+    ],
+    "held_without_price": [
+     "CWAN"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002382,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.987593,
+      "limit": 1.04629
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003111,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796489,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.019537,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.297089,
+      "limit": "0.297107 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "CWAN"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-06-26",
+    "execution_date": "2026-06-29",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 161,
+    "n_buy": 68,
+    "n_sell": 93,
+    "buy_notional": 11412.52,
+    "sell_notional": 19950.01,
+    "n_dropped_min_notional": 640,
+    "rounding_drift_one_sided": 0.02819836,
+    "final_drift_one_sided": 0.04231146,
+    "n_target_names": 1690,
+    "vix": 18.41,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CNTA",
+     "CWAN",
+     "PRA"
+    ],
+    "held_without_price": [
+     "PRA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001441,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.997481,
+      "limit": 1.055725
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003213,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796132,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.005721,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.290545,
+      "limit": "0.290592 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "PRA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-06-29",
+    "execution_date": "2026-06-30",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 178,
+    "n_buy": 79,
+    "n_sell": 99,
+    "buy_notional": 13434.88,
+    "sell_notional": 27427.08,
+    "n_dropped_min_notional": 630,
+    "rounding_drift_one_sided": 0.02820173,
+    "final_drift_one_sided": 0.04258951,
+    "n_target_names": 1686,
+    "vix": 17.65,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CWAN",
+     "PRA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.008732,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 1.00251,
+      "limit": 1.059773
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003402,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796941,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.008401,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.278695,
+      "limit": "0.278737 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-06-30",
+    "execution_date": "2026-07-01",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 559,
+    "n_buy": 287,
+    "n_sell": 272,
+    "buy_notional": 82603.8,
+    "sell_notional": 56893.25,
+    "n_dropped_min_notional": 553,
+    "rounding_drift_one_sided": 0.02834374,
+    "final_drift_one_sided": 0.04128121,
+    "n_target_names": 1783,
+    "vix": 16.45,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "PRA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.011502,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.9793,
+      "limit": 1.032349
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003168,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.802733,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.023335,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.307415,
+      "limit": "0.307447 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-01",
+    "execution_date": "2026-07-02",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 690,
+    "n_buy": 369,
+    "n_sell": 321,
+    "buy_notional": 81864.43,
+    "sell_notional": 59955.1,
+    "n_dropped_min_notional": 487,
+    "rounding_drift_one_sided": 0.02894733,
+    "final_drift_one_sided": 0.04180802,
+    "n_target_names": 1777,
+    "vix": 16.59,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "held_without_price": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.005011,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.965101,
+      "limit": 1.013028
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003077,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.804578,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.005109,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.326393,
+      "limit": "0.326394 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 4,
+      "limit": 0,
+      "detail": "BLD, JHG, SEM, SILA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-02",
+    "execution_date": "2026-07-06",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 693,
+    "n_buy": 350,
+    "n_sell": 343,
+    "buy_notional": 64181.7,
+    "sell_notional": 69147.57,
+    "n_dropped_min_notional": 534,
+    "rounding_drift_one_sided": 0.02868816,
+    "final_drift_one_sided": 0.04328477,
+    "n_target_names": 1773,
+    "vix": 16.15,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002024,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.962671,
+      "limit": 1.012092
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003356,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.80084,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.002997,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.330229,
+      "limit": "0.330270 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-06",
+    "execution_date": "2026-07-07",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 715,
+    "n_buy": 375,
+    "n_sell": 340,
+    "buy_notional": 64573.23,
+    "sell_notional": 79766.58,
+    "n_dropped_min_notional": 503,
+    "rounding_drift_one_sided": 0.02898679,
+    "final_drift_one_sided": 0.042654,
+    "n_target_names": 1776,
+    "vix": 15.57,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00134,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.978448,
+      "limit": 1.027754
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003527,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.803225,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.001975,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.316911,
+      "limit": "0.316924 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-07",
+    "execution_date": "2026-07-08",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 676,
+    "n_buy": 345,
+    "n_sell": 331,
+    "buy_notional": 59255.96,
+    "sell_notional": 70541.02,
+    "n_dropped_min_notional": 540,
+    "rounding_drift_one_sided": 0.02757738,
+    "final_drift_one_sided": 0.04290923,
+    "n_target_names": 1680,
+    "vix": 16.13,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [
+     "ARTL"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.007872,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.987382,
+      "limit": 1.041861
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003531,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799113,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.023974,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.310765,
+      "limit": "0.310755 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "ARTL"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-08",
+    "execution_date": "2026-07-09",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 118,
+    "n_buy": 48,
+    "n_sell": 70,
+    "buy_notional": 15281.88,
+    "sell_notional": 12152.01,
+    "n_dropped_min_notional": 682,
+    "rounding_drift_one_sided": 0.02775693,
+    "final_drift_one_sided": 0.0431062,
+    "n_target_names": 1676,
+    "vix": 16.9,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.006005,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.982503,
+      "limit": 1.037323
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003444,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.798138,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.016057,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.317708,
+      "limit": "0.317731 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-09",
+    "execution_date": "2026-07-10",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 118,
+    "n_buy": 53,
+    "n_sell": 65,
+    "buy_notional": 8637.16,
+    "sell_notional": 26527.05,
+    "n_dropped_min_notional": 691,
+    "rounding_drift_one_sided": 0.02845196,
+    "final_drift_one_sided": 0.0440249,
+    "n_target_names": 1673,
+    "vix": 15.84,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000568,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.995456,
+      "limit": 1.051175
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003364,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.798257,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.00072,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.302914,
+      "limit": "0.302959 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-10",
+    "execution_date": "2026-07-13",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 117,
+    "n_buy": 54,
+    "n_sell": 63,
+    "buy_notional": 8566.44,
+    "sell_notional": 11858.36,
+    "n_dropped_min_notional": 720,
+    "rounding_drift_one_sided": 0.02878743,
+    "final_drift_one_sided": 0.04495804,
+    "n_target_names": 1671,
+    "vix": 15.03,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.00271,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.995111,
+      "limit": 1.048889
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003373,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799727,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.006527,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.302574,
+      "limit": "0.302524 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-13",
+    "execution_date": "2026-07-14",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 142,
+    "n_buy": 52,
+    "n_sell": 90,
+    "buy_notional": 17328.54,
+    "sell_notional": 12986.1,
+    "n_dropped_min_notional": 714,
+    "rounding_drift_one_sided": 0.02818803,
+    "final_drift_one_sided": 0.04442967,
+    "n_target_names": 1670,
+    "vix": 17.16,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.006408,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.989093,
+      "limit": 1.043583
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003265,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799145,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.017546,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.311854,
+      "limit": "0.311870 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-14",
+    "execution_date": "2026-07-15",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 132,
+    "n_buy": 55,
+    "n_sell": 77,
+    "buy_notional": 9667.76,
+    "sell_notional": 18261.68,
+    "n_dropped_min_notional": 697,
+    "rounding_drift_one_sided": 0.02827925,
+    "final_drift_one_sided": 0.04422292,
+    "n_target_names": 1671,
+    "vix": 16.5,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000803,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.995793,
+      "limit": 1.047958
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003425,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800749,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.000318,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.305741,
+      "limit": "0.305764 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-15",
+    "execution_date": "2026-07-16",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 135,
+    "n_buy": 68,
+    "n_sell": 67,
+    "buy_notional": 11941.74,
+    "sell_notional": 12102.66,
+    "n_dropped_min_notional": 687,
+    "rounding_drift_one_sided": 0.02853249,
+    "final_drift_one_sided": 0.04446145,
+    "n_target_names": 1669,
+    "vix": 15.67,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CPRX",
+     "NUVL"
+    ],
+    "held_without_price": [
+     "CPRX",
+     "NUVL"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000474,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.995658,
+      "limit": 1.04596
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003585,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.801892,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.003349,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.307305,
+      "limit": "0.307344 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 2,
+      "limit": 0,
+      "detail": "CPRX, NUVL"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-16",
+    "execution_date": "2026-07-17",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 177,
+    "n_buy": 73,
+    "n_sell": 104,
+    "buy_notional": 21132.41,
+    "sell_notional": 16955.83,
+    "n_dropped_min_notional": 657,
+    "rounding_drift_one_sided": 0.02852061,
+    "final_drift_one_sided": 0.0439706,
+    "n_target_names": 1666,
+    "vix": 16.73,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CPRX",
+     "GTLS",
+     "NUVL"
+    ],
+    "held_without_price": [
+     "GTLS"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.011306,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.993402,
+      "limit": 1.042117
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003608,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.804034,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.023176,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.316658,
+      "limit": "0.316643 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "GTLS"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-17",
+    "execution_date": "2026-07-20",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 152,
+    "n_buy": 56,
+    "n_sell": 96,
+    "buy_notional": 18666.53,
+    "sell_notional": 15597.1,
+    "n_dropped_min_notional": 655,
+    "rounding_drift_one_sided": 0.02810604,
+    "final_drift_one_sided": 0.04356534,
+    "n_target_names": 1668,
+    "vix": 18.77,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CPRX",
+     "GTLS",
+     "NUVL"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.007205,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.98915,
+      "limit": 1.040593
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00337,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.802625,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.014686,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.325877,
+      "limit": "0.325892 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-20",
+    "execution_date": "2026-07-21",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 135,
+    "n_buy": 64,
+    "n_sell": 71,
+    "buy_notional": 13558.98,
+    "sell_notional": 10386.91,
+    "n_dropped_min_notional": 714,
+    "rounding_drift_one_sided": 0.02766744,
+    "final_drift_one_sided": 0.04352161,
+    "n_target_names": 1674,
+    "vix": 18.65,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "GTLS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.004169,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.985878,
+      "limit": 1.038851
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003406,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.802309,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.004839,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.32962,
+      "limit": "0.329646 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-21",
+    "execution_date": "2026-07-22",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 134,
+    "n_buy": 61,
+    "n_sell": 73,
+    "buy_notional": 8880.26,
+    "sell_notional": 28841.81,
+    "n_dropped_min_notional": 692,
+    "rounding_drift_one_sided": 0.02787136,
+    "final_drift_one_sided": 0.04369775,
+    "n_target_names": 1672,
+    "vix": 17.05,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006395,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 1.000181,
+      "limit": 1.054716
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003588,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.802306,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.02565,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.312002,
+      "limit": "0.312051 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-22",
+    "execution_date": "2026-07-23",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 111,
+    "n_buy": 49,
+    "n_sell": 62,
+    "buy_notional": 11623.06,
+    "sell_notional": 8135.37,
+    "n_dropped_min_notional": 703,
+    "rounding_drift_one_sided": 0.02777931,
+    "final_drift_one_sided": 0.04398473,
+    "n_target_names": 1669,
+    "vix": 16.64,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "NSA"
+    ],
+    "held_without_price": [
+     "NSA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002879,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.996049,
+      "limit": 1.051633
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003497,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800649,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.018683,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.312805,
+      "limit": "0.312762 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "NSA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-23",
+    "execution_date": "2026-07-24",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 113,
+    "n_buy": 52,
+    "n_sell": 61,
+    "buy_notional": 21743.44,
+    "sell_notional": 9469.4,
+    "n_dropped_min_notional": 721,
+    "rounding_drift_one_sided": 0.02813865,
+    "final_drift_one_sided": 0.0449943,
+    "n_target_names": 1671,
+    "vix": 18.7,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "NSA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.00045,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.988848,
+      "limit": 1.044484
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003347,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800023,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.016549,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.321762,
+      "limit": "0.321746 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-24",
+    "execution_date": "2026-07-27",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 158,
+    "n_buy": 71,
+    "n_sell": 87,
+    "buy_notional": 12597.14,
+    "sell_notional": 12129.25,
+    "n_dropped_min_notional": 679,
+    "rounding_drift_one_sided": 0.02827109,
+    "final_drift_one_sided": 0.04419161,
+    "n_target_names": 1671,
+    "vix": 18.58,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "NSA",
+     "TMHC"
+    ],
+    "held_without_price": [
+     "TMHC"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.008501,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.98629,
+      "limit": 1.040687
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003308,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800075,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.012828,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.321658,
+      "limit": "0.321622 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "TMHC"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-27",
+    "execution_date": "2026-07-28",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 159,
+    "n_buy": 83,
+    "n_sell": 76,
+    "buy_notional": 14465.73,
+    "sell_notional": 20782.68,
+    "n_dropped_min_notional": 691,
+    "rounding_drift_one_sided": 0.02836067,
+    "final_drift_one_sided": 0.04425053,
+    "n_target_names": 1676,
+    "vix": 18.67,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "AVNS",
+     "TMHC"
+    ],
+    "held_without_price": [
+     "AVNS"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.006231,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.995028,
+      "limit": 1.048577
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003648,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800961,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.006982,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.31296,
+      "limit": "0.312917 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "AVNS"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-28",
+    "execution_date": "2026-07-29",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 172,
+    "n_buy": 76,
+    "n_sell": 96,
+    "buy_notional": 16026.55,
+    "sell_notional": 24168.05,
+    "n_dropped_min_notional": 696,
+    "rounding_drift_one_sided": 0.02844785,
+    "final_drift_one_sided": 0.04468244,
+    "n_target_names": 1674,
+    "vix": 18.21,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "AVNS",
+     "TMHC"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.012223,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.999592,
+      "limit": 1.051853
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003449,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800669,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.02299,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.30396,
+      "limit": "0.303967 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-29",
+    "execution_date": "2026-07-30",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 476,
+    "n_buy": 227,
+    "n_sell": 249,
+    "buy_notional": 211008.65,
+    "sell_notional": 92592.66,
+    "n_dropped_min_notional": 604,
+    "rounding_drift_one_sided": 0.02790864,
+    "final_drift_one_sided": 0.04205843,
+    "n_target_names": 1675,
+    "vix": 20.66,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "AVNS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.018335,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.901949,
+      "limit": 0.933126
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.002988,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.818197,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.025485,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.475653,
+      "limit": "0.475627 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-30",
+    "execution_date": "2026-07-31",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 170,
+    "n_buy": 83,
+    "n_sell": 87,
+    "buy_notional": 13465.8,
+    "sell_notional": 37116.78,
+    "n_dropped_min_notional": 689,
+    "rounding_drift_one_sided": 0.02801774,
+    "final_drift_one_sided": 0.04355544,
+    "n_target_names": 1676,
+    "vix": 17.09,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.001641,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.914392,
+      "limit": 0.947536
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003224,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.815069,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.010734,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.454922,
+      "limit": "0.454888 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-31",
+    "execution_date": "2026-08-03",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 631,
+    "n_buy": 308,
+    "n_sell": 323,
+    "buy_notional": 84713.7,
+    "sell_notional": 60252.28,
+    "n_dropped_min_notional": 573,
+    "rounding_drift_one_sided": 0.02858538,
+    "final_drift_one_sided": 0.04267172,
+    "n_target_names": 1788,
+    "vix": 15.99,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "SKYT"
+    ],
+    "held_without_price": [
+     "SKYT"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002633,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.876135,
+      "limit": 0.917937
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003019,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.804819,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.004601,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.47449,
+      "limit": "0.474511 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "SKYT"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-03",
+    "execution_date": "2026-08-04",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 770,
+    "n_buy": 370,
+    "n_sell": 400,
+    "buy_notional": 71281.38,
+    "sell_notional": 85639.82,
+    "n_dropped_min_notional": 485,
+    "rounding_drift_one_sided": 0.02984509,
+    "final_drift_one_sided": 0.04274825,
+    "n_target_names": 1791,
+    "vix": 15.86,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "SKYT"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.012497,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.877979,
+      "limit": 0.922101
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003337,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.803067,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.026446,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.45912,
+      "limit": "0.459135 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-04",
+    "execution_date": "2026-08-05",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 773,
+    "n_buy": 402,
+    "n_sell": 371,
+    "buy_notional": 77676.79,
+    "sell_notional": 92836.24,
+    "n_dropped_min_notional": 516,
+    "rounding_drift_one_sided": 0.02963051,
+    "final_drift_one_sided": 0.04355677,
+    "n_target_names": 1794,
+    "vix": 16.5,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "SKYT"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.019158,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.883652,
+      "limit": 0.935671
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003427,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.79945,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.034666,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.437574,
+      "limit": "0.437540 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-05",
+    "execution_date": "2026-08-06",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 707,
+    "n_buy": 381,
+    "n_sell": 326,
+    "buy_notional": 126166.47,
+    "sell_notional": 218409.2,
+    "n_dropped_min_notional": 515,
+    "rounding_drift_one_sided": 0.03025443,
+    "final_drift_one_sided": 0.04351879,
+    "n_target_names": 1791,
+    "vix": 15.81,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "EA"
+    ],
+    "held_without_price": [
+     "EA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.013158,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.976817,
+      "limit": 1.033539
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003615,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796261,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.011954,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.283671,
+      "limit": "0.283719 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "EA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-06",
+    "execution_date": "2026-08-07",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 734,
+    "n_buy": 365,
+    "n_sell": 369,
+    "buy_notional": 80972.91,
+    "sell_notional": 89753.53,
+    "n_dropped_min_notional": 541,
+    "rounding_drift_one_sided": 0.02899175,
+    "final_drift_one_sided": 0.04337872,
+    "n_target_names": 1719,
+    "vix": 15.15,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "EA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.004944,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.990399,
+      "limit": 1.049095
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003279,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.795068,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.00281,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.261296,
+      "limit": "0.261249 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-07",
+    "execution_date": "2026-08-10",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 260,
+    "n_buy": 150,
+    "n_sell": 110,
+    "buy_notional": 34265.25,
+    "sell_notional": 35191.69,
+    "n_dropped_min_notional": 640,
+    "rounding_drift_one_sided": 0.02995235,
+    "final_drift_one_sided": 0.04467987,
+    "n_target_names": 1731,
+    "vix": 14.9,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "EA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.008427,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 1.000285,
+      "limit": 1.053771
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003535,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.801159,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.014064,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.245674,
+      "limit": "0.245658 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-10",
+    "execution_date": "2026-08-11",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 261,
+    "n_buy": 146,
+    "n_sell": 115,
+    "buy_notional": 30191.94,
+    "sell_notional": 19570.69,
+    "n_dropped_min_notional": 671,
+    "rounding_drift_one_sided": 0.03022896,
+    "final_drift_one_sided": 0.04650085,
+    "n_target_names": 1732,
+    "vix": 15.46,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001013,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.994185,
+      "limit": 1.046319
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003271,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.801058,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.001943,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.246426,
+      "limit": "0.246412 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-11",
+    "execution_date": "2026-08-12",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 276,
+    "n_buy": 143,
+    "n_sell": 133,
+    "buy_notional": 29325.22,
+    "sell_notional": 29717.78,
+    "n_dropped_min_notional": 671,
+    "rounding_drift_one_sided": 0.03058067,
+    "final_drift_one_sided": 0.04664597,
+    "n_target_names": 1729,
+    "vix": 15.28,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.004276,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.998519,
+      "limit": 1.049749
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003291,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.802185,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.011068,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.237304,
+      "limit": "0.237330 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-12",
+    "execution_date": "2026-08-13",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 263,
+    "n_buy": 139,
+    "n_sell": 124,
+    "buy_notional": 28464.36,
+    "sell_notional": 29514.97,
+    "n_dropped_min_notional": 695,
+    "rounding_drift_one_sided": 0.03110729,
+    "final_drift_one_sided": 0.04812649,
+    "n_target_names": 1726,
+    "vix": 14.55,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00664,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.998204,
+      "limit": 1.053427
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00336,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.803059,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.01993,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.230894,
+      "limit": "0.230943 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-13",
+    "execution_date": "2026-08-14",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 235,
+    "n_buy": 120,
+    "n_sell": 115,
+    "buy_notional": 22482.18,
+    "sell_notional": 29674.59,
+    "n_dropped_min_notional": 703,
+    "rounding_drift_one_sided": 0.03132895,
+    "final_drift_one_sided": 0.04816088,
+    "n_target_names": 1723,
+    "vix": 14.63,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.007569,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 1.001478,
+      "limit": 1.055807
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003386,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.80309,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.016755,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.219759,
+      "limit": "0.219743 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-14",
+    "execution_date": "2026-08-17",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 193,
+    "n_buy": 96,
+    "n_sell": 97,
+    "buy_notional": 15831.42,
+    "sell_notional": 16951.33,
+    "n_dropped_min_notional": 704,
+    "rounding_drift_one_sided": 0.0320815,
+    "final_drift_one_sided": 0.04859339,
+    "n_target_names": 1718,
+    "vix": 14.25,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006909,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 1.004193,
+      "limit": 1.057781
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00343,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.80219,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.018359,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.219623,
+      "limit": "0.219588 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-17",
+    "execution_date": "2026-08-18",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 174,
+    "n_buy": 93,
+    "n_sell": 81,
+    "buy_notional": 26913.21,
+    "sell_notional": 13582.2,
+    "n_dropped_min_notional": 705,
+    "rounding_drift_one_sided": 0.03253086,
+    "final_drift_one_sided": 0.04897312,
+    "n_target_names": 1717,
+    "vix": 15.19,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "AVB"
+    ],
+    "held_without_price": [
+     "AVB"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.004692,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.994436,
+      "limit": 1.050374
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003381,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.801765,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.019526,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.23169,
+      "limit": "0.231690 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "AVB"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-18",
+    "execution_date": "2026-08-19",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 156,
+    "n_buy": 75,
+    "n_sell": 81,
+    "buy_notional": 32518.04,
+    "sell_notional": 13466.74,
+    "n_dropped_min_notional": 722,
+    "rounding_drift_one_sided": 0.03219318,
+    "final_drift_one_sided": 0.04895913,
+    "n_target_names": 1716,
+    "vix": 15.84,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "AVB"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.005567,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.977961,
+      "limit": 1.036067
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003164,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.801136,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.013481,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.251425,
+      "limit": "0.251385 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-19",
+    "execution_date": "2026-08-20",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 151,
+    "n_buy": 75,
+    "n_sell": 76,
+    "buy_notional": 12929.59,
+    "sell_notional": 25334.11,
+    "n_dropped_min_notional": 721,
+    "rounding_drift_one_sided": 0.03218269,
+    "final_drift_one_sided": 0.04872158,
+    "n_target_names": 1718,
+    "vix": 14.89,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "AVB"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000273,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.989458,
+      "limit": 1.047669
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.004708,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.80054,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.003187,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.238901,
+      "limit": "0.238924 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-20",
+    "execution_date": "2026-08-21",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 156,
+    "n_buy": 74,
+    "n_sell": 82,
+    "buy_notional": 25032.99,
+    "sell_notional": 12771.1,
+    "n_dropped_min_notional": 725,
+    "rounding_drift_one_sided": 0.03112656,
+    "final_drift_one_sided": 0.04791738,
+    "n_target_names": 1719,
+    "vix": 16.01,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "LBRDK",
+     "WBS"
+    ],
+    "held_without_price": [
+     "LBRDK",
+     "WBS"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.003218,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.981261,
+      "limit": 1.039352
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.0032,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799381,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.005913,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.248457,
+      "limit": "0.248502 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 2,
+      "limit": 0,
+      "detail": "LBRDK, WBS"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-21",
+    "execution_date": "2026-08-24",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 165,
+    "n_buy": 88,
+    "n_sell": 77,
+    "buy_notional": 15260.1,
+    "sell_notional": 26767.47,
+    "n_dropped_min_notional": 703,
+    "rounding_drift_one_sided": 0.03082518,
+    "final_drift_one_sided": 0.04730001,
+    "n_target_names": 1715,
+    "vix": 15.13,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "LBRDK",
+     "WBS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000299,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.989992,
+      "limit": 1.052459
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003426,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.798186,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.000291,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.234669,
+      "limit": "0.234688 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-24",
+    "execution_date": "2026-08-25",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 153,
+    "n_buy": 74,
+    "n_sell": 79,
+    "buy_notional": 20928.6,
+    "sell_notional": 14625.93,
+    "n_dropped_min_notional": 729,
+    "rounding_drift_one_sided": 0.03077557,
+    "final_drift_one_sided": 0.04789582,
+    "n_target_names": 1714,
+    "vix": 15.85,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "LBRDK",
+     "WBS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.005926,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.986043,
+      "limit": 1.045734
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003188,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800726,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.014095,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.242844,
+      "limit": "0.242824 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-25",
+    "execution_date": "2026-08-26",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 170,
+    "n_buy": 75,
+    "n_sell": 95,
+    "buy_notional": 15344.23,
+    "sell_notional": 21820.34,
+    "n_dropped_min_notional": 717,
+    "rounding_drift_one_sided": 0.03083476,
+    "final_drift_one_sided": 0.04689586,
+    "n_target_names": 1713,
+    "vix": 15.45,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "TWO"
+    ],
+    "held_without_price": [
+     "TWO"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000545,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.988282,
+      "limit": 1.048896
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003251,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799039,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.002993,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.234793,
+      "limit": "0.234778 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "TWO"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-26",
+    "execution_date": "2026-08-27",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 137,
+    "n_buy": 61,
+    "n_sell": 76,
+    "buy_notional": 12136.44,
+    "sell_notional": 13750.95,
+    "n_dropped_min_notional": 727,
+    "rounding_drift_one_sided": 0.03058411,
+    "final_drift_one_sided": 0.04754255,
+    "n_target_names": 1714,
+    "vix": 15.21,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "TWO"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000445,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.987338,
+      "limit": 1.048011
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003037,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799337,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.00235,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.233609,
+      "limit": "0.233653 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-27",
+    "execution_date": "2026-08-28",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 152,
+    "n_buy": 83,
+    "n_sell": 69,
+    "buy_notional": 13189.63,
+    "sell_notional": 17529.02,
+    "n_dropped_min_notional": 728,
+    "rounding_drift_one_sided": 0.03030064,
+    "final_drift_one_sided": 0.04729101,
+    "n_target_names": 1713,
+    "vix": 14.51,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "FBRX",
+     "TWO"
+    ],
+    "held_without_price": [
+     "FBRX"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003555,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.990925,
+      "limit": 1.049617
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003298,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799664,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.005561,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.225788,
+      "limit": "0.225781 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "FBRX"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-28",
+    "execution_date": "2026-08-31",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 153,
+    "n_buy": 77,
+    "n_sell": 76,
+    "buy_notional": 23763.23,
+    "sell_notional": 12280.9,
+    "n_dropped_min_notional": 715,
+    "rounding_drift_one_sided": 0.03027201,
+    "final_drift_one_sided": 0.04660899,
+    "n_target_names": 1714,
+    "vix": 14.43,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "FBRX"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.005184,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.980297,
+      "limit": 1.037763
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003058,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800026,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.019088,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.235793,
+      "limit": "0.235771 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-31",
+    "execution_date": "2026-09-01",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 538,
+    "n_buy": 264,
+    "n_sell": 274,
+    "buy_notional": 76726.44,
+    "sell_notional": 56527.4,
+    "n_dropped_min_notional": 626,
+    "rounding_drift_one_sided": 0.03060907,
+    "final_drift_one_sided": 0.04560992,
+    "n_target_names": 1805,
+    "vix": 14.92,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "FBRX"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.003062,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.961439,
+      "limit": 1.016324
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.002962,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800826,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.010198,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.2641,
+      "limit": "0.264074 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-01",
+    "execution_date": "2026-09-02",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 663,
+    "n_buy": 315,
+    "n_sell": 348,
+    "buy_notional": 83704.1,
+    "sell_notional": 66667.32,
+    "n_dropped_min_notional": 572,
+    "rounding_drift_one_sided": 0.0296419,
+    "final_drift_one_sided": 0.04440818,
+    "n_target_names": 1805,
+    "vix": 16.34,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CRNX"
+    ],
+    "held_without_price": [
+     "CRNX"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.007547,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.94566,
+      "limit": 0.99701
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.002747,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.80127,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.018623,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.291892,
+      "limit": "0.291932 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "CRNX"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-09-02",
+    "execution_date": "2026-09-03",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 673,
+    "n_buy": 333,
+    "n_sell": 340,
+    "buy_notional": 56788.14,
+    "sell_notional": 71761.96,
+    "n_dropped_min_notional": 587,
+    "rounding_drift_one_sided": 0.02965112,
+    "final_drift_one_sided": 0.04505235,
+    "n_target_names": 1805,
+    "vix": 15.2,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "CRNX"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.0017,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.95447,
+      "limit": 1.007809
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.002752,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.800993,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.006368,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.291017,
+      "limit": "0.290990 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-03",
+    "execution_date": "2026-09-04",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 685,
+    "n_buy": 334,
+    "n_sell": 351,
+    "buy_notional": 58973.9,
+    "sell_notional": 85621.86,
+    "n_dropped_min_notional": 585,
+    "rounding_drift_one_sided": 0.02915434,
+    "final_drift_one_sided": 0.04491412,
+    "n_target_names": 1803,
+    "vix": 14.32,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "APGE",
+     "CRNX"
+    ],
+    "held_without_price": [
+     "APGE"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.005417,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.971999,
+      "limit": 1.030537
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003155,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.798779,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.013013,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.276283,
+      "limit": "0.276241 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "APGE"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-09-04",
+    "execution_date": "2026-09-08",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 673,
+    "n_buy": 325,
+    "n_sell": 348,
+    "buy_notional": 54038.46,
+    "sell_notional": 81258.85,
+    "n_dropped_min_notional": 577,
+    "rounding_drift_one_sided": 0.0288989,
+    "final_drift_one_sided": 0.045084,
+    "n_target_names": 1726,
+    "vix": 14.53,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "APGE"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.013241,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.992153,
+      "limit": 1.053885
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003219,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.795019,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.026989,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.263734,
+      "limit": "0.263744 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-08",
+    "execution_date": "2026-09-09",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 148,
+    "n_buy": 67,
+    "n_sell": 81,
+    "buy_notional": 19495.4,
+    "sell_notional": 11800.03,
+    "n_dropped_min_notional": 675,
+    "rounding_drift_one_sided": 0.02849917,
+    "final_drift_one_sided": 0.04393112,
+    "n_target_names": 1732,
+    "vix": 15.72,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [
+     "APGE"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.016992,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.988528,
+      "limit": 1.048307
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003483,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.797829,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.037082,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.271597,
+      "limit": "0.271615 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-09",
+    "execution_date": "2026-09-10",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 129,
+    "n_buy": 74,
+    "n_sell": 55,
+    "buy_notional": 26985.86,
+    "sell_notional": 8570.17,
+    "n_dropped_min_notional": 709,
+    "rounding_drift_one_sided": 0.02780076,
+    "final_drift_one_sided": 0.04373782,
+    "n_target_names": 1731,
+    "vix": 16.46,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00683,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.977346,
+      "limit": 1.034792
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00334,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799124,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.017089,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.284286,
+      "limit": "0.284311 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-10",
+    "execution_date": "2026-09-11",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 146,
+    "n_buy": 68,
+    "n_sell": 78,
+    "buy_notional": 20708.9,
+    "sell_notional": 11604.98,
+    "n_dropped_min_notional": 734,
+    "rounding_drift_one_sided": 0.02755247,
+    "final_drift_one_sided": 0.04431966,
+    "n_target_names": 1732,
+    "vix": 17.84,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002611,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.971538,
+      "limit": 1.027811
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003147,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799439,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.006144,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.289842,
+      "limit": "0.289889 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-11",
+    "execution_date": "2026-09-14",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 154,
+    "n_buy": 77,
+    "n_sell": 77,
+    "buy_notional": 15465.3,
+    "sell_notional": 31277.66,
+    "n_dropped_min_notional": 742,
+    "rounding_drift_one_sided": 0.02817339,
+    "final_drift_one_sided": 0.04538227,
+    "n_target_names": 1737,
+    "vix": 15.84,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002859,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.983817,
+      "limit": 1.03995
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003264,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.799014,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.002876,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.269494,
+      "limit": "0.269502 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-14",
+    "execution_date": "2026-09-15",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 169,
+    "n_buy": 84,
+    "n_sell": 85,
+    "buy_notional": 13591.16,
+    "sell_notional": 14331.07,
+    "n_dropped_min_notional": 749,
+    "rounding_drift_one_sided": 0.02791269,
+    "final_drift_one_sided": 0.04532724,
+    "n_target_names": 1733,
+    "vix": 17.1,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000229,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.986698,
+      "limit": 1.042583
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003193,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.798137,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.003404,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.26741,
+      "limit": "0.267394 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-15",
+    "execution_date": "2026-09-16",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 154,
+    "n_buy": 76,
+    "n_sell": 78,
+    "buy_notional": 23393.93,
+    "sell_notional": 14522.75,
+    "n_dropped_min_notional": 750,
+    "rounding_drift_one_sided": 0.02737956,
+    "final_drift_one_sided": 0.0453225,
+    "n_target_names": 1728,
+    "vix": 17.2,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.004398,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.980888,
+      "limit": 1.039162
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.003035,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.797279,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.00704,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.278468,
+      "limit": "0.278431 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-16",
+    "execution_date": "2026-09-17",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 166,
+    "n_buy": 76,
+    "n_sell": 90,
+    "buy_notional": 13988.48,
+    "sell_notional": 12787.32,
+    "n_dropped_min_notional": 746,
+    "rounding_drift_one_sided": 0.02702739,
+    "final_drift_one_sided": 0.04455482,
+    "n_target_names": 1727,
+    "vix": 17.71,
+    "scale_event": false,
+    "tbill_symbol": "SGOV",
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002619,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.979029,
+      "limit": 1.038835
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00317,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.795418,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.001616,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 0.280836,
+      "limit": "0.280789 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   }
+  ],
+  "quant2": [
+   {
+    "decision_date": "2026-06-23",
+    "execution_date": "2026-06-24",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 38,
+    "n_buy": 20,
+    "n_sell": 18,
+    "buy_notional": 19363.33,
+    "sell_notional": 3258.01,
+    "n_dropped_min_notional": 270,
+    "rounding_drift_one_sided": 0.02740497,
+    "final_drift_one_sided": 0.02945901,
+    "n_target_names": 1698,
+    "vix": 19.49,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002509,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.513421,
+      "limit": 0.550497
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00183,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.781781,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.000965,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.26836,
+      "limit": "1.268552 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-06-24",
+    "execution_date": "2026-06-25",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 31,
+    "n_buy": 16,
+    "n_sell": 15,
+    "buy_notional": 5242.49,
+    "sell_notional": 2722.61,
+    "n_dropped_min_notional": 446,
+    "rounding_drift_one_sided": 0.02730453,
+    "final_drift_one_sided": 0.03218162,
+    "n_target_names": 1696,
+    "vix": 18.63,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CNTA"
+    ],
+    "held_without_price": [
+     "CNTA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001431,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.514136,
+      "limit": 0.551301
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00168,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.784108,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.007215,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.269972,
+      "limit": "1.269845 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "CNTA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-06-25",
+    "execution_date": "2026-06-26",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 43,
+    "n_buy": 25,
+    "n_sell": 18,
+    "buy_notional": 4585.28,
+    "sell_notional": 4350.04,
+    "n_dropped_min_notional": 539,
+    "rounding_drift_one_sided": 0.02758908,
+    "final_drift_one_sided": 0.03550474,
+    "n_target_names": 1691,
+    "vix": 18.89,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CNTA",
+     "CWAN"
+    ],
+    "held_without_price": [
+     "CWAN"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000375,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.515313,
+      "limit": 0.552623
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001583,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.785652,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.010522,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.270339,
+      "limit": "1.270309 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "CWAN"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-06-26",
+    "execution_date": "2026-06-29",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 81,
+    "n_buy": 39,
+    "n_sell": 42,
+    "buy_notional": 13878.94,
+    "sell_notional": 7426.57,
+    "n_dropped_min_notional": 587,
+    "rounding_drift_one_sided": 0.02775869,
+    "final_drift_one_sided": 0.0374705,
+    "n_target_names": 1690,
+    "vix": 18.41,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CNTA",
+     "CWAN",
+     "PRA"
+    ],
+    "held_without_price": [
+     "PRA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001388,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.521024,
+      "limit": 0.558536
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001689,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.789467,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.000499,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.268443,
+      "limit": "1.268773 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "PRA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-06-29",
+    "execution_date": "2026-06-30",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 67,
+    "n_buy": 27,
+    "n_sell": 40,
+    "buy_notional": 3936.35,
+    "sell_notional": 22058.58,
+    "n_dropped_min_notional": 615,
+    "rounding_drift_one_sided": 0.02786948,
+    "final_drift_one_sided": 0.03924229,
+    "n_target_names": 1686,
+    "vix": 17.65,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CWAN",
+     "PRA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006389,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.523927,
+      "limit": 0.561035
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001788,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796965,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.006946,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.273038,
+      "limit": "1.273115 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-06-30",
+    "execution_date": "2026-07-01",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 275,
+    "n_buy": 129,
+    "n_sell": 146,
+    "buy_notional": 20582.04,
+    "sell_notional": 34675.11,
+    "n_dropped_min_notional": 679,
+    "rounding_drift_one_sided": 0.02917895,
+    "final_drift_one_sided": 0.04385613,
+    "n_target_names": 1783,
+    "vix": 16.45,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "PRA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.012464,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.513412,
+      "limit": 0.547289
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001777,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.786654,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.013926,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.273243,
+      "limit": "1.273478 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-01",
+    "execution_date": "2026-07-02",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 411,
+    "n_buy": 211,
+    "n_sell": 200,
+    "buy_notional": 33850.14,
+    "sell_notional": 32572.88,
+    "n_dropped_min_notional": 621,
+    "rounding_drift_one_sided": 0.02842976,
+    "final_drift_one_sided": 0.04341491,
+    "n_target_names": 1777,
+    "vix": 16.59,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "held_without_price": [
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.011297,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.502772,
+      "limit": 0.537264
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001635,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.775038,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.008984,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.272267,
+      "limit": "1.271991 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 3,
+      "limit": 0,
+      "detail": "JHG, SEM, SILA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-02",
+    "execution_date": "2026-07-06",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 398,
+    "n_buy": 201,
+    "n_sell": 197,
+    "buy_notional": 30051.31,
+    "sell_notional": 32658.83,
+    "n_dropped_min_notional": 644,
+    "rounding_drift_one_sided": 0.02903649,
+    "final_drift_one_sided": 0.04527998,
+    "n_target_names": 1773,
+    "vix": 16.15,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.009399,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.501179,
+      "limit": 0.537673
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001783,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.771029,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.002849,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.26985,
+      "limit": "1.270010 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-06",
+    "execution_date": "2026-07-07",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 432,
+    "n_buy": 217,
+    "n_sell": 215,
+    "buy_notional": 34287.67,
+    "sell_notional": 43934.4,
+    "n_dropped_min_notional": 634,
+    "rounding_drift_one_sided": 0.02950549,
+    "final_drift_one_sided": 0.04527707,
+    "n_target_names": 1776,
+    "vix": 15.57,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "BLD",
+     "JHG",
+     "SEM",
+     "SILA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.009576,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.510564,
+      "limit": 0.546682
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001783,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.780978,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.003399,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.270414,
+      "limit": "1.270083 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-07",
+    "execution_date": "2026-07-08",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 394,
+    "n_buy": 196,
+    "n_sell": 198,
+    "buy_notional": 34414.12,
+    "sell_notional": 30694.47,
+    "n_dropped_min_notional": 692,
+    "rounding_drift_one_sided": 0.02806697,
+    "final_drift_one_sided": 0.04632115,
+    "n_target_names": 1680,
+    "vix": 16.13,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [
+     "ARTL"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003503,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.51668,
+      "limit": 0.555444
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00188,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.784049,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.009652,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.267368,
+      "limit": "1.267039 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "ARTL"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-08",
+    "execution_date": "2026-07-09",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 75,
+    "n_buy": 36,
+    "n_sell": 39,
+    "buy_notional": 8233.33,
+    "sell_notional": 6259.16,
+    "n_dropped_min_notional": 737,
+    "rounding_drift_one_sided": 0.0279344,
+    "final_drift_one_sided": 0.04532106,
+    "n_target_names": 1676,
+    "vix": 16.9,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003454,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.516982,
+      "limit": 0.553698
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001834,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.782671,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.002185,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.265689,
+      "limit": "1.265666 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-09",
+    "execution_date": "2026-07-10",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 63,
+    "n_buy": 28,
+    "n_sell": 35,
+    "buy_notional": 4794.83,
+    "sell_notional": 13926.3,
+    "n_dropped_min_notional": 726,
+    "rounding_drift_one_sided": 0.02828297,
+    "final_drift_one_sided": 0.04516139,
+    "n_target_names": 1673,
+    "vix": 15.84,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006073,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.524344,
+      "limit": 0.561452
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001865,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.791727,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.004624,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.267383,
+      "limit": "1.267144 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-10",
+    "execution_date": "2026-07-13",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 62,
+    "n_buy": 28,
+    "n_sell": 34,
+    "buy_notional": 4478.97,
+    "sell_notional": 9786.07,
+    "n_dropped_min_notional": 738,
+    "rounding_drift_one_sided": 0.02849021,
+    "final_drift_one_sided": 0.0448204,
+    "n_target_names": 1671,
+    "vix": 15.03,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.004199,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.523696,
+      "limit": 0.559822
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001829,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.792012,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.001128,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.268316,
+      "limit": "1.267960 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-13",
+    "execution_date": "2026-07-14",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 63,
+    "n_buy": 29,
+    "n_sell": 34,
+    "buy_notional": 11978.22,
+    "sell_notional": 4494.11,
+    "n_dropped_min_notional": 744,
+    "rounding_drift_one_sided": 0.02818717,
+    "final_drift_one_sided": 0.04434284,
+    "n_target_names": 1670,
+    "vix": 17.16,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000314,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.520315,
+      "limit": 0.557165
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001751,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.786413,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.008845,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.266097,
+      "limit": "1.265888 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-14",
+    "execution_date": "2026-07-15",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 58,
+    "n_buy": 27,
+    "n_sell": 31,
+    "buy_notional": 4997.4,
+    "sell_notional": 8084.54,
+    "n_dropped_min_notional": 741,
+    "rounding_drift_one_sided": 0.02828917,
+    "final_drift_one_sided": 0.04461045,
+    "n_target_names": 1671,
+    "vix": 16.5,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001919,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.521856,
+      "limit": 0.559561
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001837,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.788689,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.007349,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.266834,
+      "limit": "1.266482 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-15",
+    "execution_date": "2026-07-16",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 62,
+    "n_buy": 34,
+    "n_sell": 28,
+    "buy_notional": 5304.57,
+    "sell_notional": 9915.04,
+    "n_dropped_min_notional": 741,
+    "rounding_drift_one_sided": 0.02813349,
+    "final_drift_one_sided": 0.04436152,
+    "n_target_names": 1669,
+    "vix": 15.67,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CPRX",
+     "NUVL"
+    ],
+    "held_without_price": [
+     "CPRX",
+     "NUVL"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001014,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.521211,
+      "limit": 0.558865
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001866,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.787782,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.008864,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.266571,
+      "limit": "1.266514 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 2,
+      "limit": 0,
+      "detail": "CPRX, NUVL"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-16",
+    "execution_date": "2026-07-17",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 79,
+    "n_buy": 31,
+    "n_sell": 48,
+    "buy_notional": 9057.47,
+    "sell_notional": 6874.81,
+    "n_dropped_min_notional": 740,
+    "rounding_drift_one_sided": 0.02827128,
+    "final_drift_one_sided": 0.04464747,
+    "n_target_names": 1666,
+    "vix": 16.73,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CPRX",
+     "GTLS",
+     "NUVL"
+    ],
+    "held_without_price": [
+     "GTLS"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.003822,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.520537,
+      "limit": 0.557718
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001835,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.784749,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.018204,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.264212,
+      "limit": "1.264276 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "GTLS"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-17",
+    "execution_date": "2026-07-20",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 73,
+    "n_buy": 33,
+    "n_sell": 40,
+    "buy_notional": 14047.97,
+    "sell_notional": 5121.19,
+    "n_dropped_min_notional": 722,
+    "rounding_drift_one_sided": 0.0280203,
+    "final_drift_one_sided": 0.04451589,
+    "n_target_names": 1668,
+    "vix": 18.77,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CPRX",
+     "GTLS",
+     "NUVL"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.003201,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.520054,
+      "limit": 0.557948
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001755,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.781417,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.011687,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.261363,
+      "limit": "1.261481 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-20",
+    "execution_date": "2026-07-21",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 56,
+    "n_buy": 26,
+    "n_sell": 30,
+    "buy_notional": 6714.4,
+    "sell_notional": 3978.54,
+    "n_dropped_min_notional": 740,
+    "rounding_drift_one_sided": 0.02789314,
+    "final_drift_one_sided": 0.04462461,
+    "n_target_names": 1674,
+    "vix": 18.65,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "GTLS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002354,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.520525,
+      "limit": 0.55739
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001826,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.782078,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.005837,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.261553,
+      "limit": "1.261198 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-21",
+    "execution_date": "2026-07-22",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 75,
+    "n_buy": 35,
+    "n_sell": 40,
+    "buy_notional": 5327.0,
+    "sell_notional": 14925.77,
+    "n_dropped_min_notional": 724,
+    "rounding_drift_one_sided": 0.02832313,
+    "final_drift_one_sided": 0.04504733,
+    "n_target_names": 1672,
+    "vix": 17.05,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003006,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.529721,
+      "limit": 0.566435
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001924,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.792817,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.009944,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.263097,
+      "limit": "1.263117 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-22",
+    "execution_date": "2026-07-23",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 73,
+    "n_buy": 36,
+    "n_sell": 37,
+    "buy_notional": 7734.67,
+    "sell_notional": 6099.93,
+    "n_dropped_min_notional": 714,
+    "rounding_drift_one_sided": 0.02819178,
+    "final_drift_one_sided": 0.0446201,
+    "n_target_names": 1669,
+    "vix": 16.64,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "NSA"
+    ],
+    "held_without_price": [
+     "NSA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002002,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.527505,
+      "limit": 0.564155
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001875,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.791376,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.005756,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.26387,
+      "limit": "1.263922 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "NSA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-23",
+    "execution_date": "2026-07-24",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 61,
+    "n_buy": 35,
+    "n_sell": 26,
+    "buy_notional": 18663.05,
+    "sell_notional": 4524.02,
+    "n_dropped_min_notional": 721,
+    "rounding_drift_one_sided": 0.02802327,
+    "final_drift_one_sided": 0.04418174,
+    "n_target_names": 1671,
+    "vix": 18.7,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "NSA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000212,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.523442,
+      "limit": 0.559619
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001789,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.78573,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.00346,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.262288,
+      "limit": "1.262206 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-24",
+    "execution_date": "2026-07-27",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 68,
+    "n_buy": 25,
+    "n_sell": 43,
+    "buy_notional": 3931.66,
+    "sell_notional": 6770.45,
+    "n_dropped_min_notional": 725,
+    "rounding_drift_one_sided": 0.02800047,
+    "final_drift_one_sided": 0.04424178,
+    "n_target_names": 1671,
+    "vix": 18.58,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "NSA",
+     "TMHC"
+    ],
+    "held_without_price": [
+     "TMHC"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002506,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.521722,
+      "limit": 0.557088
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00175,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.785292,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.009666,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.26357,
+      "limit": "1.263257 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "TMHC"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-27",
+    "execution_date": "2026-07-28",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 76,
+    "n_buy": 39,
+    "n_sell": 37,
+    "buy_notional": 6202.41,
+    "sell_notional": 4914.8,
+    "n_dropped_min_notional": 696,
+    "rounding_drift_one_sided": 0.02800594,
+    "final_drift_one_sided": 0.04362965,
+    "n_target_names": 1676,
+    "vix": 18.67,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "AVNS",
+     "TMHC"
+    ],
+    "held_without_price": [
+     "AVNS"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.001738,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.525953,
+      "limit": 0.560919
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001892,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.789797,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.00556,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.263844,
+      "limit": "1.263902 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "AVNS"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-07-28",
+    "execution_date": "2026-07-29",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 109,
+    "n_buy": 47,
+    "n_sell": 62,
+    "buy_notional": 7206.04,
+    "sell_notional": 11015.74,
+    "n_dropped_min_notional": 675,
+    "rounding_drift_one_sided": 0.02810363,
+    "final_drift_one_sided": 0.04341549,
+    "n_target_names": 1674,
+    "vix": 18.21,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "AVNS",
+     "TMHC"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.003718,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.528785,
+      "limit": 0.562121
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001824,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.794174,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.014478,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.265389,
+      "limit": "1.265584 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-29",
+    "execution_date": "2026-07-30",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 225,
+    "n_buy": 98,
+    "n_sell": 127,
+    "buy_notional": 15042.39,
+    "sell_notional": 32499.22,
+    "n_dropped_min_notional": 707,
+    "rounding_drift_one_sided": 0.02699162,
+    "final_drift_one_sided": 0.04224574,
+    "n_target_names": 1675,
+    "vix": 20.66,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "AVNS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002056,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.483415,
+      "limit": 0.499305
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001637,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.71912,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.006987,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.235705,
+      "limit": "1.235609 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-30",
+    "execution_date": "2026-07-31",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 101,
+    "n_buy": 54,
+    "n_sell": 47,
+    "buy_notional": 8924.82,
+    "sell_notional": 25240.81,
+    "n_dropped_min_notional": 716,
+    "rounding_drift_one_sided": 0.02768674,
+    "final_drift_one_sided": 0.04286135,
+    "n_target_names": 1676,
+    "vix": 17.09,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.004917,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.489578,
+      "limit": 0.507503
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001767,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.7282,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.009296,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.238622,
+      "limit": "1.238843 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-07-31",
+    "execution_date": "2026-08-03",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 350,
+    "n_buy": 166,
+    "n_sell": 184,
+    "buy_notional": 28206.07,
+    "sell_notional": 36335.58,
+    "n_dropped_min_notional": 694,
+    "rounding_drift_one_sided": 0.02823773,
+    "final_drift_one_sided": 0.04441864,
+    "n_target_names": 1788,
+    "vix": 15.99,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "SKYT"
+    ],
+    "held_without_price": [
+     "SKYT"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.007091,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.464637,
+      "limit": 0.489575
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001609,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.706948,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.010849,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.242311,
+      "limit": "1.242157 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "SKYT"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-03",
+    "execution_date": "2026-08-04",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 461,
+    "n_buy": 233,
+    "n_sell": 228,
+    "buy_notional": 38131.21,
+    "sell_notional": 49098.23,
+    "n_dropped_min_notional": 639,
+    "rounding_drift_one_sided": 0.0284835,
+    "final_drift_one_sided": 0.04370919,
+    "n_target_names": 1791,
+    "vix": 15.86,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "SKYT"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.011139,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.459368,
+      "limit": 0.48899
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001778,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.706493,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.019666,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.247125,
+      "limit": "1.246978 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-04",
+    "execution_date": "2026-08-05",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 435,
+    "n_buy": 243,
+    "n_sell": 192,
+    "buy_notional": 40401.45,
+    "sell_notional": 47796.59,
+    "n_dropped_min_notional": 674,
+    "rounding_drift_one_sided": 0.02870887,
+    "final_drift_one_sided": 0.04581576,
+    "n_target_names": 1794,
+    "vix": 16.5,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "SKYT"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.005709,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.464631,
+      "limit": 0.49307
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001812,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.7165,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.010848,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.251869,
+      "limit": "1.252059 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-05",
+    "execution_date": "2026-08-06",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 395,
+    "n_buy": 194,
+    "n_sell": 201,
+    "buy_notional": 63050.5,
+    "sell_notional": 31821.86,
+    "n_dropped_min_notional": 658,
+    "rounding_drift_one_sided": 0.02936063,
+    "final_drift_one_sided": 0.04552288,
+    "n_target_names": 1791,
+    "vix": 15.81,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "EA"
+    ],
+    "held_without_price": [
+     "EA"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.004477,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.502392,
+      "limit": 0.541167
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001882,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.783322,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.002342,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.280931,
+      "limit": "1.280693 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "EA"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-06",
+    "execution_date": "2026-08-07",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 440,
+    "n_buy": 215,
+    "n_sell": 225,
+    "buy_notional": 38053.35,
+    "sell_notional": 37846.45,
+    "n_dropped_min_notional": 656,
+    "rounding_drift_one_sided": 0.0282127,
+    "final_drift_one_sided": 0.04508567,
+    "n_target_names": 1719,
+    "vix": 15.15,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "EA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006806,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.503958,
+      "limit": 0.545163
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001708,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.786684,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.003942,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.282727,
+      "limit": "1.282482 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-07",
+    "execution_date": "2026-08-10",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 137,
+    "n_buy": 78,
+    "n_sell": 59,
+    "buy_notional": 12235.96,
+    "sell_notional": 14038.29,
+    "n_dropped_min_notional": 689,
+    "rounding_drift_one_sided": 0.02885888,
+    "final_drift_one_sided": 0.04472928,
+    "n_target_names": 1731,
+    "vix": 14.9,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "EA"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.008987,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.505447,
+      "limit": 0.543495
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00184,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.791378,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.010566,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.285931,
+      "limit": "1.286168 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-10",
+    "execution_date": "2026-08-11",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 141,
+    "n_buy": 72,
+    "n_sell": 69,
+    "buy_notional": 12554.67,
+    "sell_notional": 10867.09,
+    "n_dropped_min_notional": 688,
+    "rounding_drift_one_sided": 0.02873093,
+    "final_drift_one_sided": 0.0442102,
+    "n_target_names": 1732,
+    "vix": 15.46,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.008072,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.502783,
+      "limit": 0.53689
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001691,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.790651,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.009764,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.287868,
+      "limit": "1.287571 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-11",
+    "execution_date": "2026-08-12",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 136,
+    "n_buy": 73,
+    "n_sell": 63,
+    "buy_notional": 16685.34,
+    "sell_notional": 9470.88,
+    "n_dropped_min_notional": 715,
+    "rounding_drift_one_sided": 0.02827791,
+    "final_drift_one_sided": 0.04415169,
+    "n_target_names": 1729,
+    "vix": 15.28,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00868,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.505249,
+      "limit": 0.535984
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001786,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.794396,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.01909,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.289147,
+      "limit": "1.289245 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-12",
+    "execution_date": "2026-08-13",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 143,
+    "n_buy": 79,
+    "n_sell": 64,
+    "buy_notional": 12306.18,
+    "sell_notional": 10050.59,
+    "n_dropped_min_notional": 715,
+    "rounding_drift_one_sided": 0.02808948,
+    "final_drift_one_sided": 0.04400699,
+    "n_target_names": 1726,
+    "vix": 14.55,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006456,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.504663,
+      "limit": 0.53579
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001721,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796266,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.01213,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.291603,
+      "limit": "1.291730 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-13",
+    "execution_date": "2026-08-14",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 117,
+    "n_buy": 61,
+    "n_sell": 56,
+    "buy_notional": 8307.64,
+    "sell_notional": 13580.79,
+    "n_dropped_min_notional": 716,
+    "rounding_drift_one_sided": 0.02812742,
+    "final_drift_one_sided": 0.04398305,
+    "n_target_names": 1723,
+    "vix": 14.63,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.006693,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.503088,
+      "limit": 0.535088
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001735,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.798258,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.010064,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.29517,
+      "limit": "1.294880 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-14",
+    "execution_date": "2026-08-17",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 87,
+    "n_buy": 43,
+    "n_sell": 44,
+    "buy_notional": 6990.81,
+    "sell_notional": 7009.91,
+    "n_dropped_min_notional": 711,
+    "rounding_drift_one_sided": 0.02784802,
+    "final_drift_one_sided": 0.04369436,
+    "n_target_names": 1718,
+    "vix": 14.25,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.007852,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.503319,
+      "limit": 0.536719
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001757,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.796702,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.015327,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.293382,
+      "limit": "1.293463 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-17",
+    "execution_date": "2026-08-18",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 60,
+    "n_buy": 37,
+    "n_sell": 23,
+    "buy_notional": 11087.71,
+    "sell_notional": 2999.49,
+    "n_dropped_min_notional": 740,
+    "rounding_drift_one_sided": 0.02810241,
+    "final_drift_one_sided": 0.04439052,
+    "n_target_names": 1717,
+    "vix": 15.19,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "AVB"
+    ],
+    "held_without_price": [
+     "AVB"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003951,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.498252,
+      "limit": 0.532865
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001732,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.790156,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.010207,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.291904,
+      "limit": "1.292195 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "AVB"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-18",
+    "execution_date": "2026-08-19",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 69,
+    "n_buy": 36,
+    "n_sell": 33,
+    "buy_notional": 12050.84,
+    "sell_notional": 4763.45,
+    "n_dropped_min_notional": 752,
+    "rounding_drift_one_sided": 0.02766762,
+    "final_drift_one_sided": 0.04409239,
+    "n_target_names": 1716,
+    "vix": 15.84,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "AVB"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.00188,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.490834,
+      "limit": 0.525919
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001621,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.780918,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.004301,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.290083,
+      "limit": "1.290159 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-19",
+    "execution_date": "2026-08-20",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 59,
+    "n_buy": 29,
+    "n_sell": 30,
+    "buy_notional": 4464.53,
+    "sell_notional": 6128.96,
+    "n_dropped_min_notional": 764,
+    "rounding_drift_one_sided": 0.02771742,
+    "final_drift_one_sided": 0.04445152,
+    "n_target_names": 1718,
+    "vix": 14.89,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "AVB"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000831,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.495199,
+      "limit": 0.532224
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.002441,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.785682,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.002483,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.290483,
+      "limit": "1.290632 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-20",
+    "execution_date": "2026-08-21",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 74,
+    "n_buy": 32,
+    "n_sell": 42,
+    "buy_notional": 14246.94,
+    "sell_notional": 6244.02,
+    "n_dropped_min_notional": 740,
+    "rounding_drift_one_sided": 0.02732862,
+    "final_drift_one_sided": 0.04352686,
+    "n_target_names": 1719,
+    "vix": 16.01,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "LBRDK",
+     "WBS"
+    ],
+    "held_without_price": [
+     "LBRDK",
+     "WBS"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00106,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.490539,
+      "limit": 0.5279
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.0016,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.780095,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.003966,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.289557,
+      "limit": "1.289433 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 2,
+      "limit": 0,
+      "detail": "LBRDK, WBS"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-21",
+    "execution_date": "2026-08-24",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 72,
+    "n_buy": 36,
+    "n_sell": 36,
+    "buy_notional": 5730.42,
+    "sell_notional": 8952.61,
+    "n_dropped_min_notional": 746,
+    "rounding_drift_one_sided": 0.02782327,
+    "final_drift_one_sided": 0.04429482,
+    "n_target_names": 1715,
+    "vix": 15.13,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "LBRDK",
+     "WBS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00308,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.497654,
+      "limit": 0.534584
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001692,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.789424,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.001203,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.29177,
+      "limit": "1.291391 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-24",
+    "execution_date": "2026-08-25",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 56,
+    "n_buy": 29,
+    "n_sell": 27,
+    "buy_notional": 7784.47,
+    "sell_notional": 4497.27,
+    "n_dropped_min_notional": 746,
+    "rounding_drift_one_sided": 0.02799161,
+    "final_drift_one_sided": 0.04482655,
+    "n_target_names": 1714,
+    "vix": 15.85,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "LBRDK",
+     "WBS"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000871,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.494962,
+      "limit": 0.531637
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001594,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.78599,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.008296,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.291028,
+      "limit": "1.290783 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-25",
+    "execution_date": "2026-08-26",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 77,
+    "n_buy": 37,
+    "n_sell": 40,
+    "buy_notional": 5340.96,
+    "sell_notional": 8617.18,
+    "n_dropped_min_notional": 748,
+    "rounding_drift_one_sided": 0.02828796,
+    "final_drift_one_sided": 0.04526802,
+    "n_target_names": 1713,
+    "vix": 15.45,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "TWO"
+    ],
+    "held_without_price": [
+     "TWO"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002079,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.497252,
+      "limit": 0.532699
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001606,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.789342,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.000363,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.29209,
+      "limit": "1.292349 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "TWO"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-26",
+    "execution_date": "2026-08-27",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 72,
+    "n_buy": 31,
+    "n_sell": 41,
+    "buy_notional": 5245.79,
+    "sell_notional": 6495.44,
+    "n_dropped_min_notional": 751,
+    "rounding_drift_one_sided": 0.02838091,
+    "final_drift_one_sided": 0.04547178,
+    "n_target_names": 1714,
+    "vix": 15.21,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "TWO"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002776,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.495188,
+      "limit": 0.531612
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001478,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.788331,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.000508,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.293143,
+      "limit": "1.293249 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-27",
+    "execution_date": "2026-08-28",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 77,
+    "n_buy": 30,
+    "n_sell": 47,
+    "buy_notional": 5179.13,
+    "sell_notional": 13670.62,
+    "n_dropped_min_notional": 740,
+    "rounding_drift_one_sided": 0.02839946,
+    "final_drift_one_sided": 0.04515772,
+    "n_target_names": 1713,
+    "vix": 14.51,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "FBRX",
+     "TWO"
+    ],
+    "held_without_price": [
+     "FBRX"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.007664,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.496277,
+      "limit": 0.531588
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001649,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.791725,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.007173,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.295448,
+      "limit": "1.295318 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "FBRX"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-08-28",
+    "execution_date": "2026-08-31",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 70,
+    "n_buy": 28,
+    "n_sell": 42,
+    "buy_notional": 6191.76,
+    "sell_notional": 6423.41,
+    "n_dropped_min_notional": 743,
+    "rounding_drift_one_sided": 0.02828489,
+    "final_drift_one_sided": 0.04468657,
+    "n_target_names": 1714,
+    "vix": 14.43,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "FBRX"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.0053,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.489414,
+      "limit": 0.524807
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001546,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.78423,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.003194,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.294816,
+      "limit": "1.295119 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-08-31",
+    "execution_date": "2026-09-01",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 267,
+    "n_buy": 139,
+    "n_sell": 128,
+    "buy_notional": 22059.86,
+    "sell_notional": 18342.88,
+    "n_dropped_min_notional": 742,
+    "rounding_drift_one_sided": 0.02866546,
+    "final_drift_one_sided": 0.04500616,
+    "n_target_names": 1805,
+    "vix": 14.92,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "FBRX"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.00276,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.479234,
+      "limit": 0.515766
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001565,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.770946,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.001651,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.291712,
+      "limit": "1.292062 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-01",
+    "execution_date": "2026-09-02",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 331,
+    "n_buy": 165,
+    "n_sell": 166,
+    "buy_notional": 29765.89,
+    "sell_notional": 24489.99,
+    "n_dropped_min_notional": 724,
+    "rounding_drift_one_sided": 0.02770512,
+    "final_drift_one_sided": 0.04536853,
+    "n_target_names": 1805,
+    "vix": 16.34,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CRNX"
+    ],
+    "held_without_price": [
+     "CRNX"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.001813,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.476505,
+      "limit": 0.508862
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001374,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.763913,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.007471,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.287408,
+      "limit": "1.287530 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "CRNX"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-09-02",
+    "execution_date": "2026-09-03",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 381,
+    "n_buy": 188,
+    "n_sell": 193,
+    "buy_notional": 30356.67,
+    "sell_notional": 36185.18,
+    "n_dropped_min_notional": 718,
+    "rounding_drift_one_sided": 0.02857179,
+    "final_drift_one_sided": 0.04627426,
+    "n_target_names": 1805,
+    "vix": 15.2,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "CRNX"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.002422,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.483586,
+      "limit": 0.518111
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001428,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.769055,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.00257,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.285469,
+      "limit": "1.285425 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-03",
+    "execution_date": "2026-09-04",
+    "status": "blocked",
+    "blocked_by": [
+     "reference_prices_complete"
+    ],
+    "n_orders": 393,
+    "n_buy": 182,
+    "n_sell": 211,
+    "buy_notional": 25996.2,
+    "sell_notional": 47449.89,
+    "n_dropped_min_notional": 709,
+    "rounding_drift_one_sided": 0.02895928,
+    "final_drift_one_sided": 0.04680063,
+    "n_target_names": 1803,
+    "vix": 14.32,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "APGE",
+     "CRNX"
+    ],
+    "held_without_price": [
+     "APGE"
+    ],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.007457,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.496555,
+      "limit": 0.533628
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001636,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.780791,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.015741,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.284235,
+      "limit": "1.284609 +- 0.02"
+     }
+    },
+    "failed_checks": [
+     {
+      "name": "reference_prices_complete",
+      "value": 1,
+      "limit": 0,
+      "detail": "APGE"
+     }
+    ]
+   },
+   {
+    "decision_date": "2026-09-04",
+    "execution_date": "2026-09-08",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 394,
+    "n_buy": 201,
+    "n_sell": 193,
+    "buy_notional": 35888.47,
+    "sell_notional": 29045.47,
+    "n_dropped_min_notional": 697,
+    "rounding_drift_one_sided": 0.02825219,
+    "final_drift_one_sided": 0.04646943,
+    "n_target_names": 1726,
+    "vix": 14.53,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "APGE"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003515,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.509998,
+      "limit": 0.548515
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001668,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.790824,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.007749,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.280826,
+      "limit": "1.280531 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-08",
+    "execution_date": "2026-09-09",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 73,
+    "n_buy": 45,
+    "n_sell": 28,
+    "buy_notional": 12019.74,
+    "sell_notional": 4304.34,
+    "n_dropped_min_notional": 733,
+    "rounding_drift_one_sided": 0.02790016,
+    "final_drift_one_sided": 0.04523227,
+    "n_target_names": 1732,
+    "vix": 15.72,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [
+     "APGE"
+    ],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003019,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.508725,
+      "limit": 0.545053
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001804,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.788644,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.012699,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.279919,
+      "limit": "1.279603 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-09",
+    "execution_date": "2026-09-10",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 56,
+    "n_buy": 25,
+    "n_sell": 31,
+    "buy_notional": 9141.41,
+    "sell_notional": 4979.66,
+    "n_dropped_min_notional": 763,
+    "rounding_drift_one_sided": 0.02759435,
+    "final_drift_one_sided": 0.04497967,
+    "n_target_names": 1731,
+    "vix": 16.46,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000802,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.502121,
+      "limit": 0.537324
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00173,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.781428,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.003935,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.279307,
+      "limit": "1.278929 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-10",
+    "execution_date": "2026-09-11",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 62,
+    "n_buy": 28,
+    "n_sell": 34,
+    "buy_notional": 11391.53,
+    "sell_notional": 6202.21,
+    "n_dropped_min_notional": 793,
+    "rounding_drift_one_sided": 0.02776199,
+    "final_drift_one_sided": 0.04560914,
+    "n_target_names": 1732,
+    "vix": 17.84,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.000268,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.496556,
+      "limit": 0.532666
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.00163,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.775015,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.00069,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.278459,
+      "limit": "1.278788 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-11",
+    "execution_date": "2026-09-14",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 95,
+    "n_buy": 39,
+    "n_sell": 56,
+    "buy_notional": 5297.94,
+    "sell_notional": 14504.16,
+    "n_dropped_min_notional": 775,
+    "rounding_drift_one_sided": 0.02804298,
+    "final_drift_one_sided": 0.0457775,
+    "n_target_names": 1737,
+    "vix": 15.84,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.003479,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.502264,
+      "limit": 0.538325
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001691,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.784743,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": -0.000244,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.282479,
+      "limit": "1.282422 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-14",
+    "execution_date": "2026-09-15",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 72,
+    "n_buy": 37,
+    "n_sell": 35,
+    "buy_notional": 9533.83,
+    "sell_notional": 5384.31,
+    "n_dropped_min_notional": 791,
+    "rounding_drift_one_sided": 0.02828213,
+    "final_drift_one_sided": 0.04607748,
+    "n_target_names": 1733,
+    "vix": 17.1,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.002876,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.504974,
+      "limit": 0.539943
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001713,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.786296,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.000961,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.281322,
+      "limit": "1.281605 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-15",
+    "execution_date": "2026-09-16",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 77,
+    "n_buy": 38,
+    "n_sell": 39,
+    "buy_notional": 13741.24,
+    "sell_notional": 5791.36,
+    "n_dropped_min_notional": 799,
+    "rounding_drift_one_sided": 0.02815438,
+    "final_drift_one_sided": 0.04639066,
+    "n_target_names": 1728,
+    "vix": 17.2,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": 0.000575,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.504798,
+      "limit": 0.539355
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001627,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.783877,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.004611,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.279078,
+      "limit": "1.279251 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   },
+   {
+    "decision_date": "2026-09-16",
+    "execution_date": "2026-09-17",
+    "status": "ok",
+    "blocked_by": [],
+    "n_orders": 83,
+    "n_buy": 37,
+    "n_sell": 46,
+    "buy_notional": 9577.48,
+    "sell_notional": 6541.37,
+    "n_dropped_min_notional": 804,
+    "rounding_drift_one_sided": 0.02809347,
+    "final_drift_one_sided": 0.04614536,
+    "n_target_names": 1727,
+    "vix": 17.71,
+    "scale_event": false,
+    "tbill_symbol": null,
+    "unpriced_in_target": [],
+    "held_without_price": [],
+    "key_checks": {
+     "net_dollar": {
+      "passed": true,
+      "value": -0.001183,
+      "limit": 0.05
+     },
+     "gross_stock": {
+      "passed": true,
+      "value": 0.502498,
+      "limit": 0.539762
+     },
+     "max_name_weight": {
+      "passed": true,
+      "value": 0.001678,
+      "limit": 0.0125
+     },
+     "gross_leverage": {
+      "passed": true,
+      "value": 1.780452,
+      "limit": 1.98
+     },
+     "beta_neutral": {
+      "passed": true,
+      "value": 0.001306,
+      "limit": 0.05
+     },
+     "core_leg": {
+      "passed": true,
+      "value": 1.277954,
+      "limit": "1.278222 +- 0.02"
+     }
+    },
+    "failed_checks": []
+   }
+  ]
+ },
+ "other_variants_summary": {
+  "M0_P1000": {
+   "summary": {
+    "quant1": {
+     "days": 60,
+     "days_blocked": 9,
+     "days_ok": 51,
+     "check_fail_days": {
+      "reference_prices_complete": 9
+     },
+     "orders_per_day": {
+      "median": 155.0,
+      "p95": 466.0,
+      "max": 484,
+      "min": 76
+     },
+     "dropped_min_notional_median": 172.5,
+     "final_drift_p95": 0.024745795499999997,
+     "scale_event_days": 0,
+     "days_with_unpriced_in_target": 24,
+     "days_with_held_without_price": 9,
+     "tbill_symbols": [
+      "SGOV"
+     ]
+    },
+    "quant2": {
+     "days": 60,
+     "days_blocked": 9,
+     "days_ok": 51,
+     "check_fail_days": {
+      "reference_prices_complete": 9
+     },
+     "orders_per_day": {
+      "median": 79.0,
+      "p95": 308.1,
+      "max": 330,
+      "min": 47
+     },
+     "dropped_min_notional_median": 193.0,
+     "final_drift_p95": 0.025009487,
+     "scale_event_days": 0,
+     "days_with_unpriced_in_target": 24,
+     "days_with_held_without_price": 9,
+     "tbill_symbols": []
+    }
+   },
+   "failure_events": [
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-15",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-16",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-05",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-17",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-20",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-03",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-15",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-16",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-05",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-17",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-20",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-03",
+     "check": "reference_prices_complete",
+     "value": 1
+    }
+   ],
+   "unexplained_failing_checks": []
+  },
+  "M1_U3000": {
+   "summary": {
+    "quant1": {
+     "days": 60,
+     "days_blocked": 18,
+     "days_ok": 42,
+     "check_fail_days": {
+      "reference_prices_complete": 18
+     },
+     "orders_per_day": {
+      "median": 169.5,
+      "p95": 247.6999999999999,
+      "max": 459,
+      "min": 55
+     },
+     "dropped_min_notional_median": 695.0,
+     "final_drift_p95": 0.0484677905,
+     "scale_event_days": 0,
+     "days_with_unpriced_in_target": 42,
+     "days_with_held_without_price": 18,
+     "tbill_symbols": [
+      "SGOV"
+     ]
+    },
+    "quant2": {
+     "days": 60,
+     "days_blocked": 19,
+     "days_ok": 41,
+     "check_fail_days": {
+      "reference_prices_complete": 19
+     },
+     "orders_per_day": {
+      "median": 79.5,
+      "p95": 126.14999999999993,
+      "max": 176,
+      "min": 33
+     },
+     "dropped_min_notional_median": 717.5,
+     "final_drift_p95": 0.045393848,
+     "scale_event_days": 0,
+     "days_with_unpriced_in_target": 42,
+     "days_with_held_without_price": 19,
+     "tbill_symbols": []
+    }
+   },
+   "failure_events": [
+    {
+     "account": "quant1",
+     "decision_date": "2026-06-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-06-25",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-06-26",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-01",
+     "check": "reference_prices_complete",
+     "value": 3
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-07",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-15",
+     "check": "reference_prices_complete",
+     "value": 2
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-16",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-22",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-27",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-31",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-05",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-20",
+     "check": "reference_prices_complete",
+     "value": 2
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-25",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-27",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-03",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-11",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-06-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-06-25",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-06-26",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-01",
+     "check": "reference_prices_complete",
+     "value": 3
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-07",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-15",
+     "check": "reference_prices_complete",
+     "value": 2
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-16",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-22",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-27",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-31",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-05",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-17",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-20",
+     "check": "reference_prices_complete",
+     "value": 2
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-25",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-27",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-03",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-11",
+     "check": "reference_prices_complete",
+     "value": 1
+    }
+   ],
+   "unexplained_failing_checks": []
+  },
+  "M1_P1000": {
+   "summary": {
+    "quant1": {
+     "days": 60,
+     "days_blocked": 10,
+     "days_ok": 50,
+     "check_fail_days": {
+      "beta_neutral": 1,
+      "reference_prices_complete": 9
+     },
+     "orders_per_day": {
+      "median": 183.0,
+      "p95": 253.25,
+      "max": 418,
+      "min": 87
+     },
+     "dropped_min_notional_median": 168.0,
+     "final_drift_p95": 0.025920250500000002,
+     "scale_event_days": 0,
+     "days_with_unpriced_in_target": 24,
+     "days_with_held_without_price": 9,
+     "tbill_symbols": [
+      "SGOV"
+     ]
+    },
+    "quant2": {
+     "days": 60,
+     "days_blocked": 8,
+     "days_ok": 52,
+     "check_fail_days": {
+      "reference_prices_complete": 8
+     },
+     "orders_per_day": {
+      "median": 99.0,
+      "p95": 145.2,
+      "max": 262,
+      "min": 38
+     },
+     "dropped_min_notional_median": 187.0,
+     "final_drift_p95": 0.02505999,
+     "scale_event_days": 0,
+     "days_with_unpriced_in_target": 24,
+     "days_with_held_without_price": 8,
+     "tbill_symbols": []
+    }
+   },
+   "failure_events": [
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-15",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-16",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-07-29",
+     "check": "beta_neutral",
+     "value": 0.051595
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-05",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-17",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-08-20",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant1",
+     "decision_date": "2026-09-03",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-15",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-16",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-07-24",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-05",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-17",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-08-20",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-01",
+     "check": "reference_prices_complete",
+     "value": 1
+    },
+    {
+     "account": "quant2",
+     "decision_date": "2026-09-03",
+     "check": "reference_prices_complete",
+     "value": 1
+    }
+   ],
+   "unexplained_failing_checks": []
+  }
+ }
+}

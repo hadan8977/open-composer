@@ -27,6 +27,9 @@ ACCOUNT_OPTION = typer.Option(..., "--account", help="quant1 or quant2")
 PRICES_FILE_OPTION = typer.Option(
     ..., "--prices-file", help='JSON {"official_close": {sym: px}, "snapshot_1545": {sym: px}}'
 )
+DATA_ROOT_OPTION = typer.Option(
+    None, "--data-root", help="equity-book root (default: OC_EQUITY_BOOK_DIR or the snapshot)"
+)
 
 
 def _fail(exc: Exception) -> typer.BadParameter:
@@ -203,6 +206,61 @@ def book_paper_reconcile(
         f"net_pnl={pnl['net_pnl']:.2f}"
     )
     console.print(f"daily file: {path}")
+
+
+@book_paper_app.command("targets")
+def book_paper_targets(
+    decision_date: str = typer.Option(..., "--decision-date", help="decision date D (a session)"),
+    variant: str | None = typer.Option(
+        None, "--variant", help="default: primary variant of the t20261002_book_v12 results.json"
+    ),
+    data_root: Path | None = DATA_ROOT_OPTION,
+    write: bool = typer.Option(False, "--write", help="write both target files (signal log)"),
+) -> None:
+    """Book v1.2 targets (F1 quant1, F2 quant2) of a decision date; no broker calls.
+
+    Without --write only a summary is printed.  Exit 2: data root not fresh to D; exit 3: refused.
+    """
+    from open_composer.book_paper import v12_targets as v12
+    from open_composer.book_paper.targets import BookTargetError, now_utc_text, write_target_file
+
+    root = project_root()
+    day = date.fromisoformat(decision_date)
+    try:
+        if v12.last_session(data_root) < day:
+            console.print(
+                f"data root last session {v12.last_session(data_root)} is before {day}: not fresh"
+            )
+            raise typer.Exit(2)
+        chosen = variant or v12.primary_variant()
+        bundle = v12.build_v12_bundle(
+            day, variant=chosen, data_root=data_root, logged_at_utc=now_utc_text()
+        )
+    except v12.TargetRefused as exc:
+        console.print(f"refused: {exc}")
+        raise typer.Exit(3) from exc
+    console.print(f"variant={chosen} data_root={bundle.data_root} vix={bundle.vix:.2f}")
+    for target in bundle.targets.values():
+        info = v12.summarize_target(target)
+        console.print(
+            f"{info['account']} {info['form']} names={info['n_names']} "
+            f"L={info['long']:.4f} S={info['short']:.4f} hedge={info['hedge_weight']:+.4f} "
+            f"{info['core_symbol']}={info['core_weight']:.4f} gross={info['gross_total']:.4f} "
+            f"beta={info['stock_beta']:+.4f} max_name={info['max_name_weight']:.4f} "
+            f"sha={info['payload_sha256'][:12]}"
+        )
+    for form, names in bundle.unpriced.items():
+        if names:
+            console.print(f"{form}: dropped without a close on D: {', '.join(names)}")
+    if not write:
+        console.print("summary only (use --write to log the target files)")
+        return
+    try:
+        for target in bundle.targets.values():
+            console.print(f"wrote {write_target_file(root, target)}")
+    except BookTargetError as exc:
+        console.print(f"refused: {exc}")
+        raise typer.Exit(3) from exc
 
 
 @book_paper_app.command("status")
