@@ -1335,7 +1335,7 @@
 - brief: reports/research/control/briefs/T-20261002-26.md
 
 ### T-20261002-27 下单引擎：对冲腿和可变 T-bill 腿（v1.2 的 F1/F2 形式，只 dry-run）
-- status: running（10-02 05:45 UTC 交互会话派子代理 R1002-0540-T27；定时轮不要取）
+- status: done（9eed9d4，05:39 UTC；05:58 主审复核：75 个测试通过（原 57 + 新 18）；v1 目标的哈希不变，因为 v1 载荷里不含新字段；beta 检查 = 股票 beta + 1.0 × 实际对冲权重；F1/F2 v2 的 dry-run 13 项检查全过）。下一步：生产端目标生成器 T-20261002-28，等 T-26 的 book_v12 模块提交后开始
 - priority: 1
 - not_before: 无
 - goal: T-16 引擎要求核心腿权重恰好为 1.0，并把 SPY 当股票检查净敞口、单名上限和 beta，表达不了 v1.2 的两种形式：F1 是股票、SPY 对冲加可变 T-bill；F2 是 SPY 1.0 加并入的对冲。本任务把引擎扩成 BookTarget v2：向后兼容，v1 哈希不变，检查分层。生产端目标生成器之后另立任务，复用 T-26 的模块。
@@ -1480,6 +1480,7 @@
 
 ### T-20261002-02 数据：从修好的归档重建价格类特征表（两区不变性检验），接着刷新依赖表
 - status: blocked（等 T-20261002-01 完成并经主审审核；简报由 07:07 或之后的主审轮按 T-01 的实际结果写，范围取决于被替换的 symbol 数）
+- 交互会话注（10-02 05:58 UTC）：T-20261002-26（交互会话子代理）在 10:00 UTC 前后可能跑 1.5–2.2 GB 的重任务。本任务每个重步骤开始前用 `ps aux --sort=-rss | head` 确认；有超过 1 GB 的进程就等它结束，不要并行（本机 3.9 GB）
 - priority: 1
 - not_before: T-20261002-01 以 done 开头，并且主审已审核
 - goal: 把组合线用到的价格类特征表接到修好的归档上，延伸到最近交易日。表包括 daily_broad、窄 daily、universe_broad、alpha101/191_broad，然后是 sec_fundamentals_daily、nsi、short_interest 和 SEC facts。给 T-22 的 live 目录和 D6 前向影子用。
