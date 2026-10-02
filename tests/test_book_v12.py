@@ -213,3 +213,44 @@ def test_tranche_target_hedge_scales_exactly_with_vix_and_zeroes_missing_fills()
     # short leg after the ETB restriction is -1 before the missing-fill zeroing
     assert calm.w_unit[calm.w_unit < 0].sum() <= 0.0
     assert calm.n_members == len(names)
+
+
+# ---------------------------------------------------------------------------
+# placebo arithmetic and regression helper (scripts)
+# ---------------------------------------------------------------------------
+def test_placebo_weights_match_tranche_target_on_permuted_scores():
+    from scripts.book_v12_placebo import placebo_weights
+
+    names, score, ind, elig, beta = _toy(60, seed=3)
+    symbols = names
+    fill_ok = np.ones(len(symbols), dtype=bool)
+    fill_ok[[5, 17]] = False
+    rng = np.random.default_rng(11)
+    perm = score.copy()
+    perm[:] = score.to_numpy()[rng.permutation(len(score))]
+    ref = bv.tranche_target(perm, ind, elig, symbols, fill_ok, beta, 25.0)
+    codes, uniq = pd.factorize(ind.reindex(names).fillna(-1).to_numpy())
+    w0, h = placebo_weights(
+        perm.to_numpy(),
+        codes,
+        len(uniq),
+        elig.to_numpy(),
+        fill_ok,
+        beta.clip(-1.0, 4.0).to_numpy(),
+        0.5,
+    )
+    np.testing.assert_allclose(w0, ref.w, atol=1e-14)
+    assert h == pytest.approx(ref.h, abs=1e-13)
+
+
+def test_newey_west_ols_recovers_exact_line_and_reports_r2_one():
+    from scripts.book_v12_score import nw_ols
+
+    rng = np.random.default_rng(1)
+    x = rng.standard_normal((200, 2))
+    y = 0.001 + x @ np.array([0.5, -0.3])
+    out = nw_ols(y, x, lag=5)
+    np.testing.assert_allclose(out["beta"], [0.001, 0.5, -0.3], atol=1e-10)
+    assert out["r2"] == pytest.approx(1.0)
+    noisy = nw_ols(y + 0.01 * rng.standard_normal(200), x, lag=5)
+    assert noisy["t"][1] > 10
