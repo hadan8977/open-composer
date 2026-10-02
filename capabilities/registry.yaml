@@ -248,6 +248,59 @@ capabilities:
       - native PRE rows use official created_at and updated_at system timestamps, including delayed publications
       - paper readiness requires an immutable official snapshot, marginal-lift and placebo evidence, and fail-closed missing-packet behavior
 
+  - id: macro.kalshi_public
+    kind: macro
+    status: trial
+    provider: kalshi
+    use_for: [macro_release_uncertainty, expectation_gap, regime_filter, weekly_research]
+    reliability: medium
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    supported_timeframes: [hourly, daily]
+    paper_ready_timeframes: []
+    fixture: data/fixtures/capabilities/kalshi_macro.jsonl
+    min_score: 0.9
+    source_urls:
+      api_base: https://api.elections.kalshi.com/trade-api/v2
+      historical_cutoff: https://api.elections.kalshi.com/trade-api/v2/historical/cutoff
+    collector: scripts/collect_prediction_markets.py
+    feature_builder: scripts/build_kalshi_release_uncertainty.py
+    caveats:
+      - the public market-data endpoints need no key; no order, account or login endpoint is used
+      - the fixture validates packet shape only and is not market or research evidence
+      - the live snapshot time is when we fetched it (fetched_at_utc), not when the market last traded; historical candlesticks are routed by /historical/cutoff and rows carry the endpoint used
+      - tail strikes can be stale or one-sided; spread and candle age travel with every derived distribution and wide-spread strikes fall back to the last trade or are dropped
+      - implied distributions on bin midpoints are an approximation of the published single-decimal value (about half a strike step of bias for CPI); thresholds, units and series differ by release
+      - a market that is cancelled, redefined or delayed (e.g. the 2025 shutdown) keeps its own close_time; release_date is derived from close_time and flagged where it differs
+      - LLM, news and event inputs must become point-in-time feature packets before they can affect trading behavior; these distributions are a research input, not a trade trigger
+      - paper readiness requires a forward shadow record from the hourly collector and a passed preregistered test (iteration h20261002_pm_macro_uncertainty)
+
+  - id: event.polymarket_public
+    kind: event
+    status: trial
+    provider: polymarket
+    use_for: [event_probability_context, macro_policy_expectations, weekly_research]
+    reliability: medium
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    supported_timeframes: [hourly, daily]
+    paper_ready_timeframes: []
+    fixture: data/fixtures/capabilities/polymarket_event.jsonl
+    min_score: 0.9
+    source_urls:
+      gamma_markets: https://gamma-api.polymarket.com/markets
+      clob_prices_history: https://clob.polymarket.com/prices-history
+    collector: scripts/collect_prediction_markets.py
+    caveats:
+      - Gamma API lists markets and current prices and CLOB /prices-history gives price history; both are public and need no key, wallet or login
+      - the fixture validates packet shape only and is not market or research evidence
+      - the snapshot time is when we fetched it (fetched_at_utc); Gamma updatedAt is the source's own stamp and can lag the book
+      - Polymarket is an offshore venue with a US relaunch; prices are a research input only and are never an order trigger
+      - multi-outcome groups are separate yes/no markets whose prices need not sum to one; liquidity and spread differ widely across the watchlist
+      - the watchlist (config/prediction_markets/polymarket_watchlist.yaml) is hand-curated and its market ids expire when markets resolve
+      - a registry row for generic odds-to-equity lead-lag remains evidence_too_weak (dir:prediction_market_crypto_as_equity_signal); this entry makes data available, it does not endorse that use
+      - LLM, news and event inputs must become point-in-time feature packets before they can affect trading behavior
+
   - id: news.alpha_vantage
     kind: news
     status: trial
