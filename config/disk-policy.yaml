@@ -1,0 +1,156 @@
+# Disk policy for this box (root partition /dev/vda1, 217 GB).
+# Enforced by scripts/disk_guard.py (hourly cron); rules in docs/runbook-disk.zh.md.
+#
+# Why: the root partition also carries the owner's live service /opt/quantcheck, and
+# /opt/gdrive-agent/README.md: a full root partition kills it. On 2026-10-02 the disk
+# reached 96% (31 GB raw minute archive already on Drive, 15 GB of caches, 8 GB /tmp
+# leftovers, 5 GB of task backups). Every large path now has a class and an action.
+#
+# Classes:
+#   cache  - regenerable; cleaned by a command or by age
+#   backup - task backups / void scratch; archived to Drive, verified, then deleted once
+#            expired (age limit, or `expired: true` set by a lead decision) and never
+#            while its hold_task is still open in the autonomous queue
+#   warm   - large datasets kept on Drive; deleted locally only at emergency level,
+#            replaced by a symlink into the read-only mount /mnt/gdrive
+#   hot    - in daily use; never touched (listed so they are not "unregistered")
+version: 1
+
+thresholds:
+  act_pct: 80          # hourly run acts at or above this usage
+  target_pct: 75       # actions stop once usage is at or below this
+  emergency_pct: 90    # warm datasets may be archived and removed
+  min_free_gb_heavy_job: 15   # scripts/run_capped.sh --min-free-gb default for research jobs
+  report_unregistered_gb: 1.0 # status lists unregistered dirs under data/ above this
+  backup_max_age_days: 7
+  tmp_max_age_days: 7
+
+drive:
+  remote_root: gdrive:agent-data      # rclone remote used for verification
+  mount_root: /mnt/gdrive             # read-only mount of remote_root
+  archive_prefix: archive/open-composer   # Drive path for archived backups
+
+# Deletion is only ever allowed under these roots ...
+allowed_roots:
+  - /root/codex-test/open-composer/data
+  - /tmp
+# ... and never under these (checked after resolving paths, symlinks are never followed)
+protected:
+  - /opt
+  - /etc
+  - /var/lib
+  - /root/.config
+  - /root/backup
+  - /root/.claude
+  - /root/.paseo
+  - /root/codex-test/open-composer/data/research/equity_book   # hash-guarded research snapshot
+  - /root/codex-test/open-composer/data/live/equity_book       # live book data root
+  - /root/codex-test/open-composer/data/sip/daily              # SIP daily archive
+  - /root/codex-test/open-composer/data/sec                    # another session's work
+  - /tmp/claude-0                                              # running agent task outputs
+
+caches:
+  - name: pip
+    path: /root/.cache/pip
+    command: ["python3", "-m", "pip", "cache", "purge"]
+  - name: uv-home
+    path: /root/.cache/uv
+    command: ["uv", "cache", "prune"]   # waits while a uv process reads the cache (no --force)
+    timeout_s: 300
+  - name: uv-tmp
+    path: /tmp/open-composer-uv-cache
+    command: ["uv", "cache", "prune"]
+    timeout_s: 300
+    env: {UV_CACHE_DIR: /tmp/open-composer-uv-cache}
+  - name: npm
+    path: /root/.npm/_cacache
+    command: ["npm", "cache", "clean", "--force"]
+  - name: journald
+    path: /var/log/journal
+    command: ["journalctl", "--vacuum-size=300M"]
+  - name: tmp-old
+    path: /tmp
+    max_age_days: 7     # newest mtime inside the entry must be older than this
+    keep_patterns:      # never removed by age
+      - "claude-*"
+      - "open-composer-uv-cache"
+      - "lead"
+      - "systemd-*"
+      - ".X*"
+      - ".ICE*"
+      - ".*-unix"
+      - "tmux-*"
+      - "paseo*"
+      - "snap-*"
+      - "*.sock"
+      - "*.lock"
+    archive_patterns:   # archived to Drive archive/open-composer/tmp/<name> and verified first
+      - "*backup*"
+      - "*.bundle"
+      - "*.tar"
+      - "*.tar.gz"
+      - "*.tgz"
+      - "*.zip"
+      - "*.dump"
+      - "*.sql"
+      - "*.sqlite"
+      - "*.db"
+
+backups:
+  # explicit entries first (lead decisions), then generic patterns
+  - path: data/live/backup-20261001
+    owner: T-20261001-21 (done 2026-10-02 01:26)
+    expired: true
+  - path: data/features/daily_backup_2026-09-17
+    owner: feature refresh of 2026-09-17 (superseded by T-20261001-21)
+    expired: true
+  - path: data/features/_t21_tmp
+    owner: T-20261001-21 (declared void by the 01:07 lead round, rebuilt by T-20261002-02)
+    expired: true
+  - path: data/features/_daily_broad_aliasdup_012649
+    owner: daily_broad alias dedup leftover (2026-09-17)
+    expired: true
+  - path: data/live/backup-sip-daily-20261002
+    owner: T-20261002-01 (rollback point of the archive repair)
+    hold_task: T-20261002-01
+  - path: data/live/failed-sip-daily-20261002
+    owner: T-20261002-01 (failed repair attempt kept for diagnosis)
+    hold_task: T-20261002-01
+  - glob: "data/**/backup-*"
+  - glob: "data/**/*_backup_*"
+  - glob: "data/**/failed-*"
+  - glob: "data/**/_*_tmp"
+
+warm:
+  # emergency only; the current and previous calendar year are never touched
+  - path: data/sip/minute/{year}
+    remote: datasets/sip/minute/{year}
+    years_back_min: 2
+    verify: size-only
+
+hot:
+  - data/sip/minute
+  - data/sip/daily
+  - data/features
+  - data/research
+  - data/live
+  - data/raw
+  - data/sip-delisted
+  - data/cache
+  - data/sec_ftd
+  - data/sip-hist     # symlink into /mnt/gdrive since 2026-10-02
+
+watch:
+  # report only (sizes in reports/ops/disk-status.json); never cleaned by this tool.
+  # measured 2026-10-02 07:14-07:26 UTC: repo 78 GB of 155 GB used; /usr 12, /root/.hermes 11,
+  # /root/.cache 9 (uv 3.0, whisper 2.1, playwright 1.3, camoufox 1.3), /opt/openwebui-venv 7.6,
+  # /root/.codex 4.1, /swapfile 4.1 GB. The read-only Drive mount caches reads in
+  # /root/.cache/rclone (up to 20 GB, evicted after 1 h idle).
+  - /root/codex-test/open-composer
+  - /root/.hermes
+  - /root/.cache
+  - /root/.codex
+  - /root/.claude
+  - /root/.paseo
+  - /opt/openwebui-venv
+  - /var/log
