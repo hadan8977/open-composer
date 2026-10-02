@@ -19,6 +19,7 @@ from open_composer.adapters.data.longbridge import (
     DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
     MAX_LONGBRIDGE_CANDLESTICKS,
 )
+from open_composer.book_paper.cli import book_paper_app
 from open_composer.config import project_root
 from open_composer.research import build_promotion_report, run_hybrid_adaptive_router_research
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
@@ -140,6 +141,7 @@ app.add_typer(project_app, name="project")
 app.add_typer(agent_app, name="agent")
 app.add_typer(factor_app, name="factor")
 app.add_typer(research_app, name="research")
+app.add_typer(book_paper_app, name="book-paper")
 research_app.add_typer(research_campaign_app, name="campaign")
 research_app.add_typer(research_iteration_app, name="iteration")
 research_app.add_typer(research_knowledge_app, name="knowledge")

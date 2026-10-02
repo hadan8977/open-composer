@@ -21,6 +21,7 @@ CURRENT_DOCS = {
     "docs/research-mission.zh.md",
     "docs/research-program.zh.md",
     "docs/equity-book-design.zh.md",
+    "docs/evaluation-standard.zh.md",
     "docs/research-autonomy.zh.md",
     "docs/plan-research-autonomy-2026-09-21.zh.md",
     "docs/alpha158-recovery-2026-09-21.zh.md",
