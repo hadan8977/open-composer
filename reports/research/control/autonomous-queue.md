@@ -1342,6 +1342,14 @@
 - done_when: `t20261002_book_v12/placebo-persistent.json` 已提交；默认模式的结果逐位不变。
 - brief: reports/research/control/briefs/T-20261002-29.md
 
+### T-20261002-42 下单引擎：book_paper 的撤单和清仓命令（紧急停止路径，只用假客户端）
+- status: running（10-02 08:16 UTC 交互会话派子代理 R1002-0816-T42；定时轮不要取）
+- priority: 1
+- not_before: 无
+- goal: 合同第 6 节要求首单前测过开关和撤单，第 7 节的停止规则也要有办法真正停下来。`oc book-paper` 目前没有撤单，也没有清仓。新增两个命令：`cancel` 只撤本书（`bk1-`）当天的未成交单，撤单不受 kill switch 限制；`flatten` 默认只演练、需要显式确认，按收盘竞价或盘中市价整股平掉全部持仓，跳过不可交易的持仓，有未成交单时拒绝。quant1 上的真实撤单测试在机主对检查表点头后由主审做，不在本任务内。
+- done_when: 两个命令和测试（至少 10 个）已提交，旧测试原样通过；报告给出真实撤单测试要用的命令。
+- brief: reports/research/control/briefs/T-20261002-42.md
+
 ### T-20261002-40 下单引擎：持仓里停牌、退市、被收购的股票不再卡住整份计划（frozen 持仓）
 - status: done（ab303e5；10-02 08:14 UTC 交互会话主审）
   - 已核对：
