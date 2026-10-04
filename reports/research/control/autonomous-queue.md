@@ -1694,7 +1694,7 @@
   - 2026-10-02 07:35 UTC 07:07 主审轮（Opus）登记并写简报。这是描述性分析，不涉及策略选择，不需要预注册；结论和续期建议由主审在结果出来后写。
 
 ### T-20261004-51 预测市场第二轮：Polymarket 财报超预期赔率 vs 公告窗口收益（h20261004_pm_earnings_beat_odds）
-- status: running（交互会话；01:26 派的子代理只做完文书（d646cea），01:33 被新消息打断；2026-10-04 07:41 UTC 改派独立 Paseo 代理 R1004-0741-T51 续做数据和检验；定时轮不要取）
+- status: done（交互会话主审 2026-10-04 08:25 UTC：按停止规则否定。A1 周 IC +0.019，t 0.43，30 周；置换百分位 64.2；净价差 −97 bp/对；安慰剂都无效；MDE 是周 IC 0.110、价差 227 bp。赔率本身有信息（AUC 0.81），但 15:00 ET 时股价已经反映。正对照按事件层 t 4.59 判通过，裁定写在 results.json。时间按 EDGAR 修正，见数据坑 #61。结果提交 2a05f83；登记 dir:prediction_market_earnings_beat_odds = refuted）
 - priority: 2
 - brief: reports/research/control/briefs/T-20261004-51.md
 - goal: 用 2025-09 至 2026-10 已结算的 1354 个 Polymarket 财报合约，检验公告前赔率在同周横截面上的排名，能否预测公告窗口相对 SPY 的超额收益。机主 10-02 要求持续迭代预测市场。
@@ -1739,7 +1739,7 @@
   - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。同一执行轮在 T-02 完成后可以接着跑本任务（不并行，重任务一次一个）。
 
 ### T-20261004-52 数据：修 8-K 财报事件表的受理时间（改用 EDGAR 索引页 Accepted，修复数据坑 #61）
-- status: ready
+- status: ready（交互会话安排；没有简报，定时轮不取）
 - priority: 3
 - not_before: T-20261004-51 以 done 开头（它在用这张表做只读匹配）
 - goal: `data/features/earnings_events/{2024,2025,2026}.parquet` 的 acceptance_utc 被转换了两次，比真实 UTC 晚 4 或 5 小时（数据坑 #61）。改 `scripts/build_earnings_events.py`：受理时间一律取 EDGAR 索引页的 Accepted（美东墙钟），再转成真实 UTC。重建三个年份分区，新增一列 `acceptance_source`。
@@ -1751,3 +1751,13 @@
 - notes:
   - 2026-10-04 08:19 UTC 交互会话（Opus）登记，没写单独简报：done_when 就是全部验收。请求频率控制在每秒 4 次以内，带真实 User-Agent。
   - 内存很小，不跑重任务。
+
+
+### T-20261004-53 预测市场第三轮：中期选举控制权赔率 → "Trump trades"（Goldstein-Li-Wang 2026 的样本外检验）＋ 前向影子到 11-04
+- status: running（交互会话 2026-10-04 08:25 UTC 派独立 Paseo 代理 R1004-0845-T53；定时轮不要取）
+- priority: 2
+- brief: reports/research/control/briefs/T-20261004-53.md
+- goal: 用论文原样的变换、资产和方向，检验 2026 中期选举众议院和参议院控制权赔率的日变化，能否预测次日"Trump trades"组合的收益。2025-01 至 2026-10-02 做回测；10-05 至 11-04 做前向影子，因为选前最后一个月赔率波动最大。
+- done_when: 文书冻结并通过 pre-backtest 检查；数据漏斗写清楚；H-M 和安慰剂按冻结规则算完；影子脚本和测试写好（cron 由交互会话安装）；已提交，标"待主审"。
+- notes:
+  - 2026-10-04 08:25 UTC 交互会话（Opus）登记。设计冻结在 6f6bd6c。功效有限：只有效应接近论文的夏普 1.95 时才检测得出来。
