@@ -1781,7 +1781,7 @@
 
 
 ### T-20261004-54 审计：SEC 日表 sue_series 的时点泄漏（数据坑 #62），量化它对 v1.2 earnings 主题和 M0 回测的影响
-- status: running（交互会话 2026-10-04 09:39 UTC 派独立 Paseo 代理 R1004-T54，简报 reports/research/control/briefs/T-20261004-54.md，范围扩大到 #62 全部季度梯列和 #63 回退市值；定时轮不要取）
+- status: done（交互会话主审 2026-10-04 16:32 UTC：接受。闸门 09:43 冻结（ad834a4），数字出来后未开：M0 平均形成 IC 近期 0.01095→0.01092（相对 −0.3%），压力窗 0.01544→0.01545；主题最大变化 value −0.00039（门槛 0.005）；综合分按日秩相关 p5 0.9990（门槛 0.98）。#62、#63 对 v1.2 M0 证据不重要，第 4 步未跑。提交 55de760、eb33e23、0530ab6）
 - brief: reports/research/control/briefs/T-20261004-54.md
 - priority: 2
 - goal: T-02 发现 sue_series 用的是最终的季度梯，迟到的 10-Q 会改写它申报日之前的历史 sue_eps 和 sue_rev（SHPH 的 09-24 申报改写了 67 行）。研究快照里的 earnings 主题（M0 九个主题之一）可能带有少量前视。按申报日逐日重建季度梯，得到严格时点的 sue，再比较 earnings 主题的 IC 和 M0 回测夏普。
@@ -1812,3 +1812,14 @@
 - done_when: `reports/research/program/earnings-events-timing-fix-2026-10-04/downstream.md` 和代码测试已提交，标"待主审"。
 - notes:
   - 2026-10-04 10:09 UTC 交互会话（Opus）登记。旧 bug 只会让时间变晚，不会前视：已有的正面结论仍成立，对时点敏感的负面结论可能是假阴性。
+
+
+### T-20261004-57 数据：live 面板的回退市值改用 t−1 前 252 日分桶中位数（数据坑 #63 的构建器修法）
+- status: ready（定时执行轮可取）
+- priority: 3
+- not_before: 2026-10-12（v1.2 模拟盘第一周不改 live 管线）
+- brief: reports/research/program/pit-audit-2026-10-04/live-builder-proposal.md（T-54 的建议，按它做）
+- goal: 让 live 面板的历史可复现：今天的年内中位规则每天都会改写 2026 年早期的行。live 在 D 的值本来就时点正确，T-54 测得改法对 M0 没有实质影响。#62（按申报日建梯）不在本任务，等下次动 SEC 构建器时一起做。
+- done_when: `build_equity_book_panel.py` 加开关（默认新规则，研究快照不重建），测试覆盖 round-half-even 分桶；live 根按新规则重建 2026 年后跑 `scripts/check_live_book_parity.py`，目标权重相关仍 ≥ 0.97；已提交，标"待主审"。
+- notes:
+  - 2026-10-04 16:32 UTC 交互会话（Opus）登记。T-54 发现分桶实际是 round-half-even(adv_rank/250)，不是整除；年中位规则能 100% 复现快照（2016–25）。
