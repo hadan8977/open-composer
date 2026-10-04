@@ -1,0 +1,65 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261004_book_v13_tc/candidate-manifest.json",
+  "candidate_manifest_sha256": "c2b398a8d5dc7fcd633da724e56ad21478ba5f8c48554f4e3eb478a2861816f2",
+  "cost_table_path": "reports/research/iterations/t20261004_book_v13_tc/cost-table.json",
+  "created_at": "2026-10-04T01:25:48.829069+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261004_book_v13_tc/data-feasibility.json",
+  "data_feasibility_sha256": "15b797efa5f47ea993ef564391e11a80292906d40d56f007ee9ff12e6f75fdbc",
+  "evaluation_report_paths": [
+    "reports/research/iterations/t20261004_book_v13_tc/results.json",
+    "reports/research/iterations/t20261004_book_v13_tc/report.md"
+  ],
+  "iter_id": "t20261004_book_v13_tc",
+  "paths": [
+    {
+      "benchmark_family": [
+        "b0_full_rebalancing_t25_r6_identity",
+        "paired_daily_net_difference_newey_west_lag5",
+        "two_x_cost_replay_same_paths",
+        "account_layer_f1_overlay_and_f2_ir_vs_b0",
+        "other_three_v12_variants_selected_rule_only",
+        "dsr_15_trial_family_and_116_trial_program_disclosure",
+        "within_date_score_permutation_placebo_20_seeds_selected_rule"
+      ],
+      "candidate_count": 5,
+      "hypothesis_refs": [
+        "T-20261004-01"
+      ],
+      "name": "cost_aware_trading_rules_book_v13",
+      "parameters": {
+        "construction": [
+          "v1.2 / T-25 R6 unchanged: M0 theme equal weight composite, industry-demeaned rank-normal weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1"
+        ],
+        "cost": [
+          "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6"
+        ],
+        "exits": [
+          "names whose target is 0 (left universe, short not easy-to-borrow, no fill price) are closed at the refresh; a name that is not short-eligible is never held short"
+        ],
+        "trading_rule": [
+          "P2: x_new = x_old + 0.5 (w_tgt - x_old) for target members, hedge recomputed on x_new",
+          "P3: x_new = x_old + (1/3) (w_tgt - x_old) for target members, hedge recomputed on x_new",
+          "P2V: unit book u_new = u_old + 0.5 (w_unit - u_old) with u_old = x_old / s_prev, then x_new = s_t u_new (VIX scale applied at once)",
+          "N25: x_new = clip(x_old, w_tgt - d, w_tgt + d), d = 0.25 x population SD of the nonzero target weights at that refresh",
+          "N50: x_new = clip(x_old, w_tgt - d, w_tgt + d), d = 0.50 x population SD of the nonzero target weights at that refresh"
+        ],
+        "universe": [
+          "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t"
+        ],
+        "windows": [
+          "recent 2024-01-08..2026-09-15 and stress 2017-10-02..2023-08-31 both decide (+0.10 offset-median net Sharpe each); A, B and full reported"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+  "spec_hash": "d4adc4b51ce39fd5b5eaafd7ee3345e3bdfa6d2ff0e0d8917003fab5c208e20e",
+  "strategy_name": "t20261004_book_v13_tc",
+  "total_candidate_budget": 5,
+  "trial_ledger_paths": [
+    "reports/research/iterations/t20261004_book_v13_tc/identity.json",
+    "reports/research/iterations/t20261004_book_v13_tc/trial-ledger.json"
+  ]
+}

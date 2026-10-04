@@ -1,0 +1,159 @@
+{
+  "candidate_count": 5,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V13_P2",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "cost_aware_trading_rules_book_v13",
+      "parameters": {
+        "construction": "v1.2 / T-25 R6 unchanged: M0 theme equal weight composite, industry-demeaned rank-normal weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "exits": "names whose target is 0 (left universe, short not easy-to-borrow, no fill price) are closed at the refresh; a name that is not short-eligible is never held short",
+        "trading_rule": "P2: x_new = x_old + 0.5 (w_tgt - x_old) for target members, hedge recomputed on x_new",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress 2017-10-02..2023-08-31 both decide (+0.10 offset-median net Sharpe each); A, B and full reported"
+      },
+      "path": "cost_aware_trading_rules_book_v13",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V13_P3",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "cost_aware_trading_rules_book_v13",
+      "parameters": {
+        "construction": "v1.2 / T-25 R6 unchanged: M0 theme equal weight composite, industry-demeaned rank-normal weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "exits": "names whose target is 0 (left universe, short not easy-to-borrow, no fill price) are closed at the refresh; a name that is not short-eligible is never held short",
+        "trading_rule": "P3: x_new = x_old + (1/3) (w_tgt - x_old) for target members, hedge recomputed on x_new",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress 2017-10-02..2023-08-31 both decide (+0.10 offset-median net Sharpe each); A, B and full reported"
+      },
+      "path": "cost_aware_trading_rules_book_v13",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V13_P2V",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "cost_aware_trading_rules_book_v13",
+      "parameters": {
+        "construction": "v1.2 / T-25 R6 unchanged: M0 theme equal weight composite, industry-demeaned rank-normal weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "exits": "names whose target is 0 (left universe, short not easy-to-borrow, no fill price) are closed at the refresh; a name that is not short-eligible is never held short",
+        "trading_rule": "P2V: unit book u_new = u_old + 0.5 (w_unit - u_old) with u_old = x_old / s_prev, then x_new = s_t u_new (VIX scale applied at once)",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress 2017-10-02..2023-08-31 both decide (+0.10 offset-median net Sharpe each); A, B and full reported"
+      },
+      "path": "cost_aware_trading_rules_book_v13",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V13_N25",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "cost_aware_trading_rules_book_v13",
+      "parameters": {
+        "construction": "v1.2 / T-25 R6 unchanged: M0 theme equal weight composite, industry-demeaned rank-normal weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "exits": "names whose target is 0 (left universe, short not easy-to-borrow, no fill price) are closed at the refresh; a name that is not short-eligible is never held short",
+        "trading_rule": "N25: x_new = clip(x_old, w_tgt - d, w_tgt + d), d = 0.25 x population SD of the nonzero target weights at that refresh",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress 2017-10-02..2023-08-31 both decide (+0.10 offset-median net Sharpe each); A, B and full reported"
+      },
+      "path": "cost_aware_trading_rules_book_v13",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V13_N50",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "cost_aware_trading_rules_book_v13",
+      "parameters": {
+        "construction": "v1.2 / T-25 R6 unchanged: M0 theme equal weight composite, industry-demeaned rank-normal weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "exits": "names whose target is 0 (left universe, short not easy-to-borrow, no fill price) are closed at the refresh; a name that is not short-eligible is never held short",
+        "trading_rule": "N50: x_new = clip(x_old, w_tgt - d, w_tgt + d), d = 0.50 x population SD of the nonzero target weights at that refresh",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress 2017-10-02..2023-08-31 both decide (+0.10 offset-median net Sharpe each); A, B and full reported"
+      },
+      "path": "cost_aware_trading_rules_book_v13",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-04T01:25:48.827655+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261004_book_v13_tc",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261004_book_v13_tc.yaml": "d4adc4b51ce39fd5b5eaafd7ee3345e3bdfa6d2ff0e0d8917003fab5c208e20e"
+  }
+}

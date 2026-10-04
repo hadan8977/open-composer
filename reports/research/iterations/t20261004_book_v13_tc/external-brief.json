@@ -1,0 +1,160 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "cost_aware_trading_rules_book_v13",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261004_book_v13_tc.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261004-01",
+      "source_urls": [
+        "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261004_book_v13_tc",
+  "objective": "Equity book v1.3 candidate: can a preregistered cost-aware trading rule (Garleanu-Pedersen partial adjustment at rate 1/2 or 1/3, the same on the unit book with the VIX scale applied at once, or a Novy-Marx-Velikov style no-trade band of 0.25 / 0.50 weight SD) raise the net Sharpe of the unchanged v1.2 primary book M0_U3000 by at least 0.10 in both the recent (2024-01-08..2026-09-15) and the stress (2017-10-02..2023-08-31) window, against full rebalancing (B0, R6 identity), with a paired Newey-West t >= 2, and keep the gain in the account layer (whole shares, $100 minimum order) so the paper book trades cheaper without changing its signal.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "gp_2013_dynamic_trading_aim_partial_adjustment",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf"
+    },
+    {
+      "claim_id": "nmv_2016_buy_hold_spread_cost_mitigation",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf"
+    },
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v13_tc.jsonl",
+      "source_url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261004_book_v13_tc.yaml",
+  "sources": [
+    {
+      "claim_id": "gp_2013_dynamic_trading_aim_partial_adjustment",
+      "core_claim": "Garleanu and Pedersen (NBER w15205, 2009; Journal of Finance 2013): with predictable returns and transaction costs the optimal policy trades partially towards an aim portfolio at a fixed rate a/lambda < 1 that falls with costs and rises with risk aversion (Proposition 2, eq. 7-10); the aim is an exponential average of current and expected future Markowitz portfolios, so predictors with slower alpha decay get more weight (Proposition 3). In their commodity-futures application (Table II, benchmark costs) the Markowitz portfolio has gross Sharpe 0.83 and net -9.84, the dynamic optimum 0.62 gross / 0.58 net, and the best static partial-adjustment rule (3% weight on Markowitz per day) 0.58 / 0.46; the dynamic net Sharpe is about 20% above the best static strategy because it under-weights the fast (2.4-day half-life) signal.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Rules P2, P3 and P2V are the static fixed-rate form of Proposition 2 applied per tranche to the unchanged M0 target; the persistence-tilted aim (Proposition 3) is deferred to a later contract because it changes the composite.",
+      "published_or_updated_at": "2009-08-01",
+      "reflection": "Commodity futures, daily data, quadratic costs and a 5-day signal; our book is weekly, mostly slow signals, with spread plus square-root impact, so the size of the gain does not transfer, only the form of the rule.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf"
+    },
+    {
+      "claim_id": "nmv_2016_buy_hold_spread_cost_mitigation",
+      "core_claim": "Novy-Marx and Velikov (A Taxonomy of Anomalies and Their Trading Costs, August 2015 version; RFS 2016), 1973-2012 with effective-spread costs: a buy/hold spread (a stricter rule to enter a position than to keep it, e.g. 10%/20% deciles) is the most effective cost-mitigation technique; for a UMD-like factor it earns 0.77%/month gross, 0.26% costs, 0.51% net, against 0.62 / 0.26 / 0.37 for staggered quarterly partial rebalancing and 0.66 / 0.35 / 0.31 for trading only a low-cost universe (Table 5): the same cost saving as lower-frequency staggered rebalancing while giving up less gross return.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Rules N25 and N50 are the continuous-weight analogue (a no-trade band around each name's target); v1.2's five weekly tranches are already a form of staggered partial rebalancing, which this paper ranks below the buy/hold spread.",
+      "published_or_updated_at": "2015-08-01",
+      "reflection": "Decile sorts with monthly rebalancing and 1973-2012 effective spreads; a band on continuous rank weights is an analogue, not the tested rule; 10%/20% in rank terms is roughly a 0.44 standard-deviation band in normal scores at the 80th-90th percentile, which motivates the 0.25 and 0.50 band sizes.",
+      "source_type": "paper",
+      "url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf"
+    },
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line. v1.3: eq. (20) starts from the grown (drifted) position and trades toward an aim, the form of rules P2/P3/P2V.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "published_or_updated_at": "2018-08-01",
+      "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+      "source_type": "paper",
+      "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "credibility": "primary_broker_documentation",
+      "project_applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "published_or_updated_at": "unknown",
+      "reflection": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    }
+  ],
+  "spec_hash": "d4adc4b51ce39fd5b5eaafd7ee3345e3bdfa6d2ff0e0d8917003fab5c208e20e",
+  "strategy_name": "t20261004_book_v13_tc",
+  "topic_coverage": [
+    "dynamic_trading_partial_adjustment_aim_portfolio",
+    "buy_hold_spread_no_trade_band_cost_mitigation",
+    "cost_aware_ml_portfolio_implementable_frontier",
+    "trading_cost_square_root_impact",
+    "anomaly_net_of_cost_decay",
+    "professional_longshort_net_sharpe_benchmarks",
+    "factor_theme_replication_slow_signals",
+    "broker_margin_rules_reg_t"
+  ]
+}

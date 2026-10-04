@@ -1,0 +1,2253 @@
+   A Taxonomy of Anomalies and their Trading Costs
+
+                            Robert Novy-Marx                   Mihail Velikov
+
+                                               August, 2015
+
+
+                                                    Abstract
+
+           We study the after-trading-cost performance of anomalies, and effectiveness of trans-
+       action cost mitigation techniques. Introducing a buy/hold spread, with more stringent re-
+       quirements for establishing positions than for maintaining them, is the most effective cost
+       mitigation technique. Most anomalies with turnover less than 50% per month generate sig-
+       nificant net spreads when designed to mitigate transaction costs; few with higher turnover
+       do. The extent to which new capital reduces strategy profitability is inversely related to
+       turnover, and strategies based on size, value, and profitability have the greatest capacities
+       to support new capital. Transaction costs always reduce strategy profitability, increasing
+       data snooping concerns.
+
+       JEL classification: G12.
+       Keywords: Anomalies, Trading Costs, Performance Evaluation, Market Efficiency.
+
+
+
+
+   
+      The views expressed in this paper are those of the authors and do not necessarily reflect the position of the
+Federal Reserve Bank of Richmond or the Federal Reserve System. We thank Ken French, Milena Novy-Marx,
+the editor, and two anonymous referees for discussions and comments. All mistakes are ours alone.
+    
+      Simon Business School, University of Rochester, 500 Joseph C. Wilson Blvd., Box 270100, Rochester, NY
+14627. Email: robert.novy-marx@simon.rochester.edu.
+    
+      Federal Reserve Bank of Richmond, 502 S Sharp St, Baltimore, MD 21201.                         Email: mi-
+hail.velikov@rich.frb.org.
+1. Introduction
+This paper provides a taxonomy of the most important anomalies, calculates the cost of trad-
+ing each strategy, and quantifies the capacity each strategy has to attract new capital before
+they become unprofitable for marginal traders. It also studies several transaction cost mit-
+igation techniques. It finds that while transaction costs dramatically reduce the profitabil-
+ity of many anomalies, especially those with high turnover, designing strategies to minimize
+transaction costs significantly reduces these costs. It also shows that while anomaly spreads
+are often higher for smaller stocks, these stocks are significantly more expensive to trade.
+Equal-weighted portfolio results, popular in the academic literature because they are frequently
+stronger than their value-weighted counterparts, are consequently misleading and should be
+viewed skeptically. Because equal-weighted strategies take disproportionately large positions
+in small stocks that are expensive to trade, equal-weighting often results in a deterioration of
+net performance.
+   Over the last 30 years academic researchers have documented hundreds of cross-sectional
+“anomalies,” a term which has come to mean size, value, momentum, and any other strategy
+that generates a significant positive alpha relative to a four-factor model that accounts for these
+first three. The incentives to find these strategies are high both within academia (publications
+and tenure) and on the street (a marketable story and a bigger paycheck). This raises significant
+data snooping concerns. Harvey, Liu and Zhu (2014) argue on econometric grounds that three
+should be the new two for t-statistics, and conclude that “most claimed research findings in
+financial economics are likely false.” This paper ignores transaction costs, however, meaning
+that even the spreads reported in the literature often dramatically overstate the profitability of
+attempting to trade these strategies.
+   McLean and Pontiff (2014) study 82 anomalies, and find a 35% post-publication reduction
+in average strategy performance. They attribute less than a third of this decay to statistical bias,
+and the rest to price pressure by newly aware investors, arguing that their results are “consistent
+with costly (limited) arbitrage,” because post-publication return declines are more pronounced
+for strategies that disproportionately take positions in stocks that are easier to trade. Chordia,
+
+                                                 1
+Subrahmanyam and Tong (2014) find even greater recent performance deterioration, which
+they attribute to increased arbitrage activity. They report that the expected returns to a portfolio
+of prominent anomalies has fallen by half since decimalization.
+   Limits to arbitrage are important for addressing questions related to the degree of market
+efficiency. Market anomalies are often used as evidence against efficiency. Arbitrage forces
+help keep markets efficient, but anomalies will not attract arbitrage capital if they are not actu-
+ally profitable to trade. In this case the existence of anomalies indicates suboptimal behavior
+on the part of some individual traders, but does not suggest irrationality on market participants
+more broadly. The existence of anomalies that can be profitably traded consequently presents
+a stronger test of market efficiency.
+   Several authors have studied the limits trading costs impose when implementing momen-
+tum strategies. Lesmond, Schill and Zhou (2004) argue that the large gross spreads observed
+on momentum trades create an “illusion of profit opportunity when, in fact, none exists.” Ko-
+rajczyk and Sadka (2004) consider the price impact of trading momentum, and conclude that
+it would only be profitable to trade on a very small scale. These papers study the momentum
+strategies previously proposed by the literature, however, not strategies designed to minimize
+transaction costs. More recently Frazzini, Israel and Moskowitz (2014) have argued that “actual
+trading costs are less than a tenth as large as, and therefore the potential scale of these strategies
+is more than an order of magnitude larger than, previous studies suggest,” and conclude that the
+strategy is “robust [and] implementable,” but their study is conducted using proprietary data
+that covers a relatively short time-series, limited to larger stocks. No study provides a compre-
+hensive analysis of the cost of trading more than a few of the known anomalies, especially over
+longer horizons or using the entire cross-section of stocks.
+   We consider a large array of well known anomalies, evaluating their after-transaction cost
+performance over long horizons and across different types of stocks. To do this we develop a
+new performance metric. This metric measures the extent to which the test strategy (i.e., the
+asset being investigated) improves the investment opportunity set, accounting for transaction
+costs, of an investor that already has access to a set of potential explanatory strategies. Specif-
+
+
+                                                  2
+ically, we evaluate a strategy using the average abnormal return of the mean-variance efficient
+portfolio of the strategy and potential explanatory factors, levered to hold one dollar of the
+test asset, relative to the mean-variance efficient portfolio of the potential explanatory factors
+alone. This measure agrees exactly with the common notion of alpha when trading is friction-
+less. Unlike the common notion of alpha, however, which can be misleading in the presence
+of trading frictions, the measure provides unambiguous information about the extent to which
+introducing the test asset improves the investment frontier.
+   We also evaluate three simple strategies for reducing transaction costs: limiting trading to
+low expected transaction costs stocks, reduced rebalancing frequencies, and the introduction
+of a buy/hold spread that makes the criterion for entering into a position more stringent that
+the criteria for maintaining a position. We find that for most of the anomalies we consider the
+buy/hold spread is the most effective cost mitigation technique, though for very high turnover
+strategies, for which transaction cost mitigation is most important, a combination of all three
+techniques yields greater performance enhancements.
+   Round trip transaction costs for typical value-weighted strategies average in excess of 50
+basis points, and though these have fallen over the last decade they can be significantly higher
+for strategies that trade disproportionately in high transaction cost stocks such as the anomalies
+based on idiosyncratic volatility or distress. Transaction costs consequently reduce realized
+spreads by more than 1% of the monthly one-sided turnover. That is, if the long side of a strat-
+egy turns over 20% per month, the realized long/short spread will be at least 20 basis points
+per month lower than the gross spread, and the statistical significance of the spread will be
+reduced proportionately. Transaction costs for equal-weighted strategies are generally two to
+three times higher, and are thus often less profitable to implement, despite frequently looking
+stronger ignoring transaction costs. While many of the strategies that we study remain signifi-
+cantly profitable after accounting for transaction costs, only two of the strategies that have more
+than 50% one-sided monthly turnover do. In particular, the high turnover strategies based on
+combined signals of industry momentum and industry-relative reversals, and the strategy that
+trades industry-relative reversals exclusively among low volatility stocks, have significant net
+
+
+                                                3
+spreads, when designed with trading costs mitigation in mind. In all cases transaction costs sig-
+nificantly reduce the anomalies’ profitability and significance. This greatly increases concerns
+related to data snooping; while many of the strategies’ net excess returns remain significant at
+the t-statistic greater than two level, far fewer of the strategies generate net excess spreads with
+t-statistics greater than three.
+    Finally, while we are primarily interested in the marginal profitability of anomalies (i.e., the
+profits a small trader could actually have realized), we also consider the capacity each strategy
+has to attract new capital. In particular, we quantify how much new capital could be devoted
+to trading each strategy before marginal traders, defined as those who trade latest, would no
+longer find the strategies profitable. A simple, back-of-the-envelope calculation suggests that
+capacities should decrease with strategy turnover. Our empirical results are consistent with
+this calculation. Low turnover strategies tend to have higher capacities. Strategies based on
+size and profitability could both attract hundreds of billions of dollars of new arbitrage capital
+(i.e., in excess of $100 billion on each the long and short sides) before these strategies became
+unprofitable. Value has a capacity to absorb new capital roughly half as large. Mid-turnover
+strategies have capacities an order of magnitude smaller. For example, momentum’s profitabil-
+ity disappears when roughly $5 billion of new capital, on each the long and short sides, pursues
+the strategy. The few high-frequency strategies that remain profitable after accounting for ef-
+fective spreads have capacities still an order of magnitude smaller, on the order of only a few
+hundred million dollars.
+
+
+
+2. Trading Cost Model
+When evaluating anomaly performance we calculate transactions costs using the effective bid-
+ask spread measure proposed by Hasbrouck (2009). These costs are estimated using a Bayesian
+Gibbs sampler on a generalized Roll (1984) model of stock price dynamics. Roll’s model can
+
+
+
+
+                                                 4
+be formally defined as:
+
+
+                                         Vt D Vt 1 C "t                                        (1)
+
+                                         Pt D Vt C cQt                                         (2)
+
+
+where Vt is the underlying “efficient value” (the log quote midpoint prevailing prior to trade t),
+Pt is the observed trade price, Qt is a random indicator for the direction of the trade that takes
+the value one (minus one) if the trade took place at the ask (bid), "t is a random disturbance
+reflecting public information about the stock, and c is the effective cost of trading. The previous
+equations imply that
+
+
+                                       Pt D cQt C "t ;                                       (3)
+
+                   p
+which yields c D       Cov.Pt ; Pt C1 /. Earlier empirical studies use the sample autocovari-
+ances of daily price changes to estimate transaction costs but, as noted by Hasbrouck (2009)
+and discussed in detail by Harris (1990), such an estimation is infeasible due to the relatively
+high proportion of positive autocoviarances between daily changes in stock prices in the data.
+Hasbrouck (2009) instead advocates a Bayesian approach to estimating the cost measure. He
+generalizes the previous equation to include a market return factor,
+
+
+                                 Pt D cQt C ˇm rmt C "t ;                                    (4)
+
+                         2
+and assumes "t i:i:d:
+                  N.0; " /. Then, given the history of price data and additional assumptions
+
+about initial values and prior distributions for the unknowns fc; "2 ; Q1 ; :::; QT g, he draws
+sequentially the parameter estimates using a Gibbs sampler to characterize the posterior den-
+sities. Hasbrouck (2009) shows that effective spreads estimated using this procedure have a
+96.5% correlation with the ones estimated from actual trades from the trade and quote (TAQ)
+dataset.
+   The effective bid/ask spread has limitations. It does not account for the price impact of
+
+
+                                                5
+Fig. 1. Median effective spreads across market capitalization ranks
+
+
+large trades (considered in Section 6), and should thus be interpreted as the costs faced by a
+small liquidity demander. While it ignores this important concern for large institutional traders,
+it is nevertheless conservative (i.e., an upper-bound), because it assumes market orders. It is
+also the appropriate measure for questions related to market efficiency, which depend on the
+marginal profitability of a strategy for an arbitrageur considering directing capital to the trade.
+       This measure has other significant advantages. It is easy to estimate for all stocks over the
+entire sample using publicly available information.1 This contrasts with estimates from the
+TAQ data or proprietary trade execution datasets, which are limited in their coverage, difficult
+to extrapolate due to the nonlinear and time varying nature of transaction costs, and harder to
+obtain.2
+       Figure 1 shows cross-sectional and time-series variation in trading costs, by looking at the
+estimated median effective spreads of the largest 2,000 firms, by decade. Not surprisingly
+it shows that smaller cap stocks are more expensive to trade. It also shows a general trend
+   1
+      Hasbrouck provides SAS code for estimating effective spreads using the procedure at
+http://people.stern.nyu.edu/jhasbrou/.
+    2
+      Korajczyk and Sadka (2004), Lesmond, Schill and Zhou (2004), and Chen, Watanabe and Stanzl (2005) use
+TAQ data to estimate spreads and price impacts. Keim and Madhavan (1997), Engle, Festenberg and Russel
+(2012), and Frazzini, Israel and Moskowitz (2014) use proprietary trade datasets.
+
+
+                                                    6
+Table 1. Determinants of transaction costs
+The table reports results from Fama-MacBeth regressions of trading cost estimates on lagged
+trading costs, market capitalization, and idiosyncratic volatility. The trading costs is the effec-
+tive bid-ask spread measure proposed by Hasbrouck (2009). Idiosyncratic volatility is mea-
+sured as the standard deviation of residuals of the past three months’ daily returns on the daily
+excess market return. Both market capitalization and idiosyncratic volatility use end of July
+values. The regressions are estimated on an annual frequency and cover 1963 through 2013.
+Lagged T-costs               0.96                                                            0.47
+                            [25.7]                                                          [21.1]
+log(ME)/100                              -0.41        -1.40                    -0.86         -0.59
+                                        [-12.2]     [-12.4]                  [-12.6]       [-10.8]
+[log(ME)]2 /100                                       0.10                     0.07          0.05
+                                                     [12.2]                   [13.0]        [10.9]
+Idiosyncratic Volatility                                           0.62        0.43          0.25
+                                                                  [16.8]      [13.8]        [10.0]
+Average R O 2 (%)            62.7         38.3        50.4         55.0        65.0          72.2
+Average obs./year           3,787        3,976       3,976        3,608       3,578        3,499
+
+
+towards lower costs over time, and a dramatic reduction in the cost of trading stocks outside
+the mega-cap universe over the last decade.
+   Table 1 examines the transaction cost estimates in greater detail. It reports Fama-MacBeth
+cross-sectional regressions of the trading costs estimates on firm characteristics. We can see
+that the trading costs are persistent and significantly positively associated with idiosyncratic
+volatility. As expected, size is strongly negatively correlated with transaction costs in the cross
+section, but the effect is non-linear. The coefficient on the squared market cap variable is
+positive and significant, implying a convex relation between trading costs and size. More gen-
+erally, nonlinearities make it difficult to parametrically estimate costs accurately using directly
+observable firm characteristics. Table A1 in Appendix A highlights the danger of extrapolat-
+ing transaction costs estimated on large, relatively liquid stocks to small stocks using a linear
+model. It reports results from similar Fama-MacBeth regressions performed on firms with
+above (panel A) and below (panel B) NYSE median market capitalization, and shows dissimi-
+lar parameter estimates for the two groups.
+   The Bayesian/Gibbs estimation technique requires relatively long strings of reported daily
+
+                                                 7
+returns, which results, especially in the early part of our sample, in a substantial number of
+missing monthly and annual observations, the rebalance frequency for most of the trading
+strategies we consider. We are interested in the cost of trading anomalies, and cannot know at
+the time of portfolio formation if the trading cost estimate for any given stock will be missing
+when we want to unwind the position. We thus cannot limit our trading to stocks for which
+the direct estimates of trading costs are available. We consequently need a method for esti-
+mating trading costs when the direct estimates from the Baysian-Gibbs sampler is unavailable.
+Because of the difficulties associated with fitting transaction costs to a linear model observed
+in Table 1, we use a non-parametric matching method. The high observed cross-sectional
+correlations between transaction costs and size and idiosyncratic volatility lead us to match
+on these characteristics. Specifically, in each month we rank all firms on market equity and
+estimated idiosyncratic volatility. Each missing transaction cost observation is then replaced
+with the estimated cost of trading the nearest match stock for which a direct trading cost es-
+timate is available. The closest match is defined by the shortest Euclidean distance in size
+and idiosyncratic volatility rank space, i.e., where the distance between firms i and j equals
+p
+  .rankMEi rankMEj /2 C .rankIVOLi rankIVOLj /2 . This methodology adds a time se-
+ries average of 29% to the total number of observations, though these additional observations
+account on average for less than 4% of market capitalization.
+   Figure 2 shows that the effective spread obtained from this matching procedure yields
+anomaly trading cost estimates almost indistinguishable from those obtained using the directly
+estimated effective spreads. Specifically, the figure compares the two cost estimates when trad-
+ing price momentum (Panel A) and post earnings announcement drift (PEAD, Panel B). Price
+momentum strategies are selected on the basis of stock market performance over the first eleven
+months of the year prior to portfolio formation. PEAD strategies are selected on the basis, fol-
+lowing Foster, Olsen and Shevlin (1984), of standardized unexpected earnings (SUE), defined
+as the change in earnings per share between the last quarterly earnings announcement and the
+the earnings announcement one year earlier, scaled by the standard deviation in these changes
+over the last eight announcements. Strategies are long and short the highest and lowest deciles,
+
+
+                                               8
+                                           (a)
+
+
+
+
+                                           (b)
+
+Fig. 2. Comparison of transaction cost estimates: direct versus matched
+The figure reports estimated monthly 12-month moving average cost of trading momen-
+tum and post earnings announcement drift (PEAD) strategies, using directly estimated
+transaction costs (solid lines) and transaction costs estimates obtained through a match-
+ing procedure (dashed lines). For the matching procedure, each trading cost estimate is
+replaced by its closest match, defined as the shortest Euclidean distance in size and id-
+iosyncratic volatility rank space, i.e., where the distance between firms i and j equals
+p
+   .rankMEi rankMEj /2 C .rankIVOLi rankIVOLj /2 . The sample covers stocks for
+which we have direct trading costs estimates.
+
+                                           9
+using NYSE breaks. The figure shows the estimated monthly 12-month moving average cost of
+trading these strategies, where costs are estimated using either the directly estimated effective
+spreads (solid lines), or those obtained through the matching procedure (dashed lines), on the
+sample for which we have the direct estimates.3
+       The figure shows that the matching procedure yields similar costs of trading momentum
+and PEAD as the direct estimates, with no obvious biases in either direction. Both strategies
+show similar time-series variation in trading costs using estimates obtained through the two
+different procedures, with the strong secular decline after decimalization in 2001, except for
+the spike in costs around the market crash at the end of 2008. In both cases the difference
+in the estimated monthly transaction costs averages less than one basis point per month. For
+the remainder of the paper we consequently use the trading costs estimates obtained through
+the matching procedure to fill the 4% of market capitalization for which we are missing direct
+estimates.
+
+
+
+3. Performance evaluation
+We are interested in whether anomalies documented in the literature are “real,” both in the sense
+that they generate significant excess returns after accounting for transaction costs, and that
+they are distinct from the most studied anomalies, value and momentum. Indeed, anomalies
+other than value or momentum are essentially defined as those strategies that have generated
+significant abnormal returns relative to the Fama-French four-factor model.
+       In the presence of transaction costs, evaluating performance against the standard four-factor
+model is complicated by two issues. First, the Fama-French factors are gross factors, i.e., they
+do not account for transaction costs, and were not designed with transaction costs in mind.
+They consequently overstate the returns an investor could have realized, especially in the case
+of the momentum factor UMD.
+   3
+     These strategies are not actually implementable, as the direct trading cost estimates require data that are not
+available at the time of portfolio formation. We restrict the sample here to stocks for which we have direct trading
+costs estimates in order to facilitate the comparison of the estimates obtained through the matching procedure to
+those estimated directly.
+
+
+                                                        10
+   The second issue is more subtle, and related to the very notion of performance evaluation.
+Evaluating anomaly performance against the four-factor pricing model requires a metric of
+performance. The metric most commonly employed is “alpha,” an asset’s abnormal returns
+relative to a set of potential explanatory assets. Alpha is defined as the average return to the
+part of a test strategy not spanned by the explanatory assets, i.e., the average active return
+benchmarked against the replicating portfolio of explanatory assets. Alpha, and in particular
+its significance, is important because it answers, at least in a frictionless world, the question
+“would the test asset have improved the investment opportunity set of an investor already trad-
+ing the explanatory assets?”
+   In the presence of trading costs, however, alpha does not unambiguously answer this ques-
+tion. A strategy can have a significant positive alpha relative to the explanatory assets without
+significantly improving the investment opportunity set. This is most easily seen by an example.
+Suppose an investor has access to a strategy that generates insignificant excess returns. Now
+suppose the investor gains access to a new highly correlated strategy that generates slightly
+higher returns. This new strategy itself generates insignificant excess returns, but will neverthe-
+less have a highly significant alpha relative to the original set strategy. In fact, in a frictionless
+world the introduction of this asset could theoretically improve the Sharpe ratio available to
+the investor by a factor of ten, or a hundred–a long position in the higher return asset hedged
+with a short position in the highly correlated lower return asset could have an extremely high
+Sharpe ratio. In the real world, however, the introduction of this asset may hardly improve the
+investment opportunity set. Trading costs can easily exceed the small spread generated by pairs
+trading the two assets, in which case the investor would just switch out of the old strategy into
+the new, with essentially no impact on the available Sharpe ratio.
+   These issues are important here. We are evaluating anomaly performance explicitly ac-
+counting for the cost of trading, and many of the anomalies we consider have high correla-
+tions with the explanatory factors we employ, particularly with HML and UMD, the Fama and
+French (1993) value factor and their version of the Carhart (1997) momentum factor. We con-
+sequently prefer a generalized notion of alpha, which both agrees with the common notion of
+
+
+                                                 11
+alpha when trading is frictionless and unambiguously answers the question “does the test asset
+improve the investment opportunity set of an investor with access to the explanatory assets?”
+
+
+3.1. Performance metric: a generalized alpha
+
+Let MVEX denote the ex post mean-variance efficient portfolio of the assets X, or, in a
+convenient abuse of notation, the returns to this mean-variance efficient portfolio.4 Also let
+wy;MVEfX;yg denote the weight on y in MVEfX;yg . Then our generalized notion of alpha is
+defined as the abnormal returns of the mean-variance efficient portfolio of y and the assets in
+X, levered to hold one dollar of asset y, relative to the mean-variance efficient portfolio of the
+assets in X alone. That is, ˛  from the regression
+
+                                    MVEfX;yg
+                                                D ˛  C ˇ  MVEX C   :                                            (5)
+                                    wy;MVEfX;yg
+
+When wy;MVEfX;yg D 0 we define ˛  D 0. In this case the asset does not improve the investment
+opportunity set, and this is the common interpretation of a zero alpha.
+       To see that this generalized notion of alpha agrees exactly with common notions of alpha
+when trading is frictionless, note that ˛  is the sum of the intercepts from the following three
+regressions:
+
+                                   MVEfX;yg
+                                  wy;MVEfX;yg
+                                                   y D ˛1 C ˇ1 MVEX C 1
+
+                                                ˇ 0 X D ˛2 C ˇ2 MVEX C 2
+
+                                          y     ˇ 0 X D ˛3 C ˇ3 MVEX C 3 ;
+
+
+where ˇ is the vector of slope coefficients from the regression of the test asset y onto the
+   4
+     In the presence of transaction costs, MVE weights come from calculating the optimal portfolio of long and
+short versions of all the assets in X , net of transaction costs, subject to a non-negativity constraint on portfolio
+weights. That is, given some strategy (e.g., momentum), the strategy and a short version of the strategy are treated
+as distinct assets, where the assets have opposite gross returns but an investor incurs the cost of trading the strategy
+regardless of whether they are long or short. The optimal portfolio never takes positions in both the long and short
+versions of an asset, because the fraction of these positions that net earn zero gross returns but incur transaction
+costs.
+
+
+                                                          12
+individual assets in X,
+
+
+                                       y D ˛ C ˇ 0 X C :
+
+
+In a frictionless world, MVEX prices every member of X. The left hand sides of the first two
+regressions are portfolios constructed solely from members of X, so ˛1 D ˛2 D 0. The left
+hand side of the third regression is orthogonal to X, and thus to MVEX , so ˇ3 D 0. This
+implies that ˛3 D ˛, so ˛  D ˛.
+   The fact that this generalized notion of alpha can differ dramatically from common notions
+in the presence of trading frictions is most easily seen with a simple example. Suppose y is
+orthogonal to X, generates high gross returns, and has trading costs that greatly exceed the
+gross profits from trading the strategy. Then, by the common notion, the strategy has a large
+positive gross alpha, suggesting investors want to hold the asset long without incurring the costs
+associated with holding it. This would be great, but is impossible. The strategy also has a large
+negative net alpha, suggesting investors want to short the asset but earn the costs associated
+with trading it. This would again be great, but is also impossible. In reality, no investor wants
+to hold the asset, either long or short, and the generalized alpha correctly captures this fact.
+   This example also illustrates potential problems associated with earlier measures designed
+to evaluate performance in the presence of transaction costs. Our generalized notion of alpha
+is related to, but distinct from, that proposed by Grinblatt and Titman (1989) and employed
+by Hanna and Ready (2005) to evaluate the stock selection strategy proposed by Haugen and
+Baker (1996). These authors evaluate performance using the average return to the part of the
+test asset itself that is not spanned by the MVE portfolio of the explanatory assets. That is,
+using ˛ from the regression
+
+
+                                    y D ˛ C ˇ MVEX C :
+
+
+In the example given above, this measure yields the same misleading inferences as the common
+notion of alpha.
+
+
+                                                13
+   A more subtle example of the divergence in our generalized notion of alpha from common
+notions, which better illustrates the practical problems our measure is designed to avoid, is
+provided in the following example. Suppose y is a well designed (i.e., transactionally efficient)
+version of x 2 X, has modest net returns, and is highly correlated with x, which has large
+negative net returns. The net-on-net ˛ of y relative to X, using the common notion, will
+be large and extremely significant, reflecting the large average difference and high correlation
+between the net returns to x and y. This alpha cannot, however, be interpreted as asset y greatly
+improving the investment opportunity set; x contributes nothing to the investment opportunity
+set, and y contributes little. Using our generalized notion ˛  will be small, accurately reflecting
+y’s modest net returns and marginal contribution to the investment frontier.
+
+
+3.2. Factor trading costs
+
+Figure 3 shows the estimated 12-month moving average cost of trading the Fama/French size,
+value and momentum factors (SMB, HML and UMD) each month, over the period spanning
+July 1963 through December 2013. SMB and HML incur similar trading costs, because they
+are constructed using the same two-way cut on size (NYSE median market capitalization) and
+three-way cut on book-to-market (30 and 70 percentiles using NYSE break points). These
+factors’ underlying portfolios are only rebalanced annually, and both size and book-to-market
+are fairly persistent, so turnover is fairly low and transaction costs are modest. Over the sample
+SMB and HML on average only turn over 2.32% and 1.99% per year. The time-series average
+cost of trading these factors is 5.66 and 5.45 basis points per month, and the 12-month moving
+averages are constant over one year periods because the strategies are only rebalanced annually.
+UMD, which is constructed using the same two-way cut on size and a tertile sort on stock
+performance over the first eleven months of the prior year, is rebalanced monthly and incurs
+much higher transaction costs. Over the sample UMD turns over 24.6% per year, and its
+time-series average cost of trading is 48.4 basis points per month. The figure shows the sharp
+downward trend in trading costs after 2000, and spikes in trading costs over periods of market
+stress (e.g., OPEC oil crisis in 1973, Nasdaq deflation in 2001, and the great recession in 2008).
+
+                                                14
+Fig. 3. Transaction costs for Fama-French Factors over Time
+The figure reports the estimated 12-month moving average cost of trading the Fama and French
+(1993) size, value and momentum factors (SMB, HML and UMD, respectively) each month,
+over the period spanning July 1963 through December 2013.
+
+
+4. Anomalies
+Equipped with our transaction costs measures and a generalized notion of alpha, we next study
+the behavior of popular asset pricing anomalies accounting for costs of trading. Our first goal
+is to establish a taxonomy of anomalies in the cross section of expected stock returns. Focus-
+ing on the economics of the underlying problems, researchers often compare the behavior of
+strategies whose implementability differs substantially. For example, Jegadeesh and Titman
+(1993) study momentum and short-term reversal portfolios rebalanced each month. Fama and
+French (1993), on the other hand, look at size and value portfolios that are only rebalanced
+annually. Clearly, size and value are much cheaper to trade. Moreover, even though both mo-
+mentum and reversals are rebalanced monthly, last year’s performance is far more persistent
+than last month’s performance, resulting in turnover on the short-term reversal strategy almost
+three times as high as on momentum.
+   Our main results analyze twenty-three of the best known, and strongest performing, anomaly
+
+
+                                              15
+strategies. This is about the largest set for which we could reasonably show detailed results.
+Also, while it may seem like a much smaller set than the 300 claimed by Harvey, Liu and Zhu
+(2014), it is less restricted than it first appears. More than a third of the factors in the taxonomy
+of Harvey, Liu and Zhu (2014) are what they call “common” factors, i.e., things that proxy for
+a common source of risk, and are frequently inconsistent with our notions of cross sectional
+anomalies. For example, their list includes the marginal rate of substitution as a common factor,
+citing the theory of the Lucas (1978) tree economy as the reference. Their remaining factors in-
+clude numerous variations and refinements of a smaller set of basic underlying strategies, e.g.,
+they count as distinct more than a dozen strategies that all broadly fall under the umbrella of
+price momentum. We try not to include multiple versions of the same anomaly.5 For example,
+we present results for strategies sorted on investment, defined as changes in working capital and
+plant, property, and equipment, but exclude the closely related but weaker performing strategy
+based on capital expenditures. Finally, we exclude many anomalies, even well cited anomalies,
+on the basis of poor performance. For example, the beta arbitrage of Black (1972) has seen
+renewed interest with the work of Frazzini and Pedersen (2014), but value-weighted beta arbi-
+trage strategies do not generate significant returns, or have significant three-factor alphas, even
+before accounting for transaction costs. The twenty-three strategies we are left with represent
+a manageable set, and mostly spans the set of distinct, important cross-sectional anomalies.
+       Table 2 reports the twenty-three anomalies that we examine. In our taxonomy we divide
+trading strategies into three groups, low-, mid-, and high-turnover strategies, corresponding
+roughly to strategies where each of the long and short side on average turn over less than once
+per year, between one and five times per year, and more than five times per year, respectively.
+The table includes references to the studies that first document them, brief descriptions of the
+sorting variable used, the frequency of rebalancing, and the starting year. For additional details
+on the construction of the signals, see Appendix B.
+
+
+   5
+     We include a few strategies that combine multiple anomalies (e.g., value and profitability, or value and mo-
+mentum), but do so for the purpose of evaluating the effect this has on transaction costs. Novy-Marx (2015) shows
+that inferences drawn regarding the return performance of these sorts of strategies from standard statistical tests
+are biased and misleading.
+
+
+                                                       16
+Table 2. The anomalies
+All strategies consist of a time-series of value-weighted returns on a long/short self-financing portfolio,
+constructed using a decile sort on a signal using NYSE breakpoints. Column 2 indicates the relevant
+reference, column 3 reports the signal used for sorting. The last two columns indicate the frequency of
+rebalancing and the time-period used (07/1963 - 12/2012 for the full period and 07/1973 to 12/2012 for
+the recent one). See Appendix B and/or the references for further details on the construction.
+Panel A: Low Turnover
+Anomaly                    Reference(s)                Signal                                Rebal.    Period
+Size                       Fama and French (1993)      Market equity                         Annual    1963
+Gross Profitability        Novy-Marx (2013)            Gross Profitability                   Annual    1963
+Value                      Fama and French (1993)      Book-to-market equity                 Annual    1963
+ValProf combo              Novy-Marx (2014)            Sum of firms’ ranks in univariate     Annual    1963
+                                                       sorts on book-to-market and gross
+                                                       profitability
+Accruals                   Sloan (1996)                Accruals                              Annual    1963
+Asset Growth               Cooper, Gulen and Schill    Asset Growth                          Annual    1963
+                           (2008)
+Investment                 Lyandres, Sun and Zhang     Investment                            Annual    1963
+                           (2008)
+Piotroski’s F-score        Piotroski (2000)            Piotroski’s F-score                   Annual    1963
+Panel B: Mid Turnover
+Anomaly                    Reference(s)                Signal                                Rebal.    Period
+Net Issuance               Fama and French (2008)      Net stock issuance                    Monthly   1973
+Return-on-book equity      Chen, Novy-Marx and         Return-on-book equity                 Monthly   1973
+                           Zhang (2010)
+Failure Probability        Campbell, Hilscher and      Failure Probability                   Monthly   1973
+                           Szilagyi (2008)
+ValMomProf combo           Novy-Marx (2014)            Sum of firms’ ranks in univariate     Monthly   1963
+                                                       sorts on book-to-market, gross
+                                                       profitability, and momentum
+ValMom combo               Novy-Marx (2014)            Sum of firms’ ranks in univariate     Monthly   1963
+                                                       sorts on book-to-market and
+                                                       momentum
+Idiosyncratic Volatility   Ang, Hodrick, Xing and      Idiosyncratic volatility, measured    Monthly   1963
+                           Zhang (2006)                as the residuals of regressions of
+                                                       their past three months’ daily
+                                                       returns on the daily returns of the
+                                                       Fama-French three factors
+Momentum                   Jegadeesh and Titman        Prior year’s stock performance        Monthly   1963
+                           (1993)                      excluding the most recent month
+PEAD (SUE)                 Foster, Olsen and Shevlin   Standardized Unexpected Earnings      Monthly   1973
+                           (1984)                      (SUE)
+PEAD (CAR3)                Brandt, Kishore,            Cumulative three-day abnormal         Monthly   1973
+                           Santa-Clara and             return around announcement (days
+                           Venkatachalam (2008)        minus one to one)
+
+
+
+                                                       17
+Table 2: Continued
+Panel C: High Turnover
+Anomaly                  Reference(s)              Signal                                  Rebal.    Period
+Industry Momentum        Moskowitz and Grinblatt   Industry past month’s return            Monthly   1963
+                         (1999)
+Industry Relative        Da, Liu and Schaumurg     Difference between a firm’s prior       Monthly   1963
+Reversals                (2014)                    month’s return and the prior
+                                                   month’s return of their industry
+High-frequency                                     Sum of firms’ ranks in the              Monthly   1963
+Combo                                              univariate sorts on industry relative
+                                                   reversals and industry momentum
+Short-run Reversals      Jegadeesh and Titman      Prior month’s returns                   Monthly   1963
+                         (1993)
+Seasonality              Heston and Sadka (2011)   Average return in the calendar          Monthly   1963
+                                                   month over the preceding five years
+Industry Relative                                  Industry relative reversals,            Monthly   1963
+Reversals (Low                                     restricted to stocks with
+Volatility)                                        idiosyncratic volatility lower than
+                                                   the NYSE median for the month
+
+
+
+
+4.1. Basic strategy performance
+
+Table 3 reports time-series regression results for the twenty-three strategies, constructed using
+the simple decile sorting procedure popular in the academic literature, split into the three bins,
+low- (Panel A), mid- (Panel B), and high- (Panel C) turnover. In each panel we report the gross
+average monthly returns of the strategy (column 1), the four-factor alpha for these returns
+(column 2), monthly average turnover of each side of the strategy (column 3) and transaction
+costs (column 4), net return (column 5), and the generalized alpha described in subsection 3.1
+of the net returns relative to the four factors (column 6). Generalized alpha is not reported if
+a strategy does not improve the investment opportunity set. That is, a blank cell indicates that
+the test asset is not included in the ex post mean-variance efficient portfolio of the test assets
+and the potential explanatory factors.
+   The cost of trading the low turnover strategies is generally quite low, often less than 10 bp
+per month, primarily because all of them are constructed using annual rebalancing. Because
+transaction costs generally represent a small fraction of these strategies’ gross spreads, we
+focus on the mid- and high-turnover strategies when we consider transaction cost mitigation
+
+
+                                                   18
+techniques.
+   The mid-turnover strategies on the other hand exhibit sizable transaction costs. These are
+all rebalanced monthly, and have average turnover on each of the long and the short side of
+between 14% and 35% per month. Trading costs average between 20 and 57 basis points
+per month, often exceeding half the strategies’ gross spreads. In fact, only the net issuance,
+earnings momentum strategy based on cumulative abnormal three day returns around the prior
+earnings announcement (PEAD CAR3), and momentum and its derivative anomalies (ValMom
+
+
+
+Table 3. Value-weighted returns
+This table presents results for returns on value-weighted long/short self-financing portfolios,
+constructed using a decile sort on a signal using NYSE breakpoints. Panel A presents results
+for low turnover strategies, panel B reports the results for mid-turnover strategies, while panel
+C focuses on the high-turnover strategies. In each panel, the strategies’ gross excess return,
+alpha relative to the four-factor model, average turnover (average over the long and short side),
+transaction costs, net returns, and the net four-factor alpha are presented. Generalized alpha
+is not reported if a strategy does not improve the investment opportunity set, so blank cells
+indicate that the test asset is not included in the ex post mean-variance efficient portfolio of
+the test assets and the potential explanatory factors. See table 2 and/or Appendix B for further
+details on the construction of the signals.
+Panel A: Low turnover strategies
+                            e            FF 4                                   e          FF 4
+Anomaly                 EŒrgross      ˛gross       TO         T-costs      EŒrnet      ˛net
+Size                      0.33         -0.14       1.23          0.04        0.28
+                         [1.66]       [-1.77]                               [1.44]
+Gross Profitability       0.40          0.52       1.96          0.03        0.37         0.51
+                         [2.94]        [3.83]                               [2.74]       [3.77]
+Value                     0.47         -0.17       2.91          0.05        0.42        -0.02
+                         [2.68]       [-1.76]                               [2.39]      [-0.17]
+ValProf                   0.82          0.50       2.94          0.06        0.77         0.49
+                         [5.18]        [4.01]                               [4.82]       [3.93]
+Accruals                  0.27          0.27       5.74          0.09        0.18         0.19
+                         [2.14]        [2.15]                               [1.43]       [1.55]
+Asset Growth              0.37          0.07       6.37          0.11        0.26         0.03
+                         [2.52]        [0.58]                               [1.75]       [0.21]
+Investment                0.56          0.35       6.40          0.10        0.46         0.31
+                         [4.44]        [2.90]                               [3.60]       [2.62]
+Piotroski’s F-score       0.20          0.31       7.24          0.11        0.09         0.24
+                         [1.04]        [1.75]                               [0.45]       [1.37]
+
+
+                                               19
+Table 3: Continued
+Panel B: Mid turnover strategies
+                                  e           FF 4                        e        FF 4
+Anomaly                       EŒrgross     ˛gross   TO     T-costs   EŒrnet    ˛net
+Net Issuance                    0.57         0.58    14.4    0.20      0.37       0.41
+                               [3.70]      [4.10]                     [2.43]     [2.93]
+Return-on-book equity           0.71         0.84    22.3    0.38      0.33       0.59
+                               [2.96]      [4.41]                     [1.38]     [3.18]
+Failure Probability             0.85         0.94    26.1    0.61      0.24       0.70
+                               [2.52]      [4.89]                     [0.73]     [3.55]
+ValMomProf                      1.43         0.68    26.8    0.43      0.99       0.68
+                               [7.41]      [5.52]                     [5.18]     [5.22]
+ValMom                          0.93        -0.12    28.7    0.41      0.51
+                               [4.81]      [-1.31]                    [2.67]
+Idiosyncratic Volatility        0.63         0.83    24.6    0.52      0.11       0.41
+                               [2.13]      [5.14]                     [0.37]     [2.57]
+Momentum                        1.33         0.35    34.5    0.65      0.68       0.40
+                               [4.80]      [3.04]                     [2.45]     [3.12]
+PEAD (SUE)                      0.72         0.58    35.1    0.46      0.26       0.29
+                               [4.52]      [4.31]                     [1.60]     [2.21]
+PEAD (CAR3)                     0.91         0.87    34.7    0.57      0.34       0.38
+                               [6.54]      [6.39]                     [2.41]     [2.85]
+Panel C: High turnover strategies
+                                  e          FF 4                          e      FF 4
+Anomaly                       EŒrgross    ˛gross    TO     T-costs   EŒrnet    ˛net
+Industry Momentum               0.93        0.83     90.1    1.22       -0.29
+                               [3.97]      [3.52]                     [-1.20]
+Industry Relative Reversals     0.98        1.05     90.3    1.78       -0.80
+                               [5.72]      [6.66]                     [-4.73]
+High-frequency Combo            1.61        1.48     91.0    1.45       0.16      0.05
+                              [11.21]      [9.93]                      [1.11]    [0.35]
+Short-run Reversals             0.37        0.45     90.9    1.65       -1.28
+                               [1.71]      [2.22]                     [-6.02]
+Seasonality                     0.84        0.82     91.1    1.46       -0.62
+                               [5.21]      [5.03]                     [-3.88]
+Industry Relative Reversals     1.25        1.17     94.0    1.06       0.19      0.07
+(Low Volatility)               [9.36]      [8.96]                      [1.41]    [0.57]
+
+
+
+
+                                               20
+and ValMomProf), achieve net excess returns that are more than two standard deviations from
+zero. The best performing strategy, after accounting for transaction costs, is the one sorted
+on the basis of the combined value, momentum and gross profitability signals. Including the
+profitability considerations almost doubles the net spread relative to the strategy based on value
+and momentum signals alone, from 51 to 99 bp per month, with a t-statistic of 5.18. Other
+popular anomalies including idiosyncratic volatility and the strategy based on predicted failure
+probability, are only marginally profitable after accounting for transaction costs. With the
+exception of the ValMom combo, however, all these strategies do have significant generalized
+alphas relative to the four factor model.
+   The cost of trading the high-turnover strategies (those with monthly turnover in excess of
+90% per month), at least when designed with complete disregard for trading costs, always
+exceeds 1% per month. Transaction costs significantly exceed the gross spread for all but two
+of the anomalies we examine, with only the High-frequency Combo and the Low Volatility
+Industry Relative Reversals strategies achieving positive net excess returns.
+   Table 4 shows the ex-post mean-variance efficient tangency portfolio weights and the max-
+imum attainable Sharpe ratios, accounting for transaction costs, using the Fama and French
+factors and each of the twenty-three anomalies. All of the low-turnover anomalies except for
+size, and all of the mid-turnover strategies except for ValMom, seem to improve the mean-
+variance frontier, increasing the achievable Sharpe ratio above the 0.75 that can be obtained
+from the four Fama and French factors alone. None of the high-turnover anomalies gets any
+weight in the MVE portfolio, except for the High-frequency combo and the Low Volatility
+Industry Relative Reversals, so only results for these two strategies are presented. Neither
+strategy significantly improves the achievable Sharpe ratio.
+
+
+
+
+                                               21
+Table 4. Ex post mean variance efficient portfolios
+The table reports ex-post mean-variance efficient tangency portfolio weights on the net returns
+to the Fama/French factors and one of the twenty-three anomalies at a time. Panel A presents
+results for low turnover strategies, panel B reports the results for mid-turnover strategies, while
+panel C focuses on the high-turnover strategies. For each anomaly, the weights in the tangency
+portfolio are reported as well as the maximum attainable Sharpe Ratio. See table 2 and/or
+Appendix B for further details on the construction of the signals.
+                                     Strategy weight in ex post MVE portfolio
+Anomaly strategy               MKT          SMB        HML          UMD      Anomaly         SR
+Panel A: Low Turnover Strategies
+Size                           25.1        12.9        45.2        16.8                    0.75
+Gross Profitability            17.9        11.5        37.8        9.7         23.1        0.93
+Value                          24.8        13.6        47.1        16.5        -2.1        0.75
+ValProf                        27.3                    21.2        18.0        33.6        0.94
+Accruals                       22.2        14.4        36.5        13.9        13.0        0.79
+Asset Growth                   25.2        12.5        43.5        16.7         2.1        0.75
+Investment                     24.6         6.6        31.3        13.6        24.0        0.84
+Piotroski’s F-score            23.4        15.4        39.4        13.4         8.4        0.78
+Panel B: Mid Turnover Strategies
+Net Issuance                   22.3        18.0        26.5         9.1        24.1        0.89
+Return-on-book equity          21.1        25.7        32.4         2.7        18.0        0.92
+Failure Probability            24.5        26.9        33.6                    14.9        0.94
+ValMomProf                     30.9                    34.9                    34.2        1.04
+ValMom                         25.1        12.9        45.2        16.8                    0.75
+Idiosyncratic Volatility       24.1        29.2        25.4        7.4         14.0        0.84
+Momentum                       26.3        13.6        44.7                    15.4        0.85
+PEAD (SUE)                     21.0        16.8        39.2         2.4        20.6        0.84
+PEAD (CAR3)                    21.6        12.4        36.2         4.9        24.8        0.89
+Panel C: High Turnover Strategies
+High-frequency Combo           24.3        12.5        43.9        16.4         2.9        0.76
+Ind. Rel. Rev. (Low Vol.)      23.4        11.3        43.1        16.8         5.3        0.76
+
+
+
+
+                                                  22
+5. Transaction Cost Mitigation
+The strategies presented in the previous section, constructed using the high-minus-low decile
+sort most commonly employed in academic studies, significantly overstate the actual cost of
+trading these anomalies for at least two reasons. First, even though the effective bid-ask spread
+measure we use does not account for price impact it assumes market orders for all trades and
+it does nothing to reduce transaction costs. In practice large institutional investment managers
+devote entire departments to the sole purpose of reducing the costs of executing trades.
+   Even more importantly, the strategies were designed ignoring trading costs, and thus gener-
+ate far more trading and far higher transaction costs than necessary. In this section we propose
+three simple, rule-based methodologies designed to reduce trading costs. The first of these
+simply limits trading to the universe of stocks that we expect to be relatively cheap to trade.
+The other two strategies attempt to significantly reduce turnover without significantly reducing
+exposure to the underlying anomaly. The first of these turnover reduction techniques, what
+we call “staggered partial rebalancing,” entails rebalancing only a fraction of the portfolio at
+each rebalance point. That is, a strategy is rebalanced at a relatively low frequency, with the
+rebalancing applied to only a portion of the portfolio at a higher frequency (e.g., quarterly
+rebalancing, but on only one-third of the portfolio each month). The second turnover reduc-
+tion technique employs the introduction of what we call a “buy/hold spread.” This technique
+involves employing a more stringent requirement to actively trade into a position than to main-
+tain a position that you already have. Buy/hold spreads are largely absent from the academic
+literature but frequently employed in practice.
+   We are primarily interested in whether anomalies are real, in the sense that they are at-
+tractive to trade in the real world after accounting for transaction costs, and that they are
+distinct from the best known anomalies, especially value and momentum. In order to deter-
+mine whether an anomaly truly improves the investment opportunity set of an investor with
+access to the four factors employed in our asset pricing model, we need to use factors that do
+not themselves incur unreasonably large trading costs. In particular, the anomalies should be
+evaluated relative to a momentum factor that is constructed using transaction cost mitigation
+
+                                               23
+Table 5. Momentum factor performance net of transaction costs
+This table reports the performance of UMD-like factors, constructed using the three trading-
+cost mitigation techniques. The table reports gross return, transaction costs, net returns and
+results from a net-on-net Fama-French four factor model regression. The sample covers July
+1973 to December 2012.
+                                                      net-on-net FF4 regression results
+Cost mitigation           e                 e
+strategy              EŒrgross  T-costs EŒrnet   ˛        ˇmkt     ˇsmb      ˇhml     ˇumd
+Restrict trading to     0.66     0.35      0.31      0.17     -0.04   -0.11   -0.06        0.93
+low cost universe      [3.84]             [1.82]    [3.06]   [-3.05] [-5.97] [-2.81]      [69.2]
+Staggered quarterly 0.62         0.26      0.37      0.19     -0.00   -0.02   -0.04    0.89
+rebalancing         [3.98]                [2.34]    [6.62]   [-0.11] [-1.58] [-3.64] [131.3]
+Buy/hold spread         0.77     0.26      0.51      0.33     0.01      -0.05   -0.08    1.01
+                       [4.29]             [2.87]    [8.81]   [0.69]    [-4.34] [-5.78] [114.6]
+
+
+techniques to create a fair playing field. Table 5 reports the performance of UMD-like factors,
+constructed using each of the three trading-cost mitigation techniques. The table reports gross
+returns, transaction costs, net returns and results from a net-on-net Fama-French four factor
+model regression.
+   The table shows that while all three factors generate significant net-on-net four factor al-
+phas, the momentum strategy constructed using a spread between the buy and hold thresholds
+has the largest and most significant net alpha relative to the standard four factor model that
+accounts for transaction costs. This momentum factor is also outside the span of the other two.
+The ex post mean-variance efficient portfolios, accounting for transaction costs, of the three
+momentum factors, or the three momentum factors and the three Fama-French factors, put no
+weight on the momentum factors constructed in the low cost universe and with staggered quar-
+terly rebalancing. The three Fama-French factors and UMD together explain 87.3%, 95.3%
+and 94.8% of the variation in the three factors. Because the momentum factor constructed
+using the buy/hold strategy generates the largest spread, and the most significant alpha rela-
+tive to the canonical factors, it is this factor that we employ in future sections when evaluating
+anomaly performance.
+
+
+
+
+                                               24
+5.1. Strategies designed to mitigate transaction costs
+
+While we analyze three distinct cost mitigation strategies, one technique, trading with the
+buy/hold spread, typically yields the best outcomes. Consistent with the momentum factor
+results of Table 5, introducing a buy/hold spread generally yields transaction cost reductions
+similar to those achieved with trading at lower frequency (i.e., from staggered partial rebal-
+ancing), and superior to those achieved by concentrating trading among low transaction cost
+stocks, while sacrificing less in the way of gross returns. Because the buy/hold cost mitigation
+strategy is generally superior to the other two cost mitigation techniques, detailed analysis of
+the performance of the other two techniques is relegated to Appendix C.6
+       These buy/hold strategies trade according to an “sS rule.”7 On the long side, traders buy
+into a stock when it enters the buy range (e.g., highest 10% on some signal), but do not sell the
+stock until it falls out of the hold range, which is larger than the buy range. On the short side
+traders use a more stringent threshold for shorting a stock than for maintaining a previously
+established short position. For example, a 10%/20% buy/hold rule implies that a trader buys
+stocks when they enter the top decile of the stock selection signal, and holds these stocks until
+they fall out of the top quintile. Similarly, a trader sells stocks when they enter the bottom
+decile, and cover these short positions when they fall out of the bottom quintile.
+       Buy/hold spreads present an easy to implement, rule-based methodology, which doesn’t
+depend on an explicit model for transaction costs or expected returns, such as the one employed
+in Frazzini, Israel and Moskowitz (2014). It provides exposure to the sources of excess returns
+without incurring the high turnover inherent in the traditional decile sorted portfolios. The
+procedure dramatically reduces turnover by holding (not selling) close substitutes to the stocks
+   6
+      Appendix D analyzes an alternative cost mitigation technique, which allows investors trading one strategy to
+opportunistically take small positions in another at effectively negative trading costs. This is done with a “screen,”
+or “filter,” which delays transactions suggested by the lower frequency primary expected return signal if and while
+the higher frequency screening signal finds the trade unfavorable.
+    7
+      These “sS rules,” named by Arrow, Harris and Marschak (1951), arise frequently in economics. In a portfolio
+context, Davis and Norman (1990) derive an sS rule for optimally reallocating between risky and risk-free assets
+when reallocation is costly. In an investment model, Abel and Eberly (1996) show that the size of the inaction
+region is proportional to the cube-root of the proportional cost of investing, implying even trivial frictions can
+have non-trivial impacts on behavior.
+
+
+
+                                                         25
+you would have bought, since there is not much of a difference in expected returns between
+stocks in the 75-80% range of the distribution of a given return predictor and those in the
+80-85% range. Additional analysis of the portfolio characteristics of strategies constructed
+using a variety of buy/hold ranges, targeted to achieve the same degree of name diversification
+observed from a simple decile sort, is provided in Appendix C.1.
+   Table 6 presents buy/hold strategy results for all the mid- and high-frequency anomalies.
+Panel A looks at 10%/20% mid-turnover strategies, while panel B examines 10%/50% high-
+turnover strategies. In each panel, we report the strategies’ gross excess returns, gross alpha
+relative to the four-factor model, average turnover (averaged over the long and short side),
+transaction costs, net returns, net four-factor alpha, and the net alpha relative to the four fac-
+tors and the respective simple strategy from Table 3. The buy/hold strategies exhibit slightly
+lower gross returns but much lower turnover and transaction costs as opposed to their simple
+counterparts. The average reduction in the turnover for the twenty-three anomalies is 41%,
+while the transaction costs decrease by 42%. Net returns are consequently higher. The clear
+winner is the ValMomProf again, with an average monthly return of 1.02%, with a t-statistic of
+                                                                                   FF 4
+6.19. It also has the highest information ratio relative to the four net factors (˛net  t-statistic of
+4.86), and improves the investment opportunity set the most relative to the four factors and the
+                                                                           F F 4C
+simple decile sorted strategy constructed from the same sorting variable (˛net    t-statistic of
+3.28). Virtually all of the mid-turnover anomalies also have significant positive generalized net
+four-factor alphas. Moreover, the buy/hold strategies seem to add to the investment possibili-
+ties even after the basic equivalents of the strategies are included in the investment opportunity
+set, as evidenced by the last column.
+   There is an improvement in the performance of the high-frequency strategies as well, and
+the High-frequency Combo and the Low Volatility Industry Relative Reversals have positive
+and statistically significant net returns, and marginally significant net-on-net four and five factor
+alphas.
+
+
+
+
+                                                 26
+Table 6. Buy/hold strategy performance
+This table presents results for returns on buy/hold strategies. Panel A contains results for
+mid-turnover strategies using the 10%/20% buy/hold rule. Panel B contains results for high-
+turnover strategies using the 10%/50% buy/hold rule. Columns 2-7 report the strategies’ gross
+excess returns, gross four-factor alpha, average turnover (averaged over the long and short
+side), transaction costs, net returns, and net four-factor alpha. The last column indicates the net
+alpha relative to the four factors and the respective simple strategy from Table 3. Generalized
+alpha is not reported if a strategy does not improve the investment opportunity set, so blank
+cells indicate that the test asset is not included in the ex post mean-variance efficient portfolio
+of the test assets and the potential explanatory factors. See Table 2 and/or Appendix B for
+further details on the construction of the signals.
+Panel A: Mid Turnover 10%/20% Strategies
+                                     e        FF 4                           e      FF 4     F F 4C
+Anomaly                         EŒrgross  ˛gross      TO     T-costs EŒrnet    ˛net      ˛net
+Net Issuance                      0.51       0.54     8.21      0.11     0.40      0.44      0.11
+                                 [3.53] [4.18]                          [2.74] [3.49] [2.11]
+Return-on-book equity             0.61       0.76     13.8      0.24     0.37      0.55      0.15
+                                 [2.77] [4.42]                          [1.69] [3.27] [2.40]
+Failure Probability               0.61       0.66     10.3      0.23     0.38      0.57      0.24
+                                 [1.97] [3.87]                          [1.22] [3.38] [2.91]
+ValMomProf                        1.20       0.49     11.6      0.19     1.02      0.52      0.21
+                                 [7.30] [4.60]                          [6.19] [4.86] [3.28]
+ValMom                            0.81      -0.17     13.4      0.19     0.62
+                                 [4.83] [-2.12]                         [3.67]
+Idiosyncratic Volatility          0.43       0.65     12.4      0.25     0.18      0.41      0.13
+                                 [1.56] [4.34]                          [0.65] [2.79] [2.38]
+Momentum                          1.20       0.13     18.8      0.35     0.85      0.13      0.13
+                                 [4.71] [1.48]                          [3.35] [1.52] [1.52]
+PEAD (SUE)                        0.66       0.47     24.4      0.32     0.35      0.24      0.11
+                                 [4.36] [3.75]                          [2.26] [1.91] [1.69]
+PEAD (CAR3)                       0.82       0.74     28.9      0.47     0.35      0.31      0.03
+                                 [6.11] [5.73]                          [2.58] [2.43] [0.81]
+Panel B: High Turnover 10%/50% Strategies
+                                     e        FF 4                           e      FF 4     F F 4C
+Anomaly                         EŒrgross  ˛gross      TO     T-costs EŒrnet    ˛net      ˛net
+Industry Momentum                 0.73       0.53     57.4      0.75     -0.02
+                                 [3.64] [2.62]                          [-0.09]
+Industry Relative Reversals 0.79             0.93     57.0      1.09     -0.31
+                                 [4.91] [6.86]                          [-1.98]
+High-frequency Combo              1.18       1.05     53.6      0.83     0.35      0.23      0.21
+                                 [9.87] [8.43]                          [2.83] [1.81] [1.81]
+Short-run Reversals               0.28       0.50     57.1      1.00     -0.72
+                                 [1.44] [2.91]                          [-3.78]
+Seasonality                       0.51       0.53     57.6      0.88     -0.36
+                                 [3.61] [3.70]                          [-2.56]
+Industry Relative Reversals 0.95             0.94     58.8      0.67     0.28      0.24      0.17
+(Low Volatility)                 [7.93] [8.63] 27                       [2.41] [2.30] [2.19]
+6        Strategy Capacity
+The previous sections investigate the cost of trading anomalies for small, marginal traders.
+They account for the effective spreads faced by investors, but ignore any price impact that
+would result from significant new trading in the strategies. This section investigates the effect
+of these price impact costs, quantifying the amount of new capital a strategy can attract before
+it is no longer profitable to the last executing trader. That is, we establish the capacity that
+strategies to attract new capital.
+        While significant new trading in these strategies would affect prices, it is less obvious
+how this would affect the strategies’ profitability for the average trader. When more capital is
+devoted to trading an anomaly, it clearly impairs the performance of poorly executing traders.
+These traders buy after prices have already been pushed up by their competitors’ trades, and do
+not unwind until all the price pressure has already been reversed. They thus lose on each round-
+trip transaction by the extent to which traders in the strategy establishing positions impacts
+prices. The best executing traders benefit to the same extent that the worst executing traders
+suffer. They get in first, before prices have been impacted by trading in the strategy, and get
+out before others, and consequently before the price impact of establishing the positions has
+been reversed. For the average trader there are neither direct benefits from, nor costs to, others’
+trading. The average trader transacts before half of the competition, and after the other half, so
+front runs other traders to the same extent that they are front run.
+        While “hot capital” chasing anomaly strategies does not drive down the strategies’ average
+profitability directly, it does limit the scale at which they can be traded profitably for marginal
+investors.8 These poorly executing traders get into their position after others, and thus pay
+a price that is too high by an amount that is proportional to both the extent to which they
+    8
+     Additional capital devoted to trading anomalies has indirect costs, which are more difficult to quantify.
+Crowding in these strategies increases the incentives for traders to get in and out of their positions early, i.e.,
+to front run the large quantities of capital running similar strategies. These incentives tend to decrease the average
+time traders hold their position, increasing turnover and thus the costs incurred from effective spreads. It also
+encourages traders to obtain the signals they use earlier, which may be costly, and forces them to trade on less
+developed, less informative signals. These costs cannot by quantified without an explicit model of how crowding
+in a strategy influences the way the strategy is traded, and how this impacts its performance for the average trader.
+
+
+
+                                                         28
+are front run, and to the price impact this front running has per dollar traded. Because these
+costs are increasing in the capital the strategies attract, there is a point beyond which marginal
+investors find the strategies unattractive. The maximum capacity for each strategy is defined as
+the amount of additional capital it can attract before the last trader to get into and out of their
+positions finds the strategy, on average, unprofitable.
+
+
+6.1       Estimated price impact of trading
+
+For each stock we estimate the price impact of trading (Kyle’s lambda) from the linear regres-
+sion
+
+
+                                        ri;t D ˛i C i OFi;t C "i;t ;
+
+
+where ri;t is the return to stock i on day t , and OFi;t is the contemporaneous order flow, mea-
+sured as the dollar value of the difference between buyer and seller initiated trades.9 Daily order
+flow comes from the Trade and Quote (TAQ) dataset, with trades signed using the algorithm
+of Lee and Ready (1991). Price impact parameters are estimated monthly, using observations
+from the preceding twelve months.
+       Market capitalization is by far the strongest cross-sectional correlate of the estimated price-
+impact parameters. In Fama and MacBeth regressions of the log of the estimated Kyle’s lamb-
+das on the logs of firms’ market capitalizations, the estimated slope coefficient is -0.98, with
+a t-statistic of 76.7 (Newey-West, calculated using 36 monthly lags). Log-size explains on av-
+erage more than 70% of the cross-sectional variation in the log-price impact parameter. While
+this slope coefficient is precisely estimated, we cannot reject that the true slope is -1. That is,
+the data are consistent with the hypothesis that, holding all else equal, doubling the size of a
+firm cuts in half the price impact per dollar traded.
+   9
+     The literature has estimated both convex and concave cost impact functions. The fact that large blocks are
+often “worked” using multiple smaller trades suggests a non-concave cost function. Several papers have found
+concave price impact functions (e.g., Frazzini, Israel and Moskowitz (2014)), but these results are plagued by
+endogeneity. Traders certainly trade more when their trades have less price impact per dollar traded, but this is
+not evidence that larger trades have less price impact per dollar traded.
+
+
+                                                      29
+Fig. 4. Average price elasticity to stock supply
+This figure shows the cross-sectional average estimated price elasticity of stock supply, for each month
+between January 1994 and December 2012. Elasticities are measured as the product of estimated price
+impacts per dollar traded (i ), times firms’ market capitalizations. Price impact parameters are estimated
+over the previous year, from the linear regression
+
+                                       ri;t D ˛i C i OFi;t C "i;t ;
+
+where ri;t is the return to stock i on day t , and OFi;t is the contemporaneous order flow, measured as the
+dollar value of the difference between buyer and seller initiated trades, where these trades come from
+TAQ and are signed using the algorithm of Lee and Ready.
+
+
+    Thinking of order flow as changing the supply of stock available to market participants, the
+product of Kyle’s lambda and market capitalization can be interpreted as the price elasticity of
+supply. These elasticities have no obvious strong cross-sectional correlates. They are almost
+uncorrelated with size. They are only weakly correlated with volatility, or with estimated
+effective spreads, which each explain on average less than 4% of their cross-sectional variation.
+    Figure 4 shows the cross-sectional average of the estimated elasticities over time. The fig-
+ure shows a gradual decline in the price impact of trading from the bottom of the NASDAQ
+deflation through the market crash at the end of 2008, when the price impact of trading spiked
+sharply. The time-series average of the average cross-sectional elasticity is 6.53, an estimate
+consistent with the literature. Breen, Hodrick and Korajczyk (2002) find elasticities between
+
+                                                    30
+2.5 and 30.9, using a methodology similar to ours but estimating at higher frequencies. Frazz-
+ini, Israel and Moskowitz (2014) find that a daily order imbalance of 0.1% of daily volume,
+which represents on average 0.0005-0.001% of market capitalization, is associated on average
+with a price impact of 5 basis points, which corresponds to an elasticity between 50 and 100.
+For order imbalances 100 times as large (10% of daily volume) they estimate a price impact
+roughly eight times as large (40 basis points), implying an elasticity from four to eight.
+
+
+6.2    Strategy capacities, illustrative examples
+
+Before using the stock-by-stock estimates of price impact of trading to explicitly calculate the
+price impact cost of each of the anomalies we consider, it is useful to develop some intuition
+regarding the scale of the capacities we might expect. The approximate price impact cost
+incurred by the last trader in and out of any given strategy can be calculated roughly from a
+simple back-of-the-envelope calculation.
+   Price impact costs are proportional to the average price impact that results from getting
+into each position, and the average frequency with which a strategy adjusts each position. The
+costs are thus directly proportional to the size of the positions that new trading in a strategy
+represents, the price elasticity of these stocks for each of these positions, and the strategies’
+average turnover. Value-weighted strategies take positions that represent the same fraction of
+market capitalization for each stock they hold, meDprt , where D is the total number of dollars of
+new trading in the strategy and meprt is the entire market capitalization of all the firms in which
+the strategy takes any position on one side (long or short). So the average cost is roughly
+
+                                                         
+                                                   D
+                                        cD       meprt
+                                                              TO;
+
+
+where  is the average price elasticity of supply (i.e., i mei ), and TO is the strategy’s average
+monthly turnover (long and short sides combined). Letting ˛ be the fraction of total aggregate
+market capitalization (ME) held on either side of the strategy, and equating the cost with the
+
+
+
+
+                                                31
+strategy’s average spread, s, implies
+
+                                                  D     ˛s
+                                                     D     :
+                                                  ME   TO
+
+       For the standard academic construction of momentum (long/short top deciles using NYSE
+breaks), the typical stock in the top and bottom deciles is smaller than average, so these deciles
+each represent roughly only 5% of market capitalization (˛  0:05). The average monthly
+spread, after accounting for effective spreads, is s = 68 basis points/month (Table 3). The
+average monthly turnover on each side is 34.5% (also Table 3), so TO  0:69. Using the time-
+series average cross-sectional average price elasticity of 6.53, and an aggregate end-of-sample
+market capitalization of roughly $20 trillion, this suggests that the standard academic construc-
+tion of momentum could attract 0:050:0068
+                                6:530:69
+                                            $20 trillion  $1.5 billion of new capital before
+the strategy was unprofitable to the latest executing trader. The buy/hold strategy considered
+in Table 6 has a higher net spread (s = 85 basis points/month), turns over less (TO  0:38),
+and trades in a broader universe because it holds some stocks in the ninth past performance
+decile in addition to all the stocks in the tenth (˛  0:07). This momentum construction could
+thus attract roughly 0:070:0085
+                      6:530:38
+                                  $20 trillion  $4.8 billion new capital before the strategy was
+unprofitable to the latest executing trader.
+       For value strategies, net spreads are slightly smaller, but turnover is significantly lower,
+suggesting larger capacities. For the high/low decile strategy considered in Table 3, s = 42
+basis points/month, TO  0:058, and ˛  0:05, implying this simple value construction could
+attract roughly 0:050:0042
+                6:530:058
+                             $20 trillion  $11.1 billion new capital before the strategy was
+unprofitable to the latest executing trader.10 The 10%/20% strategy has a similar spread, holds
+roughly a third more positions, and turns over roughly half as much, suggesting a capacity
+almost three times as large, or roughly $30 billion.
+  10
+     In practice, the stocks in the value and growth portfolios represent very different fractions of market capital-
+ization. Value stocks are on average much smaller than growth stocks, so the value decile holds on average only
+3% of market capitalization, compared to almost 23% for the growth decile.
+
+
+
+
+                                                        32
+6.3       Strategy capacities
+
+While the back-of-the-envelope calculation can provide a rough estimate of any strategy’s ca-
+pacity, precise estimates require tracking a strategy’s individual positions, as well as how the
+price impact of trading each position varies over time. This section provides these estimates.
+       The examples of the previous subsection illustrate the importance of taking positions across
+a wide, diversified set of stocks, to minimize position sizes and thus the price impact of trading
+in and out of them.11 We consequently present results for strategies that are more broadly di-
+versified than those considered previously. Our first specification employs the 10/50 strategies,
+like those employed for the high-frequency strategies, even for the low frequency strategies.
+Because these strategies do not trade out of a previously established position until a stock’s
+signal becomes less favorable than the median, every stock is potentially in either the long or
+short side of any given strategy. Our second specification is even more broadly diversified.
+It employs 30/50 strategies, and is constructed using market capitalization, not NYSE breaks,
+i.e., breaks that target the same fraction of market capitalization in each portfolio. Employ-
+ing capitalization breaks is particularly important for the size strategies, and for strategies that
+employ sorting variables correlated with size, like value. This is because even the entire small
+cap universe, defined by stocks with below median NYSE market capitalization, accounts for
+a time-series average of only 9% of the market. The long side of the size strategy, constructed
+using NYSE breaks, is consequently forced to hold relatively concentrated positions. Using
+market capitalization breaks, which define half of the market by capitalization as large and half
+as small, dramatically reduces the size of the individual positions the strategy takes. Using
+capitalization breaks thus dramatically increases the strategy’s maximal feasible capacity.
+       Table 7 shows capacities for all the strategies that have positive net returns, i.e., those
+that are profitable after accounting for effective spreads. Perhaps not surprisingly, the most
+important low turnover anomalies, size, value and profitability, have the largest capacities of
+  11
+     To avoid excluding stocks for which data limitations prevent direct estimates of the price impact parameter,
+when direct estimates are missing we use the contemporaneous cross-sectional average price elasticity (shown
+in Figure 4), scaled by firms’ market capitalizations. The stocks for which we use these estimates represent on
+average less than 3.8% of total market capitalization.
+
+
+
+                                                      33
+Table 7. Anomaly strategy capacities
+The table reports the amount of new capital each strategy could attract before the latest execut-
+ing trader finds the strategies unprofitable. Net Sharpe ratios (SR) are estimated over the entire
+sample (starting July 1963 or July 1973, as per Table 2), and calculated accounting for effective
+spreads. Sharpe ratio reductions from new capital are calculated over the period January 1993
+to December 2012, dates determined by the availability of the TAQ data used to estimate the
+stock-level price impact parameters. Maximal capacities are listed for the end of the sample,
+December 2012, and are one-sided (i.e., are the capacities of each the long and short sides).
+                                    10/50 strategies,                    30/50 strategies,
+                                      NYSE breaks                      capitalization breaks
+Anomaly                      Net SR, SR/$B Capacity,             Net SR, SR/$B Capacity,
+                             first $1   (100)        $B          first $1     (100)       $B
+Panel A: Low Turnover Strategies
+Size                           0.22      -1.11         20.1         0.20       -0.12      169.2
+Gross Profitability            0.19      -0.15        131.0         0.21       -0.17      124.7
+Value                          0.37      -1.78         20.7         0.20       -0.40       50.6
+ValProf                        0.69      -1.89         36.3         0.66       -1.19       55.3
+Accruals                       0.25      -3.94         6.46         0.20       -1.88       10.5
+Asset Growth                   0.34      -6.03         5.61         0.18       -2.36       7.60
+Investment                     0.35      -4.72         7.38         0.12       -2.59       4.50
+Piotroski’s F-score            0.08      -12.0         0.70         0.26       -6.11       4.20
+Panel B: Mid Turnover Strategies
+Net Issuance                   0.40      -3.87        10.3          0.17       -3.20      5.44
+Return-on-book equity          0.33      -7.23        4.50          0.30       -4.06      7.41
+Failure Probability            0.13      -3.04        4.12          0.12       -2.73      4.53
+ValMomProf                     0.76      -6.24        12.1          0.53       -4.24      12.6
+ValMom                         0.51      -5.49        9.35          0.38       -3.83      10.0
+Idiosyncratic Volatility       0.03      -2.05        1.51          <0
+Momentum                       0.48      -9.36        5.16          0.31       -5.34      5.81
+PEAD (SUE)                     0.40      -19.9        2.00          0.39       -13.1      2.95
+PEAD (CAR3)                    0.41      -40.1        1.01          0.19       -23.7      0.79
+Panel C: High Turnover Strategies
+High-frequency Combo           0.40      -106.8       0.38          0.21       -46.8      0.44
+Ind. Rel. Rev. (Low Vol.)      0.12       -65.3       0.18          0.32       -60.4      0.53
+
+
+
+                                                 34
+all anomalies we consider. Like Frazzini, Israel and Moskowitz (2014), we find that the size
+strategy, at least when constructed so that the long and short sides trade potential universes
+representing similar total capitalizations, has the largest total capacity, nearly $170 billion.
+Profitability has a similar capacity, well in excess of $100 billion. The potential for value
+strategies to absorb additional capital is somewhat smaller, roughly $50 billion. This estimate
+is smaller than, but still the same order of magnitude as, the $83 billion estimate of Frazzini,
+Israel and Moskowitz (2014), and consistent with our ealier back-of-the-envelope calculation.
+    Strategies based on the other low frequency signals (accruals, asset growth, investment,
+and Piotroski’s F-score) and the mid-turnover strategies have estimated capacities in the range
+of one to ten billion dollars. Momentum lies in the middle, at slightly more than $5 billion.
+This number is again consistent with the back-of-the-envelope calculation from the previous
+subsection, and with the $5 billion estimate of Korajczyk and Sadka (2004), but an order of
+magnitude smaller than the $52 billion estimate of Frazzini, Israel and Moskowitz (2014).
+    The high turnover strategies that remain profitable after accounting for effective spreads,
+the ones based on the combined signals of industry momentum and intra-industry reversals and
+the one that trades intra-industry reversals among only low volatility stocks, both have limited
+capacities. The break even point for new capital in these strategies is on the order of one-half
+billion dollars.
+
+
+
+7. The Role of Microcaps
+In this section, we examine the strategies across various size groups. Fama and French (2008)
+emphasize that, when studying anomalies, researchers often use equal-weighted returns of a
+hedge portfolio, which can be dominated by microcaps (which they define as stocks with mar-
+ket capitalization below the 20th percentile of the NYSE). These tiny stocks typically account
+for 60% of the number of firms listed on NYSE, NASDAQ, and AMEX, but they comprise
+only about 3% of the total market capitalization. They are relatively illiquid, so strategies that
+take disproportionately large positions in these stocks are more expensive to trade.
+
+
+                                               35
+   Figures 5 through 7 present results for returns on value-weighted long/short self-financing
+portfolios, constructed using a decile sort on a signal using NYSE breakpoints. For each strat-
+egy, gross and net Sharpe ratios are presented across size bins. Micro-caps are stocks in the
+bottom 20% of market capitalization, using NYSE breaks; large-caps are stocks with above
+median NYSE market capitalization; small-caps are those in-between. To reduce turnover, size
+universe reclassifications do not trigger the liquidation of established strategy positions. For
+example, a winner already held long in a micro-cap momentum strategy would not be sold
+while it remained a strong winner just because it grew to be a small-cap stock.
+   In Figure 5, we report the basic low-turnover strategies. A simple visual inspection shows
+that the net and gross Sharpe ratios are not very different for the the low-turnover strategies.
+The transaction costs seem to be immaterial for the low-turnover anomalies, even for the micro-
+caps. The only exception to this rule are the micro-cap Size and Accruals strategies, whose net
+Sharpe ratios drop significantly.
+   Not surprisingly, accounting for the cost of trading matters more for mid- and high-turnover
+strategies. An interesting pattern emerges in Figure 6, which shows results for mid-turnover
+strategies. As in Fama and French (2008), micro-caps strategies exhibit the highest gross
+Sharpe ratios, followed by small- and large-cap strategies. Differences in net Sharpe ratios be-
+tween the three size bins are, however, much smaller. For example, the ValMomProf anomaly
+has gross annualized Sharpe ratios of 1.14, 1.05, and 0.84 in the micro-, small-, and large-caps,
+respectively, while the net Sharpe ratios for this strategy are 0.87, 0.85, and 0.64. This is not
+surprising, because firm size is negatively correlated with transaction costs, and as long as there
+is sufficient trading we should expect to see smaller stocks disproportionately affected.
+   Net Sharpe ratios are even more impacted by transaction costs in high-turnover strategies,
+as evidenced by Figure 7. The extremely high gross Sharpe ratios across the micro-caps turn
+severely negative once we account for transaction costs. In fact, net Sharpe ratios are negative
+for all but two of strategies. The high-frequency combo achieves an annualized Sharpe ratio of
+0.32 in the large- and 0.48 in the small-caps. Low volatility industry relative reversals achieves
+an annualized Sharpe ratio of 0.39 in the large- and 0.28 in the small-caps.
+
+
+                                                36
+                                        Gross Sharpe ratios
+
+
+
+
+        Size     Gross         Value   ValProf   Accruals      Net      Asset   Investment Piotroski’s
+               Profitability           Combo                 Issuance             Growth    F-score
+                                                            (Monthly)
+
+                                         Net Sharpe ratios
+
+
+
+
+        Size     Gross         Value   ValProf   Accruals      Net      Asset   Investment Piotroski’s
+               Profitability           Combo                 Issuance             Growth    F-score
+                                                            (Monthly)
+
+
+Fig. 5. Gross and net Sharpe ratios for low-turnover anomalies, by size terciles
+This figure presents results for returns on value-weighted long/short self-financing portfolios,
+constructed using a decile sort on a signal using NYSE breakpoints. For each strategy, gross
+and net Sharpe ratios are presented across size bins. Micro-caps are stocks in the bottom 20%
+of market capitalization, using NYSE breaks; large-caps are stocks with above median NYSE
+market capitalization; small-caps are those in-between. To reduce turnover, size universe re-
+classifications do not trigger the liquidation of established strategy positions.
+
+
+
+
+                                                 37
+                                      Gross Sharpe ratios
+
+
+
+
+        Net       ROE      Failure ValMomProf ValMom IdiosyncraticMomentum PEAD        PEAD
+      Issuance           Probability Combo     Combo Volatility            (SUE)      (CAR3)
+      (Annual)
+
+                                       Net Sharpe ratios
+
+
+
+
+        Net       ROE      Failure ValMomProf ValMom IdiosyncraticMomentum PEAD        PEAD
+      Issuance           Probability Combo     Combo Volatility            (SUE)      (CAR3)
+      (Annual)
+
+
+Fig. 6. Gross and net Sharpe ratios for mid-turnover anomalies, by size terciles
+This figure presents results for returns on the value-weighted, long/short anomaly strategies.
+Strategies are constructed using the 10%/20% buy/hold methodology, from decile portfolios
+sorted on the signal variable, using NYSE breakpoints. For each strategy, gross and net Sharpe
+ratios are presented across size bins. Micro-caps are stocks in the bottom 20% of market cap-
+italization, using NYSE breaks; large-caps are stocks with above median NYSE market capi-
+talization; small-caps are those in-between. To reduce turnover, size universe reclassifications
+do not trigger the liquidation of established strategy positions.
+
+
+
+
+                                              38
+                                       Gross Sharpe ratios
+
+
+
+
+           Industry Industry-Relative High-frequency   Short-run   Seasonality Industry-Relative
+          Momentum      Reversals        Combo         Reversals               Reversals (low vol.)
+
+                                        Net Sharpe ratios
+
+
+
+
+           Industry Industry-Relative High-frequency   Short-run   Seasonality Industry-Relative
+          Momentum      Reversals        Combo         Reversals               Reversals (low vol.)
+
+
+Fig. 7. Gross and net Sharpe ratios for high-turnover anomalies, by size terciles
+This figure presents results for returns on the value-weighted, long/short anomaly strategies.
+Strategies are constructed using the 10%/50% buy/hold methodology, from decile portfolios
+sorted on the signal variable, using NYSE breakpoints. For each strategy, gross and net Sharpe
+ratios are presented across size bins. Micro-caps are stocks in the bottom 20% of market cap-
+italization, using NYSE breaks; large-caps are stocks with above median NYSE market capi-
+talization; small-caps are those in-between. To reduce turnover, size universe reclassifications
+do not trigger the liquidation of established strategy positions.
+
+
+
+
+                                                39
+8. Conclusion
+This paper studies the performance of a large number of anomalies after accounting for trans-
+action costs, the potential these strategies have to attract new capital, and the effectiveness
+of several transaction cost mitigation strategies. It finds that introducing a buy/hold spread,
+which allows investors to continue to hold stocks that they would not actively buy, is the sin-
+gle most effective simple cost mitigation strategy. Most of the anomalies that we consider
+with one-sided monthly turnover lower than 50% continue to generate statistically significant
+spreads after accounting for transaction costs, at least when designed to mitigate transaction
+costs. Few of the strategies with higher turnover do. In all cases transaction costs reduce the
+strategies’ profitability and its associated statistical significance, increasing concerns related to
+data snooping.
+   We also quantify how much new capital could be devoted to trading each strategy before
+marginal traders, defined as those that trade latest, would no longer find the strategies profitable.
+Low turnover strategies tend to have higher capacities. Those based on size and profitability
+could both attract hundreds of billions of dollars of new arbitrage capital before they became
+unprofitable. Value has a capacity roughly half as large. Mid-turnover strategies have capacities
+an order of magnitude smaller, with momentum’s profitability disappearing when roughly $5
+billion of new capital, on each the long and short sides, pursues the strategy. The few high-
+frequency strategies that remain profitable after accounting for effective spreads have capacities
+limited to the order of only a few hundred million dollars.
+
+
+
+
+                                                 40
+References
+Abel, A. B., Eberly, J. C. 1996. Optimal investment with costly reversibility. Review of Eco-
+  nomic Studies, 63, 581–593.
+
+Ang, A., Hodrick, R. J., Xing, Y., Zhang, X. 2006. The cross-section of volatility and expected
+  returns. Journal of Finance, 61, 259–299.
+
+Arrow, K. J., Harris, T., Marschak, J. 1951. Optimal inventory policy. Econometrica, 19, 250–
+  272.
+
+Black, F. 1972. Capital market equilibrium with restricted borrowing. Journal of Business, 45,
+  444–455.
+
+Brandt, M. W., Kishore, R., Santa-Clara, P., Venkatachalam, M. 2008. Earnings announce-
+  ments are full of surprises. Working paper.
+
+Breen, W. J., Hodrick, L. S., Korajczyk, R. A. 2002. Predicting equity liquidity. Management
+  Science, 48, 470–483.
+
+Campbell, J. Y., Hilscher, J., Szilagyi, J. 2008. In search of distress risk. Journal of Finance,
+  63, 2899–2939.
+
+Carhart, M. M. 1997. On the persistence in mutual fund performance. Journal of Finance, 52,
+  57–82.
+
+Chen, L., Novy-Marx, R., Zhang, L. 2010. An alternative three-factor model. Working paper.
+
+Chen, Z., Watanabe, M., Stanzl, W. 2005. Price impact costs and the limit of arbitrage. Working
+  paper.
+
+Chordia, T., Subrahmanyam, A., Tong, Q. 2014. Have capital market anomalies attenuated in
+  the recent era of high liquidity and trading activity? Journal of Accounting and Economics,
+  58.
+
+
+                                                41
+Cooper, M. J., Gulen, H., Schill, M. J. 2008. Asset growth and the cross-section of stock
+  returns. Journal of Finance, 63, 1609–1651.
+
+Da, Z., Liu, Q., Schaumurg, E. 2014. A closer look at the short-term reversal. Management
+  Science, 60, 658–674.
+
+Davis, M., Norman, A. 1990. Portfolio selection with transaction costs. Mathematics of Oper-
+  ations Research, 15, 676–713.
+
+Engle, R., Festenberg, R., Russel, J. 2012. Measuring and modeling execution cost and risk.
+  Journal of Portfolio Management, 38, 14–28.
+
+Fama, E. F., French, K. R. 1993. Common risk factors in the returns on stocks and bonds.
+  Journal of Financial Economics, 33, 3–56.
+
+Fama, E. F., French, K. R. 2008. Dissecting anomalies. Journal of Finance, 63, 1653–1678.
+
+Foster, G., Olsen, C., Shevlin, T. 1984. Earnings releases, anomalies, and the behavior of
+  security returns. The Accounting Review, 59, 574–603.
+
+Frazzini, A., Israel, R., Moskowitz, T. 2014. Trading costs of asset pricing anomalies. Working
+  paper.
+
+Frazzini, A., Pedersen, L. H. 2014. Betting against beta. Journal of Financial Economics, 111,
+  1–25.
+
+Grinblatt, M., Titman, S. 1989. Portfolio performance evaluation: Old issues and new insights.
+  Review of Financial Studies, 2, 393–416.
+
+Hanna, J. D., Ready, M. J. 2005. Profitable predictability in the cross section of stock returns.
+  Journal of Financial Economics, 78, 463–505.
+
+Harris, L. E. 1990. Statistical properties of the Roll serial covariance bid/ask spread estimatior.
+  Journal of Finance, 45, 579–590.
+
+
+                                                42
+Harvey, C., Liu, Y., Zhu, H. 2014. ... and the cross-section of expected returns. Working Paper.
+
+Hasbrouck, J. 2009. Trading costs and returns for U.S. equities: estimating effective costs from
+  daily data. Journal of Finance, 64, 1446–1477.
+
+Haugen, R. A., Baker, N. L. 1996. Commonality in the determinants of expected stock returns.
+  Journal of Financial Economics, 41, 401–440.
+
+Heston, S. L., Sadka, R. 2011. Seasonality in the cross-section of stock returns. Journal of
+  Financial Economics, 87, 418–445.
+
+Jegadeesh, N., Titman, S. 1993. Returns to buying winners and selling losers: implications for
+  stock market efficiency. Journal of Finance, 48, 65–91.
+
+Keim, D. B., Madhavan, A. 1997. Execution costs and investment style: an interexchange
+  analysis of instituitional equity trades. Journal of Financial Economics, 46, 265–292.
+
+Korajczyk, R. A., Sadka, R. 2004. Are momentum profits robust to trading costs? Journal of
+  Finance, 59, 1039–1082.
+
+Lee, C. M., Ready, M. J. 1991. Inferring trade direction from intraday data. Journal of Finance,
+  46, 733–746.
+
+Lesmond, D. A., Schill, M. J., Zhou, C. 2004. The illusory nature of momentum profits. Journal
+  of Financial Economics, 71, 349–380.
+
+Lucas, R. E. 1978. Asset prices in an exchange economy. Econometrica, 46, 1429–1445.
+
+Lyandres, E., Sun, L., Zhang, L. 2008. Investment-based underperformance following seasoned
+  equity offerings. Review of Financial Studies, 21, 2825–2855.
+
+McLean, D., Pontiff, J. 2014. Does academic research destroy return predictability. Working
+  paper.
+
+
+
+
+                                              43
+Moskowitz, T., Grinblatt, M. 1999. Do industries explain momenum? Journal of Finance, 54,
+  1249–1290.
+
+Novy-Marx, R. 2013. The other side of value: The gross profitability premium. Journal of
+  Financial Economics, 108, 1–28.
+
+Novy-Marx, R. 2014. The quality dimension of value investing. Working paper.
+
+Novy-Marx, R. 2015. Backtesting strategies based on multiple signals. Working Paper.
+
+Piotroski, J. 2000. Value investing: the use of historical financial statement information to
+  separate winners from losers. Journal of Accounting Research, 38, 1–41.
+
+Roll, R. 1984. A simple implicit measure of the effective bid-ask spread in an efficient market.
+  Journal of Finance, 39, 1127–1139.
+
+Sloan, R. G. 1996. Do stock prices fully reflect information in accruals and cash flows about
+  future earnings? The Accounting Review, 71, 289–315.
+
+
+
+
+                                              44
+Appendix A. Fama-MacBeth regressions by size
+This Appendix highlights the danger of extrapolating transaction costs estimated on large, rel-
+atively liquid stocks to small stocks using a linear model. Table A1 reports results from Fama-
+MacBeth regressions, similar to those presented in Table 1, performed on firms with above
+(panel A) and below (panel B) NYSE median market capitalization, and shows dissimilar pa-
+
+
+
+Table A1. Determinants of transaction costs
+The table reports results from Fama-MacBeth regressions of trading cost estimates on lagged
+trading costs, market capitalization, and idiosyncratic volatility. The trading costs consist of
+the effective bid-ask spread measure proposed by Hasbrouck (2009). Idiosyncratic volatility is
+measured as the standard deviation of residuals of past three months’ daily returns on the daily
+excess market return. Both market capitalization and idiosyncratic volatility use end of July
+values. The regressions are estimated on an annual frequency and cover 1963 through 2013. In
+panel A (B), only stocks with market capitalization higher (lower) than the NYSE median are
+used.
+Panel A: Large cap stocks
+Lagged T-costs               0.54                                                         0.35
+                            [29.6]                                                       [12.4]
+log(ME)/100                             -0.07        -0.18                    -0.12       -0.05
+                                       [-14.1]     [-5.71]                  [-4.13]     [-2.38]
+           2
+[log(ME)] /100                                       0.01                     0.01        0.00
+                                                    [4.22]                   [3.38]      [1.87]
+Idiosyncratic Volatility                                          0.19        0.16        0.10
+                                                                 [23.0]      [23.2]      [18.3]
+            2
+Average R O (%)              32.0        9.26        9.47         28.1        30.8        42.4
+Panel B: Small cap stocks
+Lagged T-costs             0.93                                                          0.45
+                          [25.7]                                                        [20.7]
+log(ME)/100                             -0.65           -1.93                -1.28       -0.97
+                                       [-12.7]        [-13.1]              [-13.9]     [-11.9]
+[log(ME)]2 /100                                         0.18                 0.13        0.10
+                                                       [13.1]               [14.5]      [12.2]
+Idiosyncratic Volatility                                         0.63        0.44        0.26
+                                                                [16.7]      [13.6]      [10.3]
+           2
+        O (%)
+Average R                   59.5        39.8           46.1     50.9        62.7        70.0
+
+
+
+                                                 45
+rameter estimates for the two groups. This fact leads us to use the non-parametric matching
+procedure, rather than fitted values from a regression, to get the indirect estimates of effective
+spreads for those stocks for which direct estimates are unavailable.
+
+
+
+Appendix B. Anomaly Construction
+This Appendix contains details about the construction of anomaly strategies. All strategies
+consist of a time-series of value-weighted returns on a long/short self-financing portfolio, con-
+structed using a decile sort on a signal using NYSE breakpoints. The period examined is
+between July 1963 and December 2012 (full period) for the anomalies using the annual files
+and between July 1973 and December 2012 (recent period) for the anomalies using the quar-
+terly files. For the strategies using the annual files, accounting data for fiscal-year end of year
+t is matched with stock returns data from July of year t+1 until June of year t+2 to avoid look-
+ahead bias. For the ones that use the quarterly files, the accounting data for a given quarter are
+matched to the end of the month in which they were reported.
+   All strategies are constructed using data from the merged CRSP and COMPUSTAT in-
+dustrial database. We start with all domestic common shares trading on NYSE, AMEX, and
+NASDAQ with available accounting data and returns. Book equity of firms is calculated by
+adding the deferred taxes and investment tax credits where available, and preferred stock val-
+ues were incorporated in the following order of availability - redemption value, liquidation
+value, or par value of preferred stock. Book-to-market equity is calculated using the December
+of year t - 1 value for market equity. Stock returns are adjusted for delisting where applicable.
+For further details on the construction of the strategies, please see the referenced papers.
+
+
+B.1    Low turnover Strategies
+
+    Size - follows Fama and French (1993). The portfolios are constructed at the end of each
+      June using the CRSP end of June price times shares outstanding. Rebalanced annually,
+      uses the full period.
+
+
+                                                46
+ Gross Profitability - follows Novy-Marx (2013). Gross Profitability D GP=AT, where
+  GP is gross profits and AT is total assets. Financial firms (those with SIC codes between
+  6000 and 6999) are excluded. Rebalanced annually, uses the full period.
+
+ Value - follows Fama and French (1993). At the end of June of each year, we use book
+  equity from the previous fiscal year and market equity from December of the previous
+  year. Rebalanced annually, uses the full period.
+
+ ValProf - follows Novy-Marx (2014). Firms are sorted into deciles based on the sum
+  of their ranks in univariate sorts on book-to-market and profitability. Annual book-to-
+  market and profitability values are used for the entire year. Rebalanced annually, uses
+  the full period.
+
+ Accruals - follows Sloan (1996). Accruals D ACT CHE.ATCAT
+                                                         LCTCDLCCTXP DP
+                                                              12 /=2
+                                                                           , where
+  ACT is the annual change in total current assets, CHE is the annual change in total
+  cash and short-term investments, LCT is the annual change in current liabilities, DLC
+  is the annual change in debt in current liabilities, TXP is the annual change in income
+  taxes payable, DP is the annual change in depreciation and amortization, and .AT C
+  AT 12 /=2 is average total assets over the last two years. Rebalanced annually, uses the
+  full period.
+
+ Asset Growth - follows Cooper, Gulen and Schill (2008). Asset Growth=AT=AT 12
+  Rebalanced annually, uses the full period.
+
+ Investment - follows Lyandres, Sun and Zhang (2008) and Chen, Novy-Marx and Zhang
+  (2010). Investment D .PPEGT C INVT/=AT 12 , where PPEGT is the annual
+  change in gross total property, plant, and equipment, INVT is the annual change in
+  total inventories, and AT 12 is lagged total assets. Rebalanced annually, uses the full
+  period.
+
+ Piotroski’s F-score - based on Piotroski (2000). Piotroski’s F-score D      IB>0 C ROA>0 C
+
+   CF O>0 C CF O>IB C DTA<0jDLT T D0jDLT T          12 D0
+                                                             C AT L>0 C E qI ss0 C GM >0 C
+
+                                          47
+       ATO>0 , where IB is income before extraordinary items, ROA is income before ex-
+
+      traordinary items scaled by lagged total assets, CFO is cash flow from operations, DTA
+      is total long-term debt scaled by total assets, DLTT is total long-term debt, ATL is total
+      current assets scaled by total current liabilities, EqIss is the difference between sales of
+      of common stock and purchases of common stock recorded on the cash flow statement,
+      GM equals one minus the ratio of cost of goods sold and total revenues, and ATO equals
+      total revenues, scaled by total assets. Rebalanced annualy, uses the full period.
+
+
+B.2    Medium Turnover Strategies
+
+   Net Issuance - follows Fama and French (2008). Net issuance is the year-over-year
+      change in adjusted shares outstanding, ADJEXQ  CSHOQ, where ADJEXQ is the quar-
+      terly COMPUSTAT split adjustment factor and CSHOQ is common shares outstanding.
+      Rebalanced monthly, uses the recent period.
+
+   Return-on-book equity - follows Chen, Novy-Marx and Zhang (2010). Return-on-book equity D
+      IBQ=BEQ 3 , where IBQ is income before extraordinary items (updated quarterly), and
+      BEQ is book value of equity. Rebalanced monthly, uses the recent period.
+
+   Failure Probability - follows Campbell, Hilscher and Szilagyi (2008). Also used in
+      Chen, Novy-Marx and Zhang (2010). Failure Probability D         9:164 20:264NIMTAAVGC
+      1:416TLMTA 7:129 EXRETAVGC1:411SIGMA 0:045RSIZE 2:132CASHMTAC
+                                                             3
+      0:075MB 0:058 PRICE, where NIMTAAVG D 11 12 .NIMTA 1; 3 C:::C 9 NIMTA 10; 12 /,
+                           3
+      EXRETAVG D 11 12 .EXRET 1 C:::C 11 EXRET 12 /, NIMTA is net income (updated
+      quarterly) divided by the sum of market equity (price times shares outstanding from
+                                                                               
+      CRSP) and total liabilities (updated quarterly), EXRETD log 1Cr1Cr it
+                                                                      S&P 500it
+                                                                                 , TLMTA is
+      the ratio of total liabilities (updated quarterly) scaled by the sum of market equity and
+                                     q
+      total liabilities, SIGMA D N2521 k2ft 1;t 2;t 3g rk2 in which rk2 is firm’s daily return
+                                            P
+
+      and N is the number of trading days in the three-month period, RSIZE is the relative size
+      of each firm measured as the log of its market equity to that of the S&P500, CASHMTA
+
+
+                                               48
+  is the ratio of cash and short-term investments (updated quarterly) to the sum of market
+  equity and total liabilities, MB is the the market-to-book ratio, and PRICE is each firm’s
+  log price per share, truncated above at $15. Rebalanced monthly, uses the recent period.
+
+ ValMomProf - follows Novy-Marx (2014). Firms are sorted based on the sum of their
+  ranks in univariate sorts on book-to-market, profitability, and momentum. Annual book-
+  to-market and profitability values are used for the entire year. Rebalanced monthly, uses
+  the full period.
+
+ ValMom - follows Novy-Marx (2014). Firms are sorted based on the sum of their ranks
+  in univariate sorts on book-to-market and momentum. Annual book-to-market values are
+  used for the entire year. Rebalanced monthly, uses the full period.
+
+ Idiosyncratic Volatility - follows Ang, Hodrick, Xing and Zhang (2006). In each month,
+  firms are sorted based on the standard deviation of the residuals of regressions of their
+  past three months’ daily returns on the daily returns of the Fama-French three factors.
+  Rebalanced monthly, uses the full period.
+
+ Momentum - follows Jegadeesh and Titman (1993). In each month, firms are sorted
+  based on their cumulated past performance in the previous year by skipping the most
+  recent month. Rebalanced monthly, uses the full period.
+
+ PEAD (SUE) - follows Foster, Olsen and Shevlin (1984). Earnings surprises are mea-
+  sured by Standardized Unexpected Earnings (SUE), which is the change in the most
+  recently announced quarterly earnings per share from its value announced four quarters
+  ago divided by the standard deviation of this change in quarterly earnings over the prior
+  eight quarters. SUE D IBQ
+                          IBQ
+                              IBQ 12
+                                WIBQ
+                                     , where IBQ is income before extraordinary items
+                                24    3
+
+  (updated quarterly), and IBQ 24 WIBQ 3 is the standard deviation of IBQ in the past two
+  years skipping the most recent quarter. Rebalanced monthly, uses the recent period.
+
+ PEAD (CAR3) - follows Brandt, Kishore, Santa-Clara and Venkatachalam (2008). Earn-
+  ings surprises are measured by the cumulative three-day abnormal return around the an-
+
+                                          49
+      nouncement (days minus one to one). Rebalanced monthly, uses the recent period.
+
+
+B.3    High Turnover Strategies
+
+   Industry Momentum - follows Moskowitz and Grinblatt (1999). In each month, the
+      Fama and French 49 industries are sorted on their value-weighted past month’s perfor-
+      mance and assigned to 10 industry deciles. Then, all firms in decile 10 (from the 5 winner
+      industries) form the value-weighted long portfolio and all firms in decile 1 (the 5 loser
+      industries) form the short portfolio. Rebalanced monthly, uses the full period.
+
+   Industry Relative Reversals - follows Da, Liu and Schaumurg (2014). In each month,
+      firms are sorted based on the difference between their prior month’s return and the prior
+      month’s return of their industry (based on the Fama and French 49 industries). Updated
+      monthly, uses the full period.
+
+   High-Frequency Combo In each month, firms are sorted based on sum of their ranks in
+      the univariate sorts on industry relative reversals and industry momentum. Rebalanced
+      monthly, uses the full period.
+
+   Short-term reversals - follows Jegadeesh and Titman (1993) . In each month, firms are
+      sorted based on their prior month’s returns. Rebalanced monthly, uses the full period.
+
+   Seasonality - follows Heston and Sadka (2011). At the end of each month firms are
+      sorted based on their average return in the coming calendar month over the preceding
+      five years. Rebalanced monthly, uses the full period.
+
+   Industry Relative Reversals (Low Volatility) - in each month, firms are sorted based
+      on the difference between their prior month’s return and the prior month’s return of their
+      industry (based on the Fama and French 49 industries). Only stocks with idiosyncratic
+      volatility lower than the NYSE median for month are included in the sorts. Updated
+      monthly, uses the full period.
+
+
+
+                                              50
+Appendix C. Cost Mitigation Strategy Comparison
+Section 5 presents results for the buy/hold strategies. In this Appendix, we provide further de-
+tails on these strategies and introduce two different trading cost mitigation techniques: trading
+in the low cost universe of stocks and trading using staggered partial rebalancing. We also pro-
+vide a comparison between the three different mitigation techniques and examine how using
+them all simultaneously affects strategy profitability.
+
+
+C.1. Buy/hold strategy characteristic details
+
+Figure A1 examines buy/hold strategies in further detail, using momentum as an illustrative
+example. These strategies target the same degree of name diversification on both the long and
+short sides as that observed in the extreme past performance deciles, constructed using NYSE
+breaks. The top left panel shows the buy and hold thresholds that yield comparable name
+diversification to the decile strategies, as a function of the buy/hold spread. The other panels
+show that as the buy/hold spread increases the past performance spread between the winners
+and losers portfolios narrows, but that the turnover and transaction cost reductions are even
+more dramatic, resulting in increasing net spreads and Sharpe ratios.
+
+
+C.2. Strategies Formed in the Low Cost Universe
+
+The second trading cost mitigation technique we examine is limiting the universe of stocks
+to low trading cost stocks. To this end, we use only stocks that are in the low lagged trading
+cost tertile of each NYSE size decile. Since the effective spread measure is fairly persistent,
+this procedure helps us identify the low-cost universe without having a look-ahead bias. The
+conditional double sort is used to avoid a large cap bias when selecting low trading cost stocks.
+Table A2 shows the strategies’ gross excess returns, gross alpha relative to the four-factor
+model, average turnover on each side, transaction costs, net returns, the generalized net alpha
+                                          FF 4
+relative to both the four factors alone (˛net  ) and relative to the four factors and the simple
+                                                       F F 4C
+strategy constructed using the same sorting variable (˛net    ).
+
+
+                                               51
+Fig. A1. Buy/hold momentum strategy characteristics
+The figure plots buy/hold momentum strategy results as a function of buy/hold spread. The
+top left panel plots the buy and hold thresholds for past performance rank. The top right panel
+plots the past performance spread between the winner and loser portfolios. The middle panels
+plot the turnover and the average number of firms over the long and short sides of the strategy.
+The bottom left panel plots the gross and net returns, as well as the trading costs, associated
+with each strategy. The bottom right panel plots the net return t-statistics.
+
+
+
+                                              52
+Table A2. Low cost universe
+This table presents results for strategies constructed using only stocks that are in the low lagged
+trading cost tertile of each NYSE size decile. Each strategy consists of a value-weighted
+long/short portfolio, constructed using a decile sort on a signal using NYSE breakpoints. Panel
+A examines mid-turnover strategies, while panel B looks at high-turnover strategies. Columns
+2-7 report the strategies’ gross excess return, gross four-factor alpha, average turnover (average
+over the long and short side), transaction costs, net returns, and net four-factor alpha. The last
+column indicates the net alpha relative to the four factors and the respective simple strategy
+from Table 3. Generalized alpha is not reported if a strategy does not improve the investment
+opportunity set, so blank cells indicate that the test asset is not included in the ex post mean-
+variance efficient portfolio of the test assets and the potential explanatory factors. See Table 2
+and/or Appendix B for further details on the construction of the signals.
+Panel A: Mid Turnover Strategies
+                                    e        FF 4                           e       FF 4      F F 4C
+Anomaly                        EŒrgross  ˛gross      TO      T-costs EŒrnet   ˛net        ˛net
+Net Issuance                     0.48       0.45     15.8      0.17      0.31      0.32
+                                [2.81] [2.60]                           [1.83] [1.87]
+Return-on-book equity            0.63       0.68     24.6      0.37      0.25      0.40
+                                [2.05] [2.76]                           [0.83] [1.64]
+Failure Probability              0.88       0.83     24.9      0.62      0.26      0.39       0.07
+                                [2.18] [3.34]                           [0.65] [1.62] [0.35]
+ValMomProf                       1.41       0.67     29.6      0.41      1.00      0.48       0.16
+                                [6.66] [3.75]                           [4.74] [2.72] [1.06]
+ValMom                           0.96      -0.09     32.1      0.39      0.57
+                                [4.09] [-0.54]                          [2.46]
+Idiosyncratic Volatility         1.07       1.08     26.0      0.65      0.41      0.53       0.29
+                                [3.21] [5.26]                           [1.25] [2.63] [1.79]
+Momentum                         1.44       0.29     38.2      0.62      0.82      0.07       0.07
+                                [4.00] [1.33]                           [2.29] [0.33] [0.33]
+PEAD (SUE)                       0.51       0.39     40.0      0.41      0.10      0.05
+                                [2.53] [2.09]                           [0.48] [0.26]
+PEAD (CAR3)                      1.20       1.27     42.0      0.58      0.62      0.69       0.42
+                                [5.73] [5.84]                           [2.97] [3.22] [2.34]
+Panel B: High Turnover Strategies
+                                    e        FF 4                           e       FF 4      F F 4C
+Anomaly                        EŒrgross  ˛gross      TO      T-costs EŒrnet   ˛net        ˛net
+Industry Momentum                0.83       0.63     91.6      0.94      -0.11
+                                [3.47] [2.68]                           [-0.45]
+Industry Relative Reversals 1.34            1.35     93.8      1.44      -0.10
+                                [5.75] [6.17]                           [-0.44]
+High-frequency Combo             1.68       1.55     93.0      1.10      0.58      0.45       0.43
+                                [9.86] [8.76]                           [3.39] [2.60] [2.59]
+Short-run Reversals              0.66       0.71     94.4      1.33      -0.67
+                                [2.56] [2.92]                           [-2.65]
+Seasonality                      1.02       1.00     95.0      1.22      -0.20
+                                [5.06] [4.76]                           [-1.01]
+Industry Relative Reversals 1.44            1.36 53 94.8       0.88      0.56      0.46       0.38
+(Low Volatility)                [8.31] [7.81]                           [3.27] [2.76] [2.63]
+       Surprisingly this procedure does not significantly reduce the trading costs for any of the
+mid-turnover strategies. The average turnover and trading costs are similar to the ones for the
+strategies, which can be most easily seen in the last column. Only the PEAD (CAR3) anomaly
+                                              F F 4C
+has a positive and statistically significant ˛net    , and this comes primarily from an increased
+gross spread, not a reduction in the cost of trading the strategy. Restricting the universe to the
+low trading cost does not add much over using the traditional decile sort on the entire universe
+for the mid-turnover anomalies.
+       For the high-turnover strategies, however, there seems to be a marked reduction in trad-
+ing costs. While there is not much of a reduction in turnover, the trading costs for this lot
+decrease by 25% on average. The performances of the High-frequency Combo and the IRR
+(Low Volatility) benefit the most, as evidenced by the positive and significant net returns and
+net four-factor alphas.
+
+
+C.3. Strategies Formed Using Staggered Partial Rebalancing
+
+The third cost mitigation technique we examine is staggered partial rebalancing. This tech-
+nique reduces turnover by simply lowering the frequency at which a strategy is traded, at the
+expense of some staleness in the signals on which the strategies are based. The technique is
+popular among large institutional money-managers. For example, Applied Quantitative Re-
+search’s (AQR) momentum indices, which are designed to track the Momentum strategy with
+limited trading costs, are rebalanced quarterly.12 We consider mid-turnover strategies here sim-
+ilarly rebalanced quarterly. For the high-frequency strategies, which are sorted on signals that
+are much less persistent, rebalancing quarterly is too infrequent to maintain a large average
+exposure to the underlying anomaly. We consequently run these strategies twice as fast, with
+staggered rebalancing at a half-quarterly frequency.
+       The table shows that a two-thirds reduction in trading frequency generally yields roughly
+only a one-third reduction in turnover and transaction costs, as more of the portfolio turns over
+at each rebalance point. For the mid-turnover strategies these cost reductions generally come
+  12
+       See http://www.aqrindex.com/resources/docs/PDF/News/News_Momentum_Indices.pdf
+
+
+                                                  54
+Table A3. Staggered partial rebalancing
+This table presents results for returns on strategies that rebalance one third of the portfolio
+each month. Each strategy consists of a value-weighted long/short portfolio, constructed using
+a decile sort on a signal using NYSE breakpoints. Panel A examines mid-turnover strategies,
+while panel B looks at high-turnover strategies. Columns 2-7 report the strategies’ gross ex-
+cess return, gross four-factor alpha, average turnover (average over the long and short side),
+transaction costs, net returns, and net four-factor alpha. The last column indicates the net alpha
+relative to the four factors and the respective simple strategy from Table 3. Generalized alpha
+is not reported if a strategy does not improve the investment opportunity set, so blank cells
+indicate that the test asset is not included in the ex post mean-variance efficient portfolio of
+the test assets and the potential explanatory factors. See Table 2 and/or Appendix B for further
+details on the construction of the signals.
+Panel A: Mid Turnover Strategies
+                                    e       FF 4                            e      FF 4     F F 4C
+Anomaly                        EŒrgross  ˛gross      TO     T-costs EŒrnet    ˛net      ˛net
+Net Issuance                      0.58     0.60      11.3     0.15       0.43     0.46      0.10
+                                 [4.00] [4.49]                          [2.98] [3.53] [2.61]
+Return-on-book equity             0.52     0.64      14.1     0.29       0.23     0.39
+                                 [2.23] [3.46]                          [0.99] [2.14]
+Failure Probability               0.75     0.77      12.8     0.33       0.43     0.59      0.25
+                                 [2.31] [4.30]                          [1.31] [3.40] [3.09]
+ValMomProf                        1.29     0.54      14.6     0.23       1.06     0.54      0.18
+                                 [7.41] [4.76]                          [6.09] [4.75] [3.45]
+ValMom                            0.89    -0.17      15.1     0.22       0.67
+                                 [4.95] [-1.97]                         [3.72]
+Idiosyncratic Volatility          0.56     0.74      12.7     0.33       0.23     0.43      0.13
+                                 [1.92] [4.68]                          [0.79] [2.81] [2.43]
+Momentum                          1.25     0.20      16.7     0.34       0.91     0.20      0.20
+                                 [4.85] [2.19]                          [3.53] [2.28] [2.28]
+PEAD (SUE)                        0.49     0.30      24.9     0.33       0.17     0.06
+                                 [3.28] [2.37]                          [1.11] [0.46]
+PEAD (CAR3)                       0.39     0.29      27.7     0.45       -0.06
+                                 [3.46] [2.64]                          [-0.54]
+Panel B: High Turnover Strategies
+                                    e       FF 4                            e      FF 4     F F 4C
+Anomaly                        EŒrgross  ˛gross      TO     T-costs EŒrnet    ˛net      ˛net
+Industry Momentum                 0.50     0.36      57.9     0.75       -0.26
+                                 [4.40] [3.21]                          [-2.26]
+Industry Relative Reversals 0.82           0.94      60.4     1.15       -0.33
+                                 [8.23] [10.36]                         [-3.42]
+High-Frequency Combo              1.14     1.05      61.2     0.96       0.18     0.11      0.10
+                                [14.68] [12.90]                         [2.40] [1.35] [1.34]
+Short-run Reversals               0.42     0.58      60.9     1.07       -0.65
+                                 [3.45] [5.29]                          [-5.44]
+Seasonality                       0.23     0.28      60.6     0.95       -0.72
+                                 [2.63] [3.17]                          [-8.32]
+Industry Relative Reversals 0.80           0.82 55 61.8       0.72       0.08     0.08      0.04
+(Low Volatility)                [10.71] [11.26]                         [1.07] [1.11] [0.75]
+at the expense of only marginal reductions in the net spreads, however, resulting in significant
+generalized net alphas relative to the four Fama and French factors and the corresponding sim-
+ple strategies. The high-frequency strategies, and the highest turnover mid-turnover strategies
+(the fundamental momentum strategies), see similar proportional trading cost reductions, but
+suffer larger deterioration in the gross spreads, yielding more modest improvements to these
+strategies’ realized performance.
+
+
+C.4. Cost Mitigation Technique Comparison
+
+Next, we compare the performance of the three trading cost mitigation techniques. Table A4
+reports ex-post mean-variance efficient tangency portfolio weights on the net returns to the
+Fama/French factors and each of the twenty-three anomalies, mitigated using each of the three
+mitigation techniques. Panel A presents results for basic, non-mitigated low turnover strategies,
+while panels B and C add to the four factors the mid- and high-turnover strategies, mitigated
+in the three different ways discussed above. For each anomaly, the weights in the tangency
+portfolio are reported as well as the maximum attainable Sharpe Ratio.
+   Here, we also use the transaction cost mitigated buy/hold UMD factor, as opposed to the
+traditional one, to better judge the improvement in the investment opportunity set by each
+strategy. Thus, the maximum attainable Sharpe ratio from the four factors alone is 0.90, which
+is significantly higher than the 0.75 in Table 4 using the regular UMD factor, which is more
+expensive to trade. The low-turnover strategies used are the basic ones, since turnover for
+these is low enough that applying the mitigation techniques reduces exposure to the underlying
+anomaly without significantly reducing trading costs. All the low turnover strategies, with the
+exception of size and value which are redundant to the Fama and French factors, improve the
+investment opportunity set.
+   The more interesting results, however, concern the mid- and high-turnover strategies. All
+of the mid-turnover strategies, with the exception of ValMom, benefit from trading cost miti-
+gation. The maximum attainable Sharpe ratio for the ValMomProf strategy increases to 1.15,
+by putting weight on all three mitigated strategies. It is also worth emphasizing that the most
+
+                                               56
+Table A4. Ex post mean variance efficient portfolio weights and Sharpe ratios
+The table reports ex-post mean-variance efficient tangency portfolio weights on the net returns
+to the Fama/French factors and each of the twenty-three anomalies, mitigated using the three
+mitigation techniques separately. Panel A presents results for basic, non-mitigated low turnover
+strategies, while panels B and C add to the four factors the mid- and high-turnover strategies,
+mitigated in three different ways. For each anomaly, the weights in the tangency portfolio are
+reported as well as the maximum attainable Sharpe Ratio. See Table 2 and/or Appendix B for
+details on the construction of the signals.
+Anomaly                      MKT SMB HML UMDB/H                         Anomaly             SR
+Panel A: Low Turnover Strategies
+Size                         22.3    11.9     42.3     23.5                               0.90
+Gross Profitability          20.3    12.6     39.7     20.3              7.1              0.92
+Value                        22.1    13.3     44.4     23.0             -2.9              0.90
+ValProf                      24.6             31.6     24.9             18.8              1.00
+Accruals                     21.5    13.5     38.2     21.0              5.8              0.92
+Asset Growth                 22.1    11.4     38.8     23.0              4.6              0.91
+Investment                   21.9     9.1     31.4     18.0             19.6              1.07
+Piotroski’s F-score          20.0    15.6     38.0     18.8              7.6              0.94
+                                                           T-cost mitigation
+                                                           technique used in
+                                                         anomaly construction
+Anomaly                   MKT        SMB      HML UMDB/H LC       QR      B/H             SR
+Panel B: Mid Turnover Strategies
+Net Issuance                 20.4    17.1     23.3     13.3             14.8     11.1     1.06
+Return-on-book equity        19.4    23.4     31.5     8.3                       17.4     1.04
+Failure Probability          23.5    27.5     31.8                       9.4      7.8     1.05
+ValMomProf                   27.7             30.6              3.2     12.5     26.1     1.15
+ValMom                       22.3    11.9     42.3     23.5                               0.90
+Idiosyncratic Volatility     21.9    29.3     23.9     10.1     5.5               9.2     1.01
+Momentum                     24.2    13.6     42.9                      19.3              0.96
+PEAD (SUE)                   19.8    15.4     37.1     11.0                      16.7     0.94
+PEAD (CAR3)                  19.8    12.8     33.2     13.8     12.5             8.0      1.04
+Panel C: High Turnover Strategies
+High-Frequency Combo         17.2    10.6     35.4     20.2     11.7              4.8     0.98
+Ind. Rel. Rev. (Low Vol.)    15.3    6.0      33.1     23.8     11.1             10.7     1.00
+
+
+
+                                              57
+weight out of the three types of mitigated strategies is typically put on the buy/hold strategies,
+suggesting that it is the most useful single, simple method for reducing turnover while preserv-
+ing exposure to the underlying signal. Not surprisingly, the only high-frequency strategies that
+improve the attainable Sharpe ratio are those that are based on the combination of industry mo-
+mentum and industry-relative reversals and the industry-relative reversals strategy that trades
+exclusively among low volatility stocks. For these strategies, the low-frequency versions, con-
+structed with staggered partial rebalancing, get no weight in the tangency portfolios.
+
+
+C.5. Strategies that Employ Multiple Cost Mitigation Techniques
+
+While introducing a buy/hold spread seems to be the single most useful cost mitigation tech-
+nique for most of the strategies we consider, the other techniques often contribute to marginal
+performance improvements, and sometimes to significant ones. It is thus natural to ask if these
+separate improvements can be realized simultaneously using multi-mitigated strategies, which
+employ all three mitigation techniques simultaneously. The strategies are constructed in the
+lower lagged trading cost half of each NYSE size decile, using staggered partial rebalancing,
+with turnover further reduced using the buy/hold spread.
+   Table A5 reports the strategies’ gross excess return, gross alpha relative to the four-factor
+model, average turnover (average over the long and short side), transaction costs, net returns,
+net four-factor alpha, and the net alpha relative to the four factors and the respective simple
+strategy from Table 3. We see a dramatic decrease in turnover (60% on average) and in trans-
+action costs (59% on average) compared to the basic strategies, which is partially offset by
+a decreased exposure to the expected return signal, evidenced by the reduction in gross re-
+turns. While these strategies do see improved performance relative to the basic strategies, they
+generally do not improve on the single mitigation technique of the buy/hold spread.
+   The benefit of multiple mitigation techniques is much greater, however, for the high turnover
+strategies. This is not surprising, as reducing transaction costs is much more important for the
+net performance of high transaction cost strategies. The net returns to the High-Frequency
+Combo and the IRR (Low Volatility) have impressive t-statistics of 5.23 and 4.12, resulting in
+
+                                               58
+Table A5. Strategies that use multiple cost mitigation techniques
+The table reports results for strategies that use all three trading cost mitigation techniques.
+Panel A examines mid-turnover strategies, while panel B looks at high-turnover strategies.
+Columns 2-7 report the strategies’ gross excess return, gross four-factor alpha, average turnover
+(average over the long and short side), transaction costs, net returns, and net four-factor alpha.
+The last column indicates the net alpha relative to the four factors and the respective simple
+strategy from Table 3. Generalized alpha is not reported if a strategy does not improve the
+investment opportunity set, so blank cells indicate that the test asset is not included in the ex
+post mean-variance efficient portfolio of the test assets and the potential explanatory factors.
+See Table 2 and/or Appendix B for further details on the construction of the signals.
+Panel A: Mid Turnover 10%/20% Strategies
+                                  e        FF 4                            e       FF 4     F F 4C
+Anomaly                      EŒrgross  ˛gross      TO      T-costs EŒrnet    ˛net       ˛net
+Net Issuance                    0.43      0.46     6.18      0.08       0.34      0.41      0.12
+                               [2.83] [3.07]                           [2.28] [2.77] [1.12]
+Return-on-book equity           0.44      0.59     5.79      0.19       0.25      0.45      0.03
+                               [1.51] [2.58]                           [0.87] [2.03] [0.18]
+Failure Probability             0.31      0.46     3.46      0.23       0.08      0.35      0.10
+                               [0.85] [2.35]                           [0.22] [1.82] [0.67]
+ValMomProf                      1.11      0.64     9.66      0.14       0.97      0.65      0.39
+                               [6.22] [4.05]                           [5.41] [4.21] [2.83]
+ValMom                          0.77     -0.12     10.2      0.14       0.63
+                               [4.11] [-0.94]                          [3.36]
+Idiosyncratic Volatility        0.81      0.93     2.87      0.34       0.47      0.64      0.41
+                               [2.52] [5.14]                           [1.45] [3.60] [2.97]
+Momentum                        1.27      0.34     15.5      0.26       1.01      0.42      0.42
+                               [4.10] [2.08]                           [3.25] [2.61] [2.61]
+PEAD (SUE)                      0.43      0.36     20.1      0.22       0.21      0.21      0.09
+                               [2.31] [2.24]                           [1.12] [1.33] [0.77]
+PEAD (CAR3)                     0.66      0.64     26.3      0.36       0.30      0.30      0.11
+                               [3.78] [3.51]                           [1.74] [1.69] [0.68]
+Panel B: High Turnover 10%/50% Strategies
+                                  e        FF 4                            e       FF 4     F F 4C
+Anomaly                      EŒrgross  ˛gross      TO      T-costs EŒrnet    ˛net       ˛net
+Industry Momentum               0.35      0.14     38.2      0.40       -0.05
+                               [3.47] [1.49]                          [-0.44]
+Industry Relative Reversals 0.61          0.82     39.6      0.60       0.01      0.14      0.14
+                               [5.43] [8.95]                           [0.10] [1.54] [1.54]
+High-Frequency Combo            0.84      0.74     39.2      0.48       0.37      0.28      0.28
+                              [12.04] [10.24]                          [5.23] [3.98] [3.98]
+Short-run Reversals             0.38      0.65     41.2      0.54       -0.17
+                               [2.85] [6.35]                          [-1.29]
+Seasonality                     0.01      0.09     36.8      0.50       -0.49
+                               [0.10] [1.05]                          [-5.59]
+Industry Relative Reversals 0.70          0.78     41.1      0.39       0.31      0.35      0.33
+(Low Volatility)               [9.10] [11.75]                          [4.12] [5.50] [5.44]
+                                                59
+net Sharpe ratios of 0.74 and 0.58, respectively. Further, even the simple IRR strategy seems
+to have a positive net four-factor alpha, albeit not statically significant.
+
+
+
+Appendix D. Alternative Cost Mitigation Strategies
+This section focuses on an alternative cost mitigation technique that allows investors trading
+one strategy to opportunistically take small positions in another at effectively negative trading
+costs. This technique of trading one strategy on the margin of another is often referred to as
+a screen or filter. To examine its effectiveness, we look at how trading momentum and PEAD
+on the margin of a size strategy improves performance relative to teh simple size strategy, and
+how trading the high-frequency combo on the margin of momentum, or buy/hold momentum,
+improves the performance of the two momentum strategies.
+   Table A6 documents results of trading the two mid-turnover strategies on the margin of
+size. Panel A looks at trading size with a momentum filter (i.e., trading momentum on the
+margin of size), while panel B looks at trading size with a PEAD filter (i.e., trading momentum
+on the margin of size). The screened strategies are enhanced by slowing sales (purchases)
+and short covers (shorts) when the screening variable is in the top (bottom) x%, where x is
+indicated by the first column. The third column shows each strategy’s turnover in percentages,
+and the fourth indicates its net excess return over the risk-free rate. The fifth column presents
+the generalized four factor net ˛. Finally, the last three columns report the coefficients from
+                                    i             SIZE       MOM
+the following spanning regression: Rnet D ˛ C ˇ1 Rnet  C ˇ2 RB=H;n C " for panel A, and
+ i             SIZE       PEAD
+Rnet D ˛ C ˇ1 Rnet  C ˇ2 RB=H;n C " for panel B.
+   We can observe that in both cases, as the screen decile cutoff is increased, the turnover
+decreases and the t-statistic on net returns increases. The loadings in the last three columns
+demonstrate the extent to which the exposure to the screening strategy increases. Naturally, the
+loadings on the size strategy decrease while the loadings on the buy/hold momentum in Panel
+A and buy/hold PEAD in Panel B increase. Interestingly, trading momentum on the margin of
+size does not seem to add much if an investor is already trading size and buy/hold momentum,
+
+
+                                                 60
+Table A6. Trading momentum and PEAD on the margin of size
+This table presents results from trading the momentum and PEAD strategies on the margin
+of the size strategy. Panel A looks at size screened by momentum, while panel B looks at
+size screened by PEAD. The screened strategies are enhanced by slowing sales (purchases)
+and short covers (shorts) when the screening variable is in the top (bottom) x%, where x is
+indicated by the first column. The third column shows each strategy’s turnover in percentages,
+and the fourth indicates its net excess return over the risk-free rate. The fifth column presents
+the generalized four factor net ˛. Finally, the last three columns report the coefficients from
+                             i                   SIZE           MOM                             i
+the following regression: Rnet  D ˛simple C ˇ1 Rnet    C ˇ2 RB=H;n    C " for panel A, and Rnet   D
+              SIZE          PEAD
+˛B=H C ˇ1 Rnet      C ˇ2 RB=H;n C " for panel B.
+Panel A: Trading momentum on the margin of size
+                                                              i            SIZE         MOM
+MOM         MOM                                             Rnet D ˛ C ˇ1 Rnet    C ˇ2 RB=H;n C"
+                                          e          FF 4
+Screen      Accel.         TO        EŒRnet       ˛              ˛             ˇ1           ˇ2
+                           4.2        0.12          0.15
+                                     [0.63]       [0.73]
+10%                        3.2        0.22          0.19         0.00          0.99         0.11
+                                     [1.12]       [0.95]        [0.11]     [119.19]       [16.36]
+30%                        2.3        0.31          0.23         0.03          0.97         0.18
+                                     [1.62]       [1.13]        [0.57]      [76.22]       [18.75]
+50%                        1.5        0.31          0.26         0.00          0.94         0.22
+                                     [1.65]       [1.27]        [0.06]      [63.97]       [19.87]
+50%          10%           2.5        0.42          0.24         0.08          0.85         0.28
+                                     [2.27]       [1.17]        [0.80]      [41.55]       [18.00]
+50%          20%           3.0        0.43          0.23         0.07          0.82         0.30
+                                     [2.35]       [1.14]        [0.77]      [40.67]       [19.27]
+Panel B: Trading PEAD on the margin of size
+                                                              i            SIZE         PEAD
+PEAD        PEAD                                            Rnet D ˛ C ˇ1 Rnet    C ˇ2 RB=H;n  C"
+                                          e          FF 4
+Screen      Accel.         TO        EŒRnet       ˛              ˛             ˇ1           ˇ2
+                           4.2        0.12          0.15
+                                     [0.63]       [0.73]
+10%                        3.9        0.16          0.16         0.04          0.99         0.02
+                                     [0.83]       [0.79]        [4.59]     [495.37]        [6.45]
+30%                        3.2        0.23          0.19         0.10          0.97         0.07
+                                     [1.19]       [0.92]        [2.67]     [114.99]        [6.17]
+50%                        2.6        0.27          0.21         0.14          0.94         0.11
+                                     [1.45]       [1.04]        [2.45]      [73.15]        [6.56]
+50%          10%           3.5        0.41          0.21         0.28          0.79         0.18
+                                     [2.31]       [1.03]        [3.13]      [39.39]        [6.54]
+50%          20%           3.8        0.42          0.20         0.29          0.77         0.18
+                                     [2.39]       [1.00]        [3.24]      [37.94]        [6.34]
+
+
+                                                61
+as evidenced by the insignificant alphas in column 5. On the other hand, trading PEAD on the
+margin of size seems to improve the investment opportunity set, as evidenced by the significant
+alphas in column 5 of Panel B. Using this technique, an investor can effectively take a small
+position in PEAD on top of the size exposure at negative transaction costs.
+   Similarly, Table A7 shows that trading the high-frequency combo on the margin of momen-
+tum (Panel A) or buy/hold momentum (Panel B) also decreases turnover (up to 28% for the 50%
+momentum screen) and improves the net returns. The spanning regression results in the last
+three columns of Panel B reveal that the buy/hold momentum enhanced high-frequency combo
+is worth trading even if an investor already has positions in both strategies separately, sim-
+ply because one saves the trading costs associated with rebalancing against the high-frequency
+combo. We see a similar result in Panel A for the basic momentum enhanced combo strategy,
+but only after the screen is increased to 30% or more.
+
+
+
+
+                                              62
+Table A7. Trading high-frequency combo on the margin of momentum
+This table presents results from trading the high-frequency combination strategy on the mar-
+gin of the momentum and the buy/hold momentum strategies. Panel A looks at momentum
+screened by the combo, while Panel B looks at buy/hold momentum screened by the combo.
+The screened strategies are enhanced by slowing sales (purchases) and short covers (shorts)
+when the screening variable is in the top (bottom) x%, where x is indicated by the first col-
+umn. The third column shows each strategy’s turnover in percentages, the fourth one indicates
+its net excess return over the risk-free rate. The fifth one presents the generalized four factor
+net ˛. Finally, the last three columns report the coefficients from the following regression:
+   i                  MOM          COMBO
+Rnet D ˛B=H C ˇ1 RB=H;n     C ˇ2 RB=H;n      C ".
+Panel A: Trading the high-frequency combo on the margin of momentum
+                                                              i             MOM         COMBO
+COMBO         COMBO                                          Rnet D ˛ C ˇ1 RB=H;n C ˇ2 RB=H;n   C"
+                                            e         FF 4
+Screen        Accel.        TO         EŒRnet      ˛              ˛           ˇ1           ˇ2
+                            34.4        0.68         0.70        -0.23        1.06         0.01
+                                       [2.45]       [2.45]      [-3.51]     [103.76]      [0.54]
+10%                         33.5        0.76         0.72        -0.15        1.05         0.06
+                                       [2.77]       [2.50]      [-2.45]     [105.57]      [2.87]
+30%                         29.8        1.00         0.78         0.10        1.04         0.06
+                                       [3.69]       [2.71]      [1.58]      [106.94]      [2.84]
+50%                         24.9        1.05         0.86         0.16        0.99         0.14
+                                       [4.01]       [2.99]      [2.20]      [83.82]       [5.83]
+50%             10%         31.9        0.90         0.79         0.08        0.82         0.34
+                                       [3.97]       [2.76]      [1.08]      [69.98]      [14.29]
+50%             20%         36.6        0.71         0.78        -0.05        0.75         0.34
+                                       [3.36]       [2.69]      [-0.57]     [59.15]      [13.13]
+Panel B: Trading the high-frequency combo on the margin of buy/hold momentum
+                                                              i             MOM         COMBO
+COMBO         COMBO                                          Rnet D ˛ C ˇ1 RB=H;n C ˇ2 RB=H;n   C"
+                                            e         FF 4
+Screen        Accel.        TO         EŒRnet      ˛              ˛           ˇ1           ˇ2
+                            18.7        0.85         0.86
+                                       [3.35]       [3.27]
+10%                         18.6        0.89         0.86         0.04        0.99         0.02
+                                       [3.52]       [3.28]      [2.99]      [507.78]      [5.05]
+30%                         18.0        0.98         0.87         0.14        0.97         0.02
+                                       [3.93]       [3.32]      [4.72]      [200.89]      [1.93]
+50%                         16.8        0.97         0.89         0.15        0.93         0.08
+                                       [3.97]       [3.40]      [2.41]      [93.57]       [3.97]
+50%             10%         23.2        0.85         0.81         0.08        0.82         0.23
+                                       [3.88]       [3.08]      [1.20]      [77.75]      [10.44]
+50%             20%         28.3        0.71         0.77        -0.02        0.76         0.25
+                                       [3.41]       [2.91]      [-0.28]     [66.17]      [10.73]
+
+
+                                               63
+

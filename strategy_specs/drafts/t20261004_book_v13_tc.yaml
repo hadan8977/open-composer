@@ -1,0 +1,113 @@
+name: t20261004_book_v13_tc
+description: 'Equity book v1.3 candidate (cost-aware trading), preregistered 2026-10-04 by the 01:07 lead round: the v1.2 primary variant M0_U3000 (T-25 R6 construction, unchanged composite, weights, ETB shorts, EWMA SPY hedge, VIX > 20.60 halving, weekly 5 tranches, fill at the close of t+1) traded with one of five preregistered rules instead of full rebalancing at each tranche refresh: partial adjustment towards the target at rate 1/2 or 1/3 (Garleanu-Pedersen), partial adjustment of the unit book with the VIX scale applied at once, or a no-trade band of 0.25 or 0.50 cross-sectional weight standard deviations (Novy-Marx-Velikov buy/hold analogue). Replacement needs +0.10 offset-median net Sharpe in both the recent and the stress window (runbook section 5), a paired Newey-West t >= 2, and account-layer confirmation. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- IWM
+- IJR
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3000
+  max_position_weight: 0.0125
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3000
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.0125
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261004_book_v13_tc:cost_aware_trading_rules
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/research/equity_book/panel
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_book_alpha:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Signals come from themes_<year>.parquet via AlphaSource (scripts/run_book_v1_stage2.py), weights, hedge, VIX rule and costs from scripts/realism_ladder_book_ls.py (T-25 R6), the account layer from the T-20261002-26 simulator, all as preregistered in reports/research/iterations/t20261002_book_v12/hypotheses.md; the v1.3 trading rules are preregistered in reports/research/iterations/t20261004_book_v13_tc/hypotheses.md.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- events.sec_filings
+- events.sec_form4_insider
+- market.finra_short_interest
+- reference.sec_sic_industry
+research_design:
+  iter_id: t20261004_book_v13_tc
+  candidate_manifest_path: reports/research/iterations/t20261004_book_v13_tc/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261004_book_v13_tc/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261004_book_v13_tc.jsonl
+  source_card_claim_ids:
+  - gp_2013_dynamic_trading_aim_partial_adjustment
+  - nmv_2016_buy_hold_spread_cost_mitigation
+  - jkmp_2022_implementable_efficient_frontier
+  - aqr_2023_longshort_manager_sharpe_percentiles
+  - chen_velikov_2023_anomaly_net_returns
+  - fim_2018_trading_costs_square_root_impact
+  - jkp_2023_replication_153_factors_13_themes
+  - alpaca_2026_regt_margin_short_selling_rules
+  parameter_space:
+    trading_rule:
+    - P2_partial_adjustment_rate_1_2
+    - P3_partial_adjustment_rate_1_3
+    - P2V_partial_adjustment_unit_book_rate_1_2_vix_scale_immediate
+    - N25_no_trade_band_0_25_sd
+    - N50_no_trade_band_0_50_sd
+  candidate_budget: 5
+  selection_objective: Net-of-cost Sharpe of the unchanged v1.2 M0_U3000 book under five preregistered trading rules against full rebalancing (B0, identity with T-25 R6). A rule replaces B0 only if its offset-median net Sharpe is at least 0.10 higher in both the recent window 2024-01-08..2026-09-15 and the stress window 2017-10-02..2023-08-31, at least 4 of 5 offsets improve in each window, the paired Newey-West t (lag 5) of the blended daily net difference over 2017-10..2026-09 is at least 2, the realized beta stays within 0.15, and the account layer, the other three variants, the 15-trial family DSR tier and a 20-seed placebo confirm it.
+  candidate_budget_note: '5 selectable rules on M0_U3000; B0 is the v1.2 identity baseline, not a trial. DSR family for tiers: 15 (v1.2 family of 10 plus 5 rules); program disclosure: 116 trials. The other three variants are run only for the selected rule as a non-selectable robustness check.'
+  anti_overfit_notes:
+  - Before this contract the lead round computed only B0 (v1.2 R6) cost statistics from the saved R6 series (cost 224 bp a year recent / 152 bp stress, turnover 32x / 26x, VIX-flip rebalances 26% of cost); no rule was run or simulated.
+  - Rule rates (1/2, 1/3) and band sizes (0.25, 0.50 SD) are fixed from the literature forms (GP 2013 fixed-rate rule, NMV 2016 10%/20% buy/hold spread is about 0.44 SD in normal scores), not searched.
+  - The replacement threshold is the runbook section 5 optimization-iteration rule (+0.10 in both windows), unchanged.
+  validation_plan:
+  - 'Stage 1: B0 identity against data/research/equity_book/realism_ladder/R6_M0_U3000_o<k>.parquet (<= 1e-12), five rules x five offsets on M0_U3000, metrics in both windows, eligibility E1-E4, return-free diagnostics (turnover decomposition, weekly rank autocorrelation per theme)'
+  - 'Stage 2 (only if a rule is eligible): the selected rule on M0_P1000, M1_U3000, M1_P1000; account layer F1/F2 on M0_U3000; 20-seed placebo; 15-trial family DSR tier'
+notes:
+  intent: Lower the trading cost of the v1.2 primary book without changing its signal, and keep the change only if the net Sharpe gain clears the runbook optimization rule in both windows and survives the account layer.
+  hypothesis_id: T-20261004-01
+  previous_link: t20261002_book_v12
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered
