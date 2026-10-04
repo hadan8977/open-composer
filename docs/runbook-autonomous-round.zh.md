@@ -128,6 +128,13 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - 数字从仓库文件取，用代码算，带路径。先写一页结论，最后写需要机主决定的事；没有就写"没有"。
    - 周日 00:50 UTC 的 cron（`scripts/owner_report.py auto --send`）会把它和脚本生成的一周数据一起发到机主邮箱。不要自己发邮件。
    - 这一轮被闸门暂停或没跑成，周日照常发纯数据版。下一个主审轮补写，再用 `uv run python scripts/owner_report.py weekly --send --force` 补发。
+8. **按引擎轮换主攻方向**（机主 10-04，`docs/plan-owner-feedback-2026-10-04.zh.md` 第 3 节 E3）。审核做完后，本轮只把一条线往前推一步，不四处试新方向：
+   - 01:07：E1 日频股票组合；
+   - 07:07：E2 ETF 状态层，包括半导体依赖和 S3 替代族；
+   - 13:07：E3 日内与交易频率；
+   - 19:07：组合配置和实盘就绪，周六兼写周报。
+   - **先改进、后否定**：信号层面成立、死于成本或执行的，下一步必须是并入组合（按边际贡献判）或改执行方式。只有这两条都试过仍不行，才能关线，并写清死因。
+9. **维护 `reports/owner/live-track.json`**：候选的阶段、模拟盘起始日、下一步和日期、提议日，引擎的现状和下一步，待机主决定的事。有变化就改，和本轮其他改动一起提交。看板首页和日报都读它。
 
 ### 4B. 执行轮（Sonnet high）
 
@@ -239,7 +246,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - **迭代档案在 `.gitignore` 里**（`reports/research/iterations/*`）。新产出的 `results.json`、`report.md`、`candidate-manifest.json`、`prebacktest-validated-at.txt`、`cost-table.json`、`data-feasibility.json`、`sources/`、修正案等文件，必须逐个用 `git add -f <路径>` 加入。`cache/` 不提交。
    - 提交后用 `git status --short --ignored reports/research/iterations/<id>` 确认除 `cache/` 外没有 `!!` 行。
    - 2026-09-30 10:07 执行轮只提交了已跟踪的文件，两个任务的 `results.json` 都没进 git，由交互会话补交。
-6. **最后一条消息**是给机主看的汇报（在 Paseo 里显示）。执行轮只写三行：做了哪些简报、各自产物路径和"待主审"、值守是否正常。主审轮中文、简短，按这个结构：
+6. **最后一条消息**是给机主看的汇报（在 Paseo 里显示）。**同一份汇报要在第 5 步提交之前写进 `reports/owner/rounds/<YYYY-MM-DD>T<HHMM>Z-<lead|exec>.md`**（本轮开始的 UTC 时间，格式见该目录的 README），和本轮改动一起提交；看板的报告页和每日邮件从这里读。执行轮只写三行：做了哪些简报、各自产物路径和"待主审"、值守是否正常。主审轮中文、简短，按这个结构：
    - **这一轮做了什么**（1–3 条）
    - **结果**（数字要和 JSON 核对过；否定的也写清楚为什么）
    - **模拟盘值守**（正常 / 异常及处理）
