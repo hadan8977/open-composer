@@ -1949,7 +1949,7 @@
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
 
 ### T-20261004-80 调研（第二版计划输入）：中频交易做到什么程度才有效
-- status: running（独立 Paseo 代理 eaa6dfee，Sonnet 5.5 high，协调码 R1004-T80）
+- status: done（2026-10-04 18:57 UTC 交互会话审核：接受。主攻：成本感知的残差多信号短期统计套利，500–1000 只，持有 3–10 日，部分调仓，叠在 v1.2 上。执行：换仓从开盘移到收盘，开盘半价差是收盘的 3.2–4.9 倍。最大缺口是 2022 年以后没有净值证据，阶段 1 补）
 - priority: 1
 - brief: reports/research/control/briefs/T-20261004-80.md
 - done_when: `reports/research/intel/I-20261004-05-mid-frequency-depth.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
@@ -1957,7 +1957,7 @@
   - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
 
 ### T-20261004-81 调研（第二版计划输入）：状态模型、主题集中、半导体周期做到什么程度才有效
-- status: running（独立 Paseo 代理 70a25627，Sonnet 5.5 high，协调码 R1004-T81）
+- status: done（2026-10-04 18:57 UTC 交互会话审核：接受。先做主题风险预算，再做在线跳跃模型状态层（回撤控制，不是收益来源）。半导体周期指标只做条件器和监控；韩国 9 月芯片出口 603 亿美元、同比 +263% 已对快照核实。朴素的'出口好就买'方向相反）
 - priority: 1
 - brief: reports/research/control/briefs/T-20261004-81.md
 - done_when: `reports/research/intel/I-20261004-06-regime-theme-cycle-depth.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。

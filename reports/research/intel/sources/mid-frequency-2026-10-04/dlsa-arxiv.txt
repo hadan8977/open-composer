@@ -1,0 +1,2576 @@
+URL: https://arxiv.org/pdf/2106.04028
+FETCHED_UTC: 2026-10-04T18:36Z
+HTTP: 200 application/pdf
+-----
+                                                                     Deep Learning Statistical Arbitrage∗
+                                                          Jorge Guijarro-Ordonez†                  Markus Pelger‡              Greg Zanotti§
+
+                                                                                This draft: September 25, 2022
+                                                                                 First draft: March 15, 2019
+arXiv:2106.04028v2 [cs.LG] 7 Oct 2022
+
+
+
+
+                                                                                               Abstract
+
+
+
+                                                   Statistical arbitrage exploits temporal price differences between similar assets. We develop a
+                                               unifying conceptual framework for statistical arbitrage and a novel data driven solution. First,
+                                               we construct arbitrage portfolios of similar assets as residual portfolios from conditional latent
+                                               asset pricing factors. Second, we extract their time series signals with a powerful machine-
+                                               learning time-series solution, a convolutional transformer. Lastly, we use these signals to form
+                                               an optimal trading policy, that maximizes risk-adjusted returns under constraints. Our com-
+                                               prehensive empirical study on daily US equities shows a high compensation for arbitrageurs to
+                                               enforce the law of one price. Our arbitrage strategies obtain consistently high out-of-sample
+                                               mean returns and Sharpe ratios, and substantially outperform all benchmark approaches.
+
+
+
+                                               Keywords: statistical arbitrage, pairs trading, machine learning, deep learning, big data, stock
+                                               returns, convolutional neural network, transformer, attention, factor model, market efficiency,
+                                               investment.
+                                               JEL classification: C14, C38, C55, G12
+
+
+
+
+                                           ∗
+                                             We thank Robert Anderson, Jose Blanchet, Marcelo Fernandes, Kay Giesecke, Lisa Goldberg, Amit Goyal (discussant),
+                                        Bryan Kelly, Robert Korajczyk, Martin Lettau, Sophia Li, Marcelo Medeiros, Scott Murray, George Papanicolaou, Guofu
+                                        Zhou (discussant) and seminar and conference participants at Stanford, UC Berkeley, Rutgers University, GSU CEAR Finance
+                                        Conference, NBER-NSF Time-Series Conference, AI and Big Data in Finance Research Seminar, AI in Fintech Forum, World
+                                        Congress of the Bachelier Finance Society, Society of Financial Econometrics Annual Conference, the Econometric Research in
+                                        Finance Workshop, the Meeting of the Brazilian Finance Society, World Online Seminars on Machine Learning in Finance, the
+                                        Machine Learning and Quantitative Finance Workshop at Oxford, Annual Bloomberg-Columbia Machine Learning in Finance
+                                        Workshop, NVIDIA AI Webinar, Vanguard Academic Seminar, INFORMS and the Western Conference on Mathematical
+                                        Finance for helpful comments. We thank MSCI for generous research support.
+                                           †
+                                             Stanford University, Department of Mathematics, Email: jguiord@stanford.edu.
+                                           ‡
+                                             Stanford University, Department of Management Science & Engineering, Email: mpelger@stanford.edu.
+                                           §
+                                             Stanford University, Department of Management Science & Engineering, Email: gzanotti@stanford.edu.
+                                      I.     Introduction
+   Statistical arbitrage is one of the pillars of quantitative trading, and has long been used by
+hedge funds and investment banks. The term statistical arbitrage encompasses a wide variety of
+investment strategies, which identify and exploit temporal price differences between similar assets
+using statistical methods. Conceptually, they are based on relative trades between a stock and a
+mimicking portfolio. The mimicking portfolio is constructed to be “similar” to the target stock,
+usually based on historical co-movements in the price time-series or similar firm characteristics.
+When the spread between the prices of the two comparison assets widens, the arbitrageur sells the
+winner and buys the loser. If their prices move back together, the arbitrageur will profit. While
+Wall Street has developed a plethora of proprietary tools for sophisticated arbitrage trading, there is
+still a lack of understanding of how much arbitrage opportunity is actually left in financial markets.
+In this paper we answer the two key questions around statistical arbitrage: What are the important
+elements of a successful arbitrage strategy and how much realistic arbitrage is in financial markets?
+   Every statistical arbitrage strategy needs to solve the following three fundamental problems:
+Given a large universe of assets, what are long-short portfolios of similar assets? Given these
+portfolios, what are time series signals that indicate the presence of temporary price deviations?
+Last, but not least, given these signals, how should an arbitrageur trade them to optimize a trading
+objective while taking into account possible constraints and market frictions? Each of these three
+questions poses substantial challenges, that prior work has only partly addressed. First, it is a
+hard problem to find long-short portfolios for all stocks as it is a priori unknown what constitutes
+“similarity”. This problem requires considering all the big data available for a large number of
+assets and times, including not just conventional return data but also exogenous information like
+asset characteristics. Second, extracting the right signals requires detecting flexibly all the relevant
+patterns in the noisy, complex, low-sample-size time series of the portfolio prices. Last but not
+least, optimal trading rules on a multitude of signals and assets are complicated and depend on
+the trading objective. All of these challenges fundamentally require flexible estimation tools that
+can deal with many variables. It is a natural idea to use machine learning techniques like deep
+neural networks to deal with the high dimensionality and complex functional dependencies of the
+problem. However, our problem is different from the usual prediction task, where machine learning
+tools excel. We show how to optimally design a machine learning solution to our problem that
+leverages the economic structure and objective.
+   In this paper, we propose a unifying conceptual framework that generalizes common approaches
+to statistical arbitrage. Statistical arbitrage can be decomposed into three fundamental elements:
+(1) arbitrage portfolio generation, (2) arbitrage signal extraction and (3) the arbitrage allocation
+decision given the signal. By decomposing different methods into their arbitrage portfolio, signal
+and allocation element, we can compare different methods and study which components are the most
+relevant for successful trading. For each step we develop a novel machine learning implementation,
+which we compare with conventional methods. As a result, we construct a new deep learning
+statistical arbitrage approach. Our new approach constructs arbitrage portfolios with a conditional
+
+                                                   1
+latent factor model, extracts the signals with the currently most successful machine learning time-
+series method and maps them into a trading allocation with a flexible neural network. These
+components are integrated and optimized over a global economic objective, which maximizes the
+risk-adjusted return under constraints. Empirically, our general model outperforms out-of-sample
+the leading benchmark approaches and provides a clear insight into the structure of statistical
+arbitrage.
+   To construct arbitrage portfolios, we introduce the economically motivated asset pricing per-
+spective to create them as residuals relative to asset pricing models. This perspective allows us to
+take advantage of the recent developments in asset pricing and to also include a large set of firm
+characteristics in the construction of the arbitrage portfolios. We use fundamental risk factors and
+conditional and unconditional statistical factors for our asset pricing models. Similarity between as-
+sets is captured by similar exposure to those factors. Hence, arbitrage portfolios are trades relative
+to mimicking stock portfolios, which are well-diversified portfolios with the same exposure to risk
+factors. In the case of statistical principal component factors, the mimicking portfolios correspond
+to assets with the highest correlation with the target stocks. Arbitrage Pricing Theory provides
+a justification for mean reversion patterns. It implies that, with an appropriate model, the corre-
+sponding factor portfolios represent the “fair price” of each of the assets. Therefore, the residual
+portfolios relative to the asset pricing factors capture the temporary deviations from the fair price
+of each of the assets and should only temporally deviate from their long-term mean. Importantly,
+the residuals are tradeable portfolios, which are only weakly cross-sectionally correlated, and close
+to orthogonal to firm characteristics and systematic factors. These properties allow us to extract a
+stationary time-series model for the signal.
+   To detect time series patterns and signals in the residual portfolios, we introduce a filter perspec-
+tive and estimate them with a flexible data-driven filter based on convolutional networks combined
+with transformers. In this way, we do not prescribe a potentially misspecified function to extract the
+time series structure, for example, by estimating the parameters of a given parametric time-series
+model, or the coefficients of a decomposition into given basis functions, as in conventional methods.
+Instead, we directly learn in a data-driven way what the optimal pattern extraction function is for
+our trading objective. The convolutional transformer is the ideal method for this purpose. Convo-
+lutional neural networks are the state-of-the-art AI method for pattern recognition, in particular
+in computer vision. In our case they identify the local patterns in the data and may be thought
+as a nonlinear and learnable generalization of conventional kernel-based data filters. Transformer
+networks are the most successful AI model for time series in natural language processing. In our
+model, they combine the local patterns to global time-series patterns. Their combination results in
+a data-driven flexible time-series filter that can essentially extract any complex time-series signal,
+while providing an interpretable model.
+   To find the optimal trading allocation, we propose neural networks to map the arbitrage signals
+into a complex trading allocation. This generalizes conventional parametric rules, for example fixed
+rules based on thresholds, which are only valid under strong model assumptions and a small signal
+
+
+                                                  2
+dimension. Importantly, these components are integrated and optimized over a global economic
+objective, which maximizes the risk-adjusted return under constraints. This allows our model
+to learn the optimal signals and allocation for the actual trading objective, which is different
+from a prediction objective. The trading objective can maximize the Sharpe ratio or expected
+return subject to a risk penalty, while taking into account constraints important to real investment
+managers, such as restricting turnover, leverage, or proportion of short trades.
+   Our comprehensive empirical out-of-sample analysis is based on the daily returns of roughly the
+550 largest and most liquid stocks in the U.S. from 1998 to 2016. We estimate the out-of-sample
+residuals on a rolling window relative to the empirically most important factor models. These
+are observed fundamental factors, for example the Fama-French 5 factors and price trend factors,
+locally estimated latent factors based on principal component analysis (PCA) or locally estimated
+conditional latent factors that include the information in 46 firm-specific characteristics and are
+based on the Instrumented PCA (IPCA) of Kelly et al. (2019). We extract the trading signal with
+one of the most successful parametric models, based on the mean-reverting Ornstein-Uhlenbeck
+process, a frequency decomposition of the time-series with a Fourier transformation and our novel
+convolutional network with transformer. Finally, we compare the trading allocations based on
+parametric or nonparametric rules estimated with different risk-adjusted trading objectives.
+   Our empirical main findings are five-fold. First, our deep learning statistical arbitrage model
+substantially outperforms all benchmark approaches out-of-sample. In fact, our model can achieve
+an impressive annual Sharpe ratio larger than four. While respecting short-selling constraints we
+can obtain annual out-of-sample mean returns of 20%. This performance is four times better than
+one of the best parametric arbitrage models, and twice as good as an alternative deep learning
+model without the convolutional transformer filter. These results are particularly impressive as we
+only trade the largest and most liquid stocks. Hence, our model establishes a new standard for
+arbitrage trading.
+   Second, the performance of our deep learning model suggests that there is a substantial amount
+of short-term arbitrage in financial markets. The profitability of our strategies is orthogonal to
+market movements and conventional risk factors including momentum and reversal factors and
+does not constitute a risk-premium. Our strategy performs consistently well over the full time
+horizon. The model is extremely robust to the choice of tuning parameters, and the period when
+it is estimated. Importantly, our arbitrage strategy remains profitable in the presence of realistic
+transaction and holdings costs. Arbitrage signals are persistent over short time horizons. While
+arbitrageurs correct most mispricing over the horizon of a month, around half of the Sharpe ratio
+can persist for a holding period of one week. Assessing the amount of arbitrage in financial markets
+with unconditional pricing errors relative to factor models or with parametric statistical arbitrage
+models, severely underestimates the amount of statistical arbitrage.
+   Third, the trading signal extraction is the most challenging and separating element among dif-
+ferent arbitrage models. Surprisingly, the choice of asset pricing factors has only a minor effect
+on the overall performance. Residuals relative to the five Fama-French factors and five locally
+
+
+                                                 3
+estimated principal component factors perform very well with out-of-sample Sharpe ratios above
+3.2 for our deep learning model. Five conditional IPCA factors increase the out-of-sample Sharpe
+ratio to 4.2, which suggests that asset characteristics provide additional useful information. In-
+creasing the number of risk factors beyond five has only a marginal effect. Similarly, the other
+benchmark models are robust to the choice of factor model as long as it contains sufficiently many
+factors. The distinguishing element is the time-series model to extract the arbitrage signal. The
+convolutional transformer doubles the performance relative to an identical deep learning model
+with a pre-specified frequency filter. Importantly, we highlight that time-series modeling requires a
+time-series machine learning approach, which takes temporal dependency into account. An off-the-
+shelf nonparametric machine learning method like conventional neural networks, that estimates an
+arbitrage allocation directly from residuals, performs substantially worse.
+   Fourth, successful arbitrage trading is based on local asymmetric trend and reversion patterns.
+Our convolutional transformer framework provides an interpretable representation of the underlying
+patterns, based on local basic patterns and global “dependency factors”. The building blocks of
+arbitrage trading are smooth trend and reversion patterns. The arbitrage trading is short-term
+and the last 30 trading days seem to capture the relevant information. Interestingly, the direction
+of policies is asymmetric. The model reacts quickly on downturn movements, but more cautiously
+on uptrends. More specifically, the “dependency factors” which are the most active in downturn
+movements focus only on the most recent 10 days, while those for upward movements focus on the
+first 20 days in a 30-day window.
+   Fifth, time-series-based trading patterns should be extracted from residuals and not directly
+from returns. For an appropriate factor model, the residuals are only weakly correlated and close
+to stationary in both, the time and cross-sectional dimension. Hence, it is meaningful to extract
+a uniform trading pattern, that is based only on the past time-series information, from the resid-
+uals. In contrast stock returns are dominated by a few factors, which severely limits the actual
+independent time-series information, and are strongly heterogenous due to their variation in firm
+characteristics. While the level of stock returns is extremely hard to predict, even with flexible
+machine learning methods, residuals capture relative movements and remove the level component.
+These properties make residuals analyzable from a purely time-series based perspective and, unlike
+the existing literature, they allow us to incorporate alternative data into the portfolio construction
+process. This also highlights a fundamental difference with most of the existing financial machine
+learning literature: We do not use characteristics to get features for prediction, but rather to obtain
+the data orthogonal to these features.
+
+Related Literature
+   Our paper builds on the classical statistical arbitrage literature, in which the three main prob-
+lems of portfolio generation, pattern extraction, and allocation decision have traditionally been
+considered independently. Classical statistical methods of generating arbitrage portfolios have
+mostly focused on obtaining multiple pairs or small portfolios of assets, using techniques like the
+
+
+                                                  4
+distance method of Gatev et al. (2006), the cointegration approach of Vidyamurthy (2004), or cop-
+ulas as in Rad et al. (2016). In contrast, more general methods that exploit large panels of stock
+returns include the use of PCA factor models, as in Avellaneda and Lee (2010) and its extension
+in Yeo and Papanicolaou (2017), and the maximization of mean-reversion and sparsity statistics as
+in d’Aspremont (2011). We include the model of Yeo and Papanicolaou (2017) as the parametric
+benchmark model in our study as it has one of the best empirical performances among the class of
+parametric models. Our paper paper contributes to this literature by introducing a general asset
+pricing perspective to obtain the arbitrage portfolios as residuals. This allows us to take advantage
+of conditional asset pricing models, that include time-varying firm characteristics in addition to the
+return time-series, and provides a more disciplined, economically motivated approach. The signal
+extraction step for these models assumes parametric time series models for the arbitrage portfolios,
+whereas the allocations are often decided from the estimated parameters by using stochastic con-
+trol methods or given threshold rules and one-period optimizations. Some representative papers
+of the first approach include Jurek and Yang (2007), Mudchanatongsuk et al. (2008), Cartea and
+Jaimungal (2016), Lintilhac and Tourin (2016) and Leung and Li (2015), whereas the second one is
+illustrated by Elliott et al. (2005) and Yeo and Papanicolaou (2017). Both approaches are special
+cases of our more general framework. Mulvey et al. (2020) and Kim and Kim (2019) are exam-
+ples of including machine learning elements within the parametric statistical arbitrage framework,
+by either solving a stochastic control problem with neural networks or estimating a time-varying
+threshold rule with reinforcement learning.
+   Our paper is complementary to the emerging literature that uses machine learning methods for
+asset pricing. While the asset pricing literature aims to explain the risk premia of assets, our focus is
+on the residual component which is not explained by the asset pricing models. Chen et al. (2022),
+Bryzgalova et al. (2019) and Kozak et al. (2020) estimate the stochastic discount factor (SDF),
+which explains the risk premia of assets, with deep neural networks, decision trees or elastic net
+regularization. These papers employ advanced statistical methods to solve a conditional method of
+moment problem in the presence of many variables. The workhorse models in equity asset pricing
+are based on linear factor models exemplified by Fama and French (1993, 2015). Recently, new
+methods have been developed to extract statistical asset pricing factors from large panels with
+various versions of principal component analysis (PCA). The Risk-Premium PCA in Lettau and
+Pelger (2020a,b) includes a pricing error penalty to detect weak factors that explain the cross-
+section of returns. The high-frequency PCA in Pelger (2020) uses high-frequency data to estimate
+local time-varying latent risk factors and the Instrumented PCA (IPCA) of Kelly et al. (2019)
+estimates conditional latent factors by allowing the loadings to be functions of time-varying asset
+characteristics. Gu et al. (2021) generalize IPCA to allow the loadings to be nonlinear functions of
+characteristics. Giglio and Xiu (2021) use PCA factors to account for missing priced factors in risk
+premia estimation. He et al. (2022) highlight the important insight that the time-series of residuals
+can be informative for trading. They test asset pricing models by studying the profitability of
+trading residuals based on high-minus-low sorting strategies of prior residual returns.
+
+
+                                                   5
+      Our paper is related to the growing literature on return prediction with machine learning meth-
+ods, which has shown the benefits of regularized flexible methods. In their pioneering work Gu et al.
+(2020) conduct a comparison of machine learning methods for predicting the panel of individual
+U.S. stock returns based on the asset-specific characteristics and economic conditions in the previ-
+ous period. Freyberger et al. (2020) use different methods for predicting stock returns. In a similar
+spirit, Bianchi et al. (2019) predict bond returns, Li and Rossi (2020) predict mutual fund returns,
+and Bali et al. (2022) predict option returns. A related stream extends cross-sectional machine
+learning prediction to higher moments and residuals, which are used for investment decisions. Li
+and Tang (2022) use machine learning to predict risk measures and estimate conditional volatil-
+ities. Kaniel et al. (2022) and DeMiguel et al. (2022) predict the skill of mutual fund managers
+based on residuals from benchmark asset pricing factors. The return prediction literature is funda-
+mentally estimating the risk premia of assets, while our focus is on understanding and exploiting
+the temporal deviations thereof. This different goal is reflected in the different methods that are
+needed. These return predictions estimate a nonparametric cross-sectional model between current
+returns and large set of covariates from the last period, but do not estimate a time-series model.
+In contrast, the important challenge that we solve is to extract a complex time-series pattern.
+      A related stream of the return prediction literature forecasts returns using past returns, generally
+followed by some long-short investment policy based on the prediction. For example, Krauss et al.
+(2017) use various machine learning methods for this type of prediction.1 However, they use general
+nonparametric function estimates, which are not specifically designed for time-series data. Lim and
+Zohren (2020) show that it is important for machine learning solutions to explicitly account for
+temporal dependence when they are applied to time-series data. Murray et al. (2021) and Jiang et al.
+(2022) build on this insight and use machine learning to learn price trends for return forecasting.
+Forecasting returns and building a long-short portfolio based on the prediction is different from
+statistical arbitrage trading as it combines a risk premium and potential arbitrage component. It
+is not based on temporary price differences and also in general not orthogonal to common risk
+factors and market movements. In this paper we highlight the challenge of inferring complex
+time-series information and argue that using returns directly as an input to a time-series machine
+learning method, can be suboptimal as returns are dominated by a few factor time-series and are
+heterogeneous due to cross-sectionally and time-varying characteristics. In contrast, appropriate
+residuals are close to uncorrelated and locally cross-sectionally stationary. Hence, appropriate
+residuals allow the extraction of a complex time-series pattern.
+      Naturally, our work overlaps with the literature on using machine learning tools for investment.
+The SDF estimated by asset pricing models, like in Chen et al. (2022) and Bryzgalova et al. (2019),
+directly maps into a conditionally mean-variance efficient portfolio and hence an attractive invest-
+ment opportunity. However, by construction this investment portfolio is not orthogonal but fully
+exposed to systematic risk, which is exactly the opposite for an arbitrage portfolio. Prediction
+approaches also imply investment strategies, typically long-short portfolios based on the predic-
+  1
+      Similar studies include Fischer et al. (2019), Chen et al. (2018), Huck (2009), and Dunis et al. (2006).
+
+
+
+                                                            6
+tion signal. However, estimating a signal with a prediction objective, is not necessarily providing
+an optimal signal for investment. Bryzgalova et al. (2019) and Chen et al. (2022) illustrate that
+machine learning models that use a trading objective can result in a substantially more profitable
+investment than models that estimate a signal with a prediction objective, while using the same
+information as input and having the same flexibility. This is also confirmed in Cong et al. (2020),
+who use an investment objective and reinforcement learning to construct machine learning invest-
+ment portfolios. Our paper contributes to this literature by estimating investment strategies, that
+are orthogonal to systematic risk and are based on a trading objective with constraints.
+     Finally, our approach is also informed by the recent deep learning for time series literature. The
+transformer method was first introduced in the groundbreaking paper by Vaswani et al. (2017). We
+are the first to bring this idea into the context of statistical arbitrage and adopt it to the economic
+problem.
+
+
+                                           II.     Model
+     The fundamental problem of statistical arbitrage consists of three elements: (1) The identifica-
+tion of similar assets to generate arbitrage portfolios, (2) the extraction of time-series signals for
+the temporary deviations of the similarity between assets and (3) a trading policy in the arbitrage
+portfolios based on the time-series signals. We discuss each element separately.
+
+A.    Arbitrage portfolios
+     We consider a panel of excess returns Rn,t , that is the return minus risk free rate of stock
+n = 1, ..., Nt at time t = 1, ..., T . The number of available assets at time t can be time-varying.
+                                                                                     >
+The excess return vector of all assets at time t is denoted as Rt = R1,t · · · RNt ,t .
+     We use a general asset pricing model to identify similar assets. In this context, similarity is
+defined as the same exposure to systematic risk, which implies that assets with the same risk
+exposure should have the same fundamental value. We assume that asset returns can be modeled
+by a conditional factor model:
+
+                                                >
+                                        Rn,t = βn,t−1 Ft + n,t .
+
+The K factors F ∈ RT ×K capture the systematic risk, while the risk loadings βt−1 ∈ RNt ×K can be
+general functions of the information set at time t − 1 and hence can be time-varying. This general
+formulation includes the empirically most successful factor models. In our empirical analysis we
+will include observed traded factors, e.g. the Fama-French 5 factor model, latent factors based on
+the principal components analysis (PCA) of stock returns and conditional latent factors estimated
+with Instrumented Principal Component Analysis (IPCA).
+     Without loss of generality, we can treat the factors as excess returns of traded assets. Either
+the factors are traded, for example a market factor, in which case we include them in the returns
+
+
+                                                   7
+Rt . Otherwise, we can generate factor mimicking portfolios by projecting them on the asset space,
+as for example with latent factors:
+
+                                                         F     >
+                                                   Ft = wt−1 Rt .
+
+                                                                     >
+We define arbitrage portfolios as residual portfolios n,t = Rn,t − βn,t−1 Ft . As factors are traded
+assets, the arbitrage portfolios are themselves traded portfolios. Hence, the vector of residual
+portfolios equals
+
+                                         F >                  F >
+                                                                 
+                         t = Rt − βt−1 wt−1 Rt = INt − βt−1 wt−1   Rt = Φt−1 Rt .                               (1)
+                                                 |       {z       }
+                                                                   Φt−1
+
+
+      Arbitrage portfolios are trades relative to mimicking stock portfolios. The factor component
+in the residuals corresponds to a well-diversified mimicking portfolio, that is is “close” to the
+specific stock in the relative trade. More specifically, in the case of PCA factors, we construct
+well-diversified portfolios of stocks that have the highest correlation with each target stock in the
+relative trades. This is conceptually the same idea as using some form of clustering algorithm to
+construct a portfolio of highly correlated stocks.2 Hence, residuals of PCA factors construct relative
+trades based on correlations in past return time-series. In the case of IPCA factors, we intuitively
+construct for each stock a well-diversified mimicking portfolio that is as similar as possible in terms
+of the underlying firm characteristics. Hence, the mimicking portfolio represents an asset with very
+similar firm fundamentals. Lastly, for Fama-French factors, we construct mimicking portfolios with
+the same exposure to those fundamental factors. In all cases, the choice of factor model implies a
+notation of similarity. By construction the mimicking portfolio and the target stock have identical
+loadings to the selected factors.
+      Arbitrage trading relative to mimicking portfolios takes advantage of all assets in the market.
+In practice and modern statistical arbitrage theory, it has replaced the more restrictive idea of
+pairs trading, which considers relative trades between only two stocks. On an intuitive level, the
+mimicking portfolio represents the reference asset in the relative trade. It can be constructed even
+if there does not exist an individual stock that is highly correlated with a target stock.
+      Our arbitrage portfolios based on residuals also allow us to benefit from an asset pricing per-
+spective. Arbitrage portfolios are projections on the return space that annihilate systematic asset
+risk. For an appropriate asset pricing model, the residual portfolios should not earn a risk premium.
+This is the fundamental assumption behind any arbitrage argument. As deviations from a mean of
+zero have to be temporary, arbitrage trading bets on the mean revision of the residuals. In partic-
+ular, for an appropriate factor model the residuals are expected to have the following properties:
+First, the unconditional mean of the arbitrage portfolios is zero, E[n,t ] = 0. Second, the arbitrage
+portfolios are only weakly cross-sectionally dependent. We confirm empirically that once we use
+sufficiently many statistical or fundamental factors the residuals are indeed close to uncorrelated
+  2
+      In fact, under appropriate assumptions a clustering problem can be solved by a latent factor estimation.
+
+
+                                                           8
+and have an average mean close to zero. However, while the asset pricing perspective provides a
+theoretical argument for mean reversion in residuals, our approach is still valid even if we omit
+some relevant risk factors. The relative trades would then only exploit the temporal time-series
+deviations from the risk factors captured by the mimicking portfolios.
+     We denote by Ft−1 the filtration generated by the returns Rt−1 , which include the factors, and
+the information set that captures the risk exposure βt−1 , which is typically based on asset specific
+characteristics or past returns.
+
+B.    Arbitrage signal
+     The arbitrage signal is extracted from the time-series of the arbitrage portfolios. These time-
+series signals are the input for a trading policy. An example for an arbitrage signal would be a
+parametric model for mean reversion that is estimated for each arbitrage portfolio. The trading
+strategy for each arbitrage portfolio would depend on its speed of mean reversion and its deviation
+from the long run mean. More generally, the arbitrage signal is the estimation of a time-series model,
+which can be parametric or nonparametric. An important class of models are filtering approaches.
+Conceptually, time-series models are multivariate functional mappings between sequences, which
+take into account the temporal order of the elements and potentially complex dependencies between
+the elements of the input sequence.
+     We apply the signal extraction to the time-series of the last L lagged residuals, which we denote
+in vector notation as
+                                                                  
+                                    L
+                                     n,t−1 :=   n,t−L · · · n,t−1 .
+
+
+The arbitrage signal function is a mapping θ ∈ Θ from RL to Rp , where Θ defines an appropriate
+function space:
+
+                                         θ(·) : L
+                                                 n,t−1 → θn,t−1 .
+
+
+The signals θn,t−1 ∈ Rp for the arbitrage portfolio n at time t only depend on the time-series
+of lagged returns L
+                   n,t−1 . Note that the dimensionality of the signal can be the same as for the
+                                                                           ,L
+input sequence. Formally, the function θ is a mapping from the filtration Fn,t−1 generated by
+                                                                        ,L
+L                          θ
+ n,t−1 into the filtration Fn,t−1 generated by θn,t−1 and  Fθ      ⊆ Fn,t−1    . We use the notation
+                                                         n,t−1
+                                                                                   = θt−1 ∈ RNt with
+                                                                                 
+of evaluating functions elementwise, that is θ(L
+                                                t−1 ) =  θ 1,t−1 · · · θ Nt ,t−1
+                           
+L
+ t−1 = 1,t−1 · · · Nt ,t−1 .
+     The arbitrage signal θn,t−1 is a sufficient statistic for the trading policy; that is, all relevant
+information for trading decisions is summarized in it. This also implies that two arbitrage portfolios
+with the same signal get the same weight in the trading strategy. More formally, this means that the
+arbitrage signal defines equivalence classes for the arbitrage portfolios. The most relevant signals
+summarize reversal patterns and their direction with a small number of parameters. A potential
+
+
+                                                    9
+trading policy could be to hold long positions in residuals with a predicted upward movement and
+go short in residuals that are in a downward cycle.
+     This problem formulation makes two implicit assumptions. First, the residual time-series follow
+a stationary distribution conditioned on its lagged returns. This is a very general framework that
+includes the most important models for financial time-series. Second, the first L lagged returns are
+a sufficient statistic to obtain the arbitrage signal θn,t−1 . This reflects the motivation that arbitrage
+is a temporary deviation of the fair price. The lookback window can be chosen to be arbitrarily
+large, but in practice it is limited by the availability of lagged returns.
+
+C.       Arbitrage trading
+     The trading policy assigns an investment weight to each arbitrage portfolio based on its signal.
+The allocation weight is the solution to an optimization problem, which models a general risk-return
+tradeoff and can also include trading frictions and constraints. An important case are mean-variance
+efficient portfolios with transaction costs and short sale constraints.
+     An arbitrage allocation is a mapping from Rp to R in a function class W , that assigns a weight
+ 
+wn,t−1 for the arbitrage portfolio n,t−1 in the investment strategy using only the arbitrage signal
+θn,t :
+
+                                                w : θn,t−1 → wn,t−1
+                                                               
+                                                                     .
+
+Given a concave utility function U (·), the allocation function is the solution to
+
+                                  Et−1 U wt−1
+                                          R
+                                                     
+                           max                Rt                                                      (2)
+                    w ∈W ,θ∈Θ
+                                                >Φ
+                                              wt−1
+                                  R                 t−1                   
+                    s.t.         wt−1 =      >Φ
+                                                                and      wt−1 = w (θ(L
+                                                                                       t−1 )).        (3)
+                                          kwt−1  t−1 k1
+
+
+In the presence of trading costs, we calculate the expected utility of the portfolio net return by
+                                       R R the trading costs that are associated with the stock
+subtracting from the portfolio return wt−1 t
+            R . The trading costs can capture the transaction costs from frequent rebalancing and
+allocation wt−1
+                                                                                 R are normalized
+the higher costs of short selling compared to long positions. The stock weights wt−1
+to add up to one in absolute value, which implicitly imposes a leverage constraint. The conditional
+expectation uses the general filtration Ft−1 .
+     This is a combined optimization problem, which simultaneously solves for the optimal allocation
+function and arbitrage signal function. As the weight is a composition of the two functions, i.e.
+ 
+wt−1 = w (θ(L
+              t−1 )), the decomposition into a signal and allocation function is in general not
+uniquely identified. This means there can be multiple representations of θ and w , that will result
+in the same trading policy. We use a decomposition that allows us to compare the problem to
+classical arbitrage approaches, for which this separation is uniquely identified. The key feature of
+the signal function θ is that it models a time-series, that means it is a mapping that explicitly models
+
+
+
+                                                           10
+the temporal order and the dependency between the elements of L
+                                                               t−1 . The allocation function w
+                                                                                               
+
+can be a complex nonlinear function, but does not explicitly model time-series behavior. This
+means that w is implicitly limited in the dependency patterns of its input elements that it can
+capture.
+         We will consider arbitrage trading that maximizes the Sharpe ratio or achieves the highest
+average return for a given level of variance risk. More specifically we will solve for
+
+                               E wt−1
+                                   h          i
+                                  R >R
+                                                                            E[wt−1
+                                      t
+                                                                               R >              R >
+                      max     q                        or           max            Rt ] − γVar(wt−1 Rt )        (4)
+               w ∈W ,θ∈Θ           R >R )                     w ∈W ,θ∈Θ
+                               Var(wt−1 t
+                                          >Φ
+                                        wt−1
+                             R                t−1                          
+               s.t.         wt−1 =        >Φ
+                                                            and           wt−1 = w (θ(L
+                                                                                        t−1 )).                 (5)
+                                       kwt−1  t−1 k1
+
+
+for some risk aversion parameter γ. We will consider this formulation with and without trading
+costs.3
+         Many relevant models estimate the signal and allocation function separately. The arbitrage
+signals can be estimated as the parameters of a parametric time-series model, the serial moments
+for a given stationary distribution or a time-series filter. In these cases, the signal estimation solves
+a separate optimization problem as part of the estimation. Given the signals, the allocation function
+is the solution of
+
+                                                                                w (θt−1 )> Φt−1
+                                Et−1 U wt−1
+                                        R                              R
+                                              
+                            max             Rt               s.t.     wt−1 =                        .           (6)
+                            
+                            w ∈W                                               kw (θt−1 )> Φt−1 k1
+
+         We provide an extensive study of the importance of the different elements in statistical arbitrage
+trading. We find that the most important driver for profitable portfolios is the arbitrage signal
+function; that is, a good model to extract time-series behavior and to time the predictable mean
+reversion patterns is essential. The arbitrage portfolios of asset pricing models that are sufficiently
+rich result in roughly the same performance. Once an informative signal is extracted, parametric
+and nonparametric allocation functions can take advantage of it. We find that the key element is
+to consider a sufficiently general class of functions Θ for the arbitrage signal and to estimate the
+signal that is the most relevant for trading. In other words, the largest gains in statistical arbitrage
+come from flexible time-series signals θ and a joint optimization problem.
+
+D.        Models for Arbitrage Signal and Allocation Functions
+         In this section we introduce different functional models for the signal and allocation functions.
+They range from the most restrictive assumptions for simple parametric models to the most flexible
+model, which is our sophisticated deep neural network architecture. The general problem is the
+estimation of a signal and allocation function given the residual time-series. Here, we take the
+     3
+     While the conventional mean-variance optimization applies a penalty to the variance, we found that it is numer-
+ically beneficial to use the standard deviation instead. Both formulations describe the same fundamental trade-off.
+
+
+
+                                                              11
+                                    Figure 1: Conceptual Arbitrage Model
+
+
+
+
+This figure illustrates the conceptual structure of our statistical arbitrage framework. The model takes as input the last L
+cumulative returns of a residual portfolio on a lookback window at a given time and outputs the predicted optimal allocation
+weight for that residual for the next time. The model is composed of a signal extraction function and an allocation function.
+
+
+
+residual returns as given, i.e. we have selected an asset pricing model. In order to illustrate the
+key elements of the allocation functions, we consider trading the residuals directly. Projecting the
+residuals back into the original return space is identical for the different methods and discussed in
+the empirical part. The conceptual steps are illustrated in Figure 1.
+   The input to the signal extraction functions are the last L cumulative residuals. We simplify
+the notation by dropping the time index t − 1 and the asset index n and define the generic input
+vector
+                                                                              
+                 x := Int L
+                                          P2                    PL
+                           n,t−1 = n,t−L  l=1 n,t−L−1+l · · ·  l=1 n,t−L−1+l   .
+
+Here the operation Int(·) simply integrates a discrete time-series. We can view the cumulative
+residuals as the residual “price” process. We discuss three different classes of models for the signal
+function θ that vary in the degree of flexibility of the type of patterns that they can capture.
+Similarly, we consider different classes of models for the allocation function w .
+
+D.1.     Parametric Models
+
+   Our first benchmark method is a parametric model and corresponds to classical mean-reversion
+trading. In this framework, the cumulative residuals x are assumed to be the discrete realizations
+of continuous time model:
+                                                              
+                                                x = X1 · · · XL .
+
+Following the influential papers by Avellaneda and Lee (2010) and Yeo and Papanicolaou (2017)
+we model Xt as an Ornstein-Uhlenbeck (OU) process
+
+                                            dXt = κ (µ − Xt ) dt + σdBt
+
+
+
+
+                                                             12
+for a Brownian motion Bt . These are the standard models for mean-reversion trading and Avel-
+laneda and Lee (2010) among others have shown their good empirical performance.
+       The parameters of this model are estimated from the moments of the discretized time-series, as
+described in detail along with the other implementation details in Appendix B.B. The parameters
+for each residual process, the last cumulative sum and a goodness of fit measure form the signals
+for the Ornstein-Uhlenbeck model:
+                                                           
+                                        θOU = κ̂ µ̂ σ̂ XL R2 .
+
+Following Yeo and Papanicolaou (2017) we also include the goodness of fit parameter R2 as part of
+the signal. R2 has the conventional definition of the ratio of squared values explained by the model
+normalized by total squared values. If the R2 value is too low, the predictions of the model seem
+to be unreliable, which can be taken into account in a trading policy. Hence, for each cumulative
+residual vector L
+                 n,t−1 we obtain the signal
+
+                                                                           
+                        OU                              PL              2
+                       θn,t−1 = κ̂n,t−1 µ̂n,t−1 σ̂n,t−1  l=1 n,t−1+l Rn,t−1 .
+
+
+Avellaneda and Lee (2010) and Yeo and Papanicolaou (2017) advocate a classical mean-reversion
+thresholding rule, which implies the following allocation function4 :
+                                         
+                                                 XL√−µ
+                                         
+                                          −1 if σ/ 2κ
+                                                       > cthresh and R2 > ccrit
+                                         
+                                                      XL√−µ
+                       w|OU θOU =
+                                
+                                             1     if σ/ 2κ
+                                                            < −cthresh and R2 > ccrit
+                                         
+                                         
+                                             0     otherwise
+                                         
+
+The threshold parameters cthresh and ccrit are tuning parameters. The strategy suggests to buy
+                                     XL√−µ
+or sell residuals based on the ratio σ/ 2κ
+                                           . If this ratio exceeds a threshold, it is likely that the
+process reverts back to its long term mean, which starts the trading. If the R2 value is too low, the
+predictions of the model seem to be unreliable, which stops the trading. This will be our parametric
+benchmark model. It has a parametric model for both the signal and allocation function.
+       Figure A.2 in the Appendix illustrates this model with an empirical example. In this figure
+we show the allocation weights and signals of the Ornstein-Uhlenbeck with threshold model as
+well as the more flexible models that we are going to discuss next. The models are estimated
+on the empirical data, and the residual is a representative empirical example. In more detail, we
+consider the residuals from five IPCA factors and estimate the benchmark models as explained in
+the empirical Section III.N. The left subplots display the cumulative residual process along with the
+out-of-sample allocation weights wl that each model assigns to this specific residual. The evaluation
+of this illustrative example is a simplification of the general model that we use in our empirical main
+analysis. In this example, we consider trading only this specific residual and hence normalize the
+   4
+    The allocation function is derived by maximizing an expected trading profit. This deviates slightly from our
+objective of either maximizing the Sharpe ratio or the expected return subject to a variance penalty. As this is the
+most common arbitrage trading rule, we include it as a natural benchmark.
+
+
+                                                        13
+weights to {−1, 0, 1}. In our empirical analysis we trade all residuals and map them back into the
+original stock returns. The middle column shows the time-series of estimated out-of-sample signals
+for each model, by applying the θl arbitrage signal function to the previous L = 30 cumulative
+returns of the residual. The right column displays the out-of-sample cumulative returns of trading
+this particular residual based on the corresponding allocation weights.
+    The last row in Figure A.2 shows the results for the OU+Threshold model. The cumulative
+return of trading this residual is negative, suggesting that the parametric model fails. The residual
+time-series with the corresponding allocation weights in subplot (g) explain why. The trading
+allocation does not assign a positive weight during the uptrend and wrongly assigns a constant
+negative weight, when the residual price process follows a mean-reversion pattern with positive and
+negative returns. A parametric model can break down if it is misspecified. This is not only the case
+for trend patterns, but also if there are multiple mean reversion patterns of different frequencies.
+Subplot (h) shows the signal.5 We see that changes in the allocation function are related to sharp
+changes in at least one of the signals, but overall, the signal does not seem to represent the complex
+price patterns of the residual.
+    A natural generalization is to allow for a more flexible allocation function given the same time-
+series signals. We will consider for all our models also a general feedforward neural network (FFN)
+to map the signal into an allocation weight. FFNs are nonparametric estimators that can capture
+very general functional relationships.6 Hence, we also consider the additional model that restricts
+the signal function, but allows for a flexible allocation function:
+
+                                        w|OU-FFN θOU = g FFN θOU .
+                                                                
+
+
+We will show empirically that the gains of a flexible allocation function are minor relative to the
+very simple parametric model.
+
+D.2.     Pre-Specified Filters
+
+    As a generalization of the restrictive parametric model of the last subsection, we consider
+more general time-series models. Many relevant time-series models can be formulated as filtering
+problems. Filters are transformations of time-series that provide an alternative representation of
+the original time-series which emphasizes certain dynamic patterns.
+    A time-invariant linear filter can be formulated as
+                                                         L
+                                                         X
+                                                  θl =         Wjfilter xj ,
+                                                         j=1
+
+   5
+     For better readability we have scaled the parameters of the OU process by a factor of five, but this still represents
+the√same model as the scaling cancels out in the allocation function. As a minor modification, we use the ratio
+σ/ 2κ as a signal instead of two individual parameters, as the conventional regression estimator of the OU process
+directly provides the ratio, but requires additional moments for the individual parameters. However, this results in
+an equivalent presentation of the model as only the ratio enters the allocation function.
+   6
+     Appendix B.A provides the details for estimating a FFN as a functional mapping g FFN : p → . R      R
+
+                                                           14
+which is a linear mapping from RL into RL with the matrix W filter ∈ RL×L . The estimation
+of causal ARMA processes is an example for such filters. A spectral decomposition based on a
+frequency filter is the most relevant filter for our problem of finding mean reversion patterns.
+   A Fast Fourier Transform (FFT) provides a frequency decomposition of the original time-series
+and separates the movements into mean reverting processes of different frequencies. FFT applies
+                     2πi
+the filter WjFFT = e L j in the complex plane, but for real-valued time-series it is equivalent to
+fitting the following model:
+
+                           L/2−1                                         
+                            X                       2πj                2πj
+               xl = a0 +             aj · cos           l + bj · sin       l    + aL/2 cos (πl) .
+                                                     L                  L
+                            j=1
+
+
+The FFT representation is given by coefficients of the trigonometric representation
+
+                           θFFT = a0 · · · aL/2 b1 · · · bL/2−1 ∈ RL .
+                                                              
+
+
+The coefficients al and bl can be interpreted as “loadings” or exposure to long or short-term reversal
+patterns. Note that the FFT is an invertible transformation. Hence, it simply represents the original
+time-series in a different form without losing any information. It is based on the insight that not
+the magnitude of the original data but the relative relationship in a time-series matters.
+   We use a flexible feedforward neural network for the allocation function
+
+                                      w|FFT θFFT = g FFN θFFT .
+                                                             
+
+
+The usual intuition behind filtering is to use the frequency representation to cut off frequencies
+that have low coefficients and therefore remove noise in the representation. The FFN is essentially
+implementing this filtering step of removing less important frequencies.
+   We illustrate the model within our running example in Figure A.2. The middle row shows the
+results for the FFT+FFN model. The cumulative residual in subplot (d) seems to be a combination
+of low and high-frequency movements with an initial trend component. The signal in subplot (e)
+suggests that the FFT filter seems to capture the low frequency reversal pattern. However, it
+misses the high-frequency components as indicated by the simplistic allocation function. The
+trading strategy takes a long position for the first half and a short position for the second part.
+While this simple allocation results in a positive cumulative return, in this example it neglects the
+more complex local reversal patterns.
+   While the FFT framework is an improvement over the simple OU model as it can deal with
+multiple combined mean-reversion patterns of different frequencies, it fails if the data follows a
+pattern that cannot be well approximated by a small number of the pre-specified basis functions.
+   For completeness, our empirical analysis will also report the case of a trivial filter, which simply
+
+
+
+
+                                                          15
+takes the residuals as signals, and combines them with a general allocation function:
+
+                                          θ ident (x) = x = θident
+                                                   
+                                    w|FFN θident = g FFN (x) .
+
+This is a good example to emphasize the importance of a time-series model. While FFNs are
+flexible in learning low dimensional functional relationships, they are limited in learning a complex
+dependency model. For example, the FFN architecture we consider is not sufficiently flexible
+to learn the FFT transformation and hence has a worse performance on the original time-series
+compared to frequency-transformed time-series. While Xiaohong Chen and White (1999) have
+shown that FFNs are “universal approximators” of low-dimensional functional relationships, they
+also show that FFN can suffer from a curse of dimensionality when capturing complex dependencies
+between the input. Although the time domain and frequency domain representations of the input
+are equivalent under the Fourier transform, clearly the time-series model implied by the frequency
+domain representation allows for a more effective learning of an arbitrage policy. However, the
+choice of the pre-specified filter limits the time-series patterns that can be exploited. The solution
+is our data driven filter presented in the next section.
+
+D.3.   Convolutional Neural Network with Transformer
+
+   Our benchmark machine learning model is a Convolutional Neural Network (CNN) combined
+with a Transformer. It uses the most advanced state-of-the art machine learning tools tailored to
+our problem. Convolutional networks are in fact the most successful networks for computer vision,
+i.e. for pattern detection. Transformers have rapidly become the model of choice for sequence
+modeling such as Natural Language Processing (NLP) problems, replacing older recurrent neural
+network models such as the Long Short-Term Memory (LSTM) network.
+   The CNN and transformer framework has two key elements: (1) Local filters and (2) the
+temporal combination of these local filters. The CNN can be interpreted as a set of data driven
+flexible local filters. A transformer can be viewed as a data driven flexible time-series model to
+capture complex dependencies between local patterns. We use the CNN+Transformer to generate
+the time-series signal. The allocation function is then modeled as a flexible data driven allocation
+with an FFN.
+   The CNN estimates D local filters of size Dsize :
+
+                                              Dsize
+                                        (0)
+                                              X
+                                                       (0)
+                                       yl =           Wm   xl−m+1
+                                              m=1
+
+
+for a matrix W (0) ∈ RDsize ×D . The local filters are a mapping from x ∈ RL to y (0) ∈ RL×D given
+by the convolution y (0) = W (0) ∗ x. Figure 2 shows examples of these local filters for Dsize = 3.
+The values of y (0) can be interpreted as the “loadings” or exposure to local basis patterns. For
+
+
+
+                                                  16
+                                     Figure 2: Examples of Local Filters
+
+
+
+
+    (a) Upward trend             (b) Downward trend                    (c) Up reversal          (d) Down reversal
+
+These figures show the most important local filters estimated for the benchmark model in our empirical analysis. These are
+projections of our higher dimensional nonlinear filter from a 2-layer CNN into two-dimensional linear filters.
+
+
+
+example, if x represents a global upward trend, its filtered representation should have mainly large
+values for the local upward trend filter.
+    The convolutional mapping can be repeated in multiple layers to obtain a multi-layer CNN.
+First, the output of the first layer of the CNN is transformed nonlinearly by applying the ReLU(·)
+function:
+                                                      
+                                       (1)         (0)         (0)
+                                      xl,d = ReLU yl,d := max(yl,d , 0).
+
+The second layer is given by a higher dimensional filtering projection:
+
+                                                   D     D
+                                                    size X
+                                           (2)                  (1)      (1)
+                                                   X
+                                          yl,d =              Wd,j,m xl−m+1,j ,
+                                                   m=1 j=1
+                                                                  
+                                          (2)                  (1)
+                                         xl,d = ReLU          yl,d .
+
+The final output of the CNN is x̃ ∈ RL×D . Our benchmark model is a 2-layered convolutional
+neural network. The number of layers is a hyperparameter selected on the validation data. Figure
+3 illustrates the structure of the 2-layer CNN. While this description captures all the conceptual
+elements, the actual implementation includes additional details, such as bias terms, instance nor-
+malization and residual connection to improve the implementation as explained in Appendix B.C.
+    For a 1-layer CNN without the final nonlinear transformation, i.e. for a simple local linear filter,
+                                                              (0)
+the patterns can be visualized by the vectors Wm . In our case of a 2-layer CNN the local filter
+can capture more complex patterns as it applies a 3-dimensional weighting scheme in the array
+W (1) and nonlinear transformations. In order to visualize the type of patterns, we project the local
+filter into a simple local linear filter. We want to find the basic patterns that activate only one of
+the D filters, but none of the others, i.e. we are looking for an orthogonal representation of the
+projection.7
+    7
+      A local filter can be formalized as a mapping from the local Dsize points of a sequence to the activation of the
+             R          R
+D filters: φ : Dsize → D . Denote              R
+                                        by ed ∈ D a vector that is 0 everywhere except for the value 1 at position d,
+i.e. ed = 0 · · · 1 0 · · · 0 . Fundamentally, we want to invert the local filter to obtain φ−1 (ed ) to find the local
+                                
+
+sequences that only activates filter d. In general, the inverse is a set and not unique. Our example basic patterns in
+
+
+                                                           17
+                                Figure 3: Convolutional Network Architecture
+
+
+
+
+This figure shows the structure of our convolutional network. The network takes as input a window of L consecutive daily
+cumulative returns a residual, and outputs D features for each block of Dsize days. Each of the features is a nonlinear function
+of the observations in the block, and captures a common pattern.
+
+
+
+    The example plots for local filters in Figure 2 are projections of our higher dimensional nonlinear
+filter into two-dimensional linear filters. The examples show some of the most important local
+filters for our empirical benchmark model. While these projections are of course not complete
+representations of the nonlinear filters of the CNN, they provide an intuition for the type of patterns
+which are activated by specific filters. Our 2-layer CNN network has a local window size of Dsize = 2,
+but because of the 2-layer structure it captures information from two neighboring points. Hence,
+the projection on a one-dimensional linear filter has a local window size of three as depicted in
+Figure 2.
+    The output of the CNN x̃ ∈ RL×D is used as an input to the transformer. The CNN projection
+provides a more informative representation of the dynamics than the original time-series as it
+captures the relative local dependencies between data points. However, by construction the CNN
+is only a local representation, and we need the transformer network to detect the global patterns.
+A transformer network is a model of temporal dependencies between local filters. Given the local
+structure x̃ the transformer estimates the temporal interactions between the L different blocks by
+computing a “global pattern projection”:
+    Assume there are H different global patterns. The transformer will calculate projections on
+these H patterns with the “attention weights”. We first introduce a simplified linear projection
+model before extending it to the actual transformer. For each of the i = 1, ..., H patterns we have
+projections defined by αi ∈ RL×L :
+
+                                                   L
+                                      hsimple
+                                                   X
+                                       i      =          αi,j x̃j     for i = 1, .., H.
+                                                   j=1
+
+Figure 2 solve
+
+                                 argminxloc,d ∈RDsize kφ(xloc,d ) − ed k2    for d = 1, ..., D.
+
+
+
+
+                                                                18
+The “attention function” αi (., .) ∈ [0, 1] captures dependencies between the last local patterns x̃L
+and the prior local patterns x̃j :
+
+                                   αi,j = αi (x̃L , x̃j )          for i = 1, ..., H.
+
+Each projection hsimple
+                 i      is called an “attention head”. These attention heads hsimple
+                                                                              i      could be
+interpreted as “loadings” or “exposure” for a specific “pattern factor” αi . For example, a global
+upward trend can be captured by an attention function that puts weight on subsequent local upward
+trends. Another example would be sinusoidal mean reversion patterns which would put weights on
+alternating “curved” local basis patterns. The projection on these weights captures how much a
+specific time-series x̃ is exposed to this global pattern. Hence, hsimple
+                                                                   i      measures the exposure to the
+global pattern i of the time-series x̃. Each attention head can focus on a specific global pattern,
+which we then combine to obtain our signal.
+    The fundamental challenge is to learn attention functions that can model complex dependencies.
+The crucial innovation in transformers is their modeling of the attention functions αi and attention
+heads hi . In order to deal with the high dimensionality of the problem, transformers consider
+lower dimensional projections of x̃ into RD/H and use the lower-dimensional scaled dot product
+attention mechanism for αi as explained in Appendix B.C. More specifically, each attention head
+hi ∈ RL×D/H is based on8 the projected input x̃WiV with WiV ∈ RD×D/H and αi ∈ RL×L :
+
+                                      hi = αi x̃WiV              for i = 1, .., H.
+
+The projection on all global basis patterns h ∈ RL×D/H is given by a weighted linear combination
+of the different attention heads
+                                                           
+                                         hproj = h1 · · · hH W O
+
+with W O ∈ RD×D . This final projection can, for example, model a combination of a global trend
+and mean reversion patterns. In conclusion, hproj represents the time-series in terms of the H
+global patterns. This is analogous to a Fourier filter, but without pre-specifying the global patterns
+a priori. All parts of the CNN+Transformer network, i.e. the local patterns, the attention functions
+and the projections on global patterns, are estimated from the data.
+    The trading signal θCNN+Trans equals the global pattern projection for the final cumulative
+return projection9 hproj
+                    L :
+
+
+                                          θCNN+Trans = hproj
+                                                        L    ∈ RH ,
+   8
+     The actual implementation also includes bias terms which we neglect here for simplicity. The Appendix provides
+the implementation details.
+   9
+                                                      R
+     In principle, we can use the complete matrix h ∈ L×D as the signal. However, conceptually the global pattern
+at the end of the time period should be the most relevant for the next realization of the process. We have also
+implemented a transformer that uses the full matrix, with similar results and the variable importance rankings
+suggest that only hL is selected in the allocation function.
+
+
+                                                            19
+                                 Figure 4: Transformer Network Architecture
+
+
+
+
+This figure shows the structure of our transformer network. The model takes as input the matrix x̃ ∈ RL×D that we obtain
+as output of the convolutional network depicted in Figure 3, which contains D features for each of the L blocks of the original
+time series. These features are projected onto H attention heads, which capture the global temporal dependency patterns.
+The projections on these attention heads represent our arbitrage signals, which are the input to the feedforward network that
+estimates the allocation weight for the residual on the next day.
+
+
+
+which is then used as input to a time-wise feedforward network allocation function
+
+                               w|CNN+Trans θCNN+Trans = g FFN θCNN+Trans .
+                                                                        
+
+
+The separation between signal and allocation is not uniquely identified as we use a joint optimization
+problem. We have chosen a separation that maps naturally into the classical examples considered
+in the previous subsections. Figure 4 illustrates the transformer network architecture. We have
+presented a 1-layer transformer network, which is our benchmark model. The transformed data
+can be used as input in more iterations of the transformer to obtain a multi-layer transformer.
+   We illustrate the CNN+Transformer model in the first row of Figure A.2 in the Appendix for
+an empirical residual example. First, it is apparent that the cumulative returns of the strategy in
+subplot (c) outperforms the previous two models. This is because the allocation weights in subplot
+(a) capture not only the low frequency reversal patterns, but also the high-frequency cycles and
+trend components. This also implies that the allocation weights change more frequently to capture
+the higher frequency components. This more sophisticated allocation function requires a more
+complex signal as illustrated in subplot (b). Each change in the allocation can be traced back to
+changes in at least one of the signals. While the signals themselves are hard to interpret, we will
+leverage the transformer structure to extract interpretable “global dependency factors” in our main
+analysis. Figure A.3 in the Appendix provides another example to illustrate the differences between
+the three models. This example has a strong negative trend component with a superimposed mean-
+
+
+                                                              20
+reversion. Only the CNN+Transformer captures both type of patterns.
+
+
+                                     III.      Empirical Analysis
+A.      Data
+       We collect daily equity return data for the securities on CRSP from January 1978 through
+December 2016. We use the first part of the sample to estimate the various factor models, which
+gives us the residuals for the time period from January 1998 to December 2016 for the arbitrage
+trading. The arbitrage strategies trade on a daily frequency at the close of each day. We use the
+daily adjusted returns to account for dividends and splits and the one-month Treasury bill rates
+from the Kenneth French Data Library as the risk-free rate. In addition, we complement the stock
+returns with the 46 firm-specific characteristics from Chen et al. (2022), which are listed in Table
+A.I. All these variables are constructed either from accounting variables from the CRSP/Compustat
+database or from past returns from CRSP. The full details on the construction of these variables
+are in the Internet Appendix of Chen et al. (2022).
+       Our analysis uses only the most liquid stocks in order to avoid trading and market friction
+issues. More specifically, we consider only the stocks whose market capitalization at the previous
+month was larger than 0.01% of the total market capitalization at that previous month, which is
+the same selection criterion as in Kozak et al. (2020). On average this leaves us with approximately
+the largest 550 stocks, which correspond roughly to the S&P 500 index. This is an unbalanced
+dataset, as the stocks that we consider each month need not be the same as in the next month,
+but it is essentially balanced on a daily frequency in rolling windows of up to one year in our
+trading period from 1998 through 2016. For each stock we have its cross-sectionally centered and
+rank-transformed characteristics of the previous month. This is a standard transformation to deal
+with the different scales which is robust to outliers and time-variation, and has also been used in
+Chen et al. (2022), Kozak et al. (2020), Kelly et al. (2019), and Freyberger et al. (2020).
+       Our daily residual time-series start in 1998 as we have a large number of missing values in daily
+individual stock returns prior to this date, but almost no missing daily values in our sample.10 We
+want to point out that the time period after 1998 also seems to be more challenging for arbitrage
+trading or factor trading, and hence our results can be viewed as conservative lower bounds.
+
+B.      Factor model estimation
+       As discussed in Section II.A, we construct the statistical arbitrage portfolios by using the resid-
+uals of a general factor model for the daily excess returns of a collection of stocks. In particular,
+we consider the three empirically most successful families of factor models in our implementation.
+  10
+    Of all the stocks that have daily returns observed in a the local lockback window of L = 30 days, only 0.1% have
+a missing return the next day for the out-of-sample trading, in which case we do not trade this stock. Hence, our
+data set of stocks with market capitalization higher than 0.01% of the total market capitalization, has essentially no
+missing daily values on a local window for the time period after 1998.
+
+
+
+                                                         21
+For each family, we conduct a rolling window estimation to obtain daily residuals out of sample
+from 1998 through 2016. This means that the residual composition matrix Φt−1 of equation (1)
+depends only on the information up to time t − 1, and hence there is no look-ahead bias in trading
+the residuals. The rolling window estimation is necessary because of the time-variation in risk
+exposure of individual stocks and the unbalanced nature of a panel of individuals stock returns.
+      The three classes of factor models consists of pre-specified factors, latent unconditional factors
+and latent conditional factors:
+
+  1. Fama-French factors: We consider 1, 3, 5 and 8 factors based on various versions and
+        extensions of the Fama-French factor models and downloaded from the Kenneth French Data
+        Library. We consider them as tradeable assets in our universe. Each model includes the
+        previous one and adds additional characteristic-based risk factors:
+         (a) K = 1: CAPM model with the excess return of a market factor
+         (b) K = 3: Fama-French 3 factor model includes a market, size and value factor
+         (c) K = 5: Fama-French 3 factor model + investment and profitability factors
+         (d) K = 8: Fama-French 5 factor model + momentum, short-term reversal and long-term
+              reversal factors.
+        We estimate the loadings of the individual stock returns daily with a linear regression on
+        the factors with a rolling window on the previous 60 days and compute the residual for the
+        current day out-of-sample. This is the same procedure as in Carhart (1997). At each day
+        we only consider the stocks with no missing observations in the daily returns within the
+        rolling window, which in any window removes at most 2% of the stocks given our market
+        capitalization filter.
+  2. PCA factors: We consider 1, 3, 5, 8, 10, and 15 latent factors, which are estimated daily
+        on a rolling window. At each time t − 1, we use the last 252 days, or roughly one trading
+        year, to estimate the correlation matrix from which we extract the PCA factors.11 Then, we
+        use the last 60 days to estimate the loadings on the latent factors using linear regressions,
+        and compute residuals for the current day out-of-sample. At each day we only consider the
+        stocks with no missing observations in the daily returns during the rolling window, which in
+        any window removes at most 2% of the stocks given our market capitalization filter.
+  3. IPCA factors: We consider 1, 3, 5, 8, 10, and 15 factors in the Instrumented PCA (IPCA)
+        model of Kelly et al. (2019). This is a conditional latent factor model, in which the loadings
+        βt−1 are a linear function of the asset characteristics at time t − 1. As the characteristics
+        change at most each month, we reestimate the IPCA model on rolling window every year
+        using the monthly returns and characteristics of the last 240 months. The IPCA provides the
+        factor weights and loadings for each stock as a function of the stock characteristics. Hence,
+        we do not need to estimate the loadings for individual stocks with an additional time-series
+        regression, but use the loading function and the characteristics at time t − 1 to obtain the
+ 11
+      This is the same procedure as in Avellaneda and Lee (2010).
+
+
+
+                                                         22
+         out-of-sample residuals at time t. The other details of the estimation process are carried out
+         in the way outlined in Kelly et al. (2019).
+
+In addition to the factor models above, we also include the excess returns of the individual stocks
+without projecting out the factors. This “zero-factor model” simply consists of the original excess
+returns of stocks in our universe and is denoted as K = 0. For each factor model, in our empirical
+analysis we observe that the cumulative residuals exhibit consistent and relatively regular mean-
+reverting behavior. After taking out sufficiently many factors, the residuals of different stocks are
+only weakly correlated.
+
+C.      Implementation
+       Given the daily out-of-sample residuals from 1998 through 2016 we estimate the trading signal
+and policy on a rolling window to obtain the out-of-sample returns of the strategy. For each strategy
+we calculate the annualized sample mean µ, annualized volatility σ and annualized Sharpe ratio12
+SR = σµ . The Sharpe ratio represents a risk-adjusted average return. Our main models estimate
+arbitrage strategies to maximize the Sharpe ratio without transaction costs. In Section III.E we
+also consider a mean-variance objective and in Section III.J we include transaction costs in the
+estimation and evaluation.
+       Our strategies trade the residuals of all stocks, which are mapped back into positions of the
+original stocks. We use the standard normalization that the absolute values of the individual stock
+                                                                  R k = 1. This normalization
+portfolio weights sums up to one, i.e. we use the normalization kωt−1 1
+implies a leverage constraint as short positions are bounded by one. The trading signal is based on
+a local lookback window of L = 30 days. We show in Section III.I, that the results are robust to
+this choice and are very comparable for a lookback window of L = 60 days. Our main results use a
+rolling window of 1,000 days to estimate the deep learning models. For computational reasons we
+re-estimate the network only every 125 days using the previous 1,000 days. Section III.I shows that
+our results are robust to this choice. Our main results show the out-of-sample trading performance
+from January 2002 to December 2016 as we use the first four years to estimate the signal and
+allocation function.
+       The hyperparameters for the deep learning models are based on the validation results summa-
+rized in Appendix C.A. Our benchmark model is a 2-layer CNN with D = 8 local convolutional
+filters and local window size of Dsize = 2 days. The transformer has H = 4 attention heads, which
+can be interpreted as capturing four different global patterns. The results are extremely robust to
+the choice of hyperparameters. Appendix B.D includes all the technical details for implementing
+the deep learning models.
+  12                                                                                                 PT
+   We obtain the annualized metrics from the daily returns using the standard calculations µ = 252
+                                                                                                T     t=1 Rt and
+   q    PT
+σ = 252
+     T    t=1 (Rt − µ) .
+                      2
+
+
+
+
+                                                       23
+              Table I: OOS Annualized Performance Based on Sharpe Ratio Objective
+
+                       Factors         Fama-French                     PCA                       IPCA
+             Model         K        SR       µ         σ       SR       µ         σ       SR       µ         σ
+
+                           0       1.64 13.7%        8.4%     1.64    13.7%     8.4%     1.64 13.7%        8.4%
+                           1       3.68 7.2%         2.0%     2.74    15.2%     5.5%     3.22 8.7%         2.7%
+             CNN           3       3.13 5.5%         1.8%     3.56    16.0%     4.5%     3.93 8.6%         2.2%
+               +           5       3.21 4.6%         1.4%     3.36    14.3%     4.2%     4.16 8.7%         2.1%
+             Trans         8       2.49 3.4%         1.4%     3.02    12.2%     4.0%     3.95 8.2%         2.1%
+                          10         -    -            -      2.81    10.7%     3.8%     3.97 8.0%         2.0%
+                          15         -    -            -      2.30     7.6%     3.3%     4.17 8.4%         2.0%
+
+                           0       0.36    4.9%     13.6%     0.36 4.9% 13.6%            0.36    4.9%     13.6%
+                           1       0.89    3.2%      3.5%     0.80 8.4% 10.6%            1.24    6.3%      5.0%
+            Fourier        3       1.32    3.5%      2.7%     1.66 11.2% 6.7%            1.77    7.8%      4.4%
+              +            5       1.66    3.1%      1.8%     1.98 12.4% 6.3%            1.90    7.7%      4.1%
+             FFN           8       1.90    3.1%      1.6%     1.95 10.1% 5.2%            1.94    7.8%      4.0%
+                          10         -       -         -      1.71 8.2% 4.8%             1.93    7.6%      3.9%
+                          15         -       -         -      1.14 4.8% 4.2%             2.06    7.9%      3.8%
+
+                           0       -0.18 -2.4% 13.3%          -0.18 -2.4% 13.3%          -0.18 -2.4% 13.3%
+                           1       0.16 0.6% 3.8%              0.21 2.1% 10.4%           0.60 3.0% 5.1%
+             OU            3       0.54 1.6% 3.0%              0.77 5.2% 6.8%            0.88 3.8% 4.3%
+              +            5       0.38 0.9% 2.3%              0.73 4.4% 6.1%            0.97 3.8% 4.0%
+            Thresh         8       1.16 2.8% 2.4%              0.87 4.4% 5.1%            0.91 3.5% 3.8%
+                          10         -      -     -            0.63 2.9% 4.6%            0.86 3.1% 3.6%
+                          15         -      -     -            0.62 2.4% 3.8%            0.93 3.2% 3.5%
+This table shows the out-of-sample annualized Sharpe ratio (SR), mean return (µ), and volatility (σ) of our three statistical
+arbitrage models for different numbers of risk factors K, that we use to obtain the residuals. We use the daily out-of-
+sample residuals from January 1998 to December 2016 and evaluate the out-of-sample arbitrage trading from January 2002 to
+December 2016. CNN+Trans denotes the convolutional network with transformer model, Fourier+FFN estimates the signal
+with a FFT and the policy with a feedforward neural network and lastly, OU+Thres is the parametric Ornstein-Uhlenbeck
+model with thresholding trading policy. The two deep learning models are calibrated on a rolling window of four years and
+use the Sharpe ratio objective function. The signals are extracted from a rolling window of L = 30 days. The K = 0 factor
+model corresponds to directly using stock returns instead of residuals for the signal and trading policy.
+
+
+
+
+D.    Main Results
+     Table I displays the main results for various arbitrage models. It reports the annualized Sharpe
+ratio, mean return and volatility for our principal deep trading strategy CNN+Transformer and
+the two benchmark models, Fourier+FFN and OU+Threshold, for every factor model described in
+Section III.B. The CNN+Transformer model and Fourier+FFN model are estimated with a Sharpe
+ratio objective. We obtain the daily out-of-sample residuals for different number of factors K for
+the time period January 1998 to December 2016. The daily returns of the out-of-sample arbitrage
+trading is then evaluated from January 2002 to December 2016, as we use a rolling window of four
+years to estimate the deep learning models.
+     First, we confirm that it is crucial to apply arbitrage trading to residuals and not individual
+stock returns. The stock returns, denoted as the K = 0 model, perform substantially worse than
+any type of residual within the same model and factor family. This is not surprising as residuals
+
+                                                             24
+for an appropriate factor model are expected to be better described by a model that captures mean
+reversion. Importantly, individual stock returns are highly correlated and a substantial part of the
+returns is driven by the low dimensional factor component.13 Hence, the complex nonparametric
+models are actually not estimated on many weakly dependent residual time-series, but most time-
+series have redundant information. In other words, the models are essentially calibrated on only
+a few factor time-series, which severely limits the structure that can be estimated. However, once
+we extract around K = 5 factors with any of the different factor models, the performance does not
+substantially increase by adding more factors. This suggests that most of commonality is explained
+by a small number of factors.
+       Second, the CNN+Transformer model strongly dominates the other benchmark models in terms
+of Sharpe ratio and average return. The Sharpe ratio is approximately twice as large as for a compa-
+rable Fourier+FFN model and four times higher for the corresponding parametric OU+Threshold
+model. Using IPCA residuals, the CNN+Transformer achieves the impressive out-of-sample Sharpe
+ratio of around 4, in spite of trading only the most liquid large cap stocks and the time period after
+2002. The mean returns of the CNN+Transformer are similar to the Fourier+FFN model, but
+have substantially smaller volatilities, which results in the higher Sharpe ratios. The parametric
+mean-reversion model achieves positive mean returns with Sharpe ratios close to one for the IPCA
+residuals, but as expected is too restrictive relative to the flexible models. The Fourier+FFN has
+the same flexibility as the CNN+Transformer in its allocation function, but is restricted to a pre-
+specified signal structure. The difference in performance quantifies the importance of extracting
+the complex time-series signals.
+       Third, the average return of the arbitrage strategies is large in spite of the leverage constraints.
+                                          R so sum up in absolute value to one limits the short-
+Normalizing the individual stock weights wt−1
+selling. The CNN+Transformer with a five-factor PCA residual achieves an attractive annual
+mean return of around 14%. This means that the strategies do not require an infeasible amount of
+leverage to yield an average return that might be required by investors. In other words, the high
+Sharpe ratios are not the results of vanishing volatility but a combination of high average returns
+with moderate volatility.
+       Fourth, the arbitrage strategies are qualitatively robust to the choice of factor models to obtain
+residuals. The Fama-French and PCA factor lead to very similar Sharpe ratio results, suggesting
+that they explain a similar amount of co-movement in the data. However, as the mean returns
+of PCA factors are usually higher than the mean returns of the Fama-French factors, the risk
+factors are different. This confirms the findings of Pelger (2020) and Lettau and Pelger (2020b),
+who show that PCA factors do not coincide with Fama-French type factors and explain different
+mean returns. The IPCA factors use the additional firm-specific characteristic information. The
+resulting residuals achieve the highest Sharpe ratios, which illustrates that conditional factor models
+can capture more information than unconditional models. Including the momentum and reversal
+  13
+   Pelger (2020) shows that around one third of the individual stock returns is explained by a latent four-factor
+model.
+
+
+
+                                                       25
+               Table II: Significance of Arbitrage Alphas based on Sharpe Ratio Objective
+                                                          CNN+Trans model
+                      Fama-French                                    PCA                                       IPCA
+                              2                                          2
+  K      α       tα       R         µ     tµ       α         tα      R        µ       tµ       α       tα       R2      µ      tµ
+                   ∗∗∗                      ∗∗∗               ∗∗∗                       ∗∗∗              ∗∗∗
+  0    11.6% 6.4   30.3% 13.7% 6.3                11.6% 6.4   30.3% 13.7% 6.3                 11.6% 6.4        30.3% 13.7% 6.3∗∗∗
+  1    7.0% 14∗∗∗ 2.4% 7.2% 14∗∗∗                 14.9% 10∗∗∗ 0.6% 15.2% 11∗∗∗                8.1% 12∗∗∗        9.5% 8.7% 12∗∗∗
+  3    5.5% 12∗∗∗ 1.2% 5.5% 12∗∗∗                 15.8% 14∗∗∗ 1.7% 16.0% 14∗∗∗                8.2% 15∗∗∗        6.0% 8.6% 15∗∗∗
+  5    4.5% 12∗∗∗ 2.3% 4.6% 12∗∗∗                 14.1% 13∗∗∗ 1.3% 14.3% 13∗∗∗                8.3% 16∗∗∗        3.9% 8.7% 16∗∗∗
+  8    3.3% 9.4∗∗∗ 2.1% 3.4% 9.6∗∗∗               12.0% 12∗∗∗ 0.9% 12.2% 12∗∗∗                7.8% 15∗∗∗        5.0% 8.2% 15∗∗∗
+  10     -      -     -     -     -               10.5% 11∗∗∗ 0.7% 10.7% 11∗∗∗                7.7% 15∗∗∗        4.0% 8.0% 15∗∗∗
+  15     -      -     -     -     -               7.5% 8.8∗∗∗ 0.5% 7.6% 8.9∗∗∗                8.1% 16∗∗∗        4.2% 8.4% 16∗∗∗
+
+                                                          Fourier+FFN model
+                      Fama-French                                    PCA                                       IPCA
+                              2                                          2
+  K      α       tα       R         µ     tµ       α         tα      R        µ       tµ       α       tα       R2      µ      tµ
+  0    2.7%       0.8    8.6%     4.9%     1.4    2.7%       0.8     8.6%     4.9%     1.4    2.7%      0.8     8.6%   4.9%     1.4
+  1    3.0%     3.3∗∗    3.3%     3.2%   3.5∗∗∗   7.4%     2.7∗∗     3.3%     8.4%   3.1∗∗    4.8%    4.0∗∗∗   16.4%   6.3%   4.8∗∗∗
+  3    3.2%     4.7∗∗∗   4.2%     3.5%   5.1∗∗∗   10.9%    6.3∗∗∗    2.2%    11.2%   6.4∗∗∗   6.8%    6.4∗∗∗   13.0%   7.8%   6.9∗∗∗
+  5    2.9%     6.1∗∗∗   3.5%     3.1%   6.4∗∗∗   12.1%    7.5∗∗∗    1.5%    12.4%   7.6∗∗∗   6.7%    6.9∗∗∗   13.3%   7.7%   7.4∗∗∗
+  8    3.0%     7.2∗∗∗   3.2%     3.1%   7.4∗∗∗   10.0%    7.5∗∗∗    0.9%    10.1%   7.6∗∗∗   6.8%    7.0∗∗∗   13.3%   7.8%   7.5∗∗∗
+  10     -         -       -        -       -     8.0%     6.5∗∗∗    1.0%     8.2%   6.6∗∗∗   6.8%    7.1∗∗∗   12.7%   7.6%   7.5∗∗∗
+  15     -         -       -        -       -     4.7%     4.3∗∗∗    0.4%     4.8%   4.4∗∗∗   7.1%    7.6∗∗∗   12.2%   7.9%   8.0∗∗∗
+
+                                                          OU+Thresh model
+                      Fama-French                                    PCA                                       IPCA
+                              2                                          2
+  K      α       tα       R         µ     tµ       α         tα      R        µ       tµ       α       tα       R2      µ      tµ
+  0    -4.5%     -1.4    13.4% -2.4%     -0.7     -4.5%     -1.4    13.4% -2.4% -0.7          -4.5%    -1.4    13.4% -2.4% -0.7
+  1    -0.2%     -0.2    13.5% 0.6%       0.6     0.7%      0.3      6.3% 2.1%   0.8           1.7%    1.4     18.9% 3.0%  2.3∗
+  3    0.9%      1.2     10.4% 1.6%      2.1∗     4.3%     2.5∗     4.3% 5.2% 3.0∗∗            2.6%   2.6∗∗    18.8% 3.8% 3.4∗∗∗
+  5    0.5%      0.9      6.8% 0.9%       1.5     3.7%     2.4∗     3.2% 4.4% 2.8∗∗            2.8%   3.0∗∗    17.7% 3.8% 3.8∗∗∗
+  8    0.6%      1.2      5.5% 1.0%       1.9     3.9%     3.0∗∗    1.9% 4.4% 3.4∗∗∗           2.3%   2.6∗∗    17.6% 3.5% 3.6∗∗∗
+  10      -        -        -     -        -      2.6%     2.2∗     1.4% 2.9%   2.4∗           2.1%   2.5∗     17.6% 3.1% 3.3∗∗∗
+  15      -        -        -     -        -      2.1%     2.1∗     0.7% 2.4%   2.4∗           2.3%   2.8∗∗    18.1% 3.2% 3.6∗∗∗
+
+This table shows the out-of-sample pricing errors α of the arbitrage strategies relative of the Fama-French 8 factor model and
+their mean returns µ for the different arbitrage models and different number of factors K that we use to obtain the residuals.
+We run a time-series regression of the out-of-sample returns of the arbitrage strategies on the 8-factor model (Fama-French
+5 factors + momentum + short-term reversal + long-term reversal) and report the annualized α, accompanying t-statistic
+value tα , and the R2 of the regression. In addition, we report the annualized mean return µ along with its accompanying
+t-statistic tµ . The hypothesis test are two-sided and stars indicate p-values of 5% (∗ ), 1% (∗∗ ), and 0.1% (∗∗∗ ). All results
+use the out-of-sample daily returns from January 2002 to December 2016 and the deep learning models are based on a Sharpe
+ratio objective.
+
+
+
+factors in the Fama-French 8 factor models to obtain residuals still results in profitable arbitrage
+strategies. Hence, the arbitrage strategies are not simply capturing a conventional price trend risk
+premium.
+   The returns of the CNN+Transformer arbitrage strategies are statistically significant and not
+subsumed by conventional risk factors. Table II reports the out-of-sample pricing errors α of the
+arbitrage strategies relative of the Fama-French 8 factor model and their mean returns µ. We run a
+time-series regression of the out-of-sample returns of the arbitrage strategies on the 8-factor model
+(Fama-French 5 factors + momentum + short-term reversal + long-term reversal) and report the
+annualized α, accompanying t-statistic value tα , and the R2 of the regression. In addition, we report
+the annualized mean return µ along with its accompanying t-statistic tµ . The arbitrage strategies
+
+
+                                                                    26
+                 Figure 5. Cumulative OOS Returns of Different Arbitrage Strategies
+
+
+
+
+ (a) CNN+Trans, Fama-French 5                  (b) CNN+Trans, PCA 5                      (c) CNN+Trans, IPCA 5
+
+
+
+
+ (d) Fourier+FFN, Fama-French 5                (e) Fourier+FFN, PCA 5                   (f ) Fourier+FFN, IPCA 5
+
+
+
+
+ (g) OU+Thresh Fama-French 5                    (h) OU+Thresh PCA 5                      (i) OU+Thresh IPCA 5
+These figures show the cumulative daily returns of the arbitrage strategies for our representative models on the out-of-sample
+trading period between January 2002 and December 2016. We estimate the optimal arbitrage trading strategies for our three
+benchmark models based on the out-of-sample residuals of the Fama-French, PCA and IPCA 5-factor models. The deep
+learning models use the Sharpe ratio objective.
+
+
+
+for the CNN+Transformer model for K ≥ 1 are all statistically significant and not explained by the
+Fama-French 5 factors or price trend factors. Importantly, the pricing errors are essentially as large
+as the mean returns, which implies that the returns of the CNN+Transformer arbitrage strategies
+do not carry any risk premium of these eight factors. This is supported by the R2 values, which
+are close to zero for the Fama-French or PCA residuals, and hence confirm that these arbitrage
+portfolios are essentially orthogonal to the Fama-French 8 factors. In contrast, one third of the
+individual return variation for K = 0 is explained by those risk factors. However, even in that case
+the pricing errors are significant. The residuals of IPCA factors have a higher correlation with the
+Fama-French 8 factors, suggesting that the conditional IPCA factor model extracts factors that are
+inherently different from the conventional risk factors. Note that the residuals of a Fama-French 8
+factor model are not mechanically orthogonal in the time-series regression on the Fama-French 8
+
+
+
+                                                             27
+factors, as we construct out-of-sample residuals based on rolling window estimates. The parametric
+arbitrage strategies are largely explained by conventional risk factors. The third subtable in Table
+II shows that the residuals of the OU+Threshold model for Fama-French of PCA residuals do not
+have statistically significant pricing errors on a 1% level.
+     The CNN+Transformer has a consistent out-of-sample performance and is not affected by vari-
+ous negative events. Figure 5 shows the cumulative out-of-sample returns of the arbitrage strategies
+for our representative models. We select the residuals of the various five-factor models as including
+additional factors has only minor effects on the performance. Note that the CNN+Transformer
+model has consistently almost always positive returns, while maintaining a low volatility and avoid-
+ing any large losses. Importantly, the performance of the CNN+Transformer is nearly completely
+immune to both the “quant quake” which affected quantitative trading groups and funds engaging
+in statistical arbitrage in August 2007 (Barr (2007)), and the period of poor performance in quant
+funds during 2011–2012 (Ebrahimi (2013)). The Fourier+FFN model also performs similarly well
+until the financial crisis, but its risk increases afterwards as displayed by the larger volatility and
+larger drawdowns. The performance of the parametric model is visibly inferior. This illustrates that
+although all strategies trade the same residuals, which should be orthogonal to common market
+risk, profitable arbitrage trading requires an appropriate signal and allocation policy.
+
+E.    Mean-Variance Objective
+     The deep learning statistical arbitrage strategies can achieve high average returns in spite of
+leverage constraints. Our main deep learning models are estimated with a Sharpe ratio objective.
+As the sum of absolute stock weights is normalized to one, the arbitrage strategies impose an
+implicit leverage constraint. We show that the average return can be increased while maintaining
+this leverage constraint. For this purpose we change the objective for the deep learning model to a
+mean-variance objective. In order to illustrate the effect of the different objective function, we set
+the risk aversion parameter to γ = 1.
+     Tables III and IV collect the results for the Sharpe ratio, mean, volatility and significance tests.
+As expected the Sharpe ratios are slightly lower compared to the corresponding model with Sharpe
+ratio objective, but the mean returns are substantially increased. The CNN+Transformer model
+achieves average annual returns around 20% with PCA and IPCA residuals while the volatility
+is only around half as large as the one of a market portfolio. The mean returns are statistically
+highly significant and not spanned by conventional risk factors or a price trend risk premium.
+The Fourier+FFN model can also obtain high average returns, but those come at the cost of
+a higher volatility. Overall, we confirm that the more flexible signal extraction function of the
+CNN+Transformer is crucial for the superior performance.
+
+F.    Unconditional Residual Means
+     The unconditional average of residuals is not a profitable strategy and does not provide infor-
+mation about the potential arbitrage profitability contained in the residuals. A natural question to
+
+                                                   28
+            Table III: OOS Annualized Performance Based on Mean-Variance Objective
+                              CNN+Trans strategy, mean-variance objective function
+                              Fama-French                    PCA                          IPCA
+                 K      SR        µ         σ       SR        µ         σ        SR        µ         σ
+                 0     0.83      9.5%    11.4%      0.83     9.5%     11.4%      0.83    9.5%      11.4%
+                 1     3.15     10.5%     3.3%      2.21    27.3%     12.3%      2.83    15.9%      5.6%
+                 3     2.95      7.8%     2.6%      2.38    22.6%      9.5%      3.13    17.9%      5.7%
+                 5     3.03      5.9%     2.0%      2.75    19.6%      7.1%      3.21    18.2%      5.7%
+                 8     2.96      4.2%     1.4%      2.68    16.6%      6.2%      3.18    17.0%      5.4%
+                10       -         -        -       2.67    15.3%      5.7%      3.21    16.6%      5.2%
+                15       -         -        -       2.20     8.7%      4.0%      3.34    16.3%      4.9%
+
+                              Fourier+FFN strategy, mean-variance objective function
+                              Fama-French                    PCA                          IPCA
+                 K      SR        µ         σ       SR        µ         σ        SR        µ         σ
+                 0     0.28     5.5%     19.3%      0.28     5.5%     19.3%      0.28    5.5%      19.3%
+                 1     0.38     2.5%      6.7%      0.48    16.6%     34.8%      0.56    9.7%      17.2%
+                 3     1.16     4.3%      3.7%      0.34    32.1%     93.1%      1.06    17.6%     16.7%
+                 5     1.30     3.1%      2.4%      0.37    22.5%     61.2%      1.17    17.0%     14.5%
+                 8     1.73     3.6%      2.0%      0.67    17.4%     25.9%      1.21    14.4%     11.9%
+                10       -        -         -       0.45     7.4%     16.4%      1.06    12.6%     11.9%
+                15       -        -         -       0.56     5.7%     10.2%      1.17    12.1%     10.4%
+This table shows the out-of-sample annualized Sharpe ratio (SR), mean return (µ), and volatility (σ) of our CNN+Transformer
+and Fourier+FFN models for different numbers of risk factors K, that we use to obtain the residuals. We use a mean-variance
+objective function with risk aversion γ = 1. We use the daily out-of-sample residuals from January 1998 to December 2016
+and evaluate the out-of-sample arbitrage trading from January 2002 to December 2016. The two deep learning models are
+calibrated on a rolling window of four years. The signals are extracted from a rolling window of L = 30 days. The K = 0
+factor model corresponds to directly using stock returns instead of residuals for the signal and trading policy.
+
+
+
+ask is if the residuals themselves have a risk premium component and if trading an equally weighted
+portfolio of residuals could be profitable. Table A.VI in the Appendix shows the performance of
+this simple strategy. If we do not project out any factors (K = 0), this strategy essentially trades an
+equally weighted market portfolio. Table A.VII in the Appendix reports the test statistics relative
+to the Fama-French 8 factor model, which completely subsumes the market risk premium. Once
+we regress out at least 3 factors, the equally weighted residuals have a mean return of around 1%
+or lower. The low volatility confirms that the residuals are only weakly cross-sectionally dependent
+and are largely diversified away. The moderately large Sharpe ratios for PCA residuals is a conse-
+quence of the near zero volatility. Scaling up the mean returns to a meaningful magnitude would
+potentially require an unreasonable amount of leverage. Overall, we confirm that residuals need to
+be combined with a signal and trading policy that takes advantage of the time series patterns in
+order to achieve a profitable strategy.
+   IPCA factors are close to uncorrelated with conventional risk factors. The R2 values in Table
+A.VII are as expected for the Fama-French factors and, not surprisingly, after regressing out all of
+those factors, the cross-sectional average of the residuals is essentially orthogonal to those factors.
+The PCA residuals show a very similar behavior. However, the conditional IPCA model leaves a
+
+
+                                                            29
+                Table IV: Significance of Arbitrage Alphas based on Mean-Variance Objective
+                                                            CNN+Trans model
+                         Fama-French                                 PCA                                       IPCA
+                                2                                         2
+     K      α      tα       R          µ    tµ       α        tα      R        µ       tµ      α       tα       R2      µ       tµ
+                     ∗                        ∗∗                ∗                        ∗∗               ∗
+      0    5.8% 2.2    19.6% 9.5%          3.2       5.8%  2.2   19.6% 9.5% 3.2                5.8%    2.2     19.6%    9.5%   3.2∗∗
+      1    9.9% 12∗∗∗ 7.1% 10.5%           12∗∗∗    26.3% 8.3∗∗∗ 1.6% 27.3% 8.6∗∗∗            14.0%   11∗∗∗    23.5%   15.9%   11∗∗∗
+      3    7.5% 11∗∗∗ 5.3% 7.8%            11∗∗∗    22.1% 9.1∗∗∗ 2.2% 22.6% 9.2∗∗∗            16.6%   12∗∗∗    17.6%   17.9%   12∗∗∗
+      5    5.7% 11∗∗∗ 5.3% 5.9%            12∗∗∗    19.0% 10∗∗∗ 3.2% 19.6% 11∗∗∗              16.7%   12∗∗∗    16.0%   18.2%   12∗∗∗
+      8    4.4% 9.8∗∗∗ 3.6% 4.6%           10∗∗∗    16.3% 10∗∗∗ 1.6% 16.6% 10∗∗∗              15.5%   12∗∗∗    18.3%   17.0%   12∗∗∗
+     10      -     -      -    -             -      14.8% 10∗∗∗ 1.7% 15.3% 10∗∗∗              15.2%   13∗∗∗    20.6%   16.6%   12∗∗∗
+     15      -     -      -    -             -       8.5% 8.4∗∗∗ 0.9% 8.7% 8.5∗∗∗             14.8%   13∗∗∗    21.6%   16.3%   13∗∗∗
+
+                                                            Fourier+FFN model
+                         Fama-French                                 PCA                                       IPCA
+                                2                                         2
+     K      α      tα       R          µ    tµ       α        tα      R        µ       tµ      α       tα       R2      µ       tµ
+      0    3.2%   0.7      8.4%     5.5%     1.1     3.2%     0.7    8.4%      5.5%    1.1     3.2%     0.7    8.4%     5.5%     1.1
+      1    2.8%   1.6      1.8%     2.5%     1.5    15.4%     1.7    1.3%     16.6%    1.9     7.9%     1.8    2.6%     9.7%    2.2∗
+      3    4.1% 4.4∗∗∗     3.4%     4.3%   4.5∗∗∗   30.3%     1.3    0.1%     32.1%    1.3    17.4%   4.1∗∗∗   1.9%    17.6%   4.1∗∗∗
+      5    2.9% 4.8∗∗∗     3.1%     3.1%   5.0∗∗∗   21.0%     1.3    0.1%     22.5%    1.4    15.9%   4.3∗∗∗   2.6%    17.0%   4.5∗∗∗
+      8    3.5% 6.8∗∗∗     2.3%     3.6%   7.0∗∗∗   17.4%    2.6∗∗   0.3%     17.2%   2.6∗∗   12.9%   4.3∗∗∗   4.4%    14.4%   4.7∗∗∗
+     10      -     -         -        -       -      7.1%     1.7    0.3%      7.4%    1.8    11.7%   3.9∗∗∗   3.5%    12.6%   4.1∗∗∗
+     15      -     -         -        -       -      5.5%    2.1∗    0.1%      5.7%   2.2∗    11.3%   4.3∗∗∗   4.0%    12.1%   4.5∗∗∗
+
+This table shows the out-of-sample pricing errors α of the arbitrage strategies relative of the Fama-French 8 factor model and
+their mean returns µ for the different arbitrage models and different number of factors K that we use to obtain the residuals.
+We use a mean-variance objective function with risk aversion γ = 1. We run a time-series regression of the out-of-sample
+returns of the arbitrage strategies on the 8-factor model (Fama-French 5 factors + momentum + short-term reversal + long-
+term reversal) and report the annualized α, accompanying t-statistic value tα , and the R2 of the regression. In addition, we
+report the annualized mean return µ along with its accompanying t-statistic tµ . The hypothesis test are two-sided and stars
+indicate p-values of 5% (∗ ), 1% (∗∗ ), and 0.1% (∗∗∗ ). All results use the out-of-sample daily returns from January 2002 to
+December 2016.
+
+
+
+component in the residuals that it is highly correlated with conventional risk factors. In this sense,
+the IPCA factors extract a factor model that is quite different from the Fama-French factors.
+     Importantly, unconditional means and alphas of asset pricing residuals are a poor measure of
+arbitrage opportunities. The mean and alphas of residuals that are optimally traded based on their
+time series patterns have mean returns that can be larger by a factor of 50. This implies more
+generally, that the unconditional perspective of evaluating asset pricing models could potentially
+overstate the efficiency of markets and the pricing ability of asset pricing models.
+
+G.        Importance of Time-Series Signal
+     How important is the flexibility in the signal extraction function relative to the allocation
+function? So far, we have considered a rigid parametric model for the signal and allocation function
+and a flexible allocation function but either a pre-specified time-series filter or a data-driven flexible
+filter. In A.IX in Appendix we also report the results for two additional model variations, which
+serve as ablation tests emphasizing the central importance of applying a time-series model to extract
+a signal extraction function from the data.
+     The first model, OU+FFN, uses the same 4-dimensional OU signal as the OU+Threshold
+policy, but replaces the threshold allocation function with an FFN allocation function. This FFN
+
+
+                                                                     30
+allocation function has the same architecture as that of the Fourier+FFN policy, except the input
+is 4-dimensional instead of 30-dimensional. The results show that even despite using a very flexible
+allocation function, the results are similar or even worse than the simple parametric thresholding
+rule. This points to the weakness of the OU signal representation: although the allocation function
+is a powerful universal approximator, it cannot accomplish much with an information-poor input. If
+the optimal allocation function given the simple OU signal is well approximated by the parametric
+thresholding rule, then the nonparametric FFN offers too much flexibility without comparable
+efficiency, which leads to a noisier estimate of a simple function and hence worse out-of-sample
+performance.
+      The second model does not extract a time-series signal from the residuals, but uses the residuals
+themselves as signal to a flexible FFN allocation function. As the allocation function uses the same
+type of network as for the CNN+Transformer, Fourier+FFN or OU+FFN, this setup directly
+assesses the relevance of using a time-series model for the signal. The FFN model also performs
+worse than the deep learning models that apply a time-series filter to the residuals. This is a good
+example to emphasize the importance of a time-series model. While FFNs are flexible in learning
+low dimensional functional relationships, they are limited in learning a complex dependency model
+if the training data is limited. For example, the FFN is not sufficiently efficient to learn an FFT-
+like transformation and hence has a substantially worse performance on the original time-series
+compared to frequency-transformed time-series.
+      In summary, the flexible data-driven signal extraction function of the CNN+Transformer model
+seems to be the critical element for statistical arbitrage. A flexible allocation function is not
+sufficient to compensate for an uninformative signal.
+
+H.     Dependency between Arbitrage Strategies
+      The trading strategies for different factor models are only weakly correlated. In Table A.VIII,
+we report the correlations of the returns of our CNN+Transformer strategies across factor models
+with 3, 5, and 10 factors, based on the Sharpe ratio objective function strategy.14 Notably, the
+correlations between strategies from different factor model families range from roughly 0.2 to 0.45,
+indicating that strategies for different factor model families can be used as part of a diversification
+strategy. While the performance of the arbitrage trading for the residuals obtained with different
+families of factor models is comparable, the factors themselves are different. Hence, even if the
+arbitrage signal and allocation functions are similar, the resulting strategies can be weakly corre-
+lated. The within-family correlations range from 0.4 to 0.85, indicating that the residuals from the
+same class of factor model capture similar patterns.
+ 14
+      The correlations for the mean-variance objective function are similar.
+
+
+
+
+                                                           31
+      Table V: OOS Annualized Performance of CNN+Trans for 60 Days Lookback Window
+                               Fama-French                     PCA                         IPCA
+                   K      SR        µ         σ       SR          µ       σ        SR        µ        σ
+                    0     1.50    13.5%     9.0%      1.50    13.5%     9.0%      1.50    13.5%     9.0%
+                    1     2.95     9.6%     3.2%      2.68    15.8%     5.9%      3.14    8.8%      2.8%
+                    3     3.21     8.7%     2.7%      3.49    16.8%     4.8%      3.84    9.6%      2.5%
+                    5     3.23     6.8%     2.1%      3.54    16.0%     4.5%      3.90    9.2%      2.4%
+                    8     2.96     4.2%     1.4%      3.02    12.5%     4.2%      3.93    8.7%      2.2%
+                   10       -        -        -       2.67     9.9%     3.7%      3.98    9.2%      2.3%
+                   15       -        -        -       2.36     8.1%     3.4%      4.24    9.6%      2.3%
+This table shows the out-of-sample annualized Sharpe ratio (SR), mean return (µ), and volatility (σ) of the CNN+Transformer
+model for different numbers of risk factors K, that we use to obtain the residuals. The signals are extracted from a rolling
+window of L = 60 days. We use the daily out-of-sample residuals from January 1998 to December 2016 and evaluate the
+out-of-sample arbitrage trading from January 2002 to December 2016. The model is calibrated on a rolling window of four
+years and uses the Sharpe ratio objective function. The K = 0 factor model corresponds to directly using stock returns instead
+of residuals for the signal and trading policy.
+
+
+
+I.   Stability over Time
+     Our results are robust to length of the local window to extract the trading signal. We re-
+estimate the CNN+Transformer model on an extended rolling lookback window of L = 60 days,
+while keeping the rest of the model structure the same. Tables V and VI show that the results are
+robust to the choice of lookback window. Extending the local window to 60 trading days, which
+is close to three months, leads to essentially the same performance as using only the most recent
+L = 30 trading days to infer the signal. This is further evidence that the arbitrage signal is different
+from conventional momentum or reversal strategies that incorporate information from longer time
+periods. As the signal can be inferred from the most recent past, it implies that either the arbitrage
+signal depends only on the most recent days or that those days are sufficient to infer the relevant
+time-series structure. In the next section, we provide evidence that the arbitrage trading signals
+put strong emphasis on most recent two weeks prior to the trading.
+     A constant-in-time signal and allocation function captures a large fraction of the arbitrage infor-
+mation. We re-estimate the CNN+Transformer model with a constant model instead of the rolling
+window calibration. Our main models are estimated on a rolling window of four years, which allows
+the models to adopt to changing economic conditions. Here we use either the first Ttrain = 4 years
+(1,000 trading days) or Ttrain = 8 years (2,000 trading days) to estimate the signal and allocation
+function, and then keep those functions constant for the remaining out-of-sample trading period.
+The results are reported in Tables VII and VIII. As expected the performance decreases relative to
+a time-varying model with re-estimation, which suggests that there is some degree of time-variation
+in the signal and allocation function. The longer training window of 8 years results in slightly higher
+Sharpe ratios than the 4 year window, as the model has more data and more variety in the market
+environment to learn the arbitrage information. Importantly, the constant CNN+Transformer still
+substantially outperforms the other benchmark models, Fourier+FFN and OU+Threshold, even
+if those are estimated on a rolling window. We conclude that the constant signal and allocation
+
+
+                                                             32
+              Table VI: Significance of Arbitrage Alphas for 60 Days Lookback Window
+                           CNN+Trans Model , Sharpe objective function, L = 60 days lookback window
+                     Fama-French                                           PCA                                            IPCA
+                               2                                               2
+  K      α      tα         R          µ        tµ            α     tα      R        µ       tµ          α        tα        R2    µ     tµ
+                 ∗∗∗                              ∗∗∗               ∗∗∗                      ∗∗∗                   ∗∗∗
+  0    11.8% 5.6          19.5% 13.5% 5.8                11.8% 5.6   19.5% 13.5% 5.8                  11.8% 5.6          19.5% 13.5% 5.8∗∗∗
+  1    9.1% 11∗∗∗         7.2% 9.6% 11∗∗∗                15.5% 10∗∗∗ 1.2% 15.8% 10∗∗∗                 8.2% 12∗∗∗         10.1% 8.8% 12∗∗∗
+  3    8.3% 12∗∗∗         7.1% 8.7% 12∗∗∗                16.5% 13∗∗∗ 2.5% 16.8% 14∗∗∗                 9.2% 15∗∗∗          9.3% 9.6% 15∗∗∗
+  5    6.5% 12∗∗∗         6.0% 6.8% 13∗∗∗                15.6% 13∗∗∗ 2.2% 16.0% 14∗∗∗                 8.8% 15∗∗∗         10.3% 9.2% 15∗∗∗
+  8    4.1% 11∗∗∗         3.2% 4.2% 11∗∗∗                12.2% 11∗∗∗ 1.6% 12.5% 12∗∗∗                 8.3% 15∗∗∗          8.9% 8.7% 15∗∗∗
+  10     -      -            -     -     -               9.7% 10∗∗∗ 1.0% 9.9% 10∗∗∗                   8.8% 15∗∗∗          8.3% 9.2% 15∗∗∗
+  15     -      -            -     -     -               8.1% 9.1∗∗∗ 0.7% 8.1% 9.1∗∗∗                 9.2% 16∗∗∗          9.3% 9.6% 16∗∗∗
+
+This table shows the out-of-sample pricing errors α of the arbitrage strategies relative of the Fama-French 8 factor model and
+their mean returns µ for the CNN+Transformer model and different number of factors K that we use to obtain the residuals.
+The signals are extracted from a rolling window of L = 60 days. We run a time-series regression of the out-of-sample returns
+of the arbitrage strategies on the 8-factor model (Fama-French 5 factors + momentum + short-term reversal + long-term
+reversal) and report the annualized α, accompanying t-statistic value tα , and the R2 of the regression. In addition, we report
+the annualized mean return µ along with its accompanying t-statistic tµ . The hypothesis test are two-sided and stars indicate
+p-values of 5% (∗ ), 1% (∗∗ ), and 0.1% (∗∗∗ ). All results use the out-of-sample daily returns from January 2002 to December
+2016 and are based on a Sharpe ratio objective.
+
+
+             Table VII: OOS Annualized Performance of CNN+Trans for Constant Model
+                                                                 Ttrain = 4 years
+                                    Fama-French                            PCA                              IPCA
+                     K         SR          µ             σ        SR           µ        σ        SR          µ            σ
+                      0        1.10       8.5%          7.8%     1.10      8.5%     7.8%         1.10       8.5%         7.8%
+                      1        1.90       4.5%          2.3%     0.66      5.2%     7.9%         0.94       3.1%         3.3%
+                      3        1.60       3.6%          2.2%     1.65      8.7%     5.3%         1.82       5.3%         2.9%
+                      5        1.81       3.0%          1.7%     1.93      9.8%     5.1%         2.09       5.4%         2.6%
+                      8        1.70       2.5%          1.5%     2.04      9.6%     4.7%         1.89       5.0%         2.6%
+                     10          -          -             -      2.06      9.1%     4.4%         1.77       4.7%         2.7%
+                     15          -          -             -      1.82      7.0%     3.9%         2.09       5.5%         2.7%
+
+                                                                 Ttrain = 8 years
+                                    Fama-French                            PCA                              IPCA
+                     K         SR          µ             σ        SR           µ        σ        SR          µ            σ
+                      0        1.33       12.0%         9.0%     1.33     12.0%     9.0%         1.33       12.0%        9.0%
+                      1        2.06        5.0%         2.4%     1.81     15.2%     8.4%         2.02       8.5%         4.2%
+                      3        2.46        5.3%         2.2%     2.04     13.1%     6.4%         2.47       7.5%         3.0%
+                      5        1.82        3.2%         1.8%     1.91     11.9%     6.2%         2.64       7.6%         2.9%
+                      8        1.48        2.5%         1.7%     1.89     10.8%     5.7%         2.71       8.3%         3.1%
+                     10          -           -            -      1.82     10.0%     5.5%         2.68       8.2%         3.1%
+                     15          -           -            -      1.38      6.2%     4.5%         2.70       7.8%         2.9%
+This table shows the out-of-sample annualized Sharpe ratio (SR), mean return (µ), and volatility (σ) of the CNN+Transformer
+model for different numbers of risk factors K. We estimate the model on only once on the first Ttrain days and keep it constant
+on the remaining test set. We use the daily out-of-sample residuals from January 1998 to December 2016 and evaluate the
+out-of-sample arbitrage trading from January 1998 +Ttrain to December 2016. The signals are extracted from a rolling window
+of L = 30 days and we use the Sharpe ratio objective function.
+
+
+
+function for the CNN+Transformer model already capture a substantial amount of arbitrage infor-
+mation. Therefore, the constant functions serve as a meaningful model to analyze in more detail
+
+
+
+                                                                          33
+                         Table VIII: Significance of Arbitrage Alphas for Constant Model
+                                     CNN+Trans model, Sharpe objective function, Ttrain = 4 years
+                         Fama-French                                   PCA                                      IPCA
+                                 2                                         2
+     K      α       tα       R         µ     tµ       α       tα       R        µ      tµ       α       tα       R2     µ      tµ
+                      ∗∗∗                      ∗∗∗              ∗∗∗                      ∗∗∗              ∗∗∗
+     0     8.4%    4.2      3.0%     8.5%   4.3      8.4%    4.2       3.0%    8.5%   4.3      8.4%    4.2     3.0%    8.5%   4.3∗∗∗
+     1     4.0%    6.8∗∗∗   5.9%     4.5%   7.3∗∗∗   4.1%     2.0∗     4.5%    5.2%    2.5∗    3.1%    3.7∗∗∗ 1.6%     3.1%   3.6∗∗∗
+     3     3.2%    5.7∗∗∗   4.9%     3.6%   6.2∗∗∗   8.2%    6.1∗∗∗    2.7%    8.7%   6.4∗∗∗   5.3%    7.4∗∗∗ 11.7%    5.3%   7.0∗∗∗
+     5     2.8%    6.6∗∗∗   4.3%     3.0%   7.0∗∗∗   9.3%    7.1∗∗∗    1.8%    9.8%   7.5∗∗∗   5.5%    8.6∗∗∗ 8.3%     5.4%   8.1∗∗∗
+     8     2.3%    6.1∗∗∗   5.1%     2.5%   6.6∗∗∗   9.0%    7.5∗∗∗    2.2%    9.6%   7.9∗∗∗   5.0%    7.7∗∗∗ 8.2%     5.0%   7.3∗∗∗
+     10      -        -       -        -       -     8.6%    7.5∗∗∗    1.9%    9.1%   8.0∗∗∗   5.1%    8.0∗∗∗ 16.6%    4.7%   6.9∗∗∗
+     15      -        -       -        -       -     6.8%    6.8∗∗∗    1.0%    7.0%   7.1∗∗∗   5.8%    9.3∗∗∗ 17.6%    5.5%   8.1∗∗∗
+
+                                     CNN+Trans model, Sharpe objective function, Ttrain = 8 years
+                         Fama-French                                   PCA                                      IPCA
+                                 2                                         2
+     K      α       tα       R         µ     tµ       α       tα       R        µ      tµ       α       tα       R2     µ      tµ
+     0     10.1%   4.1∗∗∗   18.1% 12.0% 4.4∗∗∗       10.1%   4.1∗∗∗ 18.1% 12.0% 4.4∗∗∗         10.1%   4.1∗∗∗   18.1% 12.0% 4.4∗∗∗
+     1     4.4%    6.5∗∗∗   14.3% 5.0% 6.8∗∗∗        14.5%   5.8∗∗∗ 2.5% 15.2% 6.0∗∗∗          7.0%    6.6∗∗∗   30.6% 8.5% 6.7∗∗∗
+     3     4.9%    7.9∗∗∗   11.6% 5.3% 8.2∗∗∗        12.8%   6.7∗∗∗ 2.7% 13.1% 6.8∗∗∗          7.0%    7.9∗∗∗    8.2% 7.5% 8.2∗∗∗
+     5     2.9%    5.8∗∗∗   12.3% 3.2% 6.0∗∗∗        11.6%   6.2∗∗∗ 1.6% 11.9% 6.3∗∗∗          7.1%    8.7∗∗∗   12.1% 7.6% 8.7∗∗∗
+     8     2.3%    4.7∗∗∗   5.4% 2.5% 4.9∗∗∗         10.2%   6.0∗∗∗ 3.1% 10.8% 6.3∗∗∗          7.7%    9.0∗∗∗   14.6% 8.3% 9.0∗∗∗
+     10      -        -        -     -     -         9.4%    5.7∗∗∗ 2.6% 10.0% 6.0∗∗∗          7.7%    8.9∗∗∗   11.3% 8.2% 8.9∗∗∗
+     15      -        -        -     -     -         6.0%    4.4∗∗∗ 0.9% 6.2% 4.6∗∗∗           7.4%    8.9∗∗∗   11.2% 7.8% 8.9∗∗∗
+
+This table shows the out-of-sample pricing errors α of the arbitrage strategies relative of the Fama-French 8 factor model and
+their mean returns µ for the CNN+Transformer model and different number of factors K. We estimate the model on only
+once on the first Ttrain days and keep it constant on the remaining test set. We use the daily out-of-sample residuals from
+January 1998 to December 2016 and evaluate the out-of-sample arbitrage trading from January 1998 +Ttrain to December
+2016. The signals are extracted from a rolling window of L = 30 days and we use the Sharpe ratio objective function. We run
+a time-series regression of the out-of-sample returns of the arbitrage strategies on the 8-factor model (Fama-French 5 factors
++ momentum + short-term reversal + long-term reversal) and report the annualized α, accompanying t-statistic value tα ,
+and the R2 of the regression. In addition, we report the annualized mean return µ along with its accompanying t-statistic tµ .
+The hypothesis test are two-sided and stars indicate p-values of 5% (∗ ), 1% (∗∗ ), and 0.1% (∗∗∗ ).
+
+
+
+in Section III.N.
+
+J.        Market Frictions and Transaction Costs
+      Our deep learning arbitrage strategies remain profitable in the presence of realistic trading
+frictions. In practice, trading costs associated with high turnover or large short-selling positions
+can diminish the profitability of arbitrage trading. In order to ensure that our model produces
+economically meaningful results, we extend it to the setting in which both transaction costs and
+holding costs are accounted for. We do not model market frictions associated with market impact,
+as in our empirical analysis we restrict the asset universe to stocks with large market capitalization,
+which are especially liquid.
+      In our market-friction extension, the daily returns Rt of the strategy now have constant linear
+penalties associated with the daily turnover and the proportion of short trades. These penalties
+quantify proportional transaction costs, which are used to model trading fees, size of the bid-ask
+spread, etc., and holding costs, which are used to model short borrow rate fees charged by a
+brokerage. In particular, we incorporate a subset of the market friction models proposed by Boyd
+
+
+
+
+                                                                      34
+                  Table IX: OOS Performance of CNN+Trans with Trading Frictions
+                                                   IPCA factor model
+                                              Sharpe ratio            Mean-variance
+                                  K      SR       µ          σ      SR       µ        σ
+                                   0    0.52    8.5%     16.3%     0.22    2.6%    11.9%
+                                   1    0.85    5.9%      6.9%     0.86    5.5%     6.4%
+                                   3    1.24    6.6%      5.4%     1.16    6.9%     5.9%
+                                   5    1.11    5.5%      5.0%     1.02    5.3%     5.3%
+                                  10    0.98    5.1%      5.2%     1.04    5.4%     5.2%
+                                  15    0.94    4.8%      5.1%     1.02    5.1%     5.0%
+This table shows the out-of-sample annualized Sharpe ratio (SR), mean return (µ), and volatility (σ) for the CNN+Transformer
+model with trading frictions on IPCA residuals. We use the daily out-of-sample residuals from January 1998 to December
+2016 and evaluate the out-of-sample arbitrage trading from January 2002 to December 2016. The models are calibrated
+on a rolling window of four years and use either the Sharpe ratio or mean-variance objective function with trading costs
+       R , w R ) = 0.0005kw R − w R k
+(cost(wt−1                                                    R
+              t−2             t−1     t−2 L1 + 0.0001k min(wt−1 , 0)kL1 ). The signals are extracted from a rolling window of
+L = 30 days.
+
+
+
+et al. (2017), which are commonly used in the statistical arbitrage literature.15 Mathematically, we
+subtract the market-friction costs
+
+                        R      R               R      R                      R
+                  cost(wt−1 , wt−2 ) = 0.0005kwt−1 − wt−2 kL1 + 0.0001k min(wt−1 , 0)kL1
+
+from the portfolio returns and use these net portfolio returns in the optimization problem of section
+             R ∈ RNt−1 is the strategy’s allocation weight vector at time t − 1. The first penalty
+II.C, where wt−1
+term represents a slippage/transaction cost of 5 basis points per transaction, whereas the second
+one is a holding cost of 1 basis point per short position. Both costs are universal for all times and all
+stocks. This corresponds to a modification of the objective function in the training and evaluation
+parts of our algorithm. We use this model for the sake of illustration and simplicity given that in
+our empirical study we trade a universe of highly liquid US stocks, but more complicated models16
+may be included in the computations without any significant structural changes.
+       Table IX displays the Sharpe ratios, average returns, and volatility of our CNN+Transformer
+model under market frictions for IPCA residuals. The results for PCA residuals are collected in the
+Appendix in Table A.X with very similar findings. We exclude the Fama-French factor model from
+the analysis with market frictions, as we take the traded factors from Kenneth French Data Library
+as given, which are based on a larger stock universe with different trading costs and, hence, would
+not be directly comparable to the IPCA and PCA results.17 As expected the Sharpe ratios are lower
+and range from 0.94 to 1.24 for a reasonable number of IPCA factors. The Sharpe ratio and mean-
+  15
+     See for example Avellaneda and Lee (2010), Yeo and Papanicolaou (2017) and Krauss et al. (2017).
+  16
+     For example, those considering time and stock-dependent transaction costs or market impact of the trades on
+the stock prices.
+  17
+     Regardless, each factor corresponds to a portfolio of traded assets, and thus the residuals of this model could
+be traded in a number of a number of ways under suitable extensions. For example, we could include ETFs which
+try to track a value or size premium, project these latent factors onto our asset universe, or approximate each factor
+with a number of sparse subset of assets in our asset universe as in Pelger and Xiong (2021). However, these changes
+constitute differences that would make the results incomparable to the PCA and IPCA results.
+
+
+
+                                                             35
+ Figure 6: Turnover of CNN+Transformer Model with and without Trading Friction Objective
+
+
+
+
+            (a) No Trading Friction Penalty                              (b) With Trading Friction Penalty
+
+These figures show the daily turnover of CNN+Transformer model with and without trading friction objective on the repre-
+sentative IPCA 5-factor residuals for the out-of-sample trading period between January 2002 and December 2016. The models
+are calibrated on a rolling window of four years and use the Sharpe ratio objective function with or without trading costs
+        R , w R ) = 0.0005kw R − w R k
+(cost(wt−1                                                     R
+              t−2             t−1      t−2 L1 + 0.0001k min(wt−1 , 0)kL1 ). We define turnover as the `1 norm of the difference
+                                                                R − w R ||
+between allocation weight vectors at consecutive times, i.e. ||wt−1     t−2 L1 .
+
+
+    Figure 7: Proportion of Short Allocation Weights of CNN+Transformer Model with and
+                             without Trading Friction Objective
+
+
+
+
+            (a) No Trading Friction Penalty                              (b) With Trading Friction Penalty
+
+These figures show the daily fraction of short trades of the CNN+Transformer strategies with and without trading friction
+objective on the representative IPCA 5-factor residuals for the out-of-sample trading period between January 2002 and
+December 2016. Each plot shows the absolute value of the sum of negative weights k min(wt−1  R , 0)k
+                                                                                                    L1 relative to the sum of
+                                                           R
+absolute values of all weights, which is normalized to kwt−1 k1 = 1. The models are calibrated on a rolling window of four
+                                                                                       R , w R ) = 0.0005kw R − w R k
+years and use the Sharpe ratio objective function with or without trading costs (cost(wt−1  t−2              t−1     t−2 L1 +
+              R , 0)k
+0.0001k min(wt−1          ).
+                       L1
+
+
+
+
+variance objective have the desired effects, but lead to overall very similar results. Importantly, the
+arbitrage strategies retain their economic significance even in the presence of trading costs.
+   These results present a lower bound on the profitability under trading frictions, as we have
+made four simplifying assumptions. First, in the current implementation the factor composition
+cannot be changed due to trading costs. A possible extension could construct the latent risk
+factors by including the trading friction objective. For example, the sparse representation of latent
+factors as in Pelger and Xiong (2020) would reduce trading costs. Second, because the policy with
+frictions is recursive, we are conducting an approximate training process to maintain parallelization
+
+
+                                                              36
+given our computational resources and the large volume of data, but this may lead to suboptimal
+optimization results. However, it would be possible to conduct an exact sequential training process
+at the cost of more computation. Third, our modified architecture with the market-friction objective
+is given by the simplest modification to our architecture without frictions, but it is possible that
+the optimal transaction and holding cost-minimizing strategy has a more complicated functional
+form or is not Markovian and requires additional previous allocations. Last but not least, we keep
+the hyperparameters of our main analysis, but we could potentially improve the performance by
+employing hyperparameter tuning.
+     The effect of trading frictions is time-varying and our model can exploit particularly profitable
+arbitrage time periods by increasing trading and short positions. In Figure 6 we analyze the daily
+turnover of a representative CNN+Transformer strategy based on IPCA 5-factor residuals and
+a Sharpe ratio objective. Broadly, we see that our model with trading friction penalty is able
+to adapt by decreasing daily turnover. However, our model seems to reduce turnover based on
+trading opportunities. During the times of high market volatility such as 2007–2009, arbitrage
+trading could be potentially be more profitable, which our model takes advantage of. On the
+other hand, during the later years of the calm bull market from 2011–2015, strategies with less
+turnover could maintain profitability. This pattern is confirmed in Figure 7 which shows the daily
+proportion of allocation weights, which are short stocks in our universe. As expected the holding
+cost friction model reduces the overall proportion of short trades. Interestingly, our model is able
+to intelligently choose time periods during which it can maximize performance by taking positions
+with higher short proportion, such as the market turmoil at the end of 2015 and the financial crisis
+of 2008. Effectively, this indicates that the CNN+Transformer trading policy has learned to avoid
+holding and transaction costs by generally modifying the original strategy’s allocations to be less
+short-biased on average, and to more appropriately enter short-dominant positions during relevant
+subperiods.
+
+K.    Portfolio Weight Concentration
+     In this section we study the portfolio weight concentration of successful statistical arbitrage
+trading. We show that our arbitrage portfolios are well-diversified, but we can still achieve a large
+fraction of the profitability when restricted to a sparse set of assets. In this and the following
+sections, the benchmark model is the CNN+Transformer based on IPCA 5-factor residuals and
+a Sharpe ratio objective. The results hold qualitatively for alternative factor specifications. We
+study the out-of-sample portfolio weights wtR for individual stocks.
+     Figure 8 shows that the optimal portfolio weights are well-diversified and do not rely on exces-
+sively large weights on individual stocks. The left subplot the shows the histogram of the distribu-
+tion of stock weights wtR aggregated over time. The weights are approximately normally distributed
+and centered at zero. Hence, most weights concentrate around values in [−0.5%, +0.5%], which
+implies a relatively well-diversified portfolio. Second, the portfolios correspond to long-short posi-
+tions with approximately similar weights on each of the two legs. The right subplot estimates the
+
+
+                                                  37
+                                 Figure 8: Distribution of Portfolio Weights
+
+
+
+
+    (a) Distribution of stock portfolio weights               (b) Distribution of stock portfolio weights with
+                                                                          trading friction penalty
+
+These figures show histograms of the distribution of stock weights wtR aggregated over time. Subplot (a) shows the out-of-
+sample weights for our empirical benchmark model, which is the CNN+Transformer model based on IPCA 5-factor residuals.
+Subplot (b) estimates the baseline model with trading friction penalty. The out-of-sample trading period is between January
+2002 and December 2016.
+
+
+
+baseline model with the trading friction penalty from Section III.J. While a trading friction penalty
+increases the kurtosis, which implies sparser weights, we still do not observe excessive weights on
+individual stocks. The trading friction penalty also reduces short sales, which is consistent with
+Figure 7.
+   Our statistical arbitrage trading policy does not target specific industries. Figure A.5 in the
+Appendix shows the rolling industry concentration of portfolio weights standardized by the popu-
+lation industry concentration. The fraction invested in a specific industry follows very closely the
+sample proportion of stocks in the corresponding industry. While there is some minor variation in
+the industry concentration over time, it deviates less than 20% from the population concentration.
+This suggests that stocks in all industries offer statistical arbitrage opportunities.
+   While our statistical arbitrage portfolios are well-diversified, a subset of a few stocks can already
+achieve most of their performance. This finding is important for optimization under trading fric-
+tions. We construct sparse trading policies by selecting only the proportion p of the stock weights
+wtR with the largest absolute value for trading. We compare the full model with sparse models,
+which invest only in p = 1%, 5%, 10% or 20% of the stocks. Note that this represents only a lower
+bound for the performance of sparse portfolios, as we are not including the sparsity constraint in
+the optimization.
+   Figure 9 in panel A shows the annualized out-of-sample Sharpe ratio, mean return and volatility
+of arbitrage strategies based only the most extreme portfolio weights. Portfolios with less stocks
+are less diversified and as expected have a higher volatility. However, focussing on the extreme
+weights can increase the mean return of the portfolios. The Sharpe ratio of sparse portfolios is
+generally decreasing in the degree of sparsity, as the loss in diversification dominates the effect
+of higher expected returns. However, a sparse portfolio can capture a substantial amount of the
+profitability. We achieve out-of-sample Sharpe ratios above two with only 10% of the stocks. These
+
+
+                                                            38
+                                  Figure 9: Performance of Sparse Portfolios
+                                   PANEL A: Largest Stock Portfolio Weights
+
+
+
+
+         (a) Sharpe ratio                          (b) Mean Return                              (c) Volatility
+
+                                 PANEL B: Largest Residual Portfolio Weights
+
+
+
+
+         (d) Sharpe ratio                          (e) Mean Return                              (f ) Volatility
+
+These figures show the annualized out-of-sample Sharpe ratio, mean return and volatility of arbitrage strategies based on
+selecting only the largest portfolio weights in absolute value. Panel A selects the proportion p of the most extreme stock
+weights wtR for trading, while panel B selects the proportion p of the most extreme residual weights wt for the trading policy.
+The baseline model is the CNN+Transformer model based on IPCA 5-factor residuals for the out-of-sample trading period
+between January 2002 and December 2016. We consider the full model p = 1 and the fraction p = 0.01, 0.05, 0.1 and 0.2.
+
+
+                            Figure 10: Cumulative Returns of Sparse Portfolios
+
+
+
+
+    (a) Cumulative Returns of Extreme Stock                        (b) Cumulative Returns of Extreme Residual
+               Portfolio Weights                                               Portfolio Weights
+
+These figures show the cumulative returns of sparse portfolio weights in the stock and residual weight vectors. Subplot (a)
+selects the proportion p of the stock weights wtR with the largest absolute value for trading, while subplot (b) selects the
+proportion p of the residual weights wt with the largest absolute value for the trading policy. The baseline model is the
+CNN+Transformer model based on IPCA 5-factor residuals for the out-of-sample trading period between January 2002 and
+December 2016. We consider the full model p = 1 and the fraction p = 0.01, 0.05, 0.1 and 0.2.
+
+
+
+are lower bounds as we use the model that is optimized for non-sparse weights, and select only the
+extreme weights. It is noteworthy, that using only 5% of the stocks, which corresponds to roughly
+
+
+                                                              39
+25 stocks in our sample, achieves mean returns of 14%. However, the performance deteriorates
+when our portfolio consists of only 1%, corresponding to around 5 stocks. The cumulative return
+time series in Figure 10 further illustrate the different effect of sparsity on the mean and variance
+of the strategies.
+     In our second analysis, we construct sparse residual portfolio weights wt . Similar to the sparse
+stock weights, we select the proportion p of the most extreme residual weights wt for the trading
+policy. A sparse stock portfolio weight wtR combines a sparse factor representation and a sparse
+trading policy in residuals. By studying the largest portfolio weights in residuals, we can separate
+the effect of sparse factors from a sparse trading policy in residuals. This is relevant as some factors
+could be approximated by a sparse set of traded assets, for example ETFs. Panel B in Figure 9 shows
+the out-of-sample Sharpe ratio, mean return and volatility for sparse residual portfolio weights wt .
+The Sharpe ratio effects are very similar, as targeting the most extreme residual portfolios results
+in larger mean returns, while it increases the variance. However, a sparse residual portfolio can
+achieve around twice the expected return of a sparse stock portfolio.
+
+L.    Complexity of Arbitrage Trading
+     Our CNN+Transformer solution can discover complex trading signals and policies. As a ro-
+bustness check, we study how much simple reversal strategies can earn. Given the residuals from
+our baseline IPCA-5-factor model, we construct long-short trading strategies for different time
+lags. Such high-minus-low strategies have been motivated in He et al. (2022). In more detail, the
+portfolio weights of the simple trading strategy are long-short portfolios, that buy the 20% lowest
+residuals and sell the 20% highest residuals from L periods in the past.
+     Figure 11 shows the out-of-sample Sharpe ratio, mean return and volatility of simple reversal
+strategies. First, these simple reversal strategies yield positive returns and Sharpe ratios. The
+variance is increasing for longer lags. The reversal returns increase substantially with a lag of at
+least one week (five trading days). The Sharpe ratios are primarily driven by the low variance and
+achieve Sharpe ratios of up to 0.3 for lags between one and two weeks.
+
+                                      Figure 11: Simple Reversal Trading
+
+
+
+
+         (a) Sharpe ratio                         (b) Mean Return                            (c) Volatility
+
+These figures show the annualized out-of-sample Sharpe ratio, mean return and volatility of simple reversal strategies based
+on IPCA 5-factor residuals. The portfolio weights of the simple trading strategy are long-short portfolios, that buy the 20%
+lowest residuals and sell the 20% highest residuals for L periods in the past. The out-of-sample trading period is between
+January 2002 and December 2016.
+
+
+
+
+                                                            40
+     Simple reversal strategies result in substantially lower mean returns and Sharpe ratios than our
+complex arbitrage strategies. This confirms that simple ad-hoc approaches are not sufficient to
+leverage mispricing and successful arbitrage trading is more complex than simple reversal patterns.
+The findings also suggest that there is profitability in longer holding periods for signals that are
+further in the past. We will study this aspect in depth in the next section.
+
+M.    Persistence of Arbitrage
+     We study arbitrage trading for different holding periods and show that statistical arbitrage
+signals are persistent. Given the out-of-sample portfolio weights wtR , we document the portfolio
+performance for longer holding periods. As in the previous sections, our benchmark model is the
+CNN+Transformer based on IPCA 5-factor residuals and a Sharpe ratio objective.
+     First, we consider longer holding periods, that can overlap. An investment with weights wtR
+is held for B trading days, ranging from 1 to 30 trading days. The trading with longer holding
+periods is overlapping and the fraction 1/B is invested based on new weights every trading day.
+Assuming log returns, this is equivalent to the portfolio weights
+
+                                                       B−1
+                                                      1 X R
+                                       wtR,B-days =      wt−l .
+                                                      B
+                                                        l=0
+
+     Panel A in Figure 12 shows the annualized out-of-sample Sharpe ratio, mean return and volatil-
+ity for different overlapping holding periods. Daily trading indeed generates the highest payoff in
+terms of mean returns and Sharpe ratios. The half-life in terms of Sharpe ratios is around seven
+trading days. In fact, the Sharpe ratio is still above one with a one month (22 business days)
+holding period, when using signals estimated with a 1-day trading objective. As expected, the
+lower trading frequency can reduce the volatility. This shows that statistical arbitrage is long-lived
+and persists for several days and even weeks. We also include the results, when we change the
+estimation to optimize the Sharpe ratio of the overlapping multi-horizon holding periods. It is
+possible to achieve out-of-sample Sharpe ratios around 1.5 with a one month holding period, when
+directly optimizing for longer holding periods. The mean returns for a strategy based on the B-day
+trading objective decline less than for a 1-day trading objective. For longer horizons this comes at
+the cost of a slightly higher variance. For shorter horizons, the B-day trading objective reduces the
+variance by taking advantage of additional diversification.
+     Overlapping trading generates diversification effects between strategies. It is a valid measure
+of how fast signals are dying out, but it is still implicitly based on daily trading. Optimizing for a
+longer holding period can take advantage of this diversification effects and increase the mean return
+without strongly increasing the variance. This is one reason why we can maintain Sharpe ratios of
+1.5 for one month holding periods.
+     An alternative analysis actually trades only every B days without overlap. As there are B
+different starting days, this yields B possible implementations of a B-day holding strategy. We
+
+
+
+                                                  41
+                            Figure 12: Performance for Longer Holding Periods
+
+                                         PANEL A: Overlapping Trading
+
+
+
+
+         (a) Sharpe ratio                         (b) Mean Return                              (c) Volatility
+
+                                       PANEL B: Non-overlapping Trading
+
+
+
+
+         (d) Sharpe ratio                          (e) Mean Return                             (f ) Volatility
+
+These figures show the annualized out-of-sample Sharpe ratio, mean return and volatility for different holding periods for our
+empirical benchmark model, which is the CNN+Transformer model based on IPCA 5-factor residuals. An investment with
+weights wtR is held for B trading days, ranging from 1 to 30 trading days. The blue line indicates a model that is estimated
+with a daily trading objective (that is, our baseline model), while the orange line displays a model that is estimated with a
+B-holding day objective. In panel A the trading with longer holding periods is overlapping and the fraction 1/B is invested
+based on new weights every trading day. In panel B, we estimate for a holding period of B days, the performance of the
+B different trading strategies starting at different days and report the average results. Hence, panel B reports results for
+non-overlapping portfolios. The out-of-sample trading period is between January 2002 and December 2016.
+
+
+
+report the average performance for each of the possible B starting days, that is, we average the
+performance metrics, but do not create a portfolio of overlapping returns. Panel B in Figure 12
+shows the corresponding results. By construction, the mean returns for weights based on the 1-day
+trading objective are identical to overlapping trading. The difference between the two analyses
+comes from the variance. The overlapping trading generates large diversification benefits, which
+are not achieved with the separate non-overlapping trading. As a result the Sharpe ratios for non-
+overlapping trading are lower. However, even with a one month (22 business days) holding period,
+we still achieve an out-of-sample Sharpe ratio of around 0.5. There is little improvement when
+optimizing the trading for a longer holding period with non-overlapping trading.
+   Overall, we have two main findings. First, arbitrageurs do indeed correct prices quickly. Depend-
+ing on the analysis around half of the Sharpe ratio vanishes after one or two weeks. Arbitrageurs
+do engage in arbitrage trading as signals do eventually die out. Second, a large fraction of the
+statistical arbitrage signal is persistent. Even with holding periods of over one month, the signals
+
+
+                                                             42
+can be highly profitable. This has important economic implications. The persistence in arbitrage
+signals could be explained by the limited capacity of arbitrageurs, that is, arbitrageurs might have
+insufficient capital to fully exploit temporal mispricing quickly. An alternative explanation could
+relate to strategic trading. Arbitrageurs might try to take advantage of temporal mispricing, while
+at the same time limit their market impact to avoid revealing their detected signal. A third expla-
+nation could relate to behavioral trading. In the presence of noise traders or uninformed traders,
+the adjustment of prices also depends on how quickly the non-arbitrageurs adjust their expecta-
+tions. The persistence of arbitrage has also practical implications. It explains our findings from
+Section III.J, why statistical arbitrage can also be exploited in the presence of transaction costs by
+avoiding frequent trading.
+
+N.    Estimated Structure
+     What are the patterns that our CNN+Transformer model can learn and exploit? In order
+to answer this question, we analyze the different building blocks of our benchmark model and
+show their structure on representative and informative residuals inputs. Our goal is to ascertain,
+characterize, and explain the role that the convolutional features and attention heads play in the
+determination of the final allocation weight and recognition of salient time series patterns. The
+benchmark model for this section is the CNN+Transformer based on IPCA 5-factor residuals and
+a Sharpe ratio objective. The model is calibrated on the first 8 years of data and kept constant,
+which allows us to study the signal and allocation function.
+     As an illustrative example, Figure 13 shows the allocation and return on representative residuals.
+The left subplot displays an out-of-sample time-series of cumulative returns of a randomly selected
+residual and its value in the allocation function. We normalize the allocation weight to have an
+absolute value of one, that is, for this illustrative example we only trade this particular residual.
+The right subplots depicts the payoff of trading the specific residual with the displayed allocation
+function. The first residual shows mean-reversion patterns, which are successfully detected and
+exploited by the function w|CNN+Trans . The second residual has a downward trend, which is
+also correctly detected and taken advantage of by the model.18 These examples suggest that the
+CNN+Transformer model can learn mean-reversion and trend patterns. Figures A.2 and A.3 are
+further examples with the same takeaways.
+     Next, we “dissect” the CNN+Transformer model to understand what type of functions it can
+estimate. Our analysis begins with the eight basic convolutional patterns learned by the convo-
+lutional layers of our network, which are displayed in Figure 14. The CNN represents a given
+time-series as a matrix of exposures to local basic patterns. As explained in Section II.D.3, these
+local filters are more complicated than simple local linear filters, but we can project our CNN filters
+into two-dimensional orthogonal linear filters, which are more interpretable. These local patterns
+are the building blocks to construct global patterns. We see that these basic patterns display a
+  18
+     Note that our in our empirical study the model trades in all residuals and is not limited to trade only in one
+residual. Hence, the empirical performance is substantially better as shown in Figure 5.
+
+
+
+                                                        43
+          Figure 13: Examples of Allocation and Returns of CNN+Transformer Strategy
+
+
+
+
+These plots display representative examples of the CNN+Transformer out-of-sample arbitrage trading on a sample of residuals
+from the IPCA 5-factor model. The left subplots show the normalized cumulative returns of the residuals and the normalized
+allocation weight, which the specific residual has in the trading strategy. The right subplots illustrates the payoff of trading
+the specific residual with the displayed allocation function. The model is calibrated on the first 8 years of data and kept
+constant.
+
+
+
+variety of salient price behavior which are considered to be important. Basic patterns 4 and 6
+capture local upward trends, basic patterns 3 and 7 track local downward trends and basic pat-
+terns 1, 5 and 8 learn reversion patterns. However, the basis patterns do not include very spiked,
+sharp changes. Overall, the building blocks seem to be sufficient to construct any smooth trend
+and mean-reversion pattern.
+   We can understand the global patterns learned by the transformer by studying the attention
+function. The attention functions αi (., .) of each attention head i = 1, ..., H = 4 capture the
+dependencies between the local patterns. Our arbitrage signal can be interpreted as “loadings” to
+these “attention factors”. We use the same H attention functions for all residuals, but in order to
+visualize them, we evaluate them for a given residual time-series, which yield the attention weights
+per head:
+
+                                       αi,j = αi (x̃L , x̃j )        for i = 1, ..., H.
+
+As our signal only depends on the final cumulative return projection hproj
+                                                                      L , the attention weights
+αi,j for i = 1, .., H and j = 1, ..., L contain all the “global factor” information. Hence, we will
+plot the H × L dimensional attention weights of the attention heads to understand which global
+
+
+                                                                44
+                          Figure 14: Local Basic Patterns of Benchmark Model
+
+
+
+
+   (a) Basic pattern 1            (b) Basic pattern 2             (c) Basic pattern 3             (d) Basic pattern 4
+
+
+
+
+   (e) Basic pattern 5             (f ) Basic pattern 6           (g) Basic pattern 7             (h) Basic pattern 8
+
+These figures show the D = 8 local filters of the CNN estimated for the benchmark model in our empirical analysis. These are
+projections of our higher dimensional nonlinear filter from a 2-layer CNN into two-dimensional linear filters. These building
+blocks are labeled “basic patterns”. The benchmark model is the CNN+Transformer model based on IPCA 5-factor residuals.
+We estimate the model on only once on the first Ttrain =8 years based on the Sharpe ratio objective.
+
+
+
+patterns are activated by specific time-series.
+   Figure 15 plots the attention head weights for simulated sinusoidal residual input time-series.
+Note that the attention head weights discover the sinusoidal pattern although the model was es-
+timated on the empirical data and not specifically trained for this simulated input. The different
+attention heads capture different patterns. The fourth attention head displayed in red has the
+strongest activation and capture high-frequency mean reversion patterns. These attention head
+weights are positive for negative realizations. We will label these fourth attention head weights a
+“negative reversal” pattern. The third attention head weights depicted by the green curve co-move
+with the mean-reversion patterns of the original time-series, that is they are positive for high values,
+but seem to be only activated if this positive “hilltop” appears at the beginning of the time-series.
+If the mean-reversion cycle achieves its positive values at the end, the third attention head is not
+activated. We will label these third attention head weights the “early reversal” pattern. The first
+attention head in blue seems to be a “dampened” version of the fourth red attention head. Figure
+A.4 in the Appendix shows additional simulated input time-series that confirm this interpretation.
+In summary, the different attention head weights can be assigned to specific global patterns.
+   In Figure 16, we plot the different components of the CNN+Transformer model evaluated on a
+randomly selected, representative 30-day empirical residual. The cumulative residual in subfigure
+(a) is the input to the CNN. This L = 30 dimensional vector is represented by the CNN in terms
+of its “exposure” to local basic pattern. The subfigures (d)–(k) show this D × L dimensional
+representation, which is the output of the CNN. As we have D = 8 local filters, we obtain eight
+time-series that display the activation to each filter. For example, basic pattern 1 is associated with
+
+                                                             45
+               Figure 15: Example Attention Weights for Sinusoidal Residual Inputs
+
+
+
+
+                                                                                      l
+                                                                                                 
+                       (a) Input residual and attention head weights for xl = sin 2π 30
+
+
+
+
+                   (b) Input residual and attention head weights for for xl = sin 2π l+15
+                                                                                                     
+                                                                                      30
+
+These plots show the attention head weights of the CNN+Transformer benchmark model for simulated sinusoidal residual
+input time series. Both sine functions have a cycle of 30 days and the second is shifted by 15 days. The right subplot
+shows the attention weights for the H = 4 attention heads for the specific residuals. The empirical benchmark model is the
+CNN+Transformer model based on IPCA 5-factor residuals. We estimate the model only once on the first Ttrain =8 years
+based on the Sharpe ratio objective.
+
+
+
+a “reversal kink” in subfigure 14(a) and hence has the strongest activation to this basic pattern
+on day 28, when the residual has a downward spike. This D × L matrix of exposures to local
+patterns is the input to the transformer. The attention head weights in subfigure (b) connect
+the local patterns to a global pattern. The fourth attention head weight in red has its highest
+values during the “bottom” of the residual movements, confirming our previous intuition that this
+attention head activates during bad times. The third attention head weight in green spikes during
+the “top” at the beginning of the residual time-series, which is in line with our interpretation as an
+early reversal pattern. The first attention head in blue is a dampened version of the red attention
+head. The average over the four attention head weights depicted in subfigure (c) suggests that the
+heads attend on average more closely to the latter half of the time series.
+   In Figure 17 we generalize the analysis of Figure 16 to study the model structure of the bench-
+mark model over time. While Figure 16 represents a “snapshot” for one point in time, we now
+display the allocation weights and attention head weights of a single representative residual for
+different times. Subfigure 17(a) shows the cumulative residual time-series. For a specific point in
+time we use the lagged L = 30 days as an input to obtain the allocation weights and attention
+head weights for that time. The out-of-sample allocation weights correctly change the directions
+to exploit the patterns in the residual time-series. The attention head weights over time offer ad-
+ditional insights into the structure of the global patterns. Each vertical slice from window index 1
+
+                                                           46
+            Figure 16: CNN+Transformer Model Structure for Representative Residual
+
+
+
+
+     (a) Cumulative residual                (b) Attention weights per head               (c) Average attention weights
+
+
+
+
+(d) CNN activations for          (e) CNN activations for           (f ) CNN activations for       (g) CNN activations for
+    basic pattern 1                  basic pattern 2                    basic pattern 3               basic pattern 4
+
+
+
+
+(h) CNN activations for          (i) CNN activations for           (j) CNN activations for        (k) CNN activations for
+    basic pattern 5                  basic pattern 6                   basic pattern 7                basic pattern 8
+
+These figures illustrate the different components of the CNN+Transformer benchmark model evaluated for a randomly selected,
+representative empirical residual. The cumulative residual returns, which are the input to the model, are plotted in (a). The
+convolutional activations (d)–(k) quantify the exposure of the residual time-series to local basis filters. Subplot (b) displays
+the attention weights for the H = 4 attention heads, which represent global dependency patterns. Subplot (c) shows the
+average of these four attention head weights. The empirical benchmark model is the CNN+Transformer model based on
+IPCA 5-factor residuals. We estimate the model on only once on the first Ttrain =8 years based on the Sharpe ratio objective.
+
+
+
+to window index 30 displays the normalized attention weights for the time point under the slice.
+The third attention head, which was displayed in green in Figures 15 and 16 has the largest val-
+ues during “up-patterns” of the residual, for example for 2007, 2010 and 2012. Importantly, the
+attention weights focus on the early days within the 30-day window. This confirms our previous
+interpretation as an “early reversal” pattern. Attention head four, which was previously repre-
+sented as a red line, has the highest values during down-times, such as 2009, 2014 and the middle
+of 2016. In contrast to attention head 3, this head focuses on the immediate past within the local
+window. Attention head 1, which is a dampened down-version, focuses more uniformly on all the
+values within the local window.
+   The average attention weights in (b) illustrate the asymmetric response of the transformer net-
+work. During uptrends, it focuses on the residual prices which are further in the past part of the
+
+
+                                                              47
+     Figure 17: CNN+Transformer Model Structure for Representative Residual Over Time
+
+
+
+
+     (a) Cumulative residuals                (b) Average attention weights                   (c) Allocation weights
+
+
+
+
+(d) Attention weights for (e) Attention weights for (f ) Attention weights for (g) Attention weights for
+         head 1                    head 2                     head 3                    head 4
+
+These figures illustrate the out-of-sample behavior from 2006 to 2016 of the CNN+Transformer benchmark model for a single
+residual time-series. The cumulative residual returns are plotted in (a), and the suggested allocation weights before cross-
+sectional normalization are plotted in (c). The attention head weights (d)–(g) quantify the activation for each attention head
+over time. Subplot (b) shows the average of these weights over the four heads for different times. All time-series have been
+smoothed using a simple moving average with a 30-day window for better presentation. The empirical benchmark model is
+the CNN+Transformer model based on IPCA 5-factor residuals. We estimate the model on only once on the first Ttrain =8
+years based on the Sharpe ratio objective.
+
+
+                           Figure 18: Variable Importance for Allocation Weight
+
+
+
+
+       (a) Importance of Local Basic Patterns                               (b) Importance of Residual Days
+
+These figures show the normalized average absolute gradient (NAAG) of the allocation weight with respect to various inputs
+to intermediate layers in the CNN+Transformer benchmark network. A higher NAAG indicates a higher importance. Subplot
+(a) quantifies the importance of the D = 8 different convolutional filters, that is, we display the gradient with respect to the
+output of the convolutional network, which is the input to the self-attention layer. In (b), we report the importance of the
+first 27 days of the input residual time series. Each average absolute gradient is normalized by dividing each element by the
+sum of all elements. The empirical benchmark model is the CNN+Transformer model based on IPCA 5-factor residuals. We
+estimate the model on only once on the first Ttrain =8 years based on the Sharpe ratio objective.
+
+
+
+window to decide which to position to take; however, during downtrends, it focuses on the most re-
+
+
+
+                                                              48
+cent cumulative residual prices in the lookback window, which indicates that it is taking into account
+the latest data in order to decide what position to take. This indicates that our CNN+Transformer
+policy network has learned to act swiftly during downtrends, and more slowly during uptrends.
+This shows that our model learns in particular the commonly repeated wisdom that “markets take
+escalators up and elevators down”. This asymmetric policy is a key benefit of the attention-based
+model, which cannot easily be replicated by the parametric Ornstein-Uhlenbeck or fixed basis pat-
+tern benchmark models we compare against. The convolutional subnetwork’s patterns provide
+translation invariant information about what kind of trend is present within each 3-day subwindow
+of the 30-day cumulative residual price lookback window, which allows the transformer subnetwork
+to form a stable attention function that results in this unique policy.
+       Figure 18 sheds further light on which days and patterns are important. The figure shows
+the normalized average absolute gradient (NAAG) of the allocation weight with respect to various
+inputs to intermediate layers in the CNN+Transformer benchmark network. A higher NAAG
+indicates a higher importance. Subplot (a) quantifies the importance of the D = 8 different basic
+patterns. We observe that the flat basic pattern 2 has a negligible weight, while basis patterns that
+are needed for trend or reversal patterns have high importance. In (b), we report the importance
+of the first 27 days of the input residual time series.19 Crucially, all previous days matter, which
+emphasizes that the trading allocation depends on the past dynamics. The most recent 14 days
+seem to get on average more attention for the trading decisions. However, as indicated in Figure
+17, the importance of the days seems to be asymmetric for different global patterns.
+
+
+                                        IV.      Conclusion
+       In this paper, we introduce a unifying conceptual framework to compare different statistical
+arbitrage approaches based on the decomposition into (1) arbitrage portfolio generation, (2) sig-
+nal extraction and (3) allocation decision. We develop a novel deep learning statistical arbitrage
+approach. It uses conditional latent factors to generate arbitrage portfolios. The signal is esti-
+mated with a CNN+Transformer, which combines global dependency patterns with local filters.
+The allocation is estimated with a nonparametric FFN based on a global trading objective.
+       We conduct a comprehensive empirical out-of-sample study on U.S. equities and demonstrate
+the potential of machine learning methods in arbitrage trading. Our CNN+Transformer substan-
+tially outperforms all benchmark approaches. The implied trading strategies are not spanned by
+conventional risk factors, including price trend factors, and survive realistic transaction and holding
+costs. Our model provides insights into optimal trading policies which are based on asymmetric
+trend and reversion patterns. In particular, our study shows that the trading signal extraction is
+the most challenging and separating element among different statistical arbitrage approaches.
+       Our findings contribute to the debate on efficiency of markets. We quantify the scope of profits
+that arbitrageurs can achieve in equity markets. Importantly, the substantial profitability of our
+  19
+   As the attention head weights are determined relative to the last local 3-day window, that subwindow has
+mechanically a larger weight and is not comparable to the other 27 days.
+
+
+                                                    49
+arbitrage strategies is not inconsistent with equilibrium asset pricing, following similar arguments
+as in Gatev et al. (2006). It could rather be viewed as empirical evidence about how efficiency is
+maintained in practice. We document non-declining profitability of arbitrage trading over time,
+which suggests that the profits are compensation for arbitrageurs to enforce the law of one price.
+
+
+                                        REFERENCES
+Avellaneda, M. and J.-H. Lee (2010): “Statistical arbitrage in the US equities market,” Quantitative
+  Finance, 10, 761–782.
+
+Bali, T. G., A. Goyal, D. Huang, F. Jiang, and Q. Wen (2022): “Predicting Corporate Bond Returns:
+  Merton Meets Machine Learning,” Working paper.
+
+Barr, A. (2007): “Quant quake shakes hedge-fund giants,” Marketwatch.
+
+Bianchi, D., M. Büchner, and A. Tamoni (2019): “Bond risk premia with machine learning,” Working
+  paper.
+
+Boyd, S., E. Busseti, S. Diamond, R. N. Kahn, K. Koh, P. Nystrup, J. Speth, et al. (2017):
+  “Multi-period trading via convex optimization,” Foundations and Trends in Optimization, 3, 1–76.
+
+Bryzgalova, S., M. Pelger, and J. Zhu (2019): “Forest through the Trees: Building Cross-Sections of
+  Stock Returns,” Working paper.
+
+Carhart, M. M. (1997): “On persistence in mutual fund performance.” Journal of Finance, 52, 57–82.
+
+Cartea, A. and S. Jaimungal (2016): “Algorithmic trading of co-integrated assets,” International Jour-
+  nal of Theoretical and Applied Finance, 19, 165038.
+
+Chen, L., M. Pelger, and J. Zhu (2022): “Deep learning in asset pricing,” Management Science,
+  forthcoming.
+
+Chen, Y., W. Chen, and S. Huang (2018): “Developing Arbitrage Strategy in High-frequency Pairs
+  Trading with Filterbank CNN Algorithm,” in 2018 IEEE International Conference on Agents (ICA),
+  113–116.
+
+Cong, L., K. Tang, J. Wang, and Y. Zhang (2020): “Single-Step Portfolio Construction through
+ Reinforcement Learning and Economically Interpretable AI,” Working paper.
+
+d’Aspremont, A. (2011): “Identifying small mean-reverting portfolios,” Quantitative Finance, 11, 351–364.
+
+DeMiguel, V., J. Gil-Bazo, F. Nogales, and A. Santos (2022): “Machine Learning and Fund Char-
+ acteristics Help to Select Mutual Funds with Positive Alpha,” Working paper.
+
+Dunis, C., J. Laws, and B. Evans (2006): “Modelling and trading the soybean-oil crush spread with
+ recurrent and higher order networks: a comparative analysis,” Neural Network World, 16, 193–213.
+
+Ebrahimi, H. (2013): “Hedge fund quants lose money in 2012,” The Telegraph.
+
+Elliott, R., J. Van Der Hoek, and W. Malcolm (2005): “Pairs trading,” Quantitative Finance, 5,
+  513–545.
+
+Fama, E. F. and K. R. French (1993): “Common risk factors in the returns on stocks and bonds,”
+  Journal of.
+
+——— (2015): “A five-factor asset pricing model,” Journal of financial economics, 116, 1–22.
+
+
+                                                   50
+Fischer, T. G., C. Krauss, and A. Deinert (2019): “Statistical arbitrage in cryptocurrency markets,”
+  Journal of Risk and Financial Management, 12, 31.
+
+Freyberger, J., A. Neuhierl, and M. Weber (2020): “Dissecting characteristics nonparametrically,”
+  Review of Financial Studies, 33, 2326–2377.
+
+Gatev, E., W. N. Goetzmann, and K. Rouwenhorst (2006): “Pairs trading: performance of a relative-
+ value arbitrage rule,” Review of Financial Studies, 19, 797–827.
+
+Giglio, S. and D. Xiu (2021): “Asset Pricing with Omitted Factors,” Journal of Political Economy, 129,
+  1947–1990.
+
+Gu, S., B. Kelly, and D. Xiu (2021): “Autoencoder Asset Pricing Models,” Journal of Econometrics,
+ 222, 429–450.
+
+Gu, S., B. T. Kelly, and D. Xiu (2020): “Empirical Asset Pricing Via Machine Learning,” Review of
+ Financial Studies, 33, 2223–2273.
+
+He, A., S. He, D. Huang, and G. Zhou (2022): “Testing Asset Pricing Models Using Pricing Error
+  Information,” Working paper.
+
+Huck, N. (2009): “Pairs selection and outranking: An application to the S&P 100 index,” European Journal
+ of Operational Research, 196, 819–825.
+
+Jiang, J., B. Kelly, and D. Xiu (2022): “(Re-)Imag(in)ing Price Trends,” Journal of Finance, forthcom-
+  ing.
+
+Jurek, J. W. and H. Yang (2007): “Dynamic portfolio selection in arbitrage,” in EFA 2006 Meetings
+  Paper.
+
+Kaniel, R., Z. Lin, M. Pelger, and S. Van Nieuwerburgh (2022): “Machine-Learning the Skill of
+ Mutual Fund Managers,” Working paper.
+
+Kelly, B., S. Pruitt, and Y. Su (2019): “Characteristics Are Covariances: A Unified Model of Risk and
+ Return,” Journal of Financial Economics, 134, 501–524.
+
+Kim, T. and H. Y. Kim (2019): “Optimizing the Pairs-Trading Strategy Using Deep Reinforcement Learn-
+  ing with Trading and Stop-Loss Boundaries,” Complexity, 2019.
+
+Kozak, S., S. Nagel, and S. Santosh (2020): “Shrinking the Cross Section,” Journal of Financial
+ Economics, 135, 271–292.
+
+Krauss, C., X. A. Doa, and N. Huck (2017): “Deep neural networks, gradient-boosted trees, random
+ forests: Statistical arbitrage on the S&P 500,” European Journal of Operational Research, 259, 689–702.
+
+Lettau, M. and M. Pelger (2020a): “Estimating Latent Asset Pricing Factors,” Journal of Econometrics,
+  218, 1–31.
+
+——— (2020b): “Factors that Fit the Time-Series and Cross-Section of Stock Returns,” Review of Financial
+ Studies, 33, 2274–2325.
+
+Leung, T. and X. Li (2015): “Optimal mean reversion trading with transaction costs and stop-loss exit,”
+  International Journal of Theoretical and Applied Finance, 18, 1550020.
+
+Li, S. and Y. Tang (2022): “Automated Risk Forecasting,” Working paper.
+
+Lim, B. and S. Zohren (2020): “Time Series Forecasting With Deep Learning: A Survey,” Working paper.
+
+Lintilhac, P. S. and A. Tourin (2016): “Model-based pairs trading in the bitcoin markets,” Quantitative
+  Finance, 17, 703–716.
+
+
+                                                  51
+Mudchanatongsuk, S., J. A. Primbs, and W. Wong (2008): “Optimal pairs trading: A stochastic
+ control approach,” in 2008 American Control Conference, IEEE, 1035–1039.
+
+Mulvey, J. M., Y. Sun, M. Wang, and J. Ye (2020): “Optimizing a portfolio of mean-reverting assets
+ with transaction costs via a feedforward neural network,” Quantitative Finance, forthcoming.
+
+Murray, S., H. Xiao, and Y. Xia (2021): “Charting By Machines,” Working paper.
+
+Pelger, M. (2020): “Understanding Systematic Risk: A High-Frequency Approach,” Journal of Finance,
+  74, 2179–2220.
+
+Pelger, M. and R. Xiong (2020): “Interpretable Sparse Proximate Factors for Large Dimensions,” Jour-
+  nal of Business & Economic Statistics, Conditionally accepted.
+
+——— (2021): “Interpretable sparse proximate factors for large dimensions,” Journal of Business & Eco-
+ nomic Statistics, conditionally accepted.
+
+Rad, H., R. K. Y. Low, and R. Faff (2016): “The profitability of pairs trading strategies: distance,
+ cointegration and copula methods,” Quantitative Finance, 16, 1541–1558.
+
+Vaswani, A., N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. Gomez, L. Kaiser, and I. Polo-
+  sukhin (2017): “Attention Is All You Need,” NIPS Conference on Neural Information Processing Systems.
+
+Vidyamurthy, G. (2004): Pairs Trading: Quantitative Methods and Analysis, Wiley.
+
+Xiaohong Chen and H. White (1999): “Improved rates and asymptotic normality for nonparametric
+  neural network estimators,” IEEE Transactions on Information Theory, 45, 682–691.
+
+Yeo, J. and G. Papanicolaou (2017): “Risk control of mean-reversion time in statistical arbitrage,” Risk
+  and Decision Analysis, 6, 263–290.
+
+
+
+
+                                                  52
+                                           Appendix A.                  Data
+Appendix A.        List of the Firm-Specific Characteristics
+
+                            Table A.I: Firm Characteristics by Category
+
+        Past Returns                                                               Value
+ (1)    r2 1       Short-term momentum                                     (26)    A2ME          Assets to market cap
+ (2)    r12 2      Momentum                                                (27)    BEME          Book to Market Ratio
+ (3)    r12 7      Intermediate momentum                                   (28)    C             Ratio of cash and short-term
+                                                                                                 investments to total assets
+ (4)    r36 13         Long-term momentum                                  (29)    CF            Free Cash Flow to Book Value
+ (5)    ST Rev         Short-term reversal                                 (30)    CF2P          Cashflow to price
+ (6)    LT Rev         Long-term reversal                                  (31)    D2P           Dividend Yield
+                                                                           (32)    E2P           Earnings to price
+        Investment                                                         (33)    Q             Tobin’s Q
+ (7)    Investment Investment                                              (34)    S2P           Sales to price
+ (8)    NOA        Net operating assets                                    (35)    Lev           Leverage
+ (9)    DPI2A      Change in property, plants, and
+                   equipment
+ (10)   NI         Net Share Issues                                                Trading Frictions
+                                                                           (36)    AT         Total Assets
+        Profitability                                                      (37)    Beta       CAPM Beta
+ (11)   PROF          Profitability                                        (38)    IdioVol    Idiosyncratic volatility
+ (12)   ATO           Net sales over lagged net operating assets           (39)    LME        Size
+ (13)   CTO           Capital turnover                                     (40)    LTurnover Turnover
+ (14)   FC2Y          Fixed costs to sales                                 (41)    MktBeta    Market Beta
+ (15)   OP            Operating profitability                              (42)    Rel2High   Closeness to past year high
+ (16)   PM            Profit margin                                        (43)    Resid Var  Residual Variance
+ (17)   RNA           Return on net operating assets                       (44

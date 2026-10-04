@@ -1,0 +1,1154 @@
+URL: https://arxiv.org/pdf/2412.09394
+FETCHED_UTC: 2026-10-04T18:39Z
+HTTP: 200 application/pdf
+-----
+                                           Large Language Models for Time Series: an
+                                           Application for Single Stocks and Statistical
+arXiv:2412.09394v2 [q-fin.PM] 3 Nov 2025
+
+
+
+
+                                                            Arbitrage
+                                                       Sebastien Valeyre ∗†               Sofiane Aboura ‡
+                                                                       November 4, 2025
+
+
+                                                                              Abstract
+                                                   Large Language Models (LLMs) have been adapted for time series
+                                               prediction with significant success in pattern recognition. However,
+                                               the common belief is that these models are not suitable for predict-
+                                               ing financial market returns, which are known to be almost random.
+                                               We aim to challenge this misconception through a counterexample.
+                                               Specifically, we utilize the Chronos model from Ansari et al. (2024)
+                                               and test both pretrained configurations and fine-tuned supervised fore-
+                                               casts on the largest American single stocks using data from Guijarro-
+                                               Ordonnez et al. (2021). We construct a long/short portfolio, and the
+                                               performance simulation indicates that LLMs can in reality handle time
+                                               series that are nearly indistinguishable from noise, demonstrating an
+                                               ability to identify inefficiencies amidst randomness and generate alpha.
+                                               Finally, we compare these results with benchmark models, highlight-
+                                               ing significant room for improvement in LLM performance to further
+                                               enhance their predictive capabilities.
+
+
+
+
+                                           ∗
+                                             Machina Capital, Paris, France
+                                           †
+                                             Valeyre Research, Cannes, France
+                                           ‡
+                                             University of Paris XIII – Sorbonne Paris Nord, Villetaneuse, France
+
+
+                                                                                   1
+1         Introduction
+Large Language Models (LLMs) gained widespread popularity when Chat-
+GPT convinced many that machines were intelligent enough to reason like
+humans, even though the underlying techniques merely determine the most
+likely sequences of words that could respond to a prompt. Besides, with
+regards to the integration of generative AI in the financial industry, Citadel
+CEO Ken Griffin says ”the tech hasn’t done much for hedge funds where
+it matters most— beating the market”1 . This study challenges this view by
+applying for the first time a LLM to a large portfolio of U.S stocks. Recently,
+the introduction of the transformer architecture by Vaswani et al. (2017) was
+a key development, as it enabled fast training on large datasets. LLMs are
+composed of many layers of transformers and have around a billion parame-
+ters. For instance, the T5 (Text-To-Text Transfer Transformer) architecture
+was introduced by Raffel et al. (2023), and further advanced the field from
+T5-small size with 60 million of parameters to T6-11B with 11 billion of pa-
+rameters). Amatrianin (2023) describes the catalog of LLMs models from
+Albert to ChatGPT and classifies T5 among others.
+    The incorporation of Transformers into trading, risk, and the portfolio
+management industry is on the verge of transforming the financial landscape
+due to the oncoming technological gap. The reason is straightforward: They
+are reaching the state-of-the-art performance of learning from time series
+in many domains including Traffic, Climate, Energy, and recently, Finance.
+The transformer is indeed a deep learning architecture that enhances con-
+siderably the analysis and processing of huge volume of diverse and complex
+data that are valuable for businesses and decision-makers on a real time
+basis. For instance, it helps making timely decision of buying and selling
+securities or of optimizing portfolio with risk prediction. LLMs, such like
+Generative Pre-Trained Transformers, are designed for specific tasks use-
+ful in the financial industry like real time translation or sentiment analysis.
+Still, the most challenging, crucial and valuable task remains the time series
+forecasting. Time series in finance are difficult to predict because they are
+modeled as random walk process based on a sequence of random observa-
+tions generated by a stochastic process over time. In addition, financial time
+series are subject to noise, temporal dependence, non-stationarity and some-
+times missing values. In an efficient market it should be nearly impossible
+    1
+        https://blinks.bloomberg.com/news/stories/T48R8PBQ99TS
+
+
+
+                                           2
+to do prediction. In the real world, there exist thousands of financial time
+series since several decades, but most of them are not liquid enough to be
+included in a sample for prediction. For example, small capitalization shares
+or penny stocks could be subject to less frequent or stale quotes. Econo-
+metrics models (e.g. ARIMA) are well suited for predicting financial future
+outcomes because they provide a clear representation of the system, which
+is very useful in an industry where regulators require explanations. Unfortu-
+nately, they suffer from limitations when it comes to handling large and com-
+plex data structure. Significant advancements were made from the machine
+learning models (e.g. Nearest-Neighbor methods, Shrinkage methods, Tree-
+based methods and Boosting, Support Vector Machines classifiers, Neural
+Networks approaches) that proved successful in capturing complex data set.
+On top of that, deep learning models (e.g. Long Short-Term Memory) went
+even further through modelling heterogeneous and long-term data to extract
+patterns from complex data structure, which enhances forecasting accuracy.
+However, they are exposed to a sort of performance saturation because they
+are relatively small models with hundreds of parameters. Transformers ad-
+dress this limitation allowing for billions of parameters to be estimated on
+large scale dataset (please see Wen et al. 2024 for a survey on transformers
+on time series). They are reshaping the field of time series forecasting given
+their empirical success in the so-called “one-model-for-all-datasets” (Wu et
+al. (2025)). The vanilla Transformer is built on the encoder-decoder struc-
+ture where the model architecture is based on an attention mechanism to
+draw global dependencies between inputs and outputs (see Vaswani et al.
+(2017)). This encoder-decoder architecture has become a promising tool for
+predicting complex multivariate time series. LLMs share the same archi-
+tecture with transformers. LLMs for time series (e.g. BERT) are able to
+perform time series forecasting across a variety of datasets and are capable
+of incorporating missing data (Gruver et al. (2023)). The application of such
+LLMs for time series prediction is an emerging field that excels in predicting
+time series with clear patterns (Tang et al. (2025)).
+    Garza et al. (2023) introduce TimeGPT, the first foundation model for
+time series, capable of generating accurate predictions for diverse datasets
+not seen during training. They evaluate their pre-trained model against es-
+tablished statistical, machine learning, and deep learning methods, demon-
+strating that TimeGPT zero-shot inference excels in performance. Ansari
+et al. (2024) also sought to adapt these highly efficient LLMs to time series
+forecasting. Their approach involved representing real numbers in differ-
+
+                                      3
+ent bins (using a vocabulary of 4096 tokens) and training a T5 architecture
+on a wide range of time series data (around 90 billion observations). They
+produced several pretrained models of varying sizes, ranging from tiny (11
+millions of parameters) to large. TimesFM (Time Series Foundation Model)
+is another pretrained time-series foundation model developed by Das et al.
+(2024). Rasul et al. (2024) uses a lagged features for tokenization. Nie et
+al. (2023) build a transformer model for multivariate time series forecasting
+by using segmentation of time series into subseries-level patches that served
+as input tokens to the Transformer and also by using channel-independence
+for which each channel contains a unique time series that shares the same
+Transformer weights through all the series. Ekambaram et al. (2023) de-
+velop a neural architecture exclusively composed of multi-layer perceptron
+modules for multivariate forecasting and representation learning on patched
+time series. This novel MLP-Mixer is also patching-based and it exploits
+various time-series features for multivariate forecasting. Motivated by recent
+advances in Large Language Models for Natural Language Processing, Ansari
+et al. (2024); Das et al. (2024) designed a time-series foundation model for
+forecasting whose out-of-the-box zero-shot performance on a variety of public
+datasets comes close to the accuracy of state-of-the-art supervised forecasting
+models for each individual dataset. Their models are based on pretraining a
+patched-decoder style attention model on a large time-series corpus, and can
+work well across different forecasting history lengths, prediction lengths and
+temporal granularities.
+    Deep learning has become very popular among researchers in finance,
+both for asset pricing and systematic strategies: Brugiere and Turinici (2024)
+tested transformers for financial time series and showed that the algorithm
+cannot predict returns, but can only predict squared returns. Konigstein
+(2024) stated that LLMs present challenges, but also opportunities, partic-
+ularly for long-term financial time series forecasting. Guijarro-Ordonnez et
+al. (2021) implemented transformers (with only 769 parameters) but cou-
+pled them with convolutional layers and tested them on quantitative trading
+strategies applied to single stocks. Their results, without accounting for
+trading costs, were encouraging. They applied deep learning algorithms to
+residual daily returns after removing common factors using techniques such as
+Principal Component Analysis (PCA), Fama-French factors, or Instrumental
+Principal Component Analysis (IPCA), implementing the methodology from
+Kelly et al. (2019), who used financial data to constrain the eigenvectors.
+This approach was also developed and justified by Valeyre (2019). Trans-
+
+                                      4
+formers have also been used by Jiang et al. (2023) to identify patterns in im-
+ages for financial price time series. Wood et al. (2022) applied deep learning
+techniques with only a few parameters to identify the most effective trend-
+following indicators enhancing and timing trend-following strategies. Trans-
+formers have also been used to extract common returns, as demonstrated
+by Gu et al. (2021). Qyrana (2024) applied a simple Short Term Reversal
+factor fed by residual returns using an autoencoder-based factor model, sub-
+sequently generating a highly profitable trading strategy (i.e. through buying
+losing stocks based on residual returns and shorting winner stocks). Chen
+et al. (2021) used a deep learning technique to identify anomalies in asset
+pricing.
+    However the question remains whether a Large Language Model opti-
+mized for time series outside the field of finance is sufficiently intelligent and
+sensitive to capture inefficiencies and market anomalies. Despite the burgeon-
+ing literature, there are still no papers that apply a deep learning technique
+with millions of parameters to financial forecasting while this is the natural
+number of parameters to consider in the context of LLMs. Studies such as
+Chen et al. (2021), Jiang et al. (2023), Wood et al. (2022), Guijarro-Ordonnez
+et al. (2021), and Brugiere and Turinici (2024) utilized models with at most a
+few hundred parameters so their models were not real deep learning models.
+This limitation was due to their inability to pre-train models with millions
+of parameters using large datasets from outside the financial industry. This
+study fills the gap by implementing deep learning algorithms with more than
+11 million parameters for forecasting financial returns. This methodological
+approach attempts to solve the problem to what extent LLMs are intelligent
+enough to predict financial returns. Therefore, the contribution of this paper
+is to be the first that use LLMs for financial time series forecasting.
+    The employed methodology is two-fold. First, we conduct a zero-shot
+evaluation of the predictions from pretrained and fine-tuned supervised time
+series foundation LLMs Chronos by Ansari et al. (2024), which were pre-
+trained on 13 datasets that do not include single stock data or stock indices,
+using the datasets of the residual returns of American single stocks published
+by Guijarro-Ordonnez et al. (2021). The interest in using only zero-shot eval-
+uation is that it provides more convincing results, as overfitting is less likely
+in this case. Indeed overfitting is a major concern in machine learning when
+applied to trading, which often makes honest results appear suspect. An-
+other interesting aspect is demonstrating how the algorithm can adapt and
+display ’intelligence’ in trading without being specifically trained for that
+
+                                        5
+purpose. We simulate a portfolio that goes long the stocks whose predicted
+next return is positive and short the stocks whose predicted next return is
+negative. Secondly, we compare these results with the well-known standard
+Short Term Reversal (STR) or trend-following approaches, as described in
+Jegadeesh (1990); Jegadeesh and Titman (1993). The main finding reveals
+that LLMs optimized on non-financial time series are still capable of produc-
+ing significant forecasts for financial time series.
+
+
+2     The methodology of our empirical backtest
+2.1    Chronos as the LLM model
+Our objective is to assess whether one LLM-based time series model could
+capture inefficiencies or market anomalies in financial markets.
+    We limited our test to the Chronos model because it stands out as a best-
+in-class LLM for time series forecasting, delivering robust performance, par-
+ticularly in zero-shot and long-horizon forecasting tasks. Its adaptability and
+scalability make it a valuable tool across a wide range of forecasting applica-
+tions. The model used was ”amazon/chronos-t5-tiny” version of the chronos
+which was pretrained by Ansari et al. (2024) on 14 datasets (Brazilian cities
+temperatures, Mexico city bikes, Solar, Spanish energy and weather, Taxi,
+USHCN, weatherbench, wiki daily, wind farms) but not on financial time
+series. The model has 11 millions of parameters. Chronos was presented by
+Konigstein (2024). Her thorough comparative examination includes several
+LLM models, such as Lag-Llama from Meta (Rasul et al. (2024)), PatchTST
+from IBM (Nie et al. (2023)), and TSMixer from IBM (Ekambaram et al.
+(2023)). According to Konigstein (2024), Chronos was both the easiest to
+implement and the most effective among the models tested, based on inter-
+nal evaluations across a variety of models: local models, task-specific models,
+in-domain pretrained models, and out-of-domain pretrained models. We do
+not claim that it is optimal or superior to simpler models without pretrain-
+ing, especially given that out-of-sample results in quantitative finance papers
+sometimes lack of reliability and sometimes are not confirmed once the pa-
+per is published as mentioned by McLean et al. (2016) and Harvey et al.
+(2016). That is why we limited our investigation to two well established and
+very simple benchmarks such as both the Short Term Reversal (STR) and
+ARIMA, while including the machine learning model of Guijarro-Ordonnez
+
+
+                                      6
+et al. (2021) as we used their data. We used a ’context’ period of 100 days
+so that Chronos guess the next day, knowing only the previous 100 days.
+We focused only on the next day return forecast. We used 100 days as a
+compromise to avoid running out of memory while giving Chronos a chance
+to capture some patterns. Additionally, we decided to limit the study to
+predicting the next daily returns. While forecasting weekly or monthly re-
+turns was a possible alternative, we considered that Chronos would be more
+effective at identifying patterns over a shorter time horizon.
+    We used both the zero-shot pretrained and fine-tuned versions of Chronos.
+To implement the fine-tuned version, we adjusted the 11 million weights of the
+’amazon/chronos-t5-tiny’ model by training it on our dataset, setting τ —the
+maximum number of training steps and one of Chronos’s key parameters—to
+5, 15, or 40. Training was conducted daily during the backtest, using the
+data available on each respective date and starting from the weights of the
+previous day. The details of the parameters used for both the pretrained
+and fine-tuned cases are provided in Sections 2.3.1 and 2.3.2, with additional
+information and the corresponding Python code available in Appendices B.1
+and B.2.
+
+2.2    Dataset description
+We use the datasets from Guijarro-Ordonnez et al. (2021), who restricted
+their analysis to the most liquid stocks to mitigate trading and friction is-
+sues. Specifically, they considered stocks whose market capitalization in the
+prior month exceeded 0.01% of the total market capitalization of that month,
+resulting in a selection of approximately the largest 550 stocks on average.
+This portfolio of the most liquid U.S. stocks over such a long period ap-
+pears as the most appropriate sample for a deep learning application. The
+total number of stocks exceeds 550 because the composition changes daily
+and we have a total of 9483 different stocks in the whole period. It is very
+common in financial studies to test strategies on the largest 500 U.S. stocks.
+Indeed evaluating investment strategies or identifying market anomalies of-
+ten involves testing on large-cap U.S. stocks, particularly those in the S&P
+500 index. This practice is prevalent due to the S&P 500’s representation
+of a substantial portion of the U.S. equity market and the availability of
+high-quality data: Hou et al. (2020) examines 452 documented anomalies in
+finance. The authors construct a vast data library and apply rigorous repli-
+cation tests, emphasizing the use of NYSE breakpoints and value-weighted
+
+                                      7
+returns to mitigate the influence of microcap stocks. Their methodology un-
+derscores the importance of focusing on larger, more liquid stocks, such as
+those in the S&P 500, to ensure robustness in empirical findings. It is worth
+noting that Gu et al. (2021), in their effort to gather sufficient data to train
+their 500,0002 -parameter models, explicitly stated that, ”unlike the existing
+literature”, they did not exclude micro-cap stocks. They applied no filters,
+resulting in an average of over 6,200 stocks per day in their dataset. Also
+as we mainly use the pretrained case of Chronos, we did not need a larger
+dataset for the zeros shot version or the fine tuned one.
+    The three different datasets of daily residual returns (IPCA, PCA and
+FF) provided by Guijarro-Ordonnez et al. (2021) are all based on the same
+raw universe of securities from the CRSP dataset spanning January 1978
+to the end of 2016, but obtained using different methods for extracting the
+residuals. Guijarro-Ordonnez et al. (2021) released their datasets of residual
+returns on GitHub. We utilized their three datasets whose statistics are
+displayed in Tab. 1, each corresponding to their standard parameters with
+the number of factors, K, equal to five:
+
+       • IPCA factors with a rolling windows of 240 months with the details
+         described in Kelly et al. (2019). We report the following summary
+         statistics for daily residual returns: a mean of 4.35 × 10−6 and a stan-
+         dard deviation of 0.0066.
+
+       • PCA factors with a rolling windows of 252 days. We report the follow-
+         ing summary statistics for daily residual returns: a mean of 2.31 × 10−6
+         and a standard deviation of 0.0059.
+
+       • FF factors (Fama-French market, value, size, investment and profitabil-
+         ity factors) with a rolling windows of 60 days. We report the following
+         summary statistics for daily residual returns: a mean of 2.95 × 10−6
+         and a standard deviation of 0.0068.
+
+   K = 5 appears to be the optimal hyper parameter according to Guijarro-
+Ordonnez et al. (2021) when applying their convolution and transformer
+   2
+     The figure of 660,000 parameters for their simple version is our own estimation, based
+on the code released at https://github.com/dkyol/Asset-Pricing-Model. However,
+this implementation does not appear to be officially validated by Gu et al. (2021) and may
+not be fully appropriate, as it assigns different weights to each stock, whereas one would
+typically expect a shared parameter structure across stocks
+
+
+                                            8
+        Dataset     Mean            SD      Skewness Kurtosis Total number of residual returns
+                              −6
+         IPCA     4.35 × 10        0.0066     1.38       583               4079040
+
+         PCA      2.31 × 10−6      0.0059     1.16       594               4079040
+                              −6
+          FF      2.95 × 10        0.0068     1.16       504               4079040
+
+Table 1: Statistics of the daily residual returns of single stocks included in
+the 3 datasets provided by Guijarro-Ordonnez et al. (2021)
+
+
+process with a performance measure, the gross sharpe ratio, of 3.21 for Fama-
+French, 3.36 for the PCA and 4.16 for the IPCA. Nevertheless the sharpe ratio
+in net appears to be significant only before 2006. Using residual returns
+allows for a less correlated dataset, which is crucial for deep learning. It
+is worth noting that Gu et al. (2021) also used IPCA, PCA and FF as
+benchmarks to compare the performance of the residuals produced by their
+autoencoder asset pricing model.
+
+2.3     Description of the different simulated strategies
+Our experiment is organized in three parts. We began by testing the zero-
+shot version of Chronos, then we implement the fine-tuned version, and finally
+compared the results against three different benchmarks. We used exactly the
+same evaluation procedure, described in Section 2.3.1, which constructs the
+portfolio based on the forecasts generated by each method. Only Guijarro-
+Ordonnez et al. (2021), which in one of the benchmarks, directly determined
+the portfolio without going through a separate forecasting step.
+
+2.3.1   Zero-shot version
+First, we implemented a ”zero-shot evaluation”, which means without any
+fine-tuning (or training). The weights of Chronos were not trained on fi-
+nancial data. Our experiment consists of, for each day, from 2001-12-26 to
+2016-12-30, and for each dataset (IPCA, PCA, FF):
+
+   • Computing χ̂d,i , the Chronos average prediction of the next residual
+     daily return, derived in the Eq 2 conditioned to a rolling window of the
+     last 100 days. In Eq 2 we used the average of different ”equiweight”
+     scenarii χ computed by Chronos of the forecasted residual return, r̂d+1 ,
+     knowing only rd,i ...rd−99,i . We used two possible inputs for Chronos:
+
+                                                     9
+     – Either the last 100 residual daily returns rd,i ...rd−99,i of the single
+       stock i.
+     – or the last r̂d,i ...r̂d−99,i the exponential moving average of the last
+       100 residual daily returns derived in Eq 1 with α > 0. In fact,
+       the second possibility is merely a more general case of the first,
+       which corresponds to the particular case where α = 0 in Eq 1.
+       We tested α values of 0.1, 0.2, 0.3, 0.4, 0.5, and 0.8, all different
+       from zero. This option allows the model to account for the well-
+       known weak negative autocorrelation of daily returns, potentially
+       improving its forecasting ability. However, in this case, the model
+       must outperform the Short-Term Reversal strategy described in
+       Eq. 10 as Eq. 1 is close to Eq. 10.
+• Predicting of the next residual returns with χ̃d,i which is derived in Eq
+  3.
+• Calculating the weights of the portfolio ω̂ derived in Eq 6 which uses ωdχ
+  derived in Eq 4 which ranks through ℜ = ArgSort every day d the dif-
+  ferent the forecasted residual return χ̃d,i from Eq 3. In this method, in
+  Eq 4, the median rank is withdrawn through N2 where N is the number
+  of stocks. A normalization of the weights is derived in Eq 6 to target
+  a gross investment of 1. This process ensures that the portfolio is 50%
+  long and 50% short every day, with weights proportional to the distance
+  in ranking from the median stock according to the forcasted residual
+  returns χ̃ derived in Eq 3. Valeyre (2019) proved that this approach
+  is the mathematically optimal method and better than just buying the
+  top quintile and short the bottom quintile as it is invested on a larger
+  number of stocks with a better diversification. A ’resized’ version to
+  manage better risk through reducing weights on volatile stocks is also
+  tested when the weights are also inversely proportional to the volatil-
+  ity as derived in Eq 5 where σ are the standard deviation of the daily
+  returns on the previous 100 days and M is the median.
+• Simulating the performance of the portfolio determined by the weights
+  in Eq 6: We derived Pd+1 , the performance of the portfolio for the next
+  day through Eq 8. We then reconstructed the cumulative returns and
+  calculated the gross Sharpe ratio, excluding any trading costs. We also
+  simulate [Pd+1 ] for the resized version through Eq 9 which used weights
+  derived in Eq 5.
+
+                                    10
+                                         r̂d+1,i = αr̂d,i + rd+1,i          (1)
+                             χ̂d,i = E [χ (r̂d+1,i |r̂d,i ...r̂d−99,i )]    (2)
+                                              χ̃d,i = χ̂d,i − αr̂d,i        (3)
+                                                                      N
+                                          ωdχ = ℜ [ℜ (χ̃d )] −              (4)
+                                                                    2
+                                      N          M (σ0 ...σN )
+             [ωdχ ]r = ℜ [ℜ (χ̃d )] −                                       (5)
+                                      2 max(σ, M (σ0 ...σN )
+                                                 χ            ω χ d,i
+                                               ω̂d,i =P χ                   (6)
+                                                              j |ω d,j |
+                                         χ r            [ω χ d,i ]r
+                                         ω̂d,i = P               χ    r     (7)
+                                                          j |[ω d,j ] |
+                                                 X χ
+                                      Pd+1 =          ω̂d,i × rd+1,i        (8)
+                                                       i
+                                                  X χ 
+                                      [Pd+1 ] =     ω̂d,i × rd+1,i          (9)
+                                                   i
+   .
+
+2.3.2   Fine-tuned version
+Secondly, we employed a very naive approach to fine-tuning from the pre-
+trained weights, which can be highly challenging and unstable in practice
+Goodfellow et al. (2013). Thanks to that feed, Chronos can adapt its weights
+according to the properties of the financial time series. We trained Chronos
+which was initiated at the beginning of the backtest with the pretrained
+weights. The training was realized on a daily basis during the backtest using
+the available residual returns data starting on every day with the weights of
+the previous day. On every day d, we provided as input to Chronos the up-
+dated time series available at day d using the the previous 100 days. We test
+5 and 15 as values for τ , the maximal number of steps in the iteration process.
+τ is a critical parameter of the algorithm, detailed in Appendix B.2, governing
+the daily training process. If τ is set too high, Chronos may completely for-
+get its pretrained knowledge, leading to severe overfitting—especially given
+the relatively small size of our dataset compared to the model’s 11 million
+parameters. Moreover, even a moderate value such as τ = 15 is already
+highly computationally demanding: it required approximately one week of
+
+                                           11
+computation on our setup, which includes 22 Intel(R) Core(TM) i7-14700KF
+3.40GHz processors, two NVIDIA GeForce RTX 4060 Ti GPUs with 80 GB
+of combined VRAM, and 128 GB of RAM. We also used different values of
+the parameter α in Eq 1 which adjusts the input of Chronos. The contin-
+uous training led to Chronos model to update its weights for each day of
+the backtest leading to a continuous outsample result. We then determined
+the portfolio weights based on the predictions using the fine-tuned weights
+instead of the pretrained ones.
+    We do not claim that our methodology for fine tuning is optimal to em-
+pirically determine other approaches by controling overfitting and the loss of
+the pretrained weights through the analysis of the statistics of the eigenvalues
+derived from the millions of weights (Martin (2019, 2024)). However, this
+falls outside the scope of our current study. For instance, the drawback of
+our methodology is that the pretraining weights are gradually forgotten over
+time, which is not an ideal solution. We give more detail of the methodology
+we used for fine tuning in Section B.2 of the Appendix.
+    We did perform an analysis using WeightWatcher (Martin (2024)) on
+both the pretrained and fine-tuned models, and found no signs of overfitting
+or underfitting. The results of this analysis (Fig 2 in Sec B.3 of the Ap-
+pendix ) which is distribution of the power law coefficient of the eigenvalues
+distributions layer per layer are included in the appendix and show that the
+power-law exponents fall within the range of 2 to 6 in the fine-tuned case, in-
+dicating no risk of overfitting (which would be suggested by exponents below
+2) or underfitting (suggested by exponents above 6). The statistics from the
+fine-tuned model are even more favorable than those of the pretrained model,
+which shows some exponents above 6, suggesting a minor risk of underfitting.
+
+2.3.3   Comparison
+Third, we compare the results of Chronos to those obtained by replicat-
+ing the machine learning model with a small number of 169 parameters
+of Guijarro-Ordonnez et al. (2021), who used a CNN Transformers model.
+Their number of paramaters is small compared with the 11 million of the
+Chronos one. They used a CNN Transformers model. We also include the
+results achieved using standard autoARIMA from the statsforecast package
+( https://pypi.org/project/statsforecast/) as it is a standard benchmark in
+Machine Learning, as well as the Short Term Reversal (STR) described in
+Jegadeesh (1990); Jegadeesh and Titman (1993) which is a well-documented
+
+                                      12
+market anomaly that was first noted by Fama (1965) as the same anomaly
+is captured by Chronos.
+    Both AutoARIMA and Short Term Reversal (STR) appear to be well-
+suited benchmarks, as they capture anomalies that are very similar to those
+detected by Chronos within our framework. Guijarro-Ordonnez et al. (2021)
+captures also Short Term Reversal (STR). The returns between their port-
+folios are correlated.
+    The Autoregressive integrated moving average (ARIMA) specification is
+part of the ARMA statistical models that typically predict future values
+based on explicit past values. The class of ARIMA models has been widely
+applied through Box and Jenkins (1970) methodology and has proved fruitful
+for time series modeling according to Engle (1978). They are made with three
+components: First, an Auto-Regressive (AR) component based on a number
+of lagged values with order (p). Second, a Moving Average (MA) component
+based on the number of lagged residual terms. Third, an Integrated (q)
+component based a number of differencing orders used to make the data
+stationary on a degree (d). The auto-ARIMA specification use information
+criteria such like AIC or BIC to determine optimally the ARIMA parameters
+(p,d,q), where the best ARIMA model for the time series is one with the
+smallest AIC or BIC. The AutoARIMA was also fit in a continuous way
+every day during the backtest using the previous 100 days × N observations
+and yielded to forecasts Ad and the portfolio weights ωdA were also derived
+with the same methodology Eq 12.
+    Short Term Reversal (STR) financial strategy has been a market anomaly
+that was first observed by Fama (1965) and first documented by Jegadeesh
+(1990). It belongs to the category of price trend-following strategies in the
+industry of portfolio management and it captures the Short Term mean-
+reversion behavior. In practice this dynamic strategy requires sorting stocks
+into deciles according to their past-month returns in order to buy losers
+(stocks in the bottom decile) and sell winners (stocks in the top decile). It is
+a dynamic strategy because it is rebalanced on a monthly basis. It is also a
+robust and statistically significant strategy because Jegadeesh (1990) unveil
+a monthly extra return of 2% (see for a detailed discussion, see e.g. Da et al.
+(2014)). The Short Term Reversal (STR) strategy was implemented using
+an exponential moving average of residual returns, as defined in Equation 10,
+with two parameter settings: β = 1 − 51 and β = 1 − 20 1
+                                                         . The portfolio of the
+                                        ζ
+STR is then derived in Eq 11 with ω d , the weights of the portfolios, using
+the same methodology as for the Chronos forecast where N is the number of
+
+                                      13
+single stocks.
+
+
+                         r̃d+1,i = β × r̃d,i + rd+1,i                       (10)
+                                                  N
+                            ωdζ = ℜ [ℜ (−r̃d )] −                           (11)
+                                                  2
+                                                  N
+                            ωdA = ℜ (ℜ (Ad )) −                             (12)
+                                                  2
+
+2.4    Performance measures
+We based our results on the gross Sharpe ratio metric of the portfolio which
+corresponds to the outsample annualized average of daily returns of the port-
+folio divided by the annualized standard deviation of daily returns, meaning
+that we do not consider slippage and trading costs. This metric is standard in
+the portfolio management literature and can be associated with the t-statistic
+by multiplying it by the square root of 15, corresponding to the 15 years in
+our sample period. If the Sharpe ratio of the portfolio is positive and the
+associated t-statistic exceeds 3, we can consider that the prediction methodol-
+ogy has succeeded in capturing some market anomalies through its forecasts.
+Fama and French (2015) typically assess anomalies by comparing the perfor-
+mance of portfolios formed on different quantiles (e.g., quintiles) of a given
+factor. They consider an anomaly to exist if the return spread between ex-
+treme portfolios is statistically different from zero, based on a t-statistic. In
+this sense, our use of the Sharpe ratio—or its associated t-statistic—is closely
+related to their methodology. The Sharpe ratio is particularly relevant as it
+provides an aggregate performance measure across the entire universe and is
+a simple yet widely used metric in asset management to evaluate whether a
+strategy is efficiently generating profits. A net Sharpe ratio of 1 is already
+considered excellent from the perspective of a final investor.
+
+
+3     Empirical results
+We can see that resizing the weights of the profolio inversely proportional to
+the volatility improves the Sharpe ratio for Chronos slighly, as well as for the
+benchmarks so that we chose to report only the results obtained from this
+version for all methods.
+
+
+                                        14
+    We observe that the pre-trained Chronos model with the autoregressive
+coefficient α = 0.3 effectively identifies opportunities in the financial market
+(see Table 2), achieving a Sharpe ratio above 3.17√for PCA over a 15-year
+period, which corresponds to a t-statistic of 3.17 15 = 12.27. However,
+trading costs are prohibitive, as including a 3 basis point slippage3 cost per
+trade results in negative net Sharpe ratios. Additionally, we note a decline
+in profitability over time, suggesting that markets may be becoming more
+efficient or that opportunities are increasingly challenging to capture or that
+returns used to be more negatively autocorrelated before 2008 (see Figure
+1). However, at least until 2007, it was easier for AI to capture inefficiencies.
+
+                         α     0     0.1   0.2   0.3   0.4   0.5   0.8
+
+                        FF    0.07   1.27 1.80 1.84 1.39 1.39 -0.24
+
+                        PCA   0.04   2.08 2.75 3.17 3.25 2.71      0.07
+
+                       IPCA   -0.47 0.68 1.19 1.34 1.42 1.18 -0.81
+
+Table 2: Simulation of the Gross sharpe ratio of the strategy with the resized
+version (ie. Eq 5) to reduce risk on volatiles stocks based on the zero-shot
+pretrained prediction of Chronos when using as input the exponential moving
+average of daily residual returns through using either the IPCA, the PCA or
+FF. α is the parameter of the EMA from Eq 1. The period is 2002-2016.
+
+    It is particularly interesting to observe that the pre-trained version with
+α = 0 is ineffective until 2007 but seems to work after 2008 (see Figure 1). In
+our interpretation, Chronos is pre-trained on data where ’trend’ serves as an
+efficient indicator, whereas in our dataset, residual returns tend to be nega-
+tively autocorrelated in the short term. We believe that α = 0.3 is optimal,
+as it offsets this effect, helping Chronos to overcome biases from its trend-
+oriented training dataset. Setting α = 0.3 artificially helps Chronos. How-
+ever, it ultimately gets very correlated to the Short-Term Reverseal (STR)
+strategy with β = 0.3 but fails to outperform it . In other words, when
+Chronos is fed with the Exponential Moving Average (EMA), its perfor-
+mance does not exceed that of a zero forecast. Nevertheless, it avoids being
+affected by detrimental noise, which is already a positive outcome.
+   3
+     A transaction cost of 3 basis points per trade is consistent with the average market
+impact—typically between 2 and 3 basis points for very small orders—and brokerage fees
+of approximately 1 basis point. With α = 0.3, the gross Sharpe ratio for PCA is 3.17, but
+it drops to -1.49 after accounting for a 3 basis point trading cost.
+
+
+                                            15
+                                                           FF     PCA IPCA
+
+                       pretrained Chronos α = 0.2          1.80   2.75   1.19
+
+                      trained Chronos α = 0 τ = 15                0.24
+
+                      trained Chronos α = 0.3 τ = 5        2.12   3.90   2.29
+
+                     trained Chronos α = 0.3 τ = 15               3.97
+
+                  resized trained Chronos α = 0.3 τ = 15          4.21
+
+                     trained Chronos α = 0.3 τ = 40               3.80
+
+                            CNN Transformer                3.15   5.01   4.29
+
+                              STR β = 0.2                  2.23   4.16   2.31
+
+                              STR β = 0.3                  2.16   4.03   2.31
+
+                           resized STR β = 0.3             2.31   4.27   2.32
+
+                              STR β = 0.8                  1.24   2.42   1.76
+
+                              STR β = 0.95                 0.98   1.38   1.20
+
+                              autoARIMA                    1.43   2.10   1.22
+
+Table 3: Simulation of the Gross sharpe ratio of different strategies using
+the resized version (ie. Eq 5) to reduce risk on volatiles stocks. α is the
+parameter of the EMA in Eq 1. β is the parameter of the EMA in Eq 10.
+τ is ’max steps’ input in the fine-tuned version of Chronos. The period is
+2002-2016.
+
+
+    Table 3 presents the Sharpe ratios for the fine-tuning case as well as for the
+benchmarks. When setting α = 0, Chronos requires fine-tuning with τ = 15,
+which is the number of iterations of the algorithm,√to achieve a Sharpe ratio
+of 0.24, which corresponds to a t-statistic of 0.24 15 = 0.92. It appears to
+work well until 2008 (see Figure 1), but after that, the pre-trained configu-
+ration may have been completely forgotten due to the numerous fine-tuning
+processes performed since 2002. It might be interesting to test a version
+where there is a regular reinforcement of the pre-trained configuration to
+ensure it remains in memory. Additionally, the correlation with the STR
+strategy is not significant when α = 0 and τ = 15. In contrast, the CNN-
+Transformer appears to be primarily a linear combination of STR strategies
+at different time scales based on its empirical correlation with such a basktet.
+This suggests that the opportunities captured by Chronos may be more com-
+plex than those driven by basic mean reversion process. We also observe that
+
+                                             16
+                      0.7
+
+                      0.6                                                                                            0.00
+
+                      0.5                                                                                           −0.05
+ Cumulative returns
+
+
+
+
+                                                                                               Cumulative returns
+                      0.4
+                                                                                                                    −0.10
+                      0.3
+
+                      0.2                                                                                           −0.15
+
+                      0.1                                                                                           −0.20
+                      0.0
+                               2      4       6      8       0       2      4         6                                        2      4         6      8       0         2      4         6
+                            200    200    200     200    201     201     201    201                                         200    200    200       200    201     201       201    201
+                                                         Dates                                                                                             Dates
+
+
+
+(a) zero-shot pretrained prediction of                                                         (b) zero-shot pretrained prediction of
+Chronos. α = 0.3. The orange is for                                                            Chronos. α = 0. The orange is for
+pca, the green for FF, the blue for                                                            pca, the blue for ipca, the green for
+ipca.                                                                                          FF.
+
+
+
+                      1.4                                                                                            0.07
+
+                      1.2                                                                                            0.06
+                                                                                                                     0.05
+                      1.0
+ Cumulative returns
+
+
+
+
+                                                                                               Cumulative returns
+
+
+
+
+                                                                                                                     0.04
+                      0.8
+                                                                                                                     0.03
+                      0.6
+                                                                                                                     0.02
+                      0.4
+                                                                                                                     0.01
+                      0.2                                                                                            0.00
+                      0.0                                                                                           −0.01
+                               2      4       6      8       0       2      4         6                                        2      4         6      8       0         2      4         6
+                            200    200    200     200    201     201     201    201                                         200    200    200       200    201     201       201    201
+                                                         Dates                                                                                             Dates
+
+
+
+(c) STR β = 0.8. The blue is for ipca,                                                         (d) fined tuned Chronos. α = 0 and
+the orange for pca, the green for FF.                                                          τ = 15. the blue for pca.
+
+Figure 1: Simulation of the strategy. α is the parameter of the EMA in Eq
+1. β is the parameter of the EMA in Eq 10. τ is ’max steps’ input in the
+fine-tuned version of Chronos.
+
+
+the autoARIMA model, which is a classical benchmark in Machine Learning
+
+
+                                                                                          17
+underperforms the STR model, demonstrating that fitting a model is partic-
+ularly challenging when the data are nearly random and contain significant
+noise. This results in underperformance compared to more rigid models like
+STR. Finally, it is interesting to note that the optimal τ for training appears
+to be 15. When τ = 40, the Sharpe ratio decreases, suggesting that Chronos
+may lose some of its pre-trained intelligence.
+
+
+4     Conclusion
+Our results show that AI, specifically LLMs, can be trained on large datasets
+that exclude financial time series and still exhibit enough intelligence to iden-
+tify opportunities in the financial market, previously considered too challeng-
+ing for AI, without the risk of overfitting. Currently, AI lacks the “intelli-
+gence” to find opportunities that remain profitable when factoring in trading
+costs, but we can anticipate that advancements in AI may eventually make
+this feasible.
+    Nevertheless, the specialized models, which theoretically capture well-
+established opportunities in an optimal way, will always prove more efficient,
+while AI could serve as a valuable tool for identifying more complex opportu-
+nities. That assertion is supported by the case of the strong outperformance
+of the STR compared to AutoARIMA, which can capture more complexity
+but whose noisy fit makes it suboptimal and overly erratic.
+
+
+References
+Xavier Amatriain, ’Transformer models:         an introduction and catalog’,
+  arXiv:2302.07730v2, 2023
+
+Abdul Fatir Ansari, Lorenzo Stella, Caner Turkmen, Xiyuan Zhang, Pedro
+ Mercado, Huibin Shen, Oleksandr Shchur, Syama Sundar Rangapuram,
+ Sebastian Pineda Arango, Shubham Kapoor, Jasper Zschiegner, Danielle
+ C. Maddix, Hao Wang, Michael W. Mahoney, Kari Torkkola, Andrew Gor-
+ don Wilson, Michael Bohlke-Schneider, Yuyang Wang, ’Chronos: Learning
+ the Language of time series’, arXiv:2403.07815, 2024
+
+Box, G.E. and G.M., Jenkins. 1970. Time Series Analysis: Forecasting and
+  Control. San Francisco: Holden-Day, 1970
+
+
+                                       18
+Pierre Brugiere, Gabriel Turinici , ’Transformer for Times Series: an Appli-
+  cation to the S&P500’, arXiv2403.02523, 2024
+
+Luyang Chen, Markus Pelger, Jason Zhu, ’deep learning in asset pricing’,
+  Management Science 70(2):714-750, 2023
+
+Da, Z., Q., Liu, and E. Schaumburg. 2014. A Closer Look at the Short-Term
+ Return Reversal. Management Science 60, 3, pp. 658-674, 2014
+
+Abhimanyu Das, Weihao Kong, Rajat Sen, Yichen Zhou, ’A decoder-only
+ foundation model for time-series forecasting’, Proceedings of the 41st Inter-
+ national Conference on Machine Learning, PMLR 235:10148-10167, 2024
+
+Vijay Ekambaram, Arindam Jati, Nam Nguyen, Phanwadee Sinthong, Jayant
+  Kalagnanam,l, ’TSMixer: Lightweight MLP-Mixer Model for Multivariate
+  Time Series Forecasting’, Proceedings of the 29th ACM SIGKDD Confer-
+  ence on Knowledge Discovery and Data Mining, 2023
+
+Engle, R.F. 1978. Estimating structural models of seasonality. In Seasonal
+  Analysis of Economic Time Series, ed. A. Zellner, Washington DC, Bureau
+  of the Census, pp 281-308, 1978
+
+Eugene Fama, ’The behavior of stock market prices’. J. Bus., 38:34–105, 1965
+
+Eugene F. Fama and Kenneth R. French. ”A five-factor asset pricing model.”
+  Journal of financial economics 116.1 (2015): 1-22., 2015
+
+Azul Garza, Cristian Challu, Max Mergenthaler-Canseco, ’TimeGPT-1’,
+  arXiv:2310.03589, 2023
+
+Ian J. Goodfellow, Mirza, M., Xiao, D., Courville, A., and Bengio, Y., ’An
+  Empirical Investigation of Catastrophic Forgetting in Gradient-Based Neu-
+  ral Networks’, arXiv:1312.6211, 2013
+
+Gruver, N., Finzi, M., Qiu, S., and Wilson, A.G. 2023. Large language mod-
+  els are zero-shot time series forecasters. Advances in Neural Information
+  Processing Systems, 36, 19622-19635, 2023
+
+Shihao Gu, B. Kelly, and D. Xiu , ’Autoencoder Asset Pricing Models’,
+  Journal of Econometrics, 22, 429–450, 2021
+
+
+
+                                     19
+Jorge Guijarro-Ordonez, Markus Pelger, Greg Zanotti, ’Deep Learning Sta-
+  tistical Arbitrage’, nber-nsf Time Series Conference, 2021
+Kewei Hou, Chen Xue, and Lu Zhang. ”Replicating anomalies.” The Review
+  of financial studies 33.5 : 2019-2133, 2020
+Zacharia Issa, Blanka Horvath, Maud Lemercier, Cristopher Salvi, ’Non-
+  adversarial training of neuram SDEs with signature kernel scores’, 37th
+  Conference on Neural Information Processing Systems (NeurIPS 2023),
+  2023
+Narasimhan Jegadeesh, ’Evidence of predictable behavior of securities re-
+  turns’, Journal of Finance 45 no. 3, 881898, 1990
+Narasimhan Jegadeesh and S. Titman, ’Returns to buying winners and selling
+  losers: Implications for stock market effciency’, The Journal of Finance 48
+  no. 1, 6591, 1993
+Jingwen Jiang, Bryan Kelly, Dacheng Xiu, ’(Re-)Imag(in)ing price trends’,
+  Journal of Finance, 2023
+Brian Kelly, S. Pruitt, and Y. Su , ’Characteristics Are Covariances: A
+  Unified Model of Risk and Return’, Journal of Financial Economics, 134,
+  501–524, 2019
+Nicole Konigstein, ’Time series transformers challenges and opportunities in
+  long-term financial time series forecasting’, 20th quant finance conference,
+  cannes, 2024
+Harvey, Campbell R., Yan Liu, and Heqing Zhu. ”. . . and the cross-section
+  of expected returns.” The Review of Financial Studies 29.1 (2016): 5-68.,
+  2016
+McLean, R. David, and Jeffrey Pontiff. ”Does academic research destroy
+ stock return predictability?.” The Journal of Finance 71.1 (2016): 5-32,
+ 2016.
+Charles H. Martin, ’A semi empirical theory of (deep) learning’, 2024
+Charles H. Martin, ’Traditional and Heavy-Tailed Self Regularization in Neu-
+ ral Network Models’, Proceedings of the 36th International Conference on
+ Machine Learning, Long Beach, California, PMLR 97, 2019
+
+                                     20
+Yuqi Nie, Nam H. Nguyen, Phanwadee Sinthong, Jayant Kalagnanam, ’A
+  time series is worth 64 words: Long-term forecasting with transformers’,
+  ICLR, 2023
+
+Mishel Qyrana, ’Well-diversified arbitrage portfolios through attentional’,
+ ssrn, 2024
+
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang,
+  Michael Matena, Yanqi Zhou, Wei Li, Peter J. Liu, ’Exploring the Limits of
+  Transfer Learning with a Unified Text-to-Text Transformer’, The Journal
+  of Machine Learning Research, Volume 21, Issue 1, 2020
+
+Kashif Rasul, Arjun Ashok, Andrew Robert Williams, Hena Ghonia, Rishika
+ Bhagwatkar, Arian Khorasani, Mohammad Javad Darvishi Bayazi, George
+ Adamopoulos, Roland Riachi, Nadhir Hassen, Marin Biloš, Sahil Garg, An-
+ derson Schneider, Nicolas Chapados, Alexandre Drouin, Valentina Zant-
+ edeschi, Yuriy Nevmyvaka, Irina Rish, ’Lag-Llama: Towards Foundation
+ Models for Probabilistic Time Series Forecasting’, arXiv:2310.08278, 2024
+
+Sebastien Valeyre,      ’Modélisation fine de la matrice de co-
+  variance/corrélation   des       actions’, Thèse de   doctorat,
+  http://www.theses.fr/2019USPCD057/document, 2019
+
+Tang, Hua, ZHANG, Chong, JIN, Mingyu, et al. 2025. Time series forecast-
+  ing with LLMs: Understanding and enhancing model capabilities. ACM
+  SIGKDD Explorations Newsletter, 2025, 26, 2, 109-118,2025
+
+Sebastien Valeyre, ’Optimal trend following portfolios’, Journal of investment
+  strategies, 2024
+
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+  Aidan N. Gomez, Lukasz Kaiser, Illia Polosukhin, ’Attention Is All You
+  Need’, NIPS Conference on Neural Information Processing Systems, 2017
+
+Wen, Q., Zhou, T., Zhang, C., Chen, W., Ma, Z., Yan, J., and Sun, L. 2022.
+ Transformers in time series: A survey. arXiv preprint arXiv:2202.07125
+
+Kieran Wood, Sven Giegrich, Stephen Roberts, Stefan Zohren, ’Trading with
+  the momentum transformer: an intelligent and interpretable architecture’,
+  arxiv:2112.08534v3, 2022
+
+
+                                     21
+    Wu, D., He, Y., Cao, Y., Fan, J., and Liu, H. 2025. Transformers and their
+     roles as time series foundation models. arXiv preprint arXiv:2502.03383,
+     2025
+
+
+
+    A     Data
+    The datasets provided by Guijarro-Ordonnez et al. (2021) are released at
+    https://github.com/gregzanotti/dlsa-public/tree/main/residuals
+
+
+    B     Parameters of Chronos
+    We downloaded the python package:
+1   ! pip install git + https :// github . com / amazon - science /
+        chronos - forecasting . git
+
+
+
+    B.1    Parameters of pretrained version of Chronos
+    We used the version ”amazon/chronos-t5-tiny” with the following parameters
+    in python:
+1   ChronosPipeline . from_pretrained ( " amazon / chronos - t5 - tiny
+       " , device_map = " cuda " , torch_dtype = torch . bfloat16 )
+
+1   load_model (
+2   model_id = " google / t5 - efficient - tiny " ,
+3   model_type = " seq2seq " ,
+4   vocab_size =4096 ,
+5   random_init = False ,
+6   tie_embeddings = False ,
+7   pad_token_id =0 ,
+8   eos_token_id =1)
+
+1   forecast = pipeline . predict ( batch_context , 1)
+
+
+
+
+                                        22
+ 1   predictions = np . mean ( forecast . numpy () , axis =1) -
+        alpha_chronos * np . reshape ( data_train_t [ -1 , group *
+        siz e_goup _chron os :( group +1) * siz e_goup _chron os ] ,( np .
+        shape ( data_train_t [ -1 , group * size_ goup_c hronos :( group
+        +1) * s ize_go up_chr onos ]) [0] ,1) ) # - all_timeseries
+        [ -1 ,:]# np . quantile ( forecast . numpy () , 0.5 , axis =1)
+ 2   eline . predict ( batch_context , 1)
+
+
+     B.2    Parameters of Fine tuned version of Chronos
+     Starting from the initial pretrained weights at the beginning of the back-
+     test period, we updated the Chronos model’s weights daily throughout the
+     backtest. Each day, this update was performed by running the training pro-
+     cedure on 10 subgroups of the asset universe, using the previous 100 days of
+     data. For each subgroup, training was conducted with τ iterations per day,
+     corresponding to the ”max steps” parameter in the ”TrainingArguments”
+     configuration of the ”trainer.train()” method. In other words, τ successive
+     weight updates were applied using the ’AdamW Torch Fused’ gradient opti-
+     mization algorithm. We tested τ values of 5, 15, and 40. The specific Python
+     training parameters used are listed below:
+ 1   chronos . ChronosConfig (
+ 2   tokenizer_class = ’ M e a nS c a l e U n i f o r m B i n s ’ ,
+ 3   tokenizer_kwargs ={ ’ low_limit ’: -15.0 , ’ high_limit ’:
+        15.0} ,
+ 4   n_tokens =4096 ,
+ 5   n_special_tokens =2 ,
+ 6   pad_token_id =0 ,
+ 7   eos_token_id =1 ,
+ 8   use_eos_token = True ,
+ 9   model_type = " seq2seq " ,
+10   context_length = length_training_chronos -1 ,
+11   predict ion_le ngth =1 ,
+12   num_samples =20 ,
+13   temperature =1 ,
+14   top_k =50 ,
+15   top_p =1 ,
+16   )
+
+
+                                         23
+ 1   Trainin gArgum ents (
+ 2   output_dir = str ( " ./ output / " ) ,
+ 3   p e r _ d e v i c e _ t r a i n _ b a t c h _ s i z e =32 ,
+ 4   learning_rate =1 e -3 ,
+ 5   lr_sche duler_ type = " linear " ,
+ 6   warmup_ratio =0 ,
+ 7   optim = " a damw_t orch_f used " ,
+ 8   logging_dir = str ( " ./ output / logs " ) ,
+ 9   logging_strategy = " steps " ,
+10   logging_steps =500 ,
+11   save_strategy = " steps " ,
+12   save_steps =500 ,
+13   report_to =[ " tensorboard " ] ,
+14   max_steps =5 , # 200000 ,
+15   g r a d i e n t _ a c c u m u l a t i o n _ s t e p s =2 ,
+16   da t a l o a d e r _ n u m _ w o r k e r s =0 , # len ( loaded_data ) ,
+17   tf32 = True , # remove this if not using Ampere GPUs ( e . g
+          . , A100 )
+18   torch_compile = True ,
+19   d d p _ f i n d _ u n u s e d _ p a r a m e t e r s = False ,
+20   r em o v e _ u n u s e d _ c o l u m n s = False ,)
+
+ 1   sh u f f l e d _ t r a i n _ d a t a s e t = tch . ChronosDataset (
+ 2   datasets =( tch . c r e a t e _ g l u o n t s _ d a t a s e t ( all_timeseries ,
+          daily_dates [ l e n g t h _ t r a i n i n g _ c h r o n o s + t :
+          l e n g t h _ t r a i n i n g _ c h r o n o s + t +1]) ) , # list ( tch .
+          c r e a t e _ g l u o n t s _ d a t a s e t 2 ( loaded_data ) )
+ 3   probabilities =[1.0 / len ( all_timeseries ) ] * len (
+          all_timeseries ) ,
+ 4   tokenizer = chronos_config . create_tokenizer () ,
+ 5   context_length = length_training_chronos -1 ,
+ 6   predict ion_le ngth =1 ,
+ 7   min_past =50 ,
+ 8   model_type = " seq2seq " ,
+ 9   imputat ion_me thod = None ,
+10   mode = " training " ,
+11   ) . shuffle ( s h u f f l e _ b u f f e r _ l e n g t h =100)
+
+ 1   trainer = Trainer (
+
+
+                                               24
+2   model = model ,
+3   args = training_args ,
+4   train_dataset = shuffled_train_dataset ,)
+
+1   trainer . train ()
+
+
+
+    B.3    Analysis by WeightWatcher
+    We assessed the quality of both the pretraining and fine-tuning of Chronos
+    using the analysis method described at https://weightwatcher.ai/. Fig
+    2 shows that the power-law exponents fall within the range of 2 to 6 in the
+    fine-tuned case, indicating no risk of overfitting (which would be suggested
+    by exponents below 2) or underfitting (suggested by exponents above 6).
+    The statistics from the fine-tuned model are even more favorable than those
+    of the pretrained model, which shows some exponents above 6, suggesting a
+    minor risk of underfitting.
+
+
+
+
+    Figure 2: Analysis of the Weightwatcher (Martin (2024)) of the distribution
+    of eigenvalues shows that there is no overfitting nor underfitting in both
+    pretrained and finetuned case.
+
+
+
+
+                                        25
+     C    Parameters of the CNN Transformers strat-
+          egy
+     We used the following major parameters provided by Guijarro-Ordonnez
+     et al. (2021) we did not change from https://github.com/gregzanotti/
+     dlsa-public/tree/main/config
+ 1            # Major parameters
+ 2            mode : " test " # can be ’ test ’ or ’ estimate ’
+ 3            results_tag : " " # optional ; try not to use
+                 underscores in this tag , use dashes instead
+ 4            debug : False # set to True to turn on debug
+                 logging and file naming
+ 5            # Model parameters
+ 6            model_name : " CNNTransformer " # name of a class
+                 defined in models folder and initialized in
+                 model folder ’s __init__ . py
+ 7            model : { # contains parameter settings for
+                 __init__ () function of class with name ‘
+                 model_name ‘
+ 8                      lookback : 30 , # number of days of
+                            preprocessed residual time series to
+                            feed into model
+ 9                      dropout : 0.25 ,
+10                      filter_numbers : [1 ,8] ,
+11                      filter_size : 2 ,
+12                      attention_heads : 4 ,
+13                      h id d e n_ u n it s _ f ac t o r : 2 , # multiplicand
+                            of last item in ‘ filter_numbers ‘;
+                            determines number of hidden units ( e .
+                            g . 2*8 = 16)
+14                      # hidden_units : 16 , # use either
+                            hidden_units or hidden_units_factor ,
+                            but not both
+15                      no rm al iz ati on _c on v : True , # normalize
+                            convolutions or not
+16                      use_transformer : True ,
+17                      use_convolution : True ,
+18            }
+19            # Data parameters
+
+
+                                       26
+20   preprocess_func : " p reproc ess_cu msum " # name of
+          a function defined in preprocess . py
+21   u s e _ r e s i d u a l _ w e i g h t s : False # use residual
+          composition matrix to compute turnover , short
+            proportion , etc .
+22   cap_proportion : 0.01 # defines asset universe :
+          0.01 corresponds to a residual data set
+23   factor_models : { # number of factors per
+          residual time series to test , for each factor
+            model
+24                   " IPCA " : [5] ,
+25                   " PCA " : [5] ,
+26                   " FamaFrench " : [5] ,
+27   }
+28   perturbation : { # perturbation of residual time
+            series by noise is optional , leave empty or
+          comment out entirely to disable
+29                   # " noise_type " : " gaussian " ,
+30                   # " noise_mean " : 0.0 ,
+31                   # " noise_std_pct " : 2 ,
+32                   # " noise_only " : False ,
+33                   # " per_residual " : True ,
+34   }
+35   # Training parameters
+36   num_epochs : 100
+37   optimizer_name : " Adam " # see PyTorch docs for
+          potential optimizers
+38   optimizer_opts : { # see PyTorch docs for
+          optimizer options
+39                   lr : 0.001
+40   }
+41   batch_size : 125
+42   retrain_freq : 125 # if mode == ’ estimate ’, this
+          is the number of obs used to form a test set
+          ( chronologically after the training set )
+43   rolling_retrain : True # set to False for no
+          rolling retraining ( i . e . train once , test for
+            all data past training set )
+44   force_retrain : True # force the model to be
+          trained , even if existing weights for the
+
+
+                              27
+        model are saved on disk
+45   length_training : 1000 # size of rolling
+        training window in trading days
+46   early_stopping : False # employ early stopping
+        or not
+47   objective : " sharpe " # objective function : ’
+        sharpe ’ or ’ meanvar ’ or ’ sqrtMeanSharpe ’
+48   # Market frictions parameters
+49   market_frictions : False # enable or disable
+50   trans_cost : 0 # cost in bps per txn side per
+        equity , e . g . 0.0005
+51   hold_cost : 0 # cost in bps for short positions
+        per equity per day , e . g . 0.0001
+
+
+
+
+                        28
+

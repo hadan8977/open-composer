@@ -1,0 +1,2937 @@
+SOURCE: https://afajof.org/management/viewp.php?n=32508
+FETCHED_UTC: 2026-10-04T18:38:26Z
+HTTP: 200|application/pdf
+BYTES_RAW: 629383
+---
+                                       Timing the factor zoo ∗
+
+
+      Andreas Neuhierl†            Otto Randl‡           Christoph Reschenhofer§               Josef Zechner¶
+
+
+
+                                                 March 15, 2023
+
+
+                                                      Abstract
+      We provide a comprehensive analysis of the timing success for equity risk factors. Our analysis covers
+      over 300 risk factors (factor zoo) and a high dimensional set of predictors. The performance of almost all
+      groups of factors can be improved through timing, with improvements being highest for profitability and
+      value factors. Past factor returns and volatility stand out as the most successful individual predictors of
+      factor returns. However, both are dominated by aggregating many predictors using partial least squares.
+      The median improvement of a timed vs. untimed factor is about 2% p.a. A timed multifactor portfolio
+      leads to a 20% increase in return relative to its untimed counterpart.
+
+
+
+      Keywords: time-varying risk premia, factor investing, partial least squares
+      JEL codes: G10, G12, G14
+
+
+
+
+   ∗ We thank Georg Cejnek, Thorsten Hens, Semyon Malamud, Alessandro Melone, Patrick Weiss, and Alexandre Ziegler for
+
+helpful discussions and comments.
+   † Washington University in St. Louis, andreas.neuhierl@wustl.edu
+   ‡ WU Vienna University of Economics and Business, otto.randl@wu.ac.at
+   § WU Vienna University of Economics and Business, christoph.reschenhofer@wu.ac.at
+   ¶ WU Vienna University of Economics and Business, josef.zechner@wu.ac.at
+
+
+
+
+                                                          1
+1     Introduction
+
+Empirical asset pricing research has identified a staggering quantity of priced risk factors. While it may
+
+be challenging to rationalize all these factors as independent sources of systematic risk, it is clear that one
+
+needs a multifactor model to explain the cross-section of asset returns. In light of the empirical asset pricing
+
+literature, it is also uncontroversial that risk premia vary conditionally over time. At the market level, for
+
+example, Fama and French (1988) find that returns are predictable by the dividend-price ratio. This opens
+
+the arena for market timing, but, in a multifactor world, the more general question concerns the timing of all
+
+sources of systematic risk – factor timing. Given the plethora of factors, it is no surprise that a large number
+
+of time series predictors for their returns has also been suggested in the literature. The combination of the
+
+large numbers of factors and predictors amplifies the empirical challenge in giving an answer to the question
+
+- should investors engage in factor timing? We carry out a comprehensive analysis using over 300 factors
+
+and 39 signals and find that factor timing is indeed possible and profitable. We thereby resolve conflicting
+
+findings in the academic literature that result from choosing a smaller subset of factors and/or predictors.
+
+    We first establish a benchmark and study the benefits from factor timing in a univariate fashion, i.e.
+
+we forecast each factor using each of the 39 signals and then aggregate over the signal class. The analysis
+
+reveals that versions of momentum and volatility signals are able to provide improvements on a broad
+
+basis. Other signal classes (valuation spreads, characteristic spreads, reversal and issuer-purchaser spread)
+
+provide improvements, but the results vary more strongly depending on whether we study improvements in
+
+raw returns, alphas or Sharpe ratios. Next, we aim to improve the univariate analysis by aggregating the
+
+signals. Many of the predictive signals are highly correlated as they aim to capture the same phenomenon,
+
+such as versions of momentum. Since conventional ordinary least squares regression is known to perform
+
+rather poorly in such settings, we resort to dimension-reduction techniques to obtain a low dimensional
+
+representation of the predictive information. We use partial least squares regression, which provides a data-
+
+driven method to aggregate the signals for each factor. However, our setup allows for heterogeneous dynamics
+
+across factors. Partial least squares leads to improvements in statistical and economic terms. For the median
+
+factor, we achieve an out-of-sample R2 of approximately 0.75% and an improvement of annual returns of 2
+
+percentage points. We correctly forecast the sign of a factor return approximately 56% of the time and most
+
+notably the improvements relative to passive buy-and-hold are not confined to a small part of the sample,
+
+but accrue almost equally over the full sample.
+
+    We also study the benefits of factor timing for multifactor portfolios. We build quintile portfolios of
+
+factors, i.e. we go long the factors for which we forecast the highest returns and short the factors for which
+
+we forecast the lowest returns. The resulting “high-low” portfolio achieves an annualized Sharpe ratio of 1.3.
+
+
+
+                                                       2
+This is a significant improvement over merely sorting factors on their historical mean returns, which leads
+
+to an annual Sharpe ratio of 0.79.
+
+   While previous research on factor timing has taken the factors as given, we look under the hood and
+
+study the portfolio composition of optimal factor timing portfolios. This bottom-up approach allows us to
+
+answer important questions about the properties of timing portfolios such as turnover as well as their style
+
+tilts. This approach also allows us to focus on large stocks. We find that timing portfolios that focus on
+
+large stocks exhibit moderate levels of turnover and could likely be implemented in practice. The large-cap
+
+timing portfolios achieve an annual average return of approximately 17%, whereas the CRSP value weighted
+
+index only averages 12% p.a. over the same period. Nonetheless, the optimal large-cap timing portfolio still
+
+contains almost 200 stocks on average, thereby providing sufficient diversification of idiosyncratic risk.
+
+   The early literature on factor timing is largely concerned with the market index. While the overall
+
+literature on market timing is too large to be summarized here, we refer to the important early contributions
+
+of Shiller (1981) and Fama and French (1988). Their early work has been extended to other style factors,
+
+such as value by Asness, Friedman, Krail, and Liew (2000) and Cohen, Polk, and Vuolteenaho (2003), who
+
+show that the expected return on a value-minus-growth strategy is atypically high at times when its spread
+
+in the book-to-market ratio is wide. More recently, Yara, Boons, and Tamoni (2021), show returns for value
+
+strategies in individual equities, commodities, currencies, global bonds and stock indexes are predictable by
+
+the value spread between stocks ranked in the top percentiles versus those in the bottom.
+
+   An important methodological innovation is due to Kelly and Pruitt (2013), who link disaggregated
+
+valuation ratios and aggregate market expectations to document high out-of-sample return predictability for
+
+value, size, momentum and industry portfolios. Their finding is particularly useful for our setting as we also
+
+need to aggregate many predictors to forecast individual time series. Other approaches to aggregate signals
+
+are proposed in Leippold and Rueegg (2019), who use momentum in the weights of an integrated scoring
+
+approach to form long-only portfolios that outperform. Dichtl, Drobetz, Lohre, Rother, and Vosskamp
+
+(2019) use cross-sectional information about factor characteristics to tilt factors and show that the model
+
+loads positively on factors with short-term momentum, but avoids factors that exhibit crowding.
+
+   Factor volatility as a potential timing signal deserves special mention as it is subject to considerable
+
+controversy. DeMiguel, Martın-Utrera, and Uppal (2021) show that a conditional mean-variance multifactor
+
+portfolio whose weights on each factor vary with market volatility outperforms out-of-sample. They use the
+
+time-varying parametric portfolio framework of Brandt, Santa-Clara, and Valkanov (2009). Their paper is
+
+most closely related to existing work on volatility-managed portfolios. Moreira and Muir (2017) show that
+
+past factor volatility, estimated from past daily returns, is a useful conditioning variable to choose time-
+
+varying exposure to individual factors, in particular the market factor. Cederburg, O’Doherty, Wang, and
+
+
+                                                       3
+Yan (2020) find that the performance benefits of volatility management no longer obtain once more realistic
+
+assumptions are made regarding portfolio implementation, such as trading costs. They conclude that, once
+
+such frictions are considered, volatility-managed portfolios exhibit lower certainty equivalent returns and
+
+Sharpe ratios than do simple investments in the original, unmanaged portfolios. Barroso and Detzel (2021)
+
+consider volatility-managed factor portfolios, applying various cost-mitigation strategies. They find that even
+
+in this case, realistic estimates of transactions costs render volatility management unprofitable for all factors,
+
+except for the market. Reschenhofer and Zechner (2022) show that portfolio performance can be improved
+
+significantly when jointly using volatilities of past factor returns and option-implied market volatilities to
+
+determine factor exposures. This multi-variate volatility-based factor timing leads to larger improvements
+
+when option-implied market returns are right-skewed and exhibit high volatility.
+
+   Various implementations of factor momentum have also received considerable attention in the literature.
+
+Ehsani and Linnainmaa (2022) show that factor momentum is a likely underlying driver of different forms
+
+of classic cross-sectional momentum. Arnott, Clements, Kalesnik, and Linnainmaa (2021) show that factor
+
+momentum is also the source of industry momentum. Gupta and Kelly (2019) also provide evidence of factor
+
+momentum in many popular asset pricing factors. In contrast, Leippold and Yang (2021) argue that factor
+
+momentum can largely be attributed to high unconditional rather than conditional returns.
+
+   Haddad, Kozak, and Santosh (2020) extract principal components from 50 popular anomaly portfolios and
+
+use the book-to-market ratio to predict future factor returns. They find out-of-sample R2 in the order of 4%
+
+on a monthly basis. They also discuss broader asset pricing implications of their findings. In particular, they
+
+document that a stochastic discount factor that takes into account timing information is more volatile and
+
+has different time series behavior compared to static alternatives, thereby posing new challenges for theories
+
+that aim to explain the cross-section of expected returns. Kelly, Malamud, and Pedersen (2021) allow
+
+for cross-predictability; they use signals of all securities to predict each security’s individual return. They
+
+apply a singular value decomposition to summarize the joint dynamics of signals and returns into “principal
+
+portfolios”. Using a large sample of equity factors and trading signals, they find factor timing strategies
+
+based on principal portfolios to perform well overall and across the majority of signals, outperforming the
+
+approach of Haddad et al. (2020).
+
+   Asness (2016) finds timing strategies that are simply based on the “value” of factors to be very weak
+
+historically. Asness, Chandra, Ilmanen, and Israel (2017) look at the general efficacy of value spreads in
+
+predicting future factor returns. At first, timing based on valuation ratios seems promising, yet when the
+
+authors implement value timing in a multi-style framework that already includes value, they find somewhat
+
+disappointing results. They conclude that value timing of factors is too correlated with the value factor
+
+itself. Adding further value exposure this way is dominated by an explicit risk-targeted allocation to the
+
+
+                                                        4
+value factor. Lee (2017) suggests investors are better off focusing on the underlying rationale of risk premia
+
+rather than attempting to time factors. Ilmanen, Israel, Moskowitz, Thapar, and Lee (2021) examine four
+
+prominent factors across six asset classes over a century. They find only modest predictability, which could
+
+only be exploited in a profitable way for factor timing strategies if trading costs are minimal.
+
+
+
+2      Data
+
+2.1       Factors
+
+Cross-sectional asset pricing has taken a long journey from single-factor models (e.g., Sharpe, 1964) via
+
+parsimonious multi-factor models (e.g., Fama and French, 1992) towards a heavily criticized factor zoo (e.g.,
+
+Cochrane, 2011; Harvey, Liu, and Zhu, 2016). For many factors, their validity in the sense of out-of-sample
+
+evidence on the one hand and mere replication on the other hand has come under scrutiny. Chen and
+
+Zimmermann (2022) give a positive assessment of preceding academic work. In a massive and open source
+
+code replication effort, they reproduce 318 firm-level characteristics. They confirm the original papers’
+
+evidence for all but three characteristics and confirm previous findings of performance decaying, but often
+
+staying positive out-of-sample.1 To analyze factor timing, we clearly need a clean data set of portfolios
+
+that ideally are associated with positive unconditional risk premia, but time variation in returns. Thus, our
+
+starting point is the factor portfolios obtained through applying the methodology of Chen and Zimmermann
+
+(2022).
+
+     To sort stocks into portfolios, we construct firm characteristics based on data obtained from CRSP,
+
+Compustat, IBES, and FRED. Multiple characteristics require specific data to reconstruct the results of the
+
+original studies, and are readily available on the authors websites. For each characteristic, we follow Chen
+
+and Zimmermann (2022) and replicate portfolios defined in the original paper that introduced the anomaly
+
+in the literature. We group similar factors based on their economic interpretation. For factors included in
+
+Hou, Xue, and Zhang (2020), we follow their classification. For the remaining factors, we group them into the
+
+categories intangibles, investment, momentum, profitability, trading frictions, value vs. growth, and other.
+
+Our sample covers the time period from 1926 to 2020. Data availability translates into different starting
+
+points for the various characteristics. In general, price-based characteristics have the longest history, with
+
+accounting data and analyst forecasts becoming available later in time. Figure 1 plots the number of factors
+
+per category over time. Table A.1 provides detailed information on the characteristics, the original studies,
+
+and classification into economic categories. Table A.2 provides descriptive statistics of factor category and
+    1 Their positive assessment is reinforced by the findings of another open-source project, Jensen, Kelly, and Pedersen (2021).
+
+
+
+
+                                                                5
+individual factor returns.
+
+                                          Figure 1: Number of factors per category
+This figure shows the number of factors over time. We group factor portfolios into six economic categories based on the firm character-
+istics used to construct them: Intangibles, Investment, Momentum, Profitability, Trading frictions, Value vs. growth, and Other. Table
+A.1 provides a description of each individual factor and the assigned factor category.
+
+
+
+
+              300
+
+
+
+
+              200
+
+
+
+
+              100
+
+
+
+
+                0
+                                  1940
+
+
+
+
+                                                       1960
+
+
+
+
+                                                                               1980
+
+
+
+
+                                                                                                   2000
+
+
+
+
+                                                                                                                     2020
+                                         Intangibles          Momentum       Profitability       Value vs. growth
+                                         Investment           Other          Trading frictions
+
+
+
+
+2.2     Timing signals
+
+We use a broad set of timing signals that have been proposed in the literature and group them into six classes:
+
+momentum, volatility, valuation spread, characteristics spread, issuer-purchaser spread, and reversal. We
+
+here provide a broad overview of the different signals; full details are given in Appendix B.
+
+
+Momentum:           Momentum signals are based on the observation that past factor returns over fairly recent
+
+periods positively predict future returns. While the classic definition for momentum is cross-sectional and
+
+thus less suited for factor timing, we use variations of time series momentum to construct signals. The
+
+simplest variants of momentum-based timing signals rely on the sign of prior returns. Thus, we derive
+
+momentum signals that assign a weight of wi,t = ±1, conditional on the sign of the past factor return over
+
+an n-months horizon. We use look-back periods n equal to 1, 3, 6, and 12 months. Ehsani and Linnainmaa
+
+(2022) measure the profitability of factor momentum by taking long and short positions in factors based
+
+
+                                                                         6
+on prior returns. In further variants of timing signals, we follow Gupta and Kelly (2019), and obtain the
+
+weights wi,t of the timed factor portfolios as factor i n-months past return, scaled by m-months past return
+
+volatility. Different values for n and m result in different timing signals. Ehsani and Linnainmaa (2022)
+
+measure the profitability of factor momentum by taking long and short positions in factors based on prior
+
+returns. Thus, we derive momentum signals that assign a weight of wi,t = ±1, conditional on the sign of the
+
+past factor return over an n-months horizon. Finally, we follow Moskowitz, Ooi, and Pedersen (2012) and
+
+scale positions such that the timed factor has an ex ante volatility of 40%. In total, we use 16 momentum
+
+signals.
+
+
+Volatility: Moreira and Muir (2017) show that realized volatility predicts future volatility but not returns.
+
+Investment strategies that condition factor exposure on recent realized volatility tend to outperform. Mir-
+
+roring the measures analyzed in their paper, we use the realized standard deviation and the variance of daily
+
+factor returns over the preceding month to construct timing signals. In a variant, we obtain the variance
+
+predictor from an AR(1) process fitted to log variance. Following Cederburg et al. (2020), we estimate a
+
+variant that deals with variation in the number of trading days in a month by scaling realized variance with
+
+the fraction of the number of trading days in a month and 22. An additional volatility signal is obtained from
+
+volatility of market returns instead of factor returns (DeMiguel et al., 2021). Finally, we follow Reschen-
+
+hofer and Zechner (2022), who find improved predictability when complementing moments estimated from
+
+historical data with option-implied information. We thus use the CBOE VIX index and the CBOE SKEW
+
+index for signal construction. The different methods result in a total of seven volatility signals.
+
+
+Valuation spread:      Stock market valuation ratios are a traditional predictor of aggregate returns, (see,
+
+e.g., Campbell and Shiller, 1988). Prices scaled by fundamental variables such as dividends, earnings, or
+
+book values contain information about expected returns of the market. If the aggregate valuation level
+
+predicts aggregate returns, it seems plausible that the relative valuation of value versus growth stocks should
+
+predict their relative returns. Cohen et al. (2003) provide confirming empirical evidence. The value spread
+
+– the book-to-market ratio of value stocks minus that of growth stocks – predicts the HML factor return.
+
+Similarly, Haddad et al. (2020) use a portfolio’s net book-to-market ratio (defined as the difference between
+
+the log book-to-market ratio of the long and the short legs) to predict its return. We define value signals
+
+similarly, standardizing a factor portfolio’s value spread using the rolling and expanding means, respectively.
+
+Variants for the value spread differ with respect to the timing of the signals, with variants (i) end of year
+
+book and market values, (ii) end of year book value and most recent market value, and (iii) quarterly book
+
+and market values. In total, we derive six versions of valuation signals.
+
+
+
+                                                       7
+Characteristics spread: The unconditional factor portfolios result from sorting individual stocks on a
+
+specific characteristic. As noted by Huang, Liu, Ma, and Osiol (2010), it is thus intuitive that the spread in
+
+the characteristic between the top and the bottom deciles proxies for future return dispersion. To construct
+
+the factor-specific characteristic spread, we calculate the difference in the characteristic of the long minus
+
+the short leg, and scale the demeaned spread by its standard deviation. We obtain two signal variants, from
+
+using a rolling or an expanding mean.
+
+
+Reversal:       Moskowitz et al. (2012) document time series momentum at horizons up to 12 months and
+
+reversal for longer horizons. We first compute 60 (120) months past returns and obtain two version of
+
+reversal signals: The 60 (120) month reversal signal translates into a weight equal to 1 minus the annualized
+
+60 (120) month return.
+
+
+Issuer-purchaser spread: External financing activities such as equity issuance net of repurchases and
+
+debt issuance are negatively related to future stock returns (Bradshaw, Richardson, and Sloan, 2006; Pontiff
+
+and Woodgate, 2008). Greenwood and Hanson (2012) find that determining which types of firms issue stocks
+
+in a given year helps forecasting returns of factor portfolios. In particular, the differences between firms who
+
+recently issued vs. repurchased shares predict returns to long–short factor portfolios associated with those
+
+characteristics. We construct issuer-purchaser spreads based on three variants for the determination of net
+
+issuance: the difference between sales and repurchase of common stock, the change in split-adjusted shares
+
+outstanding, and the change in split-adjusted common shares outstanding. The time series are demeaned
+
+using rolling or expanding means, and scaled by standard deviation, resulting in 6 signals.
+
+
+
+3      Empirical analysis
+
+3.1      Univariate factor timing
+
+For univariate factor timing, we construct timed factors as versions of the original factor portfolios, using
+
+one specific timing signal to scale the returns. More precisely, we obtain
+
+
+                                                       τj      j
+                                                     fi,t+1 = wi,t fi,t+1 ,                                                     (1)
+
+         jτ
+where fi,t+1 is the excess return of the timed factor i from time t to t + 1, fi,t+1 is the excess return of the
+                                j
+original factor portfolio, and wi,t is the timing weight constructed from signal j.2 We time each one of the
+    2 For example, when the signal is a proxy for the portfolio’s conditional variance as defined in Moreira and Muir (2017),
+
+
+
+
+                                                                8
+i ∈ {1, . . . , 318} factors at monthly frequency, using j ∈ {1, . . . , 39} signals, resulting in 12,402 timed factor
+
+portfolios.
+
+
+3.1.1      Timing performance for different types of signals
+
+To evaluate the success of factor timing, we look at the difference in returns, Sharpe ratios and time-series
+
+alphas of the timed factor against its untimed version. We denote the timed version of the i-th factor (using
+                τ
+signal j) as fi j . Our measures of success are then computed as:
+
+                                                              T
+                                                          1 X τj
+                                              ∆R̄i,j =         (f     − fi,t+1 ) .                                              (3)
+                                                          T t=1 i,t+1
+
+    To incorporate risk-adjustment, we also look at the difference in Sharpe ratios, i.e.
+
+
+                                                                       τ
+                                               ∆SRi,j = SR(fi j ) − SR(fi ) .                                                   (4)
+
+
+    Some of our timing strategies also make use of leverage, but note that the Sharpe ratios increase propor-
+
+tionally and do not falsely indicate success in such cases.3 We show the results for differences in returns and
+
+Sharpe ratios in Figure 2.
+
+    Figure 2 displays the net fraction of significant performance differences, obtained as the fraction of factors
+
+with significant positive performance differences between the timed and the untimed portfolios minus the
+
+fraction of factors with significant negative performance differences. Panel (a) displays the measure for
+
+average returns. We find that timing signals based on momentum lead to the largest improvements. There
+
+are some exceptions, such as the signals based on Ehsani and Linnainmaa (2022), which by construction
+
+lead to a low average exposure to the original factor. Panel (b) shows that for most signals factor timing on
+
+average decreases Sharpe ratios. Only volatility signals are able to improve Sharpe ratios. The top signals
+
+are based on the standard deviation of the previous month’s daily returns (Moreira and Muir, 2017) and
+
+on S&P 500 implied volatility (Reschenhofer and Zechner, 2022). Time series momentum with 12 months
+
+lookback period (Moskowitz et al., 2012) also delivers strong performance. All other signals have weaker
+
+results.
+
+    Another popular measure to assess the performance of timed factors is time-series alpha (see, e.g., Gupta
+
+and Kelly, 2019). We estimate the alpha of a timed vs. an untimed factor as:
+
+                                                           j            c
+                                                          wi,t =              ,                                                 (2)
+                                                                   σ̂t2 (fi )
+where σ̂t2 (fi ) is the previous month’s realized variance of daily returns, and c a constant that controls the average exposure of
+the strategy.
+   3 Statistical significance can easily be assessed using the test of Jobson and Korkie (1981) of testing the null that ∆SR
+                                                                                                                            i,j = 0.
+
+
+
+
+                                                                   9
+                         Figure 2: Net fraction of positive and negative performance differences
+This figure shows for each timing signal the fraction of factor portfolios with significant positive performance difference between the
+timed and untimed factors minus the corresponding fraction of significant negative performance differences. Colors indicate the timing
+category. Table B.1 provides a description of the individual timing signals and the assigned signal class. Figure (a) displays the net
+fraction for mean returns, Figure (b) for Sharpe ratios. We determine statistical significance at the 5 percent level. For Sharpe ratios,
+we use the z-statistic from the Jobson and Korkie (1981) test of the null that SR(fiτ − fi ) = 0.
+
+                (a) Differences in mean return                                      (b) Differences in Sharpe ratio
+
+
+
+      1                                                                    1
+              Momentum                                                             Momentum
+              Volatility                                                           Volatility
+              Iss.Purch.Spread                                                     Iss.Purch.Spread
+     0.5      Valuation                                                  0.5       Valuation
+              Charact.Spread                                                       Charact.Spread
+              Reversal                                                             Reversal
+
+      0                                                                    0
+
+
+
+    −0.5                                                                −0.5
+
+
+
+     −1                                                                   −1
+              REV1
+              REV2
+               VAL2
+           SPREAD2
+               VAL4
+                IPS1
+               VAL6
+                IPS2
+               VAL3
+                IPS4
+                IPS3
+               VAL5
+               VAL1
+           SPREAD1
+                IPS6
+             MOM10
+             MOM11
+              MOM8
+              MOM9
+             MOM12
+              MOM6
+                IPS5
+              MOM5
+               VOL7
+               VOL1
+               VOL4
+               VOL5
+              MOM2
+               VOL6
+              MOM3
+               VOL2
+               VOL3
+              MOM1
+              MOM4
+            TSMOM2
+              MOM7
+            TSMOM1
+            TSMOM3
+            TSMOM4
+
+
+
+
+                                                                                   VAL2
+                                                                                    IPS2
+                                                                                    IPS1
+                                                                                   VAL6
+                                                                                   VAL3
+                                                                               SPREAD2
+                                                                                   VAL4
+                                                                               SPREAD1
+                                                                                    IPS4
+                                                                                   VAL5
+                                                                                    IPS3
+                                                                                   VAL1
+                                                                                    IPS6
+                                                                                  REV1
+                                                                                    IPS5
+                                                                                 MOM10
+                                                                                  MOM2
+                                                                                  MOM8
+                                                                                 MOM11
+                                                                                  MOM3
+                                                                                  MOM5
+                                                                                  MOM9
+                                                                                  REV2
+                                                                                  MOM1
+                                                                                 MOM12
+                                                                                  MOM7
+                                                                                  MOM4
+                                                                                TSMOM2
+                                                                                TSMOM1
+                                                                                TSMOM3
+                                                                                   VOL7
+                                                                                  MOM6
+                                                                                   VOL4
+                                                                                   VOL1
+                                                                                   VOL5
+                                                                                TSMOM4
+                                                                                   VOL3
+                                                                                   VOL6
+                                                                                   VOL2
+                                                  τj
+                                                fi,t+1 = αi,j + βi,j fi,t+1 + t+1 .                                                 (5)
+
+
+    The magnitude of the alpha has to be interpreted with caution, as it may be due to leverage taken by
+
+a managed strategy. The statistical significance is not influenced by leverage and implies that the managed
+
+strategy expands the efficient frontier. Figure 3 gives a first overview of the univariate timing results.
+
+
+
+
+                                                                   10
+                                                                      Figure 3: Fraction of positive and negative alphas
+This figure shows the fraction of factor portfolios with positive and negative alphas, respectively, for each timing signal. Colors indicate
+the signal class. For each factor i and signal j we obtain the alpha αi,j from an OLS regression of timed factor portfolios’ excess
+                                                           j                                                                       τ
+returns on unmanaged factor portfolio’s excess returns: fi,t+1 = αi,j + βi,j fi,t+1 + t+1 . The dark shaded areas of the bars present
+the fraction of αi,j significant at the 5 percent level, using t-statistics adjusted for heteroscedasticity. Table B.1 provides a description
+of the individual timing signals and the assigned signal class.
+
+
+
+
+                1
+
+
+
+
+              0.5
+
+
+
+
+                0
+
+
+
+
+              0.5
+                           SPREAD2
+                                     SPREAD1
+
+
+
+
+                                                                                                                                                                                                                                                                                      TSMOM1
+                                                                                                                                                                                                                                                                                               TSMOM2
+                                                                                                                                                                                                                                                                                                        TSMOM3
+                                                                                                                                                                                                                                                                                                                 TSMOM4
+                                                                                                                                                                                                                           MOM11
+
+
+
+
+                                                                                                                                                                                                                                                               MOM10
+
+
+                                                                                                                                                                                                                                                                              MOM12
+                                               MOM8
+
+
+
+
+                                                                                                                                                     MOM5
+                                                                                                                                                            MOM6
+
+
+
+
+                                                                                                                                                                                                                    MOM3
+
+
+                                                                                                                                                                                                                                   MOM7
+                                                                                                                                                                                                                                          MOM2
+                                                                                                                                                                                                                                                 MOM4
+                                                                                                                                                                                                                                                        MOM9
+
+
+                                                                                                                                                                                                                                                                       MOM1
+                    REV1
+
+
+
+
+                                                                    REV2
+                                                                           VOL7
+
+
+
+
+                                                                                                                                              VOL6
+
+
+
+
+                                                                                                                                                                   VOL5
+                                                                                                                                                                          VOL3
+                                                                                                                                                                                 VOL4
+                                                                                                                                                                                        VOL1
+                                                                                                                                                                                               VOL2
+                                                      VAL6
+                                                             VAL2
+
+
+
+
+                                                                                                VAL4
+
+
+
+
+                                                                                                                     VAL5
+                                                                                                                            VAL1
+                                                                                                                                       VAL3
+                                                                                  IPS4
+                                                                                         IPS2
+
+
+                                                                                                       IPS1
+                                                                                                              IPS3
+
+
+
+
+                                                                                                                                                                                                      IPS6
+                                                                                                                                                                                                             IPS5
+
+
+
+
+                                                                                                   Characteristic spread                                                           Momentum                                    Valuation
+                                                                                                   Issuer−purchaser spread                                                         Reversal                                    Volatility
+
+
+
+
+    Figure 3 plots the fraction of factor portfolios with positive and negative alphas, respectively, for each
+
+timing signal. Each bar has a length of 1; the vertical position of the bar shows the fraction of positive and
+
+negative alphas. Areas with dark borders within a bar present the fraction of timed factors with statistically
+
+significant α. We use a 5 percent significance level, with t-statistics adjusted for heteroscedasticity. The
+
+signals are ranked according to the fraction of positive alphas. Momentum signals achieve the highest fraction
+
+of positive αs. More importantly, positive alphas tend to be statistically significant, while there is almost no
+
+statistical significance for negative alphas. The single best momentum signal is time series momentum with 12
+
+months lookback period, as defined in Moskowitz et al. (2012). Volatility timing signals achieve performance
+
+improvements in the same ballpark as momentum, with high percentages of statistically significant positive
+
+alphas. The top signal in this group is the standard deviation of the previous month’s daily returns, as
+
+described in Moreira and Muir (2017). Timing signals based on valuation, reversal, characteristics spreads
+
+and issuer-purchaser spread are less successful.
+
+
+
+                                                                                                                                                        11
+3.1.2    Timing performance for different categories of factors
+
+In the previous analysis, we aggregated the performance across all 318 factors for different timing signals.
+
+While some level of aggregation is clearly necessary for tractability, it may mask important heterogeneity
+
+in timing success across factors. Factors that capture different sources of risk can potentially be timed with
+
+different signals. We therefore use the economic interpretation of factors to group them into seven categories:
+
+intangibles, investment, momentum, profitability, trading frictions, value vs. growth, and other.4 We compile
+
+the results for categories of factors in Table 1. The columns show results for all signals, momentum signals,
+
+and volatility signals.5 Panel A displays average αs of time-series regressions. We report simple averages
+
+over all factors within an economic category and for signals of a given type. Average t-statistics in brackets
+
+are based on heteroscedasticity-adjusted standard errors.
+  4 See Table A.1 for further details.
+  5 We relegate details for signals based on the the characteristic spread, issuer-purchaser spread, reversal and valuation to
+
+appendix Table C.1.
+
+
+
+
+                                                             12
+                           Table 1: Performance impact of factor timing with single signals
+This table shows timing success of different signals for individual factors, grouped into economic categories. The columns to the
+left, middle, and right show results for all signals, momentum signals, and volatility signals, respectively.        Panel A displays the
+annualized average alphas of time-series regressions of a managed factor portfolio on the corresponding unconditional factor portfolio:
+ τ j
+fi,t+1 = αi,j + βi,j fi,t+1 + t+1 . We report simple averages over all factors fi within an economic category and all signals τj of a given
+type. We report average t-statistics in brackets, where statistical significance is based on heteroscedasticity-adjusted standard errors.
+∆SR shows the average difference in the annualized Sharpe ratio of the timed versus original factor across factor/signal combinations.
+In brackets, we show the average z-statistic from the Jobson and Korkie (1981) test of the null that ∆SR = 0. Panel B reports
+the percentage of positive (+) and negative (−) alphas. Numbers in brackets are the percentages of positive and negative alphas,
+respectively, that are statistically significant at the 5% level. Panel C reports the percentage of timed factor/signal combinations with
+a higher (+) and lower (−) Sharpe ratio; fractions with statistically significant changes in Sharpe ratios are given in brackets. Table
+C.1 shows results for the remaining timing signal types. We describe the factors and their allocation to an economic category in Table
+A.1. Table B.1 describes the timing signals.
+
+
+
+                                   All signals                       Momentum signals                        Volatility signals
+A. Average α and ∆SR
+                             α                ∆SR                  α                  ∆SR                  α                ∆SR
+All factors             3.283 [1.018]     -0.119 [-0.627]      6.666 [1.696]       0.011 [-0.157]     1.448 [1.257]      0.046 [ 0.562]
+Intangibles             2.875 [0.898]     -0.120 [-0.597]      6.026 [1.619]       0.016 [-0.089]     0.860 [0.891]      0.025 [ 0.307]
+Investment              2.311 [0.951]     -0.163 [-0.945]      5.121 [1.832]       0.025 [-0.224]     0.702 [1.112]      0.018 [ 0.290]
+Momentum                4.028 [1.408]     -0.302 [-1.356]      6.178 [1.343]      -0.146 [-1.094]     5.111 [3.439]      0.208 [ 2.494]
+Other                   3.067 [0.897]     -0.105 [-0.602]      6.278 [1.627]       0.005 [-0.152]     0.814 [0.608]     -0.001 [-0.024]
+Profitability           5.098 [1.394]     -0.045 [-0.164]     10.245 [2.165]       0.090 [ 0.362]     2.609 [1.808]      0.115 [ 1.213]
+Trading frictions       2.348 [0.681]     -0.095 [-0.478]      4.048 [0.902]      -0.044 [-0.449]     0.953 [0.910]      0.022 [ 0.287]
+Value vs. growth        4.393 [1.318]     -0.088 [-0.528]     10.076 [2.449]       0.078 [ 0.208]     1.799 [1.826]      0.070 [ 0.987]
+
+B. Percentage of positive and negative α
+                         +              −                           +                   −                  +                  −
+All factors        0.706 [0.277]    0.294 [0.035]               0.832 [0.428]       0.168 [0.012]     0.706 [0.363]       0.294 [0.053]
+Intangibles        0.700 [0.244]    0.300 [0.024]               0.831 [0.406]       0.169 [0.004]     0.714 [0.288]       0.286 [0.049]
+Investment         0.707 [0.271]    0.293 [0.032]               0.925 [0.452]       0.075 [0.000]     0.705 [0.320]       0.295 [0.043]
+Momentum           0.734 [0.337]    0.266 [0.020]               0.776 [0.332]       0.224 [0.014]     0.883 [0.747]       0.117 [0.006]
+Other              0.690 [0.225]    0.310 [0.027]               0.820 [0.385]       0.180 [0.004]     0.564 [0.213]       0.436 [0.055]
+Profitability      0.777 [0.367]    0.223 [0.021]               0.907 [0.571]       0.093 [0.007]     0.792 [0.441]       0.208 [0.024]
+Trading frictions 0.648 [0.217]     0.352 [0.060]               0.667 [0.284]       0.333 [0.057]     0.668 [0.348]       0.332 [0.118]
+Value vs. growth 0.730 [0.377]      0.270 [0.057]               0.904 [0.598]       0.096 [0.003]     0.829 [0.526]       0.171 [0.038]
+
+C. Percentage of positive and negative ∆SR
+                        +               −                           +                   −                  +                  −
+All factors        0.370 [0.104]    0.630 [0.245]               0.409 [0.114]       0.591 [0.158]     0.612 [0.209]       0.388 [0.066]
+Intangibles        0.385 [0.074]    0.615 [0.211]               0.469 [0.096]       0.531 [0.130]     0.588 [0.148]       0.412 [0.054]
+Investment         0.320 [0.115]    0.680 [0.342]               0.342 [0.133]       0.658 [0.217]     0.587 [0.137]       0.413 [0.071]
+Momentum           0.290 [0.141]    0.710 [0.397]               0.267 [0.051]       0.733 [0.315]     0.831 [0.623]       0.169 [0.013]
+Other              0.354 [0.079]    0.646 [0.215]               0.399 [0.112]       0.601 [0.132]     0.463 [0.103]       0.537 [0.076]
+Profitability      0.462 [0.137]    0.538 [0.184]               0.554 [0.162]       0.446 [0.075]     0.727 [0.318]       0.273 [0.041]
+Trading frictions 0.385 [0.115]     0.615 [0.222]               0.360 [0.110]       0.640 [0.224]     0.568 [0.208]       0.432 [0.121]
+Value vs. growth 0.385 [0.116]      0.615 [0.234]               0.433 [0.114]       0.567 [0.084]     0.777 [0.251]       0.223 [0.049]
+
+
+
+     The average annualized alpha across all factors and all signals equals 3.3%. This number is economically
+
+large, but there is weak statistical significance and strong heterogeneity between factor categories. Timing
+
+profitability factors produces the highest average α of 5.1%. This contrasts with an average α of 2.3% for
+
+
+
+                                                                    13
+factors related to trading frictions. Column ∆SR shows the average difference in the Sharpe ratio of the
+
+timed versus original factor. We show the average z-statistic from the Jobson and Korkie (1981) test of
+
+the null that ∆SR = 0 in brackets. Unsophisticated application of all signals on all factors tends to reduce
+
+risk-adjusted returns on average. Using just momentum signals shows more successful factor timing. In
+
+particular, average αs for profitability and value vs. growth factors are economically high (above 10% p.a.)
+
+and statistically significant; the corresponding change in Sharpe ratios is positive. Timing momentum factors
+
+with momentum signals is least attractive: Average alphas are statistically insignificant, and the average
+
+change in Sharpe ratios is negative. While timing with volatility signals leads to smaller gains in alphas,
+
+a higher proportion of alphas is statistically significant. Further, timing with volatility signals enhances
+
+Sharpe ratios. Volatility signals work best for momentum factors, where the average Sharpe ratio gain of
+
+0.2 is highly significant.
+
+   Panel B reports the percentage of positive (+) and negative (−) αs. Numbers in brackets are the
+
+percentages of positive and negative αs, respectively, that are statistically significant at the 5% level. Our
+
+previous findings are reinforced. Momentum signals are associated with a particularly high fraction of
+
+positive alphas. This is true in particular for investment, profitability, and value vs. growth factors. For the
+
+latter group, roughly 60% of factors have a statistically significant alpha. Importantly, momentum signals
+
+produce virtually no statistically significant negative alphas.
+
+   We turn to Sharpe ratios in Panel C and report the percentage of timed factor/signal combinations with
+
+a higher (+) and lower (−) Sharpe ratio. Fractions with statistically significant changes in Sharpe ratios are
+
+given in brackets. Assessing the differences in Sharpe ratio, momentum signals are not able to time factors
+
+that well – i.e. no economic category has more than 50% positive differences in the Sharpe ratio. The average
+
+change in Sharpe ratios is actually negative. It seems that momentum signals enhance the performance, but
+
+increase unpriced risk even more. Strategies based on those signals might be useful if they constitute only a
+
+small part of the portfolio. Timing with volatility signals improves Sharpe ratios of 83 percent of momentum
+
+factors, with 62 percent being statistically significant.
+
+
+3.2    One factor - many signals
+
+Section 3.1 suggests heterogeneity in timing capabilities: The extent to which factor timing works appears
+
+to be factor and signal-specific. Clearly we cannot feasibly analyze the combination of 318 factors × 39
+
+signals in a simple manner but need to resort to appropriate tools for dimension reduction. In a first
+
+step of aggregation, we still time each factor individually, but we use multiple signals to make a timing
+
+decision. Since many of the signals are highly correlated, it is clear that we cannot simply run a “kitchen
+
+
+
+                                                       14
+sink” regression and expect to obtain sensible predictions. We therefore resort to partial least squares (PLS)
+
+as the appropriate signal aggregation technique. We briefly introduce PLS in the next section and refer to
+
+Kelly and Pruitt (2013, 2015) for a comprehensive treatment.
+
+
+3.2.1    Partial least squares
+
+For the aggregation of the right-hand side, we could use principal components analysis (PCA), a well-known
+
+statistical approach that is widely applied in finance. Intuitively, PCA extracts k < J linear combinations
+
+of the original J = 39 signals in a way to explain as much as possible of the variance of the original signals.
+
+Yet, our goal is not primarily a parsimonious description of the signals per se, but to find an efficient set of
+
+predictors for time-varying factor returns. Hence, we resort to a related technique that is better suited to be
+
+used in a regression setting – partial least squares. Kelly and Pruitt (2013) use PLS to successfully predict
+
+the market index.6 The main idea of PLS in our setting is to find linear combinations of the original signals
+
+that maximize their covariances with the factor return. More precisely, consider the regression model
+
+
+
+                                                    fi = Wi βi + i ,                                                    (6)
+
+
+where fi is a T × 1 vector of factor i’s one-period ahead excess returns, and T is the sample length. Wi is
+
+a T × J factor-specific signal matrix that contains J = 39 column vectors wij , βi is a J × 1 vector of signal
+
+sensitivities and i is a T × 1 vector of errors. PLS decomposes Wi such that the first k vectors can be used
+
+to predict fi . We can write this as
+
+
+
+                                                 fi = Wi Pik bki + ui .
+                                                            
+                                                                                                                         (7)
+
+
+Pik is a J ×k matrix with columns vm , m = 1, . . . , k, and bki is a k ×1 vector of sensitivities to the aggregated
+
+signals. To find the vm s, we iteratively solve the following problem
+
+
+
+            vm = arg max[cov(fi , Wi v)]2 , s.t. v 0 v = 1, cov(Wi v, Wi vn ) = 0 ∀ n = 1, 2, ..., m − 1 .7              (8)
+                        v
+
+
+   PLS is well suited for problems such as factor timing as it can deal with highly correlated signals. In
+
+particular, a linear combination of the signals can be identified as a useful predictor of factor returns even if
+
+it does not explain much of the variation among signals.
+  6 Light, Maslov, and Rytchkov (2017) employ PLS successfully for cross-sectional predictions.
+  7 Note that we run a separate PLS regression for each factor to capture differential dynamics in factor risk premia.To
+                                          (i)
+emphasize this procedure, we could write vm to emphasize the dependence on i. In order to ease the notation, we omit this
+superscript.
+
+
+
+
+                                                            15
+3.2.2    Univariate factor timing with PLS
+
+Our approach is to produce one-month ahead forecasts using standard predictive regression of the dominant
+
+components of factor returns. For each one of 314 factors,8 we run four PLS regressions as specified in
+
+Eq. (7), where the number of components k equals 1, 2, 3, and 5. We use each factor’s first half of the
+
+sample to obtain initial estimates, and use the second half to form out-of-sample (OOS) forecasts. To this
+
+end, our OOS results are not subject to a look-ahead bias. As in Campbell and Thompson (2008), we use
+
+monthly holding periods and calculate out-of-sample R2 as
+
+                                                         
+                                                         PT                2
+                                                          f i,t+1 − ˆi,t+1
+                                                                    f
+                                          2          t=1
+                                         ROOS = 1 − PT                     2 ,                                             (9)
+                                                                    ¯
+                                                     t=1 fi,t+1 − fi,t+1
+
+
+where fˆi,t+1 is the predicted value from a predictive regression estimated through period t, and f¯i,t+1 is the
+
+historical average return estimated through period t. To assess the economic importance of factor timing, we
+
+follow Campbell and Thompson (2008) and compare the average excess return that a buy-and-hold investor
+                                                                        2
+will earn from investing in factors without timing, R∗ = SR
+                                                          γ , to the average excess returns earned by an
+
+active investor exploiting predictive information through PLS regressions, obtained from
+
+
+                                                          1 SR2 + ROOS
+                                                                    2
+                                                  R∗ =            2    .                                                   (10)
+                                                          γ 1 − ROOS
+
+    We follow Campbell and Thompson (2008) and also assume that γ = 1, i.e. unit risk aversion.
+
+    Table 2 presents statistical and economic measures of timing success in the PLS framework. Panel A
+                     2
+reports the average ROOS of these regressions and the 25th, 50th, and 75th percentiles. Panel B groups the
+                                                          2
+factors into economic categories and reports the average ROOS per category. Panels C and D report average
+
+excess returns for all factors and economic categories, respectively.
+   8 We lose 4 factors due to lack of sufficient historical data. These are: Activism1, Activism2, Governance, and ProbInformed-
+
+Trading.
+
+
+
+
+                                                              16
+                                 Table 2: Predictive regressions of factor excess returns
+                                2
+This table shows out-of-sample ROOS and active investor excess returns obtained from predictive regressions of factor returns on timing
+signals. For each one of 314 factors, we run four partial least squares (PLS) regressions, where the number of components equals 1, 2,
+                                       2
+3, and 5. Panel A reports the average ROOS of these regressions and the 25, 50, and 75 percentiles. Panel B groups the factors into
+                                             2
+economic categories and reports the average ROOS per category. Panel C compares the annualized average excess return R∗ (ORG) that
+a buy-and-hold investor will earn from investing in factors without timing to the average excess returns earned by an active investor
+exploiting predictive information through PLS regressions, R∗ (P LS). We follow Campbell and Thompson (2008) to determine untimed
+returns R∗ = SR2 /γ, shown in column ORG, and timed returns R∗ = (SR2 + ROOS
+                                                                         2             2
+                                                                             )/(γ(1 − ROOS )), shown in columns PLS 1 to
+PLS 5, assuming unit risk aversion γ. Panel D displays average active investor returns per economic factor category. We use the first
+half of the sample to obtain initial estimates, and report only values from out-of-sample regressions using an expanding window. We
+describe the factors and their allocation to an economic category in Table A.1. Table B.1 describes the timing signals.
+
+
+                                                             ORG         PLS        PLS        PLS        PLS
+                     N of components                                       1          2          3          5
+                                     2
+                     A. Full sample ROOS
+                     Mean                                               0.754     -0.218     -1.044     -2.058
+                     25 perc.                                          -0.166     -1.186     -2.116     -3.133
+                     50 perc.                                           0.757      0.097     -0.444     -1.290
+                     75 perc.                                           1.793      1.285      0.886      0.352
+                                           2
+                     B. Economic category ROOS
+                     Intangibles                                        0.467     -0.809     -1.777     -2.447
+                     Investment                                         0.789     -0.175     -0.572     -1.365
+                     Momentum                                           0.017     -1.118     -1.401     -1.420
+                     Other                                              0.551     -0.200     -1.064     -2.009
+                     Profitability                                      1.404      0.283     -1.397     -3.781
+                     Trading frictions                                  0.451     -0.838     -1.562     -2.761
+                     Value vs. growth                                   1.612      1.185      0.456     -0.527
+                     C. Full sample R*
+                     Mean                                    2.364      3.202      2.238      1.461     0.606
+                     D. Economic category R*
+                     Intangibles                             1.345      1.887      0.631     -0.274     -0.871
+                     Investment                              3.716      4.580      3.581      3.219      2.476
+                     Momentum                                4.706      4.773      3.724      3.440      3.437
+                     Other                                   1.951      2.589      1.859      1.010      0.122
+                     Profitability                           1.626      3.133      1.978      0.408     -1.228
+                     Trading frictions                       1.538      2.039      0.748      0.149     -0.781
+                     Value vs. growth                        3.151      4.908      4.503      3.773      2.813
+
+
+
+    Table 2 shows the statistical and economic gains of using partial least squares to time factors. The average
+               2
+out-of-sample ROOS (over all factor portfolios) for partial least squares predictive regression using just one
+
+component (PLS1) equals 0.75%, on a one-month prediction horizon. This corresponds to an increase in the
+
+squared Sharpe ratio of about 40% from 2.36 to 3.20 for a mean-variance investor. Thus, timing leads to an
+
+increase in excess returns and Sharpe ratios of active investors in single-factor portfolios. The increase in
+
+excess returns is pervasive but heterogeneous among economic categories. The largest gains are obtained for
+
+
+
+                                                                  17
+the profitability and value vs. growth factor categories. The gain for momentum-based factors is relatively
+
+meager.
+
+   In practice, risk constraints or other frictions might prohibit an investor from fully exploiting the infor-
+
+mation of the signals. The results presented in Table 2 may thus appear as an overstatement. To alleviate
+
+this concern we construct the simplest possible univariate timing strategies. For each of the 314 factors we
+
+time the long and short legs separately. We invest 100% in the long leg if the forecast is positive and earn
+
+an excess return of zero otherwise. We separately present the results for the short leg, where we either fully
+
+short the stocks in that portfolio or earn an excess return of zero otherwise. Return predictions are made
+
+using PLS regressions, where we again vary the number of components. In order to compute performance
+
+statistics, we use a two-step procedure: First, we compute statistics for each individual factor separately for
+
+its out-of-sample period. Second, we take cross-sectional averages. This means we do not take the perspec-
+
+tive of an investor diversified across factors, but an investor who is randomly sampling one factor from the
+
+set of 314 factors. We report the average return (R), standard deviation (SD), Sharpe ratio (SR), maximum
+
+drawdown (maxDD), turnover, the proportion of months with long positions (N), and the hit rate (fraction
+
+of months with a positive return prediction which are correctly followed by a positive factor return).
+
+   Table 3 reports performance statistics for untimed factors and univariate factor timing portfolios. Panel
+
+A reports results for the long leg. We see that timing individual factors is attractive. It increases average
+
+returns from about 4% to 5% p.a. and increases Sharpe ratios from 0.33 to 0.45. Panel B shows results
+
+for the short leg of timed factors. It is notoriously hard to predict one-month negative returns for factors
+
+that have unconditional positive returns. While the short leg successfully earns returns on average, it is not
+
+possible to generate a hit rate above 50%. Panel C reports statistics for long-short portfolios that combine
+
+the long and the short legs from Panels A and B. We find that long-short portfolios have a higher return, but
+
+only slightly higher Sharpe ratios than timed long-only portfolios. Panel D shows performance over time.
+
+Irrespective of the number of components for the PLS regression, the timed strategies beat the untimed
+
+performance every single period. Interestingly, there is no performance decay. On the contrary, performance
+
+improves as more information becomes available. At the start of the out-of-sample period, from 1975-1989,
+
+one component improves the return by 46%, from 4.49% to 6.60%. The following period, from 1990-2004,
+
+there is a gain of 49%, from 5.77% to 8.59%. For the last third of our sample, 2005-2020, we find a gain of
+
+67%, from 2.24% to 3.73%.
+
+
+
+
+                                                      18
+                                               Table 3: Univariate factor timing
+This table shows performance statistics for univariate factor timing portfolios. Panel A reports results for the long leg of timed factors.
+For each one of 314 factors, the timed portfolio is 100% in the long leg if the forecast is positive and earns an excess return of zero
+otherwise. Predicted returns come from partial least squares (PLS) regressions, where the number of factors equals 1, 2, 3, or 5.
+Column ORG shows results for the untimed factors. All statistics are obtained in a two-steps procedure: First, we compute statistics
+for each individual factor separately for its out-of-sample period. Second, we take cross-sectional averages. We report the annualized
+average return in percent, annualized standard deviation in percent, annualized Sharpe ratio, maximum drawdown in percent, turnover
+in percent, the proportion of months with long positions, and the hit rate (fraction of months with a positive return prediction which
+are correctly followed by a positive factor return). Panel B shows results for the short leg of timed factors, where the timed portfolio is
+short 100% in the original factor when the predicted return is negative. Panel C reports statistics for long-short portfolios constructed
+from the long and the short legs of Panels A and B. Panel D shows factor performance over different time periods. We describe the
+factors and their allocation to an economic category in Table A.1. Table B.1 describes the timing signals.
+
+
+                                                                            ORG            PLS          PLS          PLS          PLS
+N of components                                                                              1            2            3            5
+A. Factor performance: long-leg
+R long                                                                      3.964        4.952        4.859        4.716        4.579
+SD long                                                                    12.873       10.710       10.532       10.454       10.364
+SR long                                                                     0.334        0.448        0.450        0.439        0.429
+maxDD long                                                                 46.023       32.707       32.516       32.743       33.030
+Turnover long                                                                          207.302      205.033      208.350      207.579
+N long                                                                                  74.245       71.230       70.491       68.998
+Hit rate long                                                                           79.028       76.135       75.100       73.651
+B. Factor performance: short-leg
+R short                                                                                  0.988        0.895        0.752         0.615
+SD short                                                                                 6.084        6.591        6.812         7.075
+SR short                                                                                 0.094        0.074        0.053         0.036
+maxDD short                                                                             33.975       35.967       36.165        36.157
+Turnover short                                                                          79.377       94.989      100.374        108.81
+N short                                                                                 25.755        28.77       29.509        31.002
+Hit rate short                                                                          29.858       33.161       33.547        34.946
+C. Factor performance: long-short
+R ls                                                                                     5.941        5.755        5.467        5.193
+SD ls                                                                                   12.840       12.841       12.853       12.866
+SR ls                                                                                    0.485        0.473        0.446        0.421
+maxDD ls                                                                                37.252       38.516       39.553       40.218
+Turnover ls                                                                            551.106      555.979      557.094      558.361
+Hit rate ls                                                                             56.905       56.800       56.405       56.237
+D. Factor performance: ORG and long-short over time
+05/1975 - 12/1989                                                           4.494        6.601         6.319        6.106        6.215
+01/1990 - 12/2004                                                           5.771        8.590         8.257        7.769        7.498
+01/2005 - 12/2020                                                           2.237        3.728         3.621        3.335        3.032
+
+
+
+
+3.3      Multifactor timing
+
+The previous analyses show that factor timing can be beneficial even if applied to individual factors. However
+
+it is unlikely that a sophisticated investor seeks exposure to only one source of systematic risk. We therefore
+
+
+                                                                    19
+investigate the gains of factor timing for an investor who seeks exposure to multiple factors. This is also
+
+likely a better approximation to the stochastic discount factor.
+
+   In the first step, we strive for the simplest possible implementation to utilize the outcome from factor
+
+timing regressions. Thus, we form long-leg portfolios, which at any time t is the equally weighted portfolio
+
+of all factors which have positive predicted returns for time t + 1. In contrast to the single-factor portfolios
+
+discussed in a previous section, the multi-factor portfolio is always fully invested, but the number of factors
+
+it invests in can vary over time. We denote Nt+ the number of factors for which we predict a positive return
+
+for period t + 1. Similarly, the short leg consists of all Nt− factors with negative predicted returns. Both
+
+portfolios are equally weighted. The benchmark portfolio, denoted ORG, is a naive untimed 1/N multifactor
+
+portfolio. More specifically, we define the benchmark portfolio as
+
+                                                           N
+                                              ORG     1 X
+                                             ft+1 =         fi,t+1                                         (11)
+                                                      N i=1
+
+and the long leg portfolio of timed factors with positive expected returns as
+
+
+                                             P LSn    P LSn
+                                            ft+1   = wi,t   fi,t+1 ,                                       (12)
+
+
+where P LSn is the portfolio based on predictions of factor returns with PLS with n components and the
+        P LSn
+weight wi,t   equals 1/Nt+ for all factors with positive predicted returns, and 0 otherwise. The short leg
+
+portfolio is defined analogously, consisting of factors with negative predicted returns. For each portfolio, we
+
+calculate average return, standard deviation, Sharpe ratio, maximum drawdown and alphas relative to the
+
+Fama-French 5-factor plus momentum asset pricing model. For the timed portfolios, we report the average
+
+return difference to the benchmark (and its t-value) and the difference in Sharpe ratios.
+
+
+
+
+                                                      20
+                                        Table 4: Multivariate factor timing portfolio
+This table shows performance statistics for multivariate factor timing portfolios. ORG is an untimed portfolio, where all factors available
+at time t are equally weighted. Panel A reports statistics for the long leg, where portfolios PLS are formed at each point in time as
+equally weighted portfolios of factors with positive predicted returns. We use partial least squares (PLS) regressions with the number
+of components equal to 1, 2, 3, and 5, respectively, for prediction. We report annualized return, standard deviation, Sharpe ratio,
+maximum drawdown, annualized turnover and the average proportion of factors included in the long leg portfolio. Panel B shows risk
+adjusted performance measures: The alpha from a multifactor regression on the Fama-French five factors plus momentum, its t-value
+and the R2 from the regression. Panel C reports t-statistics of the return difference between the predicted and original factor portfolio
+as well as the Jobson and Korkie (1981) test of Sharpe ratios, with the null hypothesis ∆SR = 0. Panel D reports statistics for the short
+leg, where portfolios PLS are formed at each point in time as equally weighted portfolios of factors with negative predicted returns.
+Panel E shows performance statistics of the corresponding long-short portfolio. We estimate parameters strictly out-of-sample using an
+expanding window, where only data up to time t are considered to predict returns from t to t + 1. We use the first half of the sample
+to obtain initial estimates. We describe the factors and their allocation to an economic category in Table A.1. Table B.1 describes the
+timing signals.
+
+
+                                                                ORG            PLS          PLS          PLS           PLS
+            N of components                                                      1            2            3             5
+            A. Portfolio performance: long-leg
+            R long                                              4.942        5.844        5.818         5.658        5.554
+            SD long                                             2.242        2.993        2.752         2.635        2.515
+            SR long                                             2.205        1.952        2.114         2.147        2.209
+            maxDD long                                          3.048        5.314        4.462         3.177        3.167
+            Turnover long                                                   27.786       27.442        29.636       29.170
+            N long                                                          75.750       73.053        72.326       70.888
+            B. Risk-adjusted performance
+            FF5+M α                                             3.877        4.523        4.689         4.597        4.564
+            FF5+M t(α)                                         17.091       13.818       14.828        15.072       15.271
+            R2                                                 57.699       50.599       45.474        44.661       41.663
+            C. Timed vs. original
+            t(∆R)                                                             3.693        4.020        3.453        3.183
+            zJK (∆SR)                                                        -2.586       -0.942       -0.602        0.044
+            D. Portfolio performance: short-leg
+            R short                                                          0.902        0.876         0.716        0.612
+            SD short                                                         1.678        1.497         1.424        1.321
+            SR short                                                         0.538        0.585         0.503        0.463
+            maxDD short                                                     35.406       34.323        29.893       26.196
+            Turnover short                                                  88.126       76.704        79.474       74.516
+            N short                                                         24.250       26.947        27.674       29.112
+            E. Portfolio performance: long-short
+            R ls                                                             6.747        6.695        6.374        6.167
+            SD ls                                                            4.304        3.822        3.594        3.334
+            SR ls                                                            1.567        1.752        1.773        1.850
+            maxDD ls                                                         8.421        7.815        6.036        4.923
+            Turnover ls                                                    115.911      104.146      109.110      103.687
+
+
+
+    Table 4 displays the results. For columns denoted as PLS, we use partial least squares regressions and
+
+the number of components equal to 1, 2, 3, and 5, respectively, for prediction. We rebalance the portfolios
+
+
+
+                                                                    21
+monthly, based on the sign of the factors’ t + 1 predicted returns. Panel A reports portfolio performance
+
+of the long leg. Column ORG shows statistics for the untimed equally weighted factor portfolio. This
+
+constitutes a tough benchmark with an average return of 4.94% and a Sharpe ratio of 2.2.9 Nevertheless,
+
+the timed portfolios outperform. The portfolio using only one component to predict future returns delivers
+
+an annualized return of 5.84% and a Sharpe ratio of 1.95. PLS 5 on the other hand, delivers slightly
+
+lower returns, but at a lesser level of risk, translating into a Sharpe ratio of 2.21. Panel B shows risk-
+
+adjusted performance measures, i.e. alphas from a multifactor regression on the Fama-French five factors
+
+plus momentum, its t-value and the R2 from the regression. Alphas are generally large and statistically
+
+significant. For the PLS1 long leg, alpha is approximately 4.5% p.a. with a t-statistic of 13.8. In Panel C,
+
+we report t-statistics of the return difference between the timed and the original factor portfolios as well
+
+as the Jobson and Korkie (1981) test of Sharpe ratios. We find that although return differences are highly
+
+significant even with a small number of partial least squares components, Sharpe ratio differences become
+
+only marginally positive when we use 5 components.
+
+    The performance of short-leg portfolios is shown in Panel D. Returns are close to 1%. Compared to the
+
+long-leg portfolios, the maximum drawdown is considerably larger in magnitude and turnover more than
+
+doubles. Hence, short-leg portfolios do not appear as an attractive investment strategy on a stand-alone
+
+basis. Panel E shows portfolios that take long minus short positions in all factors based on the predicted
+
+sign from the combination of signals. This strategy does in fact improve average returns, but a the cost of
+
+higher risk and subsequently lower Sharpe ratios, compared to long-only.
+
+    Figure 4 displays the absolute and relative attribution of each factor category to the overall performance
+
+of multivariate factor timing portfolios, respectively. The black bars show the performance attribution of each
+
+factor category for the untimed equal-weighted factor portfolio. The red bars show performance attribution of
+
+each factor category for long-leg portfolios based on PLS1 regressions. Panel (a) shows absolute attribution,
+
+i.e., the black (red) bars add up to the total performance of the untimed (timed) portfolio. Panel (b) displays
+
+relative attribution, i.e., both the black bars and the red bars add up to a length of 1. We find that each
+
+individual category attributes to the overall outperformance of the timed strategy. Factors in the categories
+
+Trading frictions and Other (residual factors not grouped into any other category) contribute most to returns
+
+on an absolute basis. Groups which already present high absolute returns, such as Momentum and Other,
+
+have less impact when we look at the relative return attribution. Profitability, Trading frictions and Value
+
+vs. growth, have higher relative contributions in our timing model.
+
+    The previous analysis uses only the sign of the prediction, but not the magnitude. We may therefore
+   9 Note that these numbers differ from Table 3 because we now report the time-series average of a 1/N portfolio, in contrast
+
+to taking time-series averages first, and second cross-sectional averages of the time-series means.
+
+
+
+                                                             22
+                                                     Figure 4: Performance attribution by factor category
+Figure (a) displays the absolute attribution of each factor category to the overall performance of multivariate factor timing portfolios in
+Table 4. Bars show the performance in percent that factors of a specific economic category jointly contribute. Figure (b) displays the
+relative performance contribution. Bars show the fraction of the overall performance attributed to factors within a specific economic
+category. Black bars represent the factors of the untimed portfolio (ORG), where all factors available at time t are equally weighted.
+Red bars (PLS 1) represent the factors in the timed portfolio, which is formed at each point t as an equally weighted portfolio of
+factors with positive one-month ahead predicted returns, using partial least squares regressions with one component for prediction.
+We estimate the parameters strictly out-of-sample using an expanding window, where only data up to time t are considered to predict
+returns from t to t + 1. We use the first half of the sample to obtain initial estimates. Table A.1 gives a brief description of the firm
+characteristics and economic category.
+
+                                    (a) Absolute attribution                                                                                                  (b) Relative attribution
+
+                                                                                                                              0.3
+
+    1.5
+
+
+
+
+                                                                                                                              0.2
+    1.0
+
+
+
+
+                                                                                                                              0.1
+    0.5
+
+
+
+
+    0.0                                                                                                                       0.0
+                                                                                                                   th
+
+
+
+
+                                                                                                                                                                                                                                               th
+                                                                                              ns
+
+
+
+
+                                                                                                                                                                                                                           ns
+                                                m
+
+
+
+
+                                                                                                                                                                          m
+                  s
+
+
+
+
+                                t
+
+
+
+
+                                                                            y
+
+
+
+
+                                                                                                                                            s
+
+
+
+
+                                                                                                                                                          t
+
+
+
+
+                                                                                                                                                                                                        y
+                                                         er
+
+
+
+
+                                                                                                                                                                                   er
+                               en
+
+
+
+
+                                                                                                                                                         en
+                 le
+
+
+
+
+                                                                        ilit
+
+
+
+
+                                                                                                                                           le
+
+
+
+
+                                                                                                                                                                                                    ilit
+                                                                                                                w
+
+
+
+
+                                                                                                                                                                                                                                            w
+                                             tu
+
+
+
+
+                                                                                                                                                                       tu
+                                                                                           tio
+
+
+
+
+                                                                                                                                                                                                                        tio
+                                                     th
+
+
+
+
+                                                                                                                                                                               th
+               ib
+
+
+
+
+                                                                                                                                         ib
+                          tm
+
+
+
+
+                                                                                                                                                    tm
+                                                                                                              ro
+
+
+
+
+                                                                                                                                                                                                                                          ro
+                                                                       ab
+
+
+
+
+                                                                                                                                                                                                   ab
+                                           en
+
+
+
+
+                                                                                                                                                                     en
+                                                     O
+
+
+
+
+                                                                                                                                                                               O
+                                                                                       fric
+
+
+
+
+                                                                                                                                                                                                                    fric
+             ng
+
+
+
+
+                                                                                                                                       ng
+                                                                                                              .g
+
+
+
+
+                                                                                                                                                                                                                                          .g
+                           s
+
+
+
+
+                                                                                                                                                     s
+                                                                  fit
+
+
+
+
+                                                                                                                                                                                              fit
+                                        om
+
+
+
+
+                                                                                                                                                                  om
+                        ve
+
+
+
+
+                                                                                                                                                  ve
+           ta
+
+
+
+
+                                                                                                                                     ta
+                                                                   o
+
+
+
+
+                                                                                                                                                                                               o
+                                                                                                            vs
+
+
+
+
+                                                                                                                                                                                                                                        vs
+                                                                                       g
+
+
+
+
+                                                                                                                                                                                                                    g
+                                                                Pr
+
+
+
+
+                                                                                                                                                                                            Pr
+          In
+
+
+
+
+                                                                                                                                    In
+                      In
+
+
+
+
+                                                                                                                                                In
+                                       M
+
+
+
+
+                                                                                                                                                                 M
+                                                                                  in
+
+
+
+
+                                                                                                                                                                                                               in
+                                                                                                       e
+
+
+
+
+                                                                                                                                                                                                                                   e
+                                                                                  ad
+
+
+
+
+                                                                                                                                                                                                               ad
+                                                                                                       lu
+
+
+
+
+                                                                                                                                                                                                                                   lu
+                                                                                                    Va
+
+
+
+
+                                                                                                                                                                                                                                Va
+                                                                                Tr
+
+
+
+
+                                                                                                                                                                                                             Tr
+                                                    ORG       PLS 1                                                                                                           ORG         PLS 1
+
+
+
+
+be underestimating the potential gains from timing in a multifactor portfolio. One easy way to consider
+
+magnitudes is to sort factors into portfolios based on the predicted returns. Below we will consider quintile
+
+portfolios. Each month t we sort factors into five portfolios based on their t + 1 predicted excess return. To
+
+compare the performance of these portfolios, we use a more sophisticated benchmark than the naive 1/N
+
+factor portfolio employed in Section 3.3, sorting factors based on their historical average. I.e., we assume
+
+that investors expect factors that have historically performed well (poorly), to do so again in the future.
+
+This implementation also directly addresses the concern that factor timing might only be successful because
+
+we are capturing factors with high unconditional returns. Thus, the benchmark portfolios are formed as
+
+
+                                                                                                   ORG                   1 ORGq
+                                                                                              ft+1 q =                     w    fi,t+1                                                                                                              (13)
+                                                                                                                        N q i,t
+                  ORGq
+where wi,t                     equals 1/Ntq for factors where the historical average return up to t is in the qth quintile, and
+
+0 otherwise. The quintile portfolios of timed factors are given by
+
+
+                                                                                                   P LS                   P LSq,n
+                                                                                                 ft+1 q,n = wi,t                    fi,t+1 ,                                                                                                        (14)
+
+                                                                                                                                                                                        P LSq,n
+where P LSq,n is the quintile q PLS portfolio with n components and the weight wi,t                                                                                                                         equals 1/Ntq,n for
+
+
+                                                                                                                         23
+all factors where the t + 1 return predicted with P LSn is in the qth quintile, and 0 otherwise.
+
+   Table 5 displays the results. Panel A reports performance statistics of the quintile and the high-minus-
+
+low (HML) portfolios, for the benchmark (ORG). Panel B shows timed factors using PLS1. We find several
+
+interesting results. First, sorting factors into portfolios merely based on their historic average leads to a
+
+monotonic increase in performance across sorted portfolios. In other words, the expected factor performance
+
+seems to be a good predictor for future returns. The High (Low) portfolio, for example, produces an
+
+annualized average return of 10.463 (1.161) percent. Hence, portfolio sorts based on the historical average
+
+constitute a tough benchmark. The HML portfolio delivers an average return of 9.3% p.a., with a Sharpe
+
+ratio of 0.79. Second, timing improves both alphas and Sharpe ratios. The top PLS1-based quintile leads to
+
+the highest Sharpe ratio of about 1.96, compared to 1.49 for the top portfolio based on historical averages.
+
+Although the HML portfolio has a lower Sharpe ratio than the High portfolio, due to its high standard
+
+deviation, it is nevertheless considerably higher than the corresponding benchmark portfolio. The average
+
+returns and Sharpe ratios of the timed portfolios are highly statistically significant. Further, we display
+
+FF5+Momentum alphas of timed HML portfolios (14.47% for PSL1) that exceed the benchmark (5.5%
+
+for ORG) by a wide margin. Third, the return difference between the PLS portfolios and historic average
+
+sorted HML factor portfolios are highly significant. The PLS1 HML portfolio minus the ORG HML portfolio
+
+produces a t-statistic of 5.6, while the difference in Sharpe ratio is also highly significant, with a z-statistic
+
+of 4.16.
+
+
+
+
+                                                       24
+                                            Table 5: Factor timing portfolio sorts
+This table shows performance statistics for factor timing portfolio sorts. In each month t, we sort factors into 5 portfolios based on
+their t + 1 predicted return. Further, we construct a high-minus-low (HML) portfolio. In Panel A, portfolios are constructed based on
+the historic average. Panel B shows sorts based on partial least squares (PLS) regressions with 1 component. We estimate parameters
+strictly out-of-sample on expanding windows, where only data up to time t are used to predict returns from t to t + 1. We use the
+first half of the sample to obtain initial estimates. We report the annualized mean predicted return (Pred), mean realized return (R),
+standard deviation (SD), and Sharpe ratio (SR). For the HML portfolio, we display in addition the maximum drawdown (maxDD)
+and the alpha of the Fama-French five-factor model augmented by the momentum factor (FF5+Mα). As indicators for statistical
+significance, we report the t-statistic of the mean return, the alpha and the return difference PLS1-ORG, and for Sharpe ratios and
+differences in Sharpe ratios the Jobson and Korkie (1981) test zJK . We describe the factors and their allocation to an economic category
+in Table A.1. Table B.1 describes the timing signals.
+
+
+
+                                                                         Pred        R        SD        SR    maxDD       FF5+M α
+
+A. ORG
+L                                                                                 1.161     6.169    0.188
+2                                                                                 3.700     3.403    1.087
+3                                                                                 4.196     3.055    1.373
+4                                                                                 5.376     5.037    1.067
+H                                                                                10.463     7.025    1.489
+HML                                                                               9.303   11.843      0.786     37.287          5.543
+Statistical significance (t, zJK )                                               5 .395              4 .916                    3 .677
+B. PLS 1
+L                                                                       -5.802   -3.929     7.410    -0.530
+2                                                                        1.173    2.127     3.307     0.643
+3                                                                        4.628    4.849     3.684     1.316
+4                                                                        8.212    7.477     5.123     1.459
+H                                                                       16.718   14.598     7.477     1.952
+HML                                                                     22.519   18.527   13.991      1.324     33.631         14.468
+Statistical significance (t, zJK )                                               9 .094              8 .800                    8 .042
+Statistical significance (t, zJK ) of difference PLS1 - ORG                      5 .661              4 .158
+
+
+
+
+    We further find that our timing approach offers robust performance over time. Figure 5 displays the
+
+performance for sorting factors on past average returns and factor timing portfolio sorts.10 The performance
+
+of our timing model using one component (i.e. PLS1) clearly and consistently outperforms portfolios sorted
+
+on historical average returns. For the High portfolio, the end-of-period wealth is about ten times larger
+
+than the comparable portfolio based on historical averages. Furthermore, we find that the lowest quintile
+
+experiences negative returns on average. McLean and Pontiff (2016) find that many anomalies have lower
+
+average returns post-publication. And indeed, we find that the performance for ORG gets flatter after the
+
+year 2000, i.e., sorting on the historical mean produces a smaller performance spread. Yet sorting on returns
+
+predicted from timing signals continues to work at least as well in recent periods as before 2000.
+  10 In unreported results we find a monotonic ranking of quintile portfolios, and the economic differences are huge.
+
+
+
+
+                                                                   25
+                                             Figure 5: Portfolio sort performance
+This figure displays the performance for factor timing portfolio sorts. We sort factors into quintile portfolios based on their t + 1
+predicted return and plot performance of the High, Low and High-Low (HML) portfolios. The total return indices are in excess of
+the risk-free rate. ORG displays results for portfolio sorts based on the historic average. PLS1 shows results for partial least squares
+regressions with one component. We estimate the parameters strictly out-of-sample using an expanding window, where only data up
+to time t are considered to predict returns from t to t + 1. We use the first half of the sample to obtain initial estimates.
+
+
+
+
+              1000
+
+                                                                                                             Portfolio
+                                                                                                                  PLS1_HML
+               100
+                                                                                                                  PLS1_High
+                                                                                                                  ORG_High
+                 10                                                                                               ORG_HML
+                                                                                                                  ORG_Low
+                                                                                                                  PLS1_Low
+                  1
+
+
+
+
+                                1980            1990            2000             2010            2020
+
+
+
+
+    Next, we analyze whether the performance is driven by a specific selection of factors. In Table 6, we
+
+therefore display the total number of factors per economic category (first column) and the number of factors
+
+allocated to each quintile portfolio (subsequent columns). The right part of the table shows the percentage
+
+distribution of factors. Again, the first column shows the overall distribution of factors and the subsequent
+
+columns report the difference to the overall distribution for each bucket. We see that selecting factors
+
+based on historical average performance leads to a strong focus on momentum factors and overweight in
+
+profitability and value vs. growth factors, while trading frictions appear least attractive. Timing leads to a
+
+more balanced factor structure. Momentum is still overweight, but intangibles and value vs. growth factors
+
+are more evenly distributed. Interestingly, investment factors are now under-represented in both the high
+
+and low quintiles.
+
+
+
+
+                                                                   26
+                   Table 6: Allocation of factors into quintile portfolios and economic categories
+This table shows the average distribution of factors into quintile portfolios and economic categories. Allocation of a factor to a portfolio
+L, 2, 3, 4, and H is based on the t + 1 predicted return. Panel A reports the distribution based on the historic average. Panel B is based
+on portfolio sorts using partial least squares (PLS) regressions with 1 component. We estimate the parameters strictly out-of-sample
+using an expanding window, where only data up to time t are considered to predict returns from t to t + 1. We use the first half of the
+sample to obtain initial estimates. The left part of the table reports the number of factors. We display the total number of factors in
+the first column and each bucket’s number of allocated factors in subsequent columns. The right part of the table shows the percentage
+distribution of factors. We describe the factors and their allocation to an economic category in Table A.1.
+
+
+
+                                                N of factors                                            % of factors
+
+ A. ORG                       Full         L        2         3        4       H        Full        L        2        3       4       H
+ Intangibles                    38         9        9         9       6         4         13        3        2        3      -2       -7
+ Investment                     37         8        7         7       7         8         15        0        0        1       1       -1
+ Momentum                       18         2        2         4       3         7          8       -5       -3        0       0        8
+ Other                          50        11       12         9      10        10         24        1        3       -3      -1       -1
+ Profitability                  29         6        5         4       7         7         10       -1       -2       -2       3        2
+ Trading frictions              38        10        7         9       7         5         18        5       -1        4      -1       -7
+ Value vs. growth               32         5        6         4       6        11         13       -3        0       -3       0        6
+
+ B. PLS 1                     Full         L        2         3        4       H        Full        L        2        3       4       H
+ Intangibles                    38         8        9        9        7         6         13        1        2        2      -2       -3
+ Investment                     37         7        8       10        8         5         15       -3        2        7       0       -6
+ Momentum                       18         2        2        3        4         7          8       -4       -4       -2       2        9
+ Other                          51        11       11        9       10        10         24        2        1       -4       1        0
+ Profitability                  29         6        6        5        5         7         10        1        0       -1      -1        2
+ Trading frictions              38        10        8        7        7         7         18        5        0       -2      -1       -2
+ Value vs. growth               31         6        6        6        6         8         13       -1       -1        0       1        1
+
+
+
+
+    Table 7 shows the top holdings for each quintile in our portfolio sorts approach in greater detail. The
+
+first panel shows portfolio sorts based on the historical average. We find a very persistent presence of factors
+
+in certain quintiles, when the sorting criteria is the expected return. ReturnSkewCAPM and betaCR, for
+
+example, are more in the low bucket approximately 9 out of 10 times; STreversal, MomSeasonShort, IntMom,
+
+MomOffSeason and IndRetBig end up in the top bucket about 90% of the time. Mediocre factors, such as
+
+PriceDelaySlope, Coskewness, MomSeason11YrPlus, remain largely in the second, third and fourth buckets,
+
+respectively. Timing, however, results in a more heterogeneous allocation. Even though ReturnSkewCAPM
+
+remains the highest top holding in the low bucket, other factors, such as betaCR, drop down to 57 percent.
+
+We find similar results for the high bucket, where STreversal, MomSeasonShort, IntMom, MomOffSeason
+
+and IndRetBig remain the most frequent holdings, but to a lesser degree.
+
+
+
+
+                                                                    27
+                                                    Table 7: Top 10 factor investments
+This table shows the frequency of factor allocation into quintile portfolios. We sort factors into 5 portfolios based on their t+1 predicted
+return. We report the 10 factors with the highest percentage of months a factor is a component of a given quintile portfolio. Panel
+A shows frequencies in portfolio sorts based on the historic average. Panel B shows portfolio sorts using partial least squares (PLS)
+regressions with 1 component. We estimate the parameters strictly out-of-sample using an expanding window, where only data up to
+time t are considered to predict returns from t to t + 1. We use the first half of the sample to obtain initial estimates. We describe the
+factors and their allocation to an economic category in Table A.1.
+
+
+
+Acronym             L      Acronym                    2      Acronym                   3      Acronym                  4      Acronym              H
+A. ORG
+ReturnSkewCAPM    99.117   PriceDelaySlope          93.816   Coskewness              78.269   MomSeason11YrPlus      82.332   STreversal         99.647
+betaCR            92.049   DownsideBeta             74.382   zerotradeAlt12          72.438   DolVol                 76.502   MomSeasonShort     97.703
+BetaDimson        84.629   pchdepr                  66.608   PriceDelayRsq           72.085   ShareIss5Y             75.972   IntMom             97.350
+BetaFP            82.155   ChPM                     65.901   ReturnSkew              72.085   DivInit                74.912   MomOffSeason       96.996
+BetaSquared       81.449   currat                   65.548   BetaTailRisk            66.608   zerotradeAlt1          71.731   IndRetBig          94.346
+betaRR            79.859   ChNNCOA                  63.604   ResidualMomentum6m      66.078   DivYieldST             69.965   ResidualMomentum   84.806
+IdioVolCAPM       78.445   GrSaleToGrReceivables    63.251   DivSeason               65.724   Tax                    66.431   FirmAgeMom         78.799
+ChNCOA            73.145   MomOffSeason11YrPlus     63.251   VolMkt                  64.311   IdioVolAHT             66.254   MomVol             76.148
+ChNCOL            72.968   DelLTI                   61.661   CompEquIss              63.781   ShareVol               63.251   Mom12mOffSeason    74.028
+sgr               72.968   pchgm pchsale            61.484   Illiquidity             60.777   DelCOA                 62.367   EntMult            71.731
+B. PLS 1
+ReturnSkewCAPM    95.230   LaborforceEfficiency     65.018   DivSeason               73.322   DivYieldST             67.314   IndRetBig          87.809
+sgr               71.731   PriceDelayTstat          59.717   ShareIss1Y              67.668   VolumeTrend            60.247   STreversal         87.102
+ChNCOA            70.495   GrSaleToGrReceivables    56.890   ShareIss5Y              63.074   DelFINL                59.717   IntMom             74.735
+ChNCOL            68.375   DelLTI                   48.763   GrSaleToGrInv           56.714   DivYield               52.827   FirmAgeMom         67.138
+betaCR            57.244   GrSaleToGrOverhead       46.113   ReturnSkew3F            54.770   MomSeason06YrPlus      51.943   MomOffSeason       60.601
+BetaSquared       56.184   EarningsValueRelevance   45.583   ResidualMomentum6m      49.470   ReturnSkew             51.943   MomSeasonShort     57.244
+FirmAge           53.534   PriceDelaySlope          44.876   CompositeDebtIssuance   48.940   InvestPPEInv           51.590   ResidualMomentum   56.360
+DivYieldAnn       52.297   ChPM                     44.346   ChNNCOA                 47.527   MomSeason11YrPlus      49.117   Frontier           54.770
+BetaDimson        50.353   EarningsTimeliness       44.170   DivInit                 46.643   MomSeason              46.643   MomRev             53.357
+AssetGrowth q     49.293   Coskewness               43.816   ConvDebt                42.933   MomOffSeason06YrPlus   44.876   DolVol             53.004
+
+
+
+
+3.4       Stock-level timing portfolios
+
+In all of the previous analyses we have taken factor portfolios as primitives. Since the factors are zero
+
+investment portfolios, combinations of them will of course also be zero investment portfolios and the results
+
+can be interpreted as proper excess returns. Nonetheless, it is beneficial to take a look “under the hood” to
+
+get more insights into the properties of multifactor timing portfolios for multiple reasons. To properly
+
+assess turnover of factor timing strategies, we need to compute the actual positions for each security in the
+
+portfolio, as the same stock may be in the long leg of one factor portfolio and in the short leg of another
+
+portfolio. When implementing dynamic investment strategies in real-world portfolios, investors will clearly
+
+transact only on the difference between the desired net position and the current actual holdings. DeMiguel,
+
+Martin-Utrera, Nogales, and Uppal (2020) show that many trades cancel out when multiple factors are
+
+combined into one portfolio. A second important reason is the real life frictions and constraints investors
+
+are facing. For example, leverage or short-sale constraints may inhibit the implementation of the optimal
+
+timing portfolio. The only way to gain more insight into these issues is to unpack the timing portfolio and
+
+study the multifactor timing portfolios at the individual security level.
+
+    To keep track of the net position of stock i in a multifactor timing portfolio, we derive the aggregate
+
+weight wi by aggregating across the j = 1, ..., N factors:
+
+
+                                                                          28
+                                                                N
+                                                                X
+                                                       wi,t =         wi,j,t ,                                               (15)
+                                                                j=1
+
+where wi,j,t is firm i’s weight in factor j at time t. We then avoid short positions in individual stocks, and
+
+only consider those stocks which receive a positive aggregate weight:
+
+
+                                                      +
+                                                     wi,t = max [0, wi,t ] .                                                 (16)
+
+                                              P LS,+
+    Similarly, we derive stock-level weights wi,t    from the timed factor portfolios.
+
+    Table 9 shows the results. Panels A and B report results for small and large-capitalization stocks,
+
+respectively, where we split the sample using the median NYSE market equity at the end of June of year t
+
+(see Fama and French, 1992). CRSP VW depicts the value-weighted portfolio using all stocks in the available
+
+universe. ORG refers to the non-timed factor weight portfolio based on the original factor definition. PLS1
+
+shows portfolio timing based on partial least squares regressions. Rows denoted as PLS1 | w in top 50% and
+
+PLS1 |w in top 20% show portfolios using only a subset of of firms where the aggregate firm-level weights are
+
+in the top half and top 20%, respectively.11 Columns R, SD, SR, maxDD, N and Turn depict the annualized
+
+return, standard deviation, Sharpe ratio, maximum drawdown, average number of firms in the portfolio and
+
+the annualized turnover.12
+  11 We re-scale weights to 1.
+  12 We define the monthly turnover as the change in weights
+
+
+                                                            1X          bh
+                                                   T Ot =       wi,t − wi,t ,                                                (17)
+                                                            2 i
+                                               bh is the buy and hold weight, i.e. the weight of firm i at time t when no action
+where wi,t is the weight of firm i at time t, wi,t
+                                                              bh as
+is taken on the previous period’s weight wi,t−1 . We define wi,t
+                                                                              
+                                                                           exd
+                                                      mcapt−1 wi,t−1 1 + ri,t
+                                                 bh
+                                               wi,t =                             ,                                           (18)
+                                                                 mcapt
+where mcapt is the market capitalization of the entire investment universe at time t. Note that this can change from t − 1 to
+t not only because of performance, but also because of IPOs, SEOs, buybacks, and dividend payments. ri,t      exd is the return of
+
+firm i excluding dividends from t − 1 to t.
+
+
+
+
+                                                                29
+                                             Table 8: Stock-level timing portfolios
+This table shows performance statistics for long-only equity portfolios. We aggregate all underlying security weights from all timed factor
+portfolios. We then retain only firms that have positive total weights. Panel A and B report results for small and large-capitalization
+stocks in the CRSP universe, where we split the sample in June of year t using the median NYSE market equity and keep firms from
+July of year t to June of year t + 1. CRSP VW is the value-weighted U.S. market return. ORG refers to portfolio weights based on
+the original factor definition. PLS1 shows portfolio timing based on partial least squares regressions with a single component. We
+further provide returns for portfolios based on PLS1 where only firms with weights in the top 20% or in the top 50% of all firms in
+the investment universe are retained. We report annualized mean return (R), standard deviation (SD), Sharpe ratio (SR), maximum
+drawdown (maxDD), average number of firms in the portfolio (N), and annualized turnover (Turn). The sample period is January 1974
+to December 2020. We describe the factors and their allocation to an economic category in Table A.1.
+
+
+                                             R              SD              SR           maxDD                    N              Turn
+ A. Small capitalization stocks
+ CRSP VW                    12.829                      20.422           0.413             55.078            3, 945            7.045
+ ORG                        24.098                      21.694           0.908             57.689            2, 219          286.515
+ PLS                        26.575                      22.473           0.987             52.071            2, 136          364.001
+ PLS1 | w in top 50%        28.080                      23.171           1.022             51.634            1, 068          241.198
+ PLS1 | w in top 20%        29.915                      24.764           1.031             52.314               428          202.764
+ B. large-capitalization stocks
+ CRSP VW                      9.264                     15.538           0.314             51.585               929            3.487
+ ORG                         12.045                     16.145           0.474             49.138               340          312.342
+ PLS1                        14.369                     17.528           0.569             48.443               379          418.445
+ PLS1 | w in top 50%         14.529                     17.744           0.571             48.121               190          315.070
+ PLS1 | w in top 20%         14.219                     18.210           0.540             49.008                76          292.770
+
+
+
+    We find several interesting results. First, there is a tremendous gain in portfolio performance relative to
+
+the market weighted return, even when we just use non-timed factors to form portfolios. When we restrict
+
+the sample to small stocks, the annualized return of the untimed portfolio is about 11% p.a. higher than
+
+the benchmark, which constitutes an increase of roughly 80%. Results for large-capitalization firms suggest
+
+a smaller, but still high absolute (3%) and relative (25%) over-performance. This increase in performance
+
+is unmatched by the increase in portfolio risk. Even though the standard deviation increases in all groups,
+
+the rise is less pronounced than the return, resulting in much larger Sharpe ratios. The Sharpe ratio for the
+
+small (large) sample rises from 0.413 (0.314) to 0.908 (0.474), which is an increase of 120% (50%).
+
+    Second, our timing model, denoted as PLS1, further increases the performance and risk-adjusted returns.
+
+The small cap portfolio yields an annualized return of 26.6% with a Sharpe ratio of 0.98. Alongside the
+
+impressive gain in performance, we find decreasing maximum drawdowns and a reasonable number of firms
+
+in the portfolio. However, timing and re-balancing on a monthly basis results in high turnover of roughly
+
+360% per year.
+
+    Third, there is merit in focusing on the best in class firms, i.e. firms that have the largest weights across all
+
+
+
+                                                                    30
+timed factors. We therefore use a subset of firms in each size sample, retaining only firms with weights above
+
+the median and in the top quintile, respectively. Generally speaking, these portfolios have higher returns
+
+and higher Sharpe ratios, but also slightly higher standard deviations. The increase in standard deviation
+
+might be due to the rise of idiosyncratic risk, reflected by the decrease in the number of firms in the portfolio.
+
+For example, in the large-cap sample, the number of firms is on average 190, when we just use firms in the
+
+upper half of the weight distribution, and about 76 when we use the highest quintile. Interestingly, we find
+
+that these portfolios generate much lower turnover than the base-case PLS1 portfolio. This suggests that
+
+firms have, on aggregate across all factors, relatively sticky weights. The strategy that focuses on large-cap
+
+stocks with a weight in the top 50% resulting from timing with PLS1, increases the Sharpe ratio by roughly
+
+80% to 0.571 (relative to 0.314 for the market-weight CRSP large-cap universe). With an average number
+
+of 190 large-cap stocks in the portfolio and a turnover of 300%, the resulting strategy can very likely be
+
+implemented in practice.
+
+
+3.5    Performance in different economic regimes
+
+Next, we analyze the persistence of results across different economic regimes. We split the data along two
+
+dimensions. First we split the sample by the implied market volatility, i.e. the CBOE S&P 500 volatility
+
+index, into high VIX regimes when the VIX at month t is above the historical median, and vice versa.
+
+The number of observations is 164 and 207 months, respectively. Second, we provide statistics for NBER
+
+recession and expansions, with 73 and 492 observations, respectively. Table 9 shows the results.
+
+   The upper part of the table shows that the naive timing (ORG), using only the historical average of
+
+factor returns, already outperforms the market portfolio in both high and low volatility regimes, with a
+
+Sharpe ratio slightly higher in low volatility regimes. However, using the factor timing model’s weights does
+
+improve the return and Sharpe ratio in both regimes.
+
+   The lower left-hand part reveals performance statistics during economic turmoil. Most notably, when the
+
+economy is in a recession, the return for the sample of small (large) stocks is -11.7% (-12.4%). However, the
+
+PLS1 timing model does improve the return tremendously. Small (large) capitalization stock portfolios return
+
+roughly 13 (6) percent above and beyond the market. This result is not dwarfed when we investigate the
+
+performance during expansions. Here the PLS1 timing portfolio again provides the highest outperformance,
+
+with returns being 1.5 and 2.3 percent above the small and large market portfolios, respectively.
+
+
+
+
+                                                       31
+                         Table 9: Performance of stock-level timing portfolios during crises
+This table shows performance statistics for high (above the historical mean) and low (below historical mean) implied volatility (i.e.
+CBOE S&P 500 volatility index, VIX) regimes, and NBER recession regimes for long-only equity portfolios. We aggregate all underlying
+security weights from all timed factor portfolios. We then retain only firms that have positive total weights. Panel A reports results
+for all securities in the CRSP universe. Panels B and C report performance statistics for small and large-capitalization stocks, where
+we split the sample in June of year t using the median NYSE market equity and keep firms from July of year t to June of year t + 1.
+CRSP VW is the value-weighted U.S. market return. ORG refers to portfolio weights based on the original factor definition. PLS1
+shows portfolio timing based on partial least squares regressions with a single component. We further provide returns for portfolios
+based on PLS1 where only firms with weights in the top 20% or in the top 50% of all firms in the investment universe are retained. We
+report annualized mean return (R), standard deviation (SD), and Sharpe ratio (SR). The sample period is January 1990 to December
+2020 for VIX regimes and January 1974 to December 2020 for recession regimes. We describe the factors and their allocation to an
+economic category in Table A.1.
+
+
+
+                                             High VIX (N=164)                                   Low VIX (N=207)
+                                             R         SD                     SR                R        SD                    SR
+ A. Small capitalization stocks
+ CRSP VW                      14.194                    17.942             0.426          13.776           22.005           0.369
+ ORG                          25.910                    19.230             1.007          29.345           22.874           1.036
+ PLS1                         28.277                    20.020             1.085          31.883           24.713           1.061
+ PLS1 | w in top 50%          29.800                    20.574             1.130          33.742           25.697           1.093
+ PLS1 | w in top 20%          31.509                    21.258             1.174          36.064           27.987           1.086
+ B. large-capitalization stocks
+ CRSP VW                       10.589                   15.672             0.258           8.249           16.058           0.161
+ ORG                           12.912                   15.701             0.405          12.521           15.989           0.429
+ PLS1                          14.417                   17.674             0.445          15.426           18.261           0.535
+ PLS1 | w in top 50%           14.348                   18.042             0.432          15.613           18.560           0.536
+ PLS1 | w in top 20%           12.951                   18.709             0.342          15.292           19.306           0.499
+                                          NBER recession (N=73)                                 Expansion (N=492)
+                                            R         SD                      SR                R         SD                   SR
+ C. Small capitalization stocks
+ CRSP VW                    −11.743                     29.601           −0.608           16.475           18.493           0.668
+ ORG                            0.200                   33.264           −0.182           27.644           19.241           1.223
+ PLS1                           2.820                   30.527           −0.113           30.100           20.867           1.245
+ PLS1 | w in top 50%            4.090                   30.857           −0.070           31.639           21.654           1.271
+ PLS1 | w in top 20%            5.544                   32.101           −0.022           33.531           23.342           1.260
+ D. large-capitalization stocks
+ CRSP VW                     −12.383                    22.779           −0.819           12.476           13.949           0.600
+ ORG                          −9.876                    24.148           −0.668           15.298           14.390           0.777
+ PLS1                         −6.191                    23.360           −0.533           17.419           16.336           0.815
+ PLS1 | w in top 50%          −6.081                    23.134           −0.534           17.587           16.648           0.809
+ PLS1 | w in top 20%          −6.645                    22.617           −0.571           17.314           17.312           0.763
+
+
+
+
+                                                                 32
+3.6    Stochastic discount factor
+
+In the previous analysis, we have shown that (i) a parsimonious combination of a multitude of signals is helpful
+
+in predicting the time-series of factor returns and (ii) it is possible to construct portfolios that significantly
+
+outperform naive factor portfolios. If the underlying source of predictability is related to systematic risk,
+
+the time-series predictions of factor returns should also be helpful in pricing the cross-section of factor risk
+
+premia. We thus construct a stochastic discount factor (SDF) that makes use of factor return predictions
+
+and compare it to an SDF that is based on historical means. Specifically, we construct a mean-variance
+
+efficient portfolio M V EP with weights
+
+
+
+                                          wtM V EP = Σ−1
+                                                      t (z)Et (zt+1 )st                                      (19)
+
+
+where Σ−1
+       t (z) is the covariance matrix of the first five principal components z of factor returns, Et (zt+1 ) is a
+
+vector of expected excess returns of the five PCs, and st scales the standard deviation of the derived portfolio
+
+to that of the market portfolio over the observation window. All components of Eq. (19) are estimated using
+
+information up to time t. The return of the optimal portfolio is given by
+
+
+                                              M V EP
+                                             rt+1    = wtM V EP zt+1                                         (20)
+
+
+and the SDF can be obtained from
+
+
+
+                                   SDFt+1 = 1 − wtM V EP (zt+1 − Et (zt+1 )) .                               (21)
+
+
+   We obtain four SDF variants: We either use historical average returns to obtain the vector of expected
+
+returns, or the predictions obtained from timing signals, aggregated through PLS1. For both cases, we use
+
+either expanding windows or rolling windows of 120 months of data. We restrict the data to factors where we
+
+have complete observations from January 1980 to December 2020, i.e., we exclude factors where return time
+
+series start later, end earlier, or have missing values. This gives us 144 factors that are used to construct
+
+the SDF and a further 170 factors that do not have full time series. Note that the optimal portfolio and
+
+SDF are semi-out-of-sample: Portfolio weights are obtained using covariance matrices and predicted returns
+
+using information up to time t, which allows to obtain out-of-sample t + 1 returns. Yet, the selection of 144
+
+factors makes use of full sample information as we exclude factors with missing returns to obtain a balanced
+
+panel for PCA analysis.
+
+
+
+
+                                                       33
+                                      Table 10: Properties of the efficient portfolio
+This table shows properties of mean variance efficient portfolios, obtained from factors with complete observations from January 1980
+to September 2020. For estimation of covariances, we use rolling windows of 120 months of data or expanding windows, starting with
+120 months, and apply a PCA with 5 components. Expected returns are obtained either from historical averages or predicted returns
+using PLS1. We report the average return (mean), standard deviation (SD) and Sharpe ratio (SR).
+
+
+
+                                                                                     Mean                  SD                SR
+
+ Rolling windows; average returns                                                      2.58              5.23               1.71
+ Rolling windows; predicted returns                                                    2.90              5.49               1.83
+ Expanding windows; average returns                                                    3.21              5.47               2.03
+ Expanding windows; predicted returns                                                  3.40              5.49               2.15
+
+
+
+    Table 10 shows that mean-variance efficient portfolios constructed using predicted returns have higher
+
+average returns and Sharpe ratios than those constructed using historical average returns. This is the case
+
+for rolling and expanding windows. The highest annualized Sharpe ratio of 2.15 is obtained using expanding
+
+windows and predicted returns.
+
+
+
+4     Conclusion
+
+The academic literature has identified many asset pricing factors – the factor zoo. It has also analyzed
+
+whether risk premia associated with these factors are time-varying and whether it is possible to successfully
+
+time investors’ exposure to the various risk factors. The evidence on the latter question is inconclusive, as
+
+different papers have focused on very different sets of factors and predictive variables. In this paper we
+
+conduct a comprehensive analysis of factor timing, simultaneously considering a large set of risk factors
+
+and of prediction variables. Our analysis reveals that factor timing is indeed possible. Predictability is not
+
+concentrated in short subsamples of the data and does not decay in recent time periods. In short, factor risk
+
+premia are robustly predictable. Our evidence reveals that factor timing is greatly beneficial to investors
+
+relative to passive “harvesting” of risk premia.
+
+    In addition, our results have important implications for asset pricing theories and models. Our results
+
+show that there is a large difference between the conditional and unconditional behavior of factor returns
+
+and risk premia. In particular, models of constant conditional risk premia are inconsistent with the data.
+
+Our findings are also useful for the design of models of the stochastic discount factor. For example, models
+
+that imply i.i.d. innovations of the SDF cannot match our empirical findings and are likely to be rejected in
+
+the data.
+
+
+
+                                                                 34
+References
+Arnott, R. D., M. Clements, V. Kalesnik, and J. T. Linnainmaa (2021). Factor momentum. Available at
+  SSRN 3116974 .
+Asness, C., S. Chandra, A. Ilmanen, and R. Israel (2017). Contrarian factor timing is deceptively difficult.
+  The Journal of Portfolio Management 43 (5), 72–87.
+Asness, C. S. (2016). The siren song of factor timing aka “smart beta timing”aka “style timing”. The Journal
+  of Portfolio Management 42 (5), 1–6.
+Asness, C. S., J. A. Friedman, R. J. Krail, and J. M. Liew (2000). Style timing: Value versus growth. The
+  Journal of Portfolio Management 26 (3), 50–60.
+Barroso, P. and A. Detzel (2021). Do limits to arbitrage explain the benefits of volatility-managed portfolios?
+  Journal of Financial Economics 140 (3), 744–767.
+Bradshaw, M. T., S. A. Richardson, and R. G. Sloan (2006). The relation between corporate financing
+  activities, analysts’ forecasts and stock returns. Journal of Accounting and Economics 42, 53–86.
+Brandt, M. W., P. Santa-Clara, and R. Valkanov (2009). Parametric portfolio policies: Exploiting charac-
+  teristics in the cross-section of equity returns. The Review of Financial Studies 22 (9), 3411–3447.
+
+Campbell, J. Y. and R. J. Shiller (1988). The dividend-price ratio and expectations of future dividends and
+  discount factors. The Review of Financial Studies 1 (3), 195–228.
+Campbell, J. Y. and S. B. Thompson (2008). Predicting excess stock returns out of sample: Can anything
+  beat the historical average? The Review of Financial Studies 21 (4), 1509–1531.
+
+Cederburg, S., M. S. O’Doherty, F. Wang, and X. S. Yan (2020). On the performance of volatility-managed
+  portfolios. Journal of Financial Economics 138 (1), 95–117.
+Chen, A. Y. and T. Zimmermann (2022). Open source cross-sectional asset pricing. Critical Finance
+  Review 27 (2), 207–264.
+
+Cochrane, J. H. (2011). Presidential address: Discount rates. The Journal of Finance 66 (4), 1047–1108.
+Cohen, R. B., C. Polk, and T. Vuolteenaho (2003). The value spread. The Journal of Finance 58 (2),
+  609–641.
+DeMiguel, V., A. Martin-Utrera, F. J. Nogales, and R. Uppal (2020). A transaction-cost perspective on the
+  multitude of firm characteristics. The Review of Financial Studies 33 (5), 2180–2222.
+
+DeMiguel, V., A. Martın-Utrera, and R. Uppal (2021). A multifactor perspective on volatility-managed
+  portfolios. Available at SSRN 3982504 .
+Dichtl, H., W. Drobetz, H. Lohre, C. Rother, and P. Vosskamp (2019). Optimal timing and tilting of equity
+  factors. Financial Analysts Journal 75 (4), 84–102.
+
+Ehsani, S. and J. T. Linnainmaa (2022). Factor momentum and the momentum factor. The Journal of
+  Finance 77 (3), 1877–1919.
+Fama, E. F. and K. R. French (1988). Dividend yields and expected stock returns. Journal of Financial
+  Economics 22 (1), 3–25.
+
+Fama, E. F. and K. R. French (1992). The cross-section of expected stock returns. The Journal of Fi-
+  nance 47 (2), 427–465.
+Greenwood, R. and S. G. Hanson (2012). Share issuance and factor timing. The Journal of Finance 67 (2),
+  761–798.
+
+
+
+                                                      35
+Gupta, T. and B. Kelly (2019). Factor momentum everywhere. The Journal of Portfolio Management 45 (3),
+ 13–36.
+Haddad, V., S. Kozak, and S. Santosh (2020). Factor timing. The Review of Financial Studies 33 (5),
+  1980–2018.
+Harvey, C. R., Y. Liu, and H. Zhu (2016). . . . and the cross-section of expected returns. The Review of
+  Financial Studies 29 (1), 5–68.
+Hou, K., C. Xue, and L. Zhang (2020). Replicating anomalies. The Review of Financial Studies 33 (5),
+  2019–2133.
+Huang, E., V. Liu, L. Ma, and J. Osiol (2010). Methods in dynamic weighting. Working paper.
+Ilmanen, A., R. Israel, T. J. Moskowitz, A. K. Thapar, and R. Lee (2021). How do factor premia vary over
+  time? A century of evidence. Journal of Investment Management 19 (4), 15–57.
+Jensen, T. I., B. Kelly, and L. H. Pedersen (2021). Is there a replication crisis in finance? The Journal of
+  Finance forthcoming.
+Jobson, J. D. and B. M. Korkie (1981). Performance hypothesis testing with the Sharpe and Treynor
+  measures. The Journal of Finance 36 (4), 889–908.
+Kelly, B., S. Malamud, and L. H. Pedersen (2021). Principal portfolios. The Journal of Finance forthcoming.
+Kelly, B. and S. Pruitt (2013). Market expectations in the cross-section of present values. The Journal of
+  Finance 68 (5), 1721–1756.
+Kelly, B. and S. Pruitt (2015). The three-pass regression filter: A new approach to forecasting using many
+  predictors. The Journal of Econometrics 186, 294–316.
+Lee, W. (2017). Factors timing factors. The Journal of Portfolio Management 43 (5), 66–71.
+Leippold, M. and R. Rueegg (2019). Fama–french factor timing: The long-only integrated approach. Euro-
+  pean Financial Management 24 (5), 829–855.
+Leippold, M. and H. Yang (2021). The anatomy of factor momentum. Available at SSRN 3517888 .
+Light, N., D. Maslov, and O. Rytchkov (2017). Aggregation of information about the cross section of stock
+  returns: A latent variable approach. The Review of Financial Studies 30 (4), 1339–1381.
+McLean, R. D. and J. Pontiff (2016). Does academic research destroy stock return predictability?          The
+ Journal of Finance 71 (1), 5–32.
+Moreira, A. and T. Muir (2017). Volatility-managed portfolios. The Journal of Finance 72 (4), 1611–1644.
+Moskowitz, T. J., Y. H. Ooi, and L. H. Pedersen (2012). Time series momentum. Journal of Financial
+ Economics 104 (2), 228–250.
+Pontiff, J. and A. Woodgate (2008). Share issuance and cross-sectional returns. The Journal of Finance 63 (2),
+  921–945.
+Reschenhofer, C. and J. Zechner (2022). Volatility managed multi-factor portfolios. Available at SSRN
+  4005163 .
+Sharpe, W. F. (1964). Capital asset prices: A theory of market equilibrium under conditions of risk. The
+  Journal of Finance 19 (3), 425–442.
+Shiller, R. J. (1981). Do stock prices move too much to be justified by subsequent changes in dividends?
+  The American Economic Review 71 (3), 421–436.
+Yara, F. B., M. Boons, and A. Tamoni (2021). Value return predictability across asset classes and common-
+  alities in risk premia. Review of Finance 25 (2), 449–484.
+
+
+                                                     36
+Appendices
+A         Anomalies
+This section describes the details of our dataset. As mentioned in section 2, our dataset is an adapted version
+using the open source code of Chen and Zimmermann (2022), consisting of over 300 equity portfolios sorted
+by characteristics. The sample includes NYSE, AMEX, and Nasdaq ordinary common stocks for the time
+period from 1926 to 2020. The list of firm characteristics can be constructed from CRSP, Compustat, and
+IBES, FRED data. Multiple characteristics require specific data to reconstruct the results of the original
+studies, which are readily available on the authors’ websites. For each characteristic, Chen and Zimmermann
+(2022) replicate portfolios used in the original papers that introduced the anomaly in the literature. Table A.1
+displays a brief description of the firm characteristics.
+                                           Table A.1: Summary of anomaly variables
+
+Acronym                     Description                                Original study                             Journal   Economic category
+
+AbnormalAccruals            Abnormal Accruals                          Xie (2001)                                 AR        Investment
+AbnormalAccrualsPercent     Percent Abnormal Accruals                  Hafzalla, Lundholm, Van Winkle (2011)      AR        Investment
+AccrualQuality              Accrual Quality                            Francis, LaFond, Olsson, Schipper (2005)   JAE       Investment
+AccrualQualityJune          Accrual Quality in June                    Francis, LaFond, Olsson, Schipper (2005)   JAE       Investment
+Accruals                    Accruals                                   Sloan (1996)                               AR        Investment
+AccrualsBM                  Book-to-market and accruals                Bartov and Kim (2004)                      RFQA      Investment
+Activism1                   Takeover vulnerability                     Cremers and Nair (2005)                    JF        Other
+Activism2                   Active shareholders                        Cremers and Nair (2005)                    JF        Intangibles
+AdExp                       Advertising Expense                        Chan, Lakonishok and Sougiannis (2001)     JF        Intangibles
+AgeIPO                      IPO and age                                Ritter (1991)                              JF        Intangibles
+AM                          Total assets to market                     Fama and French (1992)                     JF        Value vs. growth
+AMq                         Total assets to market (quarterly)         Fama and French (1992)                     JF        Value vs. growth
+AnalystRevision             EPS forecast revision                      Hawkins, Chamberlin, Daniel (1984)         FAJ       Momentum
+AnalystValue                Analyst Value                              Frankel and Lee (1998)                     JAE       Intangibles
+AnnouncementReturn          Earnings announcement return               Chan, Jegadeesh and Lakonishok (1996)      JF        Momentum
+AOP                         Analyst Optimism                           Frankel and Lee (1998)                     JAE       Intangibles
+AssetGrowth                 Asset growth                               Cooper, Gulen and Schill (2008)            JF        Investment
+AssetGrowth-q               Asset growth quarterly                     Cooper, Gulen and Schill (2008)            JF        Investment
+AssetLiquidityBook          Asset liquidity over book assets           Ortiz-Molina and Phillips (2014)           JFQA      Other
+AssetLiquidityBookQuart     Asset liquidity over book (qtrly)          Ortiz-Molina and Phillips (2014)           JFQA      Other
+AssetLiquidityMarket        Asset liquidity over market                Ortiz-Molina and Phillips (2014)           JFQA      Other
+AssetLiquidityMarketQuart   Asset liquidity over market (qtrly)        Ortiz-Molina and Phillips (2014)           JFQA      Other
+AssetTurnover               Asset Turnover                             Soliman (2008)                             AR        Other
+AssetTurnover-q             Asset Turnover                             Soliman (2008)                             AR        Other
+Beta                        CAPM beta                                  Fama and MacBeth (1973)                    JPE       Trading frictions
+BetaBDLeverage              Broker-Dealer Leverage Beta                Adrian, Etula and Muir (2014)              JF        Trading frictions
+betaCC                      Illiquidity-illiquidity beta (beta2i)      Acharya and Pedersen (2005)                JFE       Trading frictions
+betaCR                      Illiquidity-market return beta (beta4i)    Acharya and Pedersen (2005)                JFE       Trading frictions
+BetaDimson                  Dimson Beta                                Dimson (1979)                              JFE       Trading frictions
+BetaFP                      Frazzini-Pedersen Beta                     Frazzini and Pedersen (2014)               JFE       Trading frictions
+BetaLiquidityPS             Pastor-Stambaugh liquidity beta            Pastor and Stambaugh (2003)                JPE       Trading frictions
+betaNet                     Net liquidity beta (betanet,p)             Acharya and Pedersen (2005)                JFE       Trading frictions
+betaRC                      Return-market illiquidity beta             Acharya and Pedersen (2005)                JFE       Trading frictions
+betaRR                      Return-market return illiquidity beta      Acharya and Pedersen (2005)                JFE       Trading frictions
+BetaSquared                 CAPM beta squred                           Fama and MacBeth (1973)                    JPE       Trading frictions
+BetaTailRisk                Tail risk beta                             Kelly and Jiang (2014)                     RFS       Trading frictions
+betaVIX                     Systematic volatility                      Ang et al. (2006)                          JF        Trading frictions
+BidAskSpread                Bid-ask spread                             Amihud and Mendelsohn (1986)               JFE       Trading frictions
+BM                          Book to market using most recent ME        Rosenberg, Reid, and Lanstein (1985)       JF        Value vs. growth
+BMdec                       Book to market using December ME           Fama and French (1992)                     JPM       Value vs. growth
+BMq                         Book to market (quarterly)                 Rosenberg, Reid, and Lanstein (1985)       JF        Value vs. growth
+BookLeverage                Book leverage (annual)                     Fama and French (1992)                     JF        Value vs. growth
+BookLeverageQuarterly       Book leverage (quarterly)                  Fama and French (1992)                     JF        Value vs. growth
+BPEBM                       Leverage component of BM                   Penman, Richardson and Tuna (2007)         JAR       Value vs. growth
+BrandCapital                Brand capital to assets                    Belo, Lin and Vitorino (2014)              RED       Intangibles
+BrandInvest                 Brand capital investment                   Belo, Lin and Vitorino (2014)              RED       Intangibles
+CapTurnover                 Capital turnover                           Haugen and Baker (1996)                    JFE       Other
+CapTurnover-q               Capital turnover (quarterly)               Haugen and Baker (1996)                    JFE       Other
+Cash                        Cash to assets                             Palazzo (2012)                             JFE       Value vs. growth
+cashdebt                    CF to debt                                 Ou and Penman (1989)                       JAR       Other
+CashProd                    Cash Productivity                          Chandrashekar and Rao (2009)               WP        Intangibles
+CBOperProf                  Cash-based operating profitability         Ball et al. (2016)                         JFE       Profitability
+CBOperProfLagAT             Cash-based oper prof lagged assets         Ball et al. (2016)                         JFE       Profitability
+CBOperProfLagAT-q           Cash-based oper prof lagged assets qtrly   Ball et al. (2016)                         JFE       Profitability
+CF                          Cash flow to market                        Lakonishok, Shleifer, Vishny (1994)        JF        Value vs. growth
+cfp                         Operating Cash flows to price              Desai, Rajgopal, Venkatachalam (2004)      AR        Value vs. growth
+cfpq                        Operating Cash flows to price quarterly    Desai, Rajgopal, Venkatachalam (2004)      AR        Value vs. growth
+CFq                         Cash flow to market quarterly              Lakonishok, Shleifer, Vishny (1994)        JF        Value vs. growth
+ChangeInRecommendation      Change in recommendation                   Jegadeesh et al. (2004)                    JF        Intangibles
+ChangeRoA                   Change in Return on assets                 Balakrishnan, Bartov and Faurel (2010)     NA        Profitability
+ChangeRoE                   Change in Return on equity                 Balakrishnan, Bartov and Faurel (2010)     NA        Profitability
+ChAssetTurnover             Change in Asset Turnover                   Soliman (2008)                             AR        Profitability
+ChEQ                        Growth in book equity                      Lockwood and Prombutr (2010)               JFR       Intangibles
+ChForecastAccrual           Change in Forecast and Accrual             Barth and Hutton (2004)                    RAS       Intangibles
+ChInv                       Inventory Growth                           Thomas and Zhang (2002)                    RAS       Investment
+ChInvIA                     Change in capital inv (ind adj)            Abarbanell and Bushee (1998)               AR        Investment
+ChNAnalyst                  Decline in Analyst Coverage                Scherbina (2008)                           ROF       Intangibles
+ChNCOA                      Change in Noncurrent Operating Assets      Soliman (2008)                             AR        Investment
+ChNCOL                      Change in Noncurrent Operating Liab        Soliman (2008)                             AR        Investment
+ChNNCOA                     Change in Net Noncurrent Op Assets         Soliman (2008)                             AR        Investment
+ChNWC                       Change in Net Working Capital              Soliman (2008)                             AR        Profitability
+ChPM                        Change in Profit Margin                    Soliman (2008)                             AR        Other
+ChTax                       Change in Taxes                            Thomas and Zhang (2011)                    JAR       Intangibles
+CitationsRD                 Citations to RD expenses                   Hirschleifer, Hsu and Li (2013)            JFE       Other
+CompEquIss                  Composite equity issuance                  Daniel and Titman (2006)                   JF        Investment
+
+
+
+
+                                                                       37
+Table A.1 – cont.
+Acronym                     Description                               Original study                             Journal   Economic category
+
+CompositeDebtIssuance       Composite debt issuance                   Lyandres, Sun and Zhang (2008)             RFS       Investment
+ConsRecomm                  Consensus Recommendation                  Barber et al. (2002)                       JF        Other
+ConvDebt                    Convertible debt indicator                Valta (2016)                               JFQA      Intangibles
+CoskewACX                   Coskewness using daily returns            Ang, Chen and Xing (2006)                  RFS       Trading frictions
+Coskewness                  Coskewness                                Harvey and Siddique (2000)                 JF        Trading frictions
+CredRatDG                   Credit Rating Downgrade                   Dichev and Piotroski (2001)                JF        Profitability
+currat                      Current Ratio                             Ou and Penman (1989)                       JAR       Value vs. growth
+CustomerMomentum            Customer momentum                         Cohen and Frazzini (2008)                  JF        Other
+DebtIssuance                Debt Issuance                             Spiess and Affleck-Graves (1999)           JFE       Investment
+DelayAcct                   Accounting component of price delay       Callen, Khan and Lu (2013)                 CAR       Other
+DelayNonAcct                Non-accounting component of price delay   Callen, Khan and Lu (2013)                 CAR       Other
+DelBreadth                  Breadth of ownership                      Chen, Hong and Stein (2002)                JFE       Intangibles
+DelCOA                      Change in current operating assets        Richardson et al. (2005)                   JAE       Investment
+DelCOL                      Change in current operating liabilities   Richardson et al. (2005)                   JAE       Investment
+DelDRC                      Deferred Revenue                          Prakash and Sinha (2012)                   CAR       Profitability
+DelEqu                      Change in equity to assets                Richardson et al. (2005)                   JAE       Investment
+DelFINL                     Change in financial liabilities           Richardson et al. (2005)                   JAE       Investment
+DelLTI                      Change in long-term investment            Richardson et al. (2005)                   JAE       Investment
+DelNetFin                   Change in net financial assets            Richardson et al. (2005)                   JAE       Investment
+DelSTI                      Change in short-term investment           Richardson et al. (2005)                   JAE       Investment
+depr                        Depreciation to PPE                       Holthausen and Larcker (1992)              JAE       Other
+DivInit                     Dividend Initiation                       Michaely, Thaler and Womack (1995)         JF        Value vs. growth
+DivOmit                     Dividend Omission                         Michaely, Thaler and Womack (1995)         JF        Value vs. growth
+DivSeason                   Dividend seasonality                      Hartzmark and Salomon (2013)               JFE       Value vs. growth
+DivYield                    Dividend yield for small stocks           Naranjo, Nimalendran, Ryngaert (1998)      JF        Value vs. growth
+DivYieldAnn                 Last year’s dividends over price          Naranjo, Nimalendran, Ryngaert (1998)      NA        Value vs. growth
+DivYieldST                  Predicted div yield next month            Litzenberger and Ramaswamy (1979)          JF        Value vs. growth
+dNoa                        change in net operating assets            Hirshleifer, Hou, Teoh, Zhang (2004)       JAE       Investment
+DolVol                      Past trading volume                       Brennan, Chordia, Subra (1998)             JFE       Trading frictions
+DownRecomm                  Down forecast EPS                         Barber et al. (2002)                       JF        Intangibles
+DownsideBeta                Downside beta                             Ang, Chen and Xing (2006)                  RFS       Trading frictions
+EarningsConservatism        Earnings conservatism                     Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+EarningsConsistency         Earnings consistency                      Alwathainani (2009)                        BAR       Intangibles
+EarningsForecastDisparity   Long-vs-short EPS forecasts               Da and Warachka (2011)                     JFE       Intangibles
+EarningsPersistence         Earnings persistence                      Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+EarningsPredictability      Earnings Predictability                   Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+EarningsSmoothness          Earnings Smoothness                       Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+EarningsStreak              Earnings surprise streak                  Loh and Warachka (2012)                    MS        Other
+EarningsSurprise            Earnings Surprise                         Foster, Olsen and Shevlin (1984)           AR        Momentum
+EarningsTimeliness          Earnings timeliness                       Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+EarningsValueRelevance      Value relevance of earnings               Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+EarnSupBig                  Earnings surprise of big firms            Hou (2007)                                 RFS       Momentum
+EBM                         Enterprise component of BM                Penman, Richardson and Tuna (2007)         JAR       Value vs. growth
+EBM-q                       Enterprise component of BM                Penman, Richardson and Tuna (2007)         JAR       Value vs. growth
+EntMult                     Enterprise Multiple                       Loughran and Wellman (2011)                JFQA      Value vs. growth
+EntMult-q                   Enterprise Multiple quarterly             Loughran and Wellman (2011)                JFQA      Value vs. growth
+EP                          Earnings-to-Price Ratio                   Basu (1977)                                JF        Value vs. growth
+EPq                         Earnings-to-Price Ratio                   Basu (1977)                                JF        Value vs. growth
+EquityDuration              Equity Duration                           Dechow, Sloan and Soliman (2004)           RAS       Value vs. growth
+ETR                         Effective Tax Rate                        Abarbanell and Bushee (1998)               AR        Other
+ExchSwitch                  Exchange Switch                           Dharan and Ikenberry (1995)                JF        Trading frictions
+ExclExp                     Excluded Expenses                         Doyle, Lundholm and Soliman (2003)         RAS       Intangibles
+FailureProbability          Failure probability                       Campbell, Hilscher and Szilagyi (2008)     JF        Other
+FailureProbabilityJune      Failure probability                       Campbell, Hilscher and Szilagyi (2008)     JF        Other
+FEPS                        Analyst earnings per share                Cen, Wei, and Zhang (2006)                 WP        Other
+fgr5yrLag                   Long-term EPS forecast                    La Porta (1996)                            JF        Intangibles
+fgr5yrNoLag                 Long-term EPS forecast (Monthly)          La Porta (1996)                            JF        Intangibles
+FirmAge                     Firm age based on CRSP                    Barry and Brown (1984)                     JFE       Other
+FirmAgeMom                  Firm Age - Momentum                       Zhang (2004)                               JF        Momentum
+ForecastDispersion          EPS Forecast Dispersion                   Diether, Malloy and Scherbina (2002)       JF        Intangibles
+ForecastDispersionLT        Long-term forecast dispersion             Anderson, Ghysels, and Juergens (2005)     RFS       Intangibles
+FR                          Pension Funding Status                    Franzoni and Marin (2006)                  JF        Intangibles
+FRbook                      Pension Funding Status                    Franzoni and Marin (2006)                  JF        Intangibles
+Frontier                    Efficient frontier index                  Nguyen and Swanson (2009)                  JFQA      Intangibles
+Governance                  Governance Index                          Gompers, Ishii and Metrick (2003)          QJE       Other
+GP                          gross profits / total assets              Novy-Marx (2013)                           JFE       Profitability
+GPlag                       gross profits / total assets              Novy-Marx (2013)                           JFE       Profitability
+GPlag-q                     gross profits / total assets              Novy-Marx (2013)                           JFE       Profitability
+GrAdExp                     Growth in advertising expenses            Lou (2014)                                 RFS       Intangibles
+grcapx                      Change in capex (two years)               Anderson and Garcia-Feijoo (2006)          JF        Investment
+grcapx1y                    Investment growth (1 year)                Anderson and Garcia-Feijoo (2006)          AR        Investment
+grcapx3y                    Change in capex (three years)             Anderson and Garcia-Feijoo (2006)          JF        Investment
+GrGMToGrSales               Gross margin growth to sales growth       Abarbanell and Bushee (1998)               AR        Intangibles
+GrLTNOA                     Growth in long term operating assets      Fairfield, Whisenant and Yohn (2003)       AR        Investment
+GrSaleToGrInv               Sales growth over inventory growth        Abarbanell and Bushee (1998)               AR        Intangibles
+GrSaleToGrOverhead          Sales growth over overhead growth         Abarbanell and Bushee (1998)               AR        Intangibles
+GrSaleToGrReceivables       Change in sales vs change in receiv       Abarbanell and Bushee (1998)               AR        Other
+Herf                        Industry concentration (sales)            Hou and Robinson (2006)                    JF        Intangibles
+HerfAsset                   Industry concentration (assets)           Hou and Robinson (2006)                    JF        Intangibles
+HerfBE                      Industry concentration (equity)           Hou and Robinson (2006)                    JF        Intangibles
+High52                      52 week high                              George and Hwang (2004)                    JF        Momentum
+hire                        Employment growth                         Bazdresch, Belo and Lin (2014)             JPE       Intangibles
+IdioRisk                    Idiosyncratic risk                        Ang et al. (2006)                          JF        Trading frictions
+IdioVol3F                   Idiosyncratic risk (3 factor)             Ang et al. (2006)                          JF        Trading frictions
+IdioVolAHT                  Idiosyncratic risk (AHT)                  Ali, Hwang, and Trombley (2003)            JFE       Trading frictions
+IdioVolCAPM                 Idiosyncratic risk (CAPM)                 Ang et al. (2006)                          JF        Trading frictions
+IdioVolQF                   Idiosyncratic risk (q factor)             Ang et al. (2006)                          JF        Trading frictions
+Illiquidity                 Amihud’s illiquidity                      Amihud (2002)                              JFM       Trading frictions
+IndIPO                      Initial Public Offerings                  Ritter (1991)                              JF        Intangibles
+IndMom                      Industry Momentum                         Grinblatt and Moskowitz (1999)             JFE       Momentum
+IndRetBig                   Industry return of big firms              Hou (2007)                                 RFS       Momentum
+IntanBM                     Intangible return using BM                Daniel and Titman (2006)                   JF        Value vs. growth
+IntanCFP                    Intangible return using CFtoP             Daniel and Titman (2006)                   JF        Value vs. growth
+IntanEP                     Intangible return using EP                Daniel and Titman (2006)                   JF        Value vs. growth
+IntanSP                     Intangible return using Sale2P            Daniel and Titman (2006)                   JF        Value vs. growth
+IntMom                      Intermediate Momentum                     Novy-Marx (2012)                           JFE       Momentum
+IntrinsicValue              Intrinsic or historical value             Frankel and Lee (1998)                     JAE       Other
+Investment                  Investment to revenue                     Titman, Wei and Xie (2004)                 JFQA      Investment
+InvestPPEInv                change in ppe and inv/assets              Lyandres, Sun and Zhang (2008)             RFS       Investment
+InvGrowth                   Inventory Growth                          Belo and Lin (2012)                        RFS       Investment
+IO-ShortInterest            Inst own among high short interest        Asquith Pathak and Ritter (2005)           JFE       Other
+iomom-cust                  Customers momentum                        Menzly and Ozbas (2010)                    JF        Momentum
+iomom-supp                  Suppliers momentum                        Menzly and Ozbas (2010)                    JF        Momentum
+
+
+
+
+                                                                      38
+Table A.1 – cont.
+Acronym                Description                              Original study                             Journal   Economic category
+
+KZ                     Kaplan Zingales index                    Lamont, Polk and Saa-Requejo (2001)        RFS       Intangibles
+KZ-q                   Kaplan Zingales index quarterly          Lamont, Polk and Saa-Requejo (2001)        RFS       Intangibles
+LaborforceEfficiency   Laborforce efficiency                    Abarbanell and Bushee (1998)               AR        Other
+Leverage               Market leverage                          Bhandari (1988)                            JFE       Profitability
+Leverage-q             Market leverage quarterly                Bhandari (1988)                            JFE       Profitability
+LRreversal             Long-run reversal                        De Bondt and Thaler (1985)                 JF        Other
+MaxRet                 Maximum return over month                Bali, Cakici, and Whitelaw (2010)          JF        Trading frictions
+MeanRankRevGrowth      Revenue Growth Rank                      Lakonishok, Shleifer, Vishny (1994)        JF        Value vs. growth
+Mom12m                 Momentum (12 month)                      Jegadeesh and Titman (1993)                JF        Momentum
+Mom12mOffSeason        Momentum without the seasonal part       Heston and Sadka (2008)                    JFE       Other
+Mom6m                  Momentum (6 month)                       Jegadeesh and Titman (1993)                JF        Momentum
+Mom6mJunk              Junk Stock Momentum                      Avramov et al (2007)                       JF        Momentum
+MomOffSeason           Off season long-term reversal            Heston and Sadka (2008)                    JFE       Other
+MomOffSeason06YrPlus   Off season reversal years 6 to 10        Heston and Sadka (2008)                    JFE       Other
+MomOffSeason11YrPlus   Off season reversal years 11 to 15       Heston and Sadka (2008)                    JFE       Other
+MomOffSeason16YrPlus   Off season reversal years 16 to 20       Heston and Sadka (2008)                    JFE       Other
+MomRev                 Momentum and LT Reversal                 Chan and Ko (2006)                         JOIM      Momentum
+MomSeason              Return seasonality years 2 to 5          Heston and Sadka (2008)                    JFE       Other
+MomSeason06YrPlus      Return seasonality years 6 to 10         Heston and Sadka (2008)                    JFE       Other
+MomSeason11YrPlus      Return seasonality years 11 to 15        Heston and Sadka (2008)                    JFE       Other
+MomSeason16YrPlus      Return seasonality years 16 to 20        Heston and Sadka (2008)                    JFE       Other
+MomSeasonShort         Return seasonality last year             Heston and Sadka (2008)                    JFE       Other
+MomVol                 Momentum in high volume stocks           Lee and Swaminathan (2000)                 JF        Momentum
+MRreversal             Medium-run reversal                      De Bondt and Thaler (1985)                 JF        Other
+MS                     Mohanram G-score                         Mohanram (2005)                            RAS       Other
+nanalyst               Number of analysts                       Elgers, Lo and Pfeiffer (2001)             AR        Other
+NetDebtFinance         Net debt financing                       Bradshaw, Richardson, Sloan (2006)         JAE       Investment
+NetDebtPrice           Net debt to price                        Penman, Richardson and Tuna (2007)         JAR       Value vs. growth
+NetDebtPrice-q         Net debt to price                        Penman, Richardson and Tuna (2007)         JAR       Value vs. growth
+NetEquityFinance       Net equity financing                     Bradshaw, Richardson, Sloan (2006)         JAE       Investment
+NetPayoutYield         Net Payout Yield                         Boudoukh et al. (2007)                     JF        Value vs. growth
+NetPayoutYield-q       Net Payout Yield quarterly               Boudoukh et al. (2007)                     JF        Value vs. growth
+NOA                    Net Operating Assets                     Hirshleifer et al. (2004)                  JAE       Investment
+NumEarnIncrease        Earnings streak length                   Loh and Warachka (2012)                    MS        Momentum
+OperProf               operating profits / book equity          Fama and French (2006)                     JFE       Profitability
+OperProfLag            operating profits / book equity          Fama and French (2006)                     JFE       Profitability
+OperProfLag-q          operating profits / book equity          Fama and French (2006)                     JFE       Profitability
+OperProfRD             Operating profitability RD adjusted      Ball et al. (2016)                         JFE       Profitability
+OperProfRDLagAT        Oper prof RD adj lagged assets           Ball et al. (2016)                         JFE       Profitability
+OperProfRDLagAT-q      Oper prof RD adj lagged assets (qtrly)   Ball et al. (2016)                         JFE       Profitability
+OPLeverage             Operating leverage                       Novy-Marx (2010)                           ROF       Intangibles
+OPLeverage-q           Operating leverage (qtrly)               Novy-Marx (2010)                           ROF       Intangibles
+OptionVolume1          Option to stock volume                   Johnson and So (2012)                      JFE       Trading frictions
+OptionVolume2          Option volume to average                 Johnson and So (2012)                      JFE       Trading frictions
+OrderBacklog           Order backlog                            Rajgopal, Shevlin, Venkatachalam (2003)    RAS       Intangibles
+OrderBacklogChg        Change in order backlog                  Baik and Ahn (2007)                        Other     Investment
+OrgCap                 Organizational capital                   Eisfeldt and Papanikolaou (2013)           JF        Intangibles
+OrgCapNoAdj            Org cap w/o industry adjustment          Eisfeldt and Papanikolaou (2013)           JF        Intangibles
+OScore                 O Score                                  Dichev (1998)                              JFE       Profitability
+OScore-q               O Score quarterly                        Dichev (1998)                              JFE       Profitability
+PatentsRD              Patents to RD expenses                   Hirschleifer, Hsu and Li (2013)            JFE       Other
+PayoutYield            Payout Yield                             Boudoukh et al. (2007)                     JF        Value vs. growth
+PayoutYield-q          Payout Yield quarterly                   Boudoukh et al. (2007)                     JF        Value vs. growth
+pchcurrat              Change in Current Ratio                  Ou and Penman (1989)                       JAR       Investment
+pchdepr                Change in depreciation to PPE            Holthausen and Larcker (1992)              JAE       Investment
+pchgm-pchsale          Change in gross margin vs sales          Abarbanell and Bushee (1998)               AR        Other
+pchquick               Change in quick ratio                    Ou and Penman (1989)                       JAR       Investment
+pchsaleinv             Change in sales to inventory             Ou and Penman (1989)                       JAR       Other
+PctAcc                 Percent Operating Accruals               Hafzalla, Lundholm, Van Winkle (2011)      AR        Investment
+PctTotAcc              Percent Total Accruals                   Hafzalla, Lundholm, Van Winkle (2011)      AR        Investment
+PM                     Profit Margin                            Soliman (2008)                             AR        Profitability
+PM-q                   Profit Margin                            Soliman (2008)                             AR        Profitability
+PredictedFE            Predicted Analyst forecast error         Frankel and Lee (1998)                     JAE       Intangibles
+Price                  Price                                    Blume and Husic (1972)                     JF        Other
+PriceDelayRsq          Price delay r square                     Hou and Moskowitz (2005)                   RFS       Trading frictions
+PriceDelaySlope        Price delay coeff                        Hou and Moskowitz (2005)                   RFS       Trading frictions
+PriceDelayTstat        Price delay SE adjusted                  Hou and Moskowitz (2005)                   RFS       Trading frictions
+ProbInformedTrading    Probability of Informed Trading          Easley, Hvidkjaer and O’Hara (2002)        JF        Trading frictions
+PS                     Piotroski F-score                        Piotroski (2000)                           AR        Other
+PS-q                   Piotroski F-score                        Piotroski (2000)                           AR        Other
+quick                  Quick ratio                              Ou and Penman (1989)                       JAR       Investment
+RD                     RD over market cap                       Chan, Lakonishok and Sougiannis (2001)     JF        Profitability
+RD-q                   RD over market cap quarterly             Chan, Lakonishok and Sougiannis (2001)     JF        Profitability
+rd-sale                RD to sales                              Chan, Lakonishok and Sougiannis (2001)     JF        Other
+rd-sale-q              RD to sales                              Chan, Lakonishok and Sougiannis (2001)     JF        Other
+RDAbility              RD ability                               Cohen, Diether and Malloy (2013)           RFS       Other
+RDcap                  RD capital-to-assets                     Li (2011)                                  RFS       Intangibles
+RDIPO                  IPO and no RD spending                   Gou, Lev and Shi (2006)                    JBFA      Intangibles
+RDS                    Real dirty surplus                       Landsman et al. (2011)                     AR        Intangibles
+realestate             Real estate holdings                     Tuzel (2010)                               RFS       Intangibles
+ResidualMomentum       Momentum based on FF3 residuals          Blitz, Huij and Martens (2011)             JEmpFin   Momentum
+ResidualMomentum6m     6 month residual momentum                Blitz, Huij and Martens (2011)             JEmpFin   Momentum
+retConglomerate        Conglomerate return                      Cohen and Lou (2012)                       JFE       Momentum
+RetNOA                 Return on Net Operating Assets           Soliman (2008)                             AR        Profitability
+RetNOA-q               Return on Net Operating Assets           Soliman (2008)                             AR        Profitability
+ReturnSkew             Return skewness                          Bali, Engle and Murray (2015)              Book      Trading frictions
+ReturnSkew3F           Idiosyncratic skewness (3F model)        Bali, Engle and Murray (2015)              Book      Trading frictions
+ReturnSkewCAPM         Idiosyncratic skewness (CAPM)            Bali, Engle and Murray (2015)              Book      Trading frictions
+ReturnSkewQF           Idiosyncratic skewness (Q model)         Bali, Engle and Murray (2015)              Book      Trading frictions
+REV6                   Earnings forecast revisions              Chan, Jegadeesh and Lakonishok (1996)      JF        Momentum
+RevenueSurprise        Revenue Surprise                         Jegadeesh and Livnat (2006)                JFE       Momentum
+RIO-Disp               Inst Own and Forecast Dispersion         Nagel (2005)                               JF        Other
+RIO-MB                 Inst Own and Market to Book              Nagel (2005)                               JF        Other
+RIO-Turnover           Inst Own and Turnover                    Nagel (2005)                               JF        Other
+RIO-Volatility         Inst Own and Idio Vol                    Nagel (2005)                               JF        Other
+roaq                   Return on assets (qtrly)                 Balakrishnan, Bartov and Faurel (2010)     JAE       Profitability
+roavol                 RoA volatility                           Francis, LaFond, Olsson, Schipper (2004)   AR        Other
+RoE                    net income / book equity                 Haugen and Baker (1996)                    JFE       Profitability
+roic                   Return on invested capital               Brown and Rowe (2007)                      WP        Profitability
+salecash               Sales to cash ratio                      Ou and Penman (1989)                       JAR       Other
+saleinv                Sales to inventory                       Ou and Penman (1989)                       JAR       Other
+salerec                Sales to receivables                     Ou and Penman (1989)                       JAR       Other
+secured                Secured debt                             Valta (2016)                               JFQA      Intangibles
+
+
+
+
+                                                                39
+Table A.1 – cont.
+Acronym               Description                            Original study                            Journal   Economic category
+
+securedind            Secured debt indicator                 Valta (2016)                              JFQA      Intangibles
+sfe                   Earnings Forecast to price             Elgers, Lo and Pfeiffer (2001)            AR        Value vs. growth
+sgr                   Annual sales growth                    Lakonishok, Shleifer, Vishny (1994)       JF        Other
+sgr-q                 Annual sales growth quarterly          Lakonishok, Shleifer, Vishny (1994)       JF        Other
+ShareIss1Y            Share issuance (1 year)                Pontiff and Woodgate (2008)               JF        Investment
+ShareIss5Y            Share issuance (5 year)                Daniel and Titman (2006)                  JF        Investment
+ShareRepurchase       Share repurchases                      Ikenberry, Lakonishok, Vermaelen (1995)   JFE       Investment
+ShareVol              Share Volume                           Datar, Naik and Radcliffe (1998)          JFM       Trading frictions
+ShortInterest         Short Interest                         Dechow et al. (2001)                      JFE       Trading frictions
+sinAlgo               Sin Stock (selection criteria)         Hong and Kacperczyk (2009)                JFE       Other
+Size                  Size                                   Banz (1981)                               JFE       Other
+skew1                 Volatility smirk near the money        Xing, Zhang and Zhao (2010)               JFQA      Trading frictions
+SmileSlope            Put volatility minus call volatility   Yan (2011)                                JFE       Trading frictions
+SP                    Sales-to-price                         Barbee, Mukherji and Raines (1996)        FAJ       Value vs. growth
+SP-q                  Sales-to-price quarterly               Barbee, Mukherji and Raines (1996)        FAJ       Value vs. growth
+Spinoff               Spinoffs                               Cusatis, Miles and Woolridge (1993)       JFE       Other
+std-turn              Share turnover volatility              Chordia, Subra, Anshuman (2001)           JFE       Trading frictions
+STreversal            Short term reversal                    Jegadeesh (1989)                          JF        Other
+SurpriseRD            Unexpected RD increase                 Eberhart, Maxwell and Siddique (2004)     JF        Intangibles
+tang                  Tangibility                            Hahn and Lee (2009)                       JF        Intangibles
+tang-q                Tangibility quarterly                  Hahn and Lee (2009)                       JF        Intangibles
+Tax                   Taxable income to income               Lev and Nissim (2004)                     AR        Profitability
+Tax-q                 Taxable income to income (qtrly)       Lev and Nissim (2004)                     AR        Profitability
+TotalAccruals         Total accruals                         Richardson et al. (2005)                  JAE       Investment
+UpRecomm              Up Forecast                            Barber et al. (2002)                      JF        Intangibles
+VarCF                 Cash-flow to price variance            Haugen and Baker (1996)                   JFE       Other
+VolMkt                Volume to market equity                Haugen and Baker (1996)                   JFE       Trading frictions
+VolSD                 Volume Variance                        Chordia, Subra, Anshuman (2001)           JFE       Trading frictions
+VolumeTrend           Volume Trend                           Haugen and Baker (1996)                   JFE       Other
+WW                    Whited-Wu index                        Whited and Wu (2006)                      RFS       Other
+WW-Q                  Whited-Wu index                        Whited and Wu (2006)                      RFS       Other
+XFIN                  Net external financing                 Bradshaw, Richardson, Sloan (2006)        JAE       Investment
+zerotrade             Days with zero trades                  Liu (2006)                                JFE       Trading frictions
+zerotradeAlt1         Days with zero trades                  Liu (2006)                                JFE       Trading frictions
+zerotradeAlt12        Days with zero trades                  Liu (2006)                                JFE       Trading frictions
+ZScore                Altman Z-Score                         Dichev (1998)                             JFE       Profitability
+ZScore-q              Altman Z-Score quarterly               Dichev (1998)                             JFE       Profitability
+
+
+
+
+This table summarizes the firm characteristics used to construct the long-short anomalies. The columns show
+the acronym, a brief description, the original study, and the corresponding journal, where we follow Chen and
+Zimmermann (2022). In the column ‘Economic category’we group similar factors based on their economic
+interpretation. Where available, we use the classification by Hou et al. (2020). For the remaining factors,
+we group them into the categories intangibles, investment, momentum, profitability, trading frictions, value
+vs. growth, and other.
+
+
+
+
+                                                             40
+                                    Table A.2: Summary of anomaly variables returns
+
+Acronym                     Economic category       R     t(R)       SD       SR    maxDD 

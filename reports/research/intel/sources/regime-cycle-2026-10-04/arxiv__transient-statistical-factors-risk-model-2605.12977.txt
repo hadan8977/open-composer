@@ -1,0 +1,1967 @@
+SOURCE: https://arxiv.org/pdf/2605.12977
+FETCHED_UTC: 2026-10-04T18:43:37Z
+HTTP: 200|application/pdf
+BYTES_RAW: 655077
+---
+                                               Enhancing a Risk Model by Adding Transient Statistical Factors
+                                                    Alexandros E. Tzikas1,2   Emmanuel J. Candès1,2                         Trevor Hastie1,2
+                                                                    1,2
+                                                    Stephen P. Boyd         Mykel J. Kochenderfer1,2                       Ronald N. Kahn2
+                                                                     1
+                                                                      Stanford University, Stanford, CA 94305, USA
+                                                           2
+                                                               BlackRock, 400 Howard Street, San Francisco, CA 94105, USA
+arXiv:2605.12977v1 [stat.AP] 13 May 2026
+
+
+
+
+                                                                                              Abstract
+                                                     Estimating the covariance of asset returns, i.e., the risk model, is a key component of financial
+                                                 portfolio construction and evaluation. Most risk modeling approaches produce a factor model
+                                                 that decomposes the asset variability into two components: the first attributed to a small number
+                                                 of factors that are common among the assets and the second attributed to the idiosyncratic
+                                                 behavior of each asset. Third-party providers typically provide risk models to investors, and
+                                                 while these models are typically of high quality, they may fail to capture important information,
+                                                 e.g., changing market regimes and transient factors. To overcome these limitations, we propose a
+                                                 systematic method based on maximum likelihood estimation to enhance an existing factor model
+                                                 by both refining the given model and adding new statistical factors. Our approach relies only on
+                                                 the observed sequence of realized returns and on the choice of two hyperparameters: the number
+                                                 of additional factors and the half-life parameter that determines the weights assigned to returns
+                                                 in the log-likelihood objective. Importantly, our methodology applies to the situation where
+                                                 asset returns may be missing, making it suitable for typical equity datasets. We demonstrate
+                                                 our approach on the Barra short-term US risk model, a high-quality risk model used in practice,
+                                                 for a universe of US high-capitalization equities. We show that the proposed extension captures
+                                                 structure in the returns that is missed by the original model.
+
+
+                                           1    Introduction
+                                           The covariance of asset returns is a central quantity in several areas of finance, including Markowitz
+                                           portfolio construction [2, 10, 17], risk management [18], asset pricing [27], and performance attri-
+                                           bution analysis [20]. The variance of a portfolio (or investment strategy) is a linear function of
+                                           the asset return covariance. An accurate (as judged by its statistical fit) asset return covariance
+                                           allows investors to build portfolios with a desired level of risk and also evaluate the risk of existing
+                                           portfolios. An inaccurate risk model can over-estimate or under-estimate portfolio risk. As a re-
+                                           sult, during portfolio construction, it may be overly restrictive, causing the investor to miss out on
+                                           potentially good investments, or fail to account for certain risk sources, potentially exposing the
+                                           investment strategy to unexpected risks. Risk modeling is therefore a challenging problem in any
+                                           investment process.
+                                               A challenge is that only information available at the current time can be used to estimate
+                                           the risk model, which should be predictive of the assets’ behavior in the future (that is, out-of-
+                                           sample). Prediction is particularly difficult because of changing market conditions [29], extreme
+                                           events (e.g., COVID-19), and fat tails in the distribution of returns [9]. In addition, asset returns
+                                           can fluctuate significantly even on a daily basis, making it difficult to separate meaningful structure
+                                           from randomness. The high dimensionality of the data, i.e., the large number of assets (possibly
+                                           thousands), is another challenge [8]. Capturing the dependence structure of thousands of assets
+
+                                                                                                  1
+requires simultaneously and accurately estimating a very large number of parameters from return
+data. For instance, the sample covariance based on the observed data is singular when the number of
+assets is larger than the number of sample return vectors [9]. This implies that there are directions
+in asset space with zero estimated variance, and it is easy to understand that this will cause
+problems in portfolio construction. Because of these challenges, various companies, for example
+MSCI Barra [19,21], offer risk models as products and a Nobel Memorial Prize in Economic Sciences
+was awarded for work directly related to volatility estimation [4].
+    A standard model for the asset returns is the factor model. At any time t, it assumes that the
+vector of asset returns, xt ∈ Rn , is driven by a low-dimensional vector of factor returns, st ∈ Rn1 ,
+and a vector of residual returns ϵt ∈ Rn , i.e.,
+
+                                            xt = Ft st + ϵt ,                                        (1)
+
+where Ft ∈ Rn×n1 is the matrix of factor exposures, ϵt is independent of st , the n elements of ϵt
+are independent, and n1 ≪ n [10]. In this model, xt , st , and ϵt are random vectors and Ft is a
+non-random matrix that can vary with time t. The model implies that there are common factors
+that influence the returns of the assets. For equities, factors typically include the returns of specific
+portfolios, such as the overall market (with weights proportional to capitalization), industries, and
+style portfolios like the Fama-French factors [6, 7]. The model also implies that there is a part of
+the returns that cannot be attributed to these factors. We call this part the idiosyncratic return,
+ϵt , which is independent of the factor returns, st , and also independent for each asset.
+     Under these assumptions the asset return covariance is given by the low-rank-plus-diagonal form
+
+                                  cov(xt ) = Ft cov(st )Ft⊤ + cov(ϵt ),                              (2)
+
+where cov(·) denotes the covariance. Because the elements of ϵt are independent, cov(ϵt ) is a diag-
+onal matrix with positive diagonal entries. This structure is especially appealing in high dimensions
+(n in the order of hundreds or thousands), because we only need to estimate O(nn1 ) parameters,
+instead of O(n2 ) in the case of a generic n×n covariance matrix. The smaller number of parameters
+required in the low-rank-plus-diagonal structure (2) is also a form of regularization, which avoids
+overfitting and can improve the covariance estimate, especially for out-of-sample applications (such
+as predicting future portfolio risk) [8]. The low-rank-plus-diagonal structure also allows for a pos-
+itive definite covariance matrix even when there are fewer than n return samples. Finally, in the
+context of portfolio construction using convex optimization, the low-rank-plus-diagonal structure
+can be exploited to bring the computational complexity down from O(n3 ) to O(nn21 ) operations [2].
+    In this paper, we assume a low-rank-plus-diagonal risk model is provided. We call this the base
+or existing model. This scenario is typical in the case of investors or quantitative traders, e.g.,
+an MSCI Barra [19, 21] model is available. We propose a principled method based on maximum
+likelihood estimation to refine the existing model and extend it with additional statistical factors
+using the time series of realized asset returns. Our method can be used to capture market shifts
+of a shorter time horizon than the update period of the provided risk model. Furthermore, the
+added statistical factors capture structure in the returns that is missed by the base model. As
+a demonstration of our approach, we extend the Barra short-term US risk model (already high-
+quality and widely used in practice) for a universe of 870 US high-capitalization equities and obtain
+an improvement in terms of the model’s out-of-sample statistical fit. We show that the extended
+model uncovers hidden structure in the returns that is missed by the base model. As a secondary
+contribution, we also show how to handle missing return data within our framework. Missing returns
+arise in financial datasets for several practical reasons, such as reporting delays, non-synchronous
+trading across time zones, or unavailable price observations on certain dates.
+
+                                                   2
+   The remainder of the paper is organized as follows. In Section 2, we discuss related work in
+covariance estimation and low-rank-plus-diagonal risk modeling. In Section 3, we mathematically
+formulate our maximum likelihood estimation problem. Our proposed approach is described in
+Section 4. We discuss metrics and results in Section 5. The paper concludes with Section 6.
+
+
+2     Prior work
+We review in Section 2.1 the standard approaches to empirical covariance estimation that rely
+solely on the time series of historical returns and do not impose any structural assumptions. Next,
+in Section 2.2 we turn to techniques that introduce additional structure into the covariance ma-
+trix—most notably low-rank-plus-diagonal decompositions—which aim to capture common risk
+factors and improve stability in high-dimensional settings.
+
+2.1   Empirical covariance estimation
+Given a time-series of historical returns, the simplest covariance estimate is the sample covariance.
+However, when the number of assets is large relative to the number of return samples (which is
+almost always true in practice), the sample covariance is a very poor approximation of the true
+covariance [23] and its eigenvalues can have high variance. Generally, the sample covariance may
+fail to capture the time-dependence and regime shifting of financial markets. A simple way to deal
+with the regime shifting is to use a rolling window estimate, which has a fixed memory window and
+only averages the return outer products in this window. To improve the quality of the estimator
+we can add regularization or shrinkage [14]. Practitioners often replace rolling window covariance
+estimates with exponentially weighted moving averages (EWMAs) to place greater weight on recent
+observations, thereby adapting more quickly to time-varying conditions [12, 13, 19]. The EWMA
+estimator is controlled by the half-life parameter that dictates how far in the past the weight of
+an observation is reduced to 0.5. The half-life parameter is thus completely interpretable. The
+EWMA estimate also allows for fast, recursive computation.
+     When the number of assets is large and the half-life (or the length of the returns time-series) is
+small, naive covariance estimation leads to singular matrices. In these cases, even though it might
+fail to capture information in the returns, a popular remedy is to learn a factor model [10], which
+we discuss next.
+
+2.2   Low-rank-plus-diagonal risk models
+Factor models are a natural way to represent correlations among assets, because assets in similar
+market sectors tend to behave similarly [24]. We discuss methods that produce risk models in
+low-rank-plus-diagonal form. These methods differ in how they obtain the factor exposure ma-
+trix, the covariance of the factor returns, and the covariance of the idiosyncratic returns. Each
+method corresponds to a different category of factors: fundamental, macroeconomic, and statis-
+tical. Fundamental and macroeconomic factors are built from observable economic, financial, or
+asset-specific characteristics. Such a factor can correspond to a concept that has an intuitive in-
+terpretation grounded in economics, corporate structure, or investor behavior [5]. Fundamental
+factors include industry/sector classifications, while macroeconomic factors include inflation, un-
+employment, industrial productivity, as well as oil, gold, and interest rates. Statistical factors are
+extracted directly from historical return data through dimensionality-reduction techniques [25, 26].
+They attempt to capture the main directions of covariance in the return vector without imposing
+any economic interpretation.
+
+
+                                                  3
+Methods based on fundamental factors In this case, we calculate the factor exposure matrix
+and then estimate the factor returns by regressing the asset returns on the factor exposures [22].
+Either ordinary or generalized least squares (where we scale each asset by its volatility) is used in
+this empirical approach. We then estimate the covariance of the factor returns using a method from
+Section 2.1 and the variances of the idiosyncratic returns similarly from the regression residuals.
+We mention an example of a fundamental factor: the price-to-earnings ratio. We can assign the
+price-to-earnings ratio of each asset as its exposure to the factor, perhaps with some cross-sectional
+(i.e., across assets) standardization.
+
+Methods based on macroeconomic factors In this case, we calculate the factor returns first.
+For example, we can use the returns of style portfolios as the factor returns. We then compute the
+factor exposure matrix by regressing the historical asset returns on the historical factor returns [11].
+We estimate the covariance of the factor returns using a method from Section 2.1 and the variances
+of the idiosyncratic returns similarly from the regression residuals. Note that the estimation of the
+factor exposure matrix is separable across assets. This is also an empirical approach.
+
+Methods based on statistical factors Such methods start by computing an empirical asset
+return covariance, as described in Section 2.1. The low-rank-plus-diagonal structure is imposed by
+dimensionality reduction. Effectively, we find the low-rank-plus-diagonal model that optimizes an
+objective involving the empirical covariance. We can learn the low-rank component by minimizing
+its Frobenius norm to the empirical covariance. The solution is related to the top eigenvalues (and
+corresponding eigenvectors) of the empirical estimate [1], [12, Section 8.2], [30]. We can then set the
+idiosyncratic component of the risk model to match the diagonal entries of the empirical covariance
+estimate. This approach tends to underestimate the idiosyncratic risk. If we fit the risk model by
+maximizing Gaussian log-likelihood, then the solution can be obtained via an iterative algorithm
+called expectation-maximization (EM) [12, 25, 26] or an alternating minimization approach [16].
+    The risk model is time-dependent as the factor exposures, factor return covariance, and idiosyn-
+cratic return covariance are all time-dependent quantities. The update frequency of the risk model
+can vary from daily to, e.g., quarterly, depending on the investor’s needs and the nature of the fac-
+tors involved. The update frequency can be a limiting factor when it comes to the responsiveness
+of the risk model to changing market conditions. For example, a quarterly update frequency may
+not be able to capture sudden market regime shifts or transient factors that appear on shorter time
+scales.
+
+Our contribution We propose a method that can extend any given low-rank-plus-diagonal risk
+model, either fundamental, macroeconomic, or statistical. Our algorithm uses the history of ob-
+served returns and a weighted Gaussian log-likelihood objective to refine the base model and extend
+it with additional statistical factors. As such, it is a principled way to build hybrid models with
+both fundamental-macroeconomic and statistical factors. Spector et al. [28] investigated how to
+assess the statistical fit of an existing risk model and proposed a simple method to extend the
+model by recursively adding factors. Our work is similarly based on a provided model, but our
+method both refines the given risk model and adds new statistical factors. Lee et al. [15] also
+propose extending a risk model by additional factors. However, the asset exposures to these new
+factors are not estimated statistically, but are instead constructed. The new factor exposures are
+thematic narrative exposures built from news data. They are constructed based on how frequently
+the narrative appears in news coverage about each asset. Furthermore, the covariance of the new
+factor returns is estimated following an empirical approach that uses ordinary least squares. In
+
+
+                                                   4
+contrast, our approach relies on statistically learning the additional factors in order to improve
+the likelihood fit of the observed data. In addition, beyond adding new factors, our approach also
+refines the covariance of the factor returns of the base model.
+    We leave the algorithmic selection of the number of additional factors as future work. We note
+that our approach preserves the factor exposures to the base factors. As such, the methodology is
+particularly suitable when the base model consists of fundamental factors. By choosing the log-
+likelihood weights based on an EWMA with an appropriate (typically short) half-life, our work can
+also be regarded as a principled way to find additional transient factors in the returns, which are
+commonly known as themes [3].
+
+
+3     Problem statement
+Suppose at time t we are given a sequence of asset return vectors x1 , . . . , xT ∈ Rn , potentially with
+missing entries. We are also provided with the base asset return covariance model
+
+                                   cov(xt ) ≈ F1 Ωbase F1⊤ + Dbase ,                                 (3)
+
+where F1 ∈ Rn×n1 is the matrix of factor exposures to the base factors, Ωbase is the (positive definite)
+covariance of the base factor returns, and Dbase is a diagonal matrix with positive diagonal entries
+corresponding to the idiosyncratic asset variances. In practice, the provided covariance model
+depends on time t, i.e., F1 , Ωbase , and Dbase depend on t. For simplicity we hide this dependence.
+
+3.1    The extended risk model
+We consider the extended asset return covariance model (this model also depends on time t but we
+hide this dependence)                                  ⊤
+                                                        F
+                               cov(xt ) ≈ F1 F2 Σf 1⊤ + D,
+                                                 
+                                                                                              (4)
+                                                        F2
+where F2 ∈ Rn×n2 , Σf ∈ R(n1 +n2 )×(n1 +n2 ) , and D ∈ Rn×n . D is a diagonal matrix with positive
+diagonal entries and Σf is a positive definite matrix. The number of base factors is n1 and the
+number of added factors is n2 . Typically the total number of factors, n1 + n2 , is much smaller than
+n. We look to find appropriate factor exposures F2 , factor return covariance Σf , and idiosyncratic
+covariance D.
+   We make a distinction between the factors involved in F1 and F2 .
+
+    • F1 is a known matrix of factor exposures, which have been measured and provided to us.
+      For example, F1 could be the matrix of factor exposures from an MSCI Barra model [21].
+      However, the covariance of the factor returns involved in F1 will be re-estimated, by learning
+      Σf . The only information from the base model that the extended model shall rely on without
+      modification is the matrix of factor exposures F1 . This is natural if the base model consists
+      of fundamental factors: in such a model exposures are constructed from relatively stable
+      asset characteristics or classification rules, while the covariance of factor returns is computed
+      empirically.
+
+    • F2 denotes a matrix of unknown factor exposures representing residual factor structure not
+      captured by F1 . Estimating F2 and Σf therefore allows the model to account for additional
+      common sources of variation in asset returns beyond those included in the base model.
+
+
+
+                                                   5
+3.1.1   Identifiability of the extended risk model
+Consider first a general factor model and the implied covariance F Σf F ⊤ + D, where all the terms
+are unknown. This is different than our setting (4), where F1 is known. In the general model,
+neither F nor Σf are identifiable, since for any invertible matrix R, setting
+
+                                    F̄ = F R,   Σ̄f = R−1 Σf R−⊤
+
+yields the same covariance. With the Cholesky decomposition Σf = Lf L⊤
+                                                                     f , another equivalent form
+is
+                                      F̄ = F Lf , Σ̄f = I.
+Since the latter is the easiest representation, the standard form for the general model assumes
+Σf = I.
+   Our case (4) is a little more complex, because F1 is known. We show that the analogous
+representation for the family of risk models (4) is
+
+                                             Ω 0 F1⊤
+                                                    
+                                    
+                                      F1 F2               + D,                              (5)
+                                               0 I F2⊤
+
+where Ω ∈ Rn1 ×n1 is a positive definite matrix, F2 ∈ Rn×n2 is arbitrary and D is diagonal. Note that
+F2 is still only identifiable up to a rotation/reflection: if R is any n2 × n2 orthogonal matrix, then
+the representation (5) with F2 replaced by F2 R is equivalent, since F2 RR⊤ F2⊤ = F2 F2⊤ (a standard
+situation in factor models). We prefer the representation given by the family of models (5), because
+it ensures that the additional factors remain identifiable (up to a rotation/reflection) and allows for
+a decomposition of risk across the base factors F1 and the added factors F2 . Family (5) involves a
+smaller number of parameters compared to family (4), i.e., family (4) is over-parameterized.
+
+Lemma 1. The family of models given by the right-hand side of (4) is the same as the family of
+models given by (5).
+
+Proof. Consider a model Σ̂ (F2 , Ω, D) in the family (5). Obviously, this model also belongs to the
+family of models given by (4). Simply set
+                                                      
+                                                   Ω 0
+                                           Σf =          .
+                                                   0 I
+
+Now, consider the model Σ̂ (F2 , Σf , D) in the family (4) and the decomposition
+                                                           
+                                                Σf,11 Σf,12
+                                        Σf =                  ,
+                                                Σf,21 Σf,22
+
+where Σf,11 ∈ Rn1 ×n1 and let
+                                     −1/2
+                           "              #
+                            I Σf,12 Σf,22
+                      Φ=           1/2      ,    Ω = Σf,11 − Σf,12 Σ−1
+                                                                    f,22 Σf,21 .
+                             0   Σf,22
+
+The matrix Ω is positive definite as the Schur complement of Σf . Because Σf is positive definite,
+Σf,22 is also positive definite.
+
+
+
+
+                                                  6
+   We can write
+                                 Ω 0 ⊤ F1⊤
+                                          
+                          
+ Σ̂ (F2 , Σf , D) = F1   F2 Φ           Φ         +D
+                                 0 I        F2⊤
+                 h                                 i Ω 0 h                             i⊤    (6)
+                                   −1/2       1/2                         −1/2       1/2
+                = F1     F1 Σf,12 Σf,22 + F2 Σf,22           F1 F1 Σf,12 Σf,22 + F2 Σf,22 + D.
+                                                      0 I
+Therefore, the model Σ̂ (F2 , Σf , D) in the family (4) can be represented by a model in the family
+(5).
+     From (6), it becomes evident that the columns of the added factor exposure matrix F2 are not
+necessarily orthogonal to the columns of F1 . There exists another representation that is equivalent
+to (4) and (5), but constrains the new factor exposure matrix F2 to have orthogonal columns to
+F1 . Although not necessary for the purposes of this paper, the proof is given in Section A. Lee et
+al. [15] extend a provided risk model with F2 that has orthogonal columns to F1 . In the remainder
+of the paper, we will consider the representation given by family (5) for the extended model.
+
+3.2     Estimation objective
+We assume that at each time τ = 1, . . . , T we only observe the returns xτ on a subset of assets
+indexed by the set Oτ ⊆ {1, . . . , n}. Let Mτ = {1, . . . , n} \ Oτ be the set of assets with missing
+returns at time τ . We denote the observed portion of the return at τ as xτ,obs and the missing
+portion as xτ,mis .
+    Let pθ (x) be the probability density function of the Gaussian N (0, F̃ Ω̃F̃ ⊤ + D), where
+                                                                  
+                                                             Ω 0
+                                   F̃ = F1 F2 ,        Ω̃ =          ,                             (7)
+                                                               0 I
+and N (µ, Σ) is the Gaussian distribution with mean µ and covariance Σ. The covariance of the
+Gaussian N (0, F̃ Ω̃F̃ ⊤ + D) belongs to the family of extended risk models (5). Set the family of all
+components to be estimated as θ =: (F2 , Ω, D). We estimate θ by solving
+                                                X
+                                    maximize        wτ ℓ(θ; xτ,obs ),                             (8)
+                                         θ
+                                                 τ ≤T
+
+where
+                                     ℓ(θ; xτ,obs ) = log pθ (xτ,obs ),
+and, with a slight abuse of notation, pθ (xτ,obs ) is the marginal density of the observed returns at
+time τ induced by the density function pθ (x). The weights wτ are non-negative and sum to 1. In
+our setting, they reflect the assumption that more recent observations are more informative and
+should therefore receive larger weights. Although we do not write it explicitly, Ω is positive definite
+and D is diagonal with positive entries in its diagonal.
+    Problem (8) maximizes the weighted sum of the Gaussian log-likelihoods of the observed data.
+Although the distribution of financial returns may not be Gaussian, a Gaussian model is still a
+reasonable second-order approximation to the cross-sectional structure; in many risk-model ap-
+plications the main object of interest is the covariance matrix, not the exact tail behavior [12].
+The Gaussian assumption also gives a simple tractable framework for estimating and manipulating
+covariance structure.
+    For most daily or even weekly equity returns, the means are typically tiny compared to the
+random fluctuations. Therefore, assuming a zero mean often has little practical effect when the
+goal is to estimate the covariance. Nevertheless, we can account for a non-zero mean, by first
+estimating the mean return and then subtracting it from the return samples.
+
+                                                    7
+4    Solution via expectation-maximization
+We propose to solve problem (8) using an iterative method called expectation-maximization (EM)
+[11]. We first discuss the method in general. Then, we show how it applies to the case of fully
+observed returns. Finally, we discuss how to solve the problem with missing returns.
+
+General description              Consider maximizing the objective
+                                                    X
+                                             ℓ(θ) =    wτ ℓ(θ; yτ ).                                                   (9)
+                                                            τ ≤T
+
+We have already seen this objective in the previous section in which yτ was xτ,obs . We prefer here to
+use yτ for generality. In many problems, the log-likelihood is either intractable or leads to difficult
+optimization. In some cases, e.g. in our setting, augmenting the data with unobserved latent
+observations simplifies the log-likelihood and permits maximization. Consider then unobserved
+latent variables zτ and the weighted sum of log-likelihoods of the augmented data:
+                                                X
+                                     ℓaug (θ) =   wτ ℓ(θ; yτ , zτ ),
+                                                           τ ≤T
+
+where
+                                                ℓ(θ; yτ , zτ ) = log pθ (yτ , zτ )
+                 R
+and pθ (yτ ) =       zτ pθ (yτ , zτ )dzτ .   Starting from an initial guess θ0 , the EM algorithm inductively
+defines
+                                       Q(θ || θk ) = E[ℓaug (θ) | {yτ }τ =1,...,T , θk ],
+                                                                                              indep.
+where the conditional expectation above is over the latent variables zτ                        ∼ pθk (zτ |yτ ). This is the
+E-step. Then, the M-step finds
+
+                                               θk+1 = arg maxθ Q(θ || θk ).
+
+The point of the data augmentation is that the M-step is now tractable. It is well known that the
+EM produces a monotone sequence in the sense that ℓ(θk ) is nondecreasing.
+
+Fully observed returns In the case where asset returns are fully observed, the observations yτ
+above are the asset returns xτ . The latent variables are the factor returns so that with the notation
+above zτ = sτ . The joint distribution pθ (xτ , sτ ) of asset returns and factor returns is
+
+                                      sτ ∼ N (0, Ω̃)      and       xτ |sτ ∼ N (F̃ sτ , D).
+
+Marginally xτ ∼ N (0, F̃ Ω̃F̃ ⊤ + D), as is requested. The E-step and M-step have closed-form
+expressions and their derivations are in Section C. With these expressions, the steps of the EM
+algorithm are given in Algorithm 1. In the case that the number of factors in F1 is zero (n1 = 0),
+our algorithm reduces to the standard EM algorithm [25] for factor models. Algorithm 1 typically
+converges after 20 − 30 iterations. That said, we do wish to clarify some of the steps in Algorithm 1
+below.
+    At iteration k, the parameter estimate is θk . It holds that
+
+                                                sτ | xτ ; θk ∼ N (Lk xτ , Gk ).
+
+
+                                                                8
+Lk and Gk are computed in lines 14-15 using standard multivariate Gaussian calculations. Fur-
+thermore,                            X        h                i
+                                 k
+                               Css =     wτ E s τ s ⊤
+                                                    τ | xτ , θk ,
+                                               τ ≤T
+                                                 X
+                                        k
+                                       Cxs =          wτ E [xτ sτ | xτ , θk ] .
+                                               τ ≤T
+ k is computed in line 15, while C k is computed in line 16.
+Css                                                                           Finally, in lines 17-21 we calculate
+                                  xs
+θk+1 .
+   Particular attention should be given to the initialization θ0 = (F20 , Ω0 , D0 ) in Algorithm 1. Once
+again, we wish to build the approximation
+                                      X
+                                C=        wτ x τ x ⊤          ⊤
+                                                   τ ≈ F̃ Ω̃F̃ + D.                                  (10)
+                                          τ ≤T
+
+The initialization for F2 is based on the singular value decomposition of the residual returns of the
+base model. This is because the additional factors should explain the variance left unexplained by
+the base model. The initialization for D preserves the asset volatilities, as given by the empirical
+covariance C. This means that the diagonal entries of the left-hand and right-hand sides in the
+above display (10) are the same.
+
+Partially observed returns We let yτ be the observed returns xτ,obs and zτ be the factor returns
+and missing asset returns (sτ , xτ,mis ). The joint distribution of (xτ,obs , xτ,mis , sτ ) is pθ (xτ , sτ ) (up
+to a permutation of the variables). The E-step is a little more involved but still has a closed
+form expression. The M-step also has a closed-form expression. The complete analysis is given in
+Section D.
+
+
+5    Empirical performance
+We consider the time period between 2018-06-27 and 2023-12-28. This period contains the COVID-
+19 pandemic, a time of high market volatility. Our universe consists of the US large-capitalization
+equities in the BlackRock Systematic investment universe for which we observe complete return data
+over the period from 2018-06-27 to 2023-12-28. We restrict attention to assets with uninterrupted
+return histories and for simplicity do not consider the version of our approach that explicitly
+accommodates missing returns in evaluating performance. As a result, the reported performance
+may not be representative of the performance on the full evolving asset universe. Nevertheless, it
+allows us to focus on the core mechanism by which our approach refines a general risk model to a
+targeted investment universe. This restriction does not necessarily favor the extended model over
+the base model.
+    Our universe consists of 870 assets for which we have access to daily returns. Every day t, we
+can observe the history of daily returns x1 , . . . , xt . The return xτ corresponds to the time period
+between day τ − 1 and day τ . The low-rank-plus-diagonal covariance estimate at time t is denoted
+
+                                               Σ̂t = F̂t F̂t⊤ + D̂t .                                        (11)
+
+Note that we hide the factor return covariance (specifically its square root) in F̂t . Below, Σ̂t will
+correspond to either:
+
+
+
+                                                          9
+Algorithm 1 Extending a factor model using EM
+ 1: Inputs: sample returns x1 , . . . , xT ∈ Rn , base risk model F1 Ωbase F1⊤ + Dbase where F1 ∈ Rn×n1
+ 2: Parameters: weights w1 , . . . , wT that are non-negative and sum to 1, number of additional
+    factors n2 , number of iterations Niterations , small positive threshold ν > 0
+ 3: Obtain C as in (10)
+                                                                                                           ▷ Initialization
+ 4: Regress the returns x1 , . . . , xT on the factor exposure matrix F1 and obtain the residuals
+    e1 , . . . , eT ∈ Rn
+                                                     1P
+ 5: Compute the empirical covariance                             eτ e⊤
+                                                                     τ . Take its eigendecomposition. Let Λ ∈ R
+                                                                                                                      n2 ×n2
+                                                     T τ ≤T
+    be the diagonal matrix of the top n2 eigenvalues of the covariance and U ∈ Rn×n2 be the matrix
+    of the corresponding eigenvectors.
+ 6: k ← 0
+ 7: F2k ← U Λ1/2
+ 8: F̃k ← F1 F2k
+                          
+
+ 9: Ωk ← Ωbase 
+                 Ωk 0
+10: Ω̃k =
+                  0 I
+                                              
+11: Dk = max{diag C − F̃k Ω̃k F̃k⊤ , ν}, where max is elementwise and diag(·) with a matrix ar-
+    gument returns the diagonal elements
+12: for k = 1, . . . , Niterations do
+                                                                                                       ▷ Expectation-step
+13:       G−1k    ←  F̃ ⊤ D −1 F̃ + Ω̃−1
+                        k    k    k      k           k
+                               −1                     L
+14:       Lk ← Gk F̃k Dk , where Lk = 1k , where Lk1 ∈ Rn1 ×n , Lk2 ∈ Rn2 ×n
+                          ⊤
+                                                      L2
+                                                         "                   #
+                                                           C k       C k
+             k ← G + L CL⊤ where C k =                       ss,11     ss,12
+15:       Css          k       k    k             ss         k,⊤       k
+                                                                                     k
+                                                                               and Css,11  ∈ Rn1 ×n1 , Css,22
+                                                                                                         k    ∈ Rn2 ×n2
+                                                           Css,12    Css,22
+                                              h                     i 
+             k ← CL⊤ , where C k =                   k,⊤        k,⊤          k      k
+                                                                                         
+16:       Cxs             k             xs      CL   1      CL  2     =    C xs,1 C xs,2
+                                                                                                    ▷ Maximization-step
+17:       Ωk ← Css,11 k
+                            
+                     Ωk 0
+18:       Ω̃k =
+                     0 I
+             k          k            k
+                                            k,−1
+19:       F2 ← Cxs,2         − F1 Css,12     Css,22
+                              k
+                               
+20:       F̃k ← F1 F2
+                                                            
+21:       Dk ← diag C − 2Cxs          k F̃ ⊤ + F̃ C k F̃ ⊤
+                                           k      k ss k
+
+22: return F2k , Ωk , Dk
+
+
+                                                                       1/2
+    • the base model at time t, in which case F̂t = F1,t Ωt,base (F1,t is the provided factor exposure
+      matrix at time t) and D̂t = Dt,base (Dt,base is the provided diagonal matrix of idiosyncratic
+      variances at time t).
+                                                                    "         #
+                                                                    Ω̂1/2 0
+    • the extended model at time t, in which case F̂t = F1,t F̂2,t
+                                                         
+                                                                       t       , where F̂2,t , Ω̂t , and
+                                                                       0    I
+       D̂t are obtained by Algorithm 1 using the observed returns at time t, i.e., x1 , . . . , xt .
+
+
+                                                            10
+     Our base model is the Barra short-term US risk model, which is updated monthly. The base
+model consists of 73 factors for the universe of 870 assets. The 73 factors include sectors, such
+as aerodefense, airlines, and banks, where the exposure is binary (0 or 1), and factors where the
+exposures are not binary, e.g., the beta factor. We extend the base model with an additional 7
+factors. This number is considered a good choice overall, as it allows the extended model to learn
+information missed by the base model, but also mitigates the risk of overfitting. We update the
+extended model on a daily basis. We use an EWMA with a half-life of H = 126 days for the weights
+wτ on each day t. Our ability to pick up transient factors depends on the choice of the half-life
+parameter. A short half-life will allow us to pick up short-lived, rapidly changing effects, but if it
+is too short it may primarily capture noise rather than meaningful signal. A longer half-life will
+emphasize more persistent, slowly evolving correlations, but may be biased. We do not optimize
+over the choice of the half-life or the number of additional factors in this paper.
+     We compare the two models–the base and the extended models–with respect to their statistical
+fit out-of-sample. For this purpose we consider several metrics that correspond to separate subsec-
+tions below. We evaluate the models in the time period between 2019-06-26 and 2023-12-28. The
+days before 2019-06-26 are used as the burn-in period for the extended model.
+     Throughout, we assume that daily returns are zero-mean. This approximation is reasonable
+for most stocks, because the mean returns are small compared to the random fluctuations. For
+example, the S&P 500 has a daily mean return of 4 basis points (bps) and a daily volatility of 100
+bps.
+
+5.1     Out-of-sample R2
+5.1.1    Estimating returns
+If the extended model uncovers covariance structure that the base model misses, then it should be
+able to better estimate out-of-sample returns. We quantify this by measuring the out-of-sample
+R2 . A larger R2 implies a better statistical fit. A negative R2 implies that the model is worse than
+simply predicting zero.
+    At time t, we split the n assets in two disjoint groups: train and test (we suppress the dependence
+on t for these two groups for clarity). We use the next-day returns for the assets in the train set to
+get the most likely factor returns according to our model, by solving
+                                                   ⊤                               
+                 minimize       xtrain   train
+                                 t+1 − F̂t     st        D̂ttrain,−1 xtrain   train
+                                                                      t+1 − F̂t     st + s ⊤
+                                                                                           t st ,   (12)
+                     st
+
+where the superscript train indicates that we only consider the assets in the train set. We maximize
+the conditional density of the factor returns given the train returns. We then predict the next-day
+(out-of-sample) returns for the assets in the test set as
+
+                                               x̂test    test
+                                                 t+1 = F̂t    ŝt ,                                 (13)
+
+where ŝt is the solution of (12). This is the return prediction under our factor model. Finally, we
+compute the R2 between the predicted next-day returns and the actual next-day returns for the
+assets in the test set:
+                                                 ∥xtest − x̂test 2
+                                                            t+1 ∥2
+                                      Rt2 = 1 − t+1             2 .                             (14)
+                                                  ∥xtest
+                                                     t+1 − 0∥2
+Using zero as the mean is reasonable for daily asset returns because the mean is typically much
+smaller than the random fluctuations. If the extended risk model achieves a higher R2 than the base
+
+
+                                                          11
+model, this suggests that it exploits missing correlations to make better predictions from available
+returns. We compute R2 every day in the evaluation period.
+    We include a third risk model in the results of this section as a baseline. We call this model
+randomly extended. We construct this risk model as follows. Let F2′ ∈ Rn×7 be a matrix of factor
+exposures sampled from N (0, 1). This risk model is then
+                                                               ⊤
+                                          F1,t F2′ Ω′t F1,t F2′ + Dt′ ,
+                                                  
+
+
+where we learn Ω′t and Dt′ using Algorithm 1: we run Algorithm 1 using n2 = 0 with the input F1
+being F1,t F2′ . Essentially, we augment the base model with a random factor exposure matrix
+and re-learn the factor return covariance and the idiosyncratic variances to maximize the weighted
+log-likelihood. The added factor subspace for this model is random and for the small number of
+added factors we consider it is not expected to capture meaningful structure in the returns.
+    The time series of Rt2 is shown in Figure 1. The extended model outperforms the base model.
+It is also important to note that the extended model, where the 7 additional factors are learned
+from the returns data, outperforms the randomly extended model. We therefore conclude that the
+extended model actually captures covariance structure that the base model misses. The randomly
+extended model slightly underperforms the base model because it overfits to the assets in the train
+set due to the random added factors. This emphasizes what should be obvious: adding random
+factors does not help in estimating out-of-sample returns. We do not show the randomly extended
+model in future sections.
+    Finally we note that the base model also captures a significant amount of structure in the
+returns. The 90/10 split is chosen to ensure that the train set is significantly large to obtain
+meaningful factor return estimates, while the test set is large enough to obtain meaningful out-of-
+sample R2 estimates. We have verified that other splits (e.g., 50/50) lead to similar conclusions.
+    For each risk model we report a point estimate and a dispersion for the R2 in Table 1. The
+extended model offers an improvement in R2 . It allows for better return forecasts of 10% of the
+returns given the remaining 90% of the returns.
+
+                            Model                    Point estimate   Dispersion
+                            Base                           0.445          0.0058
+                            Extended                       0.454          0.0059
+                            Randomly extended              0.439          0.0058
+
+Table 1: Results for the out-of-sample return R2 using a 90/10 train/test split. The point estimate
+is the average across time of the cross-replication mean. The dispersion is the standard deviation
+of the average across time of the cross-replication mean.
+
+
+5.1.2    Estimating residuals with respect to the factors of the base model
+The extended model assumes that there is additional structure in the returns beyond the factors
+included in the base model. If this additional structure exists and the extended model is able to
+learn it, then it should be able to predict out-of-sample residuals with respect to the factors of the
+base model using the additional learned factors. This methodology is similar, but not identical, to
+the measure of out-of-sample performance proposed by Spector et al. [28].                           
+    We only consider the extended model in this section. Recall that in this case F̂t = F̂1,t F̂2,t ,
+                     1/2
+where F̂1,t = F1,t Ω̂t     corresponds to the n1 factors also present in the base model and F̂2,t corre-
+
+                                                      12
+                          0.65
+                                                                                                base
+                                                                                                extended
+                          0.60                                                                  randomly extended
+
+                          0.55
+
+                          0.50
+                  return R²
+
+                          0.45
+
+                          0.40
+
+                          0.35
+
+                          0.30
+                                     2020-01 2020-07 2021-01 2021-07 2022-01 2022-07 2023-01 2023-07 2024-01
+                                                                     Time
+
+
+Figure 1: Out-of-sample return predictability (R2 ) across time. At each of 30 replications and each
+day, assets are randomly split into train and test sets (90/10), and the out-of-sample (next-day
+for test assets) return R2 is computed. Lines report the rolling mean (window = 100 days) of
+the cross-replication average R2 . The shaded bands indicate the ±1 rolling mean of the standard
+deviation of the average cross-replication R2 (window = 100 days), providing a smoothed measure
+of sampling variability across random splits.
+
+
+sponds to the additional n2 factors. The underlying return model is therefore
+                                                                                     1/2
+                                                  xt = F̂1,t s1,t + F̂2,t s2,t + D̂t ϵt ,
+
+where s1,t , s2,t , and ϵt are all decorrelated. We refer to the n1 factors involved in F̂1,t , s1,t , as the
+base factors.
+    At each time t, we split the n assets in two disjoint groups: train and test (again we suppress
+the dependence on t). We use the next-day returns for the assets in the train set to compute the
+factor returns for the n2 added factors. We then use these returns to estimate the residuals with
+respect to the base factors for the assets in the test set.
+    In details, we first use the assets in the train set to get the most likely base factor returns, by
+solving
+                                              ⊤                                 −1                           
+                                                        train train,⊤                                       (1)
+ minimize        xtrain   train
+                  t+1 − F̂1,t s1,t                    F̂2,t  F̂2,t    + D̂ttrain           xtrain   train
+                                                                                            t+1 − F̂1,t st            + s⊤
+                                                                                                                         1,t s1,t .   (15)
+     s1,t
+
+The residuals with respect to the base factors for the train assets are then:
+
+                                                       ϵtrain  train   train train
+                                                        t+1 = xt+1 − F̂1,t ŝ1,t ,                                                    (16)
+
+where ŝtrain
+        1,t is the solution of (15). Problem (15) is appropriate because it maximizes the conditional
+density of the base factor returns, s1,t , given the returns in train.
+   We then use the train assets to obtain the most likely returns for the n2 added factors by solving
+                                                              ⊤                               
+                  minimize                 ϵtrain   train
+                                            t+1 − F̂2,t s2,t        D̂ttrain,−1 ϵtrain   train       ⊤
+                                                                                 t+1 − F̂2,t s2,t + s2,t s2,t ,                       (17)
+                              s2,t
+
+
+                                                                      13
+with solution ŝ2,t . Problem (17) maximizes the conditional density of the added factor returns, s2,t ,
+given that
+                                      train          train,1/2
+                                    F̂2,t   s2,t + D̂t         ϵt = ϵtrain
+                                                                     t+1 .
+
+   Similarly, we compute the residuals with respect to the base factors for the test assets by solving
+                                        ⊤                              −1                     
+                                                  test test,⊤                                          ⊤
+      minimize       xtest    test
+                      t+1 − F̂1,t s1,t          F̂2,t F̂2,t   + D̂ttest           xtest    test
+                                                                                   t+1 − F̂1,t s1,t + s1,t s1,t ,   (18)
+         s1,t
+
+and setting
+                                                 ϵtest   test    test test
+                                                  t+1 = xt+1 − F̂1,t ŝ1,t ,                                        (19)
+where ŝtest
+        1,t is the solution of (18).
+   Finally, we compute the predicted residuals with respect to the base factors for the test assets
+as
+                                        ϵ̂test    test
+                                          t+1 = F̂2,t ŝ2,t ,                                  (20)
+and obtain the R2
+                                                            ∥ϵtest    test 2
+                                                              t+1 − ϵ̂t+1 ∥2
+                                                Rt2 = 1 −                 2 .                                       (21)
+                                                             ∥ϵtest
+                                                                t+1 − 0∥2
+
+A positive R2 here indicates that the added factors are able to explain existing structure in the
+out-of-sample residuals with respect to the base factors. We note that ϵ̂test
+                                                                            t+1 only depends on the
+                                                test
+next day’s returns of the train assets, while ϵt+1 only depends on the next day’s returns of the test
+assets. Our ability to predict the latter using the former depends on the quality of the risk model.
+     The R2 is plotted in Figure 2. The extended model achieves a positive R2 which indicates that
+it is in fact learning useful structure in the returns. The added factors allow the model to predict
+out-of-sample residuals with respect to the base factors. The average across time cross-replication
+mean R2 is 0.125.
+
+5.2    Predictive ability of added factors
+We demonstrate in another way that the added factors of the extended model
+                                                                ⊤
+                                            F̂1,t F̂2,t F̂1,t F̂2,t + D̂t
+
+capture structure present in the returns that the base factors miss. We consider the null hypothesis
+                                                        (1) (1)
+                                                xt = F̂t st + ϵ̃t ,        (H0 )
+                 (1)
+where ϵ̃t and st are independent, and the elements of ϵ̃t are independent. In other words, we
+assume there is no added structure, other than the base factors. We will show that our predictive
+ability is not consistent with this hypothesis.
+    We split the n assets in two disjoint groups: train and test (again we suppress the dependence
+on t). For each group, we solve the out-of-sample ordinary least squares problem
+
+                                          minimize ∥xgroup   group
+                                                     t+1 − F̂1,t   s1,t ∥22 ,                                       (22)
+                                                s1,t
+
+
+where group is either train or test. The solution of (22) is ŝgroup
+                                                                1,t  for each group. We compute the
+optimal residuals
+                                   δ̂tgroup = xgroup   group group
+                                               t+1 − F̂1,t  ŝ1,t .
+
+
+                                                              14
+                                                                                               extended
+                          0.25
+
+
+                          0.20
+                residual R²
+                          0.15
+
+
+                          0.10
+
+
+                          0.05
+
+
+                          0.00
+                                 2020-01 2020-07 2021-01 2021-07 2022-01 2022-07 2023-01 2023-07 2024-01
+                                                                 Time
+
+
+Figure 2: Out-of-sample predictability (R2 ) of the residuals with respect to the base model’s
+factors based on the added learned factors for the extended model across time. At each of 30
+replications and each day, assets are randomly split into train and test sets (90/10), and the out-
+of-sample (next-day for test assets) R2 for the residuals is computed. Lines report the rolling mean
+(window = 100 days) of the cross-replication average R2 . The shaded bands indicate the ±1 rolling
+mean of the standard deviation of the average cross-replication R2 (window = 100 days), providing
+a smoothed measure of sampling variability across random splits.
+
+
+Under the null H0 , it holds that δ̂ttrain and δ̂ttest are independent. In other words, under the null,
+the residuals δ̂ttrain are not predictive of the residuals δ̂ttest : the highest possible R2 value is 0. Now
+let                                                                           
+                         Ptgroup = I − F̂1,t
+                                          group    group,⊤ group −1 group,⊤
+                                                (F̂1,t    F̂1,t ) F̂1,t            group
+                                                                                 F̂2,t
+
+for each of the two groups: train or test. Under the alternative hypothesis that the extended risk
+model holds, i.e., the additional factors exist and
+                                                                              1/2
+                                         xt = F̂1,t s1,t + F̂2,t s2,t + D̂t ϵt ,    (H1 ),
+
+the in-sample residuals of the train and test assets with respect to the base factors (i.e., after solving
+problems (22) where we replace xt+1 with xt ) have factor exposures to s2,t equal to Pttrain and Pttest ,
+respectively. Therefore, to predict s2,t using δ̂ train , we solve
+
+                                               minimize ∥δ̂ttrain − Pttrain s2,t ∥22                       (23)
+                                                   s2,t
+
+and obtain the solution ŝ2,t . We then make the prediction
+
+                                                          δ̃ttest = Pttest ŝ2,t
+
+for δ̂ttest . Under the null, the best prediction would be 0 for δ̂ttest (assume F̂2,t = 0) and the best R2
+would also be 0. If the R2
+                                                    ∥δ̂ test − δ̃ttest ∥22
+                                          Rt2 = 1 − t                                                  (24)
+                                                      ∥δ̂ttest − 0∥22
+
+                                                                   15
+is positive, then we are able to predict δ̂ttest from δ̂ttrain , which should not be possible under the null.
+Therefore, this would be evidence against the null and in favor of the discovered added factors.
+This methodology is inspired by Spector et al. [28].
+    The time-series of R2 is plotted in Figure 3. The predictive ability implied by the positive out-
+of-sample R2 for the extended model is evidence that the added factors are present (equivalently
+evidence against the null). The average across time of the cross-replication mean R2 is 0.0129. The
+time periods when the extended model achieves the largest return R2 gap to the base model (as
+shown in Figure 1) coincide with the periods of largest R2 in Figure 3. The performance degrades
+in late 2023. This is a period when the extended model does not improve upon the base model, as
+shown in Figure 1.
+
+                     0.08                                                                 extended
+                     0.06
+
+                     0.04
+
+                     0.02
+                R²
+
+
+
+
+                     0.00
+
+                     0.02
+
+                     0.04
+
+                     0.06
+
+                            2020-01 2020-07 2021-01 2021-07 2022-01 2022-07 2023-01 2023-07 2024-01
+                                                            Time
+
+
+Figure 3: Evidence against the null ‘no added factors’ (R2 ) for the extended risk model. At each
+of 30 replications and at each time, assets are randomly split into train and test sets (90/10), and
+the out-of-sample R2 (24) is computed for each day. Lines report the rolling mean (window = 100
+days) of the cross-replication average R2 . The shaded bands indicate the ±1 rolling mean of the
+standard deviation of the average cross-replication R2 (window = 100 days), providing a smoothed
+measure of sampling variability across random splits.
+
+5.3    Log likelihood and regret
+Every day t, we compute the normalized log-likelihood (i.e., log-likelihood divided by the number
+of assets) of the next return, xt+1 , under our current model
+                                            1                                          
+                      ℓ(Σ̂t , xt+1 ) = −        n log(2π) + log det Σ̂t + xTt+1 Σ̂−1
+                                                                                  t xt+1 .              (25)
+                                           2n
+
+    Given the series of returns, the best constant predictor (in terms of log-likelihood) is the em-
+pirical sample covariance
+                                                   T
+                                                1X
+                                        Σemp =        xτ x⊤
+                                                          τ ,                                    (26)
+                                                T
+                                                            τ =1
+
+
+
+
+                                                          16
+with normalized log-likelihood ℓt (Σemp , xt+1 ). Here τ = 1 corresponds to 2019-06-27 and τ = T
+corresponds to 2023-12-28. We therefore also report the difference
+
+                                  ∆t = ℓ(Σemp , xt+1 ) − ℓt (Σ̂t , xt+1 ).                           (27)
+
+This is a measure of regret and measures how much the covariance estimate underperforms the best
+possible constant covariance predictor. We want our covariance estimate to have small regret. Note
+that the regret can be negative, because our covariance is time-dependent, i.e., a time-dependent
+covariance can outperform Σemp .
+    Our results are included in Table 2. We show both the average normalized log-likelihood and
+regret over the evaluation period, but also the standard deviation of these averages. The extended
+model obtains a lift in both log-likelihood and regret.
+
+                            Average         Std. of Average       Average    Std. of Average
+            Model
+                         Log-Likelihood     Log-Likelihood        Regret         Regret
+            Base              2.679               0.039            0.565          0.038
+            Extended          2.726               0.032            0.517          0.031
+
+Table 2: Normalized log-likelihood and normalized log-likelihood regret metrics. The normalization
+is by the number of assets.
+
+
+5.4   Whitened returns
+For each risk model, we compute out-of-sample whitened returns and their empirical correlation
+matrix. We judge the risk model by the discrepancy between the empirical correlation matrix and
+the implied (by the risk model) correlation matrix of the whitened returns.
+    In detail, consider an arbitrary risk model Σ̂t for every time t. Under the hypothesis that the
+                                                                                      −1/2
+risk model is true and the returns are zero-mean, then cov(xt ) = Σ̂t and cov(Σ̂t          xt ) = I, where
+I is the identity.
+                                                           −1/2
+    We now collect the out-of-sample whitened returns {Σ̂t      xt+1 }Tt=1 that should have the identity
+as the covariance under this hypothesis. We compute the Frobenius norm between the empirical
+                                                                   −1/2
+correlation matrix (n × n matrix) of the whitened returns {Σ̂t           xt+1 }Tt=1 and their theoretical
+correlation matrix assuming the risk model is true, i.e., the identityp      matrix I. We report the
+Frobenius norm for each risk model in Table 3, but normalized by n(n − 1). A larger normalized
+Frobenius norm indicates a greater discrepancy between the risk model and the covariance structure
+of the realized returns. The extended model achieves the best fit.
+
+                                          (normalized) Frobenius norm of
+                            Model
+                                           correlation matrix to identity
+                            Base                          0.077
+                            Extended                      0.056
+                                                                             p
+Table 3: Results for the whitened returns. The normalization is by            n(n − 1), where n is the
+number of assets.
+
+
+
+
+                                                    17
+5.5    Whitened residuals
+We perform a similar procedure to the previous section, but instead of looking at out-of-sample
+whitened returns, we focus on out-of-sample whitened residuals. We describe our approach using
+an arbitrary risk model Σ̂t for every time t.
+   At time t, we solve the out-of-sample ordinary least squares problem
+
+                                          minimize ∥xt+1 − F̂t st ∥22                                        (28)
+                                                  st
+
+and compute the residual
+                                                  δ̂t = xt+1 − F̂t ŝt                                       (29)
+where ŝt is the solution of (28).
+   We assume that the risk model Σ̂t holds for the returns, i.e., the returns follow
+
+                             xt = F̂t st + ϵt ,        cov(st ) = I,     cov(ϵt ) = D̂t .
+
+By letting Mt = I − F̂t (F̂t⊤ F̂t )−1 F̂t⊤ , it also holds that the in-sample ordinary least squares residuals
+et (where we solve (28) but replacing xt+1 with xt ) are equal to Mt ϵt . Since Mt is an orthogonal
+projection matrix it can be written as Mt = Ut Ut⊤ , where Ut is orthonormal. Let zt = Ut⊤ et . Then
+cov(zt ) = Ut⊤ D̂t Ut and                                         
+                                           cov (Ut⊤ D̂t Ut )−1/2 zt = I.                                  (30)
+We collect the out-of-sample whitened residuals
+
+                                          {(Ut⊤ D̂t Ut )−1/2 Ut⊤ δ̂t }Tt=1                                   (31)
+
+and compute the Frobenius norm between the empirical correlation matrix of the out-of-sample
+whitened residuals and their theoretical correlation matrix under the assumption that theprisk model
+holds, i.e., the identity I. For each of the risk models, we report the normalized (by n(n − 1))
+Frobenius norm in Table 4. A larger normalized Frobenius norm indicates a greater discrepancy
+between the risk model and the covariance structure of the realized returns. The extended model
+achieves the best statistical fit.
+
+                                            (normalized) Frobenius norm of
+                              Model
+                                             correlation matrix to identity
+                              Base                              0.072
+                              Extended                          0.050
+                                                                                        p
+Table 4: Results for the whitened residuals. The normalization is by                     n(n − 1), where n is the
+number of assets.
+
+
+
+6     Discussion
+We proposed a methodology to refine an available low-rank-plus-diagonal risk model and extend it
+with additional statistical factors. Our method is based on maximum likelihood estimation and is
+an instance of the expectation-maximization algorithm. This is particularly useful if the provided
+risk model is only infrequently updated, but we would like to incorporate information in shorter
+time horizons as well. We empirically show that this modification can improve the risk model’s
+
+                                                           18
+statistical fit even when the provided risk model is of high quality. Our approach is also able to
+handle missing returns data. However, we note that adding factors does not necessarily improve
+statistical fit [28]. Furthermore, the effectiveness of our approach depends on the quality of the
+factors in the original risk model, namely the quality of the provided factor exposure matrix.
+    We leave the problem of selecting the number of additional factors as future work, although we
+do note that a value in the range 2-10 typically worked well for a base risk model of roughly 70
+factors. One simple approach for determining the number of additional factors is to evaluate out-
+of-sample R2 and select the number of additional factors corresponding to the cutoff beyond which
+R2 decreases. An important aspect not covered in this work is interpreting the added statistical
+factors. This can be done by looking at the cross-sectional correlation of the added factors with
+existing themes or by querying a large language model.
+    We plan to combine our extension methodology with factor selection in the base model. This
+can be helpful if the base model has many factors, but only a few of them are relevant. We can
+reduce the number of base factors using, e.g., forward selection, and then apply our extension
+methodology to the reduced base model. We can also consider learning an F2 with a specified
+range, if we wish to capture specific factors.
+    Finally, we plan to construct portfolios via Markowitz optimization [2] where we either use the
+extended or the base risk model for the asset return covariance. Preliminary results suggest that
+the extended model produces a Pareto frontier that dominates that of the base model in the space
+of realized returns and target volatilities.
+
+
+
+Appendices
+A     Different representations of the extended risk model
+We prove the equivalence between two different representations of the family of extended risk
+models.
+
+Lemma 2. Consider the family of risk models (4). This is equivalent to the family of risk models
+given by                                                 ⊤
+                                                        F1
+                       Σ̂ (F2,⊥ , Σf , D) = F1 F1,⊥ Σf     ⊤   + D,                         (32)
+                                                         F1,⊥
+       ⊤ F = 0.
+where F1,⊥ 1
+
+Proof. Consider a risk model Σ̂ (F2,⊥ , Σf , D) in the family (32). It is obviously included in family
+(4).
+    Now consider a risk model Σ̂ (F2 , Σf , D) in family (4). We can write
+
+                                         F2 = F1 U + F1,⊥ V,
+
+where the columns of F1,⊥ are an orthonormal basis of the orthogonal complement of the range of
+F1 . We can then rewrite the risk model as
+                                                             
+                                          I U          I   0          ⊤
+               Σ̂ (F2 , Σf , D) = F1 F1,⊥          Σf     ⊤   ⊤   F1 F1,⊥ + D
+                                             0 V        U   V
+
+Therefore, the two families are the same.
+
+
+                                                 19
+B      Equivalence of objectives
+Let pθ (x) be the probability density function of the Gaussian N (0, F̃ Ω̃F̃ ⊤ + D):
+                   1                   −1     1                    1
+     log pθ (x) = − x⊤ F̃ Ω̃F̃ ⊤ + D        x − log det F̃ Ω̃F̃ ⊤ + D − n log(2π)
+                   2                            2                       2
+                                          −1                                                      (33)
+                   1                                   1                       1
+                = − trace     F̃ Ω̃F̃ ⊤ + D     xx⊤ − log det F̃ Ω̃F̃ ⊤ + D − n log(2π)
+                   2                                   2                          2
+We show that the following two problems:
+                                                      X
+                                          maximize           wτ log pθ (xτ ),                        (34)
+                                                  θ
+                                                      τ ≤T
+                                                                                     
+                             minimize KL N (0, C) ∥               N (0, F̃ Ω̃F̃ ⊤ + D)               (35)
+                                  θ
+are equivalent, i.e., they have the same set of solutions θ⋆ , for
+                                               X
+                                          C=        wτ xτ x⊤
+                                                           τ .                                       (36)
+                                                      τ ≤T
+                                                                    P
+By the linearity of the trace operator and the fact that               τ ≤T wτ = 1, we get
+    X
+           wτ log pθ (xτ )
+    τ ≤T
+                                                        
+              1                         −1
+                                                          − 1 log det F̃ Ω̃F̃ ⊤ + D − 1 n log(2π)
+                                         X                                       
+           = − trace  F̃ Ω̃F̃ ⊤ + D            wτ xτ x⊤
+                                                       τ                                             (37)
+              2                                              2                         2
+                                           τ ≤T
+                                    −1    
+              1                                   1                     1
+           = − trace    F̃ Ω̃F̃ ⊤ + D      C − log det F̃ Ω̃F̃ ⊤ + D − n log(2π).
+              2                                   2                            2
+Problem (35) is equivalent (has the same solution) to
+
+                                         maximize Ex∼N (0,C) log pθ (x),                             (38)
+                                              θ
+
+by expanding the KL divergence objective. By the cyclic property and the linearity of the trace
+operator
+                                                −1  1
+                          1                                                   1
+ Ex∼N (0,C) log pθ (x) = − trace    F̃ Ω̃F̃ ⊤ + D    C − log det F̃ Ω̃F̃ ⊤ + D − n log(2π). (39)
+                          2                             2                       2
+This proves the claim and implies that our method can be thought of as maximizing log-likelihood
+or, equivalently, as minimizing the KL divergence with a time weighted empirical covariance matrix.
+    As an aside, we should note that the minimizer of the Gaussian KL objective is equivariant under
+congruence transformations. Therefore, although not a focus of this paper, we could equivalently
+work with standardized returns.
+    We further observe that for any zero-mean distribution P with covariance C it holds that
+
+                                      Ex∼N (0,C) log pθ (x) = Ex∼P log pθ (x).                       (40)
+
+This justifies talking about problem (38) as maximum likelihood estimation, as we are maximizing
+the expected log-likelihood of the Gaussian N (0, F̃ Ω̃F̃ ⊤ + D) under any distribution P.
+
+                                                         20
+C     The EM update for fully observed returns
+Our derivation of the iterative EM algorithm focuses on optimizing a series of lower bounds for
+problem                                     X
+                                  maximize      wτ log pθ (xτ ),                           (41)
+                                                 θ
+                                                         τ ≤T
+
+which is equivalent to
+                                         maximize Ex∼N (0,C) log pθ (x),                              (42)
+                                             θ
+as shown in Section B. In Section B, we also showed that these problems are equivalent to
+
+                                           maximize Ex∼P log pθ (x),                                  (43)
+                                                     θ
+
+where P is the empirical data distribution (with covariance C (10)).
+
+C.1     A lower bound of the objective
+We fix θ, i.e., F2 , Ω, and D. Let
+                                                 
+                                 S1             Ω 0
+                              S=      ∼ N (0,         ),                 E ∼ N (0, D),
+                                 S2             0 I
+where S1 ∈ Rn1 , S2 ∈ Rn2 and E ∈ Rn are random variables. Further, we suppose S and E are
+independent, i.e., S ⊥ E. We define
+                                                
+                                              S1
+                                    X = F1 F2      + E.
+                                                S2
+It follows that
+                                                       Ω̃F̃ ⊤
+                                                            
+                                  S          Ω̃
+                                     ∼ N 0,                        ,
+                                  X         F̃ Ω̃ F̃ Ω̃F̃ ⊤ + D
+where                                                                        
+                                                                       Ω 0
+                                         F̃ = F1 F2 ,              Ω̃ =         .
+                                                                          0 I
+Marginally X is distributed according to N (0, F̃ Ω̃F̃ ⊤ + D) with density
+                                               Z
+                                      pθ (x) = pθ (x, s)ds,
+                                                              s
+
+where pθ (x, s) is the joint density of (X, S) evaluated at X = x and S = s.
+   We now also fix x. Let q(s; x) be a probability density function in s, parametrized by x. Then
+                          Z
+         log pθ (x) = log pθ (x, s)ds
+                          Zs                                                                           (44)
+                                    pθ (x, s)                    pθ (x, s)                 pθ (x, s)
+                    = log q(s; x)             ds = log Es∼q(s;x)           ≥ Es∼q(s;x) log           ,
+                            s       q(s; x)                      q(s; x)                   q(s; x)
+where the inequality follows from Jensen’s inequality for the concave function log. For brevity, we
+may write q(s; x) instead of s ∼ q(s; x). Because eq. (44) holds for all x, it is true that
+                                                                                    pθ (x, s)
+                          Ex∼N (0,C) log pθ (x) ≥ Ex∼N (0,C) Eq(s;x) log                      .       (45)
+                                                                                    q(s; x)
+
+                                                              21
+This implies that
+                                                                                     pθ (x, s)
+              maximize Ex∼N (0,C) log pθ (x) ≥ maximize Ex∼N (0,C) Eq(s;x) log                 ,         (46)
+                    θ                                      θ                         q(s; x)
+where the optimal point of the right-hand side is the same as that of
+
+                                  maximize Ex∼N (0,C) Eq(s;x) log pθ (x, s).                             (47)
+                                       θ
+
+Notice that we can write
+
+         pθ (x, s) = pθ (X = x, S = s) = pθ (E = x − F̃ s, S = s) = pθ (E = x − F̃ s)pθ (S = s),
+
+because S ⊥ E. Therefore, up to an additive constant,
+
+            2 log pθ (x, s) = −(x − F̃ s)⊤ D−1 (x − F̃ s) − log det D − s⊤ Ω̃−1 s − log det Ω̃.          (48)
+
+By expanding eq. (48) and using
+                                                          Ω−1 0
+                                                                  
+                                             Ω̃−1 =                                                      (49)
+                                                           0  I
+we get
+
+   − 2 log pθ (x, s) =
+                  ⊤ ⊤  F1⊤
+                         
+    ⊤ −1
+   x D x − 2 s1 s2           D−1 x + s⊤  ⊤ −1          ⊤ ⊤ −1          ⊤ ⊤ −1
+                                      1 F1 D F1 s1 + 2s2 F2 D F1 s1 + s2 F2 D F2 s2                      (50)
+                         F2⊤
+   + s⊤  −1     ⊤
+      1 Ω s1 + s2 s2 + log det D + log det Ω.
+
+For any density q(s; x), ignoring all terms that do not depend on F2 , Ω or D, using the fact that
+the trace of a scalar equals the scalar, and the cyclic property of the trace, we get
+
+   Eq(s;x) [−2 log pθ (x, s)] =
+                                                 h      i                       h    i
+           trace(D−1 xx⊤ ) + trace(D−1 F1 Eq(s;x) s1 s⊤    ⊤             −1        ⊤   ⊤
+                                                      1 F1 ) − 2 trace(D Eq(s;x) xs1 F1 )
+                                h     i                            h     i
+           − 2 trace(D−1 Eq(s;x) xs⊤      ⊤             −1             ⊤
+                                    2 F2 ) + 2 trace(D F1 Eq(s;x) s1 s2 F2 )
+                                                                            ⊤
+
+                                 h      i                                                                (51)
+           + trace(D−1 F2 Eq(s;x) s2 s⊤     ⊤
+                                       2 F2 )
+                              h      i
+           + trace(Ω−1 Eq(s;x) s1 s⊤
+                                   1 )
+
+           + log det D + log det Ω.
+
+   At this point, we have an explicit expression for the objective of problem (47).
+
+C.2      Deriving the EM update
+The EM algorithm is an iterative algorithm that solves a sequence of problems of the form (47).
+At each iteration the density q(s; x) is updated. Assuming that at iteration k we are provided with
+θk , the EM algorithm computes θk+1 as
+
+  θk+1 = arg max Ex∼N (0,C) Es∼qk (s;x) log pθ (x, s) = arg min Ex∼N (0,C) Es∼qk (s;x) [−2 log pθ (x, s)] ,
+              θ                                                θ
+                                                                                                         (52)
+where qk (s; x) = pθk (S = s | X = x). We therefore need to compute
+
+                                                      22
+   • Eqk (s;x) [s1 ] =: E [S1 | X = x; θk ]
+
+   • Eqk (s;x) [s2 ] =: E [S2 | X = x; θk ] ,
+
+   • Eqk (s;x) s1 s⊤              ⊤
+                                           
+                     2 =: E S1 S2 | X = x; θk ,
+
+   • Eqk (s;x) s2 s⊤              ⊤
+                                           
+                     2 =: E S2 S2 | X = x; θk ,
+
+   • Eqk (s;x) s1 s⊤              ⊤
+                                           
+                     1 =: E S1 S1 | X = x; θk .
+
+This is easy to do under our Gaussian assumptions. Note that
+                                 
+                                 S1
+                                      | X = x; θk ∼ N (Lk x, Gk ).
+                                 S2
+
+We can compute Lk and Gk using the density pθk (S = s | X = x). Because S | X = x is Gaussian:
+
+   • E [S | X = x; θk ] = arg maxs log pθk (S = s | X = x) = arg maxs log pθk (x, s). By taking the
+     derivative of (48) with respect to s and setting it to zero, we get the necessary optimality
+     condition
+                                                                               −1
+             −F̃k⊤ Dk−1 x + F̃k⊤ Dk−1 F̃k s + Ω̃−1              ⊤ −1         −1
+                                                k s = 0 ⇔ s = F̃k Dk F̃k + Ω̃k      F̃k⊤ Dk−1 x.
+
+     This implies that
+                                                                       −1
+                              E [S | X = x; θk ] = F̃k⊤ Dk−1 F̃k + Ω̃−1
+                                                                     k      F̃k⊤ Dk−1 x.
+
+     Quantities indexed by the iteration k are evaluated using the parameter value θk , e.g., F̃k is
+     the value of F̃ at iteration k.
+
+   • The inverse of the conditional covariance is given by the Hessian of − log pθk (S = s | X = x)
+     with respect to s (that is equal to the Hessian of − log pθk (S = s, X = x) with respect to s),
+     i.e.,
+                                        G−1      ⊤ −1         −1
+                                          k = F̃k Dk F̃k + Ω̃k .
+
+We combine the two results and get that
+
+                              Lk = Gk F̃k⊤ Dk−1 ,   G−1    ⊤ −1         −1
+                                                     k = F̃k Dk F̃k + Ω̃k .
+
+Furthermore, by the definition of the conditional covariance, it holds that
+                  h                 i
+                E SS ⊤ | X = x; θk = Gk + E [S | X = x; θk ] E [S | X = x; θk ]⊤ ,
+
+which can equivalently be written as
+
+                 E S1 S1⊤ | X = x; θk E S1 S2⊤ | X = x; θk
+               "                                        #
+                                                                         ⊤ ⊤
+                       ⊤
+                                           ⊤
+                                                            = Gk + Lk xx Lk .
+                 E S2 S1 | X = x; θk E S2 S2 | X = x; θk
+
+Notice that we can select the appropriate block from E SS ⊤ | X = x; θk by multiplying left and
+                                                                      
+
+right with the appropriate (block-selecting) matrices. For example:
+
+
+                                                      23
+   •                          h                  i
+                             E S1 S1⊤ | X = x; θk = Bl,11 (Gk + Lk xx⊤ L⊤
+                                                                        k )Br,11 ,
+
+       where                                                                      
+                                                                           In1
+                                  Bl,11 = In1     0n1 ×n2 ,    Br,11 =                 .
+                                                                         0n2 ×n1
+       and In1 is the identity matrix of dimension n1 .
+
+   •                          h                  i
+                             E S2 S2⊤ | X = x; θk = Bl,22 (Gk + Lk xx⊤ L⊤
+                                                                        k )Br,22 ,
+
+       where                                                                   
+                                                                      0n1 ×n2
+                                  Bl,22 = 0n2 ×n1     In2 ,    Br,22 =            .
+                                                                          In2
+   •                          h                  i
+                             E S1 S2⊤ | X = x; θk = Bl,12 (Gk + Lk xx⊤ L⊤
+                                                                        k )Br,12 ,
+
+       where                                                                   
+                                                                      0n1 ×n2
+                                  Bl,12 = In1     0n1 ×n2 ,    Br,12 =            .
+                                                                          In2
+
+Similarly
+
+   •
+                                            E [S1 | X = x; θk ] = B1 Lk x,
+                                  
+       where B1 = In1      0n1 ×n2 .
+
+   •
+                                            E [S2 | X = x; θk ] = B2 Lk x,
+                                  
+       where B2 = 0n2 ×n1      In2 .
+
+By combining the above results with (51), we get that
+
+               Es∼qk (s;x) [−2 log pθ (x, s)] =
+                          trace(D−1 xx⊤ ) + trace(D−1 F1 Bl,11 (Gk + Lk xx⊤ L⊤         ⊤
+                                                                             k )Br,11 F1 )
+                          − 2 trace(D−1 xx⊤ L⊤  ⊤ ⊤
+                                             k B1 F1 )
+                          − 2 trace(D−1 xx⊤ L⊤     ⊤ ⊤
+                                              k B2 F2 )
+                                                               
+                          + 2 trace(D−1 F1 Bl,12 Gk + Lk xx⊤ L⊤         ⊤
+                                                              k Br,12 F2 )
+                                                             
+                          + trace(D−1 F2 Bl,22 Gk + Lk xx⊤ L⊤         ⊤
+                                                             k Br,22 F2 )
+                                                          
+                          + trace(Ω−1 Bl,11 Gk + Lk xx⊤ L⊤k Br,11 )
+
+                          + log det D + log det Ω
+
+
+
+
+                                                      24
+and therefore
+            Ex∼N (0,C) Es∼qk (s;x) [−2 log pθ (x, s)] =
+                                  trace(D−1 C) + trace(D−1 F1 Bl,11 (Gk + Lk CL⊤         ⊤
+                                                                               k )Br,11 F1 )
+                                  − 2 trace(D−1 CL⊤  ⊤ ⊤
+                                                  k B1 F1 )
+                                  − 2 trace(D−1 CL⊤     ⊤ ⊤
+                                                    k B2 F2 )
+                                                                    
+                                  + 2 trace(D−1 F1 Bl,12 Gk + Lk CL⊤         ⊤
+                                                                   k Br,12 F2 )
+                                                                  
+                                  + trace(D−1 F2 Bl,22 Gk + Lk CL⊤         ⊤
+                                                                  k Br,22 F2 )
+                                                                
+                                  + trace(Ω−1 Bl,11 Gk + Lk CL⊤k Br,11 )
+
+                                  + log det D + log det Ω.
+
+We now define
+        k
+       Css =: Gk + Lk CL⊤k
+              "               # "                                                            #
+                 k      k
+                Css,11 Css,12     Bl,11 (Gk + Lk CL⊤k )B r,11   B l,12 (G k + L k CL⊤ )B
+                                                                                    k   r,12
+           =:    k,⊤    k      =                             ⊤
+                Css,12 Css,22     Bl,12 (Gk + Lk CL⊤
+                                                   k )B r,12    B l,22 (G k + L k CL⊤ )B
+                                                                                    k   r,22
+
+and partition                                          k
+                                                       L
+                                                  Lk = 1k ,
+                                                       L2
+where Lk1 ∈ Rn1 ×n and L2k ∈ Rn2 ×n . We further define
+                                  k
+                   Σ̃k =: C + F1 Css,11 F1⊤ − 2CLk,⊤ ⊤
+                                                 1 F1 ,
+                                                                    k
+                                                                  C̃xs =: CLk,⊤
+                                                                            2
+                                                                                      k
+                                                                                − F1 Css,12 .
+
+Note that                                h    i               h    i
+                    Ex∼N (0,C) Eqk (s;x) xs⊤ = Ex∼N (0,C) xx⊤ L⊤        ⊤
+                                                                  k = CLk .
+                         h                  i 
+           k =: CL⊤ =
+                           CLk,⊤        k,⊤       k      k
+                                                              
+We define Cxs      k         1     CL   2    =  C xs,1 C xs,2   .
+  With these definitions
+                     Ex∼N (0,C) Eqk (s;x) [−2 log pθ (x, s)] =
+                                                                                   
+                                          trace D−1 Σ̃k − 2C̃xsk
+                                                                 F2⊤ + F2 Css,22
+                                                                           k
+                                                                                 F2⊤
+                                                                                                 (53)
+                                           + trace(Ω−1 Css,11
+                                                        k
+                                                              )
+                                           + log det Ω + log det D.
+
+With our previous definitions, we can clearly see how each variable (F2 , Ω, D) enters the optimiza-
+tion objective.
+
+C.3    Explicit equations for the EM update
+Using (53), we are now ready to evaluate the EM update
+
+                           θk+1 = arg min Ex∼N (0,C) Es∼qk (s;x) [−2 log pθ (x, s)]              (54)
+                                       θ
+
+under the constraint that D is diagonal. Notice that the problem is separable in (D, F2 ) and Ω.
+
+                                                       25
+   We do the easy part first and find the optimal value for Ω. To do this we take the derivative of
+                                              trace(Ω−1 Css,11
+                                                         k
+                                                               ) + log det Ω
+with respect to Ω−1 and set it to zero. This gives:
+                                                      Ω⋆ = Css,11
+                                                            k
+                                                                  .                                       (55)
+We now turn to the sub-problem that depends on D, F :
+                                                                    
+         minimize minimize trace D−1 Σ̃k − 2C̃xsk
+                                                   F2⊤ + F2 Css,22
+                                                             k
+                                                                   F2⊤ + log det D.                       (56)
+                D          F2
+
+We fix D. The optimal F2 for this D can be found by taking the derivative of the objective with
+respect to F2 and setting it to zero. This gives
+                                                                           k,−1
+                      D−1 (−2C̃xs
+                               k
+                                  + 2F2⋆ (D)Css,22
+                                             k
+                                                   ) = 0 ⇔ F2⋆ (D) = C̃xs
+                                                                       k
+                                                                          Css,22 .                        (57)
+It only remains to minimize over the diagonal D.                We plug F2⋆ (D) in the objective of (56), which
+takes care of the internal minimization with respect to F2 . To obtain the optimal diagonal D, we
+solve                                                         
+                                                      k,−1 k,⊤
+                     minimize trace D−1 Σ̃k − C̃xsk
+                                                    Css,22 C̃xs    + log det D.              (58)
+                           D
+Let Dii = 1/ψi . Then, problem (58) is equivalent to
+                                   n                           
+                                                     k,−1 k,⊤
+                                  X
+                                                  k
+                        minimize      ψi Σ̃k − C̃xs Css,22 C̃xs   − log ψi .                              (59)
+                               ψ1 ,...,ψn                                      ii
+                                             i=1
+The last problem is separable in the ψi ’s. By taking the derivatives with respect to the ψi ’s and
+setting them to zero, we get the solution
+                                   1    
+                                                 k  k,−1 k,⊤
+                                                               
+                                      = Σ̃k − C̃xs Css,22 C̃xs      .                           (60)
+                                  ψi⋆                            ii
+
+Therefore, it holds that                                               
+                                                              k,−1 k,⊤
+                                        D⋆ = diag Σ̃k − C̃xs
+                                                          k
+                                                             Css,22 C̃xs .                                (61)
+To summarize, the EM update is
+                                                 k
+                                            Ω ← Css,11
+                                               k    k,−1
+                                        F2 ← C̃xs Css,22                                                  (62)
+                                                                      
+                                                         k   k,−1 k,⊤
+                                        D ← diag Σ̃k − C̃xs Css,22 C̃xs .
+
+We expect that the diagonal of the obtained risk model F̃k Ω̃k F̃k⊤ + Dk will be equal to the diagonal
+of C. When fitting a low-rank-plus-diagonal model by maximizing the Gaussian log likelihood, this
+is implied by the first-order optimality condition with respect to D [16, Chapter 9].
+    The update (62) can equivalently be written as
+                                           k
+                                     Ω ← Css,11
+                                                            
+                                             k         k        k,−1
+                                    F2 ← Cxs,2   − F1 Css,12   Css,22
+                                                                                                        (63)
+                                    F ← F1 F2
+                                                                         
+                                    D ← diag C − 2Cxs  k
+                                                          F ⊤ + F Css k ⊤
+                                                                       F    .
+                                      k
+Here, we used the fact that diag(F1 Css,12 F2T ) = diag(F2 Css,21
+                                                            k     F1⊤ ), because the diagonal of a square
+matrix is equal to the diagonal of its transpose.
+
+                                                           26
+C.4    Evidence lower bound (ELBO) for EM
+The EM algorithm maximizes a sequence of lower bounds, as seen by
+
+                                                                                            pθ (x, s)
+              maximize Ex∼N (0,C) log pθ (x) ≥ maximize Ex∼N (0,C) Es∼q(s;x) log                        (64)
+                   θ                                         θ                              q(s; x)
+
+for any q(s; x). If we set q(s; x) to be the conditional distribution pθ (s | x), then
+
+                             pθ (x, s)                            pθ (x, s)
+                       log             = log pθ (x) ⇒ Eq(s;x) log           = log pθ (x).               (65)
+                             q(s; x)                              q(s; x)
+
+Let J(θ) = Ex∼N (0,C) log pθ (x). Then, by eq. (45)
+
+                                                                           pθk+1 (x, s)
+                               J(θk+1 ) ≥ Ex∼N (0,C) Es∼qk (s;x) log                                    (66)
+                                                                            qk (s; x)
+
+and by (52)
+
+                                              pθk+1 (x, s)                             pθ (x, s)
+                Ex∼N (0,C) Es∼qk (s;x) log                 ≥ Ex∼N (0,C) Es∼qk (s;x) log k        .      (67)
+                                               qk (s; x)                               qk (s; x)
+
+By (65)
+                                                 pθk (x, s)
+                   Ex∼N (0,C) Es∼qk (s;x) log               = Ex∼N (0,C) log pθk (x) = J(θk ).          (68)
+                                                 qk (s; x)
+Combining the above results
+                                                 J(θk+1 ) ≥ J(θk )                                      (69)
+for the EM update. In other words, EM improves the expected log-likelihood at every iteration.
+
+
+D     The EM update with missing returns
+D.1    The set-up
+We derive the EM algorithm in the case of missing returns data. We consider a time window of
+length T . Let Xτ be the returns random vector at time τ = 1, . . . , T . We assume that at time
+τ we only observe the returns Xτ on a subset of assets indexed by the set Oτ ⊆ {1, . . . , n}. Let
+Mτ = {1, . . . , n} \ Oτ be the set of assets with missing returns at time τ . We denote the observed
+portion of the return at τ as Xτ,obs (with value xτ,obs ) and the missing portion as Xτ,mis . We define
+the permutation matrix Πτ ∈ Rn×n that satisfies
+                                                    
+                                              Xτ,mis
+                                                       = Πτ Xτ .
+                                              Xτ,obs
+
+We wish to solve                                  X
+                                    maximize             wτ log pθ,obs,τ (xτ,obs ),                     (70)
+                                          θ
+                                                  τ ≤T
+
+where pθ (x) is the probability density function of the Gaussian N (0, F̃ Ω̃F̃ ⊤ + D),
+                                                                
+                                                           Ω 0
+                                  F̃ = F1 F2 ,        Ω̃ =         ,
+                                                             0 I
+
+                                                           27
+pθ,obs,τ (·) is the marginal density of the observed returns at time τ , θ =: (F2 , Ω, D), and wτ are
+non-negative weights that sum to 1.
+    It holds that                                                  Z
+                                  log pθ,obs,τ (xτ,obs ) = log pθ (xτ , sτ )dxτ,mis dsτ =
+                               Z
+                                                                pθ (xτ , sτ )
+                          log q(sτ , xτ,mis ; xτ,obs )                             dxτ,mis dsτ ≥
+                                                         q(sτ , xτ,mis ; xτ,obs )
+                                                                                pθ (xτ , sτ )
+                                   Esτ ,xτ,mis ∼q(sτ ,xτ,mis ;xτ,obs ) log                          ,
+                                                                           q(sτ , xτ,mis ; xτ,obs )
+                           
+                 ⊤   xτ,mis
+where xτ = Πτ                , and q(sτ , xτ,mis ; xτ,obs ) is any probability density function over the latent
+                     xτ,obs
+variables sτ and the missing returns xτ,mis , parameterized by the observed returns xτ,obs . The
+inequality follows from Jensen’s inequality. The analysis above is similar to the analysis of Section C.
+Recall that pθ (x, s) is the joint density of (X, S) evaluated at X = x and S = s.
+    We now have a lower bound for each term in the objective of (70). Instead of solving (70)
+directly, we can maximize the lower bound
+                                   X                                                         pθ (xτ , sτ )
+                    maximize             wτ Esτ ,xτ,mis ∼q(sτ ,xτ,mis ;xτ,obs ) log
+                         θ                                                              q(sτ , xτ,mis ; xτ,obs )
+                                  τ ≤T
+
+that has the same solution as
+                                    X
+                      minimize               wτ Esτ ,xτ,mis ∼q(sτ ,xτ,mis ;xτ,obs ) [−2 log pθ (xτ , sτ )] .       (71)
+                             θ
+                                    τ ≤T
+
+Note that as derived in Section C,
+
+  Eqτ [−2 log pθ (xτ , sτ )] =
+                       h        i                        h            i                          h          i
+      trace(D−1 Eqτ xτ x⊤     τ  ) +   trace(D −1
+                                                  F1 Eqτ  s τ,1 s ⊤
+                                                                  τ,1   F ⊤
+                                                                          1 ) − 2 trace(D −1
+                                                                                             Eqτ   x τ s ⊤    ⊤
+                                                                                                         τ,1 F1 )
+                             h        i                                 h         i
+      − 2 trace(D−1 Eqτ xτ s⊤              ⊤               −1
+                                   τ,2 F2 ) + 2 trace(D F1 Eqτ sτ,1 sτ,2 F2 )
+                                                                               ⊤     ⊤
+
+                              h          i                                                                        (72)
+      + trace(D−1 F2 Eqτ sτ,2 s⊤             ⊤
+                                      τ,2 F2 )
+                          h          i
+      + trace(Ω−1 Eqτ sτ,1 s⊤     τ,1 )
+
+        + log det D + log det Ω,
+
+where we abbreviate sτ , xτ,mis ∼ q(sτ , xτ,mis ; xτ,obs ) as qτ for simplicity.
+   EM solves (71) iteratively. Assuming we are at iteration k, with θk , we set
+
+                  q(sτ , xτ,mis ; xτ,obs ) = pθk (Sτ = sτ , Xτ,mis = xτ,mis | Xτ,obs = xτ,obs ).                   (73)
+
+We remind the reader that for arbitrary θ, the random variables satisfy
+
+                                                Xτ,obs = F̃τ,obs Sτ + Eτ,obs
+                                                                                    ,
+                                                Xτ,mis = F̃τ,mis Sτ + Eτ,mis
+
+where                                                   
+                                      Sτ,1            Ω 0
+                                 Sτ =        ∼ N (0,         ),               Eτ ∼ N (0, D),
+                                      Sτ,2             0 I
+
+                                                                 28
+and Sτ is independent of Eτ . Also, to make the notation clear: F̃τ,obs refers to the rows of F̃
+indexed by Oτ , and similarly for the other quantities indexed by ‘obs’ or ‘mis’.
+    These relations allows us to compute the conditional distribution in (73) and the necessary
+statistical moments, as we show next.
+
+D.2      Computing the statistical moments
+Similar to Section C, the conditional distribution of Sτ given the observed returns Xτ,obs = xτ,obs
+at iteration k (i.e., with F̃k , Ωk , Dk ) is
+
+                              Sτ | Xτ,obs = xτ,obs ; θk ∼ N (Lk,τ xτ,obs , Gk,τ ),                        (74)
+
+where
+                                         −1
+                                ⊤
+                  Lk,τ = Gk,τ F̃k,τ,obs Dk,τ,obs ,   G−1      ⊤        −1                    −1
+                                                      k,τ = F̃k,τ,obs Dk,τ,obs F̃k,τ,obs + Ω̃k .          (75)
+To make the notation clear, F̃k,τ,obs is the sub-matrix of F̃k that contains the rows indexed by Oτ
+and Dk,τ,obs is the sub-matrix of Dk that contains the rows and columns indexed by Oτ . We also
+define
+                                           ŝτ =: Lk,τ xτ,obs .
+We can now compute the necessary statistical moments at iteration k. First, similar to Section C,
+we get                   h                             i
+                        E Sτ Sτ⊤ | Xτ,obs = xτ,obs ; θk = Gk,τ + ŝτ ŝ⊤
+                                                                       τ .
+
+Second,                        h                                 i
+                              E Xτ,obs Sτ⊤ | Xτ,obs = xτ,obs ; θk = xτ,obs ŝ⊤
+                                                                             τ .                          (76)
+Third,         h                                 i             h                              i
+              E Xτ,mis Sτ⊤ | Xτ,obs = xτ,obs ; θk = F̃k,τ,mis E Sτ Sτ⊤ | Xτ,obs = xτ,obs ; θk
+                                                                                                          (77)
+                                         = F̃k,τ,mis (ŝτ ŝ⊤                      ⊤
+                                                            τ + Gk,τ ) = x̂τ,mis ŝτ + F̃k,τ,mis Gk,τ ,
+
+where x̂τ,mis = F̃k,τ,mis ŝτ are the imputed missing values. Here, we leveraged the fact that Eτ,mis is
+independent of (Eτ,obs , Sτ ). Equations (76)-(77) imply that
+                                                                                           
+                                                        ⊤ Xτ,mis
+                h                             i
+                       ⊤                                              ⊤
+              E Xτ Sτ | Xτ,obs = xτ,obs ; θk = E Πτ                  S | Xτ,obs = xτ,obs ; θk
+                                                            Xτ,obs τ
+                                                                                               (78)
+                                                    ⊤ x̂τ,mis     ⊤     ⊤ F̃k,τ,mis Gk,τ
+                                                = Πτ            ŝ + Πτ                    ,
+                                                        xτ,obs τ                 0
+where                                                             
+                                                           x̂τ,mis
+                                               x̂τ = Π⊤
+                                                      τ
+                                                            xτ,obs
+are the imputed values for Xτ . Finally, it holds that
+                                               "             ⊤                       #
+          h
+               ⊤
+                                      i
+                                            ⊤     Xτ,mis Xτ,mis
+        E Xτ Xτ | Xτ,obs = xτ,obs ; θk = Πτ E                      | Xτ,obs = xτ,obs ; θk Πτ ,
+                                                  Xτ,obs Xτ,obs
+
+where, because Eτ,mis is independent of (Eτ,obs , Sτ ) we can write:
+ h                                    i             h                            i             h              i
+          ⊤                                              ⊤                          ⊤                   ⊤
+E Xτ,mis Xτ,mis | Xτ,obs = xτ,obs ; θk = F̃k,τ,mis E Sτ Sτ | Xτ,obs = xτ,obs ; θk F̃k,τ,mis + E Eτ,mis Eτ,mis
+                                         = x̂τ,mis x̂⊤                        ⊤
+                                                     τ,mis + F̃k,τ,mis Gk,τ F̃k,τ,mis + Dk,τ,mis .
+
+
+                                                        29
+Furthermore:
+          h                                   i   h                                i
+                  ⊤                                        ⊤                          ⊤
+        E Xτ,obs Xτ,mis | Xτ,obs = xτ,obs ; θk = E Xτ,obs Sτ | Xτ,obs = xτ,obs ; θk F̃k,τ,mis
+                                                   = xτ,obs x̂⊤
+                                                              τ,mis ,
+                             h                                     i
+                                      ⊤
+                            E Xτ,obs Xτ,obs | Xτ,obs = xτ,obs ; θk = xτ,obs x⊤
+                                                                             τ,obs
+
+We can combine the expressions above to write
+                                                                    ⊤
+                                                                                        
+                                                 ⊤ F̃k,τ,mis Gk,t F̃k,τ,mis + Dk,τ,mis 0
+      h                            i
+            ⊤                               ⊤
+     E Xτ Xτ | Xτ,obs = xτ,obs ; θk = x̂τ x̂τ + Πτ                                         Πτ .     (79)
+                                                                     0                 0
+The zero entries of the matrix in the right-hand side are reasonable, because the conditional co-
+variance of any quantity involving Xτ,obs is 0.
+
+D.3       Explicit equations for the EM update
+We are at iteration k, with θk . Let
+  • Cxxk =:                     ⊤
+             P                                        
+               τ ≤T wτ E Xτ Xτ | Xτ,obs = xτ,obs ; θk ,
+
+  • Wxs                        ⊤
+        k =:
+             P                                          k        k
+                                                                        
+                τ ≤T wτ E Xτ Sτ | Xτ,obs = xτ,obs ; θk = Wxs,1 Wxs,2 ,
+                                                          k      k
+                                                                        
+                                                          Css,11 Css,12
+  • Css =: τ ≤T wτ E Sτ Sτ | Xτ,obs = xτ,obs ; θk =
+       k                     ⊤
+             P                                      
+                                                           k      k       .
+                                                          Css,21 Css,22
+These can be computed as shown in the end of the previous subsection. EM solves problem (71)
+using (73) to get θk+1 . With our new definitions, we can write problem (71) as
+                                                                                                     
+minimize trace D−1 Cxx    k       k
+                            + F1 Css,11 F1⊤ − 2Wxs,1
+                                                k
+                                                     F1⊤ − 2Wxs,2
+                                                             k
+                                                                  F2⊤ + 2F1 Css,12
+                                                                             k
+                                                                                   F2⊤ + F2 Css,22
+                                                                                             k
+                                                                                                   F2⊤
+      θ
+            + log det D
+            + trace(Ω−1 Css,11
+                         k
+                               ) + log det Ω.
+                                                                                                    (80)
+We further define
+   • Σ̃k =: Cxx
+             k + F Ck      ⊤     k     ⊤
+                  1 ss,11 F1 − 2Wxs,1 F1 ,
+
+   • C̃xs
+       k =: W k         k
+             xs,2 − F1 Css,12 .
+
+With these definitions, (80) becomes
+                                                                           
+                          minimize trace D−1 Σ̃k − 2C̃xs
+                                                      k
+                                                         F2⊤ + F2 Css,22
+                                                                   k
+                                                                         F2⊤
+                              θ
+                                     + log det D                                                    (81)
+                                     + trace(Ω−1 Css,11
+                                                  k
+                                                        ) + log det Ω.
+We have already solved this problem in Section C. Therefore, the EM update with missing returns
+data is
+                                          k
+                                     Ω ← Css,11
+                                           k    k,−1
+                                    F2 ← C̃xs Css,22                  .                             (82)
+                                                                   
+                                                     k   k,−1 k,⊤
+                                    D ← diag Σ̃k − C̃xs Css,22 C̃xs
+
+                                                     30
+References
+ [1] Jushan Bai and Serena Ng. Large Dimensional Factor Analysis. Foundations and Trends®
+     in Econometrics, 3(2):89–163, 2008.
+
+ [2] Stephen Boyd, Kasper Johansson, Ronald Kahn, Philipp Schiele, and Thomas Schmelzer.
+     Markowitz Portfolio Construction at Seventy. Journal of Portfolio Management, 50(8):117–
+     160, 2024.
+
+ [3] Emmanuel Candès, Trevor Hastie, Ked Hogan, Ronald N Kahn, Robert Luo, and Asher Spec-
+     tor. Thematic Investing: A Risk-Based Perspective. Financial Analysts Journal, 81(4):103–
+     120, 2025.
+
+ [4] Robert F Engle. Autoregressive Conditional Heteroscedasticity with Estimates of the Variance
+     of United Kingdom Inflation. Econometrica: Journal of the Econometric Society, pages 987–
+     1007, 1982.
+
+ [5] Frank J Fabozzi. Handbook of Finance, Investment Management and Financial Management,
+     volume 2. Wiley, 2008.
+
+ [6] Eugene F Fama and Kenneth R French. The Cross-Section of Expected Stock Returns. The
+     Journal of Finance, 47(2):427–465, 1992.
+
+ [7] Eugene F Fama and Kenneth R French. Common Risk Factors in the Returns on Stocks and
+     Bonds. Journal of Financial Economics, 33(1):3–56, 1993.
+
+ [8] Jianqing Fan, Yingying Fan, and Jinchi Lv. High Dimensional Covariance Matrix Estimation
+     using a Factor Model. Journal of Econometrics, 147(1):186–197, 2008.
+
+ [9] Jianqing Fan, Yuan Liao, and Han Liu. An Overview of the Estimation of Large Covariance
+     and Precision Matrices. The Econometrics Journal, 19(1):C1–C32, 2016.
+
+[10] Richard C Grinold and Ronald N Kahn. Active Portfolio Management. McGraw Hill New
+     York, 2000.
+
+[11] Trevor Hastie, Robert Tibshirani, and Jerome Friedman. The Elements of Statistical Learning.
+     Springer, 2nd edition, 2009.
+
+[12] Kasper Johansson, Mehmet G Ogut, Markus Pelger, Thomas Schmelzer, and Stephen Boyd.
+     A Simple Method for Predicting Covariance Matrices of Financial Returns. Foundations and
+     Trends® in Econometrics, 12(4):324–407, 2023.
+
+[13] REUTERS JP Morgan. Riskmetrics–Technical Document, 1996.
+
+[14] Olivier Ledoit and Michael Wolf. Honey, I Shrunk the Sample Covariance Matrix. The Journal
+     of Portfolio Management, 30(4):110–119, 2004.
+
+[15] Wai Lee, Ryan Brown, and Harin de Silva. Narrative Factors and Risk Models. Available at
+     SSRN 5271271, 2025.
+
+[16] K. V. Mardia, J. T. Kent, and J. M. Bibby. Multivariate Analysis. Academic Press, 1979.
+
+[17] Harry Markowitz. Portfolio Selection. The Journal of Finance, 7(1):77–91, 1952.
+
+
+                                               31
+[18] Alexander J McNeil, Rüdiger Frey, and Paul Embrechts. Quantitative Risk Management:
+     Concepts, Techniques and Tools-Revised Edition. Princeton University Press, 2015.
+
+[19] Jose Menchero, D Orr, and Jun Wang. The Barra US Equity Model (USE4), Methodology
+     Notes. MSCI Barra, 2011.
+
+[20] Jose Menchero and Vijay Poduri. Custom Factor Attribution. Financial Analysts Journal,
+     64(2):81–92, 2008.
+
+[21] MSCI Inc.    MSCI Barra Risk Models.        https://app2.msci.com/products/analytics/
+     models/.
+
+[22] Frank Nielsen and Jennifer Bender. The Fundamentals of Fundamental Factor Models. MSCI
+     Barra Research Paper, (2010-24), 2010.
+
+[23] Szilárd Pafka and Imre Kondor. Noisy Covariance Matrices and Portfolio Optimization II.
+     Physica A: Statistical Mechanics and its Applications, 319:487–494, 2003.
+
+[24] Barr Rosenberg. Extra-Market Components of Covariance in Security Returns. Journal of
+     Financial and quantitative analysis, 9(2):263–274, 1974.
+
+[25] Donald B Rubin and Dorothy T Thayer. EM Algorithms for ML Factor Analysis. Psychome-
+     trika, 47(1):69–76, 1982.
+
+[26] Abd-Krim Seghouane. An Iterative Projections Algorithm for ML Factor Analysis. In IEEE
+     Workshop on Machine Learning for Signal Processing, pages 333–338, 2008.
+
+[27] William F Sharpe. Capital Asset Prices: A Theory of Market Equilibrium under Conditions
+     of Risk. The Journal of Finance, 19(3):425–442, 1964.
+
+[28] Asher Spector, Rina Foygel Barber, Trevor Hastie, Ronald N Kahn, and Emmanuel Candès.
+     The Mosaic Permutation Test: An Exact and Nonparametric Goodness-of-Fit Test for Factor
+     Models. arXiv preprint arXiv:2404.15017, 2024.
+
+[29] Cătălin Stărică and Clive Granger. Nonstationarities in Stock Returns. Review of Economics
+     and Statistics, 87(3):503–522, 2005.
+
+[30] Kingsley Yeon and Mihai Anitescu. Beyond Low Rank: Fast Low-Rank + Diagonal Decom-
+     position with a Spectral Approach. arXiv preprint arXiv:2512.17120, 2025.
+
+
+
+
+                                                32
+

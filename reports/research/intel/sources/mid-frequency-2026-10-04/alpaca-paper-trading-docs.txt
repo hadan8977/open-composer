@@ -1,0 +1,105 @@
+URL: https://docs.alpaca.markets/docs/paper-trading
+FETCHED_UTC: 2026-10-04T18:38Z
+HTTP: 200 text/html; charset=utf-8
+-----
+ Paper Trading 
+ For AI agents: visit https://docs.alpaca.markets/us/llms.txt for an index of all pages formatted in Markdown and endpoints in OpenAPI. Append .md to any documentation page URL to get its markdown version. Jump to Content Region: US Home Documentation API Reference Changelog Region: US Log In Trading Dashboard Broker Dashboard Documentation Search Ask AI Log In Trading Dashboard Broker Dashboard Home Documentation API Reference Changelog Paper Trading Introduction Welcome About Alpaca Alpaca API Platform Authentication SDKs and Tools Additional Resources Trading CLI Trading MCP Server Broker MCP Server BROKER API About Broker API Getting Started with Broker API Credentials Management Use Cases Integration Setup with Alpaca Broker API FAQs Mandatory Corporate Actions Voluntary Corporate Actions FDIC Sweep Program Instant Funding Fully Paid Securities Lending (FPSL) 24/5 Trading OmniSub Fixed Income ACATS API Intraday Margin Rule for Non-Leverage Margin Accounts The Intraday Margin Rule Understanding FINRA’s New Intraday Margin Rule and the End of PDT US IPOs (Initial Public Offerings) Customer Account Opening Accounts Statuses International Accounts Domestic (USA) Accounts Data Validations IRA Accounts Overview Crypto Trading Crypto Wallets API Funding Accounts Journals API Funding Wallets ACH Funding Instant Funding Trading Fully Paid Securities Lending (FPSL) FPSL Integration Guide for Fully Disclosed FPSL Integration Guide for OmniSub Portfolio Rebalancing SSE Events Account Status Events for KYCaaS Activities Daily Processes and Reconcilations Banking Holiday Funding Processes Statements and Confirms Local Currency Trading (LCT) Options Trading Overview Index Options Fixed Income Tokenization Guide for Issuer Tokenization Guide for Authorized Participant US IPOs (Initial Public Offerings) Rate Limits Custodial accounts TRADING API About Trading API Getting Started with Trading API Working with /account Working with /assets Working with /orders Working with /positions Paper Trading Trading Account Crypto Spot Trading Crypto Orders Crypto Pricing Data Crypto Spot Trading Fees Options Trading Options Orders Options Level 3 Trading Non-Trade Activities for Option Events Account Activities Fractional Trading Margin and Short Selling Placing Orders DMA Gateway / Advanced Order Types User Protection Websocket Streaming Trading API FAQs 24/5 Trading Position Average Entry Price Calculation Intraday Margin Rule for Non-Leverage Margin Accounts The Intraday Margin Rule Understanding FINRA’s New Intraday Margin Rule and the End of PDT Regulatory Fees Market Data API About Market Data API Getting Started with Market Data API Historical API Historical Stock Data Historical Crypto Data Historical Option Data Historical News Data WebSocket Stream Real-time Stock Data Real-time Crypto Data Real-time News Real-time Option Data Market Data FAQ Connect API About Connect API Registering Your App Using OAuth2 and Trading API FIX API About FIX API FIX Specification Paper Trading Test your algos in our paper environment. Free and available to all Alpaca users. Paper trading is a real-time simulation environment where you can test your code. You can reset and test your algorithm as much as you want using free, real-time market data. Paper trading simulates crypto trading as well. Paper trading works the same way as live trading end to end - except the order is not routed a live exchange. Instead, the system simulates the order filling based on the real-time quotes. 
+ When you run your algorithm with the live market, there are many things that can happen that you may not see in backtesting. Orders may not be filled, prices may spike, or your network may get disconnected and retry may be needed. During the software development process, it is important to test your algorithm to catch these things in advance. 
+ 🌍 Anyone globally can create an Alpaca Paper Only Account ! All you need to do is sign up with your email address. 
+ An Alpaca Paper Only Account is for paper trading only. It allows you to fully utilize the Alpaca API and run your algorithm in our paper trading environment only. You won’t be trading real money, but you will be able to track your simulated activity and balance in the Alpaca web dashboard. As an Alpaca Paper Only Account holder, you are only entitled to receive and make use of IEX market data. For more information about our paper trading environment, please refer to Paper Trading Specification. 
+ Paper vs Live 
+ We are thrilled that many users have found paper trading useful, and we continue to work on improving our paper trading assumptions so that users may have a superior experience. However, please note that paper trading is only a simulation. It provides a good approximation for what one might expect in real trading, but it is not a substitute for real trading and performance may differ. Specifically, paper trading does not account for: 
+ Market impact of your orders 
+ Information leakage of your orders 
+ Price slippage due to latency 
+ Order queue position (for non-marketable limit orders) 
+ Price improvement received 
+ Regulatory fees 
+ Dividends 
+ If you are interested to incorporate these issues into your testing, you may do so by trading a live brokerage account. Even small amounts of real money can often provide insight into issues not seen in a simulation environment. 
+ Paper vs Live 
+ Feature Paper Live Eligibility ✅ ✅ API Access ✅ ✅ Free IEX Real Time Data ✅ ✅ MFA ✅ ✅ Margin Trading ✅ ✅ Short Selling ✅ ✅ Premarket/After Hours Trading ✅ ✅ Borrow Fees ⛔️ (Coming Soon!) ✅ 
+ Comparing Other Simulators 
+ Users may be interested to compare their paper trading results on Alpaca with their paper trading results on other platforms such as Quantopian or Interactive Brokers. Please note there are several factors that may lead to performance differences. Paper trading platforms may have different: 
+ Fill prices 
+ Fill assumptions 
+ Liquidity assumptions 
+ Return calculation methodologies 
+ Market data sources 
+ Getting Started with Paper Trading 
+ Your initial paper trading account is created with $100k balance as a default setting. You can reset the paper trading account at any time later with arbitrary amount as you configure. 
+ Your paper trading account will have a different API key from your live account, and all you need to do to start using your paper trading account is to replace your API key and API endpoint with ones for the paper trading. The API spec is the same between the paper trading and live accounts. The API endpoint (base URL) is displayed in your paper trading dashboard, and please follow the instruction about how to set it depending on the library you are using. In most cases, you need to set an environment variable APCA_API_BASE_URL = https://paper-api.alpaca.markets 
+ Reset Your Paper Trading Account 
+ We've updated the dashboard to allow you to create and delete paper accounts, rather than resetting them. 
+ To create a new paper account, click the paper account number in the upper left corner of the dashboard and select "Open New Paper Account." 
+ To delete an existing paper account, click the paper account number in the upper left corner, then go to "Account Settings." Locate the paper account you'd like to remove and click the "Delete Account" button next to it. 
+ Don't forget to generate new API keys for any newly created account. 
+ Rules and Assumptions 
+ Paper trading account does NOT simulate dividends. 
+ Paper trading account does NOT send order fill emails. 
+ Market Data API works identically. 
+ You cannot change the account balance after it is created, unless you reset it. 
+ Orders are filled only when they become marketable. This means that a non-marketable buy limit order will not be filled until its limit price is equal to or greater than the best ask price, and a non-marketable sell limit order will not be filled until its limit price is equal to or less than the best bid. 
+ Your order quantity is not checked against the NBBO quantities. In other words, you can submit and receive a fill for an order that is much larger than the actual available liquidity. 
+When orders are eligible to be filled, they will receive partial fills for a random size 10% of the time. If the order price is still marketable, the remaining quantity would be re-evaluated for a subsequent fill. 
+ Regardless of whether you have a Paper Trading Only account or a real money brokerage account, all orders submitted in paper trading will be matched against the best available current market price (NBBO). 
+ Updated 3 months ago Working with /positions Trading Account Did this page help you? Yes No Copy Page Paper vs Live Paper vs Live Comparing Other Simulators Getting Started with Paper Trading Reset Your Paper Trading Account Rules and Assumptions 
+ Developers 
+ Docs 
+ Slack 
+ Forum 
+ Support 
+ Learn 
+ SDKs & Libraries 
+ GitHub 
+ API Status 
+ Security 
+ About Us 
+ Story 
+ Blog 
+ Contact 
+ We're hiring 
+ Disclosures 
+ Disclosure Library 
+ Form CRS 
+ Form CRS Responses to Conversation Starters 
+ Privacy Policy 
+ Cookie Policy 
+ Terms & Conditions 
+ Twitter 
+ LinkedIn 
+ Facebook 
+ Slack 
+ Submit Feedback 
+ Alpaca 
+ http://alpaca.markets/ 
+ © 2025 Alpaca Securities LLC All rights reserved. 
+ © 2025 Alpaca Crypto LLC All rights reserved. 
+ © 2025 AlpacaDB, Inc. All rights reserved. 
+ Securities brokerage services are provided by Alpaca Securities LLC
+ ("Alpaca Securities"), member
+ FINRA / SIPC , a wholly-owned subsidiary
+ of AlpacaDB, Inc.
+ Technology and services are offered by AlpacaDB, Inc.
+ Options trading is not suitable for all investors due to its inherent
+ high risk,
+ which can potentially result in significant losses.
+ Please read Characteristics and Risks of
+ Standardized Options before investing in options.
+ Cryptocurrency services are made available by Alpaca Crypto LLC
+ ("Alpaca Crypto"), a FinCEN registered money services business (NMLS #
+ 2160858), and a wholly-owned subsidiary of AlpacaDB, Inc. Alpaca Crypto
+ is not a member of SIPC or FINRA. Cryptocurrencies are not stocks and
+ your cryptocurrency investments are not protected by either FDIC or
+ SIPC.
+ Cryptocurrency is highly speculative in nature, involves a high degree
+ of risks, such as volatile market price swings, market manipulation,
+ flash crashes, and cybersecurity risks. Cryptocurrency regulations are
+ continuously evolving, and it is your responsibility to understand and
+ abide by them. Cryptocurrency trading can lead to large, immediate and
+ permanent loss of financial value. You should have appropriate knowledge
+ and experience before engaging in cryptocurrency trading. For additional
+ information, please click here .
+ ! View Important Disclosures 
+-->
+ 

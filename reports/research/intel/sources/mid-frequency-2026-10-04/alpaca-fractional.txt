@@ -1,0 +1,117 @@
+URL: https://docs.alpaca.markets/docs/fractional-trading
+FETCHED_UTC: 2026-10-04T18:42Z
+HTTP: 200 text/html; charset=utf-8
+-----
+ Fractional Trading 
+ For AI agents: visit https://docs.alpaca.markets/us/llms.txt for an index of all pages formatted in Markdown and endpoints in OpenAPI. Append .md to any documentation page URL to get its markdown version. Jump to Content Region: US Home Documentation API Reference Changelog Region: US Log In Trading Dashboard Broker Dashboard Documentation Search Ask AI Log In Trading Dashboard Broker Dashboard Home Documentation API Reference Changelog Fractional Trading Introduction Welcome About Alpaca Alpaca API Platform Authentication SDKs and Tools Additional Resources Trading CLI Trading MCP Server Broker MCP Server BROKER API About Broker API Getting Started with Broker API Credentials Management Use Cases Integration Setup with Alpaca Broker API FAQs Mandatory Corporate Actions Voluntary Corporate Actions FDIC Sweep Program Instant Funding Fully Paid Securities Lending (FPSL) 24/5 Trading OmniSub Fixed Income ACATS API Intraday Margin Rule for Non-Leverage Margin Accounts The Intraday Margin Rule Understanding FINRA’s New Intraday Margin Rule and the End of PDT US IPOs (Initial Public Offerings) Customer Account Opening Accounts Statuses International Accounts Domestic (USA) Accounts Data Validations IRA Accounts Overview Crypto Trading Crypto Wallets API Funding Accounts Journals API Funding Wallets ACH Funding Instant Funding Trading Fully Paid Securities Lending (FPSL) FPSL Integration Guide for Fully Disclosed FPSL Integration Guide for OmniSub Portfolio Rebalancing SSE Events Account Status Events for KYCaaS Activities Daily Processes and Reconcilations Banking Holiday Funding Processes Statements and Confirms Local Currency Trading (LCT) Options Trading Overview Index Options Fixed Income Tokenization Guide for Issuer Tokenization Guide for Authorized Participant US IPOs (Initial Public Offerings) Rate Limits Custodial accounts TRADING API About Trading API Getting Started with Trading API Working with /account Working with /assets Working with /orders Working with /positions Paper Trading Trading Account Crypto Spot Trading Crypto Orders Crypto Pricing Data Crypto Spot Trading Fees Options Trading Options Orders Options Level 3 Trading Non-Trade Activities for Option Events Account Activities Fractional Trading Margin and Short Selling Placing Orders DMA Gateway / Advanced Order Types User Protection Websocket Streaming Trading API FAQs 24/5 Trading Position Average Entry Price Calculation Intraday Margin Rule for Non-Leverage Margin Accounts The Intraday Margin Rule Understanding FINRA’s New Intraday Margin Rule and the End of PDT Regulatory Fees Market Data API About Market Data API Getting Started with Market Data API Historical API Historical Stock Data Historical Crypto Data Historical Option Data Historical News Data WebSocket Stream Real-time Stock Data Real-time Crypto Data Real-time News Real-time Option Data Market Data FAQ Connect API About Connect API Registering Your App Using OAuth2 and Trading API FIX API About FIX API FIX Specification Fractional Trading Fractional shares are fractions of a whole share, meaning that you don’t need to buy a whole share to own a portion of a company. You can now buy as little as $1 worth of shares for over 2,000 US equities. 
+ By default all Alpaca accounts are allowed to trade fractional shares in both live and paper environments. Please make sure you reset your paper account if you run into any issues dealing with fractional shares. 
+ Supported Order Types 
+ Alpaca currently supports fractional trading for market, limit, stop & stop limit orders with a time in force=Day, accommodating both fractional quantities and notional values. You can pass either a fractional amount (qty), or a notional value (notional) in any POST/v2/orders request. Note that entering a value for either parameters, will automatically nullify the other. If both qty and notional are entered the request will be rejected with an error status 400. 
+ Both notional and qty fields can take up to 9 decimal point values. 
+ Moreover, we support fractional shares trading not only during standard market hours, but extending into pre-market (4:00 a.m. - 9:30 a.m. ET), post-market (4:00 p.m. - 8:00 p.m. ET) and overnight (8:00 p.m. - 4:00 a.m.) hours, offering global investors the ability to trade during the full extended hours session. 
+ Eligible Securities 
+ Only exchange-listed securities are eligible to trade in the extended hours. Additionally, the asset must be enabled as a fractional asset on Alpaca’s side. If there is an asset you want to trade in the extended hours and it is not eligible, please contact our support team. 
+ Sample Requests 
+ Notional Request 
+ JSON {
+ "symbol": "AAPL",
+ "notional": 500.75,
+ "side": "buy",
+ "type": "market",
+ "time_in_force": "day"
+} 
+ Fractional Request 
+ JSON {
+ "symbol": "AAPL",
+ "qty": 3.654,
+ "side": "buy",
+ "type": "market",
+ "time_in_force": "day"
+} 
+ Supported Assets 
+ Not all assets are fractionable yet so please make sure you query assets details to check for the parameter fractionable = true . 
+ Supported fractionable assets would return a response that looks like this 
+ JSON {
+ "id": "b0b6dd9d-8b9b-48a9-ba46-b9d54906e415",
+ "class": "us_equity",
+ "exchange": "NASDAQ",
+ "symbol": "AAPL",
+ "name": "Apple Inc. Common Stock",
+ "status": "active",
+ "tradable": true,
+ "marginable": true,
+ "shortable": true,
+ "easy_to_borrow": true,
+ "fractionable": true
+} 
+ If you request a fractional share order for a stock that is not yet fractionable, the order will get rejected with an error message that reads requested asset is not fractionable . 
+ Dividends 
+ Dividend payments occur the same way in fractional shares as with whole shares, respecting the proportional value of the share that you own. 
+ For example if the dividend amount is $0.10 per share and you own 0.5 shares of that stock then you will receive $0.05 as dividend. As a general rule of thumb all dividends are rounded to the nearest penny. 
+ Notes on Fractional Trading 
+ We do not support short sales in fractional orders. All fractional sell orders are marked long. 
+ The expected price of fill is the NBBO quote at the time the order was submitted. If you submit an order for a whole and fraction, the price for the whole share fill will be used to price the fractional portion of the order. 
+ Day trading fractional shares counts towards your day trade count. 
+ You can cancel a fractional share order that is pending, the same way as whole share orders. 
+ Limit orders are supported for both fractional and notional orders. Extended hours are also supported with limit orders (same as whole share orders). 
+ Fees for fractional trading work the same way as with whole shares. 
+ Alpaca does not make recommendations with regard to fractional share trading, whether to use fractional shares at all, or whether to invest in any specific security. A security’s eligibility on the list of fractional shares available for trading is not an endorsement of any of the securities, nor is it intended to convey that such stocks have low risk. Fractional share transactions are executed either on a principal or riskless principal basis, and can only be bought or sold with market orders during normal market hours. Updated about 1 year ago Account Activities Margin and Short Selling Did this page help you? Yes No Copy Page Supported Order Types Eligible Securities Sample Requests Notional Request Fractional Request Supported Assets Dividends Notes on Fractional Trading 
+ Developers 
+ Docs 
+ Slack 
+ Forum 
+ Support 
+ Learn 
+ SDKs & Libraries 
+ GitHub 
+ API Status 
+ Security 
+ About Us 
+ Story 
+ Blog 
+ Contact 
+ We're hiring 
+ Disclosures 
+ Disclosure Library 
+ Form CRS 
+ Form CRS Responses to Conversation Starters 
+ Privacy Policy 
+ Cookie Policy 
+ Terms & Conditions 
+ Twitter 
+ LinkedIn 
+ Facebook 
+ Slack 
+ Submit Feedback 
+ Alpaca 
+ http://alpaca.markets/ 
+ © 2025 Alpaca Securities LLC All rights reserved. 
+ © 2025 Alpaca Crypto LLC All rights reserved. 
+ © 2025 AlpacaDB, Inc. All rights reserved. 
+ Securities brokerage services are provided by Alpaca Securities LLC
+ ("Alpaca Securities"), member
+ FINRA / SIPC , a wholly-owned subsidiary
+ of AlpacaDB, Inc.
+ Technology and services are offered by AlpacaDB, Inc.
+ Options trading is not suitable for all investors due to its inherent
+ high risk,
+ which can potentially result in significant losses.
+ Please read Characteristics and Risks of
+ Standardized Options before investing in options.
+ Cryptocurrency services are made available by Alpaca Crypto LLC
+ ("Alpaca Crypto"), a FinCEN registered money services business (NMLS #
+ 2160858), and a wholly-owned subsidiary of AlpacaDB, Inc. Alpaca Crypto
+ is not a member of SIPC or FINRA. Cryptocurrencies are not stocks and
+ your cryptocurrency investments are not protected by either FDIC or
+ SIPC.
+ Cryptocurrency is highly speculative in nature, involves a high degree
+ of risks, such as volatile market price swings, market manipulation,
+ flash crashes, and cybersecurity risks. Cryptocurrency regulations are
+ continuously evolving, and it is your responsibility to understand and
+ abide by them. Cryptocurrency trading can lead to large, immediate and
+ permanent loss of financial value. You should have appropriate knowledge
+ and experience before engaging in cryptocurrency trading. For additional
+ information, please click here .
+ ! View Important Disclosures 
+-->
+ 

@@ -1,0 +1,613 @@
+{
+ "id": "I-20261004-06",
+ "coordinator_code": "R1004-T81",
+ "generated_utc": "2026-10-04T18:55:14Z",
+ "language_of_markdown": "zh",
+ "evidence_tiers": {
+  "1": "none",
+  "2": "backtest only",
+  "3": "out-of-sample or post-publication",
+  "4": "institution self-reported live use",
+  "5": "verifiable or independently replicated"
+ },
+ "headline": {
+  "primary_recommendation": "theme risk budget first (no prediction), then online jump-model state layer vs trend x VIX baseline, semiconductor-cycle indicators as conditioners/monitoring only",
+  "minimum_depth": "3-6 complementary inputs, 2 states, validated persistence (jump penalty/hysteresis), >=12y fit and >=25y evaluation incl. >=3 crashes, online inference with >=1-2d delay and 5-10bp cost, exposure-matched baseline + circular-shift placebo",
+  "semis_cycle_reading_2026_10_04": "fundamental readings at record and still accelerating (Korea Sept chip exports $60.3B +263% y/y; TSMC Aug +53.3% y/y; SIA July +135.1% y/y) but price growth decelerating (DRAM contract q/q ~+100% 1Q -> +13-18% 3Q -> +10-15% 4Q); SMH -5.7% and SOX -10.2% from 2026-06-22 high at 2026-10-02 close after a -23% SMH drawdown into 2026-07-29"
+ },
+ "regime_methods": [
+  {
+   "method": "HMM",
+   "inputs": "daily returns, 2 states",
+   "oos_result": "S&P500 1990-2023, 10bp, 2d delay: Sharpe 0.48->0.54, MDD -55.2%->-28.9%, CAGR 8.5% vs B&H 10.2%, turnover 141%",
+   "post_publication": "yes (Nystrup et al. JPM 2015/2018; abstract-level read only)",
+   "open_source": [
+    {
+     "repo": "hmmlearn/hmmlearn",
+     "stars": 3434,
+     "license": "BSD-3-Clause",
+     "pushed": "2024-10-31"
+    }
+   ],
+   "tier": 3,
+   "source_snapshots": [
+    "sources/regime-cycle-2026-10-04/arxiv__shu-yu-mulvey-2024-fulltext.txt",
+    "sources/regime-cycle-2026-10-04/dtu-nystrup-regime-based-asset-allocation-do-profitable-strategies-exist.txt"
+   ]
+  },
+  {
+   "method": "Statistical jump model (Shu, Yu, Mulvey 2024)",
+   "inputs": "EWM downside deviation HL10, EWM Sortino HL20 and HL60",
+   "oos_result": "S&P500 1990-2023: Sharpe 0.48->0.68, MDD -55.2%->-26.6%, CAGR 10.2%->11.2%, turnover 44%; DAX Sharpe 0.30->0.44; Nikkei 0.12->0.31; 0.4-2.7 shifts/yr at lambda 5-150",
+   "post_publication": "arXiv preprint; journal version unverified; independent partial replication (1-star repo) reproduces drawdown halving but not the replicator's cited Sharpe",
+   "open_source": [
+    {
+     "repo": "Yizhan-Oliver-Shu/jump-models",
+     "stars": 170,
+     "license": "Apache-2.0",
+     "pushed": "2025-01-12"
+    }
+   ],
+   "tier": 3,
+   "source_snapshots": [
+    "sources/regime-cycle-2026-10-04/arxiv__shu-yu-mulvey-2024-fulltext.txt",
+    "sources/regime-cycle-2026-10-04/github__jumpmodels-readme.txt"
+   ]
+  },
+  {
+   "method": "Sparse jump model for factor allocation (Shu, Mulvey 2024b)",
+   "inputs": "~20 features per factor index",
+   "oos_result": "2007-2024, 5bp: IR vs market 0.05 (EW) -> ~0.4; Sharpe and MDD also improve",
+   "post_publication": "arXiv preprint",
+   "open_source": [
+    {
+     "repo": "Yizhan-Oliver-Shu/jump-models",
+     "stars": 170,
+     "license": "Apache-2.0"
+    }
+   ],
+   "tier": 3,
+   "source_snapshots": [
+    "sources/regime-cycle-2026-10-04/arxiv__shu-mulvey-2024-dynamic-factor-allocation-jm.txt"
+   ]
+  },
+  {
+   "method": "Markov switching (Kritzman-Page-Turkington 2012; Ang-Timmermann 2012)",
+   "inputs": "turbulence, inflation, growth",
+   "oos_result": "backtests only per abstract",
+   "post_publication": "published; Ang-Timmermann is a survey (NBER page only)",
+   "open_source": [
+    {
+     "repo": "statsmodels/statsmodels",
+     "stars": 11670,
+     "license": "BSD-3-Clause"
+    }
+   ],
+   "tier": 2,
+   "source_snapshots": [
+    "sources/regime-cycle-2026-10-04/repec-kritzman-2012-regime-shifts.txt",
+    "sources/regime-cycle-2026-10-04/nber-ang-timmermann-regime-changes-w17182.txt"
+   ]
+  },
+  {
+   "method": "Bayesian online changepoint detection",
+   "inputs": "any series",
+   "oos_result": "no investment out-of-sample evidence found",
+   "post_publication": "method paper only",
+   "open_source": [
+    {
+     "repo": "hildensia/bayesian_changepoint_detection",
+     "stars": 777,
+     "license": "MIT"
+    },
+    {
+     "repo": "gwgundersen/bocd",
+     "stars": 111,
+     "license": "BSD-3-Clause"
+    },
+    {
+     "repo": "deepcharles/ruptures",
+     "stars": 2092,
+     "license": "BSD-2-Clause"
+    }
+   ],
+   "tier": 1,
+   "source_snapshots": [
+    "sources/regime-cycle-2026-10-04/arxiv__adams-mackay-2007-bocpd.txt"
+   ]
+  },
+  {
+   "method": "Gaussian mixture (Two Sigma 2021)",
+   "inputs": "17 Two Sigma Factor Lens factors, 1971-2020, 4 clusters",
+   "oos_result": "article states the model is not predictive; use = scenario stress tests and allocation robustness; no timing performance",
+   "post_publication": "institution self-described use, descriptive",
+   "open_source": [
+    {
+     "repo": "scikit-learn/scikit-learn",
+     "stars": 67471,
+     "license": "BSD-3-Clause"
+    }
+   ],
+   "tier": 4,
+   "tier_note": "4 for institutional use, 1 for timing performance",
+   "source_snapshots": [
+    "sources/regime-cycle-2026-10-04/twosigma__ml-approach-to-regime-modeling-copy.txt"
+   ]
+  },
+  {
+   "method": "Supervised ML regime classifiers",
+   "inputs": "various",
+   "oos_result": "no cost-aware OOS evidence retrieved; local DEUP regime-trust gate, PDR ML gate, multiasset ML ranking all refuted",
+   "post_publication": "none",
+   "open_source": [],
+   "tier": 1
+  }
+ ],
+ "crash_management": [
+  {
+   "item": "Daniel-Moskowitz 2016",
+   "result": "dynamic momentum roughly doubles static alpha and Sharpe; pooled markets dynamic Sharpe 1.18, ~4x static US momentum; sample 1927-2013",
+   "tier": 3
+  },
+  {
+   "item": "Barroso-Santa-Clara 2015",
+   "result": "risk-managed momentum virtually eliminates crashes, nearly doubles Sharpe",
+   "tier": 3
+  },
+  {
+   "item": "Moreira-Muir 2017",
+   "result": "vol-managed portfolios have significant spanning alphas",
+   "tier": 3
+  },
+  {
+   "item": "Cederburg et al 2020",
+   "result": "real-time vol-managed versions earn lower CER than unmanaged in 72 of 103 strategies; all 9 momentum strategies improve, 5 significantly; failure due to structural instability of spanning regressions",
+   "tier": 3
+  },
+  {
+   "item": "Grobys et al 2018",
+   "result": "risk-managed industry momentum benefits robust to estimators, definitions, subsamples; no option-like time-varying beta in industry momentum",
+   "tier": 3
+  },
+  {
+   "item": "Local S3 bear guard (H-20260923-11)",
+   "result": "QQQ<SMA200 gate 25.6%/0.74/-61.1% vs no gate 30.7%/0.83/-48.0%; SMH<SMA200 30.9%/0.85/-41.1%; no gate meets +10pt DD and +0.10 Sharpe with exposure match and placebo",
+   "tier": 2
+  },
+  {
+   "item": "Local S1 vol target",
+   "result": "Sharpe 1.35 -> 1.05/1.13",
+   "tier": 2
+  },
+  {
+   "item": "Molchanov-Stangl 2023",
+   "result": "business-cycle sector rotation: no systematic sector performance; excess disappears after costs",
+   "tier": 3
+  },
+  {
+   "item": "LETF dynamics arXiv 2504.20116",
+   "result": "LETF performance depends on autocorrelation and regime persistence; trends help, mean reversion hurts",
+   "tier": 2
+  }
+ ],
+ "theme_crowding": [
+  {
+   "item": "MSCI Barra USE4 / BlackRock fundamental risk model",
+   "result": "industry factors + style factors; BlackRock treats crowdedness as a style factor (search summary only, unread)",
+   "local_gap": "risk.py has FF48-merged ~30 industry groups and 9 styles but no AI/semis theme factor and no crowding style"
+  },
+  {
+   "item": "MSCI stock-crowding model (2021 blog)",
+   "result": "inputs: valuation, trading volume, volatility, momentum, short interest"
+  },
+  {
+   "item": "Lou-Polk comomentum (RFS 2022)",
+   "result": "high comomentum -> momentum stocks revert; low -> stabilizing",
+   "tier": 3
+  },
+  {
+   "item": "Tzikas et al (Stanford/BlackRock) arXiv 2605.12977",
+   "result": "adds transient statistical factors to Barra short-term US model via ML estimation; two hyperparameters",
+   "tier": 3
+  },
+  {
+   "item": "RBA FSR 2026-10",
+   "result": "AI-profitability sentiment shift amplified by rising equity concentration and leverage; circular vendor financing",
+   "tier": 4
+  },
+  {
+   "item": "Fed FSR 2026-05",
+   "result": "hedge fund leverage high and concentrated in largest funds; AI among survey risks"
+  },
+  {
+   "item": "JPM Eye on the Market 2026 Outlook",
+   "result": "4 hyperscalers + semis ecosystem market cap $3T -> $18T; 42 AI companies = 65-75% of S&P earnings, profits, capex since Nov 2022; ~20% of developed-world equity"
+  },
+  {
+   "item": "Atranica 2026-08-07 (secondary)",
+   "result": "SOX ~-21% in July 2026, worst month since Oct 2008; BofA FMS 'long semis most crowded' 24% Apr, 73% May, 80% Jun, 82% Jul (BofA original not read)"
+  }
+ ],
+ "semiconductor_indicators": [
+  {
+   "indicator": "Korea exports incl. first-10/20-day",
+   "release": "MOTIE monthly on 1st; customs first-10 on 11th, first-20 on 21st",
+   "free_access": "Yonhap/Korea Times English press coverage; FRED XTEXVA01KRM667S (OECD, total goods, ~3 month lag, since 1957); semis-level API unverified",
+   "reading": {
+    "date": "2026-09",
+    "chip_exports_usd_bn": 60.3,
+    "chip_yoy_pct": 263,
+    "prior_month_chip_usd_bn": 46.7,
+    "total_exports_usd_bn": 120.9,
+    "total_yoy_pct": 83.5,
+    "first20d_chip_usd_bn": 34.12,
+    "first20d_chip_yoy_pct": 259,
+    "first20d_total_usd_bn": 71.4,
+    "first20d_total_yoy_pct": 78.3
+   },
+   "sox_predictive_tier": 1,
+   "own_exploratory_test": "see exploratory_tests"
+  },
+  {
+   "indicator": "Taiwan export orders (MOEA)",
+   "release": "~20th of following month",
+   "free_access": "MOEA press release / Focus Taiwan; programmatic access unverified",
+   "reading": {
+    "date": "2026-08",
+    "total_usd_bn": 102.96,
+    "yoy_pct": 71.4,
+    "electronics_usd_bn": 45.75,
+    "electronics_yoy_pct": 83.9,
+    "ict_usd_bn": 34.21,
+    "ict_yoy_pct": 100.5,
+    "prior_month_usd_bn": 97.94
+   },
+   "sox_predictive_tier": 1
+  },
+  {
+   "indicator": "TSMC monthly revenue",
+   "release": "~10th of following month",
+   "free_access": "TWSE OpenAPI https://openapi.twse.com.tw/v1/opendata/t187ap05_L (JSON, verified); TSMC IR and SEC 6-K return 403 to curl",
+   "reading": {
+    "date": "2026-08",
+    "revenue_ntd_bn": 514.81,
+    "yoy_pct": 53.3,
+    "mom_pct": 10.1,
+    "ytd_yoy_pct": 39.3,
+    "umc_yoy_pct": 30.7,
+    "ase_yoy_pct": 45.7,
+    "mediatek_yoy_pct": 44.1
+   },
+   "next_release": "~2026-10-10 (not yet published)",
+   "sox_predictive_tier": 1
+  },
+  {
+   "indicator": "SIA/WSTS global semiconductor sales (3MMA)",
+   "release": "~5 weeks lag; July data on 2026-09-04",
+   "free_access": "SIA press release (headline + regions); WSTS detail paid (not bought)",
+   "reading": {
+    "date": "2026-07",
+    "sales_usd_bn": 146.8,
+    "yoy_pct": 135.1,
+    "mom_pct": 6.4,
+    "consecutive_mom_rises": 17,
+    "wsts_2026_forecast_usd_tn": 1.51,
+    "wsts_2026_growth_pct": 89.9
+   },
+   "next_release": "August data ~early Oct (not yet published)",
+   "sox_predictive_tier": 1,
+   "industry_cycle_tier": 3
+  },
+  {
+   "indicator": "DRAM/NAND contract prices (TrendForce)",
+   "release": "quarterly forecast press releases; monthly contract",
+   "free_access": "TrendForce press releases (free); spot page free but delayed",
+   "reading": {
+    "date": "2026-09-30",
+    "conventional_dram_4q26_qoq_pct": "10-15",
+    "nand_4q26_qoq_pct": "15-20",
+    "server_dram_3q26_qoq_pct": "13-18",
+    "dram_1q26_qoq_pct_approx": 100,
+    "note": "1Q figure via Custer (secondary)"
+   },
+   "sox_predictive_tier": 1
+  },
+  {
+   "indicator": "ISM manufacturing PMI",
+   "release": "1st business day",
+   "free_access": "ISM site, PR Newswire; not on FRED",
+   "reading": {
+    "date": "2026-09",
+    "pmi": 54.5,
+    "new_orders": 55.3,
+    "inventories": 48.6,
+    "customers_inventories": 41.6,
+    "prices_change_pts": 6.8,
+    "supplier_deliveries": 59
+   },
+   "sox_predictive_tier": 1
+  },
+  {
+   "indicator": "US electronics inventory/shipments and new orders (Census M3)",
+   "release": "~5 weeks",
+   "free_access": "FRED A34SIS, A34SNO (CSV, no key)",
+   "reading": {
+    "date": "2026-08",
+    "inv_ship_ratio": 2.01,
+    "inv_ship_yoy_pct": -5.6,
+    "new_orders_usd_m": 30868,
+    "new_orders_yoy_pct": 16.5
+   },
+   "industry_cycle_tier": 3,
+   "sox_predictive_tier": 1
+  },
+  {
+   "indicator": "Capex cycle (SEMI, hyperscalers)",
+   "release": "SEMI mid-year July 14; hyperscalers quarterly",
+   "free_access": "SEMI press release (403, Yahoo mirror), company filings",
+   "reading": {
+    "date": "2026-07-14",
+    "semi_total_equipment_2026_usd_bn": 165.9,
+    "growth_pct": 23.2,
+    "wfe_2026_usd_bn": 143.9,
+    "wfe_2027_growth_pct": 21.8,
+    "hyperscaler_2026_capex_guidance": "Amazon ~220, Alphabet 195-205, Meta 130-145 (USD bn); total 720-745 per search summary only"
+   },
+   "sox_predictive_tier": 1
+  },
+  {
+   "indicator": "Price state: SMH/SOX vs SPY",
+   "release": "daily",
+   "free_access": "Yahoo unofficial chart API (diagnostic only)",
+   "reading": {
+    "date": "2026-10-02",
+    "smh": 630.6,
+    "smh_dd_from_2y_high_pct": -5.7,
+    "sox": 13136.7,
+    "sox_dd_from_2y_high_pct": -10.2,
+    "high_date": "2026-06-22",
+    "smh_6m_pct": 60.7,
+    "smh_rel_spy_6m_pct": 37.0,
+    "smh_above_200d_pct": 26.2,
+    "smh_21d_vol_pct": 30,
+    "smh_2026_07_29_low": 504.2,
+    "smh_2026_06_30": 655.9
+   }
+  }
+ ],
+ "exploratory_tests": [
+  {
+   "name": "Korea total exports yoy vs next-3m SOX minus SPX",
+   "status": "exploratory, in-sample, not evidence",
+   "data": "FRED XTEXVA01KRM667S + Yahoo ^SOX/^GSPC monthly, 1995-01..2026-06, n=378 overlapping",
+   "spearman_level": -0.22,
+   "circular_shift_p": 0.01,
+   "nonoverlap_spearman": [
+    -0.158,
+    -0.341,
+    -0.153
+   ],
+   "halves": [
+    -0.2,
+    -0.215
+   ],
+   "quintile_mean_next3m_rel_ret_pct": [
+    4.19,
+    3.04,
+    1.14,
+    -0.16,
+    -2.18
+   ],
+   "quintile_hit_rate": [
+    0.72,
+    0.72,
+    0.55,
+    0.52,
+    0.37
+   ],
+   "acceleration_spearman": -0.011,
+   "acceleration_circular_shift_p": 0.897,
+   "caveats": [
+    "total not semis exports",
+    "overlapping windows, ~8 independent high-growth episodes",
+    "single specification, not preregistered",
+    "OECD series revised; price index excludes dividends"
+   ]
+  }
+ ],
+ "factor_timing": [
+  {
+   "item": "Haddad-Kozak-Santosh 2020",
+   "result": "first 5 PCs of 50 anomalies; OOS R2 ~4% for top PCs, ~1% total; pure timing portfolio Sharpe 0.71",
+   "tier": 3
+  },
+  {
+   "item": "Neuhierl et al 2023",
+   "result": "300+ factors; PLS aggregation beats single predictors; OOS R2 ~0.75%; median +2%/yr; no decay reported",
+   "tier": 3
+  },
+  {
+   "item": "Gupta-Kelly 2019",
+   "result": "time-series factor momentum Sharpe 0.84 vs equal-weighted 65 raw factors 1.07, significant alpha",
+   "tier": 3
+  },
+  {
+   "item": "Asness 2016",
+   "result": "factor timing akin to market timing; tiny doses at most; possible exception at unprecedented extremes",
+   "tier": 3
+  },
+  {
+   "item": "Blitz (Robeco) via directions.jsonl",
+   "result": "short-term factor momentum 2.8%/yr full sample -> 0.4%/yr post-2011; medium-term 67% correlated with WML",
+   "tier": 3
+  }
+ ],
+ "minimum_depth": {
+  "inputs": "3-6 complementary (downside deviation, Sortino at two windows, optional VIX term structure, credit spread)",
+  "states": "2 (max 3)",
+  "history": "fit >=12y, evaluate >=25y incl >=3 crashes; SIP from 2016 is insufficient alone",
+  "persistence": "jump penalty/hysteresis/min-hold; report shifts per year, target <=1-2",
+  "protocol": "online inference only, >=1-2d delay, 5-10bp cost, hyperparameters re-selected monthly/quarterly on past data",
+  "controls": [
+   "exposure-matched baseline",
+   "existing trend x VIX tercile state",
+   "circular-shift placebo +-21 sessions, many seeds",
+   "random-theme placebo"
+  ],
+  "reporting": "drawdown, ES and Sharpe separately; count trials for multiple-testing correction"
+ },
+ "open_source": [
+  {
+   "repo": "Yizhan-Oliver-Shu/jump-models",
+   "stars": 170,
+   "license": "Apache-2.0",
+   "pushed": "2025-01-12"
+  },
+  {
+   "repo": "hmmlearn/hmmlearn",
+   "stars": 3434,
+   "license": "BSD-3-Clause",
+   "pushed": "2024-10-31"
+  },
+  {
+   "repo": "statsmodels/statsmodels",
+   "stars": 11670,
+   "license": "BSD-3-Clause",
+   "pushed": "2026-10-04"
+  },
+  {
+   "repo": "hildensia/bayesian_changepoint_detection",
+   "stars": 777,
+   "license": "MIT",
+   "pushed": "2026-09-24"
+  },
+  {
+   "repo": "gwgundersen/bocd",
+   "stars": 111,
+   "license": "BSD-3-Clause",
+   "pushed": "2023-09-03"
+  },
+  {
+   "repo": "deepcharles/ruptures",
+   "stars": 2092,
+   "license": "BSD-2-Clause",
+   "pushed": "2026-07-06"
+  },
+  {
+   "repo": "scikit-learn/scikit-learn",
+   "stars": 67471,
+   "license": "BSD-3-Clause",
+   "pushed": "2026-10-03"
+  },
+  {
+   "repo": "dcajasn/Riskfolio-Lib",
+   "stars": 4533,
+   "license": "BSD-3-Clause",
+   "pushed": "2026-10-04"
+  },
+  {
+   "repo": "skfolio/skfolio",
+   "stars": 2458,
+   "license": "BSD-3-Clause",
+   "pushed": "2026-10-03"
+  },
+  {
+   "repo": "cvxgrp/cvxportfolio",
+   "stars": 1293,
+   "license": "GPL-3.0",
+   "pushed": "2026-04-27",
+   "note": "license copyleft; reference only"
+  },
+  {
+   "repo": "microsoft/qlib",
+   "stars": 49132,
+   "license": "MIT",
+   "pushed": "2026-09-22"
+  }
+ ],
+ "roadmap": [
+  {
+   "stage": 1,
+   "name": "theme risk budget",
+   "effort_days": "1-2",
+   "reuse": [
+    "open_composer/research/equity_book/risk.py",
+    "open_composer/research/equity_book/etf_risk.py",
+    "T-75 exposure regressions"
+   ],
+   "build": [
+    "SMH-orthogonalised or transient-PC theme factor",
+    "ETF look-through holdings",
+    "theme marginal-risk cap"
+   ],
+   "data": "SIP daily, SEC N-PORT, issuer holdings (free)",
+   "evidence_at_end": "portfolio risk decomposition; replays of 2024-07, 2025-04, 2026-07; random-theme placebo; vol-matched comparison",
+   "stop": "no drawdown reduction or recent-Sharpe loss beyond preregistered tolerance -> monitor only"
+  },
+  {
+   "stage": 2,
+   "name": "online jump-model state layer v0",
+   "effort_days": "3-5",
+   "reuse": [
+    "scripts/analyze_equity_book_regimes.py trend x VIX state",
+    "data/raw/french_industry",
+    "SIP"
+   ],
+   "build": [
+    "~150-line online JM (or jumpmodels if approved)",
+    "features DD HL10 + Sortino HL20/60 (+VIX/VIX3M, HY spread)",
+    "rolling-CV lambda"
+   ],
+   "data": "long history Yahoo/FRED 1995+ for fit, SIP 2016+ for validation",
+   "evidence_at_end": "DD/ES/Sharpe separately, shifts per year, exposure-matched baseline, circular-shift placebo, recent + stress windows",
+   "expectation": "drawdown control, not return source"
+  },
+  {
+   "stage": 3,
+   "name": "semiconductor-cycle conditioners",
+   "effort_days": "~5 (parallel with 2)",
+   "build": [
+    "dated monthly panel with visible_at",
+    "PLS/ridge aggregation to 3-5 components",
+    "expanding-window OOS vs SOX-SPX 3m return and 3m max drawdown"
+   ],
+   "data": "all free; pre-2010 semis-level history may be incomplete (to verify)",
+   "stop": "no OOS increment in both halves -> monitoring panel only"
+  },
+  {
+   "stage": 4,
+   "name": "crowding style factor",
+   "effort_days": "~5 (after stage 1)",
+   "build": [
+    "MSCI-style 5-input crowding score on U3000",
+    "Lou-Polk comomentum on SMH constituents"
+   ],
+   "data": "SEC XBRL, FINRA short volume/interest (already in data/raw), SIP; ETF flow source unverified",
+   "evidence_at_end": "score percentile before 2026-07, 2025-04, 2024-07 unwinds; stress replay with multiplier; random-theme placebo"
+  }
+ ],
+ "not_worth_doing": [
+  "single SMA gates on levered ETFs",
+  "factor momentum as standalone overlay",
+  "standalone HMM as main signal",
+  "business-cycle sector rotation",
+  "single-indicator trading on Korea exports / Taiwan orders / TSMC revenue",
+  "predicting the semiconductor top date",
+  "supervised regime classifier trained on 10y SIP alone",
+  "Two Sigma GMM as a timing signal",
+  "full Barra theme-factor zoo",
+  "buying data",
+  "vol target on S1"
+ ],
+ "incomplete_or_unverified": [
+  "IMF GFSR 2026-04 ch1 unread (403)",
+  "BlackRock crowdedness style, FAJ 2025 thematic risk paper, LPL Korea-exports note: search summaries only",
+  "BofA FMS and Goldman prime figures second-hand",
+  "Nystrup 2015/2018 originals not read",
+  "Shu-Yu-Mulvey journal status; the replicator's cited paper Sharpe 1.43 not found in the paper",
+  "programmatic access to Korea semis-level and Taiwan export-order data unverified",
+  "exploratory test uses total not chip exports",
+  "SIA Aug data, TSMC Sept revenue, Taiwan Sept orders not yet published",
+  "T-75 state-conditional Sharpe table not yet delivered"
+ ]
+}

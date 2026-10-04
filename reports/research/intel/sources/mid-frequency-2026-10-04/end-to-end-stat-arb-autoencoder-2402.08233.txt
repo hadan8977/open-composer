@@ -1,0 +1,748 @@
+URL: https://arxiv.org/pdf/2402.08233
+FETCHED_UTC: 2026-10-04T18:39Z
+HTTP: 200 application/pdf
+-----
+                                                       End-to-End Policy Learning of a Statistical Arbitrage Autoencoder
+                                                                                Architecture
+
+
+                                                                                        Fabian Krause 1 Jan-Peter Calliess 1
+arXiv:2402.08233v1 [q-fin.TR] 13 Feb 2024
+
+
+
+
+                                                                      Abstract                                   tential of such approaches. A systematic review of pairs
+                                                                                                                 trading research is provided by Krauss (2017). Our fo-
+                                                   In Statistical Arbitrage (StatArb), classical mean
+                                                                                                                 cus extends beyond pairs to the co-movement of groups of
+                                                   reversion trading strategies typically hinge on
+                                                                                                                 stocks or their underlying factors. Avellaneda & Lee (2010)
+                                                   asset-pricing or PCA based models to identify
+                                                                                                                 formally generalised the idea of pairs to StatArb trading
+                                                   the mean of a synthetic asset. Once such a (lin-
+                                                                                                                 that is said to have been developed in the mid 1980’s in
+                                                   ear) model is identified, a separate mean rever-
+                                                                                                                 Morgan Stanleys trading group around Nunzio Tartaglia
+                                                   sion strategy is then devised to generate a trad-
+                                                                                                                 (Gatev et al., 2006).
+                                                   ing signal. With a view of generalising such
+                                                   an approach and turning it truly data-driven, we              StatArb trading assumes an asset pricing model incorporat-
+                                                   study the utility of Autoencoder architectures in             ing various statistical or fundamental factors to describe an
+                                                   StatArb. As a first approach, we employ a stan-               asset’s price movement. There is a multitude of asset pric-
+                                                   dard Autoencoder trained on US stock returns to               ing options to choose from depending on context and mod-
+                                                   derive trading strategies based on the Ornstein-              elling goals. The idea of StatArb is that deviations of an
+                                                   Uhlenbeck (OU) process. To further enhance                    asset’s return from the model’s explained return are tempo-
+                                                   this model, we take a policy-learning approach                rary and will revert to the model returns. This necessitates
+                                                   and embed the Autoencoder network into a neu-                 modelling the reversion time series process and combining
+                                                   ral network representation of a space of portfo-              various asset signals into a tradable portfolio.
+                                                   lio trading policies. This integration outputs port-
+                                                                                                                 Principal Component Analysis (PCA) is the work horse
+                                                   folio allocations directly and is end-to-end train-
+                                                                                                                 for uncovering the statistical factors in asset pricing mod-
+                                                   able by backpropagation of the risk-adjusted re-
+                                                                                                                 els. Our first contribution is replacing PCA with an Au-
+                                                   turns of the neural policy. Our findings demon-
+                                                                                                                 toencoder to derive tradeable residuals. It is well known
+                                                   strate that this innovative end-to-end policy learn-
+                                                                                                                 since Oja (1982) that Autoencoders can replicate and ex-
+                                                   ing approach not only simplifies the strategy de-
+                                                                                                                 tend PCA’s capabilities by including non-linearities. We
+                                                   velopment process, but also yields superior gross
+                                                                                                                 compare the performance of trading strategies based on our
+                                                   returns over its competitors illustrating the po-
+                                                                                                                 simple Autoencoder asset pricing models against the litera-
+                                                   tential of end-to-end training over classical two-
+                                                                                                                 ture benchmark models based on PCA as well as based on
+                                                   stage approaches.
+                                                                                                                 the classic fundamental asset pricing models using Fama
+                                                                                                                 French factors (Fama & French, 2018). This performance
+                                                                                                                 comparison of Autoencoder based asset pricing models
+                                            1. Introduction                                                      against PCA and Fama French has, to the best of our knowl-
+                                            Quantifying relationships between financial assets using             edge, not been systematically explored in the literature.
+                                            statistical techniques has long captivated both researchers          The multitude of modelling decisions in the StatArb pro-
+                                            and practitioners. The concept of exploiting mean reverting          cess introduces substantial modelling risk. Asset pricing
+                                            prices in pairs trading, where one asset is traded against an-       models are constructed to explain asset returns, not to
+                                            other upon divergence from their established relationship,           find residuals that exhibit mean reversion characteristics.
+                                            laid the groundwork for this field. Significant excess re-           The mean reversion characteristic is a by-product that is
+                                            turns identified in pairs trading strategies between 1962 and        exploited by traders. Recognising this, we propose em-
+                                            2002, as reported by Gatev et al. (2006), highlight the po-          bedding an Autoencoder in a neural network representing
+                                               1
+                                                 Department of Engineering, University of Oxford, Ox-            a trading policy, trained end-to-end with a loss function
+                                            ford, United Kingdom. Correspondence to: Fabian Krause               that optimises both portfolio return representation and risk-
+                                            <lina3477@ox.ac.uk>.                                                 adjusted returns. We study the performance of different
+                                                                                                                 variants of the architecture and competing methods on his-
+
+
+                                                                                                             1
+                                                 End to End Learning StatArb
+
+torical US equity returns, demonstrating the advantages of            Notably, Chan et al. (2019) also proposed using
+an end-to-end training approach over traditional methods.             Autoencoder-generated residuals for StatArb strategies,
+                                                                      employing convolutional Autoencoders. However, their
+Our methodology not only learns a statistical factor model
+                                                                      approach, unlike ours, does not integrate all stages of
+from data but also extracts residuals within the network,
+                                                                      the StatArb process and lacks a comprehensive evaluation
+leading to a portfolio that is optimised for StatArb trading
+                                                                      against a range of data and competing models.
+through a risk-adjusted performance policy. This architec-
+ture, as we will demonstrate, surpasses prevalent bench-              Our work seeks to contribute to this evolving field by pre-
+mark solutions in StatArb trading, offering improvements              senting an integrated approach that leverages Autoencoders
+in terms of return before cost and reducing modelling risk            for residual generation, embedding these within a compre-
+at every stage of the process.                                        hensive trading strategy that is optimised end-to-end. This
+                                                                      method aims to address gaps in current methodologies, of-
+2. Related Work                                                       fering a holistic solution to StatArb trading that encom-
+                                                                      passes model generation, risk management, and strategy
+The concept of StatArb trading, as we define it, finds its            optimisation.
+roots in the foundational work of Avellaneda & Lee (2010).
+Their basic idea is that price changes follow the differential        3. Statistical Arbitrage
+equation
+                           n                                          The following sections lay out the building blocks for a suc-
+              dPt         X       (j)                                 cessful StatArb trading strategy and the assumptions that
+                  = αdt +     βj Ft + dXt
+              Pt          j=1                                         such a strategy is based upon.
+where Xt is a stationary mean reverting process, referred
+                                                                      3.1. Asset Pricing Models
+to as the cointegration residual, Pt is the price of a security
+at time t, α a drift term, and βj factor exposures for the            Asset pricing models rest on the assumption of no arbi-
+                (j)                                                   trage - the premise that all excess returns are attributable
+risk-factors Ft . Statistical arbitrage is the generalisation
+of pairs-trading in which n = 1. They show how mod-                   to risk factors. This assumption implies that any unex-
+elling the risk factors as industry ETFs or principal com-            plained excess return signals an overlooked factor in the
+ponents and modelling the residual process as a mean re-              model. Historically, stock price anomalies were incremen-
+verting Ornstein-Uhlenbeck (OU) process, one can derive               tally recognised and integrated into these models, a process
+a profitable trading strategy. Yeo & Papanicolauou (2017)             formalised using a stochastic discount factor by Kelly et al.
+further refine the idea to include risk controls depending on         (2019). The general formulation of an asset pricing model
+the speed of mean reversion of residuals.                             is:
+                                                                                                     T
+                                                                                   ri,t+1 = αi,t + βi,t ft+1 + ǫi,t+1
+There is a proliferation of factors and asset pricing models
+in the financial literature (Harvey et al., 2016; Feng et al.,        for βi,t ∈ Rkx1 , the factor exposures of stock i to the
+2019). The seminal contributions in this space were per-              selected k factors that exhibit returns ft+1 ∈ Rkx1 at
+formed by Sharpe (1964) developing the Capital Asset Pric-            time t and a residual ǫi,t+1 that is not explained by the
+ing model, Ross (1976) introducing multi-factor models in             given factor returns and therefore is stock specific. Further,
+his arbitrage pricing theory, and Fama & French (1993)                Et [ǫi,t+1 ] = Et [ǫi,t+1 ft+1 ] = αi,t = 0 if the stochas-
+defining the Fama French factors. Lately, the state of the art        tic discount factor accounts for all statistically significant
+in factor models was pushed by combining exogeneous and                                                          T
+                                                                      anomalies. Model returns are given by βi,t    ft+1 . They are
+latent factors using an Instrumented Principal Component              what, according to the model, a stock should have returned
+Analysis (IPCA) proposed by Kelly et al. (2019). Gu et al.            at a given time with given factor returns for that time.
+(2021) built upon that work and introduced a novel autoen-
+                                                                      There are primarily two methods to model the factor struc-
+coder architecture that incorporates IPCA at its foundation.
+                                                                      ture in asset pricing models:
+While similar in technique to our work, their work focuses
+on explaining the cross-section of returns rather than con-
+structing a trading strategy that exploits model deviations.             • Observable Exogeneous Factors: Either the factor
+                                                                           loadings are predefined, e.g. as firm characteristics,
+Further, Guijarro-Ordonez et al. (2021) explored the use of                or the factor returns are given, with betas and alphas
+a Transformer-based model for StatArb portfolio construc-                  estimated via cross-sectional regressions.
+tion, processing residual series from various asset pricing
+models. While this model integrates residual extraction and              • Latent Factors: Assuming the factors to be latent and
+portfolio construction, it leaves the asset pricing model se-              estimating them via PCA or similar latent factor anal-
+lection at the discretion of the user.                                     ysis techniques.
+
+                                                                  2
+                                                    End to End Learning StatArb
+
+In the former case when factor returns are given, loadings            This ensures a target leverage of 1, with the syntax ||.||1
+βi,t for stock i at each time step t + 1 are estimated using          denoting the L1 norm.
+a cross-sectional regression with a lookback window of T .
+                                                                      Weights generated in this way require stock return infor-
+Residuals for time step t + 1 are retrieved via:
+                                                                      mation up to the end of time t. We assume we can take
+                                    T
+                 ǫi,t+1 = ri,t+1 − βi,t ft+1                          positions using this weight at the beginning of time t + 1
+                                                                      and capture the return from the beginning to the end of t+1.
+In matrix notation, the regression for each time step t + 1
+                                                                      This assumption is not unrealistic given the liquidity of the
+can be denoted as
+                                                                      considered universe of stocks and the state of electronic
+               Rt−T :t = Ft−T :t βtT + ǫt−T :t                        markets.
+with stock returns R ∈ RT xN for N stocks, factor returns             The return of a portfolio p at time t + 1 given weights wi,t
+F ∈ RT xk , factor loadings β ∈ RN xk , and residuals                 is
+ǫ ∈ RT xN . The out of sample residuals for the model are
+                                                                                                   N
+retrieved via                                                                                      X
+                                                                                          rp,t =         wi,t ri,t+1 .
+                  ǫt+1 = Rt+1 − βtT Ft+1                                                           i=1
+
+with ǫt+1 ∈ R1xN , Rt+1 ∈ R1xN , βt ∈ Rkx1 , Ft+1 ∈
+                                                                      4. Methodology
+Rkx1 .
+The case of using a latent factor structure is similar to the         4.1. Data
+benchmark PCA methodology explained in section 4.2.2.                 CRSP1 stock data was used in the experiments from Jan-
+                                                                      uary 2000 to December 2022. While we recognise that the
+3.2. Arbitrage Signal Extraction                                      asset pricing literature uses longer lookbacks and historic
+                                                                      data before 2000, research results around portfolio returns
+In StatArb trading, a core assumption is that the expected
+                                                                      on earlier data are seldom reproducible in recent years. In
+value of the residuals is zero, Et [ǫi,t+1 ] = 0. The belief is
+                                                                      particular, much of the statistical arbitrage literature gener-
+that residuals are mean reverting. However, the difficulty
+                                                                      ates great strategy returns up until 2007 but fails to gener-
+lies in accurately timing the mean reversion for a profitable
+                                                                      alise to similar results post 2007. Furthermore, the aim of
+trading strategy. Therefore, one needs to employ time se-
+                                                                      asset pricing research is to explain stock returns whereas
+ries prediction techniques on the univariate residual process
+                                                                      we present a trading strategy.
+to generate signals to act upon.
+                                                                      We select only US traded companies and restrict our analy-
+We denote a generic time series extraction technique as φ,
+                                                                      sis to the primary listing of a given company. Prices are ad-
+the signal at the end of time t is φ(ǫt−τ :t ) ∈ RN for a look-
+                                                                      justed for dividends and stock splits to run experiments on
+back window of residuals τ and N stocks in the universe at
+                                                                      an adjusted total return series. This leaves a total of 13.610
+time t.
+                                                                      companies in our data set and 5.787 daily observations.
+This extraction allows to make informed predictions about
+                                                                      Furthermore, for our benchmark analysis, we use Fama
+the likely future behaviour of stock prices based on their
+                                                                      French factor returns for the same time period2 . The data
+past residual patterns. By doing so, the aim is to better time
+                                                                      contains the daily risk-free rate, returns for the market fac-
+trading strategies, exploiting the predicted mean reversion
+                                                                      tor, size factor, value factor, profitability factor, investment
+of these residuals.
+                                                                      factor, and momentum factor.
+3.3. Arbitrage Portfolio Construction                                 In line with the literature on financial asset pricing, all our
+                                                                      performance analyses are done on excess returns, i.e. re-
+The final stage of the StatArb process uses the time series           turns in excess of the risk-free rate.
+predictions φ(ǫi,t−τ :t ) at time t to construct a portfolio of
+weights, represented as wt . These can be optimised us-               4.1.1. U NIVERSE OF E LIGIBLE S TOCKS
+ing classic portfolio optimisation techniques including con-
+straints on holdings, factor exposures, and targeting risk            Statistical arbitrage trading tends to incur high transaction
+levels. The simplest combination, and the one we use                  costs due to a high volume of daily turnover in a large uni-
+throughout to highlight and compare the modelling aspects             verse of stocks. We restrict our universe by removing any
+of a statistical arbitrage trading pipeline, is to target con-        stocks with a close price lower than $5, a 20-day median
+stant leverage in the portfolio, i.e.                                 rolling market capitalisation of below $1bn, or a 20-day
+                                                                         1
+                              φi (ǫi,t−τ :t )                                https://www.crsp.org
+                   wi,t =                       .                        2
+                                                                             Data can be found at http://mba.tuck.dartmouth.edu/pages/facu
+                            ||φi (ǫi,t−τ :t ||1
+
+                                                                  3
+                                                 End to End Learning StatArb
+
+median rolling trading volume below $1m. We update the               with Zt ∈ RTτ xN the returns preceding and including time
+filter of stocks to include at the end of each calendar month.       t for all N stocks. Ct is used to extract eigenvalues and
+                                                                     eigenvectors.
+This universe construction restricts the number of stocks
+included over the whole lookback period from 13.611 com-             Keeping only a subset of the principal components as fac-
+panies to 5.188. On average, 1.470 stocks are included each          tors, we calculate returns of the eigenportfolios (Avellaneda
+month with the number of included stocks increasing in re-           & Lee, 2010) as
+cent years.
+                                                                                                   N   (j)
+                                                                                                   X v i
+4.2. Benchmarks for Asset Pricing Models                                                  Ft,j =             ri,t
+                                                                                                   i=1
+                                                                                                       σi
+4.2.1. FAMA F RENCH
+                                                                           (j)
+                                                                     with vi the j-th principal component’s entry for stock i
+To extract residuals from the Fama French model, we em-
+                                                                     and σi stock i’s volatility. These are the PCA factor returns.
+ploy a daily regression process. This involves regressing
+the stock returns against the returns of Fama French fac-            Once factor returns are calculated for each time step t,
+tors using the past TF F = 60 days. The factor loadings              we run a regression akin to the Fama French case to esti-
+for our stock universe are projected to the next day and             mate loadings of stocks on the latent factors using the past
+model returns are derived from which the residuals are               TF F = 60 days. This regression uses non-standardised re-
+retrieved. Our analysis encompasses the following factor             turns and yields βt estimates to calculate residuals for time
+models, each selected for its relevance in capturing differ-         t + 1. Note that time step t + 1 was not used during the
+ent market dynamics:                                                 PCA or regression steps. Similar to the cited research, we
+                                                                     also only use stocks with no missing observations during
+   • CAPM: 1 factor representing the market, commonly                the lookback window.
+     termed the capital asset pricing model (CAPM).
+                                                                     4.3. Autoencoder Residual Generation
+   • FF 3: Fama French 3 factor model with market, size
+                                                                     Our first contribution entails the extension of the PCA setup
+     and value factors.                                              for creating residuals by using Autoencoders in a StatArb
+                                                                     framework. All of our tested Autoencoders use an output
+   • FF 5: Fama French 5 factor model including profitabil-
+                                                                     layer that contains a hyperbolic tangent activation and a
+     ity and investment factors.
+                                                                     MSE loss function optimised with an Adam optimiser for
+   • FF 5 Mom: Fama French 5 factor model plus a mo-                 10 epochs to find weights that best model the standardised
+     mentum factor.                                                  input returns. We use the past Tτ trading days to train
+                                                                     the Autoencoder, mirroring the PCA model setup, using
+                                                                     only stocks with no missing values for standardised returns
+4.2.2. P RINCIPAL C OMPONENT A NALYSIS                               throughout the lookback period. Standardised returns are
+Residuals from the PCA approach are retrieved according              capped at 3 standard deviations to prevent outliers to dis-
+to the methodology of Avellaneda & Lee (2010). We use                tort the model’s training.
+factor models keeping 1, 3, 5, 8, 10, 15, and 20 principal           Our architecture can be summarised by the following equa-
+components in line with Guijarro-Ordonez et al. (2021).              tions and loss function L. Let Z denote the standardised
+Each day we use standardised returns of the past Tτ = 252            returns as defined earlier, then:
+trading days, i.e. one trading year, to estimate the empirical
+correlation matrix. For τ = 0, ..., Tτ − 1 the standardised
+returns Zi,t−τ are                                                               F = enc(Z) = fe (W (0) Z + b(0) )
+                           ri,t−τ − µi,t−Tτ :t                                   Ẑ = dec(F ) = fd (W (1) F + b(1) )
+               Zi,t−τ =                                                                                   n
+                                σi,t−Tτ :t                                                            1X
+                                                                                 L = M SE(Z, Ẑ) =          (Zi − Ẑi )2
+                                                                                                      n i=1
+where µi,t−Tτ :t denotes the sample mean of returns for the
+period of t − Tτ to t and σi,t−Tτ :t the sample standard de-
+viation of returns for the same period. These standardised           where fe is the encoder activation function, the biases b are
+returns form the empirical correlation matrix                        optional depending on which variant is run, fd is the de-
+                                                                     coder activation function of the network, in our case fixed
+                              1                                      to a hyperbolic tangent function, and MSE is the mean
+                    Ct =         ZT Z                                squared error loss function.
+                           Tτ − 1 t
+
+                                                                 4
+                                                  End to End Learning StatArb
+
+A new model is fitted every day. The variation is in the
+                                                                     Table 1. Autoencoder architecture choices for residual generation.
+number of layers, activation of the encoder part of the net-
+                                                                     TANH denotes the hyperbolic tangent activation function and
+work, whether to use biases in the linear layer generation,          RELU the rectified linear unit.
+and whether to use dropout layers. Additionally, we also
+test several distinct options of extracting residuals from the
+trained network:                                                      VARIANT       ACTIVATION       B IAS     D ROPOUT      L AYERS
+                                                                      0                TANH         T RUE         0.25              1
+  1. Subtracting the Autoencoder predicted standardised               1                TANH         T RUE         0.25              3
+     returns from the actual standardised returns, i.e.               2                TANH         T RUE        FALSE              1
+                                                                      3                TANH         FALSE        FALSE              1
+                                                                      4                TANH         FALSE        FALSE              3
+                         ǫi,t = Zi,t − Ẑi,t .                        5                RELU         T RUE         0.25              1
+                                                                      6                RELU         T RUE         0.25              3
+  2. Extracting factor returns for the past 60 days by                7                RELU         T RUE        FALSE              1
+     predicting the latent layer in the network using just            8                RELU         FALSE        FALSE              1
+     the encoder part of the Autoencoder and running a                9                RELU         FALSE        FALSE              3
+     regression of factor returns against actual returns to
+     extract factor loadings. We then use the final day’s
+     standardised return (that was not included in running           standardised stock returns in the decoder. For this compari-
+     the regression) to get an encoder prediction of factor          son we keep the number of hidden nodes fixed at 20 for all
+     returns. These factor returns are multiplied by the             options and variants.
+     estimated loadings and subtracted from the actual               The variants that are run for each residual option are la-
+     returns to retrieve the residuals.                              belled and defined in table 1.
+
+     The regression to estimate the factor loadings β can            4.4. Benchmarks for Arbitrage Signal Extraction
+     be summarised as:
+                                                                     Once residuals are calculated using the discussed asset pric-
+                                                                     ing models, time series techniques are applied on the resid-
+                                                                     uals’ processes to extract signals that form the inputs to
+          Rt−60:t−1 = β enc(Zt−60:t−1 ) + ǫt−60:t−1                  the portfolio construction step. These time series signal ex-
+                                                                     traction techniques are applied univariately, i.e. for each
+     which leads to residuals using the estimated β:                 stock’s residuals separately.
+                      ǫt,i = ri,t − β enc(Zt ).
+                                                                     4.4.1. O RNSTEIN U HLENBECK
+
+  3. Using the procedure as in the second option but in-             The most prevailing approach in the literature for mod-
+     stead of using standardised returns to retrieve factor          elling the residual time series is using a mean reverting
+     return estimates, we use volatility scaled returns to           Ornstein-Uhlenbeck (OU) process. We follow the method-
+     mirror the setup of eigenportfolios in Avellaneda &             ology of Avellaneda & Lee (2010) and estimate its pa-
+     Lee (2010). The scaling of returns uses the backward-           rameters assuming a discretised version to model the id-
+     looking standard deviation of the past Tτ = 252 trad-           iosyncratic residual dXi (t) within the stochastic differen-
+     ing days.                                                       tial equation
+     The regression changes to
+                                                                          dXi (t) = ki (mi − Xi (t))dt + σi dWi (t),      ki > 0.
+          Rt−60:t−1 = β enc(St−60:t−1 ) + ǫt−60:t−1
+                                                                     Like in Avellaneda & Lee (2010) s-scores are calculated as
+                ǫt,i = ri,t − β enc(St )
+                                                                                                  Xi (t) − mi
+                        r                                                                  si =
+     with Si,t = σi,t−T i,t−1:t−1 .                                                                   σeq,i
+                         τ
+
+                                                                     with σeq,i = √σ2k i
+                                                                                           . Buy and sell decisions are driven by
+The final two options and especially the volatility scaled                               i
+                                                                     these s-scores and using historically chosen thresholds for
+returns option are inspired by the relationship between Au-
+                                                                     opening and closing positions. We follow the already cited
+toencoders and PCA as well as the use of PCA in StatArb
+                                                                     work in this area and use a threshold of -1.25 (1.25) to open
+trading.
+                                                                     a long (short) position and -0.5 (0.75) to close the open long
+Our choice for using the hyperbolic tangent function in the          (short) position. Moreover, we only take positions in stocks
+decoder stems from the fact that we are trying to recreate           that show a high R2 value, representing confidence in the
+
+                                                                 5
+                                                End to End Learning StatArb
+
+regressions, and chose a threshold of 0.25. This technique          combine the asset pricing model estimation with the estima-
+is described in Yeo & Papanicolauou (2017).                         tion of StatArb parameters into a unified, cohesive model.
+                                                                    This integration allows end-to-end decision making and cir-
+4.4.2. A RTIFICAL N EURAL N ETWORK                                  cumvents the need for external asset pricing models and
+                                                                    time series prediction techniques.
+Additionally, we follow the example of Guijarro-Ordonez
+et al. (2021) and use a 3-layered feed forward network with         The encoder consists of one layer with the number of l
+5 input parameters to extract signals from the OU estima-           nodes as specified in the results section. We use a simi-
+tion output statistics. These parameters are part of the dis-       lar number of hidden units as in the PCA model to simplify
+cretisation process described in the appendix of Avellaneda         comparison of the methods. It uses a rectified linear unit as
+& Lee (2010) and represent a summary of the residual pro-           the activation in its hidden layer:
+cess at each time step t.
+The feed forward networks make univariate predictions us-                      F = enc(Z) = relu(W (0) Z + b(0) )
+ing all 5 parameters as inputs, transforming them via 3 lay-
+ers of each 5 nodes with a relu activation function and a           where Z ∈ RN x1 , W (0) ∈ RlxN , and b(0) ∈ Rlx1 . The de-
+dropout layer with a dropout weight of 0.25. The output is          coder also only consists of one layer, denoted as dec, with
+a single value from a linear layer. We train the network us-        the same dimension as the input data, i.e. the number of
+ing a Sharpe ratio policy on batches of 1.000 outputs using         included stocks N . It uses a hyperbolic tangent activation
+the Adam optimiser and 5 epochs of training.                        function to allow the network to best represent the input
+                                                                    data:
+Our backtesting methodology is the same as the one de-
+scribed by Guijarro-Ordonez et al. (2021):
+                                                                          Ẑ = dec(F )
+   • At each time t, we extract OU parameters from the
+                                                                            = tanh(W (1) F + b(1) )
+     residual time series using a 60 day lookback regres-
+     sion.                                                                  = tanh(W (1) (relu(W (0) X + b(0) )) + b(1) )
+
+   • To train the model, 1.000 days of history of OU pa-            where F ∈ Rlx1 , W (1) ∈ RN xl , and b(1) ∈ RN x1 .
+     rameters are used for all stocks and optimised using a         The decoded values are used in the loss function to min-
+     Sharpe ratio objective.                                        imise the MSE between inputs and decoded outputs to al-
+                                                                    low the network to learn a useful latent space representation
+   • The next 125 days are used out of sample to make               without loss of expression.
+     predictions and create portfolios for performance eval-
+     uation before a new model is trained.                          To allow the architecture to be geared towards StatArb trad-
+                                                                    ing, we add two additional layers to the network that feed
+                                                                    into the trading policy. The first layer calculates the differ-
+Training start dates are adjusted across models to accom-
+                                                                    ence between decoded returns and the original input stan-
+modate the varying length of lookbacks required. We refer
+                                                                    dardised returns. This yields residuals akin to the ones gen-
+to this extraction technique as OU+FFN in the results sec-
+                                                                    erated by traditional factor models. The second layer takes
+tion.
+                                                                    these residuals as inputs and builds a portfolio of weights,
+                                                                    wt , by using a hyperbolic tangent activation function with
+5. Autoencoder Statarb Policy                                       no bias term:
+In the realm of statistical arbitrage trading, as delineated
+in the preceding sections, the efficacy heavily relies on em-            wt = tanh(W (2) (Ẑt − Zt )),      W (2) ∈ RN xN .
+ploying an asset pricing model that accurately captures the
+variability in stock returns. The plethora of asset pricing         Its reuse of the inputs Z makes this layer similar to residual
+models and factors makes the choice for one to be used at           or skip connections in classic deep learning literature.
+best a data mining exercise that is prone to overfit. More-         The optimisation problem for this network includes min-
+over, the modeler is tasked with choosing an apt signal ex-         imisation of a Sharpe ratio policy. We also ensure that the
+traction technique and adjusting portfolio weights accord-          sum of the final absolute positions equals 1 to prevent ac-
+ingly.                                                              cidentally leveraging the portfolio, i.e. wt = ||wwtt||1 . By
+To address these challenges, we propose an integrated Au-           introducing λ as a gearing parameter, to weight the MSE
+toencoder training procedure that facilitates learning a fac-       and the Sharpe ratio components of the loss function differ-
+tor model that is tailored for StatArb trading. This way, we        ently, the objective is formalised as follows:
+
+                                                                6
+                                                   End to End Learning StatArb
+
+
+                                                                     Table 2. Performance comparison of asset pricing models against
+  min     λ M SE(Zt , Ẑt ) + (1 − λ) Sharpe(wt , Rt+1 )             our simple Autoencoder models using Ornstein-Uhlenbeck Ex-
+    θ                                                                traction. The model column describes the type of asset pricing
+          n
+          X                                                          model and signal extraction method. The variant is the sub-variant
+   s.t.         wi,t = 1 ∀t                                          within the combination, SR is the Sharpe ratio before costs, and
+          i=1                                                        µ and σ the sample mean and standard deviation of returns re-
+  and θ = {W (0) , W (1) , W (2) , b(0) , b(1) }                     spectively. The numbers in the variant name of the PCA models
+                                                           (1)       denote the number of latent factors to keep.
+
+with network parameters θ.                                                  M ODEL       VARIANT       SR       µ         σ
+For the results in this paper, we keep λ = 0.5. The Sharpe                                CAPM        0.13    1.31%    10.17%
+ratio policy is defined as:                                                                FF 3       0.3     2.07%     6.89%
+                                                                            FF OU
+                                                                                           FF 5       0.33    2.22%     6.78%
+                                                                                         FF 5 M OM    0.52    3.39%     6.56%
+                          √    µp,t
+           Sharpe =        252                                                            PCA 8       0.96    4.55%     4.74%
+                               σp,t                                                       PCA 10      0.92     4.3%     4.66%
+                                                                            PCA OU
+                             T                                                            PCA 15      0.87    3.94%     4.53%
+                        1 X                                                               PCA 20      0.88    3.91%     4.43%
+                 µp,t =        rp,t−τ
+                        T τ =1                             (2)                          VARIANT 0     0.14    2.36%    16.75%
+                        v                                                               VARIANT 1     0.34    5.76%    16.96%
+                        u      T                                            AE OU 2
+                        u1 X                                                            VARIANT 2     0.29    4.84%    16.77%
+                 σp,t = t        (rp,t−τ − µp,t )2                                      VARIANT 3     0.31    5.17%    16.75%
+                          T τ =1
+                                                                                        VARIANT 1     0.24    4.06%     17.2%
+             Pn                              √                                          VARIANT 2     0.27    4.44%    16.55%
+with rp,t = i=1 wi,t ri,t+1 . The factor 252 annualises                     AE OU 3     VARIANT 6     0.42    6.93%    16.52%
+the Sharpe ratio as we use daily estimates of mean and stan-                            VARIANT 7     0.32    5.28%    16.31%
+dard deviation of returns. This policy could further be ex-                             VARIANT 8     0.32    5.18%    16.33%
+tended to incorporate portfolio constraints.
+
+                                                                     increased risk, primarily due to higher turnover and daily
+5.1. Training
+                                                                     architectural changes. Future iterations could potentially
+In line with the benchmark models, we train a new model              mitigate this by introducing penalties for frequent model
+every trading day using the past Tτ = 252 days of standard-          modifications.
+ised returns, capped at 3 standard deviations, as an input to
+                                                                     Results using OU+FFN extractions, which generally under-
+the Autoencoder model. The Sharpe ratio objective is eval-
+                                                                     performed, are detailed in table 5 in the appendix. Our anal-
+uated on actual returns of the next day. For each model, we
+                                                                     ysis here was limited to the second methodology of residual
+only use past data as training inputs and project the model
+                                                                     extraction through cross-sectional regression, as it emerged
+forward to retrieve the model’s performance on the next day
+                                                                     as the most effective.
+out of sample.
+                                                                     Our second major contribution is the proposal of a novel
+Models are trained for 10 epochs using the Adam optimiser
+                                                                     Autoencoder policy strategy, as detailed in section 5. Its
+and a 0.001 learning rate.
+                                                                     pre-cost performance is presented in table 3, showcasing an
+                                                                     outperformance over all benchmarks in risk-adjusted terms,
+6. Results                                                           with high mean returns at a risk level comparable to PCA
+                                                                     model variants. Figure 1 visually contrasts these perfor-
+Our first key contribution is the systematic comparison of
+                                                                     mances since 2002 focusing on the best performing vari-
+our basic Autoencoder models with baseline asset pricing
+                                                                     ants and a diverse set of benchmark models.
+models (PCA and Fama French) for residual generation in
+the StatArb process. Table 2 shows results for the best per-         The architecture’s ability to learn a representation con-
+forming models between our basic Autoencoder variants                ducive to StatArb trading is notable. Interestingly, the num-
+(as defined in table 1) and the other asset pricing models           ber of latent factors in the best-performing policy models
+using OU signal extraction. A full comparison of all mod-            aligns with the literature’s recommended range of 10 to
+els can be found in table 4 in the appendix. It is notewor-          15, suggesting that the Autoencoder effectively learns a
+thy that while the Autoencoder models do not surpass PCA             representation akin to qualitatively derived factors. The
+in terms of Sharpe ratio, the regression-based models de-            flexible policy learning approach also facilitates the inte-
+liver competitive, and in some cases superior, returns when          gration of portfolio construction constraints, crucial for
+compared to the best-performing PCA models, albeit with              strategies with potential high turnover and transaction costs.
+
+                                                                 7
+                                                                End to End Learning StatArb
+
+
+
+                                             PCA_8
+                                       250   PCA_10
+                                             PCA_15
+                                       200   FF5_Mom
+                                             CAPM
+
+                     Performance (%)
+                                             AE Policy 8
+                                       150   AE Policy 10
+                                             AE Policy 15
+                                       100
+
+
+                                        50
+
+
+                                         0
+
+
+                                       −50
+                                                   4               8          2               6            0             4
+                                                200             200        201             201          202           202
+                                                                                 Date
+
+                   Figure 1. Performance comparison in compounded percentage returns from 2002 to end of 2022.
+
+
+                                                                                  proved upon by including convolutional features, using
+Table 3. Performance of our Autoencoder Policy. The dimension
+                                                                                  Variational Autoencoders, and additional layers.
+column defines how many latent dimensions were included in the
+architecture.                                                                     Our end-to-end Autoencoder architecture of learning the
+                                                                                  entire pipeline in StatArb modelling shows promising re-
+      M ODEL        D IMENSION                 SR           µ          σ
+                                                                                  sults on a pre-cost basis. It highlights the theoretically
+                                       3       1.51     5.56%    3.69%            achievable performance and establishes a baseline for fu-
+                                       5       1.42     5.08%    3.58%            ture work. Notably, our findings align with existing liter-
+                                       6       1.67     5.66%     3.4%
+                                       8       1.73     6.2%     3.58%            ature regarding the optimal number of latent factors in as-
+      AE P OLICY                       10      1.75     5.89%    3.37%            set pricing models for StatArb trading, hinting that there is
+                                       15      1.81     6.24%    3.46%            an economic or statistical foundation for this number and
+                                       20       1.5     5.34%    3.55%
+                                       30      1.43     5.28%    3.68%            also bolstering confidence in our approach. Our AE pol-
+                                       50      1.58     5.68%     3.6%            icy strategies perform best when using the same number of
+                                                                                  latent factors as the optimal choice in the literature.
+                                                                                  There is variety of future avenues to make the architecture
+Thereby, one can slow down the signal or penalise for fre-                        competitive in a realistic after-cost simulation, but we al-
+quent model changes. While initial analysis indicates the                         ready outlined initial steps for improvement in section 6.
+need for further refinement to enhance after-cost competi-                        Firstly, reducing model turnover is a priority, achievable
+tiveness, the model’s promising gross performance under-                          through less frequent retraining, incorporating transaction
+scores its theoretical potential. In a broader quantitative                       cost penalties, or modifying the Sharpe policy in a way that
+trading portfolio, this model could serve as an additional                        slows down the model. Furthermore, we propose using an
+signal to augment overall performance.                                            additional layer of smoothing in portfolio construction post
+                                                                                  Autoencoder portfolio weight retrieval. This could also be
+                                                                                  in the form of more sophisticated time series prediction
+7. Conclusion                                                                     techniques like LSTMs or Transformers trained in a suit-
+To the best of our knowledge, this is the first time Autoen-                      able way.
+coder architectures were systematically evaluated against                         A deeper analysis and economic interpretation of the re-
+the prevailing approaches to construct factor models in                           sulting portfolios could offer insightful comparisons with
+the context of StatArb trading. Our findings reveal that                          PCA-derived or fundamental factors, particularly in under-
+even basic Autoencoder implementations can rival the per-                         standing the impact of non-linearities.
+formance of established benchmark models like PCA and
+Fama French in a StatArb context. In the future, we aim                           We also aim to refine the architecture to dynamically learn
+to broaden our comparison by including IPCA approaches                            the optimal number of latent factors to instead of setting
+and the Autoencoder IPCA model introduced by Gu et al.                            the hyperparameter upfront. PCA research shows that the
+(2021) as additional benchmarks. Furthermore, the ba-                             optimal number of factors also changes depending on the
+sic implementations that we used can be substantially im-                         economic regime and we aim to include that information in
+
+                                                                            8
+                                                End to End Learning StatArb
+
+our StatArb pipeline.                                                Ross, S. The arbitrage theory of capital asset pricing. Jour-
+                                                                       nal of Economic Theory, 13(3):341–360, 1976.
+Finally, it is important to acknowledge that successful
+StatArb strategies often operate on intraday data due to the         Sharpe, W. F. Capital asset prices: A theory of market
+brief mean reversion times of stock residuals. This con-               equilibrium under conditions of risk. Journal of Finance,
+trasts with the focus on interday data in much of the aca-             19(3):425–442, 1964.
+demic literature, pointing towards a significant area for fur-
+ther exploration in both practical and academic contexts.            Yeo, J. and Papanicolauou, G. Risk control of mean-
+                                                                       reversion time in statistical arbitrage. Risk and Decision
+                                                                       Analysis, 6(4):263–290, 2017.
+References
+Avellaneda, M. and Lee, J.-H. Statistical Arbitrage in the
+  US equity market. Quantitative Finance, 10(7):761–782,
+  2010.
+
+Chan, B., Truong, N., and Zhang, C. Two Machine Learn-
+  ing approaches for Statistical Arbitrage pairs selection.
+  Stanford, 2019.
+
+Fama, E. F. and French, K. R. Common risk factors in
+  the returns on stocks and bonds. Journal of financial
+  economics, 33(1):3–56, 1993.
+
+Fama, E. F. and French, K. R. Choosing factors. Journal
+  of Financial Economics, 128(2):234–252, 2018.
+
+Feng, G., Giglio, S., and Xiu, D. Taming the factor zoo:
+  A test of new factors. National Bureau of Economic Re-
+  search, (w25481), 2019.
+
+Gatev, E., Goetzmann, W. N., and Rouwenhorst, K. G.
+  Pairs trading: performance of a relative value arbitrage
+  rule. The Review of Financial Studies, 19(3):797–827,
+  2006.
+
+Gu, S., Kelly, B. T., and Xiu, D. Autoencoder asset pric-
+  ing models. Journal of Econometrics, 222(1):429–450,
+  2021.
+
+Guijarro-Ordonez, J., Pelger, M., and Zanotti, G.
+  Deep Learning Statistical Arbitrage. arXiv preprint
+  arXiv:2106.04028, 2021.
+
+Harvey, C. R., Liu, Y., and Zhu, H. ... and the cross-section
+  of expected returns. The Review of Financial Studies, 29
+  (1):5–68, 2016.
+
+Kelly, B. T., Pruitt, S., and Su, Y. Characteristics are co-
+  variances: A unified model of risk and return. Journal of
+  Financial Economics, 134:501–524, 2019.
+
+Krauss, C. Statistical Arbitrage pairs trading strategies: re-
+  view and outlook. Journal of economic surveys, 31:513–
+  545, 2017.
+
+Oja, E. A simplified neuron model as a principal compo-
+  nent analyzer. Journal of Mathematical Biology, 15:267–
+  273, 1982.
+
+                                                                 9
+                                                  End to End Learning StatArb
+
+A. Benchmark Results
+The following tables 4 and 5 show the remaining benchmark and Autoencoder results that were referred to in the main
+text. Table 4 gives the full comparison of asset pricing models against the simple Autoencoder variants we derived using
+the OU signal extraction methodology and table 5 compares the different models using the OU+FFN signal extraction
+methodology.
+
+
+Table 4. Performance comparison of the benchmark asset pricing models against our simple Autoencoder architectures using Ornstein-
+Uhlenbeck time series extraction.
+
+                                        M ODEL      VARIANT      SR        µ         σ
+                                                    CAPM         0.13    1.31%    10.17%
+                                                     FF 3         0.3    2.07%    6.89%
+                                        FF OU
+                                                     FF 5        0.33    2.22%    6.78%
+                                                   FF 5 M OM     0.52    3.39%    6.56%
+                                                     PCA 1       0.44    2.92%     6.64%
+                                                     PCA 3       0.74    4.04%     5.48%
+                                                     PCA 5       0.76    3.88%     5.07%
+                                                     PCA 6       0.88    4.33%     4.93%
+                                        PCA OU
+                                                     PCA 8       0.96    4.55%     4.74%
+                                                     PCA 10      0.92     4.3%     4.66%
+                                                     PCA 15      0.87    3.94%     4.53%
+                                                     PCA 20      0.88    3.91%     4.43%
+                                                   VARIANT 0    -0.24   -3.17%    13.45%
+                                                   VARIANT 1    -0.29   -3.91%    13.65%
+                                                   VARIANT 2    -0.24   -3.33%    13.84%
+                                                   VARIANT 3    -0.23   -3.27%    14.12%
+                                                   VARIANT 4    -0.26   -3.78%    14.39%
+                                        AE OU 1
+                                                   VARIANT 5    -0.18   -1.65%    9.25%
+                                                   VARIANT 6    -0.19   -1.72%    9.24%
+                                                   VARIANT 7    -0.24   -2.42%    9.94%
+                                                   VARIANT 8    -0.23   -2.24%    9.78%
+                                                   VARIANT 9    -0.18   -1.66%    9.38%
+                                                   VARIANT 0     0.14    2.36%    16.75%
+                                                   VARIANT 1     0.34    5.76%    16.96%
+                                                   VARIANT 2     0.29    4.84%    16.77%
+                                                   VARIANT 3     0.31    5.17%    16.75%
+                                                   VARIANT 4      0.1    1.68%    17.25%
+                                        AE OU 2
+                                                   VARIANT 5     0.23    3.83%    16.32%
+                                                   VARIANT 6     0.22    3.61%    16.1%
+                                                   VARIANT 7     0.25    3.93%    16.0%
+                                                   VARIANT 8     0.25    4.01%    16.03%
+                                                   VARIANT 9     0.15    2.52%    16.45%
+                                                   VARIANT 0     0.17    2.93%    16.76%
+                                                   VARIANT 1     0.24    4.06%    17.2%
+                                                   VARIANT 2     0.27    4.44%    16.55%
+                                                   VARIANT 3     0.24    4.04%    16.56%
+                                                   VARIANT 4     0.14    2.35%    17.26%
+                                        AE OU 3
+                                                   VARIANT 5     0.27    4.34%    16.36%
+                                                   VARIANT 6     0.42    6.93%    16.52%
+                                                   VARIANT 7     0.32    5.28%    16.31%
+                                                   VARIANT 8     0.32    5.18%    16.33%
+                                                   VARIANT 9     0.07    1.24%    16.98%
+
+
+
+
+                                                               10
+                                               End to End Learning StatArb
+
+
+
+
+Table 5. Performance comparison of the benchmark asset pricing models against our simple Autoencoder architectures using the
+OU+FFN time series extraction.
+
+                                   M ODEL           VARIANT         SR       µ        σ
+                                                     CAPM          0.03    0.41%    15.1%
+                                                      FF 3         -0.31   -4.81%   15.67%
+                                   FF OU+FFN
+                                                      FF 5         0.11    1.65%    15.38%
+                                                    FF 5 M OM      -0.09   -1.38%   15.88%
+                                                     PCA 1         -0.04   -0.63%   17.27%
+                                                     PCA 3          -0.1   -1.65%   16.77%
+                                                     PCA 5         -0.18   -2.69%   15.09%
+                                                     PCA 6         -0.19   -3.48%   17.89%
+                                   PCA OU+FFN
+                                                     PCA 8         -0.22   -3.37%   15.46%
+                                                     PCA 10        -0.17   -2.59%   15.6%
+                                                     PCA 15        -0.31   -4.88%   15.84%
+                                                     PCA 20        -0.08   -1.41%   17.89%
+                                                    VARIANT 0      0.08    1.64%    19.56%
+                                                    VARIANT 1      0.06    1.14%    20.3%
+                                                    VARIANT 2      -0.09   -1.75%   19.21%
+                                                    VARIANT 3      0.06    1.28%    20.32%
+                                                    VARIANT 4      0.08    1.54%    20.36%
+                                   AE OU+FFN 2
+                                                    VARIANT 5      0.12    2.15%    18.43%
+                                                    VARIANT 6       -0.3    -5.3%   17.83%
+                                                    VARIANT 7      0.04    0.72%    18.07%
+                                                    VARIANT 8      0.01    0.13%    18.34%
+                                                    VARIANT 9      -0.29   -5.37%   18.33%
+
+
+
+
+                                                              11
+

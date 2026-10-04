@@ -1,0 +1,676 @@
+URL: https://arxiv.org/pdf/2510.11616
+FETCHED_UTC: 2026-10-04T18:39Z
+HTTP: 200 application/pdf
+-----
+                                                                           Attention Factors for Statistical Arbitrage
+                                                                            Elliot L. Epstein                                                                    Rose Wang
+                                                                           Stanford University                                                                Stanford University
+                                                                         Stanford, United States                                                            Stanford, United States
+                                                                         epsteine@stanford.edu                                                              rosew47@stanford.edu
+
+                                                                              Jaewon Choi                                                                      Markus Pelger
+                                                                             Hanwha Life                                                                      Stanford University
+                                                                          Seoul, South Korea                                                                Stanford, United States
+                                                                       jaewonch@hanwha.com                                                                  mpelger@stanford.edu
+arXiv:2510.11616v1 [cs.LG] 13 Oct 2025
+
+
+
+
+                                         Abstract                                                                                        two comparison assets widens, the arbitrageur sells the winner and
+                                         Statistical arbitrage exploits temporal price differences between                               buys the loser. If their prices move back together, the arbitrageur
+                                         similar assets. We develop a framework to jointly identify similar                              will profit. Statistical arbitrage trading has to solve the following
+                                         assets through factors, identify mispricing and form a trading policy                           three key problems: Given a large universe of assets, what are long-
+                                         that maximizes risk-adjusted performance after trading costs. Our                               short portfolios of similar assets? Given these portfolios, what are
+                                         Attention Factors are conditional latent factors that are the most                              time-series signals that indicate the presence of temporary price
+                                         useful for arbitrage trading. They are learned from firm character-                             deviations? Lastly, given these signals, how should an arbitrageur
+                                         istic embeddings that allow for complex interactions. We identify                               trade them to maximize risk-adjusted performance after trading
+                                         time-series signals from the residual portfolios of our factors with                            costs? Each of these three questions poses substantial challenges,
+                                         a general sequence model. Estimating factors and the arbitrage                                  that prior work has only partly addressed.
+                                         trading strategy jointly is crucial to maximize profitability after                                 Previous approaches have studied this problem as a two-step ap-
+                                         trading costs. In a comprehensive empirical study we show that                                  proach, where the first step identifies similar assets separately from
+                                         our Attention Factor model achieves an out-of-sample Sharpe ra-                                 the trading objective. Similarity between assets can be captured
+                                         tio above 4 on the largest U.S. equities over a 24-year period. Our                             by similar exposure to risk factors. Arbitrage portfolios are trades
+                                         one-step solution yields an unprecedented Sharpe ratio of 2.3 net                               relative to mimicking stock portfolios with the same exposure to
+                                         of transaction costs. We show that weak factors are important for                               risk factors. A common approach is to use principal component
+                                         arbitrage trading.                                                                              analysis (PCA) factors, which maximize the explained correlation
+                                                                                                                                         in a panel and where mimicking portfolios are assets with high cor-
+                                         Keywords                                                                                        relation with the target stocks. The second step in arbitrage trading
+                                                                                                                                         is to identify time-series signals from the residuals of a candidate
+                                         Deep learning, attention, statistical arbitrage, latent factor model,
+                                                                                                                                         factor model and form a trading policy. The leading approach is
+                                         sequence models, equities, investment
+                                                                                                                                         [19], which outperforms the benchmarks in this literature. It uses
+                                         ACM Reference Format:                                                                           PCA-type factors in the first step and a general sequence model
+                                         Elliot L. Epstein, Rose Wang, Jaewon Choi, and Markus Pelger. 2025. Atten-                      in the second step. It achieves high Sharpe ratios before trading
+                                         tion Factors for Statistical Arbitrage. In 6th ACM International Conference                     costs, but degrading Sharpe ratios after trading costs. The key issue
+                                         on AI in Finance (ICAIF ’25), November 15–18, 2025, Singapore, Singapore.                       in a two-step approach is that the factors cannot adjust to reduce
+                                         ACM, New York, NY, USA, 9 pages. https://doi.org/10.1145/3768292.3770398
+                                                                                                                                         trading costs for arbitrage strategies. For example, PCA factors
+                                                                                                                                         have high turnover and large short positions, which diminish net
+                                         1     Introduction                                                                              performance. We provide a solution with our one-step approach.
+                                         Statistical arbitrage exploits temporal price differences between                                   In this paper, we propose the Attention Factor Model, a framework
+                                         similar assets using statistical methods. Conceptually, these meth-                             that jointly learns tradable arbitrage factors and arbitrage portfolio
+                                         ods are based on relative trades between a stock and a mimicking                                allocations in a computationally efficient manner. Our Attention
+                                         portfolio. The mimicking portfolio is constructed to be “similar”                               Factors are conditional latent factors. The estimation objective is not
+                                         to the target stock, usually based on historical co-movements in                                to explain variation, but to construct profitable arbitrage strategies
+                                         the price time-series. When the spread between the prices of the                                after trading costs. The attention mechanism learns embeddings
+                                                                                                                                         of firm characteristics and allows to capture general dependencies
+                                         Permission to make digital or hard copies of all or part of this work for personal or           of the factors on firm characteristics with complex interactions. A
+                                         classroom use is granted without fee provided that copies are not made or distributed
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       general sequence model learns time-series signals from the residuals
+                                         on the first page. Copyrights for components of this work owned by others than the              of our attention factors with the joint objective of maximizing the
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          net Sharpe ratio and explained variance. Figure 1 illustrates the
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission
+                                         and/or a fee. Request permissions from permissions@acm.org.                                     conceptual structure.
+                                         ICAIF ’25, Singapore, Singapore                                                                     We perform a comprehensive empirical out-of-sample analysis
+                                         © 2025 Copyright held by the owner/author(s). Publication rights licensed to ACM.               on 24 years of daily returns of the 500 largest and most liquid U.S.
+                                         ACM ISBN 979-8-4007-2220-2/2025/11
+                                         https://doi.org/10.1145/3768292.3770398                                                         equities using an extensive set of firm characteristics. The Attention
+ICAIF ’25, November 15–18, 2025, Singapore, Singapore                                          Elliot L. Epstein, Rose Wang, Jaewon Choi, and Markus Pelger
+
+
+Factor model achieves an annualized Sharpe ratio above 4 without          a trading objective. Popular sequence models to learn general time-
+trading frictions and 2.3 with trading frictions, significantly outper-   series patterns are Transformer [36] models and S4 [17] models.
+forming prior work with an 84% increase in net Sharpe ratio over          The Set-Sequence Model [10] captures joint dependencies for arbi-
+the current state-of-the-art model in [19]. Our arbitrage strategy        trary sequence models. Low-rank Gaussian copula processes model
+yields an annual return of 16% while being uncorrelated to market         joint distributions with tractable structure [34], while global–local
+risk. The Attention Factors have an interpretable structure, where        networks exploit parameter sharing with series-specific condition-
+the loadings are closely related to industry sectors. Our study pro-      ing [35]. Transformer-based models dominate recent benchmarks:
+vides evidence for weak factors that explain less variation but are       Crossformer introduces cross-dimension attention for multivariate
+important for identifying temporal mispricing.                            dependencies [39], iTransformer inverts tokenization to attend over
+                                                                          variates and scales to long horizons [26], and S4-based models use
+2    Related Work                                                         structured state spaces to efficiently handle long sequences [17].
+   Statistical Arbitrage. Our paper builds on the classical statistical
+arbitrage literature, in which the three main problems of residual        3     Method
+portfolio construction, time-series pattern extraction, and allocation       Notation. We consider 𝑁 assets with returns 𝑅𝑡 ∈ R𝑁 with 𝑀
+decision have traditionally been considered independently. Classical      time-varying characteristics 𝑋𝑡 ∈ R𝑁 ×𝑀 for the times 𝑡 = 1, . . . ,𝑇 .
+statistical methods of generating arbitrage portfolios use parametric
+                                                                             Problem. The fundamental problem of statistical arbitrage con-
+methods and have mostly focused on obtaining multiple pairs or
+                                                                          sists of three elements: (1) Identification of similar assets to generate
+small portfolios of assets, using techniques like the distance method
+                                                                          arbitrage portfolios, (2) extraction of time-series signals for tem-
+of [16], the cointegration approach of [37], or copulas as in [33]. In
+                                                                          porary deviations of similarity between assets and (3) a trading
+contrast, more general methods that exploit large panels of stock
+                                                                          policy in the arbitrage portfolios based on the time-series signals.
+returns include the use of PCA factor models, as in [1] and its
+                                                                          We provide a general end-to-end solution for each element.
+extension in [38], and the maximization of mean-reversion and
+sparsity statistics as in [8]. Alternative parametric models include
+[6, 25, 29]. The most closely related paper to our work is [19], which
+                                                                          3.1     Factor Model
+uses transformer models to extract general time-series patterns              Conditional Factor Model. Factor models explain the returns
+from residuals. The residuals are obtained from PCA and IPCA              of a cross-section of assets in terms of their exposure to factors
+factors to optimize explained variation. Our approach unifies factor      𝐹𝑡 = (𝐹 1,𝑡 , . . . , 𝐹𝐾,𝑡 ). We use factors to identify similar assets, where
+extraction and residual trading within a single learning objective.       similarity is defined as the same exposure to factors. We assume
+                                                                          that asset returns can be modeled by a conditional factor model:
+   Machine Learning in Asset Pricing. Our paper is complementary                           𝑇
+to the fast growing literature that uses machine learning methods                  𝑅𝑖,𝑡 = 𝛽𝑖,𝑡 −1 𝐹𝑡 + 𝜖𝑖,𝑡 ,     𝑡 = 1, ...,𝑇 and 𝑖 = 1, ...𝑁 .
+for asset pricing. While the asset pricing literature aims to explain     The 𝐾 tradable factors 𝐹𝑡       ∈ R𝐾 capture systematic risk, while the
+the risk premia of assets, our focus is on the residual component         loadings 𝛽𝑖,𝑡 −1 are time-varying and based on information up to
+which is not explained by the asset pricing models. [5, 7, 21, 23]        time 𝑡 − 1. This general formulation includes the empirically most
+estimate the stochastic discount factor (SDF), which explains the         successful factor models.
+risk premia of assets, with deep neural networks, decision trees,             Through the lens of Arbitrage Pricing Theory (APT) [24], if the
+elastic net regularization and attention methods. [3, 4, 9, 14, 18, 20]   factors capture all relevant sources of systematic risk, then the
+predict asset returns with machine learning methods.                      factor portfolio 𝛽𝑖,𝑡 −1 𝐹𝑡 is the “fair price”, and the residual portfolio,
+                                                                                            𝑇
+
+                                                                          𝜖𝑖,𝑡 , given by
+   Statistical Factor Modeling. The workhorse models in equity as-                                                   𝑇
+set pricing are based on linear factor models exemplified by [11, 12].                                𝜖𝑖,𝑡 = 𝑅𝑖,𝑡 − 𝛽𝑖,𝑡 −1 𝐹𝑡 ,
+Recently, new methods have been developed to extract statistical          identifies mispricing. Arbitrage trading aims to exploit temporal
+factors from large panels with various versions of PCA that explain       patterns in the residuals.
+the systematic comovement between assets [2, 13]. Motivated by Ar-
+                                                                             Candidate Factors. Empirically successful factor models include
+bitrage Pricing Theory (APT), systematic risk factors are expected
+                                                                          observed fundamental factors and statistical factors. Examples of
+to explain the cross-section of expected returns. Extensions of PCA
+                                                                          fundamental factors are the market factor in the CAPM model, and
+include RP-PCA [24] to account for pricing errors, state-dependent
+                                                                          the Fama-French 3- and 5-factor models [11] that include a market,
+factors in [32], interpretable PCA [31], high-frequency PCA [30],
+                                                                          size, value, respectively, investment and profitability factor. The
+and conditional factor models in Instrumented PCA (IPCA) [22]
+                                                                          Fama-French factors are tradeable portfolios, 𝐹𝑡 = 𝜔𝑡FF−1 𝑅𝑡 , where
+linking latent loadings to observable characteristics. Statistical fac-
+                                                                          portfolio weights 𝜔𝑡FF−1 depend on past firm characteristics like
+tors that explain the variation in panels are complementary to
+                                                                          size or book-to-market ratios. Statistical factor models encompass
+our work as they have a different objective. Our method estimates
+                                                                          unconditional and conditional factor models. The most widely used
+factors that are the most useful for arbitrage trading.
+                                                                          unconditional factor models are based on versions of PCA; see
+   Machine learning for Time-Series. Our paper builds on the litera-      [24] for an overview. PCA estimates latent factors that explain the
+ture for time-series modeling with sequence models, which typi-           most cross-sectional variation. These latent factors are typically
+cally solve a time-series prediction problem. We estimate a Long-         extracted as 𝐹𝑡 = 𝜔 PCA 𝑅𝑡 , where 𝜔 PCA are the eigenvectors of the
+Conv [15] model jointly with our Attention Factor model [36] with         top 𝐾 eigenvalues of the return covariance matrix. Conditional
+Attention Factors for Statistical Arbitrage                                                                                     ICAIF ’25, November 15–18, 2025, Singapore, Singapore
+
+
+                                                              Figure 1: Conceptual Attention Factor Model
+
+
+
+
+ The figure illustrates the conceptual structure of the Attention Factor model. Left: Attention factors are constructed by computing scaled inner products between embedded
+ characteristics for each asset and the 𝐾 query vectors 𝑄𝑘 . Right: The statistical arbitrage methodology. First, for each asset, a replicating portfolio based on the attention factors is
+ created, giving a residual mispricing. Second, a series of lagged residuals are used to construct the portfolio weights in the residual space, using a Long Convolution model for
+ sequence modeling. Finally, the portfolio weights are mapped back to the asset space via a composition matrix, giving the next-period portfolio return.
+
+
+
+statistical factors model the factor portfolio weights and loadings as                            dependencies between characteristics. In our approach, for each
+functions of characteristics. A prominent example is IPCA in [22]                                 point in time, the firm characteristics 𝑋𝑡 are first embedded as
+with 𝐹𝑡 = 𝜔𝑡IPCA                            IPCA    ⊤
+               −1 𝑅𝑡 , where the weights 𝜔 𝑡 −1 = 𝑋𝑖,𝑡 −1 𝐵 are a linear                                                    𝑋˜ 𝑡 = 𝑋𝑡 𝑊 𝐾 ,     𝑊 𝐾 ∈ R𝑀 ×𝑑 .
+function of firm characteristics. This conditional structure allows
+exposures to evolve with firm attributes, linking the latent factors                              Each asset is attended with a dot product to the query vector 𝑄𝑘 ∈
+to observable fundamental information. However, the factors are                                   R𝑑 for each factor, with query matrix 𝑄 = (𝑄 1, . . . , 𝑄 𝐾 )𝑇 giving a
+still estimated to maximize explained variation in the cross-section.                             factor weight matrix 𝜔𝑡F−1 as
+                                                                                                                                                √
+   Challenges for Arbitrage Trading. The above factor models are                                                     𝜔𝑡F−1 = Softmax(𝑄 𝑋˜ 𝑡𝑇−1 / 𝑑),                  (1)
+not constructed with the objective to create profitable arbitrage
+                                                                                                  where Softmax is applied along each row to ensure that the result-
+portfolios. These models impose restrictive ad-hoc assumptions
+                                                                                                  ing factors are normalized. The name attention factor is due to the
+on the functional form of loadings and portfolio weights, and do
+                                                                                                  similarity of Equation 1 with the multi-head attention mechanism
+not target factors based on a trading objective. Importantly, the
+                                                                                                  used in Transformer [36] models, but instead of standard attention
+resulting factor portfolios might have high trading costs in terms
+                                                                                                  that compares each token in a sequence (across time) to each other
+of turnover and shorting positions. We provide a solution that
+                                                                                                  token, we compare each asset (in the cross section) with each factor.
+addresses all these challenges.
+                                                                                                  Simpler models, for example IPCA, are a special case of this for-
+                                                                                                  mulation. Factor loadings 𝛽𝑡 −1 and weights 𝜔𝑡F−1 are mechanically
+3.2      Attention Arbitrage Factors
+                                                                                                  related, as up to a rotation the loadings represent factor portfolio
+   Residual Portfolios. We estimate a conditional factor model that is                            weights (see, for example, [28]). We obtain the factor loadings as
+optimal for arbitrage trading. As in factor models from the previous                                                                                     −1
+                                                                                                                            𝑇
+section, our factors are tradable portfolios                                                                   𝛽𝑡𝑇−1 = 𝜔𝑡𝐹−1 𝜔𝑡𝐹−1 (𝜔𝑡𝐹−1 )𝑇 + 𝜆ridge 𝐼𝐾      ,
+                                    𝐹𝑡 = 𝜔𝑡𝐹−1 𝑅𝑡 ,                                               where we add a ridge penalty 𝜆ridge for stability. Hence, the estima-
+for a factor portfolio weight matrix 𝜔𝑡F−1 ∈ R𝐾 ×𝑁 . This implies that                            tion of 𝜔𝑡F−1 directly implies 𝛽𝑡 −1 and 𝜔𝑡𝜖−1 .
+the residuals are traded portfolios as well
+             𝜖𝑡 = 𝑅𝑡 − 𝛽𝑡𝑇−1 𝐹𝑡 = 𝑅𝑡 − 𝛽𝑡𝑇−1𝜔𝑡F−1 𝑅𝑡 = 𝜔𝑡𝜖−1 𝑅𝑡 ,                                 3.3      Arbitrage Trading
+                                                                                                     Arbitrage Portfolio. The key idea of statistical arbitrage is to
+for the implied projection matrix 𝜔𝑡𝜖−1 = 𝐼 𝑁 − 𝛽𝑡𝑇−1𝜔𝑡F−1 .
+                                                                                                  exploit predictable patterns in the time-series of residual portfo-
+   Attention Factors. Our attention factors allow for a general func-                             lios. Traditionally, statistical arbitrage focuses on parametric mean-
+tional form for the weights and loadings, that captures complex                                   reversion patterns. We detect time-series patterns in the residual
+ICAIF ’25, November 15–18, 2025, Singapore, Singapore                                                                 Elliot L. Epstein, Rose Wang, Jaewon Choi, and Markus Pelger
+
+
+                                                              Table 1: Firm Characteristics by Category
+
+                     Past Returns                                            Value                                        Investment
+                     r2_1       Short-term momentum                          A2ME     Assets / market cap                 Investment Investment
+                     r12_2      Momentum                                     BEME     Book-to-market ratio                NOA        Net operating assets
+                     r12_7      Intermediate momentum                        C        Cash + ST inv. / assets             DPI2A      Change in PP&E
+                     r36_13     Long-term momentum                           CF       Free cash-flow / book value
+                     ST_Rev     Short-term reversal                          CF2P     Cash-flow / price
+                     Ret_D1     Daily return                                 Q        Tobin’s Q
+                     Ret_W1     Weekly return                                Lev      Leverage
+                     STD_W1     Weekly volatility                            E2P      Earnings / Price
+                     Trading Frictions                                       Profitability                                Intangibles
+                     AT         Total assets                                 PROF Profitability                           OA          Operating accruals
+                     LME        Size                                         CTO     Capital turnover                     OL          Operating leverage
+                     LTurnover Turnover                                      FC2Y Fixed costs / sales                     PCM         Price-to-cost margin
+                     Rel2High   52-week-high closeness                       OP      Operating profitability
+                     Resid_Var Residual variance                             PM      Profit margin
+                     Spread     Bid–ask spread                               RNA     Return on NOA
+                     SUV        Standard unexplained volume                  D2A     Capital intensity
+                     Variance   Variance
+                     Vol        Weekly trading volume
+                     Beta       Beta with market
+
+                 The table shows the 39 firm-specific characteristics (six categories) used as features to construct the attention factors. Construction details are
+                 in the Internet Appendix of [7].
+
+
+portfolios with a flexible data-driven filter based on convolutional                           tradeoff between these two objectives is selected optimally on
+networks using a trading objective. The arbitrage portfolio weight                             the validation data. Including the explained variance is necessary
+function depends on the time-series signals that we extract with                               for identification, and empirically improves the performance. This
+LongConv [15] from the past 𝑠 residuals 𝜖𝑖,(𝑡 −𝑠,𝑡 −1) as                                      framework nests conditional latent factors that maximize explained
+                      port                                                                     variance as a special case.
+                    𝜔𝑖,𝑡 −1 = LongConv𝜃 (𝜖𝑖,(𝑡 −𝑠,𝑡 −1) ),
+                                                                                                                       port
+                                                                                                                     𝑅¯𝑛𝑒𝑡 − 𝑅 𝑓                            𝑁                
+where 𝜃 denotes the learnable parameters of the LongConv model.                                                                                          1 ∑︁       Var(𝑒 𝑖 )
+                                                                                                  max √︃                                      + 𝜆Var ·          1−              ,
+LongConv can capture complex time-series patterns. We chose it                                  𝜔 𝐹 ,𝜔 port 1 Í𝑇          port    ¯port 2                𝑁 𝑖=1     Var(𝑅𝑖 )
+because of its linear scaling in the sequence length and simplicity.                                          𝑇    𝑡 =1 (𝑅𝑡,𝑛𝑒𝑡 − 𝑅𝑛𝑒𝑡 )                 |       {z           }
+The choice of sequence model is flexible, and we expect alterna-
+                                                                                                          |              {z               }
+                                                                                                                                                              explained variance
+                                                                                                                    net Sharpe ratio
+tive sequence models such as Transformers to perform similarly.
+Each convolution captures distinct time-series patterns, and our                                                                   port           port
+                                                                                               subject to ∥𝜔𝑡 ∥ 1 = 1 and where 𝑅¯𝑛𝑒𝑡 = 𝑇1 𝑇𝑡=1 𝑅𝑡,𝑛𝑒𝑡 , and 𝑅 𝑓 is
+                                                                                                                                            Í
+optimally tuned model has 32 different convolutions.                                           the risk-free rate. The learned parameters that determine 𝜔 𝐹 and
+   Arbitrage Trading. The arbitrage portfolio return, 𝑅𝑡 , is
+                                                                      port                     𝜔 port are the query matrix 𝑄, the embedding matrix 𝑊 𝐾 , and the
+                                                                                             LongConv model parameters 𝜃 .
+           port      port                port
+          𝑅𝑡 = 𝜖𝑡⊤𝜔𝑡 −1 = 𝑅𝑡⊤ (𝜔𝑡𝜖−1 ) ⊤𝜔𝑡 −1 = 𝑅𝑡⊤𝜔𝑡 −1,
+                                                  port                                         4 Empirical Analysis
+with portfolio weights 𝜔𝑡 −1 = (𝜔𝑡𝜖−1 ) ⊤𝜔𝑡 −1 in the asset space. Note
+that 𝜔𝑡𝜖−1 is only a function of lagged firm characteristics 𝑋𝑡 −1 , while                     4.1 Data
+  port
+𝜔𝑡 −1 is only a function of the time-series patterns in residuals.                                Data Sets. We collect daily equity return data for the securities
+                                                                                               on CRSP from January 1990 through December 2021. Our analysis
+    Arbitrage Trading Objective. We estimate the arbitrage portfolio
+                                                                                               uses only the most liquid stocks. More specifically, we consider only
+weights to maximize the Sharpe ratio after transaction costs. We
+                                                                                               the 500 largest stocks based on the previous month market capi-
+measure transaction costs as in [19], which is common in this
+                                                                                               talization. We complement the stock returns with 39 firm-specific
+literature:
+                                                                                               characteristics from [7], which are listed in Table 1. All these vari-
+cost(𝜔𝑡 , 𝜔𝑡 −1 ) = 0.0005 × ||𝜔𝑡 − 𝜔𝑡 −1 || 1 + 0.0001 × ||𝑚𝑎𝑥 (−𝜔𝑡 , 0)|| 1,                 ables are constructed either from accounting variables from the
+The first penalty represents a transaction cost of 5 basis points per                          CRSP/Compustat database or from past returns from CRSP. The full
+transaction, whereas the second one is a shorting cost of 1 basis                              details on the construction of these variables are in the Internet Ap-
+point. The portfolio net return is then calculated as:                                         pendix of [7]. Firm characteristics are normalized to rank quantiles
+                       port       port                                                         as it is standard in this literature. In addition to the most important
+                     𝑅𝑡,𝑛𝑒𝑡 = 𝑅𝑡         − cost(𝜔𝑡 , 𝜔𝑡 −1 ).                                  characteristics from [7] we also include the previous day and week
+Our objective function maximizes the net Sharpe ratio of the ar-                               return and volatility. In order to keep the level information, we also
+bitrage portfolio and the explained variance of the factors. The                               include the cross-sectional median of the characteristics and the
+Attention Factors for Statistical Arbitrage                                                                     ICAIF ’25, November 15–18, 2025, Singapore, Singapore
+
+
+risk free rate, which results in the dimension of 𝑋𝑡 −1 of 79. Missing                           Figure 2: Cumulative Returns of Arbitrage Portfolios
+values in the characteristics are imputed with last observed values                      50
+if available and by the cross-sectional median otherwise.                                           K=1
+                                                                                                    K=3
+                                                                                                    K=5
+                                                                                         40         K=8
+4.2      Estimation                                                                                 K=15
+
+
+
+
+                                                                         Cumulative Return
+   Models. We estimate our models on a rolling window of 8 years,                                   K=30
+                                                                                         30         K=100
+where we retrain the models every year and evaluate them out-                                       OU K=8
+of-sample from January 1998 to December 2021. We compare our                                        OU K=30
+Attention Factor model to two natural benchmark models, which                            20
+both estimate residuals to maximize explained variation. The para-
+metric benchmark from the seminal work of [1] corresponds to                             10
+classical mean-reversion trading. The second benchmark estimates
+factors with PCA, but uses the same flexible convolution model for
+                                                                                             0
+trading the residuals. It allows us to understand the importance
+
+
+
+
+                                                                                             1998
+                                                                                             2099
+                                                                                             2000
+                                                                                             2001
+                                                                                             2002
+                                                                                             2003
+                                                                                             2004
+                                                                                             2005
+                                                                                             2006
+                                                                                             2007
+                                                                                             2008
+                                                                                             2009
+                                                                                             2010
+                                                                                             2011
+                                                                                             2012
+                                                                                             2013
+                                                                                             2014
+                                                                                             2015
+                                                                                             2016
+                                                                                             2017
+                                                                                             2018
+                                                                                             2019
+                                                                                             2020
+                                                                                             2021
+                                                                                                22
+of the one-step optimization and general functional form. Both
+
+
+
+
+                                                                                             19
+                                                                                                                             Year
+sets of benchmark models have been found to perform strongly
+empirically.                                                                   The figure shows the out-of-sample cumulative returns for different arbitrage port-
+   In summary, the three classes of models are                                 folios. We consider the Attention Factor model with different number of factors,
+                                                                               K, and the parametric Ornstein-Uhlenbeck model with thresholding trading policy
+    (1) Attention Factors: The factors and arbitrage trading policy            (OU) on the out-of-sample period from Jan 1998 to Dec 2021.
+        are learned in one-step with a trading objective including
+        transaction costs. We consider 1, 3, 5, 8, 10, 15, 30, and 100
+        latent factors.                                                   filter. All models are essentially uncorrelated with a market factor.
+    (2) PCA Factors: The latent factors are estimated with PCA            We conclude that our attention factors identify more profitable
+        using the past 252 trading days. The residual portfolios          arbitrage opportunities.
+        weights 𝜔 𝑝𝑜𝑟𝑡 are estimated with our LongConv model and
+        the Sharpe ratio objective with trading costs. Hence, we al-           Net Results. Second, our attention factors represent the best per-
+                                      port
+        low the same flexibility for 𝜔𝑡 −1 as in our attention model.      forming model after transaction costs. We compare the Sharpe
+        This is essentially a benchmark in the spirit of [19].             ratios and average returns after transaction costs. The strategy of
+    (3) PCA+OU Thresh: We use PCA factors to estimate residuals            the parametric model drops to negative net Sharpe ratios and mean
+        and use a parametric portfolio weight based on an Ornstein-        returns due to its excessive turnover. Similarly, a simple PCA factor
+        Uhlenbeck model with thresholding rule proposed in [1]. We         model cannot adjust the factor construction to trading frictions,
+        use the same implementation as in [19].                            resulting in a deterioration of the net performance to a Sharpe ratio
+                                                                           of around 1.5. In contrast, our Attention Factor model provides
+We report the out-of-sample annualized Sharpe ratio, average re-
+                                                                           unprecedented performance of 2.3 after trading costs. This is due
+turn, volatility and net results after subtracting transaction costs.
+                                                                           to the end-to-end optimization and including the transaction costs
+   Implementation. Adam [27] was used as our optimizer. We use             in the objective function. The model learns to identify arbitrage
+the last two years of the first training data to select tuning param-      strategy that is profitable after taking transaction costs into account.
+eters and find that our results are robust to the tuning parameter         This makes our model one of the best performing models in the
+selection. We follow the architectural choices of prior work, and          literature under realistic frictions.
+test our model for a wide range of parameter choices. Our opti-
+mal Attention Factor model has a hidden dimension of 𝑑𝑥 = 32.                Number of Factors. Third, we demonstrate the importance of
+The optimal LongConv sequence model has 1 layer with hidden               weak factors for arbitrage trading. Our attention arbitrage model
+dimension 32. The optimal weight on the variance is 𝜆Var = 100.           achieves a substantial performance for 8 attention factors. However,
+All sequence models use a look-back window of the past 30 daily           we observe an out-of-sample improvement for including 30 factors.
+residual returns.                                                         These higher order factors capture weak signals and local depen-
+                                                                          dency patterns. This is in line with [24], who show that weaker
+                                                                          factors that capture local dependency patterns are important for
+4.3      Results
+                                                                          trading. A model with 100 attention factors leads to further minor
+   Performance. Table 2 shows the main results for our attention          improvements. This means that our model does not overfit, but
+arbitrage model and the benchmarks for different number of factors.       discovers further weak signals, as increasing K expands the model’s
+First, our Attention Factor model achieves an excellent performance       capacity to optimize the trading objective without requiring factor
+as demonstrated by the annual Sharpe ratio of around 4 with 30            independence.
+attention factors. It substantially outperforms the parametric bench-
+mark, which can achieve a solid Sharpe ratio of 1.2. A two-step               Performance over Time. Figure 2 shows cumulative out-of-sample
+approach with PCA factors and the convolutional time-series fil-           returns for the different arbitrage strategies. Our attention factors
+ter achieves out-of-sample Sharpe ratios close to 2.8 with 30 PCA          exhibit a strong performance throughout the full sample - even
+factors, which illustrates the importance of a flexible time-series        during the later part of the sample where arbitrage trading is more
+ICAIF ’25, November 15–18, 2025, Singapore, Singapore                                                           Elliot L. Epstein, Rose Wang, Jaewon Choi, and Markus Pelger
+
+
+                                                        Table 2: Out-of-sample Annualized Performance
+
+                                 Model                            K        SR         𝜇        𝜎       𝑆𝑅net       𝜇 net     𝜎net     Beta
+                                                                  1       3.05     14.45      4.74      1.68      7.94       4.72      0.05
+                                                                  3       3.05     14.91      4.89      1.69      8.25       4.87      0.06
+                                                                  5       2.92     14.21      4.87      1.58      7.66       4.85      0.07
+                                 Attention Factors
+                                                                  8       3.35     15.70      4.68      1.94      9.05       4.66      0.07
+                                                                  15      3.81     16.66      4.37      2.25      9.78       4.35      0.06
+                                                                  30      3.97     16.66      4.20      2.28      9.52       4.18      0.05
+                                                                  100     4.52     16.45      3.64      2.19      7.93       3.62      0.05
+                                                                  1      0.40      1.85       4.57     -2.54     -11.62      4.57      0.02
+                                                                  3      1.26      4.18       3.33     -2.72      -9.04      3.33      0.01
+                                                                  5      0.99      2.91       2.93     -3.44     -10.11      2.93      0.00
+                                 Parametric Benchmark
+                                                                  8      0.78      2.04       2.61     -4.15     -10.83      2.61      0.00
+                                 PCA + OU Thresh
+                                                                  10     0.80      1.99       2.50     -4.32     -10.80      2.50      0.00
+                                                                  15     0.51      1.12       2.20     -5.24     -11.53      2.20      0.00
+                                                                  30     0.18      0.40       2.24     -6.45     -14.74      2.29     -0.00
+                                                                  100    -0.35     -0.66      1.87     -7.05     -13.23      1.88     -0.00
+                                                                  1       2.26     13.10      5.79      1.19      6.98       5.78      0.10
+                                                                  3       2.76     14.61      5.30      1.57      8.29       5.28      0.07
+                                                                  5       2.41     14.10      5.86      1.30      7.62       5.84      0.10
+                                 PCA Factors
+                                                                  8       2.64     14.88      5.63      1.50      8.42       5.61      0.09
+                                 (Two-Step Approach)
+                                                                  10      2.66     14.94      5.61      1.52      8.48       5.59      0.09
+                                                                  15      2.56     14.74      5.75      1.41      8.08       5.73      0.09
+                                                                  30      2.79     15.15      5.42      1.57      8.47       5.40      0.09
+                                                                  100     2.66     14.36      5.40      1.44      7.75       5.38      0.09
+                                 Market                           -       0.42      8.61     20.37      0.42      8.61      20.37      1.00
+                 The table shows the out-of-sample arbitrage trading performance using different models (Jan. 1998- Dec. 2021). We report the results for
+                 our Attention Factor model, and for a two-step approach where the residual obtained from PCA factors. The portfolio weight functions is
+                 estimated with LongConv from the residuals of each factor model. For each model, 𝐾 denotes the number of factors. Parametric benchmark
+                 OU+Thresh is the parametric Ornstein-Uhlenbeck model with thresholding trading policy based on [1] and implemented as in [19]. We use a
+                 lookback window of 30 days of residual returns, and PCA factors are estimated on rolling window of 252 days. 𝐾 denotes the number of
+                 factors. The Sharpe Ratio (SR), mean return (𝜇 in %), and standard deviation (𝜎 ) are annualized. "Net" metrics account for transaction and
+                 shorting costs. Beta denotes the market beta. The equally weighted market portfolio is provided for reference.
+
+
+challenging. The large-volatility period in early 2020 due to COVID-                          Factor Structure. Our attention factor structure has a clear eco-
+19 led to temporary deviations in market dynamics, reflecting a                            nomic interpretation. We focus on the attention 8-factor model,
+short-lived distribution shift relative to the preceding training win-                     which already achieves a substantial performance. Figure 3 rep-
+dows. While a shorter training horizon may have been able to adapt                         resents the similarity of firms captured by the loadings, that is,
+more rapidly to these changing conditions, we maintain a fixed                             firms with similar loadings are considered closer. We use t-SNE to
+8-year rolling window to ensure a consistent empirical design.                             represent closeness of firms in the loading space. Here we evaluate
+                                                                                           our model in a specific date, but similar results hold throughout
+                                                                                           our sample. Firms in similar industries are grouped together, that is,
+                                                                                           our model learns specific industries. For example, the upper right
+4.4     Interpretation                                                                     cluster represents banks and financial, the lower right petroleum
+   Drivers of Performance. Table 3 reports the effect on out-of-                           and energy companies, lower middle real estate companies, lower
+sample performance after removing a group of characteristics. Re-                          left utility companies, middle left hotels and middle-lower left tech-
+moving past return information in the attention factors substan-                           nology companies. Note, we do not provide industry classification,
+tially reduces the performance and the net Sharpe ratios drop to                           but this similarity is learned from price data and firm fundamentals.
+0.59. In contrast, removing any other characteristic group has a
+negligible effect. This indicates that price based patterns and not                           Factors Weights. The factor portfolio weights have a clear in-
+“classical” firm characteristics are driving arbitrage trading. The                        terpretation in terms of industry sectors. Figure 4 shows the top
+values are averaged across multiple starting seeds for the neural                          10 companies that are used to construct the first six factors on a
+network estimation, and the value in parentheses for the Sharpe                            representative date. In each case, the first top 10 companies account
+Ratio is the standard deviation across seeds. We conclude that the                         for a large portion of the total weight in the companies (between
+results are robust to the implementation.                                                  10%-23%). We see clear industry relationships. Factor 1 represents
+Attention Factors for Statistical Arbitrage                                                                                                         ICAIF ’25, November 15–18, 2025, Singapore, Singapore
+
+
+                                                       Table 3: Characteristic Importance for Model Performance
+
+                                                 Dropped Feature                       SR                𝜇           𝜎        𝑆𝑅net         𝜇 net       Beta
+                                                 baseline                       3.97 (0.13)             16.66       4.20       2.28         9.52        0.05
+                                                 (none excluded)
+                                                 past returns                    1.50 (0.07)             7.82       5.23       0.59        3.09         0.08
+                                                 investment                      3.88 (0.17)            17.93       4.63       2.19        10.06        0.06
+                                                 profitability                   3.94 (0.15)            18.39       4.67       2.26        10.48        0.05
+                                                 intangibles                     3.91 (0.15)            18.18       4.65       2.24        10.34        0.06
+                                                 value                           4.08 (0.12)            18.45       4.53       2.32        10.44        0.04
+                                                 trading frictions               2.90 (0.14)            13.36       4.61       1.34        6.14         0.06
+                  The table shows the out-of-sample model performance when dropping characteristic groups in the estimation and evaluation. The Sharpe
+                  Ratio (SR), mean return (𝜇 in %), and standard deviation (𝜎 ) are annualized. "Net" metrics account for transaction and shorting costs. Reported
+                  Sharpe Ratio, mean return, and return standard deviation are annualized. Net Sharpe Ratio is calculated after accounting for transaction costs
+                  and shorting costs. Beta is relative to the market. All values are averaged across multiple starting seeds for model estimation of the neural
+                  networks, and the value in parentheses for the Sharpe Ratio is the standard deviation across seeds. Each row drops a characteristic group to
+                  assess its feature group importance. The number of attention factors are 30. The out-of-sample evaluation is from Jan. 1998- Dec. 2021.
+
+
+                                                              Figure 3: Interpretation of Attention Factor Betas
+
+                 30
+
+                                                                                                                                                    Ameriprise Financial
+                                                                                                                                                        Intercontinentalexchange
+                 20                                                                                                                                   CME
+                                                                                                                                                                         Nasdaq
+                                                                                                                                        Broadridge Financial Solutns
+                                                                                                     Celanese Del
+                 10                                                                                                                                               Blackstone
+                                      American Water Works                                  Energy Transfer
+                                                                                                                                                                     Unitedhealth
+                                                                                                 First Solar                            Leidos Chipotle Mexican Grill Philip Morris International
+                  0                                                                       Natwest          Anheuser Busch Inbev Netflix                                    Johnson & Johnson
+                                                                  Ecopetrol                Banco Santander Brasil              Molsonors Beverage
+                                                                                                                                                                               Pfizer
+                                                                       Delta Air Lines              Cheniere Energy Partners MasimoT Mobile Marketaxess
+                                                                                                             Liberty Global
+                                                                        Las Vegas Sands                                                Visa      Alphabet                       Mizuho Financial
+                 10                                                                            United Airlines
+                                                             Shell Imperial Oil              H World                               Mastercard MSCI Alphabet
+                                                                                   Wheaton Precious Metals                                                   Microsoft
+                                                                                                                             Apple Expedia
+                                                                                                              IPG Photonics         Baidu           Fortinet
+                 20                                                                                                         Generac           Live Nation Entertainment
+                                                                                                                            Monolithic Pwr Sys         Tesla
+                                                                                                                                                    Mercadolibre
+                                                                               Digital Realty Trust
+                 30
+                                                                             Medical Properties Trust
+                                                  20                                  10                                 0                                   10
+
+                      Agriculture             Finance, Real Estate               Manufacturing                  Other                        Retail Trade               Transport, Comm., Utils
+                      Construction            Holding Companies                  Mining                         Public Admin.                Services                   Wholesale Trade
+
+                  The figure illustrates the attention factor loading composition by showing the t-SNE (t-distributed stochastic neighbor embedding) projection
+                  of estimated betas for the first 8 attention factors estimated on the 500 equities with the largest market cap on the first trading day of 2021. The
+                  training period is January 2013 - December 2020. The dots are colored based on industry classification. The Attention Factor model betas
+                  capture meaningful dependencies between firms. The clusters represent different industry sectors: the upper right cluster represents banks
+                  and financial firms, lower right petroleum and energy companies, lower middle real estate companies, lower left utility companies, middle left
+                  hotels and middle-lower left technology.
+
+
+technology, factor 2 natural resources, factor 3 the financial indus-                                         conditional latent attention factors to capture complex dependen-
+try, factor 4 holding companies, factor 5 consumer manufacturing                                              cies in firm characteristics and the one-step model estimation that
+and factor 6 captures energy companies.                                                                       maximizes portfolio performance after trading frictions. In exten-
+                                                                                                              sive empirical analysis, we demonstrate that our arbitrage model
+                                                                                                              sets the new standard in this literature with the best performance
+5     Conclusion                                                                                              under realistic trading frictions.
+This paper develops an Attention Factor model for statistical ar-
+bitrage. We provide a one-step estimation framework for latent                                                References
+factors to identify similar assets and an arbitrage portfolio alloca-                                         [1] Marco Avellaneda and Jeong-Hyun Lee. 2010. Statistical arbitrage in the US
+tion based on time-series patterns. The two key innovations are the                                               equities market. Quantitative Finance 10, 7 (2010), 761–782. https://doi.org/10.
+ICAIF ’25, November 15–18, 2025, Singapore, Singapore                                                                          Elliot L. Epstein, Rose Wang, Jaewon Choi, and Markus Pelger
+
+
+                                                       Figure 4: Attention Weights for Factor Portfolio Weights
+                                                  Factor 1 (10.0%)                                   Factor 2 (13.9%)                                       Factor 3 (18.0%)
+                                        Tesla                                  Royal Dutch Shell                                                 Keycorp
+                                          Kla                                     Conocophillips                                  Huntington Bancshares
+                           On Semiconductor                                     Totalenergies SE                                     Fifth Third Bancorp
+                          Nxp Semiconductors                                      Suncor Energy                                         Bank Of America
+                             Align Technology                                       Exxon Mobil                                               M&T Bank
+                                 Mercadolibre                         Canadian Natural Resources                                       Regions Financial
+                           Monolithic Pwr Sys                          Pioneer Natural Resources                                                Citigroup
+                                       Qorvo                                             Equinor                                             Wells Fargo
+                                    Lam Resh                                       Schlumberger                                          Truist Financial
+                                     Entegris                                               Bhp                                          US Bancorp Del
+                                                  Factor 4 (23.5%)                                   Factor 5 (11.6%)                                       Factor 6 (21.4%)
+                          Extra Space Storage                                             Unilever                                  Consolidated Edison
+                         Essex Property Trust                                             Novartis                               American Electric Power
+                                           Udr                                              Sanofi                                               Ameren
+                      Avalonbay Communities                                          Toyota Motor                                           Cms Energy
+                            Equity Residential                           British American Tobacco                                      Dominion Energy
+                                Public Storage                                     Glaxosmithkline                                         Duke Energy
+                       Camden Property Trust                                                Merck                                           Xcel Energy
+                        Healthpeak Properties                                    Procter & Gamble                                                 Evergy
+                 Mid America Apt Communities                                               Orange                                            Wec Energy
+                    Equity Lifestyle Properties                           Verizon Communications                                          Alliant Energy
+                                         Agriculture                 Holding Companies          Mining          Retail Trade          Transport, Comm., Utils
+                                         Finance, Real Estate        Manufacturing              Other           Services
+
+                  This figure shows attention weights for constructing the factor portfolio weights. We display the top 10 company weights for the first 6 factors
+                  (out of total 8) for the Attention Factor model. We also report the industry for each company, along with the percentage weight (out of the full
+                  500 assets) that the top 10 companies represent. The evaluation is on the first trading day of 2021 for the model trained from January 2013 to
+                  December 2020.
+
+
+     1080/14697680903124632                                                                               (2020), 2326–2377. https://doi.org/10.1093/rfs/hhz123
+ [2] Jushan Bai and Serena Ng. 2002. Determining the Number of Factors in Approxi-                   [15] Daniel Y. Fu, Elliot L. Epstein, Eric Nguyen, Armin W. Thomas, Michael Zhang,
+     mate Factor Models. Econometrica 70, 1 (2002), 191–221. https://doi.org/10.1111/                     Tri Dao, Atri Rudra, and Christopher Ré. 2023. Simple Hardware-Efficient Long
+     1468-0262.00273                                                                                      Convolutions for Sequence Modeling. In Proceedings of the 40th International
+ [3] Turan G. Bali, Amit Goyal, Dashan Huang, Fuwei Jiang, and Quan Wen. 2022.                            Conference on Machine Learning. https://doi.org/10.48550/arXiv.2302.06646
+     Predicting Corporate Bond Returns: Merton Meets Machine Learning. Working                       [16] Evan Gatev, William N. Goetzmann, and K. Geert Rouwenhorst. 2006. Pairs
+     paper (2022). https://doi.org/10.2139/ssrn.3686164                                                   Trading: Performance of a Relative-Value Arbitrage Rule. The Review of Financial
+ [4] D. Bianchi, M. Büchner, and A. Tamoni. 2021. Bond risk premia with machine                           Studies 19, 3 (02 2006), 797–827. https://doi.org/10.1093/rfs/hhj020
+     learning. Review of Financial Studies 34, 2 (2021), 1046–1089. https://doi.org/10.              [17] Albert Gu, Karan Goel, and Christopher Re. 2022. Efficiently Modeling Long
+     1093/rfs/hhaa062                                                                                     Sequences with Structured State Spaces. In International Conference on Learning
+ [5] Svetlana Bryzgalova, Markus Pelger, and Jason Zhu. 2023. Forest through the                          Representations. https://doi.org/10.48550/arXiv.2111.00396
+     Trees: Building Cross-Sections of Stock Returns. Journal of Finance, forthcoming                [18] Shihao Gu, Bryan T. Kelly, and Dacheng Xiu. 2020. Empirical Asset Pricing Via
+     (2023). https://dx.doi.org/10.2139/ssrn.3493458                                                      Machine Learning. Review of Financial Studies 33, 5 (2020), 2223–2273. https:
+ [6] Álvaro Cartea and Sebastian Jaimungal. 2016. Algorithmic trading of co-                              //doi.org/10.1093/rfs/hhaa009
+     integrated assets. International Journal of Theoretical and Applied Finance 19, 6               [19] Jorge Guijarro-Ordonez, Markus Pelger, and Greg Zanotti. 2025. Deep Learning
+     (2016), 165038. http://dx.doi.org/10.2139/ssrn.2637883                                               Statistical Arbitrage. Management Science (accepted) (2025). https://dx.doi.org/
+ [7] Luyang Chen, Markus Pelger, and Jason Zhu. 2024. Deep Learning in Asset                              10.2139/ssrn.3862004
+     Pricing. Management Science 70, 2 (2024), 714–750. https://dx.doi.org/10.2139/                  [20] Ron Kaniel, Zihan Lin, Markus Pelger, and Stijn Van Nieuwerburgh. 2023.
+     ssrn.3350138                                                                                         Machine-learning the skill of mutual fund managers. Journal of Financial Eco-
+ [8] Alexandre d’Aspremont. 2011. Identifying small mean-reverting portfolios. Quan-                      nomics 150, 1 (2023), 94–138. https://doi.org/10.1016/j.jfineco.2023.07.004
+     titative Finance 11, 3 (2011), 351–364. https://doi.org/10.1080/14697688.2010.                  [21] Bryan T. Kelly, Boris Kuznetsov, Semyon Malamud, and Teng Andrea Xu. 2025.
+     481634                                                                                               Artificial Intelligence Asset Pricing Models. NBER Working Paper 33351. National
+ [9] Victor DeMiguel, J. Gil-Bazo, F.J. Nogales, and A.A.P. Santos. 2023. Machine                         Bureau of Economic Research. http://www.nber.org/papers/w33351
+     Learning and Fund Characteristics Help to Select Mutual Funds with Positive                     [22] Bryan T. Kelly, Seth Pruitt, and Yinan Su. 2019. Characteristics are covariances:
+     Alpha. Journal of Financial Economics 150, 3 (2023), 1–22. https://doi.org/10.                       A unified model of risk and return. Journal of Financial Economics 134, 3 (2019),
+     1016/j.jfineco.2023.103737                                                                           501–524. https://doi.org/10.1016/j.jfineco.2019.05.001
+[10] Elliot L. Epstein, Apaar Sadhwani, and Kay Giesecke. 2025. A Set-Sequence Model                 [23] Serhiy Kozak, Stefan Nagel, and Shrihari Santosh. 2020. Shrinking the cross-
+     for Time Series. https://doi.org/10.48550/arXiv.2505.11243                                           section. Journal of Financial Economics 135, 2 (Feb. 2020), 271–292. https:
+[11] Eugene F. Fama and Kenneth R. French. 1993. Common risk factors in the                               //doi.org/10.1016/j.jfineco.2019.06.008
+     returns on stocks and bonds. Journal of Financial Economics 33, 1 (1993), 3–56.                 [24] Martin Lettau and Markus Pelger. 2020. Factors That Fit the Time Series and
+     https://doi.org/10.1016/0304-405X(93)90023-5                                                         Cross-Section of Stock Returns. The Review of Financial Studies 33, 5 (03 2020),
+[12] Eugene F. Fama and Kenneth R. French. 2015. A five-factor asset pricing model.                       2274–2325. https://doi.org/10.1093/rfs/hhaa020
+     Journal of Financial Economics 116, 1 (2015), 1–22. https://doi.org/10.1016/j.                  [25] Paul Sopher Lintilhac and Agnes Tourin. 2016. Model-based pairs trading in the
+     jfineco.2014.10.010                                                                                  bitcoin markets. Quantitative Finance 17, 5 (2016), 703–716. https://doi.org/10.
+[13] Jianqing Fan, Yuan Liao, and Martina Mincheva. 2013. Large covariance es-                            1080/14697688.2016.1231928
+     timation by thresholding principal orthogonal complements. Journal of the                       [26] Yong Liu, Tengge Hu, Haoran Zhang, Haixu Wu, Shiyu Wang, Lintao Ma, and
+     Royal Statistical Society: Series B (Statistical Methodology) 75, 4 (2013), 603–680.                 Mingsheng Long. 2024. iTransformer: Inverted Transformers Are Effective for
+     https://doi.org/10.1111/rssb.12016                                                                   Time Series Forecasting. https://doi.org/10.48550/arXiv.2310.06625
+[14] Joachim Freyberger, Andreas Neuhierl, and Michael Weber. 2020. Dissecting                       [27] Ilya Loshchilov and Frank Hutter. 2019. Decoupled weight decay regularization.
+     characteristics nonparametrically. Review of Financial Studies, forthcoming 33, 5                    In International Conference on Learning Representations (ICLR). https://doi.org/
+Attention Factors for Statistical Arbitrage                                                                        ICAIF ’25, November 15–18, 2025, Singapore, Singapore
+
+
+     10.48550/arXiv.1711.05101                                                            FFT convolution theorem:
+[28] Hao Ma. 2021. Conditional Latent Factor Models Via Econometrics-Based Neural
+                                                                                                                 K ∗ 𝑢 = F −1 F 𝑢 ⊙ F K ,
+                                                                                                                                       
+     Networks. Technical Report. Queen Mary University. https://dx.doi.org/10.2139/
+     ssrn.3946388
+[29] Supakorn Mudchanatongsuk, James A Primbs, and Wilfred Wong. 2008. Optimal            which reduces the complexity to O (𝑇 log𝑇 ). Here, F and F −1
+     pairs trading: A stochastic control approach. In 2008 American Control Conference.   denote the discrete Fourier transform and its inverse.
+     IEEE, 1035–1039. http://10.1109/ACC.2008.4586628
+[30] Markus Pelger. 2020. Understanding Systematic Risk: A High-Frequency Ap-               Kernel regularization. Following [15], we apply the element-wise
+     proach. The Journal of Finance 75, 4 (2020), 2179–2220. https://doi.org/10.1111/
+     jofi.12898
+                                                                                          Squash operator to K as a simple regularizer in the model forward
+[31] Markus Pelger and Ruoxuan Xiong. 2022. Interpretable Sparse Proximate Factors        pass:
+     for Large Dimensions. Journal of Business & Economic Statistics 40, 4 (2022),                      K̄ = sign(K) ⊙ max(|K | − 𝜆squash, 0),
+     1642–1664. https://doi.org/10.1080/07350015.2021.1961786
+[32] Markus Pelger and Ruoxuan Xiong. 2022. State-Varying Factor Models of Large
+                                                                                          with regularization strength 𝜆squash . This acts as a proximal step for
+     Dimensions. Journal of Business & Economic Statistics 40, 3 (2022), 1315–1333.       an ℓ1 penalty and regularizes the kernel by shrinking all weights
+     https://doi.org/10.1080/07350015.2021.1927744                                        and setting small weights to zero, making the kernel more sparse.
+[33] Hossein Rad, Rand Kwong Yew Low, and Robert Faff. 2016. The profitability of
+     pairs trading strategies: distance, cointegration and copula methods. Quantitative      Initialization . The kernel is initialized with a geometric decay
+     Finance 16, 10 (2016), 1541–1558. https://doi.org/10.1080/14697688.2016.1164337
+[34] David Salinas, Michael Bohlke-Schneider, Laurent Callot, Roberto Medico, and         across both the sequence and hidden dimensions following [15]:
+     Jan Gasthaus. 2019. High-dimensional multivariate forecasting with low-rank                                              ℎ
+                                                                                                                                 !
+     Gaussian Copula Processes. In Advances in Neural Information Processing Systems,                    (ℎ)           𝑡 𝑑 𝑑
+     Vol. 32. https://doi.org/10.48550/arXiv.1910.03002                                               K𝑡 = 𝑥 exp − ( ) ,                𝑥 ∼ N (0, 1),
+                                                                                                                      𝑇 2
+[35] Rajat Sen, Hsiang-Fu Yu, and Inderjit S Dhillon. 2019. Think Globally, Act
+     Locally: A Deep Neural Network Approach to High-Dimensional Time Series              for 1 ≤ 𝑡 ≤ 𝑇 and 1 ≤ ℎ ≤ 𝑑, which gives convolution filters that
+     Forecasting. In Advances in Neural Information Processing Systems, Vol. 32. https:
+     //doi.org/10.48550/arXiv.1905.03806                                                  act on both short and long time-scales.
+[36] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+     Aidan N Gomez, Lukasz Kaiser, and Illia Polosukhin. 2017. Attention is All
+     you Need. In Advances in Neural Information Processing Systems, Vol. 30. https:
+                                                                                          B    Training Details
+     //doi.org/10.48550/arXiv.1706.03762                                                    Model parameters. We use the last two years of the first training
+[37] G. Vidyamurthy. 2004. Pairs Trading: Quantitative Methods and Analysis. John
+     Wiley & Sons.
+                                                                                          window to select tuning parameters, and find that our results are
+[38] Joongyeub Yeo and George Papanicolaou. 2017. Risk control of mean-reversion          robust to the tuning parameter selection. The selected optimal
+     time in statistical arbitrage. Risk and Decision Analysis 6, 4 (2017), 263–290.      parameters are shown in Table 4.
+     http://dx.doi.org/10.2139/ssrn.2868525
+[39] Yunhao Zhang and Junchi Yan. 2023. Crossformer: Transformer Utilizing Cross-
+     Dimension Dependency for Multivariate Time Series Forecasting. In The Eleventh                         Table 4: Selected tuning parameters
+     International Conference on Learning Representations. https://openreview.net/
+     forum?id=vSVLM2j9eie                                                                  Parameter            Value       Description
+                                                                                           Hidden dim (𝑑)          32       Model hidden dimension
+A     Sequence Model Details                                                               Dropout                0.1       Model dropout
+We use LongConv [15] as the sequence model on the residual time                            𝑑𝑥                     32        Model attention dim
+series. Given input to the LongConv layer 𝑢 ∈ R𝑁 ×𝑑 ×𝑇 with 𝑁                              Epochs                  30       Number of passes over the data
+assets, hidden dimension 𝑑, and sequence length 𝑇 , a learnable long                       Nr layers               1        Number of layers for sequence model
+                                                                                           𝜆VAR                   100       Weight on variance term in loss
+convolution kernel K ∈ R𝑑 ×𝑇 and skip parameter 𝐷 ∈ R𝑑 , the                               LR                    0.003      Learning rate
+LongConv computes                                                                          Weight decay          0.05       Adam weight decay in LongConv model
+                               𝑦 = K ∗ 𝑢 + 𝐷 ⊙ 𝑢,                                          LongConv init      Geom Decay    Kernel initialization of the LongConv
+                                                                                                                            model
+where ∗ denotes a convolution along the temporal dimension, and                            𝜆squash               0.001      LongConv Squash operator strength
+⊙ denotes element-wise multiplication. The convolution is defined
+as                             ∑︁
+                 (K ∗ 𝑢) [𝑖] =    𝑢 [ 𝑗] K [𝑖 − 𝑗],                                          Computational Setup. All the results in the paper are obtained
+                                          𝑗                                               on a Linux cluster with 5 NVIDIA RTX A6000 GPUs, each with
+which has a direct computational complexity of O (𝑇 2 ) for a se-                         49140 MB memory, running on CUDA Version 12.5. The cluster
+quence of length 𝑇 . In practice, we compute it efficiently using the                     is equipped with two AMD EPYC 7763 64-Core Processors (128
+                                                                                          physical cores, 256 threads total) and 1 TB of RAM.
+

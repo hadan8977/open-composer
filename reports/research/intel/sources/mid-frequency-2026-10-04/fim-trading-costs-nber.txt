@@ -1,0 +1,2506 @@
+URL: https://conference.nber.org/conf_papers/f68262/f68262.pdf
+FETCHED_UTC: 2026-10-04T18:37Z
+HTTP: 200 application/pdf
+et=utf-8
+-----
+             Trading Costs of Asset Pricing Anomalies
+
+                   ANDREA FRAZZINI, RONEN ISRAEL, AND TOBIAS J. MOSKOWITZ 
+
+
+
+
+                                   Preliminary and incomplete version:
+
+                                       First draft: October 23, 2012
+                                       This draft: December 5, 2012
+
+
+
+
+                                                  Abstract
+
+Using nearly a trillion dollars of live trading data from a large institutional money manager across 19
+developed equity markets over the period 1998 to 2011, we measure the real-world transactions costs
+and price impact function facing an arbitrageur and apply them to size, value, momentum, and short-
+term reversal strategies. We find that actual trading costs are less than a tenth as large as, and
+therefore the potential scale of these strategies is more than an order of magnitude larger than,
+previous studies suggest. Furthermore, strategies designed to reduce transactions costs can increase
+net returns and capacity substantially, without incurring significant style drift. Results vary across
+styles, with value and momentum being more scalable than size, and short-term reversals being the
+most constrained by trading costs. We conclude that the main anomalies to standard asset pricing
+models are robust, implementable, and sizeable.
+
+
+
+
+
+ Andrea Frazzini is at AQR Capital Management, Two Greenwich Plaza, Greenwich, CT 06830, e-mail:
+andrea.frazzini@aqr.com. Ronen Israel is at AQR Capital Management, Two Greenwich Plaza, Greenwich, CT
+06830, e-mail: ronen.israel@aqr.com. Tobias Moskowitz is at the Booth School of Business, University of Chicago
+and NBER, email: tobias.moskowitz@chicagobooth.edu. We thank Cliff Asness, Eugene Fama, John Heaton, Bryan
+Kelly, John Liew, Gregor Matvos, Michael Mendelson, Lasse Pedersen, Amit Seru, Amir Sufi, Richard Thaler,
+Brian Weller, and seminar participants at the University of Chicago and Harvard Business School for helpful
+comments. We also thank Laura Serban for outstanding research assistance. Moskowitz thanks the Center for
+Research in Security Prices for financial support. Moskowitz has an ongoing consulting relationship with AQR
+Capital, which invests in, among other strategies, many of the aforementioned anomalies studied in this paper.
+     Empirical asset pricing studies largely focus on the expected gross returns of assets, without
+taking transaction costs into account. For investors, however, the net of transaction costs returns are
+the critical input for investment decisions. A large literature documents several strong predictors for
+the cross-section of average returns, which have been thrust into the efficient markets debate as
+challenges or anomalies to standard asset pricing models. However, an understanding of the net of
+transaction costs returns and capacity limits of strategies based on these predictors is crucial in
+determining whether they are robust, implementable, and sizeable or face significant arbitrage limits
+that prevent traders from profiting from them.
+     We explore the cross-section of net of trading cost returns using a unique dataset of live trading
+data, representing nearly one trillion dollars of live trades from a large institutional money manager
+from 1998 to 2011 across 19 developed equity markets. The data offer a singular look into the real-
+time trading costs of an investor who resembles the theoretical ―arbitrageur.‖                 Indeed, our
+institutional investor implemented strategies similar to those we examine here. Specifically, we
+evaluate the robustness of several prominent capital market anomalies—size, value, momentum, and
+short-term reversals, which dominate the cross-sectional return landscape1—to trading costs and
+assess their implied capacity limits.
+     The results help shed light on the market efficiency debate surrounding these return predictors.
+If some predictors do not survive real-world trading costs, or only survive at small dollar investments
+(low capacity), then limits to arbitrage may simply prevent them from being exploited and
+disappearing. On the other hand, if returns after trading costs are significantly positive at very large
+size, then strategies based on these predictors may be implementable and sizeable, either offering
+profit opportunities to be exploited by an arbitrageur or perhaps representing a risk factor in the
+economy that a significant fraction of the market is exposed to. We remain agnostic on risk versus
+non-risk based explanations for these predictors and simply estimate the implementation frictions and
+real-world costs of each strategy.
+     Our live trading data contains some unique features not previously studied in the literature. For
+example, our dataset contains both the actual trade as well as the intended trade of our manager. The
+intent of the trade provides us with a model-implied portfolio weight and theoretical price, where the
+difference between the executed trade and intended (theoretical) trade can be used to measure
+―implementation shortfall‖ in order to capture the opportunity cost of a trade in addition to its
+execution cost. The unique look into the opportunity cost of a trade allows us to explore the tradeoff
+
+1
+ See Fama and French (1996, 2008, and 2012), Asness, Moskowitz, and Pedersen (2012), and Ilmanen (2011) for a
+description of cross-sectional stock return predictors that appear most robust in the data.
+
+
+                              Trading Costs of Asset Pricing Anomalies – Page 2
+between price impact and the opportunity cost of not trading at various fund sizes. In addition, we
+can look separately at buy versus sell initiated trades, trades to speculate versus cover a position, and
+sell versus short-sell trades, all of which may face different costs, and hence can provide a more
+accurate measure of the trading costs of long-short portfolios common in the literature. Finally, in
+addition to estimating these costs for NYSE and NASDAQ stocks, our data also covers 18 other
+developed equity markets internationally, providing the first look at the trading costs of similar
+strategies deployed in many different markets simultaneously.
+    Armed with our trading cost measures from live trade data, we evaluate the robustness of size,
+value, momentum, and short-term reversal strategies to trading costs and compute their break-even
+sizes or capacities. Assessing standard long-short strategies commonly used in the literature we find
+that size, value, and momentum survive transactions costs at fairly substantial sizes, but that short-
+term reversals do not. Break-even fund sizes for the Fama and French long-short factors of size,
+value, and momentum are 103, 83, and 52 billion dollars among U.S. securities, respectively, and
+156, 190, and 89 billion dollars globally. Short-term reversal strategies, on the other hand, do not
+survive transactions costs at sizes greater than $9 billion in the U.S. or $13 billion globally.
+Moreover, a combination of value and momentum has even higher capacity ($100 billion U.S., $177
+billion globally) due to netting of trades across negatively correlated positions.
+    However, since the standard academic portfolios are not designed to address or consider
+transactions costs in any way, it may be misleading to conclude what the efficacy or capacity of these
+strategies might be without recognizing what a real-world trader might do to respond to transactions
+costs. We therefore construct portfolios that seek to minimize trading costs or maximize net of
+trading cost returns, subject to maintaining similar exposure to the style of the strategy. Using a
+static portfolio optimization, we minimize trading costs subject to a tracking error constraint that
+seeks to avoid style drift, using our estimated transaction cost model from the live trading data that
+measures both price impact and the opportunity cost of a trade. We analyze how much after-
+transaction costs returns can be improved across styles through portfolio optimization and assess the
+tradeoff between reducing trading costs and introducing tracking error across the equity style
+strategies. We find that value and momentum offer the most favorable tradeoffs, where after-cost net
+alphas can be improved significantly without incurring large tracking error or reductions in before-
+cost gross alphas. Size and especially short-term reversal strategies are more difficult to optimize
+since minimizing trading costs results in a steeper decline in gross alpha or increase in tracking error.
+At their maximums, within one percent tracking error, optimized versions of size, value, momentum,
+and short-term reversal strategies applied globally generate break-even sizes of 1,807, 811, 122 and
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 3
+17 billion dollars, respectively. These findings indicate that the main anomalies to standard asset
+pricing models, particularly size, value, and momentum, are robust, implementable, and sizeable.
+     We view our trading cost estimates as those facing a real arbitrageur engaged in similar
+strategies, and not those of the average investor.            However, the ability to generalize our cost
+estimates to other strategies studied in the academic literature or perhaps to other institutional money
+managers depends on how exogenous the trading costs are to the portfolios being traded by our
+manager. For instance, if the portfolios themselves are a function of trading costs, then the cost
+estimates we obtain would be most relevant to the specific portfolios run by the manager, but less
+relevant for portfolios not identical to the manager’s. We argue and show that the trading costs we
+estimate are indeed fairly independent from the portfolios being traded. First, we only examine the
+live trades of our manager’s longer-term strategies, where the portfolio formation process generating
+the desired trade is separate from the trading process executing it. This is because the set of intended
+trades is primarily created from longer-term models (such as value and momentum effects, which we
+study here) and from specific client mandates that often adhere to a benchmark subject to a tracking
+error constraint of a few percent. This separation of portfolio formation from the trading process is a
+feature of the longer-term trades we examine and would not apply, for instance, to high frequency
+trading strategies. Hence, we exclude all high frequency trading from our trade data. The manager
+then trades to the intended positions in the cheapest possible manner using a proprietary trading
+algorithm, but importantly, that algorithm does not make any buy or sell decisions. The algorithm
+merely determines how best to execute the desired trades. The average realized trade horizon for
+completion is less than one day and no more than three days, indicating relatively low tracking error
+to the intended trade.
+     To rule out any concerns over the endogeneity of portfolio weights to (expected) transactions
+costs, we also estimate our trading costs using only the first trade from new inflows from long-only
+mandates that specifically adhere to a benchmark. The initial trades to a benchmark from inflows
+only are exogenous to trading costs since there is no scope for deviation. We find that the trading
+costs from these exogenous, initial trades are identical to those from all other trades.2
+     Our unique approach has some advantages and disadvantages relative to other studies on trading
+costs. While explicit trading costs, such as commissions and bid/ask spreads, can be measured
+
+
+
+2
+ These costs, however, are not applicable to high frequency (intra-day) strategies where the trading process and the
+portfolio weights are determined simultaneously and endogenously. Again, these strategies are excluded from our
+sample.
+
+
+                                Trading Costs of Asset Pricing Anomalies – Page 4
+relatively easily and have been studied at length, 3 the full costs of trading are typically dominated by
+the cost of price impact (Kyle (1985), Easley and O’Hara (1987), Glosten and Harris (1988),
+Hasbrouck (1991a, 1991b), Huberman and Stanzl (2000), Breen, Hodrick, and Korajczyk (2002),
+Loeb (1983), Keim and Madhavan (1996, 1997), and Knez and Ready (1996)), where transaction
+costs are a function of the size of a trade and its ability to move the market price of an asset.
+Previous studies attempting to estimate transactions costs, particularly price impact costs, rely on
+theoretical models and typically use one of two types of data: daily spread and price information or
+intra-day transaction level data (containing time-stamped volume, transactions prices, and bid-ask
+spread information), which are often aggregated over time intervals ranging from five to 30 minutes.4
+However, both the daily and intra-daily data provide estimates of transactions costs for the average
+trader, which reflects the aggregated volume of a variety of traders with different intentions,
+objectives, and information. Our unique trade data reflects the trading costs of a single arbitrageur,
+which may be a better proxy for the marginal investor’s trading costs. While a few other studies
+have looked at proprietary trade data from a large institution or set of institutions (e.g., Keim (1995),
+Keim and Madhavan (1997), Engle, Ferstenberg, and Russell (2008)), the data used in these studies
+is much more limited in breadth and depth and covers only a few years of U.S. data. In addition, the
+data used in all of these studies only reflects executed trades and contains no information about the
+process generating the trades (at least we are not aware of any study that does). Our unique look at
+the intent of the trade provides a novel source of trading cost information across a variety of markets.
+     The drawback of our data is that we can only measure costs for one particular money manager,
+albeit a large manager who invests in many of the anomalies we investigate. In addition, our sample
+period is shorter than those that use daily or TAQ data, though it is much longer (and covers a
+broader cross-section of stocks and markets) than the few other papers that use proprietary trade data
+(e.g., Keim (1995), Keim and Madhavan (1997), and Engle, Ferstenberg, and Russell (2008)). We
+also use our trading data to estimate a price impact model using observable stock and market
+variables that we then project out of sample to estimate trading costs in earlier time periods.
+
+3
+  Schultz (1983) and Stoll and Whaley (1983) examine the effect of commissions and spreads on size portfolios.
+4
+  Examples of trading cost measures using daily price and spread data include Roll (1984), Huang and Stoll (1996),
+Chordia, Roll, and Subrahmanyam (2000), Amihud (2002), Acharya and Pedersen (2005), Pastor and Stambaugh
+(2003), Watanabe and Watanabe (2006), Fujimoto (2003), Korajczyk and Sadka (2008), Hasbrouck (2009), and
+Bekaert, Harvey, and Lundblad (2007). Examples using transaction level data from the trade and quote (TAQ) data
+from the NYSE, Rule 605 data (e.g., Goyenko, Holden, and Trzcinka (2009)), or proprietary broker data (e.g.,
+Engle, Ferstenberg, and Russell (2008)), include Goyenko (2006), Sadka (2006), Holden (2009) and for a
+comparison of daily versus intra-daily measures, see Lesmond, Ogden, and Trzcinka (1999), Lesmond (2005),
+Engle, Ferstenberg and Russell (2008), Lehmann (2003), Werner (2003), Hasbrouck (2009), and Goyenko, Holden,
+and Trzcinka (2009).
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 5
+    Our conclusions differ substantially from other papers that use trading cost estimates from daily
+or intra-daily data to study the effects of price impact on the profitability and size of investment
+strategies. Generally, these papers find a huge effect from transactions costs on the viability of these
+strategies. For instance, Knez and Ready (1996) find that trading costs swamp the profitability of
+lead-lag trading strategies between large and small firms. Mitchell and Pulvino (2001) estimate
+commissions and price-impact costs for a merger arbitrage portfolio and find that trading costs
+account for 300 basis points per year. Chen, Stanzl, and Watanabe (2002) estimate that only small
+maximal fund sizes are attainable before costs eliminate profits on size, book-to-market, and
+momentum strategies. Lesmond, Schill, and Zhou (2003) find that trading costs eliminate the profits
+to momentum strategies and Korajczyk and Sadka (2004) find that break-even fund sizes for long-
+only momentum portfolios are in the two to five billion dollar range. We find that our real-world
+estimates of transaction costs are much smaller—approximately one tenth as large—as those reported
+in the literature. As a result our estimates of the break-even capacity of size, value, and momentum
+strategies are more than an order of magnitude larger than those implied by previous studies.
+    Two key differences between our study and the previous literature are driving these results.
+First, previous studies compute trading costs for the average investor using aggregated daily or
+transaction-level data, which are about ten times higher than the costs we estimate for a large
+arbitrageur. Second, these studies examine portfolios that do not consider transactions costs in their
+design, which we show can significantly reduce trading costs. Both innovations result in trading cost
+estimates (break-even fund sizes) that are an order of magnitude smaller (larger) than previous
+studies suggest. We believe our estimates are much closer to the real-world transactions costs facing
+an arbitrageur, which has import for addressing market efficiency questions with respect to the asset
+pricing anomalies we study.
+    The paper proceeds as follows. Section I describes the trade data and equity style strategies we
+examine and discusses the manager’s portfolio formation and trading processes. Section II outlines
+our methodology for measuring transactions costs and examines realized trading costs across time,
+markets, and trade types, which we then use to estimate a price impact function based on observable
+trade, stock, and market characteristics. Section III presents the cross-section of net after-cost returns
+to the style strategies and computes their break-even capacities. Section IV constructs strategies
+using trading cost optimization that seek to maximize net after-cost returns subject to a tracking error
+or style constraint. Section V concludes.
+
+
+
+
+                              Trading Costs of Asset Pricing Anomalies – Page 6
+    I. Data and Methodology
+    We detail the equity style portfolios and trading data we examine, including a description of
+how our institutional manager generates desired trades and executes and manages trading.
+
+    A. Equity style portfolios
+    We examine long-short equity style portfolios commonly used in the literature pertaining to size,
+value, momentum, and short-term reversals, as well as combinations of these portfolios. We focus on
+these equity styles because research shows they capture much of the cross-sectional variation in
+returns (Fama and French [1996, 2008] and Asness, Moskowitz and Pedersen [2012]), and are also,
+not coincidentally, the focus of attention in the investment management industry.
+    We examine equity strategies in U.S. and developed international markets. We obtain stock
+returns and accounting data from the union of the CRSP tapes and the XpressFeed Global database.
+Our U.S. equity data include all available common stocks on the merged CRSP/Compustat data
+between July 1926 and December 2011. Our global equity data include all available common stocks
+on the XpressFeed Global database for 18 developed markets. The international data run from
+January 1983 to December 2011. We assign individual stocks to the corresponding market based on
+the location of the primary exchange. For international companies with securities traded in multiple
+markets, we use the primary trading vehicle identified by XpressFeed. Table A1 in the Appendix
+presents the summary statistics for the global data, including number of stocks and average market
+caps for stocks in each country.
+    Our portfolio construction closely follows Fama and French (1996 and 2012) and Asness and
+Frazzini (2012). Our global portfolios are country neutral in the sense that we form long-short
+portfolios within each country and then compute a global factor by weighting each country’s long-
+short portfolio by the country’s total (lagged) market capitalization. The market factor, MKT, is the
+value-weighted return on all available stocks minus the one-month U.S. Treasury bill rate. The size
+and value factors are constructed using six value-weighted portfolios formed on size and book-to-
+market. At the end of June of year t, stocks are assigned to two size-sorted portfolios based on their
+market capitalization. For the U.S., the size breakpoint is the median NYSE market equity. For the
+international sample the size breakpoint is the 80th percentile by country (to roughly match the U.S.
+size portfolios). Since some countries have a small cross section of stocks in the early years of our
+sample, we use conditional sorts that first sort on size, then on book-to-price, in order to ensure we
+have enough securities in each portfolio (the U.S. sorts are always independent). Portfolios are value-
+weighted and reconstructed every month using the most recent price following the methodology of
+
+
+                            Trading Costs of Asset Pricing Anomalies – Page 7
+Asness and Frazzini (2012), and rebalanced every calendar month to maintain value weights.5
+Following Fama and French (1992) we assume that accounting variables are known with a minimum
+six-month lag and align book value of the firm at the end of the firm’s fiscal year, ending anywhere
+in calendar year t-1 to June of calendar year t. In order to be included in any of our tests we require a
+firm to have a non-negative book value and non-missing price at fiscal yearend as well as in June of
+calendar year t.
+     The size factor, SMB (Small minus Big), is the average return on the three small portfolios
+minus the average return on the three big portfolios = 1/3 (Small Value + Small Neutral + Small
+Growth) - 1/3 (Big Value + Big Neutral + Big Growth). The value factor, HML (High minus Low),
+is the average return of the two value portfolios minus the average return of the two growth portfolios
+= HML = 1/2 (Small Value + Big Value) - 1/2 (Small Growth + Big Growth).
+     The momentum and short term reversal long-short portfolios are constructed in a similar
+manner, where we use six value-weighted portfolios formed on size and prior returns (the cumulative
+return in local currency from months t-12 to t-2 in the case of momentum or the return at t-1 for
+short-term reversals). The portfolios are the intersections of two portfolios formed on size and three
+portfolios formed on prior returns. The momentum factor UMD is constructed as UMD = 1/2 (Small
+High + Big High) - 1/2(Small Low + Big Low) and the short term reversal factor STR = 1/2 (Small
+Low + Big Low) - 1/2(Small High + Big High).
+     All portfolio returns are in $US and excess returns are relative to the one-month U.S. Treasury
+bill rate. We include delisting returns when available in CRSP. Finally, since some of our variables
+are computed from closing prices we skip one trading day between portfolio formation and
+investment, both when reconstituting the breakpoints and when rebalancing stocks in the portfolio.
+This serves two purposes. First, it ensures that our portfolios are implementable in that they use only
+information available at portfolio formation. Second, it avoids a mechanical negative autocorrelation
+in returns induced by bid-ask bounce, which would overstate returns to STR and HML and
+understate returns to UMD.
+     While the above portfolios are standard to the literature (see Fama and French (2012) and Ken
+French’s webpage), these portfolios are not designed in any way to deal with transactions costs. As
+
+5
+  To obtain shareholders’ equity we use Stockholders’ Equity (SEQ), but if not available, we use the sum of
+Common Equity (CEQ) and Preferred Stock (PSTK). If both SEQ and CEQ are unavailable, we will proxy
+shareholders’ equity by Total Assets (TA) minus the sum of Total Liabilities (LT) and Minority Interest (MIB). To
+obtain book equity, we subtract from shareholders’ equity the preferred stock value (PSTKRV, PSTKL, or PSTK
+depending on availability). Finally, to compute book value per share (B) we divide by common shares outstanding
+(CSHPRI). If CSHPRI is missing, we compute company-level total shares outstanding by summing issue-level
+shares (CSHOI) at fiscal yearend for securities with an earnings participation flag in the security pricing file.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 8
+such, they may not be proper benchmarks to evaluate the after-cost efficacy or capacity of an
+anomaly since break-even capacities may depend critically on the design of the portfolios, including
+simple steps taken to limit trading costs. Therefore, we also consider in Section IV a set of style
+portfolios specifically designed to optimize for trading costs and maximize after-cost returns and
+examine their trading costs and break-even sizes.
+
+    B. Trade execution data
+    Our trading costs data are drawn from the internal trade execution database maintained by our
+institutional manager, who manages global strategies ranging from benchmark-oriented long-only
+strategies (including mutual funds) to absolute return alternative strategies in a variety of asset
+classes. The database is compiled by the execution desk and covers all trades executed
+algorithmically (described below) in any of the firm’s funds since inception, excluding trades
+associated with high frequency (intra-day) models.
+    The data contains information about orders, execution prices, and quantities. We exclude all
+non-equity and emerging markets trades, restricting the sample to developed market equity
+transactions, which includes cash equities and equity swap transactions. For each individual order we
+collect the trade-order-set identifier, stock identifier, order size, trade horizon, order type, region and
+country, size and portfolio type, benchmark, ex-ante predicted beta (described below), model-implied
+price Ptheory, arrival price Pstart, execution time, execution price Pex and execution quantity Qex.
+    The trade-order-set has a unique identifier that allows the mapping of individual trades to
+corresponding portfolios. A trade-order-set is simply a basket of trades submitted together. Usually a
+trade-order-set contains trades from a single fund, but in some cases trades from multiple funds are
+bundled in the same set. In a given day, the same stock can appear in multiple order sets. Therefore,
+we use a trade-order-set stock pair as our cross sectional unit of observation for each date. Hereafter,
+we’ll use the term ―order‖ to indicate a trade-order-set stock pair submission date triplet.
+    The order size is the desired number of shares to trade when orders are submitted. This, of
+course, can be different from the sum of the actual execution quantities, such as when the trading
+algorithm does not fully execute orders. The trade horizon is the target trade duration (in days) at the
+time of order submission. Similar to the trade horizon, the actual total trade duration is endogenous
+and depends on realized fill rates and may be different from the target duration. The order type
+indicator identifies the transaction as ―buy-long‖, ―buy-to-cover‖, ―sell-long‖, and ―sell-short‖. The
+size and portfolio indicators classify each portfolio as ―large‖ or ―small‖ in terms of market
+capitalization (based on their relevant benchmark, such as Russell 1000 or 2000 in U.S. equities, for
+
+
+                              Trading Costs of Asset Pricing Anomalies – Page 9
+example) and ―long/short‖ or ―long-only‖ based on the portfolio’s mandate.6 The benchmark
+identifies the relevant benchmark, while the ex-ante predicted beta is a forecasted beta for each stock
+to the benchmark at the time of order submission, which is based on a regression using the past year
+of daily stock returns on the corresponding benchmark. The model price is defined as the stock price
+at portfolio formation. For portfolios constructed during market hours this is equal to the current
+price. For portfolios constructed off market hours this is the latest closing price. The arrival price is
+defined as the current price at the time the first order is submitted to the market, which is recorded by
+the trading algorithm when orders are submitted. The execution prices are time-stamped and
+incorporate commissions. Since the trading algorithms break orders into smaller pieces (and typically
+dynamically submit and cancel a range of limit orders), there are many executions per order.
+     The final dataset contains 5,310,387 distinct orders covering 9,128 stocks between August 1998
+and December 2011 and totaling $721,430,000,000 in trades.7 Panel A of Table I reports the amount
+traded (in $billions) for each year from 1998 to 2011 in the U.S. equity market, across the 18
+international markets, for large cap and small cap stocks separately, and for long-short and long-only
+portfolios separately. Not surprisingly, the amounts traded have grown substantially over time, with
+faster growth in the U.S. from $1.3 billion traded in 1998 to $95.5 billion in 2011. Equities traded in
+international markets have grown from $1.7 to $48.7 billion. Large cap (as defined by the Russell
+1000 or MSCI) comprises the bulk of trades, accounting for $699.6 billion out of the total $721.4
+billion traded over the sample period. Nevertheless, nearly $22 billion worth of trades were placed
+among small cap stocks. Finally, $536 billion, or roughly 75%, of trades occur for long-short
+strategies similar to those constructed in the literature.
+     Panel B of Table I reports time-series means, medians, standard deviations, minimums, and
+maximums of the number of stocks traded, number of countries traded, and number of exchanges
+traded on per year. A minimum of 389 stocks across eight countries on 11 exchanges are traded each
+year with a maximum of over 5,000 stocks in 19 markets across 33 exchanges. Panel C of Table I
+reports year-by-year time series averages in the style of Fama and MacBeth (1973) of the average
+trade size (in $thousands) and fraction of daily volume traded. The average (median) trade over time
+is $695,300 ($401,500), but there is substantial heterogeneity in the size of trades. The standard
+deviation of trade size is over $1 million and ranges from $52,600 to $5,939,100 over our sample
+
+
+6
+  We classify relaxed constraint portfolios, such as 130-30 or 140-40, as long-only. These represent only a small
+fraction of trades and excluding them or reclassifying them does not alter any of our results.
+7
+  Throughout our analysis we exclude netting trades (which are trades settled internally among accounts). Including
+netting trades does not affect any of our results.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 10
+period. As a fraction of daily volume, the average (median) trade represents 1.2% (0.5%) with a
+standard deviation of 2.1% of total daily volume that ranges from 0.1% to 13.1%. This variation
+allows us to measure the price impact function across a wide range of trade sizes.
+    Table A2 in the Appendix reports the fraction of firms covered and the fraction of total market
+cap covered by our trading database for all stocks on CRSP and Xpressfeed Global. Panel A of
+Table A2 reports the year-by-year coverage, which reaches as high as 60 percent of names and 97
+percent of market cap. Panel B reports the coverage by region and year. Finally, Panel C reports the
+fraction of the style strategies our data covers that were actually traded (fraction of absolute value of
+portfolio weights). For the U.S., the trade data covers about 65% of the portfolio weights of the
+factors we study. Internationally, we cover about 36%, with little variation across style portfolios.
+
+    C. Portfolio Formation and Trading Process
+    Understanding how portfolios and trades are created and executed is important for interpreting
+the trading costs measures we obtain from these data.           Trades are executed using proprietary,
+automated trading algorithms designed and built by the manager. Before describing how these
+algorithms are designed, we first briefly describe the portfolio generation process.
+    Importantly, we examine trades where the portfolio generation process is separate from the
+trading process.    Specifically, we only examine the live trades of our manager’s longer-term
+strategies, where the portfolio formation process generating the desired trade is separate from the
+trading process executing it. This is because the set of intended trades is primarily created from
+longer-term models (such as value and momentum effects, which we study here) and from specific
+client mandates that often adhere to a benchmark subject to a tracking error constraint of a few
+percent. This separation of portfolio formation from the trading process is a feature of the longer-
+term trades we examine and would not apply, for instance, to high frequency trading strategies.
+Hence, we exclude all high frequency trading from our trade data. For these non-high frequency
+trades, a set of desired trades is first obtained for a portfolio from a set of optimal holdings based on a
+particular style or model, often using historical data. While the models employed are often more
+complex, a lot of the portfolio generation process is based on style portfolios similar to those from
+the academic literature and those we investigate in this paper. Once a theoretical portfolio is
+determined, an optimization process generates portfolio weights subject to various constraints which
+can include risk constraints and other client mandated constraints (e.g., tracking error to a
+benchmark, shorting constraints, industry and position limits, etc.). Once an optimal portfolio is
+generated, it implies a set of trades that moves the current portfolio to the desired portfolio. These
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 11
+trades are then loaded into the algorithms which are responsible for implementing or executing the
+desired trades, where the algorithms do not make any explicit aggregate buy or sell decisions. Those
+decisions are made solely by the portfolio generation process. The trading algorithms, however,
+determine the trade horizon—how long it will take to buy or sell those positions. The average
+realized trade horizon for completion is less than one day and no more than three days, indicating
+relatively low tracking error to the intended trade.
+    The trading algorithms directly and anonymously access market liquidity through electronic
+exchanges and, in order to minimize market impact, are designed to provide rather than demand
+liquidity by using a system of limit orders (with prices generally set to buy at the bid or below and
+sell at the ask or above) that dynamically break up total orders (parent orders) into smaller orders
+(child orders), with the sizes of child orders and the time in which they are sent being randomized.
+Given these features of trading, the costs we estimate are not those facing the average investor in the
+market, but rather those of an arbitrageur engaged in these strategies and hence much closer to the
+marginal investor in such strategies. We assume other large arbitrageurs are (or could be) trading
+similarly to our manager. We are treating the trading costs as (mostly) exogenous to the portfolio
+weights and the set of securities being traded. There are several reasons to justify this assumption.
+First, as described above the portfolio determination process is separate from the trading process.
+Second, we throw out high frequency trades where this isn’t true. Third, many of the client mandates
+force the portfolio to trade to a benchmark with low tracking error, leaving little scope for deviation.
+Fourth, the trading algorithm controls trade execution, not stock selection, and since most trades are
+completed within a day to three days, the intended trades for the long-term strategies we study are
+met in short order with only small deviations in timing. Finally, to rule out any remaining concerns
+over the endogeneity of portfolio weights to transactions costs, we also estimate our trading costs
+using only the first trade from new inflows from long-only mandates that specifically adhere to a
+benchmark. The initial trades to a benchmark from inflows only are exogenous to trading costs since
+there is no scope for deviation. In the next section we show that the trading costs from these
+exogenous initial, trades are identical to those from all other trades.
+
+    II. Realized Trading Costs
+    We first describe our methodology for estimating trading costs. Then, using the live trading data
+we present summary statistics of trading costs over time, for different types of stocks, and across
+markets for various types of trades. Finally, we estimate an econometric model for the price impact
+function based on observable variables that we can then apply to various portfolios out of sample.
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 12
+    A. Measuring Transactions Costs: Price Impact and Implementation Shortfall
+    To measure transactions costs, we use an implementation shortfall (IS) methodology as defined
+in Perold (1988). Implementation shortfall measures the difference between a theoretical or
+benchmark price (e.g., a model price) and an actual traded price, scaled by the amount traded. We
+also define market impact (MI) in a similar way by looking at the difference between an arrival price
+(i.e., the price that exists when a trade begins in the market) and an actual traded price, scaled by the
+amount traded. The difference between these two measures represents pre-trade moves that might
+occur from the time a model, or theoretical, portfolio is generated and the time trading begins. The
+following equations illustrate the two costs:
+                                 IS  ret p ,theory  ret p ,actual
+                                                                                                          (1)
+                                      ret p ,theory  cost execution  cost opportunity
+where the opportunity cost is the difference in returns before trading costs between the theoretical
+and actual portfolio and the cost of execution is measured as
+                           cost execution  Qex ( Pex  Ptheory )  Qex ( Pex  Ptheory )              (2)
+
+with Qex and Qex representing the quantity of shares bought and sold, respectively. Equation (2)
+
+takes into account bid-ask spread, market impact, and commissions. Part of the cost of execution is
+market impact costs, which we measure as
+                               MI  Qex ( Pex  P start )  Qex (Pex  P start )                       (3)
+where the cost of execution is generally at least as great as the market impact cost.
+    Both IS and MI are effective measures of the costs of trading. Implementation shortfall measures
+the total amount of slippage a strategy might experience from its theoretical returns. For the
+strategies we examine, the theoretical or benchmark price is often defined as the closing price at the
+time the strategy’s desired holdings and trades are generated (e.g., prior day’s closing price). Market
+impact is similarly defined as the opening price on the day the strategy begins trading to the new
+desired holdings (e.g., current day’s opening price).                   Our unique data allow us to calculate
+implementation shortfall since we have the underlying theoretical model prices our institutional
+manager was attempting to trade to. This gives us a novel glimpse into the slippage between
+theoretical and actual portfolio construction and implementation costs. We can therefore measure the
+elusive opportunity cost of trading, which is absent from previous studies since data on the model
+generating the portfolios is typically unavailable to the researcher.
+
+
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 13
+    In expectation, IS and MI should be the same, since we assume that the pre-trade moves (or the
+difference between the two) are randomly distributed with expected mean of zero. In other words, we
+assume that the strategies are not forming opinions about the overnight moves in the stocks they
+desire to hold such that there would be an expected difference in the two measures, or in cases where
+trading begins almost immediately after portfolio formation, the model price and arrival price are
+effectively the same. Empirically, we will estimate IS and MI separately and examine the differences.
+    There are many ways to think about transactions costs and many different objectives when doing
+so. Our notion of trading costs computes the difference between the results of a theoretical portfolio
+which has zero transactions costs by definition and the results of a practical portfolio which attempts
+to track the theoretical portfolio but is subject to actual traded prices. Effectively, our cost estimates
+measure how much of the theoretical returns to a strategy can actually be achieved in practice.
+    There are other ways to measure transactions costs, such as to compare actual traded prices over
+the trading period to other possible traded prices that existed during the same period. For example,
+one could compare the actual trade price to the average trade weighted price achieved in the market,
+such as the volume weighted average price (VWAP) or the price that would have been achieved
+using market orders over the same period. For example, we could define market impact costs
+relative to the VWAP as,
+                         MI relative  Qex ( Pex  VWAP )  Qex (P ex  VWAP ).                     (4)
+
+However, these calculations tell us more about the effectiveness of a trade relative to other traders in
+the market at the same time, but they do not help us understand whether the theoretical returns of a
+strategy are achievable or what the breakeven capacity is to being profitable, which is the goal of this
+paper. For comparison, we show both market impact measures, recognizing that the relative market
+impact measure in equation (4) will generally be a lot lower than our estimates of trading costs from
+the theoretical portfolio in equation (3), where the latter is most relevant for thinking about capacity.
+
+    B. Estimated Trading Costs
+    Table II reports the mean, median, and value-weighted mean (weighted by dollar value of
+trades) of the market impact (MI) and implementation shortfall (IS) estimates we get from the live
+trading data, following equations (1)–(3).       Specifically, the cross-sectional mean, median, and
+weighted mean are computed each month and the time-series average of these monthly measures are
+reported, where each month is weighted by the number of stocks traded in that month. Standard
+errors of the monthly estimates are reported in the style of Fama and MacBeth (1973) in the bottom
+
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 14
+half of each panel. Panel A reports results for the full sample period from 1998 to 2011. The first
+column reports the summary statistics for all trades, where the mean market impact measure is 12.18
+basis points and the mean implementation shortfall measure is 13 basis points. The 0.82 basis point
+difference between the two represents the opportunity cost of trading or difference between the
+intended model and the actual portfolio at the time of trading. The median MI and IS costs are quite
+a bit lower at 7.98 and 10.34 basis points, respectively, suggesting that trading costs are positively
+skewed by a few much more expensive trades. For the median trade, the opportunity cost is much
+higher at 2.36 basis points. Weighting trades by their dollar value, the value-weighted means are
+quite a bit higher at 18.65 basis points for market impact and 20.20 basis points for implementation
+shortfall, which indicates that the largest trades are the most expensive trades, consistent with non-
+proportional trading cost models that argue that trading costs increase substantially with trade size.
+The standard errors for each of these estimates are small and typically close to one basis point, so the
+difference between the MI and IS measures are usually within two standard errors of zero.
+    Permanent vs. temporary price impact. In measuring the price impact of a trade, as defined
+in equation (3), it is interesting to assess how much of the impact is permanent versus temporary.
+The permanent component, while still a cost relative to the theoretical price, is driven by outside
+forces such as market demand, while the temporary component should reflect the trader’s demand for
+immediacy, which once alleviated should result in price reversion. Figure 1 plots the average price
+movement in the 24 hours following a trade for the average trade from our live trading data. We
+restrict the sample to U.S. stock trades with a trading horizon of 1 trading day and compute average
+price impact during trading and the average overnight and intraday return over the subsequent 24
+hours.8 For simplicity, we estimate the average price impact during the day and split it equally across
+time during trading hours, doing the same for overnight returns and for the next day’s returns.
+Hence, the plots in Figure 1 are linear. As Figure 1 shows, most (around 70%) of the initial price
+impact in our trade executions data appears to be permanent. Of the average 9 basis point market
+impact, only about 2.5 basis points are reversed over the next 24 hours. For our break even fund size
+calculations, we will use the entire price impact (permanent + temporary), but recognize that less
+than a third of this impact is temporary and represents immediacy.
+    By exchange. The next three columns of Panel A of Table II report the same statistics for
+NYSE-AMEX and NASDAQ traded stocks as well as for all stocks traded on international
+exchanges separately. Whether measured by market impact or implementation shortfall, the average
+
+8
+ We use U.S. trades only since coverage of open prices on XpressFeed global tends to be sparse. We use CRSP
+open prices to decompose daily returns into overnight and trading-day return.
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 15
+costs of trading on the NYSE appear smaller than on NASDAQ or in international markets, which
+makes sense since the NYSE contains larger and more liquid firms. However, the median traded
+costs are more similar across exchanges.             Looking at the differences between the IS and MI
+measures, the implied opportunity cost of trading appears to be similar across the exchanges. 9
+     By size. The fifth and sixth columns of Panel A of Table II report results for large and small cap
+stocks separately. Clearly, large cap stocks face lower trading costs than small cap stocks. The
+average large cap stock trade generates 11.21 basis points of market impact costs compared to 21.27
+basis points for small cap stocks. For the median and average dollar-weighted trade, the difference in
+trading costs between small and large cap stocks is similar. The opportunity cost or difference
+between IS and MI is similar among large and small cap stocks.
+     By portfolio type. The last two columns of Panel A of Table II report trading costs for trades
+made within the context of long-short portfolios and long-only portfolios separately. The trading
+costs for long only portfolios are larger than those made in long-short portfolios. The average long-
+only trade faces nearly 16 basis points of market impact costs compared to only 10 basis points for
+the average long-short trade. However, on a value-weighted basis, long-short portfolios face about
+the same or slightly larger costs, since long-short portfolios trade more extreme positions.
+     Robustness. Panel B of Table II repeats the estimates over the more recent sample period from
+2003 to 2011. As shown in Table I, trading activity increased substantially starting in 2003, which
+also coincides (but not coincidentally) with the adoption of an electronic trading algorithm. Since the
+time-series averages we report in Table II weight each month by the number of stocks traded, which
+overweights the more recent periods, the results from 2003 to 2011 look very similar to those from
+the full sample from 1998 to 2011. Figure 2 summarizes the results from Table II for the price
+impact measure.10
+     Alternative cost measure. For comparison, Table A4 in the Appendix reports market impact
+costs relative to VWAP following equation (4), for our sample of U.S. trades. As Table A4 indicates,
+the trading costs when measured versus the VWAP are much lower than those in Table II that
+measured costs relative to the theoretical price. Instead of the 9.4 basis point average price impact in
+
+9
+   Figure A1 in the Appendix plots the mean and median market impact costs separately for each of the 19 equity
+markets we examine: Australia, Austria, Belgium, Canada, Switzerland, Germany, Denmark, Spain, Finland,
+France, U.K., Hong Kong, Italy, Japan, Netherlands, Norway, Singapore, Sweden, and the U.S. Singapore, Hong
+Kong, and Japan have some of the highest price impact costs, along with Australia. The U.S. and most of the
+European countries have the lowest price impact costs.
+10
+    Table A3 in the Appendix reports pooled means of the trading cost measures, rather than Fama and MacBeth
+averages, over the full sample period and the post-2003 sample period. The point estimates of trading costs are very
+similar.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 16
+Table II, the average price impact measured relative to the VWAP is only 3.7 basis points. The latter
+measure indicates that our manager paid 3.7 basis points on average relative to the VWAP or average
+traded priced during the same trading day. The former measure indicates, however, that our manager
+paid 9.4 basis points more relative to the theoretical prices it was trying to trade to.         These
+differences are also roughly consistent with the permanent versus temporary decomposition of
+trading costs from Figure 1, where the demand for immediacy should show up as both a cost relative
+to the average price paid by traders as well as be reversed the following trading day.
+    We believe the theoretical price impact numbers are the most relevant for answering the
+question we pose in this paper, which is what are the implementation costs and break even sizes of
+strategies designed to exploit the asset pricing anomalies we investigate in this paper.            Our
+conclusions using the theoretical price impact numbers will therefore be conservative relative to
+those using alternative price impact measures from average traded prices like the VWAP.
+
+    C. Exogenous Trades from Inflows
+    We argued above that the trading costs we estimate are (mostly) exogenous to the portfolio
+weights and set of securities being traded. To rule out any remaining concerns over the endogeneity
+of portfolio weights to transactions costs, we re-estimate our trading costs using only the first trade
+from new inflows coming from long-only mandates that specifically adhere to a benchmark.
+Specifically, we restrict the set of trades to new inflows coming from long-only mandates (that
+typically specify a benchmark and a tracking error constraint of no more than a few percent) and only
+examine the initial trade from each. These trades provide little scope for deviation or optimization
+and hence offer an exogenous estimate of trading costs.
+    Table III reports the mean, median, and value-weighted mean market impact measures for long-
+only trades coming from inflows only and for all other trades for comparison. The estimates are very
+similar and show no systematic differences in market impact across the two types of trades. The last
+column performs a formal statistical test on the differences and cannot reject that the two measures
+are identical. Cutting the trades by small and large cap stocks yields the same conclusions. Figure 3
+summarizes the results, showing no difference in market impact costs from the exogenous initial
+inflow trades relative to all other trades in our sample. This indicates that our trading cost estimates
+are fairly independent and exogenous to the portfolios being traded, and hence can be applied more
+broadly to other portfolios or settings, including the portfolios from the academic literature we
+examine in the next section.
+
+
+
+
+                            Trading Costs of Asset Pricing Anomalies – Page 17
+     D. Price Impact by Time and Trade Type
+     Since the estimates for market impact and implementation shortfall are so similar, for brevity we
+focus on market impact costs in Table IV, which reports trading cost estimates over time and by trade
+type. Panel A of Table IV reports market impact by year. Trading costs are quite a bit larger in the
+early time period prior to 2003, and then decline through the sample period, primarily due to market
+conditions (such as electronic trading, more venues, increased volumes, etc.). The time variation in
+average costs is also interesting. Costs appear to decline through time but jump up before and during
+the financial crisis in 2007 and 2008. The patterns in international markets mirror those of the U.S.
+     Panel B of Table IV reports trading costs for different types of trades: buy long, buy to cover,
+sell long, and sell short. The first two columns report the percentage of trades, in both dollar terms
+and numbers, of each trade type. Buying long and selling long account for two-thirds of all trades,
+with the remaining one third split evenly between short selling and covered buys. Over the full
+sample, buying long generates about 12.2 basis points of price impact, but buying to cover has 19.5
+basis points of price impact, and the 7.3 basis point difference between them is statistically
+significant (as the bottom of Panel B of Table IV shows). The fact that buying to cover is more
+expensive than buying long makes sense since covering is potentially a more liquidity-demanding
+trade.   Comparing selling long versus short selling, we see that short selling is slightly more
+expensive by 3.7 basis points on average, but the difference is not statistically significant.11
+Although a large literature discusses the additional costs associated with short-selling, conditional on
+actually shorting, we see no marked difference in trading costs between selling a long position versus
+selling short. If short selling is indeed costlier, it is likely to be from opportunity cost (i.e., not being
+able to short). The execution costs of short selling versus selling long appear no different, even with
+uptick rules and other barriers to shorting. Results for international exchanges are similar: buying to
+cover is more expensive than buying long, but short selling versus selling long faces roughly the
+same price impact. (In fact, in the U.S. selling short is actually 2.67 basis points cheaper than selling
+long on average, though this difference is not statistically significant.)
+
+     E. Trading Cost Model: What Determines Trading Costs?
+     To better understand what affects trading costs, we investigate what observable market, stock,
+and trade characteristics are related to realized trading costs. Through this exercise, we seek to better
+
+11
+  Shorting costs and shorting revenues from lending fees are not included in these costs, which just capture price
+impact. The majority (around 99%) of short positions are in stocks that are not hard to borrow and hence the general
+collateral rate applies, which is small.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 18
+understand what determines price impact costs, but also build a model based on observable
+characteristics that we apply out of sample in other time periods and for other trading strategies.
+    When it comes to modeling transactions costs, there are a number of different types of models.
+Proportional trading costs models, where the cost of trading does not vary with the size of the
+portfolio traded, do not match theory or data (or practice for that matter). Nonproportional trading
+costs models, where the cost of trading does vary with the size of the portfolio traded, are more
+realistic, but the shape of the price impact function is an important ingredient. Often these are
+modeled as concave or linear functions (Hasbrouck (1991), Hausman, Lo, and MacKinlay (1992),
+and Keim and Madhavan (1996)), which don’t appear to match actual trade data, where the
+functional form appears to be convex—the price impact of large trades increases considerably.
+    Figure 4 plots the average and median price impact measures from the live trading data as a
+function of trade size, measured by fraction of daily trading volume traded. The plot shows the
+convex relation between market impact and trade size. Fitting a curve to our sample of trade data
+(superimposed on the graph) statistically supports a convex function of price impact. Hence, for our
+econometric model of transactions costs we estimate a convex function.
+    Table V presents our econometric model for trading costs. The explanatory variables used in the
+model are characterized into three groups. The first set of variables captures how trading costs vary
+with the size of a trade. These variables include the fraction of daily trading volume traded, which is
+the dollar size of the trade divided by that stock’s average daily trading volume over the past year,
+and the square root of the fraction of daily volume traded to capture the convexity we see in the data
+(Figure 4). The second group of variables include firm characteristics that may be related to the cost
+of trading, such as the size of the firm, which is the log of 1 plus the market value of equity
+[log(1+ME)] and the idiosyncratic volatility of firm’s equity return, which is the standard deviation
+of the residuals from a regression of one-year daily stock returns of the firm on the corresponding
+value-weighted market index for that country (expressed as an annualized percentage). Finally, we
+include a set of market variables to capture variation in trading costs over time that result from
+different market conditions. We include the ―VIX‖ to capture market volatility, which is the monthly
+variance of the CRSP-value weighted index computed using daily returns (expressed as an
+annualized percentage), and also include the variable ―Beta*IndexRet*buysell‖, which is the beta of
+the stock times the index return for that market times a variable ―buysell‖ equal to 1 for buys and -1
+for sells. ―Beta‖ is the stock’s predicted beta at time of order submission and ―IndexRet‖ is the
+market index return over the life of the trade. This variable is used to account for contemporaneous
+(beta-adjusted) market returns over the trade period and to sign the trades correctly, since our data
+
+
+                            Trading Costs of Asset Pricing Anomalies – Page 19
+contains both buys and sells. This variable is only used to parameterize our model when looking at
+historical transactions. It plays no role in estimating future transactions costs or when applying the
+model out of sample, since we assume that daily market returns are unforecastable (i.e., E[IndexRet]
+= 0). Thus, when estimating transaction costs out of sample, we simply drop this term while holding
+the other parameters fixed.
+     The model is estimated separately for the full sample, U.S. trades only, and international trades
+only, using pooled regressions with country fixed effects. The dependent variable is the realized
+market impact from the live trading data, in basis points. Table V shows the results from the model
+regressions. The economic intuition is fairly clear. Larger trades lead to higher transaction costs.
+Smaller and more volatile firms have higher transaction costs. An increase in market volatility is
+associated with higher transactions costs, which is consistent with the notion that market makers need
+to be compensated more in more volatile markets.                   These variables are generally statistically
+significant, with only one variable (idiosyncratic volatility) not being significant at the 5% level for
+the full sample. The R-squares of the regressions are about 7%, which is reasonably large for these
+types of models given the noisiness of trade data. The variable with the largest impact on trading
+costs is the square root of the fraction of daily volume, consistent with theory and data that costs of
+trading increase significantly and non-linearly as trades become larger. The coefficient estimates are
+also very similar across markets, with U.S. and international data giving similar parameterizations.12
+
+     III.         The Cross-Section of After-Trading Cost Returns
+     Using the parameters from Table V, we estimate the price impact function for the standard
+portfolios used in the literature to capture the anomalies related to size, value, momentum, and short-
+term reversals. We first apply the models in sample over the same time period with which the
+trading costs are measured (from 1998 to 2011).                 We then extend our model using the same
+parameters to estimate price impact costs out of sample for earlier time periods going back to 1926
+for U.S. data and to 1983 for international data. Using these estimates, we compute the net after-
+trading-cost returns of the strategies and their break-even capacities.
+
+
+
+12
+  Our price impact function is, of course, limited by the range of trading size our data provides. Hence, we cannot
+say what price impact might look like beyond these sizes. However, the range of trading volumes (as shown in
+Figure 3) used in our transactions cost model are mostly less than 5% of a stock’s daily volume (the max is 13%).
+This is a reasonable range of trading volumes for the types of strategies we investigate in this paper and for the type
+of trader, a large arbitrageur, we wish to model. Trades done at sizes well beyond these levels tend to reflect
+idiosyncratic trades, perhaps around an event, and are often informational trades.
+
+
+
+                                Trading Costs of Asset Pricing Anomalies – Page 20
+    A. In Sample Net Returns
+     We start by computing the trading costs and net returns to our portfolio strategies in sample over
+the 1998 to 2011 period. We examine the strategies SMB, HML, UMD, STR, an equal-weighted
+combination of HML and UMD we call ValMom, and an equal-weighted combination (Combo) of
+all four strategies. We examine ValMom based on the benefits of combining value with momentum
+shown in Asness, Moskowitz, and Pedersen (2012), Asness and Frazzini (2012), and Daniel and
+Moskowitz (2012) and examine the combination of all four strategies to see what costs, net returns,
+and capacity look like for a diversified portfolio of all four strategies.
+     By examining these strategies over the same period that we have live trading data, we are able to
+compute actual realized trading costs of these theoretical portfolios. Moreover, since our trading
+costs are shown to be exogenous to the portfolios, the results should provide a reasonably accurate
+assessment of what the live trading costs of these strategies would have been historically.
+Specifically, we restrict the universe of stocks that appear in our trade execution database at portfolio
+formation, and build long/short portfolios to match those in the literature based on that universe. This
+ensures that we have trading cost estimates for each stock in the portfolio. Since the manager was
+trading similar types of strategies during this time, many of the stocks in these portfolios are covered
+by the execution data. Our data on average covers 75% (58%) of the market cap of U.S.
+(International) stocks, and a large fraction of the portfolio weights of the strategies we aim to mimic
+from the literature (see Table A2 in the Appendix).
+     For each stock we estimate its market impact at each rebalance using the realized market impact
+of all trades executed in that stock in the prior six months. For example, if the UMD portfolio
+required buying Microsoft on June 30, 2003, we assume that the market impact of that purchase is
+equal to the average market impact of Microsoft trades between January 1, 2003, and June 30, 2003.
+We use six month windows of trading activity to maximize stock coverage and to reduce noise. This
+exercise assumes that the trade size is equal to the average trade size of our manager over the past six
+months. In essence, we replicate SMB, HML, UMD, and STR using only those stocks that were
+traded by the manager in the most recent six months at the actual sizes the manager traded and use
+the actual prices and actual trading costs borne for those trades.
+     This calculation produces actual trading costs on a stock-by-stock basis, but assumes that trading
+costs are the same no matter what portfolios the trades belong to. Given the independence between
+portfolios and trading costs we showed earlier, this assumption seems valid. On the other hand, if
+market makers knew the reason behind each trade and adjusted prices depending on the type of
+
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 21
+portfolio being traded (e.g., SMB versus UMD), then this assumption would be violated. However,
+given the anonymity of trading through the trading algorithm and the virtual impossibility of
+knowing which portfolio each trade belongs to, it seems quite reasonable to assume that these costs
+would remain essentially the same.
+     U.S. equity 1998 – 2011. Panel A of Table VII reports results for U.S. equity style strategies
+over the sample of live trading data. The first row reports the average dollar volume of trades used to
+estimate trading costs at each rebalance. For example, when rebalancing SMB, our trading cost
+estimate for that month is based on an average of 7.6 billion dollars of trades. The second row reports
+the ―implied fund size‖ from these trades. For example, given turnover (which we report near the
+bottom of the table as the sum of long and short trades per dollar) of SMB is 50% per month, our
+estimates are based on a fund size of 7.6/0.5 = 15.2 billion dollars. In other words, we are carving out
+a 15.2 billion dollar SMB portfolio from our live trading data that would generate the same dollar
+volume of trades in SMB stocks as our manager. The next row reports the realized trading cost of the
+SMB strategy at this size, which is 1.46 percent per year. The corresponding average market impact
+cost is 24.2 basis points per dollar traded.13
+     Looking across the columns at the other strategies, HML has a slightly higher realized cost of
+1.54 percent per year because it has higher turnover of 68%, though it has lower average market
+impact costs of 19 basis points. UMD has an annual drag of 3.51 percent per year from trading costs,
+due to its 127% turnover and an average market impact cost of 23 basis points. STR has the largest
+trading costs of 6.75 percent per year, due to its 305% turnover per month with a market impact cost
+of 18.4 basis points per trade. A ValMom combination has a realized cost of 2.18 percent per year
+with turnover of only 79% since value and momentum trades tend to offset each other, resulting in
+lower turnover which has real transactions costs benefits. Finally, a combination of all four strategies
+experiences a 2.39 percent per year trading cost from 102% turnover with an average price impact of
+19.4 basis points.
+     To compare the realized trading costs to the profitability of these strategies, the third row of
+Panel A of Table VI reports the break-even cost of each strategy, which we estimate for each strategy
+using historical data over the largest sample of returns available. For example, for SMB we compute
+the average return in U.S. data from July 1926 to December 2011, which is 2.61 percent. We use the
+longest sample of returns available because estimating mean returns is notoriously difficult and the
+
+13
+  Total trading costs depend on turnover and market impact of each stock. We define the average market impact as
+the constant market impact (̅̅̅̅ ) that would generate the same level of total trading costs:             ̅̅̅̅
+           .
+
+
+                              Trading Costs of Asset Pricing Anomalies – Page 22
+short sample from 1998 to 2011 may provide a distorted view of what the true expected return is on
+these strategies. For instance, we report the actual gross average return over the 1998 to 2011 sample
+period for SMB to be 8.58 percent, which is four times larger than its historical average of 2.61,
+which seems like a much more reasonable estimate of SMB’s expected return. Given the 1.46
+percent trading cost, this implies that a $15.2 billion SMB portfolio would deliver in expectation 1.16
+percent per year net of trading costs. This difference between the expected return and expected
+trading cost, which is the net expected return, is highly statistically significant with a t-statistic of
+5.20. (We also report the gross and net Sharpe ratios.) This indicates that SMB still remains
+profitable in expectation after trading costs at a size of $15 billion.
+     The next row calculates the break-even size of SMB given an expected gross return of 2.61
+percent per year and the implied price impact function we estimate from live trade data. We find that
+the break-even size for SMB would be $103 billion.
+     We conduct the same exercise for the other long-short equity strategies. For HML, using a
+historical average return from 1926 to 2011 of 3.88 percent per year, the net return to HML trading
+on average $4.74 billion is 2.34 percent per year (t-statistic of 10.20), and its break-even fund size is
+almost $83 billion. For UMD, the net expected return at its implied fund size of $3.7 billion is 4.34
+percent per year (t-statistic of 8.42) and its break-even fund size is $52 billion. For short-term
+reversals, STR, the expected net returns are only 1.52 percent per year with a marginally significant
+2.14 t-statistic, as trading costs significantly eat into the return of this strategy at an implied fund size
+of $1.5 billion. As such, STR’s break-even size is only $9.5 billion. The ValMom combination
+generates a 4.05 percent net expected return (t-statistic of 13.11) at a fund size of $8.25 billion and its
+break-even size is $98 billion, which is larger than both value and momentum independently. Thus,
+significant gains in trading costs are obtained from combining value with momentum because of
+offsetting trades. This is another positive feature of combining value and momentum (Asness,
+Moskowitz, and Pedersen (2012) and Israel and Moskowitz (2012)). Finally, the combination of all
+four strategies produces a net expected return of 3 percent per year (t-statistic of 11.37) for an
+average trading size of $7.8 billion, and an implied break-even fund size of $51 billion.
+     The remaining rows of the table report the in-sample gross and net returns and Sharpe ratios of
+the portfolios over the 1998 to 2011 trading sample period.               Over this sample period SMB
+experiences a very positive realization relative to history, while HML, UMD, and STR experience
+relatively poor performance by historical standards. This is why using the historical long-term
+estimates of average returns is a better measure of the strategy’s expected returns going forward.
+Nevertheless, the combination of all four strategies net of transactions costs would have produced
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 23
+2.42 percent per year over this sample period, which is similar to the 3 percent net expected return
+we calculated using the longer historical mean estimates.
+    Comparison with the Literature. Before turning to the international evidence and the out of
+sample results, it is important to reconcile our results with those in the literature that estimate much
+higher transactions costs and far lower break-even sizes for similar strategies in U.S. stocks. For
+instance, Chen, Stanzl, and Watanabe (2002) estimate very small maximal fund sizes before costs
+eliminate profits on size, book-to-market, and momentum strategies. Lesmond, Schill, and Zhou
+(2003) find that trading costs eliminate the profits to momentum strategies at small fund sizes and
+Korajczyk and Sadka (2004) find that break-even fund sizes for long-only momentum portfolios are
+about $2 to $5 billion. Our estimates of trading costs are many times smaller than these studies and,
+consequently, our estimated break-even sizes are many times larger. For example, instead of the $2
+to $5 billion Korajczyk and Sadka (2004) estimate for momentum, we find a break-even fund size for
+momentum of over $50 billion.
+    Why do our results look so different than previous studies? First, previous studies compute
+trading costs using aggregated daily or TAQ data and using simple microstructure models. The
+models employed are typically too conservative and overestimate price impact costs. Moreover, use
+of the TAQ data, which approximates the average trade, includes informed traders, retail traders,
+liquidity demanders, and those traders facing high price impact costs.            The costs facing such
+investors are an order of magnitude higher than those facing a large institution engaged in exploiting
+these strategies. As a result, the estimates from these papers may represent the average trading costs
+and break-even sizes for the average investor seeking a size, value, or momentum trade, but these
+costs are conservative for a large arbitrageur.
+    For a more direct comparison, we use the trading cost estimates from Korajczyk and Sadka
+(2004) using TAQ data to back out the implied break-even size of the long-only momentum portfolio
+they examine, which is the top 10% of momentum winners. Using their methodology and data, we
+indeed get a similar break-even fund size of around $2 billion. Applying our trading cost model
+estimated from our live trading data to the exact same portfolio, we get a break-even fund size of
+$33.5 billion; an almost 17-fold increase.
+    For another comparison, we repeat the same exercise for the Russell 1000 and 2000, where we
+estimate the alphas of each with respect to the market to be about 36 basis points and 2.5% per year,
+respectively. The break-even fund sizes according to the Korajczyk and Sadka (2004) trading cost
+estimates are $785 billion for the Russell 1000 and $127 billion for the Russell 2000. Under our
+trading cost estimates, we get a break-even size of $4,655 billion for the Russell 1000 and $1,114
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 24
+billion for the Russell 2000, which are both almost an order of magnitude larger. To get a sense of
+the actual capacity of these indexes, we assume, according to ICI, that about half is held by money
+managers and half of that is indexed, such that about 25% of the total market cap of each index is
+held passively. This alone accounts for $3,750 billion in assets for the Russell 1000 and $250 billion
+for the Russell 2000, which already exceeds the break even sizes estimated by Korajczyk and Sadka
+(2004) by a lot. In addition, if you add to this the amount being benchmarked to the Russell 1000
+and 2000 from active investors, which according to Sensoy (2009) is 13.2% of all active funds for the
+Russell 1000 and 21.6% for the Russell 2000, multiplied by the roughly three trillion dollars in assets
+in active U.S. funds, then the total current amounts invested in the Russell 1000 and 2000 are $4,146
+and $898 billion, respectively, which are just under our estimated break-even sizes (and you
+wouldn’t expect actual sizes to reach the break even zero profit levels in any case). Hence, our
+estimated costs seem more in line with the real sizes of aggregate institutional investment, which
+previous studies grossly underestimate.
+    Finally, our money manager has also been running long-only momentum indexes in large and
+small cap U.S. stocks and internationally, as well as momentum mutual funds based off of these
+indexes, since July 2009. The live realized price impact costs in these funds have been 8, 18.2, and
+5.9 basis points in large cap, small cap, and international momentum, respectively, which is in line
+with, but slightly lower than, our estimates from historical trading data.
+    Previous models in the literature and aggregate transaction level data, therefore, seem ill-
+equipped to address whether anomalies survive transactions costs. The marginal investor’s costs in
+these markets are not the average investor’s costs, and our data from a large arbitrageur shows that
+these costs can be very different and are substantially lower. We turn now to international evidence
+on transactions costs on the same strategies.
+    International equity 1998 – 2011. Panel B of Table VI reports the results for the international
+portfolios over the trading sample period. The results are remarkably similar in the sense that the
+estimated trading costs are very close to those we get for U.S. equities. The market impact costs for
+each of the strategies are very similar to those we found in the U.S., and the turnover of each
+portfolio is nearly identical to its U.S. counterpart. The implied fund sizes at which we calculate
+these costs are higher internationally, indicating our dataset has a robust international sample.
+    Conducting the same break-even exercise we did for the U.S. strategies, where we estimate the
+mean returns to the strategies using the longest historical return information we have internationally
+
+
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 25
+(which is from 1983 to 2011),14 net expected returns to SMB are marginally significant at 45 basis
+points per year, but are a highly significant 5.21, 4.57, and 2.26 percent per year for HML, UMD,
+and STR, respectively. The break-even fund sizes we estimate are about the same in international
+markets as they are in the U.S. For SMB, HML, UMD, and STR we calculate break-even fund sizes
+of $53, $106, $37, and $3.3 billion.
+     Global equity 1998 – 2011. Finally, Panel C of Table VI reports results for global strategies
+that combine both the U.S. and international data. The fund sizes used to calculate the trading costs
+obviously increase as do the break-even fund sizes. Since an arbitrageur seeking to exploit these
+anomalies would apply these strategies globally, perhaps the most relevant break-even fund sizes are
+reported here, where SMB can be run at $156 billion, HML at $190 billion, UMD at $89 billion, and
+STR at $12.8 billion. Moreover, a combination of value and momentum can be run at $177 billion
+and all four strategies applied globally can reach $89 billion before wiping out returns entirely
+through trading costs. At these dollar magnitudes, the anomalous returns to size, value, momentum,
+and short-term reversals appear to be robust to transactions costs and implementable.
+
+     B. Out of Sample Net Returns
+     Since returns to our strategies are available over a much longer sample period in both U.S. and
+international markets, we also assess the net expected returns of our strategies out of sample over
+these longer time periods. In order to do so, we use our trading cost model estimated in Table V and
+apply the coefficients to observable variables in the out of sample time periods. We assume that the
+relation between the observable variables and trading costs from our model are the same over time.
+This assumes, for instance, that the relation between trade size and market impact is constant through
+time, or the relation between VIX and market impact costs is the same through time. To be clear, the
+model allows for time variation in costs as VIX or other observable variables change, but it assumes
+that the relation between those variables and costs remains the same through time. While this
+assumption may not be true, it provides a rough and reasonable estimate of what trading costs might
+have looked like in earlier time periods if our model were accurate and predictive.
+     This exercise produces market impact estimates for the entire cross section of stocks from 1926
+to 2011. To compute these estimates we project the coefficients from our trading cost model on
+observable variables out of sample. We use firm size, market and firm volatility (we require one-year
+of daily return and volume data) and fix the average trade size (as a fraction of daily volume) equal to
+
+14
+  Alternatively, we could use the U.S. historical estimates for the expected returns to these strategies since they
+cover a much longer period and there is no a priori reason why the returns should be different internationally.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 26
+the median fraction of volume traded in our execution data. For stocks covered by our execution
+data, we take a conservative approach and take the maximum between the realized market impact
+(averaged over the past six months) and the predicted impact from the regression model. Table A5 in
+the Appendix reports the predicted price impact costs for U.S. stocks from 1926 to 2011 and for
+international stocks from 1983 to 2011 by 20-year subsamples and for large and small stocks
+separately.
+    U.S. equity 1926 – 2011. Panel A of Table VII applies the out of sample estimates of trading
+costs to the U.S. equity portfolios over the entire 1926 to 2011 historical sample. The results are
+fairly consistent with those from the shorter and more recent sample period, but provide a more
+robust assessment of the long-term expected net returns to these strategies. Focusing on the gross
+and net expected return numbers, SMB and STR, despite having significant gross expected returns,
+do not have significant net expected returns after trading costs. Especially for STR, trading costs
+wipe out most of its alpha. Hence, even for a large arbitrageur facing low trading costs, the viability
+of a short-term reversal strategy is not very compelling. HML delivers a marginally significant net
+expected return of 2.92 percent after trading costs (t-statistic of 2.00) that weakly survives, but UMD
+offers a 5.37 percent net of trading cost return (t-statistic of 2.99) that is robust to transactions costs.
+A combination of value and momentum is even more powerful, generating a 4.87 percent net
+expected return (t-statistic of 6.84) after trading costs. Finally, a combination of all four strategies
+produces a net expected return of 5.39 percent (t-statistic of 9.99).
+    The break-even fund sizes implied by these estimated trading costs are large: $354 billion for
+SMB, $190 billion for HML, $66 billion for UMD, except for STR, which is only $9.4 billion.
+These numbers are similar to those obtained over the shorter sample period of actual trading costs. A
+value and momentum combination has a $130 billion break-even capacity and a portfolio of all four
+strategies has a capacity of $54 billion, limited by the inclusion of the short-term reversal strategy.
+    International equity 1982 – 2011. Panel B of Table VII reports similar findings for the
+international portfolios, where SMB and STR do not survive trading costs and HML and UMD do,
+where a combination of value and momentum is even more powerful and produces the highest net
+expected returns after trading costs. Again, the break-even fund sizes are very consistent with what
+we find in U.S. stocks and for what we found for the more recent time period of actual trading data.
+Significant capacity sizes are obtained for size, value, and momentum, but short-term reversals can
+only be run profitably at a very small size of $3.3 billion.
+    Global equity 1926 – 2011. Panel C of Table VI reports the results for the global strategies that
+combine the U.S. and international data. Here, all the strategies produce positive net expected
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 27
+returns after trading costs that are significant at the 10% level, where value and momentum, and their
+combination, produce the strongest and most reliable after-cost returns. Break-even fund sizes
+globally for SMB and HML are in the hundreds of billions. UMD is also above $100 billion in
+capacity and a value and momentum combination has a $236 billion break-even size. Only STR is
+severely limited in scale globally, with only $8.3 billion capacity potential after trading costs.
+     Finally, as a robustness check, Appendix Table A6 inflates costs by factors of two or three and
+then calculates breakeven costs. Even with these much more conservative cost estimates, size, value,
+and momentum continue to produce significant positive excess returns after transactions costs.
+
+     IV.         Optimizing Portfolios for Trading Costs
+     To more fully address the trading cost efficiency of the equity style strategies, in this section we
+attempt to maximize the after-trading costs returns and capacity of each style. We design ―trading
+costs managed‖ versions of our portfolios that try to maximize after-trading costs returns of each
+strategy, subject to a tracking error constraint. Portfolios analyzed in the literature are not designed
+to optimize or pay attention to transactions costs in any way and hence may be quite trading-cost
+inefficient. In order to answer how cost-efficient various investment styles are, it seems crucial to
+evaluate how trading costs can be optimized within a style. Comparing the after-trading costs returns
+of the original versions of the style portfolios to those optimized for trading costs provides a sense of
+how large the improvements are in trading costs across styles.
+
+     A. Baseline Optimization
+     The objective is to maximize after-trading cost returns subject to maintaining the style of the
+original portfolio. We place a one percent (annualized) constraint on the amount of tracking error or
+style drift we allow the optimized portfolio to have. We want to optimize for trading costs but not at
+the expense of producing a portfolio that is too dissimilar from the equity style itself. 15 We focus on
+the trading cost consequences of trading weighed against the opportunity cost of not trading by
+simply minimizing the total amount of expected trading costs, while imposing a cost for tracking
+error or style drift and a penalty for trading amounts in excess of 5% of a stock’s average daily
+trading volume. This constraint ensures that we do not dominate a market for very small stocks and is
+also consistent with our estimated trading cost model in that no trades are designed to exceed this
+size and only very rarely do some trades actually exceed this threshold. For simplicity, we use the
+
+15
+   For example, we could buy and hold a portfolio and never trade for the entire sample period in order to minimize
+trading costs, but this portfolio would not look anything like its intended style.
+
+
+                                Trading Costs of Asset Pricing Anomalies – Page 28
+CAPM as a risk model so the inputs of the covariance matrix are a stock’s beta, its idiosyncratic
+volatility, and market volatility.16 The optimization problem is
+
+
+
+                                    Subject to:
+                                    Tracking Error Constraint: √                                        (5)
+                                    $1 long and $1 short:                   and | |
+                                 Trading Constraint: Fraction of daily volume <=5%
+
+
+where      is the vector of chosen portfolio weights,        is the vector of original weights for SMB,
+HML, UMD, STR, ValMom or Combo,               is a vector of 1s and     is the CAPM-implied covariance
+matrix estimated using daily data over the prior 12 months. The trading cost function is based on
+column (4) of Table V.
+     Since we are interested in studying implementable portfolios, and to ease computational burden
+and because volume information and trading cost estimates are more noisy in the earlier time periods,
+we restrict our sample to the period 1980 to 2011 and use stocks with relatively active trading
+markets, mimicking the universe of liquid stocks traded by large institutional managers. We focus on
+the top 2,000 stocks in the U.S. based on their combined rank of size and daily volume, and do the
+same for the top 2,000 stocks outside of the U.S. across all other markets. We refer to this sample of
+4,000 stocks as our ―tradable‖ universe. These additional restrictions allow the optimization to run in
+reasonable time and are also consistent with the trading cost model we estimate in Table V.
+     In order to run the optimizations and estimate trading costs, we must input a portfolio size.
+Panel A of Table VIII reports results where we start with a fund size of $100 million in net asset
+value (NAV) and Panel B starts with a $200 million NAV. The second row of Panel A reports the
+ending NAV for each strategy, which ranges from only $112.8 million for STR to $988.2 million for
+HML, which is a function of both the gross returns on the strategy over the sample period as well as
+the trading costs of each strategy. The third and fourth rows report the gross returns and t-statistics
+of the non-optimized portfolios using the tradable sample from 1980 to 2011. The gross returns for
+SMB and HML are pretty consistent with those over the full sample from 1926 to 2011, but the
+returns to UMD and STR over this shorter period are much lower than they are over the full period
+(compared to Table VII). The next two rows of Panel A of Table VIII report the gross returns and t-
+
+16
+ Using the Fama and French (1993) three factor model augmented with a fourth momentum factor does not have a
+material impact on the results.
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 29
+statistics for the optimized portfolios we obtain from equation (5). The returns are very close to
+those for the non-optimized portfolios, suggesting that little style drift is imposed from the
+optimization when we require less than 1% of tracking error.
+     Computing the trading costs of both the non-optimized and optimized versions of the trading
+strategies, we see that the optimized portfolios significantly reduce trading costs. Rows 9 and 10
+report the total trading costs for the non-optimized and optimized versions of the strategies. The non-
+optimized versions correspond to those portfolios typically studied in the literature. For example, the
+original or non-optimized SMB generates 99 basis points of total trading costs per year, but the
+optimized version of SMB we construct generates only 21 basis points of trading costs per year over
+the same time period. Since the gross returns of the two portfolios are similar (actually, the
+optimized version added 29 basis points of gross returns), the net result is that the optimized-for-
+trading-costs version of SMB outperforms the original SMB portfolio by 128 basis points per year
+after trading costs.
+     Repeating the same exercise for the other strategies, we see even larger improvements in after-
+trading-cost returns. HML’s trading costs are 2.28 percent per year, but an optimized version of
+HML that adjusts portfolio weights to explicitly account for the cost of trading generates only 57
+basis points of costs. Again, since the gross returns to the non-optimized versus optimized versions
+of HML are similar, this results in significant improvement in HML’s net returns after trading costs.
+For UMD, the results are similar. The non-optimized version of UMD faces 4.78% trading cost drag
+per year, but an optimized version can reduce those costs to 2.14% per year, leaving significant after-
+trading-cost returns to momentum. Even STR, which faces a 10.82 percent trading cost per year, can
+be reduced to 6.17 percent, but at these levels trading costs more than wipe out the average profits to
+STR, even the optimized version of STR. In other words, at $100 million in staring assets, a short-
+term reversal strategy would not have survived trading costs even when optimized to minimize those
+trading costs.
+     The next set of rows decompose the reduction in trading costs for each strategy. Rows 11 and
+12 report the turnovers of the non-optimized versus optimized versions of the strategies. In all cases,
+turnover is reduced considerably. Hence, one of the main factors in reducing trading costs across all
+styles is to reduce trading, which isn’t surprising. More interestingly, however, are the results in
+rows 13 and 14 which report the average market impact cost of trades for the non-optimized and
+optimized versions. As Panel A of Table VIII shows, the average market impact of trades also
+declines significantly for the optimized portfolios. Hence, not only do the optimized portfolios trade
+
+
+
+                            Trading Costs of Asset Pricing Anomalies – Page 30
+less, but they also trade stocks with the least predicted price impact in order to reduce transactions
+costs. On both dimensions the optimization is successful.
+     An arbitrageur facing trading costs who wishes to implement these strategies would both
+manage the turnover of the strategies and be strategic in which stocks he/she traded in order to
+minimize price impact costs. Moreover, as the optimization shows, significant turnover and price
+impact reduction can be achieved without incurring substantial tracking error or degradation in gross
+returns. The tracking errors are small,17 and the betas with respect to the original non-optimized
+portfolios are very close to one. The net effect of managing these two variables is a significant
+improvement in after-trading cost net returns, without incurring significant style drift.
+     Panel B of Table VIII reports results for strategies that begin with twice the amount of assets
+($200 million). The main results are similar. SMB, HML, and UMD all experience significant
+improvements in after-trading cost returns, with the largest improvements for HML and UMD.
+Ending NAV’s for SMB, HML, and UMD reach 1.7, 1.8, and 1.3 billion, respectively. However,
+STR, even after trading cost optimization, faces too high a cost to remain profitable, as its NAV
+deteriorates from 200 to 150 million over the sample period and its net returns remain significantly
+negative after trading costs. In this sense, SMB, HML, and UMD seem to easily survive trading
+costs and their after-trading-cost net performances can be improved substantially further through
+portfolio optimization, but STR appears too constrained by trading costs.
+     Finally, the ValMom combination and composite combination portfolio of all four strategies
+shows significant net returns and significant improvements following optimization. The largest
+improvements are for the ValMom combination, which generates significant excess net returns after
+trading costs both before and after optimization, and whose trading costs decline the most after
+optimization, going from 4.57 (5.54) before optimization to 1.11 (1.44) percent per year after
+optimization starting at $100 ($200) million in NAV. The source of this large reduction in trading
+costs comes both from turnover, which is reduced by almost 2/3, and from price impact per trade,
+which is cut almost in half. These reductions are larger than those for either HML or UMD
+themselves, indicating that there are significant trading cost synergies from combining value and
+momentum that allow trading costs to be reduced even further than a simple averaging of the two.
+Value and momentum trades within the same portfolio provide useful interaction benefits that help
+further reduce trading costs, which is another virtue of combining value and momentum in the same
+
+17
+  The ex-ante tracking error constraint is 1% per year, which is based on forecasted volatility and covariances, but
+the realized tracking error is closer to 2% for the strategies. Still, the optimized versions bear little tracking error to
+their original portfolios.
+
+
+                                 Trading Costs of Asset Pricing Anomalies – Page 31
+portfolio (Asness (1997), Asness, Moskowitz, and Pedersen (2012), Daniel and Moskowitz (2012),
+and Israel and Moskowitz (2012)). Panels C and D of Table VIII report similar results for the
+international and global portfolios, which highlight substantial reductions in trading costs from
+portfolio optimization, especially for value and momentum.
+
+    B. The Tracking Error Frontier of After-Trading Cost Returns
+    The previous results in Table VIII pertain to optimized portfolios with a tracking error constraint
+of 100 basis points. In this subsection we examine how the results change across styles as we vary
+the tracking error constraint. This analysis is informative about the tradeoff between trading cost
+management and tracking error across styles.
+    Table IX reports the total trading costs for the portfolios at ex ante tracking errors ranging from
+zero (the non-optimized/original version) to 200 basis points per year. Panel A reports the U.S.
+results, and Panels B and C the international and global results. For each style strategy, trading costs
+decrease monotonically as tracking error is allowed to increase, indicating that the optimization is
+doing what it is supposed to. The most dramatic reductions occur for HML and UMD. HML’s 2.88
+annual trading cost in the U.S. can be reduced to 30 basis points through portfolio optimization
+allowing as much as 2% tracking error. UMD’s 5.83 annual cost is reduced to 111 basis points at 2%
+tracking error. But, the largest improvements in trading costs occur for the value and momentum
+combination, ValMom, where annual costs of 5.54 percent per year are reduced to 31 basis points per
+year. The combination of all four strategies can similarly be vastly improved on an after-cost basis
+through portfolio optimization.
+    Below the trading cost estimates are the net Sharpe ratios of the strategies after trading costs
+across tracking errors. The Sharpe ratios reflect significant improvements in after-cost returns to
+these strategies, with the biggest benefits accruing to value and momentum and especially a
+combination of value and momentum. This evidence indicates that trading costs can be significantly
+reduced without incurring large return consequences or tracking error costs. The tradeoff between
+tracking error and trading costs appears most favorable for value and momentum.
+    Figures 5 and 6 illustrate and summarize the results in Table IX. Figure 5 plots the total trading
+costs of each strategy across tracking error. As the graph illustrates, HML and UMD benefit the
+most from portfolio optimization as their trading costs decline the fastest as tracking error increases.
+However, the steepest decline in trading costs appears for the value and momentum combination.
+Figure 6 shows that the reduction in trading costs does not impose equally high and offsetting return
+consequences.    The net Sharpe ratios of the strategies improve significantly as tracking error
+
+
+                            Trading Costs of Asset Pricing Anomalies – Page 32
+increases, especially for value and momentum. SMB’s after-cost Sharpe ratios improve only slightly
+and while STR’s net Sharpe ratios also improve, they still produce significantly negative
+performance after trading costs. Hence, STR does not appear to survive transactions costs even when
+optimized to try to minimize those costs. Finally, the combination of value and momentum benefits
+the most from portfolio optimization, with the steepest improvement in net Sharpe ratio among all
+strategies as tracking error increases.18
+
+     C. Break-Even Capacity After Optimization
+     How much do break-even sizes of these strategies improve from portfolio optimization? In
+order to compare to our previous break-even sizes, we first compare the same universe of tradable
+stocks and consider the same sample period from 1980 to 2011. Our previous break-even sizes
+pertained to the much longer 1926 to 2011 time period and covered the entire universe of listed
+equities. To facilitate comparisons, we use the results from our trading-cost optimized portfolios and
+apply them to the average returns to the strategies over the longest historical time period (1926 to
+2011) to calculate break even sizes.
+     The last two rows of Table IX report the break-even sizes for the optimized portfolios at zero
+and 100 basis points of (ex ante) tracking error. The zero tracking error break even sizes are identical
+to those in Table VII and represent the non-optimized break even fund sizes. Comparing those
+numbers to break even sizes for the optimized portfolios at 100 basis points of tracking error, we see
+marked increases in fund sizes for all strategies, except STR. SMB goes from $354 billion to $1.58
+trillion in capacity after optimization. HML’s capacity more than doubles from $190 to $486 billion,
+and UMD’s break-even capacity increases by 50 percent from $66 billion to just under $100 billion.
+STR’s break-even size, however, only improves from $9.4 to $13.2 billion after trading cost
+optimization. A combination of value and momentum doubles capacity to nearly $250 billion.
+     Panels B and C repeat these calculations for the international and global samples and find
+similar improvements from optimization. On a global scale, we estimate that through portfolio
+optimization, SMB, HML, and UMD have $1.8 trillion, $811 billion, and $122 billion in capacity,
+while STR has only $17 billion. A global value and momentum combination strategy has $415
+billion in capacity. These break-even sizes are orders of magnitude larger than those previously
+estimated in the literature. We conclude that the returns to size, value, and momentum appear to
+
+18
+   It’s worth noting that the significant improvement in trading costs through portfolio optimization is another
+indication that the trading costs we estimate from the live trade data are largely independent from the portfolios
+being traded. If the portfolio weights and trading costs has already been simultaneously optimized, and given the
+manager was running similar strategies, we would have found no further improvement from optimization.
+
+
+                               Trading Costs of Asset Pricing Anomalies – Page 33
+survive transactions costs at very high asset size, and hence appear to be robust, implementable, and
+sizeable. Returns to short-term reversal strategies, however, do not.
+
+    V. Conclusion
+    We examine the trading costs, net of cost returns, and break even fund sizes of equity strategies
+designed to capture several of the main asset pricing anomalies documented in the literature. Using a
+unique dataset of live trades from a large institutional investor, who engages in many similar
+strategies, we approximate the trading costs of a large arbitrageur. We find that our trading cost
+estimates are many times smaller and our fund sizes are more than an order of magnitude larger than
+those claimed in the literature. These results are driven by two key innovations in our study. First,
+we use actual trading costs from a real-world arbitrageur to estimate price impact rather than
+aggregated trade and quote level data used in other studies. The latter represents the average trader’s
+cost, while the former is likely closer to the marginal investor’s cost, and we find costs that are five
+to six times smaller than those estimated in the literature. Second, we use portfolio optimization
+techniques to design strategies that account for trading costs, as a real-world investor facing
+transactions costs would do, that further decreases realized trading costs. The combination of these
+two effects provides orders of magnitude larger break-even sizes for strategies designed to capture
+several of the key asset pricing anomalies in the literature.
+    The results and tradeoffs between trading costs and tracking error vary across the different
+anomalies/styles. Value and momentum benefit the most from trading cost optimization and face the
+most favorable tradeoffs. Short-term reversals, however, do not survive trading costs at reasonable
+size and do not offer much improvement from portfolio optimization. Our results indicate that
+strategies based on size, value, and momentum can be deployed at very high asset size and still
+survive trading costs, while short-term reversals cannot. Hence, the return premia associated with
+size, value, and momentum appear to be robust, sizeable, and implementable.
+
+
+
+
+                             Trading Costs of Asset Pricing Anomalies – Page 34
+References
+Asness, Cliff S. (1994), ―Variables that Explain Stock Returns‖, Ph.D. Dissertation, University of
+Chicago.
+
+Asness, Cliff S., and Andrea Frazzini (2012), ―The Devil in HML’s Details,‖ Working Paper, AQR
+Capital Management.
+
+Asness, Cliff S., Tobias J. Moskowitz, and Lasse H. Pedersen (Forthcoming), ―Value and
+Momentum Everywhere,‖ The Journal of Finance.
+
+Engle, Robert, Robert Ferstenberg and Jeffrey Russell (2012), ―Measuring and Modeling Execution
+Cost and Risk,‖ The Journal of Portfolio Management.
+
+Fama, E., French, K., 1992. The cross section of expected stock returns. Journal of Finance 47, 427–
+465.
+
+Fama, Eugene F. and Kenneth R. French (1993), ―Common Risk Factors in the Returns on Stocks
+and Bonds,‖ The Journal of Financial Economics, vol. 33, pp. 3-56.
+
+Fama, E., French, K., 1996. Multifactor explanations of asset pricing anomalies. Journal of Finance
+51, 55–84.
+
+Fama, E., French, K., 1998. Value versus growth: the international evidence. Journal of Finance 53,
+1975–1999.
+
+Fama, E., French, K., 2012. Size, value, and momentum in international stock returns. Forthcoming
+Journal of Financial Economics.
+
+Fama, E., MacBeth, J., 1973. Risk, return, and equilibrium: empirical tests. Journal of Political
+Economy 607-636.
+
+Grinblatt, Mark and Tobias J. Moskowitz (2004), ―Predicting Stock Price Movements from Past
+Returns: The Role of Consistency and Tax-Loss Selling‖, The Journal of Financial Economics, vol.
+71, pp. 541-579.
+
+Israel, Ronen and Tobias J. Moskowitz (Forthcoming), ―The Role of Shorting, Firm Size, and Time
+on Market Anomalies.‖ The Journal of Financial Economics.
+
+Jegadeesh, Narasimhan and Sheridan Titman (1993), ―Returns to Buying Winners and Selling
+Losers: Implications for Stock Market Efficiency,‖ The Journal of Finance, vol. 48, pp. 65-91.
+
+Keim, D.B. (1999), ―An analysis of mutual fund design: the case of investing in small-cap stocks,‖
+The Journal of Financial Economics, vol. 51, pp. 173-194.
+
+Keim, D.B., Madhavan, A. (1997), ―Execution costs and investment style: an interexchange analysis
+of institutional equity trades,‖ The Journal of Financial Economics, vol. 46, pp. 265-292.
+
+
+
+
+                           Trading Costs of Asset Pricing Anomalies – Page 35
+Korajczyk, Robert A., and Ronnie Sadka (2004), ―Are momentum profits robust to trading costs?,‖
+The Journal of Finance, vol. 59, pp. 1039-1082.
+
+Lehmann, Bruce (2003), ―What We Measure in Execution Cost Measurement‖, Journal of Financial
+Markets, vol. 6, pp. 227-231.
+
+Lesmond, David A., Michael J. Schill, and Chunsheng Zhou (2003), ―The illusory nature of
+momentum profits,‖ The Journal of Financial Economics, vol. 71, pp. 349–380.
+
+Perold, Andre F. (1988), ―The implementation shortfall: paper vs. reality,‖ Journal of Portfolio
+Management, vol. 14, pp. 4–9.
+
+Sensoy, Berk (2009), ―Performance Evaluation and Self-Designated Benchmark Indexes in the
+Mutual Fund Industry,‖ Journal of Financial Economics, vol. 92, no. 1, pp. 25-39.
+
+Werner, Ingrid (2003), ―NYSE Order Flow, Spreads and Information‖, Journal of Financial
+Markets, vol. 6, pp. 309-335.
+
+
+
+
+                            Trading Costs of Asset Pricing Anomalies – Page 36
+                                                Table I
+                         Trade Execution Data, 1998 – 2011. Summary Statistics.
+This table shows summary statistics of the trade execution database. Panel A reports the total amount traded by year.
+Amounts are in billion USD. “U.S.” are trades executed in the United States. “INT” are trades executed outside of the
+United States. “LC” are trades in large cap stocks, “SC” are trades in small cap stocks. The distinction between large cap
+and small cap is based on the portfolio’s benchmark. “L/S” are trades executed in long-short accounts and “LO” are trades
+executed in long-only accounts. Relaxed constraints portfolios (130-30 and 140-40) are classified as “LO”. Panel B reports
+times series means of summary statistics as of December of each year (14 annual observations). Panel C reports Fama-
+MacBeth averages. Each calendar month, we compute value-weighted means of each variables. Weighs are equal to the total
+amount traded and Panel C reports the time series means of the cross sectional coefficients. “Fraction of daily average
+trading volume” is equal to the trade’s dollar size divided by the stock’s average 1-year dollar volume. This table includes
+all available developed market equity transactions (cash equities and equity swaps) in our data between August 1998 and
+December 2011.
+
+  Panel A: Amount Traded                  By Region                       By Size                    By Portfolio type
+  (Billion USD)
+
+  Year                   Total             U.S.         INT       Large Cap Small Cap              Long short Long only
+  1998*                   2.96             1.29         1.67             2.96         0.00               2.96        0.00
+  1999                    5.29             1.99         3.30             5.29         0.00               5.29        0.00
+  2000                    1.99             0.76         1.23             1.99         0.00               1.86        0.13
+  2001                    1.08             0.55         0.53             1.08         0.00               1.00        0.08
+  2002                    4.21             0.71         3.50             4.21         0.00               1.40        2.81
+  2003                    5.43             2.69         2.75             5.43         0.00               4.17        1.26
+  2004                   10.00             2.95         7.05             9.99         0.01               6.38        3.62
+  2005                   16.16             8.06         8.10            15.75         0.41              11.45        4.71
+  2006                   67.01            34.79        32.22            64.23         2.78              44.69       22.31
+  2007                  127.76            68.89        58.88           123.79         3.97              95.52       32.25
+  2008                  107.82            56.06        51.76           103.91         3.90              69.21       38.60
+  2009                  110.74            75.77        34.96           107.88         2.86              85.44       25.30
+  2010                  116.86            78.44        38.42           113.52         3.34              91.87       24.99
+  2011                  144.12            95.46        48.67           139.54         4.58             114.80       29.32
+  Total                 721.43           428.41       293.02           699.57        21.85             536.04     185.39
+
+
+
+
+  Panel B: Annual Time Series                            M ean        M edian                Std         M in              M ax
+
+  Number of stocks per year                            3,147.3        3,271.0          1,676.9          389.0            5,132.0
+  Number of countries per year                            16.4           17.5              3.8            8.0               19.0
+  Number of exchange venues per year                      24.1           24.5              6.9           11.0               33.0
+  Number of trade baskets per year                       789.4          244.0            978.9            9.0            2,833.0
+  Number of orders per year (1,000s)                     109.1           23.5            140.5            0.6              393.6
+  Number of trade executions per year (1,000,000s)         2.4            2.9              1.4            0.1                4.0
+
+  Panel C: Fama M acBeth averages
+
+  Average trade size (1,000$)                            695.3          401.5          1,034.1           52.6            5,939.1
+  Fraction of daily average trading volume (%)             1.2            0.5              2.1            0.1               13.1
+  Trade horizon (days)                                     2.1            1.5              2.2            0.0                8.8
+
+
+* From 19980831
+
+
+
+
+                     Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page T1
+                                                   Table II
+                           Trade Execution Data, 1998 – 2011. Realized Trading Costs.
+This table shows average Market Impact (MI) and Implementation Shortfall (IS). Each calendar month, we compute
+average, median and weighted average cost (“vw_mean”) of all trades during the month. When computing weighted average
+cost, trades are weighted by their dollar amount. This table reports time-series averages of the cross sectional estimates.
+When computing time series averages, we weight each monthly observation by the number of stocks traded during the
+month. This table includes all available developed market equity transactions (cash equities and equity swaps) in our data
+between August 1998 and December 2011. “U.S.” indicates trades executed in the United States. “INT” indicates trades
+executed outside of the United States. “LC” indicates trades in large cap stocks, “SC” indicates trades in small cap stocks.
+The distinction between large cap and small cap is based on the portfolio’s benchmark. “L/S” indicates trades executed in
+long-short accounts, “LO” indicates trades executed in long-only accounts. Relaxed constraints portfolios (130-30 and 140-
+40) are classified as “LO”. Market Impact and Implementation Shortfall are in basis points and standard errors are reported
+in the bottom panel.
+
+Panel A:                      All sample                By Region                    By Size               By Portfolio type
+
+Full sample: 1998 - 2011                         U.S.         U.S.    INT      Large Cap   Small Cap     Long short   Long only
+                                            Nyse-Amex      Nasdaq
+
+M I mean                          12.18 #        9.44       11.93    14.09 #       11.21       21.27 #       10.13        15.98
+M I median                         7.98 #        6.60        6.51     9.88 #        7.47       14.95 #        6.99        10.45
+M I vw mean                       18.65 #       15.51       18.30    19.11 #       18.07       27.25 #       18.24        17.97
+
+IS mean                           13.00 #       10.04       11.92    15.33 #       12.02       22.19 #       11.67        15.45
+IS median                         10.34 #        8.28        8.31    12.70 #        9.67       18.35 #        9.40        12.23
+IS vw-mean                        20.20 #       17.79       21.35    20.30 #       19.58       30.62 #       19.93        19.04
+
+
+Standard errors
+M I mean                           1.01          1.07         2.20    1.00          1.06        1.71           1.25        1.11
+M I median                         0.56          0.80         1.04    0.72          0.59        1.50           0.69        0.93
+M I vw mean                        1.23          1.50         2.78    1.22          1.26        2.39           1.52        1.27
+
+IS mean                            1.32          1.36         2.61    1.36          1.38        2.05           1.63        1.35
+IS median                          0.82          1.08         1.55    1.06          0.85        1.99           0.97        1.11
+IS vw-mean                         1.53          2.02         3.29    1.39          1.57        2.67           1.80        1.54
+
+
+
+
+Panel B:                      All sample                By Region                    By Size               By Portfolio type
+
+Recent sample: 2003 - 2011                       U.S.         U.S.    INT      Large Cap   Small Cap     Long short   Long only
+                                            Nyse-Amex      Nasdaq
+
+M I mean                          12.13 #        9.57       12.44    13.73 #       11.11       21.56 #       10.02        16.00
+M I median                         7.79 #        6.40        6.45     9.62 #        7.24       15.04 #        6.71        10.43
+M I vw mean                       18.46 #       15.65       18.73    18.76 #       17.84       27.68 #       18.04        18.16
+
+IS mean                           12.98 #       10.14       12.63    14.99 #       11.96       22.48 #       11.63        15.47
+IS median                         10.16 #        8.09        8.32    12.48 #        9.45       18.48 #        9.14        12.26
+IS vw-mean                        20.00 #       17.90       21.65    19.97 #       19.35       31.07 #       19.73        19.24
+
+
+Standard errors
+M I mean                           0.85          0.92         1.28    1.06          0.89        1.64           0.93        1.12
+M I median                         0.57          0.65         0.70    0.78          0.60        1.45           0.66        0.96
+M I vw mean                        1.26          1.49         2.06    1.33          1.27        2.39           1.52        1.23
+
+IS mean                            1.25          1.30         1.59    1.54          1.31        2.00           1.46        1.40
+IS median                          0.88          0.96         1.00    1.23          0.92        1.96           1.01        1.15
+IS vw-mean                         1.64          2.15         2.65    1.56          1.67        2.67           1.85        1.55
+
+
+
+
+                       Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page T1
+                                             Table III
+                Trade Execution Data, 1998 – 2011. Realized Trading Costs – Inflows
+This table shows average Market Impact (MI). Each calendar month, we compute average, median and weighted average
+cost (“vw_mean”) of all trades during the month. When computing weighted average cost, trades are weighted by their
+dollar amount. This table reports time-series averages of the cross sectional estimates. When computing time series
+averages, we weight each monthly observation by the number of stocks traded during the month. This table includes all
+available developed market equity transactions executed in long-only accounts (cash equities and equity swaps) in our data
+between August 1998 and December 2011. The distinction between large cap and small cap is based on the portfolio’s
+benchmark. “Inflows” are defined as the first trade for a given account. Market Impact is in basis points.
+
+
+         Long - Only Trades - 1998 - 2011                           Only     All other   difference   t -statistic
+                                                                 Inflows      Trades
+
+         M I mean                           All Trades             14.68        14.10          0.58         0.07
+         M I median                         All Trades              9.62         8.10          1.52         0.19
+         M I vw mean                        All Trades             11.36        11.75         -0.38        -0.05
+         M I mean                           Large Cap              10.33        10.64         -0.31        -0.02
+         M I median                         Large Cap               4.58         6.02         -1.44        -0.12
+         M I vw mean                        Large Cap               3.19        10.04         -6.85        -0.63
+         M I mean                           Small Cap              19.80        21.31         -1.52        -0.27
+         M I median                         Small Cap              16.17        13.49          2.68         0.57
+         M I vw mean                        Small Cap              21.20        27.19         -5.99        -0.93
+
+
+
+
+                    Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page T1
+                                             Table IV
+                 Realized Trading Costs by Time period and Trade Type, 1998 – 2001
+This table shows average Market Impact (MI) and Implementation Shortfall (IS). Each calendar month, we compute
+average, median and weighted average cost (“vw_mean”) of all trades executed during the month. When computing
+weighted average cost trades are weighted by their dollar amount. This table reports time-series averages of the cross
+sectional estimates. When computing time series averages, we weight each monthly observation by the number of stocks
+traded during the month. This table includes all available developed market equity transactions (cash equities and equity
+swaps) in our data between August 1998 and December 2011. “U.S.” indicates trades executed in the United States. “INT”
+indicates trades executed outside of the United States. “LC” indicates trades in large cap stocks, “SC” indicates trades in
+small cap stocks. The distinction between large cap and small cap is based on the portfolio’s benchmark. “L/S” indicates
+trades executed in long-short accounts, “LO” indicate trades executed in long-only accounts. Relaxed constraints portfolios
+(130-30 and 140-40) are classified as “LO”. Market Impact and Implementation Shortfall are in basis points and standard
+errors are reported in the bottom panel.
+
+Panel A:                                        U.S.                                         International
+Market Impact by year           MI mean        MI median MI vw mean              MI mean        MI median MI vw mean
+1998*                              164.40             139.95       152.25           103.06             90.09           119.70
+1999                                49.12              21.16        61.97            83.62             39.56           124.59
+2000                                44.68              24.21        63.72            39.74             25.99            61.97
+2001                               -76.16              -4.78         3.90            43.97             35.31            60.52
+2002                                 8.06               8.65        38.62            14.88             15.01            28.25
+2003                                10.74               7.58        31.87             9.38              7.01            19.75
+2004                                 9.70               5.24        17.80            17.41             14.92            15.81
+2005                                20.84              12.75        20.93             9.39              7.10             7.29
+2006                                 9.29               5.15        11.40             8.08              5.17            26.02
+2007                                15.12               9.32        35.35            15.80              8.87            33.11
+2008                                14.36               7.64        34.94            23.74             14.96            34.64
+2009                                 8.25               3.10        11.96            14.34              8.18            31.22
+2010                                 6.04               3.57         6.92             7.89              5.61            15.20
+2011                                 7.36               4.89         9.47             7.79              5.91            12.86
+
+
+
+Panel B: Market Impact by Trade Type         % of sample          All sample       By Region                    By Size
+                                            Dollars    Trades                       U.S.        INT     Large Cap Small Cap
+MI (VW-mean)      Buy Long                     0.35        0.32        12.22       14.05       10.43           10.87      32.72
+                  Buy Cover                    0.15        0.17        19.53       20.12       18.92           19.20      27.71
+                  Sell Long                    0.32        0.34        19.74       12.97       23.36           19.25      28.12
+                  Sell Short                   0.18        0.18        23.47       10.31       29.99           23.16      29.64
+Differences       Buy Cover - Buy Long                                  7.31        6.07        8.49            8.33      -5.01
+                  Sell Short - Sell Cover                               3.73       -2.67        6.62            3.91       1.52
+t-statistics      Buy Cover - Buy Long                                  1.82        1.07        1.89            1.95      -0.26
+                  Sell Short - Sell Cover                               1.10       -0.50        1.37            1.08       0.07
+
+
+
+
+                    Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page T1
+                                                                                    Table V
+                                                                                Regression Results
+This table shows results from pooled regressions. The left-hand side is a trade’s Market Impact (MI), in basis point. The explanatory variables include the contemporaneous market
+returns, firm size, volatility and trade size (all measured at order submission). “Beta*IndexRet*buysell” is the contemporaneous (beta-adjusted) market returns. Beta is the stock’s
+predicted beta at time of order submission. “indexRet” is the corresponding index return over the life of the trade. “BuySell” is a dummy equal to 1 for buy orders and -1 for sell
+orders. “Size” is the equal to the log of 1 plus the market value of equity log(1+ME) . ME is in Billion USD. “Fraction of daily volume” is equal to the trade’s dollar size divided
+by the stock’s average 1-year dollar volume (in %). “Idiosyncratic Volatility” is the volatility of the residuals of a regression of 1-year daily stock returns on the corresponding
+value-weighted benchmark (annualized , in %), “Market Volatility” is the monthly variance of the CRSP-value weighted index , computed using daily returns (annualized, in %).
+Country fixed effects are included when indicated, t-statistics are shown below the coefficient estimates and 5% statistical significance is indicated in bold. Standard errors are
+clustered by calendar month.
+
+
+                                                     All sample                                             U.S.                                            International
+
+                                         (1)           (2)           (3)       (4)           (5)           (6)           (7)       (8)            (9)          (10)          (11)      (12)
+
+Beta*IndexRet*buysell                  0.20          0.20          0.20      0.20         0.20          0.20          0.20      0.20            0.21          0.21          0.21      0.21
+                                     (15.92)       (15.93)       (15.93)   (15.90)       (8.08)        (8.08)        (8.07)    (8.08)        (20.98)        (20.98)       (20.99)   (21.11)
+
+Time trend                            -0.11          -0.06         -0.07     -0.09        -0.05          0.00         -0.01     -0.02          -0.16         -0.12         -0.14     -0.15
+                                     -(2.16)       -(1.31)       -(1.40)   -(1.77)       -(0.59)       -(0.03)       -(0.07)   -(0.19)        -(5.65)       -(4.32)       -(4.75)   -(5.20)
+
+Log of ME (Billion USD)               -4.54         -3.74         -3.20     -2.18         -3.89         -3.21         -2.77     -2.05          -5.55         -4.60         -3.96     -2.46
+                                     -(9.00)       -(7.51)       -(6.63)   -(7.39)       -(5.95)       -(4.97)       -(4.70)   -(3.70)       -(11.14)       -(9.13)       -(7.52)   -(8.79)
+
+Fraction of daily volume         .                   1.68          1.06      1.01    .                  1.81          1.34      1.30     .                    1.57          0.77      0.71
+                                                    (8.59)        (3.97)    (3.79)                     (4.32)        (2.57)    (2.45)                       (11.63)        (3.89)    (3.76)
+                               .                                                     .                                                   .
+Sqrt(Fraction of daily volume) .               .                   5.61      7.39    .             .                   4.43      6.03    .              .                   6.85      8.77
+                                                                  (2.24)    (2.88)                                   (1.01)    (1.27)                                      (4.20)    (5.69)
+                                 .             .                                     .             .                                     .              .
+Idiosyncratic Volatility         .             .             .               0.10    .             .             .               0.07    .              .             .               0.19
+                                                                            (1.78)                                             (0.87)                                                (4.64)
+                                 .             .             .                       .             .             .                       .              .             .
+Vix                              .             .             .               0.36    .             .             .              0.25     .              .             .               0.43
+                                                                            (6.62)                                             (3.97)                                                (5.13)
+                                 .             .             .                       .             .             .                       .              .             .
+Obs (1,000s)                          1,561         1,561         1,561     1,561           790           790           790       790            771           771           771       771
+R2                                    0.070         0.071         0.071     0.072         0.066         0.066         0.067     0.067          0.075         0.076         0.076     0.077
+Country FE                              Yes           Yes           Yes       Yes           No            No            No        No            Yes            Yes           Yes       Yes
+
+
+
+
+                                                   Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page T1
+                                                     Table VI
+                                  Returns Results – Trade Execution Data Sample
+This table reports portfolio returns gross and net of trading costs. We report returns of value (HML), Size (SMB),
+momentum (UMD), reversal (STR), a 50-50 portfolio of UMD and HML (VALMOM) and a composite portfolio (COMBO)
+that puts equal weights in SMB, HML, UMD and STR. All the portfolios are the intersections of two portfolios formed on
+size and three portfolios formed on book to market or prior returns. At the end of each calendar month stocks are assigned to
+two size-sorted portfolios based on their market capitalization. The size breakpoint for the US sample is the median NYSE
+market equity. The size breakpoint for the international sample is the 80th percentile by country. We measure book to
+market and lagged book divided by current price and update monthly (Asness and Frazzini (2012)). We use one year return
+(in local currency) skipping the most recent month for momentum (UMD) and (minus) the local currency return in the most
+recent month for short term reversal (STR). Stocks are further ranked in 3 groups (low, neutral, high) based on NYSE-based
+breakpoints (or breakpoints based on top 20% of market capitalization by country for the international sample). The size
+portfolio SMB is the average return on the three small portfolios minus the average return on the three big portfolios. The
+value portfolio HML is the average return on the two value portfolios minus the average return on the two growth portfolios.
+UMD and STR and constructed in the same manner. All portfolios are value-weighted, refreshed every month and
+rebalanced every calendar month to maintain value weights. This table includes all available stocks in our Trade Execution
+Data at portfolio formation. The sample period runs from 1998 to 2011. Country portfolios are aggregated into International
+and Global portfolios using the country’s total market capitalization as of the prior month. For each security, the predicted
+market impact MI is equal the average market impact over the prior 6-months. Returns and costs are annualized, MI is in
+basis points, t-statistics are reported below the coefficient estimates and 5% statistical significant is indicated in bold.
+
+
+Panel A: Realized TC sample 1998 - 2011 - U.S.
+                                                   SMB          HML          UMD             STR      ValMom         Combo
+
+Average USD traded at each rebalance (Billion)      7.59         4.74          4.70          4.62         6.50          7.79
+Implied fund size (Billion, USD)                   15.11         7.02          3.71          1.51         8.25          7.61
+
+Realized cost                                        1.46         1.54          3.51          6.75         2.18          2.39
+Break-even cost*                                     2.61         3.88          7.85          8.27         6.23          5.39
+Realized minus breakeven                           -1.16        -2.34         -4.34         -1.52        -4.05         -3.00
+t- statistics                                     -(5.20)     -(10.20)       -(8.42)       -(2.14)     -(13.11)      -(11.37)
+Break-even fund size (billions)                  $103.19       $82.95        $52.18         $9.51       $98.74        $51.21
+
+Return (Gross)                                      8.58          3.44          2.56         4.65          3.00         4.81
+                                                   (2.87)       (0.74)        (0.43)       (1.10)        (1.23)        (2.76)
+Return (Net)                                        7.12          1.90         -0.95         -2.10         0.82          2.42
+                                                   (2.39)       (0.40)       -(0.16)       -(0.49)       (0.33)        (1.38)
+Turnover (monthly)                                  0.50         0.68          1.27          3.05         0.79          1.02
+MI (bps)                                           24.20        19.01         23.09         18.42        23.05         19.44
+Sharpe ratio (gross)                                0.78         0.20          0.12          0.30         0.34          0.75
+Sharpe ratio (net)                                  0.65         0.11         -0.04         -0.14         0.09          0.37
+Obs                                                  162          162           162           162          162           162
+*Average returns estimated from 1926 to 2011.
+
+
+
+
+                       Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 6
+                                                 Table VI
+                        Returns Results – Trade Execution Data Sample (Continued)
+
+Panel B: Realized TC sample 1998 - 2011 - International
+                                                     SMB        HML       UMD         STR     ValMom       Combo
+
+Average USD traded at each rebalance (Billion)       27.46      16.21      18.37     18.24        24.59      30.19
+Implied fund size (Billion, USD)                     51.04      21.47      13.70      6.00        27.17      28.24
+
+Realized cost                                          1.26       1.58       2.77     5.61          1.88       2.06
+Break-even cost*                                       1.71       6.78       7.34     3.35          7.12       4.79
+Realized minus breakeven                              -0.45     -5.21       -4.57    2.26         -5.24      -2.73
+t- statistics                                       -(1.89)   -(18.68)   -(12.04)   (3.42)      -(18.95)   -(10.56)
+Break-even fund size (billions)                     $53.21    $106.74     $37.14    $3.28        $78.17     $38.00
+
+Return (Gross)                                         3.05       5.60       1.58     3.16         3.59       3.35
+                                                     (1.41)     (1.71)     (0.34)   (0.86)        (2.09)     (2.32)
+Return (Net)                                           1.80       4.03      -1.19     -2.45         1.71       1.29
+                                                     (0.83)     (1.22)    -(0.26)   -(0.66)       (0.98)     (0.87)
+
+Turnover (monthly)                                    0.54       0.76       1.34      3.04         0.91       1.07
+MI (bps)                                             19.45      17.38      17.19     15.37        17.31      16.07
+Sharpe ratio (gross)                                  0.38       0.46       0.09      0.23         0.57       0.63
+Sharpe ratio (net)                                    0.23       0.33      -0.07     -0.18         0.27       0.24
+Obs                                                    162        162        162       162          162        162
+*Average returns estimated from 1983 to 2011.
+
+
+
+Panel C: Realized TC sample 1998 - 2011 - Global
+                                                     SMB        HML       UMD         STR     ValMom       Combo
+
+Average USD traded at each rebalance (Billion)       35.05      20.95      23.07     22.86        31.09      37.98
+Implied fund size (Billion, USD)                     67.40      29.18      17.75      7.51        36.75      36.27
+
+Realized cost                                          1.34       1.56       3.19      6.19         2.07       2.23
+Break-even cost*                                       2.61       4.88       7.88      8.33         6.75       5.63
+Realized minus breakeven                             -1.27      -3.32       -4.70    -2.14        -4.68      -3.40
+t- statistics                                       -(6.48)   -(14.82)   -(11.73)   -(3.38)     -(18.10)   -(14.12)
+Break-even fund size (billions)                    $156.40    $189.70     $89.32    $12.79      $176.91     $89.20
+
+Return (Gross)                                        6.49        4.39       3.03     4.17         3.71       4.52
+                                                     (3.12)     (1.20)     (0.60)   (1.18)        (2.00)     (3.33)
+Return (Net)                                          5.15        2.83      -0.16     -2.02         1.64       2.29
+                                                     (2.48)     (0.77)    -(0.03)   -(0.57)       (0.87)     (1.66)
+
+Turnover (monthly)                                    0.52       0.72       1.30      3.05         0.85       1.05
+MI (bps)                                             21.55      18.11      20.42     16.93        20.34      17.73
+Sharpe ratio (gross)                                  0.85       0.33       0.16      0.32         0.54       0.91
+Sharpe ratio (net)                                    0.67       0.21      -0.01     -0.16         0.24       0.45
+Obs                                                    162        162        162       162          162        162
+*Average returns estimated from 1926 to 2011.
+
+
+
+
+                       Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 7
+                                                 Table VII
+                                  Returns Results – Full sample 1926 – 2011
+This table reports portfolio returns gross and net of trading costs. We report returns of value (HML), Size (SMB),
+momentum (UMD), reversal (STR), a 50-50 portfolio of UMD and HML (VALMOM) and a composite portfolio (COMBO)
+that puts equal weights in SMB, HML, UMD and STR. All the portfolios are the intersections of two portfolios formed on
+size and three portfolios formed on book to market or prior returns. At the end of each calendar month stocks are assigned to
+two size-sorted portfolios based on their market capitalization. The size breakpoint for the US sample is the median NYSE
+market equity. The size breakpoint for the international sample is the 80th percentile by country. We measure book to
+market and lagged book divided by current price and update monthly (Asness and Frazzini (2012)). We use one year return
+(in local currency) skipping the most recent month for momentum (UMD) and (minus) the local currency return in the most
+recent month for short term reversal (STR). Stocks are further ranked in 3 groups (low, neutral, high) based on NYSE-based
+breakpoints (or breakpoints based on top 20% of market capitalization by country for the international sample). The size
+portfolio SMB is the average return on the three small portfolios minus the average return on the three big portfolios. The
+value portfolio HML is the average return on the two value portfolios minus the average return on the two growth portfolios.
+UMD and STR and constructed in the same manner. All portfolios are value-weighted, refreshed every month and
+rebalanced every calendar month to maintain value weights. This table includes all available stocks in the combined CRSP
+Xpressfeed global data. The sample period runs from 1926 to 2011. Country portfolios are aggregated into International
+and Global portfolios using the country’s total market capitalization as of the prior month. For each security, the predicted
+market impact MI is equal the maximum of the average market impact over the prior 6-months (if available) and the
+predicted market impact. To compute predicted market impact for each stock we use coefficients from column (4) Table IV.
+We assume that market returns are unpredictable (Beta*IndexRet*buysell = 0) and set the “fraction to trading volume”
+equal to the average fraction to trading volume in our trade execution database. Returns and costs are annualized, MI is in
+basis points, t-statistics are reported below the coefficient estimates and 5% statistical significant is indicated in bold.
+
+
+Panel A: All Stocks 1926 - 2011 - U.S.
+                                            SMB            HML           UMD             STR        ValMom          Combo
+Realized cost                                0.55           0.97           2.49          6.25           1.36           1.89
+Break-even cost                              2.61           3.88           7.85          8.27           6.23           5.39
+Realized minus breakeven                    -2.07          -2.92          -5.37         -2.02          -4.87          -3.51
+t- statistics                            -(104.98)       -(90.97)      -(74.27)       -(16.61)      -(142.46)       -(81.19)
+Break-even fund size (billions)           $354.27        $189.56         $65.92          $9.45       $129.47         $54.36
+Return (Gross)                               2.61           3.88          7.85           8.27           6.23           5.39
+                                            (2.13)         (2.65)        (4.41)         (6.37)         (8.79)         (9.99)
+
+Return (Net)                                 2.07           2.92          5.37            2.02          4.87           3.51
+                                            (1.68)         (2.00)        (2.99)         (1.56)         (6.84)         (6.47)
+
+Turnover (monthly)                           0.27           0.45           1.13           3.06           0.69          0.99
+MI (bps)                                    16.92          17.71          18.32          16.99          16.46         15.93
+Sharpe ratio (gross)                         0.27           0.34           0.48           0.69           1.13           1.28
+Sharpe ratio (net)                           0.22           0.26           0.32           0.17           0.88           0.83
+Obs                                           729            729          1,023          1,034           729            729
+
+
+
+
+                       Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 8
+                                                Table VII
+                          Returns Results – Full sample 1926 – 2011 (Continued)
+
+
+
+
+Panel B: All Stocks 1982 - 2011 - International
+                                             SMB         HML       UMD            STR     ValMom         Combo
+Realized cost                                 0.94        1.48       2.70         6.58           1.86       2.37
+Break-even cost                               1.71        6.78       7.34         3.35           7.12       4.79
+Realized minus breakeven                     -0.77       -5.31      -4.64         3.23          -5.26      -2.42
+t- statistics                              -(13.69)    -(63.21)   -(45.53)     (14.30)      -(74.58)     -(30.16)
+Break-even fund size (billions)            $113.45     $189.85     $49.57        $3.30      $106.42       $40.22
+Return (Gross)                                1.71        6.78       7.34         3.35           7.12       4.79
+                                             (1.12)      (3.87)     (3.01)       (1.76)         (7.17)     (6.25)
+
+Return (Net)                                  0.77        5.31       4.64        -3.23           5.26       2.42
+                                             (0.50)      (3.04)     (1.89)      -(1.66)         (5.29)     (3.13)
+
+Turnover (monthly)                            0.37        0.57       1.16         3.03           0.78       1.04
+MI (bps)                                     21.27       21.74      19.45        18.11          19.88      18.97
+Sharpe ratio (gross)                          0.21        0.72       0.56         0.32           1.34       1.17
+Sharpe ratio (net)                            0.09        0.57       0.35        -0.30           0.99       0.58
+Obs                                            345         345        349          360            345        345
+
+
+
+
+Panel C: All Stocks 1926 - 2011 - Global
+                                             SMB         HML       UMD            STR     ValMom         Combo
+Realized cost                                 0.59        0.99       2.45         6.11           1.37       1.85
+Break-even cost                               2.61        4.88       7.88         8.33           6.75       5.63
+Realized minus breakeven                     -2.02       -3.88      -5.43        -2.22          -5.38      -3.78
+t- statistics                              -(87.14)   -(107.88)   -(76.71)     -(18.75)   -(153.80)      -(90.36)
+Break-even fund size (billions)            $467.72     $379.41    $115.50       $12.75      $235.89       $94.58
+Return (Gross)                                2.61        4.88       7.88         8.33           6.75       5.63
+                                             (2.50)      (3.86)     (4.67)       (6.80)     (10.66)      (11.73)
+
+Return (Net)                                  2.02        3.88       5.43         2.22           5.38       3.78
+                                             (1.93)      (3.08)     (3.19)       (1.81)         (8.47)     (7.85)
+
+Turnover (monthly)                            0.29        0.48       1.14         3.07           0.71       1.00
+MI (bps)                                     16.92       17.39      17.88        16.57          16.06      15.37
+Sharpe ratio (gross)                          0.32        0.50       0.51         0.73           1.37       1.51
+Sharpe ratio (net)                            0.25        0.40       0.35         0.20           1.09       1.01
+Obs                                            729         729      1,023        1,029            729        729
+
+
+
+
+                       Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 9
+                                             Table VIII
+                 Returns Results – Optimized Portfolios, Tradable Sample, 1980 – 2011
+This table reports portfolio returns gross and net of trading costs. We report returns of value (HML), Size (SMB),
+momentum (UMD), reversal (STR), a 50-50 portfolio of UMD and HML (VALMOM) and a composite portfolio (COMBO)
+that puts equal weights in SMB, HML, UMD and STR. Country portfolios are aggregated into International and Global
+portfolios using the country’s total market capitalization as of the prior month. This table includes all available tradable
+stocks in the combined CRSP Xpressfeed global data. The sample period runs from 1980 to 2011. To select the tradable
+universe, at the end of each calendar month we rank all stocks with available market capitalization, 1-year average daily
+volume, market betas and idiosyncratic volatility based on their market capitalization and on their 1-year average daily
+volume. We sum the rank and select the top 2,000 U.S. securities and the top 2,000 International securities based on the
+combined rank. Portfolio are optimized for trading costs by minimizing the total dollar trading costs subject to a 1%
+tracking error constraint relative the unconstrained portfolio and a maximum trade constraint equal to 5% of the stock’s
+average daily volume. For each security, the predicted market impact MI is computed using coefficients from column (4)
+Table IV. Returns and costs are annualized, MI is in basis points, t-statistics are reported below the coefficient estimates and
+5% statistical significant is indicated in bold.
+
+Panel A: Tradable Stocks 1980- 2011 - U.S. - Starting NAV 100M
+                                              SMB                HML       UMD              STR         ValMom          Combo
+Starting Nav (Million, USD)                  100.00          100.00        100.00         100.00          100.00         100.00
+Ending Nav (Million, USD)                    856.86          988.18        738.30         112.77        1,322.47         902.08
+
+Non-optimized Excess Return (Gross)             1.99              3.96       4.95           4.23           4.46            3.78
+                                              (1.31)             (1.68)     (1.75)         (1.98)         (3.89)          (4.81)
+
+Optimized Exess Return (Gross)                  2.28              3.56       4.61           2.12           4.48            4.29
+                                              (1.56)             (1.60)     (1.71)         (1.07)         (3.55)          (4.31)
+
+Optimized Excess Return (Net)                   2.07              2.99       2.47          -4.05           3.37            2.06
+                                              (1.42)             (1.35)     (0.91)        -(2.07)         (2.66)          (2.10)
+
+Total trading costs (non-optimized)             0.99              2.28       4.78          10.82            4.57           7.52
+Total trading costs                             0.21              0.57       2.14           6.17            1.11           2.22
+Turnover (non-optimized)                        0.27              0.47       1.09           3.00            0.97           1.70
+Turnover                                        0.10              0.22       0.71           1.95            0.39           0.71
+MI (non-optimized, bps)                       30.76              40.79      36.37          30.01           39.35          36.96
+MI (bps)                                      17.67              21.72      25.23          26.36           23.95          26.17
+Sharpe ratio (gross, non-optimized)             0.23              0.30       0.31            0.35           0.69           0.85
+Sharpe ratio (gross)                            0.28              0.28       0.30            0.19           0.63           0.76
+Sharpe ratio (net)                              0.25              0.24       0.16           -0.37           0.47           0.37
+Beta to non-optimized                           0.94              0.93       0.95           0.90            1.06           1.16
+Tracking error to non-optimized (%)             1.77              2.05       1.92           2.44            2.03           2.15
+Portfolio volatility                            8.21             12.52      15.24          11.05            7.14           5.53
+Obs                                             382                382        382            382            382             382
+
+
+
+
+                      Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 10
+                                           Table VIII
+        Returns Results – Optimized Portfolios, Tradable Sample, 1980 – 2011 (Continued)
+
+
+Panel B: Tradable Stocks 1980- 2011 - U.S. - Starting NAV 200M
+                                               SMB               HML        UMD        STR     ValMom     Combo
+Starting Nav (Million, USD)                   200.00          200.00        200.00   200.00      200.00     200.00
+Ending Nav (Million, USD)                   1,710.52        1,854.77      1,275.90   152.16    2,433.47   1,475.60
+
+Non-optimized Excess Return (Gross)             1.99              3.96       4.96     4.23        4.46       3.79
+                                              (1.31)             (1.68)     (1.75)   (1.98)      (3.89)     (4.81)
+
+Optimized Exess Return (Gross)                  2.32              3.56       4.57      2.03       4.56       4.18
+                                              (1.58)             (1.60)     (1.70)   (1.01)      (3.58)     (4.30)
+
+Optimized Excess Return (Net)                   2.08              2.81       2.00     -5.27       3.12       1.43
+                                              (1.42)             (1.26)     (0.75)   -(2.68)     (2.45)     (1.50)
+
+Total trading costs (non-optimized)             1.24              2.88       5.83     12.31       5.54       8.85
+Total trading costs                             0.25              0.76       2.56      7.30       1.44       2.75
+Turnover (non-optimized)                        0.27              0.47       1.09      3.01       0.97       1.70
+Turnover                                        0.11              0.25       0.68      1.97       0.41       0.72
+MI (non-optimized, bps)                        38.53             51.51      44.34     34.12      47.81      43.46
+MI (bps)                                       19.39             25.57      31.28     30.84      28.95      31.94
+Sharpe ratio (gross, non-optimized)             0.23              0.30       0.31      0.35       0.69       0.85
+Sharpe ratio (gross)                            0.28              0.28       0.30      0.18       0.64       0.76
+Sharpe ratio (net)                              0.25              0.22       0.13     -0.48       0.43       0.27
+Beta to non-optimized                           0.95              0.94       0.94      0.90       1.07       1.13
+Tracking error to non-optimized (%)             1.71              2.00       2.05      2.64       2.10       2.08
+Portfolio volatility                            8.29             12.56      15.15     11.09       7.20       5.39
+Obs                                             382                382        382       382        382        382
+
+
+
+
+                      Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 11
+                                           Table VIII
+        Returns Results – Optimized Portfolios, Tradable Sample, 1980 – 2011 (Continued)
+Panel C: Tradable Stocks 1980- 2011 - International - Starting NAV 200M
+                                               SMB             HML          UMD        STR     ValMom     Combo
+Starting Nav (Million, USD)                   200.00          200.00       200.00    200.00     200.00     200.00
+Ending Nav (Million, USD)                     384.18          856.43       332.70    195.68     641.65     467.84
+
+Non-optimized Excess Return (Gross)             0.84            5.85         3.73      4.14       4.79       3.44
+                                               (0.63)          (2.34)       (1.11)   (1.33)      (4.08)     (3.37)
+
+Optimized Exess Return (Gross)                  0.90            6.10         2.77      2.91       4.24       3.09
+                                               (0.69)          (2.58)       (0.86)   (0.97)      (3.31)     (2.62)
+
+Optimized Excess Return (Net)                   0.57            5.18         0.67     -2.40       3.26       1.57
+                                               (0.43)          (2.19)       (0.21)   -(0.81)     (2.54)     (1.34)
+
+Total trading costs (non-optimized)             1.40               2.97      5.14     12.25       4.56       7.21
+Total trading costs                             0.34               0.92      2.10      5.31       0.98       1.52
+Turnover (non-optimized)                        0.37               0.57      1.19      3.01       1.03       1.67
+Turnover                                        0.16               0.34      0.78      2.14       0.39       0.58
+MI (non-optimized, bps)                        31.47           43.21        36.01     33.86      36.86      35.90
+MI (bps)                                       17.96           22.80        22.33     20.69      20.83      21.98
+Sharpe ratio (gross, non-optimized)             0.14               0.54      0.25      0.30       0.93       0.77
+Sharpe ratio (gross)                            0.16               0.59      0.20      0.22       0.76       0.60
+Sharpe ratio (net)                              0.10               0.50      0.05     -0.19       0.58       0.31
+Beta to non-optimized                           0.96            0.94         0.96      0.94       1.05       1.09
+Tracking error to non-optimized (%)             1.31            1.45         1.37      2.07       1.58       1.67
+Portfolio volatility                            5.74           10.32        14.09     12.88       5.62       5.12
+Obs                                              229               229        229       229        229        229
+
+Panel D: Tradable Stocks 1980- 2011 - Global - Starting NAV 200M
+                                               SMB             HML          UMD        STR     ValMom     Combo
+Starting Nav (Million, USD)                   200.00           200.00       200.00   200.00      200.00     200.00
+Ending Nav (Million, USD)                   1,615.25         2,888.74     1,170.16   174.14    2,412.09   1,373.86
+
+Non-optimized Excess Return (Gross)             1.43            4.77         4.76     4.08        4.76       3.76
+                                               (1.19)          (2.38)       (1.91)   (2.16)      (5.11)     (5.38)
+
+Optimized Exess Return (Gross)                  2.04            4.68         3.57      1.57       3.99       3.07
+                                               (1.77)          (2.50)       (1.53)   (0.92)      (3.83)     (3.88)
+
+Optimized Excess Return (Net)                   1.77            3.97         1.43     -5.02       3.01       1.16
+                                               (1.54)          (2.12)       (0.61)   -(3.01)     (2.88)     (1.49)
+
+Total trading costs (non-optimized)             1.58               3.51      6.48     13.40       6.16       9.50
+Total trading costs                             0.27               0.71      2.14      6.58       0.98       1.91
+Turnover (non-optimized)                        0.30               0.50      1.12      3.01       0.99       1.70
+Turnover                                        0.11               0.23      0.59      1.70       0.30       0.47
+MI (non-optimized, bps)                        43.66           58.07        48.07     37.07      51.73      46.68
+MI (bps)                                       20.30           26.00        30.35     32.19      27.57      34.21
+Sharpe ratio (gross, non-optimized)             0.21               0.42      0.34      0.38       0.91       0.95
+Sharpe ratio (gross)                            0.31               0.44      0.27      0.16       0.68       0.69
+Sharpe ratio (net)                              0.27               0.38      0.11     -0.53       0.51       0.26
+Beta to non-optimized                           0.92            0.92         0.92      0.86       1.06       0.98
+Tracking error to non-optimized (%)             2.03            2.14         2.23      2.83       2.01       2.06
+Portfolio volatility                            6.50           10.56        13.16      9.40       5.90       4.39
+Obs                                              382               382        382       382        382        382
+
+
+
+
+                      Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 12
+                                               Table IX
+                         Tracking Error Frontier, Tradable Sample, 1980 – 2011
+This table reports portfolio net Sharpe ratios and total trading costs. We report results for value (HML), Size (SMB),
+momentum (UMD), reversal (STR), a 50-50 portfolio of UMD and HML (VALMOM) and a composite portfolio (COMBO)
+that puts equal weights in SMB, HML, UMD and STR. Country portfolios are aggregated into International and Global
+portfolios using the country’s total market capitalization as of the prior month. This table includes all available tradable
+stocks in the combined CRSP Xpressfeed global data. The sample period runs from 1980 to 2011. To select the tradable
+universe, at the end of each calendar month we rank all stocks with available market capitalization, 1-year average daily
+volume, market betas and idiosyncratic volatility based on their market capitalization and on their 1-year average daily
+volume. We sum the rank and select the top 2,000 U.S. securities and the top 2,000 International securities based on the
+combined rank. Portfolio are optimized for trading costs by minimizing the total dollar trading costs subject to a tracking
+error constraint relative the unconstrained portfolio and a maximum trade constraint equal to 5% of the stock’s average daily
+volume. The starting NAV is 200 Million USD, corresponding to Panel B, Table VII. For each security, the predicted
+market impact MI is computed using coefficients from column (4) Table IV. Sharpe ratios and costs are annualized.
+
+
+Panel A: Tradable Stocks 1980- 2011 - U.S. - Starting NAV 200M
+
+                                Ex Ante TE           SMB          HML          UMD           STR      ValMom        Combo
+                                     (bps)
+
+Total trading costs                      0             1.24         2.88         5.83        12.31         5.54         8.85
+                                        50             0.47         1.38         3.81         9.79         3.46         5.30
+                                        75             0.32         1.02         3.13         8.59         2.25         4.41
+                                       100             0.25         0.76         2.56         7.30         1.44         2.75
+                                       200             0.16         0.30         1.11         3.40         0.31         0.39
+Sharpe ratio (net)                       0             0.09         0.08        -0.05        -0.67        -0.02        -0.44
+                                        50             0.17         0.17         0.07        -0.55         0.26         0.08
+                                        75             0.20         0.20         0.11        -0.51         0.38         0.11
+                                       100             0.25         0.22         0.13        -0.48         0.43         0.27
+                                       200             0.25         0.20         0.11        -0.38         0.17         0.26
+
+Break-even size (USD billion)            0          354.27       189.56         65.92         9.45      129.47         54.36
+                                       100         1,584.36      486.44         94.44        13.17      248.51         64.80
+
+
+
+
+                      Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 13
+                                             Table IX
+                 Tracking Error Frontier, Tradable Sample, 1980 – 2011 (continued)
+
+
+Panel A: Tradable Stocks 1980- 2011 - International - Starting NAV 200M
+
+                                Ex Ante TE        SMB         HML         UMD       STR     ValMom       Combo
+                                     (bps)
+Total trading costs                     0          1.40        2.97         5.14   12.25          4.56     7.21
+                                       50          0.70        1.63         3.42    9.56          2.45     4.33
+                                       75          0.50        1.25         2.84    8.31          1.60     2.94
+                                      100          0.36        1.00         2.33    5.70          1.08     1.62
+                                      200          0.23        0.39         0.86    3.29          0.33     0.34
+Sharpe ratio (net)                      0         -0.09        0.26        -0.09    -0.81         0.14    -0.46
+                                       50          0.03        0.37         0.00    -0.67         0.45    -0.01
+                                       75          0.06        0.42         0.03    -0.63         0.55     0.12
+                                      100          0.09        0.49         0.03    -0.24         0.55     0.27
+                                      200          0.26        0.63        -0.05    -0.40         0.56     0.50
+
+Break-even size (USD billion)           0         36.72      107.70        15.99    2.75         27.33     7.40
+                                      100        223.49      325.42        27.25    3.84        167.08    56.39
+
+
+
+
+Panel A: Tradable Stocks 1980- 2011 - Global - Starting NAV 200M
+
+                                Ex Ante TE        SMB         HML         UMD       STR     ValMom       Combo
+                                     (bps)
+Total trading costs                     0          1.58        3.51         6.48   13.40          6.16     9.50
+                                       50          0.57        1.59         4.01   10.54          3.26     5.30
+                                       75          0.40        1.12         3.15    8.93          1.96     3.72
+                                      100          0.30        0.81         2.44    7.29          1.12     2.13
+                                      200          0.17        0.29         0.88    2.97          0.31     0.33
+Sharpe ratio (net)                      0         -0.02        0.11        -0.12    -0.87        -0.08    -0.71
+                                       50          0.12        0.25         0.04    -0.72         0.37    -0.04
+                                       75          0.19        0.31         0.08    -0.65         0.47     0.12
+                                      100          0.26        0.36         0.10    -0.60         0.50     0.22
+                                      200          0.22        0.33         0.02    -0.48         0.17     0.23
+
+Break-even size (USD billion)           0        390.99      297.26        81.91   12.20        156.80    61.76
+                                      100      1,807.84      811.85       121.68   17.00        415.60   121.19
+
+
+
+
+                      Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 14
+                                                                    Figure 1
+                                              Event-Time Average Market Impact, 1998 – 2011, U.S. only
+This table shows average Market Impact (MI). We restrict the sample to each calendar month, we compute the average cost
+of all trade baskets executed during the month. This table reports time-series averages of the cross sectional estimates. When
+computing time series averages, we weight each monthly observation by the number of baskets executed during the month.
+This table includes all available developed market equity transactions (cash equities and equity swaps) in our data between
+August 1998 and December 2011. Market Impact is in basis points.
+
+            10.00
+
+
+
+                        9.00
+
+
+
+
+                        8.00
+
+
+
+                        7.00
+
+
+
+
+                        6.00
+    MI (basis points)
+
+
+
+
+                        5.00
+
+
+
+
+                        4.00
+
+
+
+                        3.00
+
+
+
+
+                        2.00
+
+
+
+                        1.00
+
+
+
+
+                        0.00
+                               9:30   10:00    11:00    12:00        13:00       14:00   15:00   16:00                      9:30              16:00
+
+
+
+                                                       date t (trade duration)                           Overnight(t,t+1)          Date t+1
+
+
+
+
+                                          Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 15
+                                                                    Figure 2
+                                                        Average Market Impact, 1998 – 2011.
+This table shows average Market Impact (MI). Each calendar month, we compute the average cost of all trade baskets
+executed during the month. This table reports time-series averages of the cross sectional estimates. When computing time
+series averages, we weight each monthly observation by the number of baskets executed during the month. This table
+includes all available developed market equity transactions (cash equities and equity swaps) in our data between August
+1998 and December 2011. Market Impact is in basis points.
+
+
+                     25.0
+
+
+
+
+                     20.0
+ MI (basis points)
+
+
+
+
+                     15.0
+
+
+
+
+                     10.0
+
+
+
+
+                      5.0
+
+
+
+
+                      0.0
+                            All sample        U.S.        U.S.     International   Large Cap   Small Cap   Long Short   Long Only
+                                          (Nyse/Amex)   (Nasdaq)       Full sample     Post 2003
+
+
+
+
+                                         Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 16
+                                                               Figure 3
+                                  Trade Execution Data, 1998 – 2011. Realized Trading Costs – Inflows
+This figure shows average Market Impact (MI). Each calendar month, we compute average cost of all trades during the
+month. This figure plots time-series averages of the cross sectional estimates. When computing time series averages, we
+weight each monthly observation by the number of stocks traded during the month. This table includes all available
+developed market equity transactions executed in long-only accounts (cash equities and equity swaps) in our data between
+August 1998 and December 2011. The distinction between large cap and small cap is based on the portfolio’s benchmark.
+“Inflows” are defined as the first trade for a given account. Market Impact is in basis points.
+
+
+
+
+                           25.0
+
+
+
+
+                           20.0
+  Mean MI (basis points)
+
+
+
+
+                           15.0
+
+
+
+
+                           10.0
+
+
+
+
+                            5.0
+
+
+
+
+                            0.0
+                                       All sample                              Large Cap                         Small Cap
+                                                    Inflows Only (Long-Only)      All other Trades (Long-Only)
+
+
+
+
+                                     Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 17
+                                                                                                      Figure 4
+                                                                                     Market Impact by Fraction of Trading Volume
+This table shows average Market Impact (MI). We sort all trades in our datasets in 30 bins based on their fraction of daily
+volume and compute average and median market impact for each bucket. This table includes all available developed market
+equity transactions (cash equities and equity swaps) in our data between August 1998 and December 2011. Market Impact is
+in basis points.
+
+
+
+
+                                 45.0
+                                                                                                                                         Average MI                           Median MI                           Fitted mean
+
+
+                                 40.0
+
+
+
+                                 35.0
+
+
+
+                                 30.0
+  Market impact (basis points)
+
+
+
+
+                                 25.0
+
+
+
+                                 20.0
+
+
+
+                                 15.0
+
+
+
+                                 10.0
+
+
+
+                                  5.0
+
+
+
+                                  0.0
+                                                                                                                 0.08%
+
+
+                                                                                                                                 0.12%
+
+
+                                                                                                                                                  0.18%
+
+
+
+
+                                                                                                                                                                                                                                                                                  11.78%
+                                        0.00%
+                                                0.00%
+                                                        0.01%
+                                                                 0.01%
+                                                                         0.02%
+                                                                                 0.03%
+                                                                                         0.04%
+                                                                                                 0.05%
+                                                                                                         0.06%
+
+
+                                                                                                                         0.10%
+
+
+                                                                                                                                          0.15%
+
+
+                                                                                                                                                          0.22%
+                                                                                                                                                                  0.26%
+                                                                                                                                                                          0.32%
+                                                                                                                                                                                  0.38%
+                                                                                                                                                                                          0.46%
+                                                                                                                                                                                                  0.55%
+                                                                                                                                                                                                          0.67%
+                                                                                                                                                                                                                  0.81%
+                                                                                                                                                                                                                          1.00%
+                                                                                                                                                                                                                                  1.25%
+                                                                                                                                                                                                                                          1.60%
+                                                                                                                                                                                                                                                  2.11%
+                                                                                                                                                                                                                                                          2.88%
+                                                                                                                                                                                                                                                                  4.08%
+                                                                                                                                                                                                                                                                          6.10%
+                                                                                                                                          Fraction of daily volume
+
+
+
+
+                                                                Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 18
+                                             Figure 5
+             Tracking Error Frontier, Tradable Sample, 1980 – 2011. Total Trading Costs
+This figure plot reports portfolio total trading costs. We report results for value (HML), Size (SMB), momentum (UMD), reversal (STR), a
+50-50 portfolio of UMD and HML (VALMOM) and a composite portfolio (COMBO) that puts equal weights in SMB, HML, UMD and
+STR. Country portfolios are aggregated into International and Global portfolios using the country’s total market capitalization as of the
+prior month. This table includes all available tradable stocks in the combined CRSP Xpressfeed global data. The sample period runs from
+1980 to 2011. To select the tradable universe, at the end of each calendar month we rank all stocks with available market capitalization, 1-
+year average daily volume, market betas and idiosyncratic volatility based on their market capitalization and on their 1-year average daily
+volume. We sum the rank and select the top 2,000 U.S. securities and the top 2,000 International securities based on the combined rank.
+Portfolio are optimized for trading costs by minimizing the total dollar trading costs subject to a tracking error constraint relative the
+unconstrained portfolio and a maximum trade constraint equal to 5% of the stock’s average daily volume. For each security, the predicted
+market impact MI is computed using coefficients from column (4) Table IV. Costs are annualized.
+
+
+                                                                                     14.0
+                                                                                                                      Total trading costs - U.S.
+
+                                                                                     12.0
+                                                    Total Trading Costs (Annual %)
+
+
+
+
+                                                                                     10.0
+
+
+                                                                                      8.0
+
+
+                                                                                      6.0
+
+
+                                                                                      4.0
+
+
+                                                                                      2.0
+
+
+                                                                                      0.0
+                                                                                                0               50             75                  100                200
+                                                                                                                      Ex-Ante Tracking (bps)
+
+                                                                                                    SMB   HML        UMD         STR          ValMom         Combo
+
+
+
+
+                                                   14.0
+                                                                                                                      Total trading costs - International
+
+                                                   12.0
+                  Total Trading Costs (Annual %)
+
+
+
+
+                                                   10.0
+
+
+                                                    8.0
+
+
+                                                    6.0
+
+
+                                                    4.0
+
+
+                                                    2.0
+
+
+                                                    0.0
+                                                                                            0               50                 75                      100                  200
+                                                                                                                      Ex-Ante Tracking (bps)
+
+                                                                                                SMB       HML        UMD          STR          ValMom         Combo
+
+
+
+
+                                                                                Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 19
+                                              Figure 6
+                 Tracking Error Frontier, Tradable Sample, 1980 – 2011. Sharpe Ratios
+This figure plot reports portfolio net Sharpe ratios. We report results for value (HML), Size (SMB), momentum (UMD), reversal (STR), a
+50-50 portfolio of UMD and HML (VALMOM) and a composite portfolio (COMBO) that puts equal weights in SMB, HML, UMD and
+STR. Country portfolios are aggregated into International and Global portfolios using the country’s total market capitalization as of the
+prior month. This table includes all available tradable stocks in the combined CRSP Xpressfeed global data. The sample period runs from
+1980 to 2011. To select the tradable universe, at the end of each calendar month we rank all stocks with available market capitalization, 1-
+year average daily volume, market betas and idiosyncratic volatility based on their market capitalization and on their 1-year average daily
+volume. We sum the rank and select the top 2,000 U.S. securities and the top 2,000 International securities based on the combined rank.
+Portfolio are optimized for trading costs by minimizing the total dollar trading costs subject to a tracking error constraint relative the
+unconstrained portfolio and a maximum trade constraint equal to 5% of the stock’s average daily volume. For each security, the predicted
+market impact MI is computed using coefficients from column (4) Table IV. Sharpe ratios are annualized.
+
+
+                                               0.6
+                                                                                                   Sharpe Ratio (net) - U.S.
+
+                                               0.4
+
+
+
+                                               0.2
+                        Sharpe Ratio (net)
+
+
+
+
+                                               0.0
+                                                                         0               50                 75                  100                200
+
+                                             -0.2
+
+
+
+                                             -0.4
+
+
+
+                                             -0.6
+
+
+
+                                             -0.8
+                                                                                                  Ex-Ante Tracking (bps)
+
+                                                                             SMB       HML        UMD         STR          ValMom         Combo
+
+
+
+
+                                                                  0.8
+                                                                                                    Sharpe Ratio (net) - International
+
+                                                                  0.6
+
+
+                                                                  0.4
+
+
+                                                                  0.2
+                                             Sharpe Ratio (net)
+
+
+
+
+                                                                  0.0
+                                                                             0               50             75                 100               200
+
+                                                                  -0.2
+
+
+                                                                  -0.4
+
+
+                                                                  -0.6
+
+
+                                                                  -0.8
+                                                                                                  Ex-Ante Tracking (bps)
+
+                                                                                 SMB   HML        UMD         STR          ValMom        Combo
+
+
+
+
+                       Trading Costs of Asset Pricing Anomalies – Tables and Figures - Page 20
+Trading Costs of Asset Pricing Anomalies
+Appendix: Additional Empirical Results
+
+
+
+
+    ANDREA FRAZZINI, RONEN ISRAEL, AND TOBIAS J. MOSKOWITZ
+
+
+
+
+      Trading Costs of Asset Pricing Anomalies – Appendix - Page A1
+This Appendix contains additional analysis and results.
+
+    Table A1 reports additional summary statistics of our merged CRSP/XpressFeed global
+     data.
+
+    Table A2 reports coverage of our Trade Execution Data.
+
+    Table A3 reports average market impact of our Trade Execution data based on pooled
+     averages.
+
+    Table A4 reports summary statistics of our predicted market impact data.
+
+    Table A5 reports average market impact of all U.S. trades in our Trade Execution data,
+     relative to the weighted average price. For each stock we compute the value-weighted
+     average price (VWAP) during the trading interval (one day or multiple days) and
+     compute market impact relative to the VWAP price. VWAPs are compute from TAQ
+     data by averaging all reported trades with a time stamp between 9.30am and 4.00pm.
+
+    Table A6 reports portfolio trading costs. We report difference between realized and
+     breakeven trading costs based on the full sample of stocks (1926 – 2011).
+
+    Table A7 reports average market impact for inflows and for all other trades in our
+     execution database. We restrict the sample to trades of long-only accounts and report
+     average trading costs of inflows (defined as the first trade for a given account) and all
+     other trades.
+
+    Figure A1 reports average and median market impact by country.
+
+
+
+
+                    Trading Costs of Asset Pricing Anomalies – Appendix - Page A2
+                                              Table A1
+                          Summary Statistics CRSP-XpressFeed Global data
+This table shows summary statistics as of June of each year. The sample includes all commons stocks on the
+CRSP/XpressFeed 

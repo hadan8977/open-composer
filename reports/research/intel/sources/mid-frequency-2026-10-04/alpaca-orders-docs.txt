@@ -1,0 +1,555 @@
+URL: https://docs.alpaca.markets/docs/orders-at-alpaca
+FETCHED_UTC: 2026-10-04T18:36Z
+HTTP: 200 text/html; charset=utf-8
+-----
+ Placing Orders 
+ For AI agents: visit https://docs.alpaca.markets/us/llms.txt for an index of all pages formatted in Markdown and endpoints in OpenAPI. Append .md to any documentation page URL to get its markdown version. Jump to Content Region: US Home Documentation API Reference Changelog Region: US Log In Trading Dashboard Broker Dashboard Documentation Search Ask AI Log In Trading Dashboard Broker Dashboard Home Documentation API Reference Changelog Placing Orders Introduction Welcome About Alpaca Alpaca API Platform Authentication SDKs and Tools Additional Resources Trading CLI Trading MCP Server Broker MCP Server BROKER API About Broker API Getting Started with Broker API Credentials Management Use Cases Integration Setup with Alpaca Broker API FAQs Mandatory Corporate Actions Voluntary Corporate Actions FDIC Sweep Program Instant Funding Fully Paid Securities Lending (FPSL) 24/5 Trading OmniSub Fixed Income ACATS API Intraday Margin Rule for Non-Leverage Margin Accounts The Intraday Margin Rule Understanding FINRA’s New Intraday Margin Rule and the End of PDT US IPOs (Initial Public Offerings) Customer Account Opening Accounts Statuses International Accounts Domestic (USA) Accounts Data Validations IRA Accounts Overview Crypto Trading Crypto Wallets API Funding Accounts Journals API Funding Wallets ACH Funding Instant Funding Trading Fully Paid Securities Lending (FPSL) FPSL Integration Guide for Fully Disclosed FPSL Integration Guide for OmniSub Portfolio Rebalancing SSE Events Account Status Events for KYCaaS Activities Daily Processes and Reconcilations Banking Holiday Funding Processes Statements and Confirms Local Currency Trading (LCT) Options Trading Overview Index Options Fixed Income Tokenization Guide for Issuer Tokenization Guide for Authorized Participant US IPOs (Initial Public Offerings) Rate Limits Custodial accounts TRADING API About Trading API Getting Started with Trading API Working with /account Working with /assets Working with /orders Working with /positions Paper Trading Trading Account Crypto Spot Trading Crypto Orders Crypto Pricing Data Crypto Spot Trading Fees Options Trading Options Orders Options Level 3 Trading Non-Trade Activities for Option Events Account Activities Fractional Trading Margin and Short Selling Placing Orders DMA Gateway / Advanced Order Types User Protection Websocket Streaming Trading API FAQs 24/5 Trading Position Average Entry Price Calculation Intraday Margin Rule for Non-Leverage Margin Accounts The Intraday Margin Rule Understanding FINRA’s New Intraday Margin Rule and the End of PDT Regulatory Fees Market Data API About Market Data API Getting Started with Market Data API Historical API Historical Stock Data Historical Crypto Data Historical Option Data Historical News Data WebSocket Stream Real-time Stock Data Real-time Crypto Data Real-time News Real-time Option Data Market Data FAQ Connect API About Connect API Registering Your App Using OAuth2 and Trading API FIX API About FIX API FIX Specification Placing Orders Using Alpaca's Trading API, users can monitor, place, and cancel orders. Each order has a unique identifier provided by the client. If the client does not provide one, the system will automatically generate a client-side unique order ID. This ID is returned as part of the order object, along with the other fields described below. Once an order is placed, it can be queried using either the client-provided order ID or the system-assigned unique ID to check its status. Updates on open orders are also delivered through the streaming interface, which is the recommended method for maintaining order state. 
+ Buying Power 
+ To accept orders that open new positions or add to existing ones, your account must have sufficient buying power. Alpaca applies a buying power check to both long buys and short sells. 
+ The calculated value of an opening short sell order is MAX(order’s limit price, 3% above the current ask price) order quantity. For market short orders, the value is simply (3% above the current ask price) order quantity. 
+ The order’s calculated value is then compared against your available buying power to determine whether it can be accepted. Note that your available buying power is reduced by existing open buy long and sell short orders. Your sell long and buy to cover orders do not replenish your available buying power until they are executed. 
+ For example, if your buying power is $10,000 and you submit a limit buy order with a value of $3,000, the order will be accepted and your remaining available buying power will be $7,000. Even if the order remains unfilled, it will continue to count against your available buying power until it is either executed or canceled. If you then submit another order with a value of $8,000, it will be rejected. 
+ Initial buying power checks on orders: 
+ When the core session is open: Far side of the NBBO (using Bid & Ask Price) 
+ If the order is entered while the extended hours session is open: Midpoint of the inside market 
+ If the order is entered when the core session and extended hours session are closed (pre-market hours): the latest trade from market cache 
+ Equities Trading 
+ The following section deals with equity trading 
+ Orders Submitted Outside of Eligible Trading Hours 
+ Orders not eligible for extended hours submitted after 4:00pm ET will be queued up for release the next trading day. 
+ Orders eligible for extended hours submitted outside of 4:00am - 8:00pm ET are handled as described in the section below. 
+ Extended Hours Trading 
+ Using API v2, you can submit and fill orders during pre-market and after-hours. Extended hours trading has specific risks due to the less liquidity. Please read through Alpaca’s Extended Hours Trading Risk Disclosure for more details. 
+ Currently, we support full extended hours: 
+ Overnight: 8:00pm - 4:00am ET, Sunday to Friday 
+ Pre-market: 4:00am - 9:30am ET, Monday to Friday 
+ After-hours: 4:00pm - 8:00pm ET, Monday to Friday 
+ Submitting an Extended Hours Eligible Order 
+ To indicate an order is eligible for extended hours trading, you need to supply a boolean parameter named extended_hours to your order request. By setting this parameter to true , the order is will be eligible to execute in the pre-market or after-hours. 
+ Only limit orders with time_in_force set to day or gtc orders are accepted as extended hours eligible. All other order types and TIF values will be rejected with an error. You must adhere to these settings to participate in extended hours: 
+ The order type must be set to limit (with a limit price). Any other type of orders will be rejected with an error. 
+ Time-in-force must be set to either day or gtc . Any other time_in_force will be rejected with an error. 
+ For Fractional Orders, starting on October 27, 2021, customers will not be able to send the following sequence of orders outside of market hours for the same security. This is so customers will not have a net short position. Examples of the order sequences that will be rejected are shown below. 
+ Summary Order 1 Order 2 Second Order Handling Accept/Reject 2x Sell Notional Sell Quantity Sell Reject 2x Sell Notional Sell Notional Sell Reject 2x Sell Quantity Sell Notional Sell Reject 2 x Sell [with Correct Quantity] Quantity Sell Quantity Sell Accept 2 x Sell [with Correct Quantity] Quantity Sell Quantity Sell Reject 
+ For more information - please see our Blog Post on this topic. 
+ If this is done you will see the following error message: "unable to open new notional orders while having open closing position orders" . 
+ All symbols supported during regular market hours are also supported during extended hours. Short selling is also treated the same. Assets tradable in the overnight session can be identified via the assets endpoint, please see our 24/5 FAQ for more information 
+ IPO Symbols 
+ Alpaca supports trading symbols which have recently begun trading publicly on major exchanges such as the NYSE and NASDAQ. This process is known as a company going public, or an IPO. 
+ As a registered broker/dealer, Alpaca must follow FINRA regulations regarding order types for IPO symbols: 
+ Alpaca is only able to accept limit orders prior to the security’s first trade on the exchange 
+ Once an IPO begins trading on an exchange, market orders are accepted 
+ To assist our customers, Alpaca will expose an attribute called ipo on the Assets model. The ipo attribute will flag to customers that this particular symbol has an IPO coming up, or is just about to begin trading on an exchange, and therefore a limit order must be used. 
+ Order Types 
+ When you submit an order, you can choose one of supported order types. Currently, Alpaca supports four different types of orders. 
+ Market Order 
+ A market order is a request to buy or sell a security at the currently available market price. It provides the most likely method of filling an order. Market orders fill nearly instantaneously. 
+ As a trade-off, your fill price may slip depending on the available liquidity at each price level as well as any price moves that may occur while your order is being routed to its execution venue. There is also the risk with market orders that they may get filled at unexpected prices due to short-term price spikes. 
+ Limit Order 
+ A limit order is an order to buy or sell at a specified price or better. A buy limit order (a limit order to buy) is executed at the specified limit price or lower (i.e., better). Conversely, a sell limit order (a limit order to sell) is executed at the specified limit price or higher (better). Unlike a market order, you have to specify the limit price parameter when submitting your order. 
+ While a limit order can prevent slippage, it may not be filled for a quite a bit of time, if at all. For a buy limit order, if the market price is within your specified limit price, you can expect the order to be filled. If the market price is equivalent to your limit price, your order may or may not be filled; if the order cannot immediately execute against resting liquidity, then it is deemed non-marketable and will only be filled once a marketable order interacts with it. You could miss a trading opportunity if price moves away from the limit price before your order can be filled. 
+ Sub-penny increments for limit orders 
+ The minimum price variance exists for limit orders. Orders received in excess of the minimum price variance will be rejected. 
+ Limit price >=$1.00: Max Decimals= 2 
+ Limit price <$1.00: Max Decimals = 4 
+ {
+ "code": 42210000,
+ "message": "invalid limit_price 290.123. sub-penny increment does not fulfill minimum pricing criteria"
+} 
+ Stop Orders 
+ A stop (market) order is an order to buy or sell a security when its price moves past a particular point, ensuring a higher probability of achieving a predetermined entry or exit price. Once the order is elected, the stop order becomes a market order. Sell stop orders are not converted into stop limit orders. A stop order does not guarantee the order will be filled at a certain price after it is converted to a market order. 
+ In order to submit a stop order, you will need to specify the stop price parameter in the API. 
+ Example: 
+ Let's say you want to buy 100 shares of TSLA only if it goes up to $210 (assuming current trading price at $200). 
+ You place a buy stop order at $210. 
+ If TSLA reaches $210 , the order is activated and turns into a market order 
+ Sub-penny increments for stop orders 
+ The minimum price variance exists for stop orders. Orders received in excess of the minimum price variance will be rejected. 
+ Stop price >=$1.00: Max Decimals= 2 
+ Stop price <$1.00: Max Decimals = 4 
+ {
+ "code": 42210000,
+ "message": "invalid stop_price 290.123. sub-penny increment does not fulfill minimum pricing criteria"
+} 
+ Stop Limit Order 
+ A stop-limit order is a conditional trade over a set time frame that combines the features of a stop order with those of a limit order and is used to mitigate risk. The stop-limit order will be executed at a specified limit price, or better, after a given stop price has been reached. Once the stop price is reached, the stop-limit order becomes a limit order to buy or sell at the limit price or better. In the case of a gap down in the market that causes the election of your order, but not the execution, your order will remain active as a limit order until it is executable or cancelled. 
+ In order to submit a stop limit order, you will need to specify both the limit and stop price parameters in the API. 
+ Example: 
+ You want to buy 50 shares of TSLA, currently trading at $200. 
+ You want to buy only if it breaks above $210 , but not higher than $215. 
+ You place a buy stop-limit order with:
+ Stop price: $210 → The order is activated when TSLA reaches this price. 
+ Limit price: $215 → The order will only execute at $215 or better. 
+ If TSLA moves to $210 , the order is triggered and converted into a limit order at $215. 
+ Opening and Closing Auction Orders 
+ Market on open and limit on open orders are only eligible to execute in the opening auction. Market on close and limit on close orders are only eligible to execute in the closing auction. Please see the Time in Force section for more details. 
+ Bracket Orders 
+ A bracket order is a chain of three orders that can be used to manage your position entry and exit. It is a common use case of an OTOCO (One Triggers OCO {One Cancels Other}) order. 
+ The first order is used to enter a new long or short position, and once it is completely filled, two conditional exit orders are activated. One of the two closing orders is called a take-profit order, which is a limit order, and the other is called a stop-loss order, which is either a stop or stop-limit order. Importantly, only one of the two exit orders can be executed. Once one of the exit orders is filled, the other is canceled. Please note, however, that in extremely volatile and fast market conditions, both orders may fill before the cancellation occurs. 
+ Without a bracket order, you would not be able to submit both entry and exit orders simultaneously since Alpaca’s system only accepts exit orders for existing positions. Additionally, even if you had an open position, you would not be able to submit two conditional closing orders since Alpaca’s system would view one of the two orders as exceeding the available position quantity. Bracket orders address both of these issues, as Alpaca’s system recognizes the entry and exit orders as a group and queues them for execution appropriately. 
+ In order to submit a bracket order, you need to supply additional parameters to the API. First, add a parameter order_class as “bracket”. Second, give two additional fields take_profit and stop_loss both of which are nested JSON objects. The take_profit object needs limit_price as a field value that specifies limit price of the take-profit order, and the stop_loss object needs a mandatory stop_price field and optional limit_price field. If limit_price is specified in stop_loss , the stop-loss order is queued as a stop-limit order, but otherwise it is queued as a stop order. 
+ An example JSON body parameter to submit a bracket order is as follows. 
+ JSON {
+ "side": "buy",
+ "symbol": "SPY",
+ "type": "market",
+ "qty": "100",
+ "time_in_force": "gtc",
+ "order_class": "bracket",
+ "take_profit": {
+ "limit_price": "301"
+ },
+ "stop_loss": {
+ "stop_price": "299",
+ "limit_price": "298.5"
+ }
+} 
+ This creates three orders. 
+ A buy market order for 100 SPY with GTC 
+ A sell limit order for the same 100 SPY, with limit price = 301 
+ A sell stop-limit order, with stop price = 299 and limit price = 298.5 
+ The second and third orders won’t be active until the first order is completely filled. Additional bracket order details include: 
+ If any one of the orders is canceled, any remaining open order in the group is canceled. 
+ take_profit.limit_price must be higher than stop_loss.stop_price for a buy bracket order, and vice versa for a sell. 
+ Both take_profit.limit_price and stop_loss.stop_price must be present. 
+ Extended hours are not supported. extended_hours must be “false” or omitted. 
+ time_in_force must be day or gtc . 
+ Each order in the group is always sent with a DNR/DNC (Do Not Reduce/Do Not Cancel) instruction. Therefore, the order price will not be adjusted and the order will not be canceled in the event of a dividend or other corporate action. 
+ If the take-profit order is partially filled, the stop-loss order will be adjusted to the remaining quantity. 
+ Order replacement ( PATCH /v2/orders ) is supported to update limit_price and stop_price . 
+ Each order of the group is reported as an independent order in GET /v2/orders endpoint. But if you specify additional parameter nested=true, the order response will nest the result to include child orders under the parent order with an array field legs in the order entity. 
+ OCO Orders 
+ OCO (One-Cancels-Other) is another type of advanced order type. This is a set of two orders with the same side (buy/buy or sell/sell) and currently only exit order is supported. In other words, this is the second part of the bracket orders where the entry order is already filled, and you can submit the take-profit and stop-loss in one order submission. 
+ With OCO orders, you can add take-profit and stop-loss after you open the position, without thinking about those two legs upfront. 
+ In order to submit an OCO order, specify “oco” for the order_class parameter. 
+ SELL BUY {
+ "side": "sell",
+ "symbol": "SPY",
+ "type": "limit",
+ "qty": "100",
+ "time_in_force": "gtc",
+ "order_class": "oco",
+ "take_profit": {
+ "limit_price": "301"
+ },
+ "stop_loss": {
+ "stop_price": "299",
+ "limit_price": "298.5"
+ }
+} {
+ "side": "buy",
+ "symbol": "SPY",
+ "type": "limit",
+ "qty": "100",
+ "time_in_force": "gtc",
+ "order_class": "oco",
+ "take_profit":{
+ "limit_price": "298"
+ },
+ "stop_loss": {
+ "stop_price": "299",
+ "limit_price": "300"
+ }
+} 
+ The type parameter must always be “limit”, indicating the take-profit order type is a limit order. The stop-loss order is a stop order if only stop_price is specified, and is a stop-limit order if both limit_price and stop_price are specified (i.e. stop_price must be present in any case). Those two orders work exactly the same way as the two legs of the bracket orders. 
+ Note that when you retrieve the list of orders with the nested parameter true, the take-profit order shows up as the parent order while the stop-loss order appears as a child order. 
+ Like bracket orders, order replacement is supported to update limit_price and stop_price. 
+ OTO Orders 
+ OTO (One-Triggers-Other) is a variant of bracket order. It takes one of the take-profit or stop-loss order in addition to the entry order. For example, if you want to set only a stop-loss order attached to the position, without a take-profit, you may want to consider OTO orders. 
+ The order submission is done with the order_class parameter be “oto”. 
+ JSON {
+ "side": "buy",
+ "symbol": "SPY",
+ "type": "market",
+ "qty": "100",
+ "time_in_force": "gtc",
+ "order_class": "oto",
+ "stop_loss": {
+ "stop_price": "299",
+ "limit_price": "298.5"
+ }
+} 
+ Either of take_profit or stop_loss must be present (the above example is for take-profit case), and the rest of requirements are the same as the bracket orders. 
+ Like bracket orders, order replacement is not supported yet. 
+ Threshold on stop price of stop-loss orders 
+ For the stop-loss order leg of advanced orders, please be aware the order request can be rejected because of the restriction of the stop_price parameter value. The stop price input has to be at least $0.01 below (for stop-loss sell, above for buy) than the “base price”. The base price is determined as follows. 
+ It is the limit price of the take-profit, for OCO orders. 
+ It is the limit price of the entry order, for bracket or OTO orders if the entry type is limit. 
+ It is also the current market price for any, of OCO, OTO and bracket. 
+ This restriction is to avoid potential race-conditions in the order handling, but as we improve our system capability, this may be loosened in the future. 
+ Trailing Stop Orders 
+ Trailing stop orders allow you to continuously and automatically keep updating the stop price threshold based on the stock price movement. You request a single order with a dollar offset value or percentage value as the trail and the actual stop price for this order changes as the stock price moves in your favorable way, or stay at the last level otherwise. This way, you don’t need to monitor the price movement and keep sending replace requests to update the stop price close to the latest market movement. 
+ Trailing stop orders keep track of the highest (for sell, lowest for buy) prices (called high water mark, or hwm) since the order was submitted, and the user-specified trail parameters determine the actual stop price to trigger relative to high water mark. Once the stop price is triggered, the order turns into a market order, and it may fill above or below the stop trigger price. 
+ To submit a trailing stop order, you will set the type parameter to “trailing_stop”. There are two order submission parameters related to trailing stop, one of which is required when type is “trailing_stop”. 
+ field type description trail_price string <number> a dollar value away from the highest water mark. If you set this to 2.00 for a sell trailing stop, the stop price is always hwm - 2.00 . trail_percent string <number> a percent value away from the highest water mark. If you set this to 1.0 for a sell trailing stop, the stop price is always hwm \* 0.99 . 
+ One of these values must be set for trailing stop orders. The following is an example of trailing order submission JSON parameter. 
+ JSON {
+ "side": "sell",
+ "symbol": "SPY",
+ "type": "trailing_stop",
+ "qty": "100",
+ "time_in_force": "day",
+ "trail_price": "6.15"
+} 
+ The Order entity returned from the GET method has a few fields related to trailing stop orders. 
+ field type description trail_price string <number> This is the same value as specified when the order was submitted. It will be null if this was not specified. trail_percent string <number> This is the same value as specified when the order was submitted. It will be null if this was not specified. hwm string <number> The high water mark value. This continuously changes as the market moves towards your favorable way. stop_price string <number> This is the same as stop price in the regular stop/stop limit orders, but this is derived from hwm and trail parameter, and continuously updates as hwm changes. 
+ If a trailing stop order is accepted, the order status becomes “new”. While the order is pending stop price trigger, you can update the trail parameter by the PATCH method. 
+ field type description trail string <number> The new value of the trail_price or trail_percent value. Such a replace request is effective only for the order type is “trailing_stop” before the stop price is hit. Note, you cannot change the price trailing to the percent trailing or vice versa. 
+ Some notes on trailing stop orders 
+ Trailing stop will not trigger outside of the regular market hours. 
+ Valid time-in-force values for trailing stop are “day” and “gtc”. 
+ Trailing stop orders are currently supported only with single orders. However, we plan to support trailing stop as the stop loss leg of bracket/OCO orders in the future. 
+ Proper use of Trailing Stop orders requires understanding the purpose and how they operate. The primary point to keep in mind with Trailing Stop orders is to ensure the difference between the trailing stop and the price is big enough that typical price fluctuations do not trigger a premature execution. 
+ In fast moving markets, the execution price may be less favorable than the stop price. The potential for such vulnerability increases for GTC orders across trading sessions or stocks experiencing trading halts. The stop price triggers a market order and therefore, it is not necessarily the case that the stop price will be the same as the execution price. 
+ With regard to stock splits, Alpaca reserves the right to cancel or adjust pricing and/or share quantities of trailing stop orders based upon its own discretion. Since Alpaca relies on third parties for market data, corporate actions or incorrect price data may cause a trailing stop to be triggered prematurely. 
+ Notional Order Restrictions 
+ Notional orders (orders placed using the notional field instead of qty ) cannot be replaced. Any attempt to modify a notional order via the replace (PATCH) endpoint — including changes to limit_price , stop_price , qty , or any other field — will be rejected. 
+ If you need to change any parameter on a notional order, cancel the original order and submit a new one. 
+ Time in Force 
+ 🚧 Crypto Time in Force For Crypto Trading, Alpaca only supports gtc , and ioc . OPG , fok , day , and CLS are not supported. 
+ Alpaca supports the following Time-In-Force designations: 
+ time_in_force description day A day order is eligible for execution only on the day it is live. By default, the order is only valid during Regular Trading Hours (9:30am - 4:00pm ET). If unfilled after the closing auction, it is automatically canceled. If submitted after the close, it is queued and submitted the following trading day. However, if marked as eligible for extended hours, the order can also execute during supported extended hours. gtc The order is good until canceled. Non-marketable GTC limit orders are subject to price adjustments to offset corporate actions affecting the issue. We do not currently support Do Not Reduce(DNR) orders to opt out of such price adjustments. opg Use this TIF with a market/limit order type to submit “market on open” (MOO) and “limit on open” (LOO) orders. This order is eligible to execute only in the market opening auction. Any unfilled orders after the open will be cancelled. OPG orders submitted after 9:28am but before 7:00pm ET will be rejected. OPG orders submitted after 7:00pm will be queued and routed to the following day’s opening auction. On open/on close orders are routed to the primary exchange. Such orders do not necessarily execute exactly at 9:30am / 4:00pm ET but execute per the exchange’s auction rules. cls Use this TIF with a market/limit order type to submit “market on close” (MOC) and “limit on close” (LOC) orders. This order is eligible to execute only in the market closing auction. Any unfilled orders after the close will be cancelled. CLS orders submitted after 3:50pm but before 7:00pm ET will be rejected. CLS orders submitted after 7:00pm will be queued and routed to the following day’s closing auction. Only available with API v2. ioc An Immediate Or Cancel (IOC) order requires all or part of the order to be executed immediately. Any unfilled portion of the order is canceled. Only available with API v2. Most market makers who receive IOC orders will attempt to fill the order on a principal basis only, and cancel any unfilled balance. On occasion, this can result in the entire order being cancelled if the market maker does not have any existing inventory of the security in question. fok A Fill or Kill (FOK) order is only executed if the entire order quantity can be filled, otherwise the order is canceled. Only available with API v2. 
+ Aged order policy 
+ Alpaca implements an aged order policy that will automatically cancel GTC orders 90 days after creation to manage risk, reduce errors, and help achieve operational efficiency. The List/Get Orders API endpoint has a field titled expires_at , which provides information on the expiration. On the expires_at date there will be a job that will submit a cancel request to cancel the GTC orders. This will take place on the expires_at date at 4:15 pm ET. The orders will remain in pending_cancel until canceled by the execution venue that Alpaca routed the order to for execution. 
+ Order Types vs Supported Time in Force 
+ This section contains the tables showing time-in-force options for various order types. 
+ Note : Please contact the sales team for any TIF marked with a* . 
+ Whole qty orders (USD) 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ DAY 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ IOC 
+ Yes* 
+ Yes* 
+ No 
+ No 
+ FOK 
+ Yes* 
+ Yes* 
+ No 
+ No 
+ OPG 
+ Yes* 
+ Yes* 
+ No 
+ No 
+ CLS 
+ Yes* 
+ Yes* 
+ No 
+ No 
+ Fractional orders (USD) 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ No 
+ No 
+ No 
+ No 
+ DAY 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ IOC 
+ No 
+ No 
+ No 
+ No 
+ FOK 
+ No 
+ No 
+ No 
+ No 
+ OPG 
+ No 
+ No 
+ No 
+ No 
+ CLS 
+ No 
+ No 
+ No 
+ No 
+ LCT (Whole qty or Fractional) 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ No 
+ No 
+ No 
+ No 
+ DAY 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ IOC 
+ No 
+ No 
+ No 
+ No 
+ FOK 
+ No 
+ No 
+ No 
+ No 
+ OPG 
+ No 
+ No 
+ No 
+ No 
+ CLS 
+ No 
+ No 
+ No 
+ No 
+ Extended Hours orders 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ No 
+ Yes 
+ No 
+ No 
+ DAY 
+ No 
+ Yes 
+ No 
+ No 
+ IOC 
+ No 
+ No 
+ No 
+ No 
+ FOK 
+ No 
+ No 
+ No 
+ No 
+ OPG 
+ No 
+ No 
+ No 
+ No 
+ CLS 
+ No 
+ No 
+ No 
+ No 
+ Crypto orders 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ Yes 
+ Yes 
+ No 
+ Yes 
+ DAY 
+ No 
+ No 
+ No 
+ No 
+ IOC 
+ Yes 
+ Yes 
+ No 
+ No 
+ FOK 
+ No 
+ No 
+ No 
+ No 
+ OPG 
+ No 
+ No 
+ No 
+ No 
+ CLS 
+ No 
+ No 
+ No 
+ No 
+ OTC Assets 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ DAY 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ IOC 
+ No 
+ No 
+ No 
+ No 
+ FOK 
+ No 
+ No 
+ No 
+ No 
+ OPG 
+ No 
+ No 
+ No 
+ No 
+ CLS 
+ No 
+ No 
+ No 
+ No 
+ Options Orders 
+ Time in Force 
+ Market Order 
+ Limit Order 
+ Stop Order 
+ Stop Limit Order 
+ GTC 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ DAY 
+ Yes 
+ Yes 
+ Yes 
+ Yes 
+ IOC 
+ No 
+ No 
+ No 
+ No 
+ FOK 
+ No 
+ No 
+ No 
+ No 
+ OPG 
+ No 
+ No 
+ No 
+ No 
+ CLS 
+ No 
+ No 
+ No 
+ No 
+ Order Lifecycle 
+ An order executed through Alpaca can experience several status changes during its lifecycle. 
+ The most common statuses are described in detail below: 
+ status description new The order has been received by Alpaca, and routed to exchanges for execution. This is the usual initial state of an order. partially_filled The order has been partially filled. filled The order has been filled, and no further updates will occur for the order. done_for_day The order is done executing for the day, and will not receive further updates until the next trading day. canceled The order has been canceled, and no further updates will occur for the order. This can be either due to a cancel request by the user, or the order has been canceled by the exchanges due to its time-in-force. expired The order has expired, and no further updates will occur for the order. replaced The order was replaced by another order, or was updated due to a market event such as corporate action. pending_cancel The order is waiting to be canceled. pending_replace The order is waiting to be replaced by another order. The order will reject cancel request while in this state. 
+ Less common states are described below. Note that these states only occur on very rare occasions, and most users will likely never see their orders reach these states: 
+ status description accepted The order has been received by Alpaca, but hasn’t yet been routed to the execution venue. This could be seen often out side of trading session hours. pending_new The order has been received by Alpaca, and routed to the exchanges, but has not yet been accepted for execution. This state only occurs on rare occasions. accepted_for_bidding The order has been received by exchanges, and is evaluated for pricing. This state only occurs on rare occasions. stopped The order has been stopped, and a trade is guaranteed for the order, usually at a stated price or better, but has not yet occurred. This state only occurs on rare occasions. rejected The order has been rejected, and no further updates will occur for the order. This state occurs on rare occasions and may occur based on various conditions decided by the exchanges. suspended The order has been suspended, and is not eligible for trading. This state only occurs on rare occasions. calculated The order has been completed for the day (either filled or done for day), but remaining settlement calculations are still pending. This state only occurs on rare occasions. 
+ An order may be canceled through the API up until the point it reaches a state of either filled , canceled , or expired . 
+ Odd Lots and Block Trades 
+ When trading stocks, a round lot is typically defined as 100 shares, or a larger number that can be evenly divided by 100. An odd lot is anything that cannot be evenly divided by 100 shares (e.g. 48, 160, etc.). A block trade is typically defined as a trade that involves 10,000 shares or more. 
+ For trading purposes, odd lots are typically treated like round lots. However, regulatory trading rules allow odd lots to be treated differently. Similarly, block trades are usually broken up for execution and may take longer to execute due to the market having to absorb the block of shares over time rather than in one large execution. When combined with a thinly traded stock, it’s quite possible that odd lots and block trades may not get filled or execute in a timely manner, and sometimes, not at all, depending on other factors like order types used. 
+ Short Sales 
+ A short sale is the sale of a stock that a seller does not own. In general, a short seller sells borrowed stock in anticipation of a price decline. The short seller later closes out the position by purchasing the stock. 
+ Order Handling Standards at Alpaca Securities LLC 
+ Market and limit order orders are protected on the primary exchange opening print. We do not necessarily route retail orders to the exchange, but will route orders to market makers who will route orders on your behalf to the primary market opening auction. This protection is subject to exchange time cutoff for each exchange’s opening process. For instance, if you enter a market order between 9:28:01 and 9:29:59 on a Nasdaq security you would not receive the Nasdaq Official Opening Price (NOOP) since Nasdaq has a cutoff of 9:28 for market orders to be sent to the cross. Any market orders received before 9:28 will be filled at the Nasdaq Official Opening Price. 
+ Stop orders and trailing stops are elected on the consolidated print. Your sell stop order will only elect if there is a trade on the consolidated tape at or lower than your stop price and provided the electing trade is not outside of the NBBO. Your buy stop order will only elect if there is a trade on the consolidated tape that is at or above your stop price that is not outside of the NBBO. 
+ Limit Orders are generally subject to limit order display and protection. Protection implies that you should not see the stock trade better than your limit without you receiving an execution. Limit Order Display is bound by REG NMS Rule 611. Your orders will be displayed if they are the National Best Bid or Best Offer excluding exceptions outlined REG NMS Rule 611. Some examples are listed below: 
+ An odd lot order (under a unit of trade). Most NMS securities have a unit of trade of 100 shares. 
+ Block Order. A block order under REG NMS is designated as an order of at least 10,000 shares or at least $200,000 notional. 
+ An “all or none” order 
+ The client requests the order to not be displayed. 
+ Not Held orders 
+ OTC Positions 
+ OTC positions that are actively trading will not be automatically removed/liquidated from a user's account. The user can submit orders if the client wishes to remove or liquidate them. 
+ OTC markets have several market tiers and depending on the market tier there may be more considerations when placing an order to close the position. 
+ OTC Market Tier OTCQX, OTCQB, Pink (Current, limited, No information) Clients can enter market orders, limit orders and stop orders to close positions. For market orders, clients can mix whole shares and fractional shares. 
+ Expert Market, Caveat Emptor Clients must enter day-limit orders when placing orders to close out an OTC expert market security. However, Alpaca will accept market orders that are only fractional shares, but it is a best practice to enter a day-limit order for your whole, mixed (whole and fraction) or fractional order. 
+ Example: User owns 10.53 shares of WXYZ Stock: Sell Limit Order for 10.53 shares of WXYZ Stock at a limit price. 
+ OTC market data is a separate data subscription. In many circumstances, a client can obtain a real-time level one quote from otcmarkets.com. Additionally, you can check the OTC market tier on that website as well. Updated about 2 months ago Margin and Short Selling DMA Gateway / Advanced Order Types Did this page help you? Yes No Copy Page Buying Power Equities Trading Orders Submitted Outside of Eligible Trading Hours Extended Hours Trading Submitting an Extended Hours Eligible Order IPO Symbols Order Types Market Order Limit Order Sub-penny increments for limit orders Stop Orders Sub-penny increments for stop orders Stop Limit Order Opening and Closing Auction Orders Bracket Orders OCO Orders OTO Orders Threshold on stop price of stop-loss orders Trailing Stop Orders Notional Order Restrictions Time in Force Aged order policy Order Types vs Supported Time in Force Whole qty orders (USD) Fractional orders (USD) LCT (Whole qty or Fractional) Extended Hours orders Crypto orders OTC Assets Options Orders Order Lifecycle Odd Lots and Block Trades Short Sales Order Handling Standards at Alpaca Securities LLC OTC Positions 
+ Developers 
+ Docs 
+ Slack 
+ Forum 
+ Support 
+ Learn 
+ SDKs & Libraries 
+ GitHub 
+ API Status 
+ Security 
+ About Us 
+ Story 
+ Blog 
+ Contact 
+ We're hiring 
+ Disclosures 
+ Disclosure Library 
+ Form CRS 
+ Form CRS Responses to Conversation Starters 
+ Privacy Policy 
+ Cookie Policy 
+ Terms & Conditions 
+ Twitter 
+ LinkedIn 
+ Facebook 
+ Slack 
+ Submit Feedback 
+ Alpaca 
+ http://alpaca.markets/ 
+ © 2025 Alpaca Securities LLC All rights reserved. 
+ © 2025 Alpaca Crypto LLC All rights reserved. 
+ © 2025 AlpacaDB, Inc. All rights reserved. 
+ Securities brokerage services are provided by Alpaca Securities LLC
+ ("Alpaca Securities"), member
+ FINRA / SIPC , a wholly-owned subsidiary
+ of AlpacaDB, Inc.
+ Technology and services are offered by AlpacaDB, Inc.
+ Options trading is not suitable for all investors due to its inherent
+ high risk,
+ which can potentially result in significant losses.
+ Please read Characteristics and Risks of
+ Standardized Options before investing in options.
+ Cryptocurrency services are made available by Alpaca Crypto LLC
+ ("Alpaca Crypto"), a FinCEN registered money services business (NMLS #
+ 2160858), and a wholly-owned subsidiary of AlpacaDB, Inc. Alpaca Crypto
+ is not a member of SIPC or FINRA. Cryptocurrencies are not stocks and
+ your cryptocurrency investments are not protected by either FDIC or
+ SIPC.
+ Cryptocurrency is highly speculative in nature, involves a high degree
+ of risks, such as volatile market price swings, market manipulation,
+ flash crashes, and cybersecurity risks. Cryptocurrency regulations are
+ continuously evolving, and it is your responsibility to understand and
+ abide by them. Cryptocurrency trading can lead to large, immediate and
+ permanent loss of financial value. You should have appropriate knowledge
+ and experience before engaging in cryptocurrency trading. For additional
+ information, please click here .
+ ! View Important Disclosures 
+-->
+ 

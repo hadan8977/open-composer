@@ -1,0 +1,38 @@
+NOTE: 本文件记录"只读到搜索摘要或 WebFetch 小模型摘要、没有原文快照"的来源。报告里凡引用这些内容，都在证据栏标注"摘要，未读原文"。
+FETCHED_UTC: 2026-10-04T18:30Z–18:50Z（协调码 R1004-T80，Sonnet 5.5 high）
+
+== WebFetch（小模型对页面的摘要，不是原文）==
+1) https://www.robeco.com/en-uk/insights/2022/05/beyond-fama-french-alpha-from-short-term-signals   （curl 只拿到 234 字节，被拦）
+   WebFetch 摘要原样：
+   - 五个短期信号：行业相对反转、一个月行业动量、过去 30 天分析师盈利修正、同月收益效应（same month stock return）、一个月特质波动率，外加五者合成。
+   - 宇宙与期间：MSCI World 成分股，1985-12 至 2021-12，剔除小盘和非基准股。
+   - 单个信号：毛年化收益 5–8%，CAPM alpha 6–10%，六因子 alpha 6–8%；换手 1300%–2000%/年；盈亏平衡交易成本都低于 25bp。
+   - 合成信号：毛年化收益和 CAPM alpha 超过 12%，六因子 alpha 超过 12%；换手约 1800%/年；盈亏平衡成本超过 30bp。
+   - 方法：等权五分位组合，"成本缓解"做法（持仓里放进当前在前/后 X% 的股票，加上之前选中且仍在前/后 Y% 的股票）。
+   - 结论："buy 10 / hold 50" 的高效交易规则下净 alpha 超过 6%。
+   局限：页面是 Robeco 自家研究摘要，数字没有表格可核；WebFetch 摘要可能有遗漏。证据档 2。
+
+2) https://www.robeco.com/en-int/insights/2011/11/short-term-residual-reversal  （Blitz 等 2013 JFM 的 Robeco 简介页）
+   WebFetch 摘要：只有"残差反转的风险调整收益是常规反转的两倍""即使限制在大盘股、1990 年后样本，净成本后的利润仍显著"，没有具体数字。
+   补充（WebSearch 摘要，未读原文，EFMA 版本和 SSRN 原文都没打开）：某一版本写"扣成本后年化超过 8%"，另一版本写"超过 7%"，另有一处写"净收益约 66bp/月"。三者互相不一致，只作线索。证据档 2。
+
+3) https://bsiranosian.com/blog/ （博客索引）
+   WebFetch 摘要：关于 DLSA 只有一篇 "Deep learning statistical arbitrage part 1 - replication"（2026-06-29），没有 part 2，没有向近期或成本扩展的后续。
+
+== WebSearch（只读到摘要；报告里标"摘要，未读原文"）==
+- FIM《Trading Costs》最终版（SSRN 3229719）：1.7 万亿美元实盘成交数据、21 个发达市场、19 年；"实际交易成本比以往研究小一个数量级"。本次读到的是 2012 年 12 月初稿（NBER 会议稿，`fim-trading-costs-nber.txt`），不是最终版。
+- Gao–Han–Li–Zhou 2018 JFE：S&P500 ETF 1993–2013，首个半小时收益预测最后半小时；波动大、成交量大、衰退日、宏观新闻日更强。原文未打开，数字经 Baltussen 等 2021（已读）引用。
+- Barbon–Beckmeyer–Buraschi–Moerke（SFI 22-40，SSRN 3925725）：杠杆 ETF 与期权 delta 对冲造成收盘动量/反转，次日消散；杠杆 ETF 效应随时间显著下降，gamma 效应整个样本持续。摘要在 abarbon.com 页面（`barbon-letf-page.txt`），全文未读。
+- Bogousslavsky–Muravyev《Who trades at the close?》（JFM）：收盘竞价占日成交量 2018 年 7.5%，2010 年 3.1%；收盘价偏离收盘报价中点，收盘后回吐一半，隔夜回吐全部；竞价成交量占比预测未来收益。只读到搜索摘要。
+- Cohen–Frazzini 2008 客户动量；Pinchuk 的 arXiv 稿（已读，`customer-momentum-2301.11394.txt`）写发现后样本幅度变小且不再显著。另一搜索摘要称七个发达市场的领先滞后在单边成本超过 40bp 后不显著（来源未打开）。
+- Kolm–Turiel–Westray 2023 Math Finance（`kolm-deep-ofi-ideas.txt` 只有页面摘要）：115 只纳斯达克股票的订单簿深度学习预测，精度峰值在两次价格变动附近。
+- FINRA 日内交易规则：搜索摘要称 SEC 2026-04-14 批准取消 25,000 美元 PDT 门槛，FINRA 公布 2026-06-04 生效，券商可延至 2027-10-20 实施。第三方页面（scanz、heygotrade、daytradingz 等），未读 FINRA 或 SEC 原文；Alpaca 自己的说明页已读（`alpaca-pdt-end-intraday-margin.txt`），但页面没有写 Alpaca 的具体实施日期。
+- Alpaca 论坛与第三方文章声称纸面盘按买卖中点成交：与 Alpaca 官方文档（已读，`alpaca-paper-trading-docs.txt`：按 NBBO 撮合）不一致，采用官方文档。
+
+== 抓取失败、已删除的快照（本次自己创建的空页或拦截页；记录在此以免重复尝试）==
+- Lou–Polk–Skouras 的 LSE 个人页 PDF（只返回空文件；改用 NBER 稿和 FMG 稿，已读）
+- Blitz 等的 EFMA 2012 稿（连接失败）、academia.edu（403）、Erasmus RePub 页面（只有目录页）
+- Robeco 2022 页面（curl 被拦，改用 WebFetch 摘要，见上）
+- AQR 官网 Trading-Costs.pdf（404 页面，改用 NBER 2012 会议稿）
+- Schwab 的 PDT 页面（403）；Alpaca support 的 paper-vs-live 页（空）；arXiv 2412.11432 的 PDF（404，作者已撤回，保留了 abs 页）；ar5iv 版（空）
+- harbourfront 的 substack（需要 JavaScript）；Alpaca 论坛 PFOF 帖子（用户抱怨，无新事实）

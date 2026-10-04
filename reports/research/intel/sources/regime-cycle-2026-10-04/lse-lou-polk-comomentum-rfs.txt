@@ -1,0 +1,2203 @@
+SOURCE: https://personal.lse.ac.uk/polk/research/hhab117.pdf
+FETCHED_UTC: 2026-10-04T18:42:22Z
+HTTP: 200|application/pdf
+BYTES_RAW: 381346
+---
+                    Comomentum: Inferring Arbitrage Activity
+                    from Return Correlations
+                    Dong Lou
+                    London School of Economics
+
+
+
+
+                                                                                                                                      Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    Christopher Polk
+                    London School of Economics
+
+
+                        We propose a novel measure of arbitrage activity to examine whether arbitrageurs can have
+                        a destabilizing effect on the stock market. We focus on stock price momentum, a classic
+                        example of a positive-feedback strategy that our theory predicts can be destabilizing. Our
+                        measure, dubbed comomentum, is the high-frequency abnormal return correlation among
+                        stocks on which a typical momentum strategy would speculate. When comomentum is
+                        low, momentum strategies are stabilizing, reflecting an underreaction phenomenon that
+                        arbitrageurs correct. When comomentum is high, the returns on momentum stocks strongly
+                        revert, reflecting prior overreaction from crowded momentum trading that pushes prices
+                        away from fundamentals. (JEL G02, G12, G23)
+
+                        Received July 21, 2020; editorial decision March 25, 2021 by Editor Tarun Ramadorai.
+                        Authors have furnished an Internet Appendix, which is available on the Oxford University
+                        Press Web site next to the link to the final published paper online.
+
+
+
+                    Arbitrageurs play a key role in financial markets, yet their impact on prices
+                    is not well understood. Indeed, the debate about whether arbitrage activity
+
+                    We are grateful to Malcolm Baker, Joe Chen, Lauren Cohen, Josh Coval, Kent Daniel, Karl Diether, Andrea
+                    Frazzini, Ken French, George Gao, Clifton Green, Byoung Hwang, Petri Jylha, Augustin Landier, Jon Lewellen,
+                    Marc Lipson, Chris Malloy, Toby Moskowitz, Abhiroop Mukherjee, Robert Novy-Marx, Monika Piazzesi, Tarun
+                    Ramadorai, Clemens Sialm, Erik Stafford, Sheridan Titman, Dimitri Vayanos, and Tuomo Vuolteenaho and
+                    seminar participants at Boston College, Brandeis University, Dartmouth College, Edinburgh University, Emory
+                    University, London Business School, London School of Economics, University of Paris Dauphine, Shanghai
+                    Advanced Institute of Finance, University of Southern California, the 2012 Paul Woolley Research Initiative
+                    Workshop, the First Annual Duisenberg Workshop in Behavioral Finance, the 2012 NBER Asset Pricing Fall
+                    Meeting, the 2012 Miami Behavioral Finance Conference, 2013 American Finance Association Annual Meetings,
+                    the 2013 Adam Smith Asset Pricing Conference, the 2013 Napa Conference on Financial Market Research,
+                    the 2013 Paul Woolley Centre Conference, the 2013 Western Finance Association Meetings, the 2013 Oxford
+                    Asset Pricing Retreat, the 2013 SIFR Conference on Re-thinking Beta, the 2013 European Finance Association
+                    Meetings, the 2014 4Nations Cup, the 2014 Inquire Europe/UK Joint Seminar, the 2014 AQR Capital Management
+                    Insight Award Conference for the Best Paper in Asset Management, the 2015 Mizuho Bank Annual Conference,
+                    the 2016 UBS Quant Conference, the 2016 Citigroup Quant Research Conference, and the 2016 London Quant
+                    Group Meeting for comments. We thank Andrea Frazzini and Ken French for providing the data used in our
+                    analysis and M. L. Cooper for copy editing. Financial support from Inquire Europe, the Q group, and the Paul
+                    Woolley Centre at the LSE is gratefully acknowledged. Supplementary data can be found on The Review of
+                    Financial Studies web site. Send correspondence to Christopher Polk, c.polk@lse.ac.uk.
+
+                    The Review of Financial Studies 35 (2022) 3272–3302
+                    © The Author(s) 2021. Published by Oxford University Press on behalf of The Society for Financial Studies.
+                    All rights reserved. For permissions, please e-mail: journals.permissions@oup.com.
+                    doi: 10.1093/rfs/hhab117                                         Advance Access publication October 27, 2021
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                       Page: 3272   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  is stabilizing or destabilizing goes back to at least Keynes (1936) and Hayek
+                  (1945). In many asset pricing models, arbitrageurs are the sole force that ensures
+                  market efficiency; thus, the extent to which the market is efficient depends
+                  crucially on the amount of arbitrage activity (e.g., Friedman 1953). An opposing
+                  view argues that arbitrage activity can at times become crowded; thus, too much
+                  arbitrage trading can destabilize prices.1
+                     Arbitrage activity, however, is extremely difficult to measure at any given
+                  point in time. For one thing, the exact composition of arbitrageurs in financial
+
+
+
+
+                                                                                                                                         Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  markets is unknown. Additionally, for a significant fraction of institutional
+                  investors, typically perceived as the “smart money” in the market, accurate high-
+                  frequency data on capital under management is unavailable. Moreover, many
+                  arbitrageurs use leverage, short-selling, and derivatives contracts to amplify
+                  returns as well as to hedge against risks; yet information about these activities
+                  is simply unobservable to researchers.2 Finally, the effect of arbitrage activity
+                  on prices critically depends on the liquidity of the traded assets, which may
+                  vary cross-sectionally and through time. In sum, existing proxies for arbitrage
+                  activity suffer from poor measurement of a portion of the inputs to the arbitrage
+                  process, for a subset of arbitrageurs.
+                     We propose a new way to measure arbitrage activity. Our innovation is to
+                  measure the outcome of the arbitrage process. In particular, we measure the
+                  past degree of abnormal return correlations among those stocks on which an
+                  arbitrageur would speculate. The basic premise of our approach is that when
+                  arbitrageurs take positions in assets, their trades can have simultaneous price
+                  impacts on those assets and thus cause return comovement.3
+                     We use this insight to provide new evidence on the long-standing debate
+                  over the impact of arbitrageurs on prices. We argue that the phenomenon of
+                  stock price momentum is a natural candidate for our analysis. Jegadeesh and
+                  Titman (1993) show that when portfolios are formed based on short-run stock
+                  performance (e.g., returns over the last year), past losers tend to be future
+                  losers, and past winners tend to be future winners. Despite the profitability
+                  of such a strategy and its vast popularity among active institutional investors,
+                  there exists no compelling risk-based explanation for this effect. Indeed, Fama
+                  and French (1996) acknowledge that momentum is “the main embarrassment
+                  of the three-factor model.” Competing behavioral models ultimately attribute
+                  price momentum to either an underreaction or overreaction phenomenon,
+                  but these models also struggle, as even this basic characteristic of abnormal
+
+               1 Stein (1987) models the way the introduction of imperfectly informed rational speculators can destabilize
+                  markets. See DeLong et al. (1990) for a model in which an increase in the number of rational speculators
+                  can be destabilizing.
+               2 A notable exception is Hanson and Sunderam (2014), who exploit time variation in the cross-section of short
+                  interest to infer the amount of arbitrage capital in quantitative trading strategies.
+               3 Our approach builds on the ideas in Barberis and Shleifer (2003) and Barberis, Shleifer, and Wurgler (2005), who
+                  argue that institutional features may play an important role in the movement of stocks’ discount rates, causing
+                  returns to comove above and beyond that implied by their fundamentals.
+
+
+
+
+                                                                                                                         3273
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                          Page: 3273   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    momentum profits (underreaction vs. overreaction) has been difficult to pin
+                    down (Jegadeesh and Titman 2001).4
+                       We focus on momentum not only because of the failure of rational models
+                    to explain these stylized facts but also because momentum is a classic example
+                    of a positive-feedback strategy. For this class of trading strategies, arbitrageurs
+                    do not base their demand on an independent estimate of fundamental value.
+                    Instead, their demand for an asset is an increasing function in lagged asset
+                    returns. Because momentum trading exacerbates the initial return signal, from
+
+
+
+
+                                                                                                                                           Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    the perspective of an individual arbitrageur, it is difficult, if not impossible,
+                    to gauge the amount of capital that has already been deployed in the strategy.
+                    A positive-feedback trading strategy like momentum is thus the most likely
+                    place where arbitrage activity can be destabilizing when trading becomes too
+                    crowded.5
+                       Guided by this intuition, we study the empirical relation between crowded
+                    trading and arbitrage returns. Our notion of arbitrage activity is a broad one that
+                    potentially includes both arbitrageurs who face limits to arbitrage when trading
+                    momentum signals and other investors who follow a naive positive-feedback
+                    strategy. Indeed, we include in our definition any trader whose investment
+                    activity resembles a quantitative momentum strategy.
+                       We first identify the size of the momentum crowd by the relative degree
+                    of abnormal return correlations, controlling for common risk factors, among
+                    momentum stocks measured in a relatively long ranking period (e.g., 12
+                    months).6 This choice is motivated by the view that momentum traders trade
+                    different flavors of the momentum strategy (e.g., use signals based on returns
+                    from the past 3 to 12 months) and thus would generate excess comovement
+                    throughout our formation period as they put on their trades. Our approach of
+                    measuring abnormal return correlations in a relatively long formation period
+                    allows us to avoid having to choose a particular flavor of price momentum and
+                    to focus instead on the total arbitrage activity in the momentum strategy. We
+                    dub this measure comomentum.
+                       At each point in time, we measure the abnormal comovement for the long
+                    and short sides separately and then average the results together to form our
+
+                 4 Tests differentiating between underreaction and overreaction interpretations of momentum profits are based on
+                    the examination of long-horizon, post-holding-period abnormal returns with the aim of determining whether
+                    momentum profits eventually revert. Previous tests, such as the ones in Jegadeesh and Titman (2001), have been
+                    inconclusive as results tend to be sample specific, not consistent across subsets of stocks, and sensitive to the
+                    benchmark model. In stark contrast, after conditioning on whether arbitrage activity is relatively low or high,
+                    our analysis reveals that momentum is an underreaction phenomenon when arbitrage activity is low and an
+                    overreaction phenomenon when arbitrage activity is high. Therefore, one additional contribution of our work
+                    is to argue that a key reason for the inconclusiveness of previous tests, such as those in Jegadeesh and Titman
+                    (2001), is that arbitrage activity varies through time.
+                 5 DeLong et al. (1990) argue that positive-feedback trading strategies are prone to destabilizing behavior. Stein
+                    (2009) highlights the coordination problem often implicit in arbitrage strategies, such as momentum.
+                 6 Controlling for common risk factors, such as industry, size, and value, helps reduce the extent to which common
+                    news about intrinsic value may be driving the correlation we measure. Nevertheless, we show that our results are
+                    robust to not using these controls.
+
+
+
+
+                    3274
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                           Page: 3274    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  comomentum measure. We argue that it is natural to separately measure the
+                  abnormal correlations within the long and short legs of the momentum strategy,
+                  as some market participants face binding short-sell constraints (e.g., mutual
+                  funds, who are known to be momentum traders). Moreover, even long-short
+                  investors, such as hedge funds, may choose to bet on only one side of the
+                  momentum strategy in certain periods. If we were to incorporate the correlations
+                  between the winner and loser portfolios, such an approach would implicitly
+                  assume that all momentum traders take simultaneous long-short momentum
+
+
+
+
+                                                                                                                                         Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  bets. Measuring these components separately, on the other hand, allows us to
+                  pick up the impact of both long-only and long-short momentum bets.7
+                     We then link both the profitability and any subsequent reversal of momentum
+                  strategy returns to our comomentum variable. Intuition predicts that when
+                  comomentum is relatively low, that is, momentum strategies are not crowded,
+                  abnormal returns to a standard momentum strategy should be positive and
+                  not revert. In this case, arbitrage activity is stabilizing, as the underreaction
+                  phenomenon is being eliminated. However, when comomentum is relatively
+                  high, momentum strategies may become crowded. If so, arbitrage activity
+                  actually may be destabilizing, resulting in prices overshooting the fundamental
+                  value. Put differently, the underreaction or overreaction characteristic of
+                  momentum, that is, whether momentum profits revert in the long run, is time
+                  varying and crucially depends on the size of the momentum crowd.8
+                     Our comomentum measure of the momentum crowd is a success based on
+                  several empirical findings. First, comomentum is significantly correlated with
+                  existing variables plausibly linked to the size of arbitrage activity in this market.
+                  These proxies include not only well-known variables, such as institutional
+                  ownership of the winner decile and hedge fund assets under management, but
+                  also more refined novel measures, such as the net arbitrage trading (NAT)
+                  variable of Chen, Da, and Huang (2019) that measures the difference between
+                  quarterly abnormal hedge fund holdings and abnormal short interest. Second,
+                  when comomentum is relatively high, the long-run buy-and-hold returns to a
+                  momentum strategy are predictably negative. This finding is consistent with
+                  relatively high amounts of arbitrage activity having pushed prices further away
+                  from fundamentals during the formation period. Third, comomentum forecasts
+                  relatively high holding-period return volatility and relatively more negative
+                  holding-period return skewness for the momentum strategy.
+                     These findings are economically large and robust. For the 20% of the sample
+                  period that is associated with the highest values of comomentum, a typical
+                  momentum strategy yields 12.7% lower returns over the first year, relative
+
+               7 That said, we show that our results were robust to measuring comomentum as the abnormal correlation of a
+                  composite portfolio that pools winners and losers together (with a negative sign in front of the returns of the
+                  latter), thus taking all potential sources of abnormal covariance into account.
+               8 Our proposed crowded-trading mechanism does not have a clear prediction for momentum profits in the short run.
+                  In fact, momentum strategies could be possibly more profitable with higher arbitrage trading as underreaction
+                  evolves into overreaction.
+
+
+
+
+                                                                                                                         3275
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                          Page: 3275   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    to its performance during the 20% of the sample period associated with low
+                    comomentum. In the second year after formation, the momentum strategy
+                    continues to lose 13% (again, relative to the low comomentum subsample).
+                    Thus, the 2-year cumulative return on a typical momentum stock is more than 25
+                    percentage points lower when comomentum is relatively high. These estimates
+                    are both individually and jointly strongly statistically significant (t-statistic of
+                    −3.35 for the joint test).
+                       These striking results are complemented by a long list of additional empirical
+
+
+
+
+                                                                                                                                              Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    findings.9 We highlight three placebo/difference-in-differences tests. First, it is
+                    well-known that institutional ownership was low before the late 1960s. For
+                    example, Blume and Keim (2014) document that institutions held less than 5%
+                    of equity during most of this time. Since the sort of professional arbitrageurs we
+                    are interested in are mostly institutional money managers who trade a portfolio
+                    of stocks, arbitrage activity of that sort was simply not prevalent before 1965.10
+                    Consistent with our crowded-trade hypothesis, we find that comomentum does
+                    not forecast time variation in expected holding and post-holding returns of
+                    momentum stocks in the 1927–1964 data.
+                       Second, we split the post-1980 sample into low and high institutional
+                    ownership subsets. We find that the relation between comomentum and the
+                    long-run reversal of returns to stocks in the momentum strategy is much stronger
+                    for stocks with higher institutional ownership. The t-statistic on the associated
+                    difference-in-differences test is −3.91.
+                       Our third test measures a placebo version of comomentum for the
+                    set of momentum stocks in question in the period prior to our actual
+                    comomentum measurement period. This version holds the momentum portfolio
+                    constant but calculates a placebo comomentum measure in the year prior
+                    to portfolio ranking. We confirm that this placebo comomentum has no
+                    incremental information about subsequent expected returns on momentum
+                    stocks. Moreover, controlling for placebo comomentum increases the absolute
+                    magnitude of the t-statistic on our key finding by more than 40%. This increase
+                    indicates that this particular difference-in-differences approach is also a useful
+                    way to control for any potential risk factors omitted in our construction of
+                    comomentum.11
+
+
+                 9 We also perform a bevy of robustness checks of our main empirical finding. The underperformance we link to
+                    comomentum is robust to implementing a variety of factor adjustments, measuring across different subsamples
+                    (including subsamples that exclude the financial crisis where momentum underperformed), controlling for
+                    existing variables known to forecast momentum returns, and constructing comomentum in a variety of ways.
+                    Furthermore, the Internet Appendix provides a variety of supplementary evidence at the firm, fund, and
+                    international levels that further confirms the sensibility of our approach to measuring arbitrage activity. All
+                    of our findings are consistent with our model’s view of the potentially destabilizing effect of arbitrage activity
+                    on positive-feedback strategies.
+                10 Indeed, the first hedge fund, run by Alfred Jones, did not grab public attention until an article published in Fortune
+                    (Loomis 1966).
+                11 We do not claim that our findings are proof that markets are inefficient as we cannot rule out that some future
+                    neoclassical model of risk may justify the patterns we find. Nevertheless, we do think that the time-varying
+
+
+
+
+                    3276
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                               Page: 3276   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                     We confirm the intuition motivating our empirical analysis in a simple
+                  stylized model following Hong and Stein (1999) in the Internet Appendix.
+                  In particular, we study an economy where in the absence of arbitrageurs,
+                  information is gradually incorporated into prices, a classic underreaction
+                  phenomenon. We add to this basic setup both momentum and value traders
+                  who optimally trade those signals. We consider a baseline version of the
+                  model where separate groups of momentum and value traders optimize on
+                  individual signals, as well as an extended version where a single group of
+
+
+
+
+                                                                                                                                          Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  arbitrageurs trade on both signals simultaneously in an optimal fashion. In
+                  contrast to Hong and Stein (1999), who keep the amount of arbitrage capital
+                  fixed, we allow it to vary stochastically through time, with both observable and
+                  unobservable components; arbitrageurs then condition their trading intensity
+                  on the observable component of aggregate arbitrage capital.
+                     Our theoretical results confirm that when the momentum crowd is relatively
+                  large, momentum strategies are more destabilizing, with a stronger reversal
+                  in the long run. The destabilizing aspect of momentum trading is exacerbated
+                  when those traders condition on a relatively more noisy signal of the amount
+                  of capital in the strategy. Interestingly, even when momentum traders know
+                  the amount of momentum capital with certainty in each period, we still show
+                  that their composite activity is destabilizing, as arbitrageurs do not adjust their
+                  trading intensity to fully offset the exogenous fluctuation in arbitrage capital.
+                     Our theory not only confirms the intuition driving our key empirical analysis
+                  but also motivates an important comparison. In particular, we construct a similar
+                  comovement measure for the value strategy, covalue, and study its relation
+                  with expected returns of value stocks. Our model predicts that relatively higher
+                  arbitrage activity by value investors should be associated with relatively higher
+                  (rather than lower, as in the case of momentum) expected long-horizon returns
+                  for the value strategy. This predicted difference in how arbitrage activity affects
+                  the long-horizon returns on momentum versus value stocks arises because the
+                  former is a positive-feedback strategy and the latter is a negative-feedback
+                  strategy. More specifically, although value traders’ demand is a linear function
+                  of the value signal (just like momentum traders’ demand is a linear function
+                  of the momentum signal), the resultant value demand shrinks the value signal.
+                  This fact has two implications: (1) The equilibrium value signal is a positive
+                  predictor of future value strategy returns (in contrast, the momentum signal can
+                  be a negative predictor of future returns). (2) High value activity is accompanied
+                  by a relatively large value signal, which in turn indicates high expected returns
+                  to the value strategy.
+
+
+                  patterns that we document raise the bar even further than that set by Fama and French (1996), who cannot explain
+                  the unconditional momentum premium. In particular, a risk explanation will be challenging as it will require
+                  either betas or risk premiums to vary in a remarkable way: momentum traders must choose to collectively increase
+                  their momentum bets when the momentum stocks in question have lower expected returns, higher volatility, and
+                  more negative skewness. Nevertheless, we grant that as-of-yet-unknown hedging demands could rationalize these
+                  surprising patterns.
+
+
+
+
+                                                                                                                          3277
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                           Page: 3277   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                       Thus, when arbitrage activity is relatively high, momentum becomes an
+                    overreaction phenomenon. In contrast, value trading, which dampens the value
+                    signal, never results in overreaction. We confirm that, consistent with our theory,
+                    covalue does forecast subsequent long-horizon returns to the value strategy with
+                    a positive sign.
+
+               1. Data and Methodology
+
+
+
+
+                                                                                                                                         Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    The challenge to econometricians in testing our model’s predictions is the same
+                    one faced by individual arbitrageurs in the market: to come up with a reasonable
+                    measure of aggregate arbitrage activity for a strategy. A key contribution of this
+                    paper is to take up this challenge directly by proposing one such measure.
+                       Our measure is motivated by the observation that arbitrageurs tend to buy
+                    or sell a diversified portfolio of stocks at the same time; for example, in the
+                    case of the momentum strategy, arbitrageurs usually buy a portfolio of winner
+                    stocks and sell a portfolio of loser stocks simultaneously. To the extent that
+                    arbitrageurs’ trading can move stock prices in the short run, we can then infer
+                    the amount of arbitrage activity in a strategy by examining high-frequency
+                    (i.e., daily or weekly) return correlations, over and beyond common risk factors,
+                    among the portfolio of stocks that are likely to be bought or sold simultaneously
+                    by arbitrageurs.12 For example, for the momentum strategy, we can extract
+                    information about arbitrage activity in the strategy by looking at the return
+                    correlation among stocks in the winner and/or loser portfolios.13
+                       An alternative approach to measuring the amount of arbitrage activity in
+                    a strategy would be to exploit the correlation of the strategy’s returns with
+                    respect to a proxy for intermediary capital; Cho (2020) is an example of that
+                    technique.14 However, several potential issues crop up with this approach in
+                    our context. First, one needs to take a stand on how to measure intermediary
+                    capital. Second, proxies for intermediary capital may not reflect the concerns
+                    of the arbitrageurs trading the anomaly in question (e.g., momentum). Finally,
+                    measures of intermediary capital are typically not available at high frequencies.
+                       At the end of each month, we sort all stocks into deciles based on their
+                    previous 12-month returns (skipping the most recent month). We then compute
+
+
+                12 For example, Anton and Polk (2014) and Lou (2012) find that mutual funds tend to expand or shrink their existing
+                    holdings in response to capital flows, and that such flow-induced trading can lead to excess comovement among
+                    stocks collectively held by mutual funds.
+                13 Frazzini, Israel, and Moskowitz (2020) show that a single hedge fund can rebalance its momentum portfolio
+                    within a day. Our analysis focuses on the aggregate quantitative momentum trader (i.e., the sum of all momentum
+                    traders); one could reasonably expect that the rebalancing by this aggregate investor takes place over a longer
+                    window.
+                14 Two additional methods for measuring arbitrage activity include using hedge fund holdings (Brunnermeier and
+                    Nagel 2004; Griffin and Xu 2009; Cao et al. 2018) or exploiting information in short-selling activity (Boehmer,
+                    Jones, and Zhang 2008; Yan 2014; Hanson and Sunderam 2014; Hwang, Liu, and Xu 2019). In Table 2, we
+                    compare our comomentum measure to the approach of Chen, Da, and Huang (2019), who propose a net arbitrage
+                    trading measure that combines these two techniques.
+
+
+
+
+                    3278
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                          Page: 3278   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  pairwise abnormal correlations using 52 weekly (Friday-to-Friday) returns for
+                  all stocks in each decile in the portfolio ranking period. (Our results are
+                  robust to calculating abnormal correlations using daily returns in the past
+                  year.) One concern is that arbitrageurs begin trading only after the momentum
+                  characteristic is observed. That concern is mitigated by the fact that we measure
+                  the momentum characteristic based on a relatively long ranking period of
+                  one year. Indeed, Jegadeesh and Titman (1993) consider ranking periods as
+                  short as 3 months. Presumably many momentum traders are trading many
+
+
+
+
+                                                                                                                                        Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  different flavors of the momentum strategy during our formation period and
+                  thus would be generating excess comovement throughout our 1-year ranking
+                  period.15
+                     Of course, stocks may move together because of common news about
+                  intrinsic value. Therefore, we industry-adjust all returns using the Fama-French
+                  30 industry portfolios as well as control for the Fama-French three factors when
+                  computing these abnormal correlations to purge out any comovement in stock
+                  returns in the same momentum decile induced by known risk factors. Since
+                  this approach may also remove nonfundamental return variation in industry or
+                  factor returns, we are careful to confirm that our results are robust to not using
+                  these controls. Note that we do not assume that stocks have constant Fama-
+                  French betas. Such an approach might result in a high value of comomentum
+                  simply reflecting an increase in the Fama-French loadings of the stocks in the
+                  momentum portfolio at a point in time. Instead, following Lewellen and Nagel
+                  (2006), we allow betas to vary by estimating rolling-window regressions using
+                  weekly returns for each stock in each year. Like Lewellen and Nagel (2006),
+                  we assume that betas are relatively stable only within the regression window.
+                  So, if in a particular year, momentum stocks happen to be small stocks, our
+                  short-window regression will remove the extent to which momentum stocks
+                  covary with SMB in that year.
+                     Though our approach measures comomentum over a 1-year ranking period,
+                  our results continue to hold if we measure comomentum over months
+                  t −7 : t −2 in the formation period. Since it is even more unlikely that
+                  conditional betas change substantially over a 6-month window, this test
+                  further confirms that conditional betas are unlikely to be driving time-series
+                  variation in comomentum. Furthermore, that result shows more broadly that
+                  our findings are not sensitive to the length of the comomentum estimation
+                  window.
+                     Our primary comomentum measure, CoMOM, is a simple average of loser
+                  comomentum (CoMOM L ) and winner comomentum (CoMOM W ), which are
+                  the average pairwise abnormal correlation for the loser and winner deciles,
+                  respectively. We operationalize this calculation by measuring the average
+
+
+              15 Nevertheless, if we instead measure comomentum in the post-ranking period, all of our results continue to hold.
+                  Of course, in this case, we are careful to study momentum trading strategies that only begin after comomentum
+                  is measured so that comomentum remains a legitimate predictor of any long-run reversal.
+
+
+
+
+                                                                                                                        3279
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                         Page: 3279   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    correlation of the three-factor residual of every stock in a particular decile
+                    with the decile in question,
+                                                              NL
+                                                 L     1 
+                                   CoMOM             = L    Corr(ret Li , ret L−i | rmrf ,smb,hml)                               (1)
+                                                      N i=1
+                                                         N       W
+                                                W      1 
+                                   CoMOM             = W    Corr(ret W       W
+                                                                     i , ret −i | rmrf ,smb,hml)                                 (2)
+                                                      N i=1
+
+
+
+
+                                                                                                                                            Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                                     CoMOM = .5∗(CoMOM W +CoMOM L )                                                              (3)
+
+                    where retiL (retiW ) is the weekly industry-adjusted return of stock i in the
+                                                          L       W
+                    extreme loser (winner) decile, ret−i     (ret−i  ) is the weekly industry-adjusted
+                    return of the equal-weight extreme loser (winner) decile excluding stock i,
+                    and N L (N W ) is the number of stocks in the extreme loser (winner) decile.16
+                    Note that Table 4 documents that our key result is robust to many variations
+                    in our methodology. These variations include examining different subperiods
+                    and subsamples, computing comomentum in a variety of ways, controlling for
+                    a variety of potentially relevant time-series variables, implementing a variety
+                    of performance adjustments, and measuring performance in a strictly out-of-
+                    sample fashion as in Goyal and Welch (2008).
+                       The main data set used in this study is the stock return data from the Center for
+                    Research in Security Prices (CRSP). To mitigate the impact of microstructure
+                    issues, we exclude stocks with prices below $5 a share and/or that are in the
+                    bottom NYSE size decile from the sample. We then augment the stock return
+                    data with institutional ownership in individual stocks provided by Thomson
+                    Financial. We further obtain information on assets under management of active
+                    mutual funds and long-short equity hedge funds from Thomson Reuters and
+                    Lipper’s Trading Advisor Selection System (TASS), respectively. Since the
+                    assets managed by mutual funds and hedge funds grow substantially in our
+                    sample period, both variables are detrended. Finally, we obtain monthly returns
+                    of actively managed equity mutual funds and long-short equity hedge funds
+                    from the CRSP survivorship-bias-free mutual fund database and the Lipper
+                    TASS database, respectively.
+
+               2. Main Results
+                    We first document simple characteristics of our comomentum measure. Table 1,
+                    panel A, indicates that comomentum varies significantly through time. We
+                    primarily focus on the period from 1965 to 2011, as institutional investing of
+
+
+                16 We measure comomentum as the average correlation of stock i and the decile portfolio that excludes stock i .
+                    However, this approach is not critical. If we instead use the average pairwise correlations between all the stocks
+                    in a decile, the correlation between comomentum measures constructed in these slightly two different ways is
+                    extremely high, at 0.98.
+
+
+
+
+                    3280
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                            Page: 3280    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  Table 1
+                  Summary statistics
+                                                                A. Summary statistics
+                  Variable                    N                Mean                    SD                  Min                   Max
+                  CoMOM                       564              0.092                 0.029                0.037                  0.241
+                  CoMOM L                     564              0.098                 0.038                0.012                  0.250
+                  CoMOM W                     564              0.086                 0.030                0.022                  0.270
+                  MRET                        564              0.231                 0.259               −0.453                  0.970
+                  MV OL                       564              0.043                 0.014                0.018                  0.075
+
+
+
+
+                                                                                                                                                Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                                                                    B. Correlation
+                                         CoMOM               CoMOM L                 CoMOM W               MRET              MVOL
+                  CoMOM                   1.000
+                  CoMOM L                 0.889                 1.000
+                  CoMOM W                 0.820                 0.467                   1.000
+                  MRET                   −0.368                −0.303                  −0.331              1.000
+                  MV OL                   0.278                 0.211                   0.273             −0.358               1.000
+                                                                  C. Autocorrelation
+
+                                   CoMOM t          CoMOM L
+                                                          t        CoMOM W
+                                                                         t           CoMOM t+1        CoMOM L
+                                                                                                            t+1         CoMOM W
+                                                                                                                              t+1
+                  CoMOM t             1.000
+                  CoMOM L
+                        t             0.889          1.000
+                  CoMOM W
+                        t             0.820          0.467             1.000
+                  CoMOM t+1           0.483          0.468             0.347            1.000
+                  CoMOM L
+                        t+1           0.399          0.390             0.282            0.892            1.000
+                  CoMOM W
+                        t+1           0.436          0.418             0.319            0.819            0.471              1.000
+
+                  This table provides key characteristics of “comomentum,” which we measure as the formation-period excess
+                  comovement of the momentum strategy over the period 1965 to 2015. At the end of each month, we sort
+                  all stocks into deciles based on their lagged 11-month cumulative returns (skipping the most recent month).
+                  We compute pairwise abnormal return correlations (after controlling for the Fama-French three factors) for all
+                  stocks in both the bottom and top deciles using weekly Fama-and-French 30-industry-adjusted stock returns in
+                  the previous 12 months. To mitigate the impact of microstructure issues, we exclude stocks with prices below
+                  $5 a share and/or that are in the bottom NYSE size decile from the sample. CoMOM L (loser comomentum)
+                  is the average pairwise abnormal return correlation in the loser decile in year t , while CoMOM W (winner
+                  comomentum) is the average pairwise abnormal return correlation in the winner decile. CoMOM is the simple
+                  average of CoMOM L and CoMOM W . MRET is the 2-year return on the CRSP market portfolio from year t -1 to
+                  t , and MV OL is the monthly return volatility of the CRSP market portfolio in years t -1 to t . Panel A reports the
+                  summary statistics of these variables. Panel B reports the time-series correlations among the key variables for the
+                  entire sample period. Panel C reports the autocorrelation coefficients forCoMOM , CoMOM L , and CoMOM W ,
+                  where CoMOM t and CoMOM t+1 (and similarly forCoMOM L                         L           W                 W
+                                                                                t and CoMOM t+1 , CoMOM t and CoMOM t+1 ) are
+                  computed in nonoverlapping 12-month windows.
+
+
+
+                  the sort in which we are interested was relatively small pre-1965, a fact we
+                  exploit in one of our placebo tests. (Since we examine momentum and value
+                  strategy returns in the 4 years following portfolio formation, our return data
+                  end in 2015.)
+                     During this period, momentum stocks have an economically large average
+                  abnormal return correlation of 0.092 during the formation period across the 47-
+                  year sample. However, this abnormal correlation can be as low as 0.037 and as
+                  high as 0.241. As one would expect, and Table 1, panel B shows, the components
+                  of CoMOM are highly correlated (correlation of 0.467). Furthermore, CoMOM
+                  and its components are highly autocorrelated and cross-autocorrelated (Table 1,
+                  panel C).
+
+
+
+                                                                                                                              3281
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                              Page: 3281      3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+                        0.25
+
+
+
+
+                         0.2
+
+
+
+
+                        0.15
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                    Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                         0.1
+
+
+
+
+                        0.05
+
+
+
+
+                           0
+                               Mar-65
+
+
+                                                 Mar-68
+
+
+                                                                   Mar-71
+
+
+                                                                                     Mar-74
+
+
+                                                                                                       Mar-77
+
+
+                                                                                                                         Mar-80
+
+
+                                                                                                                                           Mar-83
+
+
+                                                                                                                                                             Mar-86
+
+
+                                                                                                                                                                               Mar-89
+
+
+                                                                                                                                                                                                 Mar-92
+
+
+                                                                                                                                                                                                                   Mar-95
+
+
+                                                                                                                                                                                                                                     Mar-98
+
+
+                                                                                                                                                                                                                                                       Mar-01
+
+
+                                                                                                                                                                                                                                                                         Mar-04
+
+
+                                                                                                                                                                                                                                                                                           Mar-07
+
+
+                                                                                                                                                                                                                                                                                                             Mar-10
+                                        Sep-66
+
+
+                                                          Sep-69
+
+
+                                                                            Sep-72
+
+
+                                                                                              Sep-75
+
+
+                                                                                                                Sep-78
+
+
+                                                                                                                                  Sep-81
+
+
+                                                                                                                                                    Sep-84
+
+
+                                                                                                                                                                      Sep-87
+
+
+                                                                                                                                                                                        Sep-90
+
+
+                                                                                                                                                                                                          Sep-93
+
+
+                                                                                                                                                                                                                            Sep-96
+
+
+                                                                                                                                                                                                                                              Sep-99
+
+
+                                                                                                                                                                                                                                                                Sep-02
+
+
+                                                                                                                                                                                                                                                                                  Sep-05
+
+
+                                                                                                                                                                                                                                                                                                    Sep-08
+
+
+                                                                                                                                                                                                                                                                                                                      Sep-11
+                       -0.05
+                                                                                                                                    COMOM                                           Deciles 5&6
+
+
+                    Figure 1
+                    Time series of the comomentum measure
+                    At the end of each month, we sort all stocks into decile portfolios based on their lagged 11-month cumulative
+                    returns (skipping the most recent month). We compute pairwise abnormal return correlations (after controlling for
+                    the Fama-French three factors) for all stocks in both the bottom and top deciles using weekly Fama-and-French
+                    30-industry-adjusted stock returns in the previous 12 months. To mitigate the impact of microstructure issues,
+                    we exclude stocks with prices below $5 a share and/or that are in the bottom NYSE size decile of the sample.
+                    CoMOM is the average of CoMOM L and CoMOM W . CoMOM L (loser comomentum) is the average pairwise
+                    abnormal return correlation in the loser decile in year t , while CoMOM W (winner comomentum) is the average
+                    pairwise abnormal return correlation in the winner decile. Deciles 5&6 is the average of the average pairwise
+                    abnormal return correlation in deciles 5 and 6, measured in the same period as CoMOM .
+
+
+                       Figure 1 plots our comomentum measure. For comparison, we also plot
+                    the average excess correlation for a momentum-neutral portfolio (deciles 5
+                    and 6 in our momentum sort). The figure makes it clear that variation in
+                    comomentum is distinct from variation in the average excess correlation of
+                    the typical stock. Moreover, the figure confirms that comomentum is persistent.
+                    The serial correlation in the time series of comomentum is 0.48, while the serial
+                    correlation of deciles 5 and 6 is a significantly smaller 0.26.17
+                       Figure 1 shows that comomentum was high during the tech boom when
+                    momentum strategies were popular. There was also an increase in comomentum
+                    in the 2008 financial crisis, which may seem surprising at first. However, a
+                    more careful analysis reveals that financial stocks were initially hit with bad
+                    news in mid-2008; investors then sold even more financial stocks in late 2008,
+                    for many reasons (e.g., binding risk or portfolio constraints). This is indeed
+                    a form of momentum trading, on the short side, and is correctly picked up
+
+
+                17 Note that we calculate this serial correlation for annual observations of comomentum so that each comomentum
+                    value corresponds to a nonoverlapping formation period.
+
+
+
+
+                    3282
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                                                                                                                                                                                            Page: 3282                            3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  by our comomentum measure. As we show in robustness checks, our main
+                  result—that comomentum predicts lower momentum returns and stronger long-
+                  run reversals—is virtually unchanged even if we exclude 2008–2009 from our
+                  sample.
+                     We confirm that comomentum is also persistent in event time. In particular,
+                  the average excess correlation in year 1 is more than half of its year 0 value.
+                  Moreover, the correlation between year 0 and year 1 comomentum is 0.48,
+                  and even year 2 remains quite correlated with the year 0 value (around 0.40).
+
+
+
+
+                                                                                                                                         Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  Figure 2 shows this event-time evolution of comomentum. The plot documents
+                  that the abnormal comovement among momentum stocks peaks in the formation
+                  year and then slowly decays over the next 3 years, holding fixed the stocks in
+                  question. Figure 2 further shows that these event-time patterns are similar but
+                  stronger for years in which comomentum (i.e., the year 0 value of the abnormal
+                  comovement we plot in these graphs) is particularly high.
+                     Table 1 provides similar statistics for the two existing variables that the
+                  literature has linked to time variation in expected momentum returns. Cooper,
+                  Gutierrez, and Hameed (2004) argue that momentum profits depend on the
+                  state of the market. Specifically, the momentum premium falls to zero when
+                  the past 3-year market return has been negative. In related work, Wang and
+                  Xu (2015) argue that relatively high market volatility forecasts relatively low
+                  momentum returns. Therefore, we include the past 2-year return on the market
+                  portfolio and the monthly market return volatility over the past 2 years as
+                  control variables in many of our tests. (Our results are robust to controlling
+                  for market returns and volatilities measured over different horizons.) Table 1
+                  shows that comomentum is negatively correlated with the past return on the
+                  market (−0.368) and positively correlated with past market volatility (0.278).
+                  2.1 Linking comomentum to arbitrage activity
+                  Table 2 links comomentum to several variables that proxy for the size of
+                  arbitrage activity in the momentum strategy. Specifically, Table 2 forecasts
+                  year t comomentum with these proxies. The first variable we include is the
+                  performance of the momentum strategy (MOMt−1 ) in year t −1 (prior to
+                  the construction of comomentum). One would expect that momentum capital
+                  would be positively related to recent performance. Our next variable is the
+                                                                                     W
+                  aggregate institutional ownership of the winner decile, P I Ht−1     , measured
+                  using the Thomson Financial Institutional Holdings 13F database. We include
+                  institutional ownership as these investors are typically considered smart money,
+                  at least relative to individuals. We also include the assets under management
+                  (AU Mt−1 ) of long-short equity hedge funds as of the end of year t −1.
+                     Note that we find a positive but relatively weak trend in our comomentum
+                  variable.18 The lack of a strong trend might be initially surprising, given
+
+              18 A regression on monthly CoMOM on a trend produces a trend coefficient estimate of 0.00007551 with a t -statistic
+                  of 11.01. This estimate implies an increase of 0.0042 in CoMOM over the sample period. All results in the paper
+                  are robust to removing this trend from CoMOM prior to the analysis.
+
+
+
+
+                                                                                                                         3283
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                          Page: 3283   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                             0.1
+                            0.09
+                            0.08
+                            0.07
+                            0.06
+                            0.05
+                            0.04
+                            0.03
+
+
+
+
+                                                                                                                                            Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                            0.02
+                            0.01
+                               0
+                                    Year -4 Year -3 Year -2 Year -1 Year 0            Year 1    Year 2    Year 3     Year 4
+
+                                                                         Avg COMOM
+
+                            0.16
+
+                            0.14
+
+                            0.12
+
+                             0.1
+
+                            0.08
+
+                            0.06
+
+                            0.04
+
+                            0.02
+
+                               0
+                                    Year -4 Year -3 Year -2 Year -1 Year 0            Year 1    Year 2    Year 3     Year 4
+
+                                                            High COMOM                  Low COMOM
+
+                    Figure 2
+                    Event-time variation in the comomentum measure, with year 0 being the portfolio formation year
+                    At the end of each month, we sort all stocks into decile portfolios based on their lagged 11-month cumulative
+                    returns (skipping the most recent month). We compute pairwise abnormal return correlations (after controlling for
+                    the Fama-French three factors) for all stocks in both the bottom and top deciles using weekly Fama-and-French
+                    30-industry-adjusted stock returns in the previous 12 months. To mitigate the impact of microstructure issues,
+                    we exclude stocks with prices below $5 a share and/or that are in the bottom NYSE size decile from the sample.
+                    CoMOM is the average of CoMOM L and CoMOM W . The top panel shows the average CoMOM in event time for
+                    our entire sample; the bottom panel shows the average CoMOM in event time for high and low CoMOM periods
+                    separately.
+
+
+
+
+                    the increase in the raw dollar amount of arbitrage capital over the last 40
+                    years. However, comomentum is designed to capture the short-term price
+                    (co)fluctuations caused by arbitrage trading. Though it is true that more
+                    arbitrageurs are trading the momentum strategy over time, it seems reasonable
+                    that markets have generally become more liquid so that each dollar of arbitrage
+
+
+
+                    3284
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                             Page: 3284   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  Table 2
+                  Determinants of comomentum
+                                                            DepVar = Detrended CoMOM t
+                                            (1)              (2)              (3)              (4)             (5)              (6)
+                  MOM t−1                0.388∗∗∗         0.457∗∗∗                          0.572∗∗∗         0.379∗∗∗         0.408∗∗∗
+                                        [0.132]          [0.140]                           [0.148]          [0.143]          [0.129]
+                  PIH W
+                      t−1                                 0.056∗                            0.093∗∗∗         0.065∗∗∗         0.063∗∗∗
+                                                         [0.030]                           [0.033]          [0.019]          [0.023]
+                  AUM t−1                                                  0.011∗∗∗         0.007∗∗          0.007∗∗∗         0.008∗∗∗
+                                                                          [0.004]          [0.003]          [0.003]          [0.003]
+                                                                                                           −0.024∗          −0.034∗∗∗
+
+
+
+
+                                                                                                                                                  Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  MRET t−1
+                                                                                                            [0.012]          [0.012]
+                  MVOL t−1                                                                                 −0.047           −0.312
+                                                                                                            [0.222]          [0.256]
+                  P S t−1                                                                                  −0.150∗∗∗        −0.173∗∗∗
+                                                                                                            [0.046]          [0.063]
+                  NAT L
+                      t                                                                                    −3.589∗∗∗
+                                                                                                            [0.693]
+                  NAT W
+                      t                                                                                      1.879∗∗
+                                                                                                            [0.861]
+                  NAT W      L
+                      t −NAT t                                                                                                3.334∗∗∗
+                                                                                                                             [0.837]
+
+                  Adj. R 2                 .09              .19              .11              .39              .56             .52
+                  No. obs.                 564              370              204              204              204             204
+                  This table reports regressions of comomentum on variables related to arbitrage activity. At the end of year t , we
+                  sort all stocks into deciles based on their lagged 11-month cumulative returns (skipping the most recent month).
+                  We compute pairwise abnormal return correlations (after controlling for the Fama-French three factors) for all
+                  stocks in both the bottom and top deciles using weekly Fama-and-French 30-industry-adjusted stock returns in
+                  the previous 12 months. To mitigate the impact of micro-structure issues, we exclude stocks with prices below
+                  $5 a share and/or that are in the bottom NYSE size decile from the sample. The dependent variable, detrended
+                  CoMOM (average comomentum), is the detrended average of CoMOM L (loser comomentum) and CoMOM W
+                  (winner comomentum). CoMOM L is the pairwise abnormal return correlation in the loser decile in the ranking
+                  year t , while CoMOM W is the average pairwise abnormal return correlation in the winner decile in the ranking
+                  year t . MOM t−1 is the return to the momentum strategy in year t -1. PIH W         t−1 is the aggregate institutional
+                  ownership of the winner decile at the end of year t -1 (i.e., the winner decile is ranked based on cumulative returns
+                  in year t -1). MRET t−1 and MVOL t−1 are, respectively, the 2-year return and the monthly return volatility of the
+                  CRSP market portfolio. AUM t−1 is the detrended logarithm of the total assets under management of long-short
+                  equity hedge funds at the end of year t -1. P S t−1 is the Pastor and Stambaugh (2003) liquidity factor in year t -1.
+                  NAT W             L
+                       t and NAT t are the net arbitrage trading of Chen, Da, and Huang (2019) for the winner and loser deciles,
+                  respectively. NAT measures the difference between quarterly abnormal hedge fund holdings and abnormal short
+                  interest. We correct standard errors, shown in brackets, for serial dependence with 12 lags. *p <.1; **p <.05;
+                  ***p <.01.
+
+
+
+                  trading causes a smaller price impact. Nevertheless, we detrend all variables in
+                  Table 2 to ensure that our results are not spurious.
+                     The first column of Table 2 documents that past performance on the strategy
+                  strongly forecasts CoMOM. This finding is consistent with our hypothesis as
+                  we expect arbitrageurs to move into the momentum strategy if past returns to
+                  the strategy have been strong. An increase in arbitrageurs will then cause the
+                  strategy to be more crowded and thus comomentum to be higher. Next, we
+                  show in column 2 that a relatively high level of institutional ownership among
+                  winner stocks forecasts relatively high comomentum. Column 3 documents
+                  that when AU Mt−1 is relatively high, future comomentum is relatively high as
+                  well. This result is comforting as hedge funds are known to deploy momentum
+
+
+
+                                                                                                                                3285
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                                Page: 3285      3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    strategies. Column 4 confirms that when included in the same regression,
+                                       W
+                    MOMt−1 , P I Ht−1     , and AU Mt−1 continue to forecast time-series variation
+                    in CoMOM.
+                       Chen, Da, and Huang (2019) propose a stock-level measure of net arbitrage
+                    trading, N AT , that combines hedge fund long positions and total short interest.
+                    In columns 5 and 6 of Table 2, we explain variation in comomentum with
+                    N AT . In column 5, we separately include measures of net arbitrage trading for
+                    the winner side, N AT W , and the loser side, N AT L . In column 6, we simply
+
+
+
+
+                                                                                                                                          Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    use the difference between those two measures. We find that both N AT W
+                    and N AT L provide incremental explanatory power that is economically and
+                    statistically significant. Indeed, the adjusted R 2 increases by 17 percentage
+                    points. The coefficients for these two variables have opposite signs, as one
+                    would expect, and are of similar magnitudes. Column 6 documents that when
+                    we combine these two measures into one composite variable, N AT W −N AT L ,
+                    the combined measure explains a significant proportion of the variation
+                    in CoMOM.
+
+                    2.2 Forecasting long-run momentum reversal
+                    We now turn to the main empirical question of our paper: does variation in
+                    arbitrage activity forecast variation in the long-run reversal of momentum
+                    returns? Table 3 tracks the profits on our momentum strategy over the 4 years
+                    subsequent to portfolio formation. Such an event time approach allows us to
+                    make statements about whether momentum profits revert.
+                       Table 3, panel A, reports the results of this analysis. In particular, at the end
+                    of each month t −1, we sort all stocks into deciles based on their past 11-month
+                    return (skipping a month). We then form a zero-cost portfolio that goes long a
+                    value-weight portfolio of the stocks in the top decile and short a value-weight
+                    portfolio of stocks in the bottom decile. All months are then classified into five
+                    groups based on their CoMOM after first orthogonalizing CoMOM to mktret24
+                    and mktvol24.19
+                       Panel A reports the average returns in each of the subsequent 4 years
+                    (tabulated as year 1, year 2, years 1 and 2, and years 3 and 4) as well as the
+                    returns in the formation period (labeled year 0) for each of these five groups.
+                    We also report the difference between the extreme high and low comomentum
+                    groups. In addition to these sorts, Table 3 also reports the ordinary least squares
+                    (OLS) coefficient from regressing the monthly series of realized year 0, year
+                    1, year 2, years 1 and 2, or years 3 and 4 returns on the monthly series of
+                    comomentum ranks.
+                       We find that year 0 returns are monotonically increasing in comomentum.
+                    On average, the momentum differential between winners and losers is
+
+
+                19 Our results are robust to controlling for different measures of past market performance and volatility, including
+                    measuring the weekly volatility of market returns over the same window as our comomentum measure. Our
+                    results are also robust to not orthogonalizing comomentum at all.
+
+
+
+
+                    3286
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                           Page: 3286   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  Table 3
+                  Forecasting momentum returns and skewness with comomentum
+                                                              A. Raw momentum returns
+                                                   Year 0           Year 1            Year 2           Years 1-2         Years 3-4
+                  Rank          No obs.           Estimate         Estimate          Estimate          Estimate          Estimate
+                  1               112              8.50%            0.88%             0.24%              0.56%              0.08%
+                  2               113              9.00%            0.68%            −0.22%              0.23%            −0.30%
+                  3               113              9.31%            0.71%            −0.43%              0.14%            −0.15%
+                  4               113              9.90%            0.67%            −0.90%             −0.12%            −0.19%
+                  5               113             11.09%           −0.18%            −0.84%             −0.51%              0.07%
+                  5-1                              2.59%           −1.06%            −1.08%             −1.07%            −0.01%
+
+
+
+
+                                                                                                                                               Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                                                  (2.45)          (−2.72)           (−2.75)            (−3.35)           (−0.04)
+                  OLS                              0.006           −0.002            −0.003             −0.002              0.000
+                                                  (2.60)          (−2.42)           (−2.96)            (−3.53)             (0.13)
+                                                      B. Three-factor-adjusted momentum returns
+                  1               112              8.44%            1.26%             0.41%              0.83%              0.27%
+                  2               113              8.99%            1.21%             0.11%              0.66%            −0.17%
+                  3               113              9.29%            1.10%            −0.12%              0.49%              0.02%
+                  4               113              9.98%            0.90%            −0.35%              0.28%              0.04%
+                  5               113             11.10%            0.23%            −0.43%             −0.10%              0.22%
+                  5-1                              2.66%           −1.03%            −0.84%             −0.94%            −0.05%
+                                                  (2.47)          (−2.65)           (−2.12)            (−2.74)           (−0.24)
+                  OLS                              0.006           −0.002            −0.002             −0.002              0.000
+                                                  (2.70)          (−2.87)           (−2.37)            (−3.17)             (0.22)
+                                                      C. Five-factor-adjusted momentum returns
+                  1               112              8.27%            1.23%             0.41%              0.82%              0.27%
+                  2               113              8.85%            1.15%             0.27%              0.71%            −0.13%
+                  3               113              9.10%            1.04%            −0.07%              0.48%              0.07%
+                  4               113              9.79%            0.86%            −0.34%              0.26%              0.10%
+                  5               113             10.84%            0.10%            −0.35%             −0.13%              0.25%
+                  5-1                              2.58%           −1.13%            −0.76%             −0.95%            −0.02%
+                                                  (2.55)          (−2.78)           (−2.07)            (−2.87)           (−0.10)
+                  OLS                              0.006           −0.003            −0.002             −0.002              0.000
+                                                  (2.77)          (−2.96)           (−2.57)            (−3.41)             (0.44)
+                                                      D. Fraction of low-momentum-return times
+                                                              Months 1–3                  Months 1–6                  Months 1–12
+                  Rank                  No obs.                Estimate                    Estimate                    Estimate
+                  1                       112                    0.084                       0.021                        0.015
+                  2                       113                    0.079                       0.019                        0.015
+                  3                       113                    0.101                       0.023                        0.020
+                  4                       113                    0.141                       0.043                        0.044
+                  5                       113                    0.225                       0.104                        0.093
+                  5-1                                            0.141                       0.083                        0.078
+                                                                 (6.24)                      (3.75)                       (3.07)
+                  OLS                                            0.035                       0.019                        0.019
+                                                                 (6.86)                      (3.89)                       (3.28)
+
+                  This table reports returns to the momentum strategy as a function of lagged comomentum. At the end of each
+                  month, we sort all stocks into deciles based on their lagged 11-month cumulative returns (skipping the most recent
+                  month). We exclude stocks with prices below $5 a share and/or that are in the bottom NYSE size decile from the
+                  sample. We then classify all months into five groups based on residual CoMOM which we compute by purging
+                  out the lagged 2-year market return and volatility. We report the returns to the momentum strategy (i.e., long
+                  the value-weight winner decile and short the value-weight loser decile) in each of the four years after portfolio
+                  formation during 1965 to 2015, following low to high CoMOM . Year zero is the portfolio ranking period. Panels
+                  A, B, and C report, respectively, the average monthly return, the average Fama-French three-factor alpha, and
+                  the average Fama-French five-factor alpha of the momentum strategy. Panel D reports the fraction of days during
+                  which the value-weighted long-short momentum strategy returns less than -1% in months 1 to 3 after portfolio
+                  formation, conditional on CoMOM ranks. Panel D also reports the fraction of weeks during which the value-
+                  weighted long-short momentum strategy returns less than -5% in months 1 to 6 and months 1 to 12 after portfolio
+                  formation, conditional on CoMOM ranks. “5-1” is the difference in the relevant statistic across high and low
+                  CoMOM ranks. “OLS” is the slope coefficient from the regression of the relevant statistic on ranks of CoMOM .
+                  We compute t -statistics, shown in parentheses, based on standard errors corrected for serial-dependence up to
+                  24 lags. We indicate statistical significance at the 5% level in bold.
+
+
+
+
+                                                                                                                            3287
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                             Page: 3287      3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    2.59% per month higher (t-statistic of 2.45) when comomentum is in the highest
+                    quintile compared to when it is in the lowest quintile. Though formation returns
+                    are higher when comomentum is high, we find that post-formation returns in
+                    year 1 are generally decreasing in the degree of comomentum. On average, the
+                    post-formation monthly momentum return is 1.06% per month lower (estimate
+                    =−1.06%, t-statistic of −2.72) when comomentum is in the highest quintile
+                    compared to the lowest quintile.20
+                       We also find that year 2 returns are strongly decreasing in comomentum.
+
+
+
+
+                                                                                                                                             Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    On average, the post-formation monthly return on momentum stocks in year
+                    2 is 1.08% per month lower (estimate of −1.08%, t-statistic of −2.75) as
+                    comomentum moves from the highest to the lowest quintile. Given the strength
+                    of the year 1 and year 2 estimates, it is not surprising that the joint estimate
+                    is both economically and statistically very significant (estimate of −1.07%,
+                    t-statistic of −3.35). Indeed, panel A documents that returns for years 1 and
+                    2 are strongly monotonically decreasing in comomentum. By the end of year
+                    2, all reversal of the relative variation in year 0 returns has occurred, and we
+                    find no variation in cumulative returns related to comomentum. Panels B and
+                    C of Table 3 document that these conclusions are robust to controlling for the
+                    Fama and French (1993) three-factor model and the Fama and French (2015)
+                    five-factor model.21
+                       Figure 3 graphically illustrates the patterns reported in Table 3, panel A. The
+                    top panel of Figure 3 plots the cumulative returns to the momentum strategy
+                    in the 4 years after portfolio formation conditional on low comomentum or
+                    high comomentum. This plot shows that the cumulative average buy-and-
+                    hold return on the momentum strategy is positive when comomentum is
+                    low and negative when comomentum is high. The bottom panel of Figure 3
+                    plots the cumulative buy-and-hold return to the momentum strategy from the
+                    beginning of the formation year to 4 years after portfolio formation, again
+                    conditional on low comomentum or high comomentum. This plot shows that
+                    when comomentum is low, cumulative buy-and-hold returns from the beginning
+                    of the portfolio formation year to 4 years subsequent exhibit underreaction.
+                    However, when comomentum is high, the corresponding cumulative returns
+                    exhibit overreaction as returns decline from a peak of 267% in month 6
+                    of year 1 (including the formation period return spread) to 192% in month
+                    12 of year 4. Interestingly, this amount is roughly similar to the level of
+                    cumulative returns in low comomentum states, suggesting that the amount
+
+
+
+                20 Following prior literature, we skip a month between momentum portfolio formation and holding periods. We
+                    observe a similar pattern in momentum returns in the skipped month; the momentum strategy yields almost 2%
+                    higher in low comomentum periods than in high comomentum periods in that month.
+                21 A natural question to ask is whether our main finding is stronger when CoMOM L and CoMOM W are both in the
+                    highest rank. In unreported results, we find that a double sort on these two components of comomentum results
+                    in even stronger return predictability compared to our baseline result. Specifically, the difference in the years 1
+                    and 2 premium is −2.06%, nearly twice the baseline result of −1.07%. We thank a referee for this suggestion.
+
+
+
+
+                    3288
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                             Page: 3288    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+                        0.2
+
+                       0.15
+
+                        0.1
+
+                       0.05
+
+                           0
+                               0   2   4   6   8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 48
+                      -0.05
+
+
+
+
+                                                                                                                                        Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                       -0.1
+
+                      -0.15
+
+                                                           Low COMOM               High CoMOM
+
+
+                       3
+
+
+                     2.5
+
+
+                       2
+
+
+                     1.5
+
+
+                       1
+
+
+                     0.5
+
+
+                       0
+                           -12-10 -8 -6 -4 -2 0 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 48
+
+                                                           Low COMOM               High COMOM
+
+                  Figure 3
+                  Returns to the momentum strategy as a function of the lagged comomentum measure
+                  At the end of each month, we sort all stocks into deciles based on their lagged 11-month cumulative returns
+                  (skipping the most recent month). We compute pairwise abnormal return correlations (after controlling for the
+                  Fama-French three factors) for all stocks in both the bottom and top deciles using weekly Fama-and-French
+                  30-industry-adjusted stock returns in the previous 12 months. To mitigate the impact of microstructure issues,
+                  we exclude stocks with prices below $5 a share and/or that are in the bottom NYSE size decile from the sample.
+                  We then classify all months into five groups based on CoMOM , the average of CoMOM L and CoMOM W .
+                  CoMOM L (loser comomentum) is the average pairwise abnormal return correlation in the loser decile in year
+                  t , while CoMOM W (winner comomentum) is the average pairwise abnormal return correlation in the winner
+                  decile. The top panel shows the compounded returns to a value-weight momentum strategy (i.e., winner minus
+                  loser deciles) in the four years after formation, following low and high CoMOM . The bottom panel shows the
+                  compounded returns to a value-weight momentum strategy (i.e., winner minus loser deciles) from the beginning
+                  of the formation year to 4 years post-formation following low and high CoMOM .
+
+
+
+
+                  of fundamental news does not vary with the amount of arbitrage activity in
+                  the strategy.
+                     Figure 3 also sheds light on the frequency at which positive feedback
+                  happens as all of the overreaction response occurs in the formation period.
+
+
+
+                                                                                                                        3289
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                         Page: 3289   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    In stark contrast, month t+1 holding period returns are not higher during high
+                    comomentum periods.22
+                       Daniel and Moskowitz (2016) and Daniel, Jagannathan, and Kim (2019)
+                    study the non-normality of momentum returns with a particular focus on the
+                    negative skewness in momentum returns. Both papers argue that momentum
+                    crashes are forecastable.23 To the extent that many quantitative momentum
+                    traders use leverage and/or have short-term capital, crowded trading may lead
+                    to forced unwinding of their positions and hence higher momentum crash risk.
+
+
+
+
+                                                                                                                                              Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    Panel D of Table 3 reports the extent to which comomentum forecasts time-
+                    series variation in the crash risk of momentum returns. We examine the fraction
+                    of “bad” momentum days in the 12 months post-formation, following low
+                    versus high comomentum periods. We define “bad” days as having a momentum
+                    return below -1%.24 Panel D documents that this measure is strongly increasing
+                    in comomentum. For example, in the first 3 months post-portfolio formation,
+                    when comomentum is low, only 8.4% of the daily returns on momentum
+                    stocks are less than 1%. This percentage is more than doubled to 22.5%, when
+                    comomentum is high. On a related note, Internet Appendix Table A2 reports the
+                    extent to which comomentum forecasts time-series variation in the skewness of
+                    momentum returns. We examine both the skewness of daily returns (in months
+                    1–3) and weekly returns (months 1–6 and months 1–12).25
+
+                    2.3 Robustness tests
+                    Table 4 provides a variety of robustness checks. For succinctness, we only
+                    report the difference in returns to the momentum strategy between the high and
+                    low CoMOM quintiles for year 0 and for the combined return in years 1 and
+                    2. Panel A of Table 4 provides various subsample analysis. For comparison,
+                    the first row of Table 4 reports the baseline results from Table 3, panel A. The
+                    average monthly return in years 1 and 2 is 1.07% lower in the high comomentum
+                    quintile than in the low comomentum quintile. We can strongly reject the null
+
+
+                22 One interesting question is whether crowded trading can predictably increase the profitability of momentum
+                    strategies, at least in the short run. For example, can smart arbitrageurs profitably “ride the bubble” as in Abreu
+                    and Brunnermeier (2003) using a faster momentum strategy? As one way to address this question, we have
+                    redone our analysis on a 6-month momentum strategy. Using comomentum computed over this shorter window,
+                    we find that the three-factor-adjusted momentum strategy return in the top CoMOM quintile is an economically
+                    and statistically significant 2.21% (t =2.64) in the month following portfolio formation.
+                23 Daniel and Moskowitz (2016) show that market declines and high market volatility forecast momentum crashes.
+                    Daniel, Jagannathan, and Kim (2019) estimate a hidden Markov model that helps identify those times when
+                    momentum strategies experience severe losses.
+                24 The results are similar if we use other cutoffs to identify bad days (e.g., returns less than -2% or -3%).
+
+                25 In panel D of Internet Appendix Table A2, we also examine the way the betas of momentum portfolios (as well as
+                    their long and short components) change in the year after portfolio formation. Consistent with previous research
+                    (Chen, Singal, and Whitelaw 2016), we find that momentum portfolios tend to have betas that increase over the
+                    next year and that this increase is roughly attributable to both the long and short sides of the trade. However, we
+                    find no evidence that this effect varies with comomentum as the related point estimate (−0.046) is statistically
+                    insignificant (t -statistic of −0.42). These conclusions continue to hold even after zeroing in on the loser side of
+                    the portfolio.
+
+
+
+
+                    3290
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                              Page: 3290    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  Table 4
+                  Robustness checks
+                                                                                     Year 0                         Years 1–2
+                                                                          Estimate              t-stat   Estimate                t-stat
+
+                                                                   A. Subsample analyses
+                  Full sample: 1965–2015                                    2.59%               (2.45)   −1.07%                 (−3.35)
+                  Subsample: 1965–1980                                    −0.36%              (−1.46)    −0.51%                 (−1.57)
+                  Subsample: 1981–2015                                      2.65%               (2.55)   −1.04%                 (−3.23)
+                  Subsample: 1981–1994                                      0.74%               (1.90)   −0.80%                 (−4.88)
+                  Subsample: 1995–2015                                      2.00%               (1.91)   −1.11%                 (−3.94)
+                  Subsample: 1981–2015 (excld NASDAQ bubble)                2.01%               (2.82)   −0.79%                 (−2.70)
+                  Subsample: 1981–2015 (excld 2008–2009 crash)              2.82%               (2.31)   −0.94%                 (−2.80)
+
+
+
+
+                                                                                                                                                Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  Placebo sample: 1927-1964                               −1.25%              (−0.88)     0.15%                   (0.33)
+                  Placebo Sample: Low IO stocks                             2.65%               (1.91)   −0.54%                 (−1.41)
+                  High IO stocks                                            2.87%               (2.92)   −1.42%                 (−4.36)
+                  High-low IO stocks                                        0.22%               (0.51)   −0.88%                 (−3.91)
+
+                                                       B. Alternative ways to compute comomentum
+                  CoMOM measured over months 2–7                            2.28%           (2.43)       −0.97%                 (−2.90)
+                  CoMOM without industry adjustment                         2.52%           (2.72)       −1.14%                 (−3.54)
+                  CoMOM W without industry adjustment                       1.87%           (2.17)       −0.95%                 (−3.21)
+                  CoMOM L without industry adjustment                       2.36%           (2.76)       −0.90%                 (−3.04)
+                  CoMOM without industry or FF adjustment                   2.69%           (2.22)       −1.13%                 (−3.19)
+                  Pooling winners and losers                                1.63%           (2.84)       −0.89%                 (−3.32)
+                  PCA of CoMOM and CoVAL                                    2.71%           (2.25)       −1.30%                 (−3.54)
+
+                                                                  C. Time-series controls
+                  Control for MKT CORR                                      1.71%              (3.21)    −0.77%                 (−3.29)
+                  Control for VOL(UMD)                                      1.23%              (1.91)    −0.69%                 (−2.65)
+                  Control for VOL(MKT)                                      1.77%              (2.61)    −0.61%                 (−2.42)
+                  Control for Panic                                         2.25%              (2.16)    −0.82%                 (−2.29)
+                  Control for CoVAL                                         1.24%              (2.22)    −0.48%                 (−2.29)
+                  Control for MOM spread                                    1.21%              (1.58)    −0.77%                 (−2.83)
+                  Control for MOM valuation spread                          2.35%              (2.72)    −0.65%                 (−2.10)
+                  Control for deciles 5&6                                   1.57%              (2.83)    −0.76%                 (−3.14)
+                  Control for placebo CoMOM                                 1.22%              (1.22)    −1.04%                 (−4.75)
+                  Control for BW sentiment                                  1.76%              (2.08)    −0.95%                 (−3.43)
+                  Control for Michigan Consumer Index                       2.61%              (2.42)    −1.15%                 (−3.54)
+
+                                                            D. Different performance adjustments
+                  DGTW-adjusted returns                                       1.47%           (2.41)     −0.99%                 (−3.79)
+                  Intraindustry returns                                       1.98%           (2.18)     −0.76%                 (−3.24)
+
+                                                      E. Other measures to forecast momentum returns
+                  MOM spread controlling for CoMOM                           4.13%           (3.69)      −0.35%                 (−0.65)
+                  Deciles 5&6 controlling for CoMOM                          1.26%           (0.82)      −0.29%                 (−0.54)
+                  Placebo CoMOM controlling for CoMOM                        0.13%           (0.15)       0.18%                   (0.53)
+                  Mom stock vol controlling for CoMOM                        3.50%           (2.66)      −0.48%                 (−0.93)
+
+                                                                   F. Out-of-sample tests
+                  Rolling 10 years                                           2.49%             (2.42)    −1.24%                 (−3.22)
+                  Rolling 20 years                                           3.23%             (2.64)    −1.21%                 (−2.58)
+
+                                                                                                                         (Continued)
+
+
+                  hypothesis that this difference is zero as the associated t-statistic is −3.35; this
+                  hypothesis test is the key result of the paper.
+                     In rows 2 and 3, we conduct the same analysis for two subperiods (1965–1980
+                  and 1981–2015). Our finding is stronger in the second subsample, consistent
+                  with the intuition that momentum trading by mutual funds and hedge funds
+                  has dramatically increased in popularity over the last 30 years. The second
+                  subsample has an average monthly return differential in years 1 and 2 across the
+                  high and low comomentum quintiles of −1.04%, with an associated t -statistic
+                  of −3.23. This point estimate is nearly twice as large as the corresponding
+                  estimate for the earlier period.
+
+
+
+                                                                                                                                3291
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                              Page: 3291      3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    Table 4
+                    (Continued)
+
+                                                                     G. Other strategies
+                    CoVAL forecasting value                              −2.41%            (−4.20)            1.17%               (2.39)
+                    CoVAL (control for CoMOM) forecasting value          −2.18%            (−4.21)            0.98%               (2.17)
+                    PCA of CoMOM and CoVAL forecasting value             −2.13%            (−3.30)            1.10%               (2.25)
+                    CoEMOM forecasting earnings momentum                   0.87%             (2.79)          −0.04%             (−0.27)
+                    CoLTR forecasting long-term reversal                 −0.43%            (−0.89)            1.22%               (3.10)
+
+                    This table reports returns to the momentum strategy as a function of lagged comomentum. At the end of each
+                    month, we sort all stocks into deciles based on their lagged 11-month cumulative returns (skipping the most
+                    recent month). We exclude stocks with prices below $5 a share and/or that are in the bottom NYSE size decile
+
+
+
+
+                                                                                                                                             Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    from the sample. We then classify all months into five groups based on CoMOM . We report the difference in
+                    returns to the momentum strategy between high CoMOM years and low CoMOM years. Year zero is the portfolio
+                    ranking period. Panel A provides subsample analysis. Row 1 shows the baseline results that are also reported
+                    in Table 3, panel A. In rows 2 through 11 of the panel, we conduct the same analysis for various subperiods
+                    or subsamples based on institutional ownership splits. Panel B documents that the results are robust to using
+                    different methods of measuring comomentum. In row 1, we measure comomentum only in months t -7 to t -2
+                    during the formation period. In rows 2 through 4 of the panel, we do not industry-adjust returns before measuring
+                    comomentum. In row 5, we do not control for industry or the Fama-French size and value factors in measuring
+                    comomentum. In row 6 of the panel, we stack winners and losers together (putting a minus sign in front of
+                    the losers) and compute a CoMOM measure for this combined portfolio. In row 7, we calculate the principal
+                    component of CoMOM and CoVAL . Panel C documents that our findings are robust to controlling for a variety of
+                    time-series variables by first orthogonalizing comomentum to the variable in question. Row 1 of panel C controls
+                    for the average weekly pairwise correlation of all stocks in the formation year. Row 2 of panel C controls for
+                    the weekly return volatility of the momentum factor in the formation year. Row 3 of panel C controls for the
+                    weekly return volatility of the market index in the formation year. Row 4 of panel C controls for the Daniel
+                    and Moskowitz (2016) Panic variable. Row 5 of panel C controls for our CoVAL measure. Row 6 of panel C
+                    controls for the formation-period spread between the winner and loser deciles. Row 7 of panel C controls for
+                    the spread in the book-to-market ratio between the winner and loser deciles. Row 8 of panel C controls for the
+                    average pairwise abnormal return correlation of stocks in deciles 5 and 6 ranked by lagged 12-month cumulative
+                    returns. Row 9 of panel C controls for placebo comomentum which is based on the same set of winner/loser
+                    stocks but measured in the year prior to the formation period. Rows 10 and 11 of panel C control for measures
+                    of sentiment from Baker and Wurgler (2006) and the Michigan Consumer Index, respectively. Panel D shows
+                    our results are robust to various performance adjustments including using Daniel et al. (1997) (DGTW)-adjusted
+                    returns or industry-adjusted returns to measure abnormal momentum returns. Panel E documents that other
+                    variables do not forecast the same long-run reversal that comomentum does. Panel F conducts out-of-sample
+                    tests by estimating and ranking CoMOM in 10- and 20-year rolling windows. Panel G documents the extent to
+                    which similar comovement measures for the value, earnings momentum (EMOM), and long-term reversal (LTR)
+                    strategies forecast long-horizon returns on those strategies. We compute t -statistics, shown in parentheses, based
+                    on standard errors corrected for serial-dependence up to 24 lags and indicate statistical significance at the 5%
+                    level in bold.
+
+
+                       In rows 4 and 5 of panel A, we further split the post-1980 sample into two
+                    halves since momentum strategies are known to have dramatically crashed in
+                    2009. Our effect is roughly similar in both halves of the post-1980 sample.
+                    Indeed, the t-statistic is more than 20% larger in absolute magnitude in the
+                    1981–1994 portion of the sample that does not include the momentum crash of
+                    2009. More broadly, the evidence in rows 6 and 7 of the panel documents that
+                    large declines in momentum holding period returns do not drive comomentum’s
+                    strong predictability in the 1981–2011 subperiod. In particular, our finding is
+                    robust to excluding years in which realized momentum holding period returns
+                    were relatively low.
+                       Row 8 of Table 4, panel A, examines the pre-1965 subperiod. This sample
+                    provides a potentially useful placebo test of our hypothesis that institutional
+                    ownership is responsible for the overnight momentum pattern, as institutional
+                    ownership was very low for all but the largest stocks (see Blume and Keim
+                    2014). Consistent with our hypothesis, we find no predictable variation in years
+
+
+
+                    3292
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                             Page: 3292    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  1 and 2 returns linked to comomentum in the pre-1965 period. In fact, the
+                  estimate is not only insignificant but also the wrong sign.
+                     We exploit a similar idea using a cross-sectional approach in the post-1980
+                  period. The last three rows of panel A present those results. Specifically, the
+                  years 1 and 2 predictability associated with moving from low to high CoMOM
+                  subperiods among only low-institutional-ownership stocks is a statistically
+                  insignificant −0.54% per month (t-statistic of −1.41). In stark contrast, moving
+                  from low to high CoMOM states among only high-institutional-ownership
+
+
+
+
+                                                                                                                                       Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  stocks is associated with a predictable difference in years 1 and 2 returns of
+                  −1.42% per month (t-statistic of −4.36). A test that the difference in these
+                  years 1 and 2 differences across these two nonoverlapping groups of stocks is
+                  different from zero has a t -statistic of −3.91, which rejects at the 0.1% level
+                  of significance. 26
+                     Panel B of Table 4 confirms that our main finding is robust to different ways
+                  of measuring comomentum. Our results continue to hold if we simply measure
+                  comomentum over months t −7:t −2 in the formation period, if we use raw
+                  excess returns instead of industry-adjusted returns, or if we focus on just one
+                  side of the momentum bet to measure comomentum. Our results also continue
+                  to hold if we neither industry-adjust nor control for the Fama-French three-
+                  factor model or if we first pool all of the stocks in the winner and loser deciles
+                  before calculating comomentum (when doing so, we stack winners and losers
+                  together and put a minus sign in front of the losers).
+                     This last robustness test also relates to a simple test of our story. If arbitrageurs
+                  are simultaneously buying winners and shorting losers, then not only will the
+                  correlation among winners be higher and the correlation among losers be higher,
+                  but also the correlation between winners and losers will be more negative.
+                  Consistent with our story, we find that the correlation between CoMOM and
+                  the negative of the correlation between the winner and loser portfolios is 21.4%.
+                  That estimate is significant at the 1% level of significance.
+                     Finally, row 7 of Table 4, panel B, documents that the principal component
+                  of comomentum and covalue forecasts time-series variation in the returns on
+                  momentum stocks in years 1 and 2 with a t-statistic of −3.54. This principal
+                  component also forecasts time-series variation in the returns on value stocks
+                  in years 1 and 2 with a t-statistic of 2.25 (see row 3 of Table 4, panel G). We
+                  discuss these results in more detail in Section 4.2 after we summarize our model
+                  in Section 4.1.
+                     Table 4, panel C, shows that our results are robust to orthogonalizing
+                  comomentum to a variety of other time-series variables before running our tests.
+                  We first confirm that our results are robust to controlling for volatility estimates
+
+
+              26 Internet Appendix Table A3 shows the results from these tests in more detail. Given the results of Lee and
+                  Swaminathan (2000), we also examine splitting the sample in a similar fashion based on turnover and the book-
+                  to-market ratio. In either case, we find no difference in comomentum’s ability to forecast time variation in
+                  momentum’s long-run reversal.
+
+
+
+
+                                                                                                                       3293
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                        Page: 3293   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    measured contemporaneous with our comomentum variable that are calculated
+                    using weekly returns over the exact same period of time during the formation
+                    period. Pollet and Wilson (2010) document that the average correlation among
+                    stocks forecasts the equity premium. Row 1 of panel C confirms that our
+                    findings are robust to controlling for their variable. As Barroso and Santa-Clara
+                    (2015) show, the volatility of a momentum strategy is highly variable over time
+                    and quite predictable; therefore, row 2 of panel C reports results when we
+                    orthogonalize CoMOM to the contemporaneous weekly standard deviation of
+
+
+
+
+                                                                                                                                            Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    a standard momentum portfolio. Row 3 reports the robustness of our results to
+                    controlling for the volatility of weekly returns on the market.
+                       Row 4 of panel C controls for Daniel and Moskowitz’s (2016) panic variable,
+                    while row 5 controls for CoVAL, a measure of excess comovement in the value
+                    strategy that we discuss in detail in section 4.2. Rows 6 and 7 control for
+                    standard measures of the ex ante attractiveness of a strategy, namely, the spread
+                    in the characteristic across the winner and loser deciles (MOM spread) and the
+                    spread in valuation ratios across the winner and loser deciles (MOM valuation
+                    spread).27 Row 8 controls for the corresponding comovement measure for
+                    momentum deciles 5 and 6. In all cases, our results remain economically and
+                    statistically significant. Row 9 of Table 4 exploits a clever way of controlling
+                    for omitted factors that might be driving comomentum by controlling for a
+                    lagged (in event time) version of our measure. By controlling for this “Placebo
+                    CoMOM,” we increase the absolute magnitude of the t-statistic on our key
+                    finding by more than 40%.
+                       As we show in the context of our model, stronger underreaction on the part
+                    of noise traders clearly leads to intensified arbitrage activity, if all else is equal.
+                    While we agree that our comomentum measure could, in theory, be partly driven
+                    by this demand-side consideration, we find in the data that comomentum is
+                    only weakly correlated with popular measures of investor sentiment, namely,
+                    the Baker and Wurgler (2006) index, as well as the University of Michigan
+                    Consumer Sentiment Index. More importantly, the return predictability of
+                    comomentum is virtually unaffected when we control for these proxies for
+                    investor sentiment (results reported in Table 4, panel C). For example, after
+                    controlling for the Baker and Wurgler (2006) index, comomentum continues
+                    to forecast time-series variation in momentum returns in years 1 and 2; the
+                    point estimate is −0.95%/month and has an associated t-statistic of −3.43.
+                    After controlling for the Michigan Consumer index, comomentum continues
+                    to forecast time-series variation in the post-formation returns on momentum
+                    stocks in years 1 and 2 with a point estimate of −1.15%/month with a t-statistic
+                    and associated t-statistic of −3.54.
+
+
+                27 In Internet Appendix Table A4, we document the inability of these traditional variables to forecast momentum
+                    holding-period returns. Both formation-period spreads in the momentum characteristic (panel A) and formation-
+                    period spreads in valuation ratios across winner and loser stocks (panel B) do not predict abnormal holding period
+                    returns on momentum strategies.
+
+
+
+
+                    3294
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                            Page: 3294    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                     Panel D of Table 4 documents that our key result is robust to alternative ways
+                  of adjusting momentum performance including using DGTW-adjusted returns
+                  or industry-adjusted returns. Panel E documents that other variables do not
+                  forecast time-series variation in long-horizon returns on momentum strategies.
+                  These variables include the aforementioned MOM spread, the comovement of
+                  deciles 5 and 6, Placebo CoMOM, and the average momentum stock formation
+                  period volatility.
+                     The MOM spread variable warrants additional discussion. One might suggest
+
+
+
+
+                                                                                                                 Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  that using the cross-sectional spread in past 12-month returns should indicate the
+                  degree of underreaction/return-continuation in the market and thus forecast both
+                  the profitability of a momentum strategy and arbitrageur demand. However,
+                  using the preformation return spread across momentum deciles is potentially
+                  flawed by exactly the endogenous mechanism that we model and estimate in
+                  the paper. Conceptually, a large spread in preformation returns might mean
+                  that a lot of news has not been fully incorporated into prices. Alternatively, it
+                  could mean that just the right amount of reaction by market participants has
+                  taken place. A third interpretation is that a significant amount of overreaction to
+                  initial news has occurred that will continue. Finally, a large preformation return
+                  spread might indicate that a significant amount of overreaction to initial news
+                  has already occurred and is now due to reverse. Empirically, we find that the
+                  past return spread does not predict higher momentum holding-period returns in
+                  the data (Internet Appendix Table A4, panel A). Moreover, as row 1 of Table 4,
+                  panel E, documents, the return spread does not forecast post-holding period
+                  returns on momentum stocks in the presence of our comomentum measure.
+                     On a related note, one might worry that our results are a repackaging of the
+                  long-run reversal pattern in returns. This concern is unwarranted for a variety of
+                  reasons: (1) Comomentum is an average correlation of residuals from a factor
+                  regression and thus is unaffected by the realized average return of momentum
+                  stocks during the formation period. (2) Comomentum subsumes the return
+                  spread when forecasting time variation in the expected holding and post-holding
+                  period returns of momentum stocks. (3) Our result is robust to controlling for
+                  the value factor of Fama and French, which prices the long-run reversal effect
+                  (Fama and French 1996).
+                     Table 4, panel E, row 4, documents that the difference in momentum returns
+                  between high and low momentum-stock-volatility periods is −0.48% per month
+                  ( t-statistic=−0.93) in the 2 years after portfolio formation. This result shows
+                  that our focus on correlations when measuring comomentum is sensible. That
+                  component of portfolio volatility more likely reveals the activity of a quant
+                  arbitrageur, who trades a portfolio of stocks, than the activity of a noise trader,
+                  who more likely trades a solitary winner or loser. Table 4, panel F, confirms
+                  that our results are robust to measuring the predictability finding of the paper
+                  on an out-of-sample basis. These tests ensure that the trading strategy implicit
+                  in the analysis is fully implementable.
+
+
+
+
+                                                                                                3295
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                  Page: 3295   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                       Taken together, these results confirm that our comomentum measure of
+                    crowded momentum trading robustly forecasts times of strong reversal to the
+                    returns of momentum stocks and does not simply represent a repackaging of
+                    some existing variable. Therefore, our novel approach to measuring momentum
+                    arbitrage activity is a robust and unique way of identifying when and why
+                    momentum transitions from being an underreaction phenomenon to being an
+                    overreaction phenomenon.
+                       Finally, we revisit our key result of Figure 3 using an instrumental
+
+
+
+
+                                                                                                               Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    variables approach. Table 2 documents that more arbitrage trading flows to
+                    the momentum strategy when the strategy has recently performed well. An
+                    alternative interpretation of our findings might be that variation in CoMOM
+                    reflects arbitrageurs optimally allocating more capital to the momentum trade
+                    when it is viewed as more profitable, for example, because of stronger
+                    underreaction on the part of noise traders. We note the absence of strong
+                    evidence that momentum holding period returns are persistent. Moreover,
+                    as we detailed above, standard measures of the attractiveness of momentum
+                    holding period returns deteriorate markedly when comomentum increases.
+                    Nevertheless, some end investors and/or portfolio managers may hold this
+                    erroneous belief. This tension leads to a natural test.
+                       In particular, we instrument comomentum with the cash flow news
+                    component of lagged momentum strategy returns. We solely focus on this
+                    component of returns since doing so allows us to remove any feedback effect
+                    that momentum trading generates. Indeed, in a world in which arbitrage activity
+                    in momentum stocks is just enough to eliminate underreaction, but not so much
+                    as to result in overreaction, holding period returns to momentum strategies
+                    should consist of only cash flow news. The results from this test are consistent
+                    with our proposed supply-side mechanism and inconsistent with the alternative
+                    demand-side explanation. As we show in Internet Appendix Table A5, periods
+                    of high instrumented comomentum are followed by a stronger reversal to the
+                    momentum strategy. In particular, both holding period and post-holding period
+                    returns to the momentum strategy are markedly lower. Figure A8 shows these
+                    patterns in pre- and post-formation returns to the momentum strategy using
+                    instrumented comomentum. As the figure shows, we continue to find that
+                    arbitrage activity in the momentum strategy can be destabilizing.
+
+
+
+               3. A Simple Model and Additional Predictions
+                    To help motivate and interpret our empirical work, the Internet Appendix
+                    presents a simple model of crowded trading, building on the work of Hong
+                    and Stein (1999). In their model, Hong and Stein study the interaction of
+                    newswatchers and quantitative traders following well-known strategies, and
+                    assume that the number of quantitative traders is fixed. We extend their setting
+                    to incorporate a time-varying number of quantitative traders (or, equivalently,
+
+
+
+                    3296
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                Page: 3296   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  time-varying aggregate risk tolerance), to reflect the fact that arbitrage capital
+                  can change stochastically.
+                     We summarize the key results as follows. First, momentum returns peak in
+                  the short run and then gradually and partially reverse in subsequent periods.
+                  Second, all else equal, a larger amount of momentum capital is associated with
+                  a larger return effect at the time of the arbitrageurs’ trades and then a smaller
+                  drift subsequently. In other words, as more capital arrives, momentum traders
+                  incorporate more information into prices as they trade, consequently making
+
+
+
+
+                                                                                                                 Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  the momentum strategy less profitable. Third, a larger amount of momentum
+                  capital is also associated with a larger reversal in the long run, consistent with
+                  the idea that momentum trading can be destabilizing.
+
+                  3.1 Arbitrage activity and strategy returns
+                  To speak more directly to our empirical tests, we compare periods in our model
+                  with high momentum (value) activity versus periods with low momentum
+                  (value) activity. Momentum spreads in the formation period are larger in
+                  high momentum activity periods than in low activity periods. There is also
+                  a larger reversal to the momentum strategy after periods with high momentum
+                  activity than periods with low activity. Momentum returns in the holding period,
+                  however, depend on arbitrageur’s risk tolerance. When momentum traders
+                  are relatively risk-averse, momentum returns in period 1 are larger in high
+                  momentum activity periods than in low activity periods; when momentum
+                  traders are relatively risk-tolerant, the reverse is true.
+                     For the value strategy, in both the holding and post-holding periods, returns
+                  are strictly larger after high realizations of value activity than low realizations
+                  of value activity. The reason that our model has different predictions for
+                  momentum and value is that value is a negative-feedback strategy. Though
+                  value traders’ demand is a linear function of the value signal as well, the
+                  resultant demand also shrinks the signal. This fact has two implications: (1)
+                  The equilibrium value signal is a positive predictor of future value strategy
+                  returns (in contrast, the momentum signal can be a negative predictor of future
+                  returns). (2) High value activity is accompanied by a relatively large value
+                  signal, which in turn indicates high expected returns to the value strategy. See
+                  Section 2.2 of the Internet Appendix for a detailed discussion.
+
+                  3.2 Value (and other) strategy returns
+                  As our model predicts that arbitrage activity is generally stabilizing in negative-
+                  feedback strategies, we turn to the other workhorse trading strategy studied by
+                  academics, implemented by practitioners, and modeled in our theory: the value
+                  strategy. We study the comomentum analogue for the value strategy, which we
+                  dub CoVAL. Table 4, panel G, shows the results of using CoVAL to predict
+                  buy-and-hold returns on the value strategy. Consistent with our model, times of
+                  relatively high comovement among value stocks forecast relatively high returns
+                  to a value strategy rather than relatively low returns. Furthermore, we find that
+
+
+
+                                                                                                3297
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                  Page: 3297   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    there is no evidence of any long-run reversal (Table 4, panel G, rows 1–3, and
+                    Internet Appendix Table A6, panel A) or relatively high negative skewness
+                    (Internet Appendix Table A6, panel B) associated with CoVAL. These results
+                    are consistent with price stabilization.
+                        In our model, value arbitrageurs are rationally pursing value bets when
+                    they are more attractive. We test this in the data by analyzing the relation
+                    between CoVAL and the cross-sectional spread in book-to-market equity ratios,
+                    dubbed the value spread by Cohen, Polk, and Vuolteenaho (2003). 28 Cohen,
+
+
+
+
+                                                                                                                                             Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    Polk, and Vuolteenaho (2003) derive the way the value spread should be
+                    related to the relative attractiveness of the value strategy and show that the
+                    value spread forecasts the return on the value-minus-growth bet. The CoVAL
+                    measure is indeed economically and statistically related to the value spread.
+                    The contemporaneous correlation between covalue and the value spread is a
+                    highly statistically significant 0.17. Moreover, when we forecast CoVAL with
+                    the lagged value spread, we find an adjusted R 2 of 6.02% and a t -statistic
+                    of 6.09. Interestingly, covalue remains a significant (albeit weaker) predictor
+                    of future value returns after controlling for the value spread, suggesting that
+                    arbitrageurs use more information than what is included in our measure of the
+                    value spread.
+                        We argue that the negative-feedback nature of a value strategy is what
+                    generates a positive relation between arbitrage activity and subsequent long-
+                    horizon returns on value stocks. To confirm this aspect of our model, we examine
+                    another negative-feedback strategy: LT R, that buys long-term losers and sells
+                    long-term winners (based on the last 3 years of returns). Row 5 of Table 4,
+                    panel G, shows that CoLTR forecasts time-series variation in the post-formation
+                    returns to the long-term reversal strategy in years 1 and 2 with a point estimate
+                    of 1.22%/month and an associated t-statistic of 3.10.
+                        A particularly interesting test in Table 4, panel B, uses the principal
+                    component of comomentum and covalue. We find that comomentum and
+                    covalue have a correlation of 0.51. If we use the common component of these
+                    two measures, our forecasting results remain strong. In particular, the principal
+                    component of comomentum and covalue forecasts time-series variation in the
+                    returns on momentum stocks in years 1 and 2 with a t-statistic of −3.54 and
+                    also forecasts time-series variation in the returns on value stocks in years 1 and
+                    2 with a t-statistic of 2.25. This finding is consistent with the extended version
+                    of our model where variation in arbitrage activity is at the industry level, not
+                    the strategy level, and arbitrageurs optimally choose the extent to which they
+                    combine value and momentum signals. We verify that this common component
+                    is tied to an observable measure of arbitrage capital: the correlation between the
+                    common component of CoMOM and CoVAL and the logarithm of aggregate
+
+
+
+                28 Asness et al. (2000) also link variation in the value spread to the subsequent profitability of value strategies.
+
+
+
+
+                    3298
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                              Page: 3298   3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  long-short equity hedge fund AUM is 58.3%. This striking result provides nice
+                  confirmation of our paper’s core idea.
+                     Table 4 also shows that both comomentum and covalue have incremental
+                  information about subsequent returns on their respective strategies controlling
+                  for the other. In particular, comomentum, controlling for covalue, forecasts
+                  time-series variation in the returns on momentum stocks in years 1 and 2 with
+                  a t-statistic of −2.29. Covalue, controlling for comomentum, forecasts time-
+                  series variation in the returns on value stocks in years 1 and 2 with a t-statistic
+
+
+
+
+                                                                                                                 Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  of 2.17. This finding is also sensible as it is reasonable to expect that not all
+                  arbitrageurs use both types of strategies.
+                     Finally, earnings momentum strategies should exhibit much less destabiliz-
+                  ing trading behavior than price momentum strategies as arbitrageurs observe the
+                  actual earnings surprise and not just the price response to earnings information.
+                  In particular, the signal is not affected by arbitrageurs’ trading, so there
+                  is no positive-feedback loop. Consistent with the above intuition, Table 4,
+                  panel G, shows that destabilizing predictability identified using CoEMOM for
+                  the standard earnings momentum strategy of Bernard and Thomas (1989) is
+                  statistically insignificant with a point estimate of −0.04% (t-statistic=−0.27).
+
+
+             4. Conclusions
+                  Over the last several decades, professional money managers have grown to
+                  dominate asset markets. The typical presumption is that these sophisticated
+                  investors will make markets more efficient and stabilize prices. We propose
+                  a novel approach to measuring the extent and consequence of these sorts
+                  of investors based on high-frequency excess return comovement. We exploit
+                  this idea in the context of the price momentum strategy of Jegadeesh and
+                  Titman (1993), measuring the comovement of momentum stocks in the
+                  formation period. We link this comomentum measure to future characteristics
+                  of the momentum strategy to determine whether arbitrage activity can be
+                  destabilizing. We focus on price momentum not only because of the failure of
+                  both rational and behavioral models to explain stylized facts about that strategy
+                  but also because momentum is a classic example of a positive-feedback strategy
+                  where coordination problems are particularly severe. For this class of trading
+                  strategies, arbitrageurs do not base their demand on an independent estimate of
+                  fundamental value; instead, their demand for an asset is an increasing function
+                  of price. Thus, this type of positive-feedback trading strategy is a likely place
+                  in which arbitrage activity can be destabilizing, which we confirm in a model
+                  of time-varying arbitrage activity.
+                     Our comomentum measure of the momentum crowd is a success based on
+                  three main empirical findings. First, comomentum is significantly correlated
+                  with existing variables plausibly linked to the size of arbitrage activity in
+                  this market. Second, comomentum forecasts relatively low holding-period
+                  returns, relatively high holding-period return volatility, and relatively more
+
+
+                                                                                                3299
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                  Page: 3299   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    negative holding-period return skewness for the momentum strategy. Finally,
+                    when comomentum is relatively high, the long-run buy-and-hold returns to
+                    a momentum strategy are negative, consistent with times of relatively high
+                    amounts of arbitrage activity pushing prices further away from fundamentals.
+                    These results are only present for stocks with high institutional ownership and
+                    during the modern period. In sharp contrast but as predicted by our model,
+                    a similar measure for the value strategy, covalue, positively forecasts future
+                    value strategy returns. This finding is consistent with arbitrageurs stabilizing
+
+
+
+
+                                                                                                                                           Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                    prices when following negative-feedback strategies. Taken together, our results
+                    provide novel evidence that arbitrage activity can be destabilizing in strategies
+                    characterized by positive-feedback trading.
+
+
+                   References
+
+                    Abreu, D., and M. K. Brunnermeier. 2003. Bubbles and crashes. Econometrica 71:173–204.
+
+                    Anton, M., and C. Polk. 2014. Connected stocks. Journal of Finance 69:1099–127.
+
+                    Asness, C. S., J. A. Friedman, R. J. Krail, and J. M. Liew. 2000. Style timing: Value versus growth. Journal of
+                    Portfolio Management 26:50–60.
+
+                    Baker, M., and J. Wurgler. 2006. Investor sentiment and the cross-section of stock returns. Journal of Finance
+                    61:1645–80.
+
+                    Barberis, N., and A. Shleifer. 2003. Style investing. Journal of Financial Economics 68:161–99.
+
+                    Barberis, N., A. Shleifer, and J. Wurgler. 2005. Comovement. Journal of Financial Economics 75:283–317.
+
+                    Barroso, P., and P. Santa-Clara. 2015. Momentum has its moments. Journal of Financial Economics 116:111–20.
+
+                    Bernard, V. L., and J. K. Thomas. 1989. Post-earnings-announcement drift: Price response or risk premium?
+                    Journal of Accounting Research 27:1–36.
+
+                    Blume, M. E., and D. Keim. 2014. The changing nature of institutional stock investing. Critical Finance Review
+                    6:1–41.
+
+                    Boehmer, E., C. M. Jones, and X. Zhang. 2008. Which shorts are informed? Journal of Finance 63:491–527.
+
+                    Brunnermeier, M. K., and S. Nagel. 2004. Hedge funds and the technology bubble. Journal of Finance
+                    59:2013–40.
+
+                    Cao, C., Y. Chen, W. N. Goetzmann, and B. Liang. 2018. Hedge funds and stock price formation. Financial
+                    Analysts Journal 74:54–69.
+
+                    Chen, Y., Z. Da, and D. Huang. 2019. Arbitrage trading: The long and the short of it. Review of Financial Studies
+                    32:1608–46.
+
+                    Chen, H., V. Singal, and R. F. Whitelaw. 2016. Comovement revisited. Journal of Financial Economics
+                    121:624–44.
+
+                    Cho, T. 2020. Turning alphas into betas: Arbitrage and endogenous risk. Journal of Financial Economics
+                    137:550–70.
+
+                    Cohen, R. B., C. Polk, and T. Vuolteenaho. 2003. The value spread. Journal of Finance 58:609–41.
+
+                    Cooper, M. J., R. C. Gutierrez, and A. Hameed. 2004. Market states and momentum. Journal of Finance
+                    59:1345–65.
+
+                    Daniel, K., M. Grinblatt, S. Titman, and R. Wermers. 1997. Measuring mutual fund performance with
+                    characteristic-based benchmarks. Journal of Finance 52:1035–58.
+
+
+
+
+                    3300
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                           Page: 3300    3272–3302
+                  Comomentum: Inferring Arbitrage Activity from Return Correlations
+
+
+
+                  Daniel, K., and T. Moskowitz. 2016. Momentum crashes. Journal of Financial Economics 122:221–47.
+
+                  Daniel, K., R. Jagannathan, and S. Kim. 2019. Tail risk in momentum strategy returns. Working Paper, Columbia
+                  University.
+
+                  DeLong, J. B., A. Shleifer, L. H. Summers, and R. J. Waldmann. 1990. Positive feedback investment strategies
+                  and destabilizing rational speculation. Journal of Finance 45: 379–95.
+
+                  Fama, E. F., and K. R. French. 1993. Common risk factors in the returns on stocks and bonds. Journal of Financial
+                  Economics 33:3–56.
+
+                  ———. 1996. Multifactor explanations of asset pricing anomalies. Journal of Finance 51:55–84.
+
+
+
+
+                                                                                                                                           Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+                  ———. 2015. A five-factor asset pricing model. Journal of Financial Economics 116:1–22.
+
+                  Friedman, M. 1953. The case for flexible exchange rates. In Essays in positive economics, 157–203. Chicago:
+                  University of Chicago Press.
+
+                  Frazzini, A., R. Israel, and T. J. Moskowitz. 2020. Trading costs of asset pricing anomalies. Working Paper, New
+                  York University.
+
+                  Griffin, J. M., and J. Xu. 2009. How smart are the smart guys? A unique view from hedge fund stock holdings.
+                  Review of Financial Studies 22:2531–70.
+
+                  Hayek, F. A. 1945. The use of knowledge in society. American Economic Review 35:519–530.
+
+                  Hanson, S. G., and A. Sunderam. 2014. The growth and limits of arbitrage: Evidence from short interest. Review
+                  of Financial Studies 27:1238–86.
+
+                  Hwang, B. H., B. Liu, and W. Xu. 2019. Arbitrage involvement and security prices. Management Science
+                  65:2858–75.
+
+                  Hong, H., and J. C. Stein. 1999. A unified theory of underreaction, momentum trading, and overreaction in asset
+                  markets. Journal of Finance 54:2143–84.
+
+                  Jegadeesh, N., and S. Titman. 1993. Returns to buying winners and selling losers: Implications for stock market
+                  efficiency. Journal of Finance 48:65–91.
+
+                  Jegadeesh, N., and S. Titman. 2001. Profitability of momentum strategies: An evaluation of alternative
+                  explanations. Journal of Finance 56:699–720.
+
+                  Keynes, J. M. 1936. The general theory of employment, interest, and money. London, UK: Macmillan.
+
+                  Lee, C. M. C., and B. Swaminathan. 2000. Price momentum and trading volume. Journal of Finance 55:2017–69.
+
+                  Lewellen, J., and S. Nagel. 2006. The conditional CAPM does not explain asset-pricing anomalies. Journal of
+                  Financial Economics 82:289–314.
+
+                  Loomis, C. 1966, The Jones nobody keeps up with. Fortune April:237–47.
+
+                  Lou, D. 2012. A flow-based explanation for return predictability. Review of Financial Studies 25:3457–89.
+
+                  Pástor, Ľ., and R. F. Stambaugh. 2003. Liquidity risk and expected stock returns. Journal of Political Economy
+                  111:642–85.
+
+                  Pollet, J. M., and M. Wilson. 2010. Average correlation and stock market returns. Journal of Financial Economics
+                  96:364–80.
+
+                  Stein, J. C. 1987. Informational externalities and welfare-reducing speculation. Journal of Political Economy
+                  95:1123–45.
+
+                  ———. 2009. Presidential address: Sophisticated investors and market efficiency. Journal of Finance
+                  64:1517–48.
+
+                  Wang, K. Q., and J. Xu. 2015. Market volatility and momentum. Journal of Empirical Finance 30:79–91.
+
+
+
+
+                                                                                                                           3301
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                            Page: 3301   3272–3302
+                    The Review of Financial Studies / v 35 n 7 2022
+
+
+
+                    Welch, I., and A. Goyal. 2008. A comprehensive look at the empirical performance of equity premium prediction.
+                    Review of Financial Studies 21:1455–508.
+
+                    Yan, P. 2014. Crowded trades, short covering, and momentum crashes. Working Paper, Goldman Sachs Asset
+                    Management.
+
+
+
+
+                                                                                                                                        Downloaded from https://academic.oup.com/rfs/article/35/7/3272/6412574 by London School of Economics user on 26 June 2022
+
+
+
+
+                    3302
+
+
+
+
+[12:01 1/6/2022 RFS-OP-REVF210133.tex]                                                                         Page: 3302   3272–3302
+

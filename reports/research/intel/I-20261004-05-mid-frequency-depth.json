@@ -1,0 +1,1149 @@
+{
+ "meta": {
+  "id": "I-20261004-05",
+  "coordinator_code": "R1004-T80",
+  "written_utc": "2026-10-04T18:55Z",
+  "brief": "reports/research/control/briefs/T-20261004-80.md",
+  "model": "Sonnet 5.5 high",
+  "evidence_scale": {
+   "1": "无",
+   "2": "只有回测",
+   "3": "样本外或发表后",
+   "4": "机构自述实盘使用",
+   "5": "可核验或独立复现"
+  },
+  "markdown": "reports/research/intel/I-20261004-05-mid-frequency-depth.md"
+ },
+ "limitations": [
+  "近期（2022 起）净值证据空白：DLSA 止于 2016，Attention Factors 止于 2021，唯一的 2016–2024 复现已撤回",
+  "未读原文：Gao–Han–Li–Zhou 2018、Blitz 2013、Hou 2007、Cohen–Frazzini 2008、Bogousslavsky–Muravyev、Cheng–Madhavan、FIM 最终版（读到 2012 初稿）、Robeco 2022（WebFetch 摘要）",
+  "Man、Robeco 的股票信号半衰期定量表没有找到",
+  "Alpaca：OPG/CLS 对本账户的开通与截止时间、实盘价格改善数字、PDT 停用日期：未核对",
+  "Attention Factors、bsiranosian 的代码：没找到公开仓库"
+ ],
+ "conclusion": {
+  "main_attack": [
+   "A：成本感知的残差/多信号短期统计套利，最流动 500–1000 只，持有 3–10 日，部分调仓，叠在 v1.2 风险模型和优化器上",
+   "B（执行杠杆，与信号无关）：换仓从开盘移到收盘或 15:50 前限价；开盘窗口价差中位是收盘的 3.17/4.22/4.86 倍（十分位 0/2/5）"
+  ],
+  "not_main": [
+   "日内动量、半小时周期、日末反转、杠杆 ETF 收盘流、OFI、竞价失衡"
+  ],
+  "minimum_depth_core": [
+   "残差化加中性",
+   "多个低相关信号合成或学习式残差信号",
+   "成本进目标函数且用实测分时段价差",
+   "部分调仓加买/持缓冲带，速度按半衰期定"
+  ],
+  "unproven": [
+   "没有近期（2022 起）的净值证据",
+   "没有证据支持\"中频一定比周频赚得多\""
+  ]
+ },
+ "frequency_method": [
+  {
+   "step": "1. 测半衰期",
+   "text": "对每个信号每天算截面秩相关 IC_k（信号在 t，对 t+k 当天的单日收益，k=0…20），取平均得到边际 IC 衰减曲线，拟合 IC_k ≈ IC_0·φ^k，半衰期 = ln2 / (−ln φ)。同时按 DLSA 的做法画'持有 B 日的夏普'曲线（DLSA：半衰期约 7 个交易日）。隔夜与日内分开测（Lou–Polk–Skouras：同一信号两段符号可相反）。"
+  },
+  {
+   "step": "2. 算成本",
+   "text": "每名每时段的单边成本 c = 半价差（实测分时段、分十分位、分年份）+ 费用 0.5bp（本地模型值）+ 空头借券。每次来回成本 2c；持有 H 日的盈亏平衡毛 alpha = 2c/H 每日（下表）。"
+  },
+  {
+   "step": "3. 定调仓速度",
+   "text": "Gârleanu–Pedersen 2013：最优组合 x_t = (1−a/λ)·x_{t−1} + (a/λ)·aim_t（式 10），交易速率 a/λ 随成本 λ 上升而下降、随风险厌恶 γ 上升而上升（式 9）；aim_t 是现在与未来各期预期马科维茨组合的加权平均，权重 z(1−z)^(τ−t)（式 13），衰减慢的信号权重更大。商品期货实证里净夏普比最好的对照好约 20%。我们的做法：单信号用该式给 κ 的先验，真实 κ 用训练窗的网格选；多信号用 cvxpy 多期规划，planning horizon 取半衰期的 2–3 倍，再叠买/持缓冲带（Novy-Marx–Velikov，Robeco 买 10 持 50）。"
+  },
+  {
+   "step": "4. 判定",
+   "text": "对每个（信号或信号组合，调仓间隔 H ∈ {1,2,5,10,21} 日，调仓比例 κ）画净夏普曲面；在训练窗内选最优，在其后窗口前向验证。最优若落在 H ≥ 10，现有周频月频已接近最优；若落在 H ≤ 5，中频腿才值得建。"
+  },
+  {
+   "step": "5. 为什么频率高研究更快",
+   "text": "IC 的标准误约 1/√(N·T)（假定名与日之间近似独立，真实会更大，只当上限估计）：N=1000、T=250 个交易日 → 0.0020，3 倍标准误 0.006，IC 0.01–0.03 的信号一年内可检出；而要用夏普达到 t=2，夏普 0.5 要 16 年、1.0 要 4 年、1.5 要 1.8 年（计算见 JSON 的 calc）。这是中频的真实优势：证据积累得比周频月频快一个量级，但前提是成本已经算对。"
+  }
+ ],
+ "signals": [
+  {
+   "id": "S1",
+   "name": "残差反转 / PCA·ETF 统计套利（Avellaneda–Lee 2010）",
+   "hold": "日频，持有数日（s-score 开平仓）",
+   "gross_net": "扣成本后：PCA 版平均夏普 1.44（1997–2007），2003–2007 降到 0.9；ETF 版 1.1（同期），2003–2007 同样衰减；ETF 版加成交量信号 1.51（2003–2007）",
+   "cost": "5bp/笔（来回 10bp），固定",
+   "post_pub": "论文自己记录了 2003 年后衰减。后续：Attention Factors 2025 表 2 里 PCA+OU 阈值基准在 5bp/笔下毛夏普 −0.35 至 1.26、净夏普 −2.5 至 −7.1",
+   "data": "日线 + 成交量；ETF 版需行业 ETF 日线",
+   "capacity": "未给；大盘股，我们资金量下不受限",
+   "alpaca": "能做（SIP 日线 2016 起在本地；需做空 ETB 股票）",
+   "evid": 2,
+   "local": "sector_residual_reversal_statarb_decay：外部严谨复现（防泄漏，CRSP）样本内净夏普 0.34（7bp）→ 样本外 2019–2024 毛 0.23、净 −0.15，盈亏平衡 4.2bp，空头和低价股集中。经 directions.jsonl 引用，本次没有重开原文",
+   "src": [
+    "sources/mid-frequency-2026-10-04/avellaneda-lee2010.txt",
+    "sources/mid-frequency-2026-10-04/attention-factors-stat-arb-2510.11616.txt"
+   ]
+  },
+  {
+   "id": "S2",
+   "name": "Blitz 等的残差反转（JFM 2013）",
+   "hold": "月度再平衡的短期反转，用残差收益排序",
+   "gross_net": "摘要级：残差反转风险调整收益约为常规反转两倍；'扣成本后年化超过 7–8%'（各版本写法不一致，原文未读）",
+   "cost": "未读原文",
+   "post_pub": "未读；本地同族外部复现显示近期衰减",
+   "data": "日线或月线",
+   "capacity": "未读",
+   "alpaca": "能做",
+   "evid": 2,
+   "local": "见 S1",
+   "src": [
+    "sources/mid-frequency-2026-10-04/_websearch-and-webfetch-notes.txt"
+   ]
+  },
+  {
+   "id": "S3",
+   "name": "学习式残差统计套利 DLSA（Guijarro-Ordóñez、Pelger、Zanotti，2021 起，Management Science 接收）",
+   "hold": "日频信号；Sharpe 半衰期约 7 个交易日；1 个月持有毛夏普仍 >1，直接按 1 个月优化可到约 1.5（毛）",
+   "gross_net": "约 550 只最大最流动美股，样本外 2002–2016：毛夏普 >4（IPCA 残差），PCA/FF 残差约 3.2–3.6；扣 5bp/笔 + 空头 1bp：净夏普 0.94–1.24（IPCA，K 合理时）",
+   "cost": "5bp/笔滑点 + 1bp 空头持有成本，对所有股票所有时间固定",
+   "post_pub": "原样本止于 2016。独立复现（bsiranosian，2026-06-29）在 2002–2016 复现了毛数字，PCA 最高 3.40 对 3.56，FF 只到 80%，未做近期扩展。唯一的 2016–2024 复现（arXiv 2412.11432）已被作者撤回：用了静态 S&P500 名单（幸存者偏差），夏普出现 >10。Valeyre–Aboura 2025 称在同一数据集上净夏普'似乎只在 2006 年之前显著'（其自述，未核对其计算）",
+   "data": "日线收益；IPCA 版需要 46 个公司特征；训练约每 125 天一次、窗口 1000 天",
+   "capacity": "只交易最大最流动的股票；平均日换手高（论文自己列为难点）；未给容量",
+   "alpaca": "数据没问题（SIP 日线）；要多空：做空只限 ETB，碎股不能做空",
+   "evid": 2,
+   "local": "deep_learning_stat_arb_residual：2026-09-28 标 not_executable，理由是'近重复 + 简化版会测错机制'，**没有测过**，reopen 条件是'专门迭代做出带真实换手成本的残差/PCA 引擎'",
+   "src": [
+    "sources/mid-frequency-2026-10-04/dlsa-arxiv.txt",
+    "sources/mid-frequency-2026-10-04/dlsa-github-readme.txt",
+    "sources/mid-frequency-2026-10-04/bsiranosian-dlsa-replication-part1.txt",
+    "sources/mid-frequency-2026-10-04/dlsa-replication-arxiv-abs.txt",
+    "sources/mid-frequency-2026-10-04/llm-stat-arb-2412.09394.txt"
+   ]
+  },
+  {
+   "id": "S4",
+   "name": "Attention Factors 统计套利（Epstein、Wang、Choi、Pelger，ICAIF 2025，arXiv 2510.11616）",
+   "hold": "日频",
+   "gross_net": "500 只最大最流动股票，样本外 1998–2021：毛夏普 2.9–4.5；净夏普 1.58–1.69（K=1–5）、2.28（K=30）、2.19（K=100）；摘要写净 2.3。同表 PCA 因子两步法净 1.2–1.6，PCA+OU 阈值基准净 −2.5 至 −7",
+   "cost": "5bp/笔 + 1bp 空头，进训练目标（端到端）",
+   "post_pub": "样本到 2021，没有 2022 以后；作者写后段仍有效，未给分段数字",
+   "data": "日线 + 公司特征（CRSP/Compustat）；训练用 5 块 RTX A6000",
+   "capacity": "未给",
+   "alpaca": "数据部分可做；特征需要基本面（我们只有 SEC 免费数据）；本次没有找到代码",
+   "evid": 2,
+   "local": "未测",
+   "src": [
+    "sources/mid-frequency-2026-10-04/attention-factors-stat-arb-2510.11616.txt"
+   ]
+  },
+  {
+   "id": "S5",
+   "name": "短期信号合成（Robeco 2022：行业相对反转、行业动量、分析师修正、同月收益、特质波动）",
+   "hold": "月度组合，换手约 1800%/年",
+   "gross_net": "MSCI World 1985–2021：单信号毛年化 5–8%，盈亏平衡成本都低于 25bp；合成后毛 >12%，盈亏平衡 >30bp；'买 10 持 50'缓冲后净 alpha >6%",
+   "cost": "盈亏平衡法 + 缓冲带；非逐名价差",
+   "post_pub": "未分近期；全样本含 2010 年后",
+   "data": "日线 + 分析师修正（付费，我们没有）",
+   "capacity": "未给",
+   "alpaca": "除分析师修正外能做",
+   "evid": 2,
+   "local": "未按此形式测；本地 rev_5d 信号卡 IC 0.006–0.010，20bp 下无可交易层（经 directions.jsonl 引用）",
+   "src": [
+    "sources/mid-frequency-2026-10-04/_websearch-and-webfetch-notes.txt（WebFetch 摘要，未读原文）"
+   ]
+  },
+  {
+   "id": "S6",
+   "name": "隔夜 / 日内收益分解（Lou–Polk–Skouras，JFE 2019）",
+   "hold": "隔夜（收盘到开盘）与日内（开盘到收盘）；动量月度、反转日度",
+   "gross_net": "1993–2013：动量的全部异常收益来自隔夜（三因子 alpha 隔夜 0.95%/月 t 3.65，日内 0.11% t 0.27；动量的隔夜夏普是 close-to-close 夏普的两倍以上）；隔夜赢家减输家十分位（市值加权）隔夜 alpha 3.47%/月，日内 −3.02%/月",
+   "cost": "论文毛收益，未扣成本",
+   "post_pub": "论文分早晚两段都成立（1993–2002、2003–2013）；Hendershott 等、Glasserman 等 2025 做了机制解释，没有找到 2014 年后的独立净值",
+   "data": "日线开收盘价（有）",
+   "capacity": "未给",
+   "alpaca": "数据能做；隔夜持仓或竞价单（OPG/CLS 需销售开通）",
+   "evid": 3,
+   "local": "overnight_return_persistence_auction：1 个月、1 周口径否定；1 年口径在未见股票上过了 A 关（+13.7bp/夜，t 5.19），官方竞价价上 B 关没过；overnight_only_spy/qqq 每日往返夏普 −2.5 至 −4",
+   "src": [
+    "sources/mid-frequency-2026-10-04/lou-polk-skouras-nber.txt",
+    "sources/mid-frequency-2026-10-04/lou-polk-skouras-fmg.txt",
+    "sources/mid-frequency-2026-10-04/night-minus-day-predictability-jfe2023.txt",
+    "sources/mid-frequency-2026-10-04/arxiv-2507.04481-night-day-jumps.txt"
+   ]
+  },
+  {
+   "id": "S7",
+   "name": "日内动量（Gao–Han–Li–Zhou 2018；Baltussen–Da–Lammers–Martens 2021）",
+   "hold": "首个半小时收益预测最后半小时，持有最后 30 分钟",
+   "gross_net": "Baltussen 等：60 多个期货 1974–2020，权益指数期货毛夏普 1.07–1.73（年化收益 4–7%、波动约 4%），**明确不含交易成本**；Gao 等原文未读。Zarattini–Aziz–Barbon 2024（SPY，含 0.0035 美元/股佣金 + 0.001 美元/股滑点）：无杠杆 2007–2024 年化 6.2%、夏普 0.61；加波动目标和最高 4 倍杠杆后夏普 1.33",
+   "cost": "Zarattini：IB 入门佣金 + 每股 0.001 美元滑点",
+   "post_pub": "BDLM 称各时期都在；Barbon 等：杠杆 ETF 部分随时间显著下降；本地 2016–2026 复现夏普 0.30",
+   "data": "分钟线（有，2023–2026）；实时信号需要实时 SIP（付费）",
+   "capacity": "指数期货、SPY 容量大",
+   "alpaca": "Alpaca 没有期货；SPY 版可做，但只剩 0.3–0.6 夏普",
+   "evid": 3,
+   "local": "spy_noise_band_intraday、single_etf_intraday_momentum_cost_adjusted、orb_etf_opening_range_breakout：全部否定；ORB 的随机方向安慰剂拿回 92.7% 收益",
+   "src": [
+    "sources/mid-frequency-2026-10-04/baltussen-hedging-intraday-momentum.txt",
+    "sources/mid-frequency-2026-10-04/zarattini-beat-the-market-spy.txt",
+    "sources/mid-frequency-2026-10-04/barbon-letf-page.txt"
+   ]
+  },
+  {
+   "id": "S8",
+   "name": "日内半小时周期性（Heston–Korajczyk–Sadka，JF 2010）",
+   "hold": "次日同一半小时，持有半小时",
+   "gross_net": "纽交所股票 2001–2005：上一日同一半小时的最好和最差十分位相差 3.01bp，对比 S&P 500 股票报价半价差 1.7bp（2008 年 5 月）；作者自己拿它与两倍半价差同量级比较，**未扣成本**",
+   "cost": "无",
+   "post_pub": "只有 2001–2005；没有找到发表后独立样本",
+   "data": "分钟或半小时价格（有）；实时分钟需要付费 SIP",
+   "capacity": "未给",
+   "alpaca": "数据可做，收益 ≈ 两倍半价差，净值接近零",
+   "evid": 2,
+   "local": "intraday_same_slot_periodicity：否定。毛优势（收盘 17.1bp/日）大半是日线与分钟线分红调整口径不一致造成的伪影",
+   "src": [
+    "sources/mid-frequency-2026-10-04/heston-ar5iv.txt"
+   ]
+  },
+  {
+   "id": "S9",
+   "name": "日末反转（Baltussen–Da–Soebhag，2025）",
+   "hold": "日内输家在最后 30 分钟的反转，持有 15:30 到收盘",
+   "gross_net": "1993–2019：市值加权多空 3.78bp/日（约 9.5%/年，t 约 10.6–10.7），等权 6.86bp/日（17.3%/年）；输家腿几乎承担全部。作者：'可能对多数投资者扣费后不可行'",
+   "cost": "未扣",
+   "post_pub": "样本止于 2019；作者说在大盘、高流动子样本也显著，未给近期净值",
+   "data": "分钟线（我们 2023–2026 有）",
+   "capacity": "未给",
+   "alpaca": "数据可做；收盘竞价单需销售开通，否则 15:50 前限价",
+   "evid": 2,
+   "local": "end_of_day_reversal：2026-09-28 标 parked，**没有测过**（需要宽分钟面板）。本文用本地实测收盘价差换算：市值加权多空每日往返成本 7.8–10.7bp（十分位 0–2），毛 3.78bp → 净 −4.0 至 −6.9bp；等权 −0.9 至 −3.9bp。结论：不能单独做，只能做叠加腿或择时",
+   "src": [
+    "sources/mid-frequency-2026-10-04/eod-reversal-baltussen-da-soebhag.txt"
+   ]
+  },
+  {
+   "id": "S10",
+   "name": "杠杆 ETF 收盘再平衡流 / 期权 gamma 对冲",
+   "hold": "最后 30 分钟，次日消散",
+   "gross_net": "Cheng–Madhavan 估计：2009 年 2 月杠杆 ETF 再平衡占收盘市价单量的 16.8%（市场涨跌 1%）到 50.2%（涨跌 5%）（经 BDLM 引用）；无独立净值",
+   "cost": "无",
+   "post_pub": "Barbon 等（SFI 22-40，摘要读到）：杠杆 ETF 的影响随时间显著下降，期权 gamma 的影响整个样本持续；两者次日消散",
+   "data": "分钟线 + 杠杆 ETF 规模和杠杆（公开）",
+   "capacity": "受限于最后半小时流动性",
+   "alpaca": "数据可做；单独做没有证据",
+   "evid": 3,
+   "local": "没有专门测；leveraged ETF ORB 已否定",
+   "src": [
+    "sources/mid-frequency-2026-10-04/baltussen-hedging-intraday-momentum.txt",
+    "sources/mid-frequency-2026-10-04/barbon-letf-page.txt"
+   ]
+  },
+  {
+   "id": "S11",
+   "name": "开盘、收盘竞价效应（Bogousslavsky–Muravyev；Optiver 竞赛）",
+   "hold": "收盘价偏离中点，收盘后回吐一半、隔夜全部回吐",
+   "gross_net": "收盘竞价占日成交量 2018 年 7.5%、2010 年 3.1%；竞价成交量占比预测未来收益（摘要，未读原文）；Optiver 竞赛冠军特征靠竞价失衡数据（T-78 已有）",
+   "cost": "Alpaca 竞价成交无返还也无收费",
+   "post_pub": "未读",
+   "data": "**竞价失衡数据：免费源没有**（directions：closing_auction_imbalance_signal 无免费数据）",
+   "capacity": "未给",
+   "alpaca": "OPG/CLS 单在文档里标 Yes*（需联系销售）；失衡数据不可得",
+   "evid": 2,
+   "local": "closing_auction_imbalance_signal：evidence_too_weak；smallcap_gap_down_fade_auction_execution 与 overnight_return_persistence_auction 已在竞价价上核过",
+   "src": [
+    "sources/mid-frequency-2026-10-04/alpaca-orders-docs.txt",
+    "sources/mid-frequency-2026-10-04/alpaca-sec606a1-2026Q2.txt",
+    "sources/mid-frequency-2026-10-04/_websearch-and-webfetch-notes.txt"
+   ]
+  },
+  {
+   "id": "S12",
+   "name": "订单流失衡 OFI（Cont–Kukanov–Stoikov 2014；Kolm–Turiel–Westray 2023）",
+   "hold": "毫秒到秒（几次价格变动）",
+   "gross_net": "CKS：纽交所 TAQ 50 只股票，OFI 对**同期**中间价变化的平均 R² 约 65%，斜率与深度成反比；这是同期解释，不是预测。Kolm 等：115 只纳斯达克股票深度学习，精度峰值在两次价格变动附近",
+   "cost": "无",
+   "post_pub": "—",
+   "data": "L1/L2 订单簿事件（我们没有；Alpaca 历史报价可取但量极大）",
+   "capacity": "极小",
+   "alpaca": "我们的延迟和纸面盘撮合（按 NBBO、无队列）使它不可测",
+   "evid": 2,
+   "local": "true_hft_market_making：not_executable；OFI 毛夏普 +0.98 → 扣价差后 −1.73（经 directions 引用）",
+   "src": [
+    "sources/mid-frequency-2026-10-04/cks-arxiv.txt",
+    "sources/mid-frequency-2026-10-04/kolm-deep-ofi-ideas.txt"
+   ]
+  },
+  {
+   "id": "S13",
+   "name": "成交量冲击（Gervais–Kaniel–Mingelgrin 2001）",
+   "hold": "日或周的异常成交量，之后约一个月",
+   "gross_net": "CRSP 1963–1996，50 日一段：高成交量股票之后一个月上涨、低成交量下跌；本次没有抽到幅度数字",
+   "cost": "无",
+   "post_pub": "没有找到近期独立证据",
+   "data": "日线（有）",
+   "capacity": "未给",
+   "alpaca": "能做",
+   "evid": 3,
+   "local": "volume_shock 方向没有专门卡；Avellaneda–Lee 里把成交量并进信号使 ETF 版夏普 1.1→1.51（2003–2007）",
+   "src": [
+    "sources/mid-frequency-2026-10-04/gervais-kaniel-mingelgrin-volume.txt",
+    "sources/mid-frequency-2026-10-04/avellaneda-lee2010.txt"
+   ]
+  },
+  {
+   "id": "S14",
+   "name": "财报公告前后的日内反应 / 公告溢价",
+   "hold": "公告日及之后 1–4 天",
+   "gross_net": "搜索摘要：PEAD 可交易窗口只剩 1–4 天；Levy–Koijen（T-78）最佳模型解释同日涨跌的 17%，是解释不是预测",
+   "cost": "—",
+   "post_pub": "大盘 PEAD 2006 年后基本消失（pro-equity-evidence 第 18 号快照）；earnings_announcement_premium_decay 以论文标题 'Disappearing…' 自证",
+   "data": "财报日期（我们只有 2024 起的 8-K 2.02）",
+   "capacity": "—",
+   "alpaca": "可做（扩展时段只能限价日单）",
+   "evid": 2,
+   "local": "earnings_8k_tone_next_day：开盘跳空控制后 t 0.59，否定；extended_hours_earnings_post_announcement_drift：文献自 2016 起为负",
+   "src": [
+    "sources/mid-frequency-2026-10-04/_websearch-and-webfetch-notes.txt"
+   ]
+  },
+  {
+   "id": "S15",
+   "name": "行业 / 供应链领先滞后（Hou 2007；Cohen–Frazzini 2008）",
+   "hold": "日到月",
+   "gross_net": "Pinchuk（arXiv 2301.11394）：客户动量等权多空 122bp/月（t >4），价值加权 106bp/月；发现后样本幅度变小且不再显著。搜索摘要：七国领先滞后在单边成本超过 40bp 后不显著（来源未打开）",
+   "cost": "无",
+   "post_pub": "发表后衰减，且部分来自大小盘领先滞后",
+   "data": "客户-供应商链接（Compustat 分部，付费；我们没有）",
+   "capacity": "—",
+   "alpaca": "数据缺口使其不可做",
+   "evid": 3,
+   "local": "etf_constituent_lead_lag_reversion：低换手版 0/5 未过；日内捕捉版没测",
+   "src": [
+    "sources/mid-frequency-2026-10-04/customer-momentum-2301.11394.txt"
+   ]
+  }
+ ],
+ "cost_execution": [
+  {
+   "item": "点差（实测）",
+   "fact": "本地 SIP NBBO 实测半价差中位（bp，最流动十分位 → 第 5 十分位）：收盘 1.44 → 3.65；午间 2.09 → 6.01；开盘窗口 4.56 → 17.73。开盘均值 22.7bp、中位 14.0bp。2025–26 比 2018 宽约 1.5–2.2 倍",
+   "source": "reports/research/program/cost-model-v1-2026-10-01/report.md（本地，可复现）",
+   "evidence_level": 5
+  },
+  {
+   "item": "纸面盘撮合",
+   "fact": "按当前 NBBO 撮合；订单量不对照 NBBO 数量；可成交时 10% 概率随机部分成交；不模拟冲击、信息泄漏、延迟滑点、排队位置、价格改善、监管费用、分红；纸面盘借券费'即将推出'",
+   "source": "Alpaca 官方文档 paper-trading（`alpaca-paper-trading-docs.txt`）",
+   "evidence_level": 5
+  },
+  {
+   "item": "订单流付费（实盘）",
+   "fact": "Alpaca 向批发商路由并收取回扣：核心时段可成交订单收价差的 12%（每股上限 5 美分），不可成交订单每股 20 mils（价格 ≥1 美元）；开盘、收盘竞价成交无回扣也无收费；路由商含 Virtu、Citadel Securities、Jane Street、GTS。**价格改善的数字未从 606 报告里取出，待核对**",
+   "source": "Alpaca SEC 606(a)(1) 2026 Q2（`alpaca-sec606a1-2026Q2.txt`）",
+   "evidence_level": 5
+  },
+  {
+   "item": "竞价单 MOO/MOC/LOO/LOC",
+   "fact": "TIF 取值 opg 与 cls 在文档里存在；整股市价、限价单的表里标 Yes*，文档注'标 * 的需联系销售团队'；名义金额（碎股）单为 No。**本账户是否已开通、各自的提交截止时间：未核对**",
+   "source": "Alpaca 订单文档（`alpaca-orders-docs.txt`）",
+   "evidence_level": 5
+  },
+  {
+   "item": "碎股",
+   "fact": "默认可用，含盘前盘后和隔夜；碎股卖单一律视为多头，**不支持碎股做空**；碎股只支持 day 单；名义金额订单不可修改",
+   "source": "Alpaca 碎股文档、订单文档",
+   "evidence_level": 5
+  },
+  {
+   "item": "做空",
+   "fact": "需要净值 ≥2,000 美元；ETB（易借）名单 5000 多只，Trading API 用户 ETB 零定位费零借券费；HTB（难借）要先获批定位、整 100 股、定位一次性。较早的文档版本只允许开 ETB 空头——以本次抓取的文档为准",
+   "source": "Alpaca margin-and-short-selling（`alpaca-margin-short-docs.txt`）",
+   "evidence_level": 5
+  },
+  {
+   "item": "保证金",
+   "fact": "初始 50%，维持 25% 起；融资利率 6.5%（非 elite）/5%（elite），按结算日借方余额计、日内开平不计息；单一持仓集中时维持保证金升到 50%",
+   "source": "同上",
+   "evidence_level": 5
+  },
+  {
+   "item": "PDT",
+   "fact": "旧规：保证金账户 25,000 美元以下，5 个交易日内日内交易 4 次以上受限。新规：搜索摘要称 SEC 2026-04-14 批准取消，FINRA 公布 2026-06-04 生效，券商最迟 2027-10-20 实施（第三方来源，未读 FINRA 原文）。Alpaca 有专页讲新日内保证金规则，但**没有写它的实施日期**；Alpaca 碎股页仍写日内碎股交易计入日内交易次数（旧文字）。对持仓过夜的主腿没有影响，影响日内腿",
+   "source": "Alpaca user-protection、intraday margin 说明页",
+   "evidence_level": 3
+  },
+  {
+   "item": "行情数据",
+   "fact": "免费计划实时只有 IEX 单一交易所数据；SIP 历史数据过 15 分钟后与付费一致；最近 15 分钟的 SIP 需要付费订阅（价格未核对）。本地已有 SIP 分钟线 2023–2026（13405 只，无报价）和日线 2016 起。日频和收盘/开盘前一天信号不受影响；盘中 15:45 快照信号需要实时 SIP，免费 IEX 单一交易所不能当成 NBBO 或全市场成交量",
+   "source": "Alpaca market-data FAQ（`alpaca-market-data-faq.txt`）；本地 _COMPLETE_2023_2026.json",
+   "evidence_level": 5
+  },
+  {
+   "item": "理论与实证的成本口径",
+   "fact": "FIM：用 AQR 实盘成交测得冲击函数，实际成本不到以往估计的十分之一（2012 稿），最终版 1.7 万亿美元、21 国、19 年（摘要）；1 月反转盈亏平衡规模美国 90 亿美元、全球 130 亿（2012 稿），在我们的资金量下冲击可忽略，成本主要是价差",
+   "source": "`fim-trading-costs-nber.txt`",
+   "evidence_level": 4
+  }
+ ],
+ "tca_method": [
+  "到达价：订单提交时刻之前最近一条有效 SIP NBBO 的中间价（本地 sample_equity_book_spreads.py 已经取过 SIP NBBO 报价，取数方式可参考；本次未读该脚本）。",
+  "实现价差 = 成交价对到达价的符号偏差（买为正）；分解为：提交时刻半价差、提交到成交的延迟漂移（用成交时刻中间价与到达价之差）、其余（模拟盘应接近 0）。",
+  "与模型对照：按流动性十分位和时段（开盘、午间、收盘）汇总，对照 cost_model_v1 的预测，给比值和误差分布；模型约在 1.55 倍以内（开盘留出集绝对对数误差中位 0.44）。",
+  "只检验：价差、延迟、部分成交率、订单被拒（碎股、ETB 变 HTB 被撤）。不检验：冲击、价格改善、费用、借券——纸面盘没有这些。官方文档明说纸面盘不模拟它们。",
+  "要知道实盘真实成本只能做小额实盘度量（需机主授权）；在此之前用'实测 NBBO 半价差，不扣价格改善'当保守上界。"
+ ],
+ "min_depth": [
+  {
+   "dimension": "宇宙",
+   "minimum": "最流动的 500–1000 只，点时点（含退市），日面板至少 8–10 年",
+   "successful_practice": "DLSA 约 550 只；Attention Factors 500 只；Avellaneda–Lee 为 2007 年初市值 >10 亿美元的全部股票（只数论文没给数字）；Robeco 为 MSCI World",
+   "shallow_failure": "只测 10–30 只 ETF 或几只股票：截面太窄，IC 的标准误 1/√(N·T) 大到看不见 1–3bp/日的效应；静态名单会让夏普 >10（arXiv 2412.11432 被撤回）"
+  },
+  {
+   "dimension": "信号个数",
+   "minimum": "至少 5 个低相关的短期信号合成，或一个学习式残差信号（用 30 日完整残差路径，不是单个 z 分数）",
+   "successful_practice": "Robeco：单个信号盈亏平衡成本 <25bp，合成后 >30bp，毛收益翻倍；WorldQuant 101 个公式平均两两相关 15.9%（T-78）；DLSA：CNN+Transformer 比 OU 阈值夏普高数倍",
+   "shallow_failure": "单信号：外部严谨复现里行业残差反转样本外净 −0.15；Attention Factors 表里 PCA+OU 阈值净 −2.5 至 −7"
+  },
+  {
+   "dimension": "风险中性化",
+   "minimum": "先对市场、行业、风格因子取残差，组合层面美元、beta、行业中性",
+   "successful_practice": "Avellaneda–Lee（PCA 与行业 ETF 残差）；Blitz 等（残差反转风险调整收益约两倍于常规反转）；DLSA：PCA/IPCA 优于 FF（FF 因子建在更大宇宙上，映射回可交易股票时丢失一部分对冲，bsiranosian 的解释）",
+   "shallow_failure": "不做残差：暴露在行业和动量崩溃上；用不可交易的因子：bsiranosian 复现中 FF 版只到论文的 80%"
+  },
+  {
+   "dimension": "成本模型精度",
+   "minimum": "成本进目标函数；用分时段、分流动性、分年份的实测价差，加借券与费用；价差漂移要跟踪",
+   "successful_practice": "FIM（AQR 实盘成交）：实测成本不到以往估计的十分之一，短期反转仍是最受成本约束的风格；DLSA/Attention 用固定 5bp+1bp（粗）；我们的实测：开盘半价差是收盘的 3–5 倍，2025–26 比 2018 宽 1.5–2.2 倍",
+   "shallow_failure": "固定 10bp：对最流动十分位偏高（实测收盘 1.4bp），对第 2 十分位以后的开盘偏低；用 Abdi–Ranaldo 估计会把液体名的开盘成本高估 1.4–3.7 倍（本地 cost-model-v1 表）"
+  },
+  {
+   "dimension": "调仓方式",
+   "minimum": "部分调仓：朝'目标位'按比例交易，目标位 = 现在和未来预期最优组合的加权平均；加买入/持有缓冲带",
+   "successful_practice": "Gârleanu–Pedersen 2013 式 (7)(10)(13)：交易速率随成本升高而下降，随风险厌恶升高；商品期货实证净夏普比最好的对照约好 20%；Novy-Marx–Velikov：买/持缓冲是最有效的简单降成本手段；Robeco：买 10 持 50",
+   "shallow_failure": "每天全量换到目标权重：DLSA 自己列为难点；Robeco 单信号换手 1300–2000%/年"
+  },
+  {
+   "dimension": "重训与窗口",
+   "minimum": "滚动训练窗约 4 年，约每 125 个交易日重训；purge 等于标签期；重训间隔做成预注册变量",
+   "successful_practice": "DLSA：窗口 1000 天、每 125 天重训；Optiver 冠军每 12 天（T-78）；Jane Street 第二名在线更新（T-78，稠密日内数据）",
+   "shallow_failure": "只用一次性训练的静态模型；或用全样本拟合因子（前视）"
+  },
+  {
+   "dimension": "执行方式",
+   "minimum": "按时点执行（收盘或 15:50 前限价），被动挂单，拆单；纸面盘只用来测价差和延迟，不测冲击",
+   "successful_practice": "Man AHL：专用执行平台，被动慢慢挂单、必要时才主动吃单，成本比银行算法低一半；FIM：优化组合可显著降成本和提容量",
+   "shallow_failure": "在开盘市价单上换仓：实测开盘半价差中位 4.6–26.8bp，收盘 1.4–6.3bp"
+  },
+  {
+   "dimension": "验证",
+   "minimum": "预注册；点时点宇宙；年度分段净值；DSR 与安慰剂；对现有账本的边际贡献",
+   "successful_practice": "外部严谨复现（防泄漏、一次性封存样本外、DSR、预注册）把行业残差反转从'有效'改判为样本外失效；Numerai 的 MMC/BMC（T-78）",
+   "shallow_failure": "只看全样本夏普；用被看过的窗口当测试集；Jane Street 的警告：不同研究者重复同一假设会泄漏"
+  }
+ ],
+ "open_source": [
+  {
+   "repo": "gregzanotti/dlsa-public",
+   "stars": 274,
+   "license": "自定义：'All Rights Reserved… Unauthorized commercial use of any file in this project is strictly prohibited'（GitHub 标 NOASSERTION，LICENSE 全文已读）",
+   "pushed": "2022-10-05",
+   "use": "官方 DLSA 代码：preprocess.py、train_test.py、factor_models（生成残差）、models（CNN+Transformer）、configs。只当参考阅读，**不要拷贝代码进仓库**；要实盘获利使用前需向作者确认或自写。我们自写参照论文超参（L=30，1000 日窗，125 日重训，Sharpe 目标，摩擦惩罚）"
+  },
+  {
+   "repo": "bsiranosian（博客，2026-06-29）",
+   "stars": null,
+   "license": "代码'整理后发布'，本次没找到公开仓库",
+   "pushed": "—",
+   "use": "从零 PyTorch 复现，2002–2016 对齐论文（PCA 最高 3.40（K=5）对论文 3.56（K=3）；IPCA 低 K 几乎一致，高 K 衰减；FF 只到论文最高值的 80%），只在'桌面 GPU'上训练。可借的是复现路线和差异清单"
+  },
+  {
+   "repo": "hudson-and-thames/arbitragelab",
+   "stars": 698,
+   "license": "BSD-3-Clause",
+   "pushed": "2024-05-19",
+   "use": "`other_approaches/pca_approach`：Avellaneda–Lee PCA 策略。2 年多未更新；只借 s-score 与 OU 拟合的参考实现，需对照论文自己核"
+  },
+  {
+   "repo": "sydx/xpca",
+   "stars": 15,
+   "license": "Apache-2.0",
+   "pushed": "2021-08-31",
+   "use": "IPCA 与指数加权 PCA 实现，可借来做 IPCA 残差；很小，需核对正确性"
+  },
+  {
+   "repo": "cvxgrp/cvxportfolio",
+   "stars": 1293,
+   "license": "GPL-3.0",
+   "pushed": "2026-04-27",
+   "use": "多期、带成本的组合优化；仅作交叉校验（见 pro-equity-2026-10-01 第 3 节：N=800 时 20 天回测 106 s、1.85 GB）"
+  },
+  {
+   "repo": "skfolio/skfolio",
+   "stars": 2458,
+   "license": "BSD-3-Clause",
+   "pushed": "2026-10-03",
+   "use": "CPCV、Barra 类风险模型；v1.2 路线已选用，沿用"
+  },
+  {
+   "repo": "microsoft/qlib",
+   "stars": 49132,
+   "license": "MIT",
+   "pushed": "2026-09-22",
+   "use": "只借 Alpha158 特征思路；美股官方数据集已关闭（pro-equity-2026-10-01）"
+  },
+  {
+   "repo": "nkaz001/hftbacktest",
+   "stars": 4847,
+   "license": "MIT",
+   "pushed": "2025-12-23",
+   "use": "L2 订单簿回测；我们没有深度数据，不用"
+  },
+  {
+   "repo": "stefan-jansen/machine-learning-for-trading",
+   "stars": 21218,
+   "license": "MIT",
+   "pushed": "2026-10-04",
+   "use": "第 3 版书的配套笔记本；具体哪一章含统计套利或日内特征本次**未核对**"
+  },
+  {
+   "repo": "Concretum 的 SPY 日内动量 Python 复现（博客代码，非 GitHub 仓库）",
+   "stars": null,
+   "license": "未核对",
+   "pushed": "—",
+   "use": "本地已按同口径复现并否定（夏普 0.30），不再用"
+  }
+ ],
+ "phases": [
+  {
+   "n": 0,
+   "name": "测量底座：信号半衰期、分时段成本、部分调仓执行器",
+   "days": "2–3 天",
+   "goal": "把'频率怎么定'变成数据。对 v1.2 现有信号和第 3 节里能用日线算的信号（残差反转、行业相对反转、隔夜/日内分解、成交量冲击）各出一页：边际 IC 衰减曲线与半衰期、净夏普对调仓间隔（1、2、5、10、21 日）和调仓比例 κ 的曲线、对 v1.2 的边际贡献。同时把实测价差表接成按时段（开盘、午间、收盘）、按流动性十分位、按年份的成本函数，复核旧否定里用 Abdi–Ranaldo 价差的部分。",
+   "reuse": "panel.py、returns.py、backtest.py、evaluate.py、costs.py + cost_model_v1.json、optimize.py（cvxpy）、risk.py、signals.py、sample_equity_book_spreads.py；E1-1 边际贡献检验（T-78）",
+   "new": "ic_decay.py（IC 衰减与半衰期）、partial_trade.py（κ 网格 + GP 目标位 + 买/持缓冲带）、timeofday_costs（时段化成本表，含价差年漂移）",
+   "evidence": "每个信号一页表；至少一个信号的最优调仓间隔 ≤5 日且净夏普高于其周频版，才进入阶段 1 和 2；全部最优间隔 ≥10 日则中频主攻降级为'执行时点优化'",
+   "stop": "全部信号的最优间隔 ≥10 日；或时段化成本表显示最流动 500 名收盘价差在 2025–26 已超过 5bp"
+  },
+  {
+   "n": 1,
+   "name": "残差统计套利按原文深度复现，再外推到 2016–2026",
+   "days": "5–8 天，含 Modal GPU（每次启动先过 modal_budget.py）",
+   "goal": "自写 DLSA 管线（不拷贝其代码）：PCA（K=3–5）残差、OU 阈值基准、CNN+Transformer，L=30，1000 日窗，每 125 日重训，Sharpe 目标和摩擦惩罚。先在可对齐的窗口复现原文趋势（需要 1998–2016 的日收益；本地日线从 2016 起，**免费来源待核对**，取不到就只做'方法复现'并写明窗口对不齐），再在 2020–2026 外推：最流动 500、1000 只，逐年净夏普；成本换成实测分时段价差 + ETB 空头约束；持有期做 1、5、10 日三版。",
+   "reuse": "SIP 日线 2016 起、PIT 宇宙（含退市回填脚本）、risk.py（残差对照）、cost_model_v1、optimize.py（后处理成交约束）、purged CV、Modal lane（I-20260928-02）",
+   "new": "residual engine（PCA/IPCA 滚动残差）、policy network（PyTorch）、摩擦惩罚训练环、逐年报告",
+   "evidence": "2020–2026 逐年净夏普与回撤；OU 基准、两步法、端到端三者对比；持有 1/5/10 日对比；与 v1.2 的相关和边际贡献；预注册 manifest；安慰剂（打乱残差时间顺序）",
+   "stop": "2022–2026 净夏普（实测成本）全部 ≤0；或模型相对 OU 基准没有净增益"
+  },
+  {
+   "n": 2,
+   "name": "短期信号合成腿（Robeco 式）叠在 v1.2 上",
+   "days": "约 1 周",
+   "goal": "用阶段 0 留下的信号合成，成本与缓冲带按阶段 0 的结果定；中性化用 v1.2 风险模型；评价以对 v1.2 的边际贡献为准，不单独看夏普。",
+   "reuse": "v1.4/v1.5 的 LightGBM 排序器和预注册模板、optimize.py、shadow.py",
+   "new": "短期信号族（行业相对反转、行业动量一个月、隔夜/日内分解、成交量冲击、阶段 1 的学习信号）、'买 N 持 M'缓冲带参数网格",
+   "evidence": "净值（含价差、借券）、换手、容量、与四条 ETF 腿和 v1.2 的账户级相关、2025–2026 前向影子",
+   "stop": "加进 v1.2 后账户级净夏普无提升（vol 匹配后）"
+  },
+  {
+   "n": 3,
+   "name": "时点与日内叠加（分钟线 2023–2026，不当主引擎）",
+   "days": "约 1 周",
+   "goal": "（a）把阶段 1、2 的成交从开盘改到收盘或 15:50 限价，量化净改善（实测开盘价差是收盘的 3–5 倍）；（b）日末反转只做最流动 decile 0–2 的输家腿，当叠加腿测净值；（c）核对 OPG/CLS 对本账户是否可用。",
+   "reuse": "SIP 分钟线（13405 只、1.28B 行、OHLCV+成交笔数+vwap，无报价）、sample_equity_book_spreads.py、run_daily_paper_cycle.py",
+   "new": "15:45 快照信号构造（避免用收盘价前视）、时点执行模拟、日末反转叠加腿",
+   "evidence": "同一组交易开盘 vs 收盘 vs 15:50 限价的实测成本差；叠加腿的边际贡献；分钟线只有 3.7 年，结论只写'窗口内'",
+   "stop": "最流动名里收盘成交没有成本优势，或叠加腿边际贡献为负"
+  },
+  {
+   "n": 4,
+   "name": "影子盘、模拟盘 TCA 与衰减监控",
+   "days": "持续，每个信号至少 60 个交易日再判",
+   "goal": "每个信号预注册预期衰减曲线；用模拟盘成交做 TCA：以提交时刻的 SIP 中间价为到达价，记录成交价、时间、提交时刻价差、成交量占 ADV，拆成'价差、延迟漂移、冲击（模拟盘恒为 0）'；用它校验价差模型和延迟，不用它估计冲击或价格改善。实盘成本只能靠机主授权后的小额实盘度量。",
+   "reuse": "run_daily_paper_cycle.py、paper_consistency_t55.py、shadow.py、P-2 预期衰减（T-78）",
+   "new": "tca.py（到达价基准 + 分解）、衰减对比报表",
+   "evidence": "实现价差对模型价差的比值（目标 0.8–1.25）；部分成交率；信号前向 IC 对预期衰减曲线",
+   "stop": "实现价差持续大于模型 1.5 倍"
+  }
+ ],
+ "local_prior": [
+  {
+   "line": "sector_residual_reversal_statarb_decay（外部严谨复现）",
+   "tested_to": "单信号、CRSP 全市场含低价股；样本外 2019–2024 净 −0.15（7bp），盈亏平衡 4.2bp",
+   "disposition": "阶段 1 的外推窗正是它的后续；成本换成最流动 500 名的实测价差（收盘中位 1.4–3.7bp/边）后盈亏平衡是否越过，是阶段 1 要回答的问题，不是现在能下的结论"
+  },
+  {
+   "line": "deep_learning_stat_arb_residual",
+   "tested_to": "2026-09-28 标 not_executable，**没有测过**；理由是简化会测错机制",
+   "disposition": "阶段 1 按原文做法实现，满足它自己写的 reopen 条件（带真实换手成本的残差/PCA 引擎）"
+  },
+  {
+   "line": "cross_sectional_gap_fade",
+   "tested_to": "一日往返，100% 日换手；Abdi–Ranaldo 成本、官方竞价价、ETB 空头都核过，液体档官方价边际约 7.1bp/日、低于 8bp 门槛",
+   "disposition": "不重开。reopen 条件是'持有期长到能摊薄成本'，阶段 0 的半衰期表会给出这一点"
+  },
+  {
+   "line": "end_of_day_reversal",
+   "tested_to": "parked，**没测**（缺宽分钟面板）",
+   "disposition": "阶段 3 作叠加腿测；本文换算显示单独做净为负"
+  },
+  {
+   "line": "intraday_same_slot_periodicity",
+   "tested_to": "否定，毛优势大半是分红调整口径伪影",
+   "disposition": "不重开；提醒阶段 3 构造 15:45 快照时先统一日线与分钟线的调整口径"
+  },
+  {
+   "line": "etf_constituent_lead_lag_reversion",
+   "tested_to": "低换手版 0/5；日内捕捉版没测",
+   "disposition": "reopen 条件'分钟线显示单边成本 <2bp 内可捕捉'；阶段 3 若有时间窗再看，优先级低"
+  },
+  {
+   "line": "overnight_return_persistence_auction",
+   "tested_to": "1 月、1 周否定；1 年口径未见股票上通过，官方竞价价上未通过",
+   "disposition": "不重开；并入阶段 2 的隔夜/日内信号作为特征，不单独做"
+  },
+  {
+   "line": "single_etf_intraday_momentum / spy_noise_band / orb_etf",
+   "tested_to": "全部否定，ORB 被随机方向安慰剂拿回 92.7%",
+   "disposition": "与本文献一致（无杠杆夏普 0.6）；不重开"
+  }
+ ],
+ "no_go": [
+  {
+   "item": "纳秒到秒级 HFT、做市、订单簿 OFI 预测",
+   "reason": "Kolm 等精度峰值在两次价格变动；CKS 的 R² 是同期解释；本地 OFI 毛夏普 +0.98 扣价差后 −1.73；Alpaca 纸面盘无队列、按 NBBO 撮合，没有延迟和深度数据"
+  },
+  {
+   "item": "10 分钟协整配对或日内 PCA 套利",
+   "reason": "QuantConnect 官方示例夏普 3.0 只来自一个月；独立长样本 0.47–0.85（directions: intraday_cointegration_pairs_pca）"
+  },
+  {
+   "item": "把 DLSA 或 Attention Factors 的数字当作近期收益",
+   "reason": "所有已读数字止于 2016（DLSA）或 2021（Attention）；唯一的 2016–2024 复现被撤回；Valeyre–Aboura 称净值只在 2006 年前显著。它们只能当'值得做深'的理由"
+  },
+  {
+   "item": "单独的 SPY/QQQ 日内动量或噪声带",
+   "reason": "无杠杆夏普 0.61（Zarattini 自己的数字），高夏普靠最高 4 倍杠杆和波动目标；本地 2016–2026 夏普 0.30，随机方向安慰剂拿回 92.7%"
+  },
+  {
+   "item": "单独的日末反转",
+   "reason": "毛 3.78bp/日（市值加权），按本地实测收盘价差换算净 −4 到 −7bp；作者自己说多数投资者不可行。只留作叠加腿"
+  },
+  {
+   "item": "杠杆 ETF 收盘再平衡当独立信号",
+   "reason": "Barbon 等：杠杆 ETF 效应显著递减；单独没有净值证据"
+  },
+  {
+   "item": "竞价失衡 / Optiver 式收盘预测",
+   "reason": "免费源没有失衡数据（directions: closing_auction_imbalance_signal）"
+  },
+  {
+   "item": "供应链 / 客户动量",
+   "reason": "需要付费链接数据；Pinchuk：发表后幅度变小且不显著"
+  },
+  {
+   "item": "财报当日内反应交易",
+   "reason": "本地 earnings_8k_tone_next_day 否定；大盘 PEAD 2006 后消失；Levy–Koijen 解释同日不预测之后"
+  },
+  {
+   "item": "半小时周期性（HKS）",
+   "reason": "效应约等于两倍半价差；本地毛优势多为分红调整口径伪影"
+  },
+  {
+   "item": "万亿 token 基础模型、代理批量造假设",
+   "reason": "算力与数据不匹配（T-78 已排除）；缺口是验证，不是假设数量"
+  }
+ ],
+ "calc": {
+  "note": "全部由 /tmp 脚本现算；半价差取本地 cost-model-v1 报告的实测中位数；费用 0.5bp/边是本地模型值；独立性假设下的 IC 标准误只当上限估计",
+  "breakeven": [
+   {
+    "snapshot": "close",
+    "decile": 0,
+    "half_spread_bp": 1.44,
+    "side_cost_bp": 1.94,
+    "breakeven_gross_bp_per_day_per_leg_H1": 3.88,
+    "breakeven_gross_bp_per_day_per_leg_H5": 0.78,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.19
+   },
+   {
+    "snapshot": "close",
+    "decile": 2,
+    "half_spread_bp": 2.18,
+    "side_cost_bp": 2.68,
+    "breakeven_gross_bp_per_day_per_leg_H1": 5.36,
+    "breakeven_gross_bp_per_day_per_leg_H5": 1.07,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.27
+   },
+   {
+    "snapshot": "close",
+    "decile": 5,
+    "half_spread_bp": 3.65,
+    "side_cost_bp": 4.15,
+    "breakeven_gross_bp_per_day_per_leg_H1": 8.3,
+    "breakeven_gross_bp_per_day_per_leg_H5": 1.66,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.42
+   },
+   {
+    "snapshot": "mid",
+    "decile": 0,
+    "half_spread_bp": 2.09,
+    "side_cost_bp": 2.59,
+    "breakeven_gross_bp_per_day_per_leg_H1": 5.18,
+    "breakeven_gross_bp_per_day_per_leg_H5": 1.04,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.26
+   },
+   {
+    "snapshot": "mid",
+    "decile": 2,
+    "half_spread_bp": 3.71,
+    "side_cost_bp": 4.21,
+    "breakeven_gross_bp_per_day_per_leg_H1": 8.42,
+    "breakeven_gross_bp_per_day_per_leg_H5": 1.68,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.42
+   },
+   {
+    "snapshot": "mid",
+    "decile": 5,
+    "half_spread_bp": 6.01,
+    "side_cost_bp": 6.51,
+    "breakeven_gross_bp_per_day_per_leg_H1": 13.02,
+    "breakeven_gross_bp_per_day_per_leg_H5": 2.6,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.65
+   },
+   {
+    "snapshot": "open",
+    "decile": 0,
+    "half_spread_bp": 4.56,
+    "side_cost_bp": 5.06,
+    "breakeven_gross_bp_per_day_per_leg_H1": 10.12,
+    "breakeven_gross_bp_per_day_per_leg_H5": 2.02,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.51
+   },
+   {
+    "snapshot": "open",
+    "decile": 2,
+    "half_spread_bp": 9.19,
+    "side_cost_bp": 9.69,
+    "breakeven_gross_bp_per_day_per_leg_H1": 19.38,
+    "breakeven_gross_bp_per_day_per_leg_H5": 3.88,
+    "breakeven_gross_bp_per_day_per_leg_H20": 0.97
+   },
+   {
+    "snapshot": "open",
+    "decile": 5,
+    "half_spread_bp": 17.73,
+    "side_cost_bp": 18.23,
+    "breakeven_gross_bp_per_day_per_leg_H1": 36.46,
+    "breakeven_gross_bp_per_day_per_leg_H5": 7.29,
+    "breakeven_gross_bp_per_day_per_leg_H20": 1.82
+   }
+  ],
+  "open_over_close_median_ratio_by_decile": {
+   "0": 3.17,
+   "2": 4.22,
+   "5": 4.86
+  },
+  "eod_reversal_net_check": [
+   {
+    "decile": 0,
+    "side_cost_bp": 1.94,
+    "cost_ls_bp_per_day": 7.76,
+    "gross_vw": 3.78,
+    "net_vw": -3.98,
+    "gross_ew": 6.86,
+    "net_ew": -0.9
+   },
+   {
+    "decile": 2,
+    "side_cost_bp": 2.68,
+    "cost_ls_bp_per_day": 10.72,
+    "gross_vw": 3.78,
+    "net_vw": -6.94,
+    "gross_ew": 6.86,
+    "net_ew": -3.86
+   },
+   {
+    "decile": 5,
+    "side_cost_bp": 4.15,
+    "cost_ls_bp_per_day": 16.6,
+    "gross_vw": 3.78,
+    "net_vw": -12.82,
+    "gross_ew": 6.86,
+    "net_ew": -9.74
+   }
+  ],
+  "min_track_record_years": [
+   {
+    "sharpe": 0.5,
+    "years_for_t2": 16.0,
+    "years_for_t3": 36.0
+   },
+   {
+    "sharpe": 1.0,
+    "years_for_t2": 4.0,
+    "years_for_t3": 9.0
+   },
+   {
+    "sharpe": 1.5,
+    "years_for_t2": 1.8,
+    "years_for_t3": 4.0
+   },
+   {
+    "sharpe": 2.0,
+    "years_for_t2": 1.0,
+    "years_for_t3": 2.2
+   }
+  ],
+  "ic_detectability": [
+   {
+    "names": 500,
+    "days": 250,
+    "ic_se": 0.0028,
+    "ic_for_t3": 0.0085
+   },
+   {
+    "names": 500,
+    "days": 750,
+    "ic_se": 0.0016,
+    "ic_for_t3": 0.0049
+   },
+   {
+    "names": 500,
+    "days": 1500,
+    "ic_se": 0.0012,
+    "ic_for_t3": 0.0035
+   },
+   {
+    "names": 1000,
+    "days": 250,
+    "ic_se": 0.002,
+    "ic_for_t3": 0.006
+   },
+   {
+    "names": 1000,
+    "days": 750,
+    "ic_se": 0.0012,
+    "ic_for_t3": 0.0035
+   },
+   {
+    "names": 1000,
+    "days": 1500,
+    "ic_se": 0.0008,
+    "ic_for_t3": 0.0024
+   },
+   {
+    "names": 2000,
+    "days": 250,
+    "ic_se": 0.0014,
+    "ic_for_t3": 0.0042
+   },
+   {
+    "names": 2000,
+    "days": 750,
+    "ic_se": 0.0008,
+    "ic_for_t3": 0.0024
+   },
+   {
+    "names": 2000,
+    "days": 1500,
+    "ic_se": 0.0006,
+    "ic_for_t3": 0.0017
+   }
+  ]
+ },
+ "measured_spread": {
+  "close": {
+   "0": 1.44,
+   "2": 2.18,
+   "5": 3.65,
+   "9": 6.32
+  },
+  "mid": {
+   "0": 2.09,
+   "2": 3.71,
+   "5": 6.01,
+   "9": 9.53
+  },
+  "open": {
+   "0": 4.56,
+   "2": 9.19,
+   "5": 17.73,
+   "8": 26.76
+  },
+  "note": "来源 reports/research/program/cost-model-v1-2026-10-01/report.md；60 个随机交易日、18000 个股票日、SIP NBBO；开盘窗口 09:35–09:45 的中位报价，不是竞价成交；平均值高于中位数（开盘全池均值 22.7bp、中位 14.0bp）；年份效应：2025、2026 的对数价差比 2018 高 0.4–0.8（约 1.5–2.2 倍）"
+ },
+ "sources": [
+  {
+   "file": "_websearch-and-webfetch-notes.txt",
+   "url": "",
+   "fetched_utc": "2026-10-04T18:30Z–18:50Z（协调码 R1004-T80，Sonnet 5.5 high）",
+   "bytes": 5296
+  },
+  {
+   "file": "alpaca-fractional.txt",
+   "url": "https://docs.alpaca.markets/docs/fractional-trading",
+   "fetched_utc": "2026-10-04T18:42Z",
+   "bytes": 9568
+  },
+  {
+   "file": "alpaca-margin-short-docs.txt",
+   "url": "https://docs.alpaca.markets/docs/margin-and-short-selling",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 17611
+  },
+  {
+   "file": "alpaca-market-data-faq.txt",
+   "url": "https://docs.alpaca.markets/us/docs/market-data-faq",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 27325
+  },
+  {
+   "file": "alpaca-orders-docs.txt",
+   "url": "https://docs.alpaca.markets/docs/orders-at-alpaca",
+   "fetched_utc": "2026-10-04T18:36Z",
+   "bytes": 39873
+  },
+  {
+   "file": "alpaca-paper-trading-docs.txt",
+   "url": "https://docs.alpaca.markets/docs/paper-trading",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 10923
+  },
+  {
+   "file": "alpaca-pdt-end-intraday-margin.txt",
+   "url": "https://docs.alpaca.markets/docs/understanding-finras-new-intraday-margin-rule-and-the-end-of-pdt",
+   "fetched_utc": "2026-10-04T18:42Z",
+   "bytes": 13546
+  },
+  {
+   "file": "alpaca-regulatory-fees.txt",
+   "url": "https://docs.alpaca.markets/docs/regulatory-fees",
+   "fetched_utc": "2026-10-04T18:42Z",
+   "bytes": 6648
+  },
+  {
+   "file": "alpaca-sec606a1-2026Q2.txt",
+   "url": "https://files.alpaca.markets/disclosures/library/SEC+606a1+-+2026Q2.pdf",
+   "fetched_utc": "2026-10-04T18:45Z",
+   "bytes": 103543
+  },
+  {
+   "file": "alpaca-user-protection-pdt.txt",
+   "url": "https://docs.alpaca.markets/docs/user-protection",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 10055
+  },
+  {
+   "file": "arxiv-2505.17388-ofi.txt",
+   "url": "https://arxiv.org/abs/2505.17388",
+   "fetched_utc": "2026-10-04T18:43Z",
+   "bytes": 5431
+  },
+  {
+   "file": "arxiv-2507.04481-night-day-jumps.txt",
+   "url": "https://arxiv.org/abs/2507.04481",
+   "fetched_utc": "2026-10-04T18:43Z",
+   "bytes": 4754
+  },
+  {
+   "file": "attention-factors-stat-arb-2510.11616.txt",
+   "url": "https://arxiv.org/pdf/2510.11616",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 84855
+  },
+  {
+   "file": "avellaneda-lee2010.txt",
+   "url": "https://math.nyu.edu/faculty/avellane/AvellanedaLeeStatArb071108.pdf",
+   "fetched_utc": "2026-10-04T18:36Z",
+   "bytes": 74425
+  },
+  {
+   "file": "baltussen-hedging-intraday-momentum.txt",
+   "url": "https://www3.nd.edu/~zda/intramom.pdf",
+   "fetched_utc": "2026-10-04T18:37Z",
+   "bytes": 190115
+  },
+  {
+   "file": "barbon-letf-options-rebalancing.txt",
+   "url": "https://alexandria.unisg.ch/items/ae80f422-10f7-45b3-a69d-591410b5645b",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 10459
+  },
+  {
+   "file": "barbon-letf-page.txt",
+   "url": "https://abarbon.com/papers/liquidity-provision-to-leveraged-etfs-and-equity-options-rebalancing-flows",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 1603
+  },
+  {
+   "file": "blitz-residual-reversal-pwb.txt",
+   "url": "https://paperswithbacktest.com/strategies/short-term-residual-reversal",
+   "fetched_utc": "2026-10-04T18:45Z",
+   "bytes": 1743
+  },
+  {
+   "file": "bsiranosian-dlsa-replication-part1.txt",
+   "url": "https://bsiranosian.com/blog/deep-learning-statistical-arbitrage-part-1/",
+   "fetched_utc": "2026-10-04T18:40Z",
+   "bytes": 11800
+  },
+  {
+   "file": "cks-arxiv.txt",
+   "url": "https://arxiv.org/pdf/1011.6402",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 103848
+  },
+  {
+   "file": "craftsmanship-alpha-aqr.txt",
+   "url": "https://www.smallake.kr/wp-content/uploads/2017/10/SSRN-id3034472.pdf",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 78147
+  },
+  {
+   "file": "customer-momentum-2301.11394.txt",
+   "url": "https://arxiv.org/pdf/2301.11394",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 189031
+  },
+  {
+   "file": "decadal-lead-lag-nyse-2312.10084.txt",
+   "url": "https://arxiv.org/pdf/2312.10084",
+   "fetched_utc": "2026-10-04T18:45Z",
+   "bytes": 22983
+  },
+  {
+   "file": "dlsa-arxiv.txt",
+   "url": "https://arxiv.org/pdf/2106.04028",
+   "fetched_utc": "2026-10-04T18:36Z",
+   "bytes": 190101
+  },
+  {
+   "file": "dlsa-github-readme.txt",
+   "url": "https://raw.githubusercontent.com/gregzanotti/dlsa-public/main/README.md",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 3006
+  },
+  {
+   "file": "dlsa-public-license.txt",
+   "url": "https://raw.githubusercontent.com/gregzanotti/dlsa-public/main/LICENSE",
+   "fetched_utc": "2026-10-04T18:40Z",
+   "bytes": 1694
+  },
+  {
+   "file": "dlsa-replication-arxiv-abs.txt",
+   "url": "https://arxiv.org/abs/2412.11432",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 5139
+  },
+  {
+   "file": "end-to-end-stat-arb-autoencoder-2402.08233.txt",
+   "url": "https://arxiv.org/pdf/2402.08233",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 68024
+  },
+  {
+   "file": "eod-reversal-baltussen-da-soebhag.txt",
+   "url": "https://www3.nd.edu/~zda/EOD.pdf",
+   "fetched_utc": "2026-10-04T18:37Z",
+   "bytes": 133559
+  },
+  {
+   "file": "factors-crowd-equally-2512.11913.txt",
+   "url": "https://arxiv.org/pdf/2512.11913",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 123477
+  },
+  {
+   "file": "fim-trading-costs-nber.txt",
+   "url": "https://conference.nber.org/conf_papers/f68262/f68262.pdf",
+   "fetched_utc": "2026-10-04T18:37Z",
+   "bytes": 190135
+  },
+  {
+   "file": "gervais-kaniel-mingelgrin-volume.txt",
+   "url": "https://rodneywhitecenter.wharton.upenn.edu/wp-content/uploads/2014/04/9901.pdf",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 175853
+  },
+  {
+   "file": "github-api-repos.json",
+   "url": "https://api.github.com/repos/<repo>",
+   "note": "GitHub REST API 返回的仓库元数据（星数、许可证、推送日期），抓取时间在文件内"
+  },
+  {
+   "file": "gp2013.txt",
+   "url": "https://pages.stern.nyu.edu/~lpederse/papers/DynamicTrading.pdf",
+   "fetched_utc": "2026-10-04T18:36Z",
+   "bytes": 102020
+  },
+  {
+   "file": "heston-ar5iv.txt",
+   "url": "https://ar5iv.arxiv.org/html/1005.3535",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 79122
+  },
+  {
+   "file": "kolm-deep-ofi-ideas.txt",
+   "url": "https://ideas.repec.org/a/bla/mathfi/v33y2023i4p1044-1081.html",
+   "fetched_utc": "2026-10-04T18:43Z",
+   "bytes": 21389
+  },
+  {
+   "file": "llm-stat-arb-2412.09394.txt",
+   "url": "https://arxiv.org/pdf/2412.09394",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 65172
+  },
+  {
+   "file": "lou-polk-skouras-fmg.txt",
+   "url": "https://www.fmg.ac.uk/sites/default/files/publications/DP744.pdf",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 127429
+  },
+  {
+   "file": "lou-polk-skouras-nber.txt",
+   "url": "https://conference.nber.org/conf_papers/f78239/f78239.pdf",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 123247
+  },
+  {
+   "file": "man-need-for-speed.txt",
+   "url": "https://www.man.com/insights/need-for-speed-trend-following",
+   "fetched_utc": "2026-10-04T18:38Z",
+   "bytes": 22674
+  },
+  {
+   "file": "night-minus-day-predictability-jfe2023.txt",
+   "url": "https://ideas.repec.org/a/eee/jfinec/v148y2023i3p175-200.html",
+   "fetched_utc": "2026-10-04T18:43Z",
+   "bytes": 20992
+  },
+  {
+   "file": "novy-marx-velikov-taxonomy.txt",
+   "url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf",
+   "fetched_utc": "2026-10-04T18:41Z",
+   "bytes": 157684
+  },
+  {
+   "file": "nyfed-decomposing-short-term-reversal-sr513.txt",
+   "url": "https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr513.pdf",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 123177
+  },
+  {
+   "file": "pwb-where-stat-arb-profits-gone.txt",
+   "url": "https://paperswithbacktest.com/course/where-have-all-the-stat-arb-profits-gone",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 31871
+  },
+  {
+   "file": "quantconnect-intraday-etf-momentum.txt",
+   "url": "https://www.quantconnect.com/research/15348/intraday-etf-momentum/",
+   "fetched_utc": "2026-10-04T18:43Z",
+   "bytes": 15380
+  },
+  {
+   "file": "zarattini-beat-the-market-spy.txt",
+   "url": "https://www.alexandria.unisg.ch/server/api/core/bitstreams/a99aba00-f967-49b3-aceb-f544dc386e0b/content",
+   "fetched_utc": "2026-10-04T18:39Z",
+   "bytes": 87965
+  }
+ ]
+}

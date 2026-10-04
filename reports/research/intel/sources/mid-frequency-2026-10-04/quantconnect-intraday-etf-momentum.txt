@@ -1,0 +1,412 @@
+URL: https://www.quantconnect.com/research/15348/intraday-etf-momentum/
+FETCHED_UTC: 2026-10-04T18:43Z
+HTTP: 200 text/html; charset=UTF-8
+-----
+ 
+ Intraday ETF Momentum - QuantConnect.com 
+ Toggle navigation 
+ ↑↓ to select, press enter to go, use esc to exit
+ Pricing 
+ Research 
+ Strategies 
+ Data 
+ Documentation 
+ Docs 
+ Docs 
+ Algorithm Lab 
+ Lab 
+ Lab 
+ Sign In 
+ Toggle navigation 
+ Forum 
+ Platform 
+ Pricing 
+ Research 
+ Strategies 
+ Datasets 
+ Documentation 
+ Algorithm Lab 
+ SIGN IN 
+ Sign in
+ Don't have an account? Join QuantConnect Today
+ Sign up for Free
+ Intraday ETF Momentum 
+ Research 
+ Announcements 
+ Lean 
+ COMMUNITY 
+ COMMUNITY FEED 
+ | 
+ Announcements 
+ Lean 
+ Data Issues 
+ Quant League Is Moving Forward as Strategies 
+ Quant League is evolving into Strategies, our new home for sharing, discovering, and exploring trading strategies, with improved organization and a better overall experience. Q4-2025 will be the final Quant League. 
+ Explore Strategies 
+ OPEN LEAGUE 
+ PRO LEAGUE 
+ No Results
+ 0">
+ « 
+ 1 
+ » 
+ Radically Open-Source Algorithmic Trading Engine 
+ LEAN is the open-source algorithmic trading engine powering QuantConnect.
+ Founded in 2012 LEAN has been built by a global community of 180+ engineers and powers more than 300+ hedge funds today. 
+ Join Our Discord Channel 
+ Join QuantConnect's Discord server for real-time support, where a vibrant community of traders and developers awaits to help you with any of your QuantConnect needs. 
+ pending review 
+ This research is under review. To publish this research attract three community upvotes. 
+ 0">
+ Draft Discussions 
+ 0">
+ Bookmarked Discussions 
+ Loading... 
+ 0">
+ « 
+ » 
+  Share New Research 
+ Refer to our Research Guidelines for high quality research posts. 
+  Start New Discussion 
+ Sign up 
+ SEARCH DISCUSSIONS 
+ -->
+ 0 -->
+ TOP 5 Research Publications 
+ - 
+ 549,300 Quants. 
+ Become a Quant 
+ Online Now 
+ 20">
+ Code of Conduct 
+ VOTE FOR UPCOMING FEATURES 
+ Share your input and vote on our future direction. 
+ LEAN Roadmap 
+ Create an account on QuantConnect for the latest delivered to your inbox. 
+ Sign Up Today 
+ Answers 
+ Backtests 
+ Comments 
+ Live Traded 
+ Research 
+ Announcements 
+ Lean 
+ COMMUNITY 
+ COMMUNITY FEED 
+ | 
+ Announcements 
+ Lean 
+ Data Issues 
+ pending review 
+ This research is under review. To publish this research attract three community upvotes. 
+ draft post 
+ This discussion is a draft. Click here to publish this discusison. 
+ Intraday ETF Momentum 
+ Abstract 
+ In this tutorial, we implement an intraday momentum strategy that trades some of the most actively traded ETFs. 
+ Specifically, we observe the return generated from the first half-hour of the trading day to predict the sign of 
+ the trading day's last half-hour return. Researchers have shown that this momentum pattern is statistically and 
+ economically significant, even after accounting for trading fees. The algorithm we design here is a recreation of 
+ the research completed by Gao, Han, Li, and Zhou (2017). 
+ Background 
+ News items are usually released before the opening bell. As it takes time for traders to digest and interpret the 
+ news, the first half-hour of trading typically has relatively higher levels of volume and volatility. Additionally, 
+ as traders attempt to mitigate overnight risk by unloading positions near the close, the last half-hour of trading 
+ also sees these higher levels of volume and volatility. These characteristics can be observed from the image below, 
+ which is reproducible in the attached research notebook. 
+ Bogousslavsky (2016) points out that some investors are late-informed or simply prefer to delay their trading until 
+ the market close. As a result, a positive correlation exists between the direction of the opening and closing 
+ periods. Gao et al (2017) find that when trading this momentum strategy, the average annual return over their 
+ sample period was 6.67% for SPY, 11.72% for IWM, and 24.22% for IYR. Equal-weighting these returns leads to a 
+ combined average annual return of 14.2%. 
+ Method 
+ Universe Selection 
+ We implement a ManualUniverseSelectionModel that supplies a subset of the proposed ETFs in the attached research 
+ paper. Gao et al (2017) select the following tickers: DIA, QQQ, IWM, EEM, FXI, EFA, VWO, XLF, IYR, and TLT. In an 
+ effort to increase the backtest performance, we narrow our universe to SPY, IWM, and IYR. 
+ tickers = ['SPY', # S&P 500
+ 'IWM', # Russell 2000
+ 'IYR' # Real Estate ETF
+]
+symbols = [ Symbol.create(ticker, SecurityType.EQUITY, Market.USA) for ticker in tickers ]
+self.set_universe_selection( ManualUniverseSelectionModel(symbols) )
+self.universe_settings.resolution = Resolution.MINUTE 
+ Alpha Construction 
+ The IntradayMomentumAlphaModel emits insights to take positions for the last return_bar_count minutes of the day 
+ in the direction of the return for the first return_bar_count minutes of the day. During construction, we create 
+ a dictionary to store IntradayMomentum data for each Symbol , define a method to determine the sign of returns, and 
+ specify the value of return_bar_count . In this tutorial, we follow Gao et al (2017) in setting return_bar_count 
+ to 30 by default. 
+ class IntradayMomentumAlphaModel(AlphaModel):
+ intraday_momentum_by_symbol = {}
+ sign = lambda _, x: int(x and (1, -1)[x < 0])
+ def __init__(self, algorithm, return_bar_count = 30):
+ self.return_bar_count = return_bar_count 
+ Alpha Securities Management 
+ When a new security is added to the universe , we create an IntradayMomentum object for it to store information 
+ needed to calculate morning returns. The management of the IntradayMomentum objects occurs in the Alpha model's 
+ OnSecuritiesChanged method. 
+ def on_securities_changed(self, algorithm, changes):
+ for security in changes.added_securities:
+ self.intraday_momentum_by_symbol[security.symbol] = IntradayMomentum(security, algorithm)
+ for security in changes.removed_securities:
+ self.intraday_momentum_by_symbol.pop(security.symbol, None) 
+ The definition of the IntradayMomentum class is shown below. We save a reference to the security's exchange so we 
+ can access the market hours of the exchange when generating insights. 
+ class IntradayMomentum:
+ def __init__(self, security, algorithm):
+ self.symbol = security.symbol
+ self.exchange = security.exchange
+ self.bars_seen_today = 0
+ self.yesterdays_close = algorithm.history(self.symbol, 1, Resolution.DAILY).loc[self.symbol].close[0]
+ self.morning_return = 0 
+ Alpha Update 
+ With each call to the Alpha model's Update method, we count the number of bars the algorithm has received for each 
+ symbol. If we've reached the end of the morning window, we calculate the morning return. If we are at the 
+ beginning of the close window, we emit an insight in the direction of the morning window's return. If we are at 
+ the end of the day, we save the closing price and reset the counter for the number of bars seen today. 
+ def update(self, algorithm, slice):
+ insights = []
+ for symbol, intraday_momentum in self.intraday_momentum_by_symbol.items():
+ if slice.contains_key(symbol) and slice[symbol] is not None:
+ intraday_momentum.bars_seen_today += 1
+ # End of the morning return
+ if intraday_momentum.bars_seen_today == self.return_bar_count:
+ intraday_momentum.morning_return = (slice[symbol].close - intraday_momentum.yesterdays_close) / intraday_momentum.yesterdays_close
+ ## Beginning of the close
+ next_close_time = intraday_momentum.exchange.hours.get_next_market_close(slice.time, False)
+ mins_to_close = int((next_close_time - slice.time).total_seconds() / 60)
+ if mins_to_close == self.return_bar_count + 1:
+ insight = Insight.price(intraday_momentum.symbol, 
+ next_close_time, 
+ self.sign(intraday_momentum.morning_return))
+ insights.append(insight)
+ continue
+ # End of the day
+ if not intraday_momentum.exchange.date_time_is_open(slice.time):
+ intraday_momentum.yesterdays_close = slice[symbol].close
+ intraday_momentum.bars_seen_today = 0
+ return insights 
+ Trade Execution 
+ The attached research paper holds positions for the last 30 minutes of the trading day, exiting at the market close.
+ In order to accomplish this, we create a custom execution model . The model defined below submits a market order for 
+ the entry while also submitting a market on close order in the same time step. 
+ class CloseOnCloseExecutionModel(ExecutionModel):
+ def __init__(self):
+ self.targets_collection = PortfolioTargetCollection()
+ self.invested_symbols = []
+ def execute(self, algorithm, targets):
+ # for performance we check count value, OrderByMarginImpact and ClearFulfilled are expensive to call
+ self.targets_collection.add_range(targets)
+ if self.targets_collection.count > 0:
+ for target in self.targets_collection.order_by_margin_impact(algorithm):
+ # calculate remaining quantity to be ordered
+ quantity = OrderSizing.get_unordered_quantity(algorithm, target)
+ if quantity == 0:
+ continue
+ algorithm.market_order(target.symbol, quantity)
+ algorithm.market_on_close_order(target.symbol, -quantity)
+ self.targets_collection.clear_fulfilled(algorithm) 
+ Conclusion 
+ We conclude that the momentum pattern documented by Gao et al (2017) produces lower returns over our testing period.
+ Comparing the strategy to the S&P 500 benchmark, the strategy has a lower Sharpe ratio during the backtesting 
+ period and during the recovery from the 2020 stock market crash. However, the strategy greatly outperforms the 
+ benchmark during the downfall of the 2020 crash, achieving a 1.452 Sharpe ratio. Throughout all of the time periods 
+ we tested, the strategy had a lower annual standard deviation than the benchmark, meaning more consistent returns. 
+ A breakdown of the results from all of the testing periods can be seen in the table below. 
+ Period Name 
+ Start Date 
+ End Date 
+ Strategy 
+ Sharpe 
+ ASD 
+ Backtest 
+ 1/1/2015 
+ 8/16/2020 
+ Strategy 
+ -0.628 
+ 0.002 
+ Benchmark 
+ 0.582 
+ 0.023 
+ Fall 2015 
+ 8/10/2015 
+ 10/10/2015 
+ Strategy 
+ -0.417 
+ 0.002 
+ Benchmark 
+ -0.642 
+ 0.044 
+ 2020 Crash 
+ 2/19/2020 
+ 3/23/2020 
+ Strategy 
+ 1.452 
+ 0.045 
+ Benchmark 
+ -1.466 
+ 0.416 
+ 2020 Recovery 
+ 3/23/2020 
+ 6/8/2020 
+ Strategy 
+ 0.305 
+ 0.007 
+ Benchmark 
+ 7.925 
+ 0.101 
+ Update Backtest 
+ Project 
+ Backtest 
+ Cancel
+ person upvoted this 
+ 1 -->
+ people upvoted this 
+ Derek Melchin 
+  | 
+ | 
+ Accepted Answer 
+ Permalink 
+ Update Backtest 
+ Project 
+ Backtest 
+ Cancel
+ Notebook 
+ Remove
+ Disclaimer
+ The material on this website is provided for informational purposes only and does not constitute an offer to sell, a solicitation to buy, or a recommendation or endorsement for any security or strategy, nor does it constitute an offer to provide investment advisory services by QuantConnect. In addition, the material offers no opinion with respect to the suitability of any security or specific investment. QuantConnect makes no guarantees as to the accuracy or completeness of the views expressed in the website. The views are subject to change, and may have become unreliable for various reasons, including changes in market conditions or economic circumstances. All investments involve risk, including loss of principal. You should consult with an investment professional before making any investment decisions. 
+ Twitter 
+ Facebook 
+ LinkedIn 
+ Copy Link 
+ Derek Melchin 
+ STAFF 
+ Pro 
+ ,
+ See the attached backtest for an updated version of the algorithm in PEP8 style. 
+ Disclaimer
+ The material on this website is provided for informational purposes only and does not constitute an offer to sell, a solicitation to buy, or a recommendation or endorsement for any security or strategy, nor does it constitute an offer to provide investment advisory services by QuantConnect. In addition, the material offers no opinion with respect to the suitability of any security or specific investment. QuantConnect makes no guarantees as to the accuracy or completeness of the views expressed in the website. The views are subject to change, and may have become unreliable for various reasons, including changes in market conditions or economic circumstances. All investments involve risk, including loss of principal. You should consult with an investment professional before making any investment decisions. 
+ Derek Melchin 
+ INVESTOR 
+  | 
+ Permalink 
+ Update Backtest 
+ Project 
+ Backtest 
+ Cancel
+ Notebook 
+ Accept Answer
+ Disclaimer
+ The material on this website is provided for informational purposes only and does not constitute an offer to sell, a solicitation to buy, or a recommendation or endorsement for any security or strategy, nor does it constitute an offer to provide investment advisory services by QuantConnect. In addition, the material offers no opinion with respect to the suitability of any security or specific investment. QuantConnect makes no guarantees as to the accuracy or completeness of the views expressed in the website. The views are subject to change, and may have become unreliable for various reasons, including changes in market conditions or economic circumstances. All investments involve risk, including loss of principal. You should consult with an investment professional before making any investment decisions. 
+ Reply
+ person upvoted this 
+ 1 -->
+ people upvoted this 
+ | 
+ person upvoted this 
+ 1 -->
+ people upvoted this 
+ Reply
+ Loading...
+ 1 
+ Load More 
+ To unlock posting to the community forums please complete at least 30% of Boot Camp. You can
+ continue your Boot Camp training progress from the terminal. We
+ hope to see you in the community soon!
+ Allocate to this Strategy 
+ Institutional clients can contact the author and allocate capital to this strategy. 
+ Learn More 
+ Organization 
+ Organization Website 
+ 0 && discussion.Competition.type != 'pro' -->
+ Team 
+ 10" onclick="$(this).parent().find('.member-row').show();$(this).hide();">Show More 
+ Clone Strategy 
+ Copy this strategy code to your QuantConnect account and deploy it live with your brokerage. 
+ Clone 
+ 0">
+ Previous Ranking 
+ Browse strategies and organization entries from previous quarter's competitions. 
+ Author: 
+ IN THIS RESEARCH 
+ 0 -->
+ PARTICIPANTS 
+ 0 -->
+ Discussion Awards 
+ 0">
+ SHARE RESEARCH 
+ SHARE DISCUSSION 
+ SHARE ARTICLE 
+ SHARE 
+ Actions 
+ View in Strategy Explorer 
+ Award Discussion 
+ Print Research 
+ Comments 
+ What is an Award? 
+ Research 
+ Announcements 
+ Lean 
+ COMMUNITY 
+ COMMUNITY FEED 
+ | 
+ Data Issues 
+ Send Message
+ Join QuantConnect for Free 
+ Sign Up 
+ QuantConnect™ 2026. All Rights Reserved
+ Technology 
+ Algorithm Lab 
+ Documentation 
+ Research 
+ Build vs. Buy 
+ Tutorials 
+ Data Library 
+ Learning Articles 
+ System Status 
+ Settings 
+ Discussions List 
+ Company 
+ About 
+ Affiliates 
+ Our Blog 
+ Contact 
+ Pricing 
+ Integration Partners 
+ QuantConnect Swag 
+ Terms & Conditions 
+ Privacy Policy 
+ LEAN 
+ Fork 
+ 5,000 
+ Star 
+ 22,000 
+ QuantConnect™ 2026. All Rights Reserved
+ Technology 
+ Algorithm Lab 
+ Documentation 
+ Research 
+ Build vs. Buy 
+ Tutorials 
+ Data Library 
+ Learning Articles 
+ System Status 
+ Settings 
+ Discussions List 
+ Company 
+ About 
+ Affiliates 
+ Our Blog 
+ Contact 
+ Pricing 
+ Integration Partners 
+ QuantConnect Swag 
+ Terms & Conditions 
+ Privacy Policy 
+ LEAN 
+ Fork 
+ 5,000 
+ Star 
+ 22,000 
+ 

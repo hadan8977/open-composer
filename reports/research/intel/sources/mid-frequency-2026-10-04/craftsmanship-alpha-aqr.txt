@@ -1,0 +1,1057 @@
+URL: https://www.smallake.kr/wp-content/uploads/2017/10/SSRN-id3034472.pdf
+FETCHED_UTC: 2026-10-04T18:41Z
+HTTP: 200 application/pdf
+-----
+                 Craftsmanship Alpha: An Application to Style Investing
+
+
+                                                          Ronen Israel
+                                                     Ronen.israel@aqr.com
+                                              Principal, AQR Capital Management
+
+                                                       Sarah Jiang
+                                                  Sarah.jiang@aqr.com
+                                        Managing Director, AQR Capital Management
+
+
+                                                        Adrienne Ross
+                                                    Adrienne.ross@aqr.com
+                                           Vice President, AQR Capital Management
+
+
+
+                                                              Abstract
+
+Successful investing requires translating sound investment concepts into actual trading strategies. We study many of the
+implementation details that portfolio managers need to pay attention to; such choices range from portfolio construction to
+execution.
+
+While these kinds of decisions apply to any type of investment strategy, they are particularly important in the context of style
+investing. Consider two managers who both intend to capture the value factor in a long/short context: each manager might
+make a number of decisions, many of which can lead to meaningfully different outcomes. These choices can often explain
+why one value manager outperforms another.
+
+Ultimately, what may seem like inconsequential design decisions can actually matter a lot for style portfolios. In fact, the
+skillful targeting and capturing of style premia may constitute a form of alpha on its own — one we refer to as
+“craftsmanship alpha.”
+
+
+
+
+We thank Ryan Wei for providing exceptional research assistance. We also thank Gregor Andrade, Cliff Asness, Andrea Frazzini, April
+Frieda, Antti Ilmanen, T obias Moskowitz, and Lasse Pedersen for helpful comments and suggestions.
+
+
+
+
+                           Electronic copy available at: https://ssrn.com/abstract=3034472
+Introduction
+
+Today, many investors are looking to take advantage of alternative sources of return, specifically those that are uncorrelated
+with traditional assets. In doing so, they have turned their attention to style premia. Style premia are a set of systematic
+sources of returns that are well researched and have been shown to deliver long -run returns that are uncorrelated with
+traditional assets.1 Styles have been most widely studied in U.S. equity markets, but have been shown to work consistently
+across markets, across geographies, and over time. There is a logical, economic rationale for why they work and are likely to
+continue to do so.
+
+The growing popularity of style investing has also given rise to a variety of investment options for investors. There are
+variations in the types of style portfolios, but also — importantly — in how different managers choose to build those
+portfolios. While practitioners might define styles with similar “labels,” actual portfolios can differ significantly from one
+another. Even a single style such as value has variations that an investor should consider: for example, it can be applied as a
+tilt to a long-only portfolio, or it can be applied in a “purer” form through long/short strategies; it can be based on multiple
+measures of value, or a single measure; it can be done in isolation, or combined with other styles in a synergistic way.
+Investors should consider these differences and also recognize that there is potentially value-added (or subtracted) in every
+step of the investment process : signal choice, portfolio construction, risk management, and cost-effective trading.
+
+Our paper focuses on the craftsmanship required to build effective style portfolios. That is, the kind of decisions that happen
+after we have already agreed on the type of style portfolio that we want to build. We start with a brief discussion of the types
+of style portfolios an investor may choose; we then go into more detail on design decisions related to building style
+portfolios; and finally, we address other considerations for style investing, such as trading and risk management. We will
+share our thoughts on a number of enhancements that can be made without deviating from the main thesis . While many of
+these enhancements reflect our opinions on better ways to build portfolios, the main point is that these choices need to be
+made consciously. Certain design choices may improve the risk/return characteristics of the overall portfolio, by enhancing
+returns, reducing risk, or a combination of both. We call the sources of alpha that involve implementation choices
+“craftsmanship alpha.”
+
+What Kind of Style Portfolio?
+
+While style premia investing has certainly grown in popularity, there still remains considerable disagreement over which
+styles drive returns — which styles one should believe in. Generally, the most widely accepted and utilized styles relate to
+value (the tendency for cheap assets to outperform expensive ones), momentum (the tendency for outperformers to continue
+to outperform), defensive (the tendency for low-risk, high-quality assets to outperform high-risk, low-quality assets on a risk
+adjusted basis), and carry (the tendency for higher-yielding assets to outperform lower-yielding assets). However, there are
+also other styles, such as size or liquidity. While the efficacy of the latter two styles has generally been more challenged,2 it is
+outside the scope of this paper to present the merit of each style. Instead, we aim to highlight that even general agreement on
+which style to include does not map as directly to a portfolio as many think.
+1
+    Asness, Moskowitz, and Pedersen (2013); Asness et al. (2015a). Past performance is not a guarantee of future performance.
+2
+  Some of the challenges related to the size anomaly relate to its lack of pervasiveness (only applicable in equities), the lim ited economic
+intuition behind its efficacy, and its weak in-sample evidence. Even though Asness et al. (2015b) show that the size premium may be
+resurrected when you control for quality, we believe the size anomaly may be better thought of as a subset of illiquidity, which is more robust,
+more pervasive, and accompanied by better theory (but comes at a cost which is that it is less liquid, so more costly to trade).
+                                                                       2
+
+
+
+
+                              Electronic copy available at: https://ssrn.com/abstract=3034472
+To illustrate this point, consider, just as a starting point, all the different ways to take advantage of a single style such as
+value. Arguably, the most popular expression is the long-only (or “smart beta”) approach, which applies tilts within equities
+to overweight stocks that are relatively cheap.3 This approach results in deviations from market capitalization weights that in
+practice imply certain systematic style tilts.4 Relative to other forms of value investing, long-only style tilts are typically
+easier for many institutions to adopt because they involve less peer risk (they have lower tracking error to conventional
+portfolios and benchmarks), have greater capacity, and do not require the use of leverage, shorting or derivatives. But for
+investors who are more comfortable with less traditional implementations , a “purer” expression of value would be a
+long/short approach, which seeks to capture the entire style premium and none of the traditional beta. Such an approach may
+be valuable for investors who want to add uncorrelated sources of return. 5 Both long-only and long/short approaches can have
+merit, sometimes even for the same investor.
+
+While single-style (long-only or long/short) investing may be beneficial on its own, we believe that investors may do better
+by combining styles in a multi-style portfolio. Relative to a single-style approach, multi-style approaches may produce more
+robust portfolios.6 Investing in styles that are lowly correlated with each other can have attractive diversification benefits as
+the styles tend to pay off at different times.7 In particular, combining value with momentum, for example, allows investors to
+take advantage of two different potential sources of returns. Importantly, however, how they are combined matters (we will
+come back to this point later).
+
+It’s also worth mentioning that if investors are comfortable with a long/short approach, they may also apply styles across a
+broader range of asset classes. In a similar vein to how combining styles may offer greater diversification, so does combining
+asset class portfolios.8 Regardless of the implementation choice, we believe investing in styles will continue to produce
+positive long-run excess returns, but it is critical to implement them efficiently. We now turn to a discussion of portfolio
+construction.
+
+
+How to Build Style Portfolios?
+
+Once an investor has decided on the type of style portfolio they are most comfortable with (e.g., long/short value), there are a
+number of choices that can be made in actually building that portfolio. Put differently, two long/short strategies that rely on
+the same style may have different exposures and performance over time, likely a result of different design decisions in
+portfolio construction. While certain design decisions may result in better investment outcomes, these choices may not
+materialize in every period (or even over a 5-10 year period). However, to the extent they are based on sound economic logic
+3
+  In the case of value in equities, the portfolio is typically constructed by tilting a market portfolio according to some fundamental measure. For
+example, a manager might overweight high book-to-price (B/P) stocks and underweight low B/P stocks. The resulting portfolio will have both
+market and “pure” style exposure. It is the long -only equivalent of Fama and French’s famous HML factor, the return spread between a
+diversified portfolio of high book-to-price and low book-to-price stocks.
+4
+  See Ilmanen, Israel, and Villalon (2014); Asness et al. (2015c); Arnott, Hsu, and Moore (2004) for more on this.
+5
+  For more on long-only versus long/short style investing, see Ilmanen, Israel, and Villalon (2014). And for more on multi -asset style investing,
+see Asness et al. (2015a). While we do not get into “130/30” (also called relaxed constraint or active extension) implementation in any detail
+here, it’s worth mentioning that it can be considered a hybrid be tween long-only and long/short approaches.
+6
+  We do see a standalone role for some risk-reducing styles (such as defensive equity or trend -following) when an investor’s focus is on
+downside protection for their total portfolio.
+7
+  Novy-Marx (2012, 2013); Asness, Frazzini, and Pedersen (2013); Asness et al. (2015a); Frazzini et al. (2013). Diversification does not
+eliminate the risk of experiencing investment losses.
+8
+ In order to fully embrace this multi-asset approach, however, investors need to adopt the long/short framework. There are certain asset
+classes where a long-only style portfolio wouldn’t apply, such as currencies where there is no real benchmark.
+                                                                        3
+and empirical evaluation over longer histories, we do expect them to pay off over the long -run. We now focus on a number of
+the portfolio construction decisions that may improve the targeting and capturing of style premia; we focus mostly on
+long/short value portfolios in U.S. equities , but where relevant, may use a long-only approach or a different style to illustrate
+our point.
+
+Smarter Style Measures
+
+Typically value portfolios sort stocks based on some measure of fundamental value relative to price, such as book value
+relative to price or earnings relative to price. While these concepts might seem simple, practitioners may vary the inputs that
+they use or the adjustments that they make in defining each measure. For example, whether or not to include intangible assets
+and/or non-operating assets 9 can differ among managers in calculating the book value of a company. For earnings
+calculations, managers may also treat unusual or infrequently occurring items differently.
+
+Surprisingly, even the choice of market price can also vary by manager: the price used can be the latest figure or a lagged
+one. The standard academic approach, HML (“High Minus Low”), uses the price that existed contemporaneously with the
+book value, which due to financial reporting can be lagged by 6 to 18 months. To illustrate why this decision is important and
+why using lagged price might differ from using the latest price, consider a company that looked expensive based on its book
+value and price from six months ago, but whose stock price has fallen over the past six months. Holding book value
+constant,10 this stock should now look better from a valuation perspective (since the price is lower). Yet, in a traditional
+definition (using lagged prices) the stock is viewed the same way irrespective of the price move. As a result, HML can be
+viewed as an incidental bet on both value and momentum.
+
+To correct for this “noisy” combination of value and momentum, Asness and Frazzini (2013) suggest replacing the 6- to 18-
+month lagged market price with the current market price to compute valuation ratios that use more updated information.
+Measuring HML using current price (what they refer to as “HML Devil”) seeks to eliminate any incidental exposure to
+momentum, resulting in a better proxy for true “value,” while still using information available at the time of investing. While
+such an adjustment may seem inconsequential, it can actually make a big difference — ultimately, the devil is in the details
+(as we will show again and again throughout this paper!).
+
+
+Multiple Style Measures
+
+While stocks selected using the traditional academic measure of value (discussed above) perform well in empirical studies ,11
+there is no theory that says book-to-price is the best measure for value. In fact, we believe other measures can be used and
+applied simultaneously to form a more robust and reliable view of a stock’s value. 12 In addition to the fact that no theory
+exists for why you would use only one measure, there is actually a strong theoretical argument for why you would want more
+than one: regardless of whether you believe style returns comes from capturing a risk premia or a mispricing, a multiple-
+measure approach can reduce the measurement noise associated with any one measure. Utilizing multiple measures can help
+
+9
+    Penman, Richardson, and Tuna (2006).
+10
+ While such an assumption may be unrealistic, Asness and Frazzini (2013) show that moves in book value are generally smaller than market
+moves.
+11
+     Fama and French (1992).
+12
+     Frazzini et al. (2013); Asness et al. (2015c).
+                                                                   4
+isolate the common component (the “true” measure of value), which is the core of what we’re trying to capture. As such,
+investors can relate prices to a variety of other reasonable fundamentals, including, but not limited to, earnings, cash flows,
+and sales. To understand the potential benefits of a multiple-measure approach, Exhibit 1 looks at rolling 5-year Sharpe
+ratios for two value portfolios: one based on just book-to-price, and another based on a composite of five different value
+indicators.13
+
+The results show that both book-to-price and multiple value measures provide positive risk-adjusted returns on average (0.07
+and 0.26, respectively),14 and are highly correlated with each other (roughly 0.9 correlated based on monthly returns).
+However, the multiple-measure value portfolio outperforms book-to-price in almost every 5-year period since 1990.15 The
+same multiple-measure approach can be applied to other styles too: for example, momentum portfolios that include both
+earnings momentum and price momentum may be more robust. It is important to note that using multiple measures is not a
+form of factor proliferation, which can lead to concerns about data mining; instead, using additional measures leads to a more
+robust version of the ideas behind the factors as there isn’t a single, perfect definition of each style.
+
+Exhibit 1 | Diversified Signals May Improve Risk-Adjusted Performance
+
+5-Year Hypothetical Sharpe Ratios: Book-to-Price vs. Multiple Value Measures
+U.S. Stocks Long/Short, January 1990 – December 2015
+
+                                                              B/P, Rolling 5-Year SR               Multiple Measures, Rolling 5-Year SR
+
+                                      2.5                     B/P, Full Sample SR=0.07             Multiple Measures, Full Sample SR=0.26
+
+
+
+                                      2.0
+
+
+
+                                      1.5
+        Rolling 5-Year Sharpe Ratio
+
+
+
+
+                                      1.0
+
+
+
+                                      0.5
+
+
+
+                                      0.0
+
+
+
+                                      -0.5
+
+
+
+                                      -1.0
+
+
+
+                                      -1.5
+                                          1994 1995 1996 1997 1998 1999 2000 2001 2002 2003 2004 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015
+
+
+
+
+13
+   Here we use book-to-price, earnings-to-price, forecasted earnings-to-price, cash flow-to-enterprise value (an adjusted measure of price),
+and sales-to-enterprise value.
+14
+   Book-to-price was the worst performer within the multiple -measure value composite; however, the composite still outperformed three out of
+the five standalone measures on a risk-adjusted basis over this period.
+15
+     Hypothetical performance data has certain i nherent limitations, some of which are discussed in the disclosures.
+                                                                                              5
+Source: AQR, Russell 1000. For illustrative purposes only and not representative of an actual portfolio AQR manages. For all measures, we
+use current prices. T he multiple measures include book-to-price, cash flow-to-enterprise value, earnings-to-price, forecasted earnings-to-
+price, and sales-to-enterprise value. Value portfolios are formed every month by ranking all U.S. stocks in the Russell 1000 universe on
+these metrics. Portfolios are formed by going long the top half (cheap) and short the bottom half (expensive) of stocks; stocks are weighted
+by market capitalization. Hypothetical returns are gross of estimated transaction costs. Hypothetical performance data has certain inherent
+limitations, some of which are discussed in disclosures. Please read important disclosures at the end of this paper.
+
+
+Stock Selection and Weighting Schemes
+
+Another portfolio construction design choice that can result in different exposure to a given style, and thus different
+performance, is how to select and weight stocks within a portfolio. A common approach among academics is to set a cutoff
+and weight stocks in a style portfolio via their market capitalization. The standard academic approach — in Fama French’s
+HML, for example — is to rank stocks based on book-to-price, go long the top 33% of stocks with the highest book-to-price
+and short the bottom 33% with the lowest book-to-price, and then weight those stocks based on their market capitalization.
+However, the 33% cutoff is just one choice a manager can make; as is the choice of weighting by market capitalization.
+
+To illustrate this point, let’s go back to our hypothetical value portfolio based on multiple measures from Exhibit 1. Here we
+are creating a portfolio based on the top 50% of stocks with the highest “composite” value rank across five different value
+measures. Every month we rank stocks based on each value measure, and go long the top 50% of stocks with the highest
+aggregate score and short the bottom 50% with the lowest score; we then weight the stocks in the resulting portfolio by their
+market capitalization (i.e., market-cap weight). The 50% cutoff is one choice we made; if, however, we had decided to
+restrict the portfolio to the top 33% (as per the standard academic approach), the portfolio would end up having more
+concentrated value exposure and slightly better performance, but also higher risk, and therefore virtually the same Sharpe
+ratio.
+
+An alternate weighting choice that can result in even more value exposure is to account for relative cheapness within stocks
+held long and short. This approach assigns larger positive (negative) weights to the stocks that rank most (least) favorably on
+its value rank (i.e., signal-weighting). While weighting stocks in a value portfolio based on signal strength results in the
+highest exposure to the desired style (and therefore potentially higher returns and Sharpe ratios), it tends to result in exposure
+to smaller, less liquid stocks , effectively foregoing some of the potential liquidity benefits of a market capitalization
+weighting scheme. As such, an approach that blends market capitalization and signal strength may provide a good balance
+between liquidity and higher expected gross return.16
+
+The results for all these weighting choices are shown in Exhibit 2. The point here, again, is not to argue for specific choices,
+though we of course have and will share our favorites. The broader poin t is that even after substantial agreement on the basic
+styles, there are many important choices to be made.
+
+
+
+
+16
+     Note that these results are gross of transaction costs.
+                                                                     6
+Exhibit 2 | Different Selection and Weighting Schemes Produce Varying Performance
+
+Weighting Stocks in a Hypothetical Value Portfolio
+U.S. Stocks Long/Short, January 1990 – December 2015
+                          20%                                                                                                                  0.6
+
+
+                                                                                                                                               0.5
+                          15%
+     Retruns/Volatility
+
+
+
+
+                                                                                                                                               0.4
+
+
+
+
+                                                                                                                                                     Sharpe Ratio
+                          10%                                                                                                                  0.3
+
+
+                                                                                                                                               0.2
+                          5%
+                                                                                                                                               0.1
+
+
+                          0%                                                                                                                   0.0
+                                  Market Cap-Weight,
+                                Market-Cap Weight, 50%    Market Cap-Weight,
+                                                         Market-Cap Weight, 33%          Blend
+                                                                                      Blend    Market
+                                                                                            Market CapCap  &
+                                                                                                       & Signal-        Signal-Weight,
+                                                                                                                   Signal-Weight, 50% Cutoff
+                                       50% Cutoff             33% Cutoff                    Signal-Weight,                50% Cutoff
+                                        Cutoff                   Cutoff                  Weight, 50% Cutoff
+                                                                                             50% Cutoff
+                                                          Returns        Volatility          Sharpe Ratio (RHS)
+
+Source: AQR, Russell 1000. For illustrative purposes only and not representative of an actual portfolio AQR manages. T he portfolio is
+constructed every month by first sorting stocks on multiple measures including book-to-price, cash flow-to-enterprise value, earnings-to-
+price, forecasted earnings-to-price, and sales-to-enterprise value. T he long/short portfolio is formed by going long (short) the cheap
+(expensive) stocks. Value portfolios are formed every month by ranking all U.S. stocks in the Russell 1000 universe. We test two cutoffs:
+top third minus bottom third and top half minus bottom half. T he portfolio weights stocks either by the market capitalization of the stocks,
+the relative ranking of the stocks, or a blend of the two measures based on a 50/50 weight . T hroughout, we use current prices. Hypothetical
+returns are gross of estimated transaction costs. Hypothetical performance data has certain inherent limitations, some of which are
+discussed in disclosures. Please read important disclosures at the end of this paper.
+
+Unintended Risks
+
+There are also specific choices managers may make to help mitigate poorly rewarded or unintended risk exposures. Even if
+the manager has the intention of capturing the purest form of a risk premium, certain design choices can result in other
+embedded risks. These risks might be unintentional, or even worse, unwanted and perhaps uncompensated.
+
+To illustrate this point, let’s examine the Fama-French HML portfolio, but constructed using current prices as done in HML
+Devil.17 Recall that this portfolio follows an academic methodology: ranking stocks based on book-to-price and selecting the
+top 33% stocks to go long and the bottom 33% to short.18 This simple ranking results in a portfolio that implicitly takes style
+bets both within industries and across industries, without any explicit risk controls on the relative contributions of each. In
+addition, even though this portfolio is constructed with $1 long and $1 short, it can still have varying market beta over time. 19
+
+
+17
+   For the remainder of this paper we will utilize current (rather than lagged) prices, as done under the HML Devil approach as discussed
+earlier. However, for simplicity we will refer to this portfolio as book-to-price.
+18
+   Fama and French utilize current prices and also construct their portfolios over the entire CRSP universe (large - and small-cap stocks,
+including many micro-cap stocks).
+19
+     See Israel and Ross (2017) for more on how HML’s market exposure varies over time.
+                                                                                  7
+The average risk exposures of this portfolio are shown in the pie chart in Exhibit 3 where we use portfolio holdings to
+breakdown risk exposures. The results show that the majority of risk is coming from market exposure and industry selection
+(value across industries), with only 32% of the risk coming from stock selection (value within industries).
+
+To understand how a long/short value portfolio can have such significant market (and industry) risk, consider what happened
+during the technology bubble: technology stocks were expensive based on book-to-price ratios and were generally higher risk
+as well, which meant that they exhibited higher market beta. Because these stocks fell on the short side of a naïve $1 long/$1
+short value portfolio, that portfolio would have been net short the technology sector and effectively the market as well (i.e.,
+higher beta on the short side than the long side). A key question here is whether timing the market and technology sector is
+intentional. In general, we believe that if an exposure is intentional and believed to be compensated, it’s better to separately
+and explicitly gain said exposure, rather than let it fall out of a naïve implementation. If exposure is neither intentional nor
+compensated, we believe that risk should be eliminated.
+
+So how should managers deal with these risks? One way may be to “hedge” out these risks and build a value portfolio that
+isolates style exposure. For market risk, that might mean constructing a portfolio with a beta of zero (i.e., the long side beta is
+equal to the short side beta), effectively hedging out market risk.20 For industry risk, one might apply style measures (book-
+to-price, for example) on a within-industry basis (i.e., focus on comparisons relative to industry peers).21 Managers may then
+avoid unintended industry bets but also make explicit inter-industry bets where deemed beneficial. However, for styles in
+general, we believe it makes sense to assign more risk to within-industry comparisons given the greater breadth (i.e., more
+securities within industries than industries to compare). In addition, at least when it comes to value, industry selection may
+not be as well compensated over the long-run.22
+
+To understand the potential benefits of constructing a “pure play” value portfolio, the right hand side of Exhibit 3 compares
+the risk-adjusted performance for a book-to-price portfolio with significant market and industry risk to one that eliminates
+any incidental industry and market risk.23 The book-to-price portfolio that isolates value exposure has delivered higher risk-
+adjusted returns. Overlaying an industry neutrality constraint on value strategies often reduces volatility while keeping long-
+run returns broadly unaffected, which implies higher portfolio Sharpe rat ios.24 But the tradeoff is that this adjustment
+typically results in higher turnover.25 We are not saying these choices and trade-offs are easy or obvious, just that they’re real
+and should be made consciously.
+
+20
+  For a long-only portfolio, the analogous concept is to target a beta of 1 to the benchmark; such an approach ensures that active returns are
+not driven by the market.
+21
+   Note that industries are just one way to define peers; an additional craftsmanship refinement may be to define peer groups th rough
+additional economic and statistical linkages, for example.
+22
+   For momentum there is more evidence that it is effective across industries. Moskowitz and Grinblatt (1999); Asness, Porter, a nd Stevens
+(2000).
+23
+   Managers can also seek to mitigate these risks by explicitly hedging them, separating comparisons of stocks within industries from
+comparisons across industries, or diversifying across multi -style portfolios. For instance, in the case of industry exposure, combining value and
+momentum may provide offsetting industry exposure. Think of the tech bubble — during this period a value portfolio would be underweight
+“expensive” tech stocks, while a momentum portfolio would be overweight “increasing in price” tech stocks. The combination of these two
+styles may help mitigate industry exposure.
+24
+   Specifically, portfolios that are long high within-industry B/P stocks and short low within-industry B/P stocks should have about the same to
+slightly higher expected return, but less variance, than portfolios long high market -wide B/P stocks and short low market-wide B/P stocks
+(Asness, Porter, and Stevens, 2000).
+25
+  In general, when portfolio adjustments result in higher turnover, investors need to consider transaction costs and taxes. The higher costs
+associated with additional turnover may be mitigated through efficient trad ing – more on this to come. The tax efficiency of a portfolio is a
+complicated function of turnover, short- and long-term gain and loss realizations and dividend income. See Israel and Moskowitz (2012) and
+                                                                        8
+Exhibit 3 | Naïve Approaches Result in Significant Market and Industry Exposure
+
+
+
+
+Source: AQR, Russell 1000, MSCI BARRA. For illustrative purposes only and not representative of an actual portfolio AQR manages. We
+form our value portfolio every month by ranking all U.S. stocks in the Russell 1000 universe on book -to-price. The portfolio is formed by
+going long the top third (cheap) and short the bottom third (expensive) of stocks; stocks are weighted based on mar ket capitalization.The
+risk decomposition (on the left) is computed by analyzing of the holdings of the hypothetical long/short value portfolio. Using the BARRA
+USE3L risk model, we decompose holdings into three components: 1) a market portfolio based on the value portfolio’s market beta
+multiplied by the Russell 1000 index, 2) an industry portfolio, based on the value portfolio ’s beta to each industry multiplied by the
+respective cap-weighted industry portfolio, and 3) the residual portfolio that is free of market and industry biases. T he Sharpe ratios (on the
+right) use the long/short value portfolio compared to the residual portfolio that is free of market and industry biases. Hypothetical
+performance data has certain inherent limitations, some of which are discussed in disclosures. Please read important disclosures at the end
+of this paper.
+
+
+
+It’s also important to note that these risks are not just present in value portfolios. A momentum portfolio that simply ranks
+stocks based on past 12 month price returns and overweights the relative winners may result in a portfolio that implicitly
+makes market bets. For example, during a bull market, the stocks that tend to outperform are typically higher beta names; so
+by going long these stocks, the momentum portfolio will have significant market beta. Put differently, the momentum
+portfolio construction implicitly times the market: generally overweighting the market after an up market and underweighting
+after a down market. This may or may not be desired, but it should be consciously chosen!
+
+Lastly, while we have focused on market and industry risk, there are also other unintended risks that may be hedged from
+portfolios. For example, in international equity portfolios, a manager can have stock, industry, country and currency risks.26
+For instance, in creating a portfolio, if one just ranked all global stocks on valuation, part of the risk would come from buying
+cheap stocks within each country, part from country tilts, and perhaps even odder, part from currency bets. You may or may
+
+
+
+
+Sialm and Sosner (2017) for more information on the after-tax performance, tax exposure, and tax efficiency of equity styles.
+26
+     Aghassi et al. (2011).
+                                                                       9
+not desire all those bets, but you certainly may desire them at different levels of risk/confidence than what falls out of this
+simple ranking approach. We believe a better approach to building style portfolios separates and manages these risks
+independently. This approach may improve the comparability of stocks by controlling for differences across industries and
+countries, and allows the manager to better allocate and control risk to each source of return (i.e., capture and target risk to
+each return source independently).
+
+Volatility Targeting
+
+Typically, investors understand that they must periodically rebalance their portfolios to maintain a strategic asset allocation .
+Yet, many investors commonly let their portfolio volatility fluctuate with market volatility, which can result in large time-
+varying portfolio risk where returns tend to be dominated by certain periods of higher volatility. Volatility (or risk) targ eting
+is an approach that seeks to yield more consistent risk-taking over time, by adjusting nominal position sizes dynamically in
+response to these portfolio volatility changes. Such an approach may lead to more stable portfolios and better diversification
+across time periods. Similarly, volatility targeting each style within a multi-style portfolio can lead to better diversification at
+all times. As a result, volatility targeting is a technique that practitioners may use when constructing long/short style
+portfolios. In long-only portfolios, the analogous concept is targeting tracking error.
+
+Of course, targeting a more consistent level of volatility only makes sense if investors believe that it is forecastable (one
+needs forecastable volatility in order to target it), and also that the trading costs of doing so do not eliminate the benefits. To
+understand if this approach is realistic and beneficial, Exhibit 4 looks at the realized volatility over time for two hypothetical
+value portfolios, a long/short value portfolio where the volatility is not controlled, and one where the portfolio is scaled to
+target a fixed volatility. The volatility targeted portfolio has realized volatility that is more stable and closer to the target
+volatility over time.
+
+It is also worth noting that there could be a case for allowing volatility to fluctuate, for example, if higher volatility is
+associated with higher Sharpe ratios. But without a view on attractiveness, taking a consistent level of risk (i.e., being
+diversified across time) seems to be a defensible approach.
+
+
+
+
+                                                                10
+Exhibit 4 | Diversification Through Time
+
+Hypothetical Three-Year Rolling Volatilities of Book-to-Price Portfolios
+U.S. Stocks Long/Short, January 1990 – December 2015
+
+
+
+
+Source: AQR, Russell 1000. For illustrative purposes only and not representative of an actual portfolio AQR manages. Volatilities above
+are computed on 3-year rolling returns of long/short book-to-price portfolios. Value portfolios are formed every month by ranking all U.S.
+stocks in the Russell 1000 universe on book-to-price. T he long/short portfolio is formed by going long the top half (cheap) and short the
+bottom half (expensive) of stocks; stocks are weighted by value signal strength. Both volatility-adjusted and non-volatility-adjusted
+portfolios are designed to be market and industry neutral ex-ante. T he volatility adjusted portfolio targets 5% volatility at each rebalance;
+this level was chosen since it was the average volatility of the book -to-price portfolio. Hypothetical performance data has certain inherent
+limitations, some of which are discussed in disclosures. Please read important disclosures at the end of this paper.
+
+
+
+
+Integrating Styles in a Multi-Style Portfolio
+
+Similar to weighting stocks in a single style portfolio, there are also different ways to weight styles in a multi-style portfolio.
+There are two popular approaches that are often considered as potential starting points for investors: the “portfolio mix” that
+builds a style portfolio by investing in separate, standalone style portfolios (effectively an “a la carte” approach to style
+investing) and the “integrated approach” that endogenously integrates styles directly in the portfolio construction process.
+The portfolio mix approach may be used by individual investors building their own portfolios (perhaps diversifying across
+managers), or by managers building a multi-style portfolio for them.
+
+To understand how these approaches can differ, consider two portfolios that aim to take advantage of two historically lowly
+correlated styles, value and momentum: the portfolio mix first picks the “best” value stocks and the “best” momentum stocks
+and then combines them to form a portfolio; in contrast, the integrated approach first blends each stock’s value and
+momentum scores and then forms a portfolio with the stocks that look best in combination (i.e., it considers the exposure to
+both styles before investing). The two approaches can actually end up holding very different stocks (especially when
+investing in lowly correlated styles, such as value and momentum). To see why this may be the case, the top half of Exhibit 5
+                                                                      11
+shows a simple example of how 16 representative stocks (as represented by the boxes) map to different portfolios based on
+their value and momentum scores or “grades.”
+
+Focusing first on the top left long-only example, we see that stocks that score highly based on value and momentum make it
+into both the mix and the integrated portfolios, but those that look excellent on one style (e.g., “A” on value) and terrible on
+the other (e.g., “F” on momentum) are those that make it into the portfolio mix only. Notably, the integrated approach avoids
+these stocks (e.g., “A/F” value/momentum combinations) and instead focuses on stocks that look ‘good’ on both value and
+momentum (e.g., “B/B” combinations).
+
+Now, consider how the same 16 stocks map to different long/short portfolios (top right of the Exhibit). The ability to go short
+means that we can now take advantage of stocks that are unattractive based on value and momentum.27 For both the portfolio
+mix and integrated portfolios, stocks that look excellent (terrible) on value and momentum make it into the long (short) side,
+while the integrated portfolio also focuses on stocks that look good (bad) in combination for the long (short) sides. There is
+one subtle nuance with the long/short approach that is worth highlighting: the “A/F” stock does not actually make it into the
+mix portfolio (as it did for long-only); this is due to the offsetting nature between the “A” stock long and the “F” stock short,
+which can be expressed in the long/short example. 28
+
+It turns out these kinds of distinctions have implications when it comes to returns. Stocks that look excellent on one style, but
+horrible on the other (e.g., “A/F” stocks) have mediocre expected returns, while those that look good on each style (e.g.,
+“B/B” stocks) have higher expected returns. The long-only integrated portfolio correctly avoids the former types of stocks
+and instead focuses on the latter, underscoring the importance of an integrated approach for long-only investing (a point
+which is discussed at length in Fitzgibbons et al., 2016). However, integration is also important for long/short portfolio s as
+the types of stocks that make it into the mix still tend to underperform those in the integrated. The bottom half of Exhibit 5
+examines the performance differences between various groupings of stocks. It shows that the stocks that are unique to the
+integrated portfolio tend to outperform those that are unique to the portfolio mix — for both long-only and long/short
+portfolios.
+
+
+
+
+27
+  Note that a long-only portfolio can take advantage of unattractive stocks by holding them at a weight less than the benchmark (i.e.,
+underweight these stocks). However, for simplicity, we choose to represent pure longs and shorts here.
+28
+  Such a stock actually "makes it" into both the long and short side, but it would not appear in the implemented portfolio due to position
+netting. If the long/short value and momentum portfolios were run separately it would indeed appear in the long portf olio of one and in the
+short portfolio of the other.
+                                                                       12
+Exhibit 5 | Comparing Portfolio Mix and Integrated Approaches, Long-Only and Long/Short
+
+
+ Long-Only Portfolio Mapping                                                             Long/Short Portfolio Mapping
+ Hypothetical Example of 16 Stocks                                                       Hypothetical Example of 16 Stocks
+                                               Value "Grade"                                                                                       Value "Grade"
+                                 A              B             C               F                                                    A               B                C                F
+
+
+
+
+                                                                                           Momentum "Grade"
+                                                                                                                                                              Portfolio Mix
+     Momentum "Grade"
+
+
+
+
+                                                         Portfolio Mix   Portfolio Mix                            A               Both            Both
+                        A       Both          Both
+                                                             Only            Only                                                                                 Only
+
+                                            Integrated                                                                                         Integrated                       Portfolio Mix
+                        B       Both                                                                               B              Both
+                                                                                                                                                  Only                              Only
+                                               Only
+                            Portfolio Mix                                                                                     Portfolio Mix                    Integrated
+                        C       Only
+                                                                                                                  C               Only                            Only
+                                                                                                                                                                                    Both
+
+                            Portfolio Mix                                                                                                     Portfolio Mix
+                        F       Only
+                                                                                                                   F                              Only
+                                                                                                                                                                   Both             Both
+
+                                                                                                                                                              Stocks Not in Any Style Portfolio
+
+     Hypothetical Performance of Various Groups of Stocks
+     U.S. Stocks, January 1990 – December 2015
+                                                                                   Long-Only                                                        Long/Short
+                                                                                   Stocks in                   Stocks in                            Stocks in              Stocks in
+                                                                  Stocks in                                                     Stocks in
+                                                                                  Integrated                  Portfolio Mix                        Integrated             Portfolio Mix
+                                                                    Both                                                          Both
+                                                                                     Only                         Only                                Only                   Only
+         Alpha*                                                    1.9%              1.6%                        0.7%              6.5%               5.4%                   4.2%
+         t-statistic                                               2.88              2.11                         0.73             3.63               2.94                   2.15
+         Example Stocks Long: Val/Mom “Grade”                       A/A               B/B                      A/C & A/F            A/A                B/B                    A/C
+         Example Stocks Short :Val/Mom “Grade”                       -                 -                            -               F/F                C/C                    B/F
+
+
+* Alpha is measured relative to an equally-weighted composite of Russell 1000 stocks. T he stocks in each respective group are also
+equally-weighted.
+Source: AQR, Russell 1000. For illustrative purposes only and not representative of an actual portfolio AQR manages. T he long-only
+“ portfolio mix” is constructed by equally weighting standalone value (book-to-price) and momentum (past 12-month price return,
+excluding the recent month), each with a 15% cutoff based on the Russell 1000 universe. T he long-only “ integrated” portfolio is
+constructed by first combining value and momentum scores and then selecting a cutoff so that it has the same tracking error a s the portfolio
+mix. T he long/short portfolio is constructed using a similar approach, with the portfolio mix using a 15% cutoff and the cutoff for the
+integrated portfolio determined so that it has the same leverage and volatility as the portfolio mix. T hese simple portfolios are neither
+market- nor industry-neutral. Returns are gross of transaction costs. Hypothetical performance data has certain inherent limitations, some of
+which are discussed in disclosures. Please read important disclosures at the end of this paper.
+
+While we have focused on performance differences, an additional benefit of an integrated approach is the potential reduction
+in transaction and other costs. Forming a portfolio of multiple styles in an integrated way allows managers to net positions
+and trades, which may allow for a reduction in turnover of the portfolio. 29 However, the tradeoff is that allocation and
+attribution may not be as straightforward.30
+
+Strategic or Tactical
+
+A bigger picture question when it comes to investing in styles is whether to tactically time or to simply maintain strategic
+allocations. Tactical timing means owning more (less) of a particular style when its expected return is higher (lower) than
+normal. Practitioners use a variety of ways to determine whether a style is conditionally attractive; for instance, timing may
+be based on valuation metrics (increasing/decreasing the weight of a style when the spreads in valuation between the long
+
+29
+  There are also potential tax benefits to an integrated approach. See Israel and Moskowitz (2012) for more information on the tax efficiency
+of standalone and integrated equity styles.
+30
+   For an integrated approach, allocating to styles is done in the portfolio formation process and therefore the attribution process is not as
+straightforward as allocating to standalone style portfolios. See Fitzgibbons et al. (2016) for more on the benefits of an in tegrated approach.
+                                                                                           13
+and short sides are wide/tight), momentum measures (increasing/decreasing the weight of a style when recent performance
+has been better/worse), or macroeconomic conditions (identifying the best market environments for each style). While several
+studies have looked at the efficacy of tactical timing (whether for markets or styles, based on a variety of measures), the
+evidence shows that timing is very difficult in practice.31 Valuation timing tends to have slightly more predictive power for
+long-horizon factor returns, particularly for slower turnover factors (like the market itself and, to a lesser extent, the value
+factor) versus faster ones.32 Still, the evidence shows that the benefit of timing strategies has been weak historically, and
+some tests of the long-term power of timing may even be exaggerated and/or inapplicable.33
+
+Specifically, for factors the evidence on timing is further complicated by the fact that timing styles based on valu ation is
+highly correlated with having direct value factor exposure in the portfolio. As such, value timing may not add much to a
+portfolio that already has a strategic allocation to value. These results are addressed in Asness et al. (2017), who show tha t
+the bar is raised further for contrarian style rotation when the relevant benchmark is a strategically diversified multi-style
+strategy with direct value exposure. Thus, contrarian tilting across style premia is potentially even harder to do successfully
+than contrarian market timing.
+
+To further understand the high bar to timing styles, we ask the question of how good (or skilled) you would need to be at
+timing to justify tactical tilts. We do so relative to a diversified baseline portfolio, an equally-weighted 50/50 combination of
+value and momentum,34 and for a timing strategy that is based on valuation metrics (i.e., one that is correlated with strategic
+value exposure).35 For simplicity, we ignore the (weak) empirical evidence on the efficacy of value timing, and instead,
+define timing ‘skill’ by assumed standalone strategy Sharpe ratios. The results in Exhibit 6 show that the amount of timing
+(or how large the tactical tilt should be) varies as a function of skill: modest timing skills merit modest tilts. Importantly,
+timing skills need to be better than a 0.1 Sharpe strategy to merit any weight at all; that is, when the timing strategy has a 0.1
+Sharpe ratio, it may be better to stick with the strategic value/momentum weights. But even when timing skills are very large
+(the standalone timing strategy Sharpe ratio is 0.5), the results show that the size of the tilt should still be modest, at +/- 12%.
+More extreme tactical tilts require higher levels of skill to justify the concentration. Timing skills must be good enough to
+overcome not only the hurdle of a good starting point (such as a well-diversified portfolio of multiple styles), but also the
+transaction costs of doing so as tactical allocators often face higher turnover than their strategic counterparts. Finally, the
+results shown here have looked at a timing strategy that is positively correlated with the strategic baseline exposure, but if
+instead such a strategy were lowly correlated to the baseline portfolio (i.e., the baseline portfolio did not already have value
+
+
+
+31
+  Asness, Ilmanen, and Maloney (2017) focus on valuation-based market timing and show that correlation evidence (in -sample and over long
+horizons) make contrarian market timing look promising, yet when an actual contrarian trading rule is ap plied, the performance improvement is
+weak.
+32
+  There may also be a case for timing at extremes: when the spread between ‘cheap’ and ‘expensive’ assets is particularly wide. One period
+in which value timing was at extremes was during the tech bubble (1999 -2000). While a value investor was ultimately rewarded handily after
+the tech bubble burst, she would have lost a lot before making anything, highlighting another example of how value timing may be difficult in
+practice.
+33
+   Timing strategy backtests can be vulnerable to look-ahead biases. In particular, the use of in-sample spreads may over-fit the past and
+under-deliver in the future (see Asness, Ilmanen, and Maloney, 201 7) and attempts to increase the sample size by using overlapping data or
+performing multiple regressions over different horizons do not improve inference about long -horizon return predictability (see Boudoukh, Israel,
+and Richardson, 2017).
+34
+   Given assumed volatilities of 5% and expected Sharpe ratios of 0.5 for each style, the equally-weighted combination has a Sharpe ratio of
+around 1.0, due to diversification. These styles are diversifying to each other as they are -0.5 correlated. The 1.0 strategic baseline Sharpe
+ratio is consistent with long-run empirical evidence on an equally-weighted value (HML) and momentum (UMD) portfolio.
+35
+  Historically, the contemporaneous correlations between the returns to value timing (difference between the value-timed multi-style portfolio
+and the non-timed multi-style portfolio) and returns to val ue and momentum are +0.7 and -0.6, respectively (see Asness et al., 2017).
+                                                                       14
+exposure)36 there could be a case for higher tilts. Similarly, a lower baseline strategic Sharpe ratio could also merit higher
+tilts.37
+
+The decision of whether to time styles (and by how much!) should ultimately depend on how skilled you are at timing,
+combined with what is already in your portfolio. W e believe that strategic diversification generally beats extreme tactical tilts
+(i.e., tactical concentration) and that if you are to try to time factors (or the market) you should do so on the margin (i.e., “sin
+a little”).38 The positive craftsmanship choice here is resisting the temptation to sin a lot.
+
+Exhibit 6 | The Bar for Tactical Timing
+
+Size of Optimal Tactical Tilt as a Function of Skill
+Given a Strategic Baseline Portfolio with a Sharpe Ratio of 1.0
+
+                           20%
+
+
+
+                           15%
+       Tactical Tilt (%)
+
+
+
+
+                           10%
+
+
+
+                           5%
+
+
+
+                           0%
+                                 0      0.1                   0.2                   0.3                   0.4                  0.5
+                                        Sharpe Ratio of Hypothetical Tactical Timing Strategy
+Source: AQR. The example above is provided for illustrative purposes only. The baseline portfolio is a simple equal-weighted 50/50
+combination of value and momentum, assuming the two styles are lowly correlated (-0.5 correlation). For value and momentum, we assume
+arithmetic Sharpe ratios of 0.5 and volatilities of 5%, such that the combination of value and momentum (the strategic baseline portfolio) has a
+Sharpe of 1.0. We then evaluate the inclusion of a timing strategy with a correlation of +0.7 with value and -0.6 with momentum, and solve for
+optimal risk allocation to the timing strategy at different Sharpe ratios. That is, given a Sharpe assumption for a timing strategy, how much risk
+would you want to take in it; we then translate that risk to a tilt. Transaction costs will likely further penalize tactical strategies. Please read
+important disclosures in the Appendix. The Sharpe ratios and volatility assumptions used are meant to be illustrative and not based off of any
+actual underlying data. Hypothetical performance data has certain inherent limitations, some of which are discussed in disclosure s.
+
+
+
+
+36
+   For example, if an investor does not have value exposure in their strategic portfolio, then value timing may be potentially a dditive. However,
+compared to an explicit risk-targeted strategic allocation to value, value timing provides an intermittent and sub optimal amount of value
+exposure; Asness et al. (2017).
+37
+   In our example, we have assumed a baseline portfolio that has a Sharpe of 1.0. If, however, the baseline portfolio had a lowe r Sharpe ratio,
+the results would imply higher tactical tilts.
+38
+     Asness, Ilmanen, and, Maloney (2017); Asness et al. (2017).
+                                                                         15
+In this section we have focused on design decisions and choices that managers can make when constructing style portfolios
+— each choice has the opportunity to add value or subtract if done poorly, but may also require sophisticated portfolio
+construction techniques. These individual choices may result in more modest Sharpe ratio improvements than, say, the large
+gains to diversifying across factors. But, while these improvements may seem incremental, they are still worth pursuing as
+every little bit counts. At the end of the day, it is up to the manager to decide how to construct her style portfolio; we aim to
+highlight how various craftsmanship choices can affect exposures and performance of style portfolios.
+
+How To Execute Style Portfolios?
+
+While portfolio construction decisions may allow managers to more-efficiently harvest the underlying risk premia through
+enhanced signals or better weighting schemes, it is important to ensure that trading and risk management decisions do not
+erode the value added from other steps of the process.
+
+Portfolio Implementation
+
+The previous section outlined some choices managers need to make when designing their theoretical style portfolios. So far,
+the discussion has focused on portfolio construction in a world without real-world costs, such as the cost to trade toward that
+theoretical, ideal portfolio. Effective portfolio implementation is about achieving high returns net of those costs. A simplistic
+implementation is to build theoretical portfolios, and trade directly to them, without weighing the expected benefit of trading
+to the ideal portfolio against the expected trading cost of doing so. Style investing requires active portfolio rebalancing: what
+was considered cheap yesterday may no longer be trading cheap today. Because of this dynamic nature of style investing, it’s
+very important to think about execution and implementation.
+
+To illustrate this point: consider a style portfolio that rebalanced at different frequencies. A portfolio that is rebalanced daily
+may result in the “freshest” portfolio (with the highest correlation with the ideal portfolio) and the highest gross-of-
+transaction-costs performance; while a portfolio that is rebalanced annually will likely be “stale” (further away from the ideal
+portfolio) and therefore have worse gross performance. But these comp arisons don’t take transaction costs into account.39 A
+better point of comparison is to focus on net-of-transaction-costs performance. Obviously the daily rebalanced portfolio will
+incur high transaction costs, thereby reducing the gross performance benefits. And the annual rebalanced portfolio will have
+much lower transaction costs, but applied against lower gross returns. Ultimately, the transaction costs savings of rebalancing
+at a lower frequency needs to be weighed against the performance degradation of trading a more stale portfolio (i.e., there is a
+tradeoff between the cost of trading vs. the opportunity cost of not trading ). Exhibit 7 looks at a simple long/short
+momentum portfolio and shows the impact that different rebalancing frequencies can have on gross and net performance. We
+focus on momentum because of its higher natural turnover, relative to other styles. As a result of its higher turnover,
+rebalance decisions may have a larger impact for momentum portfolios .
+
+
+
+
+39
+   See Israel and Moskowitz (2012) for more information on taxes and style investing, and Frazzini, Israel, and Moskowitz (2012) for more on
+trading costs.
+
+                                                                     16
+Exhibit 7 | The Tradeoff Between Rebalancing Frequency and Performance
+Performance at Different Rebalance Frequencies for Hypothetical Price Momentum Portfolios
+U.S. Stocks Long/Short, January 1990 – December 2015
+
+
+
+
+* T he “ideal” portfolio reflects the model based on past 12-month price returns, excluding the most recent month, rebalanced daily.
+Source: AQR, Russell 1000. For illustrative purposes only and not representative of an actual portfolio AQR managed. We vary the
+rebalance frequency on a long/short momentum portfolio. Returns are shown gross of cash. T he momentum portfolio is formed at various
+frequencies, as shown along the x-axis, by ranking all U.S. stocks in the Russell 1000 universe on past 12-month price returns, excluding
+the most recent month. A long/short portfolio is formed by going long the top half (outperformers) and short the bottom half
+(underperformers); stocks are weighted by momentum-signal strength. Reported are returns gross and net of transaction costs. All numbers
+are also gross of cash and financing costs. T ransaction costs are calculated using a propriety trading cost model. T urnover is quoted as total
+buys and sells over total short -side notional. Please read important disclosures in the Appendix. Hypothetical performance data has certain
+inherent limitations, some of which are discussed in disclosures.
+
+
+
+Another way to potentially reduce transaction costs is to allow for some deviation from the ideal (or “freshest”) portfolio
+through an optimization. Given that a manager has decided to rebalance daily, for example, they may still reduce trading
+costs by allowing some deviation to the ideal portfolio. It turns out that varying the deviation can have a similar effect as
+changing the rebalance frequency: a higher deviation induces greater style drift and therefore greater performance
+degradation, but also less turnover and therefore, lower transaction costs.
+
+This exercise is not meant to suggest that there is one magic turnover level that works for all style portfolios. The behavior of
+style portfolios constructed by different managers can vary greatly (we’ve already shown several design decisions in this
+paper that can lead to vastly different portfolios); as a result, it may not be informative to compare turnover or transaction
+costs in isolation across different products or managers. Low, or high, turnover by itself should not be seen as a virtue.
+Ultimately, net returns, judged over a long enough sample period, is a better way to compare different strategies.
+
+Cost-Effective Execution
+
+
+                                                                      17
+We have discussed the tradeoff between expected returns and rebalance frequency and how transaction costs play a crucial
+role in that determination. But it’s also important that once the rebalance frequency or turnover is set, managers utilize smart
+trading techniques to minimize costs incurred per dollar traded. A big portion of trading costs for large investors is price
+impact,40 or how different the execution price is relative to the price at the time the manager enters the market. Price impact
+often dwarfs explicit costs like commissions . Interestingly, however, many managers and investors focus on the explicit,
+rather than the implicit, costs of trading.
+
+One way that managers may reduce their market impact is by being patient. Using real world execution data, Frazzini, Israel,
+and Moskowitz (2012) observe that the greater the participation rate (shares traded/market trading volume) the costlier it is to
+trade. Exhibit 8, extracted from their paper, shows that trading 2% of a stock’s daily volume results in roughly 17 basis
+points (bps) of market impact; in contrast, trading 6% costs roughly 28 bps per dollar traded on average. An implication of
+this is that if a manager wants to trade 6% of a stock’s daily volume, there needs to be a decision on how best to do so. In the
+case of style investing, trades are generally based on slower signals (rather than higher frequency ones), so a manager may
+choose a patient trading approach. Rather than completing the trades in one day, they may spread them out across 3 days
+(utilizing roughly 2% of trading volume per day). A patient trading approach such as this may reduce trading costs.41 A
+similar logic can apply to intra-day trading: spreading out trades over the course of a day, rather than trading in a short period
+(e.g., around market close), will likely lead to lower market impact.
+
+
+Exhibit 8 | Smarter Trading Can Reduce Transaction Costs
+Market Impact by Fraction of Trading Volume
+August 1998 – September 2013
+
+
+
+
+Source: Frazzini, Israel, and Moskowitz (2012). T he data through 2013 is an extension of data from 2011 using the same methodology. For
+illustrative purposes only. Plotted is the average market impact for actual live trades from AQR’s proprietary database, as in Frazzini,
+Israel, and Moskowitz (2012). T he authors sort all trades in their dataset into 30 bins based on their fraction of daily volume and compute
+average market impact for each bucket. T his includes all available developed market equity transact ions (cash equities and equity swaps) in
+their data between August 1998 and September 2013. See Appendix A for more detail. Market Impact is in basis points (annualized) and
+
+40
+   See Frazzini, Israel, and Moskowitz (2012) for additional information on explicit (commissions, bid-ask spread) and implicit (price impact)
+trading costs.
+41
+  In our example, the trading cost savings could be 11bps (28 bps-17bps), but this is likely an overestimate as we cannot assume the cost
+functions over three days are independent. That is, trading 2% on the last day might be costlier than trading 2% on the first day, since you’ve
+been trading in the same direction for consecutive days. However, this estimate of reduced trading costs should be directionally correct.
+                                                                       18
+defined as the difference between trade-weighted average execution price and the price at the time the manager enters the market. Please
+read important disclosures in the Appendix.
+
+Risk Management
+
+Another important aspect of running a style portfolio is being intentional in the type of risks the portfolio takes on and
+managing those risks through time. We have already touched on hedging out unintended risks (such as market or even
+industry risk) and volatility targeting, but there are other dimensions of risk investors need to be mindful of as well; these
+include leverage, illiquidity, solvency (i.e., adequate free cash levels), left tail risk, and correlation risk (i.e., styles becoming
+more correlated). For long/short portfolios, leverage is an important risk dimension, which can be managed by varying
+exposures as volatilities move around (e.g., reducing leverage when volatility increases), limiting leverage at some absolute
+level, trading liquid instruments, and maintaining comfortable levels of cash to support that leverage.
+
+Even with thoughtful risk management, there can be painful times for style portfolios. Having a pre-specified plan for how to
+handle a crisis is of paramount importance, especially for long/short levered portfolios. One alternative is doing nothing, but
+it is unlikely a manager can actually stick to that in all circumstances. The reality is that in a crisis, risk aversion tends to
+increase; eventually risk appetite and risk levels diverge enough such that they have to be brought back in line, which is
+typically accomplished via deleveraging. This behavior often means that investors capitulate at the bottom or worst possible
+time, and then are averse about putting risk back on.
+
+To help avoid this type of situation, investors can benefit from having a systematic plan in place on how to handle a crisis.
+This type of plan begins cutting risk when the portfolio experiences a drawdown, or if the short-term tail risk of the portfolio
+goes up. It then systematically adds back risk as the returns improve and the left tail risk subsides.42 In other words,
+mechanical drawdown rules may dial down risk if pre-specified loss levels are reached (and dial risk exposures back up when
+performance recovers). A pre-specified planned drawdown control system may be beneficial in times of panic; underscoring
+the importance of having a plan before you need one. Such an approach may allow investors to maintain diversification and
+stay invested in tough times.
+
+Conclusion
+
+Throughout this paper we have discussed many of the craftsmanship choices that can be made when constructing style
+portfolios. While there may be broad agreement on the major styles that drive asset returns , we have shown that when it
+comes to style investing, many details matter — from how to transform signals into portfolio weights to risk control to
+optimization to trading. In the design of style portfolios, craftsmanship choices are present again and again, explicitly or
+implicitly, and these are the kinds of decisions that can impact investment success .
+
+While there may not always be a clear right or wrong with some of these design decisions, managers should be able to defend
+their choices and understand their implications. We believe design choices that are based on economic principles and
+empirical evidence should lead to better investment outcomes – even if not in every period (over the short-term, randomness
+can trump an ex-ante edge!). Ultimately, what may seem like inconsequential decisions can lead to a meaningful edge over
+time.
+
+42
+  Our view is that such a plan i s likely unnecessary in long-only implementations but becomes more helpful in long/short portfolios with
+leverage.
+                                                                       19
+Appendix A: Trade Execution Data from Exhibit 8, Summary Statistics
+
+
+
+
+*Indicates partial year from August 31, 1998. **Indicates partial year up to September 30, 2013. Source: T his table shows summary
+statistics of the trade execution database used in Exhibit 8. See Frazzini, Israel, and Moskowitz (2012) for more detail. T he data through
+2013 is an extension of data from 2011 using the same methodology as detailed in this paper. For illustrative purposes only.
+
+
+
+
+                                                                      20
+References
+
+
+Aghassi, M., C. Asness, O. Kurbanov, and L. Nielsen, 2011. “Avoiding Unintended Country Bets in Global
+   Equity Portfolios.” AQR White Paper.
+
+AQR Capital Management, 2014. “Alternative Thinking: Challenges of Incorporating Tactical Views.” AQR
+  quarterly, Fourth Quarter 2014.
+
+Arnott, R., J. Hsu, and P. Moore., 2004. “Fundamental Indexation.” Financial Analysts Journal: 83-99.
+
+Asness, C., 2009. “Seven Thoughts on Running Big Money For the Long-Term.” AQR White Paper.
+
+Asness, C., R. Porter, and R. Stevens, 2000. “Predicting stock returns using industry relative firm characteristics.”
+   AQR White Paper.
+
+Asness, C., S. Chandra, A. Ilmanen, and R. Israel, 2017. “Contrarian Factor Timing is Deceptively Difficult.”
+   Journal of Portfolio Management, Vol. 43, No. 5, 72-87.
+
+Asness, C., A. Ilmanen, R. Israel, and T. Moskowitz, 2015a. “Investing with Style.” Journal of Investment
+   Management, Vol. 13, No. 1, 27-63.
+
+Asness, C., A. Ilmanen, and T. Maloney, 2017. “Market Timing: Sin a Little.” Journal of Investment
+   Management, Vol. 15, No.3, 23-40.
+
+Asness, C., A. Ilmanen, and T. Maloney, 2015. “Back in the Hunt.” Institutional Investor.
+
+Asness, C., A. Frazzini, R. Israel, T. Moskowitz, and L. Pedersen, 2015. “Size Matters, If you Control Your
+   Junk.” Forthcoming Journal of Financial Economics.
+
+Asness, C., A. Frazzini, R. Israel, and T. Moskowitz, 2015. “Fact, Fiction, and Value Investing.” Journal of
+   Portfolio Management, Vol. 42, No. 1, 34-52.
+
+Asness, C., and J. Liew, 2014. “Smart Beta: Not New, Not Beta, Still Awesome.” Institutional Investor.
+
+Asness, C., T. Moskowitz, and L. Pedersen, 2013. “Value and Momentum Everywhere.” Journal of Finance, Vol.
+   68, No. 3, 929-985.
+
+Asness, C., R. Porter, and R. Stevens, 2000. “Predicting Stock Returns Using Industry-Relative Firm
+   Characteristics.” AQR White Paper.
+
+Boudoukh, J., R. Israel, and M. Richardson, 2017. “Long-Horizon Predictability: A Cautionary Note.” AQR White
+   Paper.
+
+Fama, E.F., 1991. “Efficient Capital Markets: II.” Journal of Finance, Vol. 46, No. 5, 1575-1617.
+                                                         21
+Fama, E.F., and K.R. French, 1992. “The Cross-Section of Expected Stock Returns.” Journal of Finance, Vol. 47,
+   No. 2, 427–465.
+
+Fama, E.F., and K.R. French, 1993. “Common Risk Factors in the Returns on Stocks and Bonds.” Journal of
+   Financial Economics, Vol. 33, 3–56.
+
+Fama, E.F., and K.R. French, 1996. “Multifactor Explanations of Asset Pricing Anomalies.” Journal of Finance,
+   Vol. 51, 55–84.
+
+Fitzgibbons, S., J. Friedman, L. Pomorski, and L. Serban, 2016. “Long-Only Style Investing: Don’t Just Mix,
+    Integrate.” AQR White Paper.
+
+Frazzini, A., R. Israel, and T. Moskowitz, 2012. “Trading Costs of Asset Pricing Anomalies.” SSRN Working
+    Paper.
+
+Frazzini, A., R. Israel, T. Moskowitz, and R. Novy-Marx, 2013. “A New Core Equity Paradigm.” AQR White
+    Paper.
+
+Ilmanen, A., 2011. Expected Returns, Wiley.
+
+Ilmanen, A., R. Israel, and D. Villalon, 2014. “Style Investing: The Long and Long/Short of It.” Investments and
+    Pensions Europe.
+
+Israel, R., and T. Moskowitz, 2013. “The Role of Shorting, Firm Size, and Time on Market Anomalies.” Journal
+    of Financial Economics, Vol. 108, No. 2, 275-301.
+
+Israel, R., and T. Moskowitz, 2012. “How Tax Efficient are Equity Styles?” SSRN Working paper.
+
+Israel, R., and A. Ross, 2017. “Measuring Factor Exposures: Uses and Abuses.” Journal of Alternative
+    Investments, Vol. 20, No. 1. 10-25.
+
+Moskowitz, T., and M. Grinblatt, 1999. “Do Industries Explain Momentum?” Journal of Finance, Vol. 54, No. 4,
+   1249-1290.
+
+Novy-Marx, R., 2013. “The Other Side of Value: The Gross Profitability Premium.” Journal of Financial
+   Economics, Vol. 108, 1, 1-28.
+
+Novy-Marx, R., 2012. “The Quality Dimension of Value Investing.” Working paper.
+
+Penman, S., S. Richardson, and I. Tuna, 2006. “The Book-to-Price Effect in Stock Returns: Accounting for
+   Leverage.” Journal of Accounting Research, Vol 45, No. 2, 427-468.
+
+
+                                                       22
+Sialm, C., and N. Sosner., 2017. “Taxes, Shorting, and Active Management.” SSRN Working Paper.
+
+
+
+
+                                                   23
+The views and opinions expressed are those of the authors and do not necessarily reflect the views of AQR Ca pital
+Management, its affiliates, or its employees; do not constitute an offer or solicitation of an offer, or any advice or
+recommendation, to purchase any securities or other financial instruments; and may not be construed as such.
+
+
+
+
+                                                              24
+
