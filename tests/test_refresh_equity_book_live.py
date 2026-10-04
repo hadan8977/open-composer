@@ -262,3 +262,226 @@ def test_merge_formation_ic_is_idempotent(tmp_path: Path) -> None:
     rf.merge_formation_ic(live, snap)
     assert pd.read_parquet(path)["ic"].tolist() == [0.1, 0.1, 0.2, 0.2]
     assert len(pd.read_parquet(live / "alpha/book_v1/formation_ic_live_only.parquet")) == 3
+
+
+def test_new_month_ends_only_closed_months() -> None:
+    sessions = [date(2026, 9, 29), date(2026, 9, 30), date(2026, 10, 1), date(2026, 10, 2)]
+    assert rf.new_month_ends(date(2026, 8, 31), sessions) == [date(2026, 9, 30)]
+    assert rf.new_month_ends(date(2026, 9, 30), sessions) == []  # already stored
+    # the latest month is never closed, even when its last session is the last weekday
+    assert rf.new_month_ends(date(2026, 8, 31), [date(2026, 9, 29), date(2026, 9, 30)]) == []
+    # a missed month is picked up as well, oldest first
+    sess = [date(2026, 8, 31), date(2026, 9, 30), date(2026, 10, 2)]
+    assert rf.new_month_ends(date(2026, 7, 31), sess) == [date(2026, 8, 31), date(2026, 9, 30)]
+    assert rf.new_month_ends(None, []) == []
+
+
+def _universe_frame(month_ends: list[str], symbols: list[str], adv: float) -> pd.DataFrame:
+    rows = [
+        {"month_end": pd.Timestamp(m), "symbol": s, "adv_rank": i + 1, "dollar_adv": adv}
+        for m in month_ends
+        for i, s in enumerate(symbols)
+    ]
+    return pd.DataFrame(rows)
+
+
+def _monthly_setup(tmp_path: Path, monkeypatch) -> rf.Table:
+    feat = tmp_path / "features"
+    (feat / "universe").mkdir(parents=True)
+    (feat / "daily_broad").mkdir(parents=True)
+    _universe_frame(["2026-08-31"], ["A", "B"], 1.0).to_parquet(feat / "universe/2026.parquet")
+    dates = ["2026-08-31", "2026-09-30", "2026-10-01", "2026-10-02"]
+    pd.DataFrame({"trade_date": pd.to_datetime(dates), "symbol": "A"}).to_parquet(
+        feat / "daily_broad/2026.parquet"
+    )
+    monkeypatch.setattr(rf, "FEATURES", feat)
+    monkeypatch.setattr(rf, "STAGE_ROOT", feat / "_tmp")
+    monkeypatch.setattr(rf, "BACKUP_ROOT", tmp_path / "backup")
+    return rf.table_by_name("universe")
+
+
+def test_monthly_table_skips_without_a_new_month_end(tmp_path: Path, monkeypatch) -> None:
+    table = _monthly_setup(tmp_path, monkeypatch)
+    # make 09-30 already stored: no closed month end is left
+    _universe_frame(["2026-08-31", "2026-09-30"], ["A", "B"], 1.0).to_parquet(
+        rf.FEATURES / "universe/2026.parquet"
+    )
+    calls: list[list[str]] = []
+
+    def runner(argv, **_kw):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    assert rf.run_upstream_table(table, date(2026, 10, 2), [], runner) == rf.EXIT_OK
+    assert calls == []  # nothing built, nothing compared
+
+
+def test_monthly_table_appends_new_month_and_keeps_old_rows(tmp_path: Path, monkeypatch) -> None:
+    table = _monthly_setup(tmp_path, monkeypatch)
+    out = rf.FEATURES / "universe/2026.parquet"
+    before = pd.read_parquet(out)
+
+    def runner(argv, **_kw):
+        if "check_feature_invariance.py" in " ".join(argv):
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        stage = rf.STAGE_ROOT / "universe"
+        # the builder re-estimates every month: August moved, September is new
+        _universe_frame(["2026-08-31", "2026-09-30"], ["A", "B", "C"], 9.0).to_parquet(
+            stage / "2026.parquet"
+        )
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    steps = [
+        s for s in rf.build_plan(date(2026, 10, 2), tables=[table], stages=[]) if s.kind == "run"
+    ]
+    assert rf.run_upstream_table(table, date(2026, 10, 2), steps, runner) == rf.EXIT_OK
+    after = pd.read_parquet(out)
+    aug = after[after["month_end"] == pd.Timestamp("2026-08-31")].reset_index(drop=True)
+    pd.testing.assert_frame_equal(aug, before.reset_index(drop=True))  # old month frozen
+    sep = after[after["month_end"] == pd.Timestamp("2026-09-30")]
+    assert sorted(sep["symbol"]) == ["A", "B", "C"] and (sep["dollar_adv"] == 9.0).all()
+    assert not (rf.STAGE_ROOT / "universe").exists()  # staging cleaned
+
+
+def test_failed_check_cleans_staging(tmp_path: Path, monkeypatch) -> None:
+    feat = tmp_path / "features"
+    (feat / "insider_broad").mkdir(parents=True)
+    old = pd.DataFrame(
+        {"trade_date": pd.to_datetime(["2026-09-30", "2026-10-01"]), "symbol": "A", "x": 1.0}
+    )
+    old.to_parquet(feat / "insider_broad/2026.parquet")
+    old.to_parquet(feat / "insider_broad/2025.parquet")
+    monkeypatch.setattr(rf, "FEATURES", feat)
+    monkeypatch.setattr(rf, "STAGE_ROOT", feat / "_tmp")
+    monkeypatch.setattr(rf, "BACKUP_ROOT", tmp_path / "backup")
+    table = rf.table_by_name("insider_broad")
+    seen: dict[str, bool] = {}
+
+    def runner(argv, **_kw):
+        stage = feat / "_tmp/insider_broad"
+        if "check_feature_invariance.py" in " ".join(argv):
+            seen["prior_is_copy"] = not (stage / "2025.parquet").is_symlink()
+            return subprocess.CompletedProcess(argv, 1, "", "")
+        seen["prior_is_copy"] = not (stage / "2025.parquet").is_symlink()
+        old.assign(x=2.0).to_parquet(stage / "2026.parquet")
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    steps = [
+        s for s in rf.build_plan(date(2026, 10, 2), tables=[table], stages=[]) if s.kind == "run"
+    ]
+    assert rf.run_upstream_table(table, date(2026, 10, 2), steps, runner) == rf.EXIT_UPSTREAM
+    assert seen["prior_is_copy"] and not (feat / "_tmp/insider_broad").exists()
+    assert (feat / "insider_broad/2026.parquet").read_bytes() == (
+        tmp_path / "backup/2026-10-02/insider_broad/2026.parquet"
+    ).read_bytes()
+
+
+def test_restatement_cursor_init_and_read(tmp_path: Path) -> None:
+    log_file = tmp_path / "_restatements.jsonl"
+    log_file.write_text('{"symbol": "A", "max_rel_diff": 0.5}\n' * 3)
+    cursor = tmp_path / "state.json"
+    assert rf.read_cursor(cursor) is None  # missing cursor: nothing is processed automatically
+    assert rf.init_cursor(log_file, cursor) == 3
+    assert rf.read_cursor(cursor) == 3
+    records, offset = rf.new_split_restatements(log_file, rf.read_cursor(cursor) or 0, None)
+    assert records == [] and offset == 3
+    log_file.write_text(log_file.read_text() + '{"symbol": "B", "max_rel_diff": 0.9}\n')
+    records, offset = rf.new_split_restatements(log_file, 3, None)
+    assert [r["symbol"] for r in records] == ["B"] and offset == 4
+
+
+def _universe_files(root: Path, month_end: str) -> None:
+    (root / "universe_broad").mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"month_end": pd.to_datetime([month_end]), "symbol": ["A"]}).to_parquet(
+        root / "universe_broad/2026.parquet"
+    )
+
+
+def test_membership_cut_follows_the_universe_month_end(tmp_path: Path) -> None:
+    feat, state = tmp_path / "features", tmp_path / "state.json"
+    _universe_files(feat, "2026-09-30")
+    assert rf.last_universe_month_end(feat) == date(2026, 9, 30)
+    # first run, no state: conservative, rows from the month end on are not gated
+    assert rf.membership_cut(feat, state) == date(2026, 9, 29)
+    rf.write_state(state, universe_month_end="2026-08-31")  # a month end came in since the last run
+    assert rf.membership_cut(feat, state) == date(2026, 9, 29)
+    rf.write_state(state, universe_month_end="2026-09-30")  # nothing new: full gate
+    assert rf.membership_cut(feat, state) is None
+    # the cursor keeps living in the same file
+    rf.write_cursor(5, date(2026, 10, 2), state)
+    assert rf.read_cursor(state) == 5 and rf.read_state(state)["universe_month_end"] == "2026-09-30"
+
+
+def test_membership_cut_limits_the_gate_of_universe_keyed_tables(
+    tmp_path: Path, monkeypatch
+) -> None:
+    feat = tmp_path / "features"
+    (feat / "insider_broad").mkdir(parents=True)
+    dates = pd.to_datetime(["2026-09-29", "2026-09-30", "2026-10-01"])
+    pd.DataFrame({"trade_date": dates, "symbol": "A", "x": 1.0}).to_parquet(
+        feat / "insider_broad/2026.parquet"
+    )
+    monkeypatch.setattr(rf, "FEATURES", feat)
+    monkeypatch.setattr(rf, "STAGE_ROOT", feat / "_tmp")
+    monkeypatch.setattr(rf, "BACKUP_ROOT", tmp_path / "backup")
+    table = rf.table_by_name("insider_broad")
+    cuts: list[str] = []
+
+    def runner(argv, **_kw):
+        if "check_feature_invariance.py" in " ".join(argv):
+            cuts.append(argv[argv.index("--cut") + 1])
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        pd.DataFrame({"trade_date": dates, "symbol": "A", "x": 1.0}).to_parquet(
+            feat / "_tmp/insider_broad/2026.parquet"
+        )
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    steps = [
+        s for s in rf.build_plan(date(2026, 10, 1), tables=[table], stages=[]) if s.kind == "run"
+    ]
+    assert (
+        rf.run_upstream_table(table, date(2026, 10, 1), steps, runner, member_cut=date(2026, 9, 29))
+        == 0
+    )
+    assert rf.run_upstream_table(table, date(2026, 10, 1), steps, runner) == 0
+    assert cuts == ["2026-09-29", "2026-10-01"]
+
+
+def test_heavy_process_wait_ignores_own_tree_and_gives_up() -> None:
+    procs = [(100, 1, 5_000), (200, 100, 900_000), (300, 200, 800_000), (400, 1, 700_000)]
+    # 200/300 are descendants of 100 (me): only 400 blocks
+    assert rf.other_heavy_processes(procs, 100, 600_000) == [(400, 700_000)]
+    assert rf.other_heavy_processes(procs[:3], 100, 600_000) == []
+    ticks = iter(range(0, 10_000, 30))
+    sleeps: list[float] = []
+    assert not rf.wait_for_quiet(
+        600_000,
+        max_wait_s=60,
+        table=lambda: procs,
+        sleep=sleeps.append,
+        clock=lambda: float(next(ticks)),
+        me=100,
+    )
+    assert sleeps  # it did wait before giving up
+    rows = iter([procs, procs[:3]])
+    assert rf.wait_for_quiet(
+        600_000, table=lambda: next(rows), sleep=lambda s: None, clock=lambda: 0.0, me=100
+    )
+
+
+def test_new_entrant_symbols_and_allow_flag(tmp_path: Path) -> None:
+    old, new = tmp_path / "old.parquet", tmp_path / "new.parquet"
+    pd.DataFrame(
+        {"symbol": ["A", "B"], "trade_date": pd.to_datetime(["2026-09-01"] * 2)}
+    ).to_parquet(old)
+    pd.DataFrame(
+        {"symbol": ["A", "B", "C"], "trade_date": pd.to_datetime(["2026-09-01"] * 3)}
+    ).to_parquet(new)
+    assert rf.new_entrant_symbols(old, new) == ["C"]
+    table = rf.table_by_name("short_volume_broad")
+    allow = tmp_path / "allow.txt"
+    cmd = rf.check_command(table, old, new, date(2026, 9, 29), tmp_path / "o.json", allow)
+    assert cmd[cmd.index("--allow-only-new") + 1] == str(allow)
+    assert "--allow-only-new" not in rf.check_command(
+        table, old, new, date(2026, 9, 29), tmp_path / "o.json"
+    )

@@ -65,6 +65,8 @@ NEW_YORK = ZoneInfo("America/New_York")
 
 EXIT_OK, EXIT_NOT_FRESH, EXIT_UPSTREAM, EXIT_COMMAND, EXIT_LOCKED = 0, 2, 3, 4, 6
 SPLIT_REL_DIFF = 0.2
+HEAVY_RSS_KB = 600_000  # another process above this makes a build wait
+HEAVY_WAIT_S = 3 * 3600
 # the EWMA risk model needs the full history: a 2025 start left spec_var rank parity at 0.14 of dates
 # against 0.84 from 2017 (T-22 live-parity.json); one run takes about 3.5 minutes
 RISK_START = "2017-01-01"
@@ -98,9 +100,11 @@ class Table:
     keys: str
     build: tuple[str, ...]
     fetch: tuple[tuple[str, ...], ...] = ()
+    pre_build: tuple[tuple[str, ...], ...] = ()  # commands run before ``build`` (same placeholders)
     in_place: bool = False
     check: str = "plain"
-    link_prior_years: bool = False
+    link_prior_years: bool = False  # prior-year partitions are *copied* into the staging dir
+    monthly: bool = False  # append-only by month_end (see run_monthly_table)
     enabled: bool = True
     note: str = ""
 
@@ -119,7 +123,7 @@ UPSTREAM: tuple[Table, ...] = (
             "--out-dir",
             "{tmp}",
         ),
-        link_prior_years=True,
+        monthly=True,
     ),
     Table(
         "universe_broad",
@@ -141,7 +145,7 @@ UPSTREAM: tuple[Table, ...] = (
             "--memory-limit",
             "1.2GB",
         ),
-        link_prior_years=True,
+        monthly=True,
     ),
     Table(
         "daily",
@@ -350,6 +354,17 @@ UPSTREAM: tuple[Table, ...] = (
             "--out-root",
             "{tmp}",
         ),
+        pre_build=(
+            (
+                *PY,
+                "scripts/build_news_attention_features.py",
+                "articles",
+                "--as-of",
+                "{as_of}",
+                "--out-root",
+                "{tmp}",
+            ),
+        ),
         fetch=(
             (
                 *PY,
@@ -511,6 +526,9 @@ def build_plan(
                 plan += [
                     Step(f"up:{table.name}", "fetch", [*CAPPED, *r(cmd)]) for cmd in table.fetch
                 ]
+            plan += [
+                Step(f"up:{table.name}", "pre-build", [*CAPPED, *r(cmd)]) for cmd in table.pre_build
+            ]
             years = [
                 year,
                 *(
@@ -626,12 +644,18 @@ def upstream_last_dates(features: Path, year: int, sip_last: date | None) -> dic
             continue
         col = "month_end" if table.date_col == "month_end" else table.date_col
         last = _max_date_of_parquet(features / table.output.format(year=year), col)
-        out[table.name] = {
+        entry: dict = {
             "last_date": last.isoformat() if last else None,
             "reaches_sip_last": bool(
                 last is not None and sip_last is not None and last >= sip_last
             ),
         }
+        if (
+            table.monthly
+        ):  # a month-end table ends at the last closed month end, not at the SIP date
+            entry["reaches_sip_last"] = None
+            entry["monthly"] = True
+        out[table.name] = entry
     return out
 
 
@@ -703,6 +727,62 @@ def new_split_restatements(
     return out, len(lines)
 
 
+def read_state(path: Path | None = None) -> dict:
+    path = path or STATE_FILE
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
+def write_state(path: Path | None = None, **updates: object) -> None:
+    path = path or STATE_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({**read_state(path), **updates}))
+
+
+def read_cursor(path: Path | None = None) -> int | None:
+    """Number of ``_restatements.jsonl`` lines already handled, or None when never initialised."""
+    state = read_state(path)
+    return int(state.get("restatement_offset", 0)) if "restatement_offset" in state else None
+
+
+def write_cursor(offset: int, day: date | None = None, path: Path | None = None) -> None:
+    write_state(path, restatement_offset=offset, last_day=day.isoformat() if day else None)
+
+
+def last_universe_month_end(features: Path | None = None) -> date | None:
+    """Newest ``month_end`` of ``universe_broad`` (the membership clock of the universe-keyed tables)."""
+    root = (features or FEATURES) / "universe_broad"
+    best = None
+    for p in sorted(root.glob("[0-9][0-9][0-9][0-9].parquet")):
+        d = _max_date_of_parquet(p, "month_end")
+        best = d if best is None or (d is not None and d > best) else best
+    return best
+
+
+def membership_cut(features: Path | None = None, state_path: Path | None = None) -> date | None:
+    """Last date whose universe membership cannot have moved since the previous successful run.
+
+    The universe-keyed tables (daily, insider, short volume, ...) take their rows from the newest
+    month end of ``universe_broad`` that is <= the row date.  When a month end was appended after
+    the previous run (or the state does not know), rows dated on or after it are legitimately
+    re-membered, so the invariance gate stops the day before it.  None: no new month end."""
+    now = last_universe_month_end(features)
+    if now is None:
+        return None
+    seen = read_state(state_path).get("universe_month_end")
+    if seen is not None and date.fromisoformat(seen) >= now:
+        return None
+    return now - timedelta(days=1)
+
+
+def init_cursor(
+    restate_path: Path = SIP_DAILY / "_restatements.jsonl", path: Path | None = None
+) -> int:
+    """Put the cursor at the current end of the restatement log; returns the line count."""
+    count = len(restate_path.read_text().splitlines()) if restate_path.exists() else 0
+    write_cursor(count, None, path)
+    return count
+
+
 def restatement_years(records: Sequence[dict], current_year: int) -> list[int]:
     years = sorted({int(y) for r in records for y in r.get("years_rewritten", [])})
     return [y for y in years if y < current_year]
@@ -716,7 +796,71 @@ def restatement_years(records: Sequence[dict], current_year: int) -> list[int]:
 Runner = Callable[..., subprocess.CompletedProcess]
 
 
+def other_heavy_processes(
+    procs: Sequence[tuple[int, int, int]], me: int, limit_kb: int
+) -> list[tuple[int, int]]:
+    """``(pid, rss_kb)`` of processes above ``limit_kb`` that are not ``me`` or a descendant.
+
+    ``procs``: ``(pid, ppid, rss_kb)`` rows."""
+    parent = {pid: ppid for pid, ppid, _ in procs}
+
+    def mine(pid: int) -> bool:
+        seen = 0
+        while pid and seen < 64:
+            if pid == me:
+                return True
+            pid = parent.get(pid, 0)
+            seen += 1
+        return False
+
+    return [(pid, rss) for pid, _, rss in procs if rss > limit_kb and not mine(pid)]
+
+
+def _proc_table() -> list[tuple[int, int, int]]:
+    rows = []
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            fields = {}
+            for line in (entry / "status").read_text().splitlines():
+                key, _, value = line.partition(":")
+                fields[key] = value.split()
+            rows.append((int(entry.name), int(fields["PPid"][0]), int(fields["VmRSS"][0])))
+        except (OSError, KeyError, IndexError, ValueError):
+            continue
+    return rows
+
+
+def wait_for_quiet(
+    limit_kb: int = HEAVY_RSS_KB,
+    max_wait_s: float = HEAVY_WAIT_S,
+    *,
+    table: Callable[[], list[tuple[int, int, int]]] = _proc_table,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
+    me: int | None = None,
+) -> bool:
+    """Block while another process holds more than ``limit_kb`` RSS (this box has 3.9 GB: two
+    builds at once swap and neither finishes).  False when ``max_wait_s`` ran out."""
+    start = clock()
+    announced = False
+    while True:
+        blockers = other_heavy_processes(table(), me or os.getpid(), limit_kb)
+        if not blockers:
+            return True
+        if not announced:
+            log.info("waiting for other heavy processes: %s", blockers)
+            announced = True
+        if clock() - start > max_wait_s:
+            return False
+        sleep(20)
+
+
 def run_command(step: Step, runner: Runner = subprocess.run) -> int:
+    if step.argv[: len(CAPPED)] == CAPPED and not wait_for_quiet():
+        log.error("gave up waiting for other heavy processes before %s", step.label)
+        return 75
     env = {**os.environ, **step.env}
     log.info("run %s", step.text())
     proc = runner(step.argv, cwd=ROOT, env=env, capture_output=True, text=True, check=False)
@@ -730,7 +874,9 @@ def table_by_name(name: str) -> Table:
     return next(t for t in UPSTREAM if t.name == name)
 
 
-def check_command(table: Table, old: Path, new: Path, cut: date, out: Path) -> list[str]:
+def check_command(
+    table: Table, old: Path, new: Path, cut: date, out: Path, allow_new: Path | None = None
+) -> list[str]:
     """``check_feature_invariance.py`` argv for one table (two-zone rule for price tables)."""
     cmd = [
         *PY,
@@ -748,6 +894,8 @@ def check_command(table: Table, old: Path, new: Path, cut: date, out: Path) -> l
         "--out",
         str(out),
     ]
+    if allow_new is not None:
+        cmd += ["--allow-only-new", str(allow_new)]
     if table.check == "price":
         cmd += [
             "--columns",
@@ -772,6 +920,16 @@ def strict_cut(dates: Sequence[date], sessions_back: int = STRICT_SESSIONS_BACK)
     if len(ordered) <= sessions_back:
         return None
     return ordered[-1 - sessions_back]
+
+
+def new_entrant_symbols(old: Path, new: Path) -> list[str]:
+    """Symbols present in ``new`` but not at all in ``old`` (a month end brought them into the
+    universe; the builder backfills their history, which is new rows, not changed rows)."""
+    import pyarrow.parquet as pq
+
+    old_syms = set(pq.read_table(old, columns=["symbol"]).column("symbol").unique().to_pylist())
+    new_syms = set(pq.read_table(new, columns=["symbol"]).column("symbol").unique().to_pylist())
+    return sorted(new_syms - old_syms)
 
 
 def merge_formation_ic(live: Path = LIVE, snapshot: Path = SNAPSHOT) -> Path:
@@ -820,6 +978,108 @@ def _dates_of(path: Path, column: str) -> list[date]:
     return [v.date() if hasattr(v, "date") else v for v in values]
 
 
+def new_month_ends(old_last: date | None, sessions: Sequence[date]) -> list[date]:
+    """Month ends (last session of a month) after ``old_last`` that are closed.
+
+    A month counts as closed once a later month has a session; the latest month in ``sessions``
+    is never closed (its last session is not known yet)."""
+    if not sessions:
+        return []
+    latest = max(sessions)
+    last_of: dict[tuple[int, int], date] = {}
+    for d in sessions:
+        key = (d.year, d.month)
+        last_of[key] = max(last_of.get(key, d), d)
+    return [
+        end
+        for key, end in sorted(last_of.items())
+        if key != (latest.year, latest.month) and (old_last is None or end > old_last)
+    ]
+
+
+def compose_monthly(old, staged, ends: Sequence[date]):
+    """Old rows kept verbatim plus the staged rows of the new month ends only (polars frames)."""
+    import polars as pl
+
+    keep = old
+    add = staged.filter(pl.col("month_end").cast(pl.Date).is_in(list(ends)))
+    return pl.concat([keep, add.select(keep.columns)]).sort(["month_end", "symbol"])
+
+
+def run_monthly_table(table: Table, day: date, steps: Sequence[Step], runner: Runner) -> int:
+    """Append-only update of a month-end table (``universe``, ``universe_broad``).
+
+    The builder recomputes every month from the current archive, which moves old months (vendor
+    re-basing, late delistings); the lake keeps old months frozen and only adds closed month ends
+    (T-02 composed them the same way), so rebuilding the year and comparing it with the file was
+    the wrong check.  Skips when the calendar has no closed month end after the stored last one."""
+    import polars as pl
+
+    root = (FEATURES / table.output).parent
+    parts = sorted(root.glob("[0-9][0-9][0-9][0-9].parquet"))
+    old_last = max((max(_dates_of(p, table.date_col)) for p in parts), default=None)
+    sessions: list[date] = []
+    for y in range((old_last or day).year, day.year + 1):
+        daily = FEATURES / f"daily_broad/{y}.parquet"
+        if daily.exists():
+            sessions += _dates_of(daily, "trade_date")
+    ends = new_month_ends(old_last, sessions)
+    if not ends:
+        log.info("%s: no new month end after %s: skipped", table.name, old_last)
+        return EXIT_OK
+    log.info("%s: new month ends %s", table.name, [e.isoformat() for e in ends])
+    stage = STAGE_ROOT / table.name
+    shutil.rmtree(stage, ignore_errors=True)
+    stage.mkdir(parents=True, exist_ok=True)
+    years = sorted({e.year for e in ends})
+    backups = {}
+    for y in years:
+        cur = root / f"{y}.parquet"
+        if cur.exists():
+            backups[y] = _backup_path(table, y, day)
+            backups[y].parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(cur, backups[y])
+    for step in steps:
+        if step.kind == "run" and run_command(step, runner) != 0:
+            return EXIT_COMMAND
+    composed: dict[int, Path] = {}
+    for y in years:
+        built = stage / f"{y}.parquet"
+        if not built.exists():
+            log.error("%s: builder wrote no %s partition", table.name, y)
+            return EXIT_COMMAND
+        staged = pl.read_parquet(built)
+        old = pl.read_parquet(backups[y]) if y in backups else staged.head(0)
+        out_dir = stage / "composed"
+        out_dir.mkdir(exist_ok=True)
+        composed[y] = out_dir / f"{y}.parquet"
+        compose_monthly(old, staged, [e for e in ends if e.year == y]).write_parquet(composed[y])
+        if y in backups:
+            report = BACKUP_ROOT / day.isoformat() / f"check_{table.name}_{y}.json"
+            cut = max(_dates_of(backups[y], table.date_col))
+            rc = run_command(
+                Step(
+                    f"up:{table.name}",
+                    "check",
+                    check_command(table, backups[y], composed[y], cut, report),
+                ),
+                runner,
+            )
+            if rc != 0:
+                log.error(
+                    "%s: old months changed in the composed %s partition; nothing swapped",
+                    table.name,
+                    y,
+                )
+                shutil.rmtree(stage, ignore_errors=True)
+                return EXIT_UPSTREAM
+    for y, path in composed.items():
+        shutil.copy2(path, root / f"{y}.parquet")
+    shutil.rmtree(stage, ignore_errors=True)
+    log.info("%s: swapped in %s", table.name, [e.isoformat() for e in ends])
+    return EXIT_OK
+
+
 def run_upstream_table(
     table: Table,
     day: date,
@@ -827,8 +1087,11 @@ def run_upstream_table(
     runner: Runner,
     *,
     extra_years: Sequence[int] = (),
+    member_cut: date | None = None,
 ) -> int:
     """Backup, fetch, build, check, swap one table.  0 ok, 3 check failed, 4 command failed."""
+    if table.monthly:
+        return run_monthly_table(table, day, steps, runner)
     year = day.year
     out = FEATURES / table.output.format(year=year)
     backup = _backup_path(table, year, day)
@@ -841,10 +1104,12 @@ def run_upstream_table(
         shutil.rmtree(stage, ignore_errors=True)
         stage.mkdir(parents=True, exist_ok=True)
         if table.link_prior_years:
+            # copies, never symlinks: a builder that rewrites a prior year would write through a
+            # link into the live feature file (it did, for `universe`, in the first e2e run)
             src = out.parent
             for p in sorted(src.glob("[0-9][0-9][0-9][0-9].parquet")):
                 if int(p.stem) < year:
-                    (stage / p.name).symlink_to(p)
+                    shutil.copy2(p, stage / p.name)
     for step in steps:
         if step.kind == "run" and run_command(step, runner) != 0:
             if table.in_place and had_old:
@@ -854,11 +1119,29 @@ def run_upstream_table(
     if table.check != "none" and had_old and new.exists():
         old_dates = _dates_of(backup, table.date_col)
         cut = strict_cut(old_dates) if table.check == "price" else max(old_dates)
+        if cut is not None and member_cut is not None and member_cut < cut:
+            log.info(
+                "%s: gate stops at %s (new month end re-members later rows)", table.name, member_cut
+            )
+            cut = member_cut
         if cut is not None:
             report = BACKUP_ROOT / day.isoformat() / f"check_{table.name}.json"
             report.parent.mkdir(parents=True, exist_ok=True)
+            allow_new = None
+            if "symbol" in table.keys.split(","):
+                entrants = new_entrant_symbols(backup, new)
+                if entrants:
+                    allow_new = report.with_name(f"allow_new_{table.name}.txt")
+                    allow_new.write_text("\n".join(entrants) + "\n")
+                    log.info(
+                        "%s: %d new-entrant symbols allowed as new keys", table.name, len(entrants)
+                    )
             rc = run_command(
-                Step(f"up:{table.name}", "check", check_command(table, backup, new, cut, report)),
+                Step(
+                    f"up:{table.name}",
+                    "check",
+                    check_command(table, backup, new, cut, report, allow_new),
+                ),
                 runner,
             )
             if rc != 0:
@@ -866,9 +1149,11 @@ def run_upstream_table(
                     "%s: invariance check failed (exit %s); restoring the backup", table.name, rc
                 )
                 shutil.copy2(backup, out)
+                shutil.rmtree(stage, ignore_errors=True)
                 return EXIT_UPSTREAM
     if not table.in_place and new.exists():
         shutil.copy2(new, out)
+    log.info("%s: swapped in (%s)", table.name, "in place" if table.in_place else out.name)
     if table.name == "daily_broad":
         # split-type restatement: the whole history of the symbol was re-based, so the earlier
         # partitions are replaced too (no row gate: a re-based partition is meant to differ)
@@ -879,6 +1164,7 @@ def run_upstream_table(
                 kept.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(older, kept)
                 shutil.copy2(staged, older)
+    shutil.rmtree(stage, ignore_errors=True)
     return EXIT_OK
 
 
@@ -888,6 +1174,7 @@ def run_plan(
     runner: Runner = subprocess.run,
     *,
     extra_years: Sequence[int] = (),
+    member_cut: date | None = None,
 ) -> int:
     by_stage: dict[str, list[Step]] = {}
     for step in plan:
@@ -895,7 +1182,12 @@ def run_plan(
     for stage, steps in by_stage.items():
         if stage.startswith("up:"):
             code = run_upstream_table(
-                table_by_name(stage[3:]), day, steps, runner, extra_years=extra_years
+                table_by_name(stage[3:]),
+                day,
+                steps,
+                runner,
+                extra_years=extra_years,
+                member_cut=member_cut,
             )
             if code != EXIT_OK:
                 return code
@@ -934,7 +1226,15 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("--dry-run", action="store_true", help="print the plan, do nothing")
     ap.add_argument("--check", action="store_true", help="only write _freshness.json")
+    ap.add_argument(
+        "--init-cursor",
+        action="store_true",
+        help="set the restatement cursor to the end of _restatements.jsonl and exit",
+    )
     ap.add_argument("--day", default=None, help="session to refresh to (default: latest closed)")
+    ap.add_argument(
+        "--tables", default=None, help="upstream tables to refresh, comma separated (default: all)"
+    )
     ap.add_argument("--no-fetch", action="store_true", help="skip the upstream fetch commands")
     ap.add_argument("--no-upstream", action="store_true", help="live layer only")
     ap.add_argument("--stages", default=",".join(LIVE_STAGES), help="live stages, comma separated")
@@ -947,15 +1247,30 @@ def main(argv: list[str] | None = None) -> int:
     bad = [s for s in stages if s not in LIVE_STAGES]
     if bad:
         ap.error(f"unknown stages: {bad}")
+    tables: Sequence[Table] = UPSTREAM
+    if args.tables:
+        wanted = [t for t in args.tables.split(",") if t]
+        unknown = [t for t in wanted if t not in {x.name for x in UPSTREAM}]
+        if unknown:
+            ap.error(f"unknown tables: {unknown}")
+        tables = [t for t in UPSTREAM if t.name in wanted]
 
     if args.dry_run:
         for step in build_plan(
-            day, stages=stages, fetch=not args.no_fetch, upstream=not args.no_upstream
+            day,
+            tables=tables,
+            stages=stages,
+            fetch=not args.no_fetch,
+            upstream=not args.no_upstream,
         ):
             print(step.text())
         return EXIT_OK
 
     setup_logging(Path(args.log_file))
+    if args.init_cursor:
+        count = init_cursor()
+        log.info("restatement cursor set to %d lines (%s)", count, STATE_FILE)
+        return EXIT_OK
     try:
         lock = FileLock(Path(args.lock_file))
         lock.__enter__()
@@ -973,13 +1288,17 @@ def main(argv: list[str] | None = None) -> int:
         if sip_last is None or sip_last < day:
             log.info("SIP archive ends %s, before session %s: nothing to do", sip_last, day)
             return EXIT_NOT_FRESH
-        records, offset = new_split_restatements(
-            SIP_DAILY / "_restatements.jsonl",
-            int(json.loads(STATE_FILE.read_text()).get("restatement_offset", 0))
-            if STATE_FILE.exists()
-            else 0,
-            portfolio_universe(),
-        )
+        cursor = read_cursor()
+        if cursor is None:
+            log.warning(
+                "no restatement cursor %s: restatements are not processed (run --init-cursor once)",
+                STATE_FILE,
+            )
+            records, offset = [], None
+        else:
+            records, offset = new_split_restatements(
+                SIP_DAILY / "_restatements.jsonl", cursor, portfolio_universe()
+            )
         extra_years = restatement_years(records, day.year)
         if records:
             log.warning(
@@ -989,20 +1308,29 @@ def main(argv: list[str] | None = None) -> int:
             )
         plan = build_plan(
             day,
+            tables=tables,
             stages=stages,
             fetch=not args.no_fetch,
             upstream=not args.no_upstream,
             extra_daily_years=extra_years,
         )
-        code = run_plan(day, plan, extra_years=extra_years)
+        code = run_plan(
+            day,
+            plan,
+            extra_years=extra_years,
+            member_cut=membership_cut(),
+        )
         payload = freshness(LIVE, sip_last, day.year)
         payload["upstream"] = upstream_last_dates(FEATURES, day.year, sip_last)
         write_freshness(LIVE, payload)
         if code == EXIT_OK:
-            STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-            STATE_FILE.write_text(
-                json.dumps({"restatement_offset": offset, "last_day": day.isoformat()})
+            month_end = last_universe_month_end()
+            write_state(
+                last_day=day.isoformat(),
+                universe_month_end=month_end.isoformat() if month_end else None,
             )
+            if offset is not None:
+                write_cursor(offset, day)
         return code
     finally:
         lock.__exit__()
