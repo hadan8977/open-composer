@@ -167,10 +167,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--start", default="2025-03-03")
     parser.add_argument("--end", default="2026-09-16")
     parser.add_argument("--sleeve", choices=sorted(SLEEVES), action="append")
+    parser.add_argument(
+        "--out",
+        default=str(OUT_DIR / "2026-09-23-overlay-parity.json"),
+        help="JSON verdict path; the default is the renewal evidence file cited by the S3 decision",
+    )
+    parser.add_argument("--force", action="store_true", help="overwrite an existing --out file")
     args = parser.parse_args(argv)
+    out = Path(args.out)
+    if out.exists() and out.stat().st_size > 0 and not args.force:
+        # 2026-10-04: an ad-hoc run overwrote the 09-23 renewal evidence; never again silently
+        print(f"{out} exists; pass --out <new path> or --force", file=sys.stderr)
+        return 2
     results = [compare(key, args.start, args.end) for key in (args.sleeve or ["s3", "s2"])]
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = OUT_DIR / "2026-09-23-overlay-parity.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(results, indent=2, default=str) + "\n", encoding="utf-8")
     for result in results:
         print(
