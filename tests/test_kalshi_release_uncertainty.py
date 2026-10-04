@@ -358,3 +358,32 @@ def test_parse_candles_reads_both_endpoint_schemas():
     ):
         assert a[key] == b[key] is not None
     assert b["yes_ask_close"] == pytest.approx(0.45)
+
+
+def test_fetch_event_refetches_a_checkpoint_written_before_the_event_closed(tmp_path):
+    cutoff = int(datetime(2026, 8, 3, tzinfo=UTC).timestamp())
+
+    def http_get(url, params):
+        path = url.split("/trade-api/v2/")[-1] if "/trade-api/v2/" in url else url
+        if path == "historical/markets":
+            return 200, {"markets": [], "cursor": ""}
+        return 200, {"candlesticks": []}
+
+    market = {
+        "ticker": "KXCPI-99SEP-T0.2",
+        "event_ticker": "KXCPI-99SEP",
+        "strike_type": "greater",
+        "floor_strike": 0.2,
+        "open_time": "2026-09-20T00:00:00Z",
+        "close_time": "2099-10-14T12:25:00Z",  # still open when the checkpoint is written
+    }
+    event = {"event_ticker": "KXCPI-99SEP", "title": "CPI in Sep", "markets": [market]}
+    client = fetch.KalshiClient(http_get, sleep=lambda s: None, clock=lambda: 0.0)
+    fetch.fetch_event(client, "KXCPI", event, cutoff, tmp_path)
+    parquet = tmp_path / "KXCPI" / "KXCPI-99SEP.parquet"
+    assert parquet.exists()
+    assert fetch.checkpoint_is_final(parquet, event) is False
+    before = client.requests
+    res = fetch.fetch_event(client, "KXCPI", event, cutoff, tmp_path)
+    assert res.get("skipped") is not True
+    assert client.requests > before

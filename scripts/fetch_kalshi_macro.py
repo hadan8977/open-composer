@@ -309,13 +309,28 @@ def _atomic_write(path: Path, writer: Callable[[Path], None]) -> None:
     os.replace(tmp, path)
 
 
+def checkpoint_is_final(parquet: Path, event: dict[str, Any]) -> bool:
+    """A checkpoint is final only if it was written after every market of the event closed.
+
+    Events fetched while still open are fetched again on the next run, because their later
+    candles (up to the signal time on T-1) were not yet available. Events without market close
+    times keep the old behaviour (final once written).
+    """
+    closes = [m.get("close_time") for m in (event.get("markets") or []) if m.get("close_time")]
+    if not closes:
+        return True
+    last_close = max(datetime.fromisoformat(str(c).replace("Z", "+00:00")) for c in closes)
+    written = datetime.fromtimestamp(parquet.stat().st_mtime, UTC)
+    return written >= last_close
+
+
 def fetch_event(
     client: KalshiClient, series: str, event: dict[str, Any], cutoff_ts: int, out_dir: Path
 ) -> dict[str, Any]:
     ticker = event["event_ticker"]
     parquet = out_dir / series / f"{ticker}.parquet"
     meta_path = out_dir / series / f"{ticker}.markets.json"
-    if parquet.exists() and meta_path.exists():
+    if parquet.exists() and meta_path.exists() and checkpoint_is_final(parquet, event):
         return {"event": ticker, "skipped": True}
     markets = event_markets(client, event, event.get("markets") or [])
     rows: list[dict[str, Any]] = []
