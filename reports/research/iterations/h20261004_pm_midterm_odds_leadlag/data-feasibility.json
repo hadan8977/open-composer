@@ -2,7 +2,7 @@
   "schema_version": 1,
   "report_type": "h20261004_pm_midterm_odds_leadlag_historical_evaluation_authorization",
   "iter_id": "h20261004_pm_midterm_odds_leadlag",
-  "generated_at": "2026-10-04T08:32:01Z",
+  "generated_at": "2026-10-04T08:39:03Z",
   "workflow_pass": true,
   "research_pass": false,
   "llm_contribution_pass": false,
@@ -74,5 +74,475 @@
     "EMA convention is not stated in the paper or the design; pandas ewm(span=5, adjust=False) is used.",
     "Percentile rank uses average ranks for ties and maps rank r in (0, 1] to 2r-1."
   ],
-  "notes": "PHASE 1 (pre-build contract), written before any strategy return was computed. Both Polymarket control events and the Kalshi control series exist (see sources/). scripts/build_pm_midterm_data.py replaces this file with the measured counts. Authorization here is a workflow gate, not a research result."
+  "notes": "PHASE 1 (pre-build contract), written before any strategy return was computed. Both Polymarket control events and the Kalshi control series exist (see sources/). scripts/build_pm_midterm_data.py replaces this file with the measured counts. Authorization here is a workflow gate, not a research result. PHASE 2 (measured), written by scripts/build_pm_midterm_data.py before any strategy return was computed.",
+  "data_build": {
+    "built_at_utc": "2026-10-04T08:39:03Z",
+    "markets": {
+      "polymarket_house_r": {
+        "daily_observations": 309,
+        "first_session": "2025-07-14",
+        "last_session": "2026-10-02",
+        "max_age_hours": 166.0
+      },
+      "polymarket_senate_r": {
+        "daily_observations": 309,
+        "first_session": "2025-07-14",
+        "last_session": "2026-10-02",
+        "max_age_hours": 142.0
+      },
+      "kalshi_house_r": {
+        "daily_observations": 477,
+        "first_session": "2024-11-06",
+        "last_session": "2026-10-02",
+        "max_age_hours": 245.0
+      },
+      "kalshi_senate_r": {
+        "daily_observations": 477,
+        "first_session": "2024-11-06",
+        "last_session": "2026-10-02",
+        "max_age_hours": 313.0
+      },
+      "placebo_market": {
+        "daily_observations": 205,
+        "first_session": "2025-12-09",
+        "last_session": "2026-10-02",
+        "max_age_hours": 147.99
+      }
+    },
+    "polymarket_signal_rule": {
+      "observations": {
+        "polymarket_house_r": 309,
+        "polymarket_senate_r": 309
+      },
+      "min_required": 120,
+      "markets_used": [
+        "polymarket_house_r",
+        "polymarket_senate_r"
+      ],
+      "fallback_applied": false
+    },
+    "backtest_window": {
+      "sessions": 248,
+      "first": "2025-10-08",
+      "last": "2026-10-02"
+    },
+    "placebo_3": {
+      "selected": {
+        "event_id": "100371",
+        "event_title": "F1 Drivers' Champion",
+        "market_id": "898425",
+        "question": "Will Liam Lawson be the 2026 F1 Drivers' Champion?",
+        "token": "12049029739674782709547394278437698405073155537994805992211273099129156266263",
+        "volume": 10726111.476794006,
+        "tags": [
+          "f1",
+          "formula1",
+          "sports"
+        ],
+        "alive_coverage": 0.8065,
+        "daily_observations_in_window": 205
+      },
+      "checked": 60,
+      "candidate_log_top10": [
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558938",
+          "question": "Will Argentina win the 2026 FIFA World Cup?",
+          "token": "18812649149814341758733697580460697418474693998558159483117100240528657629879",
+          "start": "2025-07-02T22:26:52.071Z",
+          "end": "2026-07-20 01:24:43+00",
+          "volume": 174315688.25573426,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.7863,
+          "n_points": 356
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558968",
+          "question": "Will Egypt win the 2026 FIFA World Cup?",
+          "token": "30499731947464516579580181356221397335865912996104577000510883912653418218808",
+          "start": "2025-07-02T22:27:27.82Z",
+          "end": "2026-07-07 21:30:01+00",
+          "volume": 158580818.67117897,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.5968,
+          "n_points": 193
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558963",
+          "question": "Will Morocco win the 2026 FIFA World Cup?",
+          "token": "69910730841487615802736046038473620030754616421912831175284551372639933569112",
+          "start": "2025-07-02T22:27:22.568Z",
+          "end": "2026-07-10 01:10:56+00",
+          "volume": 152254451.3257818,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.6694,
+          "n_points": 242
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558934",
+          "question": "Will Spain win the 2026 FIFA World Cup?",
+          "token": "4394372887385518214471608448209527405727552777602031099972143344338178308080",
+          "start": "2025-07-02T22:26:48.104Z",
+          "end": "2026-07-20 01:14:28+00",
+          "volume": 152168021.58979887,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.7863,
+          "n_points": 376
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558943",
+          "question": "Will USA win the 2026 FIFA World Cup?",
+          "token": "94603648636330087039501304492699481091005420017442244191603206509188088089447",
+          "start": "2025-07-02T22:27:00.955Z",
+          "end": "2026-07-07 05:08:19+00",
+          "volume": 142460221.86557126,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.75,
+          "n_points": 351
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558945",
+          "question": "Will Mexico win the 2026 FIFA World Cup?",
+          "token": "22587775301869146748237913050505932485648958481571808324285560650057390882036",
+          "start": "2025-07-02T22:27:01.209Z",
+          "end": "2026-07-06 06:13:55+00",
+          "volume": 137807960.8917842,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.746,
+          "n_points": 354
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558951",
+          "question": "Will Norway win the 2026 FIFA World Cup?",
+          "token": "60447443643099453130956385288904175887233107411078568881602330835010340506057",
+          "start": "2025-07-02T22:27:12.778Z",
+          "end": "2026-07-12 02:58:20+00",
+          "volume": 137345387.0652803,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.7621,
+          "n_points": 345
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558974",
+          "question": "Will Switzerland win the 2026 FIFA World Cup?",
+          "token": "62131913648515148266463816694306031394539656598501514114816028349608560215534",
+          "start": "2025-07-02T22:27:31.4Z",
+          "end": "2026-07-12 06:56:43+00",
+          "volume": 132837715.7947361,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.6089,
+          "n_points": 202
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558936",
+          "question": "Will France win the 2026 FIFA World Cup?",
+          "token": "108233603819467706476318984012158651931658302669301887462181073562758483842092",
+          "start": "2025-07-02T22:26:52.583Z",
+          "end": "2026-07-15 00:07:37+00",
+          "volume": 132448346.86106883,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.7742,
+          "n_points": 357
+        },
+        {
+          "event_id": "30615",
+          "event_title": "World Cup Winner ",
+          "market_id": "558946",
+          "question": "Will Belgium win the 2026 FIFA World Cup?",
+          "token": "30815807067456631524510535002617106205417832891402132396713720656146245200000",
+          "start": "2025-07-02T22:27:08.513Z",
+          "end": "2026-07-11 00:12:34+00",
+          "volume": 129278677.369467,
+          "tags": [
+            "2026-fifa-world-cup",
+            "fifa-world-cup",
+            "hide-from-new",
+            "soccer",
+            "sports",
+            "wc-tournament-futures"
+          ],
+          "alive_coverage": 0.7621,
+          "n_points": 346
+        }
+      ]
+    },
+    "assets": {
+      "tickers_tested": 27,
+      "kept": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "MAGS",
+        "DIA",
+        "XLF",
+        "KRE",
+        "XLI",
+        "XLE",
+        "XAR",
+        "SHY",
+        "IEI",
+        "IEF",
+        "TLH",
+        "TLT",
+        "GOVT",
+        "TIP",
+        "GS",
+        "MS",
+        "JPM",
+        "C",
+        "BAC",
+        "WFC",
+        "UUP",
+        "DJT",
+        "PHUN",
+        "TSLA"
+      ],
+      "dropped": [],
+      "coverage": {
+        "SPY": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "QQQ": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "IWM": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "MAGS": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "DIA": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "XLF": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "KRE": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "XLI": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "XLE": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "XAR": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "SHY": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "IEI": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "IEF": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "TLH": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "TLT": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "GOVT": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "TIP": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "GS": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "MS": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "JPM": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "C": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "BAC": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "WFC": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "UUP": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "DJT": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "PHUN": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        },
+        "TSLA": {
+          "sessions_with_bar": 248,
+          "window_sessions": 248,
+          "coverage": 1.0,
+          "kept": true
+        }
+      }
+    },
+    "out_dir": "data/research/prediction_markets/midterms"
+  }
 }
