@@ -1737,3 +1737,17 @@
 - done_when: `t20261004_book_v14_ml/{identity.json,results.json,report.md,trial-ledger.json}` 已提交，`mechanical_status` 为两个值之一，新测试通过；结果标"待主审"。
 - notes:
   - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。同一执行轮在 T-02 完成后可以接着跑本任务（不并行，重任务一次一个）。
+
+### T-20261004-52 数据：修 8-K 财报事件表的受理时间（改用 EDGAR 索引页 Accepted，修复数据坑 #61）
+- status: ready
+- priority: 3
+- not_before: T-20261004-51 以 done 开头（它在用这张表做只读匹配）
+- goal: `data/features/earnings_events/{2024,2025,2026}.parquet` 的 acceptance_utc 被转换了两次，比真实 UTC 晚 4 或 5 小时（数据坑 #61）。改 `scripts/build_earnings_events.py`：受理时间一律取 EDGAR 索引页的 Accepted（美东墙钟），再转成真实 UTC。重建三个年份分区，新增一列 `acceptance_source`。
+- done_when:
+  - 抽查 20 份，全部与索引页一致；
+  - 逐行比较修复前后：所有时间差都是 +4h 或 +5h，取哪个只看夏令时，不允许出现别的差值；
+  - 有测试，旧表备份到 `data/live/backup-features-20261004/earnings_events/`；
+  - 提交代码和报告（数据不提交），标"待主审"。
+- notes:
+  - 2026-10-04 08:19 UTC 交互会话（Opus）登记，没写单独简报：done_when 就是全部验收。请求频率控制在每秒 4 次以内，带真实 User-Agent。
+  - 内存很小，不跑重任务。
