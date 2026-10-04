@@ -1571,7 +1571,7 @@
     - `_t21_tmp` 的候选是从有接缝的归档建的，作废，不要换入；由 T-20261002-02 按新口径重建。
 
 ### T-20261001-22 组合线数据：live 目录（组合层逐行对齐研究快照）、风险模型跨年修复、每日驱动脚本
-- status: running（交互会话：live 目录已验收；驱动实跑在第一张表 universe 失败，09:39 UTC 让 R1004-T22 修驱动并实跑到退出码 0，16:00 前完成；定时轮不要取）
+- status: done（交互会话主审 2026-10-04 16:19 UTC：驱动实跑退出码 0（15:00–16:12，72 分钟，八张上游表闸门全过，全部 fresh）；10-02 目标已生成（quant1 F1 1784 名、净 beta 约 0；quant2 F2 SPY+±25% 叠加）。VIX 文件过期导致第一次生成被拒，已加 `scripts/fetch_vix_live.py`（FRED+CBOE 同晚收盘，重叠 9285/9285 一致）并接入 cron。窄口径 universe 2016–2025 被驱动的符号链接暂存写穿，已从 Drive 的 T-21 副本恢复（改动比例 ≤5.4e-4，组合层不用）。提交 6ff8bbd、07e010c、01ac021）
 - priority: 1
 - not_before: T-20261002-02 以 done 开头（10-02 01:07 主审轮加：T-21 虽已 done，但价格类表要等归档修好、按新口径重建后才能用）；T-20261001-21 以 done 开头（或 partial，但组合用到的表全部通过不变性检验）；T-20261001-19 以 done 或 cancelled 开头；没有 `running（交互会话）` 的任务在改 `panel.py`、`risk.py`、`build_equity_book_panel.py`（简报第 0 步）
 - brief: reports/research/control/briefs/T-20261001-22.md
