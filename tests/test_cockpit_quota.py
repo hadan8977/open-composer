@@ -1662,7 +1662,7 @@ def test_quota_route_renders_credential_table_and_usage_estimate(client: TestCli
 
 
 def test_index_page_renders_codex_quota_state(client: TestClient) -> None:
-    response = client.get("/")
+    response = client.get("/quota")
     assert response.status_code == 200
     assert "Codex quota" in response.text
 
@@ -1858,7 +1858,7 @@ def test_quota_api_disabled_topbar_shows_the_owner_message(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(Q, "QUOTA_API_ENABLED", False)
-    response = TestClient(create_app(warm=False)).get("/")
+    response = TestClient(create_app(warm=False)).get("/quota")
 
     assert response.status_code == 200
     assert Q.QUOTA_DISABLED_REASON in response.text

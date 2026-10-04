@@ -563,51 +563,12 @@ def test_only_live_feeds_count_as_stale_sources(tmp_path: Path) -> None:
     assert not any("stale" in item.text for item in report.attention)
 
 
-def test_now_is_the_landing_screen(client: TestClient) -> None:
-    page = client.get("/")
-    assert page.status_code == 200
-    text = page.text
-    assert "<title>Now · Quant</title>" in text
-    for label in ("Paper equity", "Agents", "Research", "Fresh tokens", "System", "Model calls"):
-        assert label in text
-    # the conftest fixture hides every agent and transcript: explicit empties
-    assert "No live session" in text
-    assert "No model calls logged in the last 24 hours" in text
-    assert 'aria-current="page"' in text and 'href="/" data-screen' in text
-
-
-def test_now_renders_empty_states_for_an_empty_repo(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr("open_composer.cockpit.app.project_root", lambda: tmp_path)
-    monkeypatch.setattr("open_composer.cockpit.data.health.project_root", lambda: tmp_path)
-    page = TestClient(create_app(warm=False)).get("/")
-    assert page.status_code == 200
-    assert "No account snapshot yet" in page.text
-
-
 def test_every_screen_is_in_the_rail_in_order(client: TestClient) -> None:
     text = client.get("/paper").text
     order = [
         text.index(f'href="{path}" data-screen')
-        for path in ("/", "/hypotheses", "/lineage", "/agents", "/paper", "/quota", "/health")
+        for path in ("/", "/reports", "/paper", "/research", "/agents", "/quota", "/health")
     ]
     assert order == sorted(order)
     assert "⌘7" in text
-
-
-def test_now_greys_the_last_session_when_nothing_is_running(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    at = datetime.now(UTC) - timedelta(minutes=30)
-    report = _agents(_agent("resting", "idle", at), at=at)
-
-    class _Cache:
-        def get(self, now: datetime | None = None) -> AgentsReport:
-            return report
-
-    monkeypatch.setattr("open_composer.cockpit.app.get_default_topbar_agents_cache", _Cache)
-    text = TestClient(create_app(warm=False)).get("/").text
-    assert "live-card well is-resting" in text
-    assert "last active" in text and "session resting" in text
-    assert "No live session" not in text
+    assert 'href="/lineage" data-screen' not in text  # reached from Research, not the rail

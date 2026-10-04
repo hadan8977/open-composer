@@ -185,3 +185,27 @@ __all__ = [
     "fresh_bars",
     "led_columns",
 ]
+
+
+def sparkline_points(
+    values: tuple[float, ...] | list[float], *, width: float = 72.0, height: float = 20.0
+) -> str:
+    """SVG polyline ``points`` for a tiny line through ``values`` (oldest first).
+
+    The series is prefixed with 0.0 (the budget line) so a one-close sleeve
+    still draws a segment; a flat series sits on the vertical middle. One
+    decimal is enough at these sizes. Empty input renders nothing.
+    """
+    series = [0.0, *values]
+    if len(series) < 2:
+        return ""
+    low, high = min(series), max(series)
+    span = high - low
+    pad = 1.5
+    steps = len(series) - 1
+    points = []
+    for index, value in enumerate(series):
+        x = index * width / steps
+        y = height / 2 if span <= 0 else pad + (high - value) / span * (height - 2 * pad)
+        points.append(f"{x:.1f},{y:.1f}")
+    return " ".join(points)

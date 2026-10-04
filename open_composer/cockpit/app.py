@@ -83,7 +83,7 @@ from open_composer.cockpit.data.hypotheses import (
     headline_summary,
     lane_status,
 )
-from open_composer.cockpit.data.now import build_now_report, summarize_research
+from open_composer.cockpit.data.now import summarize_research
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
     build_account_equity_history,
@@ -109,9 +109,22 @@ from open_composer.cockpit.data.quota import (
     to_topbar_quota,
     unknown_topbar_quota,
 )
+from open_composer.cockpit.data.reports import (
+    KIND_LABELS,
+    KINDS,
+    build_report_index,
+    load_report,
+    valid_report_id,
+)
+from open_composer.cockpit.data.today import (
+    TODAY_REFRESH_SECONDS,
+    get_default_today_cache,
+    needs_summary,
+    today_report_for,
+)
 from open_composer.cockpit.markdown import render_markdown
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path
-from open_composer.cockpit.viz import equity_columns, fresh_bars, led_columns
+from open_composer.cockpit.viz import equity_columns, fresh_bars, led_columns, sparkline_points
 from open_composer.config import project_root
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -145,36 +158,50 @@ def _asset_version() -> str:
     return digest.hexdigest()[:12]
 
 
-# Every screen, in rail order (slug, url path, nav label). `/` is the Now
-# glance screen since the 2026-09-24 redesign; the hypothesis board moved to
-# `/hypotheses`. ⌘1-7 follow this order.
+# Every screen, in rail order (slug, url path, nav label). Since the
+# 2026-10-04 information-architecture pass the four primary screens answer
+# the owner's four questions (Today) and hold the reports, the paper book and
+# the research queue; Agents / Quota / Health are the System group. ⌘1-7
+# follow this order. Lineage is reached from Research and has no rail entry.
 SCREENS: tuple[tuple[str, str, str], ...] = (
-    ("now", "/", "Now"),
-    ("hypotheses", "/hypotheses", "Hypotheses"),
-    ("lineage", "/lineage", "Lineage"),
-    ("agents", "/agents", "Agents"),
+    ("today", "/", "Today"),
+    ("reports", "/reports", "Reports"),
     ("paper", "/paper", "Paper"),
+    ("research", "/research", "Research"),
+    ("agents", "/agents", "Agents"),
     ("quota", "/quota", "Quota"),
     ("health", "/health", "Health"),
+    ("lineage", "/lineage", "Lineage"),
 )
 
-#: The desktop rail's grouping: (heading or None, screen slugs).
+#: The desktop rail's grouping: (heading or None, screen slugs). The System
+#: group renders smaller and lower (`.nav-group--system`).
 NAV_GROUPS: tuple[tuple[str | None, tuple[str, ...]], ...] = (
-    (None, ("now",)),
-    ("Research", ("hypotheses", "lineage")),
-    ("Operations", ("agents", "paper")),
-    ("System", ("quota", "health")),
+    (None, ("today", "reports", "paper", "research")),
+    ("System", ("agents", "quota", "health")),
 )
 
-#: The phone tab bar holds five: (slug, label). Lineage is reached from the
-#: board, Quota from the Now screen and the status strip.
+#: The phone tab bar holds five: (slug, label). System opens Health; the tab
+#: stays lit on Quota and Agents too (see `TAB_ALSO`).
 TABS: tuple[tuple[str, str], ...] = (
-    ("now", "Now"),
-    ("hypotheses", "Research"),
-    ("agents", "Agents"),
+    ("today", "Today"),
+    ("reports", "Reports"),
     ("paper", "Paper"),
+    ("research", "Research"),
     ("health", "System"),
 )
+
+#: Other screens a tab stays highlighted for.
+TAB_ALSO: dict[str, tuple[str, ...]] = {
+    "research": ("lineage", "hypotheses"),
+    "health": ("quota", "agents"),
+}
+
+#: Screens that show the full six-slot status strip; the primary screens show
+#: one summary pill instead (owner 2026-10-04: no hierarchy, everything
+#: spread out -- the quota bars, token count, agent dots and data badge are
+#: System information).
+FULL_STRIP_SCREENS: frozenset[str] = frozenset({"agents", "quota", "health", "lineage"})
 
 
 def _topbar_data_freshness(root: Path) -> dict[str, str]:
@@ -335,6 +362,41 @@ def _status_context() -> dict[str, Any]:
     }
 
 
+def _system_summary(status: dict[str, Any]) -> dict[str, Any]:
+    """One pill for the primary screens' strip: the worst of the six status
+    objects, with a count of what is off. "ok" when nothing is."""
+    issues: list[str] = []
+    claude = status["claude"]
+    if claude.available:
+        issues.extend(
+            f"{bar.label} {bar.percent_display}"
+            for bar in claude.bars
+            if bar.status in ("warn", "stale")
+        )
+    elif not claude.disabled:
+        issues.append("live quota unavailable")
+    errors = sum(1 for _id, state in status["agents"] if state == "error")
+    if errors:
+        issues.append(f"{errors} agent error{'s' * (errors != 1)}")
+    for key, name in (("data_freshness", "data"), ("rehearsal", "auth")):
+        if status[key]["status"] in ("warn", "stale"):
+            issues.append(f"{name} {status[key]['label']}")
+    severe = (
+        any(
+            s in ("stale",)
+            for s in (status["data_freshness"]["status"], status["rehearsal"]["status"])
+        )
+        or errors > 0
+    )
+    running = sum(1 for _id, state in status["agents"] if state == "running")
+    return {
+        "status": "stale" if severe else ("warn" if issues else "ok"),
+        "label": f"{len(issues)} issue{'s' * (len(issues) != 1)}" if issues else "ok",
+        "title": " · ".join(issues) or "quota, agents, data and authorizations all fine",
+        "running": running,
+    }
+
+
 def _base_context(request: Request, active: str) -> dict[str, Any]:
     now = datetime.now(UTC)
     status = _status_context()
@@ -346,7 +408,10 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
         "screen_index": {slug: index for index, (slug, _p, _l) in enumerate(SCREENS, 1)},
         "nav_groups": NAV_GROUPS,
         "tabs": TABS,
+        "tab_also": TAB_ALSO,
         "active_screen": active,
+        "full_strip": active in FULL_STRIP_SCREENS,
+        "topbar_system": _system_summary(status),
         "topbar_data_freshness": status["data_freshness"],
         "topbar_rehearsal": status["rehearsal"],
         "topbar_quota_claude": status["claude"],
@@ -400,6 +465,13 @@ def _format_money(value: float | None, digits: int = 2) -> str:
         return "–"
     sign = "-" if value < 0 else ""
     return f"{sign}${abs(value):,.{digits}f}"
+
+
+def _format_pct(value: float | None, digits: int = 2) -> str:
+    """`+1.14%` from a fraction; `–` for None (same shape as the daily mail's `pct`)."""
+    if value is None:
+        return "–"
+    return f"{value * 100:+.{digits}f}%"
 
 
 def _format_k(value: int | float | None) -> str:
@@ -466,6 +538,44 @@ def _warm_loop() -> None:
         time.sleep(THROTTLE_CALIBRATION_CACHE_TTL_SECONDS)
 
 
+_TODAY_WARM_THREAD_NAME = "cockpit-today-warm"
+_TODAY_WARM_STARTED = False
+
+
+def _today_warm_loop() -> None:
+    """Keep the Today screen's digest snapshot fresh off the request path.
+
+    Same no-transcript-tree guard as `_warm_loop`: on a box without
+    `~/.claude/projects` (every pytest run, via `tests/conftest.py`) this
+    returns at once, so no test ever runs the 5-10 s digest collection -- or
+    its Modal billing subprocess -- in the background. Every failure inside
+    one refresh is already caught by `collect_today_sources`; the outer
+    `except` only keeps the loop alive through a surprise.
+    """
+    from open_composer.cockpit.data.quota import CLAUDE_PROJECTS_DIR
+
+    if not CLAUDE_PROJECTS_DIR.exists():
+        return
+    cache = get_default_today_cache()
+    while True:
+        try:
+            cache.refresh(project_root())
+        except Exception:
+            pass
+        time.sleep(TODAY_REFRESH_SECONDS)
+
+
+def _start_today_warm_thread() -> threading.Thread | None:
+    global _TODAY_WARM_STARTED
+    with _WARM_THREAD_LOCK:
+        if _TODAY_WARM_STARTED:
+            return None
+        _TODAY_WARM_STARTED = True
+    thread = threading.Thread(target=_today_warm_loop, name=_TODAY_WARM_THREAD_NAME, daemon=True)
+    thread.start()
+    return thread
+
+
 def _start_warm_thread() -> threading.Thread | None:
     """Start the process-wide warm thread exactly once (plan item 1: "guard
     against double start").
@@ -511,14 +621,20 @@ def create_app(*, warm: bool = True) -> FastAPI:
     templates.env.filters["hms"] = _format_hms
     templates.env.filters["money"] = _format_money
     templates.env.filters["k"] = _format_k
+    templates.env.filters["pct"] = _format_pct
     templates.env.filters["count_sep"] = format_entry_count
     templates.env.globals["asset_v"] = _asset_version()
     templates.env.globals["quota_disabled_reason"] = QUOTA_DISABLED_REASON
     templates.env.globals["equity_columns"] = equity_columns
     templates.env.globals["led_columns"] = led_columns
     templates.env.globals["fresh_bars"] = fresh_bars
+    templates.env.globals["sparkline_points"] = sparkline_points
+    templates.env.globals["needs_summary"] = needs_summary
+    templates.env.globals["report_kinds"] = KINDS
+    templates.env.globals["report_kind_labels"] = KIND_LABELS
     if warm:
         _start_warm_thread()
+        _start_today_warm_thread()
     app.mount("/static", _ImmutableStaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")
@@ -540,38 +656,61 @@ def create_app(*, warm: bool = True) -> FastAPI:
         return templates.TemplateResponse(request, "health.html", context)
 
     @app.get("/", response_class=HTMLResponse)
-    def now_page(request: Request) -> HTMLResponse:
-        """The Now screen: one glance across every other screen.
+    def today_page(request: Request) -> HTMLResponse:
+        """Today: the owner's four questions, nothing else (2026-10-04 pass).
 
-        Heavy inputs come from the caches the status strip and the warm
-        thread already keep (agent list, usage estimate, live quota, data
-        freshness, activity field); `build_now_report` adds only cheap file
-        reads on top. See `open_composer.cockpit.data.now`.
+        Reads the digest snapshot the warm thread keeps (never collects on a
+        request), the live-track file and the report index; see
+        `open_composer.cockpit.data.today`.
         """
         root = project_root()
-        now = datetime.now(UTC)
-        context = _base_context(request, "now")
-        try:
-            agents = get_default_topbar_agents_cache().get(now=now)
-        except Exception:
-            agents = load_agents(enrich=False)
-        report = build_now_report(
-            root,
-            agents=agents,
-            heavy=load_heavy_jobs(),
-            hypotheses=build_hypotheses_report(root),
-            usage=context["topbar_usage_estimate"],
-            claude=context["topbar_quota_claude"],
-            freshness=get_default_data_freshness_cache().get(root),
-            activity=get_default_activity_cache().get(now=now),
-            now=now,
+        context = _base_context(request, "today")
+        context["report"] = today_report_for(
+            root, now=datetime.now(UTC), cache=get_default_today_cache()
         )
-        context["report"] = report
-        return templates.TemplateResponse(request, "now.html", context)
+        context["refresh_seconds"] = int(TODAY_REFRESH_SECONDS)
+        return templates.TemplateResponse(request, "today.html", context)
 
+    def _reports_page(request: Request, kind: str | None, report_id: str | None) -> HTMLResponse:
+        root = project_root()
+        index = build_report_index(root)
+        doc = None
+        selected = None
+        if kind is not None and report_id is not None:
+            if kind not in KINDS or not valid_report_id(kind, report_id):
+                raise HTTPException(status_code=404, detail="not a report")
+            selected = index.find(kind, report_id)
+            if selected is None:
+                raise HTTPException(status_code=404, detail="report not found")
+            doc = load_report(root, selected)
+        context = _base_context(request, "reports")
+        context["index"] = index
+        context["selected"] = selected
+        context["doc"] = doc
+        context["detail"] = selected is not None
+        return templates.TemplateResponse(request, "reports.html", context)
+
+    @app.get("/reports", response_class=HTMLResponse)
+    def reports_page(request: Request) -> HTMLResponse:
+        """The report centre: daily, weekly and round reports, newest first.
+        Wide screens open the newest report alongside the list; phones show
+        the list and open a report as its own page."""
+        return _reports_page(request, None, None)
+
+    @app.get("/reports/{kind}/{report_id}", response_class=HTMLResponse)
+    def report_detail_page(request: Request, kind: str, report_id: str) -> HTMLResponse:
+        """One report. `kind` must be one of `KINDS` and `report_id` must match
+        that kind's pattern *before* the index is consulted; the file path is
+        then re-checked with `safe_repo_path` inside `load_report`. Unknown
+        and malformed ids both return 404, never 500."""
+        return _reports_page(request, kind, report_id)
+
+    @app.get("/research", response_class=HTMLResponse)
     @app.get("/hypotheses", response_class=HTMLResponse)
     def hypotheses_page(request: Request) -> HTMLResponse:
-        """Screen 1: the hypothesis-card board (plan section 4, "假设卡看板").
+        """Research: the task queue and the hypothesis-card board (plan
+        section 4, "假设卡看板"). `/hypotheses` is the pre-2026-10-04 path and
+        renders the same page.
 
         Swimlanes come pre-bucketed from `group_cards_by_lane` in lane order;
         this route's only job is to also look up, per card, whichever
@@ -585,7 +724,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
             card.id: [headline_summary(facts) for facts in report.results.for_card(card.id)]
             for card in report.cards
         }
-        context = _base_context(request, "hypotheses")
+        context = _base_context(request, "research")
         context["report"] = report
         context["headlines"] = headlines
         context["lane_status"] = lane_status
@@ -658,7 +797,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
             if edge.source == card.id or edge.target == card.id
         ]
 
-        context = _base_context(request, "hypotheses")
+        context = _base_context(request, "research")
         context["card"] = card
         context["card_html"] = card_html
         context["criteria_sections"] = criteria_sections

@@ -470,11 +470,18 @@ def test_bad_strategy_names_return_4xx_not_500(client: TestClient, path: str) ->
 
 
 def test_top_bar_rehearsal_countdown_is_populated_on_every_screen(client: TestClient) -> None:
-    for path in ("/", "/hypotheses", "/health", "/lineage", "/agents", "/paper"):
+    # System screens carry the full six-slot strip; the four primary screens
+    # fold it into one `system` pill (2026-10-04 information architecture).
+    for path in ("/health", "/lineage", "/agents", "/quota"):
         response = client.get(path)
         assert response.status_code == 200
         assert 'data-slot="rehearsal-countdown"' in response.text
         assert "pending T5" not in response.text
+    for path in ("/", "/reports", "/research", "/paper"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert 'data-slot="system"' in response.text
+        assert 'data-slot="rehearsal-countdown"' not in response.text
 
 
 def test_rehearsal_countdown_reflects_real_authorizations() -> None:

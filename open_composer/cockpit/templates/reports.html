@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{% if selected %}{{ selected.title }} · Reports · Quant{% else %}Reports · Quant{% endif %}{% endblock %}
+{% block content %}
+{% set open_entry = selected or index.newest %}
+
+<header class="page-head">
+  <h1>Reports</h1>
+  <span class="aside num">{{ index.daily|length }} daily · {{ index.weekly|length }} weekly · {{ index.rounds|length }} round{{ "s" if index.rounds|length != 1 }}</span>
+</header>
+
+<div class="reports{{ ' is-detail' if detail }}">
+
+  <nav class="report-list" aria-label="Reports">
+    {% for kind in report_kinds %}
+    {% set entries = index.by_kind(kind) %}
+    <section class="report-kind" id="reports-{{ kind }}">
+      <header class="report-kind-head">
+        <span class="t-cap">{{ report_kind_labels[kind] }}</span>
+        <span class="num">{{ entries|length }}</span>
+      </header>
+      {% if entries %}
+      {% set shown = entries[:8] %}
+      <div class="report-rows">
+        {%- for e in shown %}
+        <a class="report-row{{ ' is-open' if open_entry and open_entry.kind == e.kind and open_entry.id == e.id }}" href="{{ e.href }}" data-filter="{{ e.id }} {{ e.title }}">
+          <span class="report-when num">{% if kind == "rounds" %}{{ e.at.strftime("%m-%d %H:%M") }}{% elif kind == "weekly" %}{{ e.id }}{% else %}{{ e.at.strftime("%a %m-%d") }}{% endif %}</span>
+          <span class="report-title" lang="zh">{{ e.title }}</span>
+          <span class="report-note">{{ e.note }}</span>
+        </a>
+        {%- endfor %}
+      </div>
+      {% if entries|length > shown|length %}
+      <details class="more">
+        <summary>{{ entries|length - shown|length }} older</summary>
+        <div class="report-rows">
+          {%- for e in entries[8:] %}
+          <a class="report-row{{ ' is-open' if open_entry and open_entry.kind == e.kind and open_entry.id == e.id }}" href="{{ e.href }}" data-filter="{{ e.id }} {{ e.title }}">
+            <span class="report-when num">{% if kind == "rounds" %}{{ e.at.strftime("%m-%d %H:%M") }}{% elif kind == "weekly" %}{{ e.id }}{% else %}{{ e.at.strftime("%a %m-%d") }}{% endif %}</span>
+            <span class="report-title" lang="zh">{{ e.title }}</span>
+            <span class="report-note">{{ e.note }}</span>
+          </a>
+          {%- endfor %}
+        </div>
+      </details>
+      {% endif %}
+      {% else %}
+      <div class="report-empty">
+        {%- if kind == "rounds" %}No round reports yet. Each autonomous round writes one here from 2026-10-05: lead rounds in five parts, exec rounds in three lines.
+        {%- elif kind == "weekly" %}No weekly report yet. The Saturday 19:07 lead round writes the judgement; the Sunday mail adds the data.
+        {%- else %}No daily report yet. The 00:50 UTC mail saves its text here.{% endif -%}
+      </div>
+      {% endif %}
+    </section>
+    {% endfor %}
+    {% if index.warnings %}<div class="report-warn faint">{% for w in index.warnings %}{{ w }}{{ " · " if not loop.last }}{% endfor %}</div>{% endif %}
+  </nav>
+
+  <article class="report-read">
+    {% if doc %}
+    <header class="doc-head">
+      <a class="doc-back" href="/reports">‹ Reports</a>
+      <div class="doc-meta num">
+        <span class="t-cap">{{ report_kind_labels[doc.entry.kind] }}</span>
+        <span>{{ doc.entry.note }}</span>
+        <span>{% if doc.entry.kind == "rounds" %}{{ doc.entry.at.strftime("%Y-%m-%d %H:%M") }} UTC{% else %}{{ doc.entry.at.strftime("%Y-%m-%d") }}{% endif %}</span>
+        {% if doc.modified_at %}<span title="{{ doc.modified_at.isoformat() }}">file {{ doc.modified_at|ago }}</span>{% endif %}
+        <span class="doc-path">{{ doc.entry.paths|join(" + ") }}</span>
+      </div>
+    </header>
+    {% if doc.error %}<div class="well empty">{{ doc.error }}</div>{% endif %}
+    {% if doc.html %}<div class="doc" lang="zh">{{ doc.html|safe }}</div>{% endif %}
+    {% if doc.appendix_html %}
+    <div class="doc-split"><span class="t-cap">Data appendix · script generated</span></div>
+    <div class="doc doc--appendix" lang="zh">{{ doc.appendix_html|safe }}</div>
+    {% endif %}
+    {% if doc.truncated %}<div class="foot-row"><span>Cut at {{ "{:,}".format(doc.chars) }} characters; open the file for the rest.</span></div>{% endif %}
+    {% elif open_entry %}
+    {# wide screens open the newest report in place; phones show the list only #}
+    <div class="doc-open only-wide">
+      <a class="well doc-open-card" href="{{ open_entry.href }}">
+        <span class="t-cap">Newest · {{ report_kind_labels[open_entry.kind] }}</span>
+        <span class="doc-open-title" lang="zh">{{ open_entry.title }}</span>
+        <span class="num">{{ open_entry.at.strftime("%Y-%m-%d %H:%M") }} UTC · open ›</span>
+      </a>
+    </div>
+    {% else %}
+    <div class="well empty only-wide">Nothing to read yet.</div>
+    {% endif %}
+  </article>
+
+</div>
+{% endblock %}

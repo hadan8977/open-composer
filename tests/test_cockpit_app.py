@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import re
 import threading
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -30,7 +31,19 @@ def client() -> TestClient:
 
 
 @pytest.mark.parametrize(
-    "path", ["/", "/hypotheses", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"]
+    "path",
+    [
+        "/",
+        "/reports",
+        "/research",
+        "/hypotheses",
+        "/health",
+        "/healthz",
+        "/lineage",
+        "/agents",
+        "/paper",
+        "/quota",
+    ],
 )
 def test_core_routes_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
@@ -51,8 +64,43 @@ def test_core_routes_return_200(client: TestClient, path: str) -> None:
 _CJK_RE = re.compile(r"[一-鿿]")
 
 
+class _DropZh(HTMLParser):
+    """Strip every element marked `lang="zh"` (owner-facing Chinese content:
+    attention items, live-track text, report titles and bullets) and return
+    the rest of the document's text, so the chrome can be checked alone."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.out: list[str] = []
+        self._depth = 0
+        self._stack: list[bool] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        zh = dict(attrs).get("lang") == "zh"
+        self._stack.append(zh)
+        if zh:
+            self._depth += 1
+        for _name, value in attrs:
+            if value and not self._depth:
+                self.out.append(value)
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._stack and self._stack.pop():
+            self._depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self._depth:
+            self.out.append(data)
+
+
+def chrome_text(page: str) -> str:
+    parser = _DropZh()
+    parser.feed(page)
+    return "\n".join(parser.out)
+
+
 @pytest.mark.parametrize(
-    "path", ["/", "/hypotheses", "/lineage", "/health", "/agents", "/paper", "/quota"]
+    "path", ["/", "/research", "/hypotheses", "/lineage", "/health", "/agents", "/paper", "/quota"]
 )
 def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     client: TestClient, path: str
@@ -61,7 +109,11 @@ def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     assert response.status_code == 200
     # Jinja2 autoescapes a title's ASCII quotes (e.g. `"` -> `&#34;`) on the
     # way to HTML, so unescape before matching the raw title text back out.
-    text = html.unescape(response.text)
+    # Elements marked `lang="zh"` carry owner-facing content (the Today
+    # screen's attention items, live-track text and report headlines) and
+    # are dropped first; `/reports` embeds whole Chinese documents and is
+    # not checked here, like `/card/<id>`.
+    text = html.unescape(chrome_text(response.text))
     # `title`, `layer` and `data_layer` are the card's own authored prose
     # (parsed from its `层：`/`数据层：` fields) shown as-is on the board row
     # (`/`) and lineage node (`/lineage`) -- card content, not chrome. Longest
@@ -138,7 +190,17 @@ def test_every_route_is_get_or_head_only() -> None:
 
 @pytest.mark.parametrize(
     "path",
-    ["/", "/hypotheses", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"],
+    [
+        "/",
+        "/reports",
+        "/research",
+        "/health",
+        "/healthz",
+        "/lineage",
+        "/agents",
+        "/paper",
+        "/quota",
+    ],
 )
 def test_post_is_rejected_with_405(client: TestClient, path: str) -> None:
     response = client.post(path)
@@ -165,8 +227,9 @@ def test_shell_is_named_quant(client: TestClient) -> None:
     page = client.get("/")
     assert "<i></i>Quant</a>" in page.text
     assert "Cockpit</a>" not in page.text
-    assert "<title>Now · Quant</title>" in page.text
-    assert "<title>Hypotheses · Quant</title>" in client.get("/hypotheses").text
+    assert "<title>Today · Quant</title>" in page.text
+    assert "<title>Research · Quant</title>" in client.get("/research").text
+    assert "<title>Reports · Quant</title>" in client.get("/reports").text
 
 
 def test_static_mount_rejects_post(client: TestClient) -> None:

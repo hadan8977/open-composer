@@ -20,7 +20,7 @@
   <nav class="rail glass" aria-label="Screens">
     <a class="rail-brand" href="/"><i></i>Quant</a>
     {% for heading, slugs in nav_groups %}
-    <div class="nav-group">
+    <div class="nav-group{{ ' nav-group--system' if heading == 'System' }}">
       {% if heading %}<div class="nav-head">{{ heading }}</div>{% endif %}
       {% for slug in slugs %}
       <a class="nav{{ ' is-active' if active_screen == slug }}" href="{{ screen_paths[slug] }}" data-screen{% if active_screen == slug %} aria-current="page"{% endif %}>{{ icon(slug) }}<span>{{ screen_labels[slug] }}</span><kbd>⌘{{ screen_index[slug] }}</kbd></a>
@@ -35,7 +35,13 @@
     <input class="filter" id="filter-m" type="search" placeholder="Filter" autocomplete="off" aria-label="Filter">
   </header>
 
-  <div class="strip glass" role="status" aria-label="Status">
+  <div class="strip glass{{ '' if full_strip else ' strip--quiet' }}" role="status" aria-label="Status">
+    {% if not full_strip %}
+    <a class="strip-item" data-slot="system" href="/health" title="{{ topbar_system.title }}">
+      <span class="t-cap">system</span><span class="dot dot--{{ topbar_system.status }}"></span><span>{{ topbar_system.label }}</span>
+    </a>
+    {% if topbar_system.running %}<a class="strip-item strip-item--quiet" data-slot="agents-running" href="/agents" title="{{ topbar_system.running }} agent session{{ 's' if topbar_system.running != 1 }} running"><span class="dot dot--ok dot--live"></span><span class="num">{{ topbar_system.running }}</span><span>running</span></a>{% endif %}
+    {% else %}
     {% if topbar_quota_claude.available %}
       {% for bar in topbar_quota_claude.bars %}
       <a class="strip-item" data-slot="quota-claude" href="/quota" title="{{ bar.reset_label }}{% if bar.projection_label %} · {{ bar.projection_label }}{% endif %}">
@@ -67,6 +73,7 @@
     </a>
     <a class="strip-item" data-slot="data-freshness" href="/health" title="data freshness · {{ topbar_data_freshness.label }}"><span class="t-cap">data</span><span class="dot dot--{{ topbar_data_freshness.status }}"></span><span>{{ topbar_data_freshness.label }}</span></a>
     <a class="strip-item" data-slot="rehearsal-countdown" href="/paper" title="{{ topbar_rehearsal.label }}"><span class="t-cap">auth</span><span class="dot dot--{{ topbar_rehearsal.status }}"></span><span class="num">{{ topbar_rehearsal.label.rsplit(":", 1)[-1]|trim }}</span></a>
+    {% endif %}
     <span class="strip-spacer"></span>
     <input class="filter" id="filter" type="search" placeholder="Filter  ⌘F" autocomplete="off" aria-label="Filter">
   </div>
@@ -82,8 +89,8 @@
 
   <nav class="tabbar glass" id="tabbar" aria-label="Screens">
     {% for slug, label in tabs %}
-    {% set also = {"hypotheses": "lineage", "health": "quota"}.get(slug) %}
-    <a class="{{ 'is-active' if active_screen in (slug, also) }}" href="{{ screen_paths[slug] }}" data-paths="{{ screen_paths[slug] }}{% if also %} {{ screen_paths[also] }}{% endif %}">{{ icon(slug) }}<span>{{ label }}</span></a>
+    {% set also = tab_also.get(slug, ()) %}
+    <a class="{{ 'is-active' if active_screen == slug or active_screen in also }}" href="{{ screen_paths[slug] }}" data-paths="{{ screen_paths[slug] }}{% for other in also if other in screen_paths %} {{ screen_paths[other] }}{% endfor %}">{{ icon('system' if slug == 'health' else slug) }}<span>{{ label }}</span></a>
     {% endfor %}
   </nav>
 

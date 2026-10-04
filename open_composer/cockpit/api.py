@@ -75,6 +75,17 @@ from open_composer.cockpit.data.paper import (
     discover_strategy_names,
 )
 from open_composer.cockpit.data.quota import build_quota_report, get_default_claude_cache
+from open_composer.cockpit.data.reports import (
+    KINDS,
+    build_report_index,
+    load_report,
+    valid_report_id,
+)
+from open_composer.cockpit.data.today import (
+    get_default_today_cache,
+    needs_summary,
+    today_report_for,
+)
 from open_composer.cockpit.markdown import render_markdown
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path
 from open_composer.config import project_root
@@ -375,6 +386,51 @@ def register_api_routes(app: FastAPI, *, status_context: Callable[[], dict[str, 
             "generated_at": to_jsonable(datetime.now(UTC), root=root),
             "report": to_jsonable(report, root=root),
         }
+        return _json(payload)
+
+    @app.get("/api/today.json")
+    def api_today() -> JSONResponse:
+        """`/` as JSON (2026-10-04): the four blocks. Reads the cached digest
+        snapshot like the HTML route; `collected_at` is null until the warm
+        thread's first pass lands. Dataclass properties the template uses
+        (`href`, the verdict line) are added as plain keys."""
+        root = project_root()
+        report = today_report_for(root, now=datetime.now(UTC), cache=get_default_today_cache())
+        payload = to_jsonable(report, root=root)
+        payload["needs"]["summary"] = needs_summary(report.needs)
+        for sleeve, raw in zip(report.money.sleeves, payload["money"]["sleeves"], strict=True):
+            raw["href"] = sleeve.href
+        for candidate, raw in zip(report.candidates, payload["candidates"], strict=True):
+            raw["sessions_needed"] = candidate.needed
+            raw["enough_sessions"] = candidate.enough_sessions
+        payload["loading"] = report.loading
+        return _json(payload)
+
+    @app.get("/api/reports.json")
+    def api_reports() -> JSONResponse:
+        """`/reports` as JSON: the index, newest first per kind, with each
+        entry's `href`. Bodies come from `/api/reports/{kind}/{id}.json`."""
+        root = project_root()
+        index = build_report_index(root)
+        payload = to_jsonable(index, root=root)
+        for kind in KINDS:
+            for entry, raw in zip(index.by_kind(kind), payload[kind], strict=True):
+                raw["href"] = entry.href
+        payload["total"] = index.total
+        return _json(payload)
+
+    @app.get("/api/reports/{kind}/{report_id}.json")
+    def api_report_detail(kind: str, report_id: str) -> JSONResponse:
+        """One rendered report; same validation order as the HTML route."""
+        root = project_root()
+        if kind not in KINDS or not valid_report_id(kind, report_id):
+            raise HTTPException(status_code=404, detail="not a report")
+        entry = build_report_index(root).find(kind, report_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        doc = load_report(root, entry)
+        payload = to_jsonable(doc, root=root)
+        payload["entry"]["href"] = entry.href
         return _json(payload)
 
     @app.get("/api/health.json")

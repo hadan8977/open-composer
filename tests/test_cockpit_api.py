@@ -58,7 +58,8 @@ def test_every_api_route_is_get_only() -> None:
     """
     app = create_app(warm=False)
     api_routes = [r for r in app.routes if getattr(r, "path", "").startswith("/api/")]
-    assert len(api_routes) == 10, f"expected 10 /api/ routes, found {len(api_routes)}"
+    # 10 from T11 plus today.json, reports.json and reports/{kind}/{id}.json (2026-10-04)
+    assert len(api_routes) == 13, f"expected 13 /api/ routes, found {len(api_routes)}"
     for route in api_routes:
         methods = getattr(route, "methods", None)
         assert methods == {"GET"}, (

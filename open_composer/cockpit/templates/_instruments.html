@@ -58,7 +58,7 @@
 <div class="stage-legend">
   {%- for st in research.stages %}
   {%- set first = st.lanes|selectattr("1")|first %}
-  <a class="sl" href="/hypotheses{% if first %}#{{ first[0]|replace(' ', '-') }}{% endif %}" title="{% for lane, n in st.lanes %}{{ n }} {{ lane }}{{ ' · ' if not loop.last }}{% endfor %}"><i class="sw sw--{{ st.key }}"></i><span class="sl-n num">{{ st.count }}</span><span class="sl-l">{{ st.label }}</span></a>
+  <a class="sl" href="/research{% if first %}#{{ first[0]|replace(' ', '-') }}{% endif %}" title="{% for lane, n in st.lanes %}{{ n }} {{ lane }}{{ ' · ' if not loop.last }}{% endfor %}"><i class="sw sw--{{ st.key }}"></i><span class="sl-n num">{{ st.count }}</span><span class="sl-l">{{ st.label }}</span></a>
   {%- endfor %}
 </div>
 {%- endmacro %}
@@ -70,7 +70,7 @@
 </div>
 <div class="stage-legend">
   {%- for key in ("running", "review", "ready", "blocked") %}
-  <a class="sl" href="/hypotheses#queue-{{ key }}"><i class="sw sw--{{ key }}"></i><span class="sl-n num">{{ queue.counts[key] }}</span><span class="sl-l">{{ labels[key] }}</span></a>
+  <a class="sl" href="/research#queue-{{ key }}"><i class="sw sw--{{ key }}"></i><span class="sl-n num">{{ queue.counts[key] }}</span><span class="sl-l">{{ labels[key] }}</span></a>
   {%- endfor %}
 </div>
 {%- endmacro %}

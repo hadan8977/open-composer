@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% from "_instruments.html" import money_hero %}
+{% block title %}Today · Quant{% endblock %}
+{% block content %}
+{% set r = report %}
+{% set m = r.money %}
+{% set n = r.needs %}
+
+<header class="page-head page-head--today">
+  <div>
+    <div class="eyebrow num">{{ r.generated_at.strftime("%a %d %b · %H:%M") }} UTC{% if r.collected_at %} · data {{ r.collected_at|ago }}{% endif %}</div>
+    <h1>Today</h1>
+  </div>
+  <span class="aside num">{% if m.as_of %}close {{ m.as_of.strftime("%a %m-%d") }}{% endif %}</span>
+</header>
+
+{% if r.loading %}
+<section class="tile tile--hero collecting" aria-live="polite">
+  <span class="dot dot--ok dot--live"></span>
+  <span>Collecting the first snapshot — paper ledgers, health, queue. This page refreshes itself.</span>
+  <meta http-equiv="refresh" content="4">
+</section>
+{% endif %}
+
+<div class="bento bento--today">
+
+  {# 1 · What needs me #}
+  <section class="tile t-needs t-needs--{{ n.level }}">
+    <header class="tile-head">
+      <span class="tile-label">Needs you</span>
+      <span class="tile-meta">{% if n.items or n.decisions %}same list as the daily mail{% else %}owner actions only · ops stays in System{% endif %}</span>
+    </header>
+    <div class="verdict">
+      <span class="verdict-lamp"></span>
+      <span class="verdict-word">{{ n.word }}</span>
+      <span class="verdict-sub">{{ needs_summary(n) }}</span>
+    </div>
+    {% if n.items %}
+    <ul class="needs" lang="zh">
+      {%- for item in n.items %}<li><i class="dot dot--warn"></i><span>{{ item }}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if n.decisions %}
+    <div class="decisions">
+      <div class="decisions-head">Decisions with a date</div>
+      {%- for d in n.decisions %}
+      <div class="decision{{ ' is-soon' if d.days_left is not none and d.days_left <= 7 }}">
+        <span class="decision-when num">{% if d.due %}{{ d.due.strftime("%m-%d") }}{% else %}–{% endif %}</span>
+        <span class="decision-text" lang="zh">{{ d.item }}</span>
+        <span class="decision-left num">{% if d.days_left is none %}no date{% elif d.days_left < 0 %}{{ -d.days_left }}d late{% elif d.days_left == 0 %}today{% else %}in {{ d.days_left }}d{% endif %}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {% endif %}
+    {% if n.ops %}
+    <details class="more ops">
+      <summary>{{ n.ops|length }} operational issue{{ "s" if n.ops|length != 1 }} · research side fixes these</summary>
+      <ul class="needs needs--ops" lang="zh">
+        {%- for item in n.ops %}<li><i class="dot dot--unknown"></i><span>{{ item }}</span></li>{% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </section>
+
+  {# 2 · Money #}
+  <section class="tile t-money">
+    <header class="tile-head">
+      <a class="tile-label" href="/paper">Money</a>
+      <span class="tile-meta">Alpaca paper{% if m.as_of %} · close {{ m.as_of.strftime("%a %m-%d") }}{% endif %}{% if m.sleeves %} · {{ m.sleeves|length }} sleeves{% endif %}</span>
+    </header>
+    {% if m.total is not none %}
+    <div class="hero">
+      {{ money_hero(m.total) }}
+      {% if m.since is not none %}<span class="delta delta--{{ 'up' if m.since > 0 else ('down' if m.since < 0 else 'flat') }} num">{{ "▲" if m.since > 0 else ("▼" if m.since < 0 else "·") }} {{ m.since|pct }} <span>since start · budget {{ m.budget_total|money(0) }}</span></span>{% endif %}
+    </div>
+    <div class="ret-grid num" role="list">
+      <span class="ret" role="listitem"><span class="ret-k">Day</span><b class="{{ 'is-up' if m.day and m.day > 0 else ('is-down' if m.day and m.day < 0) }}">{{ m.day|pct }}</b><span class="ret-b">SPY {{ m.spy_day|pct }}</span></span>
+      <span class="ret" role="listitem"><span class="ret-k">5 sessions</span><b class="{{ 'is-up' if m.week and m.week > 0 else ('is-down' if m.week and m.week < 0) }}">{{ m.week|pct }}</b><span class="ret-b">SPY {{ m.spy_week|pct }}</span></span>
+      <span class="ret" role="listitem"><span class="ret-k">Account</span><b>{{ m.account_equity|money(0) }}</b><span class="ret-b">{% if m.kill_switch %}<span class="is-down">kill switch on</span>{% else %}kill switch off{% endif %} · {{ m.open_orders if m.open_orders is not none else "–" }} open</span></span>
+    </div>
+    {% else %}
+    <div class="well empty">{% if r.loading %}Collecting the paper book…{% else %}No paper sleeve has a close yet{% endif %}</div>
+    {% endif %}
+    {% if m.sleeves %}
+    <div class="sleeves sleeves--today" aria-label="Each sleeve on its own budget">
+      <div class="sl-head num"><span></span><span></span><span>day</span><span class="only-roomy">5 d</span><span>since</span></div>
+      {%- for s in m.sleeves %}
+      <a class="sleeve sleeve--today" href="{{ s.href }}" data-detail title="{{ s.name }} · {{ s.sessions }} session{{ 's' if s.sessions != 1 }} since {{ s.start.isoformat() }}{% for sym, w in s.holdings %} · {{ sym }} {{ (w * 100)|round|int }}%{% endfor %}">
+        <span class="sleeve-l">{{ s.label }}</span>
+        <svg class="spark{{ ' is-down' if s.since is not none and s.since < 0 }}" viewBox="0 0 72 20" preserveAspectRatio="none" aria-hidden="true"><polyline points="{{ sparkline_points(s.spark) }}"/></svg>
+        <span class="sleeve-r num {{ 'is-up' if s.day and s.day > 0 else ('is-down' if s.day and s.day < 0) }}">{{ s.day|pct }}</span>
+        <span class="sleeve-r num only-roomy {{ 'is-up' if s.week and s.week > 0 else ('is-down' if s.week and s.week < 0) }}">{{ s.week|pct }}</span>
+        <span class="sleeve-since num"><b class="{{ 'is-up' if s.since and s.since > 0 else ('is-down' if s.since and s.since < 0) }}">{{ s.since|pct }}</b><span>SPY {{ s.spy_since|pct }}</span></span>
+      </a>
+      {%- endfor %}
+    </div>
+    {% endif %}
+    <div class="book-line num">
+      {%- if m.book %}
+      {%- for b in m.book %}<span><span class="dot dot--ok"></span>v1.2 {{ b.account }} <b>{{ b.equity|money(0) }}</b>{% if b.net_return is not none %} · day <b class="{{ 'is-up' if b.net_return > 0 else ('is-down' if b.net_return < 0) }}">{{ b.net_return|pct }}</b>{% endif %}</span>{% endfor %}
+      {%- if m.book_pending %}<span class="faint">{{ m.book_pending|join(" · ") }} not trading yet</span>{% endif %}
+      {%- elif m.book_pending %}<span class="faint"><span class="dot dot--unknown"></span>v1.2 {{ m.book_pending|join(" · ") }} · no fills yet</span>
+      {%- endif %}
+    </div>
+    <div class="live-line">
+      {% if m.live %}<span class="dot dot--ok dot--live"></span>Live: <b lang="zh">{{ m.live|join(", ") }}</b>
+      {% else %}<span class="dot dot--unknown"></span>Live: <b>none</b>{% endif %}
+    </div>
+  </section>
+
+  {# 3 · How far from live #}
+  <section class="tile t-track">
+    <header class="tile-head">
+      <span class="tile-label">Path to live</span>
+      <span class="tile-meta">{{ r.candidates|length }} candidates · {{ r.candidates|selectattr("enough_sessions")|list|length }} with {{ r.candidates[0].needed if r.candidates else 10 }} paper sessions</span>
+    </header>
+    {% if r.candidates %}
+    <div class="track">
+      {%- for c in r.candidates %}
+      <div class="cand">
+        <span class="cand-main">
+          {% if c.href %}<a class="cand-l" href="{{ c.href }}" data-detail lang="zh">{{ c.label }}</a>{% else %}<span class="cand-l" lang="zh">{{ c.label }}</span>{% endif %}
+          <span class="cand-stage" lang="zh">{{ c.stage }}</span>
+        </span>
+        <span class="cand-sessions" title="{{ c.paper_sessions if c.paper_sessions is not none else 'no' }} real paper sessions{% if c.paper_since %} since {{ c.paper_since.isoformat() }}{% endif %} · {{ c.needed }} needed">
+          <span class="ticks ticks--10">{% for i in range(c.needed) %}<i class="tk{{ ' tk--ok' if i < c.sessions_done }}"></i>{% endfor %}</span>
+          <span class="num">{% if c.paper_sessions is none %}{% if c.paper_since %}starts {{ c.paper_since.strftime("%m-%d") }}{% else %}no paper sessions{% endif %}{% else %}{{ c.paper_sessions }}/{{ c.needed }}{% endif %}</span>
+        </span>
+        <span class="cand-next"><span lang="zh">{{ c.next }}</span>{% if c.next_due %} <b class="num">{{ c.next_due.strftime("%m-%d") }}</b>{% endif %}</span>
+        <span class="cand-prop num">{% if c.proposal_due %}proposal <b>{{ c.proposal_due.strftime("%m-%d") }}</b>{% endif %}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {% if r.track_rule %}<div class="foot-row"><span lang="zh">{{ r.track_rule }}</span></div>{% endif %}
+    {% else %}
+    <div class="well empty">No live-track file — <code>reports/owner/live-track.json</code> lists candidates, stages and dates.</div>
+    {% endif %}
+  </section>
+
+  {# 4 · What research is doing #}
+  <section class="tile t-engines">
+    <header class="tile-head">
+      <a class="tile-label" href="/research">Research</a>
+      <span class="tile-meta">queue · {{ r.queue.running }} running · {{ r.queue.review }} to review · {{ r.queue.ready }} ready{% if r.queue.blocked %} · {{ r.queue.blocked }} blocked{% endif %}</span>
+    </header>
+    <div class="engines-grid">
+      <div class="engines">
+        {%- for e in r.engines %}
+        <div class="engine">
+          <span class="engine-id num">{{ e.id }}</span>
+          <span class="engine-main">
+            <span class="engine-name" lang="zh">{{ e.name }}</span>
+            <span class="engine-now" lang="zh"><span class="t-cap">now</span> {{ e.now }}</span>
+            <span class="engine-next" lang="zh"><span class="t-cap">next</span> {{ e.next }}{% if e.due %} <b class="num">{{ e.due.strftime("%m-%d") }}</b>{% endif %}</span>
+          </span>
+        </div>
+        {%- else %}
+        <div class="well empty">No engines listed in the live-track file</div>
+        {%- endfor %}
+      </div>
+      <div class="headline">
+        {% if r.headline %}
+        {% set h = r.headline %}
+        <a class="headline-card well" href="{{ h.href }}">
+          <span class="headline-top num"><span class="t-cap">{{ h.label }}</span>{% if h.at %}<span>{{ h.at.strftime("%m-%d %H:%M") }} UTC</span>{% endif %}</span>
+          <span class="headline-title" lang="zh">{{ h.title }}</span>
+          {% if h.bullets %}<ul class="headline-bullets" lang="zh">{% for b in h.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+          <span class="headline-more">{% if h.source == "round" %}Read the report{% else %}Open research{% endif %} ›</span>
+        </a>
+        {% else %}
+        <div class="well empty">No round report yet · rounds write to <code>reports/owner/rounds/</code> from 2026-10-05</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+</div>
+{% if r.errors %}<div class="foot-row"><span>{{ r.errors|join(" · ") }}</span></div>{% endif %}
+{% endblock %}
