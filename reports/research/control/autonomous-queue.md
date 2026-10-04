@@ -1894,7 +1894,7 @@
   - 2026-10-04 18:17 UTC 补登记（17:52 派出）。数据层只复用 `owner_digest`；594d18f（10-04 18:03 UTC）起 `owner_items`（只含机主要做的事）与 `ops_items`（运行异常）已分开，首页"要我做什么"用前者。
 
 ### T-20261004-74 交易频率 C1：S1–S3、C2 的月/周/日频率阶梯（日频加不交易带）
-- status: ready（定时执行轮可取）
+- status: hold（2026-10-04 18:33 UTC 交互会话暂停，定时轮不要取。原因：机主 10-04 晚指出，便宜测试对需要一定深度才见效的方向会给出假阴性。这一项将由第二版计划 T-20261004-84 重新设计）
 - priority: 2
 - not_before: 无
 - brief: reports/research/control/briefs/T-20261004-74.md
@@ -1921,7 +1921,7 @@
   - 独立 Paseo 代理 f627dd9d（Sonnet 5.5 high），17:49 派出，18:06 交付。X 渠道因 twscrape 未装而空缺。
 
 ### T-20261004-77 方法检验：拓扑和相关结构风险信号（G1）、路径签名特征（G2）、残差随机矩阵诊断（G3）
-- status: ready（主审轮取：先写方向依据和预注册，再交执行轮）
+- status: hold（2026-10-04 18:33 UTC 交互会话暂停，定时轮不要取。原因：机主 10-04 晚指出，便宜测试对需要一定深度才见效的方向会给出假阴性。这一项将由第二版计划 T-20261004-84 重新设计）
 - priority: 3
 - not_before: 2026-10-08（等 T-75 的状态划分）
 - brief: reports/research/control/briefs/T-20261004-77.md
@@ -1947,3 +1947,52 @@
 - done_when: 代码、测试、`reports/research/program/time-contract-<日期>/report.md` 已提交，标"待主审"。10-16 前。
 - notes:
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
+
+### T-20261004-80 调研（第二版计划输入）：中频交易做到什么程度才有效
+- status: running（独立 Paseo 代理 eaa6dfee，Sonnet 5.5 high，协调码 R1004-T80）
+- priority: 1
+- brief: reports/research/control/briefs/T-20261004-80.md
+- done_when: `reports/research/intel/I-20261004-05-mid-frequency-depth.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
+- notes:
+  - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
+
+### T-20261004-81 调研（第二版计划输入）：状态模型、主题集中、半导体周期做到什么程度才有效
+- status: running（独立 Paseo 代理 70a25627，Sonnet 5.5 high，协调码 R1004-T81）
+- priority: 1
+- brief: reports/research/control/briefs/T-20261004-81.md
+- done_when: `reports/research/intel/I-20261004-06-regime-theme-cycle-depth.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
+- notes:
+  - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
+
+### T-20261004-82 调研（第二版计划输入）：物理、几何、拓扑、深度序列模型做到什么程度才见效
+- status: running（独立 Paseo 代理 1520faa1，Sonnet 5.5 high，协调码 R1004-T82）
+- priority: 1
+- brief: reports/research/control/briefs/T-20261004-82.md
+- done_when: `reports/research/intel/I-20261004-07-physics-geometry-deep-models-depth.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
+- notes:
+  - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
+
+### T-20261004-83 调研（第二版计划输入）：2026-08 以来的 vibe trading 新项目潮（整类）
+- status: running（独立 Paseo 代理 df7e0aec，Sonnet 5.5 high，协调码 R1004-T83）
+- priority: 1
+- brief: reports/research/control/briefs/T-20261004-83.md
+- done_when: `reports/research/intel/I-20261004-08-vibe-trading-wave-since-2026-08.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
+- notes:
+  - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
+
+### T-20261004-84 第二版计划：按"最低有效深度"重做，调研支撑、多轮复核后执行
+- status: running（交互会话 Opus 主持）
+- priority: 1
+- goal: 机主 10-04 晚的要求：
+  - 不要把他的想法缩成便宜测试；效果可能是非线性的，要做到一定程度才见效；
+  - 第一轮所有问题的方案都偏浅，要先调研别人怎么做；
+  - vibe trading 要看整类，重点是 8 月以后的新项目；
+  - 计划反复复核，直到满足他的要求，再详细执行。
+- plan: 
+  - 输入：T-78、T-80–T-83 的调研，加上交互会话自己做的"研究运作方式和防假阴性"调研。
+  - 写 `docs/plan-v2-2026-10-05.zh.md`。
+  - 复核：先按机主要求清单自审，再由独立 Opus 复核代理审，改到全部满足。
+  - 然后拆成项目和任务执行。
+- done_when: 计划和复核记录已提交，执行已开始，并向机主汇报。
+- notes:
+  - 2026-10-04 18:35 UTC 登记。T-74、T-77 已暂停，等本计划重新设计；T-70、T-75（测量和诊断）照常。

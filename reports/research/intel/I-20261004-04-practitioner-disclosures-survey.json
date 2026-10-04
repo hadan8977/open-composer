@@ -1,0 +1,719 @@
+{
+ "meta": {
+  "task": "T-20261004-78",
+  "coordinator_code": "R1004-T78",
+  "generated_utc": "2026-10-04T18:28Z",
+  "language": "zh",
+  "report": "reports/research/intel/I-20261004-04-practitioner-disclosures-survey.md",
+  "snapshots_dir": "reports/research/intel/sources/practitioner-disclosures-2026-10-04/",
+  "evidence_tiers": {
+   "1": "无",
+   "2": "只有回测或竞赛公榜",
+   "3": "竞赛私榜或样本外",
+   "4": "机构自述的实盘使用",
+   "5": "可核验或独立复现"
+  },
+  "incomplete": [
+   "Kaggle 讨论区/写作页无法渲染，没有一篇冠军原帖被亲手读到；方案细节来自第三方整理",
+   "未取得：Jane Street 2024-25 冠军(ms capital)写作；Jane Street 2020-21 私榜冠军方案；G-Research 冠军特征；Two Sigma 两次竞赛冠军方案",
+   "无方法披露：Citadel/Citadel Securities、CFM(窗口内)、HRT、XTX、G-Research(仅竞赛总结)",
+   "WSJ/Bloomberg 的 Jane Street 营收数字未核对"
+  ],
+  "tool_calls_approx": 100
+ },
+ "top5": [
+  {
+   "id": 1,
+   "borrow": "边际贡献检验：新信号对现有账本预测中性化后与目标的协方差(Numerai MMC/BMC)",
+   "line": [
+    "E1",
+    "流程"
+   ],
+   "effort_days": 0.5,
+   "value": "high",
+   "evidence_tier": 4,
+   "source": "sources/practitioner-disclosures-2026-10-04/numerai__docs-scoring-true-contribution.md"
+  },
+  {
+   "id": 2,
+   "borrow": "滚动重训节奏与标签释放纪律(冻结 vs 每5/10/20日重训，purge=标签期)",
+   "line": [
+    "E1",
+    "E3"
+   ],
+   "effort_days": "1-2",
+   "value": "medium-high (日频可能小)",
+   "evidence_tier": "3 + 5-partial",
+   "source": "sources/practitioner-disclosures-2026-10-04/github__cweill-jane-street-causal-forecasting.md; sources/practitioner-disclosures-2026-10-04/docswell__optiver-2023-1st-solution-ja.md; sources/practitioner-disclosures-2026-10-04/numerai__docs-models.md"
+  },
+  {
+   "id": 3,
+   "borrow": "流程加固：假设锁定+跨轮次/跨代理试验总数登记；实盘 vs 研究的预期衰减监控",
+   "line": [
+    "流程"
+   ],
+   "effort_days": 1,
+   "value": "medium-high",
+   "evidence_tier": 4,
+   "source": "sources/practitioner-disclosures-2026-10-04/aistreet__inside-man-group-alphagpt.md; sources/practitioner-disclosures-2026-10-04/signalsandthreads__finding-signal-in-the-noise.md"
+  },
+  {
+   "id": 4,
+   "borrow": "E1 合成器小网格：每日横截面排名/高斯化、横截面均值状态特征、多期限辅助目标、3-5种子平均",
+   "line": [
+    "E1"
+   ],
+   "effort_days": "1-2",
+   "value": "medium (证据分歧，只做预注册小网格)",
+   "evidence_tier": "3 + 5-partial negative",
+   "source": "sources/practitioner-disclosures-2026-10-04/github__chaseli2026-ubiquant-top1-reproduce.md; sources/practitioner-disclosures-2026-10-04/docswell__optiver-2023-1st-solution-ja.md"
+  },
+  {
+   "id": 5,
+   "borrow": "高斯混合模型划分市场状态，必须胜过 200日线+VIX 三档基线",
+   "line": [
+    "E2"
+   ],
+   "effort_days": 1,
+   "value": "low-medium",
+   "evidence_tier": 2,
+   "source": "sources/practitioner-disclosures-2026-10-04/twosigma__ml-approach-to-regime-modeling.md"
+  }
+ ],
+ "not_applicable": [
+  "万亿token市场基础模型(HRT/XTX/Jane Street 数万GPU)",
+  "纳秒延迟/FPGA/托管机房",
+  "订单簿自回归扩散模型",
+  "自身交易冲击反馈",
+  "NASDAQ竞价失衡数据(免费源是否可得待核对)",
+  "17种子Transformer+GRU堆叠推理",
+  "AlphaGPT规模的批量假设生成(缺口在验证不在生成)",
+  "竞赛匿名特征技巧(mixup/效用损失/特征对挑选)"
+ ],
+ "institutions": [
+  {
+   "name": "Jane Street",
+   "materials": [
+    {
+     "title": "Signals and Threads ep.22 Finding Signal in the Noise (In Young Cho)",
+     "date": "2025-03-10",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/signalsandthreads__finding-signal-in-the-noise.md"
+    },
+    {
+     "title": "Signals and Threads ep.29 Wrestling the World into Rows",
+     "date": "2026-09-02",
+     "snapshot": "sources/methods-2026-10-04/signalsandthreads__wrestling-the-world-into-rows.md"
+    },
+    {
+     "title": "Machine Learning page",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/janestreet__machine-learning-join-page.md"
+    },
+    {
+     "title": "What the interns have wrought 2026",
+     "snapshot": "sources/methods-2026-10-04/janestreet__wrought-2026.md"
+    },
+    {
+     "title": "Signals and Threads ep.21 Gugger (abstract only)",
+     "date": "2024-10-14",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/signalsandthreads__episode-index.md"
+    }
+   ],
+   "methods": "研究四步(探索/收数据/建模/投产)；低数据线性+先验，高数据深度网络+严格切分；数据处理公司行动、幸存者偏差、时间对齐",
+   "lessons": [
+    "噪声:100单位数据里1单位有用",
+    "市场regime-y",
+    "不同研究者重复同一假设会无意间泄漏",
+    "更强的模型更会利用前视泄漏"
+   ],
+   "evidence_tier": "1, 部分4",
+   "for_us": "流程(第3件)"
+  },
+  {
+   "name": "Man Group",
+   "materials": [
+    {
+     "title": "What AI Can (and Can't Yet) Do for Alpha (AlphaGPT)",
+     "date": "2025 (page shows no date)",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/man__what-ai-can-do-for-alpha.md"
+    },
+    {
+     "title": "AI Street interview with Ziang Fang",
+     "date": "2025-12-18",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/aistreet__inside-man-group-alphagpt.md"
+    },
+    {
+     "title": "Alpha Assistant (trend-following, part 1)",
+     "date": "2025-10 (GSFM repost 2025-10-15)",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/man__ai-agents-trend.md"
+    }
+   ],
+   "methods": "构思/实现/评估三代理+编排器，应用层搭建，不训练自有模型；信号过与人工信号相同的投委会阈值",
+   "lessons": [
+    "假设回测开始后不许改",
+    "幻觉/前视/多重检验",
+    "token账单大，建成本看板",
+    "上线后对比实盘与研究并追踪预期衰减",
+    "技术团队逐行审代码"
+   ],
+   "evidence_tier": 4,
+   "for_us": "流程(第3件)"
+  },
+  {
+   "name": "Two Sigma",
+   "materials": [
+    {
+     "title": "AI in Investment Management: 2026 Outlook I",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/twosigma__ai-in-investment-management-2026-outlook-part-i.md"
+    },
+    {
+     "title": "AI in Investment Management: 2026 Outlook II",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/twosigma__ai-in-investment-management-2026-outlook-part-ii.md"
+    },
+    {
+     "title": "A Machine Learning Approach to Regime Modeling",
+     "date": "2021 (data 1971-2020)",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/twosigma__ml-approach-to-regime-modeling.md"
+    }
+   ],
+   "methods": "2021: 对17个因子镜头因子联合分布拟合GMM得到4种状态",
+   "lessons": [
+    "预训练LLM的知识截止日之前的回测要特别小心",
+    "AI代理生成大量假设会加剧过拟合"
+   ],
+   "evidence_tier": "1 (2026), 2 (2021)",
+   "for_us": "E2 第5件；LLM记忆检查"
+  },
+  {
+   "name": "AQR",
+   "materials": [
+    {
+     "title": "AQR Experiments With GPT (Kelly)",
+     "date": "2023-05-02",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/institutionalinvestor__aqr-experiments-with-gpt.md"
+    },
+    {
+     "title": "Asness: AI is still just statistics",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/hedgeweek__asness-ai-still-just-statistics.md"
+    }
+   ],
+   "methods": "语言模型压缩表示接入自有模型；NLP 是 AQR 当前最常用",
+   "lessons": [
+    "复杂模型优势被Nagel 2025反驳(已有)"
+   ],
+   "evidence_tier": 2,
+   "for_us": "E1 文本压缩特征族，与 v1.4 同类"
+  },
+  {
+   "name": "HRT",
+   "materials": [
+    {
+     "title": "ICML 2025 Expo: Foundation Models for Automated Trading",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/icml__hrt-foundation-models-2025.md"
+    }
+   ],
+   "methods": "仅摘要：万亿token量级数据的市场基础模型",
+   "lessons": [],
+   "evidence_tier": 1,
+   "for_us": "排除(算力)"
+  },
+  {
+   "name": "XTX Markets",
+   "materials": [
+    {
+     "title": "NYU MIC seminar (Atlas Wang)",
+     "date": "2025-04-18",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/cims-nyu__xtx-large-scale-deep-learning-talk.md"
+    }
+   ],
+   "methods": "仅摘要：大规模异构数据基础模型，神经缩放律",
+   "lessons": [],
+   "evidence_tier": 1,
+   "for_us": "排除"
+  },
+  {
+   "name": "G-Research",
+   "materials": [
+    {
+     "title": "Wrapping up the crypto forecasting competition",
+     "date": "2022",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/gresearch__wrapping-up-crypto-forecasting.md"
+    }
+   ],
+   "methods": "见竞赛表",
+   "lessons": [
+    "前三名都用LightGBM，特征工程比模型重要",
+    "榜单大起大落"
+   ],
+   "evidence_tier": 3,
+   "for_us": "E3-3 低优先"
+  },
+  {
+   "name": "Optiver",
+   "materials": [
+    {
+     "title": "Explaining Markets partnership",
+     "date": "2026-07-31",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/optiver__explaining-markets-ai-competition.md"
+    },
+    {
+     "title": "Levy-Koijen, UChicago news",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/uchicago__how-ai-explains-stock-price-moves-levy-koijen.md"
+    }
+   ],
+   "methods": "AI系统对实时财报公告作出反应；Levy-Koijen实时测试约2000条2025年末财报，最佳AI解释同日涨跌17% vs 财报惊喜5%",
+   "lessons": [
+    "解释同日涨跌不等于预测随后收益"
+   ],
+   "evidence_tier": 3,
+   "for_us": "E1-7 需机主决定是否提交"
+  },
+  {
+   "name": "Numerai",
+   "materials": [
+    {
+     "title": "Docs: models/benchmark models v5.3",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/numerai__docs-models.md"
+    },
+    {
+     "title": "Docs: MMC/BMC",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/numerai__docs-scoring-true-contribution.md"
+    },
+    {
+     "title": "Docs: data",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/numerai__docs-data.md"
+    }
+   ],
+   "methods": "匿名股票面板按期评估；基准LGBM 20000树 lr0.001 深度6 colsample0.1；前向切分156期一块 purge 8/16期；MMC/BMC",
+   "lessons": [
+    "单特征预测力随时间不稳",
+    "重叠目标需小心交叉验证"
+   ],
+   "evidence_tier": 4,
+   "for_us": "E1-1, E1-2"
+  },
+  {
+   "name": "WorldQuant",
+   "materials": [
+    {
+     "title": "101 Formulaic Alphas (Kakushadze, 与WorldQuant关系待核对)",
+     "date": "2016",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/arxiv__1601.00991-101-formulaic-alphas.md"
+    }
+   ],
+   "methods": "101条公式；平均持有期0.6-6.4天；两两相关均值15.9%",
+   "lessons": [
+    "收益与波动强相关，与换手无显著关系"
+   ],
+   "evidence_tier": 2,
+   "for_us": "已在因子库"
+  },
+  {
+   "name": "CFM / Bouchaud",
+   "materials": [],
+   "methods": "窗口内无自有方法材料",
+   "lessons": [],
+   "evidence_tier": null,
+   "for_us": "无"
+  },
+  {
+   "name": "Citadel / Citadel Securities",
+   "materials": [],
+   "methods": "仅招聘页与媒体转述",
+   "lessons": [],
+   "evidence_tier": null,
+   "for_us": "无"
+  }
+ ],
+ "competitions": [
+  {
+   "name": "Jane Street Real-Time Market Data Forecasting",
+   "period": "2024-10 to 2025-07",
+   "teams": 3757,
+   "entries": [
+    {
+     "rank": 1,
+     "who": "ms capital (chenxin1991, wht1996, ...)",
+     "private_score": "~0.01 (clist snippet)",
+     "writeup": "not obtained",
+     "evidence_tier": 3
+    },
+    {
+     "rank": 2,
+     "who": "Patrick Yam",
+     "method": "77 clipped numeric + 3 categorical embeddings; 8x (cross-asset attention + temporal GRU + FFN); 9 responders multitask with weights; recency sample weights; AdamW 5e-4; multi-seed average",
+     "validation": "offline train -> 120-day unscored warmup -> ~200 scored days",
+     "online_learning": "3 Adam steps per newly labeled day, betas (0.8,0.95), latest day only beats multi-day replay, fresh optimizer beats reusing offline optimizer",
+     "reported_scores": {
+      "local": [
+       0.0132,
+       0.01695,
+       0.01811,
+       0.0189,
+       0.01967,
+       0.02059
+      ],
+      "public_lb": [
+       0.00872,
+       0.01103,
+       0.01161,
+       0.01208,
+       0.01255,
+       0.01303
+      ],
+      "note": "cumulative steps, not isolated ablations"
+     },
+     "independent_reconstruction": {
+      "repo": "cweill/jane-street-causal-forecasting",
+      "window": "dates 1500-1698, 17 seeds, 9 epochs",
+      "online_r2": 0.02077608,
+      "frozen_r2": 0.0143265,
+      "caveat": "windows inspected during development; not untouched"
+     },
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/github__cweill-patrick-yam-source-notes.md",
+     "evidence_tier": "3 + 5-partial"
+    }
+   ]
+  },
+  {
+   "name": "Jane Street Market Prediction",
+   "period": "2020-11 to 2021-08",
+   "teams": 4245,
+   "entries": [
+    {
+     "rank": null,
+     "who": "private-LB winner NOT obtained; Yirun Zhang supervised-AE + multitask MLP (Numerai forum; final placement unverified)",
+     "method": "AE features concatenated with originals, target info into AE, Gaussian noise, swish, BN, dropout, early stop on MLP MSE only",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/numerai__forum-autoencoder-multitask-mlp.md",
+     "evidence_tier": 3
+    },
+    {
+     "rank": null,
+     "who": "codefluence (non-winner, readable)",
+     "method": "3-layer MLP trend classifier, dropout .35-.45, mixup, target=mean of horizons, day-grouped CV, TabNet to pick 6 feature pairs; AE/PCA no gain",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/github__codefluence-jane-street-2020.md",
+     "evidence_tier": 3
+    },
+    {
+     "rank": 241,
+     "who": "scaomath / Semper Augustus",
+     "note": "live-period rank moved 75 -> 359 -> 241 of 4245; denoised target from five targets: CV too good, LB bad; seed-1111 overfit model excluded",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/github__scaomath-kaggle-jane-street.md",
+     "evidence_tier": 3
+    }
+   ]
+  },
+  {
+   "name": "Optiver Trading at the Close",
+   "period": "2023-24 (dates unverified)",
+   "teams": "~4000",
+   "entries": [
+    {
+     "rank": 1,
+     "who": "HYD (Kaggle post 487446 not opened; via Japanese study-group slides)",
+     "method": "300 features mostly ratios/ranks within a time slice (to first value, to expanding mean, same-second cross-sectional mean ratio and percentile rank); CatBoost 0.5 + GRU 0.3 (55 timepoints per stock) + Transformer 0.2 (200 stocks per timepoint)",
+     "online_learning": "retrain every 12 days (5 times) + post-processing; the two gains",
+     "third_party_replication": {
+      "lightgbm_private_mae": 5.478,
+      "catboost": 5.483,
+      "transformer": 5.613,
+      "lgbm_plus_transformer_8_2": 5.482,
+      "note": "presenter could not beat LightGBM with a NN"
+     },
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/docswell__optiver-2023-1st-solution-ja.md",
+     "evidence_tier": "3; NN part third-party"
+    },
+    {
+     "rank": 141,
+     "who": "ESANN 2024 paper authors (Hettich et al.)",
+     "finding": "top 5% models perform similarly; feeding back previous-day revealed targets was key; scaling features MAE 6.0247->5.8206",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/esann__2024-159-optiver-closing-auction.md",
+     "evidence_tier": 3
+    }
+   ]
+  },
+  {
+   "name": "G-Research Crypto Forecasting",
+   "period": "2021-22 (dates unverified)",
+   "teams": null,
+   "entries": [
+    {
+     "rank": 1,
+     "who": "Meme Lord Capital (Jose, Eduardo)",
+     "method": "LightGBM; feature engineering dominant; feature list NOT obtained",
+     "evaluation": "3 months of live future data",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/gresearch__wrapping-up-crypto-forecasting.md",
+     "evidence_tier": 3
+    }
+   ]
+  },
+  {
+   "name": "Ubiquant Market Prediction",
+   "period": "2022",
+   "teams": 2893,
+   "entries": [
+    {
+     "rank": 1,
+     "who": "K-I-Y (Kaggle writeup not opened; via chaseli2026 transcription)",
+     "method": "LGBM x5 fold + TabNet x5 fold; 300 raw + 100 per-time_id cross-sectional mean features; last 2.4M rows",
+     "self_reported": {
+      "cv": [
+       0.141,
+       0.154
+      ],
+      "lb": [
+       0.141,
+       0.149
+      ],
+      "note": "authors say they hoped for luck"
+     },
+     "independent_reproduction": {
+      "setup": "650k rows, LGBM only, no TabNet, single author",
+      "baseline": 0.116271,
+      "with_features": 0.114061,
+      "icir": [
+       1.478,
+       1.228
+      ],
+      "verdict": "negative at small scale, not a refutation"
+     },
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/github__chaseli2026-ubiquant-top1-reproduce.md; sources/practitioner-disclosures-2026-10-04/github__chaseli2026-ubiquant-notes-txt.md",
+     "evidence_tier": "3; repro 5-partial"
+    }
+   ]
+  },
+  {
+   "name": "Two Sigma Financial Modeling Challenge / News competition",
+   "period": "2016-17 / 2018-19",
+   "entries": [],
+   "note": "not obtained (Kaggle blog and Medium returned 403)"
+  },
+  {
+   "name": "Numerai tournament",
+   "period": "ongoing",
+   "entries": [
+    {
+     "who": "official benchmark models",
+     "method": "LGBM 20000 trees lr 0.001 depth 6 leaves 64 colsample 0.1; walk-forward 156-era chunks, purge 8 (20D) or 16 (60D) eras",
+     "snapshot": "sources/practitioner-disclosures-2026-10-04/numerai__docs-models.md",
+     "evidence_tier": 4
+    }
+   ]
+  }
+ ],
+ "secondary_reviews": [
+  {
+   "title": "Codila: How Jane Street Uses AI",
+   "date": "2026-10",
+   "verdict": "faithful rewrite/process manual; no new facts (see I-20261004-03 s2)"
+  },
+  {
+   "title": "FourWeekMBA: Jane Street Made $10.3 Billion...",
+   "date": "2026-06-20",
+   "verdict": "relays WSJ/Bloomberg numbers (unverified); attribution to AI is editorial; no primary source ties revenue to AI",
+   "snapshot": "sources/practitioner-disclosures-2026-10-04/fourweekmba__jane-street-10b-quarter.md"
+  },
+  {
+   "title": "AI Weekly: Jane Street's AI Blitz Revealed",
+   "date": "2026-06-21",
+   "verdict": "aggregator pointer to WSJ; headline juxtaposes compute commitment with revenue",
+   "snapshot": "sources/practitioner-disclosures-2026-10-04/aiweekly__jane-street-coreweave.md"
+  },
+  {
+   "title": "PartnerInAI: Jane Street AI strategy",
+   "date": "2026-06-20",
+   "verdict": "speculation (likely/probably); generic stats; adds nothing",
+   "snapshot": "sources/practitioner-disclosures-2026-10-04/partnerinai__jane-street-ai-strategy.md"
+  },
+  {
+   "title": "CryptoBriefing: Citadel expands quant AI",
+   "date": "2026-09-25",
+   "verdict": "hiring news; no method",
+   "snapshot": "sources/practitioner-disclosures-2026-10-04/cryptobriefing__citadel-quant-ai-talent.md"
+  },
+  {
+   "title": "Onepagecode: Jane Street dataset deep dive",
+   "date": "2025-11-18",
+   "verdict": "paywalled tutorial; no winners' content",
+   "snapshot": "sources/practitioner-disclosures-2026-10-04/onepagecode__js-dataset-deep-dive.md"
+  },
+  {
+   "title": "AI Street: Inside Man Group's AlphaGPT",
+   "date": "2025-12-18",
+   "verdict": "interview with the primary author; ADDS content beyond primary (application layer, token cost dashboards, line-by-line code review, live-vs-research decay monitoring)",
+   "snapshot": "sources/practitioner-disclosures-2026-10-04/aistreet__inside-man-group-alphagpt.md"
+  }
+ ],
+ "transferable": [
+  {
+   "id": "E1-1",
+   "line": "E1",
+   "method": "marginal-contribution (MMC/BMC-style) test of new signal vs existing book",
+   "source": "Numerai docs",
+   "tier": 4,
+   "value": "high",
+   "effort_days": 0.5,
+   "cheapest_test": "compute for v1.2 signals and C2 fast-signal candidates; compare ordering with portfolio net-Sharpe increment; portfolio backtest wins on disagreement"
+  },
+  {
+   "id": "E1-2",
+   "line": "E1",
+   "method": "refit cadence frozen vs 5/10/20 days, purge=label horizon",
+   "source": "JS 2024 2nd place; Optiver 1st; Numerai benchmark",
+   "tier": "3 + 5-partial",
+   "value": "medium-high (may be small at daily frequency)",
+   "effort_days": "1-2",
+   "cheapest_test": "v1.4 ML ranker same features, vary refit interval only, 2025-26 forward window, same costs"
+  },
+  {
+   "id": "E1-3",
+   "line": "E1",
+   "method": "per-day cross-sectional rank/gaussian features; cross-sectional mean market-state features",
+   "source": "Optiver 1st; Ubiquant 1st (independent repro negative); Numerai",
+   "tier": "3; 5-partial negative",
+   "value": "medium-low",
+   "effort_days": 0.5,
+   "cheapest_test": "with/without; compare ICIR and net Sharpe"
+  },
+  {
+   "id": "E1-4",
+   "line": "E1",
+   "method": "multi-horizon auxiliary targets, loss normalised per target",
+   "source": "JS 2024 2nd place; codefluence (helps) vs scaomath (hurts)",
+   "tier": "3 + 5-partial; evidence split",
+   "value": "medium",
+   "effort_days": 1,
+   "cheapest_test": "20D-only vs 5/10/20D multitask, both preregistered"
+  },
+  {
+   "id": "E1-5",
+   "line": "E1",
+   "method": "3-5 seed averaging",
+   "source": "JS 2024 2nd place",
+   "tier": 3,
+   "value": "low-medium",
+   "effort_days": 0.2,
+   "cheapest_test": "1 vs 5 seeds net Sharpe"
+  },
+  {
+   "id": "E1-6",
+   "line": "E1",
+   "method": "Numerai benchmark LightGBM recipe as a variant",
+   "source": "Numerai docs",
+   "tier": 4,
+   "value": "low",
+   "effort_days": 0.2,
+   "cheapest_test": "fold into E1-2 grid"
+  },
+  {
+   "id": "E1-7",
+   "line": "E1",
+   "method": "earnings-call LLM feature packet",
+   "source": "Levy-Koijen 2026; Optiver Explaining Markets",
+   "tier": 3,
+   "value": "unknown (explains same-day moves, not subsequent returns)",
+   "effort_days": "1 read; submission needs owner decision",
+   "cheapest_test": "read NBER w35431 full text for post-announcement tests first"
+  },
+  {
+   "id": "E1-8",
+   "line": "E1",
+   "method": "LLM memorisation check (anonymise / strip evidence)",
+   "source": "Two Sigma 2026 II; JS 2026 interns; JS ep.29",
+   "tier": 1,
+   "value": "required for any LLM-scored feature",
+   "effort_days": "in T-20261004-79",
+   "cheapest_test": "already queued"
+  },
+  {
+   "id": "E2-1",
+   "line": "E2",
+   "method": "GMM regimes on ETF factor returns, rolling-window fit",
+   "source": "Two Sigma 2021",
+   "tier": 2,
+   "value": "low-medium",
+   "effort_days": 1,
+   "cheapest_test": "add column next to D1 baselines (200d MA, VIX tiers, SMH relative strength); must beat baseline"
+  },
+  {
+   "id": "E2-2",
+   "line": "E2",
+   "method": "pre-declared manual-override rules at regime breaks",
+   "source": "JS ep.22",
+   "tier": 1,
+   "value": "low (discipline)",
+   "effort_days": 0.2,
+   "cheapest_test": "write into S3 alternative-family rule doc"
+  },
+  {
+   "id": "E3-1",
+   "line": "E3",
+   "method": "closing-auction imbalance features",
+   "source": "Optiver competition",
+   "tier": 3,
+   "value": "data-dependent",
+   "effort_days": 0.2,
+   "cheapest_test": "check whether free SIP/IEX data carries auction imbalance; else exclude (to verify)"
+  },
+  {
+   "id": "E3-2",
+   "line": "E3",
+   "method": "online update latest day only, fresh optimizer",
+   "source": "JS 2024 2nd place",
+   "tier": 3,
+   "value": "low until E1-2",
+   "effort_days": null,
+   "cheapest_test": "follow E1-2"
+  },
+  {
+   "id": "E3-3",
+   "line": "E3",
+   "method": "crypto 1-min LightGBM + feature engineering",
+   "source": "G-Research competition",
+   "tier": 3,
+   "value": "low",
+   "effort_days": null,
+   "cheapest_test": "shelve until E1 results; Alpaca crypto costs to verify"
+  },
+  {
+   "id": "P-1",
+   "line": "process",
+   "method": "cross-round, cross-agent trial-count registry for multiple-testing deflation",
+   "source": "Man; JS ep.22",
+   "tier": 4,
+   "value": "medium-high",
+   "effort_days": 0.5,
+   "cheapest_test": "see whether directions.jsonl + preregistration manifests can already sum trials"
+  },
+  {
+   "id": "P-2",
+   "line": "process",
+   "method": "expected-decay curve per live signal, compare shadow/paper vs expectation",
+   "source": "Man",
+   "tier": 4,
+   "value": "medium-high",
+   "effort_days": 0.5,
+   "cheapest_test": "write expectations for T-43 sleeves before 10-07 first order"
+  },
+  {
+   "id": "P-3",
+   "line": "process",
+   "method": "as-received timestamps / PIT data",
+   "source": "JS ep.29",
+   "tier": "1",
+   "value": "already T-20261004-79",
+   "effort_days": null,
+   "cheapest_test": "queued"
+  },
+  {
+   "id": "P-4",
+   "line": "process",
+   "method": "research cost dashboard",
+   "source": "Man",
+   "tier": 4,
+   "value": "low (self-count exists)",
+   "effort_days": null,
+   "cheapest_test": "skip"
+  }
+ ],
+ "prior_work_note": "I-20260928-03 item 8 (competition methods = methodology only) is unchanged; this survey adds three transferable classes (validation discipline, online-update cadence, cross-sectional features with per-period evaluation) and three weakened claims (Ubiquant state features, NN beating GBDT in Optiver replication, Jane Street 2020 autoencoder)."
+}
