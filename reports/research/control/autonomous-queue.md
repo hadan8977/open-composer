@@ -1704,7 +1704,7 @@
   - 功效有限：在 6% 标准差的假设下，最小可检测价差约 100 bp。不通过只说明没有大效应，不代表小效应不存在；不通过时转前向影子。
 
 ### T-20261004-01 组合线 v1.3 候选：成本感知的交易规则（部分调仓、不交易区间），在不改信号的前提下给 v1.2 主变体降成本
-- status: ready
+- status: done（执行轮 04:08–04:40 UTC，子代理 Sonnet 5.5，提交 82304ac；待主审）
 - priority: 2
 - not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 跑；不和 T-20261002-02/T-20261001-22 的重任务、T-20261002-03 的抓取并行，同一执行轮若取了 T-03，先跑完它再跑本任务，或留给下一轮）
 - brief: reports/research/control/briefs/T-20261004-01.md
@@ -1713,3 +1713,4 @@
 - done_when: `t20261004_book_v13_tc/{identity,results,trial-ledger,diagnostics}.json` 和 `report.md` 已提交（git add -f），`mechanical_status` 为简报列出的三个值之一，新测试通过；结果标"待主审"。
 - notes:
   - 2026-10-04 01:30 UTC 01:07 主审轮（Opus）登记并写简报。看过的只有 B0 的成本拆分（合同第 0 节）：VIX 规则翻转每档每年 7.5 次，占成本 26%；先验 E1 约 20%、最终替换约 12%。不过也要交付成本-α 前沿和换手来源，供"按持续性倾斜的瞄准组合"（GP 命题 3）设计下一份合同。
+  - 2026-10-04 04:40 UTC 执行轮（Sonnet 5.5 子代理，机械结果，待主审）：identity 通过（max abs diff 0.0，o0/o3 及 5 个偏移对 R6 均 0.0）；B0 近期/压力期偏移中位数净夏普 1.485/0.598；5 规则 delta（近期/压力）：P2 +0.112/+0.036，P3 +0.154/+0.056，P2V +0.038/+0.071，N25 +0.073/+0.083，N50 +0.158/+0.124；E1-E4：P2/P3/P2V 只过 E2、E4；N25 过 E2、E3(t 2.94)、E4 不过 E1；N50 过 E1、E2、E4，E3 全样本 NW t 1.76 <2 不过。selected_rule=null，mechanical_status=no_rule_eligible_keep_v12，未跑第 2 阶段。诊断 D1：VIX 翻转刷新占换手 25.9%、成本 25.7%（近期）；D2 周度秩自相关 0.93–1.00；D3 2 倍成本：N50 1.642→1.561，B0 1.485→1.269。产物：reports/research/iterations/t20261004_book_v13_tc/{identity,results,trial-ledger,diagnostics}.json、report.md，代码 open_composer/research/equity_book/trading_rules.py、scripts/book_v13_trading_rules.py、tests/test_trading_rules.py（12 测试通过，ruff 干净）；rule parquet 在 data/research/book_v13/（未提交）。待主审：`iteration validate --stage final` 为 blocked（decision_record_missing_continue_pivot_stop，decision-record.md 在禁改清单，需主审写）；子代理自加了 `--stage final`；trial-ledger 是 .json 而校验器要 .jsonl。
