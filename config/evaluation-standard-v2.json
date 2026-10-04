@@ -1,6 +1,6 @@
 {
-  "version": "v2.0.2",
-  "effective_utc": "2026-10-01 18:16",
+  "version": "v2.1",
+  "effective_utc": "2026-10-04 17:52",
   "doc": "docs/evaluation-standard.zh.md",
   "recent_window_start": "2024-01-08",
   "offsets_blend": "equal-weight 5 rebalance offsets",
@@ -44,17 +44,20 @@
       "robustness_min": 5
     },
     "L1_live_pilot_proposal": {
-      "requires": "P2",
-      "paper_sessions_min": 20,
+      "requires": "P1",
+      "paper_sessions_min": 10,
       "forward_z_min": -2.0,
       "pilot_size_share_of_target": [
         0.1,
         0.2
-      ]
+      ],
+      "forward_record_start": "2026-09-01",
+      "review_required": true
     },
     "L2_scale_up": {
       "forward_months_min": 6,
-      "posterior_p_sr_gt_0_min": 0.9
+      "posterior_p_sr_gt_0_min": 0.9,
+      "requires": "P2"
     }
   },
   "execution_acceptance": {
@@ -87,5 +90,6 @@
     "gross": "re-permute the composite within the universe at every rebalance",
     "net": "quarter-fixed random ranks from hash(seed, quarter, symbol); real composite order statistics assigned by those ranks at every rebalance; entrants inserted by hash (v2.0.2)",
     "since": "2026-10-02 06:39 UTC"
-  }
+  },
+  "v2_1_note": "owner 2026-10-04: forward record counted from 2026-09-01 with labelled segments (design-seen / out-of-sample shadow / paper fills); >= 10 real paper sessions; L1 pilot needs P1 plus the balanced-window and logic review; scaling (L2) needs P2"
 }

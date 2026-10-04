@@ -58,6 +58,39 @@ SESSIONS = tuple(
     date(2026, m, d) for m, d in [(9, 24), (9, 25), (9, 28), (9, 29), (9, 30), (10, 1), (10, 2)]
 )
 
+LIVE_TRACK = {
+    "updated_at": "2026-10-04T17:54Z",
+    "rule": "前向记录从 09-01 算，加满 10 个真实模拟会话",
+    "live": [],
+    "candidates": [
+        {
+            "id": "S1",
+            "label": "S1 · Sector rotation",
+            "stage": "模拟盘",
+            "paper_since": "2026-09-21",
+            "next": "稳健性复核",
+            "next_due": "2026-10-08",
+            "proposal_due": "2026-10-13",
+        },
+        {
+            "id": "V12F1",
+            "label": "v1.2 F1",
+            "stage": "P1",
+            "paper_since": None,
+            "next": "10-07 首单",
+            "next_due": "2026-10-07",
+            "proposal_due": "2026-10-21",
+        },
+    ],
+    "engines": [
+        {"name": "日频股票组合", "now": "v1.2 在 P1", "next": "每日调仓", "due": "2026-10-09"}
+    ],
+    "owner_decisions": [
+        {"item": "实盘资金规模", "due": "2026-10-08"},
+        {"item": "远期事项", "due": "2026-11-30"},
+    ],
+}
+
 
 def _data(**overrides) -> od.DigestData:
     s1 = _sleeve(
@@ -190,6 +223,80 @@ def test_attention_items_flag_kill_switch_expiry_errors_and_gate() -> None:
     assert "38928f29" in joined
     assert "报错 2 次" in joined
     assert "汇报脚本自身问题" in joined
+    owner = "\n".join(od.owner_items(flagged))
+    ops = "\n".join(od.ops_items(flagged))
+    assert "manual stop" in owner and "9 天后到期" in owner
+    assert "round_limit_gate.py" not in owner and "round_limit_gate.py" in ops
+    assert "40 小时没有更新" in ops and "汇报脚本自身问题" in ops
+
+
+def test_owner_decisions_due_within_a_week_need_the_owner() -> None:
+    items = od.owner_items(_data(live_track=LIVE_TRACK))
+    assert items == ["待你决定：实盘资金规模（10-08 前）"]
+    assert od.ops_items(_data(live_track=LIVE_TRACK)) == []
+
+
+def test_holding_contributions_split_the_day_and_leave_a_residual() -> None:
+    prev, day = date(2026, 10, 1), date(2026, 10, 2)
+    closes = {"XLK": {prev: 100.0, day: 102.0}, "XLE": {prev: 50.0, day: 49.0}, "ZZZ": {day: 1.0}}
+    parts = od.holding_contributions(
+        {"XLK": 75.0, "XLE": 150.0, "ZZZ": 5.0}, closes, day, prev, 15000.0
+    )
+    assert [symbol for symbol, _ in parts] == ["XLK", "XLE"]  # no prior close for ZZZ
+    assert parts[0][1] == pytest.approx(75.0 * 2.0 / 15000.0)
+    assert parts[1][1] == pytest.approx(-150.0 / 15000.0)
+    s1 = _sleeve("S1 · Sector rotation", [(prev, 15000.0), (day, 15100.0)], start=prev)
+    text = "\n".join(
+        od._render_contributions(
+            _data(sleeves=(s1,), sessions=(prev, day), contributions={s1.name: parts})
+        )
+    )
+    # day return +0.667% = XLK +1.00% + XLE -1.00% + residual +0.67% (rebalanced that day)
+    assert "S1（+0.67%）：XLK +1.00%、XLE -1.00%；调仓与现金 +0.67%" in text
+
+
+def test_live_track_table_counts_real_paper_sessions() -> None:
+    lines = "\n".join(od._render_live_track(_data(live_track=LIVE_TRACK)))
+    assert "实盘：没有。" in lines
+    # 09-21 .. 10-02 holds ten US equity sessions
+    assert "| S1 · Sector rotation | 模拟盘 | 2026-09-21 | 10/10 |" in lines
+    assert "| v1.2 F1 | P1 | — | — |" in lines
+    assert "**日频股票组合**：现在 v1.2 在 P1；下一步 每日调仓（2026-10-09）" in lines
+    assert "缺失" in "\n".join(od._render_live_track(_data()))
+    assert od.paper_sessions_since("2026-10-05", date(2026, 10, 2)) == 0
+    assert od.paper_sessions_since(None, date(2026, 10, 2)) is None
+
+
+def test_round_reports_are_read_from_the_window_newest_first(tmp_path: Path) -> None:
+    folder = tmp_path / od.ROUND_DIR
+    folder.mkdir(parents=True)
+    (folder / "2026-10-04T1907Z-lead.md").write_text("# 主审轮\n\n## 结论\n- A\n", encoding="utf-8")
+    (folder / "2026-10-04T2207Z-exec.md").write_text("# 执行轮\n\n- B\n", encoding="utf-8")
+    (folder / "2026-10-02T1907Z-lead.md").write_text("old", encoding="utf-8")
+    (folder / "README.md").write_text("not a report", encoding="utf-8")
+    reports = od.collect_round_reports(tmp_path, datetime(2026, 10, 4, 0, 50, tzinfo=UTC))
+    assert [(r.at.hour, r.kind) for r in reports] == [(22, "exec"), (19, "lead")]
+    text = "\n".join(od._render_rounds(_data(round_reports=reports)))
+    assert "### 执行轮 10-04 22:07 UTC" in text and "### 主审轮 10-04 19:07 UTC" in text
+    assert "#### 结论" in text and "# 主审轮" not in text.splitlines()
+    assert "### 执行轮 10-04 22:07 UTC\n\n- B" in text
+    assert "没有落盘" in "\n".join(od._render_rounds(_data()))
+
+
+def test_sleeve_ledger_reads_only_dedicated_ledgers(tmp_path: Path) -> None:
+    folder = tmp_path / od.REHEARSAL_DIR
+    folder.mkdir(parents=True)
+    (folder / "s1-latest.json").write_text(
+        '{"position_scope": "strategy_ledger",'
+        ' "strategy_ledger_positions": {"XLK": 39, "XLE": "x", "Z": 0}}',
+        encoding="utf-8",
+    )
+    (folder / "shared-latest.json").write_text(
+        '{"position_scope": "account", "strategy_ledger_positions": {"XLK": 1}}', encoding="utf-8"
+    )
+    assert od.load_sleeve_ledger(tmp_path, "s1") == {"XLK": 39.0}
+    assert od.load_sleeve_ledger(tmp_path, "shared") == {}
+    assert od.load_sleeve_ledger(tmp_path, "missing") == {}
 
 
 def test_render_daily_has_fixed_sections_and_numbers() -> None:
@@ -198,14 +305,16 @@ def test_render_daily_has_fixed_sections_and_numbers() -> None:
         "## 需要你处理",
         "## 一、模拟盘",
         "## 二、股票组合 v1.2",
-        "## 三、研究进展",
-        "## 四、运行健康",
+        "## 三、离实盘多远",
+        "## 四、自动轮汇报",
+        "## 五、研究进展",
+        "## 六、运行健康",
     ):
         assert heading in text
     assert "- 没有。" in text
     assert "| **合计** |" in text
     assert "T-20261004-55" in text and "运行中 T-20261004-54" in text
-    assert "实盘：没有。" in text
+    assert "需要你处理 0 项，运行异常 0 项" in text
     assert "提交 5 次（研究 3、队列 2）" in text
     subject = od.digest_subject(_data())
     assert subject.startswith("[Open Composer] 日报 10-05（周一）")

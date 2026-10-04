@@ -1,17 +1,17 @@
 {
- "updated_at": "2026-10-04T17:48Z",
- "updated_by": "interactive session (Opus), plan docs/plan-owner-feedback-2026-10-04.zh.md",
- "rule": "owner 2026-10-04: forward record counts from 2026-09-01 (segments labelled), plus >= 10 real paper sessions, then a live pilot proposal; owner decides capital",
+ "updated_at": "2026-10-04T17:54Z",
+ "updated_by": "交互会话（Opus），计划 docs/plan-owner-feedback-2026-10-04.zh.md",
+ "rule": "机主 10-04：前向记录从 2026-09-01 算（分段标注），加满 10 个真实模拟会话，复核通过后提实盘试点；资金由机主定",
  "live": [],
  "candidates": [
   {
    "id": "S1",
    "strategy": "us_etf_sector_rotation_252_top2_weekly",
    "label": "S1 · Sector rotation",
-   "stage": "paper",
+   "stage": "模拟盘",
    "paper_since": "2026-09-21",
    "track_from": "2026-09-01",
-   "next": "robustness and theme review (D1/D3), allocation v2",
+   "next": "稳健性与主题复核（D1、5a 节）、配置第二版",
    "next_due": "2026-10-08",
    "proposal_due": "2026-10-13"
   },
@@ -19,10 +19,10 @@
    "id": "S2",
    "strategy": "us_etf_growth_rotation_blend_top2_monthly",
    "label": "S2 · Growth rotation",
-   "stage": "paper",
+   "stage": "模拟盘",
    "paper_since": "2026-09-21",
    "track_from": "2026-09-01",
-   "next": "robustness and theme review (D1/D3); SMH/XLK exposure",
+   "next": "稳健性与主题复核（SMH/XLK 暴露）",
    "next_due": "2026-10-08",
    "proposal_due": "2026-10-13"
   },
@@ -30,10 +30,10 @@
    "id": "S3",
    "strategy": "us_etf_levered_rotation_63_top2_monthly",
    "label": "S3 · Levered rotation",
-   "stage": "paper (under review)",
+   "stage": "模拟盘（复核中）",
    "paper_since": "2026-09-21",
    "track_from": "2026-09-01",
-   "next": "semiconductor dependence review and S3 alternative family (D1/D2)",
+   "next": "半导体依赖复核和 S3 替代族（D1/D2）",
    "next_due": "2026-10-08",
    "proposal_due": "2026-10-13"
   },
@@ -41,32 +41,32 @@
    "id": "C2",
    "strategy": "us_etf_eom_sector_blend_monthly",
    "label": "C2 · Month-end + seasonality",
-   "stage": "paper",
+   "stage": "模拟盘",
    "paper_since": "2026-10-01",
    "track_from": "2026-09-01",
-   "next": "10 paper sessions on 2026-10-14; robustness review",
+   "next": "10-14 满 10 个模拟会话；稳健性复核",
    "next_due": "2026-10-14",
    "proposal_due": "2026-10-14"
   },
   {
    "id": "V12F1",
    "strategy": "book_v12 F1 (quant1)",
-   "label": "v1.2 F1 · market-neutral book",
-   "stage": "P1, paper starts 2026-10-07",
+   "label": "v1.2 F1 · 市场中性多空",
+   "stage": "P1，10-07 开始模拟盘",
    "paper_since": null,
    "track_from": "2026-09-01",
-   "next": "dry runs 10-05/10-06, first order 10-07; capacity check vs live capital (A3)",
+   "next": "10-05/06 彩排，10-07 首单；按实盘资金核对容量（A3）",
    "next_due": "2026-10-07",
    "proposal_due": "2026-10-21"
   },
   {
    "id": "V12F2",
    "strategy": "book_v12 F2 (quant2)",
-   "label": "v1.2 F2 · SPY + overlay",
-   "stage": "P1, paper starts 2026-10-07",
+   "label": "v1.2 F2 · SPY + 叠加层",
+   "stage": "P1，10-07 开始模拟盘",
    "paper_since": null,
    "track_from": "2026-09-01",
-   "next": "dry runs 10-05/10-06, first order 10-07",
+   "next": "10-05/06 彩排，10-07 首单",
    "next_due": "2026-10-07",
    "proposal_due": "2026-10-21"
   }
@@ -74,33 +74,33 @@
  "engines": [
   {
    "id": "E1",
-   "name": "Daily equity book (main)",
-   "now": "v1.2 at P1; v1.4 ML Stage B on Modal; v1.5 factor-momentum timing preregistered",
-   "next": "daily cost-aware rebalancing with fast signals (C2 line), preregistration by the 10-05 lead rounds",
+   "name": "日频股票组合（主力）",
+   "now": "v1.2 在 P1；v1.4 ML 第 B 阶段在 Modal 上跑；v1.5 因子动量择时已预注册",
+   "next": "升级为每日按成本调仓并加入快信号（C2 线），10-05 主审轮写预注册",
    "due": "2026-10-09"
   },
   {
    "id": "E2",
-   "name": "ETF regime layer",
-   "now": "S1-S3, C2 on paper; S3 is 89% of program risk",
-   "next": "theme/regime diagnostics (D1) and S3 alternative family (D2); allocation v2 (T-58)",
+   "name": "ETF 状态层",
+   "now": "S1–S3、C2 在模拟盘；S3 占组合风险 89%",
+   "next": "主题和状态诊断（D1）、S3 替代族（D2）、配置第二版（T-58）",
    "due": "2026-10-08"
   },
   {
    "id": "E3",
-   "name": "Intraday liquid ETFs (exploratory)",
-   "now": "standalone intraday lines closed on costs this week",
-   "next": "<= 3 preregistered candidates with measured spreads and an IEX-vs-SIP check",
+   "name": "日内流动 ETF（探索）",
+   "now": "本周单独测的日内线都死于成本",
+   "next": "最多 3 个预注册候选，用实测价差，并测 IEX 和 SIP 数据源的差别",
    "due": "2026-10-10"
   }
  ],
  "owner_decisions": [
   {
-   "item": "live capital size (decides which strategies can go live as-is)",
+   "item": "实盘资金规模（决定哪些策略能原样上实盘）",
    "due": "2026-10-08"
   },
   {
-   "item": "authorize the live order path (CLAUDE.md scope change) and provide the live account and keys",
+   "item": "授权实盘下单路径（CLAUDE.md 范围变更），提供实盘账户和密钥",
    "due": "2026-10-12"
   }
  ]

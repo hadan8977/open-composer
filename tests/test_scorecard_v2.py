@@ -351,11 +351,45 @@ def test_forward_record_enables_l1_when_attested():
     ret, c2 = _make_family()
     fwd = {"V0": pd.Series(0.0008 + 0.004 * np.random.default_rng(9).standard_normal(30))}
     fwd["V0"].index = pd.bdate_range("2026-09-18", periods=30)
-    out = _score(ret, c2, forward=fwd, execution_acceptance={"V0": True})
+    out = _score(ret, c2, forward=fwd, execution_acceptance={"V0": True}, review_ok={"V0": True})
     card = out["variants"]["V0"]
     assert card["forward"]["status"] == "evaluated"
     assert card["L1"]["status"] == "evaluated"
     assert card["L2"]["met"] is False  # < 6 months of forward record
+
+
+def test_v21_l1_counts_real_paper_sessions_and_needs_the_review():
+    """Owner 2026-10-04: forward record stitched from 09-01, >= 10 real paper sessions, P1 enough
+    for a pilot proposal, plus the balanced-window and logic review."""
+    cfg = CFG["tiers"]["L1_live_pilot_proposal"]
+    assert cfg["requires"] == "P1" and cfg["paper_sessions_min"] == 10 and cfg["review_required"]
+    assert CFG["tiers"]["L2_scale_up"]["requires"] == "P2"
+    ret, c2 = _make_family()
+    fwd = {"V0": pd.Series(0.0008 + 0.004 * np.random.default_rng(9).standard_normal(30))}
+    fwd["V0"].index = pd.bdate_range("2026-09-01", periods=30)
+    few = _score(
+        ret,
+        c2,
+        forward=fwd,
+        execution_acceptance={"V0": True},
+        review_ok={"V0": True},
+        paper_sessions={"V0": 4},
+    )
+    assert few["variants"]["V0"]["L1"]["conditions"]["paper_sessions"] is False
+    enough = _score(
+        ret,
+        c2,
+        forward=fwd,
+        execution_acceptance={"V0": True},
+        review_ok={"V0": True},
+        paper_sessions={"V0": 10},
+    )
+    assert enough["variants"]["V0"]["L1"]["conditions"]["paper_sessions"] is True
+    unreviewed = _score(
+        ret, c2, forward=fwd, execution_acceptance={"V0": True}, paper_sessions={"V0": 10}
+    )
+    l1 = unreviewed["variants"]["V0"]["L1"]
+    assert l1["status"] == "not_evaluable" and "balanced_and_logic_review" in l1["reason"]
 
 
 def test_contribution_test():

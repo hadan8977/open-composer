@@ -410,6 +410,8 @@ def score_family(
     attestations: Mapping[str, Mapping[str, bool]] | None = None,
     execution_acceptance: Mapping[str, bool | None] | None = None,
     paper_engine_checklist_ok: Mapping[str, bool] | None = None,
+    paper_sessions: Mapping[str, int] | None = None,
+    review_ok: Mapping[str, bool | None] | None = None,
     n_trials: int | None = None,
     end: str | None = None,
     state_lag: int = 1,
@@ -423,7 +425,11 @@ def score_family(
     "gross": [...]}} placebo Sharpe arrays), ``forward`` (daily forward returns),
     ``attestations`` ({variant: {"V1": bool, "V2": bool}}).  ``execution_acceptance``
     ({variant: bool}) and ``paper_engine_checklist_ok`` are caller attestations needed for L1 and
-    ``paper_ready_pass``.  ``n_trials`` defaults to the number of variants scored.
+    ``paper_ready_pass``.  Since v2.1 (owner 2026-10-04) the forward record may be stitched from
+    2026-09-01, so ``paper_sessions`` ({variant: real paper sessions}) is counted separately for the
+    L1 paper condition, and ``review_ok`` ({variant: bool}) attests the balanced-window and logic
+    review that L1 requires when the config sets ``review_required``.  ``n_trials`` defaults to
+    the number of variants scored.
     """
     cfg = dict(config) if config is not None else load_config(config_path)
     signal_ls = signal_ls or {}
@@ -432,6 +438,8 @@ def score_family(
     attestations = attestations or {}
     execution_acceptance = execution_acceptance or {}
     paper_engine_checklist_ok = paper_engine_checklist_ok or {}
+    paper_sessions = paper_sessions or {}
+    review_ok = review_ok or {}
 
     returns = returns.rename(columns={"trade_date": "date"})
     cost2x = cost2x.rename(columns={"trade_date": "date"})
@@ -620,7 +628,14 @@ def score_family(
         tier, tier_detail = _tier(cfg, metrics, triggered, unassessed)
 
         fwd = _forward_block(forward.get(v), main, d)
-        l1, l2 = _forward_tiers(cfg, tier, fwd, execution_acceptance.get(v))
+        l1, l2 = _forward_tiers(
+            cfg,
+            tier,
+            fwd,
+            execution_acceptance.get(v),
+            paper_sessions=paper_sessions.get(v),
+            review=review_ok.get(v),
+        )
 
         v12 = [vetoes["V1"]["triggered"], vetoes["V2"]["triggered"]]
         ready = tier in ("P1", "P2") and bool(paper_engine_checklist_ok.get(v))
@@ -721,34 +736,54 @@ def _tier(
     return best, detail
 
 
+_TIER_RANK = {"none": 0, "P1": 1, "P2": 2}
+
+
 def _forward_tiers(
-    cfg: Mapping[str, Any], tier: str, fwd: Mapping[str, Any], exec_ok: bool | None
+    cfg: Mapping[str, Any],
+    tier: str,
+    fwd: Mapping[str, Any],
+    exec_ok: bool | None,
+    *,
+    paper_sessions: int | None = None,
+    review: bool | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if fwd.get("status") != "evaluated":
         ne = {"status": "not_evaluable", "reason": "no forward record"}
         return ne, ne
     l1c, l2c = cfg["tiers"]["L1_live_pilot_proposal"], cfg["tiers"]["L2_scale_up"]
     z = fwd.get("z_vs_backtest")
-    l1_conds = {
-        "is_P2": tier == "P2",
-        "paper_sessions": fwd["sessions"] >= l1c["paper_sessions_min"],
+    l1_required = l1c.get("requires", "P2")
+    # v2.1: the forward record may start before paper trading; count real paper sessions apart
+    paper_n = fwd["sessions"] if paper_sessions is None else paper_sessions
+    l1_conds: dict[str, bool | None] = {
+        "tier_at_least_" + l1_required: _TIER_RANK.get(tier, 0) >= _TIER_RANK[l1_required],
+        "paper_sessions": paper_n >= l1c["paper_sessions_min"],
         "forward_z": z is not None and z >= l1c["forward_z_min"],
         "execution_acceptance": None if exec_ok is None else bool(exec_ok),
     }
-    if l1_conds["execution_acceptance"] is None:
+    if l1c.get("review_required"):
+        l1_conds["balanced_and_logic_review"] = None if review is None else bool(review)
+    missing = [name for name, met in l1_conds.items() if met is None]
+    if missing:
         l1 = {
             "status": "not_evaluable",
-            "reason": "execution acceptance not attested",
+            "reason": "not attested: " + ", ".join(missing),
             "conditions": l1_conds,
         }
     else:
         l1 = {"status": "evaluated", "met": all(l1_conds.values()), "conditions": l1_conds}
     p = fwd.get("posterior", {}).get("p_sr_gt_0")
+    l2_required = l2c.get("requires")
     l2_conds = {
         "is_L1": bool(l1.get("met")),
         "forward_months": fwd["months"] >= l2c["forward_months_min"],
         "posterior_p": p is not None and p >= l2c["posterior_p_sr_gt_0_min"],
     }
+    if l2_required:
+        l2_conds["tier_at_least_" + l2_required] = (
+            _TIER_RANK.get(tier, 0) >= _TIER_RANK[l2_required]
+        )
     l2 = {"status": "evaluated", "met": all(l2_conds.values()), "conditions": l2_conds}
     return l1, l2
 

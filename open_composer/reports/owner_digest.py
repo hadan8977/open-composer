@@ -27,6 +27,9 @@ BOOK_DIR = Path("reports/paper/book")
 BOOK_LOG = Path("logs/book_v12_daily.log")
 EXECUTION_DIR = Path("reports/execution")
 WEEKLY_DIR = Path("reports/owner/weekly")
+ROUND_DIR = Path("reports/owner/rounds")
+LIVE_TRACK = Path("reports/owner/live-track.json")
+REHEARSAL_DIR = Path("reports/paper/rehearsal")
 BOOK_ACCOUNTS = ("quant1", "quant2")
 AUTH_WARN_DAYS = 14.0
 DISK_WARN_PERCENT = 85.0
@@ -34,10 +37,14 @@ ACCOUNT_STALE_HOURS = 30.0
 MAX_SECTION_BULLETS = 8
 MAX_DONE_TASKS = 30
 BULLET_CHARS = 220
+ROUND_REPORT_CHARS = 6000
+DECISION_WARN_DAYS = 7
+RESIDUAL_SHOW = 0.001  # show the unexplained part of a sleeve's day return above 10 bp
 
 _HEADING_RE = re.compile(r"^## (\d{4}-\d{2}-\d{2})(?:（(.*?)）)?[：:]\s*(.*)$")
 _TIME_RE = re.compile(r"(\d{1,2}):(\d{2})")
 _PRIORITY_RE = re.compile(r"（[^（）]*优先于下方[^（）]*）\s*$")
+_ROUND_FILE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2})(\d{2})Z-(lead|exec)\.md$")
 _LOG_LINE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})Z (\w+) (.*)$")
 _COMMIT_KIND_RE = re.compile(r"^([A-Za-z][A-Za-z\-]*)(?:\([^)]*\))?:")
 _KIND_LABELS = {
@@ -160,6 +167,14 @@ class HealthInfo:
 
 
 @dataclass(frozen=True)
+class RoundReport:
+    at: datetime
+    kind: str  # "lead" | "exec"
+    path: str
+    text: str
+
+
+@dataclass(frozen=True)
 class DigestData:
     now: datetime
     window_start: datetime
@@ -180,6 +195,9 @@ class DigestData:
     health: HealthInfo | None = None
     weekly_text: str | None = None
     weekly_path: str | None = None
+    round_reports: tuple[RoundReport, ...] = ()
+    live_track: dict[str, Any] | None = None
+    contributions: dict[str, tuple[tuple[str, float], ...]] = field(default_factory=dict)
     errors: tuple[str, ...] = ()
 
 
@@ -321,24 +339,73 @@ def spy_returns(
     )
 
 
-def attention_items(data: DigestData) -> list[str]:
+def holding_contributions(
+    qty: dict[str, float],
+    closes: dict[str, dict[date, float]],
+    day: date,
+    prev: date,
+    nav_prev: float,
+) -> tuple[tuple[str, float], ...]:
+    """Each holding's close-to-close P&L on ``day`` as a share of the sleeve's
+    value at ``prev``, largest first.  Uses the latest ledger quantities, so a
+    position changed on ``day`` itself leaves a residual (shown separately)."""
+    parts = []
+    for symbol, quantity in qty.items():
+        c1, c0 = closes.get(symbol, {}).get(day), closes.get(symbol, {}).get(prev)
+        if quantity and c1 and c0 and nav_prev:
+            parts.append((symbol, quantity * (c1 - c0) / nav_prev))
+    return tuple(sorted(parts, key=lambda item: -abs(item[1])))
+
+
+def paper_sessions_since(start: str | None, last: date | None) -> int | None:
+    """US equity sessions from ``start`` through ``last``, both inclusive."""
+    if not start or last is None:
+        return None
+    try:
+        first = date.fromisoformat(start)
+    except ValueError:
+        return None
+    if first > last:
+        return 0
+    from open_composer.market_sessions import us_equity_session_dates
+
+    return len(us_equity_session_dates(first, last))
+
+
+def owner_items(data: DigestData) -> list[str]:
+    """What only the owner can act on: money, authorizations, decisions."""
     items: list[str] = []
     account = data.account
-    if account is not None:
-        if account.kill_switch_enabled:
-            items.append(f"紧急停止开关已打开：{account.kill_switch_reason or '原因未记录'}")
-        if (
-            account.age_hours is not None
-            and account.age_hours > ACCOUNT_STALE_HOURS
-            and data.now.astimezone(UTC).weekday() in (1, 2, 3, 4, 5)
-        ):
-            items.append(f"主模拟账户快照已 {account.age_hours:.0f} 小时没有更新")
+    if account is not None and account.kill_switch_enabled:
+        items.append(f"紧急停止开关已打开：{account.kill_switch_reason or '原因未记录'}")
     for row in data.sleeves:
         if row.auth_days is not None and row.auth_days <= AUTH_WARN_DAYS:
             when = f"{row.auth_expires:%m-%d %H:%M} UTC" if row.auth_expires else "日期未知"
             items.append(f"{row.label} 的模拟授权 {row.auth_days:.0f} 天后到期（{when}）")
         if row.auth_state not in ("authorized", ""):
             items.append(f"{row.label} 的授权状态是 {row.auth_state}")
+    today = data.now.astimezone(UTC).date()
+    for decision in (data.live_track or {}).get("owner_decisions") or []:
+        try:
+            due = date.fromisoformat(str(decision.get("due")))
+        except ValueError:
+            continue
+        if (due - today).days <= DECISION_WARN_DAYS:
+            items.append(f"待你决定：{decision.get('item')}（{due:%m-%d} 前）")
+    return items
+
+
+def ops_items(data: DigestData) -> list[str]:
+    """Operational anomalies the research side fixes; listed for awareness."""
+    items: list[str] = []
+    account = data.account
+    if (
+        account is not None
+        and account.age_hours is not None
+        and account.age_hours > ACCOUNT_STALE_HOURS
+        and data.now.astimezone(UTC).weekday() in (1, 2, 3, 4, 5)
+    ):
+        items.append(f"主模拟账户快照已 {account.age_hours:.0f} 小时没有更新")
     health = data.health
     if health is not None:
         items.extend(f"定时任务异常：{problem}" for problem in health.cron_problems)
@@ -358,6 +425,10 @@ def attention_items(data: DigestData) -> list[str]:
     return items
 
 
+def attention_items(data: DigestData) -> list[str]:
+    return owner_items(data) + ops_items(data)
+
+
 # ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------
@@ -367,6 +438,25 @@ def _holdings_text(row: SleeveRow) -> str:
     if not row.holdings:
         return "—"
     return "、".join(f"{symbol} {weight * 100:.0f}%" for symbol, weight in row.holdings)
+
+
+def _render_contributions(data: DigestData) -> list[str]:
+    rows = []
+    for row in data.sleeves:
+        parts = data.contributions.get(row.name) or ()
+        if not parts:
+            continue
+        day_ret, _ = sleeve_returns(row, data.sessions)
+        shown = [(symbol, share) for symbol, share in parts[:3] if abs(share) >= 0.00005]
+        text = "、".join(f"{symbol} {pct(share)}" for symbol, share in shown) or "持仓几乎不动"
+        if day_ret is not None:
+            residual = day_ret - sum(share for _, share in parts)
+            if abs(residual) >= RESIDUAL_SHOW:
+                text += f"；调仓与现金 {pct(residual)}"
+        rows.append(f"- {row.label.split(' ')[0]}（{pct(day_ret)}）：{text}")
+    if not rows:
+        return []
+    return ["当日盈亏来自哪些持仓（收盘持仓近似，占子策略净值）：", "", *rows]
 
 
 def _render_paper(data: DigestData) -> list[str]:
@@ -411,6 +501,11 @@ def _render_paper(data: DigestData) -> list[str]:
         lines.append("对账不一致：" + "；".join(f"{row.label}：{row.agreement}" for row in odd))
     else:
         lines.append("对账：经纪商持仓等于各子策略账本之和。")
+    attribution = _render_contributions(data)
+    if attribution:
+        lines.append("")
+        lines.extend(attribution)
+        lines.append("")
     fills = [
         f"{row.label.split(' ')[0]} {row.fill_rate * 100:.0f}%"
         for row in data.sleeves
@@ -516,6 +611,60 @@ def _render_health(data: DigestData) -> list[str]:
     return lines
 
 
+def _render_live_track(data: DigestData) -> list[str]:
+    track = data.live_track
+    if not track:
+        return [f"`{LIVE_TRACK}` 缺失，无法列出实盘进度。"]
+    live = track.get("live") or []
+    names = "、".join(str(item.get("label") or item.get("id")) for item in live)
+    lines = [f"实盘：{names or '没有'}。规则：{track.get('rule', '—')}。", ""]
+    lines.append("| 候选 | 阶段 | 模拟盘起 | 已满会话 | 下一步 | 截止 | 实盘提议 |")
+    lines.append("|---|---|---|---|---|---|---|")
+    last = data.sessions[-1] if data.sessions else None
+    for item in track.get("candidates") or []:
+        done = paper_sessions_since(item.get("paper_since"), last)
+        lines.append(
+            f"| {item.get('label', item.get('id'))} | {item.get('stage', '—')} | "
+            f"{item.get('paper_since') or '—'} | {'—' if done is None else f'{done}/10'} | "
+            f"{item.get('next', '—')} | {item.get('next_due', '—')} | "
+            f"{item.get('proposal_due', '—')} |"
+        )
+    engines = track.get("engines") or []
+    if engines:
+        lines.extend(["", "研究引擎："])
+        lines.extend(
+            f"- **{engine.get('name')}**：现在 {engine.get('now')}；"
+            f"下一步 {engine.get('next')}（{engine.get('due')}）"
+            for engine in engines
+        )
+    lines.extend(["", f"（`{LIVE_TRACK}`，更新于 {track.get('updated_at', '—')}）"])
+    return lines
+
+
+def _demote_headings(text: str) -> list[str]:
+    lines = text.rstrip().splitlines()
+    if lines and lines[0].startswith("# "):
+        lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    return [("###" + line[1:]) if line.startswith("#") else line for line in lines]
+
+
+def _render_rounds(data: DigestData) -> list[str]:
+    if not data.round_reports:
+        return [f"没有落盘的自动轮汇报（每轮写入 `{ROUND_DIR}/`）。"]
+    lines: list[str] = []
+    for report in data.round_reports:
+        label = "主审轮" if report.kind == "lead" else "执行轮"
+        lines.extend([f"### {label} {report.at:%m-%d %H:%M} UTC", ""])
+        body = _demote_headings(report.text)
+        if data.kind == "weekly":
+            body = [line for line in body if line.strip()][:3]
+        lines.extend(body)
+        lines.append("")
+    return lines
+
+
 def render_digest(data: DigestData) -> str:
     title = "周报" if data.kind == "weekly" else "日报"
     generated = data.now.astimezone(UTC)
@@ -542,7 +691,8 @@ def render_digest(data: DigestData) -> str:
                 f"本周判断未写：`{WEEKLY_DIR}/{iso_week_label(data.now)}.zh.md` 不存在"
                 "（周六 19:07 主审轮负责），以下只有数据。"
             )
-    items = attention_items(data)
+    items = owner_items(data)
+    ops = ops_items(data)
     _, day_ret, week_ret = combined_returns(data.sleeves, data.sessions)
     spy_day, spy_week = spy_returns(data.spy_closes, data.sessions)
     period = "本周" if data.kind == "weekly" else "过去 24 小时"
@@ -552,7 +702,8 @@ def render_digest(data: DigestData) -> str:
             f"**概览**：ETF 子策略当日 {pct(day_ret)}（SPY {pct(spy_day)}），"
             f"近 5 日 {pct(week_ret)}（SPY {pct(spy_week)}）；"
             f"{period}完成或复核 {len(data.done_tasks)} 项研究任务，"
-            f"提交 {data.commit_total} 次；需要你处理 {len(items)} 项。",
+            f"提交 {data.commit_total} 次；需要你处理 {len(items)} 项，"
+            f"运行异常 {len(ops)} 项（第六节）。",
         ]
     )
     out.extend(["", "## 需要你处理", ""])
@@ -561,14 +712,21 @@ def render_digest(data: DigestData) -> str:
     out.extend(_render_paper(data))
     out.extend(["", "## 二、股票组合 v1.2（quant1 / quant2）", ""])
     out.extend(_render_book(data))
-    out.extend(["", f"## 三、研究进展（{period}）", ""])
+    out.extend(["", "## 三、离实盘多远", ""])
+    out.extend(_render_live_track(data))
+    out.extend(["", f"## 四、自动轮汇报（{period}）", ""])
+    out.extend(_render_rounds(data))
+    out.extend(["", f"## 五、研究进展（{period}）", ""])
     out.extend(_render_research(data))
-    out.extend(["", "## 四、运行健康", ""])
+    out.extend(["", "## 六、运行健康", ""])
+    if ops:
+        out.append("异常（研究侧处理，列出供你知悉）：")
+        out.append("")
+        out.extend(f"- {item}" for item in ops)
+        out.append("")
     out.extend(_render_health(data))
     out.extend(
         [
-            "",
-            "实盘：没有。实盘要过 P2，再加 20 个模拟会话和执行验收，最后由你决定。",
             "",
             "详细页面在 cockpit（Cloudflare Access 登录）；"
             "所有数字的来源见 `docs/owner-reporting.zh.md` 第 4 节。",
@@ -580,7 +738,7 @@ def render_digest(data: DigestData) -> str:
 def digest_subject(data: DigestData) -> str:
     _, day_ret, week_ret = combined_returns(data.sleeves, data.sessions)
     spy_day, spy_week = spy_returns(data.spy_closes, data.sessions)
-    pending = len(attention_items(data))
+    pending = len(owner_items(data))
     if data.kind == "weekly":
         head = f"[Open Composer] 周报 {iso_week_label(data.now)}"
         money_part = f"子策略近 5 日 {pct(week_ret)}，SPY {pct(spy_week)}"
@@ -865,6 +1023,66 @@ def collect_health(root: Path, start: datetime) -> HealthInfo:
     )
 
 
+def collect_round_reports(root: Path, start: datetime) -> tuple[RoundReport, ...]:
+    folder = root / ROUND_DIR
+    if not folder.is_dir():
+        return ()
+    reports = []
+    for path in folder.glob("*.md"):
+        match = _ROUND_FILE_RE.match(path.name)
+        if not match:
+            continue
+        day, hour, minute, kind = match.groups()
+        at = datetime.fromisoformat(f"{day}T{hour}:{minute}").replace(tzinfo=UTC)
+        if at < start:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if len(text) > ROUND_REPORT_CHARS:
+            text = (
+                text[:ROUND_REPORT_CHARS].rstrip()
+                + f"\n\n（截断，全文见 `{ROUND_DIR / path.name}`）"
+            )
+        reports.append(RoundReport(at, kind, str(ROUND_DIR / path.name), text))
+    return tuple(sorted(reports, key=lambda report: report.at, reverse=True))
+
+
+def load_sleeve_ledger(root: Path, name: str) -> dict[str, float]:
+    payload = _read_json(root / REHEARSAL_DIR / f"{name}-latest.json") or {}
+    ledger = payload.get("strategy_ledger_positions")
+    if payload.get("position_scope") != "strategy_ledger" or not isinstance(ledger, dict):
+        return {}
+    out: dict[str, float] = {}
+    for symbol, qty in ledger.items():
+        try:
+            value = float(qty)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(symbol, str) and value:
+            out[symbol] = value
+    return out
+
+
+def collect_contributions(
+    root: Path, sleeves: tuple[SleeveRow, ...], sessions: tuple[date, ...]
+) -> dict[str, tuple[tuple[str, float], ...]]:
+    if len(sessions) < 2 or not sleeves:
+        return {}
+    from open_composer.cockpit.data.paper import load_session_prices
+
+    day, prev = sessions[-1], sessions[-2]
+    ledgers = {row.name: load_sleeve_ledger(root, row.name) for row in sleeves}
+    symbols = tuple(sorted({symbol for ledger in ledgers.values() for symbol in ledger}))
+    prices = load_session_prices(root, symbols, prev)
+    closes = {symbol: {d: bar[1] for d, bar in bars.items()} for symbol, bars in prices.items()}
+    return {
+        row.name: holding_contributions(ledgers[row.name], closes, day, prev, row.nav_on(prev))
+        for row in sleeves
+    }
+
+
 def load_weekly_text(root: Path, now: datetime) -> tuple[str | None, str | None]:
     path = root / WEEKLY_DIR / f"{iso_week_label(now)}.zh.md"
     try:
@@ -906,6 +1124,13 @@ def collect_digest(root: Path, now: datetime, kind: str) -> DigestData:
     weekly_text, weekly_path = (None, None)
     if kind == "weekly":
         weekly_text, weekly_path = load_weekly_text(root, now)
+    contributions: dict[str, tuple[tuple[str, float], ...]] = {}
+    try:
+        contributions = collect_contributions(root, sleeves, sessions)
+    except Exception as exc:
+        errors.append(f"持仓贡献计算失败（{type(exc).__name__}）")
+    round_reports = collect_round_reports(root, window_start)
+    live_track = _read_json(root / LIVE_TRACK)
     return DigestData(
         now=now,
         window_start=window_start,
@@ -926,5 +1151,8 @@ def collect_digest(root: Path, now: datetime, kind: str) -> DigestData:
         health=health,
         weekly_text=weekly_text,
         weekly_path=weekly_path,
+        round_reports=round_reports,
+        live_track=live_track,
+        contributions=contributions,
         errors=tuple(errors),
     )
