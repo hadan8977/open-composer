@@ -124,6 +124,10 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    3. 新方向先查重：`uv run oc research directions check <关键词>`，同时查本仓库的负面实验。再按登记簿格式追加，`uv run oc research directions validate` 必须 ok。
    4. 最多往队列里加 2 个新任务。写清楚机制、最便宜的否定测试和"过了之后做什么"。
 6. 队列空了不必补满。纲领的深挖实验优先，没有值得设计的就早点收尾。
+7. **周六 19:07 这一轮还要写给机主的周报**：`reports/owner/weekly/<ISO 周，如 2026-W41>.zh.md`，结构和口径按 `docs/owner-reporting.zh.md` 第 3–5 节，范例是 `2026-W40.zh.md`。
+   - 数字从仓库文件取，用代码算，带路径。先写一页结论，最后写需要机主决定的事；没有就写"没有"。
+   - 周日 00:50 UTC 的 cron（`scripts/owner_report.py auto --send`）会把它和脚本生成的一周数据一起发到机主邮箱。不要自己发邮件。
+   - 这一轮被闸门暂停或没跑成，周日照常发纯数据版。下一个主审轮补写，再用 `uv run python scripts/owner_report.py weekly --send --force` 补发。
 
 ### 4B. 执行轮（Sonnet high）
 

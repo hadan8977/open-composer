@@ -335,7 +335,9 @@ class Paseo(Protocol):
 class PaseoCli:
     """The local ``paseo`` CLI. Never prints its output; errors carry the exit code only."""
 
-    def __init__(self, timeout: float = 30.0) -> None:
+    # `paseo schedule ls` took ~33 s on 2026-10-04 and the old 30 s limit killed every
+    # gate run from 12:20 UTC on; three calls x 75 s still fit inside the cron's `timeout 240`.
+    def __init__(self, timeout: float = 75.0) -> None:
         found = shutil.which("paseo")
         exe = found or (str(PASEO_FALLBACK) if PASEO_FALLBACK.exists() else None)
         if exe is None:
