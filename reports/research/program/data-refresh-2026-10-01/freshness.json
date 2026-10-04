@@ -306,6 +306,137 @@
     "same run as alpha101_broad"
    ],
    "note": "same 178 extra keys; rows <= 2026-09-10 identical, 09-15..09-17 differ"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "universe_broad (T-02)",
+   "status": "swapped 2026-10-02",
+   "last_date_before": "month_end 2026-08-31",
+   "last_date_after": "month_end 2026-09-30",
+   "candidate_last_date_after_in_tmp": null,
+   "n_new_dates": 1,
+   "coverage_ratio": 0.9802129621866355,
+   "check_pass": true,
+   "runtime_s": null,
+   "command": "scripts/build_feature_universe.py --no-top-n-cap --min-dollar-adv 1000000 --min-close 2.0 --include-delisted-root data/sip-delisted/by_year --out-dir data/features/_t02_stage/universe_broad; scripts/t02_price_tables.py universe-compose/swap"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "universe_narrow (T-02)",
+   "status": "swapped 2026-10-02",
+   "last_date_before": "month_end 2026-08-31",
+   "last_date_after": "month_end 2026-09-30",
+   "candidate_last_date_after_in_tmp": null,
+   "n_new_dates": 1,
+   "coverage_ratio": 1.0063073394495412,
+   "check_pass": true,
+   "runtime_s": null,
+   "command": "scripts/build_feature_universe.py --memory-limit 1200MB --out-dir data/features/_t02_stage/universe; scripts/t02_price_tables.py universe-compose/swap"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "daily_broad (T-02)",
+   "status": "swapped (second swap 2026-10-04)",
+   "last_date_before": "2026-10-01",
+   "last_date_after": "2026-10-02",
+   "candidate_last_date_after_in_tmp": null,
+   "n_new_dates": 11,
+   "coverage_ratio": 1.000814170001648,
+   "check_pass": true,
+   "runtime_s": null,
+   "command": "scripts/build_daily_features.py --universe-root data/features/universe_broad --extra-daily-root data/sip-delisted/by_year --out-dir data/features/_t02_stage/daily_broad --memory-limit 1.0GB --years 2026 (built 10-04 00:52Z by R1004-0048-T02); strict zone passes only with the price-ratio-aware bound"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "daily_narrow (T-02)",
+   "status": "swapped (second swap 2026-10-04)",
+   "last_date_before": "2026-10-01",
+   "last_date_after": "2026-10-02",
+   "candidate_last_date_after_in_tmp": null,
+   "n_new_dates": 11,
+   "coverage_ratio": 0.9970706996056196,
+   "check_pass": true,
+   "runtime_s": null,
+   "command": "scripts/build_daily_features.py --universe-root data/features/universe --out-dir data/features/_t02_stage/daily --memory-limit 1.0GB --years 2026"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "alpha101_broad (T-02)",
+   "status": "not swapped (partial)",
+   "last_date_before": "2026-09-17",
+   "last_date_after": "2026-09-17 (unchanged)",
+   "candidate_last_date_after_in_tmp": "2026-10-02",
+   "n_new_dates": 29,
+   "coverage_ratio": 1.007510729613734,
+   "check_pass": false,
+   "runtime_s": null,
+   "command": "scripts/build_alpha101_alpha191_features.py --years 2026 --force --universe-root data/features/universe_broad --alpha101-out-dir data/features/_t02_stage/alpha101_broad --alpha191-out-dir data/features/_t02_stage/alpha191_broad --extra-daily-root data/sip-delisted/by_year --memory-limit 800MB"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "alpha191_broad (T-02)",
+   "status": "not swapped (partial)",
+   "last_date_before": "2026-09-17",
+   "last_date_after": "2026-09-17 (unchanged)",
+   "candidate_last_date_after_in_tmp": "2026-10-02",
+   "n_new_dates": 29,
+   "coverage_ratio": 1.007510729613734,
+   "check_pass": false,
+   "runtime_s": null,
+   "command": "same command as alpha101_broad"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "sec_fundamentals_facts (T-02)",
+   "status": "replaced in place",
+   "last_date_before": "filed 2026-09-22",
+   "last_date_after": "filed 2026-09-30",
+   "candidate_last_date_after_in_tmp": null,
+   "n_new_dates": null,
+   "coverage_ratio": null,
+   "check_pass": true,
+   "runtime_s": null,
+   "command": "scripts/build_sec_xbrl_fundamentals.py --stage download --source bulk --force; --stage facts --source bulk"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "sec_fundamentals_daily (T-02)",
+   "status": "replaced in place",
+   "last_date_before": "2026-09-17",
+   "last_date_after": "2026-10-02",
+   "candidate_last_date_after_in_tmp": null,
+   "n_new_dates": 29,
+   "coverage_ratio": 1.0044287658889166,
+   "check_pass": true,
+   "runtime_s": 509,
+   "command": "scripts/build_sec_xbrl_fundamentals.py --stage daily --source bulk --start-year 2026 --end-year 2026 --force"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "nsi (T-02)",
+   "status": "not swapped (partial); old restored",
+   "last_date_before": "2026-09-17",
+   "last_date_after": "2026-09-17 (unchanged)",
+   "candidate_last_date_after_in_tmp": "2026-10-02",
+   "n_new_dates": 29,
+   "coverage_ratio": 1.0034501445930604,
+   "check_pass": false,
+   "runtime_s": 91,
+   "command": "scripts/build_nsi_signal.py"
+  },
+  {
+   "task": "T-20261002-02",
+   "table": "short_interest (T-02)",
+   "status": "not swapped (partial); old restored",
+   "last_date_before": "2026-09-16",
+   "last_date_after": "2026-09-16 (unchanged)",
+   "candidate_last_date_after_in_tmp": "2026-10-02",
+   "n_new_dates": 29,
+   "coverage_ratio": 1.0090982841490965,
+   "check_pass": false,
+   "runtime_s": 21,
+   "command": "scripts/build_short_interest_features.py --start-year 2018 --end-year 2026 --force (2018-2025 restored from backup; the brief's --start-year 2026 drops carry-in records)"
   }
- ]
+ ],
+ "t02_D": "2026-10-02"
 }

@@ -1,0 +1,121 @@
+{
+  "swaps": [
+    {
+      "table": "universe_broad",
+      "dest": "data/features/universe_broad/2026.parquet",
+      "backup": "data/live/backup-features-20261002/universe_broad/2026.parquet",
+      "sha256_before": "fd80c2b3ab66f4852dcf089d03e1a42a69ecbbc65381cea1bc1857764883ffdc",
+      "sha256_after": "98a519f4807b607a3a898dbbe09a078253e2be082eddeb9de565e65af398abe3",
+      "sha256_staged": "98a519f4807b607a3a898dbbe09a078253e2be082eddeb9de565e65af398abe3",
+      "swapped_utc": "2026-10-02T13:40:02Z",
+      "note": "month_end<=2026-08-31 kept from existing; 2026-09-30 appended from the T-02 rebuild"
+    },
+    {
+      "table": "universe",
+      "dest": "data/features/universe/2026.parquet",
+      "backup": "data/live/backup-features-20261002/universe/2026.parquet",
+      "sha256_before": "dea84257017f7caf70c5a7dee9e1406a621fed69b2e1cc20f5bc43dfdbfd4bdc",
+      "sha256_after": "3061fdfcec8f99ab66f8d57ca5e1dcee9f7bf8c32d0acab3bf27eee0e32d77d4",
+      "sha256_staged": "3061fdfcec8f99ab66f8d57ca5e1dcee9f7bf8c32d0acab3bf27eee0e32d77d4",
+      "swapped_utc": "2026-10-02T13:40:02Z",
+      "note": "month_end<=2026-08-31 kept from existing; 2026-09-30 from the T-02 rebuild (equals the T-21 09-30 rows)"
+    },
+    {
+      "table": "daily_broad",
+      "dest": "data/features/daily_broad/2026.parquet",
+      "backup": "data/live/backup-features-20261002/daily_broad/2026.parquet",
+      "sha256_before": "3fd215c00d355a5cf410ac98d882c3d792fccecb1a23c3f93292ddc5d0167d0d",
+      "sha256_after": "a25ba11060432247e82cb0d8691d01508123e34f4b17c326062df5eaf953e4cf",
+      "sha256_staged": "a25ba11060432247e82cb0d8691d01508123e34f4b17c326062df5eaf953e4cf",
+      "swapped_utc": "2026-10-02T13:47:33Z",
+      "note": "strict zone passed with price-ratio-aware rounding bound (max_changed_share broad 4.07e-5, narrow 0); the brief-literal 0.04/close bound gave 0.0012/0.0020 (ret_252, momentum_252_21) -- see t02-checks.json"
+    },
+    {
+      "table": "daily",
+      "dest": "data/features/daily/2026.parquet",
+      "backup": "data/live/backup-features-20261002/daily/2026.parquet",
+      "sha256_before": "1e4a1833ce39d4efe2add235d99d7ba602586664bfd4249526df3328566223ef",
+      "sha256_after": "bc56e432b61f80680865ef32a5b1735c73f017c74a848b0f492d656cb79d67d6",
+      "sha256_staged": "bc56e432b61f80680865ef32a5b1735c73f017c74a848b0f492d656cb79d67d6",
+      "swapped_utc": "2026-10-02T13:47:41Z",
+      "note": "strict zone passed with price-ratio-aware rounding bound (max_changed_share broad 4.07e-5, narrow 0); the brief-literal 0.04/close bound gave 0.0012/0.0020 (ret_252, momentum_252_21) -- see t02-checks.json"
+    },
+    {
+      "table": "daily_broad_to_d1002",
+      "dest": "data/features/daily_broad/2026.parquet",
+      "backup": "data/live/backup-features-20261002/daily_broad_to_d1002/2026.parquet",
+      "sha256_before": "a25ba11060432247e82cb0d8691d01508123e34f4b17c326062df5eaf953e4cf",
+      "sha256_after": "3c0e93f2dea80e29fc22d0a99b3541c0610b539231685968a60aa94e1f574d3b",
+      "sha256_staged": "3c0e93f2dea80e29fc22d0a99b3541c0610b539231685968a60aa94e1f574d3b",
+      "swapped_utc": "2026-10-04T07:59:49Z",
+      "note": "10-04 R1004-0741-T02: rebuild to D=2026-10-02 (archive 10-02 22:05 append); intermediate 10-01 version (first T-02 swap) backed up here; original pre-T-02 file stays under backup-features-20261002/daily_broad/; strict zone passes with price-ratio-aware bound (checks2/daily_broad_strict_ratio.json), the brief-literal 0.04/close bound fails at ret_252/momentum_252_21"
+    },
+    {
+      "table": "daily_to_d1002",
+      "dest": "data/features/daily/2026.parquet",
+      "backup": "data/live/backup-features-20261002/daily_to_d1002/2026.parquet",
+      "sha256_before": "bc56e432b61f80680865ef32a5b1735c73f017c74a848b0f492d656cb79d67d6",
+      "sha256_after": "6e1087a77ebc42b0544560c923b7b2aedf8f22466ee4efa425ac3149829ca906",
+      "sha256_staged": "6e1087a77ebc42b0544560c923b7b2aedf8f22466ee4efa425ac3149829ca906",
+      "swapped_utc": "2026-10-04T07:59:56Z",
+      "note": "10-04 R1004-0741-T02: rebuild to D=2026-10-02 (archive 10-02 22:05 append); intermediate 10-01 version (first T-02 swap) backed up here; original pre-T-02 file stays under backup-features-20261002/daily/; strict zone passes with price-ratio-aware bound (checks2/daily_strict_ratio.json), the brief-literal 0.04/close bound fails at ret_252/momentum_252_21"
+    },
+    {
+      "table": "sec_fundamentals_facts",
+      "dest": "data/features/sec_fundamentals/facts.parquet",
+      "backup": "data/live/backup-features-20261002/sec_fundamentals/facts.parquet",
+      "sha256_before": "dc6a5ced30c3f52ad494b373838bc61d1ea69d920d1042c6891628af25c37ddd",
+      "sha256_after": "c94cd3b969a64cdd27f0478b206bc56a59e1f5293d0f72837439e918b665ac20",
+      "swapped_utc": "2026-10-02T14:07:45Z (built in place by the earlier subagent; accepted 2026-10-04 by the lead's rule, see t02-checks.json)",
+      "note": "zip downloaded 2026-10-02 13:49Z; raw zip old copy in backup raw_sec_xbrl/"
+    },
+    {
+      "table": "sec_fundamentals_daily_2026",
+      "dest": "data/features/sec_fundamentals_daily/2026.parquet",
+      "backup": "data/live/backup-features-20261002/sec_fundamentals_daily/2026.parquet",
+      "sha256_before": "a6b28a058f11d454492b8e2aa8c66de3d5978b057c01f7671cacc783207baba8",
+      "sha256_after": "307921670aa8fd1fc7643dac906590301bde6e20f3ea980072c280ac137131ed",
+      "swapped_utc": "2026-10-04T08:30:26Z (rebuilt in place --start-year 2026 --end-year 2026 --force; the 10-02 14:18Z intermediate to 10-01 was overwritten, not preserved)",
+      "note": "last date 2026-10-02; 2016-2025 partitions untouched (mtime 2026-09-24)"
+    },
+    {
+      "table": "nsi",
+      "status": "NOT swapped: old file restored",
+      "dest": "data/features/nsi/nsi.parquet",
+      "backup": "data/live/backup-features-20261002/nsi/nsi.parquet",
+      "sha256_before": "d25b48711b1bffaccd993daca1bc3c62c89ced76da678535e201c81fb177108c",
+      "sha256_after": "d25b48711b1bffaccd993daca1bc3c62c89ced76da678535e201c81fb177108c",
+      "sha256_candidate": "a076fa4039ac87e4c45d8cfc655208d6ec52480a70f2a893cd72a2c5a68e02fa",
+      "candidate": "data/features/_t02_stage/nsi_new/nsi.parquet",
+      "note": "keys_ok false; see t02-checks.json"
+    },
+    {
+      "table": "short_interest_2026",
+      "status": "NOT swapped: old file restored",
+      "dest": "data/features/short_interest/2026.parquet",
+      "backup": "data/live/backup-features-20261002/short_interest/2026.parquet",
+      "sha256_before": "28ce8adb9c942fff923b6b01c04357d1cf0edc9b020862ce6e87dec67d028270",
+      "sha256_after": "28ce8adb9c942fff923b6b01c04357d1cf0edc9b020862ce6e87dec67d028270",
+      "sha256_candidate": "1a02d66cf994c0af88fda89663f4641b3c1256fbea92308addac8a7fc00cdab5",
+      "candidate": "data/features/_t02_stage/short_interest_new/2026.parquet",
+      "note": "38 unattributed rows (INHD); 2018-2025 partitions rebuilt then restored from backup short_interest_2018_2025/, sha256 equal; _build_manifest.json restored from backup"
+    },
+    {
+      "table": "alpha101_broad",
+      "status": "NOT swapped",
+      "candidate": "data/features/_t02_stage/alpha101_broad/2026.parquet",
+      "sha256_candidate": "751d9525a7512aa55222c6b3fc9f92e23e1968da4b231bd0e25771d7d57b6ea9",
+      "control_candidate": "data/features/_t02_stage/alpha101_ctrl/2026.parquet",
+      "note": "rank parity below 0.99, see t02-checks.json"
+    },
+    {
+      "table": "alpha191_broad",
+      "status": "NOT swapped",
+      "candidate": "data/features/_t02_stage/alpha191_broad/2026.parquet",
+      "sha256_candidate": "f97b8c3d610372ee6871c714072c8ada592e91dc00bca0c6b50f4f9f2ed5c195",
+      "control_candidate": "data/features/_t02_stage/alpha191_ctrl/2026.parquet",
+      "note": "rank parity below 0.99, see t02-checks.json"
+    }
+  ],
+  "note_first_swaps": "daily_broad and daily were already swapped (to 2026-10-01) by the earlier subagent at 2026-10-02T13:47Z; the continuation brief listed only universe_broad as replaced. The 10-04 swaps (daily*_to_d1002) move them to 2026-10-02; the original pre-T-02 files stay in backup-features-20261002/<table>/."
+}
