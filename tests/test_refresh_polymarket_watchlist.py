@@ -282,3 +282,24 @@ def test_main_dry_run_writes_nothing_and_real_run_writes(tmp_path, monkeypatch, 
     assert refresh.main(["--watchlist", str(path), "--now", "2026-10-02T14:00:00Z"]) == 0
     assert path.read_text() != before
     assert yaml.safe_load(path.read_text())["looked_up_at"] == "2026-10-02T14:00:00Z"
+
+
+def test_missing_live_file_is_seeded_from_the_tracked_config(tmp_path, monkeypatch):
+    seed = tmp_path / "config.yaml"
+    seed.write_text(refresh.render(EXISTING, "2026-10-01T00:00:00Z"), encoding="utf-8")
+    before = seed.read_text()
+    live = tmp_path / "live" / "watchlist.live.yaml"
+    http = make_http()
+    monkeypatch.setattr(collect, "Http", lambda: http)
+    monkeypatch.setattr(refresh, "WATCHLIST", seed)
+    assert refresh.main(["--watchlist", str(live), "--now", "2026-10-02T14:00:00Z"]) == 0
+    assert seed.read_text() == before  # the tracked file is never edited
+    assert yaml.safe_load(live.read_text())["looked_up_at"] == "2026-10-02T14:00:00Z"
+
+
+def test_collector_prefers_the_live_watchlist(tmp_path, monkeypatch):
+    live = tmp_path / "watchlist.live.yaml"
+    monkeypatch.setattr(collect, "LIVE_WATCHLIST", live)
+    assert collect.active_watchlist_path() == collect.WATCHLIST
+    live.write_text(refresh.render(EXISTING, "2026-10-02T14:00:00Z"), encoding="utf-8")
+    assert collect.active_watchlist_path() == live

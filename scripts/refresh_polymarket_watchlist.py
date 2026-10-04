@@ -297,6 +297,7 @@ def format_diff(result: dict[str, Any], old_stamp: str | None, new_stamp: str) -
 
 
 def write_atomic(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.tmp")
     tmp.write_text(text, encoding="utf-8")
     os.replace(tmp, path)
@@ -304,15 +305,21 @@ def write_atomic(path: Path, text: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--watchlist", type=Path, default=WATCHLIST)
+    parser.add_argument(
+        "--watchlist",
+        type=Path,
+        default=collect.LIVE_WATCHLIST,
+        help="file to refresh; when it does not exist yet it is seeded from the tracked config",
+    )
     parser.add_argument("--dry-run", action="store_true", help="print the diff, write nothing")
     parser.add_argument("--now", help="ISO UTC time override (tests)")
     args = parser.parse_args(argv)
     now = datetime.fromisoformat(args.now.replace("Z", "+00:00")) if args.now else datetime.now(UTC)
     if now.tzinfo is None:
         now = now.replace(tzinfo=UTC)
-    payload = yaml.safe_load(args.watchlist.read_text(encoding="utf-8"))
-    existing = collect.load_watchlist(args.watchlist)
+    source = args.watchlist if args.watchlist.exists() else WATCHLIST
+    payload = yaml.safe_load(source.read_text(encoding="utf-8"))
+    existing = collect.load_watchlist(source)
     try:
         result = refresh(collect.Http(), existing, now)
     except Exception as exc:

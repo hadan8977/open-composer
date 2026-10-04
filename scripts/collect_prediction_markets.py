@@ -38,6 +38,9 @@ USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safa
 KALSHI_SERIES = ("KXCPI", "KXPAYROLLS", "KXGDP", "KXFED", "KXPCE", "KXCPICOREYOY", "KXU3")
 WATCHLIST = ROOT / "config/prediction_markets/polymarket_watchlist.yaml"
 OUT_ROOT = ROOT / "data/features/prediction_markets"
+#: The weekly refresh (scripts/refresh_polymarket_watchlist.py, cron) rewrites this live copy,
+#: seeded from WATCHLIST, so a scheduled job never edits a tracked file.
+LIVE_WATCHLIST = OUT_ROOT / "watchlist.live.yaml"
 TOTAL_BUDGET_S = 120.0
 MIN_INTERVAL_S = 0.21
 MAX_RETRIES = 3
@@ -162,6 +165,10 @@ def kalshi_rows(http: Http, fetched_at: str, series_list: tuple[str, ...]) -> li
     return rows
 
 
+def active_watchlist_path() -> Path:
+    return LIVE_WATCHLIST if LIVE_WATCHLIST.exists() else WATCHLIST
+
+
 def load_watchlist(path: Path = WATCHLIST) -> list[dict[str, str]]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     return [
@@ -246,7 +253,7 @@ def collect_snapshot(
 ) -> dict[str, Any]:
     moment = (now or datetime.now(UTC)).astimezone(UTC)
     fetched_at = moment.isoformat(timespec="seconds")
-    wl = watchlist if watchlist is not None else load_watchlist()
+    wl = watchlist if watchlist is not None else load_watchlist(active_watchlist_path())
     kalshi = kalshi_rows(http, fetched_at, series_list)
     poly = polymarket_rows(http, fetched_at, wl)
     if not kalshi:
