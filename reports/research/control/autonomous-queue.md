@@ -1739,7 +1739,8 @@
   - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。同一执行轮在 T-02 完成后可以接着跑本任务（不并行，重任务一次一个）。
 
 ### T-20261004-52 数据：修 8-K 财报事件表的受理时间（改用 EDGAR 索引页 Accepted，修复数据坑 #61）
-- status: ready（交互会话安排；没有简报，定时轮不取）
+- status: running（交互会话 2026-10-04 08:35 UTC 派独立 Paseo 代理 R1004-T52；定时轮不要取）
+- brief: reports/research/control/briefs/T-20261004-52.md
 - priority: 3
 - not_before: T-20261004-51 以 done 开头（它在用这张表做只读匹配）
 - goal: `data/features/earnings_events/{2024,2025,2026}.parquet` 的 acceptance_utc 被转换了两次，比真实 UTC 晚 4 或 5 小时（数据坑 #61）。改 `scripts/build_earnings_events.py`：受理时间一律取 EDGAR 索引页的 Accepted（美东墙钟），再转成真实 UTC。重建三个年份分区，新增一列 `acceptance_source`。
