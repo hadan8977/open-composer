@@ -1741,7 +1741,7 @@
 
   - 2026-10-04 12:06 UTC 执行轮（Sonnet，子代理耗时约 115 分钟）：第 A 阶段跑完，`stage_a.json` `mechanical_status_stage_a`=stage_b_authorized，survivors=[m0m2, m0m3]；contract sha 不变，permutation_check 通过（lgbm_perm 近期 -0.519/压力 -0.019，m3_perm 0.037/-0.572，限 1.22/0.93）；embargo_ok_all 与覆盖按简报核对通过（2019 起每日成员中位 2175）。偏移中位简化毛夏普（近期/压力-ML）：m0 1.735/0.521，m2 2.114/0.513，m3 2.362/0.213，m0m2 2.008/0.582，m0m3 2.247/0.536（压力窗领先幅度 +0.061、+0.015，很小）。Modal $0.6645。产物 reports/research/iterations/t20261004_book_v14_ml/{build.json,stage_a.json,stage_a.md,model-meta/}。子代理偏差：首次 smoke 写错目录已修；最终窗口止于 2026-09-09 决策日（r5 需要 C[p+6]）；stage_a 的 Modal 成本从 0.6563 手工改为 0.6645，其余数字不变；22 个信号库列缺失用常数填，rank 后变并列平均秩。待主审。
 ### T-20261004-03 组合线 v1.4 候选 第 B 阶段：第 A 阶段留下的候选走 v1.2 策略层，对比 M0（E1/E2/E4/E5、选择、ml_contribution_pass）
-- status: ready
+- status: partial
 - priority: 1
 - not_before: T-20261004-02 状态以 done 开头，并且 `t20261004_book_v14_ml/stage_a.json` 的 `mechanical_status_stage_a` 为 `stage_b_authorized`（不必等主审审核第 A 阶段；不是这个值时由下一主审轮取消本任务）
 - brief: reports/research/control/briefs/T-20261004-03.md
@@ -1751,6 +1751,8 @@
 - notes:
   - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。同一执行轮在 T-02 完成后可以接着跑本任务（不并行，重任务一次一个）。
   - 2026-10-04 12:06 UTC 执行轮：T-02 已 done 且 stage_b_authorized，但 T-02 子代理用了约 115 分钟，已到软上限，T-03 留给下一执行轮（22:07 UTC；注意不在 21:30–00:30 跑本地重步骤，可能要到 04:07 轮）。
+  - 2026-10-04 12:17 UTC 执行轮开始（子代理 sonnet-high 前台，mem 1.5G）
+  - 2026-10-04 13:52 UTC 执行轮：子代理写完 `scripts/book_v14_ml_eval.py`（identity/passes/evaluate 三阶段，passes 和 evaluate 未测）和 `tests/test_book_v14_ml_eval.py`（6 个合成测试通过，ruff 干净），提交 2690810。3 决策冒烟的 identity：5 个偏移 (a) 对 R6、(b) m0 对 (a) 最大差 0，pass true（不是完整序列的 1e-12 门）。完整 identity 12:24 起跑，机器 swap 约 5.7 GB、I/O 等待 60–90%（别的会话占 0.5–1.1 GB），86 分钟只拿到约 3.5 CPU 分钟，13:51 被杀，没写出任何偏移。**没有 Stage B 数字**：未写 identity.json、S_*_o*.parquet、results.json、report.md、trial-ledger.json。断点：机器安静后依次 `scripts/run_capped.sh --mem 1.5G -- uv run python scripts/book_v14_ml_eval.py --stage identity`（会写 S_B0r_o<k>.parquet）、`--stage passes`（跳过已有文件，可续跑）、`--stage evaluate`；之后用 `git add -f` + pathspec 提交 identity.json/results.json/report.md/trial-ledger.json。预计无争抢时约 20 个 pass、每个约 1 分钟。待主审（含：是否等机器空闲再跑，或把 identity 改到 Modal）。
 
 ### T-20261004-52 数据：修 8-K 财报事件表的受理时间（改用 EDGAR 索引页 Accepted，修复数据坑 #61）
 - status: done（交互会话主审 2026-10-04 10:09 UTC：接受。16089 笔全部取自索引页，99.66% 的行差恰为旧偏移，20/20 抽查一致，0 删除 48 新增；55 行旧值本来就对，记录不追。下游交 T-20261004-56。v1.2 和模拟盘不读这张表，也不读 sue_8k_visible（已 grep 核对），live 路径不变。提交 5807d85）
