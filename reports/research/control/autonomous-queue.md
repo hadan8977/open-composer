@@ -1886,7 +1886,7 @@
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。CLAUDE.md 现写明实盘写入不在范围内，必须机主明确改。
 
 ### T-20261004-73 看板改版：首页按四个问题重排，新增报告中心 /reports
-- status: running（独立 Paseo 代理 5b19476a，Fable 5.1，协调码 R1004-T73）
+- status: done（2026-10-04 18:41 UTC 交互会话验收：29881ef 已上线，/healthz 200，/、/reports、/paper、/research 均 200，首页热缓存约 0.3 秒；看过手机深色截图，四个问题按顺序回答。小问题：整页截图里底部导航条压住了钱那一块，需要在真机确认，留到第二轮）
 - priority: 2
 - brief: reports/research/control/briefs/T-20261004-73.md
 - done_when: 10-05 06:00 UTC 前截图在 `docs/cockpit-screens/v5/`；10-06 12:00 UTC 前合入并上线。

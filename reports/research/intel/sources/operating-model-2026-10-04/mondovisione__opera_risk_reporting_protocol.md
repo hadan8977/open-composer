@@ -1,0 +1,110 @@
+source: https://mondovisione.com/news/open-protocol-enabling-risk-aggregation-launched-2011811/
+fetched_utc: 2026-10-04T18:37:53Z
+
+Open Protocol Enabling Risk Aggregation Launched
+
+    Skip to main Content
+
+        Mondo Visione Worldwide Financial Markets Intelligence
+
+              Advertise with us
+
+              Online Exchange Handbook
+
+            search
+
+              Login
+
+              Subscribe
+
+    Home
+
+    Exchanges
+
+        Exchange Directory
+
+    FTSE Mondo Visione Exchanges Index 
+
+        Index News
+
+    News
+
+    Publications
+
+        Acronyms
+
+        Glossary
+
+        White Papers
+
+    Regulators/Associations
+
+    close
+
+              Track all markets on TradingView
+
+              FTSE Mondo Visione Exchanges Index:
+
+Open Protocol Enabling Risk Aggregation Launched  
+
+				Date 11/08/2011
+
+As co-chairs of a working group set up to define consistent practices across the  hedge fund industry, Albourne Partners Limited and Thomson Reuters today  announced the launch of Open Protocol Enabling Risk Aggregation (OPERA), a new  protocol that standardises how hedge funds collect, collate, and convey risk  information. The new protocol will help hedge fund investors aggregate and  integrate their exposures, reduce the proliferation of investor-specific risk  formats that hedge funds have to manage and provide regulators with a detailed  technical approach, forged by practitioners, to identify systemic  risk.
+
+Developed by an independent Working Group of 16 firms,  including investors, prime brokers, fund administrators and hedge funds, the  Open Protocol is based on a holistic approach to understanding risk and was  developed because the level of transparency available to investors varies from  fund to fund and from strategy to strategy.
+
+Since intentions of the initiative were announced earlier  this year, regulators and industry bodies have been kept informed and invited to  observe the development and refining of the protocol including a period of  public consultation that ended on 15 July, 2011. Adoption of the Protocol has  been designed with no commercial agenda, and is open to all at no commercial  cost.
+
+To coincide with the New York launch, Andrew Baker, CEO of  AIMA observed: “AIMA supports efforts to improve harmonisation of risk reporting  to investors. Open Protocol Enabling Risk Aggregation was born out of dialogue  between a range of market practitioners and we support this open, voluntary and  inclusive approach.”
+
+Henry Knapman, a Managing Director at UBS, who was seconded  to the FSA in 2009/2010 as a Senior Advisor on hedge fund policy observes: “This  initiative could not be more timely. As the industry prepares to respond to the  ESMA consultation exercise, let us hope that investors, funds, and trade  organisations can all rally around this thoughtful solution.”
+
+Gilbert Grosjean, representing CITCO at the London launch  event confirmed: “CITCO strongly supports the Open Protocol initiative. It is an  important undertaking that will increase investor transparency, thus  facilitating a better informed asset allocation to hedge funds. As an early  committed provider of transparency, CITCO has taken an active role in the  formation of the standard and will keep supporting it by providing Open Protocol  reports to its client base.”
+
+Finally, Simon Ruddick and Gerard Buggy, representing the  co-chairs of the Working Group, Albourne Partners Limited and Thomson Reuters  added: “We just want to thank everyone involved for their free-spirited  contribution of time, thought, and effort. The Open Protocol is an idea whose  time has come. There’ll be no applause for late adopters.”
+
+Full details can be seen on the web site: www.operastandards.org
+
+Including:
+
+Full protocol documents
+
+Working Group members
+
+XML Scheme to facilitate machine-to-machine  dialogue
+
+      Back to List
+
+            About Us
+
+            Online Exchange Handbook
+
+            Subscribe To News Alerts
+
+            Advertise With Us
+
+            News Centre
+
+            FTSE Mondo Visione Exchanges Index
+
+            Index News
+
+            Exchange Directory
+
+            Resources
+
+            Contact Us
+
+            RSS Feed
+
+                  Twitter
+
+            Terms
+
+            Privacy
+
+            Disclaimer
+
+            Cookies
+
+© Mondo Visione 2026

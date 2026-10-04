@@ -24,6 +24,7 @@ CURRENT_DOCS = {
     "docs/evaluation-standard.zh.md",
     "docs/owner-reporting.zh.md",
     "docs/plan-owner-feedback-2026-10-04.zh.md",
+    "docs/plan-v2-requirements-2026-10-04.zh.md",
     "docs/research-autonomy.zh.md",
     "docs/plan-research-autonomy-2026-09-21.zh.md",
     "docs/alpha158-recovery-2026-09-21.zh.md",
