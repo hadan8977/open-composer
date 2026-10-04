@@ -1692,3 +1692,13 @@
 - brief: reports/research/control/briefs/T-20261002-30.md
 - notes:
   - 2026-10-02 07:35 UTC 07:07 主审轮（Opus）登记并写简报。这是描述性分析，不涉及策略选择，不需要预注册；结论和续期建议由主审在结果出来后写。
+
+### T-20261004-51 预测市场第二轮：Polymarket 财报超预期赔率 vs 公告窗口收益（h20261004_pm_earnings_beat_odds）
+- status: running（交互会话 2026-10-04 01:26 UTC 派子代理 R1004-0130-T51；定时轮不要取）
+- priority: 2
+- brief: reports/research/control/briefs/T-20261004-51.md
+- goal: 用 2025-09 至 2026-10 已结算的 1354 个 Polymarket 财报合约，检验公告前赔率在同周横截面上的排名，能否预测公告窗口相对 SPY 的超额收益。机主 10-02 要求持续迭代预测市场。
+- done_when: 文书冻结并通过 pre-backtest 检查；数据漏斗写进 data-feasibility.json；先跑正对照，再按冻结规则算 H-A；results.json 和 report.md 已提交，标"待主审"。
+- notes:
+  - 2026-10-04 01:26 UTC 交互会话（Opus）登记。设计冻结在 ee197a4，情报在 a75be10。
+  - 功效有限：在 6% 标准差的假设下，最小可检测价差约 100 bp。不通过只说明没有大效应，不代表小效应不存在；不通过时转前向影子。
