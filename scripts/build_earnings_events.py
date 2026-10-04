@@ -33,25 +33,30 @@ Sources (all free, all cited from the plan doc section 2)
     The filing's document table (Seq/Description/Document/Type/Size), used
     to pick the exhibit and resolve its relative URL.
 
-Point-in-time note: EDGAR's ``acceptanceDateTime`` string carries a literal
-"Z" suffix but the wall-clock value is Eastern local time, not UTC (a
-long-standing EDGAR quirk -- see the ``_EASTERN`` comment below). This
-script converts it properly via ``zoneinfo`` so ``acceptance_utc`` is a real
-UTC instant across the EST/EDT boundary; verify this on the pilot's 30 rows
-against a couple of independently known release times before trusting it.
+Point-in-time note (corrected 2026-10-04, T-20261004-52, data pitfall #61):
+the submissions API's ``acceptanceDateTime`` is already a true UTC instant
+(the "Z" is honest for these filings). Earlier builds read it as US/Eastern
+and converted it a second time, so stored ``acceptance_utc`` was 4 h late in
+EDT and 5 h late in EST. The authoritative value is now the "Accepted" field
+of the filing-index page (US/Eastern wall-clock, converted once to UTC);
+``acceptance_source`` is ``edgar_index``. When the index page fails, the API
+value is used as UTC (equivalent to undoing the double shift) and
+``acceptance_source`` is ``formula``.
 
 SEC fair access
 ----------------
 User-Agent is the fixed string ``"open-composer research
 hzc43021@gmail.com"`` (no ``.env`` is read here). Requests are strictly
-serialized with a minimum inter-request interval enforcing <= 8 req/s, and
-429/500/502/503/504 responses get exponential backoff and a retry.
+serialized with a minimum inter-request interval enforcing <= 4 req/s, and
+403/429/5xx responses get linear backoff and a retry.
 
 Idempotency / resume
 ---------------------
 Exhibit text is cached at ``data/raw/earnings_text/{cik}/{accession}.txt``;
 if that file already exists and is non-empty, this run reuses it (fetch
-status ``"cached"``) instead of re-fetching. The per-year output parquet is
+status ``"cached"``) instead of re-fetching. A per-company checkpoint
+(``data/raw/earnings_text/_cache/build_checkpoint.jsonl``; delete it to force a
+clean rerun) lets an interrupted run skip finished companies. The per-year output parquet is
 loaded, merged (new rows replace old rows with the same accession) and
 rewritten, so reruns and ``--limit`` pilots are safe to repeat or extend.
 
@@ -80,7 +85,7 @@ import re
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -94,6 +99,7 @@ UNRESOLVED_PATH = OUT_DIR / "unresolved_tickers.json"
 RAW_TEXT_ROOT = ROOT / "data" / "raw" / "earnings_text"
 RAW_CACHE_ROOT = ROOT / "data" / "raw" / "earnings_text" / "_cache"
 COMPANY_TICKERS_CACHE = RAW_CACHE_ROOT / "company_tickers.json"
+CHECKPOINT_PATH = RAW_CACHE_ROOT / "build_checkpoint.jsonl"
 
 USER_AGENT = "open-composer research hzc43021@gmail.com"
 COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
@@ -101,9 +107,8 @@ SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik10}.json"
 SUBMISSIONS_FILE_URL = "https://data.sec.gov/submissions/{name}"
 ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/data/{cik}/{accession_nodash}/"
 
-#: >= 8 requests/second ceiling -> minimum 0.125s between requests. Kept
-#: strictly below the plan doc's 10 req/s SEC limit.
-MIN_REQUEST_INTERVAL_SECONDS = 1.0 / 8.0
+#: <= 4 requests/second -> minimum 0.25s between requests (SEC's limit is 10).
+MIN_REQUEST_INTERVAL_SECONDS = 1.0 / 4.0
 HTTP_TIMEOUT_SECONDS = 30.0
 RETRYABLE_STATUS = {403, 429, 500, 502, 503, 504}
 MAX_RETRIES = 5
@@ -111,13 +116,9 @@ MAX_RETRIES = 5
 REQUIRED_FORM = "8-K"
 REQUIRED_ITEM = "2.02"
 
-#: EDGAR's submissions API stamps ``acceptanceDateTime`` with a trailing
-#: "Z" as if it were UTC, but the wall-clock value is US Eastern local time
-#: (observed across every EDGAR full-text-search and submissions payload;
-#: acceptance windows close at 17:30 ET / 22:00 or 21:00 "Z" depending on
-#: season, which only makes sense as an Eastern-local stamp). Treat the
-#: naive value as America/New_York and convert properly so DST transitions
-#: don't shift accepted-before/after-hours classification by an hour.
+#: The filing-index page "Accepted" field is US/Eastern wall-clock; it is
+#: localized with zoneinfo so DST switches are handled. (The submissions API
+#: ``acceptanceDateTime`` is NOT Eastern -- it is true UTC; see module docstring.)
 _EASTERN = ZoneInfo("America/New_York")
 
 _EX99_TYPE_RE = re.compile(r"^EX-?99(\.(\d+))?$", re.IGNORECASE)
@@ -275,8 +276,9 @@ def write_unresolved(unresolved: list[str]) -> None:
 
 
 def to_utc_iso(raw: str | None) -> str | None:
-    """EDGAR's ``acceptanceDateTime`` (Eastern local, mislabeled with a "Z")
-    to a real UTC instant, ISO-8601 with a trailing "Z"."""
+    """Submissions-API ``acceptanceDateTime`` (a true UTC instant, ISO-8601,
+    optional "Z") to ``YYYY-MM-DDTHH:MM:SSZ``. Used as the fallback when the
+    filing-index page is unavailable; it equals undoing the old double shift."""
 
     if not raw:
         return None
@@ -287,9 +289,60 @@ def to_utc_iso(raw: str | None) -> str | None:
         naive = datetime.fromisoformat(text)
     except ValueError:
         return None
-    eastern = naive.replace(tzinfo=_EASTERN)
-    utc = eastern.astimezone(UTC)
-    return utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return naive.replace(tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def eastern_wallclock_to_utc_iso(text: str | None) -> str | None:
+    """Filing-index "Accepted" text (``YYYY-MM-DD HH:MM:SS``, US/Eastern
+    wall-clock) to a true UTC instant, converted once."""
+
+    if not text:
+        return None
+    try:
+        naive = datetime.strptime(text.strip(), "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    return naive.replace(tzinfo=_EASTERN).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def undo_double_shift(stored_utc: str | None) -> str | None:
+    """Recover the true UTC instant from an old, double-shifted stored value.
+
+    The old builder read the true UTC instant ``raw`` as US/Eastern wall-clock
+    and converted it to UTC again, so ``stored = raw + 4 h`` when ``raw`` falls
+    in daylight time and ``raw + 5 h`` in standard time -- DST is decided by
+    the ``raw`` wall-clock, which differs from DST at the true instant only in
+    the hours around the two switches. Inverting the old map exactly keeps
+    those hours right too. Used for audits; the builder needs only
+    :func:`to_utc_iso`."""
+
+    if not stored_utc:
+        return None
+    text = stored_utc.strip().removesuffix("Z")
+    try:
+        stored = datetime.fromisoformat(text).replace(tzinfo=UTC)
+    except ValueError:
+        return None
+    for hours in (4, 5):
+        raw = stored - timedelta(hours=hours)
+        forward = raw.replace(tzinfo=_EASTERN).astimezone(UTC)
+        if forward == stored:
+            return raw.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return None  # stored value not producible by the old map (DST gap)
+
+
+_ACCEPTED_RE = re.compile(
+    r'(?is)<div[^>]*class="infoHead"[^>]*>\s*Accepted\s*</div>\s*'
+    r'<div[^>]*class="info"[^>]*>\s*'
+    r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})\s*</div>"
+)
+
+
+def parse_accepted(index_html: str) -> str | None:
+    """The "Accepted" field of a filing-index page (Eastern wall-clock text)."""
+
+    match = _ACCEPTED_RE.search(index_html)
+    return match.group(1) if match else None
 
 
 # --------------------------------------------------------------------------
@@ -496,6 +549,7 @@ class EventRow:
     company_name: str | None
     accession: str
     acceptance_utc: str | None
+    acceptance_source: str
     form: str
     items: str
     ex99_url: str | None
@@ -515,6 +569,8 @@ class BuildStats:
     no_ex99: int = 0
     http_error: int = 0
     skipped_out_of_range: int = 0
+    index_formula_mismatch: int = 0
+    per_source: dict[str, int] = field(default_factory=dict)
     per_status: dict[str, int] = field(default_factory=dict)
 
 
@@ -540,6 +596,40 @@ def fetch_exhibit_text(
     return text, len(text), "ok"
 
 
+def load_checkpoint(path: Path, params: dict) -> tuple[set[str], dict[int, list[dict]]]:
+    """Finished tickers and their event rows from an interrupted run with the
+    same parameters; anything else starts clean."""
+
+    if not path.exists():
+        return set(), {}
+    done: set[str] = set()
+    rows_by_year: dict[int, list[dict]] = {}
+    with path.open(encoding="utf-8") as handle:
+        header = json.loads(handle.readline() or "{}")
+        if header.get("params") != params:
+            log(f"checkpoint {path} has different params; ignoring it")
+            return set(), {}
+        for line in handle:
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                break  # torn last line from a kill; that company is redone
+            done.add(record["ticker"])
+            for row in record["rows"]:
+                rows_by_year.setdefault(int(row["acceptance_utc"][:4]), []).append(row)
+    log(f"checkpoint: {len(done)} companies already done")
+    return done, rows_by_year
+
+
+def append_checkpoint(path: Path, params: dict, ticker: str, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fresh = not path.exists()
+    with path.open("a", encoding="utf-8") as handle:
+        if fresh:
+            handle.write(json.dumps({"params": params}) + "\n")
+        handle.write(json.dumps({"ticker": ticker, "rows": rows}) + "\n")
+
+
 def build(
     *,
     start: date,
@@ -547,9 +637,13 @@ def build(
     top_n: int,
     limit: int | None,
     refresh_tickers: bool,
+    client: SecClient | None = None,
+    checkpoint_path: Path | None = None,
 ) -> BuildStats:
     stats = BuildStats()
-    client = SecClient()
+    client = client or SecClient()
+    checkpoint_path = checkpoint_path or CHECKPOINT_PATH
+    params = {"start": start.isoformat(), "end": end.isoformat(), "top_n": top_n, "limit": limit}
     try:
         log(
             f"loading broad-universe symbols for [{start}, {end}], "
@@ -566,24 +660,28 @@ def build(
             f"{len(unresolved)} unresolved -> {UNRESOLVED_PATH}"
         )
 
-        rows_by_year: dict[int, list[dict]] = {}
+        done_tickers, rows_by_year = load_checkpoint(checkpoint_path, params)
+        stats.rows_written = sum(len(rows) for rows in rows_by_year.values())
         stopped_early = False
         for ticker, cik10 in sorted(resolved.items()):
             if stopped_early:
                 break
+            if ticker in done_tickers:
+                continue
             stats.companies_seen += 1
+            company_rows: list[dict] = []
             company_name, filing_rows = collect_filing_rows(client, cik10, start=start)
             for filing in filing_rows:
                 if not filing_matches(filing.form, filing.items):
                     continue
-                acceptance_utc = to_utc_iso(filing.acceptance_raw)
-                if acceptance_utc is None:
+                formula_utc = to_utc_iso(filing.acceptance_raw)
+                if formula_utc is None:
                     log(
                         f"  {ticker} {filing.accession}: missing/unparseable "
                         "acceptanceDateTime, skipping"
                     )
                     continue
-                accept_date = acceptance_utc[:10]
+                accept_date = formula_utc[:10]
                 if accept_date < start.isoformat() or accept_date > end.isoformat():
                     stats.skipped_out_of_range += 1
                     continue
@@ -600,15 +698,26 @@ def build(
                 text_sha256: str | None = None
                 text_chars = 0
                 fetch_status = "no_ex99"
+                acceptance_utc = formula_utc
+                acceptance_source = "formula"
 
                 index_status, index_content = client.get(index_url)
                 if index_status != 200:
                     fetch_status = "http_error"
                     stats.http_error += 1
                 else:
-                    candidates = parse_document_table(
-                        index_content.decode("utf-8", errors="replace")
-                    )
+                    index_html = index_content.decode("utf-8", errors="replace")
+                    index_utc = eastern_wallclock_to_utc_iso(parse_accepted(index_html))
+                    if index_utc is not None:
+                        acceptance_utc = index_utc
+                        acceptance_source = "edgar_index"
+                        if index_utc != formula_utc:
+                            stats.index_formula_mismatch += 1
+                            log(
+                                f"  {ticker} {filing.accession}: index {index_utc} != "
+                                f"api {formula_utc}; keeping index"
+                            )
+                    candidates = parse_document_table(index_html)
                     picked = pick_ex99(candidates)
                     if picked is None:
                         stats.no_ex99 += 1
@@ -628,6 +737,7 @@ def build(
                                 stats.ok += 1
                             else:
                                 stats.cached += 1
+                stats.per_source[acceptance_source] = stats.per_source.get(acceptance_source, 0) + 1
 
                 event = EventRow(
                     cik=cik10,
@@ -635,6 +745,7 @@ def build(
                     company_name=company_name,
                     accession=filing.accession,
                     acceptance_utc=acceptance_utc,
+                    acceptance_source=acceptance_source,
                     form=filing.form or REQUIRED_FORM,
                     items=filing.items or "",
                     ex99_url=ex99_url,
@@ -643,18 +754,23 @@ def build(
                     text_chars=text_chars,
                     fetch_status=fetch_status,
                 )
-                year = int(accept_date[:4])
-                rows_by_year.setdefault(year, []).append(event.__dict__)
+                company_rows.append(event.__dict__)
                 stats.rows_written += 1
                 stats.per_status[fetch_status] = stats.per_status.get(fetch_status, 0) + 1
                 log(
                     f"  [{stats.rows_written}] {ticker} {filing.accession} "
-                    f"accepted={acceptance_utc} status={fetch_status} chars={text_chars}"
+                    f"accepted={acceptance_utc} src={acceptance_source} "
+                    f"status={fetch_status} chars={text_chars}"
                 )
 
                 if limit is not None and stats.rows_written >= limit:
                     stopped_early = True
                     break
+
+            for row in company_rows:
+                rows_by_year.setdefault(int(row["acceptance_utc"][:4]), []).append(row)
+            if not stopped_early:
+                append_checkpoint(checkpoint_path, params, ticker, company_rows)
 
             if stats.companies_seen % 50 == 0:
                 log(
@@ -663,6 +779,8 @@ def build(
                 )
 
         write_year_partitions(rows_by_year)
+        if not stopped_early:
+            checkpoint_path.unlink(missing_ok=True)
     finally:
         client.close()
     return stats
@@ -670,20 +788,46 @@ def build(
 
 def write_year_partitions(rows_by_year: dict[int, list[dict]]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    new_accessions = {row["accession"] for rows in rows_by_year.values() for row in rows}
     for year, rows in rows_by_year.items():
         new_df = pd.DataFrame(rows)
         out_path = OUT_DIR / f"{year}.parquet"
         if out_path.exists():
             existing = pd.read_parquet(out_path)
-            existing = existing[~existing["accession"].isin(new_df["accession"])]
+            existing = existing[~existing["accession"].isin(new_accessions)]
             merged = pd.concat([existing, new_df], ignore_index=True)
         else:
             merged = new_df
+        # A corrected time can move a filing across a year boundary; drop its
+        # copy from the other partitions so it appears once.
+        merged = _fill_legacy_source(merged)
         merged = merged.sort_values(["acceptance_utc", "ticker"]).reset_index(drop=True)
         tmp_path = out_path.with_suffix(".parquet.tmp")
         merged.to_parquet(tmp_path, index=False)
         tmp_path.replace(out_path)
         log(f"wrote {len(merged)} rows -> {out_path} ({len(new_df)} new/updated this run)")
+    for other in sorted(OUT_DIR.glob("*.parquet")):
+        if other.stem.isdigit() and int(other.stem) in rows_by_year:
+            continue
+        frame = pd.read_parquet(other)
+        kept = frame[~frame["accession"].isin(new_accessions)]
+        if len(kept) != len(frame):
+            tmp_path = other.with_suffix(".parquet.tmp")
+            _fill_legacy_source(kept).to_parquet(tmp_path, index=False)
+            tmp_path.replace(other)
+            log(f"dropped {len(frame) - len(kept)} moved rows from {other}")
+
+
+def _fill_legacy_source(frame: pd.DataFrame) -> pd.DataFrame:
+    """Rows kept from before the timing fix carry no source; mark them so they
+    cannot be mistaken for corrected times."""
+
+    frame = frame.copy()
+    if "acceptance_source" not in frame.columns:
+        frame["acceptance_source"] = "legacy_double_shifted"
+    else:
+        frame["acceptance_source"] = frame["acceptance_source"].fillna("legacy_double_shifted")
+    return frame
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -721,7 +865,8 @@ def main(argv: list[str] | None = None) -> int:
     log(
         "done: companies_seen={companies_seen} filings_matched={filings_matched} "
         "rows_written={rows_written} ok={ok} cached={cached} no_ex99={no_ex99} "
-        "http_error={http_error} skipped_out_of_range={skipped_out_of_range}".format(
+        "http_error={http_error} skipped_out_of_range={skipped_out_of_range} "
+        "index_formula_mismatch={index_formula_mismatch} per_source={per_source}".format(
             **stats.__dict__
         )
     )

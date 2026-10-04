@@ -19,17 +19,25 @@ mis-scope or mis-select:
 
 from __future__ import annotations
 
+import json
 from datetime import date
 
+import pandas as pd
+import pytest
+
+import scripts.build_earnings_events as bee
 from scripts.build_earnings_events import (
     ExhibitCandidate,
+    eastern_wallclock_to_utc_iso,
     filing_matches,
     html_to_text,
+    parse_accepted,
     parse_document_table,
     parse_items,
     pick_ex99,
     sha256_hex,
     to_utc_iso,
+    undo_double_shift,
 )
 
 # --------------------------------------------------------------------------
@@ -197,27 +205,263 @@ def test_sha256_hex_is_deterministic_and_content_sensitive():
 
 
 # --------------------------------------------------------------------------
-# Acceptance timestamp (Eastern -> UTC)
+# Acceptance timestamp (fixed 2026-10-04, T-20261004-52 / pitfall #61)
 # --------------------------------------------------------------------------
 
+INDEX_HTML = """
+<div class="formGrouping">
+ <div class="infoHead">Filing Date</div>
+ <div class="info">2025-10-31</div>
+ <div class="infoHead">Accepted</div>
+ <div class="info">2025-10-31 06:01:26</div>
+ <div class="infoHead">Documents</div>
+ <div class="info">91</div>
+</div>
+"""
 
-def test_to_utc_iso_handles_est_offset():
-    # 2024-01-25 is EST (UTC-5): 16:30 ET -> 21:30 UTC.
-    assert to_utc_iso("2024-01-25T16:30:15.000Z") == "2024-01-25T21:30:15Z"
+
+def test_parse_accepted_reads_the_accepted_field_only():
+    assert parse_accepted(INDEX_HTML) == "2025-10-31 06:01:26"
+    assert parse_accepted("<html>no such field</html>") is None
 
 
-def test_to_utc_iso_handles_edt_offset():
-    # 2024-07-25 is EDT (UTC-4): 16:30 ET -> 20:30 UTC.
-    assert to_utc_iso("2024-07-25T16:30:00.000Z") == "2024-07-25T20:30:00Z"
+@pytest.mark.parametrize(
+    ("eastern", "utc"),
+    [
+        ("2025-03-07 16:05:00", "2025-03-07T21:05:00Z"),  # EST before the 03-09 switch
+        ("2025-03-10 16:05:00", "2025-03-10T20:05:00Z"),  # EDT after it
+        ("2025-10-31 06:01:26", "2025-10-31T10:01:26Z"),  # EDT
+        ("2025-11-01 16:05:00", "2025-11-01T20:05:00Z"),  # EDT before the 11-02 switch
+        ("2025-11-03 16:05:00", "2025-11-03T21:05:00Z"),  # EST after it
+    ],
+)
+def test_eastern_wallclock_to_utc_iso_across_dst_switches(eastern, utc):
+    assert eastern_wallclock_to_utc_iso(eastern) == utc
 
 
-def test_to_utc_iso_handles_missing_value():
+def test_eastern_wallclock_to_utc_iso_rejects_garbage():
+    assert eastern_wallclock_to_utc_iso(None) is None
+    assert eastern_wallclock_to_utc_iso("") is None
+    assert eastern_wallclock_to_utc_iso("31/10/2025 06:01") is None
+
+
+def test_to_utc_iso_reads_the_api_value_as_utc():
+    # The submissions API value is already a true UTC instant.
+    assert to_utc_iso("2024-01-25T21:30:15.000Z") == "2024-01-25T21:30:15Z"
+    assert to_utc_iso("2024-07-25T20:30:00.000Z") == "2024-07-25T20:30:00Z"
     assert to_utc_iso(None) is None
     assert to_utc_iso("") is None
+    assert to_utc_iso("not a time") is None
 
 
-def test_to_utc_iso_is_a_real_date_type_sanity_check():
-    # Not a functional assertion -- just documents that the raw acceptance
-    # date used elsewhere (accept_date[:10]) stays comparable to ISO dates.
-    result = to_utc_iso("2024-01-25T16:30:15.000Z")
-    assert date.fromisoformat(result[:10]) == date(2024, 1, 25)
+@pytest.mark.parametrize(
+    ("true_utc", "hours"),
+    [
+        ("2025-03-07T21:05:00Z", 5),  # Friday before the 03-09 switch (EST)
+        ("2025-03-10T20:05:00Z", 4),  # Monday after it (EDT)
+        ("2025-10-31T10:01:26Z", 4),
+        ("2025-11-03T21:05:00Z", 5),  # Monday after the 11-02 switch (EST)
+        ("2025-12-01T12:00:00Z", 5),
+        ("2025-07-01T12:00:00Z", 4),
+    ],
+)
+def test_undo_double_shift_is_the_inverse_of_the_old_bug(true_utc, hours):
+    from datetime import UTC, datetime, timedelta
+
+    raw = datetime.fromisoformat(true_utc.replace("Z", "+00:00"))
+    old_stored = raw.replace(tzinfo=None).replace(tzinfo=bee._EASTERN).astimezone(UTC)
+    assert old_stored - raw == timedelta(hours=hours)  # the old bug, reproduced
+    assert undo_double_shift(old_stored.strftime("%Y-%m-%dT%H:%M:%SZ")) == true_utc
+    assert undo_double_shift(None) is None
+
+
+def test_undo_double_shift_matches_index_time_for_a_known_filing():
+    # Index page says 2025-10-31 06:01:26 ET (EDT) = 10:01:26Z; the old table
+    # held 14:01:26Z.
+    assert undo_double_shift("2025-10-31T14:01:26Z") == "2025-10-31T10:01:26Z"
+    assert eastern_wallclock_to_utc_iso("2025-10-31 06:01:26") == "2025-10-31T10:01:26Z"
+
+
+# --------------------------------------------------------------------------
+# End-to-end build against a fake HTTP layer
+# --------------------------------------------------------------------------
+
+EX_INDEX_ROW = (
+    '<table class="tableFile" summary="Document Format Files">'
+    "<tr><th>Seq</th><th>Description</th><th>Document</th><th>Type</th><th>Size</th></tr>"
+    '<tr><td>1</td><td>8-K</td><td><a href="/Archives/x/main.htm">main.htm</a></td>'
+    "<td>8-K</td><td>1</td></tr>"
+    '<tr><td>2</td><td>PRESS RELEASE</td><td><a href="/Archives/x/ex991.htm">ex991.htm</a></td>'
+    "<td>EX-99.1</td><td>1</td></tr></table>"
+)
+
+
+def _index_page(accepted: str) -> bytes:
+    return (
+        f'<div class="infoHead">Accepted</div><div class="info">{accepted}</div>' + EX_INDEX_ROW
+    ).encode()
+
+
+class FakeClient:
+    """Stands in for SecClient: serves canned payloads, records every URL."""
+
+    def __init__(self, *, index_pages, submissions, explode_on=None):
+        self.index_pages = index_pages  # accession -> accepted text or None (HTTP 404)
+        self.submissions = submissions  # cik10 -> filings.recent payload
+        self.explode_on = explode_on
+        self.urls: list[str] = []
+
+    def get(self, url, *, retries=5):
+        self.urls.append(url)
+        if url == bee.COMPANY_TICKERS_URL:
+            body = {"0": {"ticker": "AAA", "cik_str": 1}, "1": {"ticker": "BBB", "cik_str": 2}}
+            return 200, json.dumps(body).encode()
+        if url.startswith("https://data.sec.gov/submissions/CIK"):
+            cik10 = url.rsplit("CIK", 1)[1].removesuffix(".json")
+            if cik10 == self.explode_on:
+                raise RuntimeError("simulated crash")
+            payload = {"name": f"Co {cik10}", "filings": {"recent": self.submissions[cik10]}}
+            return 200, json.dumps(payload).encode()
+        if url.endswith("-index.htm"):
+            accession = url.rsplit("/", 1)[1].removesuffix("-index.htm")
+            accepted = self.index_pages.get(accession)
+            if accepted is None:
+                return 404, b""
+            return 200, _index_page(accepted)
+        if url.endswith("ex991.htm"):
+            return 200, b"<p>Results for the quarter.</p>"
+        raise AssertionError(url)
+
+    def close(self):
+        pass
+
+
+def _recent(accession, accepted_utc):
+    return {
+        "accessionNumber": [accession],
+        "filingDate": [accepted_utc[:10]],
+        "acceptanceDateTime": [accepted_utc],
+        "form": ["8-K"],
+        "items": ["2.02,9.01"],
+        "primaryDocument": ["main.htm"],
+    }
+
+
+@pytest.fixture
+def sandbox(tmp_path, monkeypatch):
+    monkeypatch.setattr(bee, "ROOT", tmp_path)
+    monkeypatch.setattr(bee, "UNIVERSE_DIR", tmp_path / "universe")
+    monkeypatch.setattr(bee, "OUT_DIR", tmp_path / "out")
+    monkeypatch.setattr(bee, "UNRESOLVED_PATH", tmp_path / "out" / "unresolved.json")
+    monkeypatch.setattr(bee, "RAW_TEXT_ROOT", tmp_path / "raw")
+    monkeypatch.setattr(bee, "RAW_CACHE_ROOT", tmp_path / "raw" / "_cache")
+    monkeypatch.setattr(bee, "COMPANY_TICKERS_CACHE", tmp_path / "raw" / "_cache" / "ct.json")
+    monkeypatch.setattr(bee, "CHECKPOINT_PATH", tmp_path / "raw" / "_cache" / "ckpt.jsonl")
+    (tmp_path / "universe").mkdir()
+    pd.DataFrame(
+        {
+            "month_end": pd.to_datetime(["2025-03-31"] * 2),
+            "symbol": ["AAA", "BBB"],
+            "adv_rank": [1, 2],
+        }
+    ).to_parquet(tmp_path / "universe" / "2025.parquet")
+    return tmp_path
+
+
+def _run(client):
+    return bee.build(
+        start=date(2025, 1, 1),
+        end=date(2025, 12, 31),
+        top_n=10,
+        limit=None,
+        refresh_tickers=True,
+        client=client,
+    )
+
+
+def _load(sandbox):
+    return pd.read_parquet(sandbox / "out" / "2025.parquet").set_index("accession")
+
+
+def test_build_uses_index_time_and_falls_back_to_formula(sandbox):
+    client = FakeClient(
+        # API value is true UTC: 2025-03-10 20:05:00Z == 16:05:00 EDT.
+        submissions={
+            "0000000001": _recent("0000000001-25-000001", "2025-03-10T20:05:00.000Z"),
+            "0000000002": _recent("0000000002-25-000002", "2025-11-03T21:05:00.000Z"),
+        },
+        index_pages={"0000000001-25-000001": "2025-03-10 16:05:00"},  # index fails for the 2nd
+    )
+    stats = _run(client)
+    table = _load(sandbox)
+    first = table.loc["0000000001-25-000001"]
+    second = table.loc["0000000002-25-000002"]
+    assert first.acceptance_source == "edgar_index"
+    assert first.acceptance_utc == "2025-03-10T20:05:00Z"
+    assert second.acceptance_source == "formula"
+    assert second.acceptance_utc == "2025-11-03T21:05:00Z"  # EST: 16:05 ET
+    assert stats.per_source == {"edgar_index": 1, "formula": 1}
+    assert stats.index_formula_mismatch == 0
+
+
+def test_build_prefers_index_when_it_disagrees_with_api(sandbox):
+    client = FakeClient(
+        submissions={
+            "0000000001": _recent("0000000001-25-000001", "2025-03-10T20:05:00.000Z"),
+            "0000000002": {"accessionNumber": []},
+        },
+        index_pages={"0000000001-25-000001": "2025-03-10 16:06:00"},
+    )
+    stats = _run(client)
+    assert _load(sandbox).loc["0000000001-25-000001"].acceptance_utc == "2025-03-10T20:06:00Z"
+    assert stats.index_formula_mismatch == 1
+
+
+def test_build_resumes_from_checkpoint_without_refetching_finished_companies(sandbox):
+    submissions = {
+        "0000000001": _recent("0000000001-25-000001", "2025-03-10T20:05:00.000Z"),
+        "0000000002": _recent("0000000002-25-000002", "2025-11-03T21:05:00.000Z"),
+    }
+    pages = {
+        "0000000001-25-000001": "2025-03-10 16:05:00",
+        "0000000002-25-000002": "2025-11-03 16:05:00",
+    }
+    crashing = FakeClient(submissions=submissions, index_pages=pages, explode_on="0000000002")
+    with pytest.raises(RuntimeError, match="simulated crash"):
+        _run(crashing)
+    assert not (sandbox / "out" / "2025.parquet").exists()  # nothing half-written
+    assert bee.CHECKPOINT_PATH.exists()
+
+    resumed = FakeClient(submissions=submissions, index_pages=pages)
+    _run(resumed)
+    assert not any("CIK0000000001" in url for url in resumed.urls)
+    assert not any("0000000001-25-000001-index" in url for url in resumed.urls)
+    table = _load(sandbox)
+    assert sorted(table.index) == ["0000000001-25-000001", "0000000002-25-000002"]
+    assert table.loc["0000000002-25-000002"].acceptance_utc == "2025-11-03T21:05:00Z"
+    assert not bee.CHECKPOINT_PATH.exists()  # cleaned up after a complete run
+
+
+def test_rebuild_moves_a_filing_across_a_year_boundary_without_duplicates(sandbox):
+    out = sandbox / "out"
+    out.mkdir()
+    stale = pd.DataFrame(
+        {
+            "cik": ["0000000001"],
+            "ticker": ["AAA"],
+            "accession": ["0000000001-25-000001"],
+            # old, double-shifted: true 2025-12-31T21:00Z stored as 2026-01-01T02:00Z
+            "acceptance_utc": ["2026-01-01T02:00:00Z"],
+        }
+    )
+    stale.to_parquet(out / "2026.parquet")
+    client = FakeClient(
+        submissions={
+            "0000000001": _recent("0000000001-25-000001", "2025-12-31T21:00:00.000Z"),
+            "0000000002": {"accessionNumber": []},
+        },
+        index_pages={"0000000001-25-000001": "2025-12-31 16:00:00"},
+    )
+    _run(client)
+    assert list(_load(sandbox).index) == ["0000000001-25-000001"]
+    assert len(pd.read_parquet(out / "2026.parquet")) == 0
