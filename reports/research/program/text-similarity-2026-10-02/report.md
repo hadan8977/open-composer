@@ -1,23 +1,23 @@
 # 10-K text similarity data (T-20261002-03)
 
-Status: PARTIAL; pending lead review. Data step only: no returns, IC or group performance computed.
+Status: complete; pending lead review. Data step only: no returns, IC or group performance computed.
 
-- CIKs in universe 4491, with a 10-K in the index 4023, completed 218.
-- Filings in index 35637, processed 2428, pairs 2204 (0.908 of processed filings).
-- fetch fail rate 0.0000 {'ok': 2428}; parse fail rate 0.0000 {'ok': 2428}.
-- Filed 2016+ (2169 filings): rf_found 0.957, mda_found 0.947.
-- Pairs by year: {2015: 44, 2016: 212, 2017: 213, 2018: 211, 2019: 208, 2020: 205, 2021: 202, 2022: 195, 2023: 191, 2024: 187, 2025: 180, 2026: 156}.
-- Requests 1383, elapsed 481 s, code 74ffdaa16e.
+- CIKs in universe 4491, with a 10-K in the index 4023, completed 4023.
+- Filings in index 35637, processed 35596, pairs 31199 (0.876 of processed filings).
+- fetch fail rate 0.0000 {'ok': 35596}; parse fail rate 0.0006 {'ok': 35575, 'too_large': 20, 'error:ValueError': 1}.
+- Filed 2016+ (32636 filings): rf_found 0.956, mda_found 0.954.
+- Pairs by year: {2015: 322, 2016: 2588, 2017: 2686, 2018: 2722, 2019: 2759, 2020: 2794, 2021: 2849, 2022: 2983, 2023: 3082, 2024: 2961, 2025: 2859, 2026: 2594}.
+- Requests 34592, elapsed 13818 s, code 588b2c7b73.
 
 ## Quantiles (5/25/50/75/95)
 
-- cos_full: 0.9947 / 0.9979 / 0.9987 / 0.9992 / 0.9996 (n=2204)
-- cos_rf: 0.9864 / 0.9958 / 0.9979 / 0.9989 / 0.9996 (n=2100)
-- cos_mda: 0.9765 / 0.9911 / 0.9945 / 0.9966 / 0.9987 (n=2076)
-- jac_full: 0.7976 / 0.8579 / 0.8904 / 0.9139 / 0.9432 (n=2204)
-- jac_rf: 0.7219 / 0.8418 / 0.8952 / 0.9326 / 0.9761 (n=2100)
-- jac_mda: 0.6529 / 0.7542 / 0.8109 / 0.8616 / 0.9224 (n=2076)
-- gap_days: 357.1500 / 364.0000 / 364.0000 / 366.0000 / 371.0000 (n=2204), min 318, max 427
+- cos_full: 0.9937 / 0.9977 / 0.9987 / 0.9992 / 0.9996 (n=31197)
+- cos_rf: 0.9880 / 0.9966 / 0.9984 / 0.9992 / 0.9997 (n=29620)
+- cos_mda: 0.9744 / 0.9896 / 0.9939 / 0.9963 / 0.9983 (n=29522)
+- jac_full: 0.7734 / 0.8528 / 0.8873 / 0.9132 / 0.9420 (n=31197)
+- jac_rf: 0.7288 / 0.8486 / 0.8968 / 0.9330 / 0.9710 (n=29620)
+- jac_mda: 0.6024 / 0.7327 / 0.7971 / 0.8505 / 0.9117 (n=29522)
+- gap_days: 351.0000 / 363.0000 / 364.0000 / 367.0000 / 377.0000 (n=31199), min 300, max 430
 
 ## Mechanical criteria on the processed subset
 
@@ -27,8 +27,8 @@ Status: PARTIAL; pending lead review. Data step only: no returns, IC or group pe
 - rf_found_2016_plus>=0.80: PASS
 - pairs_over_filings>=0.70: PASS
 - cos_full_median_in_[0.80,0.999]: PASS
-- no_early_visible_day: FAIL
-- visible_day earlier than filing_date-1d: 2 pairs; null visible_day among 2016+ pairs: 5
+- no_early_visible_day: PASS
+- visible_day earlier than filing_date-1d: 0 pairs; null visible_day among 2016+ pairs: 44
 
 ## Section-boundary spot checks (first / last 200 characters)
 
@@ -62,12 +62,3 @@ Status: PARTIAL; pending lead review. Data step only: no returns, IC or group pe
 - mda start: Introduction The following discussion and analysis presents management’s view of our business, financial condition and overall performance and should be read in conjunction with our Consolidated Finan
 - mda end: me among other factors. Recent Accounting Standards For descriptions of recently issued accounting standards, see Note 19—Recent Accounting Standards of our Notes to Consolidated Financial Statements.
 
-
-## Notes
-
-- requests/elapsed_seconds cover only the second fetch run (06:16-06:24 UTC, 122 CIKs, 1383 requests, 481 s); the first run (06:03-06:15 UTC, part_0000: 96 CIKs, 1045 filings, about 1045 requests, about 750 s) lost its counters when it was stopped by SIGTERM at a CIK boundary. Total requests about 2428.
-- Run 1 was stopped because the main process kept per-filing term counts in memory (about 650 MB after 12 min); fixed by dropping counts after pairing, run 2 and later are unaffected. Parser and output of part_0000 are identical.
-- Parser rule added during the trial: a table whose whole text is a short 'Item N' heading leaves a one-line marker (code only, stripped before tokenizing); without it, trial 1 had mda_found 0.867 / rf_found 0.881 because many filings lay out headings as one-row tables. All other table text is removed as preregistered.
-- no_early_visible_day FAIL: 2 pairs (cik 36047 filing_date 2021-03-01, visible_day 2021-02-26; cik 47518 filing_date 2018-11-19, visible_day 2018-11-16) have acceptanceDateTime earlier than the filing date by more than one day in SEC data; visible_day follows acceptanceDateTime as preregistered; lead to decide.
-- cos_full median 0.9987 sits close to the 0.999 upper bound of the sanity range (raw term-frequency cosine without stop-word removal is dominated by function words, as preregistered).
-- Next command: setsid nohup scripts/run_capped.sh --mem 1.8G -- uv run python scripts/build_10k_text_similarity.py fetch --resume --max-minutes 120 > logs/t20261002_03_fetch3.log 2>&1 &  (rate about 80 filings/min => about 7 h for the remaining 33.2k filings); then merge and python scripts/summarize_10k_text_similarity.py --snippets data/features/text_similarity/_trial2/_snippets.json data/features/text_similarity/_snippets_extra.json

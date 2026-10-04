@@ -1638,7 +1638,7 @@
     - 宇宙成员按时点记录处理：2026-08-31 以前各月不改，只追加 09-30。
 
 ### T-20261002-03 信号库：10-K 文本变化数据（Lazy Prices，U3000，2014-07..2026-09，EDGAR 主文档）
-- status: running（交互会话 01:10 在后台续抓，03:29 抓完、剩余 0；2026-10-04 07:41 UTC 起后台跑 merge 和 summarize（`logs/t20261002_03_merge.log`、`_summarize.log`），之后交主审验收；定时轮不要取）
+- status: done（交互会话主审 2026-10-04 07:54 UTC：抓取 03:29 完成，merge 和 summarize 07:41 完成；summary.json 七项验收全部通过，其中 no_early_visible_day 为真，filing-date floor 移动了 4 个可见日；4023 个 CIK，35,596 份 10-K，31,199 对（0.876），抓取失败 0，解析失败 0.06%，2016 年后 RF 和 MD&A 找到率 95.6% 和 95.4%；2016 年后有 44 对可见日为空，T-04 要排除并计数。T-04 现在可以取）
 - priority: 2
 - not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 运行；和 T-20261002-01 不并行，T-01 先做）
 - brief: reports/research/control/briefs/T-20261002-03.md
