@@ -80,7 +80,7 @@
     },
     {
       "table": "nsi",
-      "status": "NOT swapped: old file restored",
+      "status": "superseded by the 10-04 lead ruling: swapped, see nsi_second_swap entry",
       "dest": "data/features/nsi/nsi.parquet",
       "backup": "data/live/backup-features-20261002/nsi/nsi.parquet",
       "sha256_before": "d25b48711b1bffaccd993daca1bc3c62c89ced76da678535e201c81fb177108c",
@@ -91,7 +91,7 @@
     },
     {
       "table": "short_interest_2026",
-      "status": "NOT swapped: old file restored",
+      "status": "superseded by the 10-04 lead ruling: swapped, see short_interest_second_swap entry",
       "dest": "data/features/short_interest/2026.parquet",
       "backup": "data/live/backup-features-20261002/short_interest/2026.parquet",
       "sha256_before": "28ce8adb9c942fff923b6b01c04357d1cf0edc9b020862ce6e87dec67d028270",
@@ -102,7 +102,7 @@
     },
     {
       "table": "alpha101_broad",
-      "status": "NOT swapped",
+      "status": "NOT swapped (lead ruling 2026-10-04: keep the old table; candidates stay in _t02_stage)",
       "candidate": "data/features/_t02_stage/alpha101_broad/2026.parquet",
       "sha256_candidate": "751d9525a7512aa55222c6b3fc9f92e23e1968da4b231bd0e25771d7d57b6ea9",
       "control_candidate": "data/features/_t02_stage/alpha101_ctrl/2026.parquet",
@@ -110,11 +110,31 @@
     },
     {
       "table": "alpha191_broad",
-      "status": "NOT swapped",
+      "status": "NOT swapped (lead ruling 2026-10-04: keep the old table; candidates stay in _t02_stage)",
       "candidate": "data/features/_t02_stage/alpha191_broad/2026.parquet",
       "sha256_candidate": "f97b8c3d610372ee6871c714072c8ada592e91dc00bca0c6b50f4f9f2ed5c195",
       "control_candidate": "data/features/_t02_stage/alpha191_ctrl/2026.parquet",
       "note": "rank parity below 0.99, see t02-checks.json"
+    },
+    {
+      "table": "nsi_second_swap",
+      "dest": "data/features/nsi/nsi.parquet",
+      "backup": "data/live/backup-features-20261002/nsi_second_swap/nsi.parquet",
+      "sha256_before": "d25b48711b1bffaccd993daca1bc3c62c89ced76da678535e201c81fb177108c",
+      "sha256_after": "a076fa4039ac87e4c45d8cfc655208d6ec52480a70f2a893cd72a2c5a68e02fa",
+      "sha256_staged": "a076fa4039ac87e4c45d8cfc655208d6ec52480a70f2a893cd72a2c5a68e02fa",
+      "swapped_utc": "2026-10-04T08:33:11Z",
+      "note": "10-04 lead ruling: accepted; 22 key mismatches, 21 restated, ESQ unattributed"
+    },
+    {
+      "table": "short_interest_second_swap",
+      "dest": "data/features/short_interest/2026.parquet",
+      "backup": "data/live/backup-features-20261002/short_interest_second_swap/2026.parquet",
+      "sha256_before": "28ce8adb9c942fff923b6b01c04357d1cf0edc9b020862ce6e87dec67d028270",
+      "sha256_after": "1a02d66cf994c0af88fda89663f4641b3c1256fbea92308addac8a7fc00cdab5",
+      "sha256_staged": "1a02d66cf994c0af88fda89663f4641b3c1256fbea92308addac8a7fc00cdab5",
+      "swapped_utc": "2026-10-04T08:33:12Z",
+      "note": "10-04 lead ruling: accepted; 2018-start build, INHD 38 rows adv_shares_63 unattributed (max 1.8%)"
     }
   ],
   "note_first_swaps": "daily_broad and daily were already swapped (to 2026-10-01) by the earlier subagent at 2026-10-02T13:47Z; the continuation brief listed only universe_broad as replaced. The 10-04 swaps (daily*_to_d1002) move them to 2026-10-02; the original pre-T-02 files stay in backup-features-20261002/<table>/."

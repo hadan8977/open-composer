@@ -70,3 +70,12 @@ Either accept an append-only policy (keep rows <= old last date, append only row
 - SEC daily: rebuilt to 10-02, coverage 1.0044, pass. 67 changed rows of one symbol (SHPH, sue_eps) trace to a late 10-Q filed 09-24 entering the quarterly ladder; `sue_series` uses the final ladder, which is a point-in-time leak in the builder (needs the lead).
 - NSI and short interest: not replaced, old files restored (sha256 equal). NSI keys differ for 22 symbols (21 restated; ESQ cause not found). Short interest: 38 unattributed rows, INHD only (adv_shares_63, up to 1.8%). The brief's `--start-year 2026` build drops pre-2026 carry-in records (visible 95.99% vs 99.80% with `--start-year 2018`); candidate is the 2018-start build, 2018-2025 partitions restored from backup. Candidates in `_t02_stage/nsi_new`, `short_interest_new`.
 - Research snapshot sha256 before = after (2637 files). Data under `data/features/`, not committed. Details: `t02-checks.json`, `t02-swap.json`, `freshness.json`.
+
+### T-20261002-02 lead rulings 2026-10-04 (applied)
+
+- NSI and short interest swapped (before/after sha256 in `t02-swap.json`, entries `nsi_second_swap`, `short_interest_second_swap`), last date 2026-10-02. NSI: 22 key mismatches, 21 restated symbols, ESQ unattributed. Short interest: 2018-start build (visible record 99.80%); INHD 38 rows of adv_shares_63 (max 1.8%) unattributed. The script `pass` for both stays false; they are accepted by ruling.
+- Strict-zone tolerance: the price-ratio-aware bound is confirmed; the literal 0.04/close bound is a record only.
+- alpha101_broad and alpha191_broad stay old (candidates in `_t02_stage`). They feed only the ML fast signal, not the M0 composite; the fast-alpha columns are empty on the new dates, with no effect on M0.
+- The 20 intraday columns are empty on the new dates; M0 does not use them; not fixed.
+- SEC daily new version kept for live. The SHPH `sue_series` point-in-time leak is data pit #62, audited separately.
+- Research snapshot sha256 before = after (2637 files), rechecked after the swaps.

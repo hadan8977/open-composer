@@ -3485,7 +3485,7 @@
   "alpha101_broad": {
    "pass": false,
    "replaced": false,
-   "status": "partial",
+   "status": "partial, not replaced (lead ruling: keep old table)",
    "last_date_after": "2026-09-17 (unchanged)",
    "candidate_last_date": "2026-10-02 (data/features/_t02_stage/alpha101_broad)",
    "failed": "kept columns rank_parity_share below 0.99 (stage build) and keys_ok false (2 symbols x 160 dates not on the allow list)",
@@ -5202,7 +5202,7 @@
   "alpha191_broad": {
    "pass": false,
    "replaced": false,
-   "status": "partial",
+   "status": "partial, not replaced (lead ruling: keep old table)",
    "last_date_after": "2026-09-17 (unchanged)",
    "candidate_last_date": "2026-10-02 (data/features/_t02_stage/alpha191_broad)",
    "failed": "kept columns rank_parity_share below 0.99 (stage build) and keys_ok false (2 symbols x 160 dates not on the allow list)",
@@ -8076,8 +8076,8 @@
   },
   "nsi": {
    "pass": false,
-   "replaced": false,
-   "status": "partial; old file restored, sha256 equal to backup",
+   "replaced": true,
+   "status": "swapped by lead ruling 2026-10-04 (script check pass remains false)",
    "candidate": "data/features/_t02_stage/nsi_new/nsi.parquet (last date 2026-10-02)",
    "failed": "keys_ok false: 464 only-new keys (HELP 160, ESQ 160, CLYM 87, IMMX 57) and 1780 only-old keys (18 symbols, all in restated_symbols.txt) not on the allow lists; unattributed_changed_rows 0",
    "diagnosis": {
@@ -8392,12 +8392,13 @@
     "baseline_n": 20,
     "pass": false
    },
-   "sha256_candidate": "a076fa4039ac87e4c45d8cfc655208d6ec52480a70f2a893cd72a2c5a68e02fa"
+   "sha256_candidate": "a076fa4039ac87e4c45d8cfc655208d6ec52480a70f2a893cd72a2c5a68e02fa",
+   "last_date_after": "2026-10-02"
   },
   "short_interest": {
    "pass": false,
-   "replaced": false,
-   "status": "partial; old file restored, sha256 equal to backup",
+   "replaced": true,
+   "status": "swapped by lead ruling 2026-10-04 (script check pass remains false)",
    "candidate": "data/features/_t02_stage/short_interest_new/2026.parquet (last date 2026-10-02)",
    "failed": "unattributed_changed_rows 38 (symbol INHD only, columns adv_shares_63 and short_interest_ratio, 2026-06-30..2026-08-21, relative change up to 1.8%); INHD is not in the restated list and its archive bars are identical between the pre-swap backup and the repaired archive except 10-01/10-02",
    "builder_finding": "the brief command (--start-year 2026 --end-year 2026) drops the carry-in record from before 2026-12-31 snapshots: with a visible record 95.99%, unattributed 40388 rows; --start-year 2025 gave 99.65% and unattributed 40350; --start-year 2018 (2018-2025 partitions restored from backup, sha256 equal) gives 99.80% and unattributed 38. Candidate is the 2018-start build",
@@ -8697,7 +8698,8 @@
     "baseline_n": 20,
     "pass": false
    },
-   "sha256_candidate": "1a02d66cf994c0af88fda89663f4641b3c1256fbea92308addac8a7fc00cdab5"
+   "sha256_candidate": "1a02d66cf994c0af88fda89663f4641b3c1256fbea92308addac8a7fc00cdab5",
+   "last_date_after": "2026-10-02"
   }
  },
  "alpha_160_keys_attribution": {
@@ -8763,7 +8765,16 @@
   "after": {
    "identical": true,
    "n_files": 2637,
-   "diff": []
+   "diff": [],
+   "rechecked": "after the NSI/short-interest swaps"
   }
+ },
+ "lead_rulings_2026_10_04": {
+  "nsi": "swapped. 22 key mismatches (21 restated symbols, ESQ unattributed) accepted; check pass stays false by the script rule",
+  "short_interest": "swapped with the 2018-start candidate (visible record 99.80%); the --start-year 2026 build drops pre-2026 carry-in records and is not used. INHD 38 rows adv_shares_63 (max 1.8%) unattributed, accepted",
+  "strict_zone_tolerance": "price-ratio-aware bound (strict_ratio) confirmed as the correct bound for multi-period returns; the literal 0.04/close bound is kept as a record only",
+  "alpha101_broad_alpha191_broad": "not swapped, old tables kept: they only feed the ML fast signal, not the M0 composite; keeping them keeps history consistent with the research snapshot. New-date fast-alpha columns are empty, no effect on M0",
+  "intraday_columns": "20 intraday columns are empty on the new dates; M0 does not use them; not fixed",
+  "sec_daily": "new version kept for live; SHPH sue_series point-in-time leak registered as data pit #62, audited separately"
  }
 }
