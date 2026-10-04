@@ -8,7 +8,8 @@ earlier). No stock return is read here: the table is the frozen design's input o
 
 Public Gamma and CLOB endpoints, no key, no wallet, nothing is written to a broker.
 Output (not committed): data/research/prediction_markets/polymarket_earnings/events.parquet
-and the coverage funnel in the iteration's ``data-feasibility.json`` (merged in place).
+and the coverage funnel in the iteration's ``data-coverage.json`` (merged in place; the
+frozen ``data-feasibility.json`` is hash-bound and never edited).
 
 Usage::
 
@@ -505,7 +506,7 @@ def main(argv: list[str] | None = None) -> int:
                 "GAAP-basis contracts are kept; the basis is recorded per event.",
             ],
         }
-        merge_feasibility(ITER_DIR / "data-feasibility.json", cov, extra)
+        merge_feasibility(ITER_DIR / "data-coverage.json", cov, extra)
         print(json.dumps(cov["funnel"]))
     return 0
 
