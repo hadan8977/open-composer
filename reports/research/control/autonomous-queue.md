@@ -1853,3 +1853,97 @@
 - done_when: 合同冻结（direction-check、iteration validate 都过），执行轮跑完，主审给出是否替换 T-43 的结论。
 - notes:
   - 2026-10-04 16:51 UTC 交互会话（Opus）登记。T-43 是事先定好的规则机械选出的，不事后改；第二版是新合同。
+
+
+### T-20261004-70 实盘快速通道 A1：拼接前向记录（09-01 起，分段标注；前向 z、跟踪差、哈希链）
+- status: ready（定时执行轮可取）
+- priority: 1
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261004-70.md
+- goal: 机主 10-04：模拟盘测试从 09-01 算，加两周真实模拟盘。评判标准 v2.1 的 L1 要每个候选（S1–S3、C2、v1.2 F1/F2、T-43 组合）有分段标注的日净收益记录：设计时看过、样本外影子、模拟盘。
+- done_when: `reports/research/program/forward-record-2026-10-06/` 的 record.csv、summary.json、hash_chain.jsonl、README.md 已提交，标"待主审"。**10-06 22:00 UTC 前**。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。计划 `docs/plan-owner-feedback-2026-10-04.zh.md` A1。设计时看过的段不算样本外证据。
+
+### T-20261004-71 实盘快速通道 A3：v1.2 在实盘资金下的容量（集中版预注册）
+- status: blocked（等机主给实盘资金数，计划第 5 节第 1 项，请他 10-08 前给）
+- priority: 1
+- not_before: 拿到资金数
+- brief: reports/research/control/briefs/T-20261004-71.md
+- goal: 100 万美元时约 1784 名、每名约 560 美元；资金小时低于最小下单额。算原样能不能上，不能就预注册并测前 100/200/300 名的集中版，报同波动净夏普损失。
+- done_when: `reports/research/program/capacity-live-<日期>/` 已提交，拿到资金数后 2 天内。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
+
+### T-20261004-72 实盘快速通道 A4：实盘就绪清单和实盘下单路径
+- status: blocked（等机主授权"实盘下单路径"范围变更并提供实盘账户和密钥；授权前只写清单文档，不写实盘写入代码）
+- priority: 1
+- not_before: 机主授权
+- brief: reports/research/control/briefs/T-20261004-72.md
+- goal: 失效即关闭清单（T-76 第 1 条）、分开的实盘路径、硬上限、PDT 和做空合规、先只读核对一天再下第一笔小单。
+- done_when: 清单、代码、测试、`docs/runbook-live-pilot.zh.md`；**10-12 前**（取决于授权时间）。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。CLAUDE.md 现写明实盘写入不在范围内，必须机主明确改。
+
+### T-20261004-73 看板改版：首页按四个问题重排，新增报告中心 /reports
+- status: running（独立 Paseo 代理 5b19476a，Fable 5.1，协调码 R1004-T73）
+- priority: 2
+- brief: reports/research/control/briefs/T-20261004-73.md
+- done_when: 10-05 06:00 UTC 前截图在 `docs/cockpit-screens/v5/`；10-06 12:00 UTC 前合入并上线。
+- notes:
+  - 2026-10-04 18:17 UTC 补登记（17:52 派出）。数据层只复用 `owner_digest`；594d18f（10-04 18:03 UTC）起 `owner_items`（只含机主要做的事）与 `ops_items`（运行异常）已分开，首页"要我做什么"用前者。
+
+### T-20261004-74 交易频率 C1：S1–S3、C2 的月/周/日频率阶梯（日频加不交易带）
+- status: ready（定时执行轮可取）
+- priority: 2
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261004-74.md
+- goal: 回答机主"为什么都是周频月频"：同一信号日频更新加不交易带，扣成本后净夏普升还是降；顺带检验 S3 的调仓日运气。先预注册再跑，20 格按多重检验口径报。
+- done_when: `reports/research/iterations/t20261004_74_frequency_ladder/` 的 prereg、results、report 已提交，标"待主审"。**10-07 22:00 UTC 前**。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。变好的不直接替换现役，交 D2/T-58 做候选。
+
+### T-20261004-75 稳健性 D1：集中度和市场状态诊断（半导体问题）
+- status: ready（定时执行轮可取）
+- priority: 1
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261004-75.md
+- goal: 每个子策略、v1.2、T-43 组合：对 SPY/QQQ/正交化 SMH 回归，按持仓算半导体贡献，剔除半导体后的表现，按大盘和半导体状态分开的夏普，六段压力片段。只诊断，改法在 D2 和 T-58 预注册。
+- done_when: `reports/research/program/concentration-regimes-2026-10-06/` 已提交，标"待主审"。**10-06 22:00 UTC 前**。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。机主 10-04：半导体周期可能已过，要从大盘和择时角度看，剔除过于明显的相关性。
+
+### T-20261004-76 调研：GitHub 近期热门 vibe trading / AI 交易项目
+- status: done（交互会话审核，2026-10-04 18:17 UTC 登记：接受，提交 9be902b。星数取自 GitHub API；32 个项目，没有一个给出扣成本、截止日后、可核验的盈利证据；借鉴的 5 条已分进 T-70、T-72、T-79 和 B 线）
+- priority: 2
+- brief: reports/research/control/briefs/T-20261004-76.md
+- notes:
+  - 独立 Paseo 代理 f627dd9d（Sonnet 5.5 high），17:49 派出，18:06 交付。X 渠道因 twscrape 未装而空缺。
+
+### T-20261004-77 方法检验：拓扑和相关结构风险信号（G1）、路径签名特征（G2）、残差随机矩阵诊断（G3）
+- status: ready（主审轮取：先写方向依据和预注册，再交执行轮）
+- priority: 3
+- not_before: 2026-10-08（等 T-75 的状态划分）
+- brief: reports/research/control/briefs/T-20261004-77.md
+- goal: 回答机主"流形、拓扑、物理建模能不能做"：证据见 `reports/research/intel/I-20261004-03-geometry-physics-methods-and-jane-street-playbook.md`。不作主攻；G1 必须胜过平均相关加已实现波动这个简单基线，G2 必须胜过同数量随机特征。
+- done_when: 预注册冻结，执行轮跑完，主审给出保留或否定；否定的写进 directions.jsonl。**10-14 前**。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
+
+### T-20261004-78 调研：顶级量化机构的公开分享和竞赛冠军方案（机主上传的 Jane Street AI 手册的延伸）
+- status: running（独立 Paseo 代理 394eace8，Sonnet 5.5 high，协调码 R1004-T78）
+- priority: 2
+- brief: reports/research/control/briefs/T-20261004-78.md
+- done_when: `reports/research/intel/I-20261004-04-practitioner-disclosures-survey.{md,json}` 和快照目录，10-05 06:00 UTC 前；交互会话审核后提交。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记并派出。PDF 本身的评估已在 I-20261004-03 第 2 节。
+
+### T-20261004-79 时间合同：三个时钟（received_at）、截断不变性测试、LLM 记忆检查进 llm_contribution_pass
+- status: ready（定时执行轮可取）
+- priority: 3
+- not_before: 2026-10-12（v1.2 模拟盘第一周不改 live 数据管线）
+- brief: reports/research/control/briefs/T-20261004-79.md
+- goal: 来自 T-76 第 3 条和 Jane Street 播客：更强的模型更会利用前视泄漏；LLM 记忆是真问题。
+- done_when: 代码、测试、`reports/research/program/time-contract-<日期>/report.md` 已提交，标"待主审"。10-16 前。
+- notes:
+  - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
