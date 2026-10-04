@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "report_type": "h20261004_pm_midterm_odds_leadlag_historical_evaluation_authorization",
+  "iter_id": "h20261004_pm_midterm_odds_leadlag",
+  "generated_at": "2026-10-04T08:32:01Z",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 3,
+    "evaluation_authorized_count": 3,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "midterm_control_odds_trump_trades": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "H-M",
+        "M-CAT",
+        "M-KAL"
+      ],
+      "reason_code": "pre_build_contract_gamma_clob_kalshi_public_and_sip_daily_present"
+    }
+  },
+  "candidate_authorization": {
+    "candidate_count": 3,
+    "rows": [
+      {
+        "candidate_id": "H-M",
+        "path": "midterm_control_odds_trump_trades",
+        "action": "evaluate",
+        "reason_code": "pre_build_contract_gamma_clob_kalshi_public_and_sip_daily_present",
+        "candidate_binding_sha256": "0d573bebc8ec0d0ee3b951d534a4994a01777c85d3594623c1de44db62f86b59"
+      },
+      {
+        "candidate_id": "M-CAT",
+        "path": "midterm_control_odds_trump_trades",
+        "action": "evaluate",
+        "reason_code": "pre_build_contract_gamma_clob_kalshi_public_and_sip_daily_present",
+        "candidate_binding_sha256": "f3401b398b4a6d38d45648f9ed4e90be10b6313897844a3b55ba2cba7414c748"
+      },
+      {
+        "candidate_id": "M-KAL",
+        "path": "midterm_control_odds_trump_trades",
+        "action": "evaluate",
+        "reason_code": "pre_build_contract_gamma_clob_kalshi_public_and_sip_daily_present",
+        "candidate_binding_sha256": "b02aef401d647085422b6813c914c6fef464b7dff1d188ef75eef30085baf6fb"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "cost_contract"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/cost-contract.json",
+      "sha256": "a2be0f7573edfb4ec42d87eb98533e60e021e0f0cc2607a9dab0cedc2d6a9568"
+    }
+  },
+  "directions_source": {
+    "applied": "paper_internet_appendix_table_a1_verbatim",
+    "snapshot": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/wang-learning-from-prediction-markets.txt",
+    "sha256": "91ad542ae6b0e3e8a849ad85601f948aa11d001a1fb6a65135190beba4b9d02b",
+    "decided_at": "2026-10-04T08:32:01Z",
+    "note": "Table A.1 is part of the paper snapshot (Internet Appendix after the main text); it matches the fallback directions frozen in hypotheses.md, so no return depends on the choice."
+  },
+  "rulings": [
+    "TSLA is not named in the cost rule of hypotheses.md; it takes the 2 bp large-cap rate.",
+    "EMA convention is not stated in the paper or the design; pandas ewm(span=5, adjust=False) is used.",
+    "Percentile rank uses average ranks for ties and maps rank r in (0, 1] to 2r-1."
+  ],
+  "notes": "PHASE 1 (pre-build contract), written before any strategy return was computed. Both Polymarket control events and the Kalshi control series exist (see sources/). scripts/build_pm_midterm_data.py replaces this file with the measured counts. Authorization here is a workflow gate, not a research result."
+}

@@ -1,0 +1,110 @@
+name: h20261004_pm_midterm_odds_leadlag
+description: 'Preregistered T-20261004-53 out-of-sample test (dir:prediction_market_policy_odds_leadlag_glw2026) of Goldstein, Li and Wang (2026): the 4pm-to-4pm change of the Polymarket 2026 House and Senate Republican-control probabilities, transformed exactly as in the paper (EMA span 5, 60-session percentile rank, map to [-1, 1], lag one session), times the paper Table A.1 direction of each Trump-trade ETF, bank and connected stock, equal weight, MOC execution. One decision candidate H-M; category and Kalshi variants are reported only. No broker write and no paper order in this step.'
+timeframe: daily
+universe:
+- SPY
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20261002_pm_macro:release_day_overlay
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  polymarket_midterm_control_signal:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is the 5-session EMA of the 4pm-to-4pm change in the mean of the Polymarket House and Senate Republican-control Yes prices, converted to a 60-session rolling percentile rank, mapped to [-1, 1] and lagged one session, then multiplied by the paper Table A.1 direction of each asset. It is built by scripts/run_h20261004_pm_midterm_odds_leadlag.py and is not expressible in the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- event.polymarket_public
+research_design:
+  iter_id: h20261004_pm_midterm_odds_leadlag
+  candidate_manifest_path: reports/research/iterations/h20261004_pm_midterm_odds_leadlag/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20261004_pm_midterm_odds_leadlag/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20261004_pm_midterm_odds_leadlag.jsonl
+  source_card_claim_ids:
+  - goldstein_li_wang_2026_learning_from_pm
+  - glw_2026_transformation_section_3_2
+  - glw_2026_table_a1_directions
+  - citi_midterm_odds_bond_gridlock_2026
+  - polymarket_gamma_midterm_control_events_probe
+  - kalshi_midterm_control_events_probe
+  - polymarket_clob_prices_history_probe
+  - feds_2026_010_kalshi_macro
+  - polymarket_v1_database_paper
+  - leigh_wolfers_zitzewitz_2003_iraq_event_probability
+  parameter_space:
+    signal_markets:
+    - polymarket_house_and_senate_republican_mean
+    ema_span:
+    - 5
+    percentile_window_sessions:
+    - 60
+    direction_source:
+    - paper_table_a1
+  candidate_budget: 3
+  selection_objective: One decision statistic, the net annualized Sharpe of the equal-weighted signal-times-direction basket over the backtest window after the 60-session burn-in. Continue only if net Sharpe >= 0.5, Newey-West (5 lags) t of the mean daily net return >= 2.0 and the mean net return is above the 95th percentile of 1000 circular shifts of the signal (seed 20261004). Stop if net Sharpe <= 0. Between the two rules is inconclusive. Category strategies and the Kalshi signal are reported and not decision eligible.
+  anti_overfit_notes:
+  - The transformation, EMA span, percentile window, assets, directions, costs and the continue, stop and inconclusive rules are frozen in hypotheses.md and candidate-manifest.json before any strategy return conditional on the signal is computed; no parameter is searched.
+  - Three placebos (circular shifts, sign flip, an unrelated high-volume non-political market) and a forward shadow to 2026-11-04 are part of the contract.
+  validation_plan:
+  - hm_net_sharpe_nw_t_and_circular_shift_gate
+  - predictive_regression_next_session_basket_return_on_dp
+  - category_strategies_report_only
+  - day2_reversal_and_same_day_relation
+  - kalshi_signal_robustness
+  - gross_sharpe_and_double_cost
+  - placebo_circular_shifts_1000_seed_20261004
+  - placebo_sign_flip
+  - placebo_unrelated_polymarket_market

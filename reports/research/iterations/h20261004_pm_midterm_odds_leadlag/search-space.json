@@ -1,0 +1,56 @@
+{
+  "iter_id": "h20261004_pm_midterm_odds_leadlag",
+  "strategy_name": "h20261004_pm_midterm_odds_leadlag",
+  "source_spec_path": "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml",
+  "spec_hash": "d2e0ecb9d1fbe62c33daa3ef22f8c8a3edf69fd3887c25a49a2a40475a78ab2c",
+  "schema_version": 3,
+  "created_at": "2026-10-04T08:32:01Z",
+  "objective": "Preregistered out-of-sample test of Goldstein-Li-Wang (2026) on the 2026 midterm control markets: one decision candidate H-M plus two report-only variants, no parameter search.",
+  "total_candidate_budget": 3,
+  "cost_assumptions": "2 bp per side (ETFs, large banks, TSLA), 10 bp per side for DJT and PHUN, doubled as stress",
+  "go_no_go_band": "H-M continues only if net Sharpe >= 0.5, NW t >= 2.0 and mean net return above the 95th percentile of 1000 circular shifts; net Sharpe <= 0 refutes; between is inconclusive",
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/candidate-manifest.json",
+  "candidate_manifest_sha256": "60bde4a0a16cd5990a33153c38a23123e0485657708ea60b9ae5d157d4745ce4",
+  "data_feasibility_path": "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/data-feasibility.json",
+  "data_feasibility_sha256": "dfa97a45d64fd5ab204e7ffc7742445dfccd033cc33b1358690648fce50543cc",
+  "cost_table_path": "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/results.json"
+  ],
+  "paths": [
+    {
+      "name": "midterm_control_odds_trump_trades",
+      "candidate_count": 3,
+      "hypothesis_refs": [
+        "H-M"
+      ],
+      "parameters": {
+        "signal_markets": [
+          "polymarket_house_senate_republican_mean",
+          "kalshi_house_senate_republican_mean"
+        ],
+        "ema_span": 5,
+        "percentile_window_sessions": 60,
+        "lag_sessions": 1,
+        "price_cut": "16:00 ET",
+        "shifts": 1000,
+        "shift_seed": 20261004,
+        "shift_range_sessions": [
+          20,
+          "N-20"
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "circular_shift_placebo",
+        "sign_flip_placebo",
+        "unrelated_polymarket_market_placebo"
+      ]
+    }
+  ]
+}

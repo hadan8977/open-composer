@@ -1,0 +1,13 @@
+{
+  "iter_id": "h20261004_pm_midterm_odds_leadlag",
+  "cost_v1_h20261004_pm_midterm": {
+    "etf_and_large_bank_bps_per_side": 2.0,
+    "djt_phun_bps_per_side": 10.0,
+    "tsla_bps_per_side": 2.0,
+    "stress": "all costs doubled (4 bp and 20 bp per side)",
+    "unit": "per side per unit change in an asset's position (position in [-1, 1] times direction, one unit = full weight of that asset)",
+    "fill_rule": "Signal from the 4pm-to-4pm probability change of session t-1 (lagged one session); position held over the close-to-close return of session t, executed MOC at the close of t-1. No limit orders, no price improvement.",
+    "borrow_note": "Negative positions are modelled as shorts of easy-to-borrow ETFs and large banks with no borrow charge in the primary series (the signal flips sign often and every leg is a liquid ETF or large cap); DJT and PHUN shorts are not realistic as hard-to-borrow names and are costed at 10 bp per side only. This is reported as a caveat in report.md.",
+    "note": "Costs as frozen in hypotheses.md; TSLA is not named there and takes the 2 bp large-cap rate (ruling recorded in data-feasibility.json)."
+  }
+}

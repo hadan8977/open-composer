@@ -1,0 +1,205 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20261004_pm_midterm_odds_leadlag",
+  "strategy_name": "h20261004_pm_midterm_odds_leadlag",
+  "source_spec_path": "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml",
+  "spec_hash": "d2e0ecb9d1fbe62c33daa3ef22f8c8a3edf69fd3887c25a49a2a40475a78ab2c",
+  "objective": "Out-of-sample test of Goldstein-Li-Wang (2026) on the 2026 US midterm control markets: same transformation, assets and directions, a different election, with costs, a shift gate and placebos.",
+  "topic_coverage": [
+    "prediction_market_prices_as_information_goldstein_li_wang_2026",
+    "paper_transformation_and_asset_directions",
+    "midterm_odds_and_bond_market_commentary",
+    "polymarket_control_markets_gamma_clob",
+    "kalshi_control_markets_robustness",
+    "regulated_event_contract_accuracy_feds_2026",
+    "polymarket_thin_market_microstructure",
+    "event_probability_to_asset_mapping_precedent_wolfers_zitzewitz"
+  ],
+  "sources": [
+    {
+      "url": "https://chenwang.one/files/predictionmkt.pdf",
+      "published_or_updated_at": "2026-09-03",
+      "source_type": "paper",
+      "credibility": "working_paper_full_text_read",
+      "core_claim": "Goldstein, Li and Wang (2026-09-03): in Polymarket 2024-01-05..2024-11-05 a one-percentage-point rise in the Trump-win probability goes with 13 bp of next-day return of Trump trades (pooled), and a probability-based strategy shows an annualised Sharpe of 1.95 over April-November 2024; the authors state the statistics are in-sample and gross of transaction costs.",
+      "project_applicability": "The claim under out-of-sample test: same mechanism, same transformation, same assets and directions, a different election and period.",
+      "reflection": "The claim under test; no costs, one event.",
+      "claim_id": "goldstein_li_wang_2026_learning_from_pm"
+    },
+    {
+      "url": "https://chenwang.one/files/predictionmkt.pdf",
+      "published_or_updated_at": "2026-09-03",
+      "source_type": "paper",
+      "credibility": "working_paper_full_text_read",
+      "core_claim": "Goldstein, Li and Wang (2026) build the strategy signal by a 5-day EMA of the daily change in the Trump-win probability, a 60-day rolling percentile rank, and a linear map to [-1, 1]; returns are equal-weighted averages across the assets, evaluation from April 1 to the election day after a 60-session burn-in.",
+      "project_applicability": "Defines the frozen transformation of hypotheses.md.",
+      "reflection": "Implemented exactly; two unstated conventions fixed in the design.",
+      "claim_id": "glw_2026_transformation_section_3_2"
+    },
+    {
+      "url": "https://chenwang.one/files/predictionmkt.pdf",
+      "published_or_updated_at": "2026-09-03",
+      "source_type": "paper",
+      "credibility": "working_paper_full_text_read",
+      "core_claim": "Internet Appendix Table A.1 of the Goldstein-Li-Wang paper (included in the snapshot after the main text) gives the asset directions: all ten stock ETFs, the six banks, UUP and the three connected stocks are long a higher Trump probability, the seven Treasury ETFs are short; this matches the fallback directions frozen in hypotheses.md.",
+      "project_applicability": "Directions used verbatim; the frozen fallback was not needed.",
+      "reflection": "Directions taken verbatim; assumption that Republican Congress control carries the Trump-win exposure.",
+      "claim_id": "glw_2026_table_a1_directions"
+    },
+    {
+      "url": "https://cryptobriefing.com/citigroup-bond-rally-polymarket-midterms/",
+      "published_or_updated_at": "2026-08-17",
+      "source_type": "platform_docs",
+      "credibility": "secondary_news_extraction",
+      "core_claim": "SECONDARY (news article, WebFetch extraction): Citigroup argues that a Democratic Congress facing a Republican president means gridlock that bond markets like, tying Polymarket midterm control odds to Treasury yields; same sign as the frozen direction of bonds short a higher Republican probability.",
+      "project_applicability": "Supports the economic sign of the bond leg only; no number enters the design.",
+      "reflection": "Supports only the sign of the bond leg.",
+      "claim_id": "citi_midterm_odds_bond_gridlock_2026"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?slug=which-party-will-win-the-house-in-2026",
+      "published_or_updated_at": "2026-10-04",
+      "source_type": "provider_official_docs",
+      "credibility": "provider_official_api_probe",
+      "core_claim": "Polymarket Gamma lists the events Which party will win the House in 2026 (id 32225) and Senate (id 32224), both created 2025-07-11 and ending 2026-11-04, each with separate Democratic and Republican Yes/No markets and CLOB token ids; both are unresolved on 2026-10-04.",
+      "project_applicability": "Defines the signal markets and the Republican Yes tokens.",
+      "reflection": "Defines the signal markets and tokens.",
+      "claim_id": "polymarket_gamma_midterm_control_events_probe"
+    },
+    {
+      "url": "https://api.elections.kalshi.com/trade-api/v2/events?series_ticker=CONTROLH",
+      "published_or_updated_at": "2026-10-04",
+      "source_type": "provider_official_docs",
+      "credibility": "provider_official_api_probe",
+      "core_claim": "Kalshi lists CONTROLH-2026 and CONTROLS-2026 with Democratic and Republican markets open since 2024-11-06 (public candlestick endpoint, no key); used only as the robustness signal.",
+      "project_applicability": "Defines the Kalshi robustness markets.",
+      "reflection": "Robustness signal only.",
+      "claim_id": "kalshi_midterm_control_events_probe"
+    },
+    {
+      "url": "https://clob.polymarket.com/prices-history",
+      "published_or_updated_at": "2026-10-04",
+      "source_type": "provider_official_docs",
+      "credibility": "provider_official_api_probe",
+      "core_claim": "The public CLOB /prices-history endpoint returns timestamped prices for a resolved market (daily points for fidelity 1440 in the probe); the intel notes record that hourly and finer history needs startTs/endTs windows and that interval=max with fidelity 60 returned empty.",
+      "project_applicability": "Data source for the daily 4 pm probabilities of the control markets.",
+      "reflection": "Hourly windowed history is the data source.",
+      "claim_id": "polymarket_clob_prices_history_probe"
+    },
+    {
+      "url": "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf",
+      "published_or_updated_at": "2026-02-12",
+      "source_type": "paper",
+      "credibility": "paper_full_text_read",
+      "core_claim": "Kalshi distributions are accurate forecasts of macro outcomes (for headline CPI a statistically significant improvement over the Bloomberg consensus); the paper tests forecast accuracy and news response, not stock returns.",
+      "project_applicability": "Shows regulated event-contract prices carry real information; motivates the Kalshi robustness signal, no stock-return test.",
+      "reflection": "Accuracy of regulated event contracts; not a return test.",
+      "claim_id": "feds_2026_010_kalshi_macro"
+    },
+    {
+      "url": "https://arxiv.org/abs/2606.04217",
+      "published_or_updated_at": "2026-06-08",
+      "source_type": "paper",
+      "credibility": "arxiv_preprint_full_text_read",
+      "core_claim": "Qin and Yang (arXiv 2606.04217) describe the Polymarket-v1 on-chain trade archive, 2022-11-21 to 2026-04-28, 1.20 billion trades, and show that tick-rule and bulk-volume classifiers are near random on it.",
+      "project_applicability": "Last prints in thin Polymarket markets are noisy; the daily 16:00 ET price is taken from the last CLOB point and a missing session carries the last price.",
+      "reflection": "Thin-market last prints are noisy.",
+      "claim_id": "polymarket_v1_database_paper"
+    },
+    {
+      "url": "https://www.nber.org/papers/w9587",
+      "published_or_updated_at": "2003-03-01",
+      "source_type": "paper",
+      "credibility": "nber_working_paper_text_read",
+      "core_claim": "Leigh, Wolfers and Zitzewitz (NBER w9587, 2003): the price of a prediction-market security on Saddam Hussein's survival moves with spot oil and equity-sector prices, so an event probability can be mapped to asset returns by a stated policy channel; 20-year-old precedent for translating event odds into asset exposures.",
+      "project_applicability": "Precedent for the mapping of event odds to policy-sensitive assets; no number enters the design.",
+      "reflection": "Precedent for odds to asset mapping.",
+      "claim_id": "leigh_wolfers_zitzewitz_2003_iraq_event_probability"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20261004_pm_midterm_odds_leadlag.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "candidate_id": "H-M",
+      "claim_ids": [
+        "goldstein_li_wang_2026_learning_from_pm",
+        "glw_2026_transformation_section_3_2",
+        "glw_2026_table_a1_directions",
+        "citi_midterm_odds_bond_gridlock_2026",
+        "polymarket_gamma_midterm_control_events_probe",
+        "kalshi_midterm_control_events_probe",
+        "polymarket_clob_prices_history_probe",
+        "feds_2026_010_kalshi_macro",
+        "polymarket_v1_database_paper",
+        "leigh_wolfers_zitzewitz_2003_iraq_event_probability"
+      ]
+    },
+    {
+      "candidate_id": "M-CAT",
+      "claim_ids": [
+        "goldstein_li_wang_2026_learning_from_pm",
+        "glw_2026_transformation_section_3_2",
+        "glw_2026_table_a1_directions",
+        "citi_midterm_odds_bond_gridlock_2026",
+        "polymarket_gamma_midterm_control_events_probe",
+        "kalshi_midterm_control_events_probe",
+        "polymarket_clob_prices_history_probe",
+        "feds_2026_010_kalshi_macro",
+        "polymarket_v1_database_paper",
+        "leigh_wolfers_zitzewitz_2003_iraq_event_probability"
+      ]
+    },
+    {
+      "candidate_id": "M-KAL",
+      "claim_ids": [
+        "goldstein_li_wang_2026_learning_from_pm",
+        "glw_2026_transformation_section_3_2",
+        "glw_2026_table_a1_directions",
+        "citi_midterm_odds_bond_gridlock_2026",
+        "polymarket_gamma_midterm_control_events_probe",
+        "kalshi_midterm_control_events_probe",
+        "polymarket_clob_prices_history_probe",
+        "feds_2026_010_kalshi_macro",
+        "polymarket_v1_database_paper",
+        "leigh_wolfers_zitzewitz_2003_iraq_event_probability"
+      ]
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "goldstein_li_wang_is_single_event_in_sample_gross_of_costs",
+      "effect": "Added costs, a 1000-shift gate, a sign-flip placebo and an unrelated-market placebo; the claim is tested on a different election, not extended."
+    },
+    {
+      "driver": "paper_leaves_ema_convention_and_rank_ties_unstated",
+      "effect": "Fixed pandas ewm(span=5, adjust=False) and average-rank percentiles before any return was computed."
+    },
+    {
+      "driver": "midterm_control_odds_are_not_a_trump_win_probability",
+      "effect": "Signal is the Republican-control probability of House and Senate; directions kept as in Table A.1 and the mapping stated as the assumption of the test."
+    },
+    {
+      "driver": "short_window_low_power",
+      "effect": "Power statement frozen in hypotheses.md (expected t about 1.2 at true Sharpe 1.0); a forward shadow to 2026-11-04 is preregistered."
+    }
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "H-M",
+      "claim_ids": [
+        "goldstein_li_wang_2026_learning_from_pm",
+        "glw_2026_transformation_section_3_2",
+        "glw_2026_table_a1_directions",
+        "citi_midterm_odds_bond_gridlock_2026",
+        "polymarket_gamma_midterm_control_events_probe",
+        "kalshi_midterm_control_events_probe",
+        "polymarket_clob_prices_history_probe",
+        "feds_2026_010_kalshi_macro",
+        "polymarket_v1_database_paper",
+        "leigh_wolfers_zitzewitz_2003_iraq_event_probability"
+      ]
+    }
+  ]
+}

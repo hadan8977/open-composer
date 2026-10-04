@@ -1,0 +1,159 @@
+{
+  "iter_id": "h20261004_pm_midterm_odds_leadlag",
+  "generated_at": "2026-10-04T08:32:01Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20261004_pm_midterm_odds_leadlag",
+  "objective": "Preregistered H-M (Polymarket midterm control odds through the paper's transformation against Trump trades), with report-only category and Kalshi variants.",
+  "candidate_count": 3,
+  "candidates": [
+    {
+      "candidate_id": "H-M",
+      "role": "decision_signal",
+      "method": "polymarket_midterm_control_glw_transform",
+      "ablation": "all_assets_equal_weight",
+      "parameters": {
+        "universe": "27 US-listed tickers of the paper Table 1 with SIP daily bars (stock ETFs 10, bonds 7, banks 6, UUP, connected 3); asset dropped if bars cover fewer than 80 percent of sessions",
+        "fill": "signal from ΔP(t-1) at 16:00 ET, MOC at the close of t-1, close-to-close return of t",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_djt_phun": 10.0,
+        "cost_bp_per_side_stress": "doubled",
+        "transformation": "EMA span 5 of the daily ΔP, percentile rank within the preceding 60 sessions (current included), linear map to [-1, 1], lag one session",
+        "directions": "paper Table A.1 verbatim (stock ETFs, banks, UUP, connected long; bonds short)",
+        "shifts": 1000,
+        "shift_seed": 20261004,
+        "window": "first valid signal after the 60-session burn-in through 2026-10-02",
+        "signal": "mean of Polymarket House and Senate Republican Yes 4pm-to-4pm changes",
+        "decision_eligible": true,
+        "decision_eligible_condition": "H-M continue rule passes"
+      },
+      "path": "midterm_control_odds_trump_trades",
+      "spec_path": "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml",
+      "fallback": "single_market_signal_if_one_polymarket_market_has_fewer_than_120_observations",
+      "data_contract": "data_v1_h20261004_pm_midterm_clob_sipdaily",
+      "label_contract": "label_v1_h20261004_basket_close_to_close",
+      "validation_contract": "validation_v1_h20261004_hm_rules",
+      "cost_contract": "cost_v1_h20261004_pm_midterm",
+      "benchmark_contract": "benchmark_v1_h20261004_three_placebos",
+      "feature_contract": "feature_v1_h20261004_dp_ema_rank"
+    },
+    {
+      "candidate_id": "M-CAT",
+      "role": "secondary_report_only",
+      "method": "polymarket_midterm_control_glw_transform_by_category",
+      "ablation": "per_category_stock_etf_bond_bank_connected",
+      "parameters": {
+        "universe": "27 US-listed tickers of the paper Table 1 with SIP daily bars (stock ETFs 10, bonds 7, banks 6, UUP, connected 3); asset dropped if bars cover fewer than 80 percent of sessions",
+        "fill": "signal from ΔP(t-1) at 16:00 ET, MOC at the close of t-1, close-to-close return of t",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_djt_phun": 10.0,
+        "cost_bp_per_side_stress": "doubled",
+        "transformation": "EMA span 5 of the daily ΔP, percentile rank within the preceding 60 sessions (current included), linear map to [-1, 1], lag one session",
+        "directions": "paper Table A.1 verbatim (stock ETFs, banks, UUP, connected long; bonds short)",
+        "shifts": 1000,
+        "shift_seed": 20261004,
+        "window": "first valid signal after the 60-session burn-in through 2026-10-02",
+        "signal": "same signal as H-M, strategy per category",
+        "decision_eligible": false,
+        "decision_eligible_condition": "never: reported separately, not decision-eligible"
+      },
+      "path": "midterm_control_odds_trump_trades",
+      "spec_path": "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml",
+      "fallback": "single_market_signal_if_one_polymarket_market_has_fewer_than_120_observations",
+      "data_contract": "data_v1_h20261004_pm_midterm_clob_sipdaily",
+      "label_contract": "label_v1_h20261004_basket_close_to_close",
+      "validation_contract": "validation_v1_h20261004_hm_rules",
+      "cost_contract": "cost_v1_h20261004_pm_midterm",
+      "benchmark_contract": "benchmark_v1_h20261004_three_placebos",
+      "feature_contract": "feature_v1_h20261004_dp_ema_rank"
+    },
+    {
+      "candidate_id": "M-KAL",
+      "role": "secondary_report_only",
+      "method": "kalshi_midterm_control_glw_transform",
+      "ablation": "kalshi_signal_in_place_of_polymarket",
+      "parameters": {
+        "universe": "27 US-listed tickers of the paper Table 1 with SIP daily bars (stock ETFs 10, bonds 7, banks 6, UUP, connected 3); asset dropped if bars cover fewer than 80 percent of sessions",
+        "fill": "signal from ΔP(t-1) at 16:00 ET, MOC at the close of t-1, close-to-close return of t",
+        "cost_bp_per_side_primary": 2.0,
+        "cost_bp_per_side_djt_phun": 10.0,
+        "cost_bp_per_side_stress": "doubled",
+        "transformation": "EMA span 5 of the daily ΔP, percentile rank within the preceding 60 sessions (current included), linear map to [-1, 1], lag one session",
+        "directions": "paper Table A.1 verbatim (stock ETFs, banks, UUP, connected long; bonds short)",
+        "shifts": 1000,
+        "shift_seed": 20261004,
+        "window": "first valid signal after the 60-session burn-in through 2026-10-02",
+        "signal": "mean of Kalshi CONTROLH-2026-R and CONTROLS-2026-R 4pm-to-4pm changes",
+        "decision_eligible": false,
+        "decision_eligible_condition": "never: robustness only"
+      },
+      "path": "midterm_control_odds_trump_trades",
+      "spec_path": "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml",
+      "fallback": "single_market_signal_if_one_polymarket_market_has_fewer_than_120_observations",
+      "data_contract": "data_v1_h20261004_pm_midterm_clob_sipdaily",
+      "label_contract": "label_v1_h20261004_basket_close_to_close",
+      "validation_contract": "validation_v1_h20261004_hm_rules",
+      "cost_contract": "cost_v1_h20261004_pm_midterm",
+      "benchmark_contract": "benchmark_v1_h20261004_three_placebos",
+      "feature_contract": "feature_v1_h20261004_dp_ema_rank"
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20261004_pm_midterm_clob_sipdaily": {
+        "sources": [
+          "data/research/prediction_markets/midterms/ (scripts/build_pm_midterm_data.py; Polymarket Gamma events 32225 and 32224, CLOB /prices-history windows; Kalshi public candlesticks; no key)",
+          "data/sip/daily (adjusted closes of the 27 tickers; read-only)"
+        ],
+        "join": "daily probability = last price at or before 16:00 America/New_York on each NYSE session; assets joined on session date"
+      }
+    },
+    "features": {
+      "feature_v1_h20261004_dp_ema_rank": {
+        "definition": "ΔP(t) = mean over the House and Senate Republican Yes markets of the 4pm-to-4pm change in percentage points (missing session carries the last price; session excluded if both markets are missing); EMA span 5 (pandas ewm adjust=False); percentile rank within the preceding 60 sessions including the current (average rank for ties); signal = 2*rank - 1 mapped to [-1, 1]; lagged one session; first 60 sessions burn-in"
+      }
+    },
+    "labels": {
+      "label_v1_h20261004_basket_close_to_close": {
+        "definition": "position(t) times direction times close(t)/close(t-1)-1 per asset on SIP daily adjusted closes, equal-weighted mean over kept assets; costs per unit change in position"
+      }
+    },
+    "validation": {
+      "validation_v1_h20261004_hm_rules": {
+        "primary_statistic": "net annualized Sharpe (sqrt(252)), Newey-West 5-lag t of the mean daily net return, paper predictive regression (next-session direction-signed basket return on ΔP(t), Newey-West t)",
+        "permutation": "1000 circular shifts of the signal series, uniform between 20 and N-20 sessions, numpy default_rng seed 20261004; real mean net return compared with the 95th percentile",
+        "continue_rule": "net Sharpe >= 0.5; NW t >= 2.0; mean net return above the 95th percentile of the circular shifts (all three)",
+        "stop_rule": "net Sharpe <= 0 on the backtest window: refuted for the midterm setting; the forward shadow still runs to 2026-11-04",
+        "inconclusive_rule": "between: verdict on 2026-11-05 on backtest plus forward shadow as one sample with the same three rules",
+        "secondary": [
+          "category strategies",
+          "day-2 reversal",
+          "same-day relation (descriptive)",
+          "Kalshi signal",
+          "gross Sharpe and doubled costs"
+        ]
+      }
+    },
+    "costs": {
+      "cost_v1_h20261004_pm_midterm": {
+        "contract_file": "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/cost-contract.json",
+        "primary_bps": "2 per side (10 for DJT and PHUN), stress doubled"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20261004_three_placebos": {
+        "placebos": [
+          "circular shifts of the signal, 1000 times (continue-rule gate 3)",
+          "sign flip: directions multiplied by -1, expected to mirror",
+          "signal from the unrelated highest-volume non-political Polymarket market with daily prices for at least 80 percent of the window, same transformation, expected to fail"
+        ],
+        "unconditional_baseline": "equal-weight mean of the direction-signed asset returns with a constant position of 1"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml": "d2e0ecb9d1fbe62c33daa3ef22f8c8a3edf69fd3887c25a49a2a40475a78ab2c"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20261004_pm_midterm_odds_leadlag.yaml",
+  "spec_hash": "d2e0ecb9d1fbe62c33daa3ef22f8c8a3edf69fd3887c25a49a2a40475a78ab2c",
+  "keep_rule": "See contracts.validation.validation_v1_h20261004_hm_rules (continue, stop and inconclusive rules). Frozen before any strategy return conditional on the signal was computed."
+}
