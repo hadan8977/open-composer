@@ -1996,3 +1996,11 @@
 - done_when: 计划和复核记录已提交，执行已开始，并向机主汇报。
 - notes:
   - 2026-10-04 18:35 UTC 登记。T-74、T-77 已暂停，等本计划重新设计；T-70、T-75（测量和诊断）照常。
+
+### T-20261004-85 调研（第二版计划候选项目 P6）：期权波动率风险溢价在 Alpaca 上能否做深
+- status: running（独立 Paseo 代理 4f051668，Sonnet 5.5 high，协调码 R1004-T85）
+- priority: 2
+- brief: reports/research/control/briefs/T-20261004-85.md
+- done_when: `reports/research/intel/I-20261004-10-options-vrp-depth.{md,json}` 和快照目录，10-05 03:00 UTC 前；交互会话审核后提交。
+- notes:
+  - 2026-10-04 18:46 UTC 交互会话（Opus）派出。机主 09-29 的范围包括期权 1–3 级；我们还没有期权策略，属于主动补充。
