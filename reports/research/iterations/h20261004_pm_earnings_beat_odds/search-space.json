@@ -1,0 +1,65 @@
+{
+  "iter_id": "h20261004_pm_earnings_beat_odds",
+  "strategy_name": "h20261004_pm_earnings_beat_odds",
+  "source_spec_path": "strategy_specs/drafts/h20261004_pm_earnings_beat_odds.yaml",
+  "spec_hash": "4d61bd95aedaad23fcec81a52a5821eff2478e9e8307bc21b42b818b9ff7ef88",
+  "schema_version": 3,
+  "created_at": "2026-10-04T01:31:14Z",
+  "objective": "Preregistered test of the Polymarket earnings-beat odds (within-week rank of P, A1 primary; rank of P minus P7, A3 secondary and decision-ineligible) against the stock's announcement-window excess return; two candidates, no parameter search.",
+  "total_candidate_budget": 2,
+  "cost_assumptions": "10 bp per side primary, 20 bp per side stress, 1 percent per year borrow on shorts",
+  "go_no_go_band": "H-A continues only if mean weekly IC > 0 with t >= 2.0, net tercile spread per event pair > 0 and the real mean IC above the 95th percentile of 1000 within-week shuffles; mean IC <= 0 or t < 1.0 refutes; between is inconclusive",
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/candidate-manifest.json",
+  "candidate_manifest_sha256": "2163c9e09c909b97dc88247e8f0684c02ee8d0ca054b7911cb1b4488d5036c0d",
+  "data_feasibility_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/data-feasibility.json",
+  "data_feasibility_sha256": "5bef6a62d58cc80c9b936811d7ad9ac508d804f035102a90bc6d5576b01ccbf6",
+  "cost_table_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20261004_pm_earnings_beat_odds/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20261004_pm_earnings_beat_odds/results.json"
+  ],
+  "paths": [
+    {
+      "name": "earnings_beat_odds_cross_section",
+      "candidate_count": 2,
+      "hypothesis_refs": [
+        "H-A"
+      ],
+      "parameters": {
+        "signals": [
+          "rank_p",
+          "rank_p_minus_p7"
+        ],
+        "price_cut": "15:00 ET on S",
+        "tercile": "top_minus_bottom",
+        "min_contract_volume_usd": 5000,
+        "min_events_per_week": 6,
+        "stale_hours": 24,
+        "week": "ISO week of R",
+        "shuffles": 1000,
+        "shuffle_seed": 20261004,
+        "sub_periods": [
+          [
+            "start",
+            "2026-02-28"
+          ],
+          [
+            "2026-03-01",
+            "end"
+          ]
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "positive_control_beat_vs_excess_return",
+        "within_week_shuffle_placebo",
+        "stale_p7_placebo",
+        "session_after_reaction_placebo"
+      ]
+    }
+  ]
+}

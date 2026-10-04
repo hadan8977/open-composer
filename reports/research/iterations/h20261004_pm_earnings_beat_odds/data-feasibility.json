@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "report_type": "h20261004_pm_earnings_beat_odds_historical_evaluation_authorization",
+  "iter_id": "h20261004_pm_earnings_beat_odds",
+  "generated_at": "2026-10-04T01:31:14Z",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 2,
+    "evaluation_authorized_count": 2,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "path_gates": {
+    "earnings_beat_odds_cross_section": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "A1",
+        "A3"
+      ],
+      "reason_code": "pre_build_contract_gamma_clob_public_and_sip_daily_present"
+    }
+  },
+  "candidate_authorization": {
+    "candidate_count": 2,
+    "rows": [
+      {
+        "candidate_id": "A1",
+        "path": "earnings_beat_odds_cross_section",
+        "action": "evaluate",
+        "reason_code": "pre_build_contract_gamma_clob_public_and_sip_daily_present",
+        "candidate_binding_sha256": "d791424272cdf3b348d3f129374bcad7709b2222b96c23dcb4b766a2a99f05f3"
+      },
+      {
+        "candidate_id": "A3",
+        "path": "earnings_beat_odds_cross_section",
+        "action": "evaluate",
+        "reason_code": "pre_build_contract_gamma_clob_public_and_sip_daily_present",
+        "candidate_binding_sha256": "183ed53cac364742c0e387487912508b3a14f35f85c041c32593d5ea562b063c"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "cost_contract"
+  ],
+  "required_references": {
+    "cost_contract": {
+      "path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/cost-contract.json",
+      "sha256": "0892f2fbc4cd527a57b4b6b9c768be364c184f936b56a609382cfe7007943211"
+    }
+  },
+  "notes": "PHASE 1 (pre-build contract), written before any return was computed and before the events table was built. Public Gamma and CLOB endpoints were probed on 2026-10-04 (sources/ and the intel report). The coverage funnel is not yet known; scripts/build_pm_earnings_events.py will replace this file with the measured funnel and the test script refuses to run if the primary sample is empty. Authorization here is a workflow gate, not a research result."
+}

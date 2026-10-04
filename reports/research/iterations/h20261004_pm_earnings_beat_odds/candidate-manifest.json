@@ -1,0 +1,136 @@
+{
+  "iter_id": "h20261004_pm_earnings_beat_odds",
+  "generated_at": "2026-10-04T01:31:14Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20261004_pm_earnings_beat_odds",
+  "objective": "Preregistered two candidates A1 (within-week rank of P, primary) and A3 (within-week rank of P minus P7, secondary and decision-ineligible) for the Polymarket earnings-beat odds versus announcement-window excess return.",
+  "candidate_count": 2,
+  "candidates": [
+    {
+      "candidate_id": "A1",
+      "role": "decision_signal",
+      "method": "polymarket_beat_odds_rank_primary",
+      "ablation": "rank_of_p",
+      "parameters": {
+        "universe": "resolved Polymarket earnings events with SIP daily bars, close on S at least 5 USD, contract volume at least 5000 USD, matched 8-K item 2.02 time, non-stale P",
+        "fill": "MOC S -> MOC R",
+        "return_basis": "close(R)/close(S)-1 minus SPY over the same window",
+        "cost_bp_per_side_primary": 10.0,
+        "cost_bp_per_side_stress": 20.0,
+        "borrow_annual_on_shorts": 0.01,
+        "spread": "mean excess return of top tercile minus bottom tercile within week, equal weight",
+        "week": "ISO week of R; weeks with fewer than 6 primary events pooled with the next week of the same reporting season",
+        "shuffles": 1000,
+        "shuffle_seed": 20261004,
+        "signal": "within-week percentile rank of P (last CLOB Yes price at or before 15:00 ET on S)",
+        "decision_eligible": true,
+        "decision_eligible_condition": "H-A continue rule passes",
+        "multiple_testing": "primary; Holm adjustment over A1 and A3 reported for A3"
+      },
+      "path": "earnings_beat_odds_cross_section",
+      "spec_path": "strategy_specs/drafts/h20261004_pm_earnings_beat_odds.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261004_pm_earnings_clob_sipdaily",
+      "label_contract": "label_v1_h20261004_window_excess_return",
+      "validation_contract": "validation_v1_h20261004_ha_rules",
+      "cost_contract": "cost_v1_h20261004_pm_earnings",
+      "benchmark_contract": "benchmark_v1_h20261004_three_placebos",
+      "feature_contract": "feature_v1_h20261004_p_rank"
+    },
+    {
+      "candidate_id": "A3",
+      "role": "secondary_report_only",
+      "method": "polymarket_beat_odds_change_rank",
+      "ablation": "rank_of_p_minus_p7",
+      "parameters": {
+        "universe": "resolved Polymarket earnings events with SIP daily bars, close on S at least 5 USD, contract volume at least 5000 USD, matched 8-K item 2.02 time, non-stale P",
+        "fill": "MOC S -> MOC R",
+        "return_basis": "close(R)/close(S)-1 minus SPY over the same window",
+        "cost_bp_per_side_primary": 10.0,
+        "cost_bp_per_side_stress": 20.0,
+        "borrow_annual_on_shorts": 0.01,
+        "spread": "mean excess return of top tercile minus bottom tercile within week, equal weight",
+        "week": "ISO week of R; weeks with fewer than 6 primary events pooled with the next week of the same reporting season",
+        "shuffles": 1000,
+        "shuffle_seed": 20261004,
+        "signal": "within-week percentile rank of P minus P7 (P7 = last price at or before 15:00 ET seven calendar days before S)",
+        "decision_eligible": false,
+        "decision_eligible_condition": "never: secondary, reported with raw p and Holm adjustment over A1 and A3",
+        "multiple_testing": "Holm over A1 and A3"
+      },
+      "path": "earnings_beat_odds_cross_section",
+      "spec_path": "strategy_specs/drafts/h20261004_pm_earnings_beat_odds.yaml",
+      "fallback": "none_event_skipped_if_data_missing",
+      "data_contract": "data_v1_h20261004_pm_earnings_clob_sipdaily",
+      "label_contract": "label_v1_h20261004_window_excess_return",
+      "validation_contract": "validation_v1_h20261004_ha_rules",
+      "cost_contract": "cost_v1_h20261004_pm_earnings",
+      "benchmark_contract": "benchmark_v1_h20261004_three_placebos",
+      "feature_contract": "feature_v1_h20261004_p_rank"
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20261004_pm_earnings_clob_sipdaily": {
+        "sources": [
+          "data/research/prediction_markets/polymarket_earnings/events.parquet (scripts/build_pm_earnings_events.py; Polymarket Gamma /events tag earnings closed, CLOB /prices-history hourly windows; public, no key)",
+          "data/features/earnings_events/{2025,2026}.parquet (8-K item 2.02 acceptance_utc; US/Eastern wall-clock reading, T-03 finding)",
+          "data/sip/daily (adjusted closes, SPY benchmark; read-only)"
+        ],
+        "join": "ticker from the title (checked against the slug) matched to the 8-K ticker within +-2 calendar days of the slug date; S and R are NYSE sessions"
+      }
+    },
+    "features": {
+      "feature_v1_h20261004_p_rank": {
+        "definition": "P = last CLOB Yes price at or before 15:00 America/New_York on the signal day S (last NYSE session closing before the announcement: pre-market or intraday announcement on D -> S = the session before D; after-close announcement on D -> S = D); an event whose last print is more than 24 h old is stale and excluded from the primary sample; P7 = last price at or before 15:00 ET seven calendar days earlier; A1 = within-week percentile rank of P among primary events of the ISO week of R; A3 = same for P - P7; weeks with fewer than 6 events pooled with the next week of the same reporting season"
+      }
+    },
+    "labels": {
+      "label_v1_h20261004_window_excess_return": {
+        "definition": "window return = close(R)/close(S)-1 for the stock minus the same for SPY, SIP daily adjusted closes; R = reaction session (pre-market: that session; after close: next session; intraday: that session with entry at the previous close); secondary exit at the open after R, secondary benchmark the SPDR sector ETF; placebo return close(R+1)/close(R)-1"
+      }
+    },
+    "validation": {
+      "validation_v1_h20261004_ha_rules": {
+        "primary_statistic": "mean over weeks with at least 6 events of the weekly Spearman IC between A1 and the window excess return; t from the weekly IC series; pooled IC with week-clustered standard error",
+        "tercile_spread": "mean excess return of the top tercile minus the bottom tercile each week, equal weight; net of 10 bp per side per leg (40 bp round trip per pair), stress 20 bp per side, 1 percent per year borrow on shorts",
+        "permutation": "1000 within-week shuffles of P, numpy default_rng seed 20261004; real mean IC compared with the 95th percentile",
+        "continue_rule": "mean weekly IC > 0 with t >= 2.0; net tercile spread per event pair > 0; real mean IC above the 95th percentile of 1000 within-week shuffles (all three)",
+        "stop_rule": "mean weekly IC <= 0, or t < 1.0: H-A refuted for effects of the size we can detect, minimum detectable effect written next to the verdict",
+        "inconclusive_rule": "between the two: forward shadow only, re-test after 450 new events under a new contract",
+        "positive_control": "realised beat (1) or miss (0) against the window excess return; t below 3 stops the run as pipeline_suspect before any verdict",
+        "secondary": [
+          "A3 with raw p and Holm adjustment over A1 and A3",
+          "calibration of P in deciles and the sample base rate",
+          "sub-periods before 2026-03-01 and from 2026-03-01",
+          "sector-adjusted return if a sector map exists",
+          "exit at the open after R",
+          "minimum detectable effect from the realised standard deviation"
+        ],
+        "scored_only_if_continue": "event-level Sharpe of the weekly long-short series and the change in program Sharpe and max drawdown at 0.10x equity notional added to the 2026-10-02 program allocation"
+      }
+    },
+    "costs": {
+      "cost_v1_h20261004_pm_earnings": {
+        "contract_file": "reports/research/iterations/h20261004_pm_earnings_beat_odds/cost-contract.json",
+        "primary_bps": "10 per side, stress 20 per side, 1 percent per year borrow on shorts"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20261004_three_placebos": {
+        "placebos": [
+          "within-week shuffle of P, 1000 times (continue-rule gate 3)",
+          "stale signal: P7 in place of P (no gate, evidence about timing)",
+          "the signal applied to the session after R (entry R close, exit R+1 close), expected not to work"
+        ],
+        "unconditional_baseline": "positive control (realised beat vs window excess return) and equal-weight mean excess return of all primary events"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20261004_pm_earnings_beat_odds.yaml": "4d61bd95aedaad23fcec81a52a5821eff2478e9e8307bc21b42b818b9ff7ef88"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20261004_pm_earnings_beat_odds.yaml",
+  "spec_hash": "4d61bd95aedaad23fcec81a52a5821eff2478e9e8307bc21b42b818b9ff7ef88",
+  "keep_rule": "See contracts.validation.validation_v1_h20261004_ha_rules (continue, stop and inconclusive rules). Frozen before any equity return grouped by P, P7 or any signal was computed."
+}

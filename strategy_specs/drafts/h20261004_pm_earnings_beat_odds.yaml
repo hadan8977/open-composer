@@ -1,0 +1,110 @@
+name: h20261004_pm_earnings_beat_odds
+description: 'Preregistered T-20261004-51 test (dir:prediction_market_earnings_beat_odds). Does the within-week rank of the Polymarket Will-X-beat-quarterly-earnings Yes price, last print at or before 15:00 ET on the signal day S, predict the stock excess return over SPY from close(S) to close(R), R the reaction session? Two preregistered candidates: A1 rank of P (primary), A3 rank of P minus the price seven days earlier (secondary, decision-ineligible). Long top tercile, short bottom tercile, 10 bp per side, 1 percent per year borrow. No broker write and no paper order in this step.'
+timeframe: daily
+universe:
+- SPY
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20261002_pm_macro:release_day_overlay
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  polymarket_beat_odds_rank:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The real signal is the within-week percentile rank of the last CLOB price of the Polymarket Yes token of a Will-X-beat-quarterly-earnings contract at or before 15:00 America/New_York on the last NYSE session S that closes before the earnings announcement (A3 uses that price minus the last price at or before 15:00 ET seven calendar days earlier). It is built by scripts/build_pm_earnings_events.py and is not expressible in the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- event.polymarket_public
+research_design:
+  iter_id: h20261004_pm_earnings_beat_odds
+  candidate_manifest_path: reports/research/iterations/h20261004_pm_earnings_beat_odds/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20261004_pm_earnings_beat_odds/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl
+  source_card_claim_ids:
+  - goldstein_li_wang_2026_learning_from_pm
+  - feds_2026_010_kalshi_macro
+  - gomez_cram_et_al_author_interview_ssrn_blog
+  - gomez_cram_et_al_accuracy_numbers_marrazzo_review
+  - rabetti_shao_zhang_cxoadvisory_sample
+  - rabetti_shao_zhang_247wallst_base_rate
+  - polymarket_gamma_earnings_events_probe
+  - polymarket_clob_prices_history_probe
+  - polymarket_v1_hf_dataset_licence
+  - polymarket_v1_database_paper
+  parameter_space:
+    signal:
+    - rank_p
+    - rank_p_minus_p7
+    price_cut:
+    - 15:00 ET on S
+    tercile:
+    - top_minus_bottom
+    min_contract_volume_usd:
+    - 5000
+  candidate_budget: 2
+  selection_objective: One preregistered statistic, the mean of weekly Spearman ICs between the within-week percentile rank of P and the stock window excess return over SPY (close S to close R), over weeks with at least 6 events. Continue only if mean IC > 0 with t >= 2.0, net tercile spread per event pair > 0 and the real mean IC is above the 95th percentile of 1000 within-week shuffles (seed 20261004). Stop if mean IC <= 0 or t < 1.0. Between the two rules is inconclusive. A3 is secondary and not decision eligible.
+  anti_overfit_notes:
+  - The two candidates, the definitions of P, P7, S, R and the week, the volume filter, costs (10 bp per side, 20 bp stress, 1 percent per year borrow) and the continue, stop and inconclusive rules are frozen in hypotheses.md and candidate-manifest.json before any return grouped by the signal is computed.
+  - A positive control (realised beat against the window excess return, t must be at least 3) is run first and stops the run if it fails; three placebos (within-week shuffle, P7 in place of P, the session after R) are part of the contract.
+  validation_plan:
+  - positive_control_beat_vs_excess_return
+  - calibration_table_p_deciles
+  - weekly_ic_and_pooled_ic_clustered_by_week
+  - tercile_spread_gross_net_stress
+  - placebo_shuffle_within_week_1000_seed_20261004
+  - placebo_p7_stale_signal
+  - placebo_session_after_reaction
+  - subperiods_before_and_from_2026_03_01

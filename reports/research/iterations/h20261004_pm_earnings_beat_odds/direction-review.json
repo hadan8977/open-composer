@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20261004_pm_earnings_beat_odds",
+  "reviewed_at": "2026-10-04T01:31:14Z",
+  "decision": "proceed",
+  "objective": "Owner request 2026-10-02 12:45 UTC: iterate on Polymarket odds and turn them into a model, factor or strategy. First company-level test: does the Polymarket 'Will X beat quarterly earnings?' Yes price, taken before the announcement, rank-predict the stock's announcement-window excess return among names reporting in the same week (H-A, preregistered in hypotheses.md)?",
+  "target_regime_and_horizon": "One event window per stock: MOC entry at the close of the signal day S (last NYSE session closing before the announcement), exit at the close of the reaction session R. Sample: resolved Polymarket earnings events 2025-09 to 2026-10 with a matched 8-K item 2.02 acceptance time, a SIP daily close of at least 5 USD on S, contract volume of at least 5000 USD and a non-stale price; about 450 events a quarter, sub-periods before and from 2026-03-01 (post-publication).",
+  "existing_solution_comparison": "Published: Gomez-Cram, Guo, Jensen, Kung (SSRN 5933475, unpublished, about two months of data) report that contract-implied probabilities classify 77 percent of announcements one day ahead against 62 percent for analysts and add information for announcement returns; Rabetti, Shao, Zhang (SSRN 6649938, 469 contracts, 2025-09..2026-02) report 78.5 percent against a 75.9 percent beat base rate. Both SSRN pages returned 403, so only secondary summaries were read (author interview, a review, a paywalled summary, a news article) and no coefficient was seen. Goldstein-Li-Wang (read in full) is a single-event, in-sample, gross-of-cost study. No product, open implementation or live record trades this signal. The registry has no prediction-market row for earnings: dir:prediction_market_crypto_as_equity_signal is a generic lead-lag row (evidence_too_weak) and the earnings rows (SUE/PEAD, 8-K tone) use text or financial data, not prediction-market prices.",
+  "remaining_evidence_gap": "Whether the contract price, taken before the announcement, still predicts the stock's announcement-window excess return after the stock market has priced the same information, on about 1000 events, with costs and shorts, with placebos, and with a post-publication sub-period. Unknown before this step: how many events have hourly CLOB history, a matched 8-K time and a non-stale price (the funnel in data-feasibility.json), and the realised standard deviation of the window return (hypotheses.md only assumes 6 percent, so the minimum detectable effect is computed from the realised value).",
+  "negative_experiments_checked": "dir:prediction_market_crypto_as_equity_signal (evidence_too_weak, generic odds lead-lag: not reopened, the mechanism here is cross-sectional information about a company's own announcement); dir:prediction_market_macro_release_uncertainty_premium (parked 2026-10-02: 79 release days too few; this test has hundreds of independent events per quarter); earnings-related rows (SUE/PEAD, 8-K tone) use no prediction-market price. Expected failures written in hypotheses.md: the stock already prices the information, the contracts are thin (median volume 6.3k USD) so prices are noise around a base rate, and returns depend on guidance and surprise size rather than the binary beat.",
+  "cost_and_execution_assumptions": "Signal known by 15:00 ET on S, MOC entry at the S close and MOC exit at the R close; long the top tercile and short the bottom tercile of each week, equal weight, 10 bp per side (40 bp round trip for a long-short pair), stress 20 bp per side, shorts on easy-to-borrow large caps with 1 percent per year borrow pro rata. Secondary exit at the open after R is reported only. No limit orders or price improvement assumed. Prices are public Polymarket CLOB history, a research input only; no wallet, key or order.",
+  "stop_condition": "H-A continues only if the mean weekly IC is above 0 with t >= 2.0, the net tercile spread per event pair is above 0 and the real mean IC exceeds the 95th percentile of 1000 within-week shuffles (seed 20261004). Mean IC <= 0 or t < 1.0 refutes H-A for effects of the detectable size, with the minimum detectable effect written next to the verdict; in between is inconclusive (forward shadow only, re-test after 450 new events under a new contract). A positive control (realised beat vs window excess return) with t < 3 stops the run as pipeline_suspect before any verdict.",
+  "queries": [
+    {
+      "query": "prediction markets Polymarket Kalshi odds predict stock returns tariffs; Polymarket election odds sector returns Trump trade event study",
+      "opened_urls": [
+        "https://chenwang.one/files/predictionmkt.pdf"
+      ],
+      "searched_at": "2026-10-04T01:12:23Z"
+    },
+    {
+      "query": "Kalshi recession probability equity returns SSRN arXiv NBER; Kalshi Fed odds vs fed funds futures FEDS",
+      "opened_urls": [
+        "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf"
+      ],
+      "searched_at": "2026-10-04T01:12:23Z"
+    },
+    {
+      "query": "Polymarket earnings contracts Financial Prediction Markets: A New Measure of Earnings Expectations Gomez-Cram",
+      "opened_urls": [
+        "https://blog.ssrn.com/2026/06/29/a-closer-look-prediction-market-accuracy-crowd-wisdom-or-informed-minority-by-roberto-gomez-cram-yunhan-guo/",
+        "https://antoniomarrazzo.substack.com/p/prediction-markets-good-forecasts"
+      ],
+      "searched_at": "2026-10-04T01:28:20Z"
+    },
+    {
+      "query": "Rabetti Shao Zhang Beating the Earnings Game Polymarket cxoadvisory",
+      "opened_urls": [
+        "https://www.cxoadvisory.com/fundamental-valuation/prediction-markets-are-better-than-humans-as-earnings-analysts/",
+        "https://247wallst.com/personal-finance/2026/09/21/polymarket-bettors-called-earnings-right-78-5-of-the-time-wall-street-analysts-managed-43-7/"
+      ],
+      "searched_at": "2026-10-04T01:28:30Z"
+    },
+    {
+      "query": "Polymarket Gamma events tag earnings closed and CLOB prices-history public API probes (no key)",
+      "opened_urls": [
+        "https://gamma-api.polymarket.com/events?tag_slug=earnings&closed=true&limit=100&offset=0",
+        "https://clob.polymarket.com/prices-history"
+      ],
+      "searched_at": "2026-10-04T01:13:43Z"
+    },
+    {
+      "query": "Polymarket-v1 database HuggingFace on-chain archive licence and arXiv 2606.04217",
+      "opened_urls": [
+        "https://huggingface.co/datasets/TimeSeventeen/Polymarket-v1",
+        "https://arxiv.org/abs/2606.04217"
+      ],
+      "searched_at": "2026-10-04T01:13:14Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://chenwang.one/files/predictionmkt.pdf",
+      "claim_id": "goldstein_li_wang_2026_learning_from_pm",
+      "claim": "Goldstein, Li and Wang (2026-09-03): in Polymarket 2024-01-05..2024-11-05 a one-percentage-point rise in the Trump-win probability goes with 13 bp of next-day return of Trump trades (pooled), and a probability-based strategy shows an annualised Sharpe of 1.95 over April-November 2024; the authors state the statistics are in-sample and gross of transaction costs.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-09-03",
+      "market_and_period": "Polymarket 2024-01-05..2024-11-05, one event (2024 US presidential election), SPY/QQQ/IWM/DIA/sector ETFs and six bank stocks; full text read.",
+      "applicability": "Only paper read in full that tests a prediction-market price against traded-asset returns; supports the mechanism that equity traders learn from Polymarket prices, but for one election event, not for company earnings.",
+      "limitations": "Single event, in-sample, gross of costs, no independent replication found; the asset set is election-sensitive ETFs and banks, not individual stocks around announcements.",
+      "independent_replication": "No independent replication found in the 2026-10-04 search.",
+      "fetched_at": "2026-10-04T01:16:26Z",
+      "sha256": "91ad542ae6b0e3e8a849ad85601f948aa11d001a1fb6a65135190beba4b9d02b",
+      "snapshot_path": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/wang-learning-from-prediction-markets.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf",
+      "claim_id": "feds_2026_010_kalshi_macro",
+      "claim": "Kalshi distributions are accurate forecasts of macro outcomes (for headline CPI a statistically significant improvement over the Bloomberg consensus); the paper tests forecast accuracy and news response, not stock returns.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-02-12",
+      "market_and_period": "Kalshi FOMC, CPI, payrolls, GDP and other macro contracts, mostly 2022-2025; Federal Reserve Board FEDS 2026-010; full text read.",
+      "applicability": "Evidence that regulated event-contract prices carry real information on scheduled releases; shows what an accurate prediction-market price looks like, but contains no stock-return test (the intel report grep for stock/equity/S&P found none).",
+      "limitations": "Macro releases on Kalshi, not company earnings on Polymarket; accuracy is not the same as tradable alpha after the stock market already prices the information.",
+      "independent_replication": "Replication code by a third party (WillBtK/macro_kalshi) rebuilds the distributions; no independent replication of the forecast claims found.",
+      "fetched_at": "2026-10-04T01:15:08Z",
+      "sha256": "5e4379df10ea48f827a36585eb60dea71f03cf6fe00ab6d9f62bc70596beb09b",
+      "snapshot_path": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/feds-2026-010-diercks-katz-wright.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://blog.ssrn.com/2026/06/29/a-closer-look-prediction-market-accuracy-crowd-wisdom-or-informed-minority-by-roberto-gomez-cram-yunhan-guo/",
+      "claim_id": "gomez_cram_et_al_author_interview_ssrn_blog",
+      "claim": "SECONDARY (author interview about a companion paper; the earnings paper SSRN 5933475 itself returned HTTP 403): Jensen says that adding the Polymarket earnings contracts to their regression of earnings-announcement surprises made them explain a lot, beyond analyst forecasts.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-06-29",
+      "market_and_period": "Polymarket earnings-beat contracts, authors Gomez-Cram, Guo, Jensen, Kung; interview published 2026-06-29; regression coefficients are not given.",
+      "applicability": "First-hand statement by an author that the contract price adds explanatory power for announcement outcomes; the direction (price adds information) is the premise of H-A.",
+      "limitations": "Interview, not the paper; SSRN 5933475 and SSRN papers.cfm pages returned 403 on 2026-10-04 so no coefficient, sample size or standard error was read; the claim is about announcement outcomes, not tradable stock returns net of costs.",
+      "independent_replication": "None found; the paper is unpublished.",
+      "fetched_at": "2026-10-04T01:27:31Z",
+      "sha256": "c10782616896bd11d52efeaa47b97a9a1ed5971a275203ed6caede30bdef407b",
+      "snapshot_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/sources/ssrn-blog-closer-look.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://antoniomarrazzo.substack.com/p/prediction-markets-good-forecasts",
+      "claim_id": "gomez_cram_et_al_accuracy_numbers_marrazzo_review",
+      "claim": "SECONDARY review of Gomez-Cram, Guo, Jensen and Kung: the market-implied probability classifies 68 percent of announcements correctly seven days ahead and 77 percent one day ahead against 62 percent for analyst forecasts, on a roughly two-month sample; prices lean optimistic in level even when they rank well.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-09-14",
+      "market_and_period": "Polymarket earnings-beat contracts, about two months of 2025 data per the review; summary written 2026-09-14 by Antonio Marrazzo.",
+      "applicability": "Gives the discrimination figure (77 percent one day ahead) and the calibration caveat (optimistic in level) that motivate within-week ranking of P rather than the raw level.",
+      "limitations": "Blog review of an unread paper (SSRN 403); numbers are the review's, sample about two months, young market; a 76 percent beat base rate makes 77 percent weak discrimination (see Rabetti et al. card).",
+      "independent_replication": "Rabetti, Shao and Zhang report a similar hit rate (78.5 percent) on a different sample.",
+      "fetched_at": "2026-10-04T01:27:31Z",
+      "sha256": "919aac0d547080bb788f4a80da80ac91e3598ea2e093b65585f13cac6c82a34c",
+      "snapshot_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/sources/substack-marrazzo.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://www.cxoadvisory.com/fundamental-valuation/prediction-markets-are-better-than-humans-as-earnings-analysts/",
+      "claim_id": "rabetti_shao_zhang_cxoadvisory_sample",
+      "claim": "SECONDARY summary (paywalled after the first paragraph; SSRN 6649938 returned 403): Rabetti, Shao and Zhang use 469 Polymarket firm-quarter earnings-beat contracts, analyst forecasts and daily stock prices for September 2025 through February 2026.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-05-14",
+      "market_and_period": "Polymarket earnings-beat contracts, 469 firm-quarters, 2025-09..2026-02; CXO Advisory summary dated 2026-05-14.",
+      "applicability": "Fixes the sample and the period of the earlier study; our events from 2026-03 onward are after both papers and form the post-publication sub-period.",
+      "limitations": "Only the first paragraph is public; findings are behind a paywall. No result number is taken from this source.",
+      "independent_replication": "None found.",
+      "fetched_at": "2026-10-04T01:27:31Z",
+      "sha256": "06d09f3d55fad23bbc8b84e5d0eee40e2f27f20649f475d17431e67678be62b8",
+      "snapshot_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/sources/cxoadvisory.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://247wallst.com/personal-finance/2026/09/21/polymarket-bettors-called-earnings-right-78-5-of-the-time-wall-street-analysts-managed-43-7/",
+      "claim_id": "rabetti_shao_zhang_247wallst_base_rate",
+      "claim": "SECONDARY news article on Rabetti, Shao and Zhang: Polymarket bettors called earnings right about 79 percent of the time against 44 percent for analyst consensus, while companies beat 75.9 percent of the time, so always guessing beat looks accurate.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-09-21",
+      "market_and_period": "Polymarket earnings-beat contracts September 2025 to February 2026 per the article; published 2026-09-21.",
+      "applicability": "Provides the beat base rate (75.9 percent) against which a 78.5 percent hit rate is weak discrimination; this is why the design ranks P within week and tests it against realised excess returns instead of counting hits.",
+      "limitations": "News article quoting an unread paper; the consensus accuracy is judged on a consensus definition that the article says is biased by walk-downs.",
+      "independent_replication": "None found.",
+      "fetched_at": "2026-10-04T01:27:31Z",
+      "sha256": "dad7574243b6c3e507400f5d1f0b2e7f7927c3c1f1a9bf620e8f642bb6eaf2c5",
+      "snapshot_path": "reports/research/iterations/h20261004_pm_earnings_beat_odds/sources/247wallst.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?tag_slug=earnings&closed=true&limit=100&offset=0",
+      "claim_id": "polymarket_gamma_earnings_events_probe",
+      "claim": "Polymarket Gamma /events with tag earnings and closed=true listed 1354 resolved earnings events on 2026-10-04, each with title containing the ticker, a slug that encodes the consensus EPS and date, an end time and a volume in USD.",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "2026-10-04",
+      "market_and_period": "Public Gamma API, no key; resolved earnings events ending 2025-09..2026-10 (probe by the intel agent, snapshot reduced to title, slug, end, start and volume).",
+      "applicability": "Data source of the events table built by scripts/build_pm_earnings_events.py; the intel snapshot is only a probe and the build refreshes from the API.",
+      "limitations": "Snapshot omits token ids and outcomes; events may be edited after resolution; Polymarket is an offshore venue and prices are a research input only.",
+      "independent_replication": "Not applicable (API response).",
+      "fetched_at": "2026-10-04T01:20:45Z",
+      "sha256": "bf98a49bf064e7f1fbb26964392416b42d484796b8a28d3dd245435ce5feba1a",
+      "snapshot_path": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/polymarket-earnings-events-closed-gamma-2026-10-04.json",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://clob.polymarket.com/prices-history",
+      "claim_id": "polymarket_clob_prices_history_probe",
+      "claim": "The public CLOB /prices-history endpoint returns timestamped prices for a resolved market (daily points for fidelity 1440 in the probe); the intel notes record that hourly and finer history needs startTs/endTs windows and that interval=max with fidelity 60 returned empty.",
+      "source_type": "provider_official_docs",
+      "published_or_updated_at": "2026-10-04",
+      "market_and_period": "Public CLOB API, no key; probe on a resolved market (US recession in 2025), 2026-10-04.",
+      "applicability": "Data source for P and P7: prices at hourly fidelity in an 8-day window per event token, ending at 15:00 ET on the signal day.",
+      "limitations": "Probe covered one market; whether every earnings token has hourly history is the first coverage question of the build and is reported in data-feasibility.json; thin markets can have no print for days (stale flag).",
+      "independent_replication": "Not applicable (API response).",
+      "fetched_at": "2026-10-04T01:13:43Z",
+      "sha256": "b767a3ca369edf8e79e2cbb036c15b224efe949d24587a6e6af3037e8baa0275",
+      "snapshot_path": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/polymarket-clob-prices-history-recession2025-sample.json",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://huggingface.co/datasets/TimeSeventeen/Polymarket-v1",
+      "claim_id": "polymarket_v1_hf_dataset_licence",
+      "claim": "Polymarket-v1 on Hugging Face (on-chain OrderFilled, CTF and daily_aligned tables) is licensed cc-by-4.0; it is a tick-level archive that is 27.4 GB for OrderFilled alone and was not chosen for this test.",
+      "source_type": "platform_docs",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "Hugging Face dataset README, Polygon on-chain Polymarket v1 trades to 2026-04; metadata read 2026-10-04.",
+      "applicability": "Fallback data source if CLOB hourly history is missing for many tokens; not used otherwise (size beyond this box without Modal).",
+      "limitations": "Trade-level, covers to 2026-04 only, no order book; CLOB prices-history is simpler and point-in-time per request.",
+      "independent_replication": "Not applicable.",
+      "fetched_at": "2026-10-04T01:13:14Z",
+      "sha256": "617f19d07415bcc4c4e06ad30a86bac703affd03a805c57f87c3432a1b699f36",
+      "snapshot_path": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/hf-polymarket-v1-README.md",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/2606.04217",
+      "claim_id": "polymarket_v1_database_paper",
+      "claim": "Qin and Yang (arXiv 2606.04217) describe the Polymarket-v1 on-chain trade archive, 2022-11-21 to 2026-04-28, 1.20 billion trades, and show that tick-rule and bulk-volume classifiers are near random on it.",
+      "source_type": "paper",
+      "published_or_updated_at": "2026-06-08",
+      "market_and_period": "Polymarket on-chain archive 2022-11 to 2026-04; full text read.",
+      "applicability": "Documents the on-chain data that could be sliced by market for earnings contracts; confirms that last-trade prices in thin Polymarket markets are noisy microstructure objects.",
+      "limitations": "A data and microstructure paper with no stock-return test.",
+      "independent_replication": "None needed.",
+      "fetched_at": "2026-10-04T01:18:44Z",
+      "sha256": "ab8c8ef2ba0e2c2e18aba66cad299dcb14ca0626086d4ae5c14541d68b3ca230",
+      "snapshot_path": "reports/research/intel/sources/prediction-markets-round2-2026-10-04/arxiv-2606.04217-polymarket-v1-database.txt",
+      "source_card_path": "reports/harness/source_cards/h20261004_pm_earnings_beat_odds.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "After the candidate manifest is committed and pre-backtest validation passes: scripts/run_h20261004_pm_earnings_beat_odds.py joins the events table (P, P7, S, R) to SIP daily adjusted closes, runs the positive control, the calibration table and H-A (weekly IC, tercile spread, 1000 within-week shuffles, A3 with Holm, three placebos, sub-periods) in one pass.",
+    "pass_condition": "Mean weekly IC > 0 with t >= 2.0, net tercile spread per event pair > 0 and the real mean IC above the 95th percentile of the 1000 within-week shuffles.",
+    "falsification_condition": "Mean weekly IC <= 0 or t < 1.0: H-A refuted for the detectable effect size; the registry row dir:prediction_market_earnings_beat_odds is recorded as refuted with the numbers and the minimum detectable effect.",
+    "max_compute_minutes": 30
+  }
+}
