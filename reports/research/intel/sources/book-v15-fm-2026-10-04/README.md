@@ -1,0 +1,4 @@
+# book-v15-fm sources (2026-10-04 16:20 lead round)
+- ehsani_linnainmaa_2022_nber_w25551.txt: pdftotext of https://www.nber.org/papers/w25551.pdf (NBER WP version of JF 77(3) 2022). Read: abstract, section on time-series factor momentum, Table 3 (EW 1.06, TS winners 1.33, TS losers 0.04, TSFM long-short 0.98 Sharpe; 1964-2015, up to 20 factors, monthly).
+- Fan et al. 2022 full text is reused from reports/research/intel/sources/regime-2026-10-01/fan2022_reexamination_factor_momentum.txt (RF1 card); Table 9 compares long-short factor momentum with buy-and-hold, not winners-only.
+Queries: "Ehsani Linnainmaa Factor Momentum and the Momentum Factor Journal of Finance 2022 time-series factor momentum 12-month"; "factor momentum out-of-sample buy-and-hold reexamination Financial Review 2022 Fan" (WebSearch, standard, ~16:33 UTC).

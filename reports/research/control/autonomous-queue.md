@@ -1729,7 +1729,7 @@
   - 2026-10-04 07:20 UTC 07:07 主审轮（Opus）审核：数字与 results.json 逐项一致（identity 0.0；N50 近期/压力 +0.158/+0.124、5/5 偏移、beta 合格、全样本 NW t 1.758 < 2；N25 t 2.94 但 E1 +0.073/+0.083）。前视、幸存者、调仓日检查无问题（规则与 B0 用同一信息集，全部 5 个偏移取中位）。主审发现合同自身缺陷：E3 用原始收益差，不是规模无关的，而 N50 波动只有 B0 的 0.966（总敞口 1.43 vs 1.68）；事后诊断（不改判定）同波动配对 t：N50 2.50、N25 3.59。判定按冻结规则维持'不替换'。D2 没有快主题，GP 命题 3 的后续不开。N50 冻结为唯一挑战者，只在新信息下重开（≥252 个 09-17 以后的会话离线复算，或实盘测得成本 ≥ 模型）。决策记录 `t20261004_book_v13_tc/decision-record.md`。
 
 ### T-20261004-02 组合线 v1.4 候选 第 A 阶段：样本外 ML 合成器（M2 GBDT 集成、M3 DKKM 随机特征 SDF）和简化毛收益闸门
-- status: done（执行轮 2026-10-04 12:06 UTC，提交 05c643e；待主审）
+- status: done（05c643e；10-04 16:48 UTC 16:20 主审轮对照 stage_a.json 复核：机械判定正确，stage_b_authorized，留下 m0m2、m0m3；ml_contribution_pass = false（纯 M2 压力期-ML 0.513 < M0 0.521，纯 M3 0.213）；结论以 T-54 为条件）
 - priority: 1
 - not_before: 无（简报第 0 步：本地重步骤不在 21:30–00:30 UTC 跑；有超过 1 GB 的进程（交互会话的 T-20261002-02）时等它结束；不起第二个 10-K 抓取进程）
 - brief: reports/research/control/briefs/T-20261004-02.md
@@ -1740,8 +1740,9 @@
   - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。写之前看过：v1.2（M1 1.389 < M0 1.506；收益主要是风格溢价，特质 −1.2%/年）、T-17/T-24（纯量价 ML 近期弱）、v1.3。外部证据：DKKM 2024、AQR 2024（支持，未扣成本）、BSW 2022（反对：扣成本后线性预测更好）。先验：第 A 阶段过约 45%，ml_contribution_pass 约 25%，第 B 阶段合格约 15%，最终替换约 4%。
 
   - 2026-10-04 12:06 UTC 执行轮（Sonnet，子代理耗时约 115 分钟）：第 A 阶段跑完，`stage_a.json` `mechanical_status_stage_a`=stage_b_authorized，survivors=[m0m2, m0m3]；contract sha 不变，permutation_check 通过（lgbm_perm 近期 -0.519/压力 -0.019，m3_perm 0.037/-0.572，限 1.22/0.93）；embargo_ok_all 与覆盖按简报核对通过（2019 起每日成员中位 2175）。偏移中位简化毛夏普（近期/压力-ML）：m0 1.735/0.521，m2 2.114/0.513，m3 2.362/0.213，m0m2 2.008/0.582，m0m3 2.247/0.536（压力窗领先幅度 +0.061、+0.015，很小）。Modal $0.6645。产物 reports/research/iterations/t20261004_book_v14_ml/{build.json,stage_a.json,stage_a.md,model-meta/}。子代理偏差：首次 smoke 写错目录已修；最终窗口止于 2026-09-09 决策日（r5 需要 C[p+6]）；stage_a 的 Modal 成本从 0.6563 手工改为 0.6645，其余数字不变；22 个信号库列缺失用常数填，rank 后变并列平均秩。待主审。
+  - 2026-10-04 16:48 UTC 16:20 主审轮（Opus）审核：合同哈希一致（af7714…），打乱检查通过（lgbm_perm 近期 −0.519/压力 −0.019，m3_perm 0.037/−0.572，限 1.22/0.93），embargo_ok_all 为真，2019 起每年最少 1998 名成员。偏移中位简化毛夏普（近期/压力-ML，括号里是赢 M0 的偏移数）：M0 1.735/0.521；M2 2.114（5/5）/0.513（1/5）；M3 2.362（5/5）/0.213（0/5）；M0M2 2.008（5/5）/0.582（4/5）；M0M3 2.247（5/5）/0.536（4/5）。闸门是两窗都高于 M0，m0m2、m0m3 机械通过；但压力期只领先 +0.061/+0.016，第 B 阶段 E1 要求净 +0.10，混合分数的周自相关 0.968/0.967 低于 M0 的 0.983（换手更高），主审估计压力期 E1 通过约 10%。纯 ML 只在近期赢：2024 年后的模型训练了 306–407 周，2019–2023 的只有 55–256 周，增量来自样本长度还是市场状态，本合同不区分。M3 暴露诊断（本轮，年度截面秩相关中位数）：2025 年对规模、动量、低 beta、低特质波动、价值、毛利、季节性都在 ±0.05 以内，对 sue_eps −0.18、空头成交比 +0.15，近期与 M0 的相关 0.001，是分散的非线性信号；M2 主要是低 beta（约 0.6）、低特质波动（0.54–0.67）和大市值（0.3–0.45）。实现偏差认可：信号库列的缺失本来就以常数存储，与 M0 同输入，不是前视；最后一个决策日 09-09（r5 需要 C[p+6]）。T-54 若发现 sue_series 实质泄漏，M0 和 ML 两边都要重算。
 ### T-20261004-03 组合线 v1.4 候选 第 B 阶段：第 A 阶段留下的候选走 v1.2 策略层，对比 M0（E1/E2/E4/E5、选择、ml_contribution_pass）
-- status: partial
+- status: ready（10-04 16:48 UTC 16:20 主审轮：identity 和 passes 改到 Modal，命令见简报末节"主审补充"；13:53 本机版因 swap 争抢没有产出）
 - priority: 1
 - not_before: T-20261004-02 状态以 done 开头，并且 `t20261004_book_v14_ml/stage_a.json` 的 `mechanical_status_stage_a` 为 `stage_b_authorized`（不必等主审审核第 A 阶段；不是这个值时由下一主审轮取消本任务）
 - brief: reports/research/control/briefs/T-20261004-03.md
@@ -1753,6 +1754,18 @@
   - 2026-10-04 12:06 UTC 执行轮：T-02 已 done 且 stage_b_authorized，但 T-02 子代理用了约 115 分钟，已到软上限，T-03 留给下一执行轮（22:07 UTC；注意不在 21:30–00:30 跑本地重步骤，可能要到 04:07 轮）。
   - 2026-10-04 12:17 UTC 执行轮开始（子代理 sonnet-high 前台，mem 1.5G）
   - 2026-10-04 13:52 UTC 执行轮：子代理写完 `scripts/book_v14_ml_eval.py`（identity/passes/evaluate 三阶段，passes 和 evaluate 未测）和 `tests/test_book_v14_ml_eval.py`（6 个合成测试通过，ruff 干净），提交 2690810。3 决策冒烟的 identity：5 个偏移 (a) 对 R6、(b) m0 对 (a) 最大差 0，pass true（不是完整序列的 1e-12 门）。完整 identity 12:24 起跑，机器 swap 约 5.7 GB、I/O 等待 60–90%（别的会话占 0.5–1.1 GB），86 分钟只拿到约 3.5 CPU 分钟，13:51 被杀，没写出任何偏移。**没有 Stage B 数字**：未写 identity.json、S_*_o*.parquet、results.json、report.md、trial-ledger.json。断点：机器安静后依次 `scripts/run_capped.sh --mem 1.5G -- uv run python scripts/book_v14_ml_eval.py --stage identity`（会写 S_B0r_o<k>.parquet）、`--stage passes`（跳过已有文件，可续跑）、`--stage evaluate`；之后用 `git add -f` + pathspec 提交 identity.json/results.json/report.md/trial-ledger.json。预计无争抢时约 20 个 pass、每个约 1 分钟。待主审（含：是否等机器空闲再跑，或把 identity 改到 Modal）。
+  - 2026-10-04 16:48 UTC 16:20 主审轮：机器仍满载（负载 13、可用内存 0.57 GB、交互会话的 PIT 审计进程占 1.3 GB），第 B 阶段的 identity 和 passes 改到 Modal（预算检查 90 分钟，4 核 8 GiB，约 $0.3），evaluate 在本机只读 parquet。判定规则、窗口、候选都不变。T-20261004-04 的第 B 阶段复用本任务的 B0r，所以先做本任务。
+
+### T-20261004-04 组合线 v1.5 候选：用 12 个月因子动量给 M0 的输入择时（只留过去一年多空收益为正的输入或主题），第 A、B 阶段
+- status: ready
+- priority: 1
+- not_before: 无（排在 T-20261004-03 之后：第 B 阶段要用 T-03 的 B0r；重步骤默认在 Modal 跑，本机只在可用内存 ≥ 2500 MB 且无其他 >1 GB 进程时跑）
+- brief: reports/research/control/briefs/T-20261004-04.md
+- goal: 设计文档第 12 节择时层的第一步。v1.2 赚的主要是风格溢价，M0 对 22 个输入固定等权，过去一年一直亏的输入（近期是动量类）照样占权重。按 Ehsani–Linnainmaa 2022（时间序列赢家组合夏普 1.33，对全部等权 1.06），只留过去 12 个月多空收益为正的输入或主题，检验 v1.2 构造下偏移中位净夏普能否两窗都 +0.10。回答机主"择时"的问题；过了进影子，不过就关掉近期收益择时。
+- plan: 合同 `reports/research/iterations/t20261004_book_v15_fm/hypotheses.md`（16:44 UTC 冻结，direction-check 和 pre-backtest 都 ok）。第 A 阶段：建择时权重（只用 t ≤ p−2 的标签）、3 个候选（FM12 输入层只留赢家、FM12T 主题层、FM12H 半倾斜）、恒等检验、简化周度毛夏普对 M0、每个候选 20 种子马尔可夫择时安慰剂；闸门：两窗都高于 M0，且全期安慰剂分位 ≥ 0.90。第 B 阶段：v1.2 策略层 × 5 偏移对 B0r，E1/E2/E4/E5，选 R*。第 C 阶段由主审另写。
+- done_when: `t20261004_book_v15_fm/{build.json,stage_a.json,stage_a.md}` 已提交（git add -f；第 B 阶段跑了再加 results.json、report.md、trial-ledger.json），状态值在允许范围内，新测试通过；结果标"待主审"。
+- notes:
+  - 2026-10-04 16:48 UTC 16:20 主审轮（Opus）登记并写简报。写之前看过：信号层便宜测试（`signal-level-check.txt`：12 个月赢家等权对全等权，压力期 0.68 对 0.49、近期 1.99 对 1.81，赢家减输家 53.7 bp/月，NW t 2.74，96 个月；1 个月回看无效）、v1.2 的 M1 < M0（负面）、v1.4 第 A 阶段。原文已读：E–L 2022 表 3、Fan 2022 表 9（多空因子动量不如买入持有，没测只留赢家）。先验：第 A 阶段约 40%，第 B 阶段合格约 18%，替换约 5%。
 
 ### T-20261004-52 数据：修 8-K 财报事件表的受理时间（改用 EDGAR 索引页 Accepted，修复数据坑 #61）
 - status: done（交互会话主审 2026-10-04 10:09 UTC：接受。16089 笔全部取自索引页，99.66% 的行差恰为旧偏移，20/20 抽查一致，0 删除 48 新增；55 行旧值本来就对，记录不追。下游交 T-20261004-56。v1.2 和模拟盘不读这张表，也不读 sue_8k_visible（已 grep 核对），live 路径不变。提交 5807d85）

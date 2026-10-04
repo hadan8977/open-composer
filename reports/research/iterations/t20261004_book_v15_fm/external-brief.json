@@ -1,0 +1,160 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "fm_timing_book_v15",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261004_book_v15_fm.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261004-04",
+      "source_urls": [
+        "https://www.nber.org/papers/w25551.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261004_book_v15_fm",
+  "objective": "Equity book v1.5 candidate: does timing M0's 22 slow inputs (or 9 themes) by the sign of their trailing 12-month industry- and beta-neutral long-short return (Ehsani-Linnainmaa 2022 winners-only, or a half tilt) raise the v1.2 book's offset-median net Sharpe by >= 0.10 in both the recent and the stress-ML window, with a Markov timing placebo beaten?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "ehsani_linnainmaa_2022_factor_momentum_winners",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://www.nber.org/papers/w25551.pdf"
+    },
+    {
+      "claim_id": "fan_2022_factor_momentum_reexamination",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://pureadmin.qub.ac.uk/ws/portalfiles/portal/532038294/A_reexamination_of_factor_momentum.pdf"
+    },
+    {
+      "claim_id": "nrrz_2023_timing_the_factor_zoo",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://afajof.org/management/viewp.php?n=32508"
+    },
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v15_fm.jsonl",
+      "source_url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261004_book_v15_fm.yaml",
+  "sources": [
+    {
+      "claim_id": "ehsani_linnainmaa_2022_factor_momentum_winners",
+      "core_claim": "Factors are positively autocorrelated at one year; time-series winners Sharpe 1.33 vs equal weight 1.06 (Table 3, gross, 1964 onward).",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Defines the 12-month sign rule and the winners-only form applied to M0's inputs and themes.",
+      "published_or_updated_at": "2022-06-01",
+      "reflection": "Gross factor portfolios, long sample; our test is inside one composite over 2017-2026 with costs; prior lowered by M1 < M0.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w25551.pdf"
+    },
+    {
+      "claim_id": "fan_2022_factor_momentum_reexamination",
+      "core_claim": "Fan, Liu et al. (Financial Review 57, 2022, 585-615): on the 22-factor Ehsani-Linnainmaa set and the 187-factor Hou-Xue-Zhang set, factor momentum is concentrated in 22-27% of factors and the factor momentum strategy does not outperform a buy-and-hold portfolio of the same factors (EL sample 4.07% vs 4.26% a year).",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "No recency tilt beyond the preregistered M1; timing in RF1 is volatility-state based (M0V), not factor momentum.",
+      "published_or_updated_at": "2022-01-01",
+      "reflection": "Factor portfolios, not a risk-controlled stock book; sample ends before 2024; trailing-return weighting of themes may still help in persistent regimes (our 2024-26 cross-sectional check t 3.4) while hurting at turning points.",
+      "source_type": "paper",
+      "url": "https://pureadmin.qub.ac.uk/ws/portalfiles/portal/532038294/A_reexamination_of_factor_momentum.pdf"
+    },
+    {
+      "claim_id": "nrrz_2023_timing_the_factor_zoo",
+      "core_claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+      "published_or_updated_at": "2023-03-15",
+      "reflection": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version.",
+      "source_type": "paper",
+      "url": "https://afajof.org/management/viewp.php?n=32508"
+    },
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line. v1.3: eq. (20) starts from the grown (drifted) position and trades toward an aim, the form of rules P2/P3/P2V.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "credibility": "primary_broker_documentation",
+      "project_applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "published_or_updated_at": "unknown",
+      "reflection": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    }
+  ],
+  "spec_hash": "b2f6370f15fa7d5d3ea388d8c65dfe7a5b18531eb466035532084052a6967844",
+  "strategy_name": "t20261004_book_v15_fm",
+  "topic_coverage": [
+    "factor_momentum_time_series_winners",
+    "factor_momentum_counter_evidence",
+    "factor_timing_composite_weights",
+    "anomaly_net_of_cost_decay",
+    "professional_longshort_net_sharpe_benchmark",
+    "factor_replication_themes",
+    "cost_aware_portfolio_implementable_frontier",
+    "broker_margin_short_rules"
+  ]
+}

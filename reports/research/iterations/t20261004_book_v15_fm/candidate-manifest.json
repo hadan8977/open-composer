@@ -1,0 +1,116 @@
+{
+  "candidate_count": 3,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V15_FM12",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "fm_timing_book_v15",
+      "parameters": {
+        "composite": "input-level winners only: c = sum a_k g_k s_k / sum a_k g_k (all g = 0 -> m0_composite), then rank-normal",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 processed theme inputs of the signal library (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) with M0 base weights a_k = 1/(9 n_theme(k)); theme_* columns for the theme-level variant",
+        "timing": "g_k(p) = 1 if the compounded industry- and beta-neutral long-short return of input k over the 252 labels at positions p-253..p-2 of regimes/signal_ls_daily.parquet is > 0, else 0 (labels t <= p-2 only: label t is realized at the open of t+2); fewer than 200 finite labels -> g = 1; theme R = mean of member input R",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15, stress_ml 2019-01-02..2023-08-31, full_ml 2019-01-02..2026-09-15 (as v1.4)"
+      },
+      "path": "fm_timing_book_v15",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v15_fm.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V15_FM12T",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "fm_timing_book_v15",
+      "parameters": {
+        "composite": "theme-level winners only: c = sum g_theme theme_score / sum g_theme (all 0 -> m0_composite), then rank-normal",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 processed theme inputs of the signal library (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) with M0 base weights a_k = 1/(9 n_theme(k)); theme_* columns for the theme-level variant",
+        "timing": "g_k(p) = 1 if the compounded industry- and beta-neutral long-short return of input k over the 252 labels at positions p-253..p-2 of regimes/signal_ls_daily.parquet is > 0, else 0 (labels t <= p-2 only: label t is realized at the open of t+2); fewer than 200 finite labels -> g = 1; theme R = mean of member input R",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15, stress_ml 2019-01-02..2023-08-31, full_ml 2019-01-02..2026-09-15 (as v1.4)"
+      },
+      "path": "fm_timing_book_v15",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v15_fm.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V15_FM12H",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "fm_timing_book_v15",
+      "parameters": {
+        "composite": "input-level half tilt: w_k = a_k x 1.5 if g_k = 1 else a_k x 0.5; c = sum w_k s_k / sum w_k, then rank-normal",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 processed theme inputs of the signal library (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) with M0 base weights a_k = 1/(9 n_theme(k)); theme_* columns for the theme-level variant",
+        "timing": "g_k(p) = 1 if the compounded industry- and beta-neutral long-short return of input k over the 252 labels at positions p-253..p-2 of regimes/signal_ls_daily.parquet is > 0, else 0 (labels t <= p-2 only: label t is realized at the open of t+2); fewer than 200 finite labels -> g = 1; theme R = mean of member input R",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15, stress_ml 2019-01-02..2023-08-31, full_ml 2019-01-02..2026-09-15 (as v1.4)"
+      },
+      "path": "fm_timing_book_v15",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v15_fm.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-04T16:43:28.860983+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261004_book_v15_fm",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261004_book_v15_fm.yaml": "b2f6370f15fa7d5d3ea388d8c65dfe7a5b18531eb466035532084052a6967844"
+  }
+}
