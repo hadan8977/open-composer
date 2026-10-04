@@ -49,11 +49,38 @@ LANE_LEADERBOARD = "reports/research/screens/h20260928_20_recent_opt/leaderboard
 TOLERANCE = 1e-12
 
 
-def main(argv: list[str] | None = None) -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--spec", default=DEFAULT_SPEC)
     parser.add_argument("--out", default=DEFAULT_OUT)
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--lane-returns",
+        default=LANE_RETURNS,
+        help="stored screen-lane returns parquet to compare against. When it is not the "
+        "default, the lane Sharpe ratios are computed from that file instead of read from "
+        "the (possibly older) leaderboard.json.",
+    )
+    return parser.parse_args(argv)
+
+
+def stored_window_sharpe(
+    stored: pd.DataFrame,
+    rf: pd.Series,
+    first_valid: pd.Timestamp,
+    window: tuple[str, str],
+    column: str = "C2__o00__net10",
+) -> float:
+    """Sharpe of a stored lane return column over one lane window (Sharpe does not
+    use turnover, so zeros stand in for it)."""
+    start = lane.window_actual_start(window[0], first_valid)
+    ret = stored[column]
+    ret = ret.loc[(ret.index >= start) & (ret.index <= pd.Timestamp(window[1]))]
+    zeros = pd.Series(0.0, index=ret.index)
+    return float(lane.base.metrics(ret, rf, zeros).sharpe)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
 
     spec = load_strategy_spec(ROOT / args.spec)
     cfg = spec.portfolio.etf_rotation
@@ -92,7 +119,8 @@ def main(argv: list[str] | None = None) -> int:
     weight_diff = (aligned - lane_frame).abs()
     bad_sessions = weight_diff.index[weight_diff.max(axis=1) > TOLERANCE]
 
-    stored = pd.read_parquet(ROOT / LANE_RETURNS)
+    stored = pd.read_parquet(ROOT / args.lane_returns)
+    default_lane = args.lane_returns == LANE_RETURNS
     leaderboard = json.loads((ROOT / LANE_LEADERBOARD).read_text(encoding="utf-8"))
     judged = next(row for row in leaderboard["candidates"] if row["id"] == "C2")["judged"]
     first_valid = lane.first_valid_signal_date(close, c2)
@@ -114,7 +142,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         sharpe[window_name] = {
             "engine_net10": float(metrics["net10"]["sharpe"]),
-            "lane_net10": float(judged[window_name]["sharpe"]),
+            "lane_net10": float(judged[window_name]["sharpe"])
+            if default_lane
+            else stored_window_sharpe(stored, rf, first_valid, window),
         }
 
     sharpe_ok = all(abs(row["engine_net10"] - row["lane_net10"]) <= 1e-9 for row in sharpe.values())
@@ -130,6 +160,8 @@ def main(argv: list[str] | None = None) -> int:
         "generated_at": datetime.now(UTC).isoformat(),
         "spec": args.spec,
         "lane_candidate": "h20260928_20_recent_opt:C2",
+        "lane_returns": args.lane_returns,
+        "lane_sharpe_source": "leaderboard.json" if default_lane else "stored returns file",
         "sessions": [sessions[0].isoformat(), sessions[-1].isoformat(), len(sessions)],
         "signal_sessions_compared": len(lane_signals),
         "signal_sessions_only_in_lane": sorted(
