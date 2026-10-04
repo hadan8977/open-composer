@@ -19,6 +19,7 @@ Layout (``data/research/equity_book/``)::
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DIR = ROOT / "data/research/equity_book"
+DEFAULT_DIR = Path(os.environ.get("OC_EQUITY_BOOK_DIR") or ROOT / "data/research/equity_book")
 
 PANEL_COLUMNS = [
     "trade_date",

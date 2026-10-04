@@ -220,6 +220,50 @@ def test_risk_model_reader_roundtrip_and_predicted_beta(tmp_path: Path) -> None:
     assert v == pytest.approx(float(xw @ f @ xw + (w**2 * d).sum()))
 
 
+def _write_prev_year(base: Path, src_year: int = 2024, new_year: int = 2023) -> None:
+    """A second synthetic year: copy the 2024 files, shifted to the last two sessions of 2023."""
+    for kind in ("exposures", "cov"):
+        df = pd.read_parquet(base / f"{kind}_{src_year}.parquet")
+        shift = {
+            pd.Timestamp("2024-03-01"): pd.Timestamp("2023-12-22"),
+            pd.Timestamp("2024-03-08"): pd.Timestamp("2023-12-29"),
+        }
+        df["trade_date"] = df["trade_date"].map(shift)
+        df.to_parquet(base / f"{kind}_{new_year}.parquet")
+
+
+def test_resolve_falls_back_to_previous_year_in_early_january(tmp_path: Path) -> None:
+    _write_tiny_model(tmp_path / "risk")
+    _write_prev_year(tmp_path / "risk")
+    rm = rk.RiskModel(tmp_path / "risk")
+    # before the first 2024 saved date: previous year's last saved date
+    assert rm.resolve("2024-01-02") == pd.Timestamp("2023-12-29")
+    assert rm.resolve("2024-02-29") == pd.Timestamp("2023-12-29")
+    # the whole reader path follows the resolved date into the older year's files
+    x, f, d = rm.at("2024-01-02")
+    assert x.shape[0] == 40 and f.shape[0] == len(rm.factors) and len(d) == 40
+    assert len(rm.caps("2024-01-02")) == 40
+    assert len(rm.predicted_beta("2024-01-02")) == 40
+    # within the year nothing changes
+    assert rm.resolve("2024-03-05") == pd.Timestamp("2024-03-01")
+    # exact=True is unchanged: no fallback
+    with pytest.raises(KeyError):
+        rm.resolve("2024-01-02", exact=True)
+    with pytest.raises(KeyError):
+        rm.at("2024-01-02", exact=True)
+
+
+def test_resolve_without_previous_year_file_still_raises(tmp_path: Path) -> None:
+    _write_tiny_model(tmp_path / "risk")
+    rm = rk.RiskModel(tmp_path / "risk")
+    with pytest.raises(KeyError):
+        rm.resolve("2024-01-02")
+    # a year with no file at all falls back to the last year that has one only if it is adjacent
+    with pytest.raises(KeyError):
+        rm.resolve("2026-01-02")
+    assert rm.resolve("2025-01-02") == pd.Timestamp("2024-03-08")
+
+
 def test_ewma_beta_recovers_time_varying_beta() -> None:
     rng = np.random.default_rng(7)
     t_n, n = 400, 6

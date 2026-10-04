@@ -350,11 +350,19 @@ class RiskModel:
     def resolve(self, date: pd.Timestamp | str, exact: bool = False) -> pd.Timestamp:
         """The saved date used for ``date``: ``date`` itself or the latest saved date before it."""
         d = pd.Timestamp(date)
-        dates = self.saved_dates(d.year)
-        use = dates[dates <= d]
+        use = self._saved_before(d.year, d)
+        if len(use) == 0 and not exact:
+            # early January: no saved date yet this year, fall back to the previous year's last one
+            use = self._saved_before(d.year - 1, d)
         if len(use) == 0 or (exact and use[-1] != d):
             raise KeyError(f"no saved risk model for {d.date()}")
         return use[-1]
+
+    def _saved_before(self, year: int, d: pd.Timestamp) -> pd.DatetimeIndex:
+        if not (self.base / f"exposures_{year}.parquet").exists():
+            return pd.DatetimeIndex([])
+        dates = self.saved_dates(year)
+        return dates[dates <= d]
 
     def at(
         self, date: pd.Timestamp | str, exact: bool = False

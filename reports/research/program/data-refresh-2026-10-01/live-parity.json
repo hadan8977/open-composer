@@ -1,0 +1,1006 @@
+{
+ "generated_utc": "2026-10-04T09:23:45Z",
+ "strict_cut": "2026-08-21",
+ "diag_window": [
+  "2026-08-24",
+  "2026-09-17"
+ ],
+ "gating_pass": {
+  "strict:panel_returns": false,
+  "strict:prices_returns": false,
+  "strict:signals": false,
+  "strict:risk_exposures": false,
+  "strict:themes_2026": false,
+  "strict:themes_2025": true
+ },
+ "formation_ic_overlap": {
+  "n_rows": 380,
+  "n_joined": 380,
+  "n_only_one_side": 0,
+  "max_abs_diff": 0.011752421070458057,
+  "series": [
+   "M0",
+   "earnings",
+   "insider",
+   "investment",
+   "low_risk",
+   "momentum",
+   "quality",
+   "seasonality",
+   "short_info",
+   "value"
+  ],
+  "pass": false
+ },
+ "all_gating_pass": false,
+ "checks": {
+  "strict:panel_returns": {
+   "zone": "strict",
+   "gating": true,
+   "label": "strict_panel_returns",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.0013555964848598917,
+   "rank_parity_share": null,
+   "n_keys_only_new": 59,
+   "n_keys_only_old": 250,
+   "n_keys_only_new_unallowed": 59,
+   "n_keys_only_old_unallowed": 90,
+   "excluded_rows": 2479,
+   "excluded_changed_rows": 19,
+   "unattributed_changed_rows": 0,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "ret_oo",
+     "changed_share": 0.0013555964848598917
+    },
+    {
+     "column": "ret_cc",
+     "changed_share": 0.0013488745188192644
+    }
+   ]
+  },
+  "strict:prices_returns": {
+   "zone": "strict",
+   "gating": true,
+   "label": "strict_prices_returns",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.0010354423002034779,
+   "rank_parity_share": null,
+   "n_keys_only_new": 4313,
+   "n_keys_only_old": 825,
+   "n_keys_only_new_unallowed": 4082,
+   "n_keys_only_old_unallowed": 665,
+   "excluded_rows": 3611,
+   "excluded_changed_rows": 25,
+   "unattributed_changed_rows": 0,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "ret_oo",
+     "changed_share": 0.0010354423002034779
+    },
+    {
+     "column": "ret_cc",
+     "changed_share": 0.0010341528328308709
+    }
+   ]
+  },
+  "strict:panel_other_levels": {
+   "zone": "strict",
+   "gating": false,
+   "label": "strict_panel_other",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.31262520138064115,
+   "rank_parity_share": null,
+   "n_keys_only_new": 59,
+   "n_keys_only_old": 250,
+   "n_keys_only_new_unallowed": 59,
+   "n_keys_only_old_unallowed": 90,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 25446,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "mcap",
+     "changed_share": 0.31262520138064115
+    },
+    {
+     "column": "open",
+     "changed_share": 0.21122071763927297
+    },
+    {
+     "column": "close",
+     "changed_share": 0.2112006631355885
+    },
+    {
+     "column": "dollar_adv_21",
+     "changed_share": 0.2101511441094352
+    },
+    {
+     "column": "beta_252_spy",
+     "changed_share": 0.057848330016912634
+    },
+    {
+     "column": "mcap_source",
+     "changed_share": 0.00037212245725605367
+    },
+    {
+     "column": "in_u3000",
+     "changed_share": 0.00031418722438984173
+    },
+    {
+     "column": "idio_vol_63",
+     "changed_share": 0.00014038152579120587
+    }
+   ]
+  },
+  "diag:panel_other_levels": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_panel_other",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.23730219877911457,
+   "rank_parity_share": null,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 27,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 13,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 2312,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "mcap",
+     "changed_share": 0.23730219877911457
+    },
+    {
+     "column": "dollar_adv_21",
+     "changed_share": 0.20693810624469072
+    },
+    {
+     "column": "open",
+     "changed_share": 0.13631245184614474
+    },
+    {
+     "column": "close",
+     "changed_share": 0.13631245184614474
+    },
+    {
+     "column": "beta_252_spy",
+     "changed_share": 0.09701890594440822
+    },
+    {
+     "column": "vol_21",
+     "changed_share": 0.004800568956320749
+    },
+    {
+     "column": "idio_vol_63",
+     "changed_share": 0.0009680159623856654
+    },
+    {
+     "column": "mcap_source",
+     "changed_share": 0.00021730970584168
+    }
+   ]
+  },
+  "strict:signals": {
+   "zone": "strict",
+   "gating": true,
+   "label": "strict_signals",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.9211902121907134,
+   "rank_parity_share": 0.9335696318316945,
+   "n_keys_only_new": 106,
+   "n_keys_only_old": 195,
+   "n_keys_only_new_unallowed": 106,
+   "n_keys_only_old_unallowed": 35,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 136781,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "resid_mom_12_1_raw",
+     "changed_share": 0.9211902121907134
+    },
+    {
+     "column": "resid_mom_12_1",
+     "changed_share": 0.8856235855218191
+    },
+    {
+     "column": "on252",
+     "changed_share": 0.8781232437687015
+    },
+    {
+     "column": "theme_momentum",
+     "changed_share": 0.8308580281604568
+    },
+    {
+     "column": "mom_12_1",
+     "changed_share": 0.7438127496696386
+    },
+    {
+     "column": "ep",
+     "changed_share": 0.6821331470145967
+    },
+    {
+     "column": "cfp",
+     "changed_share": 0.67072922520771
+    },
+    {
+     "column": "ind_mom_12_1_raw",
+     "changed_share": 0.6466910703707641
+    }
+   ]
+  },
+  "diag:signals": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_signals",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.935282902333575,
+   "rank_parity_share": 0.9300033978933061,
+   "n_keys_only_new": 3,
+   "n_keys_only_old": 19,
+   "n_keys_only_new_unallowed": 3,
+   "n_keys_only_old_unallowed": 5,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 15112,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "resid_mom_12_1_raw",
+     "changed_share": 0.935282902333575
+    },
+    {
+     "column": "resid_mom_12_1",
+     "changed_share": 0.9019576250704906
+    },
+    {
+     "column": "theme_momentum",
+     "changed_share": 0.890195762507049
+    },
+    {
+     "column": "rev_21_ind",
+     "changed_share": 0.8439002121431832
+    },
+    {
+     "column": "mom_12_1",
+     "changed_share": 0.8261768575955316
+    },
+    {
+     "column": "on252",
+     "changed_share": 0.7771959504820215
+    },
+    {
+     "column": "ind_mom_12_1_raw",
+     "changed_share": 0.6465801981793281
+    },
+    {
+     "column": "ep",
+     "changed_share": 0.6459088589919171
+    }
+   ]
+  },
+  "strict:risk_exposures": {
+   "zone": "strict",
+   "gating": true,
+   "label": "strict_risk_exposures",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.9359622735691673,
+   "rank_parity_share": 0.8856548856548857,
+   "n_keys_only_new": 25,
+   "n_keys_only_old": 43,
+   "n_keys_only_new_unallowed": 25,
+   "n_keys_only_old_unallowed": 6,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 31623,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "momentum",
+     "changed_share": 0.9359622735691673
+    },
+    {
+     "column": "investment",
+     "changed_share": 0.7131241215337528
+    },
+    {
+     "column": "beta",
+     "changed_share": 0.7104969327571032
+    },
+    {
+     "column": "value",
+     "changed_share": 0.7003297121914696
+    },
+    {
+     "column": "resid_vol",
+     "changed_share": 0.6869835932060898
+    },
+    {
+     "column": "size",
+     "changed_share": 0.47893651398321224
+    },
+    {
+     "column": "reversal",
+     "changed_share": 0.4477123753727324
+    },
+    {
+     "column": "liquidity",
+     "changed_share": 0.44299657151864646
+    }
+   ]
+  },
+  "diag:risk_exposures": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_risk_exposures",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.9562484892434131,
+   "rank_parity_share": 0.8653846153846154,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 2077,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 2073,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 3355,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "reversal",
+     "changed_share": 0.9562484892434131
+    },
+    {
+     "column": "momentum",
+     "changed_share": 0.9239787285472565
+    },
+    {
+     "column": "resid_vol",
+     "changed_share": 0.8610103940053179
+    },
+    {
+     "column": "value",
+     "changed_share": 0.6293207638385303
+    },
+    {
+     "column": "size",
+     "changed_share": 0.3316412859560068
+    },
+    {
+     "column": "mcap",
+     "changed_share": 0.23132704858593184
+    },
+    {
+     "column": "investment",
+     "changed_share": 0.2000241721053904
+    },
+    {
+     "column": "liquidity",
+     "changed_share": 0.1746434614454919
+    }
+   ]
+  },
+  "strict:themes_2026": {
+   "zone": "strict",
+   "gating": true,
+   "label": "strict_themes_2026",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.8308580281604568,
+   "rank_parity_share": 0.9291666666666667,
+   "n_keys_only_new": 106,
+   "n_keys_only_old": 195,
+   "n_keys_only_new_unallowed": 106,
+   "n_keys_only_old_unallowed": 35,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 132205,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "momentum",
+     "changed_share": 0.8308580281604568
+    },
+    {
+     "column": "value",
+     "changed_share": 0.637881434451752
+    },
+    {
+     "column": "low_risk",
+     "changed_share": 0.36090648115801144
+    },
+    {
+     "column": "seasonality",
+     "changed_share": 0.1729878335890153
+    },
+    {
+     "column": "quality",
+     "changed_share": 0.1717939760317147
+    },
+    {
+     "column": "earnings",
+     "changed_share": 0.11376885338031806
+    },
+    {
+     "column": "insider",
+     "changed_share": 0.0863253185898507
+    },
+    {
+     "column": "short_info",
+     "changed_share": 0.07338730501086016
+    }
+   ]
+  },
+  "diag:themes_2026": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_themes_2026",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.8902226160745456,
+   "rank_parity_share": 0.9382716049382716,
+   "n_keys_only_new": 3,
+   "n_keys_only_old": 19,
+   "n_keys_only_new_unallowed": 3,
+   "n_keys_only_old_unallowed": 5,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 14817,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "momentum",
+     "changed_share": 0.8902226160745456
+    },
+    {
+     "column": "value",
+     "changed_share": 0.5394344638685249
+    },
+    {
+     "column": "low_risk",
+     "changed_share": 0.4908026531324686
+    },
+    {
+     "column": "earnings",
+     "changed_share": 0.18722307258519294
+    },
+    {
+     "column": "quality",
+     "changed_share": 0.12527189237090147
+    },
+    {
+     "column": "seasonality",
+     "changed_share": 0.12465426031848331
+    },
+    {
+     "column": "short_info",
+     "changed_share": 0.1175380649319262
+    },
+    {
+     "column": "insider",
+     "changed_share": 0.10851526625312173
+    }
+   ]
+  },
+  "strict:themes_2025": {
+   "zone": "strict",
+   "gating": true,
+   "label": "strict_themes_2025",
+   "pass": true,
+   "keys_ok": true,
+   "keys_equal": true,
+   "max_changed_share": 0.0,
+   "rank_parity_share": 1.0,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 0,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 0,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 0,
+   "worst_columns": [
+    {
+     "column": "in_u3000",
+     "changed_share": 0.0
+    },
+    {
+     "column": "in_p1000",
+     "changed_share": 0.0
+    },
+    {
+     "column": "value",
+     "changed_share": 0.0
+    },
+    {
+     "column": "quality",
+     "changed_share": 0.0
+    },
+    {
+     "column": "investment",
+     "changed_share": 0.0
+    },
+    {
+     "column": "momentum",
+     "changed_share": 0.0
+    },
+    {
+     "column": "low_risk",
+     "changed_share": 0.0
+    },
+    {
+     "column": "earnings",
+     "changed_share": 0.0
+    }
+   ]
+  },
+  "strict:risk_cov": {
+   "zone": "strict",
+   "gating": false,
+   "label": "strict_risk_cov",
+   "pass": true,
+   "keys_ok": true,
+   "keys_equal": true,
+   "max_changed_share": 0.0,
+   "rank_parity_share": null,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 0,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 0,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 0,
+   "worst_columns": [
+    {
+     "column": "value",
+     "changed_share": 0.0
+    }
+   ]
+  },
+  "diag:risk_cov": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_risk_cov",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.0,
+   "rank_parity_share": null,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 2209,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 2209,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "value",
+     "changed_share": 0.0
+    }
+   ]
+  },
+  "strict:risk_factor_returns": {
+   "zone": "strict",
+   "gating": false,
+   "label": "strict_risk_factor_returns",
+   "pass": true,
+   "keys_ok": true,
+   "keys_equal": true,
+   "max_changed_share": 0.00013297872340425532,
+   "rank_parity_share": null,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 0,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 0,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 0,
+   "worst_columns": [
+    {
+     "column": "ret",
+     "changed_share": 0.00013297872340425532
+    }
+   ]
+  },
+  "diag:risk_factor_returns": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_risk_factor_returns",
+   "pass": false,
+   "keys_ok": true,
+   "keys_equal": true,
+   "max_changed_share": 0.001182033096926714,
+   "rank_parity_share": null,
+   "n_keys_only_new": 0,
+   "n_keys_only_old": 0,
+   "n_keys_only_new_unallowed": 0,
+   "n_keys_only_old_unallowed": 0,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "ret",
+     "changed_share": 0.001182033096926714
+    }
+   ]
+  },
+  "strict:risk_residuals": {
+   "zone": "strict",
+   "gating": false,
+   "label": "strict_risk_residuals",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.0005834287988963472,
+   "rank_parity_share": null,
+   "n_keys_only_new": 105,
+   "n_keys_only_old": 195,
+   "n_keys_only_new_unallowed": 105,
+   "n_keys_only_old_unallowed": 195,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "resid",
+     "changed_share": 0.0005834287988963472
+    }
+   ]
+  },
+  "diag:risk_residuals": {
+   "zone": "diag",
+   "gating": false,
+   "label": "diag_risk_residuals",
+   "pass": false,
+   "keys_ok": false,
+   "keys_equal": false,
+   "max_changed_share": 0.003250154449488302,
+   "rank_parity_share": null,
+   "n_keys_only_new": 4,
+   "n_keys_only_old": 19,
+   "n_keys_only_new_unallowed": 4,
+   "n_keys_only_old_unallowed": 19,
+   "excluded_rows": 0,
+   "excluded_changed_rows": 0,
+   "unattributed_changed_rows": 0,
+   "exit": 1,
+   "worst_columns": [
+    {
+     "column": "resid",
+     "changed_share": 0.003250154449488302
+    }
+   ]
+  }
+ },
+ "attribution": {
+  "panel_mcap": {
+   "rows_joined": 448777,
+   "share_rows_close_changed_gt_1e-3": 0.2112006631355885,
+   "close_changed_rows_outside_restated_symbols": 0,
+   "unchanged_price_rows": 185589,
+   "share_adv_fallback_rows_mcap_changed": 0.6164473039615925,
+   "share_sec_rows_mcap_changed": 0.00010345398366806444,
+   "reading": "mcap_source adv_fallback/adv_fallback_outlier use the median of close*shares/dollar_adv_21 over the whole year (build_equity_book_panel.py stage_panel): rows earlier in the year move when the year grows, so fallback mcap (about 20% of rows) is not point-in-time stable"
+  },
+  "signal_columns": {
+   "ep_raw": {
+    "changed_rows": 97883,
+    "changed_share": 0.2973495147105731,
+    "changed_with_close_change": 67581,
+    "changed_in_restated_symbols": 85343,
+    "changed_other": 12540,
+    "other_symbols": 138,
+    "other_symbols_sample": [
+     "AAL",
+     "ABNB",
+     "ACMR",
+     "ALMS",
+     "AMCI",
+     "AMRC",
+     "APAM",
+     "APP"
+    ]
+   },
+   "roe_raw": {
+    "changed_rows": 320,
+    "changed_share": 0.0009720977565806461,
+    "changed_with_close_change": 0,
+    "changed_in_restated_symbols": 160,
+    "changed_other": 160,
+    "other_symbols": 1,
+    "other_symbols_sample": [
+     "EL"
+    ]
+   },
+   "neg_accruals_raw": {
+    "changed_rows": 139,
+    "changed_share": 0.00042225496301471815,
+    "changed_with_close_change": 0,
+    "changed_in_restated_symbols": 5,
+    "changed_other": 134,
+    "other_symbols": 1,
+    "other_symbols_sample": [
+     "EL"
+    ]
+   },
+   "gp_at_raw": {
+    "changed_rows": 0,
+    "changed_share": 0.0,
+    "changed_with_close_change": 0,
+    "changed_in_restated_symbols": 0,
+    "changed_other": 0,
+    "other_symbols": 0,
+    "other_symbols_sample": []
+   },
+   "bm_raw": {
+    "changed_rows": 100676,
+    "changed_share": 0.30583410544222855,
+    "changed_with_close_change": 67994,
+    "changed_in_restated_symbols": 87033,
+    "changed_other": 13643,
+    "other_symbols": 146,
+    "other_symbols_sample": [
+     "AAL",
+     "ABNB",
+     "ACMR",
+     "ALMS",
+     "AMCI",
+     "AMRC",
+     "APAM",
+     "APP"
+    ]
+   },
+   "sp_raw": {
+    "changed_rows": 91270,
+    "changed_share": 0.27726050700973615,
+    "changed_with_close_change": 60761,
+    "changed_in_restated_symbols": 78860,
+    "changed_other": 12410,
+    "other_symbols": 123,
+    "other_symbols_sample": [
+     "AAL",
+     "ABNB",
+     "ACMR",
+     "ALMS",
+     "AMRC",
+     "APAM",
+     "APP",
+     "APPF"
+    ]
+   },
+   "cfp_raw": {
+    "changed_rows": 98996,
+    "changed_share": 0.3007305922201801,
+    "changed_with_close_change": 67798,
+    "changed_in_restated_symbols": 86146,
+    "changed_other": 12850,
+    "other_symbols": 137,
+    "other_symbols_sample": [
+     "AAL",
+     "ABNB",
+     "ACMR",
+     "ALMS",
+     "AMRC",
+     "APAM",
+     "APP",
+     "APPF"
+    ]
+   },
+   "mom_12_1_raw": {
+    "changed_rows": 72284,
+    "changed_share": 0.2195847319896107,
+    "changed_with_close_change": 67007,
+    "changed_in_restated_symbols": 72284,
+    "changed_other": 0,
+    "other_symbols": 0,
+    "other_symbols_sample": []
+   },
+   "on252_raw": {
+    "changed_rows": 82509,
+    "changed_share": 0.25064629311785164,
+    "changed_with_close_change": 76692,
+    "changed_in_restated_symbols": 82509,
+    "changed_other": 0,
+    "other_symbols": 0,
+    "other_symbols_sample": []
+   },
+   "resid_mom_12_1_raw": {
+    "changed_rows": 326259,
+    "changed_share": 0.9911113811382657,
+    "changed_with_close_change": 76511,
+    "changed_in_restated_symbols": 190593,
+    "changed_other": 135666,
+    "other_symbols": 1011,
+    "other_symbols_sample": [
+     "AA",
+     "AAL",
+     "ABBV",
+     "ABG",
+     "ABNB",
+     "ABSI",
+     "ABT",
+     "ACA"
+    ]
+   },
+   "news_attention": {
+    "changed_rows": 120536,
+    "changed_share": 0.36616492246001486,
+    "changed_with_close_change": 30440,
+    "changed_in_restated_symbols": 70600,
+    "changed_other": 49936,
+    "other_symbols": 371,
+    "other_symbols_sample": [
+     "AA",
+     "AAL",
+     "ABBV",
+     "ABNB",
+     "ABT",
+     "ACHR",
+     "ACI",
+     "ACM"
+    ]
+   },
+   "rev_21_ind_raw": {
+    "changed_rows": 301569,
+    "changed_share": 0.9161079636070902,
+    "changed_with_close_change": 75032,
+    "changed_in_restated_symbols": 179531,
+    "changed_other": 122038,
+    "other_symbols": 1012,
+    "other_symbols_sample": [
+     "AA",
+     "AAL",
+     "ABBV",
+     "ABG",
+     "ABNB",
+     "ABSI",
+     "ABT",
+     "ACA"
+    ]
+   }
+  },
+  "sec_fundamentals_daily_changed_le_0821": {
+   "eps_diluted": {
+    "rows": 4,
+    "symbols": [
+     "GURE"
+    ],
+    "first_date": "2026-08-18",
+    "last_date": "2026-08-21"
+   },
+   "revenue": {
+    "rows": 26,
+    "symbols": [
+     "CALM"
+    ],
+    "first_date": "2026-01-02",
+    "last_date": "2026-08-21"
+   },
+   "net_income": {
+    "rows": 19,
+    "symbols": [
+     "APLD",
+     "EL"
+    ],
+    "first_date": "2026-07-30",
+    "last_date": "2026-08-21"
+   },
+   "sue_eps": {
+    "rows": 67,
+    "symbols": [
+     "SHPH"
+    ],
+    "first_date": "2026-05-18",
+    "last_date": "2026-08-21"
+   },
+   "accruals": {
+    "rows": 139,
+    "symbols": [
+     "APLD",
+     "EL"
+    ],
+    "first_date": "2026-01-02",
+    "last_date": "2026-08-19"
+   },
+   "roe": {
+    "rows": 320,
+    "symbols": [
+     "APLD",
+     "EL"
+    ],
+    "first_date": "2026-01-02",
+    "last_date": "2026-08-21"
+   }
+  },
+  "sec_changed_symbols_late_filings": {
+   "CALM": {
+    "cik": 16160,
+    "facts_filed_after_0917_new": 10,
+    "facts_filed_after_0917_old": 0,
+    "min_filed_after_0917": "2026-09-30 00:00:00"
+   },
+   "SHPH": {
+    "cik": 1757499,
+    "facts_filed_after_0917_new": 13,
+    "facts_filed_after_0917_old": 0,
+    "min_filed_after_0917": "2026-09-24 00:00:00"
+   },
+   "GURE": {
+    "cik": 885462,
+    "facts_filed_after_0917_new": 30,
+    "facts_filed_after_0917_old": 0,
+    "min_filed_after_0917": "2026-09-29 00:00:00"
+   },
+   "APLD": {
+    "cik": 1144879,
+    "facts_filed_after_0917_new": 2,
+    "facts_filed_after_0917_old": 0,
+    "min_filed_after_0917": "2026-09-25 00:00:00"
+   },
+   "EL": {
+    "cik": 1001250,
+    "facts_filed_after_0917_new": 5,
+    "facts_filed_after_0917_old": 0,
+    "min_filed_after_0917": "2026-09-30 00:00:00"
+   }
+  },
+  "keys": {
+   "hygiene_symbols_changed": 79,
+   "panel_only_live": {
+    "rows": 59,
+    "archive_one_sided": 0,
+    "hygiene_symbol": 59,
+    "other": 0
+   },
+   "panel_only_snapshot": {
+    "rows": 250,
+    "archive_one_sided": 160,
+    "hygiene_symbol": 90,
+    "other": 0
+   },
+   "prices_only_live": {
+    "rows": 4313,
+    "archive_one_sided": 155,
+    "hygiene_symbol": 4158,
+    "other": 0
+   },
+   "prices_only_snapshot": {
+    "rows": 825,
+    "archive_one_sided": 160,
+    "hygiene_symbol": 665,
+    "other": 0
+   }
+  }
+ }
+}

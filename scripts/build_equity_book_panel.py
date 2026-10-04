@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -42,7 +43,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-OUT = ROOT / "data/research/equity_book"
+OUT = Path(os.environ.get("OC_EQUITY_BOOK_DIR") or ROOT / "data/research/equity_book")
 PANEL_DIR = OUT / "panel"
 DAILY = ROOT / "data/features/daily_broad"
 UNIV_GLOB = str(ROOT / "data/features/universe_broad/*.parquet")

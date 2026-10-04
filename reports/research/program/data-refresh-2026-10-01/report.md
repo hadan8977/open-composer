@@ -79,3 +79,61 @@ Either accept an append-only policy (keep rows <= old last date, append only row
 - The 20 intraday columns are empty on the new dates; M0 does not use them; not fixed.
 - SEC daily new version kept for live. The SHPH `sue_series` point-in-time leak is data pit #62, audited separately.
 - Research snapshot sha256 before = after (2637 files), rechecked after the swaps.
+
+## T-20261001-22 组合线 live 目录 (R1004-T22, D = 2026-10-02; 待主审)
+
+Status: **partial**. The live root is built to D and fresh; the parity gates of step 4 fail (details and attribution below, `live-parity.json`). No build logic was changed to make them pass.
+
+### Code (two small edits, one fix, new files)
+- `panel.py` `DEFAULT_DIR` and `build_equity_book_panel.py` `OUT`: `OC_EQUITY_BOOK_DIR` override (empty counts as unset). Test `tests/test_equity_book_live_root.py` (3 subprocess cases): unset, `DEFAULT_DIR`, `risk.RISK_DIR`, `signals.SIGNALS_DIR`, `build_book_v1_alpha.OUT_DIR`, `build_equity_book_panel.OUT` equal the snapshot paths; set, all fall under the given directory.
+- `risk.py` `RiskModel.resolve()`: when the year has no saved date <= d (or no file), fall back to the previous year's last saved date if that file exists and `exact=False`. Tests in `tests/test_equity_book_risk.py` (two-year synthetic dir, `exact=True` still raises, no previous-year file still `KeyError`).
+- **Module hashes changed** (v1 A1 binding is history, v1.1 must bind the new ones): panel.py sha256 `a023e2b1b5dc4ba2…` (was `4d5242ed635ff14b…`), risk.py `d92bf0320193189f…` (was `586c2620be11e6ac…`), build_equity_book_panel.py `613b54e976bf0377…`.
+- `scripts/check_feature_invariance.py` unchanged: it already has a relative `--tol`, so no `--rtol` was added.
+- New: `scripts/refresh_equity_book_live.py` (driver), `scripts/check_live_parity.py` (step 4), `tests/test_refresh_equity_book_live.py` (12 tests).
+- Tests: `tests/test_equity_book_*.py tests/test_book_v1_stage2.py tests/test_eval_book_v1_stage2.py tests/test_book_postmortem.py tests/test_refresh_equity_book_live.py tests/test_check_feature_invariance.py`: all pass except `test_equity_book_backtest.py::test_stage0_ls_raw_mom_12_1_p1000_parity` (max abs diff 3.97e-3, mean 4.1e-4, 106 months). That test rebuilds the stage-0 monthly returns from the current `data/features/daily_broad`, which T-02 swapped on 10-04; it does not touch `resolve`, `DEFAULT_DIR` or the env override. Not verified by a counterfactual run; needs a lead decision (freeze the old file for that test or re-baseline stage 0).
+
+### Risk-model repair on real data
+- `resolve("2026-01-02")` returns **2026-01-02 itself**, not a 2025 date: the snapshot's 2026 risk file already has 2026-01-02 as its first saved date, so the brief's expected value does not apply. The fallback is shown by `resolve("2025-01-02")` = 2024-12-31 and `resolve("2024-01-02")` = 2023-12-29.
+- Trading days before the first saved date of the year (all raised `no_risk_model` before): 2018: 3, 2019: 2, 2020: 1, 2021: 4, 2022: 4, 2023: 3, 2024: 3, 2025: 1, 2026: 0, total 21 for 2018-2026. After the fix: 0 failures for 2018-2026. 2017 (128 days before 2017-07-07) stays unresolvable, there is no 2016 file.
+
+### Live root build (all with `OC_EQUITY_BOOK_DIR=data/live/equity_book`, `run_capped.sh --mem 1.8G`, logs `logs/t22_*.log`)
+- Copied with `cp` (no symlinks): small files, 2025 partitions of panel/prices/signals, and (for the 2017 risk start) panel 2016-2024.
+- hygiene 41 s; panel 2026 102 s (530,334 rows to 2026-10-02); prices 33 s (all years, the stage has no `--years`); etf 4.5 s; **risk 2025 start 51 s, rerun 2017 start 3 min 32 s**; signals 2026 about 2 min; themes 30 s; formation_ic merged (snapshot <= 2024-12-31 plus live >= 2025-01-01; `formation_ic_live_only.parquet` kept, marker `formation_ic_merge.json`).
+- **Order finding**: signals read `risk/residuals_<y>.parquet` for `resid_mom_12_1` (`build_equity_book_signals.py` `RISK_RES`). Built before the risk model they silently fall back to industry-demeaned returns (resid_mom rho 0.80 vs the snapshot). The first signals run was therefore redone after the risk model; the driver order is hygiene, panel, prices, etf, **risk, signals**, alpha.
+- Risk start: with 2025 the 2026 spec_var rank parity was 0.14 of dates, with 2017 it is 0.84; the driver uses 2017-01-01 (3.5 min).
+- Fast-alpha signals: no error, `a101_*`/`g191_*` coverage flags are 0 from 2026-09-18 (old alpha tables). `news_attention` and `cmp_opp_buy_60d` (insider) coverage is 0 on 2026-10-02: `news_attention` and `insider_broad` end 2026-10-01 (`_freshness.json` `upstream`). The 20 intraday columns are empty after 09-17 (M0 does not use them).
+
+### Parity (step 4, `live-parity.json`; strict <= 2026-08-21, diagnostic 08-24..09-17)
+| check | gate | result |
+|---|---|---|
+| panel returns (cc, oo; price-aware, 60 vendor-revision symbols excluded) | max_changed_share <= 0.001 | **0.00136**, keys fail |
+| prices returns | same | **0.00104**, keys fail |
+| signals (164 numeric columns) | rank_parity_share >= 0.99 | **0.934** (28 columns < 0.99), keys fail |
+| risk exposures | same | **0.886** (spec_var 0.84, momentum 0.38, profitability 0.54, reversal 0.86, value 0.95), keys fail |
+| themes 2026 | same | **0.929** (momentum 0.81, value 0.71, quality 0.85) |
+| themes 2025 | same | 1.000, pass |
+| formation_ic overlap (380 rows, M1 excluded) | abs diff <= 1e-6 | all joined, **max 0.0118**, fail |
+| risk cov / factor_returns / residuals (diagnostic, rtol 1e-2) | none | changed share 0 / 0.00013 / 0.00058 (diag window 0 / 0.0012 / 0.0033) |
+
+Attribution (`live-parity.json` `attribution`, strict zone):
+- **Keys**: every only-live and only-snapshot key in panel and prices is explained by the archive one-sided keys (T-02 `archive_only_*_keys.txt`, my reading of "T-01 date_set") or by 79 symbols whose price-hygiene cutoff changed on the restated archive (panel: 59 only-live all hygiene; 250 only-snapshot = 160 archive + 90 hygiene; prices: 4313 = 155 + 4158; 825 = 160 + 665); 0 unexplained. The strict `keys_ok` is false only because the T-02 allow files do not list the hygiene symbols.
+- **Price re-basing**: 21.1% of panel rows have a close that moved by more than 1e-3, all in restated symbols (0 outside). `mom_12_1`, `on252` changes are 100% in restated symbols (22% and 25% of rows). Rank parity on a date falls below 0.999 as soon as that many names move.
+- **Panel fallback mcap** (new, not in the lead's exception list): `mcap_source` adv_fallback / adv_fallback_outlier use the median of close*shares/dollar_adv_21 over the whole year (`stage_panel`). Rows earlier in the year move when the year grows: 62% of adv_fallback rows of price-unchanged, non-restated symbols changed mcap by > 1e-3 (SEC-sourced rows: 0.01%). That is about 20% of rows and carries into ep/bm/sp/cfp (ep: 12,540 changed rows in 138 non-restated symbols with unchanged price). This is also a within-year look-ahead of the panel build and means a live append can never reproduce earlier mcap for those rows; candidate data pitfall.
+- **SEC daily changes <= 08-21: 5 symbols**, 755 rows: SHPH sue_eps 67 rows (pitfall #62, filed 09-24), EL roe 320 / accruals 139 / net_income, APLD (same columns), CALM revenue 26, GURE eps_diluted 4. For all five, the new `facts.parquet` has facts filed after 09-17 (SHPH 13 from 09-24, APLD 2 from 09-25, GURE 30 from 09-29, EL 5 from 09-30, CALM 10 from 09-30) and the old one has 0, so the mechanism is the same late-filing/amendment entry as #62. Only SHPH sue_eps is inside the lead's literal exception; EL, APLD, CALM, GURE changes in roe/accruals/net_income/revenue/eps_diluted are not sue columns and are listed here for the lead.
+- `resid_mom_12_1` changes in 99% of rows at 1e-6 (rank parity 0.875): residuals come from a risk regression over the whole cross-section, so any restated name moves all of them. `rev_21_ind` (91.6%) changes through the industry mean. Neither is a build fault.
+- Reading for the lead: the `rank_min 0.999` per-date gate is dominated by a few moved names (roe: 2 symbols moved, per-date rho 0.9975), so ranks fail even where almost all values are identical; the failures are all attributable (restated prices, hygiene cutoffs, fallback mcap, five late SEC filers), none to the live builds. Unattributed under the stated exceptions: the EL/APLD/CALM/GURE SEC rows and the fallback-mcap drift. The decision whether the live root is acceptable for v1.2 stage 1 is the lead's.
+
+### Research snapshot guard
+- sha256 of the 2637 files under `data/research/equity_book/` (without `duck_tmp/`): before `research-snapshot-sha256-before.json` (2026-10-04T08:39Z), after `research-snapshot-sha256-after.json` (09:20Z): **identical**. Nothing under the snapshot was written; the live root has no symlinks.
+
+### Freshness and driver
+- `data/live/equity_book/_freshness.json` (written by `--check`, 09:19Z): panel, prices, etf, signals, risk, alpha last date 2026-10-02 = SIP last date, `fresh: true`. Table level (`upstream`): `insider_broad` and `news_attention` end 2026-10-01, `sec_fundamentals_facts` 2026-10-01, the rest 2026-10-02 (universe month_end 09-30). `alpha101/191` are not refreshed (disabled in the driver, reason in the table spec).
+- `scripts/refresh_equity_book_live.py`: default run, `--dry-run` (prints the 51-step plan; verified for today and for 2027-01-04), `--check`; exit 2 when the SIP archive has not reached the last closed session (nothing done), 3 upstream comparison failed (backup restored), 4 command failed, 6 lock held; lock `data/live/.refresh.lock`; log `logs/refresh_equity_book_live.log`; split-type restatements (max_rel_diff >= 0.2, symbol in the panel universe) also rebuild earlier `daily_broad` years; price tables use the two-zone rule (return-like columns before last date minus 3 sessions). It does not duplicate `scripts/run_book_v12_daily.py` (targets/plan/submit/reconcile); that script's `--targets` needs a fresh live root, which this driver produces. No conflict found.
+- **Never run end to end**: the upstream path (network fetches, ~1 h of builds) was only exercised by unit tests with a fake runner (restore on failed check, swap on pass); the live-layer commands are the ones run by hand above. First scheduled run should be watched.
+- Suggested cron (not installed; UTC, after the 22:00 SIP update and the 22:30 freshness check): `45 22 * * 1-5 cd /root/codex-test/open-composer && uv run python scripts/refresh_equity_book_live.py >> logs/refresh_equity_book_live.cron.log 2>&1`. Run `run_book_v12_daily.py --targets` after it finishes (the live layer alone takes about 9.5 minutes measured above; the upstream part is unmeasured, so the offset is the lead's to set).
+
+### Not done / open
+- Parity gates fail (above); status partial. Lead decides acceptance, fallback-mcap handling and the EL/APLD/CALM/GURE rows.
+- `test_stage0_ls_raw_mom_12_1_p1000_parity` fails on the swapped data (above).
+- Driver upstream path unrun live; `alpha101/191` and the 20 intraday columns stay old/empty; `news_attention` and `insider_broad` reach only 10-01.
+- Data under `data/live/` is not committed.
