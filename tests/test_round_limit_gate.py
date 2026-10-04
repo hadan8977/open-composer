@@ -274,3 +274,51 @@ def test_dry_run_changes_nothing(tmp_path: Path) -> None:
     summary = _run(tmp_path, paseo, dry_run=True)
     assert paseo.calls == [] and len(summary["actions"]) == 3  # 2 pauses + cap note
     assert not (tmp_path / "logs" / "state.json").exists()
+
+
+def test_a_later_successful_call_lifts_the_limit(tmp_path: Path) -> None:
+    """The owner used a reset: rounds resume before the recorded Sunday reset."""
+    projects = tmp_path / "projects"
+    hit = NOW - timedelta(hours=2)
+    _write(projects / "p" / "a.jsonl", [_rejection(hit, NOW + timedelta(days=3))], NOW)
+    paseo = FakePaseo({"lead": "active", "exec": "active"})
+    _run(tmp_path, paseo)
+    assert paseo.calls == [("pause", "lead"), ("pause", "exec")]
+    later = NOW + timedelta(minutes=10)
+    _write(projects / "p" / "b.jsonl", [_assistant(later, "ok1", "claude-opus-5-5", 10)], later)
+    summary = _run(tmp_path, paseo, now=later + timedelta(minutes=1))
+    assert paseo.calls[2:] == [("resume", "lead"), ("resume", "exec")]
+    assert summary["limits"] == []
+
+
+def test_success_of_another_model_or_before_the_hit_does_not_lift(tmp_path: Path) -> None:
+    projects = tmp_path / "projects"
+    hit = NOW - timedelta(hours=1)
+    _write(
+        projects / "p" / "a.jsonl",
+        [
+            _assistant(hit - timedelta(minutes=5), "early", "claude-opus-5-5", 10),
+            _rejection(hit, NOW + timedelta(days=1), kind="seven_day_opus"),
+            _assistant(hit + timedelta(minutes=5), "son", "claude-sonnet-5-5", 10),
+        ],
+        NOW,
+    )
+    ledger = gate.update_ledger(
+        {}, projects, NOW, anchor=gate._ts(CFG["week_anchor_utc"]), weights=CFG["weights"]
+    )
+    limits = gate.active_limits(
+        projects, NOW, margin=timedelta(0), last_success=ledger["last_success"]
+    )
+    assert [lim.kind for lim in limits] == ["seven_day_opus"]
+
+
+def test_extra_reset_doubles_that_weeks_cap_only() -> None:
+    start = datetime(2026, 10, 4, tzinfo=UTC)
+    cfg = dict(CFG, extra_resets_by_week={"2026-10-04T00:00:00+00:00": 1})
+    day2 = start + timedelta(days=2)
+    assert gate.pace_check(600, day2, start, cfg, paused=False)["allowed"]  # pace 571 + 100
+    assert gate.pace_check(600, day2, start, cfg, paused=False)["cap_units"] == 2000
+    next_week = start + timedelta(days=9)
+    assert not gate.pace_check(600, next_week, start + timedelta(days=7), cfg, paused=False)[
+        "allowed"
+    ]

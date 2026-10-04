@@ -75,6 +75,10 @@ def _iso(value: datetime) -> str:
     return value.astimezone(UTC).isoformat(timespec="seconds")
 
 
+def _iso_ms(value: datetime) -> str:
+    return value.astimezone(UTC).isoformat(timespec="milliseconds")
+
+
 def _load(path: Path, default: dict[str, Any]) -> dict[str, Any]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -115,9 +119,19 @@ class Limit:
 
 
 def active_limits(
-    projects_dir: Path, now: datetime, *, margin: timedelta, max_files: int = 60
+    projects_dir: Path,
+    now: datetime,
+    *,
+    margin: timedelta,
+    last_success: dict[str, str] | None = None,
+    max_files: int = 60,
 ) -> list[Limit]:
-    """Rejections whose reset (plus margin) is still ahead, from the newest transcripts."""
+    """Rejections whose reset (plus margin) is still ahead, from the newest transcripts.
+
+    A successful call of a model the limit binds, made after the rejection, means the
+    limit was lifted early (the owner used a reset): that rejection no longer counts.
+    """
+    successes = {k: _ts(v) for k, v in (last_success or {}).items()}
     out: list[Limit] = []
     for path in transcript_files(projects_dir, now - timedelta(days=8))[:max_files]:
         for event in _all_quota_events_in_file(path):
@@ -126,8 +140,14 @@ def active_limits(
             resets = event.resets_at
             if resets is None and event.at is not None:
                 resets = event.at + timedelta(hours=UNKNOWN_RESET_HOURS)
-            if resets is not None and resets + margin > now:
-                kind = event.rate_limit_type or "unknown"
+            if resets is None or resets + margin <= now:
+                continue
+            kind = event.rate_limit_type or "unknown"
+            lifted = event.at is not None and any(
+                ok is not None and ok > event.at + timedelta(seconds=1) and limit_applies(kind, f)
+                for f, ok in successes.items()
+            )
+            if not lifted:
                 out.append(Limit(kind, resets + margin, event.at, path.name))
     return out
 
@@ -261,6 +281,10 @@ def _count(
     family = model_family(message.get("model")) if isinstance(message, dict) else None
     if moment is None or not (start <= moment <= now) or not usage or family is None:
         return
+    last = ledger.setdefault("last_success", {})
+    previous = _ts(last.get(family))
+    if previous is None or moment > previous:
+        last[family] = _iso_ms(moment)
     units = price(usage, weights.get(family, weights["opus"]))
     key = str(message.get("id") or row.get("uuid"))
     # Claude Code writes one line per content block with the same message id and usage.
@@ -278,7 +302,8 @@ def pace_check(
 
     Hysteresis: once paused for pace, resume only below the pace line itself.
     """
-    cap = float(cfg["weekly_cap_units"])
+    resets = int((cfg.get("extra_resets_by_week") or {}).get(_iso(start), 0))
+    cap = float(cfg["weekly_cap_units"]) * (1 + resets)
     fraction = min(1.0, max(0.0, (now - start) / timedelta(days=7)))
     pace = cap * fraction
     reserve_line = (1.0 - float(cfg["owner_reserve"])) * cap
@@ -291,6 +316,7 @@ def pace_check(
         "used_units": round(total, 1),
         "pace_units": round(pace, 1),
         "cap_units": cap,
+        "extra_resets": resets,
         "used_share": round(total / cap, 3),
         "week_elapsed": round(fraction, 3),
     }
@@ -376,9 +402,11 @@ def run_once(
     assert anchor is not None
     state = _load(state_path, {})
     gate_paused: dict[str, Any] = state.setdefault("paused_by_gate", {})
-    limits = active_limits(projects_dir, now, margin=margin)
     ledger = update_ledger(
         _load(ledger_path, {}), projects_dir, now, anchor=anchor, weights=cfg["weights"]
+    )
+    limits = active_limits(
+        projects_dir, now, margin=margin, last_success=ledger.get("last_success")
     )
     start = week_start(now, anchor)
     pace = pace_check(
