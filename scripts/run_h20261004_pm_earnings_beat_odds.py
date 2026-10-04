@@ -14,8 +14,8 @@ Reads the event table built by ``scripts/build_pm_earnings_events.py`` and SIP d
 
 Interpretations the design left open (fixed here before the first real run):
 
-* the positive control gate uses the weekly-IC t (the same statistic as the primary test);
-  the pooled week-clustered t is reported next to it;
+* the positive control gate is the event-level pooled t with week-clustered SE (lead ruling
+  2026-10-04, before any H-A statistic); the weekly-IC t is reported next to it;
 * weeks with fewer than 6 events are pooled forward within a reporting season (event weeks
   at most 2 weeks apart); a short tail merges into the previous pool; a season with fewer
   than 6 events in total is dropped and counted;
@@ -58,6 +58,16 @@ SIDE_BPS = {"primary": 10.0, "stress": 20.0}
 BORROW_ANNUAL = 0.01
 SEASON_GAP_WEEKS = 2
 CONTROL_T_MIN = 3.0
+EXTREME_P = 0.03  # P >= 0.97 or <= 0.03 counts as outcome-revealing at the cut
+EXTREME_SHARE_FLAG = 0.05
+#: Lead ruling (2026-10-04 08:2x UTC, before any H-A statistic was seen): the positive control
+#: "its t" is the event-level t of beat vs window excess return with week-clustered SE; the
+#: weekly-IC t is reported next to it. The announcement time is the EDGAR "Accepted" time.
+CONTROL_RULING = (
+    "Lead ruling 2026-10-04 (Opus, interactive session), made before any H-A statistic was seen: "
+    "the positive-control t is the event-level pooled t with week-clustered SE; the weekly-IC t "
+    "was the implementer's reading and is reported only. Corrected EDGAR timing is the frozen test."
+)
 CONTINUE_T = 2.0
 STOP_T = 1.0
 ALPHA_ONE_SIDED = 0.05
@@ -416,6 +426,34 @@ def calibration(df: pd.DataFrame) -> dict[str, Any]:
     }
 
 
+def extreme_p_share(df: pd.DataFrame) -> dict[str, Any]:
+    """Share of events whose P at the cut is already near 0 or 1, by announcement timing."""
+    out: dict[str, Any] = {}
+    kinds = df["timing_kind"] if "timing_kind" in df else pd.Series("all", index=df.index)
+    for kind in sorted(kinds.dropna().unique()):
+        part = df[kinds == kind]
+        ext = (part["P"] >= 1 - EXTREME_P) | (part["P"] <= EXTREME_P)
+        out[str(kind)] = {
+            "n": int(len(part)),
+            "n_extreme": int(ext.sum()),
+            "share": float(ext.mean()),
+        }
+    return out
+
+
+def a1_with_shuffle(df: pd.DataFrame) -> dict[str, Any]:
+    block = hA_block(df, "P")
+    grouped, _ = assign_groups(df)
+    shuffles = shuffle_ics(grouped, "P", "ret_win")
+    block["shuffle"] = {
+        "n": int(len(shuffles)),
+        "p95": float(np.nanpercentile(shuffles, 95)),
+        "mean": float(np.nanmean(shuffles)),
+        "percentile_of_real": float((shuffles < block["mean_ic"]).mean() * 100.0),
+    }
+    return block
+
+
 def hA_block(df: pd.DataFrame, sig: str, ret: str = "ret_win") -> dict[str, Any]:
     grouped, pooling = assign_groups(df)
     block = ic_block(grouped, sig, ret)
@@ -474,9 +512,18 @@ def run_analysis(events: pd.DataFrame, bars: dict[str, pd.DataFrame]) -> dict[st
     # 1. positive control
     control = ic_block(grouped, "beat", "ret_win")
     control["gate_t_min"] = CONTROL_T_MIN
+    control["gate_statistic"] = "pooled_event_level_t_week_clustered"
+    control["gate_t"] = control["pooled"]["t"]
+    control["ruling"] = CONTROL_RULING
     result["positive_control"] = control
     result["calibration"] = calibration(prim)
-    if not control["t"] >= CONTROL_T_MIN:
+    leak = extreme_p_share(prim)
+    result["leakage_diagnostic"] = {
+        "definition": "share of primary events with P >= 0.97 or P <= 0.03 at the 15:00 ET cut on S",
+        "by_timing": leak,
+        "flag_threshold": EXTREME_SHARE_FLAG,
+    }
+    if not control["gate_t"] >= CONTROL_T_MIN:
         result["verdict"] = "pipeline_suspect"
         result["positive_control_diagnostics"] = control_diagnostics(prim)
         result["continue_rule"] = {"evaluated": False, "reason": "positive_control_t_below_3"}
@@ -484,15 +531,19 @@ def run_analysis(events: pd.DataFrame, bars: dict[str, pd.DataFrame]) -> dict[st
         return result
 
     # 3. H-A
-    a1 = hA_block(prim, "P")
-    shuffles = shuffle_ics(grouped, "P", "ret_win")
+    a1 = a1_with_shuffle(prim)
     real = a1["mean_ic"]
-    a1["shuffle"] = {
-        "n": int(len(shuffles)),
-        "p95": float(np.nanpercentile(shuffles, 95)),
-        "mean": float(np.nanmean(shuffles)),
-        "percentile_of_real": float((shuffles < real).mean() * 100.0),
-    }
+    flagged = [k for k, v in leak.items() if v["n"] and v["share"] > EXTREME_SHARE_FLAG]
+    if flagged:
+        kinds = prim["timing_kind"]
+        extreme = (prim["P"] >= 1 - EXTREME_P) | (prim["P"] <= EXTREME_P)
+        drop = kinds.isin(flagged) & extreme
+        result["robustness_excluding_extreme_p"] = {
+            "note": "reported for reference only, not part of the verdict",
+            "flagged_timing_kinds": flagged,
+            "n_excluded": int(drop.sum()),
+            "A1": a1_with_shuffle(prim[~drop]),
+        }
     a3_sample = prim[prim["P7"].notna()]
     a3 = hA_block(a3_sample, "A3")
     a1_on_a3_sample = hA_block(a3_sample, "P")
@@ -575,6 +626,31 @@ def run_analysis(events: pd.DataFrame, bars: dict[str, pd.DataFrame]) -> dict[st
 # ------------------------------------------------------------------ outputs
 
 
+DATA_DEFECT_NOTE = [
+    "",
+    "## Data-layer defect: `data/features/earnings_events/` acceptance_utc",
+    "",
+    "- Finding (2026-10-04): `acceptance_utc` is later than the true UTC acceptance instant by 4 h "
+    "in daylight time and 5 h in standard time. The source value was already UTC and was converted "
+    "once more as if it were Eastern wall-clock. Against EDGAR filing-index Accepted times: 11 of 11 "
+    "hand-checked filings, and 1055 of 1055 matched accessions agree with the formula below "
+    "(`data/research/prediction_markets/polymarket_earnings/edgar_accepted_cache.json`).",
+    "- Affected: the `acceptance_utc` column of `earnings_events/{2024,2025,2026}.parquet` and every "
+    "consumer that reads it as a true UTC instant (`scripts/build_sue_8k_visible.py` documents it that "
+    "way and converts it to Eastern again). Dates near midnight and after-close classification shift; "
+    "the `text_path`, `ex99_url` and accession fields are unaffected.",
+    "- Cause: `scripts/build_earnings_events.py` treats the submissions API `acceptanceDateTime` as "
+    "Eastern wall-clock (its `_EASTERN` comment). For these filings the API value is true UTC.",
+    "- Suggested fix: in the builder, parse `acceptanceDateTime` as UTC; for the existing tables "
+    "recover with `pd.to_datetime(x, utc=True).dt.tz_convert('America/New_York').dt.tz_localize(None)"
+    ".dt.tz_localize('UTC')` (see `eastern_from_double_shifted` in "
+    "`scripts/build_pm_earnings_events.py`). Check rows from other sources in the same table "
+    "(10-K note: mixed conventions) before rewriting, and re-run the consumers that depend on the "
+    "timestamp (`build_sue_8k_visible.py`, the earnings-text forward test).",
+    "- Not changed here: neither the table nor its builder was edited; the lead schedules the repair.",
+]
+
+
 def _f(x: Any, nd: int = 3) -> str:
     return "n/a" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:.{nd}f}"
 
@@ -621,8 +697,15 @@ def write_outputs(result: dict[str, Any], out_dir: Path) -> None:
     )
     c = result["positive_control"]
     lines.append(
-        f"- Positive control: weekly IC {_f(c['mean_ic'])}, t {_f(c['t'], 2)} over {c['n_weeks']} weeks "
-        f"(pooled t {_f(c['pooled']['t'], 2)}); gate t >= 3."
+        f"- Positive control (gate: pooled event-level t, week-clustered SE, >= 3): "
+        f"t {_f(c['pooled']['t'], 2)} on {c['pooled']['n']} events; weekly-IC {_f(c['mean_ic'])}, "
+        f"t {_f(c['t'], 2)} over {c['n_weeks']} weeks (reported only). {c['ruling']}"
+    )
+    leak = result["leakage_diagnostic"]["by_timing"]
+    lines.append(
+        "- Leakage check (P >= 0.97 or <= 0.03 at the cut, share of events): "
+        + "; ".join(f"{k} {_f(v['share'] * 100, 1)}% (n={v['n']})" for k, v in leak.items())
+        + "."
     )
     cal = result["calibration"]
     lines.append(
@@ -659,7 +742,17 @@ def write_outputs(result: dict[str, Any], out_dir: Path) -> None:
             f"{cr['rule2_net_spread_positive']}; above shuffle p95 {cr['rule3_above_shuffle_p95']}; "
             f"stop rule triggered {cr['stop_rule_triggered']}."
         )
+    if "robustness_excluding_extreme_p" in result:
+        rb = result["robustness_excluding_extreme_p"]
+        a = rb["A1"]
+        lines.append(
+            f"- Robustness (reference only, not in the verdict), excluding {rb['n_excluded']} extreme-P "
+            f"events in {rb['flagged_timing_kinds']}: A1 IC {_f(a['mean_ic'], 4)}, t {_f(a['t'], 2)}, "
+            f"{a['n_weeks']} weeks, shuffle percentile {_f(a['shuffle']['percentile_of_real'], 1)}, "
+            f"net spread {_f(a['spread'].get('net_primary_mean_bp'), 1)} bp."
+        )
     lines.append(f"- Overlay scoring: {result['overlay_scoring']}.")
+    lines += DATA_DEFECT_NOTE
     (out_dir / "report.md").write_text("\n".join(lines) + "\n")
 
 
