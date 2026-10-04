@@ -143,6 +143,7 @@ def test_match_picks_nearest_item_202_within_two_days() -> None:
     earnings = pd.DataFrame(
         {
             "ticker": ["AAA", "AAA", "AAA", "BBB"],
+            "cik": ["1", "1", "1", "2"],
             "accession": ["far", "near", "other_item", "bbb"],
             "acceptance_utc": [
                 "2026-10-10T12:00:00Z",
@@ -153,7 +154,7 @@ def test_match_picks_nearest_item_202_within_two_days() -> None:
             "items": ["2.02,9.01", "2.02,9.01", "5.02", "2.02"],
         }
     )
-    out = pm.match_announcements(events, earnings)
+    out = pm.match_announcements(events, earnings, mode="literal")
     assert out.loc[0, "accession"] == "near"
     assert out.loc[0, "timing_source"] == "8k_2.02"
     assert pd.isna(out.loc[1, "accession"])  # slug date beyond 2 days of any 8-K
@@ -271,3 +272,57 @@ def test_merge_feasibility_keeps_existing_keys(tmp_path: Path) -> None:
     assert doc["keep"] == 1
     assert doc["data_build"]["funnel"] == {"all_events": 3}
     assert "polymarket_data_terms" in doc["data_build"]
+
+
+def test_double_shifted_acceptance_matches_edgar_examples() -> None:
+    # (table value, EDGAR index "Accepted" Eastern wall clock), checked 2026-10-04
+    cases = [
+        ("2025-03-19T15:10:04Z", "2025-03-19 07:10:04"),
+        ("2025-06-26T00:03:10Z", "2025-06-25 16:03:10"),
+        ("2025-02-21T02:08:00Z", "2025-02-20 16:08:00"),
+        ("2025-01-30T16:45:25Z", "2025-01-30 06:45:25"),
+    ]
+    out = pm.eastern_from_double_shifted(pd.Series([c[0] for c in cases]))
+    for got, (_, want) in zip(out, cases, strict=True):
+        assert got.tz_localize(None) == pd.Timestamp(want)
+
+
+def test_parse_accepted_and_fetch_with_cache_and_retry() -> None:
+    page = '<div class="infoHead">Accepted</div> <div class="info">2025-03-19 07:10:04</div>'
+    assert pm.parse_accepted(page) == et_ts("2025-03-19 07:10:04")
+    assert pm.parse_accepted("nothing") is None
+    calls: list[str] = []
+    statuses = iter([(429, ""), (200, page)])
+
+    def get(url: str):
+        calls.append(url)
+        if "000000000025000001" in url:
+            return next(statuses)
+        return 200, page
+
+    cached = {"0000000000-25-000009": et_ts("2025-01-01 08:00:00")}
+    out = pm.fetch_edgar_accepted(
+        [("5", "0000000000-25-000001"), ("5", "0000000000-25-000009")],
+        get,
+        sleep=lambda *_: None,
+        cache=cached,
+    )
+    assert out["0000000000-25-000001"] == et_ts("2025-03-19 07:10:04")
+    assert out["0000000000-25-000009"] == et_ts("2025-01-01 08:00:00")
+    assert len(calls) == 2  # one retry, cached accession not fetched
+    assert "/data/5/000000000025000001/" in calls[0]
+
+
+def test_apply_edgar_times_prefers_index_time() -> None:
+    ev = pd.DataFrame(
+        {
+            "accession": ["a", "b", None],
+            "acceptance_et": [et_ts("2025-03-19 07:10:04"), et_ts("2025-03-20 08:00:00"), pd.NaT],
+            "timing_source": ["8k_2.02", "8k_2.02", "none"],
+        }
+    )
+    out = pm.apply_edgar_times(ev, {"a": et_ts("2025-03-19 07:10:04"), "b": None})
+    assert out.loc[0, "timing_source"] == "8k_2.02_edgar_index"
+    assert out.loc[1, "timing_source"] == "8k_2.02"
+    assert out.loc[1, "acceptance_et"] == et_ts("2025-03-20 08:00:00")
+    assert pd.isna(out.loc[2, "acceptance_et"])

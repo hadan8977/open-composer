@@ -425,6 +425,32 @@ def hA_block(df: pd.DataFrame, sig: str, ret: str = "ret_win") -> dict[str, Any]
     return block
 
 
+def control_diagnostics(prim: pd.DataFrame) -> dict[str, Any]:
+    """Positive-control cuts that never touch P: by timing kind, period and return window."""
+    if "timing_kind" not in prim:
+        prim = prim.assign(timing_kind=None)
+    cuts: dict[str, pd.DataFrame] = {
+        f"timing_{k}": prim[prim["timing_kind"] == k]
+        for k in sorted(prim["timing_kind"].dropna().unique())
+    }
+    cuts["before_2026-03-01"] = prim[prim["R"] < SPLIT_DATE]
+    cuts["from_2026-03-01"] = prim[prim["R"] >= SPLIT_DATE]
+    out: dict[str, Any] = {}
+    for name, part in cuts.items():
+        grouped, _ = assign_groups(part)
+        blk = ic_block(grouped, "beat", "ret_win") if len(grouped) else {"n_events": 0}
+        out[name] = {k: blk.get(k) for k in ("n_events", "n_weeks", "mean_ic", "t")}
+        out[name]["pooled_t"] = blk.get("pooled", {}).get("t")
+    grouped, _ = assign_groups(prim)
+    mean_gap = grouped.groupby("beat")["ret_win"].mean()
+    out["mean_excess_return_by_outcome"] = {str(int(k)): float(v) for k, v in mean_gap.items()}
+    out["open_exit_variant"] = {
+        k: ic_block(grouped.dropna(subset=["ret_open_exit"]), "beat", "ret_open_exit").get(k)
+        for k in ("n_weeks", "mean_ic", "t")
+    }
+    return out
+
+
 def run_analysis(events: pd.DataFrame, bars: dict[str, pd.DataFrame]) -> dict[str, Any]:
     df = attach_returns(events, bars)
     df["A3"] = df["P"] - df["P7"]
@@ -452,6 +478,7 @@ def run_analysis(events: pd.DataFrame, bars: dict[str, pd.DataFrame]) -> dict[st
     result["calibration"] = calibration(prim)
     if not control["t"] >= CONTROL_T_MIN:
         result["verdict"] = "pipeline_suspect"
+        result["positive_control_diagnostics"] = control_diagnostics(prim)
         result["continue_rule"] = {"evaluated": False, "reason": "positive_control_t_below_3"}
         result["overlay_scoring"] = "not_run"
         return result

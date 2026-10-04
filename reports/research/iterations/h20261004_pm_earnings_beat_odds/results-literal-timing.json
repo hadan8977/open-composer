@@ -1,0 +1,158 @@
+{
+  "iter_id": "h20261004_pm_earnings_beat_odds",
+  "generated_at_utc": "2026-10-04T08:01:25Z",
+  "seed": 20261004,
+  "sample": {
+    "funnel": {
+      "all_events": 1353,
+      "ticker_parsed_and_resolved": 1352,
+      "sip_bars": 1329,
+      "timing_matched_8k": 1054,
+      "p_valid": 1051,
+      "not_stale": 1050,
+      "volume_ge_5k": 628,
+      "close_ge_5_and_returns": 622
+    },
+    "primary_events": 622,
+    "first_R": "2025-09-30",
+    "last_R": "2026-10-01",
+    "pooling": {
+      "groups": 30,
+      "dropped_events": 0
+    },
+    "groups_with_ge_6": 30
+  },
+  "positive_control": {
+    "n_events": 622,
+    "n_weeks": 27,
+    "mean_ic": 0.11341429249879038,
+    "sd_ic": 0.25177250006240376,
+    "t": 2.3406764066412387,
+    "p_one_sided": 0.01359675128792547,
+    "pooled": {
+      "ic": 0.13761827933124443,
+      "se": 0.03846088199373785,
+      "t": 3.578136334825895,
+      "n": 585
+    },
+    "gate_t_min": 3.0
+  },
+  "calibration": {
+    "n": 622,
+    "base_rate": 0.7588424437299035,
+    "mean_p": 0.74549115755627,
+    "brier_p": 0.09059182837620579,
+    "brier_base_rate": 0.18300058932393173,
+    "auc": 0.916066384180791,
+    "deciles": [
+      {
+        "n": 63,
+        "mean_p": 0.03671428571428571,
+        "beat_rate": 0.015873015873015872
+      },
+      {
+        "n": 62,
+        "mean_p": 0.37669354838709673,
+        "beat_rate": 0.3709677419354839
+      },
+      {
+        "n": 66,
+        "mean_p": 0.6535454545454545,
+        "beat_rate": 0.696969696969697
+      },
+      {
+        "n": 59,
+        "mean_p": 0.7745677966101695,
+        "beat_rate": 0.8135593220338984
+      },
+      {
+        "n": 61,
+        "mean_p": 0.8418032786885243,
+        "beat_rate": 0.8524590163934426
+      },
+      {
+        "n": 71,
+        "mean_p": 0.8961478873239437,
+        "beat_rate": 0.9436619718309859
+      },
+      {
+        "n": 54,
+        "mean_p": 0.9325370370370367,
+        "beat_rate": 0.9259259259259259
+      },
+      {
+        "n": 61,
+        "mean_p": 0.966295081967213,
+        "beat_rate": 0.9836065573770492
+      },
+      {
+        "n": 125,
+        "mean_p": 0.9993319999999998,
+        "beat_rate": 1.0
+      }
+    ]
+  },
+  "verdict": "pipeline_suspect",
+  "positive_control_diagnostics": {
+    "timing_after_close": {
+      "n_events": 164,
+      "n_weeks": 12,
+      "mean_ic": 0.000306975869217375,
+      "t": 0.0032650404252191384,
+      "pooled_t": 0.4718301861469483
+    },
+    "timing_intraday": {
+      "n_events": 152,
+      "n_weeks": 9,
+      "mean_ic": 0.201375289283723,
+      "t": 1.8472156765864864,
+      "pooled_t": 2.527874690278242
+    },
+    "timing_non_session_day": {
+      "n_events": 0,
+      "n_weeks": null,
+      "mean_ic": null,
+      "t": null,
+      "pooled_t": null
+    },
+    "timing_pre_market": {
+      "n_events": 291,
+      "n_weeks": 19,
+      "mean_ic": 0.10965752319125617,
+      "t": 1.4613816385478247,
+      "pooled_t": 2.6089826685738697
+    },
+    "before_2026-03-01": {
+      "n_events": 424,
+      "n_weeks": 16,
+      "mean_ic": 0.07026164247501906,
+      "t": 1.2068317837001576,
+      "pooled_t": 2.2351107779139903
+    },
+    "from_2026-03-01": {
+      "n_events": 198,
+      "n_weeks": 11,
+      "mean_ic": 0.1761817834424577,
+      "t": 2.117497180513533,
+      "pooled_t": 3.2977642218515353
+    },
+    "mean_excess_return_by_outcome": {
+      "0": -0.015918506829752807,
+      "1": 0.004175518639270457
+    },
+    "open_exit_variant": {
+      "n_weeks": 27,
+      "mean_ic": 0.10394136992299653,
+      "t": 2.03859394502579
+    }
+  },
+  "continue_rule": {
+    "evaluated": false,
+    "reason": "positive_control_t_below_3"
+  },
+  "overlay_scoring": "not_run",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false
+}

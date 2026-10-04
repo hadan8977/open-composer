@@ -23,6 +23,7 @@ import importlib.util
 import json
 import re
 import sys
+import time
 from datetime import UTC, date, datetime, timedelta
 from datetime import time as dtime
 from pathlib import Path
@@ -249,6 +250,18 @@ def eastern_wall_clock(acceptance: pd.Series) -> pd.Series:
     return wall.dt.tz_localize(ET, ambiguous=False, nonexistent="shift_forward")
 
 
+def eastern_from_double_shifted(acceptance: pd.Series) -> pd.Series:
+    """Recover the true Eastern acceptance time from ``acceptance_utc`` in the 8-K table.
+
+    Checked 2026-10-04 against EDGAR index "Accepted" times (11 of 11 sampled filings, summer
+    and winter): the table value is the true UTC instant read as Eastern wall-clock and
+    converted to UTC again, i.e. true ET + 8 h in EDT and + 10 h in EST. The true UTC clock is
+    the Eastern clock reading of the table value; the true Eastern time follows from it.
+    """
+    as_utc_clock = pd.to_datetime(acceptance, utc=True).dt.tz_convert(ET).dt.tz_localize(None)
+    return as_utc_clock.dt.tz_localize("UTC").dt.tz_convert(ET)
+
+
 def reaction_and_signal_day(acceptance_et: pd.Timestamp) -> tuple[date, date, str]:
     """(S, R, kind) for an announcement at an Eastern wall-clock instant.
 
@@ -269,15 +282,22 @@ def reaction_and_signal_day(acceptance_et: pd.Timestamp) -> tuple[date, date, st
     return d, next_us_equity_session(d), "after_close"
 
 
-def match_announcements(events: pd.DataFrame, earnings: pd.DataFrame) -> pd.DataFrame:
-    """Nearest 8-K item 2.02 within +/-2 calendar days of the slug date, by ticker."""
+def match_announcements(
+    events: pd.DataFrame, earnings: pd.DataFrame, *, mode: str = "corrected"
+) -> pd.DataFrame:
+    """Nearest 8-K item 2.02 within +/-2 calendar days of the slug date, by ticker.
+
+    ``mode="literal"`` reads the table value as Eastern wall-clock (the frozen wording);
+    ``mode="corrected"`` undoes the double shift found against EDGAR.
+    """
     items = earnings[earnings["items"].astype(str).str.contains(r"(?:^|,)2\.02(?:,|$)")].copy()
-    items["acceptance_et"] = eastern_wall_clock(items["acceptance_utc"])
+    convert = eastern_wall_clock if mode == "literal" else eastern_from_double_shifted
+    items["acceptance_et"] = convert(items["acceptance_utc"])
     items["acc_date"] = items["acceptance_et"].dt.tz_localize(None).dt.normalize()
     by_ticker = {k: g for k, g in items.groupby("ticker")}
     rows: list[dict[str, Any]] = []
     for ev in events.itertuples():
-        out = {"accession": None, "acceptance_et": pd.NaT, "timing_source": "none"}
+        out = {"accession": None, "cik": None, "acceptance_et": pd.NaT, "timing_source": "none"}
         g = by_ticker.get(ev.ticker) if ev.ticker else None
         anchor = ev.slug_date
         if g is not None and anchor is not None:
@@ -288,11 +308,76 @@ def match_announcements(events: pd.DataFrame, earnings: pd.DataFrame) -> pd.Data
                 best = near.loc[(near["acc_date"] - anchor_ts).abs().idxmin()]
                 out = {
                     "accession": best["accession"],
+                    "cik": best["cik"],
                     "acceptance_et": best["acceptance_et"],
                     "timing_source": "8k_2.02",
                 }
         rows.append(out)
     return pd.DataFrame(rows, index=events.index)
+
+
+ACCEPTED_RE = re.compile(r"Accepted</div>\s*<div class=\"info\">(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)")
+EDGAR_UA = "open-composer research hzc43021@gmail.com"
+EDGAR_MIN_INTERVAL_S = 0.25
+
+
+def parse_accepted(html: str) -> pd.Timestamp | None:
+    m = ACCEPTED_RE.search(html or "")
+    return pd.Timestamp(m.group(1)).tz_localize(ET) if m else None
+
+
+def fetch_edgar_accepted(
+    pairs: list[tuple[str, str]],
+    get: Any,
+    *,
+    sleep: Any = time.sleep,
+    cache: dict[str, pd.Timestamp] | None = None,
+) -> dict[str, pd.Timestamp | None]:
+    """EDGAR filing-index "Accepted" time (Eastern wall-clock) per accession, <= 4 requests/s."""
+    out: dict[str, pd.Timestamp | None] = dict(cache or {})
+    for cik, acc in pairs:
+        if acc in out:
+            continue
+        nodash = acc.replace("-", "")
+        url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{nodash}/{acc}-index.htm"
+        html = None
+        for attempt in range(3):
+            sleep(EDGAR_MIN_INTERVAL_S)
+            try:
+                status, html = get(url)
+            except Exception:
+                status, html = 599, None
+            if status == 200:
+                break
+            sleep(2.0 * (attempt + 1))
+        out[acc] = parse_accepted(html) if html else None
+    return out
+
+
+def _edgar_get(url: str) -> tuple[int, str]:
+    import httpx
+
+    r = httpx.get(url, headers={"User-Agent": EDGAR_UA}, timeout=20)
+    return r.status_code, r.text
+
+
+def apply_edgar_times(
+    events: pd.DataFrame, accepted: dict[str, pd.Timestamp | None]
+) -> pd.DataFrame:
+    """Prefer the EDGAR index time; keep the formula time where EDGAR gave none."""
+    out = events.copy()
+    out["acceptance_et_formula"] = out["acceptance_et"]
+    edgar = out["accession"].map(accepted)
+    edgar = pd.Series(
+        [pd.Timestamp(x) if x is not None and not pd.isna(x) else pd.NaT for x in edgar],
+        index=out.index,
+        dtype=f"datetime64[ns, {ET}]",
+    )
+    out["acceptance_et_edgar"] = edgar
+    has = edgar.notna()
+    out["acceptance_et"] = out["acceptance_et"].where(~has, edgar)
+    out.loc[has, "timing_source"] = "8k_2.02_edgar_index"
+    return out
 
 
 def add_sessions(events: pd.DataFrame) -> pd.DataFrame:
@@ -428,7 +513,13 @@ def sip_symbols_with_bars() -> set[str]:
 
 
 def build(
-    *, limit: int | None, http: Any, earnings: pd.DataFrame, sip_symbols: set[str], log: Any = print
+    *,
+    limit: int | None,
+    http: Any,
+    earnings: pd.DataFrame,
+    sip_symbols: set[str],
+    log: Any = print,
+    edgar_get: Any = None,
 ) -> pd.DataFrame:
     raw = fetch_events(http, limit=limit)
     log(f"gamma events: {len(raw)}")
@@ -442,6 +533,21 @@ def build(
     events["sip_bars_ok"] = events["ticker"].map(lambda t: bool(t) and t in sip_symbols)
     matched = match_announcements(events, earnings)
     events = pd.concat([events, matched], axis=1)
+    pairs = sorted(
+        {(str(c), a) for c, a in zip(events["cik"], events["accession"], strict=True) if a}
+    )
+    cache_path = OUT_DIR / "edgar_accepted_cache.json"
+    cache = {}
+    if cache_path.exists():
+        cache = {k: pd.Timestamp(v) for k, v in json.loads(cache_path.read_text()).items() if v}
+    if edgar_get is not None:
+        log(f"edgar index pages: {len(pairs)} ({len(cache)} cached)")
+        accepted = fetch_edgar_accepted(pairs, edgar_get, cache=cache)
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(
+            json.dumps({k: (v.isoformat() if v is not None else None) for k, v in accepted.items()})
+        )
+        events = apply_edgar_times(events, accepted)
     events = add_sessions(events)
     events = attach_prices(events, http, log=log)
     return events
@@ -463,6 +569,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--limit", type=int, default=None, help="pilot: first N events only")
     ap.add_argument("--no-coverage", action="store_true")
+    ap.add_argument("--no-edgar", action="store_true", help="skip the EDGAR index verification")
     ap.add_argument("--budget-min", type=float, default=40.0)
     args = ap.parse_args(argv)
 
@@ -472,13 +579,19 @@ def main(argv: list[str] | None = None) -> int:
         [
             pd.read_parquet(
                 EARNINGS_DIR / f"{y}.parquet",
-                columns=["ticker", "accession", "acceptance_utc", "items"],
+                columns=["ticker", "cik", "accession", "acceptance_utc", "items"],
             )
             for y in (2025, 2026)
         ],
         ignore_index=True,
     )
-    df = build(limit=args.limit, http=http, earnings=earnings, sip_symbols=sip_symbols_with_bars())
+    df = build(
+        limit=args.limit,
+        http=http,
+        earnings=earnings,
+        sip_symbols=sip_symbols_with_bars(),
+        edgar_get=None if args.no_edgar else _edgar_get,
+    )
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out = OUT_DIR / ("events.pilot.parquet" if args.limit else "events.parquet")
     df.to_parquet(out, index=False)
@@ -493,6 +606,18 @@ def main(argv: list[str] | None = None) -> int:
             "ticker_slug_check_counts": df["ticker_slug_check"].value_counts().to_dict(),
             "timing_kind_counts": df["timing_kind"].fillna("none").value_counts().to_dict(),
             "date_source_counts": df["date_source"].value_counts().to_dict(),
+            "timing_source_counts": df["timing_source"].value_counts().to_dict(),
+            "edgar_vs_formula_agree": int(
+                (
+                    (df["acceptance_et_edgar"] - df["acceptance_et_formula"]).abs()
+                    <= pd.Timedelta(seconds=1)
+                ).sum()
+            )
+            if "acceptance_et_edgar" in df
+            else None,
+            "edgar_checked": int(df["acceptance_et_edgar"].notna().sum())
+            if "acceptance_et_edgar" in df
+            else 0,
             "p7_available": int(df["P7"].notna().sum()),
             "price_fidelity_counts": df["price_fidelity"]
             .fillna(-1)

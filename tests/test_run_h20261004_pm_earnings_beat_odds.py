@@ -194,3 +194,12 @@ def test_write_outputs(tmp_path: Path) -> None:
     assert [r["candidate_id"] for r in ledger] == ["A1", "A3"]
     assert ledger[1]["decision_eligible"] is False
     assert "Verdict" in (tmp_path / "report.md").read_text()
+
+
+def test_pipeline_suspect_carries_control_diagnostics() -> None:
+    events, bars = synthetic(beat_effect=0.0, p_effect=0.0)
+    events["timing_kind"] = "pre_market"
+    result = run.run_analysis(events, bars)
+    diag = result["positive_control_diagnostics"]
+    assert "timing_pre_market" in diag and "mean_excess_return_by_outcome" in diag
+    assert "H_A" not in result
