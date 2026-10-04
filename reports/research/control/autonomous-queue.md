@@ -1571,7 +1571,7 @@
     - `_t21_tmp` 的候选是从有接缝的归档建的，作废，不要换入；由 T-20261002-02 按新口径重建。
 
 ### T-20261001-22 组合线数据：live 目录（组合层逐行对齐研究快照）、风险模型跨年修复、每日驱动脚本
-- status: running（交互会话：live 目录已验收；驱动实跑在第一张表 universe 失败，09:42 UTC 让 R1004-T22 修驱动并实跑到退出码 0，16:00 前完成；定时轮不要取）
+- status: running（交互会话：live 目录已验收；驱动实跑在第一张表 universe 失败，09:39 UTC 让 R1004-T22 修驱动并实跑到退出码 0，16:00 前完成；定时轮不要取）
 - priority: 1
 - not_before: T-20261002-02 以 done 开头（10-02 01:07 主审轮加：T-21 虽已 done，但价格类表要等归档修好、按新口径重建后才能用）；T-20261001-21 以 done 开头（或 partial，但组合用到的表全部通过不变性检验）；T-20261001-19 以 done 或 cancelled 开头；没有 `running（交互会话）` 的任务在改 `panel.py`、`risk.py`、`build_equity_book_panel.py`（简报第 0 步）
 - brief: reports/research/control/briefs/T-20261001-22.md
@@ -1691,7 +1691,7 @@
     - 机制复用 T-24 的 `screen_book_signal_candidates.py`，并先做 1e-9 的身份核对。
 
 ### T-20261002-30 账户层复盘：四条 ETF sleeve 和 v1.2 的相关、风险集中、一起亏、前向对账、去一和加 v1.2 的夏普（11-01 续期依据）
-- status: running（交互会话 2026-10-04 09:47 UTC 派独立 Paseo 代理 R1004-T30，为加速提前做；定时轮不要取）
+- status: running（交互会话 2026-10-04 09:42 UTC 派独立 Paseo 代理 R1004-T30，为加速提前做；定时轮不要取）
 - priority: 3
 - not_before: 无（不和 T-20261002-01/02 的重任务并行；22:07 执行轮不能跑 T-01 换入和 T-03 抓取，适合做这个）
 - goal: 纲领两周优先级第 5 项，10-25 前交机主。四条 sleeve 同在一个模拟账户，S2 和 S3 日收益相关 0.83；v1.2 准备开新账户。要知道哪条是重复下注，以及加入 v1.2 后账户夏普在同波动口径下怎么变。只出数字，续期建议由主审写。
@@ -1773,7 +1773,7 @@
 
 
 ### T-20261004-54 审计：SEC 日表 sue_series 的时点泄漏（数据坑 #62），量化它对 v1.2 earnings 主题和 M0 回测的影响
-- status: running（交互会话 2026-10-04 09:42 UTC 派独立 Paseo 代理 R1004-T54，简报 reports/research/control/briefs/T-20261004-54.md，范围扩大到 #62 全部季度梯列和 #63 回退市值；定时轮不要取）
+- status: running（交互会话 2026-10-04 09:39 UTC 派独立 Paseo 代理 R1004-T54，简报 reports/research/control/briefs/T-20261004-54.md，范围扩大到 #62 全部季度梯列和 #63 回退市值；定时轮不要取）
 - brief: reports/research/control/briefs/T-20261004-54.md
 - priority: 2
 - goal: T-02 发现 sue_series 用的是最终的季度梯，迟到的 10-Q 会改写它申报日之前的历史 sue_eps 和 sue_rev（SHPH 的 09-24 申报改写了 67 行）。研究快照里的 earnings 主题（M0 九个主题之一）可能带有少量前视。按申报日逐日重建季度梯，得到严格时点的 sue，再比较 earnings 主题的 IC 和 M0 回测夏普。
