@@ -1704,7 +1704,7 @@
   - 功效有限：在 6% 标准差的假设下，最小可检测价差约 100 bp。不通过只说明没有大效应，不代表小效应不存在；不通过时转前向影子。
 
 ### T-20261004-01 组合线 v1.3 候选：成本感知的交易规则（部分调仓、不交易区间），在不改信号的前提下给 v1.2 主变体降成本
-- status: done（执行轮 04:08–04:40 UTC，子代理 Sonnet 5.5，提交 82304ac；待主审）
+- status: done（否定：未过冻结的 E3，保留 v1.2 全量调仓；10-04 07:20 UTC 07:07 主审轮对照原始 JSON 复核，决策记录已写，final 校验 ok）
 - priority: 2
 - not_before: 无（简报第 0 步：不在 21:30–00:30 UTC 跑；不和 T-20261002-02/T-20261001-22 的重任务、T-20261002-03 的抓取并行，同一执行轮若取了 T-03，先跑完它再跑本任务，或留给下一轮）
 - brief: reports/research/control/briefs/T-20261004-01.md
@@ -1714,3 +1714,26 @@
 - notes:
   - 2026-10-04 01:30 UTC 01:07 主审轮（Opus）登记并写简报。看过的只有 B0 的成本拆分（合同第 0 节）：VIX 规则翻转每档每年 7.5 次，占成本 26%；先验 E1 约 20%、最终替换约 12%。不过也要交付成本-α 前沿和换手来源，供"按持续性倾斜的瞄准组合"（GP 命题 3）设计下一份合同。
   - 2026-10-04 04:40 UTC 执行轮（Sonnet 5.5 子代理，机械结果，待主审）：identity 通过（max abs diff 0.0，o0/o3 及 5 个偏移对 R6 均 0.0）；B0 近期/压力期偏移中位数净夏普 1.485/0.598；5 规则 delta（近期/压力）：P2 +0.112/+0.036，P3 +0.154/+0.056，P2V +0.038/+0.071，N25 +0.073/+0.083，N50 +0.158/+0.124；E1-E4：P2/P3/P2V 只过 E2、E4；N25 过 E2、E3(t 2.94)、E4 不过 E1；N50 过 E1、E2、E4，E3 全样本 NW t 1.76 <2 不过。selected_rule=null，mechanical_status=no_rule_eligible_keep_v12，未跑第 2 阶段。诊断 D1：VIX 翻转刷新占换手 25.9%、成本 25.7%（近期）；D2 周度秩自相关 0.93–1.00；D3 2 倍成本：N50 1.642→1.561，B0 1.485→1.269。产物：reports/research/iterations/t20261004_book_v13_tc/{identity,results,trial-ledger,diagnostics}.json、report.md，代码 open_composer/research/equity_book/trading_rules.py、scripts/book_v13_trading_rules.py、tests/test_trading_rules.py（12 测试通过，ruff 干净）；rule parquet 在 data/research/book_v13/（未提交）。待主审：`iteration validate --stage final` 为 blocked（decision_record_missing_continue_pivot_stop，decision-record.md 在禁改清单，需主审写）；子代理自加了 `--stage final`；trial-ledger 是 .json 而校验器要 .jsonl。
+  - 2026-10-04 07:20 UTC 07:07 主审轮（Opus）审核：数字与 results.json 逐项一致（identity 0.0；N50 近期/压力 +0.158/+0.124、5/5 偏移、beta 合格、全样本 NW t 1.758 < 2；N25 t 2.94 但 E1 +0.073/+0.083）。前视、幸存者、调仓日检查无问题（规则与 B0 用同一信息集，全部 5 个偏移取中位）。主审发现合同自身缺陷：E3 用原始收益差，不是规模无关的，而 N50 波动只有 B0 的 0.966（总敞口 1.43 vs 1.68）；事后诊断（不改判定）同波动配对 t：N50 2.50、N25 3.59。判定按冻结规则维持'不替换'。D2 没有快主题，GP 命题 3 的后续不开。N50 冻结为唯一挑战者，只在新信息下重开（≥252 个 09-17 以后的会话离线复算，或实盘测得成本 ≥ 模型）。决策记录 `t20261004_book_v13_tc/decision-record.md`。
+
+### T-20261004-02 组合线 v1.4 候选 第 A 阶段：样本外 ML 合成器（M2 GBDT 集成、M3 DKKM 随机特征 SDF）和简化毛收益闸门
+- status: ready
+- priority: 1
+- not_before: 无（简报第 0 步：本地重步骤不在 21:30–00:30 UTC 跑；有超过 1 GB 的进程（交互会话的 T-20261002-02）时等它结束；不起第二个 10-K 抓取进程）
+- brief: reports/research/control/briefs/T-20261004-02.md
+- goal: 设计文档第 5 节的 ML 合成器（Stage 2b 只因 v1 构造失败而取消）放进已到 P1 的 v1.2 构造里检验：同 22 个慢主题输入加对数市值、标签对齐这本书实际赚的收益（beta 对冲、行业去均值），每年扩张重训（2019–2026，隔离 43 个会话），看 M2、M3、M0M2、M0M3 能否在近期和压力期-ML 都打赢 M0 的简化毛夏普。回答机主"模型训练能不能帮这本书"，也决定信号层下一步是换模型还是补新输入。
+- plan: 合同 `reports/research/iterations/t20261004_book_v14_ml/hypotheses.md`（2026-10-04 07:31 UTC 冻结，direction-check 和 pre-backtest 都 ok）。本任务只做第 A 阶段：建特征和标签（本地）、Modal 8 个分片训练和预测（≤ $2）、标签打乱检查、简化周度毛收益（5 个偏移取中位）对比 M0。闸门：候选两窗都高于 M0 才授权第 B 阶段（T-20261004-03）。
+- done_when: `t20261004_book_v14_ml/{build.json,stage_a.json,stage_a.md,model-meta/}` 已提交（git add -f），`mechanical_status_stage_a` 为简报列出的三个值之一，新测试通过；结果标"待主审"。
+- notes:
+  - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。写之前看过：v1.2（M1 1.389 < M0 1.506；收益主要是风格溢价，特质 −1.2%/年）、T-17/T-24（纯量价 ML 近期弱）、v1.3。外部证据：DKKM 2024、AQR 2024（支持，未扣成本）、BSW 2022（反对：扣成本后线性预测更好）。先验：第 A 阶段过约 45%，ml_contribution_pass 约 25%，第 B 阶段合格约 15%，最终替换约 4%。
+
+### T-20261004-03 组合线 v1.4 候选 第 B 阶段：第 A 阶段留下的候选走 v1.2 策略层，对比 M0（E1/E2/E4/E5、选择、ml_contribution_pass）
+- status: ready
+- priority: 1
+- not_before: T-20261004-02 状态以 done 开头，并且 `t20261004_book_v14_ml/stage_a.json` 的 `mechanical_status_stage_a` 为 `stage_b_authorized`（不必等主审审核第 A 阶段；不是这个值时由下一主审轮取消本任务）
+- brief: reports/research/control/briefs/T-20261004-03.md
+- goal: 对第 A 阶段的留存候选跑 v1.2 策略层 × 5 个偏移（2019-01-02 起，B0r 与 R6 逐位核对），按冻结规则判 E1（两窗 +0.10）、E2（每窗 ≥4/5 偏移）、E4（|beta| ≤ 0.15）、E5（打乱检查），选 R*，报 ml_contribution_pass 和 ml_additive；同波动配对 t 只报告。
+- plan: 简报 T-20261004-03。第 C 阶段（账户层、20 种子安慰剂、族 19 定档）由下一主审轮看过本阶段后另写简报。
+- done_when: `t20261004_book_v14_ml/{identity.json,results.json,report.md,trial-ledger.json}` 已提交，`mechanical_status` 为两个值之一，新测试通过；结果标"待主审"。
+- notes:
+  - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。同一执行轮在 T-02 完成后可以接着跑本任务（不并行，重任务一次一个）。

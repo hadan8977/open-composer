@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "iter_id": "t20261004_book_v14_ml",
+  "reviewed_at": "2026-10-04T07:28:44Z",
+  "decision": "proceed",
+  "objective": "Equity book v1.4 candidate: does an out-of-sample ML composite of the same 22 slow theme inputs plus log size (M2 GBDT rank-mean of LightGBM/XGBoost/CatBoost on the 21-session book-aligned label; M3 DKKM random-Fourier-feature ridge SDF, P = 4,000, on the 5-session book-aligned return), or an equal blend of M0 with either, raise the offset-median net Sharpe of the unchanged v1.2 construction (U3000) by >= 0.10 in both the recent 2024-01-08..2026-09-15 and the stress-ML 2019-01-02..2023-08-31 windows, with annual expanding refits from 2019, a 43-session embargo and the same costs, and does it survive the paired test, account layer, placebo and family-19 DSR tier?",
+  "target_regime_and_horizon": "Same as v1.2 (hypotheses.md section 7 there): US equities in the research U3000, weekly 5 tranches, decision at the close of D, fill at the close of D+1, 21-session alpha horizon for M2 and 5-session holding for M3. The composite is meant to be regime-robust, so it must improve both the recent window 2024-01-08..2026-09-15 and the stress-ML window 2019-01-02..2023-08-31 (the first refit needs two years of data, so 2017-10..2018-12 has no out-of-sample prediction). Validity to 2026-12-31 with the v1.2 book; annual refits continue only if the candidate is kept.",
+  "existing_solution_comparison": "Published methods are reused, not invented: M2 is the T-17 GBDT ensemble (LightGBM, XGBoost, CatBoost settings frozen 2026-09-30, rank-mean as T-17's ENS), M3 is the DKKM 2024 random-Fourier-feature ridge SDF (eq. 6 and 9, gamma grid of footnote 12), the inputs are the S1 library's 22 theme inputs (JKP-style themes). Off-the-shelf products (JKP factors, AQR funds) do not give a point-in-time stock-level score for our universe and costs, so the gap is local: whether these methods beat the equal-weight composite after our costs in 2019-2026, which no source measures. The design doc (section 5) already preregistered M2/M3 for v1; Stage 2b was cancelled only because the v1 construction failed, and the v1.2 construction now reaches tier P1.",
+  "remaining_evidence_gap": "Out-of-sample (annual expanding refits) net-of-cost value of a nonlinear composite of the same slow inputs inside the v1.2 construction, in the 2024-2026 window and in 2019-2023, against the equal-weight composite that is already at tier P1; plus the turnover of nonlinear scores (M0 weekly rank autocorrelation 0.983).",
+  "negative_experiments_checked": "t20261002_book_v12: learned weights lost to equal weights (M1_U3000 recent net Sharpe 1.389 vs M0 1.506), and the book's return is mostly style premium (specific -1.2% a year), so a residual-return target would discard the premium; this contract therefore uses a book-aligned (beta-hedged, industry-demeaned) label. T-20260930-17: price-volume ML stress RankIC 0.020-0.059, ensembles +0.006..+0.012 over LightGBM. T-20261002-24: ml_pv residual IC recent t 0.5-1.8, not admitted. T-19: pure price-volume long-only ML books closed. t20261004_book_v13_tc: E3 used a raw (not scale-free) paired difference; this contract uses the vol-matched form and states power before freezing. RF1 M0X (T-19 prediction as a tenth theme) was not run (data constraint), so no ML composite has been evaluated in a v1.x construction.",
+  "cost_and_execution_assumptions": "Identical to v1.2 / T-25 R6: make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees per side, ETF branch for SPY), borrow 25 bp a year on short notional, full rebalancing at each tranche refresh, D+1 close fill; 2x cost replay on the same paths reported. Account layer (selected candidate only): whole shares, $100 minimum order, Alpaca Reg T margin, delisting bound -30% long / 0 short.",
+  "stop_condition": "Stage A: no candidate's simplified weekly gross Sharpe beats M0's in both windows, or the label-permutation check fails -> stop, keep M0. Stage B: no candidate meets E1 (+0.10 offset-median net Sharpe vs B0r in both windows), E2 (>= 4/5 offsets per window), E4 (|OLS| and |Dimson beta| <= 0.15) and E5 (permutation check clean) -> keep M0 and close ML composites for the v1.2 construction until new inputs exist.",
+  "cheapest_decisive_test": {
+    "action": "Stage A of brief T-20261004-02: build the weekly training matrix and daily prediction features locally (run_capped 1.2G), train M2 (3 GBDTs) and M3 per refit year 2019..2026 on Modal (8 shards, 4 CPU, 8 GiB, 30 min each, worst case about $1), label-permutation retrain (LightGBM and M3), then the simplified weekly gross long-short test against M0 on offset-0 dates.",
+    "pass_condition": "At least one candidate's simplified weekly gross Sharpe exceeds M0's in both the recent 2024-01-08..2026-09-15 and the stress-ML 2019-01-02..2023-08-31 window, and both permutation-label models stay within +/- 2 standard errors of zero (|Sharpe| <= 2 / sqrt(years)) in both windows.",
+    "falsification_condition": "No candidate beats M0's simplified gross Sharpe in both windows: the ML composites of the same slow inputs add nothing before costs, so Stage B is not run and ml_contribution_pass is recorded false.",
+    "max_compute_minutes": 150
+  },
+  "queries": [
+    {
+      "query": "machine learning stock return prediction out-of-sample performance recent years decline transaction costs long-short 2024 2025 paper",
+      "searched_at": "2026-10-04T07:12:00Z",
+      "opened_urls": [
+        "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf"
+      ],
+      "note": "Opened by the 2026-10-04 07:07 lead round with curl + pdftotext (WebFetch failed on the certificate); abstract and introduction read; snapshot under reports/research/intel/sources/book-v14-ml-2026-10-04/. The Frankfurt School 'Real Time ML' PDF did not resolve (DNS) and the Quantpedia summary was not opened, so neither is used as evidence."
+    },
+    {
+      "query": "\"APT or AIPT\" Didisheim Ke Kelly Malamud random Fourier features factor model out-of-sample Sharpe large factor models",
+      "searched_at": "2026-10-04T07:12:30Z",
+      "opened_urls": [
+        "https://nber.org/system/files/working_papers/w33012/w33012.pdf"
+      ],
+      "note": "Opened by the 07:07 lead round; PDF text extracted with pdftotext and read (section 2.3, eq. 6 and 9, footnotes 10 and 12, data section, size subsamples, training-window figure); snapshot saved."
+    },
+    {
+      "query": "AQR Alternative Thinking 2024 Q4 Can Machines Build Better Stock Portfolios (repository snapshot)",
+      "searched_at": "2026-10-04T07:10:00Z",
+      "opened_urls": [
+        "https://www.aqr.com/Insights/Research/Alternative-Thinking/Can-Machines-Build-Better-Stock-Portfolios"
+      ],
+      "note": "Re-read from the 2026-10-01 snapshot (Exhibits 5-7, footnotes 11 and 17, concluding thoughts)."
+    },
+    {
+      "query": "Jensen Kelly Malamud Pedersen \"Machine Learning and the Implementable Efficient Frontier\" Portfolio-ML net Sharpe",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+      ],
+      "note": "Receipt carried over from t20261004_book_v13_tc (opened by the 2026-10-04 01:07 lead round, snapshot unchanged); reused here for the cost, benchmark and broker context, not for the ML claim. Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "AQR \"Key Design Choices in Long/Short Equity\" Alternative Thinking 2023 systematic hedge fund Sharpe percentiles",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+      ],
+      "note": "Receipt carried over from t20261004_book_v13_tc (opened by the 2026-10-04 01:07 lead round, snapshot unchanged); reused here for the cost, benchmark and broker context, not for the ML claim. Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "Chen Velikov \"Zeroing in on the Expected Returns of Anomalies\" JFQA 2023 post-2005 4 bps per month",
+      "searched_at": "2026-10-01T07:17:00Z",
+      "opened_urls": [
+        "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+      ],
+      "note": "Receipt carried over from t20261004_book_v13_tc (opened by the 2026-10-04 01:07 lead round, snapshot unchanged); reused here for the cost, benchmark and broker context, not for the ML claim. Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "Jensen Kelly Pedersen \"Is There a Replication Crisis in Finance\" 153 factors 93 countries",
+      "searched_at": "2026-10-01T07:18:00Z",
+      "opened_urls": [
+        "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+      ],
+      "note": "Receipt carried over from t20261004_book_v13_tc (opened by the 2026-10-04 01:07 lead round, snapshot unchanged); reused here for the cost, benchmark and broker context, not for the ML claim. Receipt recorded by the 2026-10-01 07:07 lead round, which re-ran this query; the opened URL was fetched and snapshotted at 06:06-06:14 UTC by the intel subagent of the interactive session (URL and time in the snapshot header)."
+    },
+    {
+      "query": "Alpaca docs margin and short selling overnight buying power Reg T maintenance margin requirement short positions",
+      "searched_at": "2026-10-02T05:14:30Z",
+      "opened_urls": [
+        "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+      ],
+      "note": "Receipt carried over from t20261004_book_v13_tc (opened by the 2026-10-04 01:07 lead round, snapshot unchanged); reused here for the cost, benchmark and broker context, not for the ML claim. Opened with WebFetch, then snapshotted with curl at 05:19:39Z (HTML stripped to text)."
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "dkkm_2024_aipt_random_fourier_sdf",
+      "url": "https://nber.org/system/files/working_papers/w33012/w33012.pdf",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-09-01",
+      "snapshot_path": "reports/research/intel/sources/book-v14-ml-2026-10-04/dkkm_2024_apt_or_aipt_nber_w33012.txt",
+      "sha256": "98b10c3bcab3aa51328ef1296b819203da5f2a9632694412d03a80d57615c05d",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "fetched_at": "2026-10-04T07:14:00Z",
+      "claim": "Didisheim, Ke, Kelly and Malamud (NBER w33012, Sept 2024): an SDF built from P random Fourier features of rank-standardized characteristics, S = [sin(gamma Z w), cos(gamma Z w)] with w ~ N(0, I) and gamma drawn per feature from {0.5, ..., 1.0}, factors F = N^-1/2 S'R and ridge Markowitz weights lambda(z) = (zI + E[FF'])^-1 E[F], earns out-of-sample SDF Sharpe ratios near 3.7 with high complexity and light shrinkage (360-month rolling window, monthly, 1993 onward), about 2.6 times the low-complexity models; the full-sample result is heavily influenced by microcaps, but mega- and large-cap-only SDFs still reach about 1.6 and 1.8, above FF6's 0.74. All gross of trading costs.",
+      "core_claim": "Random-Fourier-feature ridge SDFs with P >> T earn out-of-sample SDF Sharpe near 3.7 (1993 onward, gross), about 2.6x low-complexity models; mega/large caps alone about 1.6/1.8 versus FF6 0.74.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "applicability": "Exact form of M3 (eq. 6 and 9, gamma grid footnote 12, N^-1/2 scaling footnote 10), applied to our 23 slow inputs weekly.",
+      "limitations": "130 JKP characteristics, monthly data and 30-year windows versus our 23 inputs, weekly data and 1-8 years of training; gross of costs; no industry neutralization; microcap-driven headline numbers.",
+      "independent_replication": "AQR Alternative Thinking 2024 Q4 reports the same 'virtue of complexity' pattern on value/momentum, FF5+momentum and defensive signal sets (50-100% gross Sharpe improvement, 65% in liquid large caps); same research group, so not independent.",
+      "market_and_period": "US stocks (JKP), monthly, OOS 1993 onward, 360-month rolling windows; all size groups"
+    },
+    {
+      "claim_id": "aqr_2024_virtue_of_complexity_cross_section",
+      "url": "https://www.aqr.com/Insights/Research/Alternative-Thinking/Can-Machines-Build-Better-Stock-Portfolios",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-12-01",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/02_aqr_alt_thinking_2024q4_can_machines_build_better_portfolios.txt",
+      "sha256": "3d52455e6f539ce76cd1cb2070df25789299fdb3b0e807b5fad03038eb8adb81",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "fetched_at": "2026-10-04T07:16:00Z",
+      "claim": "AQR Alternative Thinking 2024 Q4 'Can Machines Build Better Stock Portfolios?': complex random-feature models built on economically motivated signals improve out-of-sample gross Sharpe by 50-100% over the simple linear model in three applications (value and momentum; FF5 plus momentum; defensive signals), 65% when restricted to liquid large caps (footnote 17); the complex model's return stream is 'highly additive' to the simple model; adding just two noisy predictors to the value-momentum model cuts performance by about half (Exhibit 7, 1963-2019). Results are gross of transaction costs.",
+      "core_claim": "Complex models on economically motivated signals improve out-of-sample gross Sharpe 50-100% (65% in liquid large caps) and are highly additive to the simple model; two noisy predictors halve performance.",
+      "credibility": "practitioner_with_disclosed_method",
+      "applicability": "Fixes the input set to economically motivated themes and motivates the M0+ML blends.",
+      "limitations": "Practitioner note, hypothetical gross results, long samples since 1963; the cost question is explicitly left open (footnote 11).",
+      "independent_replication": "None independent; DKKM 2024 is the same group. BSW 2022 is contrary evidence after costs in large caps.",
+      "market_and_period": "US stocks, 1963-2019, monthly; also liquid large caps"
+    },
+    {
+      "claim_id": "bsw_2022_linear_forecasts_beat_ml_after_costs",
+      "url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf",
+      "source_type": "paper",
+      "published_or_updated_at": "2022-10-01",
+      "snapshot_path": "reports/research/intel/sources/book-v14-ml-2026-10-04/barroso_saxena_wang_2022_calm_your_portfolio.txt",
+      "sha256": "1d55bf3454b8706354ce8c9cbaf41a921fb4b8711a14f43171411faecc0400f6",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "fetched_at": "2026-10-04T07:19:00Z",
+      "claim": "Barroso, Saxena and Wang (Oct 2022, EFMA 2024) 'Calm Your Portfolio': in the 500 largest US stocks, mean-variance portfolios built from improved return forecasts (Fama-MacBeth, feed-forward neural network, conditional autoencoder, IPCA, nonparametric additive models) and improved covariance estimators do not beat the passive value-weighted portfolio after costs; with risk targeting plus turnover penalties all 32 transaction-cost-managed portfolios beat it, and the best net Sharpe ratios (1.10-1.20) come from the linear Fama-MacBeth forecasts with the daily sample covariance, not from the ML forecasts; without short sales none significantly beats the passive strategy.",
+      "core_claim": "In the 500 largest stocks, ML forecasts do not beat linear Fama-MacBeth forecasts after costs; turnover-penalised risk-targeted portfolios reach net Sharpe 1.10-1.20 with the linear forecasts.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "applicability": "Contrary prior: lowers the chance that M2/M3 replace M0; supports keeping M0 in the blends and the paired-test requirement for replacement.",
+      "limitations": "Preliminary working paper; 500 largest stocks, monthly mean-variance optimization rather than a rank-weighted beta-hedged book; ML models trained by the authors, not production-grade.",
+      "independent_replication": "Consistent with Avramov, Cheng and Metzker (2023): ML profits concentrate in microcaps and distressed firms and shrink under economic restrictions.",
+      "market_and_period": "500 largest US stocks, monthly, characteristics from 1964, OOS decades to about 2020"
+    },
+    {
+      "applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line. v1.3: eq. (20) starts from the grown position and trades toward an aim (the form of P2/P3/P2V).",
+      "claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:06:00Z",
+      "independent_replication": "Authors' code is public (github theisij/ml-and-the-implementable-efficient-frontier); AQR Alternative Thinking 2024 Q4 reports gains from ML-built stock portfolios; no independent academic replication was read.",
+      "limitations": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "market_and_period": "US stocks, out of sample 1981-2020, price-impact costs for a $10 billion investor",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "sha256": "8d482fb0eb156efbf9a0e75be6eefb64270ea5d693e6d7ece9e95c244df77db5",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/01_jkmp_implementable_frontier_SFI22-63_2022version.txt",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:09:00Z",
+      "independent_replication": "Consistent with Jensen-Kelly-Pedersen (JF 2023) on replication versus profitability; not re-run here.",
+      "limitations": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "market_and_period": "US stocks, published cross-sectional anomalies, with a post-2005 subsample",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "sha256": "30e153be6b4769ac9b6df25f37961728f44c3ce1eb16920b639f8cba18374288",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/06_chen_velikov_zeroing_in_JFQA2023.txt",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "fetched_at": "2026-10-01T06:14:03Z",
+      "independent_replication": "Consistent with the HFRX and BarclayHedge equity-market-neutral index snapshots in the same 2026-10-01 intel folder; no academic replication.",
+      "limitations": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "market_and_period": "HFR long/short equity funds, May 1996 - August 2023, monthly, net of fees",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "sha256": "811545a0e2d8b8f7bf77111197be0b23fe009101b89d4910e2300c85b135e339",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/B_aqr_key_design_choices_longshort_2023.txt",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "fetched_at": "2026-10-01T06:09:00Z",
+      "independent_replication": "Chen and Zimmermann's open-source asset pricing (FEDS 2021-037) independently reproduces most US predictors.",
+      "limitations": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "market_and_period": "153 factors, 93 countries, the paper's global sample",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "sha256": "438dfb4877f896bed4c4214e017408e9363ff2352a429a11b8fc791a38a021d4",
+      "snapshot_path": "reports/research/intel/sources/pro-equity-2026-10-01/evidence/10_jensen_kelly_pedersen_replication_crisis_JF2023.txt",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling",
+      "source_type": "broker_official_docs",
+      "published_or_updated_at": "unknown",
+      "snapshot_path": "reports/research/intel/sources/book-v12-2026-10-02/01_alpaca_margin_and_short_selling.txt",
+      "claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "market_and_period": "Alpaca Securities US equities margin accounts, documentation as served on 2026-10-02",
+      "applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "limitations": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "independent_replication": "Primary broker documentation; the 2x overnight / 4x intraday Reg T limits match FINRA Rule 4210 and Regulation T; no independent replication needed for a broker rule.",
+      "credibility": "primary_broker_documentation",
+      "sha256": "637065a735e7306a90cbe533c8a26be561e8fdc91faed71ea0ce77c3b7b063dc",
+      "fetched_at": "2026-10-02T05:19:39Z",
+      "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "project_applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "reflection": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "source_card_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl"
+    }
+  ]
+}

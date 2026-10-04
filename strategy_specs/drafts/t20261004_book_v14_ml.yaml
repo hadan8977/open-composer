@@ -1,0 +1,112 @@
+name: t20261004_book_v14_ml
+description: 'Equity book v1.4 candidate (ML composite), preregistered 2026-10-04 by the 07:07 lead round: the v1.2 construction (T-25 R6: industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, cost model v1) is unchanged; only the score changes from the equal-weight theme composite M0 to an out-of-sample ML composite (M2 GBDT ensemble, M3 DKKM random-feature SDF) or an equal blend of M0 with either. Not a paper or live strategy.'
+timeframe: daily
+universe:
+- SPY
+- IWM
+- IJR
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3000
+  max_position_weight: 0.0125
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3000
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.0125
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261004_book_v14_ml:ml_composite_book
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/research/equity_book/panel
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_book_alpha:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Scores come from data/research/book_v14/predictions.parquet (annual expanding-window refits, out-of-sample only) via a PredictionSource that mirrors AlphaSource (rank-normal, optional same-date placebo permutation); weights, hedge, VIX rule and costs from scripts/realism_ladder_book_ls.py and open_composer/research/equity_book/book_v12.py (T-25 R6), unchanged.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- events.sec_filings
+- events.sec_form4_insider
+- market.finra_short_interest
+- reference.sec_sic_industry
+research_design:
+  iter_id: t20261004_book_v14_ml
+  candidate_manifest_path: reports/research/iterations/t20261004_book_v14_ml/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261004_book_v14_ml/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261004_book_v14_ml.jsonl
+  source_card_claim_ids:
+  - dkkm_2024_aipt_random_fourier_sdf
+  - aqr_2024_virtue_of_complexity_cross_section
+  - bsw_2022_linear_forecasts_beat_ml_after_costs
+  - jkmp_2022_implementable_efficient_frontier
+  - aqr_2023_longshort_manager_sharpe_percentiles
+  - chen_velikov_2023_anomaly_net_returns
+  - jkp_2023_replication_153_factors_13_themes
+  - alpaca_2026_regt_margin_short_selling_rules
+  parameter_space:
+    composite:
+    - M2_gbdt_rank_mean_lgbm_xgb_cat_y21_book_aligned
+    - M3_dkkm_random_fourier_sdf_p4000_r5_book_aligned
+    - M0M2_equal_blend_rank_normal
+    - M0M3_equal_blend_rank_normal
+  candidate_budget: 4
+  selection_objective: Net-of-cost Sharpe of the unchanged v1.2 construction on U3000 when the M0 score is replaced by or blended with an out-of-sample ML composite. Shadow entry needs offset-median net Sharpe >= M0 + 0.10 in both the recent and the stress-ML window, >= 4/5 offsets improved per window, |beta| <= 0.15, a clean label-permutation check and the candidate's own tier >= P1; replacing M0 additionally needs a vol-matched paired Newey-West t >= 2.0 and account-layer confirmation.
+  candidate_budget_note: '4 selectable composites on U3000; M0 (B0r, the v1.2 identity path restarted at 2019-01-02) is the baseline, not a trial. DSR family for tiers: 19 (v1.2 10 + v1.3 5 + 4); program disclosure: 120 trials.'
+  anti_overfit_notes:
+  - 'Written before any ML composite was trained or evaluated in the v1.2 construction. The lead round had seen v1.2 (M0, M1 x U3000, P1000), v1.3 (trading rules) and T-17 / T-24 (price-volume ML, stress RankIC 0.02-0.05, recent residual IC t 0.5-1.8).'
+  - Hyperparameters are frozen from T-17 (LGBM/XGB/CAT) and DKKM 2024 (P, gamma grid, ridge form); the ridge z is chosen inside each training window on its last 52 weekly dates only; no setting is tuned on the evaluation windows.
+  - Inputs are fixed to the 22 economically motivated theme inputs plus log size; fast and alpha101/191 columns are excluded in advance (AQR 2024 Exhibit 7, T-24).
+  validation_plan:
+  - 'Stage A (brief T-20261004-02): build features and book-aligned labels, train M2 / M3 with annual expanding refits 2019-2026 on Modal (embargo 43 sessions), predict every session, label-permutation check, simplified weekly gross test against M0; candidates whose simplified gross Sharpe does not beat M0 in both windows stop here'
+  - 'Stage B / C (brief T-20261004-03): Stage A survivors through the v1.2 strategy pass x 5 offsets against B0 restarted at 2019-01-02, eligibility E1/E2/E4/E5, selection, then account layer, 20-seed placebo and family-19 tier for the selected candidate only'
+notes:
+  intent: Test whether an out-of-sample ML composite of the same slow theme inputs adds net Sharpe to the v1.2 book under the same construction and costs (design section 5 ml_contribution_pass), and keep it only on the preregistered staged conditions.
+  hypothesis_id: T-20261004-02
+  previous_link: t20261004_book_v13_tc
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

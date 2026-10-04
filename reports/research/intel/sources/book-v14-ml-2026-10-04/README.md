@@ -1,0 +1,13 @@
+# Sources for t20261004_book_v14_ml (fetched 2026-10-04 07:13-07:20 UTC, lead round 07:07)
+
+| file | source | fetched | used for |
+|---|---|---|---|
+| `dkkm_2024_apt_or_aipt_nber_w33012.txt` | Didisheim, Ke, Kelly, Malamud, "APT or 'AIPT'? The Surprising Dominance of Large Factor Models", NBER WP 33012 (Sept 2024), https://nber.org/system/files/working_papers/w33012/w33012.pdf (pdftotext -layout) | 2026-10-04 07:14 UTC | M3 specification: eq. (6) random Fourier features `[sin(gamma Z w), cos(gamma Z w)]`, `w ~ N(0, I)`, gamma drawn per feature from {0.5, ..., 1.0} (footnote 12); factors `F = N^-1/2 S' R` (footnote 10); ridge SDF `lambda(z) = (zI + E[FF'])^-1 E[F]` (eq. 9); characteristics rank-standardized to [-0.5, 0.5] (p. 16-17); 360-month rolling window, z in {1e-5, 1e-3, 1e-1, 1, 10}; out-of-sample SDF Sharpe about 3.7 overall but "heavily influenced by microcap stocks", mega 1.6 and large 1.8 (p. 36), all gross of costs. |
+| `barroso_saxena_wang_2022_calm_your_portfolio.txt` | Barroso, Saxena, Wang, "Calm Your Portfolio: The Importance of Disciplining Intelligent but Fickle Forecasts in Portfolio Optimization" (Oct 2022, EFMA 2024), https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf | 2026-10-04 07:19 UTC | Counter-evidence: in the 500 largest stocks, MVE portfolios with ML or other improved inputs do not beat the passive portfolio after costs; with risk targeting plus turnover penalties the best net Sharpe (1.10-1.20) comes from linear Fama-MacBeth forecasts, not from the neural-network, autoencoder, IPCA or additive ML forecasts (abstract; pp. 8-9). Also external support for turnover control (v1.3). |
+
+Already in the repo and re-read for this contract:
+
+- AQR, "Can Machines Build Better Stock Portfolios?", Alternative Thinking 2024 Q4: `reports/research/intel/sources/pro-equity-2026-10-01/evidence/02_aqr_alt_thinking_2024q4_can_machines_build_better_portfolios.txt`. Complex (random-feature) models on economically motivated signals improve out-of-sample gross Sharpe by 50-100% (65% in liquid large caps, footnote 17) and are "highly additive" to the simple model; adding two noisy predictors cuts performance by about half (Exhibit 7). Gross of costs.
+- Jensen, Kelly, Malamud, Pedersen, "Machine Learning and the Implementable Efficient Frontier" (SFI 22-63): `reports/research/intel/sources/pro-equity-2026-10-01/evidence/01_jkmp_implementable_frontier_SFI22-63_2022version.txt`.
+
+Not opened (search summaries only, not used as evidence): the Frankfurt School "Real Time ML" paper (DNS failure) and the Quantpedia summary "The Expected Returns of Machine-Learning Strategies" (reported ~57% average decay versus backtests).

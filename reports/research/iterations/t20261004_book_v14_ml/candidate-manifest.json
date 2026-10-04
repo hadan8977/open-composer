@@ -1,0 +1,140 @@
+{
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V14_M2",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "ml_composite_book_v14",
+      "parameters": {
+        "composite": "M2: per-date percentile-rank mean of LightGBM (kt.LGBM_REG_PARAMS), XGBoost and CatBoost (T-17 settings) trained on the per-date percentile rank of y21 = industry-demeaned (C[D+22]/C[D+1]-1) - beta_ewma (SPY same span)",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only"
+      },
+      "path": "ml_composite_book_v14",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v14_ml.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V14_M3",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "ml_composite_book_v14",
+      "parameters": {
+        "composite": "M3: DKKM ridge SDF on P = 4,000 random Fourier features of the inputs (w ~ N(0, I), gamma per frequency from {0.5..1.0}, seed 20261004), factors from industry-demeaned features and r5 = industry-demeaned (C[D+6]/C[D+1]-1) - beta_ewma x SPY clipped to [-0.5, 0.5]; z from {1e-3..1e3} x tr(E[FF'])/P on the last 52 training weeks (z = 1 when fewer than 104 training weeks); score = S lambda",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only"
+      },
+      "path": "ml_composite_book_v14",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v14_ml.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V14_M0M2",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "ml_composite_book_v14",
+      "parameters": {
+        "composite": "rank_normal(rank_normal(M0) + rank_normal(M2)), equal weights",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only"
+      },
+      "path": "ml_composite_book_v14",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v14_ml.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "V14_M0M3",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "ml_composite_book_v14",
+      "parameters": {
+        "composite": "rank_normal(rank_normal(M0) + rank_normal(M3)), equal weights",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only"
+      },
+      "path": "ml_composite_book_v14",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261004_book_v14_ml.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-04T07:27:54.388376+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261004_book_v14_ml",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261004_book_v14_ml.yaml": "4ee871642db35e7f1308aa32c4871759266e16df9b5c8a3224e7665cfa24e1d7"
+  }
+}

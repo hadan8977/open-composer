@@ -1,0 +1,180 @@
+{
+  "iter_id": "t20261004_book_v14_ml",
+  "strategy_name": "t20261004_book_v14_ml",
+  "representative_spec_path": "strategy_specs/drafts/t20261004_book_v14_ml.yaml",
+  "path_name": "ml_composite_book_v14",
+  "hypothesis_id": "T-20261004-02",
+  "objective": "Equity book v1.4 candidate: does an out-of-sample ML composite of the same 22 slow theme inputs plus log size (M2 GBDT rank-mean of LightGBM/XGBoost/CatBoost on the 21-session book-aligned label; M3 DKKM random-Fourier-feature ridge SDF, P = 4,000, on the 5-session book-aligned return), or an equal blend of M0 with either, raise the offset-median net Sharpe of the unchanged v1.2 construction (U3000) by >= 0.10 in both the recent 2024-01-08..2026-09-15 and the stress-ML 2019-01-02..2023-08-31 windows, with annual expanding refits from 2019, a 43-session embargo and the same costs, and does it survive the paired test, account layer, placebo and family-19 DSR tier?",
+  "benchmark_family": [
+    "b0r_m0_u3000_v12_construction_restarted_2019_01_02_identity_with_t25_r6_after_first_cycle",
+    "simplified_weekly_gross_long_short_vs_m0_stage_a",
+    "label_permutation_check_lgbm_and_m3",
+    "vol_matched_paired_daily_net_difference_newey_west_lag5",
+    "two_x_cost_replay_same_paths",
+    "account_layer_f1_overlay_and_f2_ir_vs_b0_selected_candidate_only",
+    "within_date_score_permutation_placebo_20_seeds_selected_candidate",
+    "dsr_19_trial_family_and_120_trial_program_disclosure"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "V14_M2",
+      "parameters": {
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only",
+        "composite": "M2: per-date percentile-rank mean of LightGBM (kt.LGBM_REG_PARAMS), XGBoost and CatBoost (T-17 settings) trained on the per-date percentile rank of y21 = industry-demeaned (C[D+22]/C[D+1]-1) - beta_ewma (SPY same span)"
+      }
+    },
+    {
+      "candidate_id": "V14_M3",
+      "parameters": {
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only",
+        "composite": "M3: DKKM ridge SDF on P = 4,000 random Fourier features of the inputs (w ~ N(0, I), gamma per frequency from {0.5..1.0}, seed 20261004), factors from industry-demeaned features and r5 = industry-demeaned (C[D+6]/C[D+1]-1) - beta_ewma x SPY clipped to [-0.5, 0.5]; z from {1e-3..1e3} x tr(E[FF'])/P on the last 52 training weeks (z = 1 when fewer than 104 training weeks); score = S lambda"
+      }
+    },
+    {
+      "candidate_id": "V14_M0M2",
+      "parameters": {
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only",
+        "composite": "rank_normal(rank_normal(M0) + rank_normal(M2)), equal weights"
+      }
+    },
+    {
+      "candidate_id": "V14_M0M3",
+      "parameters": {
+        "universe": "U3000 at the decision date; shorts limited to the easy-to-borrow proxy SE_t",
+        "construction": "v1.2 / T-25 R6 unchanged: score -> rank-normal -> industry-demeaned weights long 1 / short 1, EWMA SPY hedge on the held book, VIX > 20.60 halves, weekly 5 tranches, decision at close D, fill at close D+1, full rebalancing (B0 rule)",
+        "cost": "make_cost_fn('close') at E = $1M (half-spread + square-root impact + 0.5 bp fees), borrow 25 bp on short notional as R6",
+        "inputs": "22 theme inputs (bm, ep, sp, cfp, gp_at, roe, op_at, neg_accruals, neg_asset_growth, neg_nsi_12m, mom_12_1, ind_mom_12_1, resid_mom_12_1, neg_beta_252, neg_idio_vol_63, sue_eps, sue_rev, cmp_opp_buy_60d, nonplan_buy_mcap_60d, neg_short_vol_ratio_21, neg_si_shares, seas_5y) + log(mcap), each rank-standardized to [-0.5, 0.5] per date within U3000",
+        "training": "annual refit at the first session of 2019..2026, expanding window from 2017-10-02 on offset-0 weekly decision dates with t <= refit - 43 sessions; out-of-sample predictions for every session until the next refit",
+        "windows": "recent 2024-01-08..2026-09-15 and stress-ML 2019-01-02..2023-08-31 both decide; full-ML 2019-01-02..2026-09-15, A, B reported; v1.2 stress 2017-10..2023-08 reported for M0 only",
+        "composite": "rank_normal(rank_normal(M0) + rank_normal(M3)), equal weights"
+      }
+    }
+  ],
+  "cost_table": {
+    "base_cost_bps": "model",
+    "judged_cost": "cost model v1 at the close snapshot (make_cost_fn('close')): half-spread + square-root impact at E = $1M + fees 0.5 bp per side; borrow 25 bp on short notional as in T-25 R6; ETF branch for SPY",
+    "stress_cost_bps": "2x model",
+    "fixed_comparison": "B0r = M0_U3000 through the same code path restarted at 2019-01-02 (gross and borrow identical to R6 after the first five refreshes)",
+    "two_x_cost_check": "2x trading costs on the same weight paths, reported for every candidate (not a selection input)"
+  },
+  "sources": [
+    {
+      "claim_id": "dkkm_2024_aipt_random_fourier_sdf",
+      "url": "https://nber.org/system/files/working_papers/w33012/w33012.pdf",
+      "published_or_updated_at": "2024-09-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Random-Fourier-feature ridge SDFs with P >> T earn out-of-sample SDF Sharpe near 3.7 (1993 onward, gross), about 2.6x low-complexity models; mega/large caps alone about 1.6/1.8 versus FF6 0.74.",
+      "project_applicability": "Exact form of M3 (eq. 6 and 9, gamma grid footnote 12, N^-1/2 scaling footnote 10), applied to our 23 slow inputs weekly.",
+      "reflection": "Gross of costs, microcap-driven headline, 130 characteristics and 30-year monthly windows; our version is much smaller and the cost question is ours to answer."
+    },
+    {
+      "claim_id": "aqr_2024_virtue_of_complexity_cross_section",
+      "url": "https://www.aqr.com/Insights/Research/Alternative-Thinking/Can-Machines-Build-Better-Stock-Portfolios",
+      "published_or_updated_at": "2024-12-01",
+      "source_type": "paper",
+      "credibility": "practitioner_with_disclosed_method",
+      "core_claim": "Complex models on economically motivated signals improve out-of-sample gross Sharpe 50-100% (65% in liquid large caps) and are highly additive to the simple model; two noisy predictors halve performance.",
+      "project_applicability": "Fixes the input set to economically motivated themes and motivates the M0+ML blends.",
+      "reflection": "Hypothetical, gross, 1963-2019; the cost effect is explicitly left open."
+    },
+    {
+      "claim_id": "bsw_2022_linear_forecasts_beat_ml_after_costs",
+      "url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf",
+      "published_or_updated_at": "2022-10-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "In the 500 largest stocks, ML forecasts do not beat linear Fama-MacBeth forecasts after costs; turnover-penalised risk-targeted portfolios reach net Sharpe 1.10-1.20 with the linear forecasts.",
+      "project_applicability": "Contrary prior: lowers the chance that M2/M3 replace M0; supports keeping M0 in the blends and the paired-test requirement for replacement.",
+      "reflection": "Preliminary paper; monthly mean-variance construction differs from our rank-weighted weekly book."
+    },
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line. v1.3: eq. (20) starts from the grown (drifted) position and trades toward an aim, the form of rules P2/P3/P2V.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "credibility": "primary_broker_documentation",
+      "project_applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "published_or_updated_at": "unknown",
+      "reflection": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    }
+  ],
+  "topic_coverage": [
+    "random_fourier_feature_sdf_virtue_of_complexity",
+    "gbdt_ensemble_cross_sectional_ranking",
+    "linear_vs_ml_forecasts_after_costs",
+    "cost_aware_ml_portfolio_implementable_frontier",
+    "anomaly_net_of_cost_decay",
+    "professional_longshort_net_sharpe_benchmark",
+    "factor_replication_themes",
+    "broker_margin_short_rules"
+  ],
+  "hypothesis": {
+    "statement": "An out-of-sample ML composite of the same slow theme inputs captures nonlinear and interaction effects (size-conditional value, quality and low-risk premia) that the equal-weight composite misses, so under the unchanged v1.2 construction and costs it, or its equal blend with M0, raises the offset-median net Sharpe by at least 0.10 in both the recent and the stress-ML window.",
+    "failure_mode": "With 23 inputs and 1-8 years of weekly training the models learn noise or the 2017-2023 style history (value crash, junk rallies) and do not beat the equal-weight composite out of sample (BSW 2022, our M1 < M0 in v1.2); or nonlinear scores turn over faster and the extra cost eats the gross gain.",
+    "measurement": "Stage A: simplified weekly gross long-short Sharpe and book-aligned rank IC versus M0, weekly score rank autocorrelation, label-permutation check. Stage B: offset-median and blended net Sharpe per candidate and window, delta vs B0r per offset, vol-matched paired NW t, turnover, cost, beta, 2x cost. Stage C (selected only): account layer, 20-seed placebo, family-19 tier.",
+    "stop_pivot": "No candidate beats M0's simplified gross Sharpe in both windows (Stage A) or none meets E1/E2/E4/E5 (Stage B): keep M0, record ml_contribution_pass as false or as the design-doc comparison shows, close ML composites for the v1.2 construction until new inputs (text, Lazy Prices) exist; signals, not models, are then the bottleneck."
+  },
+  "decision": {
+    "path": "ml_composite_book_v14",
+    "decision": "pending",
+    "reason": "Preregistered 2026-10-04 by the 07:07 UTC lead round before any ML composite was trained or evaluated in the v1.2 construction; executed by briefs T-20261004-02 (Stage A) and T-20261004-03 (Stage B/C).",
+    "next_iteration_suggestion": "Shadow entry: log the selected candidate's targets next to M0 from the live directory (offline, no production change) and re-judge replacement in a new contract. Replacement: production target generator change in a separate task after the v1.2 two-week execution shakedown. None: keep M0; the next signal-layer step is new inputs (Lazy Prices T-04, prediction-market features), not a new model."
+  },
+  "source_cards_path": "reports/harness/source_cards/t20261004_book_v14_ml.jsonl"
+}
