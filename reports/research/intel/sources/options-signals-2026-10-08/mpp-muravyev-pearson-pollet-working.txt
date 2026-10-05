@@ -1,0 +1,1913 @@
+         Why Does Options Market Information Predict Stock Returns? ☆
+
+
+                 Dmitriy Muravyev a,c, Neil D. Pearson b,c, and Joshua M. Pollet d
+
+                                                May 13, 2022
+
+
+
+                                                   Abstract
+
+Several influential studies show that options volatilities and trading volume predict stock returns.
+This predictability is puzzling because market participants can readily observe options market
+data. We find that this predictability is consistent with option prices reflecting stock borrow fees
+that are known to predict stock returns. We derive a formula relating the option-implied volatility
+spread to the borrow fee. Motivated by this relation, we show that abnormal stock return
+predictability from option signals decreases by about two-thirds after returns are adjusted for
+borrow fees. The predictability of unadjusted returns decreases by a similar amount if high-fee
+stocks are excluded.
+
+
+
+
+JEL Classification: G12, G13, G14
+
+Keywords: equity options, put-call parity, implied volatility spread, implied volatility skew, stock
+borrow fee, stock lending fee
+
+
+
+
+☆
+  We gratefully acknowledge research support from the Canadian Derivatives Institute. We also thank Markit for
+providing the equity lending data. All errors remain our responsibility.
+      a
+        Broad College of Business, Michigan State University, Eppley Center, 667 N. Shaw Lane Room 341, East
+Lansing, MI 48824. Tel.: +1 (217) 721-3772. E-mail: muravyev@msu.edu
+      b
+        Department of Finance, University of Illinois at Urbana-Champaign, 1206 South Sixth Street, Champaign,
+Illinois, 61820. Tel.: +1 (217) 244-0490. E-mail: pearson2@illinois.edu
+      c
+        Canadian Derivatives Institute, 3000, Chemin de la Côte-Sainte-Catherine, Montréal, Québec H3T 2A7,
+Canada.
+      d
+        Department of Finance, University of Illinois at Urbana-Champaign, 1206 South Sixth Street, Champaign,
+Illinois, 61820. Tel.: +1 (217) 300-1961. E-mail: pollet@illinois.edu.
+1. Introduction
+         The possible informational role of the financial derivatives markets has been of interest
+since shortly after listed options trading began (Black, 1975; Back, 1993; Biais and Hillion,
+1994; Easly, O’Hara, and Srinivas, 1998; Chakravarty, Gulen, and Mayhew, 2004; and Hu,
+2014, 2018). One important finding in the empirical options literature is that different forms of
+options market information predict stock returns at horizons ranging from one to several weeks. 1
+On one hand, this might be expectedas indicated by Black (1975), informed investors are
+attracted by options’ high embedded leverage and the ease with which they can be used to
+establish synthetic short positions in the underlying stocks. On the other hand, these results are
+puzzling because they appear to suggest that stock market investors can earn large abnormal
+returns by following simple trading strategies based on readily available options market
+information. Since many traders participate in both markets, what is the limit to arbitrage that
+allows readily available options market information to predict stock returns?
+        We shed light on this question by focusing on three leading stock return predictors
+computed from options market data: the volatility spread, the volatility skew, and the O/S ratio.
+The volatility spread is the difference between the implied volatilities of calls and puts with the
+same strike price and time to expiration (Bali and Hovakimian, 2009; Cremers and Weinbaum,
+2010). The volatility skew is the difference between the implied volatility of an out-of-the-
+money (OTM) put and an at-the-money (ATM) call with the same expiration date (Xing, Zhang,
+and Zhao, 2010). These predictors are closely related because the volatility skew can be
+decomposed into the volatility spread and the difference between the implied volatility of an
+OTM put and an ATM put. Augustin and Subrahmanyam (2020) survey the literature on options
+market informed trading before corporate events and conclude that the volatility spread and skew
+are the strongest options-based predictors. The O/S ratio introduced by Roll, Schwartz, and
+Subrahmanyam (2010) is the ratio of option trading volume to underlying stock trading volume.
+Johnson and So (2010) and Ge, Lin, and Pearson (2016) show that this measure predicts the
+cross-section of stock returns, while Chan, Ge, and Lin (2015), Lin and Lu (2015), and Ge et al.
+(2019) show that it predicts stock returns around earnings announcements and corporate events.
+
+
+1
+ For example, Ofek, Richardson, and Whitelaw (2004), Bali and Hovakimian (2009), Cremers and Weinbaum
+(2010), Xing, Zhang, and Zhao (2010), Johnson and So (2010), Conrad, Dittmar, and Ghysels (2013), Clements,
+Kalesnik, and Linnainmaa (2017), Bali, Hu, and Murray (2019), and Bernile, Gao, and Hu (2019).
+
+                                                      1
+           These findings have been interpreted as critical evidence that option prices and option
+trading volume contain unique information that is not yet reflected by stock prices. If this
+interpretation is correct, then underlying stock prices are not efficient with respect to public
+information contained in the options market. Essentially, the stock market and the options market
+are segmented to an important degree. Alternatively, if a trading friction limits the ability of
+informed traders in the underlying stock market to take advantage of these patterns, then the
+findings in the literature should be interpreted with greater nuance.
+           Figures 1 and 2 suggest that the volatility spread and skew are closely related to the stock
+borrow fee. Panel A (B) of Figure 1 displays a five-day moving average of Tesla’s daily
+volatility spread (skew) together with its stock borrow fee during our sample period, where the
+volatility spread is the average difference between put and call implied volatilities across option
+pairs weighted by open interest. Figure 2 displays the same information for Factset Research
+Systems. The two figures show that the volatility spread and skew move together with the
+borrow fee throughout the sample period. The series do not track each other perfectly, as wide
+options bid-ask spreads make it difficult to compute option implied volatilities accuratelybut
+the correspondence is quite close, suggesting that the three series contain similar information.
+Why are the volatility spread, skew, and borrow fee so highly correlated?
+           Academic researchers typically use option implied volatilities that are computing treating
+the borrow fee as if it were zero. 2 Treating the borrow fee as if it were zero when it is not
+impacts call and put implied volatilities in opposite directions, and affects the entire implied
+volatility surface. Consequently, the typical academic measures of implied volatility spread and
+volatility skew, calculated from the flawed implied volatilities, are highly correlated with the
+borrow fee. In Section 3 we use a straightforward Taylor expansion to show that the implied
+volatility spread for a put and a call option with the same strike price is proportional to the
+omitted borrow fee if implied volatilities are computed by incorrectly setting the borrow fee to
+zero. Based on appropriate versions of the Black-Scholes-Merton formulas, this proportional
+relation between the borrow fee and implied volatility spread is governed by a simple expression.
+Figure 3 uses this expression to show that the transformation of the 30-day implied volatility
+spread into the implied borrow fee closely mimics the reported borrow fee. Panel A (Panel B)
+presents this comparison for Tesla (Factset). The volatility skew also reflects the borrow fee
+
+2
+    For example, the implied volatilities available from OptionMetrics.
+
+                                                            2
+because the skew can be decomposed into a volatility spread and the difference in the volatilities
+of OTM and ATM puts.
+       Figures 1 and 2, along with most research papers, use OptionMetrics’ implied volatilities,
+which neglect stock borrow fees. Since the borrow fee is one of the strongest predictors of stock
+returns (Engelberg et al., 2020; see also Jones and Lamont, 2002; Cohen, Dieter, and Malloy,
+2007; Drechsler and Drechsler, 2016), these figures suggest that the academic versions of
+implied volatility spread and skew predict stock returns because they proxy for the borrow fee.
+Sophisticated options market participants, for example options market makers, almost surely
+include the borrow fee directly in the models they use to compute options prices. Thus, it should
+not be surprising that options prices reflect the stock borrow fee.
+       The borrow fee is a substantial friction that limits stock investors’ ability to exploit
+options market informationinvestors have to pay a high borrow fee to short stocks with a high
+implied volatility spread or skew. This friction can potentially explain why the options market
+and the underlying stock market appear to be segmented even though the relevant trading
+strategies do not provide substantial abnormal returns after adjusting for the borrow fees. From a
+practical perspective, sophisticated institutional investors receive the borrow fee information for
+potential short stock positions from their prime brokers. Thus, they know the costs of shorting
+the stocks for which the options market signals negative returns, even if they do not understand
+that the borrow fee is mechanically related to the signal from the options market.
+       We begin our empirical analyses by using decile portfolio sorts based on the volatility
+spread, the volatility skew, and the O/S ratio to confirm that these three variables predict stock
+returns in our data. The predictability is concentrated in the tenth decile portfolios that have large
+and highly significant negative abnormal returns for all three sorts. Thus, the profitability of
+these strategies crucially hinges on investors’ ability to short the tenth decile stocks and the
+shorting costs they incur.
+       Indeed, we find that taking account of the borrow fees substantially reduces or eliminates
+the profitability of the three options-based strategies. The high-fee stocks, defined to be those
+with borrow fees greater than 1% per year, are concentrated in the decile ten portfolios. When we
+adjust returns for the borrow fees, the abnormal returns on the tenth decile spread-sorted and
+skew-sorted portfolios are only about one-third as large, and not significantly different from
+
+
+
+                                                  3
+zero. 3 The net-of-fee abnormal returns on the tenth decile O/S sorted portfolio are only −6 basis
+points per month.
+         When we remove the high-fee stocks from the analysis entirely, the unadjusted abnormal
+returns to the remaining low-fee stocks in the tenth decile spread-sorted and skew-sorted
+portfolios are insignificant and less than 30% as large as the original abnormal returns. The
+returns on the low-fee stocks in the tenth decile O/S sorted portfolio are only −3 basis points per
+month. The removal of a relatively small number of high-fee stocks from these strategies should
+only have a minimal impact on abnormal performance if this apparent performance of the
+strategies including all stocks is due to anything other than the stock borrow fee itself, as only
+about 7% of the observations in our sample are designated as high-fee. The remaining limited
+evidence of abnormal returns for the strategies does not survive adjusting for reasonable
+estimates of institutional transactions costs.
+         We also estimate panel regressions that predict monthly and weekly returns. In univariate
+regressions, the volatility spread, volatility skew, and O/S ratio are highly significant predictors
+of weekly and monthly returns. However, when we restrict the samples for the monthly return
+regressions to include only low-fee stocks the coefficients on the volatility spread and skew are
+only 34% and 42% of their magnitudes in the full samples, though still significant at
+conventional levels. The coefficient on the O/S ratio decreases to about half of its magnitude in
+the full sample and becomes insignificant. In the weekly return regressions, the coefficients on
+the volatility spread and skew decline to only 33% and 56% of their magnitudes in the full
+sample, and the coefficient on the volatility spread is insignificant. The coefficient on the O/S
+ratio declines to only one-quarter of its magnitude in the full sample.
+         Our results indicate that the stock return predictability using options volatility and
+volume information is not readily exploitable by investors. Trading strategies based on sorting
+stocks using the volatility spread, volatility skew, and the O/S ratio provide only limited or no
+profitability after taking account of the borrow fees paid by a short seller, and are not profitable
+
+3
+  This finding differs from the existing literature, which typically concludes that the net-of-fee returns to shorting are
+large (Geczy, Musto, and Reed, 2002; Jones and Lamont, 2002; Ofek, Richardson, and Whitelaw, 2004; Cohen,
+Dieter, and Malloy, 2007; and Drechsler and Drechsler, 2016). One reason why our results differ from those in the
+existing literature is that we use the fees paid by ultimate stock borrowers, for example hedge funds and option
+market makers, while most of the literature uses the fees received by the ultimate lenders. The fees paid by ultimate
+borrowers exceed those received by ultimate lenders due to the substantial markups charged by prime brokers.
+D’Avolio (2002) estimates the typical markup to be about 30% of the fee. The markups remain highBlackRock
+(2021) charges a markup of about 20% from its equity mutual fund clients.
+
+                                                            4
+after also taking account of institutional trading costs. The same trading strategies also are not
+profitable in the subsample of low-fee stocks after taking account of trading costs. These results
+provide little support for the hypothesis that the stock and options markets are segmented and the
+stock market is less efficient than the options market.
+       Of course, there may be other factors that explain volatility skews, for example stochastic
+volatility and stock price jumps. Also, any of the typical limits to arbitrage between the stock and
+options markets, such as transactions costs, limited capital, inventory risk, or idiosyncratic risk,
+could play a role. The volatility spreads and skews computed from OptionMetrics implied
+volatilities reflect the combined impact of the borrow fee and these other potential explanations.
+If these other considerations are strongly associated with stock return predictability, then simply
+taking into account the borrow fee should not so dramatically attenuate the performance of the
+relevant strategies. Our findings indicate that the substantial abnormal performance of these
+strategies using options market data largely reflects information about the borrow fee,
+particularly on the short side. The mild outperformance on the long side, for portfolios 1 and 2 of
+the volatility spread and skew strategies, of between six and ten basis points per month is
+consistent with the evidence of higher performance for stocks with low short interest
+documented in Boehmer, Huszar, and Jordan (2010). There may be also modest residual
+information in options prices that is unrelated to the borrow fee.
+       The evidence is broadly consistent with an equilibrium in which the options and stock
+markets are connected via the stock lending market. Such an equilibrium can arise because
+options market makers obtain borrow fee quotes from their prime brokers, treat them as a
+component of carry costs, and incorporate them into options prices. Thus, options prices directly
+embed information about the borrow fee. The stock return predictability based on the
+transformations of these options prices, namely the academic versions of volatility spread and
+volatility skew that ignore the borrow fee, is a manifestation of the omitted stock borrow fee.
+This stock return predictability is difficult to exploit precisely because a short seller must pay the
+stock borrow fee.
+       In such an equilibrium, the finding that options market information predicts stock returns
+could be consistent with the hypothesis that informed traders exploit their informational
+advantage primarily in the options market, as suggested by Cremers and Weinbaum (2010) and
+Xing, Zhang, and Zhao (2010). However, it does not imply that informed traders prefer the
+
+                                                  5
+options market, as it is also consistent with the hypothesis that short sellers have information
+about the stock return that is reflected in the borrow fee. The short sellers’ information would
+then be reflected in options prices and volatilities due to the mechanical relations between the
+borrow fee and the options prices computed by the valuation models used by sophisticated
+options market participants. These two hypotheses are not mutually exclusive and both
+mechanisms could generate order flow pressure to move option prices. However, the bulk of the
+apparent abnormal stock return from trading on options market information disappears after
+adjusting for the borrow fee. Thus, the second hypothesis plays a large role that has not been
+previously considered in the literature.
+       This equilibrium is consistent with several observations. First, informed investors can
+trade in the options market, the stock market, or both, and information flows rapidly between the
+two markets. Second, options market order imbalances are rapidly transmitted to the stock
+market via delta hedge trades by options market makers (Hu, 2014) and options exchange data
+feeds (Muravyev, 2016). Also, options market makers use autoquotation algorithms based on
+valuation models in which the stock price is a key input. As a result, the options markets follow
+the stock market at high frequency (Muravyev, Pearson, and Broussard, 2013).
+       Our analysis is also related to the many papers exploring apparent anomalies in stock
+returns, some of which emphasize trading costs as an important limit to arbitrage (for example,
+Frazzini, Israel, and Moskowitz, 2012; McLean and Pontiff, 2016; Novy-Marx and Velikov,
+2016). A few papers indirectly address the role of short sale constraints, often by assessing
+whether a given anomaly is concentrated in hard-to-borrow stocks (for example, Stambaugh, Yu,
+and Yuan, 2015). In contrast, we directly observe the borrow fee and show that it has a critical
+impact on the performance of options-based anomaly strategies.
+       In a related recent paper, Muravyev, Pearson, and Pollet (2021) show that the borrow fee
+implied from options prices on average equals the indicative borrow fee during the options’
+lives, and conclude that option-implied stock borrow fees do not reflect a risk premium for
+bearing borrow fee risk. They focus on borrow fee risk and do not study how the borrow fee
+relates to the volatility spread, skew, and O/S ratio, or whether it affects the profitability of these
+popular strategies. In addition, this paper’s approach to estimating the borrow fee from
+conventionally computed ATM implied volatilities, which are readily available, is much simpler
+than the calculation in Muravyev, Pearson, and Pollet (2021).
+
+                                                   6
+       The balance of the paper is as follows. Section 2 describes the data. Section 3 establishes
+a theoretical relation between the implied volatility spread and the stock borrow fee. Section 4
+presents the results of the portfolio sorts before and after adjusting returns for the borrow fee.
+Section 5 presents the panel regression results. Section 6 concludes.
+
+2. Data and summary statistics
+       Short sellers must pay a borrow fee, also called a loan fee, for every day they borrow
+shares. The return earned by a short seller is equal to his or her before-fee stock return less the
+borrow fee she pays. We use borrow fees and other data about stock borrowing and lending from
+the Markit Securities Finance Buy Side Analytics Data Feed available from Markit, Ltd. This
+database includes daily data on securities borrowing and lending activity, including rebates and
+borrow (loan) fees, the quantity on loan, the number of loans, the numbers of active brokers and
+lending agents, and other data. Markit obtains the information from more than 100 equity loan
+market participants, including beneficial owners, hedge funds, investment banks, lending agents,
+and prime brokers, who together account for approximately 85% of US securities loans (Markit,
+2012). While the Markit Securities Finance dataset includes a broader range of securities, this
+paper focuses on the subset of U.S. equities that have listed options. Following the literature, our
+sample begins in July 2006 because the data coverage expanded significantly around that time
+and the data are available at daily frequency beginning June 28, 2006. The end of the sample is
+August 2015. The Markit data are widely used in academic research on short selling.
+       The market for borrowing stock is described by D’Avolio (2002) and Kolasinski, Reed,
+and Ringgenberg (2013). It includes three groups of participants: (i) lenders such as mutual
+funds, pension funds, and insurance companies, some of which lend through agent lenders
+(custodians), (ii) ultimate borrowers, for example hedge funds, proprietary trading desks, and
+option market makers, and (iii) prime brokers. Typically hedge funds and option market makers
+borrow the securities from their prime brokers, who in turn borrow from the mutual funds,
+pension funds, and other ultimate lenders (Kolasinski, Reed, and Ringgenberg 2013, especially
+Figure 1). In this process the prime brokers “mark up” the fee, i.e. they borrow from the original
+lender and then relend to the option market maker or other short seller at a higher fee.
+       The borrow fee is not usually quoted directly but is derived from the quoted rebate rate.
+The security borrower usually provides cash collateral to the security lender, and the security
+lender pays interest, the rebate rate, on the cash collateral it holds. The borrow fee is the
+                                                  7
+difference between the market short-term interest rate and the rebate rate paid on the cash
+collateral. 4 The rebate rate can be negative when securities are hard to borrow and the borrow fee
+is high. In rare cases, the borrow fee can also be negative, which occurs when the rebate rate that
+the security lender pays on cash collateral exceeds the short-term interest rate.
+         The market structure in which prime brokers are typically the financial intermediaries
+implies that there are two fees, a buy-side fee paid by the ultimate borrower (for example, a
+hedge fund or option market maker) and a lender-side fee received by the ultimate lender (for
+example, a mutual fund), which is lower than the buy-side fee. The main borrow fee variable we
+use is “IndicativeFee,” which is a buy-side fee. Specifically, it is Markit’s estimate of the “The
+expected borrow cost, in fee terms, for a hedge fund on a given day,” based on “both borrow
+costs between Agent Lenders and Prime Brokers as well as rates from hedge funds to produce an
+indication of the current market rate” (Markit 2012). 5 To evaluate the performance of trading
+strategies, it is important to use the borrow fee paid by a typical institutional investor reflecting
+the cost of financial intermediation rather than the fee received by institutions for lending shares
+to prime brokers. The borrow fee is typically small, most commonly 0.375% per year, but can
+occasionally exceed 100% per year.
+         The Markit data also include the quantity on loan (QuantityOnLoan) and the utilization
+rate (Utilization), defined as the ratio of the quantity on loan to the lendable quantity
+(LendableQuantity). In addition to the Markit data, we also use end-of-day option price quotes
+from OptionMetrics. Stock prices, returns, and dividend information (amounts and ex-dividend
+dates) are from the Center for Research in Securities Prices (CRSP) files, and we address
+NASDAQ delisting returns as in Shumway and Warther (1999).
+         Table 1 presents selected percentiles of the distributions and some other statistics for
+common stocks in CRSP that match to valid options data in OptionMetrics using the filters in
+Muravyev, Pearson, and Pollet (2021) and to an indicative borrow fee in Markit. The unit of
+
+
+
+4
+  When the security borrower provides Treasury securities as collateral the borrow fee is quoted and the rebate rate
+is derived as the difference between the short-term interest rate and the borrow fee. During our data period Markit
+used the Federal Funds Open rate as the short-term interest rate in these calculations.
+5
+  The full description of the data item is “The expected borrow cost, in fee terms, for a hedge fund on a given day.
+This is a derived rate using Data Explorers proprietary analytics and data set. The calculation uses both borrow costs
+between Agent Lenders and Prime Brokers as well as rates from hedge funds to produce an indication of the current
+market rate. It should not be assumed that the indicative rate is the actual rate a Prime Broker will quote or charge
+but rather an indication of the standard market cost” (Markit, 2012).
+
+                                                          8
+observation is a combination of stock and trading date with valid data from OptionMetrics and
+Markit. 6 After applying these filters, there are 3,477 unique stocks in our sample.
+         The first row of Table 1 reveals that the mean borrow fee is 0.97% per year, and that this
+variable is positively skewed. The borrow fee is 0.25% at the first percentile, 0.38% at both the
+tenth and 50th percentiles, and then reaches 0.63% at the 90th percentile and 15% at the 99th
+percentile. Thus, any substantial impact of the borrow fee on the performance of a trading
+strategy can only be due to the extent to which the strategy is short selling stocks with fees above
+the 90th percentile. We classify a stock as high-fee on date t if the borrow fee at t is greater than
+1%. Approximately 7% of the observations in our sample are designated as high-fee.
+         The next two rows report information about utilization and short interest, which are also
+right-skewed. The mean of utilization is 19.90% compared to a median of 11.99%, and the 90th
+and 99th percentiles are 52.20% and 85.13%, respectively. Short interest is computed from the
+Markit data, and is defined as the quantity on loan divided by shares outstanding (from CRSP).
+           The implied volatility spread is the average difference of the implied volatilities of the
+available calls and puts with the same strike price and expiration date. In computing the average
+across put-call pairs weight each pair with its open interest, following Cremers and Weinbaum
+(2010). We follow Xing et al. (2010) and compute the implied volatility skew as the difference
+between the implied volatilities of an OTM put and an ATM call, where the put moneyness
+satisfies 0.8 < K/S < 0.95 and the call moneyness satisfies 0.95 < K/S < 1.05. There are fewer
+observations of the volatility skew than of the spread (2,699,582 vs. 3,414,488) because puts and
+calls that meet these more restrictive requirements do not always exist. The mean value of the
+volatility spread is 1.01%, and this variable is somewhat left-skewed. The implied volatility skew
+is right-skewed, with a mean value of 5.14% and a median value of 4.73%.
+         The option-to-stock (O/S) volume ratio is defined as the sum of call volume and put
+volume from Optionmetrics for all option contracts based on the underlying stock divided by
+share volume for the stock from CRSP on date t, following Roll et al. (2010). The average of the
+O/S ratio is 18.51% while the median is only 2.35%. The distribution is highly skewed to the
+right, indicating that the option volume is small for the majority of optionable stocks. The last
+two rows describe the market capitalization of the stocks in our sample. The typical stock is in
+
+6
+  The filters in Muravyev et al. (2021) require that at least one valid put-call pair exists in which each option has an
+absolute value of the option delta is between 0.01 and 0.99, the option implied volatility is between 3% and 200%,
+the option bid price is greater than 0.1, the bid is less than the ask and the time to expiration is at least 15 days.
+
+                                                            9
+the ninth NYSE size decile. The distribution of market capitalization is right-skewed, with a
+mean and median of $9,223 million and $2,128 million, respectively.
+       Panel A of Table 2 reports the correlation matrix of the variables for the entire sample.
+As expected, the borrow fee, utilization and short interest are positively correlated. Turning to
+the variables that are the focus of this paper, the borrow fee is strongly negatively correlated with
+the volatility spread and highly positively correlated with the volatility skew, with correlations of
+−0.62 and 0.53, respectively. As expected, the correlation between the volatility spread and skew
+is negative, −0.77. These high correlations are consistent with the hypothesis that the borrow fee,
+the volatility spread, and the volatility skew are different measures capturing the same
+phenomenon. Consistent with this hypothesis, the volatility spread and skew are transformations
+of option prices, and the option prices should embed the cost of borrowing stock in an
+augmented version of put-call parity. The strong unconditional correlation between the borrow
+fee and the volatility spread (skew) for the entire sample is the natural consequence of the
+graphical time-series pattern presented at the individual stock level in Figure 1 and Figure 2.
+Because the borrow fee and volatility spread (skew) are closely linked for each stock through
+time, the unconditional correlation across stock and trading date observations is substantial.
+       Panel B of Table 2 presents the correlation matrix for the subsample of high-fee stocks.
+The correlation patterns are largely similar to those presented in Panel A. Interestingly, the
+correlation between the borrow fee and the implied volatility measures becomes stronger within
+this subsample. The correlation between the fee and the volatility spread changes from −0.62 to
+−0.75. Similarly, the correlation between the fee and the volatility skew increases from −0.53 to
+−0.70. While the unconditional correlation between the fee and the O/S ratio ratio is a modest
+0.12 (Panel A), it increases to 0.17 (Panel B) for the high-fee subsample. These stronger
+correlations emphasize that the link between the borrow fee and the option-based measures is
+more economically relevant when the fee is most likely to impact risk-adjusted returns.
+
+3. Implied volatility in the presence of borrow fees
+       In this section we analyze how the stock borrow fee impacts the calculation of implied
+volatility when it is mistakenly assumed that the borrow fee is zero. In particular, we use a
+Taylor expansion to show that if one computes call and put implied volatilities while treating the
+borrow fee as zero, the resulting implied volatility spread is proportional to the omitted borrow
+
+
+                                                 10
+fee. Since OptionMetrics and some other data vendors compute implied volatilities assuming the
+borrow fee is zero, this is the appropriate context for our analysis. The expansion also shows that
+the borrow fee implicit in options prices, that is the option-implied borrow fee, can be readily
+computed from the implied volatilities provided by OptionMetrics.
+        For simplicity, we assume that the options are of the European type, the stock price
+follows geometric Brownian motion, the interest rate is constant, the borrow fee is a constant rate
+continuously paid to the holders of the stock, and no dividends are paid prior to option
+expiration. This borrow fee is like a continuous dividend and it lowers the expected return of the
+stock under the risk-neutral measure below the risk-free rate.
+        In the absence of arbitrage, option prices will be given by the appropriate versions of the
+Black-Scholes-Merton formulas, 7
+                      𝐶𝐶(𝑆𝑆, 𝜎𝜎, 𝑟𝑟, ℎ, 𝐾𝐾, 𝑡𝑡, 𝑇𝑇) = 𝑒𝑒 −ℎ(𝑇𝑇−𝑡𝑡) 𝑆𝑆𝑆𝑆(𝑑𝑑1 ) − 𝑒𝑒 −𝑟𝑟(𝑇𝑇−𝑡𝑡) 𝐾𝐾𝐾𝐾(𝑑𝑑2 )           (1)
+and
+                   𝑃𝑃(𝑆𝑆, 𝜎𝜎, 𝑟𝑟, ℎ, 𝐾𝐾, 𝑡𝑡, 𝑇𝑇) = −𝑒𝑒 −ℎ(𝑇𝑇−𝑡𝑡) 𝑆𝑆𝑆𝑆(−𝑑𝑑1 ) + 𝑒𝑒 −𝑟𝑟(𝑇𝑇−𝑡𝑡) 𝐾𝐾𝐾𝐾(−𝑑𝑑2 ).          (2)
+C is the price of the call, P is the price of the put, N(.) is the standard normal distribution
+function, S is the stock price, σ is the stock volatility, r is the continuous risk-free rate, h is the
+continuous borrow fee, K is the strike price, t is a point in time before expiration, and T is the
+expiration date. The terms d1 and d2 are given by the formulas
+                         ln (𝑆𝑆⁄𝐾𝐾) + (𝑟𝑟 − ℎ + 0.5𝜎𝜎 2 )(𝑇𝑇 − 𝑡𝑡)
+                 𝑑𝑑1 =                                                       and 𝑑𝑑2 = 𝑑𝑑1 − 𝜎𝜎√𝑇𝑇 − 𝑡𝑡        (3)
+                                           𝜎𝜎 √𝑇𝑇 − 𝑡𝑡
+        However, when h > 0 but is treated as zero the implied volatilities of the call and put will
+be different from each other, and also from the true volatility of the stock price, σ.
+        Let σC and σP be the implied volatilities for the call and the put mistakenly computed as
+if h = 0, respectively. We calculate σC − σP using a first-order Taylor expansion to get the
+following formula linking the implied volatility spread and the borrow fee.
+                                                                        2
+                                  𝜎𝜎𝐶𝐶 −𝜎𝜎𝑃𝑃 ≈ −�2𝜋𝜋(𝑇𝑇 − 𝑡𝑡)𝑒𝑒 𝑑𝑑1 ⁄2 �ℎ=0 × ℎ.                                   (5)
+
+The derivation of this relation is in the Appendix. This expression helps explain why the implied
+volatility spread predicts stock returnsit reflects the omitted borrow fee, which is a strong
+
+7
+ MacDonald (2013), Chapter 12, provides these formulas for the case of a continuous dividend paid at a rate δ.
+Because the borrow fee plays the same role as a continuous dividend, the borrow fee h can be substituted for the
+dividend rate δ. The formulas assume that the stock may be borrowed or lent at the borrow fee h, which the stock
+borrower pays and the stock lender receives.
+
+                                                             11
+predictor of returns. Similarly, the implied volatility skew predicts returns because it can be
+decomposed in the volatility spread and the difference between the implied volatilities of out-of-
+the-money and at-the-money puts.
+        Rearranging Equation (5), and using himplied to denote the option-implied borrow fee
+computed from the implied volatilities, we have
+                                               2
+                       ℎ𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖 ≈ − �𝑒𝑒 −𝑑𝑑1 ⁄2 �ℎ=0 /�2𝜋𝜋(𝑇𝑇 − 𝑡𝑡)� × (𝜎𝜎𝐶𝐶 −𝜎𝜎𝑃𝑃 ).          (6)
+
+Thus, the option-implied borrow fee can be readily obtained from implied volatilities σC and σP
+that are computed by incorrectly assuming the borrow fee is zero, provided one has an estimate
+                2
+of the term 𝑒𝑒 −𝑑𝑑1 /2 . For an option that is near-the-money, the term d12/2 ≈ 0 and thus the term
+    2
+𝑒𝑒 −𝑑𝑑1 /2 ≈ 1. Using this approximation, Equation (6) simplifies to
+
+                               ℎ𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖 ≈ −(𝜎𝜎𝐶𝐶 −𝜎𝜎𝑃𝑃 )/�2𝜋𝜋(𝑇𝑇 − 𝑡𝑡).                        (7)
+        Thus, if one is willing to assume that the OptionMetrics implied volatilities, which are
+computed from the prices of American options, are reasonable estimates of European implied
+volatilities, then estimates of option-implied borrow fees can be readily computed from them
+using Equation (7). Another issue is that the bid-ask midpoint option prices from which
+OptionMetrics and other data vendors compute implied volatilities can be poor estimates of
+options fair values due to wide options market bid-ask spreads, resulting in “noisy” estimates of
+implied volatilities and thus noisy estimates of option-implied borrow fees. One way to address
+this “noise” is to use the OptionMetrics call and put implied volatility surfaces, which are
+constructed using a kernel smoother that eliminates some of the “noise” in implied volatilities
+(OptionMetrics 2021, p. 38).
+        We illustrate the proposed approach for computing implied fees with two examples. The
+solid red line in Figure 3, Panel A shows the five-day moving average of the daily estimates of
+Tesla’s option-implied borrow fee himplied computed using Equation (7) and the 30-day, at-the-
+money call and put (∆ = 0.50 and ∆ = −0.50) implied volatilities taken from the OptionMetrics
+implied volatility surfaces. It also shows the daily borrow fee from Markit (dashed black line).
+The estimate of the implied borrow fee himplied tracks the Markit borrow fee very closely.
+Recognizing that himplied is proportional to the volatility spread σC – σP, it is clear that the 30-day
+volatility spread taken from the OptionMetrics volatility surfaces embeds the borrow fee. In this
+case, the very close relation between the five-day moving average of himplied and the volatility
+
+                                                       12
+spread suggests that the 30-day volatility spread reflects little other than the borrow fee. Indeed,
+the correlation between the two variables in Panel A is 0.95.
+       Panel B displays the results for another stock, Factset Research Systems. The estimate of
+Factset’s implied borrow fee display considerable apparent “noise” stemming from wide option
+bid-ask spreads, especially during the second half of 2011 and first half of 2012. For this reason,
+the implied fee tracks the borrow fee less closely for Factset than for Tesla. Nevertheless, there is
+still a strong relation between the two series. These results for Tesla and Factset displayed in
+Figure 3 suggest that option-implied borrow fees computed from OptionMetrics put and call
+implied volatility surfaces using Equation (7) provide excellent proxies for borrow fees.
+       A researcher who wants to construct a proxy for the borrow fee can apply Equation (7) to
+the at-the-money implied volatilities from the OptionMetrics volatility surfaces, which are
+widely available. The choice of option maturity determines the time horizon of the estimated
+borrow fee. For example, using the 30-day OptionMetrics implied volatilities will yield a
+market-based estimate of the average borrow fee over the next 30 days.
+
+4. Stock returns net of stock borrow costs
+       Bali and Hovakimian (2009) and Cremers and Weinbaum (2010) show that the implied
+volatility spread positively predicts stock returns, while Xing, Zhang, and Zhao (2010) show that
+the implied volatility skew is a negative predictor of stock returns. Johnson and So (2012) and
+Ge, Lin, and Pearson (2016) provide evidence that the O/S volume ratio predicts the cross-
+section of stock returns. This option-based predictability is commonly interpreted as evidence of
+demand pressure by informed investors in the options market. For example, negatively-informed
+investors may choose to buy put options and/or sell call options, impacting their prices and thus
+implied volatilities, and causing put implied volatilities to be high relative to call implied
+volatilities. This information is then only slowly reflected in stock prices. Thus, the implied
+volatility and O/S measures predict subsequent stock returns. An alternative hypothesis is that
+the volatility spread and skew predict returns because they are transformations of the omitted
+borrow fee, a variable that should predict stock returns even in the absence of any exploitable
+market inefficiency. Trading volume may be the mechanism that quickly moves options prices so
+that the options market reflects the borrow fee.
+       In this section we use decile portfolio sorts to show that the volatility spread, the
+volatility skew, and the O/S volume ratio all predict returns in our sample. We then show that the
+                                                   13
+performance of these strategies is closely tied to shorting stocks that have high borrow fees. We
+also confirm that, once we take account of the borrow fees that short sellers must pay, forming
+portfolios based on the borrow fee delivers only modest risk- and fee-adjusted returns.
+        In these analyses we begin by sorting stocks into decile portfolios based on the variable
+of interest as of the close of trading day t. Stocks are held from the close of trading day t + 1 until
+the close of trading day t + 22, to mimic the length of a typical month with 21 trading days. The
+approach of starting the return interval at the close of trading on date t + 1 ensures a one day gap
+between the information used to sort stocks into the portfolios and the evaluation period for the
+portfolio return. This time gap is important for analyses using option-implied measures because
+the midpoint of the stock price quotes used by option market participants to compute end-of-day
+option prices can differ from the closing prices often used to compute option implied volatilities.
+This temporary and non-tradable price difference generates substantial stock return predictability
+the next trading day according to the findings in Goncalves-Pinto, Grundy, Hameed, van der
+Heijden, and Zhu (2020) and Bogousslavsky and Muravyev (2020).
+        We compute abnormal returns using the characteristics-matched approach of Daniels et
+al. (DGTW, 1997). We use this approach because the borrow fees affect not only the options-
+based trading strategies but also the benchmark returns. Thus, we cannot use off-the-shelf
+benchmark returns, but rather must rebuild them using only stocks with low borrow fees. This
+crucial step is much easier to implement for the DGTW benchmarks than for alternative
+approaches. 8 Specifically, we sort stocks into portfolios on date t based on a particular variable
+of interest. For each stock we match the stock’s return from date t+1 to t+22 to the benchmark
+return for the same time period from a portfolio of low-fee stocks with similar market
+capitalization, book-to-market value, and previous six-month return. The abnormal return for
+each of our portfolios is the average of the difference between the return for stock i and the
+matched return of the benchmark for stock i for all stocks in the portfolio for the period. This
+modified version of characteristic-matching avoids mechanically altering the abnormal returns
+whenever a specific benchmark portfolio also contains many high-fee stocks.
+        The average abnormal return for each decile portfolio reported in the table is the time-
+series average for the portfolio across all portfolio formation dates t. Using the average portfolio
+
+
+8
+ We thank WRDS, and especially Rabih Moussawi and Gjergji Cici, for sharing the code that constructs the DGTW
+benchmarks. We modified the code to limit the benchmarks to low-fee stocks.
+
+                                                     14
+return across all potential starting dates eliminates any unusual results associated with end-of-
+month return patterns. Indeed, Etula et al. (2020, Figure 4) show that stock returns are
+abnormally positive around the turn of the month. By construction, each monthly portfolio return
+series has 40 overlapping periods, and so, we use Newey-West standard errors with 50 lags to
+capture this important feature of the data. Our results are robust to using more lags. We also
+obtain similar results when we use non-overlapping monthly returns, which we report in the
+Internet Appendix.
+4.1 Returns of portfolios sorted by the volatility spread
+       In Table 3 we report the average abnormal returns of stocks in decile portfolios formed
+by sorting the stocks using the implied volatility spread. The spread is defined here as the put
+implied volatility minus the call implied volatility, rather than calls-minus-puts as in Cremers
+and Weinbaum (2010), so the negative average abnormal returns are found in portfolio ten rather
+than portfolio one as is the case for the skew and O/S ratio. The results in Panel A of Table 3
+show that the abnormal performance is concentrated in the decile ten stocks, with a slight hint of
+abnormal performance in the other deciles. The average abnormal return of the decile ten stocks
+is –0.67% per month, or about 8% per year, and highly significant (t-statistic = −5.5). The
+average abnormal return of the decile nine stocks is −0.13%, with a t-statistic of −1.6. The
+average characteristic-adjusted returns of the stocks in the other eight deciles are all close to
+zero. However, the point estimates of portfolio performance are generally decreasing as one
+moves from decile one to decile ten. The return differential between the top and bottom deciles is
+−0.73% per month, due almost entirely to the performance of the stocks in decile ten.
+       In the third and fourth rows of Panel A we report the average number of high-fee stocks
+(borrow fee exceeds 1% per year) and all stocks for each of the portfolios. These two rows show
+that the high-fee stocks are concentrated in the tenth decile; on average, 57 of the 148 decile ten
+stocks are high-fee. High-fee stocks are also slightly overrepresented in decile nine, for which on
+average 13 of the 148 stocks are high-fee. In deciles one through eight only between three and
+six stocks are high-fee, on average. Thus, the pattern of high-fee stocks corresponds very closely
+to the pattern of abnormal returns. It also indicates that shorting the decile ten stocks would not
+be nearly as profitable as the abnormal returns in Panel A suggest because an investor who shorts
+the stocks in the tenth decile would need to pay a substantial borrow fee.
+
+
+
+                                                  15
+       We next compute the abnormal returns net of the borrow fees paid by an investor who
+short sells the stocks in each of the portfolios. We implement this approach by adding the borrow
+fee to the returns on a long position for each stock in portfolios nine and ten; this calculation
+implies that the borrow fee is deducted from the return on a short position. An investor following
+a long-short strategy would buy the stocks in portfolio one and make his or her shares available
+for lending, possibly receiving the borrow fee. But the investor would receive the borrow fee
+only if the shares he or she made available were actually borrowed by a short seller, which is not
+guaranteed. To reflect this consideration, we assume that the probability an investor’s shares on
+the long side are actually borrowed is equal to the utilization rate. We also reduce the borrow fee
+received by the lender by 30% of its value to reflect D’Avolio’s (2002) estimate that the borrow
+fee received by an ultimate stock lender (e.g., a pension or mutual fund) is 30% less than the
+borrow fee paid by the ultimate borrower (e.g., a hedge fund) due to intermediation spreads
+charged by prime brokers. Essentially, an investor lending shares in portfolio one receives in
+expectation a proportion of the borrow fee scaled by the utilization rate and by an adjustment for
+the typical fraction of the borrow fee extracted by the prime broker rather than the entire borrow
+fee. For consistency, we also adjust the abnormal returns of the stocks in portfolios two through
+eight using the same approach.
+       After implementing these adjustments, we report the average returns after risk and fee
+adjustments for the stocks in each decile portfolio in Table 3 Panel B. The average net-of-fee
+returns on the decile ten stocks reported in Panel B are only 0.19% per month and insignificant
+(t-statistic = −1.6). This result is in contrast to the highly significant average return of 0.67% per
+month shown in Panel A. The fee adjustment also reduces the magnitude of the average return on
+the decile nine stocks, changing the average return from −0.13% to −0.05%. The average
+abnormal return on the long-short decile one minus decile ten portfolio is −0.28%, only 38% =
+(−0.28%/−0.73%) of the corresponding value displayed in Panel A. Since very few stocks in
+portfolio one through portfolio eight have a borrow fee greater than 1%, the adjustment for the
+expected receipt of the borrow fee increases average performance by only a few basis points per
+month for these portfolios. Removing this adjustment entirely or using any plausible alternative
+calculation has a quantitatively negligible impact on the average abnormal performance of
+portfolios one through eight.
+
+
+
+                                                 16
+         We continue exploring the extent to which the abnormal returns in Panel A are due to the
+high-fee stocks by recalculating the average abnormal returns for each portfolio after removing
+the high-fee stocks from the portfolios. We report the average abnormal returns on these
+portfolios of the low-fee stocks in Panel C. The average abnormal return on the low-fee stocks in
+the decile ten portfolio is only −0.15% per month, and is significant at only the 10% level (t-
+statistic −1.7). This average abnormal return is only 22% = −0.15%/−0.67% as large as the
+abnormal return on the full set of decile ten stocks shown in Panel A. Removing the high-fee
+stocks also reduces the average return on the decile nine stocks from −0.13% to −0.06%. It has
+minimal impact on the returns of the other eight portfolios. The average abnormal return on the
+long-short decile one minus decile ten portfolio is now −0.25%, only 34% = −0.25%/−0.73% of
+the corresponding value displayed in Panel A.
+         We complete the analysis of portfolios sorted by the implied volatility spread by
+analyzing the average abnormal returns of the high-fee stocks that were removed when
+computing the Panel C results. In Panel D we report the average abnormal returns for the high-
+fee stocks in each of the ten portfolios analyzed in Panel A. As should be expected, the average
+abnormal returns are negative for all ten portfolios because high-fee stocks usually have negative
+abnormal returns (e.g., Engelberg et al., 2020). These averages for the high-fee stocks in deciles
+ten and nine are large and highly significant, −1.57% (t-statistic −6.0) and −0.93% (t-statistic
+−3.3), respectively. The average abnormal returns on the high-fee stocks in portfolio one through
+portfolio eight are also negative, but are not nearly so significant, and in some cases,
+insignificant. This pattern is likely due to the small numbers of high-fee stocks in portfolios one
+through eight. The proportion of high-fee stocks is much greater for portfolio ten compared to
+the other portfolios and the abnormal performance of high-fee stocks in this portfolio is more
+negative. This pattern is clearly the source of most of the abnormal performance of portfolio ten
+in Panel A. The average return on the decile ten minus decile one long-short portfolio is a
+marginally significant −0.63% per month (t-statistic −1.7). 9
+
+9
+ This difference of −0.63% cannot be directly calculated from the average return for portfolio ten minus the average
+return for portfolio one because the return for portfolio one is missing during months when this portfolio does not
+contain any high-fee stocks. More importantly, this result should not be interpreted as evidence that the volatility
+spread predicts returns for this subsample of high-fee stocks. The average borrow fee for the stocks in decile ten is
+13.1% per year while the average borrow fee for decile one is 3.8% per year. Thus, this evidence is consistent with
+the hypothesis that the predictability evident in Panel A is primarily due to the magnitude of the borrow fee.
+
+
+                                                         17
+4.2 Returns of portfolios sorted by the volatility skew
+       We next turn to the corresponding results for portfolios formed by sorting stocks using
+the implied volatility skew, the difference between the implied volatilities of an OTM call and an
+ATM call. In Table 4 we compute average abnormal returns for portfolios using the same
+techniques and reporting format shown in Table 3. The average numbers of stocks in the skew-
+sorted portfolios are less than in the other portfolio sorts because the computation of volatility
+skew, following Xing, Zhang, and Zhao (2010), uses the implied volatilities of options in
+particular moneyness ranges, and such options are not always available.
+       The results for the skew-sorted portfolios in Table 4 are quite similar to the patterns for
+the spread-sorted portfolios in Table 3. Panel A shows that the abnormal performance is
+concentrated in the decile ten stocks. There is significant, albeit weaker, evidence of abnormal
+performance in decile nine. The average abnormal return for the decile ten stocks is –0.59% per
+month, or about −7% per year, and highly significant (t-statistic = −4.5). The average abnormal
+return for the decile nine stocks is −0.22% per month, with a t-statistic of −2.2. There is no
+evidence of abnormal performance in the other deciles, though the average return estimates
+typically decrease from portfolio one to portfolio ten. The return differential between the top and
+bottom deciles is −0.69% per month and this estimate is highly statistically significant.
+Following the pattern displayed in Table 3, this differential is due almost entirely to the
+performance of the stocks in portfolio ten rather than portfolio one.
+       Table 4, Panel B presents the fee-adjusted returns of the ten skew-sorted portfolios. The
+fee adjustment has a critically important impact on the average abnormal return for portfolio ten.
+After adjusting for the borrow fee, the average abnormal return on the decile ten portfolio is only
+−0.21% and insignificant (t-statistic −1.6). This result corresponds closely to the impact of the
+fee adjustment on the performance of portfolio ten in Table 3. The average abnormal return is
+only 36% = −0.21%/−0.59% of the magnitude of the corresponding unadjusted returns in Panel
+A. The average return on the decile nine stocks is less affected by the fee adjustment, only
+changing from −0.22% in Panel A to −0.16% in Panel B. Similar to the results in Table 3, Panel
+A, the fee adjustment has an important impact on the returns of the long-short decile one minus
+decile ten portfolio. The average abnormal return on that strategy is now −0.33%, only 48% =
+−0.33%/−0.69% of the corresponding value displayed in Panel A.
+
+
+                                                 18
+       In Panel C we continue to follow the approach used to analyze portfolios sorted by
+implied spread by reporting the average abnormal returns of the low-fee stocks in the ten skew-
+sorted portfolios. The average abnormal return on the low-fee stocks in the decile ten portfolio is
+only −0.17% per month, and insignificant (t-statistic −1.4). This average abnormal return is only
+29% = −0.17%/−0.59% as large as the average abnormal return for all decile ten stocks shown in
+Panel A. Removing the high-fee stocks reduces the average return on the decile nine stocks from
+−0.22% to −0.16%. Since the fraction of high-fee stocks in the other portfolios is so small,
+removing them has a minimal impact on the average return for the other eight portfolios. The
+performance of the long-short decile one minus ten portfolio is now −0.30%, only 43% =
+−0.30%/−0.69% of the corresponding value displayed in Panel A.
+       In Panel D we report the average abnormal returns on the ten groups of high-fee stocks
+that were removed when computing the Panel C results. Similar to the corresponding results in
+Table 3, the average abnormal returns are negative for all ten portfolios. Those of the deciles ten
+and nine high-fee stocks are large and highly significant, −1.56% (t-statistic −5.8) and −1.12% (t-
+statistic −3.9), respectively. Once again, the proportion of high-fee stocks is much greater for
+portfolio ten compared to the other portfolios and the abnormal performance of high-fee stocks
+in this portfolio is of larger magnitude. The changing mixture across the original portfolios of the
+highly significant performance of the high-fee stocks with the modest and insignificant
+performance of the low-fee stocks generates the abnormal performance apparent in Panel A.
+
+4.3 Returns of portfolios sorted by the O/S ratio
+       We finish our analysis of sorted portfolios using data from the options market by
+analyzing the returns of stocks in decile portfolios formed by sorting using the O/S ratio. These
+results are reported in Table 5 using the same format used in Tables 3 and 4. The results in Panel
+A show that the O/S ratio is a significant predictor of portfolio returns. However, this ratio is a
+much weaker predictor than the implied spread or implied skew. The average abnormal return on
+the decile ten portfolio is statistically significant (t-statistic −2.5), but only −0.26% per month.
+The average abnormal return on the decile ten minus decile one long-short portfolio also is only
+−0.26% (t-statistic −1.9). The average abnormal return on the decile nine portfolio is also
+significant (t-statistic −2.4), with a point estimate of −0.20% per month, while the average return
+on the decile eight portfolio is −0.13% per month and marginally significant. The returns on the
+
+                                                  19
+other seven portfolios are all small, between −0.06% and 0.04% per month, and insignificant.
+The substantial abnormal performance reported for portfolio nine should not be surprising
+because the average number of high-fee stocks in portfolio nine (17) is not much lower than the
+average number of high-fee stocks in portfolio ten (24).
+       The abnormal returns on the high-decile portfolios and the long-short decile ten minus
+decile one portfolio do not survive adjustment for the borrow fee. In Table 5 Panel B we report
+the average abnormal net-of-fee returns, following the approach we used for the results reported
+in the same panel of Tables 3 and 4. Adjusting for the borrow fees, the average returns on the
+decile ten (nine) stocks change from a statistically significant −0.26% (−0.20%) per month to an
+insignificant −0.04% (−0.06%) per month. The fee adjustment’s impact on the average returns on
+the stocks in deciles one through eight is smaller, due to the lower borrow fees for the stocks in
+these portfolios. The average fee-adjusted abnormal return on the long-short decile ten minus
+decile one portfolio is only −0.06% per month, with a t-statistic of −0.5. Thus, these results
+provide no evidence that investors can exploit the return predictability from the O/S ratio after
+taking account of stock borrow costs.
+       The results we report in Table 5, Panels C and D show that the O/S ratio’s ability to
+predict returns is due almost entirely to the high-fee stocks. Panel C presents the average returns
+of the low-fee stocks in the ten O/S-sorted portfolios. The average returns on the decile ten and
+long-short decile ten minus decile one long-short portfolio are both only −0.06% per month, and
+insignificant. This differential return estimate matches the corresponding fee-adjusted estimate in
+Panel B. The only evidence that is even suggestive of abnormal returns appears in decile six,
+where the average abnormal return is 0.11% per month, which is marginally significant.
+       Panel D presents the average abnormal returns on the high-fee stocks in the ten O/S-
+sorted portfolios. As expected, the average abnormal returns on the high-fee stocks from all ten
+portfolios are negative, and with the exception of decile one and decile two are large and
+statistically significant. For example, the average abnormal returns on the high-fee stocks in the
+deciles nine and ten portfolios are −1.51% and −1.31% per month, respectively, with t-statistics
+of −5.4 and −4.4. The average return on the decile ten minus decile one long-short portfolio is a
+highly significant −1.16% per month (t-statistic −3.0). However, as with the results in Panels D
+of Tables 3 and 4, the statistically significant return on the long-short portfolio does not imply
+that the O/S ratio predicts returns, because the average borrow fee for the decile ten stocks is
+
+                                                 20
+much larger than the average borrow fee of the decile one stocks. Again, the difference in the
+average borrow fee across the portfolios for high-fee stocks is responsible for the pattern of the
+abnormal return estimates.
+       In Table 3 to Table 5, the average abnormal return for each portfolio reported is the time-
+series average for the portfolio across all portfolio formation dates t. We obtain similar, if not
+modestly more compelling results, from non-overlapping returns using only one portfolio
+formation date per month. In Table IA.1 to Table IA.3, we compute the corresponding portfolio
+abnormal returns using data from the last trading date in each month to form portfolios. We skip
+one day, and then measure the performance as the holding period return over the next 21 trading
+days. This approach removes any concerns related to overlapping observations for portfolio
+returns. The quantitative patterns using this approach are similar to the main results.
+
+4.4 Returns of portfolios sorted by the borrow fee
+       The substantial changes in the magnitudes of abnormal returns before and after borrow
+fees in Table 3, Table 4, and Table 5 indicates that the cost of borrowing stock has an important
+effect on the performance of sorting strategies using options market data. We next confirm the
+relevance of stock return predictability based on the borrow fee. We form portfolios using the
+borrow fee, use the same techniques to evaluate performance, and report the results in Table 6.
+The average abnormal returns for decile one through decile eight are virtually identical, ranging
+from a low of 0.02% to a high of 0.05% per month, none of which are statistically different from
+zero. The average return for portfolio nine is −0.02% per month (t-statistic −0.6). Stock return
+predictability based on the borrow fee is concentrated in portfolio ten, which has an average
+abnormal return of −0.80% per month that is highly significant (t-statistic of −4.3). The return
+differential between the top and bottom deciles is −0.83% per month and also similarly
+significant (t-statistic −4.5). The magnitude of this differential estimate is similar to but smaller
+than the −1.31% per month return differential reported by Drechsler and Drechsler (2016; Table
+2) for portfolios sorted using the 30-day value-weighted average lender-side fee they use.
+       The pattern of abnormal stock return performance presented in Table 6 is even more
+concentrated in decile ten than the corresponding results for portfolios sorted by the volatility
+spread, volatility skew, and O/S ratio reported in Tables 3−5. When sorting by the fee, decile ten
+includes, by construction, a large number of high-fee stocks. On average 66% (=98/148) of the
+
+
+                                                  21
+fee-sorted decile ten stocks are high-fee, 0.7% of the decile nine stocks are high-fee, and deciles
+one through eight never include any high-fee stocks. Because the volatility spread, volatility
+skew, and O/S ratio are imperfectly correlated with the fee, when forming portfolios using these
+variables fewer of the stocks in decile ten are high-fee.
+       When using volatility spread, 38% (=57/148) of the decile ten stocks are high-fee on
+average, and the abnormal returns on the decile ten portfolio are smaller in magnitude than the
+abnormal returns when sorting on the indicative fee. When using volatility skew on average 32%
+(=38/117) of the decile ten stocks are high-fee, and the abnormal returns on the decile ten
+portfolio are slightly smaller than when sorting using the volatility spread. Finally, when using
+the O/S ratio on average only 16% (=24/148) of the decile ten stock are high-fee, and the
+abnormal returns on the portfolio, while statistically significant, are much smaller than when
+using the other variables to form portfolios. Similarly, the point estimates of the average
+abnormal returns on the decile nine portfolios are closely linked to the average fractions of decile
+nine stocks that are high-fee. This pattern in the average returns of the decile ten and nine
+portfolios are what one would expect if the pattern of abnormal performance shown in Tables
+3−6 is explained by the borrow fee and the correlations between the fee and the spread, skew,
+and O/S ratio. It is consistent with the hypothesis that the volatility spread, volatility skew, and
+O/S ratio are proxies that imperfectly convey the information contained in the fee.
+       The average annualized fee reported in Table 6 indicates that most of the observed
+abnormal performance in portfolio ten is not exploitable by shorting the stocks in that portfolio.
+The annualized abnormal return is 9.6%, and 65% of this abnormal performance would
+disappear after paying the average fee of 6.25% per year. However, it should be noted that the
+magnitude of abnormal returns earned by shorting portfolio ten sorted using the borrow fee while
+paying the fee for the short positions is still larger than the residual magnitude after fees for the
+volatility spread, volatility skew, and O/S ratio. So, it could easily be the case that even the
+residual performance of these strategies is simply the abnormal performance from short selling
+stocks with high borrow fees.
+
+5. Panel regressions predicting stock returns
+        In this section, we report the results of panel regressions that further explore the extent to
+which the volatility spread, volatility skew, and O/S ratio predict returns. The dependent variable
+
+
+                                                  22
+in the panel regressions is either a weekly (five trading days) or monthly (21 trading days) stock
+return. In both cases the explanatory variables are observed at date t and we skip one day and
+compute stock returns starting from the close of trading on date t + 1. Thus, the weekly return is
+for days t + 2 through t + 6 and the monthly return is for days t + 2 through t + 22. Since the
+sample includes every trading date during the sample period, the dependent variable has many
+overlapping observations by construction. The t-statistics use standard errors that are double
+clustered by stock and by date to take account of any heteroskedasticity, contemporaneous cross-
+correlation, and autocorrelation exhibited by the error term. We use this approach to calculate the
+standard errors for all of the panel regression specifications.
+        Table 7 reports the results of panel regressions analyzing whether the implied volatility
+spread predicts weekly and monthly stock returns. For these panel regressions, we follow
+Cremers and Weinbaum (2010) by defining the volatility spread as the average difference of the
+implied volatilities of calls and puts rather than using the negated version of the variable in Table
+3. The left-hand (right-hand) three columns display the results when the dependent variable is the
+weekly (monthly) return.
+        We first confirm the existence of a strong univariate predictive relation between implied
+volatility spread and stock returns in the full sample. The results in the first column of results
+show that the volatility spread is positively related to the subsequent weeks’ returns, and that the
+relation is highly significant (t-statistic 5.1). The results in the fourth column show that the
+coefficient on the volatility spread is also positive highly significant (t-statistic 7.3). These
+results are consistent with the existing literature and closely follow the pattern for the portfolios
+sorted using implied volatility spread reported in Table 3.
+        In the second and fifth columns we report the results of the same univariate
+specifications, but now estimated using the subsample of low-fee stocks. The predictive relations
+are much weaker in this subsample. For the regressions predicting weekly returns, the estimated
+coefficient in the second column is insignificant (t-statistic = 1.3) and only 33% = 0.0058/0.0178
+as large as the full-sample coefficient displayed in the first column. For the specifications
+predicting monthly returns, the estimated coefficient on the volatility spread in the fifth column
+is similarly only 34% = 0.0277/0.0813 as large as the full-sample coefficient in the fourth
+column, but in this case is statistically significant (t-statistic = 2.3).
+
+
+
+                                                    23
+         The third and sixth columns report the results of specifications that include as additional
+covariates the stock returns on dates t – 1 and t and the first principal component PC1
+constructed from a list of seven variables that proxy for short-sale costs and activity. We
+included the stock returns to control for short-term reversals, and also because the midpoint of
+the quotes for the underlying stock price that are used by option market participants to compute
+end-of-day option prices can be different from the closing prices often used to compute option
+implied volatilities. Goncalves-Pinto et al. (2020) present evidence that this temporary price
+difference generates substantial stock return predictability the next trading day.
+         The principal component is included to control for the possible impact of variables
+related to current and possible future shorting activity in a parsimonious way. The proxies for
+shorting activity as well as costs used to construct the principal component are utilization, short
+interest, days to cover, loan tenure, indicative fee, short fee risk, and the number of stock
+borrowing transactions. Utilization, indicative borrow fee, loan tenure, and the number of stock
+borrowing transactions are from Markit, while short fee risk is calculated using the logarithm of
+variance of indicative fees during the previous year following Engelberg, Reed, and Ringgenberg
+(2018), days to cover is calculated as shares shorted from Markit divided by average daily
+volume from CRSP over the last three months, and short interest is calculated as shares shorted
+from Markit divided by shares outstanding from CRSP. The first principal component largely
+captures measures of the volume of short-selling activity. 10
+         The results in the third column of Table 7 show that the date t – 1 stock return is a
+significant negative predictor of future weekly stock returns (t-statistic = −2.1), while the
+coefficient on the date t stock return is negative and almost significant at the 10% level (t-
+statistic = −1.6). The coefficient on PC1 is small and not statistically significant, though it is
+almost significant at the 10% level (t-statistic −1.6). Controlling for these covariates, the
+coefficient on the volatility spread becomes small. The estimate in the third column is only 7% =
+0.0012/0.0178 of the magnitude of the estimate reported in the first column, and insignificant (t-
+
+
+
+
+10
+  The linear combinations of short sales activity and constraints used to construct the principal components are
+reported in Internet Appendix Table IA.4. For the first principal component (PC1), the largest loadings in
+descending order are utilization, short interest, log number of transactions, and days to cover. The second principal
+component (PC2) mostly captures measures of the cost of short selling, with the largest loadings on the indicative
+fee and short fee risk.
+
+                                                          24
+statistic = 0.3). Thus, once we add the control variables to the regression there is no evidence that
+the implied volatility spread predicts the returns of low-fee stocks.
+       The results in the sixth column show that the return variables do not help predict monthly
+stock returns. This change compared to the weekly results is to be expected because short-term
+reversals and the phenomenon identified by Goncalves-Pinto et al. (2020) should have little
+impact on monthly returns. Similarly, the coefficient on PC1 displayed in the sixth column is
+small and insignificant (t-statistic −1.4). The estimate of the coefficient on the implied volatility
+spread in the sixth column (0.0262) is only slightly smaller than the estimate reported in the fifth
+column (0.0277), which is also to be expected given that the coefficients on the control variables
+included in the sixth column specification are insignificant. While including the control variables
+does not make the coefficient on the volatility spread in the sixth column insignificant, it remains
+small, only 32% = 0.0262/0.0813 of the value computed using the full sample and reported in the
+third column. Thus, the volatility spread is a much weaker predictor of the returns of low-fee
+stocks than of the returns of high-fee stocks. This pattern for low-fee stocks closely follows the
+corresponding results in the portfolio analysis for implied volatility spread presented in Table 3.
+       Table 8 reports the results of a similar set of panel regressions that examine whether the
+implied volatility skew predicts weekly and monthly stock returns. As with our analysis of the
+volatility spread, we begin by confirming the existence of a strong univariate predictive relation
+between the implied volatility skew and stock returns in the full sample. As expected, the results
+in the first and fourth columns show that the volatility skew is significantly negatively related to
+both the subsequent week’s (t-statistic −4.2) and subsequent month’s (t-statistic −4.6) returns.
+       The second and fifth columns display the results of the same univariate specifications
+estimated on the subsample of low-fee stocks. The predictive relations are much weaker in this
+subsample. The estimated coefficient in the regression predicting weekly returns is now only
+56% = −0.0111/−0.0198 of the magnitude of the full-sample coefficient in the first column. The
+estimated coefficient in the regression predicting monthly returns is only 43% =
+−0.0306/−0.0717 of the magnitude of the full-sample coefficient in the fourth column. Adding
+control variables in the third and sixth columns reduces these coefficients even further. The
+estimated coefficient in the regression predicting weekly returns reported in the third column is
+only 38% = −0.0075/−0.0198 of the magnitude of the full-sample coefficient reported in the first
+column, and is insignificant (t-statistic −1.5). The estimated coefficient from the regression
+
+                                                  25
+predicting monthly returns reported in the right-most column is only 38% = −0.0075/−0.0198 of
+the magnitude of the full-sample coefficient displayed in the fourth column. Thus, similar to the
+volatility spread, the volatility skew is a much weaker predictor of the returns of low-fee stocks
+than of the returns of high-fee stocks.
+        Finally, in Table 9 we report the results of a similar set of panel regressions that examine
+whether the O/S ratio predicts stock returns. The results displayed in the first column show that
+the O/S ratio is not a significant predictor of weekly returns, even when using a univariate
+specification and the full sample. While the coefficient has the expected (negative) sign, the t-
+statistic is only 0.8. On the other hand, the results for the univariate specification we report in the
+fourth column show that the O/S ratio does predict monthly returns in the full sample, consistent
+with results in Johnson and So (2012).
+        Similar to the results for weekly returns, the other results displayed in Table 9 show that
+the O/S ratio is a much weaker predictor of both the weekly and monthly returns of low-fee
+stocks, which is expected. Comparing the results in the second and third columns to those in the
+first, the O/S ratio is an even weaker predictor in the subsample of low-fee stocks than in the full
+sample. The results reported in the fifth and sixth columns of Table 9 show that the O/S ratio is
+also at best a weak predictor of the monthly returns of low-fee stocks. They show that the
+estimated coefficient on the O/S ratio is only either 53% = −0.0046/−0.0087 or 52% =
+−0.0045/−0.0087) of its magnitude in the full sample, and insignificant. Thus, the O/S ratio is a
+much weaker predictor of the returns of low-fee stocks than of the returns of high-fee stocks.
+This pattern follows the same attenuation of predictability for volatility spread and volatility
+skew presented in Table 7 and Table 8 for low-fee stocks, but the initial magnitude of
+predictability using the O/S ratio is more modest.
+
+6. Discussion
+        Our results show that options volatility and volume information predict stock returns, but
+the specific patterns in the data also indicate that this predictability is not readily exploitable by
+sophisticated investors. The return predictability is concentrated in the tenth decile spread, skew,
+and O/S-sorted portfolios. The high-fee stocks are also concentrated in the very same decile ten
+portfolios. Due to this relation, the results reported in Tables 3 and 4 indicate that trading
+strategies based on sorting stocks using the volatility spread and skew offer only limited
+
+
+                                                  26
+profitability after taking account of the borrow fees paid by a short seller. For instance, adjusting
+for the borrow fee, the average fee-adjusted abnormal return on the tenth decile spread-sorted
+portfolio is just 28% of its magnitude before the fee adjustment, and statistically insignificant.
+The average fee-adjusted abnormal return on the tenth decile skew-sorted portfolio is 36% of its
+magnitude before the fee adjustment. The results in Table 5 show that trading strategies based on
+sorting stocks using the O/S ratio are not profitable after taking account of borrow fees.
+       The same trading strategies also offer only limited profitability in the subsample of low-
+fee stocks. The average abnormal return on the low-fee stocks in the tenth decile spread-sorted
+(skew-sorted) portfolio is only 21% (29%) of the average return on all stocks in the portfolio,
+and only marginally significant (volatility spread) or insignificant (volatility skew). The average
+abnormal return on the low-fee stocks in the tenth decile O/S-sorted portfolio is only −8 basis
+points per month.
+       The results of the panel regressions are consistent with the portfolio analyses. In the
+specifications that use the volatility spread to predict weekly and monthly returns, the coefficient
+on the volatility spread for the subsample of low-fee stocks is only about one-third of its
+magnitude in the full sample of both low and high-fee stocks. For the specifications with
+additional covariates, volatility spread does not help predict weekly returns at all. Similarly, in
+the low-fee subsample the coefficient on the volatility skew in the weekly (monthly) return
+regression is only 56% (43%) of its magnitude in the full sample. For the specifications with
+additional covariates, the magnitudes of the coefficients in the low-fee subsample are less than
+40% of their magnitudes in the full sample. While the results for O/S predictability are initially
+much less pronounced, the magnitude of return predictability at a monthly frequency falls
+substantially and is not statistically significant for the low-fee subsample.
+       The abnormal returns on the spread, skew, and O/S-sorted portfolio for which results are
+reported in Tables 3−5 become even smaller if one takes account of institutional transactions
+costs of the magnitudes estimated by Frazzini, Israel, and Moskowitz (2018). Specifically, if an
+investor were to trade based on the predictability evident in Tables 3 and 4, a large fraction of the
+both the fee-adjusted abnormal returns and the before-fee-adjustment returns on the low-fee
+stocks would be consumed by transactions costs. The results in Frazzini, Israel, and Moskowitz
+(2018) based on recent (2010-2016) data indicate that the price impact cost of a sophisticated
+institutional investor trading using an execution algorithm to trade 1% of daily volume is slightly
+
+                                                 27
+less than 0.10% of the amount traded. The round-trip price impact costs would be twice these
+amounts, or slightly less than 0.20%. Transaction costs of this magnitude would consume almost
+all of the net-of-fee return to shorting the stocks in the decile ten portfolios if the investor traded
+1% of average daily volume and turned over the portfolio every month.
+        Other estimates of institutional transactions costs are either consistent with or exceed
+those of Frazzini, Israel, and Moskowitz (2018). Drawing on results in Almgren et al. (2005) that
+use data on institutional trades, Almgren (2010) concludes that “trades that are a few percent of
+daily volume” have price impacts of “tens of basis points.” Novy-Marx and Velikov (2016) find
+that “round-trip transaction costs for typical value-weighted strategies average in excess of 50
+basis points.” A 2021 report from Virtu Financial, a leading high-frequency trader and execution
+broker, indicates that the combination of investment shortfall and commission costs is
+approximately 0.3% for large cap stocks during our sample period. These other results suggest
+that the trading cost estimates in Frazzini, Israel, and Moskowitz (2018) provide a plausible
+lower bound when estimating institutional transaction costs.
+        Turning to the O/S ratio, the results in Table 5 show that trading strategies based on
+sorting stocks using the O/S ratio are not profitable after taking account of the borrow fees. The
+net-of-fee abnormal returns on the tenth decile O/S sorted portfolio are only −6 basis points per
+month, and the unadjusted abnormal returns on the low-fee stocks in the tenth decile O/S sorted
+portfolio are only −3 basis points per month. The corresponding decile ten minus decile one
+long-short strategies yield similarly small abnormal returns.
+        Overall, these results provide little support for the hypothesis that the stock and options
+markets are segmented and the stock market is less efficient than the options market. As pointed
+out in the introduction, they instead are consistent with an equilibrium which the options and
+stock markets are connected via the stock lending market. The performance of the portfolios
+sorted using the borrow fee in Table 6 document the critical importance of the fee as the main
+underlying source of abnormal return predictability in this context. The high correlations
+between the volatility spread, volatility skew, and borrow fee shown in Table 2, and illustrated in
+Figures 1 and 2, are also consistent with an equilibrium in which the volatility spread, volatility
+skew, and borrow fee largely reflect the same underlying phenomenon.
+        However, the evidence also suggests that the borrow fee does not fully explain the
+abnormal returns of the spread- and skew-sorted portfolios. Although many of the relevant
+
+                                                  28
+estimates are insignificant, the point estimates of the average fee-adjusted abnormal returns are
+close to monotonically decreasing in the portfolio decile for both the spread- and skew-sorted
+portfolios. The same is true of the unadjusted abnormal returns on the portfolios of low-fee
+stocks. Also, the average fee-adjusted abnormal returns on the spread- and skew-sorted decile ten
+minus decile one long-short portfolio, while much smaller than the unadjusted returns, are
+statistically significant. Similarly, long-short portfolios formed from low-fee stocks in the
+spread- and skew-sorted portfolios have statistically significant (though small) returns. These
+abnormal returns become smaller if one further adjusts them for the round-trip transactions costs
+that would be incurred implementing such trading strategies. Regardless, the evidence suggests
+that the volatility spread and skew have some residual ability to predict returns beyond stock
+borrow costs. This residual predictability may or may not be exploitable once institutional
+transactions costs are taken into account. These much more modest magnitudes are consistent
+with the hypothesis that some options market demand pressure (that is not reflected in borrow
+costs) is quickly embedded in options prices but only slowly reflected in stock prices because
+exploiting this remaining predictability is of very limited benefit.
+
+7. Conclusion
+       A common interpretation of stock return predictability using information from options
+markets is that demand pressure in the options market due to informed trading alters option
+prices and implied volatilities but this information embedded within option prices is only slowly
+reflected in stock prices. As a result, the implied volatility measures and the O/S volume ratio
+predict stock returns. In the absence of an offsetting friction, this predictability would allow
+market participants to earn substantial risk-adjusted returns.
+       It is difficult to reconcile this common interpretation with other results and features of the
+options markets. First, option trades and option prices are readily available in real time. Second,
+the stock market is more liquid than the options market, so this interpretation requires that one
+believe that the less liquid options market contains information that is only slowly reflected in
+the more liquid stock market. In fact, Hu (2014) provides evidence that options order flow is
+quickly passed through to the stock market via the delta-hedge trades of options market makers,
+and Muravyev, Pearson, and Broussard (2013) present evidence that at high frequency options
+prices follow stock prices. This latter result should be expected because NBBO options price
+quotes are almost always from options market makers who use autoquotation algorithms in
+
+                                                 29
+which the stock price is an input. Finally, while demand pressure in the options market can
+certainly impact prices, in the well-known model of Gârleneau, Pedersen, and Poteshman (2009)
+demand pressure does not create non-zero implied volatility spreads.
+        We propose an alternative interpretation of the evidence that these measures from the
+options markets predict returns. We show that if options prices are equal to their no-arbitrage
+values that reflect the borrow fee but implied volatilities are computed omitting the borrow fee,
+the resulting implied volatility spread is proportional to the omitted borrow fee. Because the
+volatility skew can be decomposed into a volatility spread and the difference in the volatilities of
+OTM and ATM puts, the volatility skew also reflects the borrow fee.
+        These analytical results suggest the hypothesis that the implied volatility spread and
+implied volatility skew predict stock returns because they proxy for the borrow fee. Moreover,
+the borrow fee is a substantial friction that is reflected in options prices and limits stock
+investors’ ability to exploit options market informationinvestors have to pay a high borrow fee
+to short stocks with a high implied volatility spread or skew. We provide evidence consistent
+with this hypothesis. Our findings indicate that the volatility spread, the volatility skew, and the
+O/S ratio predict underlying stock returns largely because they proxy for the borrow fee.
+        The abnormal returns for the long-short portfolio strategies using the volatility spread, the
+volatility skew, and the O/S volume ratio are reduced by at least half after taking stock borrow
+costs into account. Also, the estimate of abnormal performance for the decile ten portfolio for
+each of these strategies is within 25 basis points of zero after adjusting for the borrow fee. Thus,
+selling short the stocks in portfolio ten based on these sorting strategies is not nearly as profitable
+once the cost of borrowing stocks is considered. Trading costs reduce the benefits of the related
+strategies to close to zero.
+        In panel regressions, the volatility spread, the volatility skew, and the O/S volume ratio
+are usually highly significant predictors in univariate specifications of weekly and monthly
+returns. However, once we restrict the sample to low-fee stocks, reflecting 93% of the
+observations, this return predictability is substantially attenuated or completely disappears. This
+finding for the panel regressions closely follows the attenuated portfolio return results when the
+portfolios only include low-fee stocks. Overall, the portfolio sorts and the panel regressions
+indicate that the borrow fee is largely responsible for the apparent stock return predictability
+using options market data.
+
+                                                  30
+        Of course, an unresolved puzzle in the academic literature about the abnormal return
+predictability based on measures of stock borrow costs is why those investors with long positions
+in these stocks do not sell some or all of their positions until this predictability is attenuated or
+eliminated. Explaining this puzzle is beyond the scope of this paper.
+
+
+
+
+                                                  31
+Appendix. Implied volatility in the presence of borrow fees
+        We assume that the options are of the European type, the interest rate is constant, the
+borrow fee is a constant rate continuously paid to the holders of the stock, and no dividends are
+paid prior to option expiration. This borrow fee is like a continuous dividend and it lowers the
+expected return of the stock under the risk-neutral measure below the risk-free rate. The stock
+price process is governed by geometric Brownian motion.
+        In the absence of arbitrage, option prices will be given by the appropriate versions of the
+Black-Scholes-Merton formulas, 11
+                    𝐶𝐶(𝑆𝑆, 𝜎𝜎, 𝑟𝑟, ℎ, 𝐾𝐾, 𝑡𝑡, 𝑇𝑇) = 𝑒𝑒 −ℎ(𝑇𝑇−𝑡𝑡) 𝑆𝑆𝑆𝑆(𝑑𝑑1 ) − 𝑒𝑒 −𝑟𝑟(𝑇𝑇−𝑡𝑡) 𝐾𝐾𝐾𝐾(𝑑𝑑2 )         (A1)
+and
+                 𝑃𝑃(𝑆𝑆, 𝜎𝜎, 𝑟𝑟, ℎ, 𝐾𝐾, 𝑡𝑡, 𝑇𝑇) = −𝑒𝑒 −ℎ(𝑇𝑇−𝑡𝑡) 𝑆𝑆𝑆𝑆(−𝑑𝑑1 ) + 𝑒𝑒 −𝑟𝑟(𝑇𝑇−𝑡𝑡) 𝐾𝐾𝐾𝐾(−𝑑𝑑2 ).        (A2)
+C is the price of the call, P is the price of the put, N is the standard normal cumulative
+distribution function, S is the stock price, σ is the stock volatility, r is the continuous risk-free
+rate, h is the continuous borrow fee, K is the strike price, t is a point in time before expiration,
+and T is the expiration date. The terms d1 and d2 are given by the formulas
+                             ln (𝑆𝑆⁄𝐾𝐾)+�𝑟𝑟−ℎ+0.5𝜎𝜎 2 �(𝑇𝑇−𝑡𝑡)
+                     𝑑𝑑1 =                                        and 𝑑𝑑2 = 𝑑𝑑1 − 𝜎𝜎√𝑇𝑇 − 𝑡𝑡 .                 (A3)
+                                         𝜎𝜎 √𝑇𝑇−𝑡𝑡
+
+        When h > 0 but it is treated as zero the implied volatilities of the call and put will be
+different from each other and also from the true volatility of the stock price, σ. Let σC and σP be
+the implied volatilities for the call and the put mistakenly computed as if h = 0, respectively. To
+understand how this incorrectly computed implied volatility spread depends on the borrow fee h,
+we use a Taylor expansion around h = 0 based on the derivative of this implied volatility spread
+with respect to h. The derivative is given by
+                                         𝜕𝜕(𝜎𝜎𝐶𝐶 − 𝜎𝜎𝑃𝑃 ) 𝜕𝜕𝜎𝜎𝐶𝐶 𝜕𝜕𝜎𝜎𝑃𝑃
+                                                         =      −       .                                     (A4)
+                                               𝜕𝜕ℎ         𝜕𝜕ℎ    𝜕𝜕ℎ
+        In this context σC and σP are not direct functions of h because h is mistakenly set to zero.
+Thus, a change in the borrow fee, h, can only affect σC and σP indirectly through the impact of h
+on the price of the call, C or the price of the put, P. Thus, we have the following equation
+                                      𝜕𝜕(𝜎𝜎𝐶𝐶 − 𝜎𝜎𝑃𝑃 ) 𝜕𝜕𝜎𝜎𝐶𝐶 𝜕𝜕𝜕𝜕 𝜕𝜕𝜎𝜎𝑃𝑃 𝜕𝜕𝜕𝜕
+                                                      =           −            .                              (A5)
+                                            𝜕𝜕ℎ         𝜕𝜕𝜕𝜕 𝜕𝜕ℎ    𝜕𝜕𝜕𝜕 𝜕𝜕ℎ
+11
+  MacDonald (2013), Chapter 12, provides these formulas for the case of a continuous dividend paid at a rate δ.
+Because the borrow fee plays the same role as a continuous dividend, the borrow fee h can be substituted for the
+dividend rate δ.
+
+                                                                 32
+           We rewrite this expression by applying the Inverse Function Theorem to σC and σP to get
+                                 𝜕𝜕(𝜎𝜎𝐶𝐶 − 𝜎𝜎𝑃𝑃 )       𝜕𝜕𝜕𝜕 𝜕𝜕𝜕𝜕       𝜕𝜕𝜕𝜕 𝜕𝜕𝜕𝜕
+                                                  = �1�      �    − �1�      � .                                   (A5)
+                                       𝜕𝜕ℎ             𝜕𝜕𝜎𝜎𝐶𝐶 𝜕𝜕ℎ      𝜕𝜕𝜎𝜎𝑃𝑃 𝜕𝜕ℎ
+Now, the first part of each term is simply the reciprocal of the classic option sensitivity to
+volatility in the absence of a borrow fee and the second term is the option sensitivity to the
+continuous borrow fee (essentially, a continuous dividend). However, to be internally consistent
+with the false assumption that h = 0, the values for d1 and d2 for the option sensitivity to implied
+volatility would be different for a call and a put whenever h > 0 even if the two options had the
+same strike, K. Therefore, we substitute the standard expressions for these terms into the
+previous equation, but evaluate the expression only at h = 0 to ensure that d1 is the same for both
+of the option sensitivities utilized.
+                           𝜕𝜕(𝜎𝜎𝐶𝐶 − 𝜎𝜎𝑃𝑃 )          𝑆𝑆𝑆𝑆(𝑑𝑑1 )(𝑇𝑇 − 𝑡𝑡)    𝑆𝑆𝑆𝑆(−𝑑𝑑1 )(𝑇𝑇 − 𝑡𝑡)
+                                            �     =−                      −                                        (A6)
+                                 𝜕𝜕ℎ          ℎ=0    𝑆𝑆𝑁𝑁 ′ (𝑑𝑑1 )√𝑇𝑇 − 𝑡𝑡 𝑆𝑆𝑆𝑆′(𝑑𝑑1 )�(𝑇𝑇 − 𝑡𝑡)
+where 𝑁𝑁 ′ (𝑑𝑑1 ) is the standard normal probability density function. Simplifying and using the
+formula for the standard normal density function,
+                                   𝜕𝜕(𝜎𝜎𝐶𝐶 − 𝜎𝜎𝑃𝑃 )                             2
+                                                    �     = −�2𝜋𝜋(𝑇𝑇 − 𝑡𝑡)(𝑒𝑒 𝑑𝑑1 ⁄2 )�ℎ=0 .                       (A7)
+                                         𝜕𝜕ℎ          ℎ=0
+
+Given this expression it is now straightforward to consider how σC − σP, the volatility spread for
+a call and put with the same strike mistakenly calculated as if h = 0, depends on h. The sign of
+the expression is negative because a higher h reduces the value of the call and increases the value
+of the put. If one computes the implied volatilities treating h as zero the implied volatility of the
+call decreases because the call value is lower and the implied volatility of the put increases
+because the put value is higher. The equation above indicates that h has a larger impact on the
+volatility spread when |d1| is large, which occurs when the absolute moneyness |ln(S/K)| is large.
+Also, h has a larger impact on the volatility spread when time to maturity, T − t, is large.
+           Using the derivative given by Equation (A7), we calculate σC − σP using a first-order
+Taylor expansion 12 around h = 0
+                                                                          2
+                                        𝜎𝜎𝐶𝐶 −𝜎𝜎𝑃𝑃 ≈ − �2𝜋𝜋(𝑇𝑇 − 𝑡𝑡)𝑒𝑒 𝑑𝑑1 ⁄2 �         × ℎ.                       (A8)
+                                                                                  ℎ=0
+
+This is equation (5) in the text and the expression shows that the volatility spread σC − σP is
+proportional to the borrow fee h, ignoring the approximation error. The approximation in this
+12
+     We need to assume that T – t ≥ ε1 > 0 and σ ≥ ε2 > 0 to ensure that the high-order derivatives are bounded.
+
+                                                            33
+equation is accurate in a typical setting with S = 100, σ = 0.3, r = 0.01, h = 0.05, K = 100, and T
+− t = 0.25. The actual implied volatility spread using these parameters is −0.0625 and the
+approximation based on the first-order Taylor expansion is −0.0629. Thus, the approximation
+error is only 0.0004 even with a substantial borrow fee.
+        The text points out that, for an option that is near-the-money, the term d12/2 ≈ 0 and thus
+              2
+the term 𝑒𝑒 −𝑑𝑑1 /2 ≈ 1. Using this approximation, Equation (A8) implies that
+
+                              ℎ𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖 ≈ −(𝜎𝜎𝐶𝐶 −𝜎𝜎𝑃𝑃 )/�2𝜋𝜋(𝑇𝑇 − 𝑡𝑡),                     (A9)
+which is Equation (7) in the main text.
+        Alternatively, if one has the implied volatilities and thus prices C and P of European call
+and put options with the same strike price and expiration date, and also the risk-free rate r
+corresponding to the expiration date, one can use the European put-call parity relation e−h(T−t)S –
+e−r(T−t)K = C – P to compute the option-implied borrow fee h.
+        OptionMetrics provides call and put implied volatility surfaces for call option deltas ∆ ∈
+{0.10, 0.15, 0.20, 0.25, …, 0.90}, put option deltas ∆ ∈ {−0.10, −0.15, −0.20, −0.25, …, −0.90},
+and times-to-expiration T – t ∈{30, 60, 91, 122, 152, 182, 273, 365, 547, 730}, where the time to
+expiration T – t is measured in calendar days. For each grid point, OptionMetrics also provides
+the implied strike price of an option contract with the specified delta. The implied strike of the
+say 0.50-delta call is not identical to the implied strike of the −0.50-delta put, preventing
+immediate use of the put-call parity relation. However, one can use the data in the implied
+volatility surfaces to interpolate the put and call implied volatilities for any strike price and time-
+to-expiration T – t. If one then uses the interpolated implied volatilities to compute the prices of
+European calls and puts with the same strike price and expiration date, one can then compute the
+option-implied lending fee from the put-call parity relation.
+        It is also possible to analyze how the incorrectly computed implied volatility skew
+depends on the borrow fee h. We could use a similar Taylor expansion around h = 0 based on the
+derivative of this implied volatility skew with respect to h. However, the options for the two
+implied volatilities used to calculate volatility skew have two different strike prices, that is KC ≠
+KP. So, even if h = 0 we have two different values for 𝑑𝑑1𝐶𝐶 and 𝑑𝑑1𝑃𝑃 .
+        Again, we need the derivative of volatility skew with respect to h evaluated at h = 0 for
+the Taylor expansion. The following expression provides this derivative,
+
+                                                       34
+          𝜕𝜕(𝜎𝜎𝑃𝑃 −𝜎𝜎𝐶𝐶 )                              𝑃𝑃 2                       𝐶𝐶 2
+                          �     = �2𝜋𝜋(𝑇𝑇 − 𝑡𝑡) �𝑒𝑒 (𝑑𝑑1 ) ⁄2 𝑁𝑁(−𝑑𝑑1𝑃𝑃 ) + 𝑒𝑒 (𝑑𝑑1 ) ⁄2 𝑁𝑁(𝑑𝑑1𝐶𝐶 )��    .   (A10)
+               𝜕𝜕ℎ          ℎ=0                                                                      ℎ=0
+
+While we do not get the simple expression in equation (A7), this derivative can still be calculated
+in a straightforward manner.
+
+
+
+
+                                                           35
+References
+
+Almgren, R. 2010. Execution costs. In Encyclopedia of quantitative finance, ed. R. Cont, 612−6.
+      Hoboken, NJ: John Wiley & Sons.
+Almgren, R., C. Thum, E. Hauptmann, and H. Li. 2005. Equity market impact. Risk 18:57–62.
+Bali, Turan G. and Armen Hovakimian, 2009. Volatility spreads and expected stock returns.
+       Management Science 55(11): 1797–1812.
+Biais, Bruno and Pierre Hillion, 1994. Insider and liquidity trading in stock and options markets,
+        Review of Financial Studies 7(4): 743−780.
+Black, Fisher, 1975. Fact and fantasy in the use of options. Financial Analysts Journal 31(4):
+       6−41+61−72.
+BlackRock Securities Lending, 2021. Unlocking the potential of portfolios. Marketing material.
+Boehme, Rodney D., Bartley R. Danielsen, and Sorin M. Sorescu, 2006. Short-sale constraints,
+     differences of opinion, and overvaluation, Journal of Financial and Quantitative Analysis
+     41, No.2, 455−487.
+Boehmer, Ekkehart, Zsuzsa Huszar, and Brad Jordan, 2010. The good news in short interest,
+     Journal of Financial Economics 96, 80−97.
+Bogousslavsky, V. and Muravyev, D., 2020. Who trades at the close? Implications for price
+      discovery, liquidity, and disagreement. Working paper.
+Chakravarty, Sugato, Huseyin Gulen, Stewart Mayhew, 2004. Informed trading in stock and
+      option markets. Journal of Finance 59(3): 1235−1275.
+Clements, Mark, Vitali Kalesnik, and Juhani T. Linnainmaa, 2017. Informed traders, long-dated
+      options, and the cross section of stock returns. Working paper.
+Cohen, Lauren, Karl B. Diether, and Christopher J. Malloy, 2009, Shorting demand and
+       predictability of returns, Journal of Investment Management 7(1), 36−52.
+Conrad, Jennifer, Robert F. Dittmar, and Eric Ghysels, 2013. Ex ante skewness and expected
+      stock returns. Journal of Finance 68, No. 1, 85−124.
+Cremers, Martijn and David Weinbaum, 2010. Deviations from put-call parity and stock return
+      predictability, Journal of Financial and Quantitative Analysis 45, No. 2, 335–367.
+D’Avolio, Gene, 2002, The market for borrowing stock, Journal of Financial Economics 66,
+      271−306.
+Desai, Hemang, K. Ramesh, S. Ramu Thiagarajan, and Bala V. Balachandran, 2002. An
+       investigation of the informational role of short interest in the NASDAQ market, Journal
+       of Finance 57, 2263−2287.
+Duong, Truong X., Zsuzsa R. Huszár, Ruth S. K. Tan, and Weina Zhang, 2017. The information
+      value of stock lending fees: Are lenders price takers?, Review of Finance 21, No 6, 2353–
+      2377.
+Drechsler, Itmar and Qingyi Drechsler, 2016. The shorting premium and asset pricing
+       Anomalies, Working Paper.
+                                                36
+Easley, David, Maureen O’Hara, and P.S. Srinivas. 1998. Option volume and stock prices:
+       Evidence on where informed traders trade. Journal of Finance 53(2): 431−465.
+Engelberg, Joseph E., Adam V. Reed, and Matthew C. Ringgenberg, 2018. Short selling risk,
+      Journal of Finance 73, No. 2, 755−786.
+Engelberg, Joseph E., Richard B. Evans, Greg Leonard, and Adam Reed, 2020. The loan fee
+      anomaly: A short seller's best ideas. Working paper, University of California, San Diego.
+Etula, Erkko, Kalle Rinne, Matti Suominen, and Lauri Vaittinen, 2020. Dash for cash: Monthly
+        market impact of institutional liquidity needs. Review of Financial Studies 33, 75−111.
+Figlewski, Stephen, 1981, The informational effects of restrictions on short sales: Some
+       empirical evidence, Journal of Financial and Quantitative Analysis 16, 463−476.
+Frazzini, A., R. Israel, and T.J. Moskowitz. 2012. Trading costs of asset pricing anomalies.
+       Working Paper, AQR Capital.
+Frazzini, A., R. Israel, and T.J. Moskowitz. 2018. Trading costs. Working Paper, AQR Capital.
+Gârleneau, Nicolae, Lasse Heje Pedersen, and Allen M. Poteshman, 2009. Demand-based option
+       pricing. Review of Financial Studies 22, No. 10, 4259–4299.
+Ge, Li, Tse-Chun Lin, and Neil D. Pearson, 2016. Why does the option to stock volume ratio
+        predict stock returns. Journal of Financial Economics 120, 601-622.
+Geczy, Christopher C., David K. Musto, and Adam V. Reed, 2002, Stocks are special too: An
+       analysis of the equity borrowing market, Journal of Financial Economics 66, 241−269.
+Goncalves-Pinto, Luis, Bruce Grundy, Allaudeen Hameed, Thijs van der Heijden, and Yichao
+      Zhu, 2020. Why do option prices predict stock returns? The role of price pressure in the
+      stock market. Management Science 66, No. 9, 3799−4358.
+Grundy, Bruce D., Bryan Lim, and Patrick Verwijmeren, 2012. Do option markets undo
+      restrictions on short sales? Evidence from the 2008 short-sale ban, Journal of Financial
+      Economics 106, 331–348.
+Henderson, Brian J., Gergana Jostova, and Alexander Philipov. 2019. Stock loan fees, private
+      information, and smart lending. Working Paper.
+Hong, Harrison, Frank Weikai Li, Sophie X. Ni, Jose A. Scheinkman, and Philip Yan, 2016.
+      Days to cover and stock Returns, Working Paper.
+Hu, Jianfeng, 2014. Does option trading convey stock price information? Journal of Financial
+       Economics 111, 625−645.
+Hu, Jianfeng, 2018. Option listing and information asymmetry, Review of Finance 22, 1153-
+       1194.
+Jones, Charles M., and Owen A. Lamont, 2002. Short-sale constraints and stock returns. Journal
+       of Financial Economics 66, 207−239.
+Kolasinski, Adam C., Adam V. Reed, and Matthew C. Ringbenberg, 2013. A multiple lender
+       approach to understanding supply and search in the equity borrowing market, Journal of
+       Finance 68, 559−595.
+
+                                                37
+Lamont, Owen A., 2012. Go down fighting: Short sellers vs. firms. Review of Asset Pricing
+      Studies 2, 1−30.
+MacDonald, Robert L., 2013. Derivatives Markets. 3rd edition. New York: Pearson
+Markit, 2012. Equity BuySide Analytics Data Dictionary & Sample.xlsx (updated 26 June
+       2012).
+McLean, R. David and Jeffrey Pontiff, 2016. Does academic research destroy stock return
+     predictability? Journal of Finance 71, No. 1, 5−32.
+Merton, Robert C., 1973. Theory of rational option pricing, Bell Journal of Economics and
+      Management Science 4, No. 1, 141−183.
+Muravyev, Dmitriy. 2016. Order flow and expected option returns. Journal of Finance 71, No.
+      2, 673−708.
+Muravyev, Dmitriy, Neil D. Pearson, and John Broussard, 2013. Is there price discovery in
+      equity options? Journal of Financial Economics 107, No. 2, 259−283.
+Muravyev, Dmitriy, Neil D. Pearson, and Joshua Pollet, 2021. Is there a risk premium in the
+      stock lending market? Evidence from equity options. Forthcoming, Journal of Finance.
+Novy-Marx, Robert and Mihail Velikov, 2016. A taxonomy of anomalies and their trading costs.
+      Review of Financial Studies 29, 104−147.
+Ofek, Eli, Matthew Richardson, and Robert Whitelaw, 2004, Limited arbitrage and short sales
+       restrictions: Evidence from the options markets, Journal of Financial Economics 74,
+       305−342.
+OptionMetrics LLC. 2021. IvyDB File and Data Reference Manual (version 5.0, revision
+      1/12/2021).
+Stambaugh, Robert, Jianfeng Yu, and Yu Yuan, 2015. Arbitrage asymmetry and the
+      idiosyncratic volatility puzzle. Journal of Finance 70, No. 5, 1903−1948.
+Xing, Yuhang, Xiaoyan Zhang, and Ruhui Zhao, 2010. What does the individual option volatility
+       smirk tell us about future equity returns? Journal of Financial and Quantitative Analysis
+       45, No. 3 (June), 641–646.
+
+
+
+
+                                              38
+Figure 1. Indicative borrow fee, volatility spread, and volatility skew for Tesla.
+Panel A shows the daily Markit indicative borrow fee and the five-day moving average of the daily
+implied volatility spread (negated) for Tesla Motors from July 2010 through July 2015, the part of the
+sample period for which Tesla data are available. Panel B shows the borrow fee and a five-day moving
+average of the implied volatility skew over the same period. The volatility spread and skew are computed
+from OptionMetrics implied volatilities as described in Section 2.
+
+
+                                                   39
+Figure 2. Indicative borrow fee, volatility spread, and volatility skew for Factset
+Panel A shows the daily Markit indicative borrow fee and a five-day moving average of the daily implied
+volatility spread (negated) for Factset Research Systems from July 2006 through July 2015, the full
+sample period. Panel B shows the indicative borrow fee and a five-day moving average of the implied
+volatility skew during the same period. The implied volatility spread and skew are computed from
+OptionMetrics implied volatilities as described in Section 2.
+
+
+                                                  40
+Figure 3. Indicative and option-implied borrow fees for Tesla and Factset
+Panel A shows the daily Markit indicative borrow fee and a five-day moving average of the daily option-
+implied borrow fee himplied for Tesla Motors from July 2010 through July 2015, the part of the sample
+period for which the Tesla data are available. Panel B shows the same two series for Factset Research
+systems from July 2006 through July 2015, the full sample period. In both cases the option-implied
+borrow fee is computed from the at-the-money (∆ = 0.50 or −0.50) 30-day implied volatilities taken from
+the OptionMetrics implied volatility surfaces.
+
+                                                  41
+                                                                              Table 1
+                                                                          Summary statistics
+This table presents selected statistics for the optionable common stocks in CRSP that match to valid options data in Optionmetrics using the filters in Muravyev,
+Pearson, and Pollet (Journal of Finance, forthcoming) and to an indicative borrowing fee in Markit. The unit of observation is a stock and a trading date.
+Utilization is from Markit. Short interest is the number of shares short in Markit divided by shares outstanding from CRSP. Implied volatility spread is the
+difference between the implied volatilities of at-the-money calls and puts used in Cremers and Weinbaum (2010). Please note that the portfolio sorting analysis in
+Table 3 uses the negated version of implied volatility spread so that portfolio 10 includes the stocks to be sold short by the trading strategy. Implied volatility skew
+is the difference between the implied volatilities of an out-of-the-money call and an at-the-money call used in Xing, Zhang, and Zhao (2010). Option-to-stock
+volume is defined as the sum of call volume and put volume from Option metrics for all option contracts for the underlying stock on date t multiplied by 100
+divided by share volume for the stock from CRSP on date t. Market capitalization is from CRSP and NYSE size decile is assigned accordingly. The sample period
+is July 2006 to August 2015.
+                              Summary statistics for the optionable CRSP stocks with an indicative borrowing fee in Markit
+                                No. Obs.          Mean         Std. Dev.      Skewness           1%             10%            50%            90%             99%
+Indicative borrowing fee         3,419,438       0.0097          0.0393        13.7137          0.0025        0.0038          0.0038         0.0063          0.1500
+Utilization                      3,419,400      19.9037         21.0515         1.3854          0.1197        1.1737         11.9902        52.2027         85.1342
+Short interest                   3,419,438       0.0594          0.0667         2.0282          0.0007        0.0044          0.0351         0.1497          0.2995
+Implied volatility spread        3,414,488      -0.0101          0.0486        -3.7130         -0.1794        -0.0456        -0.0053         0.0253          0.0822
+Implied volatility skew          2,699,582       0.0514          0.0424         3.1760         -0.0302        0.0155          0.0473         0.0882          0.1948
+Option-to-stock volume           3,419,419       0.0752          0.1851        35.8709          0.0000        0.0000          0.0235         0.1940          0.6942
+Market cap, $mn                  3,419,175        9223           27638             9              179           456            2128          18926          146613
+NYSE size decile                 3,350,070       8.2173          1.6599        -0.8923             4              6              9             10              10
+
+
+
+
+                                                                                 42
+                                                                              Table 2
+                                                                         Correlation matrix
+This table presents the correlation matrix for the optionable common stocks in CRSP that match to valid options data in Optionmetrics using the filters in
+Muravyev, Pearson, and Pollet (Journal of Finance, forthcoming) and to an indicative borrowing fee (IBF) in Markit. The unit of observation is a stock and a
+trading date. Utilization (U) is from Markit. Short interest (SI) is the number of shares short in Markit divided by shares outstanding from CRSP. Implied
+volatility spread (IVSP) is the difference between the implied volatilities of at-the-money calls and puts used in Cremers and Weinbaum (2010). Please note that
+the portfolio sorting analysis in Table 3 uses the negated version of implied volatility spread so that portfolio 10 includes the stocks to be sold short by the trading
+strategy. Implied volatility skew (IVSK) is the difference between the implied volatilities of an out-of-the-money call and an at-the-money call used in Xing,
+Zhang, and Zhao (2010). Option-to-stock (OS) volume is defined as the sum of call volume and put volume from Option metrics for all option contracts for the
+underlying stock on date t multiplied by 100 divided by share volume for the stock from CRSP on date t. Market capitalization (MC) is from CRSP. The sample
+period is July 2006 to August 2015.
+
+                           Panel A: Correlation matrix for optionable CRSP stocks with an indicative borrowing fee in Markit
+                                       IBF                  U                  SI                IVSP               IVSK                 OS                 MC
+Indicative borrowing fee              1.0000
+Utilization                           0.3863              1.0000
+Short interest                        0.2263              0.8452             1.0000
+Implied volatility spread            -0.6166             -0.3196            -0.2127             1.0000
+Implied volatility skew               0.5286              0.2586             0.1743            -0.7725              1.0000
+Option-to-stock volume                0.1169              0.1017             0.0697            -0.0906              0.0934             1.0000
+Market Cap, $mn                      -0.0439             -0.2172            -0.2070             0.0496             -0.0021             0.1529             1.0000
+                  Panel B: Correlation matrix for the subset of optional CRSP stocks with an indicative borrowing fee > 1% in Markit
+                                       IBF                  U                  SI                IVSP               IVSK                 OS                 MC
+Indicative borrowing fee              1.0000
+Utilization                           0.3063              1.0000
+Short interest                       -0.0136              0.3797             1.0000
+Implied volatility spread            -0.7512             -0.2790            -0.0556             1.0000
+Implied volatility skew               0.7003              0.2486             0.0628            -0.9219              1.0000
+Option-to-stock volume                0.1704              0.1351             0.0611            -0.1912              0.1840             1.0000
+Market cap, $mn                      -0.0388             -0.0275            -0.1331             0.0064             -0.0269             0.0865             1.0000
+
+
+
+
+                                                                                 43
+                                                                      Table 3
+                         Risk-adjusted performance for equal-weighted portfolios sorted on implied volatility spread (negated)
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW benchmark
+portfolio formed using the implied volatility spread (negated). The implied volatility spread (negated) is the difference between the implied volatilities of at-the-
+money puts and calls, which is the negative of the measure used in Cremers and Weinbaum (2010). The sample includes the optionable common stocks in CRSP
+on a given date t that match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal of Finance, forthcoming) and to an
+indicative borrowing fee in Markit. Stocks are sorted into deciles in each panel using implied volatility spread on trading date t and held in portfolios from the
+close of trading date t+1 until the close of trading date t+22. In Panel B the cumulative indicative borrowing fee during the evaluation period is added to each
+stock's return to adjust performance for the potential cost of borrowing stock. In Panel C (Panel D) the monthly performance for each portfolio in Panel A is
+recalculated only using the stocks in the portfolio with an indicative borrowing fee less than or equal to 1% (greater than 1%), that is, easy-to-borrow stocks (hard-
+to-borrow stocks). The sample period is July 2006 to August 2015. By construction, each portfolio return observation overlaps in time with the next (previous)
+20 observations. The t-statistics use Newey-West standard errors with 50 lags to adjust for this pattern and are reported in brackets below the coefficient
+estimates. *, **, and *** indicate statistical significance at the 10%, 5%, and 1% levels, respectively.
+
+                             1                                                                                                                 10
+                                           2           3            4           5            6           7            8            9                        10-1
+                            Low                                                                                                               High
+                   Panel A: Risk-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility spread
+Average return             0.0006       0.0006      0.0006       0.0006      0.0005       0.0000      0.0001      -0.0004      -0.0013     -0.0067*** -0.0073***
+t-statistic                 [0.8]        [0.9]       [0.9]        [0.8]       [0.7]        [-0.0]      [0.1]       [-0.5]       [-1.6]        [-5.5]     [-6.6]
+Average # fee > 1%            6            3           3            2           3            3           4           6            12            57
+Average # of stocks          148          148         148          148         148          148         148         148          148           148
+         Panel B: Risk-adjusted and fee-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility spread
+Average return             0.0009       0.0008      0.0007       0.0007      0.0006       0.0001      0.0002      -0.0002      -0.0005       -0.0019    -0.0028***
+t-statistic                 [1.3]        [1.1]       [1.0]        [1.0]       [0.9]        [0.1]       [0.3]       [-0.3]       [-0.7]        [-1.6]       [-2.6]
+           Panel C: Risk-adjusted performance using the only easy-to-borrow stocks from the portfolios sorted by implied volatility spread
+Average return             0.0010       0.0009      0.0007       0.0007      0.0006       0.0001      0.0002      -0.0001      -0.0006      -0.0015* -0.0025***
+t-statistic                 [1.4]        [1.2]       [1.0]        [1.0]       [0.9]        [0.1]       [0.3]       [-0.1]       [-0.8]        [-1.7]    [-3.6]
+Average # of stocks          142          145         145          146         145          145         144         142          136            91
+           Panel D: Risk-adjusted performance using the only hard-to-borrow stocks from the portfolios sorted by implied volatility spread
+Average return           -0.0093** -0.0076** -0.0049 -0.0075** -0.0062* -0.0055*                      -0.0038 -0.0068** -0.0089*** -0.0157*** -0.0063*
+t-statistic                [-2.4]    [-2.0]   [-1.6]   [-2.5]    [-1.8]   [-1.7]                       [-1.4]   [-2.5]     [-3.3]     [-6.0]    [-1.7]
+Average # of stocks          6         3        3        2         3        3                            4        6          12         57
+
+
+
+
+                                                                                44
+                                                                       Table 4
+                                Risk-adjusted performance for equal-weighted portfolios sorted on implied volatility skew
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW benchmark
+portfolio formed using the implied volatility skew. The implied volatility skew is the difference between the implied volatilities of an out-of-the-money call and
+an at-the-money call used in Xing, Zhang, and Zhao (2010). The sample includes the optionable common stocks in CRSP on a given date t that match to valid
+options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal of Finance, forthcoming) and to an indicative borrowing fee in Markit.
+Stocks are sorted into deciles in each panel using implied volatility skew on trading date t and held in portfolios from the close of trading date t+1 until the close
+of trading date t+22. In Panel B the cumulative indicative borrowing fee during the evaluation period is added to each stock's return to adjust performance for the
+potential cost of borrowing stock. In Panel C (Panel D) the monthly performance for each portfolio in Panel A is recalculated only using the stocks in the portfolio
+with an indicative borrowing fee less than or equal to 1% (greater than 1%), that is, easy-to-borrow stocks (hard-to-borrow stocks). The sample period is July
+2006 to August 2015. By construction, each portfolio return observation overlaps in time with the next (previous) 20 observations. The t-statistics use Newey-
+West standard errors with 50 lags to adjust for this pattern and are reported in brackets below the coefficient estimates. *, **, and *** indicate statistical
+significance at the 10%, 5%, and 1% levels, respectively.
+
+                             1                                                                                                                  10
+                                           2           3            4            5           6            7           8            9                         10-1
+                            Low                                                                                                                High
+                    Panel A: Risk-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility skew
+Average return             0.0010       0.0005      0.0008       0.0004      0.0006       0.0002      -0.0003      -0.0010    -0.0022** -0.0059*** -0.0069***
+t-statistic                 [1.0]        [0.5]       [0.8]        [0.4]       [0.6]        [0.2]       [-0.4]       [-1.2]      [-2.2]     [-4.5]     [-4.5]
+Average # fee > 1%            4            2           2            2           2            3           3            4           8          38
+Average # of stocks          117          117         117          117         117          117         117          117         117        117
+          Panel B: Risk-adjusted and fee-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility skew
+Average return             0.0012       0.0006      0.0009       0.0004      0.0006       0.0003      -0.0002      -0.0008     -0.0016*      -0.0021     -0.0033**
+t-statistic                 [1.1]        [0.6]       [0.9]        [0.5]       [0.7]        [0.3]       [-0.3]       [-1.0]       [-1.6]       [-1.6]       [-2.1]
+            Panel C: Risk-adjusted performance using the only easy-to-borrow stocks from the portfolios sorted by implied volatility skew
+Average return             0.0014       0.0006      0.0008       0.0004      0.0006       0.0003      -0.0002      -0.0009     -0.0016*      -0.0017     -0.0030**
+t-statistic                 [1.3]        [0.6]       [0.9]        [0.5]       [0.7]        [0.3]       [-0.3]       [-1.0]       [-1.7]       [-1.4]       [-2.1]
+Average # of stocks          113          115         115          115         115          114         114          113          109           79
+            Panel D: Risk-adjusted performance using the only hard-to-borrow stocks from the portfolios sorted by implied volatility skew
+Average return             -0.0081     -0.0043      -0.0002     -0.0033      -0.0045     -0.0032      -0.0028      -0.0035 -0.0112*** -0.0156***           -0.0079
+t-statistic                 [-1.6]      [-1.1]       [-0.1]      [-0.8]       [-1.3]      [-1.0]       [-0.9]       [-1.2]    [-3.9]     [-5.8]             [-1.5]
+Average # of stocks           4           2            2           2            2           3            3            4         8          38
+
+
+
+
+                                                                                45
+                                                                       Table 5
+                            Risk-adjusted performance for equal-weighted portfolios sorted on option-to-stock (O/S) volume
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW benchmark
+portfolio formed using option-to-stock (O/S) volume. The O/S volume ratio is defined as the sum of call volume and put volume from Option metrics for all
+option contracts for the underlying stock on date t multiplied by 100 divided by share volume for the stock from CRSP on date t. The sample includes the
+optionable common stocks in CRSP on a given date t that match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal
+of Finance, forthcoming) and to an indicative borrowing fee in Markit. Stocks are sorted into deciles in each panel using option-to-stock volume on trading date t
+and held in portfolios from the close of trading date t+1 until the close of trading date t+22. In Panel B the cumulative indicative borrowing fee during the
+evaluation period is added to each stock's return to adjust performance for the potential cost of borrowing stock. In Panel C (Panel D) the monthly performance
+for each portfolio in Panel A is recalculated only using the stocks in the portfolio with an indicative borrowing fee less than or equal to 1% (greater than 1%), that
+is, easy-to-borrow stocks (hard-to-borrow stocks).The sample period is July 2006 to August 2015. By construction, each portfolio return observation overlaps in
+time with the next (previous) 20 observations. The t-statistics use Newey-West standard errors with 50 lags to adjust for this pattern and are reported in brackets
+below the coefficient estimates. *, **, and *** indicate statistical significance at the 10%, 5%, and 1% levels, respectively.
+
+                             1                                                                                                                  10
+                                           2           3            4            5           6            7           8            9                         10-1
+                            Low                                                                                                                High
+                   Panel A: Risk-adjusted performance for equal-weighted portfolios using stocks sorted by option-to-stock volume
+Average return             -0.0001     -0.0003      0.0004       0.0002      0.0004       0.0004      -0.0006     -0.0013* -0.0020** -0.0026**            -0.0026*
+t-statistic                 [-0.1]      [-0.3]       [0.6]        [0.3]       [0.6]        [0.6]       [-0.9]       [-1.7]   [-2.4]    [-2.5]               [-1.9]
+Average # fee > 1%            3           3            4            6           7            9           2            4        17        24
+Average # of stocks          148         148          148          148         148          148         148          148      148       148
+          Panel B: Risk-adjusted and fee-adjusted performance for equal-weighted portfolios using stocks sorted by option-to-stock volume
+Average return             0.0002       0.0000      0.0006       0.0005      0.0007       0.0007      -0.0002      -0.0008      -0.0006      -0.0004       -0.0006
+t-statistic                 [0.2]        [0.0]       [0.9]        [0.7]       [1.0]        [1.1]       [-0.3]       [-1.1]       [-0.8]       [-0.4]        [-0.5]
+           Panel C: Risk-adjusted performance using the only easy-to-borrow stocks from the portfolios sorted by option-to-stock volume
+Average return             0.0000      -0.0002      0.0006       0.0006      0.0009      0.0011*       0.0004      -0.0001      -0.0003      -0.0008       -0.0008
+t-statistic                 [-0.0]      [-0.2]       [0.9]        [0.9]       [1.3]        [1.6]        [0.7]       [-0.1]       [-0.5]       [-0.8]        [-0.6]
+Average # of stocks          145         145          144          142         141          139          146         144          131          124
+           Panel D: Risk-adjusted performance using the only hard-to-borrow stocks from the portfolios sorted by option-to-stock volume
+Average return             -0.0011     -0.0052 -0.0075** -0.0098***-0.0101***-0.0111***-0.0125***-0.0120*** -0.0151*** -0.0131*** -0.0116***
+t-statistic                 [-0.3]      [-1.6]   [-2.5]     [-3.4]    [-3.7]    [-4.0]    [-4.3]    [-4.2]     [-5.4]     [-4.4]     [-3.0]
+Average # of stocks           3           3        4          6         7         9         2         4          17         24
+
+
+
+
+                                                                                46
+                                                                    Table 6
+                            Risk-adjusted performance for equal-weighted portfolios sorted on indicative borrowing fee
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW
+benchmark portfolio formed using the indicative borrowing fee. The indicative borrowing fee per year for each date t is from Markit. The sample includes
+the optionable common stocks in CRSP on a given date t that match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet
+(Journal of Finance, forthcoming) and to an indicative borrowing fee in Markit. Stocks are sorted into deciles in each panel using the indicative borrowing
+fee on trading date t and held in portfolios from the close of trading date t+1 until the close of trading date t+22. In Panel B and Panel D, the cumulative
+indicative borrowing fee during the evaluation period is added to each stock's return to adjust performance for the potential cost of borrowing stock. The
+sample period is July 2006 to August 2015. By construction, each portfolio return observation overlaps in time with the next (previous) 20 observations.
+The t-statistics use Newey-West standard errors with 50 lags to adjust for this pattern and are reported in brackets below the coefficient estimates. *, **, and
+*** indicate statistical significance at the 10%, 5%, and 1% levels, respectively.
+
+                            1                                                                                                             10
+                                         2           3            4           5           6           7           8           9                        10-1
+                           Low                                                                                                           High
+                     Risk-adjusted performance for equal-weighted portfolios using stocks sorted by indicative borrowing fee
+Average return            0.0004      0.0004      0.0005      0.0004       0.0004      0.0005      0.0002      0.0002      -0.0004 -0.0080*** -0.0083***
+t-statistic                [0.5]       [0.6]       [0.7]       [0.6]        [0.5]       [0.8]       [0.3]       [0.3]       [-0.6]    [-4.3]     [-4.5]
+Average fee per year      0.0035      0.0036      0.0036      0.0036       0.0037      0.0038      0.0039      0.0041      0.0050       0.0627     0.0592***
+on date t                                                                                                                                            [24.9]
+Average fee per year
+                          0.0038      0.0038      0.0038      0.0038       0.0038      0.0038      0.0039      0.0040      0.0048       0.0622     0.0584***
+from date t+1 to
+                                                                                                                                                     [23.8]
+t+22
+Average # fee > 1%           0           0           0            0           0           0           0           0           1           98
+Average # of stocks         148         148         148         148         148         148         148          148         148          148
+
+
+
+
+                                                                                  47
+                                                         Table 7
+                               Stock return predictability using implied volatility spread
+This table presents the results of regressions that use the option-implied volatility spread to predict the stock return from the
+close of trading date t+1 to the close trading date t+6 (next week) in columns 1 through 3 and from the close of trading date
+t+1 to the close trading date t+22 (next month) in columns 4 through 6. The unit of observation is the combination of a
+stock and trading date for the optionable common stocks in CRSP on a given date t on a weekly or monthly frequency that
+match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal of Finance,
+forthcoming) and to an indicative borrowing fee in Markit. The implied volatility spread is the difference between the
+implied volatilities of at-the-money calls and puts used in Cremers and Weinbaum (2010). The stock return on date t and on
+date t-1 is from CRSP. PC1 is the first principal component of a principal component analysis described in Section 5 for the
+following correlated measures of short sales constraints derived from Markit data: indicative borrowing fee, short fee risk,
+short interest, utilization, days to cover, tenure, and log number of transactions. The sample period is July 2006 to August
+2015. The sample labeled Fee < 1% (easy-to-borrow) in column 2, 3, 5, and 6 uses observations where the indicative fee on
+date t from Markit is less than 1%. For the weekly regressions the explanatory variables are known as of the close on
+Tuesday and the return is from Wedneday close to followining Wednesday close. For the monthly regressions the
+explanatory variables are known as of the second to last trading day of the previous month and the return is measured from
+the close of the previous month until the close of 21 trading days later. The regression specifications include time fixed
+effects. The t-statistics use standard errors double clustered by stock and by date to take account of any heteroskedasticity,
+contemporaneous cross-correlation, and autocorrelation exhibited by the error term and they are reported in brackets below
+the coefficient estimates. *, **, and *** indicate statistical significance at the 10%, 5%, and 1% levels, respectively.
+                                      Next week ( t+2 through t+6)                    Next month (t+2 through t+22)
+Model                                All      Fee < 1%       Fee < 1%                 All      Fee < 1%      Fee < 1%
+Implied volatility spread       0.0178***          0.0058          0.0012         0.0813***        0.0277**        0.0262**
+                                   [5.1]            [1.3]            [0.3]           [7.3]           [2.3]            [2.4]
+Stock return on date t                                             -0.0241                                          -0.0062
+                                                                    [-1.6]                                           [-0.2]
+Stock return on date t-1                                         -0.0317**                                          -0.0280
+                                                                    [-2.1]                                           [-0.5]
+PC1                                                                -0.0002                                          -0.0007
+                                                                    [-1.6]                                           [-1.4]
+Number of observations            698,265         649,004         648,501          188,276          173,019         172,861
+
+
+
+
+                                                               48
+                                                         Table 8
+                                Stock return predictability using implied volatility skew
+This table presents the results of regressions that use the option-implied volatility skew to predict the stock return from the
+close of trading date t+1 to the close trading date t+6 (next week) in columns 1 through 3 and from the close of trading date
+t+1 to the close trading date t+22 (next month) in columns 4 through 6. The unit of observation is the combination of a
+stock and trading date for the optionable common stocks in CRSP on a given date t on a weekly or monthly frequency that
+match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal of Finance,
+forthcoming) and to an indicative borrowing fee in Markit. The implied volatility skew is the difference between the
+implied volatilities of an out-of-the-money call and an at-the-money call used in Xing, Zhang, and Zhao (2010). The stock
+return on date t and on date t-1 is from CRSP. PC1 is the first principal component of a principal component analysis
+described in Section 5 for the following correlated measures of short sales constraints derived from Markit data: indicative
+borrowing fee, short fee risk, short interest, utilization, days to cover, tenure, and log number of transactions. The sample
+period is July 2006 to August 2015. The sample labeled Fee < 1% (easy-to-borrow) in column 2, 3, 5, and 6 uses
+observations where the indicative fee on date t from Markit is less than 1%. For the weekly regressions the explanatory
+variables are known as of the close on Tuesday and the return is from Wedneday close to followining Wednesday close.
+For the monthly regressions the explanatory variables are known as of the second to last trading day of the previous month
+and the return is measured from the close of the previous month until the close of 21 trading days later. The regression
+specifications include time fixed effects. The t-statistics use standard errors double clustered by stock and by date to take
+account of any heteroskedasticity, contemporaneous cross-correlation, and autocorrelation exhibited by the error term and
+they are reported in brackets below the coefficient estimates. *, **, and *** indicate statistical significance at the 10%, 5%,
+and 1% levels, respectively.
+                                     Next week ( t+2 through t+6)                    Next month (t+2 through t+22)
+Model                               All      Fee < 1%       Fee < 1%                 All      Fee < 1%      Fee < 1%
+Implied volatility skew        -0.0198***       -0.0111**         -0.0075       -0.0717***       -0.0306**       -0.0285**
+                                  [-4.2]          [-2.1]           [-1.5]          [-4.6]          [-2.2]           [-2.2]
+Stock return on date t                                            -0.0226                                          -0.0091
+                                                                   [-1.5]                                           [-0.2]
+Stock return on date t-1                                        -0.0374**                                          -0.0466
+                                                                   [-2.4]                                           [-0.9]
+PC1                                                             -0.0003**                                          -0.0007
+                                                                   [-2.1]                                           [-1.4]
+Number of observations           552,359         518,387         517,986          139,404         130,378         130,252
+
+
+
+
+                                                              49
+                                                        Table 9
+                     Stock return predictability using the ratio of option volume to stock volume
+This table presents the results of regressions that use the ratio of option volume to stock volume to predict the stock return
+from the close of trading date t+1 to the close trading date t+6 (next week) in columns 1 through 3 and from the close of
+trading date t+1 to the close trading date t+22 (next month) in columns 4 through 6. The unit of observation is the
+combination of a stock and trading date for the optionable common stocks in CRSP on a given date t on a weekly or
+monthly frequency that match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet
+(Journal of Finance, forthcoming) and to an indicative borrowing fee in Markit. The O/S volume ratio is defined as the sum
+of call volume and put volume from Option metrics for all option contracts for the underlying stock on date t multiplied by
+100 divided by share volume for the stock from CRSP on date t. The stock return on date t and on date t-1 is from CRSP.
+PC1 is the first principal component of a principal component analysis described in Section 5 for the following correlated
+measures of short sales constraints derived from Markit data: indicative borrowing fee, short fee risk, short interest,
+utilization, days to cover, tenure, and log number of transactions. The sample period is July 2006 to August 2015. The
+sample labeled Fee < 1% (easy-to-borrow) in column 2, 3, 5, and 6 uses observations where the indicative fee on date t
+from Markit is less than 1%. For the weekly regressions the explanatory variables are known as of the close on Tuesday and
+the return is from Wedneday close to followining Wednesday close. For the monthly regressions the explanatory variables
+are known as of the second to last trading day of the previous month and the return is measured from the close of the
+previous month until the close of 21 trading days later. The regression specifications include time fixed effects. The t-
+statistics use standard errors double clustered by stock and by date to take account of any heteroskedasticity,
+contemporaneous cross-correlation, and autocorrelation exhibited by the error term and they are reported in brackets below
+the coefficient estimates. *, **, and *** indicate statistical significance at the 10%, 5%, and 1% levels, respectively.
+
+                                     Next week ( t+2 through t+6)                   Next month (t+2 through t+22)
+Model                               All      Fee < 1%       Fee < 1%                All      Fee < 1%      Fee < 1%
+O/S volume ratio                 -0.0004          0.0001          0.0002       -0.0087***         -0.0046        -0.0045
+                                  [-0.8]           [0.2]            [0.3]         [-2.7]           [-1.5]         [-1.5]
+Stock return on date t                                          -0.0245*                                         -0.0140
+                                                                   [-1.7]                                         [-0.4]
+Stock return on date t-1                                        -0.0318**                                        -0.0284
+                                                                   [-2.1]                                         [-0.5]
+PC1                                                               -0.0002                                        -0.0007
+                                                                   [-1.6]                                         [-1.4]
+Number of observations           699,269         649,962         649,451         188,968         173,681         173,519
+
+
+
+
+                                                             50
+                                         Internet Appendix to
+         “Why Does Options Market Information Predict Stock Returns?”
+
+
+                 Dmitriy Muravyev a,c, Neil D. Pearson b,c, and Joshua M. Pollet d
+
+
+
+
+    a
+        Broad College of Business, Michigan State University, Eppley Center, 667 N. Shaw Lane Room 341, East
+Lansing, MI 48824. Tel.: +1 (217) 721-3772. E-mail: muravyev@msu.edu
+      b
+        Department of Finance, University of Illinois at Urbana-Champaign, 1206 South Sixth Street, Champaign,
+Illinois, 61820. Tel.: +1 (217) 244-0490. E-mail: pearson2@illinois.edu
+      c
+        Canadian Derivatives Institute, 3000, Chemin de la Côte-Sainte-Catherine, Montréal, Québec H3T 2A7,
+Canada.
+      d
+        Department of Finance, University of Illinois at Urbana-Champaign, 1206 South Sixth Street, Champaign,
+Illinois, 61820. Tel.: +1 (217) 300-1961. E-mail: pollet@illinois.edu.
+       This Internet Appendix contains additional results that supplement the figures and tables
+in the main text.
+       In Table 3 to Table 5 the average abnormal return for each portfolio reported in these
+tables is the time-series average for the portfolio across all portfolio formation dates t. Using the
+average portfolio return across all potential starting dates eliminates any unusual results
+associated with end-of-month return patterns. However, we also obtain similar, if not modestly
+more compelling results, when we use non-overlapping returns based on one portfolio formation
+date per month. In Table IA.1 to Table IA.3 we compute the corresponding portfolio abnormal
+returns while only selecting the last trading date in each month to form portfolios so that the
+holding period return measuring the performance of the portfolios is 21 trading days beginning in
+the next month. This approach removes any concerns related to overlapping observations for
+portfolio returns. The quantitative patterns are similar to the main results.
+       For instance, the differential performance for portfolios sorted using the implied volatility
+spread in Panel A of Table 3 is −0.73% per month. The corresponding estimate in Panel A of
+Table IA.1 is −0.56% per month. Both estimates are strongly statistically significant, although
+the magnitude of initial estimate before addressing borrowing fees is modestly smaller when
+only using one formation date per month. Once abnormal portfolio returns are adjusted for
+borrow fees paid by an investor who short sells the stocks in each of the portfolios as in Panel B
+of Table 3, the differential performance based implied volatility attenuates from −0.73% to
+−0.28% using the baseline approach. The corresponding attenuation in Table IA.1 using only one
+portfolio formation date per month is from −0.56% to −0.12%. In both specifications, the change
+in performance due to the adjustment for borrowing fees is about 45 basis points per month.
+Similarly, if the monthly performance for each portfolio in Panel A is recalculated only using the
+stocks in the portfolio with an indicative borrowing fee less than or equal to 1% (easy-to-borrow
+stocks), the differential performance based implied volatility attenuates from −0.73% to −0.25%
+using all portfolio formation dates. The corresponding attenuation in Table IA.1 is from −0.56%
+to −0.06% using only one portfolio formation date per month.
+       One interesting difference between the two approaches is that the coefficient after
+adjusting for the borrow fee of −0.28% is significant with a t-statistic of −2.6 in the baseline
+specification using all portfolio formation dates, but the corresponding estimate of −0.12% from
+
+
+                                                  1
+the alternative approach in Table IA.1 has a t-statistic of only −0.7. The change in the t-statistic is
+partially due to the difference in the estimated coefficient, but it is also the case that the standard
+errors for the coefficient of interest is approximately 50% larger using one portfolio formation
+date per month compared to the baseline approach. If anything, this pattern suggests that the
+alternative specifications presented in the internet appendix would make a more compelling case
+the stock borrow fee explains most of the abnormal portfolio performance related to implied
+volatility spread.
+        In Table IA.2 we analyze the performance for portfolios sorted using the implied
+volatility skew using only one portfolio formation date per month. The baseline differential
+performance estimate is −0.69% per month from Panel A of Table 4 and the corresponding
+differential performance estimate in Table IA.2 is −0.57%. After adjusting for the borrowing fee,
+the differential performance estimate in Panel B of Table 4 is −0.33% per month and the
+corresponding estimate in Panel B of Table IA.2 is −0.21%. In both portfolio formation
+specifications, the attenuation in differential performance due to the adjustment for borrowing
+fees is about 35 basis points per month. Thus, Table IA.2 also shows that the quantitative patterns
+of portfolio performance for implied volatility skew in Table 4 are not due to the overlapping
+returns.
+        We also include Table IA.3 to report the performance of portfolios sorted by OS volume
+using only one portfolio formation date per month. The differential performance estimates for
+OS volume using all portfolio formation dates in Table 5 and the corresponding results in Table
+IA.3 using one portfolio formation date per month are virtually indistinguishable from one
+another. Adjusting performance for the borrowing fee or only including stocks with low
+borrowing fees in the portfolio analysis leads to differential performance estimates near zero
+using either approach regarding portfolio formation dates.
+        In Table 7 to Table 9, the variable, PC1, is the first principal component constructed from
+a list of seven variables that proxy for short-sale costs and activity. In Table IA.4 we report the
+linear combinations of short sales activity and constraints used to construct the principal
+components. For the first principal component (PC1), the largest loadings in descending order
+are utilization, short interest, log number of transactions, and days to cover. This principal
+component appears to represent the various dimensions related to the quantity of short selling
+
+
+
+                                                   2
+activity. The second principal component (PC2) mostly captures measures of the cost of short
+selling, with the largest loadings on the indicative fee and short fee risk.
+
+
+
+
+                                                  3
+                                                                    Table IA.1
+       Risk-adjusted performance for equal-weighted portfolios sorted on implied volatility spread (negated) using one observation per month
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW benchmark
+portfolio formed using the implied volatility spread (negated). The implied volatility spread (negated) is the difference between the implied volatilities of at-the-
+money puts and calls, which is the negative of the measure used in Cremers and Weinbaum (2010). The sample includes the optionable common stocks in CRSP
+on a given date t that match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal of Finance, forthcoming) and to an
+indicative borrowing fee in Markit. Stocks are sorted into deciles in each panel using implied volatility spread on trading date t and held in portfolios from the
+close of trading date t+1 until the close of trading date t+22. In Panel B the cumulative indicative borrowing fee during the evaluation period is added to each
+stock's return to adjust performance for the potential cost of borrowing stock. In Panel C the monthly performance for each portfolio in Panel A is recalculated
+only using the stocks in the portfolio with an indicative borrowing fee less than or equal to 1%, that is, easy-to-borrow stocks. The sample period is July 2006 to
+August 2015. Only the last trading date in each month is used to form portfolios so that the holding period for the portfolios is 21 trading days beginning in the
+next month. This approach removes any concerns related to overlapping observations for portfolio returns. The t-statistics use Newey-West standard errors with
+50 lags to adjust for this pattern and are reported in brackets below the coefficient estimates. *, **, and *** indicate statistical significance at the 10%, 5%, and
+1% levels, respectively.
+
+                             1                                                                                                                 10
+                                           2           3            4           5           6            7            8            9                        10-1
+                            Low                                                                                                               High
+                   Panel A: Risk-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility spread
+Average return             -0.0012     0.0009       0.0015      -0.0002      0.0010      -0.0003     -0.0004      0.0001       -0.0018    -0.0069*** -0.0056***
+t-statistic                 [-1.10]    [0.95]       [1.48]       [-0.17]     [1.06]       [-0.35]     [-0.33]     [0.09]        [-1.46]     [-4.48]    [-3.44]
+Average # fee > 1%             7          4            3            3           3            4           4           6             12          57
+Average # of stocks           149        149          149          149         149          149         149         149           149         148
+         Panel B: Risk-adjusted and fee-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility spread
+Average return             -0.0008     0.0011       0.0016      -0.0001      0.0011      -0.0003     -0.0002      0.0003       -0.0011      -0.0020       -0.0012
+t-statistic                 [-0.72]    [1.16]       [1.61]       [-0.08]     [1.17]       [-0.30]     [-0.18]     [0.32]        [-0.90]      [-1.35]       [-0.72]
+           Panel C: Risk-adjusted performance using the only easy-to-borrow stocks from the portfolios sorted by implied volatility spread
+Average return             -0.0007     0.0011      0.0018*      -0.0001      0.0010      -0.0005     -0.0001      -0.0002      -0.0010      -0.0014       -0.0006
+t-statistic                 [-0.65]    [1.20]       [1.80]       [-0.09]     [1.03]       [-0.52]     [-0.08]      [-0.17]      [-0.86]      [-0.83]       [-0.36]
+Average # of stocks           142        145         146           146         146          145         145          143          137          91
+
+
+
+
+                                                                                4
+                                                                    Table IA.2
+             Risk-adjusted performance for equal-weighted portfolios sorted on implied volatility skew using one observation per month
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW benchmark
+portfolio formed using the implied volatility skew. The implied volatility skew is the difference between the implied volatilities of an out-of-the-money call and
+an at-the-money call used in Xing, Zhang, and Zhao (2010). The sample includes the optionable common stocks in CRSP on a given date t that match to valid
+options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal of Finance, forthcoming) and to an indicative borrowing fee in Markit.
+Stocks are sorted into deciles in each panel using implied volatility skew on trading date t and held in portfolios from the close of trading date t+1 until the close
+of trading date t+22. In Panel B the cumulative indicative borrowing fee during the evaluation period is added to each stock's return to adjust performance for the
+potential cost of borrowing stock. In Panel C the monthly performance for each portfolio in Panel A is recalculated only using the stocks in the portfolio with an
+indicative borrowing fee less than or equal to 1%, that is, easy-to-borrow stocks. The sample period is July 2006 to August 2015. Only the last trading date in
+each month is used to form portfolios so that the holding period for the portfolios is 21 trading days beginning in the next month. This approach removes any
+concerns related to overlapping observations for portfolio returns. The t-statistics use Newey-West standard errors with 50 lags to adjust for this pattern and are
+reported in brackets below the coefficient estimates. *, **, and *** indicate statistical significance at the 10%, 5%, and 1% levels, respectively.
+
+                             1                                                                                                                  10
+                                           2           3            4            5           6            7           8            9                         10-1
+                            Low                                                                                                                High
+                    Panel A: Risk-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility skew
+Average return             -0.0005      0.0013      -0.0010      0.0005      0.0006       0.0001       0.0003      -0.0011    -0.0023** -0.0062*** -0.0057**
+t-statistic                 [-0.36]     [0.93]       [-0.75]     [0.43]      [0.52]       [0.09]       [0.31]       [-0.91]     [-2.08]   [-3.42]    [-2.46]
+Average # fee > 1%             4           3            2           3           2            3            3            4           8         38
+Average # of stocks           118         118          118         118         118          118          118          118         118       117
+          Panel B: Risk-adjusted and fee-adjusted performance for equal-weighted portfolios using stocks sorted by implied volatility skew
+Average return             -0.0002      0.0015      -0.0008      0.0005      0.0007       0.0003       0.0004      -0.0010      -0.0015      -0.0023       -0.0021
+t-statistic                 [-0.14]     [1.08]       [-0.63]     [0.43]      [0.58]       [0.31]       [0.42]       [-0.84]      [-1.40]      [-1.24]       [-0.88]
+            Panel C: Risk-adjusted performance using the only easy-to-borrow stocks from the portfolios sorted by implied volatility skew
+Average return             -0.0002      0.0014      -0.0010      0.0005      0.0006       0.0000       0.0002      -0.0010      -0.0011      -0.0019       -0.0018
+t-statistic                 [-0.13]     [0.98]       [-0.79]     [0.41]      [0.51]       [0.04]       [0.23]       [-0.84]      [-1.05]      [-1.00]       [-0.71]
+Average # of stocks           114         115          116         115         116          115          115          114          110          79
+
+
+
+
+                                                                                 5
+                                                                    Table IA.3
+         Risk-adjusted performance for equal-weighted portfolios sorted on option-to-stock (O/S) volume using one observation per month
+This table presents risk-adjusted montly performance for equal-weighted portfolios relative to the easy-to-borrow stocks in each associated DGTW benchmark
+portfolio formed using option-to-stock (O/S) volume. The O/S volume ratio is defined as the sum of call volume and put volume from Option metrics for all
+option contracts for the underlying stock on date t multiplied by 100 divided by share volume for the stock from CRSP on date t. The sample includes the
+optionable common stocks in CRSP on a given date t that match to valid options data in Optionmetrics using the filters in Muravyev, Pearson, and Pollet (Journal
+of Finance, forthcoming) and to an indicative borrowing fee in Markit. Stocks are sorted into deciles in each panel using option-to-stock volume on trading date t
+and held in portfolios from the close of trading date t+1 until the close of trading date t+22. In Panel B the cumulative indicative borrowing fee during the
+evaluation period is added to each stock's return to adjust performance for the potential cost of borrowing stock. In Panel C the monthly performance for each
+portfolio in Panel A is recalculated only using the stocks in the portfolio with an indicative borrowing fee less than or equal to 1%, that is, easy-to-borrow stocks.
+The sample period is July 2006 to August 2015. Only the last trading date in each month is used to form portfolios so that the holding period for the portfolios is
+21 trading days beginning in the next month. This approach removes any concerns related to overlapping observations for portfolio returns. The t-statistics use
+Newey-West standard errors with 50 lags to adjust for this pattern and are reported in brackets below the coefficient estimates. *, **, and *** indicate statistical
+significance at the 10%, 5%, and 1% levels, respectively.
+
+                             1                                                                                                                  10
+                                           2           3            4            5           6            7           8            9                         10-1
+                            Low                                                                                                                High
+                   Panel A: Risk-adjusted performance for equal-weighted portfolios using stocks sorted by option-to-stock volume
+Average return             0.0000      -0.0011      0.0011       0.0013      -0.0001     -0.0010      -0.0015      -0.0009      -0.0015     -0.0036**     -0.0036*
+t-statistic                [-0.01]      [-0.96]     [1.39]       [1.50]       [-0.09]     [-0.90]      [-1.53]      [-0.88]      [-1.41]      [-2.47]      [-1.95]
+Average # fee > 1%            3            3           4            6            8           10           12           14           17           24
+Average # of stocks          149          149         149          149          149         149          149          149          149          149
+          Panel B: Risk-adjusted and fee-adjusted performance for equal-weighted portfolios using stocks sorted by option-to-stock volume
+Average return             -0.0008      0.0013      0.0015*      0.0003      -0.0007     -0.0010      -0.0005      -0.0001      -0.0012      -0.0014       -0.0006
+t-statistic                 [-0.72]     [1.54]       [1.71]      [0.24]       [-0.61]     [-1.04]      [-0.50]      [-0.09]      [-0.84]      [-0.78]       [-0.5]
+           Panel C: Risk-adjusted performance using the only easy-to-borrow stocks from the portfolios sorted by option-to-stock volume
+Average return             0.0002      -0.0009      0.0014*    0.0017**      0.0005      -0.0007      -0.0008      -0.0002      0.0002       -0.0014       -0.0016
+t-statistic                [0.12]       [-0.79]      [1.66]      [2.04]      [0.42]       [-0.60]      [-0.83]      [-0.22]     [0.17]        [-0.99]       [-0.88]
+Average # of stocks          146          146         145         143          141          139          137          135         132           125
+
+
+
+
+                                                                                 6
+                                                     Table IA.4
+                                Principal component analysis of short selling variables
+This table presents the coefficients for the linear combination of the underlying variables used to construct the first two
+principal components, PC1 and PC2, based on the principal component analysis (PCA) described in Section 3. This
+analysis includes the following correlated measures of short sales constraints derived from Markit data: indicative
+borrowing fee, short fee risk, short interest, utilization, days to cover, tenure, and log number of transactions. The unit of
+observation is the combination of a stock and trading date for the optionable subset of common stocks in CRSP that match
+to a valid put-call pair in Optionmetrics and an indicative borrowing fee in Markit. For each option in a valid put-call pair,
+the absolute delta is between 0.01 and 0.99, implied volatility is between 0.03 and 2, the bid is greater than 0.1, and the bid
+is less than the ask. In addition, the put moneyness, K/S, is ≤ 1.1 and time to maturity is at least 15 days. The sample period
+is July 2006 to August 2015.
+                                              Principal Component Analysis
+Variable                            Principal Component 1 (PC1)                         Principal Component 2 (PC2)
+Indicative fee                                   0.1891                                              0.5389
+
+Short fee risk                                   0.1966                                              0.5963
+
+Utilization                                      0.4999                                              0.1463
+
+Short interest                                   0.4945                                              -0.0423
+
+Days to cover                                    0.4471                                              -0.2308
+
+Tenure                                           0.1585                                              -0.4873
+
+Log Number Of                                    0.4540                                              -0.2003
+Transactions
+Fraction of total                                0.4810                                              0.1845
+variance explained
+
+
+
+
+                                                               7
+

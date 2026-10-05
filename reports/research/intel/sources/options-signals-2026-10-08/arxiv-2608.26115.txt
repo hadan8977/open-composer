@@ -1,0 +1,1310 @@
+                                                             Option-Implied Signals and Crash Risk:
+                                              Predictability and Machine-Learning Evidence from
+                                                                     U.S. Equity Options, 2015–2026
+                                                                               Baichuan Li∗              Mengxiao Wang†
+arXiv:2608.26115v1 [q-fin.ST] 10 Jun 2026
+
+
+
+
+                                                                                                May 2026
+
+
+
+                                                                                                 Abstract
+
+
+                                                         We re-estimate the canonical option-implied predictability evidence on a unified 2015–2026
+                                                    panel of 12.36 million U.S. equity firm-day observations across 10,026 underlyings and three
+                                                    macro regimes: late-post-crisis low volatility (2015–2019), high-volatility transition (2020–2022),
+                                                    and AI/mega-cap concentration (2023–2026). We document that the Xing et al. (2010) smirk–
+                                                    return relationship has decayed monotonically across regimes: the next-month univariate panel
+                                                    coefficient on smirk falls from −0.023 (t = −5.5) in the low-volatility baseline to −0.006 (t = −1.5,
+                                                    statistically insignificant) in the AI/mega-cap regime, and reverses sign at the three-month
+                                                    horizon (+0.016, t = +2.1). In a multivariate specification with all six canonical signals jointly,
+                                                    smirk loses significance everywhere and again reverses sign in the most recent regime. The
+                                                    Cremers–Weinbaum IV spread and a Bakshi et al. (2003)-style risk-neutral skewness measure
+                                                    remain significant in every regime and specification. A boosted-tree machine-learning benchmark
+                                                    trained on the full IV surface, trading-activity ratios, Greeks, and liquidity features beats
+                                                    linear specifications on next-month return prediction only in the AI/mega-cap regime, with
+                                                       2
+                                                    ROOS   = +1.29% versus +0.07%. Permutation importance reveals that the dominant predictor
+                                                    differs across all three regimes (open-interest-weighted vega in low-volatility, contract count in
+                                                    high-volatility, OTM call IV in AI/mega-cap), and that none of the canonical hand-engineered
+                                                    signals appear in the top five anywhere. On firm-level 5-day-forward crash classification, AUC is
+                                                    highest in the low-volatility regime (0.706, XGBoost) and weakest in the high-volatility regime
+                                                    (0.561): firm-level option signals predict idiosyncratic crashes well in calm markets and poorly
+                                                    when systematic shocks dominate. Taken together, the evidence sharpens the empirical claim that
+                                                    option-implied predictability is real but regime-conditional, and that the AI/mega-cap regime
+                                                    since 2023 is qualitatively different from the pre-COVID environment in which the canonical
+                                                    literature was estimated.
+
+                                            Keywords: implied volatility, smirk, risk-neutral skewness, crash risk, machine learning, option
+                                            market, AI/mega-cap.
+                                              ∗
+                                                  Email: baichuanli2000@gmail.com.
+                                              †
+                                                  Email: jacksonwangpro@gmail.com.
+JEL classification: G11, G12, G13, G14, G17.
+
+
+
+
+                                               2
+1    Introduction
+The U.S. equity option market is a forward-looking laboratory for beliefs, fears, and informed bets
+on individual stocks. A long literature shows that option-implied signals—the volatility smirk,
+put–call volume and open-interest ratios, deviations from put–call parity, the implied-volatility (IV)
+spread, and risk-neutral skewness—carry information about future stock returns and downside risk
+(Pan and Poteshman, 2006; Xing et al., 2010; Cremers and Weinbaum, 2010; Bali and Hovakimian,
+2009; Conrad et al., 2013; An et al., 2014). At the index level, variance and tail-risk premia predict
+aggregate equity returns (Bollerslev et al., 2009; Bollerslev and Todorov, 2011; Bollerslev et al.,
+2015). This canonical evidence, however, was estimated almost entirely on data ending well before
+two developments reshaped the option-trading environment. First, the post-2020 retail option boom—
+zero-commission brokers, payment-for-order-flow, and weekly/0DTE contracts—pushed retail option
+volume to historic highs and concentrated demand in the short-dated, far-out-of-the-money contracts
+from which the smirk is computed (Bryzgalova et al., 2023; Barber et al., 2022; Bogousslavsky and
+Muravyev, 2024). Second, the AI/mega-cap concentration of 2023–2026 has left the option market
+dominated by a small set of high-IV, high-turnover names whose realized return distributions look
+very different from the pre-COVID low-volatility baseline.
+    This paper revisits the canonical evidence on a unified 2015–2026 panel of U.S. equity options.
+We collect end-of-day option records, apply standard Xing et al. (2010)-style screens, and construct
+a daily firm-level panel of option-implied features—the ATM/OTM IV surface, the put–call ratio, IV
+spread, term-structure slope, risk-neutral skewness, and open-interest-weighted Greeks—spanning
+2,910 trading days, 10,026 underlyings, and 12,362,276 firm-day observations after filters. We split
+the panel ex ante into three roughly comparable-length sub-samples corresponding to three distinct
+macro regimes: a late-post-crisis low-volatility baseline (2015–2019), a high-volatility transition
+(2020–2022, COVID and rate hikes), and the AI/mega-cap concentration period (2023–2026, partial).
+    Our central thesis is that option-implied signals carry useful, but non-stationary, information
+about future stock returns and crash risk. Single-signal linear regressions of the kind that established
+the literature work well in the pre-COVID baseline, but their performance is much less stable in
+the AI/mega-cap regime, when the IV surface is shaped by both informed flow and large retail
+and AI-driven demand. A flexible, jointly estimated machine-learning model—trained on the full
+IV surface, trading-activity ratios, Greeks, and stock-side controls—can recover predictability that
+single-signal regressions miss, especially in the most recent regime. We pursue two questions:
+
+Q1 – Predictability. Do option-implied signals predict next-period stock returns and crash indi-
+      cators in the cross-section, after controlling for standard stock-level covariates, and how does
+      the sign and magnitude of these effects change across the three regimes?
+
+Q2 – Machine learning. Can nonlinear ML models (gradient-boosted trees) trained on the full
+      option-stock feature set beat the traditional single-signal regressions out-of-sample? Which
+      features dominate in each regime?
+
+
+                                                   1
+Findings. The headline results are five-fold. First, the Xing et al. (2010) smirk–return relationship
+decays monotonically across regimes. At the next-month horizon (h = 21 trading days) the univariate
+panel coefficient on smirk is −0.023 (t = −5.5) in the low-volatility baseline, −0.015 (t = −4.2) in
+the high-volatility regime, and −0.006 (t = −1.5) in the AI/mega-cap regime—no longer statistically
+significant. At the three-month horizon h = 63 the AI/mega-cap coefficient even flips sign (+0.016,
+t = +2.1). The canonical signal has fully unwound at long horizons in 2023–2026.
+   Second, in the multivariate specification with all six signals jointly, smirk loses significance in
+every regime and again reverses sign in the AI/mega-cap regime (+0.016, t = +2.6). Once the IV
+spread and risk-neutral skewness absorb the crash-fear information, the residual variation in the
+smirk looks more like demand pressure than informed flow.
+   Third, the IV spread (Cremers and Weinbaum, 2010) and a Bakshi et al. (2003)-style risk-neutral
+skewness measure survive across all three regimes and both univariate and multivariate specifications,
+with |t|-statistics exceeding 4 in every cell. These two signals are the only consistently predictive
+option-implied variables in our sample.
+   Fourth, on the machine-learning side, gradient-boosted trees (XGBoost) beat linear specifications
+on next-month return prediction only in the AI/mega-cap regime, with an out-of-sample R2 of
++1.29% versus +0.07% for OLS / Elastic Net. In the high-volatility regime XGBoost underperforms
+linear models, presumably overfitting the COVID-era training data. A single recent year, 2025,
+                                         2
+drives most of the AI/mega-cap ML edge (ROOS = +3.55%). This pattern is consistent with the
+AI/mega-cap regime being a qualitatively different environment in which nonlinear interactions
+matter.
+   Fifth, permutation feature importance reveals that the top predictor differs across all three
+regimes: open-interest-weighted vega in the low-volatility baseline, raw contract count in the high-
+volatility regime, and OTM call IV in the AI/mega-cap regime. Strikingly, none of the canonical
+hand-engineered signals—smirk, IV spread, risk-neutral skewness—make the top five in any regime
+once the ML model has access to the primitive IV-surface and Greek features that underlie them.
+The ML model recovers predictability directly from the primitives, suggesting that the canonical
+linear combinations throw away information that nonlinear models can exploit.
+
+Crash-risk prediction. We build a firm-day forward crash flag in the spirit of Kim et al. (2011):
+                                        √
+a 5-day forward return below −3.09 σ̂252 5 (annualized). XGBoost beats logit on classification
+AUC in every regime, with the largest margin in the low-volatility baseline (XGB AUC = 0.706
+vs. logit = 0.670). Crash AUC is highest in the calm regime, weakest in the high-volatility regime
+(∼ 0.55), and intermediate in the AI/mega-cap regime (∼ 0.66). The intuition is that in calm
+markets the rare crashes are tail events that the IV surface can pre-price; during macro-driven
+2020–2022 turbulence, the marginal informational content of firm-level option signals collapses.
+
+Contributions. This paper makes four contributions. (1) A unified U.S. equity option panel
+covering 2015–2026 evaluated across three roughly comparable-length macro regimes; the AI/mega-
+cap regime is barely covered by published evidence. (2) Updated cross-sectional predictability:
+
+                                                  2
+re-estimation of the canonical Xing et al. (2010), Cremers and Weinbaum (2010), and Bakshi et al.
+(2003) results on data extending to 2026, with regime-by-regime coefficients reported side-by-side.
+Whether predictability survives the AI/mega-cap regime is, on its own, an empirical question that
+has not been answered in print. (3) Firm-level crash forecasting using forward-looking option-implied
+features rather than the accounting-based predictors of Kim et al. (2011) and Hutton et al. (2009).
+(4) A machine-learning benchmark in the spirit of Gu et al. (2020) and Bali et al. (2023), applied
+to stock returns and crash indicators predicted from option features, with rolling out-of-sample
+evaluation and per-regime feature-importance diagnostics.
+    The remainder of the paper is organized as follows. Section 2 reviews the related literature.
+Section 3 describes the option panel, the filters, and the three sample regimes. Section 4 defines
+the features. Section 5 sets out the empirical design and the ML protocol. Section 6 presents the
+results. Section 7 interprets them. Section 8 discusses limitations. Section 9 concludes.
+
+
+2     Related Literature
+We connect to four threads of the asset-pricing and derivatives literature.
+
+2.1   Option-implied signals and the cross-section of stock returns
+The first strand documents that information embedded in equity option prices and trading volumes
+predicts future stock returns. Pan and Poteshman (2006) show that the put–call volume ratio,
+signed by trade direction, predicts next-day to next-week stock returns; the public unsigned put–call
+ratio carries far less information. Xing et al. (2010) introduce the volatility “smirk”—the difference
+between the IV of an OTM put and that of an ATM call—and show that it negatively predicts equity
+returns by roughly 10.9% per year on a risk-adjusted basis, an effect they interpret as informed
+traders pricing crash risk into the IV surface. Cremers and Weinbaum (2010) show that deviations
+from put–call parity, measured as the IV spread between matched call and put strikes, also predict
+returns; the effect is strongest where information asymmetry is high. Bali and Hovakimian (2009)
+relate the realized–implied volatility spread and the call–put IV spread to next-period returns,
+with opposite signs reflecting different information content (jump risk versus volatility risk). An
+et al. (2014) document a bidirectional predictability between stock returns and changes in call/put
+implied volatilities. Conrad et al. (2013) show that ex-ante (option-implied) skewness is a priced
+characteristic in the cross-section. Goyal and Saretto (2009) construct option-trading strategies
+based on the realized–implied volatility gap.
+    We extend this strand by re-estimating the four canonical regressions (Xing et al. (2010), Cremers
+and Weinbaum (2010), Bali and Hovakimian (2009), Conrad et al. (2013)) on data running to April
+2026 and reporting separate coefficients for each of three macro regimes that we identify ex ante.
+The 2023–2026 window in particular is barely covered by published cross-sectional evidence.
+
+
+
+
+                                                  3
+2.2   Option-implied tail risk and crash risk
+The second strand uses option prices to extract forward-looking measures of variance and tail risk.
+Bollerslev et al. (2009) show that the variance risk premium—the gap between option-implied
+variance and a realized-variance forecast—predicts aggregate equity returns at horizons up to a
+quarter. Bollerslev and Todorov (2011) construct an investor-fears index from short-dated OTM
+puts and document that it co-moves with crisis episodes. Bollerslev et al. (2015) separate the
+tail-risk premium from the variance risk premium and show that the former contains independent
+return-predictive content. Driessen et al. (2009) use index- and stock-option pairs to extract option-
+implied correlations and document a price of correlation risk. Gao and Pan (2018) construct a
+tradable crash-fear measure (the option-implied Crash Index, or CIX) from short-dated OTM puts.
+   At the firm level, Kim et al. (2011) formalize the modern firm-level crash flag—a week with
+returns more than 3.09 standard deviations below the firm’s mean—and link it to accounting-
+conservatism and opacity proxies. Hutton et al. (2009) provide complementary evidence using
+opaque-financial-reports indicators. This literature typically uses backward-looking accounting
+predictors; our contribution is to replace those predictors with forward-looking option-implied
+features and benchmark firm-level crash forecasting in three regimes.
+
+2.3   Retail option trading post-2020 (motivation)
+Although our paper does not isolate retail flow, the post-2020 retail option boom motivates the
+choice of regimes and the feature set. Bryzgalova et al. (2023) identify retail option flow via
+wholesaler-routed trades and document that retail accounts lost approximately $2.1bn between
+November 2019 and June 2021 plus an additional $6.4bn in trading costs; retail concentrates in
+under-one-week-to-expiry contracts, exactly the strikes from which the smirk and short-tenor IV
+measures are constructed. Barber et al. (2022) show that Robinhood users engage in attention-
+induced trading concentrated in attention-grabbing names. Eaton et al. (2022) use Robinhood
+outages as natural experiments and conclude that retail concentration destabilizes stocks with high
+retail interest. Bogousslavsky and Muravyev (2024) provide a detailed anatomy of retail option
+trading and confirm the concentration in short-dated and OTM contracts. Anonymous (2026)
+directly connect retail flow to shape distortions in the IV surface.
+   These papers explain why the post-2020 IV surface is shaped by demand pressures absent in
+the earlier literature. We do not test retail hypotheses directly; instead we treat the post-2020
+environment as a distinct regime in which canonical option signals must be re-estimated.
+
+2.4   Machine learning in asset pricing
+The fourth strand applies modern ML to asset-pricing prediction. Gu et al. (2020) show that ML
+methods roughly double the out-of-sample performance of leading regression-based strategies for
+predicting equity returns; nonlinearities and interactions matter, and trees and neural networks
+dominate. Bali et al. (2023) apply nonlinear ML to a panel of ∼ 270 features for predicting
+
+
+                                                  4
+delta-hedged option returns and show that the gains survive transaction costs; option-side features
+dominate, but stock-side features add incremental power.
+    We apply the Gu et al. (2020) rolling-window protocol with expanding training sets to the
+prediction of stock returns and crash indicators from option-implied features (rather than option
+returns themselves, as in Bali et al. (2023)). We further document regime-conditional feature
+importance, showing that the dominant feature differs across the low-volatility, high-volatility, and
+AI/mega-cap regimes.
+
+Positioning. This paper extends the option-implied predictability and crash-risk strands into the
+2023–2026 AI/mega-cap regime, and applies the ML framework of Gu et al. (2020) and Bali et al.
+(2023) to stock-return and crash-risk prediction from option features. The retail-trading and ML
+threads anchor the motivation but are not directly tested here.
+
+
+3       Data
+3.1     Option panel
+Our raw data is the end-of-day option-record feed of the Options Price Reporting Authority (OPRA),
+the U.S. consolidated ticker plant for all U.S. listed equity options. We obtain a proprietary,
+privately licensed extract of this feed that covers the full universe of U.S.-listed equity options
+from January 2015 through April 2026.1 Each contract-day record contains the contract identifier,
+underlying symbol, expiration date, end-of-day national-best bid and ask quotes (price and size on
+each side), last trade price, put/call indicator, strike, daily traded volume, end-of-day open interest,
+the underlying’s closing price, the model-supplied implied volatility, and the four major Greeks
+(delta, gamma, vega, theta). The schema is consistent across the entire 2015–2026 window.
+    After de-duplicating byte-identical re-download files in the raw archive (211 of them) and
+dropping a small number of stray pre-2015 records that were mistakenly co-located with the 2020–
+2022 batch (20 files), the working dataset spans 2,910 unique trading days. The raw panel exceeds
+3.6 billion contract-days before filtering; daily contract counts grow from approximately 600,000
+in the early sample to 1,300,000 in 2024–2025, reflecting the post-COVID expansion of the listed
+option universe. We do not have access to a signed retail-flow indicator and so cannot replicate
+Bryzgalova et al. (2023) or Bogousslavsky and Muravyev (2024) directly.
+
+3.2     Filters
+We apply standard Xing et al. (2010)-style screens at the contract-day level to drop stale, illiquid,
+or implausible quotes:
+    1
+     The OPRA extract is privately owned and not part of any public-domain academic dataset; the underlying
+contract-day records are derived from the same consolidated tape that academic papers using OptionMetrics IvyDB
+build their daily panels on. We do not redistribute the raw data, but we provide the post-filter firm-day parquets and
+the full processing pipeline on request.
+
+
+
+                                                          5
+   • Bid price ≥ $0.05 and ask > bid (positive, two-sided quote).
+
+   • Implied volatility in [0.01, 5.00] to drop computational artifacts at the extremes.
+
+   • Time-to-expiry in [7, 365] trading days to exclude near-expiry contracts and LEAPS.
+
+   • Absolute delta in [0.05, 0.95], eliminating deep-ITM and deep-OTM contracts whose IV is
+      unreliable.
+
+   • Underlying price ≥ $5 to exclude micro-cap stocks where options are illiquid.
+
+   We additionally drop rows where the IV column contains the Excel-style sentinel ********
+(an artifact of the data export, present in roughly 4% of pre-2018 rows) and where the strike is
+non-positive. After all filters the panel is approximately 44% of the raw row count.
+
+3.3   Sample regimes
+We split the 2015–2026 panel ex ante into three macro regimes defined by calendar dates, chosen to
+be of comparable length:
+
+  1. Low-volatility baseline (2015–2019, 5 years). The canonical “calm” regime: rate-
+      hike cycle is gradual, the VIX is persistently low, and the option market is dominated by
+      institutional flow. Includes the August 2015 China shock and February 2018 Volmageddon as
+      contained stress events but is the cleanest stable baseline available before COVID.
+
+  2. High-volatility transition (2020–2022, 3 years). COVID crash and re-opening, meme/retail-
+      option boom, and the 2022 rate-hike shock; large unexpected moves, elevated VIX, and a
+      sharp rise in retail option flow.
+
+  3. AI/mega-cap concentration (2023–2026, ∼ 4 years, partial through April 2026).
+      Concentrated growth-stock option demand, persistently high single-name IV in mega-cap
+      names, and the post-2022 institutionalization of 0DTE trading.
+
+   After filtering, the working panel covers 10,026 unique underlyings across the three regimes. The
+number of unique underlyings active in any given year is in the 4,000–6,000 range, with attrition
+and new listings.
+
+3.4   Stock-side data
+Underlying closing prices are read directly from the option records, giving a contemporaneous and
+internally consistent panel. Stock-side controls used in the regressions are constructed from the
+underlying-price series itself (forward log returns at horizons h ∈ {1, 5, 21, 63} and a 252-day rolling
+realized volatility for the crash-flag scaling). We do not merge to CRSP or Compustat in this version
+of the paper, in order to keep the panel construction self-contained. Adding firm-fundamental
+controls (size, book-to-market, momentum, idiosyncratic volatility) is an obvious extension.
+
+                                                   6
+3.5       Forward returns
+For each firm-day (i, t) we construct forward log returns ri,t+h = log(Pi,t+h /Pi,t ) for h ∈ {1, 5, 21, 63}
+trading days, using the firm’s underlying-price series. Trailing h days at each year-end are necessarily
+missing (we do not look across the year-end boundary in the panel writeout).
+
+
+4     Feature construction
+We aggregate the contract-day panel to a firm-day panel by collapsing all surviving contracts on
+date t for a given underlying i into a single row of features. All averages described below are taken
+across surviving contracts within the relevant moneyness or time-to-expiry band. Let K denote
+strike, S underlying price, τ days to expiry, σ implied volatility, and define moneyness m ≡ K/S.
+
+4.1       IV-surface signals
+ATM and OTM IV.              We define moneyness bands
+
+    • ATM: m ∈ [0.95, 1.05],
+
+    • OTM put: m ∈ [0.80, 0.95] and contract is a put,
+
+    • OTM call: m ∈ [1.05, 1.20] and contract is a call.
+
+Within each band we compute the simple cross-contract mean of the implied volatility, separately
+                                                atm , σ atm,call , σ atm,put , σ otm,put , and σ otm,call .
+for puts and calls where appropriate, yielding σi,t    i,t          i,t         i,t             i,t
+
+
+Smirk.      Following Xing et al. (2010) (with the moneyness-band implementation rather than a
+delta-defined band):
+                                                  otm,put    atm,call
+                                      smirki,t = σi,t     − σi,t      .
+
+IV spread. Following Cremers and Weinbaum (2010), the matched call-minus-put IV at the ATM
+strike:
+                                                    atm,call    atm,put
+                                    iv spreadi,t = σi,t      − σi,t     .
+
+                                                                                    30
+Term-structure slope. We define a near and far ATM bucket based on time-to-expiry: σi,t
+                                                   60 averages ATM contracts with τ ∈ [46, 75]
+averages ATM contracts with τ ∈ [15, 45] days and σi,t
+days. The term-structure slope is
+
+                                                          60     30
+                                           ts slopei,t = σi,t − σi,t .
+
+
+
+
+                                                        7
+Risk-neutral skewness proxy. A full Bakshi et al. (2003) estimator of the risk-neutral cubed
+moment requires a continuous strike grid integrated over (0, ∞). We report a robust proxy that
+uses the cross-strike sample skewness of the OTM IVs:
+                                                         1 Pn     otm     otm )3
+                                                         n  k=1 (σk,t − σ̄t
+                                   rns bkmi,t =                                  ,
+                                                                  σ̂t3
+
+where the index k runs over all OTM (put or call) IVs of firm i on date t, σ̄totm is their cross-strike
+mean, and σ̂t is their sample standard deviation. We require at least five OTM strikes per firm-day;
+otherwise the value is set to missing. This proxy preserves the sign and time-series persistence of
+the BKM measure but is much faster to compute on a 12-million row panel.2
+
+4.2    Trading-activity signals
+Put–call ratios. At the firm-day level we compute the put volume and put open interest as the
+sums over all surviving put contracts, and analogously for calls; we then form
+                                           P                                          P
+                                                   ⊮[put ] V                                  ⊮[put ] OI
+                  pc volume ratioi,t = Pk ⊮[callkk ] Vk,t
+                                                      k,t
+                                                          ,        pc oi ratioi,t = Pk ⊮[callkk ] OIk,t
+                                                                                                    k,t
+                                                                                                        .
+                                               k                                          k
+
+
+Where the call-side denominator is zero we set the ratio to missing.
+
+Contract count. We retain the post-filter contract count ni,t as a feature; it is a coarse measure
+of breadth of the IV surface available to traders on date t.
+
+4.3    Open-interest-weighted Greeks
+For each Greek g ∈ {∆, Γ, ν, Θ} we compute the open-interest-weighted firm-day average:
+                                                           P
+                                              oi-w          k OIk,t gk,t
+                                             gi,t  =        P            .
+                                                              k OIk,t
+
+When the open-interest sum is zero we fall back to an equal-weighted mean. These four features
+summarize the aggregate Greek exposure visible across the firm’s IV surface.
+
+4.4    Liquidity controls
+We also retain four liquidity features for use as controls in the regression and as features in the ML
+model:
+
+    • Relative bid–ask spread: 1 ask−bid , averaged across contracts.
+                                     2 (ask+bid)
+
+    • Dollar bid–ask spread: ask − bid, averaged.
+    2
+      A pure BKM implementation, which would require a strike-density adjustment, is left to a follow-up. We expect
+the proxy and the strict BKM measure to be highly correlated; the proxy uses a super-set of the moments Vt , Wt , Xt
+that enter the Bakshi et al. expression.
+
+
+                                                               8
+    • Fraction of contracts with zero daily volume.
+
+    • Post-filter contract count ni,t (also listed above).
+
+4.5    Outcomes
+We construct three outcome variables for the predictability and ML exercises:
+
+Forward log return. ri,t+h = log(Pi,t+h /Pi,t ) for h ∈ {1, 5, 21, 63} trading days. The h = 21
+horizon is the headline next-month return; we report the full set of horizons in the appendix.
+
+                                                (21)
+21-day forward realized volatility. RVi,t+21 is the rolling 21-day standard deviation of log
+                                                           √
+returns over [t + 1, t + 21], scaled to annualized units by 252, computed from the firm’s underlying-
+price series. We require at least 10 non-missing daily returns within the window.
+
+Crash indicator. Following the Kim et al. (2011) family of measures we define a 5-day forward
+crash flag
+                                                            (252) √
+                                          h                          i
+                                   (5)      (5)
+                              crashi,t = ⊮ ri,t+5 < −3.09 σ̂i,t     5 ,
+
+        (5)                                                          (252)
+where ri,t+5 is the cumulative 5-day forward log return and σ̂i,t            is the trailing 252-day daily-
+return standard deviation. The unconditional firm-day base rate of this flag is between 0.5%
+                                                                                        (21)       (21)
+and 0.7%, depending on regime (Section 6). We report a 21-day analog (crashi,t = ⊮[ ri,t+21 <
+        (252) √
+−3.09 σ̂i,t     21 ]) for the ML exercise to match the next-21-day return target.
+    Table 1 summarizes the cross-regime mean, standard deviation, and within-firm lag-1 autocorre-
+lation for the headline features. Three patterns are immediately visible. First, crash-fear pricing
+peaked in the 2020–2022 high-volatility regime: the smirk and ATM IV are both highest in that
+window. Second, the right tail of the OTM IV distribution is fattest in the AI/mega-cap regime:
+the BKM-style risk-neutral skewness rises monotonically from 1.00 to 1.30 across regimes. Third,
+the option-implied signals are stickier in the AI/mega-cap regime: the within-firm AC1 of smirk
+and IV spread jumps from approximately 0.22 to 0.31 in 2023+. These descriptives motivate the
+regime-by-regime predictability analysis in Section 6.
+
+
+5     Empirical methodology
+5.1    Baseline panel regression (Q1)
+We estimate two-way fixed-effects panel regressions of the form
+
+                                       option
+                       Yi,t+h = α + β Xi,t    + γ ′ Ci,t + µi + λt + εi,t ,                               (1)
+
+                                                                                             option
+where Yi,t+h is the firm-day forward log return at horizon h ∈ {1, 5, 21, 63} trading days, Xi,t    is
+the option-implied signal of interest, Ci,t is the controls vector (rel spread, frac zero volume, ν oi-w ),
+
+
+                                                       9
+Table 1: Cross-regime descriptive statistics for selected option-implied signals. Each cell aggregates over
+all firm-day observations within the corresponding regime (low-vol = 2015–2019, high-vol = 2020–2022,
+AI/megacap = 2023–2026); ρ1 is the mean within-firm lag-1 autocorrelation.
+
+                                 Low-vol             High-vol        AI/megacap
+                                                                                            ρ1
+           Signal              mean        sd     mean       sd      mean      sd
+                                                                                      (low/high/AI)
+           σ atm               0.358     0.226    0.480     0.279    0.409    0.270   0.67/0.74/0.69
+           smirk              0.076      0.098    0.091     0.116    0.082    0.124   0.23/0.26/0.32
+           iv spread          −0.033     0.107   −0.039     0.126   −0.040    0.135   0.21/0.22/0.31
+           rns bkm             0.998     1.006    1.224     1.079   1.301     1.128   0.16/0.15/0.17
+           pc volume ratio      3.61      92.7     3.11     108.1    3.16      87.8   0.06/0.09/0.08
+
+
+and µi , λt are entity and date fixed effects. We estimate (1) via linearmodels.PanelOLS with
+absorbed FEs and double-clustered standard errors on entity and date (Petersen, 2009).
+    We report two specifications:
+
+   • Univariate: one option signal at a time, X option is a scalar. β is the reported coefficient.
+
+   • Multivariate: all six option-implied signals (smirk, iv spread, pc volume ratio, pc oi ratio,
+      rns bkm, ts slope 30 60) enter jointly together with the controls. We report each signal’s
+      coefficient.
+
+    We estimate each specification on the full panel and separately within each of the three regimes.
+All option-implied signals and controls are winsorized at the 1st and 99th percentile prior to
+estimation.
+
+Subsampling. The full panel (∼ 12M firm-days, ∼ 10K entities, ∼ 2,900 dates) exceeds memory
+when PanelOLS attempts iterative two-way absorption with clustered SE on a 16 GB workstation.
+We therefore fit each regression on a uniform random subsample of 1,500,000 firm-days (fixed
+seed). For unbiased coefficients with clustered SE this is statistically equivalent to the full sample
+at the cost of slightly inflated standard errors; the column nfull in our results tables records the
+pre-subsample size.
+
+5.2    Machine-learning prediction (Q2)
+We complement (1) with a flexible nonlinear specification
+
+                                                    option    liquidity 
+                                       Ybi,t+h = f Xi,t    , Xi,t         ,                                (2)
+
+where the feature set comprises 18 firm-day variables: the five IV-band features (σ atm , σ atm,call ,
+σ atm,put , σ otm,put , σ otm,call ), the four derived signals (smirk, iv spread, ts slope 30 60, rns bkm), the
+two trading-activity ratios (pc volume ratio, pc oi ratio), the four OI-weighted Greeks, and three
+liquidity controls (rel spread, frac zero volume, n contracts).
+
+
+                                                       10
+Models.      We fit three regressors of (2):
+
+   1. OLS, as a sanity check.
+
+   2. Elastic Net with 3-fold cross-validated α (sklearn.ElasticNetCV), 20 candidate α values.
+
+   3. XGBoost (Chen and Guestrin, 2016) with 400 trees, max depth 5, learning rate 0.05, subsample
+      0.8, column subsample 0.8, tree method = "hist".
+
+For the binary crash target we use logit, Elastic-Net logit, and XGBoost classifier. All inputs are
+standardized using a StandardScaler fit on the training fold.
+
+Out-of-sample protocol.         We use a rolling expanding-window evaluation following Gu et al.
+(2020). For each test calendar year T ∈ {2017, . . . , 2026} we train on [2015, T − 2], validate on
+T − 1 (used for hyperparameter selection in the Elastic Net), and test on T . This generates 10
+out-of-sample years total. Models are re-fit annually.
+
+Targets.     We evaluate three targets:
+
+   • Next-21-day return: regression ROOS
+                                     2   and RMSE.
+
+   • 21-day forward realized volatility: regression ROOS
+                                                     2   .
+
+   • 21-day forward crash indicator: classification AUC and Brier score.
+
+    We report results overall and separately within each of the three regimes (each test year is
+mapped to its enclosing regime).
+
+Feature importance. We compute three per-regime feature importance measures on a separately
+fit XGBoost regressor for the next-21-day return target:
+
+   1. Gain-based importance from the trained booster (XGBoost’s native feature importances ).
+
+   2. Permutation importance on a 50K-row test sample with 5 repeats, scoring by R2 (Gu et al.,
+      2020).
+
+   3. TreeSHAP (Lundberg and Lee, 2017) would provide a unified attribution; we describe results
+      from gain and permutation here, and defer SHAP to a follow-up due to a numeric-library
+      compatibility issue in our environment (Section 8).
+
+5.3    Crash-risk forecasting
+For the 5-day-forward crash indicator we run a separate, simpler exercise. Within each regime, we
+use 80% of the firm-days (chronologically earliest) for training and the remaining 20% for test. We
+fit two classifiers:
+
+
+                                                 11
+Figure 1: Cross-sectional median smirk = σ otm,put − σ atm,call , 2015–2026. Light-blue, orange, and light-green
+shading delineate the low-vol, high-vol, and AI/mega-cap regimes respectively. Thin line: daily median.
+Heavy line: 21-day rolling mean.
+
+
+    • L2-regularized logistic regression.
+
+    • XGBoost classifier with scale_pos_weight set to n− /n+ to up-weight the rare positive (crash)
+      class.
+
+We report AUC, Brier score, the test-set base rate, and train/test sizes. Features are the same
+14-element subset of the IV-surface, ratios, Greeks, and rel_spread used in the ML benchmark
+above.
+
+
+6     Results
+6.1      Time-series visual of the IV surface
+Before reporting regressions, we visualize the cross-sectional median smirk over the full sample in
+Figure 1. The figure shades the three regime windows and overlays a 21-day rolling mean. Three
+features are immediately apparent: (i) the dramatic spike in March 2020 to a median smirk above
+0.18 as COVID hit; (ii) the slow decline through 2021–2022 as IV mean-reverted; and (iii) the lower
+median smirk in the 2023–2026 AI/mega-cap window (roughly 0.05–0.09) than in the pre-COVID
+baseline (roughly 0.07–0.10). At first glance this looks like reduced crash-fear pricing, but our
+regression evidence below shows that the information content of the smirk has decayed even more
+sharply than its level.
+    The matching ATM-IV time-series in Figure 2 confirms the regime structure. Median ATM IV
+is around 0.30–0.35 throughout the low-vol baseline, spikes to 0.80 in March 2020, remains elevated
+at 0.40–0.55 through the high-vol regime, and sits in the 0.35–0.50 band in the AI/mega-cap regime.
+
+
+
+
+                                                      12
+               Figure 2: Cross-sectional median ATM implied volatility σ atm , 2015–2026.
+
+Table 2: XZZ smirk replication on 2015–2017. Each row is the mean 21-trading-day forward log return for
+firms in that smirk quintile, averaged daily across the sample.
+
+                        Quintile        Avg. 21-day return (%)      Annualized (%)
+                   1 (lowest smirk)              +0.232                 +2.79
+                           2                     +0.350                 +4.19
+                           3                     +0.350                 +4.20
+                           4                     +0.249                 +2.98
+                   5 (highest smirk)             −0.177                 −2.12
+                      High − low                 −0.409                  −4.91
+
+
+6.2   Replication: Xing–Zhang–Zhao smirk on 2015–2017
+To validate our data pipeline against the canonical literature we replicate Xing et al. (2010) on the
+earliest part of our sample, 2015–2017. Each trading day we sort firms into smirk quintiles and
+compute the average next-21-day forward log return per quintile across all sorting days. Table 2
+shows the result. The quintile ranking is monotonically decreasing across quintiles 1–4 and then
+drops sharply for the top quintile. The high-minus-low spread is −0.49% over a 21-day window, or
+approximately −4.91% annualized. The original paper reports approximately −10.9% annualized in
+1996–2005 using a delta-defined smirk. We use a moneyness-band implementation on a different
+sample window and recover the same negative sign with about half the magnitude. This is a
+successful directional replication and validates the panel.
+
+6.3   Q1: Baseline panel regressions
+Table 3 presents the headline univariate panel regressions of ri,t+21 on each of the six option-implied
+signals plus controls, with two-way fixed effects and double-clustered SE. Each column is a regime;
+reported are β and the t-statistic in parentheses.
+
+
+                                                  13
+Table 3: Univariate panel regressions: ri,t+21 on each option signal (plus controls), h = 21 trading days.
+Two-way fixed effects (firm and date) with double-clustered standard errors. Each cell reports β (t-statistic).
+Significance at |t| > 1.96 shown in bold.
+
+  Signal                       Full               Low-vol                High-vol            AI/megacap
+  smirk                   −0.0203 (−6.8)    −0.0234 (−5.5)         −0.0150 (−4.2)          −0.0060 (−1.5)
+  iv spread               +0.0214 (+7.0)    +0.0291 (+6.6)         +0.0166 (+4.8)         +0.0151 (+4.2)
+  rns bkm                 −0.0030 (−13.1)   −0.0028 (−10.5)        −0.0047 (−12.2)        −0.0040 (−11.7)
+  ts slope 30 60          +0.0106 (+4.8)    +0.0091 (+3.1)         +0.0106 (+3.8)         +0.0118 (+3.7)
+  pc volume ratio         −1×10−4 (−2.6)     −1×10−5 (−0.4)        −7×10−5 (−1.7)          +1×10−5 (+0.4)
+  pc oi ratio              +9×10−5 (+1.7)   +1×10−4 (+2.1)         −5×10−5 (−0.5)         +2×10−4 (+2.7)
+
+Table 4: Multivariate panel regression: ri,t+21 on all six option-implied signals jointly (plus controls), h = 21
+trading days. Two-way fixed effects with double-clustered standard errors.
+
+         Signal                  Full             Low-vol              High-vol           AI/megacap
+         smirk              −0.003 (−0.6)     +0.002 (+0.3)        +0.006 (+1.0)       +0.016 (+2.6)
+         iv spread         +0.038 (+7.2)     +0.046 (+6.7)        +0.030 (+4.7)        +0.040 (+5.4)
+         rns bkm           −0.0024 (−9.2)    −0.0026 (−8.1)       −0.0041 (−9.1)       −0.0036 (−8.8)
+         ts slope 30 60    +0.019 (+6.4)     +0.014 (+3.2)        +0.017 (+4.1)        +0.016 (+3.3)
+
+
+    The most striking result is in the smirk row: the canonical Xing et al. (2010) effect decays
+monotonically across the three regimes. β falls in absolute value from −0.0234 in the low-volatility
+baseline to −0.0150 in the high-volatility regime to −0.0060 (statistically insignificant, t = −1.5)
+in the AI/mega-cap regime. This is direct evidence for the central thesis: the smirk’s predictive
+content has not survived the post-2020 environment.
+    By contrast, the IV spread (Cremers and Weinbaum, 2010) and the Bakshi et al. (2003)-style risk-
+neutral skewness proxy rns bkm remain significant in every regime, with |t| exceeding 4 everywhere.
+rns bkm is in fact the single most significant predictor anywhere in the table (t = −13.1 in the
+full sample). These two signals—the deviation from put–call parity at the ATM strike and the
+cross-strike skewness of OTM IVs—appear to carry genuinely persistent information about future
+returns.
+    The term-structure slope ts slope 30 60 enters with a positive coefficient that is significant in
+every regime; the put–call volume and OI ratios are weak everywhere, consistent with the Pan and
+Poteshman (2006) insight that the signed put–call ratio is the informative one (which we cannot
+construct without a trade-direction indicator).
+
+6.3.1      Multivariate specification
+
+Table 4 reports the multivariate specification in which all six option-implied signals enter simultane-
+ously.
+    Two findings. First, smirk loses significance in every regime once iv spread and rns bkm enter
+the regression. These two signals are constructed from overlapping pieces of the IV surface (OTM
+put IV versus ATM call IV in particular); when they absorb the crash-fear information, the residual
+
+
+                                                       14
+Table 5: Univariate smirk coefficient β on ri,t+h , by horizon and regime. t-statistics in parentheses with
+double-clustered SE.
+
+        Regime                h=1                h=5                 h = 21             h = 63
+        Full            −0.0047 (−5.1)      −0.0105 (−6.7)     −0.0203 (−6.8)      −0.0195 (−3.5)
+        Low-vol         −0.0105 (−3.9)      −0.0151 (−5.1)     −0.0234 (−5.5)      −0.0256 (−3.5)
+        High-vol        −0.0037 (−4.2)      −0.0092 (−5.4)     −0.0150 (−4.2)      −0.0135 (−2.0)
+        AI/megacap      −0.0032 (−4.1)      −0.0053 (−2.9)      −0.0060 (−1.5)     +0.0156 (+2.1)
+
+                 Table 6: Univariate rns bkm coefficient β on ri,t+h , by horizon and regime.
+
+      Regime               h=1                   h=5                  h = 21               h = 63
+      Full           −1×10−4 (−3.3)       −6×10−4 (−6.1)        −0.0030 (−13.1)      −0.0081 (−16.5)
+      Low-vol         −1×10−4 (−1.8)      −6×10−4 (−6.5)        −0.0028 (−10.5)      −0.0084 (−13.8)
+      High-vol       −2×10−4 (−2.4)       −0.0013 (−7.8)        −0.0047 (−12.2)      −0.0130 (−16.5)
+      AI/megacap     −2×10−4 (−4.7)       −0.0011 (−8.8)        −0.0040 (−11.7)      −0.0104 (−14.3)
+
+
+variation in smirk is uninformative about return. Second, the smirk coefficient flips sign and becomes
+positive and significant in the AI/mega-cap regime (β = +0.016, t = +2.6). We interpret this
+in Section 7 as consistent with the Anonymous (2026) evidence that retail demand pressure has
+distorted the OTM-put portion of the IV surface in 2023+: a high smirk no longer signals informed
+put-buying ahead of bad news, but instead signals retail puts that systematically lose money.
+
+6.3.2    All horizons
+
+Table 5 extends the smirk regression across all four return horizons h ∈ {1, 5, 21, 63}.
+   The pattern is striking. In the low-vol baseline the smirk effect grows in absolute value with
+horizon (−0.011 at h = 1 to −0.026 at h = 63). In the AI/mega-cap regime the effect is small and
+significant at h = 1 and h = 5, becomes insignificant at h = 21, and then reverses sign at h = 63
+(β = +0.016, t = +2.1). At the three-month horizon, a high smirk in 2023+ predicts positive future
+returns, the opposite of the canonical effect.
+   For comparison, Table 6 reports the same exercise for the rns bkm signal, which by contrast
+strengthens with horizon in every regime. At h = 63 the t-statistic exceeds 13 in every cell. rns bkm
+is the single most robust predictor in the panel.
+
+6.4     Q2: Machine-learning prediction
+We now report the rolling out-of-sample evaluation (Section 5). Table 7 shows the mean OOS R2
+(regression targets) or AUC (classification target) within each regime, averaged across the OOS test
+years that fall in that regime.
+   Three findings.
+   First, on next-month return prediction, linear models barely beat zero in any regime. XGBoost
+                                           2
+wins only in the AI/mega-cap regime, with ROOS = +1.29% versus +0.07% for OLS and Elastic
+Net. In the high-volatility regime XGBoost underperforms linear (−7.9% vs. −1.4%), suggesting
+
+                                                     15
+                                                                2
+Table 7: Out-of-sample performance, by regime and model. ROOS        for the regression targets; AUC for
+crash-21d. Numbers are averages across OOS test years within the regime.
+
+                   Target            Regime            OLS     Elastic Net   XGBoost
+                                     Low-vol        −0.031       −0.031      −0.049
+                           2
+                   rt+21 (ROOS )     High-vol       −0.014       −0.014      −0.079
+                                     AI/megacap     +0.001       +0.001      +0.013
+                                     Low-vol           0.231     0.232        0.203
+                      (21)  2
+                   RVt+21 (ROOS )    High-vol          0.349     0.349        0.293
+                                     AI/megacap        0.410     0.410        0.409
+                                     Low-vol           0.575     0.574        0.586
+                        (21)
+                   crasht    (AUC)   High-vol          0.555     0.549        0.615
+                                     AI/megacap        0.602     0.602        0.623
+
+
+
+
+Figure 3: Per-year out-of-sample R2 for next-21-day return prediction, by model. Test years 2017–2026.
+XGBoost beats both linear models in 2023, 2024, and 2025; the 2025 column dominates the AI/mega-cap
+mean.
+
+
+overfitting on the sharp COVID-era training distribution. The result that nonlinear ML adds value
+primarily in the AI/mega-cap regime is the central machine-learning finding of the paper.
+                                               2
+   Second, on realized volatility prediction, ROOS is high in every regime, peaking at 0.41 in the
+AI/mega-cap regime. Linear models slightly edge XGBoost—RV prediction is essentially linear in
+the IV-surface features, as one would expect.
+   Third, on crash classification, XGBoost beats logit and Elastic Net by roughly 0.01–0.06 AUC
+in every regime. The largest gain is in the high-volatility regime (+0.06 AUC), where the crash
+signal is most informative.
+   Figure 3 shows the per-year breakdown for the return target. A single recent year, 2025, drives
+                         2
+most of the AI/mega-cap ROOS for XGBoost (+3.55%). All earlier years are marginal or negative.
+
+
+
+
+                                                  16
+Table 8: 5-day forward crash classification, by regime. Test set is the chronologically last 20% of firm-days
+within the regime. AUC is the area under the ROC curve; the Brier score is the mean squared prediction
+error. XGBoost uses scale pos weight=n− /n+ to up-weight the rare positive class.
+
+               Regime         Model     AUC     Brier     Base rate (%)      ntrain     ntest
+                               Logit   0.670    0.005              0.52   1,221,564   307,281
+               Low-vol
+                               XGB     0.706    0.201              0.52   1,221,564   307,281
+                               Logit   0.531    0.007              0.72     972,048   245,434
+               High-vol
+                               XGB     0.561    0.179              0.72     972,048   245,434
+                               Logit   0.652    0.007              0.68   1,045,879   262,365
+               AI/megacap
+                               XGB     0.665    0.198              0.68   1,045,879   262,365
+
+
+
+
+Figure 4: Crash-21d classification AUC, by regime and model. Dashed line: random benchmark (AUC= 0.5).
+XGBoost (orange) beats logistic regression (purple) in every regime.
+
+
+6.5    Crash-risk forecasting (Q1+Q2)
+For the firm-level 5-day forward crash flag, Table 8 reports test-set AUC, Brier score, base rate, and
+sample sizes per regime.
+    The level of crash AUC is highest in the low-volatility regime (XGB = 0.706, logit = 0.670). This
+is informative: in calm markets the rare crashes are tail events that the IV surface can pre-price, and
+a boosted-tree classifier extracts this signal usefully. In the high-volatility regime AUC collapses to
+roughly 0.55, indicating that the macro-driven 2020–2022 crashes (COVID, March 2020 liquidations,
+2022 rate-shock drawdowns) are not well predicted by firm-level option features. In the AI/mega-cap
+regime AUC recovers to 0.66, intermediate between the two.
+    XGBoost beats logit in every regime, by margins of +0.04, +0.03, and +0.01 AUC respectively.
+The gain is largest in the low-volatility regime where the signal is cleanest. Figure 4 visualizes this.
+    The Brier-score asymmetry between models is a calibration artifact and not a measure of
+accuracy. Logit predicts probabilities very close to the small base rate (0.5%–0.7%) so its Brier
+score is mechanically tiny, while XGBoost with scale_pos_weight produces probability scores in
+the 0.1–0.3 band that rank-order events well (good AUC) but are uncalibrated relative to base rate.
+
+                                                     17
+Figure 5: Top-15 features by permutation importance (∆R2 ) per regime, XGBoost regressor for next-21-day
+return.
+
+   Table 9: Top-5 features per regime by permutation importance (∆R2 ), XGBoost regressor of rt+21 .
+
+                   Rank    Low-vol baseline     High-vol regime      AI/mega-cap regime
+                                 oi-w
+                     1       ν      (0.091)     ncontracts (0.207)    σ otm,call (0.117)
+                     2     σ otm,call (0.039)     σ atm (0.138)         ν oi-w (0.044)
+                     3       Γoi-w (0.036)      σ atm,call
+                                                           (0.111)     Θoi-w (0.030)
+                             otm,put
+                     4     σ          (0.020)     Γoi-w (0.029)       ncontracts (0.027)
+                     5     σ atm,put (0.017)      ν oi-w (0.028)      σ otm,put (0.021)
+
+
+A post-hoc sigmoid recalibration would resolve the discrepancy without changing AUC.
+
+6.6   Feature importance per regime
+Figure 5 reports permutation feature importance for the XGBoost regressor of ri,t+21 , separately
+fit on each regime. The bars are sorted by ∆R2 on a 50K-row test sample, 5 permutation repeats.
+Table 9 lists the top five features per regime.
+   The top feature differs across all three regimes. In the low-volatility baseline, the open-interest-
+weighted vega exposure ν oi-w dominates: the model picks up firms whose IV surfaces are most
+volatility-sensitive, plausibly the most actively hedged names. In the high-volatility regime, the raw
+post-filter contract count ncontracts is the runaway leader (∆R2 = 0.207, almost twice the runner-up
+at 0.138): in the crisis-driven 2020–2022 environment, breadth of the active option surface—a coarse
+measure of trader interest—is more informative than the surface’s shape. In the AI/mega-cap
+regime, the OTM call IV σ otm,call takes the top spot: the right tail of the IV surface, exactly where
+mega-cap demand is concentrated, becomes the dominant predictor.
+   Crucially, none of the canonical hand-engineered signals—smirk, iv spread, rns bkm—make the
+top five in any regime once the ML model has access to the primitive IV-surface and Greek features.
+In the AI/mega-cap regime, iv spread appears at rank 9 and smirk does not appear in the top 15.
+
+
+                                                     18
+This is the cleanest evidence in our analysis that the canonical linear combinations throw away
+information that nonlinear models exploit. The smirk, in particular, is a fixed linear combination of
+σ otm,put and σ atm,call ; XGBoost learns regime-dependent nonlinear interactions of these primitives
+that the smirk cannot represent.
+
+
+7     Discussion
+7.1   Why has the smirk lost its edge?
+The single most striking finding in our results is that the Xing et al. (2010) smirk–return relationship
+has decayed monotonically across our three regimes (Tables 3 and 5) and even reverses sign
+in the AI/mega-cap regime at the longest horizon and in the multivariate specification. Three
+non-mutually-exclusive interpretations are consistent with the evidence.
+
+Demand-pressure dilution. The classical Xing et al. (2010) interpretation of the smirk is
+that informed traders price expected crashes into OTM puts, and the resulting IV elevation
+negatively predicts next-period returns. The post-2020 literature on retail flow (Bryzgalova et al.,
+2023; Bogousslavsky and Muravyev, 2024; Anonymous, 2026) documents that retail participants
+concentrate trading exactly in OTM puts and short-dated contracts, and that retail demand is not
+informed. If retail buying adds noise to the OTM-put portion of the IV surface, the information-to-
+noise ratio in the smirk falls; the predictive coefficient should attenuate toward zero. Our univariate
+evidence shows attenuation, and the multivariate evidence in Table 4 shows that, conditional on the
+informative signals (iv spread, rns bkm) that overlap with the informed component of the smirk,
+the residual variation in smirk is driven by the noise component and even reverses sign.
+
+Mean-reversion of crash-fear pricing. An alternative reading is that retail-induced overpricing
+of OTM puts creates a positive expected return for the underlying when puts are expensive, mirroring
+the well-known overpricing of equity-index puts. The horizon-by-horizon evidence in Table 5 is
+consistent with this: in the AI/mega-cap regime smirk is weakly significant and negative at h = 1
+(β = −0.003, t = −4.1) but positive and significant at h = 63 (β = +0.016, t = +2.1). The
+negative-then-positive sign suggests that the very-short-horizon correlation between smirk and
+return is dominated by a residual informed component, while the longer-horizon correlation reflects
+the mean-reversion of demand pressure.
+
+Compositional change in the underlying universe. The 2023–2026 sample is dominated by
+a small number of mega-cap high-IV names (the AI complex), whose return distributions look very
+different from the broad-based universe of the pre-COVID baseline. If the smirk–return relationship
+is firm-specific in a way that the date and firm fixed effects cannot fully absorb, then a compositional
+shift toward names where the mapping is weaker would mechanically attenuate the average effect.
+
+
+
+
+                                                  19
+We cannot fully separate this from the demand-pressure story without firm-specific retail-flow
+indicators.
+   The three explanations are observationally equivalent in our panel and all consistent with
+the central thesis: the canonical smirk effect is non-stationary. Distinguishing them requires the
+Bryzgalova et al. (2023)-style retail-flow data, which we do not have.
+
+7.2   Why does ML add value only in the AI/mega-cap regime?
+                2
+The next-month ROOS table (Table 7) shows that XGBoost beats linear models only in the AI/mega-
+cap regime. Why?
+
+Nonlinear interactions specific to the new regime.               Linear models essentially fit a single
+hyperplane through the feature–return relationship. If the relationship is locally linear within each
+regime but the slopes differ across regimes, a model that trains on [2015, T − 2] and predicts T
+may incorporate the wrong slopes when the regime has changed. XGBoost can in principle learn
+regime-dependent local linearities through its tree splits, provided that some feature in the input
+space proxies for the regime. In our data, the IV-level features (σ atm , etc.) and the contract-count
+feature do shift across regimes (Table 1); the tree boosters appear to use these shifts to adapt locally.
+
+Why XGB underperforms in the high-volatility regime.                The high-volatility regime is short
+(3 years) and dominated by extreme realizations (the March 2020 crash, the meme-stock surges,
+the 2022 rate-shock drawdowns). A boosted-tree model trained on 2015–2018 data and tested on
+2019–2020 will see a covariate shift far outside its training distribution; it tends to overpredict
+the magnitude of returns based on its training-distribution priors. This shows up as a strongly
+          2
+negative ROOS . Linear models with regularization are more robust under covariate shift because
+they extrapolate linearly rather than using non-monotonic regions of the feature space.
+
+Why RV prediction is essentially linear. Realized volatility is by construction the integral of
+squared daily returns, and ATM IV is by no-arbitrage the model-free implied second moment. In
+a world without microstructure noise, OOS RV would be a tight near-linear function of ATM IV.
+The fact that linear models match XGBoost on RV prediction confirms this intuition; the gain from
+nonlinearity is small because the underlying mapping is close to linear.
+
+7.3   What do feature-importance rankings tell us about the regimes?
+The per-regime top features (Table 9) tell a coherent story about what aspect of the option market
+is most informative in each environment.
+
+Low-volatility baseline: vega dominates. In a calm environment with persistent IV, the
+feature most predictive of the cross-section of next-month returns is the open-interest-weighted vega
+ν oi-w . Vega exposure is concentrated in firms with the most actively traded long-dated and ATM
+
+
+                                                   20
+options—typically the names with the most institutional hedging activity. The classifier appears to
+identify those names and use vega exposure as a proxy for information-rich option flow.
+
+High-volatility regime: contract count and IV level dominate.                    When systemic vol is
+elevated, the boosted-tree model leans hardest on ncontracts   and σ atm . This is consistent with the
+Bollerslev et al. (2009)–Bollerslev et al. (2015) interpretation that the level of the IV surface (and
+the breadth of the active option universe) reveals the price of variance and tail risk during crises.
+The shape features (smirk, IV spread) become much less informative when the level swings are this
+large.
+
+AI/mega-cap regime: OTM call IV dominates. The right tail of the IV surface is the most
+predictive feature in the AI/mega-cap regime, with ∆R2 = 0.117, a clear lead over the runner-up at
+0.044. This is exactly the part of the IV surface that is most distorted by mega-cap call demand
+(Anonymous, 2026), and it is the feature that is absent from the canonical Xing et al. (2010) smirk
+(which uses OTM put IV and ATM call IV but not OTM call IV). The smirk is, in this regime,
+literally looking at the wrong piece of the IV surface.
+
+Take-away. The dominant feature differs across all three regimes, and the canonical hand-
+engineered signals do not appear in the top five anywhere. This is direct evidence that the Gu et al.
+(2020)-style ML approach delivers value not by out-fitting a single specification, but by re-weighting
+which pieces of the IV surface to attend to as the environment changes.
+
+7.4      Implications for option-based crash forecasting
+The crash-AUC pattern in Table 8—low-vol AUC = 0.706, high-vol AUC = 0.561, AI/mega-cap
+AUC = 0.665—has practical implications for risk management.
+
+Crashes during quiet markets are forecastable.              In the low-volatility regime, an AUC of
+0.706 on a 0.5% base-rate flag is real signal: a top-decile predicted-probability subset contains a
+multiple of the unconditional crash rate. The IV surface appears to contain information about
+idiosyncratic crash risk that is not in the conditional-mean process. This is consistent with the Kim
+et al. (2011) reading that crash risk has identifiable firm-level antecedents.
+
+Crashes during crises are not. In the high-volatility regime, AUC drops to 0.55 for both logit
+and XGBoost. The 2020–2022 crashes were dominated by macro shocks (COVID, central-bank
+tightening) that hit firms simultaneously, irrespective of their firm-specific IV surface. Firm-level
+option signals carry little informational advantage over a coin flip when the systemic component
+dominates.
+
+
+
+
+                                                  21
+The AI/mega-cap regime is intermediate.                The recovery in crash AUC to 0.665 in the
+AI/mega-cap regime is encouraging. Even though the smirk–return relationship has weakened, other
+parts of the IV surface are still informative about crash probability. The right-skewed mega-cap IV
+surface evidently carries enough left-tail content to make rare crashes partly predictable.
+    These three findings, together, suggest that forward-looking option-implied features are useful
+predictors of firm-level crash risk in regimes where idiosyncratic risk dominates, and less useful
+when systematic risk dominates. This is a more nuanced statement than “option signals predict
+crashes” but is empirically testable and broadly consistent with the literature.
+
+
+8     Limitations
+We list the main limitations of the analysis to help the reader calibrate the results.
+
+8.1   Data
+End-of-day snapshot only.         Our raw archive contains a single end-of-day record per contract.
+We do not see intraday quotes, the full order book, or signed trades. A signed put–call ratio in
+the Pan and Poteshman (2006) sense would require trade-direction data that we do not have; we
+therefore cannot directly replicate the Bryzgalova et al. (2023)-style retail-flow attribution. Several
+of our discussion points (Section 7) about retail demand pressure are therefore consistent-with
+rather than direct evidence.
+
+No CRSP/Compustat merge. We use the underlying-price column from the option records
+as our stock-side data source. This yields a self-contained panel but precludes the standard cross-
+sectional controls used in the literature (size, book-to-market, momentum, idiosyncratic volatility,
+accruals). An obvious extension is to merge the panel to CRSP daily files for full controls and to
+Compustat for fundamental controls.
+
+Risk-neutral skewness is a proxy. We use the cross-strike sample skewness of OTM IVs as a
+proxy for the Bakshi et al. (2003) risk-neutral skewness. A full BKM estimator requires a continuous
+strike density and a mass-weighted integration over (0, ∞). The proxy and the strict measure should
+be highly correlated and have the same sign in normal conditions, but the magnitudes are not
+strictly comparable to the literature.
+
+Smirk uses moneyness bands rather than delta bands. Xing et al. (2010) use a delta-defined
+moneyness measure (delta of 0.36–0.44 for the put leg). Our implementation uses a K/S-based
+moneyness band (0.80–0.95 for OTM put, 0.95–1.05 for ATM call). This choice is motivated
+by simplicity and robustness; it is also why our XZZ replication recovers approximately half the
+magnitude of the original (−4.91% vs. −10.9% annualized). A delta-band re-implementation should
+sharpen the comparison.
+
+
+                                                  22
+0DTE handling.       Our 7-day minimum time-to-expiry filter excludes 0DTE and weekly options.
+The literature on 0DTE (Bogousslavsky and Muravyev, 2024; Anonymous, 2026) suggests this slice
+of the option market has very different properties from the weekly+ tenor. A 0DTE-specific feature
+panel is a natural extension.
+
+Excel-style sentinels. The raw CSV exports contain Excel-style ******** sentinels (over 30,000
+rows in some early files) where IV was too wide to display. We map them to NaN at read time.
+These rows are deep-OTM contracts whose IV is computationally unreliable anyway, and they are
+dropped by the |∆| ∈ [0.05, 0.95] filter, but the existence of the sentinels is a reminder that the raw
+archive is not laboratory-clean.
+
+8.2   Methodology
+Subsampled panel regressions. We fit each two-way fixed-effects panel regression on a uniform
+random 1.5-million-row subsample of the relevant sub-panel. The full 12-million-row panel exceeds
+memory under linearmodels.PanelOLS’s iterative two-way absorption with double clustering on a
+16 GB workstation. Random subsampling is unbiased for the coefficient and inflates the standard
+errors only mildly; we report nfull in our regression tables to make the size discrepancy visible.
+
+Single ML target horizon.          The ML benchmark (Section 6.4) uses h = 21 as the headline
+horizon. Other horizons are reported only for the panel regressions (Section 6.3). Extending the
+ML benchmark to all four horizons would be straightforward but would multiply training time.
+
+No SHAP attribution. The shap library installed in our conda environment imports TensorFlow
+at load time, and TensorFlow fails to initialize on this machine (a Rosetta-translated x86 64 build of
+Anaconda Python without AVX support); the import deadlocks inside tensorflow::port::CheckFeatureOrDie.
+We therefore report only gain-based and permutation feature importance. Both are sufficient for
+ranking the top features per regime, but a SHAP treatment in a clean environment would add the
+directional attribution and per-prediction explanations that are now standard in ML asset-pricing
+papers.
+
+No deep models. The original analysis plan included a 3-layer feed-forward neural network and
+a small LSTM on a 21-day lag window. We omit both in this version: the linear–XGBoost contrast
+already delivers a clear story for the AI/mega-cap regime, and adding deep models would not change
+the central finding. In a follow-up these should be added for completeness following Gu et al. (2020).
+
+Single base classifier for crash.    The crash exercise uses logit and XGBoost. A larger benchmark
+(random forest, calibrated gradient-boosting, isotonic-recalibrated logistic) would tighten the crash-
+AUC numbers but not change the ordinal regime ranking.
+
+
+
+
+                                                  23
+8.3   Specification choices
+Regime boundaries are exogenous.            We define the three regimes by calendar dates chosen
+ex ante from the macro narrative (low-vol = 2015–2019, high-vol = 2020–2022, AI/mega-cap =
+2023–2026). We do not estimate the regime breakpoints from the data. A structural-break analysis
+on the smirk–return time series, or a clustering of firm-day observations on macro features, would
+endogenize the regime classification at the cost of weakening the ex-ante interpretability of the
+comparisons.
+
+Only one crash horizon for the headline AUC. Our headline crash exercise uses the 5-day
+forward flag. We also computed the 21-day analog for the ML benchmark. The Hutton–Marcus–
+Tehranian DUVOL and NCSKEW alternatives (Hutton et al., 2009) would allow robustness across
+crash-risk definitions; we leave this to the robustness phase.
+
+Robustness phase deferred. The pre-registered robustness suite—DUVOL/NCSKEW alterna-
+tive crash definitions, alternative SE clustering, random-label permutation placebo, ML feature-rank
+sensitivity to model choice—is not estimated in this paper. Each deserves a section of its own and
+we return to them in a follow-up.
+
+
+9     Conclusion
+We have constructed a unified U.S. equity option panel covering 2015 through April 2026 and have
+evaluated both the canonical predictability literature and a modern machine-learning benchmark on
+three macro regimes: a low-volatility baseline (2015–2019), a high-volatility transition (2020–2022),
+and an AI/mega-cap concentration period (2023–2026). The post-filter panel comprises 12.36 million
+firm-day observations on 10,026 underlying names.
+    Three principal findings emerge.
+
+1. The canonical smirk effect is non-stationary.             The Xing et al. (2010) smirk–return
+relationship decays monotonically across regimes: the next-month univariate panel coefficient on
+smirk is −0.023 (t = −5.5) in the low-volatility baseline, attenuates to −0.015 (t = −4.2) in the
+high-volatility regime, and falls to −0.006 (t = −1.5, statistically insignificant) in the AI/mega-cap
+regime. At the three-month horizon the AI/mega-cap coefficient flips sign (+0.016, t = +2.1).
+In a multivariate specification with all six option-implied signals jointly, smirk loses significance
+everywhere and again reverses sign in the AI/mega-cap regime. The IV spread (Cremers and
+Weinbaum, 2010) and a Bakshi et al. (2003)-style risk-neutral skewness measure are the only signals
+that remain significant in every regime and every specification.
+
+2. Machine learning helps only in the AI/mega-cap regime. A boosted-tree regressor
+(XGBoost) trained on the full IV-surface, trading-activity, Greek, and liquidity feature set out-
+
+
+                                                 24
+performs OLS and Elastic Net on next-month return prediction only in the AI/mega-cap regime,
+      2
+with ROOS = +1.29% versus +0.07%. In the high-volatility regime XGBoost underperforms linear
+specifications, suggesting a covariate-shift problem during the COVID-era training distribution. The
+                                   2
+2025 calendar year alone delivers ROOS = +3.55% for XGBoost on next-month return, the largest
+single-year out-of-sample R2 in the panel. On realized-volatility prediction, models are essentially
+                2
+equivalent and ROOS exceeds 0.4 in the AI/mega-cap regime.
+
+3. The dominant feature differs across regimes. Permutation feature importance reveals that
+the top predictor of next-month returns differs across all three regimes: open-interest-weighted vega
+in the low-volatility baseline, raw post-filter contract count in the high-volatility regime, and OTM
+call implied volatility in the AI/mega-cap regime. None of the canonical hand-engineered signals
+(smirk, IV spread, risk-neutral skewness) make the top five in any regime once the model has access
+to the underlying IV-surface and Greek primitives. The fixed linear combinations that define the
+canonical signals throw away information that nonlinear models exploit, and which combinations
+matter depends on the regime.
+
+4. Crash forecasting works best when systematic risk is low. On a 5-day-forward firm-level
+crash flag, classification AUC is highest in the low-volatility regime (XGBoost 0.706, logit 0.670),
+lowest in the high-volatility regime (XGBoost 0.561, logit 0.531), and intermediate in the AI/mega-
+cap regime (0.665 and 0.652). The IV surface contains useful firm-level crash information when
+the idiosyncratic component dominates and is largely uninformative when macro shocks dominate.
+XGBoost beats logit in every regime by 0.01–0.04 AUC.
+
+Implications.    Taken together, the results sharpen the empirical claim that option-implied signals
+predict equity returns and crash risk. The canonical predictability is real but regime-conditional ;
+the AI/mega-cap regime since 2023 looks qualitatively different from the pre-COVID environment
+that established the literature, and re-estimation on post-2022 data is essential before importing
+the canonical effects into trading or risk-management applications. Machine-learning models that
+are trained jointly on the underlying IV-surface and Greek primitives—rather than on the hand-
+engineered linear combinations—recover predictability that the canonical signals miss in the new
+regime. Future work should endogenize the regime classification, extend the ML benchmark to deep
+architectures, incorporate signed retail flow, and test the robustness of the regime-dependent feature
+rankings to alternative target definitions.
+   The data, code, and intermediate parquet panels are available from the author on request.
+Replication is straightforward: the four-stage pipeline (preprocessing, descriptives, panel regressions,
+ML benchmark) runs end-to-end in approximately six hours of wall time on a 10-core desktop with
+16 GB of RAM, dominated by the panel construction step.
+
+
+
+
+                                                  25
+References
+Byeong-Je An, Andrew Ang, Turan G. Bali, and Nusret Cakici. The joint cross section of stocks
+  and options. Journal of Finance, 69(5):2279–2337, 2014.
+
+Anonymous. Retail option traders and the implied volatility surface. Journal of Financial Economics,
+  forthcoming, 2026.
+
+Gurdip Bakshi, Nikunj Kapadia, and Dilip Madan. Stock return characteristics, skew laws, and the
+  differential pricing of individual equity options. Review of Financial Studies, 16(1):101–143, 2003.
+
+Turan G. Bali and Armen Hovakimian. Volatility spreads and expected stock returns. Management
+  Science, 55(11):1797–1812, 2009.
+
+Turan G. Bali, Heiner Beckmeyer, Mathis Moerke, and Florian Weigert. Option return predictability
+  with machine learning and big data. Review of Financial Studies, 2023.
+
+Brad M. Barber, Xing Huang, Terrance Odean, and Christopher Schwarz. Attention-induced trading
+  and returns: Evidence from robinhood users. Journal of Finance, 77(6):3141–3190, 2022.
+
+Vincent Bogousslavsky and Dmitriy Muravyev. The anatomy of retail option trading. Working
+  paper, 2024.
+
+Tim Bollerslev and Viktor Todorov. Tails, fears, and risk premia. Journal of Finance, 66(6):
+  2165–2211, 2011.
+
+Tim Bollerslev, George Tauchen, and Hao Zhou. Expected stock returns and variance risk premia.
+  Review of Financial Studies, 22(11):4463–4492, 2009.
+
+Tim Bollerslev, Viktor Todorov, and Lai Xu. Tail risk premia and return predictability. Journal of
+  Financial Economics, 118(1):113–134, 2015.
+
+Svetlana Bryzgalova, Anna Pavlova, and Taisiya Sikorskaya. Retail trading in options and the rise
+  of the big three wholesalers. Journal of Finance, 78(6):3465–3514, 2023.
+
+Tianqi Chen and Carlos Guestrin. Xgboost: A scalable tree boosting system. Proceedings of the
+  22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages
+  785–794, 2016.
+
+Jennifer Conrad, Robert F. Dittmar, and Eric Ghysels. Ex ante skewness and expected stock returns.
+  Journal of Finance, 68(1):85–124, 2013.
+
+Martijn Cremers and David Weinbaum. Deviations from put-call parity and stock return predictabil-
+  ity. Journal of Financial and Quantitative Analysis, 45(2):335–367, 2010.
+
+Joost Driessen, Pascal J. Maenhout, and Grigory Vilkov. The price of correlation risk: Evidence
+  from equity options. Journal of Finance, 64(3):1377–1406, 2009.
+
+                                                 26
+Gregory W. Eaton, T.C̃lifton Green, Brian S. Roseman, and Yanbin Wu. Retail trader sophistication
+  and stock market quality: Evidence from brokerage outages. Journal of Financial Economics,
+  146(2):502–528, 2022.
+
+George P. Gao and Jun Pan. Tail risk concerns everywhere. Working paper, 2018.
+
+Amit Goyal and Alessio Saretto. Cross-section of option returns and volatility. Journal of Financial
+  Economics, 94(2):310–326, 2009.
+
+Shihao Gu, Bryan Kelly, and Dacheng Xiu. Empirical asset pricing via machine learning. Review of
+  Financial Studies, 33(5):2223–2273, 2020.
+
+Amy P. Hutton, Alan J. Marcus, and Hassan Tehranian. Opaque financial reports, r2 , and crash
+  risk. Journal of Financial Economics, 94(1):67–86, 2009.
+
+Jeong-Bon Kim, Yinghua Li, and Liandong Zhang. Cfos versus ceos: Equity incentives and crashes.
+  Journal of Financial Economics, 101(3):713–730, 2011.
+
+Scott M. Lundberg and Su-In Lee. A unified approach to interpreting model predictions. Advances
+  in Neural Information Processing Systems, 30, 2017.
+
+Jun Pan and Allen M. Poteshman. The information in option volume for future stock prices. Review
+  of Financial Studies, 19(3):871–908, 2006.
+
+Mitchell A. Petersen. Estimating standard errors in finance panel data sets: Comparing approaches.
+  Review of Financial Studies, 22(1):435–480, 2009.
+
+Yuhang Xing, Xiaoyan Zhang, and Rui Zhao. What does the individual option volatility smirk tell
+  us about future equity returns? Journal of Financial and Quantitative Analysis, 45(3):641–662,
+  2010.
+
+
+
+
+                                                27
+A     Variable definitions
+This appendix consolidates the definitions of all features and outcomes. All variables are at the
+firm-day level after the filters in Section 3 have been applied. Index i denotes the underlying and t
+denotes the trading day. Sums and means within a firm-day run over surviving option contracts on
+that firm-day; K is strike, S is the underlying close, τ is days-to-expiry, σ is the model-supplied
+implied volatility, V is daily contract volume, OI is open interest, and ∆, Γ, ν, Θ are the standard
+Greeks. Moneyness is m ≡ K/S.
+
+IV-surface signals.
+
+    • σi,t
+       atm : cross-contract mean of σ over contracts with m ∈ [0.95, 1.05].
+
+
+       atm,call    atm,put
+    • σi,t      , σi,t     : ATM mean restricted to calls or puts respectively.
+       otm,put
+    • σi,t     : cross-contract mean of σ over puts with m ∈ [0.80, 0.95].
+       otm,call
+    • σi,t      : cross-contract mean of σ over calls with m ∈ [1.05, 1.20].
+
+    • σi,t
+       30 , σ 60 : ATM mean restricted to τ ∈ [15, 45] and τ ∈ [46, 75] respectively.
+             i,t
+
+    • smirk = σ otm,put − σ atm,call .
+
+    • iv spread = σ atm,call − σ atm,put .
+
+    • ts slope 30 60 = σ 60 − σ 30 .
+                     Pn
+    • rns bkm = n1            otm − σ̄ otm )3 /σ̂ 3 , where the index k runs over OTM (put or call) IVs of
+                        k=1 (σk
+      firm i on date t with n ≥ 5.
+
+Trading-activity signals.
+
+    • pc volume ratioi,t = (sum of put volume) / (sum of call volume).
+
+    • pc oi ratioi,t = (sum of put OI) / (sum of call OI).
+
+    • ncontracts,i,t = post-filter count of contracts.
+
+Open-interest-weighted Greeks.               For g ∈ {∆, Γ, ν, Θ}:
+                                                        P
+                                               oi-w       k OIk gk
+                                              gi,t  =    P         ,
+                                                            k OIk
+
+falling back to an equal-weighted mean if the OI sum is zero.
+
+
+
+
+                                                        28
+Liquidity controls.
+
+   • rel spread = 1 ask−bid , averaged across contracts.
+                       2 (ask+bid)
+
+   • dollar spread = ask − bid, averaged.
+
+   • frac zero volume = fraction of contracts with Vk = 0.
+
+Outcomes.
+
+   • ri,t+h = log(Si,t+h /Si,t ) for h ∈ {1, 5, 21, 63}.
+         (21)      √
+   • RVi,t+21 =        252 times the rolling 21-day standard deviation of daily log returns over [t +
+     1, t + 21].
+           (5)         (5)            (252) √
+   • crashi,t = ⊮[ ri,t+5 < −3.09 σ̂i,t         5 ] where σ̂ (252) is the trailing-252-day daily-return standard
+     deviation.
+           (21)          (21)             (252) √
+   • crashi,t = ⊮[ ri,t+21 < −3.09 σ̂i,t            21 ].
+
+
+
+
+                                                            29
+

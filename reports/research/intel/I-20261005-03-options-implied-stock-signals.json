@@ -1,0 +1,453 @@
+{
+ "id": "I-20261005-03",
+ "task": "T-20261005-36c",
+ "coord_code": "R1005-T36C",
+ "fetched": "2026-10-05 UTC",
+ "tier_scale": "1 无；2 只有回测；3 样本外或发表后；4 机构自述实盘；5 可核验或独立复现",
+ "signals": [
+  {
+   "id": "iv_spread_cw",
+   "name": "看跌看涨平价偏离（同行权价 ATM 看涨 IV − 看跌 IV）",
+   "original": "Cremers & Weinbaum 2010 JFQA 45(2):335-367；1996–2005（摘要）",
+   "original_effect": "看涨更贵的股票比看跌更贵的每周多约 50bp（四因子 alpha，摘要；t 值未取得）",
+   "read_level": "只读摘要（全文 SSRN 403）",
+   "post_publication": [
+    {
+     "src": "Bahlke & Setlak CBS 硕士论文 2017，2011–2015，美股，OI 加权 IV 价差",
+     "result": "1 周 4 因子 alpha 19bp（t 2.45），4 周 73bp（t 2.79）；非同步性修正后单排序失去显著性、收益下降；Fama-MacBeth 风险溢价不显著；不含成本",
+     "tier": 3
+    },
+    {
+     "src": "Li & Wang arXiv 2608.26115 v1（2026-06），2015–2026，OPRA 日终，面板回归",
+     "result": "21 日收益系数 +0.0214（t 7.0），2015–19 t 6.6、2020–22 t 4.8、2023–26 t 4.2（系数 0.0151，约为 2015–19 的一半）；联合回归 t 5.4 以上；不是组合收益、无成本、单篇未评审稿",
+     "tier": 3
+    },
+    {
+     "src": "Muravyev, Pearson & Pollet 2022 工作稿（JFE 172, 2025），2006-07→2015-08，Markit 借券费",
+     "result": "扣借券费后第十分位异常收益只剩约 1/3 且不显著；剔除高费股票后低费子样本 <30%；月度回归系数 34%；做多端仅 6–10bp/月",
+     "tier": 3
+    }
+   ],
+   "costs_net": "按 CW 硕士论文毛 73bp/4 周：成本每边 10bp、满换手 → 净 33bp；每边 20bp → −7bp；再乘借券调整的 1/3 → 10bp 即转负（cost-arith-output.json）",
+   "holding": "原文周频；CW 硕士论文 4 周累计约为 1 周的 3.8 倍，几乎线性累积、无反转",
+   "ic21_implied_range": [
+    0.01,
+    0.016
+   ],
+   "computable": "可算，有条件",
+   "computable_note": "需同行权价的 ATM 看涨和看跌两个 IV；T-33 简报只写'平值'一个点，需确认两边都存；单对合约比原文的 OI 加权多对噪声大；指示性报价对差值影响最大",
+   "evidence_tier": 3,
+   "verdict": "进预注册（第 1 位）"
+  },
+  {
+   "id": "smirk_xzz",
+   "name": "波动率微笑斜率（0.95 价外看跌 IV − ATM 看涨 IV）",
+   "original": "Xing, Zhang & Zhao 2010 JFQA 45(3):641-662；1996–2005，已读全文",
+   "original_effect": "最低微笑五分位减最高五分位：价值加权每周 16bp（t 2.19），FF3 alpha 21bp/周（10.9% 年化，t 2.93）；4–28 周累计 FF3 alpha 年化 6–7%（t 2.7–4.3）；SKEW 周自相关 0.66→0.20（8 周）",
+   "read_level": "已读全文",
+   "post_publication": [
+    {
+     "src": "arXiv 2608.26115",
+     "result": "21 日系数 2015–19 −0.0234（t −5.5），2020–22 −0.0150，2023–26 −0.0060（t −1.5）；联合回归里 2023–26 反转为 +0.016（t 2.6）；3 个月期 +0.0156（t 2.1）。其 2015–17 复现只得原文约一半（−4.9% 年化 vs −10.9%）；该稿表 2 的 −0.409% 与正文 −0.49% 不一致",
+     "tier": 3
+    },
+    {
+     "src": "MPP 2022",
+     "result": "微笑斜率同样是借券费的代理，扣费后降到约 1/3 且不显著；低费股票月度回归系数 42–56%",
+     "tier": 3
+    }
+   ],
+   "costs_net": "未单独算；信号在目标窗口已不显著",
+   "holding": "原文周到半年；最近窗口 1–5 日仍显著、21 日不显著",
+   "ic21_implied_range": [
+    0.005,
+    0.01
+   ],
+   "computable": "可算",
+   "computable_note": "25-delta 看跌 IV − ATM 看涨 IV；与 0.95 价外看跌略有差别",
+   "evidence_tier": 3,
+   "verdict": "不做（重开条件见正文）"
+  },
+  {
+   "id": "iv_change_aabc",
+   "name": "隐含波动率变化（ΔCVOL 看涨、ΔPVOL 看跌、两者差）",
+   "original": "An, Ang, Bali & Cakici 2014 JF 69(5):2279-2338；1996–2011，已读全文（NBER w19590）",
+   "original_effect": "ΔCVOL 十分位等权多空 +1.09%/月（Newey-West t 3.45，FF3 1.00，控制后 0.86、t 2.87）；ΔPVOL −0.42%/月（t −2.61）；ΔPVOL−ΔCVOL −1.68%/月（t −6.77）；预测力最强在最小的股票；两个子样本（1996–2003、2004–2011）都显著；剔除最小/最不流动/最低价股票后仍显著；OSAP 复现 dVolCall t≈3.5、dCPVolSpread t≈7",
+   "read_level": "已读全文；OSAP 登记表",
+   "post_publication": [
+    {
+     "src": "未找到 2011 年后的独立检验",
+     "result": "本轮搜索未发现；arXiv 2608.26115 没有这个变量；MPP 也没有。写'未查到'，不写'已失效'或'有效'",
+     "tier": 2
+    }
+   ],
+   "costs_net": "原文等权十分位、未含成本；月度调仓；换手未取得",
+   "holding": "月频，持续 6 个月（摘要）",
+   "ic21_implied_range": [
+    0.021,
+    0.033
+   ],
+   "computable": "可算，要 21 个交易日历史",
+   "computable_note": "用 ATM IV 的 1 个月变化；近月到期日滚动会让期限漂移 20–50 天，需插值或换月日剔除；对报价偏差较不敏感（偏差稳定时水平差相消）",
+   "evidence_tier": 2,
+   "verdict": "进预注册（第 3 位，原文效应最大但无发表后证据）"
+  },
+  {
+   "id": "iv_rv_bh_gs",
+   "name": "隐含减已实现波动（HV − ATM IV）",
+   "original": "Bali & Hovakimian 2009 Management Science 55(11):1797-1812（1996–2004）；Goyal & Saretto 2009 JFE 94(2):310-326",
+   "original_effect": "BH：RIVolSpread 价值加权五分位 +0.73%/月（OSAP 登记 t≈2.9，OSAP 说'全部股票比 NYSE 子集更接近原文'），CPVolSpread +1.05%/月（t≈4.2）。GS：卖出的是期权（跨式、delta 对冲期权）组合，月均收益'显著'，数字未取得",
+   "read_level": "只读摘要 + OSAP 登记表",
+   "post_publication": [
+    {
+     "src": "未找到独立的发表后检验",
+     "result": "arXiv 2608.26115 和 MPP 都没测这个变量",
+     "tier": 2
+    }
+   ],
+   "costs_net": "未取得",
+   "holding": "月频",
+   "ic21_implied_range": [
+    0.018,
+    0.026
+   ],
+   "computable": "可算",
+   "computable_note": "IV 用 ATM 点，HV 用本地日线（data/sip/daily）；还能用 DoltHub volatility_history 今天就测（见正文）；GS 版本要期权买卖价和 delta 对冲，不做",
+   "evidence_tier": 2,
+   "verdict": "进预注册（第 2 位，且最便宜先测）"
+  },
+  {
+   "id": "rns_bkm_cdg",
+   "name": "风险中性偏度（BKM 积分）",
+   "original": "Bakshi, Kapadia & Madan 2003 RFS 16(1)（方法论文）；Conrad, Dittmar & Ghysels 2013 JF 68(1):85-124",
+   "original_effect": "CDG（摘要）：更负偏的股票未来收益更高；多空数字未取得。Chordia, Lin & Xiang 2021 JFQA（1996–2015）符号相反：高偏度高收益，每周 17bp；Stilger 等 2017 同向，+55bp/月（t 2.47）。符号在文献里有冲突",
+   "read_level": "只读摘要；Chordia 等读到内部附录全文",
+   "post_publication": [
+    {
+     "src": "arXiv 2608.26115 'rns_bkm'",
+     "result": "21 日系数 −0.0030（t −13.1），各期 |t|>10；但该变量是'价外 IV 在行权价上的样本偏度'，作者自己说不是 BKM 积分；单篇未评审稿",
+     "tier": 3
+    }
+   ],
+   "costs_net": "未算",
+   "holding": "周到季",
+   "ic21_implied_range": [
+    0.007,
+    0.021
+   ],
+   "computable": "算不了",
+   "computable_note": "BKM 要整条行权价网格；我们只存 3 个点（200 只）或 23 只的完整链",
+   "evidence_tier": 3,
+   "verdict": "不做"
+  },
+  {
+   "id": "os_ratio_js",
+   "name": "期权成交量 / 股票成交量（O/S）",
+   "original": "Johnson & So 2012 JFE 106(2):262-286；1996–2010",
+   "original_effect": "最低十分位比最高十分位每周多 0.34%（年化 19.3%）；做空成本高、期权杠杆低时更强；OSAP 登记 t≈3.45（周频 CAPM alpha，质量'fair'）",
+   "read_level": "只读摘要 + OSAP",
+   "post_publication": [
+    {
+     "src": "MPP 2022（2006-07→2015-08）",
+     "result": "扣借券费后第十分位 O/S 组合只剩 −6bp/月；低费股票 −3bp/月；周度回归系数降到全样本的 1/4",
+     "tier": 3
+    },
+    {
+     "src": "arXiv 2608.26115 的 pc_volume_ratio（不是 O/S）",
+     "result": "各期弱，2023–26 t 0.4",
+     "tier": 3
+    }
+   ],
+   "costs_net": "毛收益已被借券费吃掉大半，成本后无",
+   "holding": "周频",
+   "ic21_implied_range": [
+    0.005,
+    0.015
+   ],
+   "computable": "算不了",
+   "computable_note": "要每只股票全部合约的当日成交量；免费层只有 15 分钟延迟的衍生成交，逐合约拉取超出限流",
+   "evidence_tier": 3,
+   "verdict": "不做"
+  }
+ ],
+ "power": {
+  "universe_note": "top-200 by 45d mean dollar volume (price>=5, ETF hint list excluded; approximate)",
+  "xs_return_sd": {
+   "1": 0.027491806807334096,
+   "5": 0.06483213472409083,
+   "10": 0.09330489163900921,
+   "21": 0.1452295144557481
+  },
+  "measured_on": "data/sip/daily 2025-07-01 起，价格 ≥5 的美元成交额前 200（近似，未做 ETF 完整剔除），1/99 分位缩尾",
+  "model": "线性累积：IC_h = IC_21·sqrt(h/21)；t = IC_1·sqrt(N−1)·sqrt(T)；双边 5% 显著、功效 80%，合计 2.80 倍标准误；跨资产相关性再乘 1.3 作敏感性",
+  "mde_60d_N200": [
+   {
+    "horizon_days": 1,
+    "indep_periods_in_60d": 60.0,
+    "mde_ic_at_that_horizon_t2_80pct": 0.025639170200617147,
+    "mde_ic_bonf3": 0.029610787116371197,
+    "mde_ic_with_xs_dependence_1.3x": 0.033330921260802296,
+    "equiv_21d_ic_if_linear_accrual": 0.11749343820018418
+   },
+   {
+    "horizon_days": 5,
+    "indep_periods_in_60d": 12.0,
+    "mde_ic_at_that_horizon_t2_80pct": 0.05733092745526686,
+    "mde_ic_bonf3": 0.06621173285948098,
+    "mde_ic_with_xs_dependence_1.3x": 0.07453020569184693,
+    "equiv_21d_ic_if_linear_accrual": 0.1174934382001842
+   },
+   {
+    "horizon_days": 10,
+    "indep_periods_in_60d": 6.0,
+    "mde_ic_at_that_horizon_t2_80pct": 0.08107817515066644,
+    "mde_ic_bonf3": 0.09363753059810231,
+    "mde_ic_with_xs_dependence_1.3x": 0.10540162769586638,
+    "equiv_21d_ic_if_linear_accrual": 0.11749343820018421
+   },
+   {
+    "horizon_days": 21,
+    "indep_periods_in_60d": 2.857142857142857,
+    "mde_ic_at_that_horizon_t2_80pct": 0.11749343820018418,
+    "mde_ic_bonf3": 0.13569367334799418,
+    "mde_ic_with_xs_dependence_1.3x": 0.15274146966023947,
+    "equiv_21d_ic_if_linear_accrual": 0.11749343820018418
+   }
+  ],
+  "ic21_detectable_in_60d_N200": 0.11749343820018418,
+  "ls21_quintile_pct_at_that_ic": 4.777401217613663,
+  "days_needed": {
+   "200": {
+    "ic21=0.01": {
+     "days_t2_80pct": 8282.824812060298,
+     "days_bonf3": 11047.663792003284,
+     "days_dep1.3": 13997.973932381909
+    },
+    "ic21=0.015": {
+     "days_t2_80pct": 3681.2554720268013,
+     "days_bonf3": 4910.072796445905,
+     "days_dep1.3": 6221.321747725294
+    },
+    "ic21=0.02": {
+     "days_t2_80pct": 2070.7062030150746,
+     "days_bonf3": 2761.915948000821,
+     "days_dep1.3": 3499.493483095477
+    },
+    "ic21=0.03": {
+     "days_t2_80pct": 920.3138680067003,
+     "days_bonf3": 1227.5181991114762,
+     "days_dep1.3": 1555.3304369313234
+    },
+    "ic21=0.04": {
+     "days_t2_80pct": 517.6765507537687,
+     "days_bonf3": 690.4789870002053,
+     "days_dep1.3": 874.8733707738693
+    },
+    "ic21=0.06": {
+     "days_t2_80pct": 230.07846700167508,
+     "days_bonf3": 306.87954977786904,
+     "days_dep1.3": 388.83260923283086
+    }
+   },
+   "400": {
+    "ic21=0.01": {
+     "days_t2_80pct": 4131.032926315789,
+     "days_bonf3": 5509.9877057861,
+     "days_dep1.3": 6981.445645473684
+    },
+    "ic21=0.015": {
+     "days_t2_80pct": 1836.014633918129,
+     "days_bonf3": 2448.883424793823,
+     "days_dep1.3": 3102.8647313216384
+    },
+    "ic21=0.02": {
+     "days_t2_80pct": 1032.7582315789473,
+     "days_bonf3": 1377.496926446525,
+     "days_dep1.3": 1745.361411368421
+    },
+    "ic21=0.03": {
+     "days_t2_80pct": 459.00365847953225,
+     "days_bonf3": 612.2208561984557,
+     "days_dep1.3": 775.7161828304096
+    },
+    "ic21=0.04": {
+     "days_t2_80pct": 258.1895578947368,
+     "days_bonf3": 344.3742316116313,
+     "days_dep1.3": 436.34035284210523
+    },
+    "ic21=0.06": {
+     "days_t2_80pct": 114.75091461988306,
+     "days_bonf3": 153.05521404961394,
+     "days_dep1.3": 193.9290457076024
+    }
+   },
+   "1000": {
+    "ic21=0.01": {
+     "days_t2_80pct": 1649.932069669669,
+     "days_bonf3": 2200.685780389043,
+     "days_dep1.3": 2788.385197741741
+    },
+    "ic21=0.015": {
+     "days_t2_80pct": 733.3031420754087,
+     "days_bonf3": 978.0825690617971,
+     "days_dep1.3": 1239.2823101074412
+    },
+    "ic21=0.02": {
+     "days_t2_80pct": 412.4830174174173,
+     "days_bonf3": 550.1714450972607,
+     "days_dep1.3": 697.0962994354353
+    },
+    "ic21=0.03": {
+     "days_t2_80pct": 183.32578551885217,
+     "days_bonf3": 244.52064226544928,
+     "days_dep1.3": 309.8205775268603
+    },
+    "ic21=0.04": {
+     "days_t2_80pct": 103.12075435435432,
+     "days_bonf3": 137.5428612743152,
+     "days_dep1.3": 174.27407485885882
+    },
+    "ic21=0.06": {
+     "days_t2_80pct": 45.83144637971304,
+     "days_bonf3": 61.13016056636232,
+     "days_dep1.3": 77.45514438171507
+    }
+   }
+  },
+  "implied_ic_from_published": {
+   "CW2010_orig_4factor_alpha_1w": 0.02754740655832579,
+   "CW_thesis_2011_2015_4f_alpha_1w": 0.010468014492163799,
+   "XZZ2010_orig_FF3_alpha_1w_decile_like": 0.01156991075449683,
+   "arXiv_smirk_2015_17_quintile_21d": 0.010059339337633644,
+   "AABC2014_dVolCall_decile_1m": 0.02138299940767209,
+   "AABC2014_dCPVol_decile_1m": 0.03295728349072395,
+   "JohnsonSo2012_OS_decile_1w": 0.014941204383633302,
+   "BaliHov2009_CPVolSpread_quintile_1m": 0.02570173498246249,
+   "BaliHov2009_RIVolSpread_quintile_1m": 0.018003511968576597,
+   "Chordia2021_RNS_1w_1996_2015": 0.007470602191816651
+  },
+  "implied_ic_arxiv_panel": {
+   "iv_spread_full": 0.01576676757876037,
+   "iv_spread_AI_regime": 0.014036403052363972,
+   "rns_proxy_full": 0.020656958134457646,
+   "smirk_AI_regime": 0.005122925617345495
+  },
+  "mde_ic21_by_design": {
+   "N200_T60": 0.1175,
+   "N200_T120": 0.0831,
+   "N200_T250": 0.0576,
+   "N400_T520": 0.0282,
+   "N1000_T520": 0.0178,
+   "N1500_T520": 0.0145
+  }
+ },
+ "cost_arithmetic": {
+  "CW_thesis_4w_gross_bp|c=5bp|turnover=1.0": {
+   "gross_bp_per_4w": 73.0,
+   "cost_bp_per_4w": 20.0,
+   "net_bp_per_4w": 53.0
+  },
+  "CW_thesis_4w_gross_bp|c=5bp|turnover=0.6": {
+   "gross_bp_per_4w": 73.0,
+   "cost_bp_per_4w": 12.0,
+   "net_bp_per_4w": 61.0
+  },
+  "CW_thesis_4w_gross_bp|c=10bp|turnover=1.0": {
+   "gross_bp_per_4w": 73.0,
+   "cost_bp_per_4w": 40.0,
+   "net_bp_per_4w": 33.0
+  },
+  "CW_thesis_4w_gross_bp|c=10bp|turnover=0.6": {
+   "gross_bp_per_4w": 73.0,
+   "cost_bp_per_4w": 24.0,
+   "net_bp_per_4w": 49.0
+  },
+  "CW_thesis_4w_gross_bp|c=20bp|turnover=1.0": {
+   "gross_bp_per_4w": 73.0,
+   "cost_bp_per_4w": 80.0,
+   "net_bp_per_4w": -7.0
+  },
+  "CW_thesis_4w_gross_bp|c=20bp|turnover=0.6": {
+   "gross_bp_per_4w": 73.0,
+   "cost_bp_per_4w": 48.0,
+   "net_bp_per_4w": 25.0
+  },
+  "CW_thesis_x_one_third_after_borrow_bp|c=5bp|turnover=1.0": {
+   "gross_bp_per_4w": 24.3,
+   "cost_bp_per_4w": 20.0,
+   "net_bp_per_4w": 4.3
+  },
+  "CW_thesis_x_one_third_after_borrow_bp|c=5bp|turnover=0.6": {
+   "gross_bp_per_4w": 24.3,
+   "cost_bp_per_4w": 12.0,
+   "net_bp_per_4w": 12.3
+  },
+  "CW_thesis_x_one_third_after_borrow_bp|c=10bp|turnover=1.0": {
+   "gross_bp_per_4w": 24.3,
+   "cost_bp_per_4w": 40.0,
+   "net_bp_per_4w": -15.7
+  },
+  "CW_thesis_x_one_third_after_borrow_bp|c=10bp|turnover=0.6": {
+   "gross_bp_per_4w": 24.3,
+   "cost_bp_per_4w": 24.0,
+   "net_bp_per_4w": 0.3
+  },
+  "CW_thesis_x_one_third_after_borrow_bp|c=20bp|turnover=1.0": {
+   "gross_bp_per_4w": 24.3,
+   "cost_bp_per_4w": 80.0,
+   "net_bp_per_4w": -55.7
+  },
+  "CW_thesis_x_one_third_after_borrow_bp|c=20bp|turnover=0.6": {
+   "gross_bp_per_4w": 24.3,
+   "cost_bp_per_4w": 48.0,
+   "net_bp_per_4w": -23.7
+  },
+  "CW_thesis_1w_gross_19bp|c=5bp|turnover=1.0": {
+   "gross_bp_per_1w": 19.0,
+   "cost_bp_per_1w": 20.0,
+   "net_bp_per_1w": -1.0
+  },
+  "CW_thesis_1w_gross_19bp|c=5bp|turnover=0.6": {
+   "gross_bp_per_1w": 19.0,
+   "cost_bp_per_1w": 12.0,
+   "net_bp_per_1w": 7.0
+  },
+  "CW_thesis_1w_gross_19bp|c=10bp|turnover=1.0": {
+   "gross_bp_per_1w": 19.0,
+   "cost_bp_per_1w": 40.0,
+   "net_bp_per_1w": -21.0
+  },
+  "CW_thesis_1w_gross_19bp|c=10bp|turnover=0.6": {
+   "gross_bp_per_1w": 19.0,
+   "cost_bp_per_1w": 24.0,
+   "net_bp_per_1w": -5.0
+  },
+  "CW_thesis_1w_gross_19bp|c=20bp|turnover=1.0": {
+   "gross_bp_per_1w": 19.0,
+   "cost_bp_per_1w": 80.0,
+   "net_bp_per_1w": -61.0
+  },
+  "CW_thesis_1w_gross_19bp|c=20bp|turnover=0.6": {
+   "gross_bp_per_1w": 19.0,
+   "cost_bp_per_1w": 48.0,
+   "net_bp_per_1w": -29.0
+  }
+ },
+ "recommendation": {
+  "preregister": [
+   "iv_spread_cw",
+   "iv_rv_bh_gs",
+   "iv_change_aabc"
+  ],
+  "not_do": [
+   "smirk_xzz",
+   "rns_bkm_cdg",
+   "os_ratio_js",
+   "goyal_saretto_option_return_portfolios"
+  ]
+ },
+ "files": {
+  "report": "reports/research/intel/I-20261005-03-options-implied-stock-signals.md",
+  "snapshots": "reports/research/intel/sources/options-signals-2026-10-08/"
+ }
+}
