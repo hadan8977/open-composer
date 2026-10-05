@@ -1,0 +1,148 @@
+{
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "P6_IVRV",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "option_implied_signal_ic_p6",
+      "parameters": {
+        "data_source": "DoltHub post-no-preference/options volatility_history pulled 2019-02-09..2026-09-17 (brief T-20261005-44); prices, panel, signals from data/research/equity_book",
+        "decision_statistic": "CIC(2..22)",
+        "definition": "iv_current(t) - RV21(t), RV21 = sqrt(252) x std of the last 21 daily log close returns ending at t (equity_book prices)",
+        "ic": "daily Spearman rank IC within L12 x coverage (>= 200 names) between the rank-normal signal at t and e(t, j); CIC(a..b) = sum of lag mean ICs; Newey-West t of the per-date lag-sum series (10 lags for CIC(2..6), 25 lags for CIC(2..22))",
+        "sign": "+1 (Bali-Hovakimian 2009; OSAP RIVolSpread -1 on realized minus implied)",
+        "target_return": "P1 Stage 0 definition: close-to-close stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code), lags j = 1..22 after the signal close t, lag 1 split overnight/intraday; no delisting return",
+        "timing": "signal date t = as-of session of the DoltHub row from the F2 alignment test (default: the row's own date, the later and conservative choice); decision at the close of t, fill at the close of t+1, so lags >= 2 are implementable; shifted further if dolt_log publication is later than 15:50 ET of t+1 for more than 5% of dates",
+        "universe": "L12 (panel adv_rank <= 1000 at the signal date t) intersected with DoltHub volatility_history rows at t (exact symbol match); L1 and L2 reported",
+        "windows": "recent 2024-01-08..2026-09-15 decides; stress 2019-02-11..2023-08-31 (Mon/Wed/Fri) diagnostic and sign source for DIV21/DIV5; owner B 2026-07-01..2026-09-15 report-only; nothing after 2026-09-17 is read"
+      },
+      "path": "option_implied_signal_ic_p6",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261005_p6_iv_signals.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "P6_DIV21",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "option_implied_signal_ic_p6",
+      "parameters": {
+        "data_source": "DoltHub post-no-preference/options volatility_history pulled 2019-02-09..2026-09-17 (brief T-20261005-44); prices, panel, signals from data/research/equity_book",
+        "decision_statistic": "CIC(2..22)",
+        "definition": "iv_current(t) - iv_month_ago(t) (vendor fields of the same row)",
+        "ic": "daily Spearman rank IC within L12 x coverage (>= 200 names) between the rank-normal signal at t and e(t, j); CIC(a..b) = sum of lag mean ICs; Newey-West t of the per-date lag-sum series (10 lags for CIC(2..6), 25 lags for CIC(2..22))",
+        "sign": "sign of the stress-window L12 CIC(2..22) mean, written to cache/signs.json before any recent-window number",
+        "target_return": "P1 Stage 0 definition: close-to-close stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code), lags j = 1..22 after the signal close t, lag 1 split overnight/intraday; no delisting return",
+        "timing": "signal date t = as-of session of the DoltHub row from the F2 alignment test (default: the row's own date, the later and conservative choice); decision at the close of t, fill at the close of t+1, so lags >= 2 are implementable; shifted further if dolt_log publication is later than 15:50 ET of t+1 for more than 5% of dates",
+        "universe": "L12 (panel adv_rank <= 1000 at the signal date t) intersected with DoltHub volatility_history rows at t (exact symbol match); L1 and L2 reported",
+        "windows": "recent 2024-01-08..2026-09-15 decides; stress 2019-02-11..2023-08-31 (Mon/Wed/Fri) diagnostic and sign source for DIV21/DIV5; owner B 2026-07-01..2026-09-15 report-only; nothing after 2026-09-17 is read"
+      },
+      "path": "option_implied_signal_ic_p6",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261005_p6_iv_signals.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "P6_DIV5",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "option_implied_signal_ic_p6",
+      "parameters": {
+        "data_source": "DoltHub post-no-preference/options volatility_history pulled 2019-02-09..2026-09-17 (brief T-20261005-44); prices, panel, signals from data/research/equity_book",
+        "decision_statistic": "CIC(2..6)",
+        "definition": "iv_current(t) - iv_week_ago(t)",
+        "ic": "daily Spearman rank IC within L12 x coverage (>= 200 names) between the rank-normal signal at t and e(t, j); CIC(a..b) = sum of lag mean ICs; Newey-West t of the per-date lag-sum series (10 lags for CIC(2..6), 25 lags for CIC(2..22))",
+        "sign": "sign of the stress-window L12 CIC(2..6) mean, written to cache/signs.json before any recent-window number",
+        "target_return": "P1 Stage 0 definition: close-to-close stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code), lags j = 1..22 after the signal close t, lag 1 split overnight/intraday; no delisting return",
+        "timing": "signal date t = as-of session of the DoltHub row from the F2 alignment test (default: the row's own date, the later and conservative choice); decision at the close of t, fill at the close of t+1, so lags >= 2 are implementable; shifted further if dolt_log publication is later than 15:50 ET of t+1 for more than 5% of dates",
+        "universe": "L12 (panel adv_rank <= 1000 at the signal date t) intersected with DoltHub volatility_history rows at t (exact symbol match); L1 and L2 reported",
+        "windows": "recent 2024-01-08..2026-09-15 decides; stress 2019-02-11..2023-08-31 (Mon/Wed/Fri) diagnostic and sign source for DIV21/DIV5; owner B 2026-07-01..2026-09-15 report-only; nothing after 2026-09-17 is read"
+      },
+      "path": "option_implied_signal_ic_p6",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261005_p6_iv_signals.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "P6_IVZ3",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "option_implied_signal_ic_p6",
+      "parameters": {
+        "data_source": "DoltHub post-no-preference/options volatility_history pulled 2019-02-09..2026-09-17 (brief T-20261005-44); prices, panel, signals from data/research/equity_book",
+        "decision_statistic": "CIC(2..6); also requires CIC(2..6) of IVZ3 minus that of HVZ3 (same move over RV21 x sqrt(3/252)) > 0",
+        "definition": "ln(close_t / close_(t-3)) / (iv_current(t) x sqrt(3/252))",
+        "ic": "daily Spearman rank IC within L12 x coverage (>= 200 names) between the rank-normal signal at t and e(t, j); CIC(a..b) = sum of lag mean ICs; Newey-West t of the per-date lag-sum series (10 lags for CIC(2..6), 25 lags for CIC(2..22))",
+        "sign": "-1 (reversal)",
+        "target_return": "P1 Stage 0 definition: close-to-close stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code), lags j = 1..22 after the signal close t, lag 1 split overnight/intraday; no delisting return",
+        "timing": "signal date t = as-of session of the DoltHub row from the F2 alignment test (default: the row's own date, the later and conservative choice); decision at the close of t, fill at the close of t+1, so lags >= 2 are implementable; shifted further if dolt_log publication is later than 15:50 ET of t+1 for more than 5% of dates",
+        "universe": "L12 (panel adv_rank <= 1000 at the signal date t) intersected with DoltHub volatility_history rows at t (exact symbol match); L1 and L2 reported",
+        "windows": "recent 2024-01-08..2026-09-15 decides; stress 2019-02-11..2023-08-31 (Mon/Wed/Fri) diagnostic and sign source for DIV21/DIV5; owner B 2026-07-01..2026-09-15 report-only; nothing after 2026-09-17 is read"
+      },
+      "path": "option_implied_signal_ic_p6",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261005_p6_iv_signals.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-05T13:34:38.817812+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261005_p6_iv_signals",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261005_p6_iv_signals.yaml": "79a8ceba01130fc315dd90283231b307b428991341328f7550beca53e335b591"
+  }
+}

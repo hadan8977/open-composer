@@ -1,0 +1,170 @@
+{
+ "schema_version": 1,
+ "iter_id": "t20261005_p6_iv_signals",
+ "reviewed_at": "2026-10-05T13:34:19Z",
+ "decision": "proceed",
+ "objective": "Within two execution tasks, find out whether option-implied volatility adds implementable stock-level information on liquid US stocks in 2024-2026: pull DoltHub volatility_history (free, daily and point-in-time from 2024-10, Mon/Wed/Fri before), pass a preregistered data gate (coverage, L12 join, timing, value sanity), then measure the industry- and beta-neutral rank-IC decay of four preregistered signals (IVRV, DIV21, DIV5, IVZ3) and promote the significant ones into the P1 Stage 2a signal family before it is frozen (about 10-12).",
+ "target_regime_and_horizon": "US L12 equities (panel adv_rank <= 1000) with DoltHub coverage; holding horizons 1-22 sessions (decision CIC(2..22) for the monthly signals, CIC(2..6) for the fast ones); decision at the close of t, fill at the close of t+1. Judged on recent 2024-01-08..2026-09-15 (594 covered sessions); stress 2019-02-11..2023-08-31 (Mon/Wed/Fri) is a diagnostic and the sign source for the two IV-change signals.",
+ "existing_solution_comparison": "Published: Bali-Hovakimian 2009 (realized minus implied negatively predicts returns, OSAP t 2.9 in 1996-2004), An-Ang-Bali-Cakici 2014 (call/put IV changes, about 1%/month decile spreads), Cremers-Weinbaum 2010. Post-publication: Muravyev-Pearson-Pollet find about two-thirds of the option-signal predictability is borrow fees; Neuhierl et al. 2026 find few option characteristics incremental to firm characteristics; Walter-Zimmer-Ulrich 2026 (in-sample) find option factors about 91% spanned, with tail/kurtosis/convexity measures (not IV-RV or IV changes) surviving. Nobody has tested these signals on 2024-2026 liquid US stocks with free data; our own attempt with Alpaca trade-based IVs was noise (dir:alpaca_free_options_iv_signals), and the T-20260929-60 acceptance of DoltHub for option pricing failed on 2019+ coverage, so the stock-signal use was never measured.",
+ "remaining_evidence_gap": "(1) Whether DoltHub's dense segment joins enough L12 names with sound timing; (2) the recent-window IC of the four signals with the correct Bali-Hovakimian direction (T-36c and the T-61 plan had it reversed); (3) how much of any IC is already in m0_composite and the nine themes; (4) whether implied-move scaling adds to plain reversal.",
+ "negative_experiments_checked": "Registry: dir:iv_hv_spread_stock_ranking_dolthub (queued, this contract executes it under a new data contract); dir:alpaca_free_options_iv_signals (not_executable: Alpaca's free tier has no quotes, trade-based IVs had wrong-signed means and negative autocorrelation, so a different data source, not a reopen); dir:iv_informed_dip_mean_reversion_live (not_executable for lack of IV history; IVZ3 is its measurable stock-signal form); T-20260929-60 DoltHub acceptance failed for option pricing on 2019+ coverage (85%/90% thresholds), which this contract does not relax: it is a different use (stock signals need IV levels, not tradable option quotes) on a measured dense segment; T-20260929-61 was blocked and never run; T-64 paid data declined by the owner (free source only here). Local search of iterations, briefs and the ledger found no earlier IC measurement of these signals.",
+ "cost_and_execution_assumptions": "Signal-layer measurement, no trades: decision at the close of t, fill at the close of t+1 (v1.2 amendment A1), so only lags >= 2 count; t is the as-of session of the DoltHub row from the F2 alignment test (default the row's own date, the later and conservative choice), shifted if dolt_log publication is later than 15:50 ET of t+1 for more than 5% of dates. Costs, borrow and trading speed are left to the P1 Stage 2a book-level test; persistence is reported to bound turnover.",
+ "stop_condition": "Measurement and promotion only; nothing here refutes the options-information line (owner 2026-10-04, plan P-1). If F1, F1b or F3 fails, stop after the data task with 'not yet at depth: data'. Signals without the information rule are recorded 'not yet at depth' with the reason (power, data or small estimate); the full-smile features then wait for the T-20261005-33 recorder.",
+ "cheapest_decisive_test": {
+  "action": "Brief T-20261005-44: pull volatility_history 2019-02-09..2026-09-17 (scripts/fetch_dolthub_options.py --volhist-all, per-day units) and run the data gate F1-F4. Brief T-20261005-45: build the four signals and the P1 Stage 0 target returns, write the stress-window signs first, then IC decay, decision CIC with Newey-West t, BH over four and the diagnostics.",
+  "pass_condition": "Promotion of a signal: recent-window L12 decision CIC > 0 in the frozen direction, Newey-West t >= 2.0, BH q <= 0.10 over the four; IVZ3 also needs a positive CIC(2..6) difference over HVZ3.",
+  "falsification_condition": "None at this stage by design: a signal that misses the rule is 'not yet at depth' (power if MDE exceeds the published reference effect, otherwise small estimate); the data gate failing stops the route as 'not yet at depth: data'.",
+  "max_compute_minutes": 240
+ },
+ "queries": [
+  {
+   "query": "DoltHub SQL API post-no-preference/options: volatility_history per-date counts 2024-01..2026-10, dolt_log, SHOW CREATE TABLE, delisted-symbol presence 2021-03",
+   "searched_at": "2026-10-05T13:22:37Z",
+   "opened_urls": [
+    "https://www.dolthub.com/api/v1alpha1/post-no-preference/options"
+   ],
+   "note": "13:07 lead round measurements; raw outputs in reports/research/intel/sources/p6-iv-signals-2026-10-05/."
+  },
+  {
+   "query": "Neuhierl Tang Varneskov Zhou \"Option Characteristics as Cross-Sectional Predictors\" stock returns",
+   "searched_at": "2026-10-05T13:24:00Z",
+   "opened_urls": [
+    "https://ideas.repec.org/a/inm/ormnsc/v72y2026i4p2742-2760.html",
+    "https://arxiv.org/html/2609.31263v1"
+   ],
+   "note": "Abstract page of the Management Science 2026 paper; HTML full text of Walter-Zimmer-Ulrich 2026 through the fetch tool; snapshot web-sources-2026-10-05.md."
+  },
+  {
+   "query": "Crossref DOI verification of the T-36c snapshots re-read for the IVRV sign and the borrow-fee caveat (Bali-Hovakimian 2009, OSAP signal documentation, An-Ang-Bali-Cakici NBER w19590, Muravyev-Pearson-Pollet JFE 2025)",
+   "searched_at": "2026-10-05T13:34:19Z",
+   "opened_urls": [
+    "https://doi.org/10.1287/mnsc.1090.1063",
+    "https://www.openassetpricing.com/",
+    "https://www.nber.org/papers/w19590",
+    "https://doi.org/10.1016/j.jfineco.2025.104153"
+   ],
+   "note": "Snapshots were saved by T-36c on 2026-10-05 (file times used as fetch receipts); the lead round verified the BH and MPP DOIs through api.crossref.org."
+  }
+ ],
+ "sources": [
+  {
+   "claim_id": "bali_hovakimian_2009_realized_minus_implied_negative",
+   "url": "https://doi.org/10.1287/mnsc.1090.1063",
+   "source_type": "paper",
+   "published_or_updated_at": "2009-11-01",
+   "snapshot_path": "reports/research/intel/sources/options-signals-2026-10-08/abstracts-fetched-2026-10-05.md",
+   "sha256": "86504c4c432e4ccfcefa786ea6f94b9716740ad8e93bcb149ae5a64564a2ebe8",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T07:24:08Z",
+   "claim": "Bali and Hovakimian (Management Science 55(11) 2009): the realized-minus-implied volatility spread is negatively related to expected stock returns (volatility-risk proxy); the call-minus-put implied volatility spread is positively related (jump-risk proxy).",
+   "core_claim": "已实现减隐含波动率价差与预期收益负相关（波动率风险代理）；看涨减看跌隐含波动率价差与预期收益正相关（跳跃风险代理）。",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Fixes the IVRV direction: long stocks whose implied volatility is high relative to realized volatility (iv - RV21 positive). Corrects the reversed direction in I-20261005-03 and the T-20260929-61 plan.",
+   "independent_replication": "OSAP replicates RIVolSpread (t 2.9, port sort); no independent post-publication test found by T-36c.",
+   "limitations": "Abstract only (full text not obtained); sample 1996-2004; NYSE stocks per OSAP notes.",
+   "market_and_period": "US optionable stocks (NYSE per OSAP notes), 1996-2004, monthly"
+  },
+  {
+   "claim_id": "osap_rivolspread_sign_minus_one",
+   "url": "https://www.openassetpricing.com/",
+   "source_type": "provider_official_docs",
+   "published_or_updated_at": "2024-01-01",
+   "snapshot_path": "reports/research/intel/sources/p6-iv-signals-2026-10-05/osap-option-signal-rows-extract.json.txt",
+   "sha256": "f97a85dc1eac396e2c11d1574b71741540019250a790f60f2773ef3d79c5cda2",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T07:16:13Z",
+   "claim": "Open Source Asset Pricing signal documentation: RIVolSpread = realized vol (past 30 days) minus ATM implied vol, Sign -1, port-sort t 2.9 (return 0.732%/month), 1996-2004; dVolCall sign +1 (t 3.45), dVolPut sign -1 (t 2.03), dCPVolSpread sign -1 (t 6.77).",
+   "core_claim": "\"Acronym\": \"RIVolSpread\", \"Authors\": \"Bali and Hovakimian\", \"Year\": \"2009\", \"LongDescription\": \"Realized minus Implied Vol\", \"SampleStartYear\": \"1996\", \"SampleEndYear\": \"2004\", \"Evidence Summary\": \"t=3 in port sort\", \"Key Table in OP\": \"Table 3 Panel A\", \"Test in OP\": \"port sort\", \"Sign\": \"-1.0\"",
+   "credibility": "provider_documentation_or_measurement",
+   "applicability": "Independent confirmation of the IVRV sign and the size reference for the power section (IC21 about 0.018-0.026 after T-36c's conversion).",
+   "independent_replication": "OSAP is itself a replication of the original papers on CRSP/OptionMetrics.",
+   "limitations": "In-sample replication of the original periods; no post-2011 numbers. Snapshot is a verbatim field extract of the T-36c OSAP SignalDoc rows (the raw JSON contains '<' filter strings that the quote checker strips).",
+   "market_and_period": "CRSP/OptionMetrics replication of the original samples, 1996-2004 (RIVolSpread) and 1996-2011 (IV changes), monthly"
+  },
+  {
+   "claim_id": "an_ang_bali_cakici_2014_iv_changes",
+   "url": "https://www.nber.org/papers/w19590",
+   "source_type": "paper",
+   "published_or_updated_at": "2014-10-01",
+   "snapshot_path": "reports/research/intel/sources/options-signals-2026-10-08/nber-w19590-an-ang-bali-cakici.txt",
+   "sha256": "d8731d0cc405a546d6c34616399bdb82db3ea6f118d057558d2e9711166a4c38",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T07:18:14Z",
+   "claim": "An, Ang, Bali and Cakici (JF 2014): stocks with large increases in call implied volatility over the previous month have high future returns and stocks with large increases in put implied volatility have low future returns; decile spreads about 1% per month that persist.",
+   "core_claim": "Stocks with large increases in call implied volatilities over the previous month tend to have high future returns while stocks with large increases in put implied volatilities over the previous month tend to have low future returns.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Motivates DIV21 and DIV5; because DoltHub's iv_current blends calls and puts, whose changes predict with opposite signs, the direction is taken from the stress window instead of the paper.",
+   "independent_replication": "No independent post-2011 test found (T-36c).",
+   "limitations": "1996-2011 OptionMetrics, separate call and put surfaces at delta 0.5 and 30 days; our IV is a vendor blend of unknown construction.",
+   "market_and_period": "US optionable stocks, OptionMetrics 1996-2011, monthly"
+  },
+  {
+   "claim_id": "muravyev_pearson_pollet_borrow_fee_proxy",
+   "url": "https://doi.org/10.1016/j.jfineco.2025.104153",
+   "source_type": "paper",
+   "published_or_updated_at": "2025-10-01",
+   "snapshot_path": "reports/research/intel/sources/options-signals-2026-10-08/mpp-muravyev-pearson-pollet-working.txt",
+   "sha256": "149e9e4af95a928d19f7ab0b4a55188fc906643af79c53b4a0394312fbf00bcb",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T07:16:43Z",
+   "claim": "Muravyev, Pearson and Pollet (working paper 2022, JFE 2025): option-signal stock return predictability decreases by about two-thirds after returns are adjusted for borrow fees, and by a similar amount if high-fee stocks are excluded.",
+   "core_claim": "we show that abnormal stock return predictability from option signals decreases by about two-thirds after returns are adjusted for borrow fees. The predictability of unadjusted returns decreases by a similar amount if high-fee stocks are excluded.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Lowers the priors; L12 names are mostly low-fee, so the measured IC is expected near the post-fee third of the published effect.",
+   "independent_replication": "n/a",
+   "limitations": "Sample 2006-07..2015-08; working-paper version read, published version not obtained.",
+   "market_and_period": "US optionable stocks with Markit borrow fees, 2006-07..2015-08"
+  },
+  {
+   "claim_id": "neuhierl_tang_varneskov_zhou_2026_few_incremental",
+   "url": "https://ideas.repec.org/a/inm/ormnsc/v72y2026i4p2742-2760.html",
+   "source_type": "paper",
+   "published_or_updated_at": "2026-04-01",
+   "snapshot_path": "reports/research/intel/sources/p6-iv-signals-2026-10-05/web-sources-2026-10-05.md",
+   "sha256": "873021bb8a2db44600a4f9a118be9df3abe8ad9ca3044cf8bdf8fcd12532912f",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T13:30:07Z",
+   "claim": "Neuhierl, Tang, Varneskov and Zhou (Management Science 72(4) 2026): option information matters, but only a few option characteristics have significant incremental predictive power after controlling for a large set of firm characteristics; the strongest relate to mispricing, tail returns and short-selling costs.",
+   "core_claim": "there are only a few option characteristics that have significant incremental predictive power after controlling for the large set of firm characteristics",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Makes the marginal IC against m0_composite and the nine themes a required diagnostic and lowers the prior that a promoted signal adds book-level Sharpe.",
+   "independent_replication": "n/a",
+   "limitations": "Abstract only; which characteristics survive is not stated in the abstract.",
+   "market_and_period": "US optionable stocks; sample period not in the abstract"
+  },
+  {
+   "claim_id": "walter_zimmer_ulrich_2026_option_zoo_spanned",
+   "url": "https://arxiv.org/html/2609.31263v1",
+   "source_type": "paper",
+   "published_or_updated_at": "2026-09-25",
+   "snapshot_path": "reports/research/intel/sources/p6-iv-signals-2026-10-05/web-sources-2026-10-05.md",
+   "sha256": "873021bb8a2db44600a4f9a118be9df3abe8ad9ca3044cf8bdf8fcd12532912f",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T13:30:07Z",
+   "claim": "Walter, Zimmer and Ulrich (arXiv 2609.31263, 2026-09-25): 137 option-implied characteristics for optionable US stocks 2004-2023, screened to 20 factors and tested against 160 equity factors; equity factors explain about 91% of option-factor variance; 4 factors survive Bonferroni (IV convexity, two jump-tail measures, risk-neutral kurtosis); in-sample only.",
+   "core_claim": "In-sample, the equity factors account for about 91% of the option factors' variance, and adding the option factors does not significantly raise the maximum Sharpe ratio.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "IV-RV and IV changes are not among the survivors, so priors are lowered; the surviving dimensions need the full smile, which only the T-20261005-33 recorder can provide.",
+   "independent_replication": "n/a (new working paper)",
+   "limitations": "In-sample, no hold-out; read through the fetch tool's extraction of the HTML full text.",
+   "market_and_period": "Optionable US stocks, Feb 2004-Jul 2023, monthly, in-sample"
+  },
+  {
+   "claim_id": "dolthub_volatility_history_coverage_and_commit_time_2026_10_05",
+   "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/options",
+   "source_type": "provider_official_docs",
+   "published_or_updated_at": "2026-10-03",
+   "snapshot_path": "reports/research/intel/sources/p6-iv-signals-2026-10-05/dolthub-volhist-coverage-vs-sessions.txt",
+   "sha256": "f2bd6fc81a3caa3b2d84203ec0417b19417e914d2c9398d12bbd900a8ea114f7",
+   "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+   "fetched_at": "2026-10-05T13:30:07Z",
+   "claim": "Measured by the 13:07 lead round on 2026-10-05 through the DoltHub SQL API: volatility_history has rows on 594 of 674 NYSE sessions in 2024-01-08..2026-09-15 and 485 of 490 from 2024-10-01, median 1,535 symbols per covered date; Mon/Wed/Fri only before 2024-09; rows also on 27 holidays; date d is committed about 06:35 UTC the next calendar day; delisted names (TWTR, SIVB, FRC, ATVI, XLNX, ...) appear in 2021 under their tickers of the time.",
+   "core_claim": "recent sessions 674 covered 594 share 0.8813 median n 1535.0",
+   "credibility": "provider_documentation_or_measurement",
+   "applicability": "Sets the data gate thresholds (F1, F2) and the power section; point-in-time symbols remove the survivorship concern for the stress window.",
+   "independent_replication": "Raw query outputs saved alongside (dolthub-volhist-date-counts-2024-01..2026-10.json, dolthub-log-survivorship-schema.json).",
+   "limitations": "Vendor and snapshot time undocumented; commit times only cover the live era.",
+   "market_and_period": "DoltHub post-no-preference/options volatility_history, about 1,535 US symbols, 2024-01..2026-10, daily"
+  }
+ ]
+}

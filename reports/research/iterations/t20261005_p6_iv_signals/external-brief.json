@@ -1,0 +1,159 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "option_implied_signal_ic_p6",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261005-45",
+      "source_urls": [
+        "https://doi.org/10.1287/mnsc.1090.1063"
+      ]
+    }
+  ],
+  "iter_id": "t20261005_p6_iv_signals",
+  "objective": "P6 Stage 1b-dense (measurement, promotion-only): on liquid US stocks (L12) with DoltHub volatility_history, measure the daily industry- and beta-neutral rank-IC decay of four preregistered option-implied signals (IVRV, DIV21, DIV5, IVZ3) and promote to the P1 Stage 2a signal family those with significant recent-window implementable information.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "bali_hovakimian_2009_realized_minus_implied_negative",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://doi.org/10.1287/mnsc.1090.1063"
+    },
+    {
+      "claim_id": "osap_rivolspread_sign_minus_one",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://www.openassetpricing.com/"
+    },
+    {
+      "claim_id": "an_ang_bali_cakici_2014_iv_changes",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://www.nber.org/papers/w19590"
+    },
+    {
+      "claim_id": "muravyev_pearson_pollet_borrow_fee_proxy",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://doi.org/10.1016/j.jfineco.2025.104153"
+    },
+    {
+      "claim_id": "neuhierl_tang_varneskov_zhou_2026_few_incremental",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://ideas.repec.org/a/inm/ormnsc/v72y2026i4p2742-2760.html"
+    },
+    {
+      "claim_id": "walter_zimmer_ulrich_2026_option_zoo_spanned",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://arxiv.org/html/2609.31263v1"
+    },
+    {
+      "claim_id": "dolthub_volatility_history_coverage_and_commit_time_2026_10_05",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/options"
+    },
+    {
+      "claim_id": "t36c_power_and_dense_segment_path",
+      "source_card_path": "reports/harness/source_cards/t20261005_p6_iv_signals.jsonl",
+      "source_url": "reports/research/intel/I-20261005-03-options-implied-stock-signals.md"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261005_p6_iv_signals.yaml",
+  "sources": [
+    {
+      "claim_id": "bali_hovakimian_2009_realized_minus_implied_negative",
+      "core_claim": "Bali and Hovakimian (Management Science 55(11) 2009): the realized-minus-implied volatility spread is negatively related to expected stock returns (volatility-risk proxy); the call-minus-put implied volatility spread is positively related (jump-risk proxy).",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Fixes the IVRV direction: long stocks whose implied volatility is high relative to realized volatility (iv - RV21 positive). Corrects the reversed direction in I-20261005-03 and the T-20260929-61 plan.",
+      "published_or_updated_at": "2009-11-01",
+      "reflection": "Abstract only (full text not obtained); sample 1996-2004; NYSE stocks per OSAP notes.",
+      "source_type": "paper",
+      "url": "https://doi.org/10.1287/mnsc.1090.1063"
+    },
+    {
+      "claim_id": "osap_rivolspread_sign_minus_one",
+      "core_claim": "Open Source Asset Pricing signal documentation: RIVolSpread = realized vol (past 30 days) minus ATM implied vol, Sign -1, port-sort t 2.9 (return 0.732%/month), 1996-2004; dVolCall sign +1 (t 3.45), dVolPut sign -1 (t 2.03), dCPVolSpread sign -1 (t 6.77).",
+      "credibility": "provider_documentation_or_measurement",
+      "project_applicability": "Independent confirmation of the IVRV sign and the size reference for the power section (IC21 about 0.018-0.026 after T-36c's conversion).",
+      "published_or_updated_at": "2024-01-01",
+      "reflection": "In-sample replication of the original periods; no post-2011 numbers. Snapshot is a verbatim field extract of the T-36c OSAP SignalDoc rows (the raw JSON contains '<' filter strings that the quote checker strips).",
+      "source_type": "provider_official_docs",
+      "url": "https://www.openassetpricing.com/"
+    },
+    {
+      "claim_id": "an_ang_bali_cakici_2014_iv_changes",
+      "core_claim": "An, Ang, Bali and Cakici (JF 2014): stocks with large increases in call implied volatility over the previous month have high future returns and stocks with large increases in put implied volatility have low future returns; decile spreads about 1% per month that persist.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Motivates DIV21 and DIV5; because DoltHub's iv_current blends calls and puts, whose changes predict with opposite signs, the direction is taken from the stress window instead of the paper.",
+      "published_or_updated_at": "2014-10-01",
+      "reflection": "1996-2011 OptionMetrics, separate call and put surfaces at delta 0.5 and 30 days; our IV is a vendor blend of unknown construction.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w19590"
+    },
+    {
+      "claim_id": "muravyev_pearson_pollet_borrow_fee_proxy",
+      "core_claim": "Muravyev, Pearson and Pollet (working paper 2022, JFE 2025): option-signal stock return predictability decreases by about two-thirds after returns are adjusted for borrow fees, and by a similar amount if high-fee stocks are excluded.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Lowers the priors; L12 names are mostly low-fee, so the measured IC is expected near the post-fee third of the published effect.",
+      "published_or_updated_at": "2025-10-01",
+      "reflection": "Sample 2006-07..2015-08; working-paper version read, published version not obtained.",
+      "source_type": "paper",
+      "url": "https://doi.org/10.1016/j.jfineco.2025.104153"
+    },
+    {
+      "claim_id": "neuhierl_tang_varneskov_zhou_2026_few_incremental",
+      "core_claim": "Neuhierl, Tang, Varneskov and Zhou (Management Science 72(4) 2026): option information matters, but only a few option characteristics have significant incremental predictive power after controlling for a large set of firm characteristics; the strongest relate to mispricing, tail returns and short-selling costs.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Makes the marginal IC against m0_composite and the nine themes a required diagnostic and lowers the prior that a promoted signal adds book-level Sharpe.",
+      "published_or_updated_at": "2026-04-01",
+      "reflection": "Abstract only; which characteristics survive is not stated in the abstract.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/inm/ormnsc/v72y2026i4p2742-2760.html"
+    },
+    {
+      "claim_id": "walter_zimmer_ulrich_2026_option_zoo_spanned",
+      "core_claim": "Walter, Zimmer and Ulrich (arXiv 2609.31263, 2026-09-25): 137 option-implied characteristics for optionable US stocks 2004-2023, screened to 20 factors and tested against 160 equity factors; equity factors explain about 91% of option-factor variance; 4 factors survive Bonferroni (IV convexity, two jump-tail measures, risk-neutral kurtosis); in-sample only.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "IV-RV and IV changes are not among the survivors, so priors are lowered; the surviving dimensions need the full smile, which only the T-20261005-33 recorder can provide.",
+      "published_or_updated_at": "2026-09-25",
+      "reflection": "In-sample, no hold-out; read through the fetch tool's extraction of the HTML full text.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/html/2609.31263v1"
+    },
+    {
+      "claim_id": "dolthub_volatility_history_coverage_and_commit_time_2026_10_05",
+      "core_claim": "Measured by the 13:07 lead round on 2026-10-05 through the DoltHub SQL API: volatility_history has rows on 594 of 674 NYSE sessions in 2024-01-08..2026-09-15 and 485 of 490 from 2024-10-01, median 1,535 symbols per covered date; Mon/Wed/Fri only before 2024-09; rows also on 27 holidays; date d is committed about 06:35 UTC the next calendar day; delisted names (TWTR, SIVB, FRC, ATVI, XLNX, ...) appear in 2021 under their tickers of the time.",
+      "credibility": "provider_documentation_or_measurement",
+      "project_applicability": "Sets the data gate thresholds (F1, F2) and the power section; point-in-time symbols remove the survivorship concern for the stress window.",
+      "published_or_updated_at": "2026-10-03",
+      "reflection": "Vendor and snapshot time undocumented; commit times only cover the live era.",
+      "source_type": "provider_official_docs",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/options"
+    },
+    {
+      "claim_id": "t36c_power_and_dense_segment_path",
+      "core_claim": "T-36c (I-20261005-03): the forward recorder alone gives a minimum detectable IC21 of 0.117 at 200 names x 60 days versus published 0.007-0.033; the DoltHub dense segment (about 1,000 names x 520 days) gives about 0.018 under pure sampling noise; it recommended IV spread, IV minus RV and monthly IV change.",
+      "credibility": "provider_documentation_or_measurement",
+      "project_applicability": "Defines the route this contract takes; its IV-minus-RV direction is corrected here (the paper's sign is the opposite).",
+      "published_or_updated_at": "2026-10-05",
+      "reflection": "Pure-sampling-noise power; time variation in the true IC makes the real MDE larger.",
+      "source_type": "internal_research_note",
+      "url": "reports/research/intel/I-20261005-03-options-implied-stock-signals.md"
+    }
+  ],
+  "spec_hash": "79a8ceba01130fc315dd90283231b307b428991341328f7550beca53e335b591",
+  "strategy_name": "t20261005_p6_iv_signals",
+  "topic_coverage": [
+    "implied_minus_realized_volatility_spread",
+    "implied_volatility_changes_informed_trading",
+    "implied_move_scaled_reversal",
+    "borrow_fee_explanation_of_option_signals",
+    "option_characteristics_incremental_to_equity_factors",
+    "free_dolthub_volatility_history_coverage_and_timing",
+    "post_publication_decay_power"
+  ]
+}
