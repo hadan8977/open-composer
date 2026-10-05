@@ -1861,13 +1861,15 @@
   - 2026-10-05 06:47 UTC 交互会话（第二版计划 D7 第 5 节、第 9 节）：合同加三项，10-08 交付。(1) 最低资金约束：每条子策略分到的资金不低于它过 V2 所需的最低资金（V2 的量化已写进标准 vetoes.whole_share_*；各条的最低资金见 T-71 的 capacity-live-2026-10-07），达不到的在该资金档位里权重设 0 或换成小资金版；资金档位 5 万、10 万、25 万、100 万美元各给一套权重。(2) 按 DSR 打折后、按模拟分布的回撤分位数（标准第 6 节），供机主对照 30%；ETF 四条的 DSR 用 T-20261005-31（10-08 00:00 前）。(3) 主题上限取 T-20261005-32 的结果（10-07）。
 
 ### T-20261004-70 实盘快速通道 A1：拼接前向记录（09-01 起，分段标注；前向 z、跟踪差、哈希链）
-- status: ready（主审 10-05 07:07 轮：已交部分接受；剩 v1.2 F1/F2 与 T-43 的 09-15 之后影子段，10-06 22:00 前）
+- status: partial（待主审；原：主审 10-05 07:07 轮：已交部分接受；剩 v1.2 F1/F2 与 T-43 的 09-15 之后影子段，10-06 22:00 前）
 - priority: 1
 - not_before: 无
 - brief: reports/research/control/briefs/T-20261004-70.md
 - goal: 机主 10-04：模拟盘测试从 09-01 算，加两周真实模拟盘。评判标准 v2.1 的 L1 要每个候选（S1–S3、C2、v1.2 F1/F2、T-43 组合）有分段标注的日净收益记录：设计时看过、样本外影子、模拟盘。
 - done_when: `reports/research/program/forward-record-2026-10-06/` 的 record.csv、summary.json、hash_chain.jsonl、README.md 已提交，标"待主审"。**10-06 22:00 UTC 前**。
 - notes:
+  - 2026-10-05 17:03 UTC 执行轮 a595acf1（子代理 sonnet-high，提交 e653f6d；第一次尝试因可用内存 <700 MB 的保守闸门未跑，约 16:33 可用内存 990 MB 后重试）：v1.2 `book` 在 `run_capped --mem 1.0G` 下跑完（/tmp/t70_book_shadow.parquet，2017-10-02..2026-09-30），`assemble` 重写 record.csv（+33 行）、summary.json、README.md；hash_chain.jsonl 未变（脚本验证 0 断链），pytest tests/test_forward_record_t70.py 通过（我复跑 10 个通过）、ruff 通过。数字（子代理报告，取自 summary.json `candidates.<X>.alt_boundary_backtest_data`，按回测数据边界 09-15 切分，我核对了设计时看过段的累计收益与天数：F1 +0.275%、10 天）：影子 09-16..09-30（11 天）F1 −0.119%、F2 +0.791%、T-43 +0.363%；前向 z 全期/近期 F1 −0.33/−0.49、F2 +0.02/−0.07、T-43 −0.17/−0.37。验收未全满足：(1) 按冻结规则（冻结提交 2026-10-02 前最后一个交易日）切分，影子天数为 0（`primary_boundary_commit`，record.csv 里 F1/F2/T43 只有 design_seen 各 21 行，影子段只在 summary 的 alt 边界里）；(2) v1.2 引擎 net_pnl 只到 09-30，缺 10-01、10-02，原因未查，未改引擎；(3) 重跑与已存文件不逐位一致，最大绝对差 F1 0.00132、F2 0.00317、T-43 0.00337（`consistency_checks`）；(4) 无模拟盘段（v1.2 10-07 才开始）。S1–S3、C2 段不变。待主审：影子/设计时看过的切分口径选哪一个、10-01/10-02 缺口、重跑漂移。待主审。
+  - 2026-10-05 16:09 UTC 执行轮 a595acf1（Sonnet 5.5）开始：续跑 v1.2 影子段（book）并 assemble；status 暂为 running
   - 2026-10-05 04:09 UTC 执行轮 2c717355 开始（sonnet-high 子代理前台）
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。计划 `docs/plan-owner-feedback-2026-10-04.zh.md` A1。设计时看过的段不算样本外证据。
 
@@ -1915,13 +1917,15 @@
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。变好的不直接替换现役，交 D2/T-58 做候选。
 
 ### T-20261004-75 稳健性 D1：集中度和市场状态诊断（半导体问题）
-- status: ready（定时执行轮可取）
+- status: done（待主审）
 - priority: 1
 - not_before: 无
 - brief: reports/research/control/briefs/T-20261004-75.md
 - goal: 每个子策略、v1.2、T-43 组合：对 SPY/QQQ/正交化 SMH 回归，按持仓算半导体贡献，剔除半导体后的表现，按大盘和半导体状态分开的夏普，六段压力片段。只诊断，改法在 D2 和 T-58 预注册。
 - done_when: `reports/research/program/concentration-regimes-2026-10-06/` 已提交，标"待主审"。**10-06 22:00 UTC 前**。
 - notes:
+  - 2026-10-05 16:32 UTC 执行轮 a595acf1（子代理 sonnet-high，提交 977f986）：`reports/research/program/concentration-regimes-2026-10-06/` results.json + report.md、脚本 `scripts/concentration_regimes_t75.py` + 8 个测试（子代理报告通过，ruff 通过）已提交；我核对了 results.json 的顶层结构（7 个对象 S1/S2/S3/C2/F1/F2/T43、六个压力片段、item2/item3/回归/状态格均在），数字未逐项重算。子代理报告：S3 近期 SMH 正交 beta 0.86（t 8.2）、半导体 ETF 占毛贡献 92.4%、剔除后近期夏普 1.58→0.82；S2 半导体占比约 42%（含 XLK 穿透 47.8%）；S1/C2/F2 是大盘 beta，F1 无半导体暴露；T-43 的 S3 风险占比 90.0%；近期 VIX<15 的 76 天里 S2/S3/C2/F2/T-43 夏普为负。偏差：(1) program_returns.parquet 只有 T-43 一列，S1–S3 由缓存的 ETF 面板（/tmp/t75）重算，C2 取修复后文件；(2) 第 3 项在可用内存约 1024 MB（低于我写的 1200 MB 闸门）时跑，700M cap 内没换页，已在 report 注明；(3) T-43 原文件用修复前 C2，表 3 用修复后 C2 重建对比。待核对项：F1/F2 的半导体贡献和第 3 项（个股账本，n/a）、QQQ/TQQQ/SPY/UPRO 里的半导体（S3、C2 占比是下限）、XLK 半导体占比用今天的持仓（45.95%，SSGA 2026-10-02）套全历史（偏高）。待主审。
+  - 2026-10-05 16:09 UTC 执行轮 a595acf1（Sonnet 5.5）开始（子代理前台）
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。机主 10-04：半导体周期可能已过，要从大盘和择时角度看，剔除过于明显的相关性。
 
 ### T-20261004-76 调研：GitHub 近期热门 vibe trading / AI 交易项目
