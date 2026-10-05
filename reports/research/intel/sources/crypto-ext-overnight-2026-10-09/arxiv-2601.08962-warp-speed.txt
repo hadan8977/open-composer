@@ -1,0 +1,2726 @@
+URL: https://arxiv.org/pdf/2601.08962v2
+FETCHED_UTC: 2026-10-05T07:34Z
+HTTP/type: 200|application/pdf
+-----
+                                                                     Warp Speed Price Moves:
+                                                                Jumps after Earnings Announcements∗
+                                                      Kim Christensen†‡               Allan Timmermann§                   Bezirgen Veliyev†‡
+                                                                                         November, 2024
+arXiv:2601.08962v2 [econ.EM] 15 Jan 2026
+
+
+
+
+                                                                                              Abstract
+                                                      Corporate earnings announcements unpack large bundles of public information that should,
+                                                  in eﬃcient markets, trigger jumps in stock prices. Testing this implication is diﬃcult in prac-
+                                                  tice, as it requires noisy high-frequency data from after-hours markets, where most earnings
+                                                  announcements are released. Using a unique dataset and a new microstructure noise-robust
+                                                  jump test, we show that earnings announcements almost always induce jumps in the stock
+                                                  price of announcing ﬁrms. They also signiﬁcantly raise the probability of price co-jumps in
+                                                  non-announcing ﬁrms and the market. We ﬁnd that returns from a post-announcement trading
+                                                  strategy are consistent with eﬃcient price formation after 2016.
+
+
+                                                  JEL Classiﬁcation: C10; C80.
+                                                  Keywords: after-hours trading; earnings announcements; jump testing; spillover eﬀects, high-
+                                                  frequency data; market eﬃciency.
+
+
+
+
+                                              ∗
+                                                We thank an anonymous reviewer for insightful and constructive referee reports during the revision process. We
+                                           also thank Andrew Patton, Federico Bandi, Hashem Pesaran, Marcelo Moreira, Pete Kyle, Peter Hansen, Roberto
+                                           Renò, Shuping Shi, Thomas Chemmanur, Tim Bollerslev, Torben G. Andersen, Viktor Torodov, Yunus Topbas, and
+                                           participants at the 33rd (EC)2 conference at ESSEC, France, the Advances in Financial Econometrics conference at
+                                           Copenhagen Business School, Denmark, the 15th annual SoFiE conference at Sungkyunkwan University, Republic
+                                           of Korea, the Volatility conference at Singapore Management University, Singapore, the 32nd annual conference on
+                                           Paciﬁc Basin Finance, Economics, Accounting, and Management at Rutgers Business School, USA, as well as in
+                                           invited seminars at the Advanced Financial Technologies Laboratory (AFTLab) at Stanford University, University
+                                           of Houston, University of Maryland, University of Nottingham, and University of Southern California for helpful
+                                           comments. We are grateful to research assistance from Hanbo Wang, who calculated the constituent members’
+                                           weights in the S&P 500 index. Christensen appreciates funding from the Independent Research Fund Denmark
+                                           (DFF 1028–00030B). This work was also supported by the Center for Research in Econometric Analysis of Time
+                                           Series (CREATES). In addition, Christensen and Veliyev are aﬃliated with the Danish Finance Institute (DFI),
+                                           which ﬁnancially supports researchers in Finance.
+                                              †
+                                                Department of Economics and Business Economics, Aarhus University, Fuglesangs Allé 4, 8210 Aarhus V, Den-
+                                           mark.
+                                              ‡
+                                                Research fellow at Danish Finance Institute (DFI).
+                                              §
+                                                Rady School of Management and Department of Economics, UCSD, 9500 Gilman Drive, La Jolla, CA 92037,
+                                           USA.
+1     Introduction
+Earnings announcements constitute perhaps the single most important source of ﬁrm-level infor-
+mation. They are the key occasions on which ﬁrms release audited results and communicate their
+views on economic prospects to stock market investors. With several headline numbers being re-
+leased simultaneously, earnings announcements can be thought of as points in time where draws
+from the public news process have a very high variance which, in all likelihood, leads investors to
+materially revise their estimates of ﬁrm values. In an eﬃcient market where trading frictions are not
+prohibitively large, the widespread prevalence of high-frequency trading for the most liquid stocks
+therefore implies that earnings announcements should—almost surely—trigger jumps in prices. Ef-
+fectively, a very high propensity of jumps in stock prices immediately after earnings announcements
+is a necessary condition for markets to eﬃciently incorporate the new information.1 Building on
+this idea, we propose to use jump tests based on high-frequency tick-by-tick price data as a way to
+study market eﬃciency.
+   In recent years, the vast majority of publicly traded U.S. companies have made their earnings
+announcements in the after-hours market outside the regular trading session (9:30am–4:00pm).2
+After-hours trading on days with earnings announcements are therefore central to the price discovery
+process and it is important to understand price dynamics in these markets. We do so by studying
+price discovery and return predictability at a much higher tick-by-tick frequency than in previous
+studies of earnings announcements. All told, we examine more than 89 billion after-hours quotes
+and nearly 8 billion after-hours transactions for 50 stocks over a 12-year sample. Our analysis
+provides the most complete analysis of price formation in the after-hours market for these stocks
+to date.
+   Unfortunately, high-frequency data from the after-hours trading session are severely aﬀected
+by market microstructure noise. The irregular format of such data poses important challenges as
+it distorts standard jump test procedures. Empirical work has therefore resorted to testing for
+jumps during the regular trading session, which does not include most earnings announcements.3
+To overcome this shortcoming, we develop a new jump test that is suitable for illiquid and noisy
+markets by generalizing the classical bipower variation-based jump test of Barndorﬀ-Nielsen and
+Shephard (2006). We construct a noise-robust version of their test statistic that relies on a pre-
+averaging technique to lessen the detrimental impact of the noise (see, e.g., Aı̈t-Sahalia, Jacod, and
+    1
+      The condition that prices jump after earnings announcements is, however, not suﬃcient because the price could
+systematically over- or undershoot, thus introducing predictable dynamics in the post-announcement returns. We
+explore this issue in Section 6.
+    2
+      Jiang, Likitapiwat, and McInish (2012), Lyle, Stephan, and Yohn (2021), and Michaely, Rubin, and Vedrashko
+(2013) report that more than 95% of U.S. ﬁrms announce earnings outside the regular exchange trading session.
+This fraction is as high as 99.1% in the recent analysis by Grégoire and Martineau (2022) which studies companies
+belonging to the S&P 1500 stock index between 2011 and 2015.
+    3
+      See, e.g., Aı̈t-Sahalia and Jacod (2009b); Aı̈t-Sahalia, Jacod, and Li (2012); Andersen, Bollerslev, and Dobrev
+(2007); Caporin, Kolokolov, and Renò (2017); Christensen, Oomen, and Podolskij (2014); Corsi, Pirino, and Renò
+(2010); Jiang and Oomen (2008).
+
+
+
+                                                         1
+Li, 2012; Jacod, Li, Mykland, Podolskij, and Vetter, 2009; Lee and Mykland, 2012; Podolskij and
+Vetter, 2009a,b) allowing for both heteroscedasticity and serial dependence in the microstructure
+noise process. We also show how to estimate the asymptotic variance of the test statistic, which
+is itself a non-trivial problem.4 Through simulations and empirical results, we demonstrate that
+the conventional jump test is severely distorted by the type of market microstructure noise that is
+prevalent in after-hours markets, leading both to too many false positives and false negatives.
+   Using our new noise-robust test statistic, we ﬁnd strong empirical evidence in support of the
+hypothesis that earnings announcements trigger jumps in prices. Speciﬁcally, the probability that
+the stock price of announcing ﬁrms jumps in after-hours sessions with earnings announcements
+exceeds 90% while the corresponding jump probabilities for the regular trading session and after-
+hours sessions without earnings announcements are 2.95% and 3.67%. In a nutshell, prices almost
+always jump after earnings announcements, but rarely jump otherwise.
+   If earnings announcements contain industry- and economy-wide news components, we should
+expect an increase in the jump probability of non-announcing ﬁrms’ stock price as well as in the
+market index on announcement days (Patton and Verardo, 2012; Savor and Wilson, 2016). We
+test these implications and ﬁnd compelling support for their presence. Jump spillover eﬀects are
+strongly related to industry proximity and after-hours market liquidity with the probability of a
+price jump more than doubling for a high-liquidity, non-announcing ﬁrm in the same industry as
+the announcing ﬁrm compared to a low-liquidity, non-announcing ﬁrm from other industries. The
+spillover eﬀect is more potent early versus late in the earnings season, consistent with Savor and
+Wilson (2016). Moreover, there is a signiﬁcant increase in the jump probability of the market index
+when many ﬁrms announce together after controlling for the mechanical price eﬀect resulting from
+the announcing ﬁrms often being constituent members of the market index.5
+   We next study whether prices adjust suﬃciently fast and by an appropriate amount to eﬃciently
+incorporate the new information. Our analysis inspects all trades and quotes, using a more detailed
+and complete data set than previously examined. This means that we can pinpoint exactly how
+long it takes for the price discovery process to impound the news as well as identify the factors—
+including earnings surprises, market liquidity and analyst coverage—determining price movements
+in the immediate aftermath of earnings announcements.
+    We follow the approach of Patell and Wolfson (1984) by examining a simple trading rule based
+on the earnings response model of Ball and Brown (1968). That is, we compute return forecasts
+oﬀ the surprise component in earnings announcements to decide whether to take a long or short
+position in the stock. Over the 12-year sample (2008–2020) we earn a highly signiﬁcant mean return
+of 1.80% per transaction in a “no-friction” scenario where investors enter at the ﬁrst transaction
+   4
+      We propose a jump- and noise-robust version of the subsampling approach studied in Christensen, Podolskij,
+Thamrongrat, and Veliyev (2017), which delivers a consistent estimator with desirable ﬁnite sample properties.
+    5
+      This ﬁnding suggests that the “information spillover” eﬀect dominates the “distraction” eﬀect identiﬁed by
+Hirshleifer, Lim, and Teoh (2009) who ﬁnd that the price response to earnings surprises is signiﬁcantly weaker on
+days when multiple ﬁrms announce their earnings.
+
+
+
+                                                       2
+price after the announcement. Executing trades instead at the midquote of the bid-ask spread,
+mean returns drop to (a highly signiﬁcant) 1.50% per trade. This ﬁnding continues to hold for
+trades executed at the actual spreads obtained from the bid-ask quotes after the announcement
+(mean return of 0.72%). Delaying trades by ﬁve seconds reduces mean returns to 0.41% per trade,
+which remains signiﬁcant. Further delays beyond ﬁve seconds lead to mean returns that are no
+longer statistically signiﬁcant.
+   To track how market eﬃciency has evolved over time, we split our data into two sub-samples
+chosen to reﬂect structural changes in market design, as explained in Section 6.2. In the early
+sub-sample (2008–2015), mean returns are a highly signiﬁcant 2.30% and 2.00% per trade in the
+frictionless and midquote scenarios, respectively, and remain signiﬁcant and large (0.80% per trade)
+even with a trading delay of 10 seconds. Conversely, in the second sub-sample (2016–2020), mean
+returns are only signiﬁcantly positive in the frictionless and midquote scenarios, becoming small and
+insigniﬁcant in the presence of bid-ask spreads or even negative with timing delays. This suggests
+that the post-earnings announcement price discovery process in the after-hours market has become
+extremely fast and increasingly eﬃcient over time for the most liquid U.S. stocks.6
+   The theoretical foundation based on jump testing with high-frequency data is fundamentally
+diﬀerent from conventional approaches that examine how news releases get processed. Existing
+work typically looks at return predictability, usually in terms of serial correlation, in one- or ﬁve-
+minute intervals after news announcements, see, e.g., Ederington and Lee (1993). While these time
+intervals are relatively short in an absolute sense, they are excessively long in modern markets with
+fast-paced, low-latency trading that can process thousands of orders within a few milliseconds after
+news releases (see Figure 2 for an illustrative example). In markets where a minute can be an
+eternity, jump tests conducted at the tick-by-tick level are arguably better at revealing whether
+prices react eﬃciently to news announcements.
+    Our paper contributes to a burgeoning literature on how stock prices react to earnings announce-
+ments, starting with Ball and Brown (1968) and Beaver (1968). The vast majority of the research
+in this ﬁeld has refrained from studying the instantaneous price change after an earnings announce-
+ment and instead uncovers evidence of post-earnings announcement drift (PEAD), see Bernard and
+Thomas (1989, 1990). The PEAD can be interpreted as an indirect test for eﬃcient price responses
+to earnings announcements because over- or underreaction in the immediate post-announcement
+price change induces a subsequent drift in the stock price. Tests for PEAD tend to exhibit low
+power and lead to conﬂicting evidence, however, since it is diﬃcult to accurately estimate mean
+returns over a long post-event window that often spans several days (or even months). Indeed, while
+Martineau (2022) concludes that the PEAD is notably weaker after the early 2000s, Fink (2021)
+   6
+     This conclusion agrees with Chordia, Green, and Kottimukkalur (2018), who study price formation in the
+composite equity market around macroeconomic news. As in our paper, they show that the speed of information
+processing has increased in recent years and that proﬁts from proprietary trading are economically small. Brogaard,
+Hendershott, and Riordan (2014) document how high-frequency traders aid with price discovery through their trading.
+
+
+
+
+                                                        3
+reaches the opposite conclusion that it has not vanished.7
+   Far fewer studies analyze ultra short-term stock price dynamics after earnings announcements
+and none comes close to the level of resolution used here. The most closely related article is Grégoire
+and Martineau (2022), who examine how earnings announcement news get transmitted to stock
+prices in the after-hours market. They examine a broader set of stocks than we do but look at the
+dynamics of price formation for each ﬁrm in far less detail, aggregating price changes into one-minute
+intervals. They conclude that bid-ask spreads are so wide that investors cannot cover their round-
+trip trading costs even if they knew the post-announcement closing price in advance.8 We arrive
+at an entirely diﬀerent result for our sample of liquid ﬁrms: The post-earnings transaction price
+at 6:30pm (at the time where we close out our trading strategy) is outside the pre-announcement
+quoted spread for 92.66% of the earnings announcements. So the post-earnings announcement price
+dynamics are rather distinctive for the most liquid stocks that exhibit the lowest bid-ask spreads
+and account for the vast majority of after-hours trading volume.
+   Our analysis is also connected to a more general stream of work that examines price discovery
+and trading in the after-hours market, notably Barclay and Hendershott (2003) who ﬁnd evidence of
+ineﬃcient price formation in those markets. Our results show that after-hours trading activity (and,
+hence, price discovery) is really a tale of two markets. Even for the vastly liquid stocks examined
+here, after-hours trading volume is almost entirely dormant on days without earnings announce-
+ments (or other important company-speciﬁc news releases). In contrast, on days with earnings
+announcements, after-hours trading activity explodes. Average after-hours trading volume on days
+with earnings announcements exceeds its counterpart on days without earnings announcement by
+almost two orders of magnitude.9
+   Other articles also study the link between jumps in stock prices and news eﬀects. Andersen,
+Bollerslev, Diebold, and Vega (2003) study price discovery in foreign exchange markets around the
+dissemination of macroeconomic news. As in our paper, they show that changes in exchange rates
+are determined by the sign and magnitude of the standardized announcement surprise but restrict
+attention to high-frequency data sampled at 5-minute frequency. This is further documented in
+Jeon, McCurdy, and Zhao (2022), who base their analysis on general news and daily data. Aı̈t-
+Sahalia, Li, and Li (2024) relate stock price jumps extracted from 5-second intraday log-returns
+to ﬁrm-level, industry and macroeconomic news. In contrast, we examine earnings announcements
+and high-frequency data sampled at the tick-by-tick level, which is the highest possible degree of
+granularity.
+   Our ﬁnding that stock prices predominantly jump on earnings announcements days and induce
+jump spillover eﬀects for other stocks and the market index has important implications also for the
+   7
+      More recently, Chan and Marsh (2024) argue that although there is scant evidence of a daily (close-to-close)
+PEAD, a signiﬁcant overnight eﬀect remains, particularly for ﬁrms with extreme earnings misses.
+    8
+      Speciﬁcally, Grégoire and Martineau (2022) write that “pre-announcement bid-ask spreads are wide enough to
+include the post-announcement closing price, eliminating the proﬁts of informed liquidity takers.”
+    9
+      Averaged over ﬁrms and years, this ratio equals 93.57 over our sample.
+
+
+
+                                                        4
+pricing of contingent claims aﬀected by earnings announcement risk (Dubinsky, Johannes, Kaeck,
+and Seeger, 2019; Bandi, Fusari, and Renò, 2022; Todorov and Zhang, 2023). Moreover, Bollerslev,
+Li, and Todorov (2016) ﬁnd signiﬁcantly positive risk premia for jump and overnight risk, but not
+for continuous variation. This suggests that investors command a risk premium for exposure to
+discontinuous or overnight variation in the aggregate market. In addition to this, Lou, Polk, and
+Skouras (2019) show that most of the equity risk premium accrues overnight. Our ﬁndings can help
+to shed further light on this issue, including the extent to which the equity risk premium is driven
+by earnings announcements.
+   The outline of the paper is as follows. Section 2 establishes the link between price jumps and
+market eﬃciency before introducing our new noise-robust jump test statistic. Section 3 explains our
+data sources. Section 4 implements the jump test statistic on a unique set of high-frequency data
+that includes information about the transaction record from outside the oﬃcial opening hours of
+the exchange. Section 5 examines jump spillover eﬀects, and Section 6 studies price dynamics after
+earnings announcements and analyzes returns from a simple trading strategy. Section 7 concludes.
+Supplemental appendices at the back of the paper provide additional results and technical analysis.
+
+
+2     Market eﬃciency and price jumps
+We begin by motivating why, in eﬃcient markets, we should expect stock prices to jump immediately
+after earnings announcements. Next, to test this implication we introduce a new jump test that is
+robust to the high levels of market microstructure noise typical in after-hours trading sessions. We
+ﬁnish the section by reporting results from Monte Carlo simulations comparing the performance of
+our new noise-robust test to existing jump tests.
+
+2.1     Earnings announcements
+Earnings announcements unpack large bundles of information to the public. The timing of their
+release is typically known in advance, giving investors ample opportunity to prepare and respond
+more or less instantaneously.10 Since the main research question of our paper is to analyze the
+process by which stock market participants incorporate such public information into prices, we
+begin by deﬁning what is meant by eﬃcient price and price discovery processes. To this end, let
+Itpublic be the public information set at time t. The eﬃcient price at time t, Pt , is deﬁned as the
+expectation of some equilibrium price, vt , conditional on this information:
+                                                           
+                                       Pt = EQ vt | Itpublic ,                                               (1)
+  10
+     Most large-cap companies inform markets in advance about their intention to release a ﬁnancial report either
+Before Market Open (BMO), during Regular Trading Hours (RTH), or After Market Close (AMC), see, e.g., https:
+//www.nasdaq.com/market-activity/earnings.
+
+
+
+
+                                                       5
+where Q is the risk-neutral probability measure (we ignore the time-discounting eﬀect, or assume
+interest rates are zero, for notational convenience). Here, vt can be thought of as the liquidation
+value of the stock or, more broadly, the conditional expectation of its future cash ﬂow (FCFt ) given
+                                                                                              
+the collective private information of investors, Itprivate , that is, vt = EQ FCFt | Itprivate . Since
+                                                                                                       
+Itpublic ⊆ Itprivate , it follows by the dominance of the coarser ﬁltration that Pt = EQ FCFt | Itpublic .
+    If, at each point in time, the eﬃcient price is determined in accordance with (1), we expect the
+release of large amounts of new public information to trigger large, and essentially instantaneous,
+price changes ∆Pt 6= 0 (i.e., a jump). We take price discovery to represent the process by which new
+public information gets impounded into the eﬃcient price; a common deﬁnition in the literature
+(e.g. Andersen, Bollerslev, Diebold, and Vega, 2003; Hasbrouck, 1991).
+    In a second strand of the literature, price discovery refers to how private information gets
+incorporated into the eﬃcient price (e.g. Biais, Hillion, and Spatt, 1999; Vives, 1995) through
+a tatonnement process in which the trades of informed parties reveal their private information
+(e.g. Glosten and Milgrom, 1985; Kyle, 1985). In that setting, Pt converges toward vt (a moving
+target in practice). This deﬁnition is ill-suited for studying the pricing implications of earnings
+announcements as we do not expect the release of previously-private now-public information to
+alter the equilibrium price which depends on the ﬁrm’s underlying business activity, the state of
+the economy, etc. In contrast, the eﬃcient price determined according to (1) is highly likely to
+change.11
+   Changing to the physical probability measure, (1) can be rewritten as
+                                                                      
+                            Pt = E vt | Itpublic + cov vt , mt | Itpublic ,                             (2)
+
+where mt is the stochastic discount factor.
+   The covariance term in (2) represents a risk premium that allows prices to jump even for earnings
+announcements that are equal to or close to expectations and do not change the ﬁrst term much.
+Whether this eﬀect arises depends on the underlying asset pricing model. Speciﬁcally, Ai and Bansal
+(2018) show that asset pricing models cannot generate an announcement premium, deﬁned as the
+return from buying an asset prior to the announcement and selling it in its immediate aftermath,
+under time-separable expected utility. However, a class of generalized risk sensitivity preferences,
+including robust-control (uncertainty aversion), implies concavity of the certainty equivalent func-
+tion. This causes additional risk-discounting for payoﬀs that correlate positively with utility, which
+generates a non-negative announcement risk premium (see also Hansen, 2021). This also holds
+under Epstein and Zin (1989) recursive utility when these lead to a preference for early resolution
+of uncertainty. Earnings announcements in line with analyst expectations are therefore more likely
+to cause the stock price of the announcing ﬁrm to rise than decline due to a reduced risk premium,
+                              
+that is ∆cov vt , mt | Itpublic ≥ 0.
+  11
+     Although we are not measuring how far the eﬃcient price is from the equilibrium price, we do expect the
+post-announcement price to be closer to the equilibrium price than the pre-announcement price.
+
+
+
+                                                     6
+   This discussion suggests the following hypothesis.
+
+Hypothesis 1. Necessary conditions for market eﬃciency after an earnings announcement include
+that, for the most liquid stocks,
+
+  1. The stock price of the announcing ﬁrm almost always jumps immediately after the earnings
+     announcement.
+
+  2. Due to uncertainty resolution, the stock price of the announcing ﬁrm is more likely to jump
+     up than down following an earnings announcement in line with analyst expectations.
+
+   Earnings announcements may contain ﬁrm-, industry-, and market-wide components. Therefore,
+investors revise their expectations not only about the prospects of the announcing ﬁrm but also
+of other ﬁrms and the broader economy (Patton and Verardo, 2012; Savor and Wilson, 2016). We
+therefore expect earnings announcements to induce spillover eﬀects that increase the likelihood of
+jumps in the prices of non-announcing ﬁrms and the market index. This eﬀect is arguably stronger
+for non-announcing ﬁrms with a closer industry proximity and high after-hours market trading
+activity, where the latter is required to facilitate the price discovery process. We also expect the
+information eﬀect—and hence the jump spillover—to be enhanced for companies that announce
+their ﬁscal results early in the earnings season, since investors revise their beliefs the most in the
+beginning of the cycle, as documented in Savor and Wilson (2016).
+
+Hypothesis 2. Information and learning-induced spillover eﬀects in jump probabilities from the
+announcing to non-announcing ﬁrms and the broader market index imply that:
+
+  1. The prices of other (non-announcing) ﬁrms are more likely to jump on days with earnings
+     announcements.
+
+  2. The increase in the jump probability for a non-announcing ﬁrm is higher if (i) the non-
+     announcing ﬁrm is closer to the announcing ﬁrm (in terms of industry proximity); (ii) the
+     announcing ﬁrm is early in the news announcement cycle; and (iii) the announcing and non-
+     announcing ﬁrm are more liquid with higher after-hours market trading activity.
+
+  3. The market index is more likely to jump on days with earnings announcements and the jump
+     probability is higher on days where multiple ﬁrms announce their earnings.
+
+   Higher jump probabilities in stock prices after an earnings announcement are a weak implication
+in the sense that it is a necessary but not suﬃcient condition for market eﬃciency. This holds
+because stock prices could over- or undershoot. For example, prices could jump too far, giving rise
+to a mean-reverting component that drifts toward the pre-announcement price in the aftermath of
+the jump. If instead prices do not jump far enough, we should expect to see post-announcement
+prices drift in the direction of the jump, as evident in the post-earnings announcement drift (PEAD)
+literature (Bernard and Thomas, 1989, 1990).
+
+                                                  7
+  These examples suggest that a suﬃcient condition for market eﬃciency after earnings announce-
+ments is that investors cannot detect return predictability at any point on the post-announcement
+price path and exploit such predictability after accounting for trading costs:12
+
+Hypothesis 3. A suﬃcient condition for market eﬃciency after an earnings announcement is that,
+at each point in time of the post-announcement price path:
+
+   1. Post-announcement returns of the announcing ﬁrm do not display any predictive patterns large
+      enough to allow investors to earn abnormal returns after accounting for transaction costs.
+
+   2. Post-announcement returns of the non-announcing ﬁrms and the market index do not dis-
+      play any predictive patterns large enough to allow investors to earn abnormal returns after
+       accounting for transaction costs.
+
+    Hypothesis 3 does not mean that the price discovery process is settled instantaneously. We
+expect elevated volatility of the price process to last several minutes after the release of the news as
+information gets processed and trading positions are adjusted. However, the price discovery process
+should not leave any (local) biases allowing investors to predict future price movements.
+   The condition that return predictability should not be exploitable is important and goes back to
+Jensen (1978).13 Trading costs and bid-ask spreads may induce negative autocorrelation in returns,
+but this should not generate abnormal proﬁts after accounting for round-trip transaction costs.
+Time-varying risk premia may induce predictability in the price process but they are unlikely to
+matter at the high resolution studied here.
+  Testing the suﬃcient conditions in Hypothesis 3 is challenging because it has to hold for all
+possible trading rules that condition on the prevailing information. Short of inspecting the prof-
+itability of all possible trading rules based on the released information, it is diﬃcult to conduct an
+exhaustive test of the condition. In practice, analysis typically examines simple strategies based on
+news measures such as earnings surprises. Conclusions about market eﬃciency are therefore limited
+to the class of trading rules being examined.
+
+2.2     Comparison to existing tests of market eﬃciency
+Our approach to testing market eﬃciency by examining the presence of jumps after the disclosure
+of public information is fundamentally diﬀerent from common practice in the ﬁnance literature on
+testing market eﬃciency in the aftermath of macroeconomic news announcements (e.g., Ederington
+and Lee, 1993; Andersen, Bollerslev, Diebold, and Vega, 2003) or corporate earnings announcements
+  12
+      Eﬃcient prices are only determined up to the marginal cost of acquiring and processing information and executing
+transactions (Grossman and Stiglitz, 1980; Pedersen, 2015). In principle, we should also account for risk premia, but
+since the returns from our proposed trading strategy are accrued over very short horizons, we do not expect such a
+correction to alter the results much.
+   13
+      He deﬁnes market eﬃciency as follows: “A market is eﬃcient with respect to information set θt if it is impossible
+to make economic proﬁts by trading on the basis of information set θt .”
+
+
+                                                          8
+(e.g., Beaver, 1968; Chambers and Penman, 1984; Jiang, Likitapiwat, and McInish, 2012; Grégoire
+and Martineau, 2022; Lyle, Stephan, and Yohn, 2021).
+    This literature typically studies predictability in post-announcement returns over ﬁxed time
+intervals such as one or ﬁve minutes. For example, Ederington and Lee (1993) conclude that
+“Following an announcement, traders with immediate access to the market apparently form an
+estimate of the release’s implication for market prices almost immediately, and the actual price
+adjusts to this level within one minute. The price level at the end of one minute of trading is
+a relatively unbiased estimate of the ﬁnal equilibrium price.” Andersen, Bollerslev, Diebold, and
+Vega (2003) observe that “The general pattern is one of very quick exchange-rate conditional mean
+adjustment, characterized by a jump immediately following the announcement, and little movement
+thereafter.” Importantly, the evidence of jumps presented by the latter relies on inspection of price
+movements over ﬁve-minute intervals and their sampling scheme does not allow them to formally
+test for instantaneous jumps in exchange rates.
+    In contrast, our hypotheses explicitly do not reference time intervals, such as one or ﬁve minutes.
+Rather, jumps must occur as close to instantaneously as trading technology allows (Hypotheses 1
+and 2) and the suﬃcient conditions in Hypothesis 3 must hold at each point in time, i.e., on the entire
+price path, regardless of whether we are studying ﬁxed or varying intervals in calendar or trading
+time. This is an important advantage because any choice of time interval used in conventional
+market eﬃciency tests is arbitrary.
+   More importantly, in the current fast-paced markets transactions can occur at high frequency
+where it is possible to execute thousands of trades at very short intervals measured in milliseconds
+or less. The absence of serial correlation in, e.g., one-minute returns is therefore no guarantee that
+prices move eﬃciently. In a world dominated by algorithmic trading with latency delays shrinking
+ever closer to the lower bound imposed by the speed of light, only jump tests can reveal whether
+markets react eﬃciently to big news events.
+   To illustrate the extreme speed with which transactions occur in the immediate aftermath of
+an announcement, Panel A of Figure 2 shows tick-by-tick evidence on the price movement and
+transaction count from the announcement (time 0) to 60 seconds after Apple (AAPL) released its
+earnings report on 07/30/2020; Panel B zooms further in on the ﬁrst 100 milliseconds. Transactions
+begin 15 milliseconds after the announcement and their toll exceeds more than 800 in the ﬁrst post-
+announcement second. The fastest trades can possibly be attributed to algorithmic traders sniping
+stale quotes in the limit order book, while the ﬂat spots can appear when a large amount of passive
+resting volume (e.g, an iceberg order) is executed against a sequence of smaller trades. Trading
+activity then lies dormant for a few seconds before picking up signiﬁcant steam again around the
+time where slower ﬁnancial intermediaries are likely to enter the market. On average, in the ﬁrst
+ten seconds 300 trades execute per second, while in the one-minute post-announcement window
+more than 165 trades get executed per second.14
+  14
+       toward the end of our sample, trading activity in the after-hours market is much higher than in the early years
+
+
+                                                           9
+   This example highlights the speed with which prices of the most liquid stocks adjust after
+earnings announcements. It also motivates the need for new market eﬃciency tests that account for
+such extremely fast trading, yet possess robustness to the high levels of noise typically encountered
+in after-hours markets. This is the topic we next turn to.
+
+2.3     A noise-robust jump test
+The vast majority of corporate earnings announcements occur in the after-hours market.15 Here, the
+trading volume is typically far lower and bid-ask spreads much wider compared to the regular trading
+session. As we demonstrate below, in the presence of such microstructure frictions, conventional
+jump tests tend to spuriously identify false jumps, while often failing to detect true jumps. This
+shortcoming makes it important to have tests that are robust to the noised-up features of high-
+frequency data from the after-hours market.16
+    Given the popularity in empirical work of the jump test of Barndorﬀ-Nielsen and Shephard
+(2006), we develop a noise-robust generalization which retains the intuitive nature of their test. We
+state the main results below with detailed deﬁnitions and formal proofs provided in Appendix A.
+
+2.3.1    The eﬃcient price
+
+We start by introducing a general continuous-time setup for modeling noisy high-frequency data.
+Consider a security price observed on the time interval [0,1] which we interpret as a complete daily
+trading session as described in Section 3. The fundamental theorem of asset pricing implies that
+in an eﬃcient market without frictions and no arbitrage the price process, P = (Pt )t≥0 , must be
+a semimartingale (e.g., Delbaen and Schachermayer, 1994). Starting with the log-price process
+p = (pt )t≥0 , where pt = log(Pt ), we can decompose the cumulative intraday log-return at time t,
+rt = pt − p0 , into a continuous part and a jump, or discontinuous, part:
+
+                                                   rt = rtc + rtd .                                               (3)
+
+In Appendix A, we introduce a general but succinct mathematical deﬁnition of these two separate
+sources of risk. Our framework is nonparametric and model-free, since we do not constrain the
+dynamics of the eﬃcient price process, and is compatible with salient features of high-frequency
+ﬁnancial data such as time-varying expected returns, stochastic volatility, leverage eﬀects, and
+jumps in the price and volatility. Furthermore, the price jump component can be inﬁnitely active
+and of inﬁnite variation.
+with high-speed electronic trading often exceeding 200 trades per second right after an earnings announcement.
+    15
+       Perhaps for this reason, existing empirical work based on high-frequency data from the regular trading session
+is somewhat inconclusive about the importance of jumps relative to the diﬀusive volatility (as often modeled by the
+inclusion of a Brownian motion in the price process), see, e.g., Christensen, Oomen, and Podolskij (2014).
+    16
+       Aı̈t-Sahalia, Jacod, and Li (2012) construct a noise-robust jump test from power variations sampled at diﬀerent
+frequencies, but it is not evident how one should implement such sampling in the after-hours market that is typically
+illiquid with limited trading. In the simulation analysis, we show that our noise-robust bipower variation-based jump
+test is on par with or even outperforms their test statistic.
+
+
+                                                         10
+   The null hypothesis that we wish to test is that P is continuous. This can be formulated as
+H0 : ω ∈ Ω0 , where Ω0 ⊆ Ω is the subset:
+
+                           Ω0 = {ω ∈ Ω : t 7−→ Pt (ω) is continuous on [0, 1]}.                            (4)
+
+We test this null, which is equivalent to the restriction rtd = 0 for all t, against the alternative
+Ha : ω ∈ Ω1 with Ω1 = Ω∁0 , the complement of Ω0 .
+   To develop a test of H0 , we examine the composition of the quadratic return variation:
+                                         Z 1          X
+                                  [r]1 =     σs2 ds +   (∆rsd )2 ,                                         (5)
+                                               0           0≤s≤1
+
+where σs is the instantaneous volatility at time s, ∆rsd = rsd − rs−
+                                                                  d
+                                                                     is the associated jump size, and
+ d            d
+rs− = limt↑s rt . The ﬁrst term in (5) is the quadratic variation of the continuous log-return, also
+known as the integrated variance. The second term represents the quadratic variation of the jump
+process, which is zero under H0 .
+   Quadratic variation can equivalently be deﬁned as follows:
+                                                           n
+                                                           X
+                                             [r]1 = plim         ri2 ,                                     (6)
+                                                    n→∞
+                                                           i=1
+
+where ri = pti − pti−1 is the log-return over [ti−1 , ti ] and the convergence in probability holds for
+                                                                               p
+every partition 0 = t0 < t1 < . . . < tn = 1 such that maxi (ti − ti−1 ) −→ 0 as n → ∞, motivating
+                                                            1≤i≤n
+why tick-by-tick high-frequency data is used to estimate quadratic variation.
+
+2.3.2    The observed price
+
+In practice, the eﬃcient market hypothesis is violated because of market frictions—or microstructure
+noise—such as price discreteness and bid–ask spreads. In addition, even though the price process
+evolves in continuous-time, trading is discrete. In this section, we suppose for notational convenience
+that the observed log-price is recorded regularly at equidistant time points ti = i∆n , for i =
+0, 1, . . . , n, where ∆n = 1/n is the time gap, which we collect in p∗ = (p∗i∆n )ni=0 .17
+    To account for microstructure noise, we follow Hasbrouck (1995) and model p∗i∆n as
+
+                                            p∗i∆n = pi∆n + ǫi∆n ,                                          (7)
+
+where ǫi∆n is the microstructure eﬀect.
+   The key challenge is to draw inference about the presence of jumps in the eﬃcient price from
+a high-frequency record of noisy prices. To see this, note from (7) that the observed log-return
+  17
+     In the empirical application, we employ tick time sampling, which leads to irregularly and randomly spaced
+observation times. We elaborate on the details in that section. However, it is important to note that the pre-
+                                                                                                  p
+averaging theory presented below remains compatible with such data, as long as maxi (ti − ti−1 ) −→ 0 as n → ∞.
+                                                                             1≤i≤n
+
+
+
+
+                                                      11
+measures the eﬃcient log-return with error due to the microstructure component:
+
+                                  ri∗ = p∗i∆n − p∗(i−1)∆n = ri + ǫi∆n − ǫ(i−1)∆n .                       (8)
+
+2.3.3    The pre-averaging approach
+
+To mitigate the eﬀect of microstructure noise, we adopt the pre-averaging procedure of Jacod, Li,
+Mykland, Podolskij, and Vetter (2009); Podolskij and Vetter (2009a,b). Speciﬁcally, we replace the
+observed noisy log-return by a pre-averaged log-return:
+                                          kX
+                                           n −1
+
+                                 r̄i∗ =           gjn ri+j
+                                                       ∗
+                                                           ,    for i = 0, . . . , n − 2kn + 1,          (9)
+                                          j=1
+                                                 √            
+where gjn = g(j/kn ) is a weight function, kn = θ n + o n−1/4 is the pre-averaging horizon, and
+θ > 0 is a tuning parameter.
+   The averaging in (9) attenuates the microstructure noise and enhances the eﬃcient log-return.
+If kn is even and g(x) = min(x, 1 − x), (9) can be rewritten as
+                                                     kn                              kn /2
+                                            1        X                          1 X ∗
+                                  r̄i∗ =                       p∗(i+j)∆n −            p        .        (10)
+                                            kn                                  kn j=1 (i+j)∆n
+                                                  j=kn /2+1
+
+Thus, (r̄i∗ )n−k
+             i=1
+                 n +2
+                      constitutes a sequence of log-returns constructed by simple averaging of the noisy
+log-price. With minor modiﬁcations, standard estimators of quadratic variation can therefore be
+tweaked to exploit the pre-averaged log-return series. We next deﬁne the pre-averaged realized
+variance and pre-averaged bipower variation as follows:
+                                                        n−2k
+                                                          X  n +1
+
+                                      RVn∗ = cn1                     |r̄i∗ |2 − cn2 ω̂n2 ,
+                                                           i=0
+                                                           n−2k
+                                                                                                        (11)
+                                                                n +1
+                                                 π           X
+                                      BVn∗ = cn1                        |r̄i∗||r̄i+k
+                                                                                 ∗
+                                                                                       | − cn2 ω̂n2 ,
+                                                 2             i=0
+                                                                                     n
+
+
+
+where
+                                                                          ℓn
+                                                                          X
+                                                  ω̂n2 = ρn (0) + 2              ρn (m),                (12)
+                                                                          m=1
+
+                                       Xn         n−5h
+                                1
+                  ρn (m) =                (p∗ − p̃∗(i+2hn )∆n )(p∗(i+m)∆n − p̃∗(i+4hn )∆n ),            (13)
+                           n − 5hn + 1 i=0 i∆n
+for m = 0, 1, . . . , ℓn , and
+                                                                  n  h −1
+                                                               1 X
+                                                   p̃∗i∆n =          p∗       .                         (14)
+                                                               hn j=0 (i+j)∆n
+
+    RVn∗ is the sum of squared pre-averaged returns, whereas BVn∗ is based on cross-products that are
+kn terms apart. As we prove in Theorem 1, the extra distancing ensures that BVn∗ is asymptotically
+
+
+                                                                     12
+jump-robust, whereas RVn∗ is not. The scalars cn1 and cn2 are deﬁned in Appendix A and depend on
+the weight function, g, and pre-averaging window, kn .
+    In the above, both estimators are normalized for the eﬀect of pre-averaging and bias-corrected
+for residual microstructure noise. The bias-correction employs the estimator in (12) due to Jacod,
+Li, and Zheng (2019). It was designed to estimate the long-run noise variance under endogeneity,
+heteroscedasticity, and a mixing condition allowing the autocovariances of the noise to decay at
+a polynomial rate (see Assumption (N) in Appendix A). The calculation involves a second pre-
+averaging parameter, hn . The intuition is that in order to construct the sample autocovariances
+of the noise, we need to purge the eﬃcient log-price component from (7). Hence, demeaning of
+p∗i∆n is done with a local average of the noisy log-price process (a proxy of pi∆n ). In the empirical
+application, we follow the implementation from Jacod, Li, and Zheng (2019), adopting a data-driven
+choice of lag length, ℓn .
+   It is worth pointing out that since the main tool for jump identiﬁcation is going to be based on
+RVn∗ − BVn∗ , the bias-correction in (11) cancels out in the construction of our jump test statistic.
+It therefore has no impact on the testing procedure but merely aﬀects those parts of the analysis,
+where a pre-averaged realized measure is employed on a stand-alone basis. Even there, however, its
+magnitude is negligible. In our sample, the bias-correction term is an order of magnitude smaller
+than the uncorrected pre-averaging statistic, which is consistent with Christensen, Hounyo, and
+Podolskij (2018). This suggests that our empirical ﬁndings are not in any way driven by the
+concrete choice of long-run noise variance estimator adopted for the bias-correction term.
+
+2.3.4   Asymptotic theory
+
+We next develop the theoretical foundation for the construction of our noise-robust jump test
+procedure.
+
+Theorem 1. Assume that r follows the process in (3) and that Assumptions (V) and (N) in Ap-
+pendix A hold. Then, as n → ∞,
+                                                                Z 1
+                                 p                          p
+                           RVn∗ −→ [r]1       and     BVn∗ −→         σs2 ds.                    (15)
+                                                                  0
+
+Moreover, provided that H0 is true, as n → ∞,
+                                         ∗
+                                             R1 2 !
+                                     RV n  −    σs ds  ds
+                               n1/4      ∗
+                                             R01 2    −→  N(0, Σ),                               (16)
+                                     BVn − 0 σs ds
+        d
+        s
+where “−→” denotes convergence in law stably (e.g. Jacod and Protter, 2012, Section 2.2.1) and Σ
+is the 2 × 2 random asymptotic covariance matrix deﬁned in (46) in Appendix A.
+
+   Theorem 1 establishes a weak law of large numbers for the pre-averaged realized variance and
+pre-averaged bipower variation in the noisy jump-diﬀusion model under Ha . It shows that RVn∗
+is consistent for the quadratic variation, including the jump part, while BVn∗ converges to the
+
+                                                 13
+integrated variance, excluding the jump part. Their diﬀerence therefore estimates the quadratic
+                               p  P
+jump variation, RVn∗ − BVn∗ −→ 0≤s≤1 (∆rsd )2 which is zero in the absence of jumps. The last
+part of Theorem 1 establishes a bivariate asymptotic mixed normal distribution of RVn∗ and BVn∗
+as estimators of integrated variance under H0 .
+    Applying the delta rule to (16), it follows from Theorem 1 that, under H0 :
+                                                        
+                                 inf.  n1/4 RVn∗ − BVn∗    d
+                              Jn =           √            −→ N(0, 1),                      (17)
+                                                 ⊤
+                                               v Σv
+                                             p
+where v = [1, −1]⊤ . In contrast, Jninf. −→ ∞ under the alternative, Ha , so large values of the test
+statistic point toward the presence of price jumps.
+
+2.3.5    A noise- and jump-robust covariance estimator
+
+The test statistic Jninf. is not feasible since it depends on the covariance matrix Σ, which is a function
+of the latent volatility and microstructure noise processes. We therefore next develop a noise- and
+jump-robust plug-in estimator of Σ.18 Speciﬁcally, we propose to set
+                             "                         #!     "                         # !⊤
+               1 XL
+                        n 1/4 BV             ˇ ∗ (2, 0)
+                               ˇ ∗ (2, 0) − BV            n1/4 BV             ˇ ∗ (2, 0)
+                                                                ˇ ∗ (2, 0) − BV
+                                 l             n                  l             n
+         Σ∗n =           √                                √                                  ,  (18)
+               L           L BV              ˇ ∗ (1, 1)
+                               ˇ ∗ (1, 1) − BV              L BV              ˇ ∗ (1, 1)
+                                                                ˇ ∗ (1, 1) − BV
+                   l=1              l             n                        l              n
+           ∗
+where BVˇ (q, r) is a truncated pre-averaged bipower variation of Christensen, Hounyo, and Podol-
+           n
+skij (2018). The details are in Appendix A.2.
+    Σ∗n is the sample covariance matrix of truncated subsampled pre-averaged bipower variation
+estimators, BVˇ ∗ (q, r), calculated on small batches of high-frequency data covering blocks of length
+                l
+pkn , for l = 1, . . . , L, where p ≥ 2 is an integer, and L is the number of subsamples. They are
+centered around the full sample statistic, BV  ˇ ∗ (q, r), and suitably normalized.
+                                                 n
+
+
+Theorem 2. Assume that r follows the process in (3), that Assumptions (V) and (N) in Appendix
+A hold, as do the conditions listed in Theorem 12 therein. Then, as n → ∞,
+                                                        p
+                                                  Σ∗n −→ Σ.                                                 (19)
+
+   Theorem 2 shows that Σ∗n is consistent both under the null and alternative. Our proof conﬁnes
+attention to jump processes of bounded variation, which is standard when inference is based on the
+continuous part of the process.
+   By Slutsky’ theorem, we obtain the feasible jump test statistic:
+                                                           
+                                         n1/4 RVn∗ − BVn∗
+                                   Jn =       p              .                                              (20)
+                                                 v ⊤ Σ∗n v
+The ﬁnite sample properties of Jn under the alternative can be further improved if we also replace
+  18
+     In principle, we only need to estimate Σ given that H0 is true. However, by using a jump-robust estimator of
+the asymptotic covariance matrix we avoid losing power under Ha .
+
+
+
+                                                       14
+BVn∗ in the numerator of (20) with a truncated version:19
+                                                                      
+                                                  n1/4 RVn∗ − BV  ˇ ∗
+                                                                    n
+                                             Jn =      p                ,                                           (21)
+                                                        v ⊤ Σ∗n v
+            ∗         ∗
+       ˇ ≡ BV
+where BV    ˇ (1, 1).
+         n    n
+   The ﬁnal form of Jn in (21) serves as our noise-robust jump test statistic.20 A one-sided test
+procedure is appropriate here, so the decision rule is to reject H0 at signiﬁcance level α if Jn >
+Φ−1 (1 − α), where Φ(x) is the standard normal distribution function. This implies that:
+                                                      (
+                                                      α, under H0 ,
+                             P Jn > Φ−1 (1 − α) →                                              (22)
+                                                        1, under Ha ,
+so our test is asymptotically unbiased and consistent.
+
+2.4     Monte Carlo study
+In Appendix B, we conduct a thorough Monte Carlo investigation of the ﬁnite-sample properties of
+our jump test. We simulate from a general jump-diﬀusion process which gets aﬀected by diﬀerent
+forms of microstructure noise with an extreme magnitude matching what we observe empirically
+in the after-hours trading session. Moreover, we investigate the robustness of our test to various
+degrees of pre-averaging, subsampling, and jump-truncation.
+   We compare our approach to the noise-robust test of Aı̈t-Sahalia, Jacod, and Li (2012) and
+the noise-free version from Barndorﬀ-Nielsen and Shephard (2006). The former is also based on
+pre-averaging to compress the noise but the building block in the test statistic is the ratio of power
+variation estimators sampled at diﬀerent frequencies, in contrast to the diﬀerence of multipower
+variation estimators sampled at identical frequencies as advocated here.21
+   19
+      On the one hand, “big” jumps induce an upward bias in BVn∗ for realistic sample sizes, causing a downward
+bias in the estimated jump variation and reducing the power of the jump test. However, such biases can readily be
+handled through truncation. On the other hand, the bipower mechanism—multiplication of adjacent log-returns—is
+an eﬀective tool to get rid of “small” jumps that survive any truncation. This approach of cracking down twice on
+the jump component was proposed by Corsi, Pirino, and Renò (2010) for bipower variation in the noise-free setting.
+In Appendix A, we show that the substitution of BVn∗ with BV      ˇ ∗ in the numerator does not alter the asymptotic
+                                                                    n
+theory in Theorem 1.
+   20
+      Barndorﬀ-Nielsen and Shephard (2006) advocate a log- and ratio-based transformation of the noise-free version
+of (21) via the delta method. We implemented both these alternative versions of the noise-robust jump test statistic,
+which does not impact any of our conclusions.
+   21
+      In Appendix D, we inspect the jump test of Lee and Mykland (2008, 2012). Whereas our test (and Aı̈t-Sahalia,
+Jacod, and Li, 2012) targets the cumulative return variation over a discrete time interval, i.e., quadratic variation
+and integrated variance, the latter is a point-in time test based on spot volatility. In principle, a local jump test over
+a short post-announcement window is more appropriate for analyzing price responses to earnings announcements
+because we know the announcement time (up to minimal rounding). However, the regime-switching nature of
+post-market high-frequency data—–in particular, the complete lack of liquidity on non-announcement days—renders
+their test unsuited for the empirical analysis conducted in this paper. Our reliance on integrated measures of return
+variation over the regular and extended trading session leads to a direct measure of incremental volatility in the
+after-hours market (typically large on announcement days and close to zero on non-announcement days), which can
+be further dissected into a continuous variation and jump component. In the appendix, we adapt the noise-free Lee
+and Mykland (2008) testing approach by designing a close-to-open return-based jump test that can be applied to the
+
+
+                                                           15
+    The key ﬁndings can be summarized as follows.
+
+    1. Our test has correct size and does not systematically over- or under-reject H0 . The sole
+      exception occurs when the noise is fat-tailed and the pre-averaging window is too short to
+      adequately accommodate this which leads to a modest overrejection. Under Ha , our test has
+      good power properties and correctly identiﬁes the jump component.
+
+    2. The Aı̈t-Sahalia, Jacod, and Li (2012) test is slightly more sensitive to the structure of mi-
+       crostructure noise. In particular, their test is very conservative under H0 , leading to loss
+      of power under Ha , with conditionally autocorrelated noise. We emphasize that this setting
+      was not allowed in their theoretical framework. We do expect that their test statistic can be
+      modiﬁed to exhibit good properties also in that setting, though this version remains to be
+      developed. Otherwise, the conclusion of their test is often close to ours.
+
+    3. In sharp contrast, the Barndorﬀ-Nielsen and Shephard (2006) test based on 5-minute realized
+       variance and bipower variation degrades in the presence of the high level of microstructure
+       noise typical for after-hours trading. In particular, it identiﬁes too many spurious jumps,
+      falsely rejecting the null when no jumps are present. Conversely, this test frequently fails to
+      identify true jumps, falsely accepting the null when jumps are genuinely present.
+
+   In summary, our simulations demonstrate both the need for and beneﬁts from utilizing our
+noise-robust jump test on the high-frequency after-hours transaction price data examined in our
+empirical application, which we next proceed to.
+
+
+3     Data description
+Earnings announcements should trigger jumps in stock prices if investors eﬃciently and instan-
+taneously process the new earnings information. In this section, we introduce the data sources
+employed to study if this prediction is supported empirically.
+
+3.1     Transaction and quotation data
+Jump tests beneﬁt crucially from having data at the highest possible resolution, so our analysis
+employs tick-by-tick transaction and quotation data on individual ﬁrms’ stock prices to track their
+response to corporate earnings announcements.
+   U.S. stock exchanges are only open for trading on normal business days from 9:30am–4:00pm
+Eastern time.22 On most days, oﬃcial pre-market trading is available from 4:00am–9:30am, while
+overnight period even when high-frequency data for the extended trading session is not available. We implemented
+this version of their test on a much larger cross-section of generally less liquid stocks. The conclusion from this
+exercise supports the corresponding evidence below.
+   22
+      The major national stock exchanges close at 1:00pm the day before big public holidays, such as July 4th,
+Thanksgiving, and Christmas.
+
+
+                                                        16
+the after-hours market runs from 4:00pm–8:00pm.23 Orders can additionally be submitted and
+trades executed at any time via private trading systems such as electronic communication networks
+(ECNs) or dark pools. The consolidated tape collates such real-time tick-by-tick data, which is
+made available for purchase via the New York Stock Exchange (NYSE) Trade and Quote (TAQ)
+database. In practice, there is usually limited trading activity before 6:00am or after 6:30pm, so we
+exclude this part of the day.
+   As noted earlier, the vast majority of U.S. companies publish their ﬁnancial results outside the
+regular trading session. They may prefer to announce at these times because these markets are
+mostly comprised of professional investors and informed traders, speeding up the price discovery
+process (see Jiang, Likitapiwat, and McInish, 2012). In Appendix C, we examine the trading
+activity in the pre-market (6:00am–9:30am) and after-hours market (4:00pm–6:30pm). We ﬁnd
+that trading volume is much lower in the pre-market, even on announcement days. This impairs
+the implementation of our jump test so our analysis focuses on the after-hours market. Following
+Dubinsky, Johannes, Kaeck, and Seeger (2019), we look at the 50 ﬁrms with the largest after-
+hours trading volume on announcement days.24 This is appropriate not only because individual
+transaction counts are prohibitively large, but also because liquidity evaporates fast as we descend
+to stocks with lower after-hours market liquidity. The selected stocks account for a sizeable fraction
+of trading activity in the after-hours market among all ﬁrms in the S&P 500 index during our
+sample (46.89% of the total transaction count vs. 21.31% in the regular trading session).
+   We download high-frequency data from the NYSE TAQ database for the stocks over the sample
+period 06/02/2008 through 12/31/2020, a total of T = 3,169 business days. The data is cleaned us-
+ing state-of-the-art procedures (e.g. Barndorﬀ-Nielsen, Hansen, Lunde, and Shephard, 2009; Chris-
+tensen, Oomen, and Podolskij, 2014). The main distinction here is that we retain observations
+with a timestamp outside the oﬃcial exchange trading hours if they otherwise fulﬁll the conditions
+required to be tagged non-erroneous.25 In total, we preserve almost ninety billion (89,640,467,708)
+quotations and nearly eight billion (7,985,202,326) transactions.
+    We employ tick time sampling, whereby the transaction price process is sampled with every
+price change, as advocated by Griﬃn and Oomen (2008). Apart from rendering the log-return
+  23
+      The trading schedule of NASDAQ- and NYSE-listed securities can be gauged at https://www.nasdaq.com/
+stock-market-trading-hours-for-nasdaq and https://www.nyse.com/markets/nyse-arca/market-info.
+   24
+      To identify these ﬁrms, we sort the constituents of the S&P 500 index as of 12/31/2020 by their post-close
+(4:00pm–6:30pm) transaction volume on quarterly earnings announcement days, averaged over the ﬁve-year period
+from 01/01/2015–31/12/2019. We further require that the ﬁrms report at least 75% of their earnings announcements
+after the close of the regular trading session during our full sample period 06/02/2008–12/31/2020. We exclude
+Xilinx (XLNX, ranked 43th) from the original list since the analyst information is missing in the I/B/E/S database
+and replace it by CSX corporation (CSX).
+   25
+      A complete list of sale conditions that can be associated with a transaction is available in the documentation of
+the Daily TAQ Client Speciﬁcation manual available for download at: http://www.nyxdata.com/Data-Products/
+Daily-TAQ. In particular, the label “T” identiﬁes pre-market and after-hours trades. These are virtually always
+ignored in the high-frequency volatility literature, since the ﬁrst rule of the widely used Barndorﬀ-Nielsen, Hansen,
+Lunde, and Shephard (2009) ﬁltering algorithm instructs researchers to “P1. Delete entries with a time stamp outside
+the 9:30am–4:00pm window when the exchange is open.”
+
+
+
+                                                          17
+series potentially more homogeneous, this approach has the convenient eﬀect of removing trans-
+actions that merely repeat the previous price. Thus, we purge zero returns that are known to be
+detrimental for jump identiﬁcation (e.g., Bandi, Kolokolov, Pirino, and Renò, 2023; Kolokolov and
+Renò, 2024). Hence, our tick data are inevitably irregularly spaced, but the pre-averaging theory
+readily conforms with such an extension.26 Finally, we aggregate any remaining observations with
+identical timestamps and replace them with an average price, a procedure that is known to further
+alleviate microstructure noise.
+   Table 1 reports descriptive statistics about the after-hours trading volume of stocks 1–25, while
+Table E.1 in Appendix E contains the information of stocks 26–50.27 We show the sample aver-
+age, standard deviation, and the 25th, 50th, 75th and 99th percentiles of the transaction count
+distribution for days without earnings announcements (columns 2–8) and days with earnings an-
+nouncements (columns 9–15). For many ﬁrms, the after-hours transaction count is two orders of
+magnitude larger on days with earnings announcements relative to days without them. For ex-
+ample, Facebook (FB) averaged 76,129 after-hours transactions on earnings announcement days,
+compared with only 891 transactions on days with no such announcements. It is clearly uncommon
+for individual ﬁrms to exhibit high transaction counts in the after-hours trading session on days
+without earnings announcements.
+   Transaction volume in the after-hours market has grown substantially between 2008 and 2020
+with more than a ninefold increase for the stocks we analyze in our paper. The fraction of after-
+hours trading has grown even more, quadrupling from 0.17% to 0.71%, as a proportion of the total
+transaction volume (including trades from the regular trading session). On days with earnings
+announcements this fraction is substantially higher at the ﬁrm-level, frequently exceeding 10%.
+Appendix F summarizes trading volume and spreads in the after-hours market over time.
+
+3.2     Announcement timing
+While most companies announce their ﬁnancial results at a ﬁxed time, for others the timing can
+vary quarter-by-quarter. Even slight inaccuracies in the recording of the announcement time can
+impede our calculation of the post-announcement price reaction, so accurate timing is imperative
+and we spend considerable eﬀort on double checking the time stamps.
+   We begin by gathering announcement times from a data set provided by Wall Street Horizon
+(https://www.wallstreethorizon.com/) that oﬀers a comprehensive suite of corporate events
+data, including detailed information on the timing of earnings announcements. Wall Street Hori-
+  26
+      Whether the sampling scheme is equidistant or irregular, the eﬀective sampling is random, as pointed out by
+Bandi, Kolokolov, Pirino, and Renò (2023). Pre-averaging complies with sampling random observation times that
+can be endogenous (i.e. dependent on the price process and microstructure noise), see Jacod, Li, and Zheng (2019);
+Mykland and Zhang (2016). In practice, transaction times are likely endogenous (e.g. Kolokolov, Livieri, and Pirino,
+2022). This is almost unavoidable when studying price movements after an earnings announcement. The impact of
+endogenous sampling times on realized variance has been studied by Li, Mykland, Renault, Zhang, and Zheng (2014)
+in the noise-free setting.
+   27
+      The corresponding table for the pre-market trading activity can be found in Appendix C.
+
+
+                                                        18
+zon stores the timestamp included with the press release issued by the company when it publicly
+announces its quarterly results.28
+   As a double-check, we hand collect a separate set of announcement times from the Factiva news
+archive by searching on the announcement day for press releases marked with the company ticker
+code and a designated “Earnings” subject.29
+    Comparing the merged set of announcement times with the audit trail of the complete tick-by-
+tick transaction price history suggests that occasionally both Wall Street Horizon and Factiva get
+it wrong. To correct seemingly erroneous timestamps, we design a conservative screening algorithm
+that infers the announcement time based on the price volatility. In particular, we calculate the
+log-return for each minute from 4:00pm–6:30pm. If the largest absolute one-minute log-return
+exceeds 2.5% and precedes the announcement time from both Wall Street Horizon and Factiva, we
+assume the earnings were released at the earlier time. The ﬁlter aﬀects only a very limited number
+of announcements (77 in total, or 3.5%). The median change is one minute, suggesting that the
+algorithm primarily captures small rounding eﬀects for some of the most important earnings reports
+that lead to substantial revisions of the security price.30
+   The third-to-last column in Table 1 shows the modal announcement time for each ﬁrm, which
+ranges from as early as 4:00pm for reports released immediately after the close of the regular
+exchange-trading session to as late as 4:30pm, with many ﬁrms announcing around 4:05pm.
+
+3.3     Earnings surprises
+Earnings announcements contain a wealth of information but the most important part is arguably
+the headline earnings ﬁgure. To compute the surprise element in earnings announcements, we em-
+ploy the Institutional Brokers Estimate System (I/B/E/S) database available via subscription to
+Reﬁnitiv (https://www.refinitiv.com/), formerly a part of Thomson Reuters. I/B/E/S aggre-
+gates earnings information for over 22,000 companies. In addition to storing the actual reported
+earnings per share (EPS), adjusted for non-recurring items and stock option expenses, prior to each
+announcement I/B/E/S surveys earnings forecasts from leading professional analysts covering in-
+  28
+      A publicly traded company with classes of securities registered in Section 12 or subject to Section 15(d) of the
+Securities Exchange Act of 1934 is legally required to ﬁle regular reports with the SEC, including an annual form
+10-K and quarterly form 10-Q’s, in addition to proxy reports and other reporting requirements. Most companies ﬁle
+form 10-Q either 40 or 45 days after the end of the ﬁscal quarter, but many large corporations choose to summarize
+their ﬁnancial statements at an earlier date by issuing a press release and ﬁling a form 8-K.
+   29
+      A limitation of both data sets is that announcement times are rounded to the nearest minute. However, most
+of the earnings reports in our sample are released to the public through professional dissemination services, such
+as Business Wire or PR Newswire, which are under strict requirements to ensure immediate and equal access to
+company information as noted by the SEC’s Regulation Fair Disclosure. The audit-trail information left from the
+high-frequency data after each announcement suggests that these vendors often publish announcements close to a
+whole minute such that the rounding eﬀect is typically negligible.
+   30
+      Importantly, our noise-robust jump test statistic does not depend on the announcement time and so is unaltered
+by the screening algorithm. Moreover, employing only Wall Street Horizon and Factive information does not cause
+any discernible change in the post-announcement return regression (Section 6.1). Only the returns from our trading
+strategy (Section 6.2) deteriorate slightly, but remain signiﬁcant with the removal of the inferred announcement time.
+
+
+                                                         19
+dividual companies. We compile this information into a consensus estimate (µEPS ) and a standard
+deviation of that estimate calculated over the distribution of analyst expectations (σEPS ). Following
+Berkman and Truong (2009), Michaely, Rubin, and Vedrashko (2013), among others, our measure
+of the standardized unexpected earnings is given by31
+                                                   Actual EPS − µEPS
+                                         zEPS =                      .                                          (23)
+                                                          σEPS
+   We purge announcements with no analyst forecasts and those where σEPS is less than 0.001
+(one tenth of a cent) which result in an unstable zEPS measure. This removes ﬁve announcements
+from Ulta Beauty (ULTA) that was still a relatively overlooked small-cap stock with limited broker
+coverage at the beginning of our sample. A single announcement from Broadcom (AVGO) is also
+eliminated. We further exclude announcements where share trading was temporarily suspended
+by the exchange as it leads to a disconnected trade sequence.32 Finally, following Grégoire and
+Martineau (2022) we discard announcements where zEPS exceeds ten in absolute value. Such out-
+liers are often caused by extraordinary items in the proﬁt statement.33 The last step removes 40
+observations (about 1.7% of the sample).34
+   The number of quarterly earnings announcements retained for each company is shown in the
+fourth-to-last column in Table 1. We report summary statistics of zEPS in the second-to-last column.
+Standardized unexpected earnings are substantially higher than zero on average, consistent with
+the notion that managers engage in earnings smoothing to avoid negative surprises.
+  31
+      Some studies employ the median analyst estimate instead of the sample average (Dellavigna and Pollet, 2009;
+Grégoire and Martineau, 2022; Hartzmark and Shue, 2018). Others replace the standard deviation with the lagged
+closing price of the stock, e.g. from a week before the announcement or at the end of the previous quarter (Grégoire
+and Martineau, 2022; Lyle, Stephan, and Yohn, 2021). Our main ﬁndings are not altered by adopting these alternative
+ways of deﬁning the standardized unexpected earnings.
+   32
+      Trading halts are registered in the daily TAQ master ﬁles that contain static information for securities traded
+by participants of the Consolidated Tape Association (CTA), mainly stocks with NYSE as primary exchange, and
+Unlisted Trading Privileges (UTP), or NASDAQ-listed issues. The ﬁle has a letter code in the “Halt Delay Reason” if
+trading was paused (blank otherwise). Resumption of trading is ﬂagged in the transaction data with a sale condition
+“5” deﬁned as “Market Center Re-Opening Trade” (CTA) or “Re-opening Prints” (UTP).
+   33
+      For example, on 08/25/2020 Salesforce (CRM) posted a quarterly EPS of $1.44 after adjusting for non-recurrent
+items. With a consensus estimate of $0.66 and a standard deviation of about four cents, this yields a twenty-sigma
+event. The surprise was motivated by mark-to-market accounting for the company’s investments in nCino, which
+saw a $617 million unrealized gain in the quarter.
+   34
+      The I/B/E/S database incorrectly puts the EPS of Akamai Technologies (AKAM) as 0.31, 0.29, 0.28, and
+0.34 for the Q1–Q4 earnings announcement of the ﬁscal year 2009. This induces a -9.64, -2.12, -8.86, and -7.80
+unexpected standardized earnings surprise, despite the company meeting or beating expecations at all occasions.
+This is possibly caused by AKAM employing non-GAAP ﬁnancial metrics in their accounting system, in particular a
+so-called normalized net income, which eliminates the eﬀects of events that are either not part of the company’s core
+operations or are non-cash. We replaced the wrong EPS numbers with the correct ones, i.e. 0.43, 0.40, 0.38, and
+0.46, which were extracted directly from the PDF ﬁles containing the ﬁnancial statements, available at the company’s
+investor relations website (www.ir.akamai.com).
+
+
+
+
+                                                         20
+4         Empirical results
+We next proceed with our empirical investigation. Price dynamics and trading activity in the after-
+hours market is not as thoroughly studied and understood as that in the regular trading session
+and it has evolved signiﬁcantly since the seminal analysis of Barclay and Hendershott (2003).
+We therefore begin by brieﬂy summarizing some of the key features of the after-hours market,
+emphasizing the contrast between days with and without earnings announcements. We start by
+analyzing the pattern in trading volumes and bid-ask spreads in a short interval around earnings
+announcements before turning to the evidence on the presence of price jumps.
+
+4.1         Trading volume and bid-ask spread
+To get a broad picture of post-announcement trades, for each ﬁve-second interval in a one-hour win-
+dow centered around the announcement time, we calculate transaction counts and bid-ask spreads
+(in basis points) relative to the midquote = (bid + ask)/2 as
+                                                                 ask − bid
+                                           Spread = 10000 ×                ,                                   (24)
+                                                                 midquote
+    As a control sample, for each announcement we select a non-announcement date at random and
+calculate transaction counts and Spread on a corresponding window.
+   Panel A in Figure 3 reports the transaction count per ﬁve-second interval on days with and
+without earnings announcements. The modal announcement time across companies is 4:05pm so
+the market typically closes ﬁve minutes prior to the announcement (labeled time 0), as highlighted
+in the ﬁgure. The transaction volume right before the regular market close is notably higher on
+days with announcements than on days without announcements, but both drop sharply at the close.
+From this point onward, the graphs evolve very diﬀerently. Whereas the after-hours transaction
+count remains close to zero on non-announcement days, it spikes to more than ﬁve contracts shortly
+after the announcement time on days with earnings announcements before gradually tailoring oﬀ
+over the next 30 minutes.
+   In Panel B of Figure 3, we compare bid-ask spreads in the after-hours market on days with and
+without earnings announcements. Again, we see distinct diﬀerences. On non-announcement days,
+the median quoted spread starts at 5 bps at the end of the regular trading session before rising to
+30–35 bps within the ﬁrst ﬁve minutes of the post-trading session. It then gradually inclines for the
+duration of the after-hours session as we approach the overnight period. On announcement days,
+the median quoted spread goes from 5 bps at close (4:00pm) before quickly rising to 60 bps at the
+time of the announcement, then drops to 30 bps within 10–20 minutes of the announcement.
+   For comparison, the average quoted spread during post-close trading is 58.1 bps, while the
+average spread in regular trading equals 8.4 bps, implying that the bid-ask spread on average is
+about seven times greater in the after-hours session compared with the regular trading session.35
+    35
+         See Appendix F, which reports summary statistics on the after-hours trading volume and bid-ask spreads.
+
+
+                                                          21
+4.2    Jump proportion
+The theoretical analysis in Section 2 highlights that jumps in prices increase the realized variance
+without aﬀecting the bipower variation. This insight suggests an intuitive way to check whether
+earnings announcements cause jumps.
+   First, since earnings announcements almost exclusively fall outside the hours of the exchange-
+traded session, in Panel A of Figure 4 we plot the pre-averaged realized variance computed for the
+regular trading session (9:30am–4:00pm) against its corresponding value computed for the extended
+trading session (9:30am–6:30pm), both converted to annualized standard deviations. Their diﬀer-
+ence measures the incremental volatility observed in the after-hours market (4:00pm–6:30pm). On
+non-announcement days (indicated by a red dot) the extra volatility during after-hours trading is
+typically minuscule and has a negligible impact on the cumulative pre-averaged realized variance
+measure. Except for a few outliers, the vast majority of these observations form a cloud close to the
+45-degree line. Conversely, on days with a quarterly earnings announcement (indicated by a blue
+cross), diﬀerences are much greater with the extended trading session pre-averaged realized variance
+substantially exceeding its corresponding value from the regular trading session. Earnings releases
+clearly trigger substantial price volatility in the after-hours market, which is otherwise dormant.
+    Second, and more directly related to our jump test, in Panel B of Figure 4 we plot the pre-
+averaged bipower variation against the pre-averaged realized variance, both based on high-frequency
+data from the extended trading session (9:30am–6:30pm). Realized variance less bipower variation
+isolates the contribution of jumps to return variation, which is zero (up to sampling error) if the
+price path is continuous but is strictly positive if there are price jumps. Hence, the farther to the
+right of the 45-degree line a data point is, the more it indicates the presence of jumps. Consistent
+with this interpretation, the pre-averaged realized variance and bipower variation are more or less
+perfectly aligned on non-announcement days. Conversely, on days with earnings announcements
+we observe large diﬀerences indicating jumps in price movements at these times. Table 2 provides
+further stock-level details on realized variance and bipower variation for the regular and extended
+trading session broken into days with and without earnings announcements. Appendix G provides
+an even more detailed analysis for Apple which is perhaps the most prominent stock in our sample.
+   Third, an alternative approach to gauge the relative importance of jumps is to examine the
+jump proportion which estimates the fraction of the return variation originating from the jump
+component. Following Christensen, Oomen, and Podolskij (2014), this is deﬁned as36
+                                                      Bipower variation
+                              Jump proportion = 1 −                     .                      (25)
+                                                      Realized variance
+Figure 5 plots kernel density estimates of the distribution of the jump proportion. As indicated by
+the peak near zero for the graphs based on our noise-robust pre-averaging estimators, on most days
+without announcements (Panel A) the jump component accounts for none of the variation in the
+   36
+      The jump proportion is computed without pre-averaging if sampling at a 5-minute frequency or with pre-
+averaging if sampling at the tick-by-tick frequency.
+
+
+                                                    22
+stock price. Note that small negative numbers can be observed due to estimation error. Conversely,
+on days with earnings announcements (Panel B) more than ﬁfty percent of the total variation in
+price movements stems from the jump component.37
+    In contrast, the jump proportion extracted with ﬁve-minute sampling peaks near 10%, regardless
+of whether there is an announcement or not. Although the jump proportion for the ﬁve-minute
+measure is slightly more right-skewed on days with announcements, in general it overestimates
+the importance of jumps on days with no announcements and underestimates it on days with
+announcements. These ﬁndings are consistent with the biases in the conventional jump measure
+documented in our Monte Carlo simulation results.
+
+4.3     Jump frequency
+Figures 4–5 shows that the jump component is important in after-hours trading sessions on days
+with earnings announcements but largely absent on days without announcements. To examine this
+point more closely and formally test Hypothesis 1.1, we compute the jump indicator:
+                                            (
+                                             1, Jn,it > q,
+                                      Jit =                                                                 (26)
+                                             0, otherwise.
+where Jn,it is the noise-robust jump test statistic in (21) for company i on day t. We set the critical
+value q in a way that reduces the likelihood of identifying false jumps by applying a Bonferroni
+correction to account for multiple testing and keep the family-wise error rate at 1%.38
+   Table 2 reports the jump frequency for stock 1–25 in our sample, while Table E.2 in Appendix
+E contains the information for stock 26–50. Panel A is for the regular trading session, while Panel
+B is for the extended trading session. The sample is further split into days with and without an
+earnings announcement. For the regular trading session, we estimate a jump frequency of 2.95%.
+While jumps do occur at a higher frequency than expected by random chance, they are relatively
+rare during the regular trading session. This result is consistent with Christensen, Oomen, and
+Podolskij (2014). For after-hours trading sessions without earnings announcements, we obtain
+a slightly higher jump frequency of 3.67%. Finally, for after-hours trading sessions with earnings
+announcements, our jump frequency estimate is 91.06% which is far higher than the previous values.
+Moreover, though very high on average, the jump frequency is even higher after 2016 (95.84%) versus
+before (87.49%).
+   In essence, while it is rare to identify a jump during regular trading sessions or in extended
+trading sessions with no announcements, it is rare not to ﬁnd a jump in extended sessions with
+earnings announcements. This ﬁnding provides strong empirical support for Hypothesis 1.1.
+   The corresponding jump frequency rates for the ﬁve-minute jump test statistic of Barndorﬀ-
+  37
+      The slight attenuation observed with θ = 1 is consistent with our Monte Carlo evidence in Appendix B, where
+we note that excessive pre-averaging tends to deﬂate the power of our microstructure noise-robust jump test.
+   38
+      Bajgrowicz, Scaillet, and Treccani (2016) report that up to 90% of jumps identiﬁed with the ﬁve-minute jump
+test are spurious due to multiple hypothesis testing.
+
+
+                                                       23
+Nielsen and Shephard (2006) are 5.46% in regular trading sessions, 14.38% in extended trading
+sessions without earnings announcements, and 40.40% in extended trading sessions with earnings
+announcements. Recall that our simulations in Appendix B show that the ﬁve-minute jump test
+overrejects in the presence of little or no microstructure noise (as in the regular trading sessions)
+but lacks power (underrejects) in the presence of high levels of noise contamination (as in the
+after-hours market). Hence, our estimates illustrate that the conventional jump test identiﬁes too
+many jumps (false positives) during regular trading sessions and extended trading sessions without
+earnings announcements but too few jumps (false negatives) during extended trading with earnings
+announcements.
+    Table 2 suggests that failure to ﬁnd jumps after earnings announcements is associated with the
+trading activity in the after-hours market. As this has increased over time, the lower average jump
+frequency prior to 2016 is therefore largely a result of fewer trades and weaker power in detecting
+jumps. If trading is too sparse, there are often relatively few post-announcement observations to
+base the analysis on, rendering it problematic for our noise-robust test statistic to work as intended.
+The other main reason why we sometimes fail to detect a post-announcement price jump is that
+although our jump test has excellent power, it is not bullet proof. This is particularly relevant for
+announcements that are succeeded by severe whipsawing in the price. Intuitively, a jump is less
+likely to be detected when it is surrounded by extremely high diﬀusive volatility which reduces the
+relative contribution of the jump to return variation.
+
+4.4     Determinants of the jump probability
+To more extensively test Hypothesis 1, we next develop a regression framework to examine the
+determinants of price jumps. We begin by inspecting the role of earnings surprises since this is the
+measure most directly related to earnings announcements.
+   To capture the relation between the jump probability versus the sign and magnitude of earnings
+surprises, we sort announcements by the value of the earnings surprise, form decile portfolios, and
+plot the corresponding average jump frequencies implied by our noise-robust jump test in Panel
+A of Figure 7. The jump probability mostly exceeds 90% across deciles, and does not depend
+systematically on the size of the earnings surprise.
+   Our ﬁnding that prices jump even when investors are not surprised by the reported earnings per
+share is consistent with Hypothesis 1.2 and can be explained as follows. First, information other than
+the headline earnings ﬁgure is typically released (e.g., forward guidance on future earnings) and this
+may trigger a jump.39 While this helps explain why prices can jump even on days where markets do
+not get surprised by the earnings ﬁgure, we would still expect a lower average jump probability on
+such days. This points to the second explanation, namely that prices jump because of the resolution
+   39
+      For example, on 10/24/2011 Netﬂix (NFLX) reported third-quarter EPS of $1.16 which beat the consensus
+expectation of $0.94, corresponding to a modest 1.6 standard deviation surprise. However, the company also signiﬁ-
+cantly lowered its forward guidance, and the stock crashed more than 20% in after-hours trading.
+
+
+
+                                                       24
+of uncertainty associated with the earnings announcement (Ai and Bansal, 2018). An implication
+of this story is that prices are more likely to move up (due to the lower post-announcement risk
+premium) than down following an earnings announcement that is close to investor expectations.
+We explore this prediction in Section 6.1.
+   To establish a more formal connection between price jumps and earnings announcements and
+examine whether other factors aﬀect jump probabilities, we next estimate logit regressions. Our
+analysis includes up to ﬁve regressors. To estimate the eﬀect of an earnings announcement on the
+jump probability and test Hypothesis 1.1, we consider an announcement dummy variable:
+                                     (
+                                       1, on announcement days,
+                             EAit =                                                                              (27)
+                                       0, otherwise.
+Since zEPS proxies for the magnitude of the news component in the announcement, we expect this
+to matter for the jump probability, even though the evidence from Panel A of Figure 7 is a bit weak.
+As our second and third covariates, we therefore include the absolute value of the earnings surprise,
+                                                                             +
+measured separately for positive and negative surprises, i.e., we deﬁne zEPS,it    = zEPS,it EA+it and
+zEPS,it = zEPS,it EAit , where EAit = 1(zEPS,it > 0) and EAit = 1(zEPS,it < 0) are indicator variables
+ −                  −            +                         −
+
+that capture the direction of the earnings surprise.
+    Fourth, to see whether high volatility in prices prior to the announcement makes it more or
+                                                                          p
+less likely to ﬁnd jumps, we include the pre-averaged realized volatility, RVn∗ , computed over the
+regular trading session from 9:30am–4:00pm on the day of the announcement. We expect to ﬁnd a
+negative eﬀect since high volatility makes it harder for our noise-robust jump test to detect jumps.
+   Fifth, as a measure of the resources available to facilitate the price discovery process, we include
+the number of analysts covering the stock, NA .40 We would expect to ﬁnd a positive coeﬃcient
+since the price discovery process, and thus the speed of price adjustments, should be more eﬃcient
+for stocks with the greatest analyst coverage.
+    In summary, we estimate the logit model using observations for stock i on day t:
+                                                                            q
+                                               +               −               ∗
+           P (Jit = 1) = F (a + b1 EAit + b2 |zEPS,it | + b3 |zEPS,it | + b4 RVn,it + b5 NA,it ),                (28)
+
+where F is the logistic distribution function.41
+    Table 3 reports estimation results for the logit regression applied to the extended trading ses-
+sion.42 The estimated intercept in column (2) with only the announcement dummy yields a jump
+probability on days without announcements (EA = 0) of 3.67% compared to 91.06% for announce-
+  40
+      We also considered the dispersion in EPS forecasts across analysts, σEPS , to get a measure of subjective un-
+certainty surrounding a particular earnings announcement. However, this measure fails to be signiﬁcant in our logit
+regression.
+   41
+      The coeﬃcients in (28) are estimated on the entire sample of days with and without earnings announcements.
+Hence, the extra explanatory variables in the model should implicitly be understood as being interacted with the
+EA variable and assume a value of zero on non-announcement days. With this design, all covariates measure the
+marginal eﬀect (or the logarithm of the odds ratio) on the jump probability conditional on an announcement.
+   42
+      The results of our logistic jump probability regressions and the linear return regression in the next subsection
+are robust to the inclusion of stock ﬁxed eﬀects.
+
+
+                                                         25
+ment days (EA = 1), which agrees with the results in Section 4.3. Further, and consistent with
+Hypothesis 1.1 and Figure 7, the earnings announcement dummy is highly statistically signiﬁcant
+and positive, showing that the likelihood of a jump increases by a huge amount and is near unity
+in the wake of an earnings announcement.
+                                                                             +
+    As reported in column (3), the estimated coeﬃcients on both positive (|zEPS |) and negative
+   −
+(|zEPS |) earnings surprises are positive. While the former is small and insigniﬁcant, the much larger
+coeﬃcient estimate for negative surprises is signiﬁcant, suggesting that disappointing earnings news
+is particularly likely to trigger a jump.
+                  p
+    The eﬀect of RVn∗ is signiﬁcantly negative so higher pre-announcement return volatility reduces
+the jump probability. For example, setting the pre-averaged realized volatility at its 10th and 90th
+percentiles while keeping the number of analysts ﬁxed at its average value our coeﬃcient estimates
+imply a conditional jump probability of 98.17% and 97.51% (93.43% and 89.87%) for an average
+negative (positive) announcement. A plausible explanation is that it is harder to detect a post-
+announcement price jump amid high levels of volatility which weakens the testing power. Moreover,
+a high level of volatility can act as a substitute for price jumps, since it widens the dispersion of
+the return distribution and enables the price to move rapidly, albeit continuously, in response to
+earnings announcements.
+   The eﬀect of the number of analysts covering a stock, NA , is signiﬁcantly positive, so jumps
+are more likely on earnings announcement days for those stocks covered by the largest number of
+analysts. For example, the coeﬃcient estimates imply a conditional jump probability of 93.96% and
+99.37% (77.90% and 98.01%) for an average negative (positive) announcement when the number of
+analysts is at its 10th and 90th percentiles while keeping pre-averaged realized volatility ﬁxed at
+its average value. Broader analyst coverage may speed up the price discovery process and increase
+the chance of observing jumps.
+
+
+5        Jump spillover eﬀects
+Earnings announcements reveal important information about the cash ﬂow prospects of the an-
+nouncing ﬁrm, but it may also aﬀect other ﬁrms or even the broader economy. Patton and Verardo
+(2012) and Savor and Wilson (2016) develop theoretical models in which investors use earnings of
+announcing ﬁrms (AFs) to revise their expectations of earnings for non-announcing ﬁrms (NAFs),
+generating a covariance between ﬁrm-speciﬁc and market-wide cash ﬂow news. As suggested in
+Hypothesis 2, it is natural to expect that such learning eﬀects can induce spillovers in the form of
+an earnings announcement from the AF triggering co-jumps in the prices of NAFs and the market
+portfolio.43 In this section, we examine if these predictions hold true and test Hypothesis 2.
+    43
+     Existing empirical work on co-jumps include Bollerslev, Law, and Tauchen (2008), Caporin, Kolokolov, and
+Renò (2017), and Li, Todorov, and Tauchen (2017). However, these studies mainly examine jump dependence
+between individual equity prices and the stock index around macroeconomic announcements, where systematic news
+are expected to arrive.
+
+
+                                                     26
+5.1     Jump spillover frequency
+We begin by matching announcement days for the AFs with non-announcement days in the NAFs.
+Any evidence of co-jump spillover eﬀects should show up as a higher conditional jump probability
+for the NAFs, given an earnings release from the AF, compared to the jump probability when no
+ﬁrms announce.
+   Table 4 reports the proportion of extended trading sessions with a jump in the NAF (listed in
+columns) when the individual AFs (in rows) report their ﬁnancial results. To preserve space, we
+narrow down our examination to the 25 most liquid stocks. This suﬃces to highlight the importance
+of industry proximity and diﬀerences in the size of ﬁrms’ idiosyncratic and market-wide earnings
+components.
+   We ﬁnd compelling evidence that industry proximity plays a crucial role in determining the co-
+jump probability. For example, conditional on a Facebook (FB) announcement, the price of Apple
+(AAPL), Amazon (AMZN), and Google (GOOG) jump on 13.3%, 25.8%, and 28.1% of their non-
+announcement days. Thus, conditional on the AF being a tech ﬁrm the jump frequency generally
+rises for companies within that sector and is much lower for companies from other sectors. This
+is consistent with the presence of a common jump factor for the tech industry. Moreover, on days
+where Intel (INTC) is the AF, we record a conditional jump frequency of 20.0%, 44.0%, and 30.0%
+in the price of Nvidia (NVDA), Advanced Micro Devices (AMD), and Micron Technology (MU),
+pointing to a common jump component tracking the microconductor industry. These numbers
+are much higher than the common non-announcement jump frequency of 4.18%, calculated as the
+average jump frequency on days where there are no announcements among any of our ﬁrms.44 Our
+analysis therefore provides strong support for Hypothesis 2.1.
+   Conversely, there is scant evidence of spillover eﬀects from some of the other companies in our
+sample without obvious industry peers. For example, conditional on an announcement from Walt
+Disney (DIS), the jump frequency in the other stocks is always less than 10% and often close to
+zero, which suggests that the jump component is tracking idiosyncratic news.45
+   In the right-most column of Table 4, we compute the jump frequency in the S&P 500 index
+(proxied by the SPDR S&P 500 ETF Trust, SPY) over the extended trading session in which
+the ﬁrm announces its earnings. This can be interpreted as the conditional jump probability in the
+market index given that a particular ﬁrm releases its ﬁnancial statement. If earnings announcements
+contain systematic news, we should expect this number to be higher than the comparable jump
+frequency in the S&P 500 in the absence of any earnings announcement.46 Furthermore, we expect
+  44
+      The conditional jump frequency on common non-announcement days is slightly lower than the conditional non-
+announcement day jump frequency reported in Table 2, since the latter does not discriminate between days where
+other ﬁrms are or are not announcing.
+   45
+      Disney may of course exert inﬂuence on the conditional jump probability of related companies not included in
+our sample such as Hasbro (HAS) or Mattel (MAT).
+   46
+      To rule out that a jump in the S&P 500 is a mechanical eﬀect following from the AF being an index constituent,
+we remove the AF’s price eﬀect from the index by subtracting its price times its weight in the S&P 500 index from
+the SPY before we implement the jump test. We are grateful to Andrew Patton for raising this point.
+
+
+                                                        27
+the eﬀect to be stronger for businesses that are more central to the economy.
+   The table oﬀers strong backing for the presence of a systematic “market” factor in individual
+stocks’ price jumps. For instance, the frequency of jumps in the S&P 500 index is very high condi-
+tional on an announcement from important stocks such as Apple (AAPL), Facebook (FB), Amazon
+(AMZN), Microsoft (MSFT), Oracle (ORCL), and Starbucks (SBUX). Notably, the market index
+jumps 30% of the time Apple makes its earnings announcements, which is an order of magnitude
+higher than the jump probability in the market index on common non-announcement days (3.60%).
+By contrast, the market jump probability is much lower when ﬁrms such as Tesla (TSLA) and
+Salesforce (CRM) announce earnings, suggesting that price movements in both of these stocks are
+to a larger extent driven by idiosyncratic news unrelated to the broader economy.
+    In our sample, there are between a minimum of zero and a maximum of nine earnings announce-
+ments on any given day. The conditional jump frequency in the market index is increasing in
+the number of announcements. On average, the rate at which the market index jumps rises from
+the 3.60% on common non-announcement days [0 announcements] to 4.82% [1–2 announcements],
+3.02% [3–4 announcements], 12.28% [5–6 announcements], and 21.05% [7–9 announcements]. These
+observations are consistent with Hypothesis 2.3. Furthermore, this ﬁnding suggests that the “in-
+formation spillover” eﬀect dominates the “distraction” eﬀect, as identiﬁed by Hirshleifer, Lim, and
+Teoh (2009), who show that the immediate price response to earnings surprises is signiﬁcantly
+weaker on days when multiple ﬁrms announce their earnings.
+
+5.2       Determinants of the jump spillover probability
+Our empirical results on co-jump frequencies are particularly interesting because it is often diﬃcult
+to detect jumps in the market index even when the price of the underlying stocks jump. This is
+because individual ﬁrms typically only take up a small part of the index basket, so their price jumps
+are attenuated. Our ﬁndings point toward an information channel that leads investors to revise their
+earnings expectations for the broader economy after individual ﬁrms’ earnings announcements. We
+next examine key determinants of this transmission mechanism and estimate their importance for
+jump spillover eﬀects with a view toward Hypothesis 2.2.
+   We let JjtNAF be an indicator variable that equals one if the price of NAF j jumps on day t, zero
+otherwise. We then estimate a logit model for the conditional jump probability of stock j’s price,
+given that AF i releases its ﬁscal results on day t (i 6= j by construction):
+                                                                                                     
+ P JjtNAF = 1 | EAit = 1 = F a + b1 IPij + b2 log(VjtNAF ) + b3 log(VitAF ) + b4 DitEARLY + b5 DitLATE .
+                                                                                                     (29)
+We include an intercept, a measure of industry proximity, IP , the natural logarithm of the trans-
+action volume of the AF and NAF, log(V NAF ) and log(V AF ), and indicator variables for whether
+the AF is disclosing its ﬁscal statement early or late in the earnings season, D EARLY and D LATE .47
+  47
+       We also included the jump indicator of the AF, JitAF , as a covariate. However, since the probability of a jump
+
+
+                                                          28
+Following Wang and Zajac (2007), we deﬁne industry proximity as the proportion of common con-
+secutive digits (starting with leading digit and going down) in their SIC code shown in Table 1.48
+V NAF and V AF are the average number of transactions in the NAF and AF in the after-hours market
+in the month prior to t. We log-transform the latter to make them less right-skewed and closer to
+Gaussian. Following Savor and Wilson (2016), we deﬁne early (late) announcers as those ﬁrms that
+release their ﬁnancial results in the 1st (4th) quartile of the earnings season. The latter is assumed
+to start two weeks and stop two months after the end of a quarter (e.g., the earnings season for Q1
+starts on April 15 and ends on May 31).
+    The results are reported in Panel A of Table 5. We expect a positive relationship with the
+ﬁrst three covariates since greater industry proximity should induce a positive jump spillover eﬀect,
+higher liquidity facilitates a bigger and more rapid transmission of information from the AF to the
+NAF, and companies that announce early in the cycle are more likely to disclose new information
+relevant to other companies. This is conﬁrmed by the ﬁtted model. Industry proximity is associated
+with a positive and highly signiﬁcant marginal eﬀect on the jump spillover probability (t-statistic
+of 7.16). The liquidity of both the NAF and AF in the after-hours market are also positive and
+signiﬁcant with the coeﬃcient estimate on V NAF being twice as large and signiﬁcant as that on
+V AF (t-statistics of 7.16 and 14.56). In addition, the spillover from early announcers is positive
+and signiﬁcant (t-statistic of 3.28), and vice versa for late announcers (t-statistic of -10.11). These
+ﬁndings are all consistent with Hypothesis 2.2.
+   To convert these estimates into an implied co-jump probability, we again change the covariates
+one at a time, while holding the others ﬁxed. For example, early in the earnings cycle (D EARLY = 1)
+and for ﬁrms with no industry overlap (IP = 0), the coeﬃcient estimates imply that the conditional
+jump probability for the NAF is 4.02% and 7.19% (4.96% and 5.80%) when V NAF (V AF ) is assumed
+to be at its 10th and 90th percentile while holding V AF (V NAF ) ﬁxed at its average value. Late
+in the earnings cycle (D LATE = 1), those numbers drop notably to 2.39% and 4.34% (2.97% and
+3.48%). Furthermore, early in the earnings cycle and for ﬁrms with identical industry classiﬁcation
+(IP = 1), the conditional jump probability for the NAF is shifted up to 5.70% and 10.06% (7.01%
+and 8.17%) when V NAF (V AF ) is at its 10th and 90th percentile while holding V AF (V NAF ) ﬁxed at
+its average value. Those numbers again drop late in the earnings cycle to 3.42% and 6.15% (4.23%
+and 4.96%).
+    To uncover any jump spillover eﬀects on the market portfolio, we estimate the following model:
+                                                                           
+                 P JtSPY = 1 | #AFt ≥ 1 = F a + b1 Dt#AF + b2 log CVtAF ,                     (30)
+
+where                                                (
+                                                      1, if #AFt ≥ 5,
+                                          Dt#AF =                                                                 (31)
+                                                      0, otherwise,
+for an AF is near unity and varies little over our sample, this variable has little-to-no explanatory power.
+   48
+      IPij is discrete with range 0.00, 0.25, 0.50, 0.75, 1.00, where IPij = 0 means no industry overlap (leading digit
+in SIC code diﬀers), while IPij = 1 is perfect overlap (SIC codes are identical).
+
+                                                          29
+             P
+and #AFt = i EAit is the number of AFs on a given day. The dummy variable separates days
+with “few” or “many” announcements. We further include the natural logarithm of the cumulative
+average number of transactions in the AFs in the after-hours market in the month prior to day t,
+         P
+CVtAF = i : EAit =1 VitAF .
+   Panel B of Table 5 shows that the jump probability for the market portfolio is signiﬁcantly higher
+on days where many ﬁrms announce their results. Moreover, there is also a positive relationship
+with the after-hours liquidity of the AFs, CVtAF . These ﬁndings make sense because a larger pool of
+company announcements implies that more market-related information is being released to investors
+and larger liquidity among the AFs facilitates a faster price discovery process, which feeds into the
+market index, consistent with Hypothesis 2.3.49
+
+
+6        Price dynamics after earnings announcements
+Our results so far provide insights into price jump dynamics in the immediate aftermath of earnings
+announcements. However, they do not address if the jumps in prices over- or undershoot. In this
+section, we explore whether post-announcement returns are predictable and whether this can be
+exploited in simple trading strategies to generate abnormal returns. Both points help us better
+understand the eﬃciency of the post-announcement price formation and test the “suﬃciency” part
+of conditions for market eﬃciency in Hypothesis 3.
+
+6.1      Determinants of the jump size
+While our noise-robust jump test statistic speaks to the presence (or absence) of a jump, it does not
+reveal by how much the price jumps. We therefore next construct a proxy for the jump size based
+on returns measured over a small time interval following the earnings announcement. In particular,
+                                                             EA
+we compute the one-minute post-announcement return (r1m         ) as the log-price a minute after the
+earnings release less the latest log-price prior to the announcement.
+   The last column of Table 1 reports summary statistics for the one-minute post-announcement
+returns for each company. While the cross-sectional sample average of 0.15% is rather large, the
+standard deviation of 3.50% is even bigger, indicating that one-minute post-announcement returns,
+while positive on average, are highly dispersed. One-minute returns are slightly negatively skewed
+(-0.48), although this is mainly driven by a few extremely negative return observations in our sample
+as evidenced by a large coeﬃcient of kurtosis (5.76).
+    In Panel B of Figure 7, we plot the average one-minute post-announcement return against
+the standardized earnings surprise. We observe a near-monotonic relationship between the sign
+and magnitude of earnings surprises and subsequent returns. Speciﬁcally, large negative (positive)
+earnings surprises are associated with large negative (positive) post-announcement returns.
+    49
+     Again, we account for the mechanical eﬀect of a constituent members’ price jump on the market index by
+subtracting its price component from the SPY.
+
+
+                                                    30
+   More than 85% of earnings announcements surprise positively in our sample, so ﬁrms are ex-
+pected to beat consensus estimates. The average value of the standardized unexpected earnings is
+z̄EPS = 1.73 (median value of 1.37), which is located in the sixth decile in Figure 7. The average
+one-minute post-announcement return in that decile is 0.46% (median value of 0.37%), which is
+consistent with Hypothesis 1.2, that earnings announcements in line with expectations generate
+positive returns due to uncertainty resolution.
+   We next examine the determinants of the change in stock prices in the aftermath of earnings
+announcements. To understand which factors drive post-announcement returns, we estimate a
+regression model that includes the predictor variables from the logit model in (28) except the EA
+dummy variable, which is captured by the intercept here. In addition, we add the cumulative net
+order imbalance, which we construct following Grégoire and Martineau (2022):
+                                                           Bit − Sit
+                                                  OIit =             ,                                              (32)
+                                                           Bit + Sit
+where Bit and Sit correspond to the buyer- and seller-initiated trading volume over the one-minute
+post-announcement window. To get signed trade volume, we assign an aggressiveness indicator to
+each transaction based on whether it was buyer- or seller-initiated. We employ a “level-1 algorithm”
+known as the tick rule (e.g. Chakrabarty, Pascual, and Shkilko, 2015).50 Note that in contrast to
+the other variables, the net order imbalance is not known ahead of the announcement.
+   We then estimate a pooled panel regression for the one-minute post-announcement return for
+                   EA
+stock i on day t, r1m,it :
+                                                     q
+             EA              +            −              ∗
+            r1m,it = a + b1 zEPS,it + b2 zEPS,it + b3 RVn,it Dit + b4 NA,it Dit + b5 OIit + ǫit , (33)
+
+where Dit = sign(zEPS,it ) is the sign function. We interact the sign of zEPS with pre-averaged
+realized volatility and the number of analysts because the latter are non-negative and merely capture
+the speed with which information gets impounded into stock prices whereas earnings surprises
+are directional. The bigger the return volatility and number of analysts, the more we expect
+positive news (a positive sign indicator) to move returns upwards and negative news (a negative
+sign indicator) to move returns downwards. A priori, we therefore expect all coeﬃcients to be
+positive in (33).
+                                                                                              +
+   Table 6 reports our estimation results. In the restricted model in column (2) with only zEPS   and
+ −
+zEPS,it but no additional controls, the estimates of b1 and b2 are both positive, implying that larger
+earnings surprises translate into larger announcement returns. The marginal eﬀect of negative
+earnings surprises is more than twice as large as that of positive earnings surprises. Negative
+earnings surprises thus trigger a much larger drop in the stock price than the rise in prices for
+   50
+     Quoting from their paper: ”The tick rule classiﬁes a trade as buyer-initiated if the trade price is above the
+preceding trade price (an uptick trade) and as seller-initiated if the trade price is below the preceding trade price (a
+downtick trade). If the trade price is identical to the previous trade price (a zero-tick trade), the rule looks for the
+closest prior price that diﬀers from the current trade price. Zero-uptick trades are classiﬁed as buys, and zero-downtick
+trades are classiﬁed as sells.”
+
+
+                                                           31
+comparable positive surprises. In this regression, the coeﬃcients are also signiﬁcantly diﬀerent from
+each other (P -value of 0.0016). Adding controls in column (3) and (4), the estimates of b1 and b2
+remain positive and b2 > b1 , but they are nearly identical and the hypothesis H0 : b1 = b2 is no
+longer rejected.
+                                                               p
+   The slope estimate on the pre-averaged realized volatility, RVn∗ , is positive and borderline
+statistically signiﬁcant. Higher volatility is therefore weakly associated with wider dispersion in
+returns as post-announcement prices move further away from their initial value during periods of
+higher volatility.
+   The coeﬃcient estimate on the number of analysts, NA , is positive and signiﬁcant. Hence, a
+larger number of analysts monitoring a company leads to larger one-minute post-announcement
+returns following positive surprises and smaller (more negative) returns for negative surprises.
+    Finally, we consider the order imbalance variable, OI. While the other variables in the regression
+are known ex-ante (at or before the earnings announcement), order imbalance is only known ex-post.
+Bearing this in mind, our estimates on OI are positive and highly signiﬁcant for both positive and
+negative earnings surprises, implying that larger net order imbalances are associated with bigger
+movements in returns. Intuitively, buying pressure (positive OI) pushes prices up, while selling
+pressure (negative OI) reduces prices.51
+   We conclude from this evidence that both small and large earnings surprises almost always
+trigger a jump in the stock price. However, while small earnings surprises are associated with
+small returns, large earnings surprises tend to move prices by a bigger amount in a direction that
+is consistent with the sign of the earnings surprise. This eﬀect is stronger for negative earnings
+surprises. Moreover, prices move by more, the more analysts cover a given stock and the magnitude
+of price movements is also aﬀected by the pre-announcement price volatility.52
+
+6.2     Trading strategy
+We next examine if the one-minute post-announcement return can be predicted and, if so, whether
+the resulting forecasts can be exploited in a simple trading strategy. We employ the parsimonious
+earnings response model of Ball and Brown (1968) by using the pooled panel regression in (33)
+based on the standardized earnings surprise as the only conditioning information:
+                                    EA              +            −
+                                   r1m,it = a + b1 zEPS,it + b2 zEPS,it + ǫit .                              (34)
+
+    We recursively estimate the parameters in (34) using an initial warm-up sample of one month
+of announcement days, adding new data as it becomes available. This ensures our forecasts are
+available in real time and do not suﬀer from look-ahead bias.
+  51
+      As a robustness check, we reestimated the return regression in (33) based on 5-, 10-, 30-, and 60-minute
+post-announcement returns. Although some of the marginal eﬀects were found to be larger simply because the
+longer-horizon returns tend to be larger than one-minute returns, none of the conclusions regarding the sign and
+signiﬁcance of the coeﬃcient estimates changed.
+   52
+      We also examined our data for a pre-earnings announcement drift but failed to identify any signiﬁcant eﬀect.
+
+
+                                                       32
+   Our trading strategy follows Patell and Wolfson (1984). It opens a long (short) position if the
+predicted return in (34) is positive (negative). In our baseline scenario the position is held until the
+end of the trading day (6:30pm, or EOD) and closed at the last observation. In contrast to Patell and
+Wolfson (1984), there is little evidence of elevated returns during the overnight period following the
+release or at the opening of trading on the next day, see Appendix F.3. Thus, our results are robust
+to leaving the position on the book until the exchange opens the next morning. To avoid chasing
+too small proﬁts, we set an entrance barrier of 0.75% in absolute value for the predicted return,
+which is a 25% markup of the immediate post-announcement bid-ask spread observed in Panel B of
+Figure 3. However, our results are robust to using a range of other threshold values. With a 0.75%
+required return, the strategy generates 826 trading signals from 2,193 earnings announcements, of
+which 664 are long and 162 are short.
+   To gauge the importance of transaction costs, we implement four versions of our trading strategy.
+The ﬁrst sets the entry level of the trade equal to the ﬁrst post-announcement transaction price
+(Trade). Our second approach employs the midquote (Midquote). We expect the transaction price
+to be in the direction of the announcement surprise, but it is possible that it is on the other side
+of the strategy (e.g., a sale following a positive announcement surprise, or vice versa). Moreover,
+whereas the Trade strategy can snipe stale quotes resting in the limit order book prior to the
+announcement, the Midquote strategy employs an updated quote that incorporates the information
+from the announcement.53 Trading at the midquote is often possible for large institutional traders,
+but may not be feasible for other entities. Our third strategy therefore incorporates the quoted
+bid-ask spread (Best Bid and Oﬀer, or BBO). It initiates a buy order at the prevailing best ask,
+whereas a sell order is initiated at the prevailing best bid. The latter therefore incorporates a full
+spread in the returns generated from the trading strategy.54 Finally, our fourth approach makes
+the odds even more unfavorable by introducing a latency delay, which is the minimum number of
+seconds an investor must wait before entering a position (BBO+Xs). Such trading delays cause
+investors to miss out on the initial reaction in the stock price. In principle, it could be beneﬁcial to
+wait a few seconds before starting a trade because spreads narrow following an announcement.
+   Figure 9 shows the evolution over time in the cumulative returns based on payoﬀs from individual
+trades. The slope of the graph reﬂects the rate at which returns accrue: The steeper the curve,
+the larger the returns. Conversely, ﬂat spots or a declining curve indicate that the trading strategy
+fails to earn, or outright loses, money.
+    The ﬁgure highlights that the transaction price and midquote approaches yield positive returns
+throughout our sample with no notable periods of inferior performance (full blue and dashed red
+lines). As expected, introducing execution costs or latency delays reduces the rate of accumulation.
+In particular, from 2016 onward the strategy that pays the bid-ask spread (dashed-dotted line)
+  53
+      Baldauf and Mollner (2022) document the importance of stale quotes in generating jumps in the transaction
+price.
+   54
+      We do not control for market impact since our data is not rich enough to include such information. Hence, our
+results are mostly relevant for small trading sizes.
+
+
+                                                        33
+is ﬂatlining. Adding a further 5- or 10-second latency delay (dashed lines) reduces returns even
+more and the strategy loses money after 2016. This indicates that the speed with which earnings
+announcement information gets incorporated into prices has increased in the second part of our
+sample.
+   To inspect the proﬁtability of our trading strategy, Figure 9 also reports (in parenthesis) the
+sample average return and a test statistic examining if the mean return is diﬀerent from zero. In
+frictionless markets where investors can enter the position at the ﬁrst post-announcement trans-
+action price, a highly signiﬁcant return of 1.80% per trade (t-statistic of 8.88) is earned over the
+full sample. Trading at the midquote, the average return drops to a highly signiﬁcant 1.50% per
+trade (t-statistic of 7.67). Even if trading is executed at the bid-ask spreads, the average return of
+0.72% continues to be signiﬁcant (t-statistic of 3.68). A 5-second latency delay reduces the return to
+0.41% per trade, which is only borderline signiﬁcant (t-statistic of 2.18). Forcing a 10-second delay
+on trade entrance, the average return is still positive at 0.28% per trade, which is now insigniﬁcant
+(t-statistic of 1.51).55
+   Panel A of Table 7 reports a more comprehensive set of summary statistics. On top of the full
+sample (2008–2020) results, we also do the analysis separately for the period 2008–2015 and 2016–
+2020. In this way, we can examine if the price discovery process has changed over time. We choose
+the subsample splits based on major structural changes in market design. First, the last electronic
+communication network (ECN) in the U.S., as deﬁned by Rule 600(b)(23) of Regulation NMS,
+closed in 2015. The disappearance of ECNs implies that during our sample an increased amount
+of liquidity has been rerouted to alternative after-hours trading venues, such as dark pools.56 The
+latter provide anonymous trading and, in general, do not display quotes to the public. On the
+one hand, this can impede price discovery, because order ﬂow contains valuable information.57
+On the other hand, less pre-trade transparency can facilitate price discovery because investors
+can conceal their trading activity, which increases the incentive to collect private information.
+Moreover, as earnings announcement news is arguably short-lived, it encourages faster and more
+aggressive trading on such information (e.g. Brogaard and Pan, 2021; Flood, Huisman, Koedijk,
+and Mahieu, 1999). Second, stricter legislation approved by the SEC means that from April 4, 2016
+a greater number of broker-dealers are required to disclose stock-by-stock aggregate volume and
+transaction count information to the Financial Industry Regulatory Authority (FINRA) on a weekly
+   55
+     We can estimate how much money investors leave on the table after an earnings announcement using transaction
+                                                                          j
+information between the announcement and 6:30pm. Denote by Pt,i             and njt,i the price and number of shares of
+                                                                                      j
+the ith transaction in stock j after the announcement at time t. Also, let Pt,6:30         be the price at 6:30pm. The
+dollar proﬁt made by an investor buying in the ith post-announcement trade and closing      P P  it out at
+                                                                                                        P6:30pm     is then
+  j
+πt,i = njt,i (Pt,6:30
+               j         j
+                      − Pt,i ). Cumulative dollar proﬁts across the whole sample are π $ = j #EAj i πt,i    j  j
+                                                                                                              It,i , where
+  j
+It,i is the signal from the trading strategy (1 = long, -1 = short, 0 = no position). We estimate a total proﬁt of
+$418,783,007, or 0.3209% of turnover. The average proﬁt is $507,001 with a standard deviation of $189,115, or a
+z-score of 2.68. We thank Lasse Heje Pedersen for suggesting this calculation.
+    56
+       Traditional ﬂoor trading is available, but it is not anonymous and probably also not fast enough.
+    57
+       Hendershott and Jones (2003) ﬁnd evidence of a deterioration in price discovery, when the Island ECN transi-
+tioned into a dark pool following stricter display requirements pursuant of Regulation ATS.
+
+
+                                                            34
+basis.58 Post-trade transparency helps investors locate more liquid platforms, which accelerates the
+matching process. Furthermore, the reduction in the number of trading venues makes the market
+less fragmented, which further enhances this process.
+    Across the board, average returns are both larger and more signiﬁcant in the ﬁrst subsample
+(2008–2015) compared to the full sample. For example, the average return per trade in the trans-
+action price setting is 2.30% (t-statistic of 8.77) over 2008–2015 but only 1.11% (t-statistic of 3.49)
+over 2016–2020. Moreover, the average return inferred from the midquote strategy drops to 0.80%
+(t-statistic of 2.65) in the second subsample – more than a full percentage point lower than its early
+subsample counterpart (2.00%). Trading at the bid-ask spread further reduces the average return
+and adding a latency delay even renders them slightly negative, though not signiﬁcant, in the second
+subsample. These ﬁndings are consistent with a more eﬃcient price discovery process over time
+with average returns declining to the point where they are no longer signiﬁcantly diﬀerent from zero
+after accounting for bid-ask spreads or latency delays. They also concur with Martineau (2022),
+who ﬁnds that most stock prices are signiﬁcantly more responsive to earnings surprises during the
+latest subsample (2016–2019) compared to the earliest (1984–1990).
+    Patell and Wolfson (1984) found that excess returns in their sample ceased to exist within 10-
+to 15-minutes following an earnings announcement. In Panel B of Table 7, we show the eﬀect of
+changing the investment horizon with more recent data. Instead of closing positions at 6:30pm, the
+duration of the position is now measured either in minutes (physical time) or by the number of tick
+updates (tick time) after the announcement.59
+   In Panels B.1–B.5, we maintain the position from 30 seconds to 5 minutes. In the full sample,
+average returns from the no-friction strategy based on transaction prices increase monotonically
+from 0.74% (t-statistic of 8.28) for positions closed after 30 seconds to 1.58% (t-statistic of 10.82)
+per trade for positions closed after ﬁve minutes. In the midquote strategy, the average return is
+slightly compressed but continues to be positive and statistically signiﬁcant. Trades executed at the
+BBO reduce the average return which becomes slightly negative at -0.47% (t-statistic of -4.75) for
+the 30-second termination rule but rises to 0.41% at the 5-minute mark (t-statistic of 2.81). Latency
+delays lead to further reductions in trading performance as none of the approaches generate positive
+and signiﬁcant average returns. Once again the results change meaningfully between the ﬁrst and
+second subsamples. As the price discovery process improves, average returns become lower and less
+signiﬁcant in the second subsample compared to the earlier subsample. Interestingly, the average
+return over the 2016–2020 sample for the baseline scenario in Panel A is close to the corresponding
+  58
+      See, for example, https://www.finra.org/sites/default/files/NoticeDocument/p446087.pdf and https:
+//www.finra.org/sites/default/files/Regulatory-Notice-15-48.pdf.
+   59
+      We also estimated the predictive return regression with the post-announcement return (dependent variable)
+measured over a 5-, 10-, 30-, and 60-minute horizon. Average trading returns decline monotonically as the length of
+the measurement window is extended, suggesting that the price response to earnings surprises is very rapid and the
+“signal” is strongest for the one-minute post-announcement return. For example, compared to the number in Table
+7, moving from a one-minute to a 60-minute horizon causes a decline of 48 basis points in average return for the
+transaction price approach.
+
+
+
+                                                        35
+value for the 5-minute stopping rule in Panel B.5. This suggests that, in the most recent subsample,
+the price discovery process has more or less been completed at that time.
+   Next, we consider what happens to trading performance in transaction time if we close the
+position after between 50 and 1,000 tick updates. As shown in Panels B.6–B.10, we continue to
+generate positive and signiﬁcant average returns for trades executed at the transaction price or
+midquote. However, executing at the BBO again produces insigniﬁcant mean returns in the latest
+subsample. Interestingly, trades stopped after 1,000 tick updates in Panel B.10 yield mean returns
+nearly identical to those from the positions held until 6:30pm (Panel A) in the ﬁrst subsample, but
+not in the second. This reﬂects the lower trading activity in the early parts of our sample, which
+means that 1,000 tick updates cover a much longer time interval.
+    Figure 10 summarizes these results by plotting the cumulative return from trading strategies that
+close out the position after a ﬁxed number of tick updates (Panels A–C) or after a ﬁxed number
+of seconds (Panels D–F), employing either the transaction price, midquote, or BBO. The ﬁgure
+illustrates both how fast the price adjusts in the very short period after an earnings announcement
+(both in trade time and in physical time) and also that the price settles at its new level even faster
+in the second subsample.
+   Overall, our results demonstrate that price discovery in the post-announcement window has got-
+ten far speedier during our twelve-year sample. Prior to 2016, investors were able to reap signiﬁcant
+proﬁts from post-earnings announcement trades executed at the BBO even with a latency delay of
+10 seconds. In contrast, during the last subsample, after-hours prices move so fast after earnings
+announcements that it is no longer possible to generate signiﬁcant outperformance after accounting
+for bid-ask spreads. This suggests that the positive eﬀects of decreased pre-trade transparency and
+improved post-trade transparency outweigh the negative eﬀects of decreased pre-trade transparency,
+leading to better price discovery around corporate earnings announcements.
+    We can gain additional insights by comparing our results with Grégoire and Martineau (2022).
+They ﬁnd that that for “most” announcements in their sample, the post-announcement closing
+price at 4:00pm the following day is within the bid-ask spread prior to the announcement, so even a
+liquidity taker who was informed about the upcoming unexpected earnings surprise could not trade
+proﬁtably on the information. We achieve the reverse ﬁnding for our sample: The post-earnings
+transaction price at 6:30pm—where we close our trading strategy—is outside the pre-announcement
+quoted spread for 92.66% of the earnings announcements.
+   This, and several other points, help to explain the diﬀerences between our ﬁndings and those
+in Grégoire and Martineau (2022). First, the data used in their paper cover the shorter and earlier
+period 2012–2015. This is important, because we document a shift in after-hours price dynamics
+after 2016 following the change in market design. Second, and most importantly, while we analyze
+the 50 most liquid constituents of the S&P 100 index, they study the after-hours behavior of the
+1,500 stocks included in the S&P 500, S&P 400, or S&P 600 indexes corresponding to the large-,
+medium- and small-cap segment of the U.S. stock market. Many of the ﬁrms in their sample are
+
+
+                                                 36
+very illiquid: The median number of trades in the after-hours market on earnings announcement
+days is 70, 10, and 7 for S&P 500, S&P 400, and S&P 600 stocks, and 20% of the included stocks
+do not trade at all. In contrast, as seen in Table E.1 in Appendix E, for our selection of stocks the
+smallest average number of trades on announcement days is 1,072, and even on non-announcement
+days many of our ﬁrms are more actively traded than those studied by Grégoire and Martineau
+(2022) are on announcement days. Third, the ﬁrms in their sample are often quoted with wide
+spreads in excess of 20% while the spreads for our ﬁrms are narrow(er) and often less than 50 basis
+points, on average, as shown in Figure 3. Finally, the time-aggregation is diﬀerent: We sample at
+tick frequency, while they sample at a 1-minute frequency.
+   Proving that the suﬃciency condition for market eﬃciency holds ultimately requires us to inspect
+a much broader class of trading strategies. However, the evidence presented here for the most recent
+subsample is consistent with Hypothesis 3.1 and with trading in the after-hours market becoming
+notably more eﬃcient over time, so we do not pursue this point further here.
+
+6.3     Spillover eﬀects on returns of non-announcing ﬁrms
+Our jump spillover analysis shows that the release of ﬁnancial statements by an announcing ﬁrm
+(AF) increases the likelihood of jumps in a non-announcing ﬁrm (NAF), particularly when the two
+ﬁrms have a close industry proximity and high after-hours trading volumes. These results do not,
+however, show the extent to which earnings surprises of AFs aﬀect the returns of NAFs and whether
+the information dissemination is fully eﬃcient as stipulated by Hypothesis 3.2.
+   To shed light on this, we estimate a return regression equivalent to (33):
+           NAF             +                 −
+          r1m,jt = a + b1 zEPS,it IPij + b2 zEPS,it IPij + b3 Dit log(VjtNAF ) + b4 Dit log(VitAF ) + ǫjt ,   (35)
+       NAF
+where r1m,jt is the one-minute post-announcement return of NAF j after the announcement of AF
+i on day t. The other variables are unchanged. The industry proximity interaction terms allow
+us to attenuate the eﬀect of earnings surprises on the post-announcement return of NAFs in more
+distant industries. Similarly, we interact the sign of zEPS with log(VjtNAF ) and log(VitAF ), allowing the
+liquidity measures to reinforce an expected negative price movement after a bad announcement. We
+ﬁnd that none of the estimated coeﬃcients in (35) are statistically signiﬁcant and their explanatory
+power is close to zero.
+   Figure 11 explains this ﬁnding. In the left panel, we show a box plot of the distribution of
+one-minute returns of NAFs in three settings: (i) NAFs on common non-announcement days; (ii)
+NAFs in other industries (IPij = 0); and (iii) NAFs in the same industry (IPij = 1). Results in (ii)
+and (iii) are based on days with at least one announcement.60
+   While the median one-minute return is close to zero and nearly identical across the three dis-
+  60
+     We construct (i) by taking for each announcement of an AF a common non-announcement day at random and
+measuring the stock price movement of the AF over the one-minute window aligned with its associated announcement
+time.
+
+
+
+                                                         37
+tributions, there is a clear ranking of their spread. The dispersion is smallest on common non-
+announcement days, where the one-minute return mostly reﬂects the bid-ask spread since no infor-
+mation is being released. The spread is slightly wider on announcement days for NAFs in other
+industries and much wider for NAFs in the same industry as the AF. However, the spillover eﬀects
+on the NAFs pale in comparison to the impact of the AF on itself shown in the right panel. Thus,
+although we can detect co-jump spillover eﬀects, the magnitude of the price impact is much smaller
+than the impact on the announcing ﬁrm itself.
+  We next implement the earlier trading strategies on the post-announcement returns of NAFs.
+Absent any trading frictions, and assuming we do not impose a threshold on the magnitude of the
+predicted return, the trading strategy produces a small, positive, and marginally signiﬁcant average
+return on the order of 3–4 bps per trade.61 This is consistent with the volatility of NAF returns
+being minuscule. Indeed, any proﬁts completely vanish and turn into severe losses once trading
+frictions and latency delays are introduced.
+                                                                               SPY
+    We also inspect whether AFs aﬀect one-minute returns on the market index, r1m,t , again after
+correcting for the mechanical price impact from the announcement, through the regression:
+                                    X                        X
+                     SPY
+                    r1m,t = a + b1      wi zEPS,it + b2 D̄it   log(VitAF ) + ǫt ,                           (36)
+                                      i : EAit =1                     i : EAit =1
+
+where                                                       !
+                                   X                                                log(VitAF )
+                   D̄it = sign                 wi zEPS,it        and wi = P                      AF
+                                                                                                     .      (37)
+                                 i : EAit =1                                   i : EAit =1 log(Vit )
+
+In this model, when more than one ﬁrm is announcing on a given day, we weight the earnings
+surprises by the respective after-hour trading volume of the companies.
+   The coeﬃcient estimates are both signiﬁcant and of the correct sign, i.e 100 × b̂1 = 0.15 (t-
+statistic of 2.26) and 100 × b̂2 = 0.09 (t-statistic of 2.49), but the predictive power of the regression
+is very small. Moreover, the slope estimates are economically small with a marginal eﬀect around
+one-tenth of a basis point for a unit change in the explanatory variables. Consequently, the predicted
+market return only rarely exceeds a full basis point which cannot be exploited in practice.
+     Taken together, the analysis in this subsection is consistent with Hypothesis 3.2.
+
+
+7        Conclusion
+High-frequency trading is widespread in today’s ﬁnancial markets. This suggests that, at least for
+the most liquid stocks, information from public announcements should be incorporated into prices
+almost instantaneously after the news release. In an eﬃcient market without large trading frictions,
+stock prices should therefore jump, almost surely, in the immediate aftermath of releases of large
+bundles of information such as ﬁrms’ earnings announcements. This suggests employing jump tests
+    61
+     The return forecasts of NAFs rarely exceed more than a few basis points, so imposing a threshold on expected
+return often prevents the trading strategy from entering a position, which renders the mean return insigniﬁcant.
+
+
+                                                                38
+on highly granular tick-by-tick data as a way to test a necessary (but not suﬃcient) condition for
+market eﬃciency. This strategy is very diﬀerent from the conventional practice of scrutinizing post-
+announcement returns deﬁned over a ﬁxed time intervals, such as one or ﬁve minutes, which can be
+almost an eternity in a modern fast-paced market environment.
+   The vast majority of earnings announcements occur outside the regular exchange trading hours,
+so such an analysis of the post-announcement price discovery process requires that we examine a
+relatively unexplored set of high-frequency data that includes quotation and transaction records
+from the after-hours trading session. The irregular trading activity combined with pronounced
+levels of microstructure noise in this market pose serious challenges to conventional jump tests that
+can severely distort the inference.
+   To address these critical shortcomings, we develop a new jump test that is robust to the unusually
+noisy price data observed in after-hours markets. Our noise-robust generalization extends the
+classical bipower variation-based jump test of Barndorﬀ-Nielsen and Shephard (2006) to a pre-
+averaged version that can be implemented on noisy high-frequency data. Moreover, we develop a
+subsample estimator of the asymptotic variance-covariance matrix that is jump-robust under the
+alternative, extending earlier work of Christensen, Podolskij, Thamrongrat, and Veliyev (2017).
+Equipped with these tools, we show that prices of the stocks with the highest after-hours trading
+volume almost always jump after earnings announcements. Conversely, jumps in stock prices are
+rare both during the regular trading session and during after-hours trading sessions without earnings
+announcements.
+   We document a strong jump spillover eﬀect. Conditional on an announcement from a ﬁrm, there
+is a signiﬁcantly higher probability that prices of non-announcing ﬁrms, both within and outside the
+industry of the announcing ﬁrm, as well as the market index, jumps in the same after-hours trading
+session. The eﬀect is larger for companies with a closer industry proximity to the announcing ﬁrm.
+Moreover, early announcers induce a much stronger spillover eﬀect than late announcers. This
+ﬁnding is consistent with investors learning about industry- and economy-wide news components
+from earnings announcements.
+   That stock prices in the after-hours market nearly always jump after the release of earnings
+announcements is indicative of a very rapid price discovery process and, thus, consistent with
+eﬃcient markets. However, the price jump in the immediate aftermath of an earnings release may
+be too big or too small, potentially introducing proﬁtable trading opportunities. We examine if in
+fact prices are unbiased predictors of their future steady-state values by studying the performance
+of a trading rule subject to diﬀerent degrees of trading frictions.
+    In the absence of transaction costs, we ﬁnd that investors could have earned highly signiﬁcant,
+positive average returns in the early years of our sample (2008–2015). Conversely, in the second part
+of our sample (2016–2020), even minor trading frictions, such as bid-ask spreads, reduce average
+returns to the point where they are no longer statistically signiﬁcant. We conclude from this analysis
+that the after-hours market incorporates information on the earnings announcements of the largest
+
+
+                                                 39
+U.S. ﬁrms extremely fast, particularly after 2016.
+
+
+
+
+                                                40
+References
+Ai, H., and R. Bansal, 2018, “Risk preferences and the macroeconomic announcement premium,”
+  Econometrica, 86(4), 1383–1430.
+
+Aı̈t-Sahalia, Y., and J. Jacod, 2009a, “Estimating the degree of activity of jumps in high frequency
+   data,” Annals of Statistics, 37(5), 2202–2244.
+
+       , 2009b, “Testing for jumps in a discretely observed process,” Annals of Statistics, 37(1),
+  184–222.
+
+Aı̈t-Sahalia, Y., J. Jacod, and J. Li, 2012, “Testing for jumps in noisy high frequency data,” Journal
+  of Econometrics, 168(2), 207–222.
+
+Aı̈t-Sahalia, Y., and R. Kimmel, 2007, “Maximum likelihood estimation of stochastic volatility
+  models,” Journal of Financial Economics, 83(2), 413–452.
+
+Aı̈t-Sahalia, Y., C. X. Li, and C. Li, 2024, “So many jumps, so few news,” Working paper.
+
+Andersen, L. B. G., 2008, “Simple and eﬃcient simulation of the Heston stochastic volatility model,”
+ Journal of Computational Finance, 11(3), 1–42.
+
+Andersen, T. G., T. Bollerslev, F. X. Diebold, and C. Vega, 2003, “Micro eﬀects of macro announce-
+ ments: Real-time price discovery in foreign exchange,” American Economic Review, 93(1), 38–62.
+
+Andersen, T. G., T. Bollerslev, and D. Dobrev, 2007, “No-arbitrage semi-martingale restrictions for
+  continuous-time volatility models subject to leverage eﬀects, jumps and i.i.d. noise: Theory and
+  testable distributional implications,” Journal of Econometrics, 138(1), 125–180.
+
+Baeumer, B., and M. M. Meerschaert, 2010, “Tempered stable Lévy motion and transient super-
+  diﬀusion,” Journal of Computational and Applied Mathematics, 233(10), 2438–2448.
+
+Bajgrowicz, P., O. Scaillet, and A. Treccani, 2016, “Jumps in high-frequency data: Spurious detec-
+  tions, dynamics, and news,” Management Science, 62(8), 2198–2217.
+
+Baldauf, M., and J. Mollner, 2022, “Fast traders make a quick buck: The role of speed in liquidity
+  provision,” Journal of Financial Markets, 58(100621), 1–22.
+
+Ball, R., and P. Brown, 1968, “An empirical evaluation of accounting income numbers,” Journal of
+  Accounting Research, 6(2), 159–178.
+
+Bandi, F. M., N. Fusari, and R. Renò, 2022, “Structural stochastic volatility,” Working paper.
+
+Bandi, F. M., A. Kolokolov, D. E. Pirino, and R. Renò, 2023, “Discontinuous trading in continuous-
+  time econometrics,” Working paper, Johns Hopkins University, Carey Business School.
+
+                                                 41
+Bandi, F. M., and J. R. Russell, 2008, “Microstructure noise, realized variance, and optimal sam-
+  pling,” Review of Economic Studies, 75(2), 339–369.
+
+Barclay, M. J., and T. Hendershott, 2003, “Price discovery and trading after hours,” Review of
+  Financial Studies, 16(4), 1041–1073.
+
+Barclay, M. J., and J. B. Warner, 1993, “Stealth trading and volatility: Which trades move prices?,”
+  Journal of Financial Economics, 34(3), 281–305.
+
+Barndorﬀ-Nielsen, O. E., S. E. Graversen, J. Jacod, M. Podolskij, and N. Shephard, 2006, “A central
+  limit theorem for realized power and bipower variations of continuous semimartingales,” in From
+  Stochastic Calculus to Mathematical Finance: The Shiryaev Festschrift, ed. by Y. Kabanov,
+  R. Lipster, and J. Stoyanov. Springer, Heidelberg, pp. 33–68.
+
+Barndorﬀ-Nielsen, O. E., P. R. Hansen, A. Lunde, and N. Shephard, 2009, “Realized kernels in
+  practice: trades and quotes,” Econometrics Journal, 12(3), 1–32.
+
+Barndorﬀ-Nielsen, O. E., and N. Shephard, 2006, “Econometrics of testing for jumps in ﬁnancial
+  economics using bipower variation,” Journal of Financial Econometrics, 4(1), 1–30.
+
+Beaver, W. H., 1968, “The information content of annual earnings announcements,” Journal of
+  Accounting Research, 6, 67–92.
+
+Berkman, H., and C. Truong, 2009, “Event day 0? After-hours earnings announcements,” Journal
+  of Accounting Research, 47(1), 71–103.
+
+Bernard, V. L., and J. K. Thomas, 1989, “Post-Earnings-Announcement Drift: Delayed price re-
+  sponse or risk premium?,” Journal of Accounting Research, 27(1), 1–36.
+
+        , 1990, “Evidence that stock prices do not fully reﬂect the implications of current earnings
+  for future earnings,” Journal of Accounting and Economics, 13(4), 305–340.
+
+Biais, B., P. Hillion, and C. Spatt, 1999, “Price discovery and learning during the preopening period
+  in the Paris Bourse,” Journal of Political Economy, 107(6), 1218–1248.
+
+Blumenthal, R. M., and R. K. Getoor, 1961, “Sample functions of stochastic processes with sta-
+  tionary independent increments,” Journal of Mathematics and Mechanics, 10(3), 493–516.
+
+Bollerslev, T., T. H. Law, and G. Tauchen, 2008, “Risk, jumps, and diversiﬁcation,” Journal of
+  Econometrics, 144(1), 234–256.
+
+Bollerslev, T., S. Z. Li, and V. Todorov, 2016, “Roughing up beta: Continuous versus discontinuous
+  betas and the cross section of expected stock returns,” Journal of Financial Economics, 120(3),
+  464–490.
+
+                                                 42
+Bollerslev, T., and V. Todorov, 2011, “Tails, fears and risk premia,” Journal of Finance, 66(6),
+  2165–2211.
+
+Brogaard, J., T. Hendershott, and R. Riordan, 2014, “High-frequency trading and price discovery,”
+  Review of Financial Studies, 27(6), 2267–2306.
+
+Brogaard, J., and J. Pan, 2021, “Dark pool trading and information acquisition,” Review of Finan-
+  cial Studies, 35(5), 2625–2666.
+
+Caporin, M., A. Kolokolov, and R. Renò, 2017, “Systemic co-jumps,” Journal of Financial Eco-
+  nomics, 126(3), 563–591.
+
+Carhart, M. M., 1997, “On persistence in mutual fund performance,” Journal of Finance, 52(1),
+  57–82.
+
+Chakrabarty, B., R. Pascual, and A. Shkilko, 2015, “Evaluating trade classiﬁcation algorithms: Bulk
+  volume classiﬁcation versus the tick rule and the Lee-Ready algorithm,” Journal of Financial
+  Markets, 25(1), 52–79.
+
+Chambers, A. E., and S. H. Penman, 1984, “Timeliness of reporting and the stock price reaction to
+  earnings announcements,” Journal of Accounting Research, 22(1), 21–47.
+
+Chan, K. F., and T. Marsh, 2024, “Overnight post-earnings announcement drift and SEC Form
+  8-K disclosures,” Working paper.
+
+Chordia, T., T. C. Green, and B. Kottimukkalur, 2018, “Rent seeking by low-latency traders:
+  Evidence from trading on macroeconomic announcements,” Review of Financial Studies, 31(12),
+  4650–4687.
+
+Christensen, K., U. Hounyo, and M. Podolskij, 2018, “Is the diurnal pattern suﬃcient to explain
+  intraday variation in volatility? A nonparametric assessment,” Journal of Econometrics, 205(2),
+  336–362.
+
+Christensen, K., S. Kinnebrock, and M. Podolskij, 2010, “Pre-averaging estimators of the ex-post
+  covariance matrix in noisy diﬀusion models with non-synchronous data,” Journal of Econometrics,
+  159(1), 116–133.
+
+Christensen, K., R. C. A. Oomen, and M. Podolskij, 2014, “Fact or friction: Jumps at ultra high
+  frequency,” Journal of Financial Economics, 114(3), 576–599.
+
+Christensen, K., R. C. A. Oomen, and R. Renò, 2022, “The drift burst hypothesis,” Journal of
+  Econometrics, 227(2), 461–497.
+
+Christensen, K., M. Podolskij, N. Thamrongrat, and B. Veliyev, 2017, “Inference from high-
+  frequency data: A subsampling approach,” Journal of Econometrics, 197(2), 245–272.
+
+                                                43
+Corsi, F., D. E. Pirino, and R. Renò, 2010, “Threshold bipower variation and the impact of jumps
+  on volatility forecasting,” Journal of Econometrics, 159(2), 276–288.
+
+Cox, J. C., J. E. Ingersoll, and S. A. Ross, 1985, “A theory of the term structure of interest rates,”
+  Econometrica, 53(2), 385–407.
+
+Delbaen, F., and W. Schachermayer, 1994, “A general version of the fundamental theorem of asset
+  pricing,” Mathematische Annalen, 300(1), 463–520.
+
+Dellavigna, S., and J. M. Pollet, 2009, “Investor inattention and Friday earnings announcements,”
+  Journal of Finance, 64(2), 709–749.
+
+Dubinsky, A., M. Johannes, A. Kaeck, and N. J. Seeger, 2019, “Option pricing of earnings an-
+  nouncement risks,” Review of Financial Studies, 32(2), 646–687.
+
+Ederington, L. H., and J. H. Lee, 1993, “How markets process information: News releases and
+  volatility,” Journal of Finance, 48(4), 1161–1191.
+
+Epstein, L. G., and S. E. Zin, 1989, “Substitution, risk aversion, and the temporal behavior of
+  consumption and asset returns: A theoretical framework,” Econometrica, 57(4), 937–969.
+
+Fama, E. F., and K. R. French, 2015, “A ﬁve-factor asset pricing model,” Journal of Financial
+  Economics, 116(1), 1–22.
+
+Fink, J., 2021, “A review of the post-earnings-announcement drift,” Journal of Behavioral and
+  Experimental Finance, 29(1), Article 100446.
+
+Flood, M. D., R. Huisman, K. G. Koedijk, and R. J. Mahieu, 1999, “Quote disclosure and price
+  discovery in multiple-dealer ﬁnancial markets,” Review of Financial Studies, 12(1), 37–59.
+
+Glosten, L. R., and P. R. Milgrom, 1985, “Bid, ask and transaction prices in a specialist market
+  with heterogeneously informed traders,” Journal of Financial Economics, 14(1), 71–100.
+
+Götze, F., and C. Hipp, 1983, “Asymptotic expansions for sums of weakly dependent random
+  vectors,” Zeitschrift für Wahrscheinlichkeitstheorie und Verwandte Gebiete, 64(2), 211–239.
+
+Grégoire, V., and C. Martineau, 2022, “How is earnings news transmitted to stock prices,” Journal
+  of Accounting Research, 60(1), 261–297.
+
+Griﬃn, J. E., and R. C. A. Oomen, 2008, “Sampling returns for realized variance calculations: Tick
+  time or transaction time?,” Econometric Reviews, 27(1–3), 230–253.
+
+Grossman, S. J., and J. E. Stiglitz, 1980, “On the impossibility of informationally eﬃcient markets,”
+  American Economic Review, 70(3), 393–408.
+
+
+                                                 44
+Hansen, L. P., 2021, “Uncertainty spillovers for markets and policy,” Annual Review of Economics,
+  13(1), 371–396.
+
+Hartzmark, S. M., and K. Shue, 2018, “A tough act to follow: Contrast eﬀects in ﬁnancial markets,”
+  Journal of Finance, 73(4), 1567–1613.
+
+Hasbrouck, J., 1991, “The summary informativeness of stock trades: An econometric analysis,”
+  Review of Financial Studies, 4(3), 571–595.
+
+        , 1995, “One security, many markets: Determining the contributions to price discovery,”
+  Journal of Finance, 50(4), 1175–1199.
+
+Hautsch, N., and M. Podolskij, 2013, “Pre-averaging based estimation of quadratic variation in
+  the presence of noise and jumps: Theory, implementation, and empirical evidence,” Journal of
+  Business and Economic Statistics, 31(2), 165–183.
+
+Hendershott, T., and C. M. Jones, 2003, “Island goes dark: Transparency, fragmentation, and
+  regulation,” Review of Financial Studies, 18(3), 743–793.
+
+Heston, S. L., 1993, “A closed-form solution for options with stochastic volatility with applications
+  to bond and currency options,” Review of Financial Studies, 6(2), 327–343.
+
+Hirshleifer, D., S. S. Lim, and S. H. Teoh, 2009, “Driven to distraction: Extraneous events and
+  underreaction to earnings news,” Journal of Finance, 64(5), 2289–2325.
+
+Jacod, J., Y. Li, P. A. Mykland, M. Podolskij, and M. Vetter, 2009, “Microstructure noise in
+  the continuous case: The pre-averaging approach,” Stochastic Processes and their Applications,
+  119(7), 2249–2276.
+
+Jacod, J., Y. Li, and X. Zheng, 2019, “Estimating the integrated volatility with tick observations,”
+  Journal of Econometrics, 208(1), 80–100.
+
+Jacod, J., and P. E. Protter, 2012, Discretization of Processes. Springer, Berlin, 2nd edn.
+
+Jacod, J., and A. N. Shiryaev, 2003, Limit Theorems for Stochastic Processes. Springer, Berlin, 2nd
+  edn.
+
+Jensen, M. C., 1978, “Some anomalous evidence regarding market eﬃciency,” Journal of Financial
+  Economics, 6(2–3), 95–101.
+
+Jeon, Y., T. H. McCurdy, and X. Zhao, 2022, “News as sources of jumps in stock returns: Evidence
+  from 21 million news articles for 9000 companies,” Journal of Financial Economics, 145(2), 1–17.
+
+
+
+
+                                                 45
+Jiang, C. X., T. Likitapiwat, and T. McInish, 2012, “Information content of earnings announce-
+  ments: Evidence from after-hours trading,” Journal of Financial and Quantitative Analysis,
+  47(6), 1303–1330.
+
+Jiang, G. J., and R. C. A. Oomen, 2008, “Testing for jumps when asset prices are observed with
+  noise – A ”swap variance” approach,” Journal of Econometrics, 144(2), 352–370.
+
+Kalnina, I., 2011, “Subsampling high frequency data,” Journal of Econometrics, 161(2), 262–283.
+
+Kalnina, I., and O. Linton, 2008, “Estimating quadratic variation consistently in the presence of
+  endogenous and diurnal measurement error,” Journal of Econometrics, 147(1), 47–59.
+
+Kolokolov, A., G. Livieri, and D. Pirino, 2022, “Testing for endogeneity of irregular sampling
+  schemes,” Working paper, https://dx.doi.org/10.2139/ssrn.4184342.
+
+Kolokolov, A., and R. Renò, 2024, “Jumps or staleness?,” Journal of Business and Economic
+  Statistics, 42(2), 516–532.
+
+Kyle, A. S., 1985, “Continuous auctions and insider trading,” Econometrica, 53(6), 1315–1335.
+
+Lahiri, S. N., 2003, Resampling methods for dependent data. Springer, Berlin, 1st edn.
+
+Lee, S. S., and P. A. Mykland, 2008, “Jumps in ﬁnancial markets: A new nonparametric test and
+  jump dynamics,” Review of Financial Studies, 21(6), 2535–2563.
+
+       , 2012, “Jumps in equilibrium prices and market microstructure noise,” Journal of Econo-
+  metrics, 168(2), 396–406.
+
+Li, J., V. Todorov, and G. Tauchen, 2017, “Jump regressions,” Econometrica, 85(1), 173–195.
+
+Li, Y., P. A. Mykland, E. Renault, L. Zhang, and X. Zheng, 2014, “Realized volatility when sampling
+  times are possibly endogenous,” Econometric Theory, 30(3), 580–605.
+
+Lou, D., C. Polk, and S. Skouras, 2019, “A tug of war: Overnight versus intraday expected returns,”
+  Journal of Financial Economics, 134(1), 192–213.
+
+Lyle, M. R., A. Stephan, and T. L. Yohn, 2021, “The diﬀerential market reaction to pre-open versus
+  post-close earnings announcements,” Working paper, Northwestern University.
+
+Mancini, C., 2009, “Non-parametric threshold estimation for models with stochastic diﬀusion coef-
+ ﬁcient and jumps,” Scandinavian Journal of Statistics, 36(2), 270–296.
+
+Martineau, C., 2022, “Rest in peace post-earnings announcement drift,” Critical Finance Review,
+ 11(3–4), 613–646.
+
+
+
+                                                46
+Michaely, R., A. Rubin, and A. Vedrashko, 2013, “Corporate governance and the timings of earnings
+ announcements,” Review of Finance, 18(6), 2003–2044.
+
+Mykland, P. A., and L. Zhang, 2016, “Between data cleaning and inference: Pre-averaging and
+ robust estimators of the eﬃcient price,” Journal of Econometrics, 194(2), 242–262.
+
+       , 2017, “Assessment of uncertainty in high frequency data: The observed asymptotic vari-
+  ance,” Econometrica, 85(1), 197–231.
+
+Oomen, R. C. A., 2006, “Comment on 2005 JBES invited address “Realized variance and market
+  microstructure noise” by Peter R. Hansen and Asger Lunde,” Journal of Business and Economic
+  Statistics, 24(2), 195–202.
+
+Patell, J. M., and M. A. Wolfson, 1984, “The intraday speed of adjustment of stock prices to
+  earnings and dividend announcements,” Journal of Financial Economics, 13(2), 223–252.
+
+Patton, A. J., and M. Verardo, 2012, “Does beta move with news? Firm-speciﬁc information ﬂows
+  and learning about proﬁtability,” Review of Financial Studies, 25(9), 2789–2839.
+
+Pedersen, L. H., 2015, Eﬃciently Ineﬃcient – How Smart Money Invests and Market Prices Are
+  Determined. Princeton University Press, Princeton, 1st edn.
+
+Podolskij, M., and M. Vetter, 2009a, “Bipower-type estimation in a noisy diﬀusion setting,” Stochas-
+  tic Processes and their Applications, 119(9), 2803–2831.
+
+       , 2009b, “Estimation of volatility functionals in the simultaneous presence of microstructure
+  noise and jumps,” Bernoulli, 15(3), 634–658.
+
+Politis, D. N., J. P. Romano, and M. Wolf, 1999, Subsampling. Springer, Berlin, 1st edn.
+
+Santosh, S., 2019, “The path of price discovery: Trade time vs clock time,” Working paper, Uni-
+  versity of Maryland.
+
+Savor, P., and M. Wilson, 2016, “Earnings announcements and systematic risk,” Journal of Finance,
+  71(1), 83–138.
+
+Todorov, V., G. Tauchen, and I. Grynkiv, 2014, “Volatility activity: Speciﬁcation and estimation,”
+  Journal of Econometrics, 178(1), 180–193.
+
+Todorov, V., and Y. Zhang, 2023, “Testing for anticipated changes in spot volatility at event times,”
+  Econometric Theory, Forthcoming.
+
+Vives, X., 1995, “The speed of information revelation in a ﬁnancial market mechanism,” Journal of
+  Economic Theory, 67(1), 178–204.
+
+
+                                                 47
+Wang, L., and E. J. Zajac, 2007, “Alliance or acquisition? A dyadic perspective on interﬁrm resource
+ combinations,” Strategic Management Journal, 28(13), 1291–1317.
+
+
+
+
+                                                48
+                         Figure 1: Examples of price jumps after earnings announcements.
+
+                 Panel A: MSFT 10/24/2013                                                Panel B: QCOM 11/02/2011.
+ 36.5                                                                       58
+
+
+
+   36                                                                       57
+
+
+
+ 35.5                                                                       56
+
+
+
+   35                                                                       55
+
+
+
+ 34.5                                                                       54
+               zEPS = 3.04                                                             zEPS = 0.48
+
+   34                                              Transaction price        53                                             Transaction price
+                                                   Market close                                                            Market close
+               P(t PA ) = 0.00                                                         P(t PA ) = 0.00
+                                                   Announcement                                                            Announcement
+ 33.5                                                                       52
+  3:45pm   A         4:30pm      5:00pm   5:30pm    6:00pm        6:30pm    3:45pm A         4:30pm      5:00pm   5:30pm    6:00pm        6:30pm
+Note. We plot the price from 3:45pm to 6:30pm for Microsoft on 10/24/2013 in Panel A, and Qualcomm on 11/02/2011 in Panel B,
+where the companies made an earnings announcement in the after-hours trading session. The ﬁgure also shows the market close and the
+announcement time. zEPS is the standardized unexpected earnings, and P (tPA ) is the P -value of the pre-averaging jump test statistic.
+
+
+
+
+                                                                       49
+                           Figure 2: Apple’s third-quarter 2020 earnings announcement on 07/30/2020.
+
+                             Panel A: 60-second horizon.                                                                                  Panel B: 100-millisecond horizon.
+                                                                                     10                                       392.5                                                                    0.9
+         402 zEPS = 3.539
+                                                                                     9                                                                                                                 0.8
+                   r EA
+                     1m
+                        = 3.293                                                                                                392
+         400                                                                         8
+                                                                                                                                                                                                       0.7
+
+
+
+
+                                                                                          Transaction count (1000s)
+
+
+
+
+                                                                                                                                                                                                             Transaction count (1000s)
+                   P(Jn) = 0.000
+                                                                                     7
+                                                                                                                              391.5                                                                    0.6
+         398
+                                                                                     6
+                                                                                                                                                                                                       0.5
+ Price
+
+
+
+
+                                                                                                                      Price
+         396                                                                         5                                         391
+                                                                                                                                                                                                       0.4
+                                                                                     4
+         394
+                                                                                                                              390.5                                                                    0.3
+                                                                                     3
+
+         392                                                                                                                                                                                           0.2
+                                                                                     2
+                                                                                                                               390
+                                                                Price                1                                                                                           Price                 0.1
+         390                                                    Transaction count                                                                                                Transaction count
+                                                                                      0                                       389.5                                                                    0
+               0            10       20        30       40           50             60                                                0       20           40          60            80              100
+                                   Seconds since announcement                                                                                      Milliseconds since announcement
+Note. The ﬁgure shows the post-announcement price (left y-axis) and cumulative transaction count in 1000s (right y-axis) for Apple’s
+third-quarter 2020 earnings announcement, which was released at 4:30pm on 07/30/2020. In Panel A, we plot the data from the ﬁrst 60
+seconds since the announcement, whereas Panel B zooms further in on the ﬁrst 100 milliseconds since the announcement.
+
+
+
+
+                                                                                                              50
+                                 Figure 3: Trading volume and bid-ask spread in the after-hours market.
+
+                           Panel A: Transaction count.                                                      Panel B: Bid-ask spread (in bps).
+                     25                                                                               60
+                                                                 Announcement                                                                    Announcement
+                                                                 No announcement                                                                 No announcement
+                                                                 Market close                         50                                         Market close
+                     20
+
+
+                                                                                                      40
+ Transaction count
+
+
+
+
+                     15
+
+
+
+
+                                                                                         Spread bps
+                                                                                                      30
+
+                     10
+                                                                                                      20
+
+
+                     5
+                                                                                                      10
+
+
+
+                     0                                                                                0
+                     -30   -20       -10        0        10           20           30                 -30     -20    -10        0        10           20           30
+                                    Minutes since announcement                                                      Minutes since announcement
+Note. In Panel A, we show the cross-sectional sample average trading volume (measured by transaction counts) for each ﬁve-second
+interval in a one-hour window centered around the earnings announcement, which occurs at time 0. In Panel B, we report the associated
+median bid-ask spread (in basis points), which is computed as Spreadbps = 10000×(ask−bid)/midquote, where midquote = (bid+ask)/2.
+As a control sample, for each announcement we select a random non-announcement date without replacement and calculate trading volume
+and Spreadbps on the corresponding time interval. The modal announcement time across companies is 4:05pm. Hence, the exchange
+typically closes ﬁve minutes prior to an announcement (highlighted by an orange circle).
+
+
+
+
+                                                                                    51
+                                                                          Figure 4: Pre-averaged realized variance and bipower variation.
+
+                                                            Panel A: Incremental return variation.                                                                                 Panel B: Incremental jump variation.
+                                                  2.5                                                                                                                    2.5
+ Pre-averaged realized variance (9:30am-4:00pm)
+
+
+
+
+                                                                                                                        Pre-averaged bipower variation (9:30am-6:30pm)
+                                                                Announcement                                                                                                          Announcement
+                                                                No announcement                                                                                                       No announcement
+                                                                45-degree line                                                                                                        45-degree line
+                                                   2                                                                                                                      2
+
+
+
+
+                                                  1.5                                                                                                                    1.5
+
+
+
+
+                                                   1                                                                                                                      1
+
+
+
+
+                                                  0.5                                                                                                                    0.5
+
+
+
+
+                                                   0                                                                                                                      0
+                                                        0          0.5            1        1.5           2       2.5                                                           0         0.5            1        1.5           2       2.5
+                                                                Pre-averaged realized variance (9:30am-6:30pm)                                                                        Pre-averaged realized variance (9:30am-6:30pm)
+Note. We show point estimates of the pre-averaged realized variance and pre-averaged bipower variation, converted to an annualized
+standard deviation. The axis label shows which estimator is plotted. In parenthesis, we further indicate for which part of the day
+high-frequency data are employed to calculate the estimate.
+
+
+
+
+                                                                                                                   52
+                             Figure 5: Distribution of the estimated jump proportion.
+
+                  Panel A: No announcement.                                                         Panel B: Announcement.
+        7                                                                            1.8
+                                                                5m                            5m
+                                                                 = 1/3               1.6       = 1/3
+        6                                                        = 1/2                         = 1/2
+                                                                 = 1/1                         = 1/1
+                                                                                     1.4
+        5
+                                                                                     1.2
+
+        4                                                                             1
+ f(x)
+
+
+
+
+                                                                              f(x)
+        3                                                                            0.8
+
+                                                                                     0.6
+        2
+                                                                                     0.4
+
+        1
+                                                                                     0.2
+
+        0                                                                             0
+        -0.4   -0.2    0       0.2      0.4      0.6      0.8            1            -0.4   -0.2      0     0.2      0.4     0.6   0.8    1
+                              Jump proportion                                                               Jump proportion
+Note. This ﬁgure shows kernel smoothed densities of the proportion of quadratic return variation from the jump component, which is
+estimated by: Jump proportion = 1 - Bipower variation / Realized variance. The latter are computed without pre-averaging if sampling
+at a 5-minute frequency
+                √       (5m) or with pre-averaging if sampling at the tick-by-tick frequency (rest). θ controls the size of the pre-averaging
+horizon kn = ⌊θ n⌋ for calculating pre-averaged returns. n is the number of tick-by-tick data. The sample is split into days without (in
+Panel A) and with earnings announcements (in Panel B).
+
+
+
+
+                                                                         53
+                            Figure 6: Jump frequency in the regular and extended trading session.
+
+                        Panel A: Regular trading session.                                     Panel B: Extended trading session.
+                   1                                                                     1
+
+                  0.9                                                                   0.9
+
+                  0.8                                                                   0.8     No announcement
+                                                                                                Announcement
+                  0.7                                                                   0.7
+ Jump frequency
+
+
+
+
+                                                                       Jump frequency
+                  0.6                                                                   0.6
+
+                  0.5                                                                   0.5
+
+                  0.4                                                                   0.4
+                        GOOG
+
+
+
+
+                        QCOM
+
+
+
+
+                                                                                              GOOG
+
+
+
+
+                                                                                              QCOM
+                  0.3                                                                   0.3
+                        CSCO
+
+
+
+
+                                                                                              CSCO
+                        AMZN
+
+
+
+
+                                                                                              AMZN
+                        NVDA
+
+
+
+
+                        ORCL
+
+
+
+
+                        AMAT
+
+
+
+
+                                                                                              NVDA
+
+
+
+
+                                                                                              ORCL
+
+
+
+
+                                                                                              AMAT
+                        MSFT
+
+
+
+
+                        SBUX
+
+
+
+
+                        ADBE
+
+
+
+
+                                                                                              MSFT
+
+
+
+
+                                                                                              SBUX
+
+
+
+
+                                                                                              ADBE
+                        EBAY
+
+
+
+
+                                                                                              EBAY
+                        AAPL
+                        NFLX
+
+
+
+
+                        ULTA
+
+
+
+
+                                                                                              AAPL
+                                                                                              NFLX
+
+
+
+
+                                                                                              ULTA
+                        TSLA
+
+
+
+
+                                                                                              TSLA
+                        INTC
+
+
+
+
+                        CMG
+
+
+
+
+                        GILD
+
+
+
+
+                                                                                              INTC
+
+
+
+
+                                                                                              CMG
+
+
+
+
+                                                                                              GILD
+                        CRM
+
+
+
+
+                                                                                              CRM
+                        AMD
+
+
+
+
+                                                                                              AMD
+                        NKE
+
+
+
+
+                                                                                              NKE
+                        IBM
+
+
+
+
+                                                                                              IBM
+                        DIS
+
+
+
+
+                                                                                              DIS
+                        MU
+
+
+
+
+                                                                                              MU
+                        FB
+
+
+
+
+                                                                                              FB
+                  0.2                                                                   0.2
+
+                  0.1                                                                   0.1
+
+                   0                                                                     0
+                                        Stock                                                                     Stock
+Note. We report the proportion of days where our noise-robust jump test is signiﬁcant during the regular trading session (9:30am–4:00pm)
+and extended trading session (9:30am–6:30pm). The latter is separated into days with and without earnings announcements.
+
+
+
+
+                                                                  54
+Figure 7: Jump frequency and post-announcement return against standardized earnings surprise.
+
+                                 Panel A: Jump frequency.                                                                                                   Panel B: Post-announcement return.
+                  0.96                                                                 6                                                         1.5                                                                     6
+                             Jump frequency                                                                                                                   One-minute post-announcement return
+                             Median zEPS                                                                                                                      Median zEPS
+                                                                                       5                                                           1                                                                     5
+
+
+
+
+                                                                                                           One-minute post-announcement return
+                  0.94
+                                                                                       4                                                                                                                                 4
+                                                                                                                                                 0.5
+ Jump frequency
+
+
+
+
+                                                                                       3                                                                                                                                 3
+
+
+
+
+                                                                                            Median z EPS
+
+
+
+
+                                                                                                                                                                                                                              Median z EPS
+                  0.92
+                                                                                                                                                   0
+                                                                                       2                                                                                                                                 2
+                                                                                                                                                 -0.5
+                  0.90
+                                                                                       1                      
