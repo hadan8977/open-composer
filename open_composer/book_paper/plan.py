@@ -786,8 +786,13 @@ def submit_plan(
     *,
     now: datetime,
     kill_switch_check: Callable[[], None] | None = None,
+    pace_seconds: float = 0.0,
 ) -> dict[str, Any]:
-    """Send the plan's CLS market orders.  Needs an unblocked plan and a verified paper client."""
+    """Send the plan's CLS market orders.  Needs an unblocked plan and a verified paper client.
+
+    ``pace_seconds`` spaces consecutive submissions (the CLI passes ``SUBMIT_PACE_SECONDS``): the
+    first v1.2 day builds the whole book (1,502 + 1,295 orders in the 10-05 dry run) and Alpaca
+    allows about 200 requests a minute per key; alpaca-py only retries a 429 three times."""
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import MarketOrderRequest
 
@@ -830,6 +835,10 @@ def submit_plan(
             time_in_force=TimeInForce.CLS,
             client_order_id=cid,
         )
+        if pace_seconds > 0 and (sent or failed):
+            import time as _time
+
+            _time.sleep(pace_seconds)
         try:
             result = client.submit_order(request)
         except Exception as exc:

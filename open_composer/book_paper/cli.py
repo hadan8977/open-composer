@@ -22,6 +22,8 @@ book_paper_app = typer.Typer(
     no_args_is_help=True, help="Short-capable book orders on Alpaca Paper."
 )
 console = Console()
+# about 176 orders a minute per account key (Alpaca allows about 200 requests a minute)
+SUBMIT_PACE_SECONDS = 0.34
 
 ACCOUNT_OPTION = typer.Option(..., "--account", help="quant1 or quant2")
 PRICES_FILE_OPTION = typer.Option(
@@ -155,7 +157,13 @@ def book_paper_submit(
     try:
         root, client, _target, plan = _build(account, decision_date, None, min_notional)
         write_plan_file(root, plan)
-        report = submit_plan(client, plan, now=now, kill_switch_check=_kill_switch_check(root))
+        report = submit_plan(
+            client,
+            plan,
+            now=now,
+            kill_switch_check=_kill_switch_check(root),
+            pace_seconds=SUBMIT_PACE_SECONDS,
+        )
     except (BookAccountError, BookEngineError) as exc:
         raise _fail(exc) from exc
     receipt = next_orders_receipt_path(root, account, plan.execution_date, now)

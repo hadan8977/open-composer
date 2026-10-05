@@ -1044,3 +1044,15 @@ def test_written_artifacts_never_contain_credentials(tmp_path: Path) -> None:
         assert creds.key_id not in text and creds.secret_key not in text, path.name
         assert not pattern.search(text), path.name
     assert load_plan_file(root / "reports/paper/book/quant1/plans/2026-09-18.json").status == "ok"
+
+
+def test_submit_paces_orders_when_asked(monkeypatch) -> None:
+    import time as time_module
+
+    naps: list[float] = []
+    monkeypatch.setattr(time_module, "sleep", lambda s: naps.append(s))
+    client = all_etb_client()
+    plan = plan_for(client=client)
+    report = submit_plan(client, plan, now=NOW, pace_seconds=0.34)
+    assert len(report["sent"]) == len(plan.orders)
+    assert naps == [0.34] * (len(plan.orders) - 1)  # no pause before the first order
