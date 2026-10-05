@@ -2027,3 +2027,12 @@
 - done_when: 数据坑 #55 改成已核实（附订单 ID 和状态），开始清单写明首单用的订单类型。
 - notes:
   - 2026-10-05 01:35 UTC 01:07 主审轮（Opus）登记：设计 P1 阶段 0 的成交口径时发现，收盘竞价单在本账户从没实测过。
+
+### T-20261005-20 v1.2 首单前：对照外部的通道失败清单（swiftward 34 条、Deflow）只读审模拟盘下单路径
+- status: running（2026-10-05 05:17 UTC 交互会话派出独立 Paseo 代理，Sonnet 5.5 high，协调码 R1005-CHA）
+- priority: 1
+- not_before: 无；10-07 18:45 UTC v1.2 首次提交前要用上结论
+- brief: reports/research/control/briefs/T-20261005-20.md
+- done_when: `reports/research/program/channel-audit-2026-10-06/audit.{md,json}`，10-05 12:00 UTC 前；交互会话审核后提交。首单前必须修的条目另开任务。
+- notes:
+  - 2026-10-05 05:17 UTC 交互会话（Opus）登记。来源：第二版计划第 3.5 节 P5 的第一项（T-83 调研 I-20261004-08 第 6 节第 2 项）。只读审计，不改代码，不调券商接口。
