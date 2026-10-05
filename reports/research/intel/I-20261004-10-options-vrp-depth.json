@@ -1,0 +1,1489 @@
+{
+ "meta": {
+  "id": "I-20261004-10",
+  "coordination_code": "R1004-T85",
+  "title": "Options VRP depth and Alpaca reality",
+  "written_utc": "2026-10-05",
+  "evidence_tier_legend": {
+   "1": "none",
+   "2": "backtest/in-sample only",
+   "3": "out-of-sample, post-publication or real trade data",
+   "4": "institutional self-reported live",
+   "5": "verifiable / independently reproduced"
+  },
+  "snapshots_dir": "sources/options-vrp-2026-10-04/",
+  "companion_md": "I-20261004-10-options-vrp-depth.md"
+ },
+ "verdict": {
+  "worth_as_project_6": "yes, narrow: phases 0-1 only, with stop lines",
+  "not_a_profit_engine": true,
+  "reasons": [
+   "index VRP is mostly equity beta (PUT beta 0.59, alpha -0.3%/yr t=-0.23 over 2008-2026)",
+   "Sharpe below buy-and-hold except in 2021-2026",
+   "Alpaca options history starts 2024-02 and has bars/trades only, no historical quotes",
+   "low statistical power: ~21 years to detect 2.4%/yr alpha at t=2"
+  ],
+  "next_action": "phase 0: nightly chain snapshots (needs owner approval for background budget); phase 1: free-data bid/ask replay of defined-risk SPY put spreads"
+ },
+ "evidence": [
+  {
+   "id": "E1",
+   "source": "Carr & Wu 2009 RFS",
+   "sample": "5 indexes + 35 stocks",
+   "numbers": "abstract only; numbers pending",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "ideas-carr-wu-2009.txt",
+   "note": "full text paywalled"
+  },
+  {
+   "id": "E2",
+   "source": "Bakshi & Kapadia 2003 RFS",
+   "sample": "S&P 500 index options",
+   "numbers": "delta-hedged gains below zero; worse at high vol (abstract)",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "ideas-bakshi-kapadia-2003.txt",
+   "note": "full text paywalled"
+  },
+  {
+   "id": "E3",
+   "source": "Bondarenko white paper via Cboe page",
+   "sample": "1986-06..2018-12",
+   "numbers": "PUT +1835% vs PPUT +708%; PUT monthly alpha 0.2%, beta 0.56, vol 9.95% (S&P 14.93%); skew -2.09 (S&P -0.81); VIX avg 19.3 vs RV 15.1",
+   "post_publication": "alpha not reproduced post-2008 (E4)",
+   "evidence_tier": 3,
+   "snapshot": "cboe-bondarenko-put-whitepaper.txt",
+   "note": "original not retrieved"
+  },
+  {
+   "id": "E4",
+   "source": "This project: Cboe index CSVs + French factors",
+   "sample": "2008-01..2026-10",
+   "numbers": "see index_stats / alpha",
+   "post_publication": "is the post-publication check",
+   "evidence_tier": 5,
+   "snapshot": "derived-cboe-index-stats.json; derived-put-beta-alpha.json; derived-analysis-script-*.py",
+   "note": "no spreads, no margin calls"
+  },
+  {
+   "id": "E5",
+   "source": "Israelov & Nielsen 2014 FAJ",
+   "sample": "1986-07..2013-12",
+   "numbers": "BXM excess 4.4%, vol 13.4%, Sharpe 0.33 vs S&P 5.4/18.5/0.29; maxDD -43.0 vs -61.7; beta 0.67 (up 0.63, down 0.78)",
+   "post_publication": "our BXM 2008-2026 Sharpe 0.39",
+   "evidence_tier": 3,
+   "snapshot": "israelov-fact-eight-myths.txt",
+   "note": ""
+  },
+  {
+   "id": "E6",
+   "source": "Israelov & Nielsen 2015 FAJ Covered Calls Uncovered",
+   "sample": "n/a",
+   "numbers": "short-vol exposure Sharpe ~1.0 but 10% of risk; reversal exposure ~25% of risk, no return",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "aqr-covered-calls-uncovered.txt",
+   "note": "abstract page only"
+  },
+  {
+   "id": "E7",
+   "source": "Broadie, Chernov, Johannes 2009 RFS",
+   "sample": "1987-08..2005-06 S&P futures options",
+   "numbers": "OTM put-writing returns statistically insignificant vs BS/Heston; straddles/delta-hedged less sampling uncertainty",
+   "post_publication": null,
+   "evidence_tier": 3,
+   "snapshot": "broadie-chernov-johannes.txt",
+   "note": ""
+  },
+  {
+   "id": "E8",
+   "source": "Santa-Clara & Saretto 2009 JFM",
+   "sample": "sample pending",
+   "numbers": "frictions and margin calls limit notional and force loss realization (abstract)",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "ideas-santa-clara-saretto-2009.txt",
+   "note": ""
+  },
+  {
+   "id": "E9",
+   "source": "Constantinides, Jackwerth, Perrakis 2009 RFS",
+   "sample": "1986-2006 1-month SPX options",
+   "numbers": "stochastic dominance violations survive costs/spreads (abstract)",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "nber-cjp-mispricing-sp500-options.txt",
+   "note": ""
+  },
+  {
+   "id": "E10",
+   "source": "Muravyev & Pearson 2020 RFS",
+   "sample": "equity options, high frequency",
+   "numbers": "effective spreads one-third smaller on average than conventional; five times smaller for timed trades",
+   "post_publication": null,
+   "evidence_tier": 3,
+   "snapshot": "muravyev-pearson.txt",
+   "note": ""
+  },
+  {
+   "id": "E11",
+   "source": "Dim, Eraker, Vilkov 2024",
+   "sample": "to 2023",
+   "numbers": "0DTE VRP exceptionally high before transaction costs, ~5x that of 11-22 DTE; 0DTE gamma does not propagate past volatility",
+   "post_publication": null,
+   "evidence_tier": 3,
+   "snapshot": "dim-eraker-vilkov.txt",
+   "note": "net-of-cost result not in the abstract"
+  },
+  {
+   "id": "E12",
+   "source": "Vilkov 0DTE Trading Rules (secondary summary)",
+   "sample": "2016-09..2024-01",
+   "numbers": "median returns mostly negative, Sharpe near 0, huge tails (secondary)",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "hulltactical-0dte-tiny-edge.txt",
+   "note": "primary SSRN 403, not read"
+  },
+  {
+   "id": "E13",
+   "source": "Beckmeyer, Branger, Gayda 2023",
+   "sample": "2021-02..2023-09 real retail trades",
+   "numbers": "retail loses $241k/day, $350k/day since 2022-05; ~60% costs; single-leg lose; median margin-adjusted return put spreads 3%, call spreads 3.3%",
+   "post_publication": null,
+   "evidence_tier": 3,
+   "snapshot": "beckmeyer.txt",
+   "note": ""
+  },
+  {
+   "id": "E14",
+   "source": "Amaya et al. 2025",
+   "sample": "proprietary Cboe data",
+   "numbers": "max market-maker gamma impact +3.3 annualized vol points vs sd of daily change 4.5",
+   "post_publication": null,
+   "evidence_tier": 3,
+   "snapshot": "cboe-gammasqueezes.txt",
+   "note": ""
+  },
+  {
+   "id": "E15",
+   "source": "Augustin, Cheng, Van den Bergen 2021 FAJ summary",
+   "sample": "2018-02-05",
+   "numbers": "short-vol ETPs lost >90% in one day",
+   "post_publication": null,
+   "evidence_tier": 3,
+   "snapshot": "cfa-volmageddon-failure-short-vol.txt",
+   "note": "XIV AUM figures come from a search summary, not a snapshot"
+  },
+  {
+   "id": "E16",
+   "source": "Yang 2024 PHBS working paper",
+   "sample": "variance swaps 1990-2023",
+   "numbers": "vol-managed: varswap Sharpe 1.54->1.76; VIX futures 0.61->0.78; SPX straddles incl margin 0.51->0.62; gains mostly in vol-spike periods",
+   "post_publication": null,
+   "evidence_tier": "2-3",
+   "snapshot": "yang-volatility-managed-volatility-trading.txt",
+   "note": "working paper"
+  },
+  {
+   "id": "E17",
+   "source": "Internal probe I-20260924-01",
+   "sample": "2024-03, 2025-04, 2026-06 samples",
+   "numbers": "last-trade IV spread wrong sign, lag-1 autocorr -0.15/-0.24; historical quotes 404",
+   "post_publication": null,
+   "evidence_tier": 5,
+   "snapshot": "(repo) reports/research/intel/I-20260924-01-alpaca-options-feasibility.md",
+   "note": ""
+  },
+  {
+   "id": "E18",
+   "source": "Concretum / Simplify blogs",
+   "sample": "n/a",
+   "numbers": "vendor claims Sharpe 0.48->1.00 with three filters",
+   "post_publication": null,
+   "evidence_tier": 2,
+   "snapshot": "(not snapshotted)",
+   "note": "not relied on"
+  }
+ ],
+ "index_stats": {
+  "windows": {
+   "full": {
+    "PUT": {
+     "start": "1991-08-07",
+     "end": "2026-10-02",
+     "n": 4969,
+     "cagr": 0.07617412116314037,
+     "vol": 0.1388307067099099,
+     "sharpe": 0.48631470907972024,
+     "maxdd": -0.3709404863646968,
+     "daily_skew": -0.6064419605172053,
+     "monthly_skew": -1.7707174591232921,
+     "worst_month": -0.17650159694874257,
+     "worst_day": -0.11463854368288084
+    },
+    "WPUT": {
+     "start": "2006-02-01",
+     "end": "2026-10-02",
+     "n": 5197,
+     "cagr": 0.04823659359976573,
+     "vol": 0.12079179443955747,
+     "sharpe": 0.3090573689586675,
+     "maxdd": -0.2861543322012483,
+     "daily_skew": -1.4012354127974875,
+     "monthly_skew": -1.410089795381289,
+     "worst_month": -0.1413984643032189,
+     "worst_day": -0.09639233370913192
+    },
+    "BXM": {
+     "start": "2002-03-25",
+     "end": "2026-10-02",
+     "n": 6169,
+     "cagr": 0.06230855280548875,
+     "vol": 0.1370790919990437,
+     "sharpe": 0.38621131954920856,
+     "maxdd": -0.40144295106766636,
+     "daily_skew": -0.7157166650886583,
+     "monthly_skew": -1.267084194566801,
+     "worst_month": -0.1501187093760944,
+     "worst_day": -0.12151833037132564
+    },
+    "BXMD": {
+     "start": "1986-06-23",
+     "end": "2026-10-02",
+     "n": 10142,
+     "cagr": 0.1079760520363855,
+     "vol": 0.15840435089497082,
+     "sharpe": 0.5384939956841959,
+     "maxdd": -0.47005734114479936,
+     "daily_skew": -1.0802623416316572,
+     "monthly_skew": -1.0336290531056627,
+     "worst_month": -0.19580588140768074,
+     "worst_day": -0.20066708735238437
+    },
+    "SPX": {
+     "start": "1975-01-03",
+     "end": "2026-10-02",
+     "n": 13045,
+     "cagr": 0.09611396007844641,
+     "vol": 0.17300118960796554,
+     "sharpe": 0.3774256412461522,
+     "maxdd": -0.5677538894035707,
+     "daily_skew": -0.6295622095203339,
+     "monthly_skew": -0.5253213367738501,
+     "worst_month": -0.2176304260013051,
+     "worst_day": -0.20466926070038904
+    },
+    "MKT": {
+     "start": "1926-07-02",
+     "end": "2026-08-31",
+     "n": 26314,
+     "cagr": 0.09745082338711719,
+     "vol": 0.17021832131413098,
+     "sharpe": 0.45468325097574114,
+     "maxdd": -0.8407399476860213,
+     "daily_skew": -0.2809151751136868,
+     "monthly_skew": 0.11493794873085696,
+     "worst_month": -0.29110374952995466,
+     "worst_day": -0.17410000000000003
+    }
+   },
+   "2007-2026(post PUT launch Nov2007 ->2008)": {
+    "PUT": {
+     "start": "2008-01-03",
+     "end": "2026-10-02",
+     "n": 4717,
+     "cagr": 0.07194408372899397,
+     "vol": 0.139481811245249,
+     "sharpe": 0.46813684340701944,
+     "maxdd": -0.37094048636469634,
+     "daily_skew": -0.7012624209027514,
+     "monthly_skew": -1.671815573022592,
+     "worst_month": -0.17650159694874257,
+     "worst_day": -0.11463854368288084
+    },
+    "WPUT": {
+     "start": "2008-01-03",
+     "end": "2026-10-02",
+     "n": 4714,
+     "cagr": 0.04185231289342606,
+     "vol": 0.1244369885399686,
+     "sharpe": 0.2800237299366295,
+     "maxdd": -0.2861543322012482,
+     "daily_skew": -1.3841505809330064,
+     "monthly_skew": -1.3810656387487463,
+     "worst_month": -0.1413984643032189,
+     "worst_day": -0.09639233370913192
+    },
+    "BXM": {
+     "start": "2008-01-03",
+     "end": "2026-10-02",
+     "n": 4714,
+     "cagr": 0.06113320851872439,
+     "vol": 0.14415955139016162,
+     "sharpe": 0.38731946833153735,
+     "maxdd": -0.401303614037129,
+     "daily_skew": -0.8078430974755636,
+     "monthly_skew": -1.355262822896537,
+     "worst_month": -0.1501187093760944,
+     "worst_day": -0.12151833037132564
+    },
+    "BXMD": {
+     "start": "2008-01-03",
+     "end": "2026-10-02",
+     "n": 4714,
+     "cagr": 0.08694592830967518,
+     "vol": 0.16942351785372983,
+     "sharpe": 0.49478451288641345,
+     "maxdd": -0.4580571755925614,
+     "daily_skew": -0.4006066612836165,
+     "monthly_skew": -0.8994652676893397,
+     "worst_month": -0.1559908466819222,
+     "worst_day": -0.11944568545395673
+    },
+    "SPX": {
+     "start": "2008-01-03",
+     "end": "2026-10-02",
+     "n": 4717,
+     "cagr": 0.09358526108174492,
+     "vol": 0.19821187577760999,
+     "sharpe": 0.4803095091415501,
+     "maxdd": -0.5325119544487129,
+     "daily_skew": -0.20036315929470203,
+     "monthly_skew": -0.5706620668744823,
+     "worst_month": -0.16942453444905492,
+     "worst_day": -0.1198177760563639
+    },
+    "MKT": {
+     "start": "2008-01-03",
+     "end": "2026-08-31",
+     "n": 4694,
+     "cagr": 0.11594861773340437,
+     "vol": 0.2012001968496458,
+     "sharpe": 0.5764920401953801,
+     "maxdd": -0.5100302440484644,
+     "daily_skew": -0.2577212991590695,
+     "monthly_skew": -0.5321354124931613,
+     "worst_month": -0.17206216016541764,
+     "worst_day": -0.12
+    }
+   },
+   "2016-2026": {
+    "PUT": {
+     "start": "2016-01-05",
+     "end": "2026-10-02",
+     "n": 2702,
+     "cagr": 0.08484805169346199,
+     "vol": 0.12524081667227815,
+     "sharpe": 0.5328969664087826,
+     "maxdd": -0.2892564440524441,
+     "daily_skew": -1.487534336350314,
+     "monthly_skew": -1.5915984843072193,
+     "worst_month": -0.13416548735184863,
+     "worst_day": -0.11463854368288084
+    },
+    "WPUT": {
+     "start": "2016-01-05",
+     "end": "2026-10-02",
+     "n": 2699,
+     "cagr": 0.041768585923430024,
+     "vol": 0.11882281613260977,
+     "sharpe": 0.213929672404619,
+     "maxdd": -0.25917244678306695,
+     "daily_skew": -1.6473961790458842,
+     "monthly_skew": -1.3892610922474313,
+     "worst_month": -0.10280788177339939,
+     "worst_day": -0.09639233370913192
+    },
+    "BXM": {
+     "start": "2016-01-05",
+     "end": "2026-10-02",
+     "n": 2699,
+     "cagr": 0.07981417143554204,
+     "vol": 0.12849712110322017,
+     "sharpe": 0.4864214651758956,
+     "maxdd": -0.30257423441222586,
+     "daily_skew": -1.5143792758569155,
+     "monthly_skew": -1.5929358299341942,
+     "worst_month": -0.14903995548457472,
+     "worst_day": -0.12151833037132564
+    },
+    "BXMD": {
+     "start": "2016-01-05",
+     "end": "2026-10-02",
+     "n": 2699,
+     "cagr": 0.10812624968970885,
+     "vol": 0.1502010403453711,
+     "sharpe": 0.6085932690071623,
+     "maxdd": -0.32333836908271696,
+     "daily_skew": -0.8468754696237693,
+     "monthly_skew": -0.9040890936676904,
+     "worst_month": -0.13322939497330022,
+     "worst_day": -0.11944568545395673
+    },
+    "SPX": {
+     "start": "2016-01-05",
+     "end": "2026-10-02",
+     "n": 2702,
+     "cagr": 0.13361689397804088,
+     "vol": 0.17819863913911718,
+     "sharpe": 0.6663816662256816,
+     "maxdd": -0.33924959024260604,
+     "daily_skew": -0.3716752607413299,
+     "monthly_skew": -0.4136850105406704,
+     "worst_month": -0.12511932083595667,
+     "worst_day": -0.1198177760563639
+    },
+    "MKT": {
+     "start": "2016-01-05",
+     "end": "2026-08-31",
+     "n": 2679,
+     "cagr": 0.15349017576484592,
+     "vol": 0.18358773471069317,
+     "sharpe": 0.7458252332634443,
+     "maxdd": -0.3421628093489293,
+     "daily_skew": -0.416682211765267,
+     "monthly_skew": -0.3823396021896528,
+     "worst_month": -0.1318237589748058,
+     "worst_day": -0.12
+    }
+   },
+   "2021-2026": {
+    "PUT": {
+     "start": "2021-01-05",
+     "end": "2026-10-02",
+     "n": 1443,
+     "cagr": 0.1119559494833755,
+     "vol": 0.10547900538472058,
+     "sharpe": 0.7509879642973029,
+     "maxdd": -0.16007678302857575,
+     "daily_skew": 0.3601722933716943,
+     "monthly_skew": -0.904293453560765,
+     "worst_month": -0.05905956946815316,
+     "worst_day": -0.05673540434573465
+    },
+    "WPUT": {
+     "start": "2021-01-05",
+     "end": "2026-10-02",
+     "n": 1443,
+     "cagr": 0.061075691089502504,
+     "vol": 0.10205065562440019,
+     "sharpe": 0.31404685017427014,
+     "maxdd": -0.19816138917262505,
+     "daily_skew": -1.4711277807735883,
+     "monthly_skew": -1.474334571300431,
+     "worst_month": -0.08807688245854906,
+     "worst_day": -0.062066988389316124
+    },
+    "BXM": {
+     "start": "2021-01-05",
+     "end": "2026-10-02",
+     "n": 1443,
+     "cagr": 0.10317915247463216,
+     "vol": 0.10976248626731676,
+     "sharpe": 0.6536680851742418,
+     "maxdd": -0.1821222408036044,
+     "daily_skew": 0.42352913518641283,
+     "monthly_skew": -0.7848883553968424,
+     "worst_month": -0.06567781818643437,
+     "worst_day": -0.05653250556283884
+    },
+    "BXMD": {
+     "start": "2021-01-05",
+     "end": "2026-10-02",
+     "n": 1443,
+     "cagr": 0.12166621676825806,
+     "vol": 0.13569198862614856,
+     "sharpe": 0.6748273547248009,
+     "maxdd": -0.22021545341037674,
+     "daily_skew": 0.09711396693155609,
+     "monthly_skew": -0.698183575340328,
+     "worst_month": -0.08043593816541628,
+     "worst_day": -0.059174604326828306
+    },
+    "SPX": {
+     "start": "2021-01-05",
+     "end": "2026-10-02",
+     "n": 1443,
+     "cagr": 0.13709018021980324,
+     "vol": 0.16500975708013893,
+     "sharpe": 0.6643703511730678,
+     "maxdd": -0.25425096319028695,
+     "daily_skew": 0.12813175160745877,
+     "monthly_skew": -0.35512691605947083,
+     "worst_month": -0.0933957016434892,
+     "worst_day": -0.05974961641947041
+    },
+    "MKT": {
+     "start": "2021-01-05",
+     "end": "2026-08-31",
+     "n": 1420,
+     "cagr": 0.1433892784714379,
+     "vol": 0.17304696057594132,
+     "sharpe": 0.6702852333492061,
+     "maxdd": -0.2555594287444415,
+     "daily_skew": 0.10668845432068016,
+     "monthly_skew": -0.3610610997532031,
+     "worst_month": -0.09414063914863613,
+     "worst_day": -0.05900000000000005
+    }
+   },
+   "2006-2007 pre": {
+    "PUT": {
+     "start": "2007-01-04",
+     "end": "2007-12-31",
+     "n": 250,
+     "cagr": 0.09499582768059556,
+     "vol": 0.10779211124830546,
+     "sharpe": 0.46840026791968803,
+     "maxdd": -0.07028051400543167,
+     "daily_skew": -0.5596046092360585,
+     "monthly_skew": -0.41703838085422446,
+     "worst_month": -0.013538356906793947,
+     "worst_day": -0.02892366050260775
+    },
+    "WPUT": {
+     "start": "2006-02-02",
+     "end": "2007-12-31",
+     "n": 481,
+     "cagr": 0.11573391940320166,
+     "vol": 0.07659635063076778,
+     "sharpe": 0.8396785925043807,
+     "maxdd": -0.05530655391120465,
+     "daily_skew": -0.9976669724654033,
+     "monthly_skew": -0.6834566486708004,
+     "worst_month": -0.03500042892682531,
+     "worst_day": -0.0278044103547459
+    },
+    "BXM": {
+     "start": "2006-02-02",
+     "end": "2007-12-31",
+     "n": 481,
+     "cagr": 0.09122578610255938,
+     "vol": 0.09023666235230668,
+     "sharpe": 0.4791235183668967,
+     "maxdd": -0.07776645465087717,
+     "daily_skew": -0.7191487445165768,
+     "monthly_skew": -1.192415081929249,
+     "worst_month": -0.02114974646801626,
+     "worst_day": -0.02910794702790631
+    },
+    "BXMD": {
+     "start": "2006-02-02",
+     "end": "2007-12-31",
+     "n": 481,
+     "cagr": 0.10746003638981261,
+     "vol": 0.11626279553141072,
+     "sharpe": 0.5220889212618732,
+     "maxdd": -0.08835250359442348,
+     "daily_skew": -0.5336181412716607,
+     "monthly_skew": -1.0293063485619782,
+     "worst_month": -0.03184688577947026,
+     "worst_day": -0.033582641571463845
+    },
+    "SPX": {
+     "start": "2006-02-02",
+     "end": "2007-12-31",
+     "n": 481,
+     "cagr": 0.07349471311989975,
+     "vol": 0.13438003732840675,
+     "sharpe": 0.2367179981433525,
+     "maxdd": -0.10090406670287255,
+     "daily_skew": -0.3703553743652886,
+     "monthly_skew": -0.6080314233679706,
+     "worst_month": -0.044043423821142014,
+     "worst_day": -0.03472543242926229
+    },
+    "MKT": {
+     "start": "2006-02-02",
+     "end": "2007-12-31",
+     "n": 481,
+     "cagr": 0.09165098806161653,
+     "vol": 0.1354139352299823,
+     "sharpe": 0.3598104522857882,
+     "maxdd": -0.09739279122715516,
+     "daily_skew": -0.32591734045890924,
+     "monthly_skew": -0.6723060958479693,
+     "worst_month": -0.04376333699638568,
+     "worst_day": -0.03400000000000003
+    }
+   }
+  },
+  "notes": "daily returns; Sharpe vs French RF; PUT before 2008 sparse so not reported; MKT = French Mkt-RF+RF to 2026-08-31; indexes to 2026-10-02; no spreads or margin calls"
+ },
+ "episodes": {
+  "2018-02 XIV/Volmageddon": {
+   "PUT": {
+    "ret": -0.07642258197093188,
+    "trough": -0.07642258197093188
+   },
+   "WPUT": {
+    "ret": -0.09189189189189195,
+    "trough": -0.09189189189189195
+   },
+   "BXM": {
+    "ret": -0.07719781401953607,
+    "trough": -0.07719781401953607
+   },
+   "BXMD": {
+    "ret": -0.08513075536685388,
+    "trough": -0.08513075536685388
+   },
+   "SPX": {
+    "ret": -0.10159526884265557,
+    "trough": -0.10159526884265557
+   },
+   "MKT": {
+    "ret": -0.09847342470041909,
+    "trough": -0.09847342470041909
+   },
+   "VIX": {
+    "start": 11.08,
+    "peak": 37.32,
+    "end": 33.46
+   }
+  },
+  "2020-03 COVID": {
+   "PUT": {
+    "ret": -0.28917191139303233,
+    "trough": -0.28917191139303233
+   },
+   "WPUT": {
+    "ret": -0.25295451256572277,
+    "trough": -0.25295451256572277
+   },
+   "BXM": {
+    "ret": -0.30226339043484995,
+    "trough": -0.30226339043484995
+   },
+   "BXMD": {
+    "ret": -0.3233383690827172,
+    "trough": -0.3233383690827172
+   },
+   "SPX": {
+    "ret": -0.3392495902426059,
+    "trough": -0.3392495902426059
+   },
+   "MKT": {
+    "ret": -0.3421628093489295,
+    "trough": -0.3421628093489295
+   },
+   "VIX": {
+    "start": 14.38,
+    "peak": 82.69,
+    "end": 61.59
+   }
+  },
+  "2024-08 yen unwind": {
+   "PUT": {
+    "ret": -0.04416799249957393,
+    "trough": -0.04416799249957393
+   },
+   "WPUT": {
+    "ret": -0.051210470916662865,
+    "trough": -0.051210470916662865
+   },
+   "BXM": {
+    "ret": -0.050666026139763676,
+    "trough": -0.050666026139763676
+   },
+   "BXMD": {
+    "ret": -0.06298172208764585,
+    "trough": -0.06298172208764585
+   },
+   "SPX": {
+    "ret": -0.08485142574816484,
+    "trough": -0.08485142574816484
+   },
+   "MKT": {
+    "ret": -0.088920930952884,
+    "trough": -0.088920930952884
+   },
+   "VIX": {
+    "start": 13.19,
+    "peak": 38.57,
+    "end": 38.57
+   }
+  },
+  "2025-04 tariff": {
+   "PUT": {
+    "ret": -0.1504463223985667,
+    "trough": -0.1504463223985667
+   },
+   "WPUT": {
+    "ret": -0.12266570670026544,
+    "trough": -0.12266570670026544
+   },
+   "BXM": {
+    "ret": -0.1546361999697654,
+    "trough": -0.1546361999697654
+   },
+   "BXMD": {
+    "ret": -0.1742786536625317,
+    "trough": -0.1742786536625317
+   },
+   "SPX": {
+    "ret": -0.18902207791150916,
+    "trough": -0.18902207791150916
+   },
+   "MKT": {
+    "ret": -0.1955759703586637,
+    "trough": -0.1955759703586637
+   },
+   "VIX": {
+    "start": 15.27,
+    "peak": 52.33,
+    "end": 52.33
+   }
+  },
+  "2008-09..10 GFC": {
+   "PUT": {
+    "ret": -0.3219108124119052,
+    "trough": -0.3219108124119052
+   },
+   "WPUT": {
+    "ret": -0.2704714640198511,
+    "trough": -0.2704714640198511
+   },
+   "BXM": {
+    "ret": -0.3237811316067325,
+    "trough": -0.3237811316067325
+   },
+   "BXMD": {
+    "ret": -0.36767180803997435,
+    "trough": -0.36767180803997435
+   },
+   "SPX": {
+    "ret": -0.39886554286170806,
+    "trough": -0.39886554286170806
+   },
+   "MKT": {
+    "ret": -0.4036578579311543,
+    "trough": -0.4036578579311543
+   },
+   "VIX": {
+    "start": 25.66,
+    "peak": 80.86,
+    "end": 80.86
+   }
+  },
+  "2022 bear (full yr)": {
+   "PUT": {
+    "ret": -0.07658545324256538,
+    "trough": -0.13596055503078064
+   },
+   "WPUT": {
+    "ret": -0.14254849466910902,
+    "trough": -0.18885914236062185
+   },
+   "BXM": {
+    "ret": -0.11365378977516172,
+    "trough": -0.17005502559592278
+   },
+   "BXMD": {
+    "ret": -0.16142440943420733,
+    "trough": -0.21689557635669088
+   },
+   "SPX": {
+    "ret": -0.19442824232404154,
+    "trough": -0.24949750114347335
+   },
+   "MKT": {
+    "ret": -0.1995555485041467,
+    "trough": -0.24912305710646288
+   },
+   "VIX": {
+    "start": 17.22,
+    "peak": 36.45,
+    "end": 21.67
+   }
+  }
+ },
+ "beta_alpha_monthly": {
+  "2008-2026": {
+   "PUT": {
+    "n": 224,
+    "alpha_ann": -0.002998521620967476,
+    "beta": 0.5880201952991103,
+    "alpha_t": -0.22958476203032735,
+    "ex_ret_ann": 0.06066356840812394,
+    "mkt_ex_ann": 0.10826514214653493,
+    "corr": 0.8644334313281565
+   },
+   "WPUT": {
+    "n": 224,
+    "alpha_ann": -0.024603437888313474,
+    "beta": 0.5107019315025491,
+    "alpha_t": -1.8612409788037365,
+    "ex_ret_ann": 0.03068777932031995,
+    "mkt_ex_ann": 0.10826514214653493,
+    "corr": 0.8277900965546917
+   },
+   "BXM": {
+    "n": 224,
+    "alpha_ann": -0.015174951167035381,
+    "beta": 0.6092894704021353,
+    "alpha_t": -1.1928968077639137,
+    "ex_ret_ann": 0.05078985995443879,
+    "mkt_ex_ann": 0.10826514214653493,
+    "corr": 0.8774367096931209
+   },
+   "BXMD": {
+    "n": 224,
+    "alpha_ann": -0.0062236084529192675,
+    "beta": 0.7738783645471631,
+    "alpha_t": -0.6105955617151868,
+    "ex_ret_ann": 0.07756044268890733,
+    "mkt_ex_ann": 0.10826514214653493,
+    "corr": 0.9453590501497207
+   }
+  },
+  "2009-10..2026-08": {
+   "PUT": {
+    "n": 204,
+    "alpha_ann": -0.0005173347889162099,
+    "beta": 0.5545142116410601,
+    "alpha_t": -0.041396053669385896,
+    "ex_ret_ann": 0.0740242407071228,
+    "mkt_ex_ann": 0.13442680806220733,
+    "corr": 0.8561144904456782
+   },
+   "WPUT": {
+    "n": 204,
+    "alpha_ann": -0.028258726564687787,
+    "beta": 0.49771273757646767,
+    "alpha_t": -2.3145698131140118,
+    "ex_ret_ann": 0.038647208079619806,
+    "mkt_ex_ann": 0.13442680806220733,
+    "corr": 0.8357503044349288
+   },
+   "BXM": {
+    "n": 204,
+    "alpha_ann": -0.010151041084780167,
+    "beta": 0.572516775660641,
+    "alpha_t": -0.7997313811248018,
+    "ex_ret_ann": 0.06681056162934662,
+    "mkt_ex_ann": 0.13442680806220733,
+    "corr": 0.8598270764772163
+   },
+   "BXMD": {
+    "n": 204,
+    "alpha_ann": -0.0030355741720992134,
+    "beta": 0.7371599294063322,
+    "alpha_t": -0.3063938284164741,
+    "ex_ret_ann": 0.0960584821693561,
+    "mkt_ex_ann": 0.13442680806220733,
+    "corr": 0.9408934725351561
+   }
+  },
+  "2016-2026": {
+   "PUT": {
+    "n": 128,
+    "alpha_ann": -0.008323139771833308,
+    "beta": 0.5341880003672158,
+    "alpha_t": -0.5609493328469741,
+    "ex_ret_ann": 0.061692702736551835,
+    "mkt_ex_ann": 0.13106966547405458,
+    "corr": 0.8726257612426196
+   },
+   "WPUT": {
+    "n": 128,
+    "alpha_ann": -0.04636745516271975,
+    "beta": 0.5079150277886825,
+    "alpha_t": -2.8026776807408984,
+    "ex_ret_ann": 0.020204797618787976,
+    "mkt_ex_ann": 0.13106966547405458,
+    "corr": 0.8360197629301678
+   },
+   "BXM": {
+    "n": 128,
+    "alpha_ann": -0.015831136609535258,
+    "beta": 0.5620303050300588,
+    "alpha_t": -0.9716107002857103,
+    "ex_ret_ann": 0.057833987457035406,
+    "mkt_ex_ann": 0.13106966547405458,
+    "corr": 0.863469533110854
+   },
+   "BXMD": {
+    "n": 128,
+    "alpha_ann": -0.009189836574875498,
+    "beta": 0.7279484121378824,
+    "alpha_t": -0.7365622875314768,
+    "ex_ret_ann": 0.08622211828640594,
+    "mkt_ex_ann": 0.13106966547405458,
+    "corr": 0.9452190548399017
+   }
+  },
+  "2021-2026": {
+   "PUT": {
+    "n": 68,
+    "alpha_ann": 0.025097065822254447,
+    "beta": 0.4413779918599848,
+    "alpha_t": 1.4225213463806399,
+    "ex_ret_ann": 0.07372565527694422,
+    "mkt_ex_ann": 0.11017447709562253,
+    "corr": 0.8557305366371163
+   },
+   "WPUT": {
+    "n": 68,
+    "alpha_ann": -0.029044241313432122,
+    "beta": 0.498589611364025,
+    "alpha_t": -1.3486645836674018,
+    "ex_ret_ann": 0.02588760840390901,
+    "mkt_ex_ann": 0.11017447709562253,
+    "corr": 0.8371476343997294
+   },
+   "BXM": {
+    "n": 68,
+    "alpha_ann": 0.014509567926525859,
+    "beta": 0.47449105968400423,
+    "alpha_t": 0.7091727197947107,
+    "ex_ret_ann": 0.06678637231375886,
+    "mkt_ex_ann": 0.11017447709562253,
+    "corr": 0.837573095415794
+   },
+   "BXMD": {
+    "n": 68,
+    "alpha_ann": 0.010049931495930182,
+    "beta": 0.6958684387460238,
+    "alpha_t": 0.5967437295877055,
+    "ex_ret_ann": 0.08671687286212064,
+    "mkt_ex_ann": 0.11017447709562253,
+    "corr": 0.9390475446677331
+   }
+  }
+ },
+ "timing_descriptive": {
+  "meta": {
+   "span": "2009-10..2026-08",
+   "months": 204,
+   "backwardation_months": 17,
+   "caveat": "in-sample descriptive, no significance test"
+  },
+  "results": {
+   "PUT": {
+    "all": {
+     "n": 204,
+     "mean_ex_month": 0.006134658005944554,
+     "vol_month": 0.027703363541294598,
+     "sharpe_ann": 0.7670938106498677,
+     "worst": -0.13606719832123593,
+     "skew": -1.13754246402154
+    },
+    "contango(ratio>1)": {
+     "n": 187,
+     "mean_ex_month": 0.00608877757753629,
+     "vol_month": 0.022538426566054037,
+     "sharpe_ann": 0.9358303774552598,
+     "worst": -0.09063884182050586,
+     "skew": -1.0352719163766169
+    },
+    "backwardation(ratio<=1)": {
+     "n": 17,
+     "mean_ex_month": 0.006639342718435457,
+     "vol_month": 0.06190141895501463,
+     "sharpe_ann": 0.3715481522499442,
+     "worst": -0.13606719832123593,
+     "skew": -0.824340919660694
+    },
+    "vrp>0": {
+     "n": 174,
+     "mean_ex_month": 0.00649445542783858,
+     "vol_month": 0.027795268923475922,
+     "sharpe_ann": 0.8093986641739019,
+     "worst": -0.13606719832123593,
+     "skew": -1.156620932955261
+    },
+    "vrp<=0": {
+     "n": 30,
+     "mean_ex_month": 0.004047832958959196,
+     "vol_month": 0.027536003121849346,
+     "sharpe_ann": 0.5092280324377246,
+     "worst": -0.07772909389170335,
+     "skew": -1.0980418876825675
+    },
+    "timed(contango only, else cash)": {
+     "n": 204,
+     "mean_ex_month": 0.005581379446074932,
+     "sharpe_ann": 0.8934626907451618,
+     "worst": -0.09063884182050586
+    },
+    "span": [
+     "2009-09-30",
+     "2026-08-31"
+    ]
+   },
+   "WPUT": {
+    "all": {
+     "n": 204,
+     "mean_ex_month": 0.0031887944238758424,
+     "vol_month": 0.025482741642318302,
+     "sharpe_ann": 0.4334819254984068,
+     "worst": -0.10490998310399724,
+     "skew": -1.3060955156733258
+    },
+    "contango(ratio>1)": {
+     "n": 187,
+     "mean_ex_month": 0.0032446000124382547,
+     "vol_month": 0.023542946950700784,
+     "sharpe_ann": 0.477409398538732,
+     "worst": -0.09037941423043416,
+     "skew": -1.323188445238237
+    },
+    "backwardation(ratio<=1)": {
+     "n": 17,
+     "mean_ex_month": 0.0025749329496893114,
+     "vol_month": 0.042368075370722055,
+     "sharpe_ann": 0.21053185238747252,
+     "worst": -0.10490998310399724,
+     "skew": -1.0538922270941964
+    },
+    "vrp>0": {
+     "n": 174,
+     "mean_ex_month": 0.0038760663464536263,
+     "vol_month": 0.024219945066610477,
+     "sharpe_ann": 0.55438142630809,
+     "worst": -0.10490998310399724,
+     "skew": -1.361436244983394
+    },
+    "vrp<=0": {
+     "n": 30,
+     "mean_ex_month": -0.000797382727075302,
+     "vol_month": 0.03204547735971015,
+     "sharpe_ann": -0.08619671230790754,
+     "worst": -0.08506061791161523,
+     "skew": -0.9967934831200256
+    },
+    "timed(contango only, else cash)": {
+     "n": 204,
+     "mean_ex_month": 0.0029742166780684,
+     "sharpe_ann": 0.45682375769326306,
+     "worst": -0.09037941423043416
+    },
+    "span": [
+     "2009-09-30",
+     "2026-08-31"
+    ]
+   },
+   "BXM": {
+    "all": {
+     "n": 204,
+     "mean_ex_month": 0.005517120457809596,
+     "vol_month": 0.028478425645555278,
+     "sharpe_ann": 0.6710998046969153,
+     "worst": -0.15094166645396223,
+     "skew": -1.0680227764624215
+    },
+    "contango(ratio>1)": {
+     "n": 187,
+     "mean_ex_month": 0.005500797749481994,
+     "vol_month": 0.02271907889919711,
+     "sharpe_ann": 0.8387365725993456,
+     "worst": -0.0794200460076041,
+     "skew": -0.8646765729194854
+    },
+    "backwardation(ratio<=1)": {
+     "n": 17,
+     "mean_ex_month": 0.00569667024941322,
+     "vol_month": 0.06549403226616513,
+     "sharpe_ann": 0.30130752267171423,
+     "worst": -0.15094166645396223,
+     "skew": -0.7878949552531488
+    },
+    "vrp>0": {
+     "n": 174,
+     "mean_ex_month": 0.005749147334520055,
+     "vol_month": 0.02861868920397327,
+     "sharpe_ann": 0.6958959729158685,
+     "worst": -0.15094166645396223,
+     "skew": -1.0638580222812741
+    },
+    "vrp<=0": {
+     "n": 30,
+     "mean_ex_month": 0.0041713645728889285,
+     "vol_month": 0.02808940590891569,
+     "sharpe_ann": 0.5144299171413393,
+     "worst": -0.0794200460076041,
+     "skew": -1.167279235350628
+    },
+    "timed(contango only, else cash)": {
+     "n": 204,
+     "mean_ex_month": 0.005042397937025161,
+     "sharpe_ann": 0.8012437421797977,
+     "worst": -0.0794200460076041
+    },
+    "span": [
+     "2009-09-30",
+     "2026-08-31"
+    ]
+   }
+  }
+ },
+ "power": {
+  "by_index": {
+   "PUT": {
+    "resid_vol_ann": 0.05539758275728099,
+    "alpha_ann": -0.002998521620967476,
+    "years_to_detect_alpha_0.024_at_t2": 21.311751217706913,
+    "years_to_detect_alpha_0.01_at_t2": 122.75568701399185
+   },
+   "BXM": {
+    "resid_vol_ann": 0.053957412583138756,
+    "alpha_ann": -0.015174951167035381,
+    "years_to_detect_alpha_0.024_at_t2": 20.218072032410145,
+    "years_to_detect_alpha_0.01_at_t2": 116.45609490668241
+   },
+   "WPUT": {
+    "resid_vol_ann": 0.05606862172120309,
+    "alpha_ann": -0.024603437888313474,
+    "years_to_detect_alpha_0.024_at_t2": 21.831182928578936,
+    "years_to_detect_alpha_0.01_at_t2": 125.74761366861466
+   }
+  },
+  "sharpe_0_5_years_at_t2": 16.0,
+  "sharpe_0_3_years_at_t2": 44.4
+ },
+ "risk_reduction": [
+  {
+   "method": "defined-risk spreads / iron condors",
+   "evidence": "E13 (real retail trades, not OOS); Alpaca allows only defined risk",
+   "tier": 3,
+   "verdict": "candidate; test net of spreads in phase 1"
+  },
+  {
+   "method": "term-structure / IV-RV timing",
+   "evidence": "own descriptive test + E16",
+   "tier": "2-3",
+   "verdict": "improves tail not mean; 17 backwardation months; preregister + placebo"
+  },
+  {
+   "method": "volatility-managed sizing",
+   "evidence": "E16 working paper",
+   "tier": "2-3",
+   "verdict": "only counts if Sharpe beats vol-matched benchmark (owner rule)"
+  },
+  {
+   "method": "delta hedging",
+   "evidence": "E2, E7",
+   "tier": 2,
+   "verdict": "diagnostic for significance, not a return source; not before phase 2"
+  },
+  {
+   "method": "position cap by max loss / equity",
+   "evidence": "E8",
+   "tier": 2,
+   "verdict": "needs margin-path replay under Alpaca max-loss rule; ratio to be preregistered"
+  },
+  {
+   "method": "hedge reversal exposure of covered calls",
+   "evidence": "E6 (AQR self-reported)",
+   "tier": 2,
+   "verdict": "needs shares; deferred"
+  }
+ ],
+ "alpaca": {
+  "levels": {
+   "L1": "covered call, cash-secured put",
+   "L2": "L1 + long call/put",
+   "L3": "spreads, straddles, butterflies, iron condors, other multi-leg (docs table lists only spreads; support page wider)",
+   "naked_short": "not supported"
+  },
+  "orders": {
+   "multi_leg": "order_class=mleg with legs[] (symbol, ratio_qty, side, position_intent); roll supported",
+   "types": "market, limit; stop/stop_limit single-leg only",
+   "tif": "day or gtc",
+   "restrictions": "whole contracts, no extended hours, no fractional/notional"
+  },
+  "index_options": "docs: Broker API, contact CSM, $0.50/contract extra; support FAQ: not in initial launch; availability for personal paper account unverified",
+  "data": {
+   "history_start": "2024-02",
+   "content": "bars and trades; no historical quotes in official index; user report 2026-07-07 and own probe 2026-09-24 both 404",
+   "feeds": {
+    "basic_indicative": "free; quotes not real OPRA; trades delayed 15 min; 200 calls/min",
+    "algo_trader_plus": "OPRA; 10,000 calls/min; price not in docs snapshot (pending)"
+   },
+   "snapshots": "latest quote + trade + greeks + IV via snapshots/chain endpoints",
+   "known_gaps": "missing morning session 2024-02-26 and 2024-03-15 (forum); contracts need status=inactive; AAPL/1AAPL duplicate roots"
+  },
+  "fees": {
+   "commission_trading_api": "0",
+   "orf_per_contract": 0.015,
+   "occ_per_contract": 0.025,
+   "cat_per_equivalent_share": 3e-06,
+   "taf_option_per_contract": 0,
+   "sec_fee_rate_sells": 2.06e-05,
+   "approx_round_trip_per_contract_usd": 0.08,
+   "source": "BrokFeeSched.pdf fetched 2026-10-05",
+   "warning": "older search-summary rates (ORF 0.02685, TAF 0.00279) do not match the current PDF"
+  },
+  "exercise_assignment": {
+   "auto_exercise_itm": ">= $0.01 ITM; liquidated within 1h before expiry if buying power insufficient",
+   "dne": "contact support",
+   "assignment_notification": "not on websocket; poll REST non-trade activities; paper NTAs appear next day",
+   "early_assignment": "possible, esp. near ex-dividend"
+  },
+  "paper": {
+   "default_balance": 100000,
+   "fills": "against NBBO when marketable; 10% random partial fills; order size not checked against NBBO size",
+   "not_simulated": "regulatory fees, dividends, impact, queue, price improvement, borrow fees",
+   "options_specific_fill_rules": "undocumented; test on paper"
+  },
+  "margin": {
+   "rule": "maintenance = worst-case theoretical loss per expiry, max across expiries, premiums ignored",
+   "csp": "buying power must cover underlying value minus premium",
+   "min_equity_margin_short": "2000 USD for stock margin/short",
+   "margin_rate_default": "6.25%"
+  },
+  "own_account_options_level": "unverified"
+ },
+ "minimum_depth": [
+  "contract-level bid/ask with executable-price fills at 100%/50%/mid of spread",
+  "implied-vol surface per expiry (SVI/spline), no-arbitrage checks; VRP = IV - forecast RV; delta-based strike selection",
+  "greeks, scenario P&L, margin-path replay under Alpaca max-loss rule",
+  "American exercise, early assignment, ex-dividend, expiry handling",
+  "preregistered state filter with placebo; report per event with event count",
+  "sample covering 2018-02 and 2020-03; Alpaca 2024-02+ alone cannot certify",
+  "simulated reference distribution (BCJ method) and straddle/delta-hedged diagnostics",
+  "power statement: minimum detectable alpha",
+  "benchmarks: vol-matched SPY, PUT/BXM, cash; judge Sharpe uplift not raw return"
+ ],
+ "close_price_backtest_failures": [
+  "stale last-trade closes for OTM options",
+  "flat-IV Black-Scholes ignores skew",
+  "no spread cost",
+  "no margin calls/forced liquidation",
+  "no assignment/dividend",
+  "no widening of spreads in shocks",
+  "index series carry no costs",
+  "too few shock events"
+ ],
+ "tools": [
+  {
+   "repo": "vollib/py_vollib",
+   "stars": 437,
+   "license": "MIT",
+   "pushed_at": "2026-05-29",
+   "archived": false,
+   "desc": "",
+   "lang": "Python"
+  },
+  {
+   "repo": "vollib/py_lets_be_rational",
+   "stars": 74,
+   "license": null,
+   "pushed_at": "2026-05-29",
+   "archived": false,
+   "desc": "",
+   "lang": "Python"
+  },
+  {
+   "repo": "marcdemers/py_vollib_vectorized",
+   "stars": 162,
+   "license": "MIT",
+   "pushed_at": "2024-12-02",
+   "archived": false,
+   "desc": "A vectorized implementation of py_vollib, that supports numpy arrays and pandas Series and",
+   "lang": "Python"
+  },
+  {
+   "repo": "lballabio/QuantLib",
+   "stars": 7649,
+   "license": "NOASSERTION",
+   "pushed_at": "2026-10-03",
+   "archived": false,
+   "desc": "The QuantLib C++ library",
+   "lang": "C++"
+  },
+  {
+   "repo": "lballabio/QuantLib-SWIG",
+   "stars": 402,
+   "license": "NOASSERTION",
+   "pushed_at": "2026-10-03",
+   "archived": false,
+   "desc": "QuantLib wrappers to other languages",
+   "lang": "SWIG"
+  },
+  {
+   "repo": "rgaveiga/optionlab",
+   "stars": 572,
+   "license": "GPL-3.0",
+   "pushed_at": "2026-09-09",
+   "archived": false,
+   "desc": "A Python library for evaluating option trading strategies.",
+   "lang": "Python"
+  },
+  {
+   "repo": "brndnmtthws/thetagang",
+   "stars": 2741,
+   "license": "AGPL-3.0",
+   "pushed_at": "2026-10-02",
+   "archived": false,
+   "desc": "ThetaGang is an IBKR bot for collecting money",
+   "lang": "Python"
+  },
+  {
+   "repo": "nautechsystems/nautilus_trader",
+   "stars": 29621,
+   "license": "LGPL-3.0",
+   "pushed_at": "2026-10-04",
+   "archived": false,
+   "desc": "Production-grade Rust-native trading engine with deterministic event-driven architecture",
+   "lang": "Rust"
+  },
+  {
+   "repo": "alpacahq/alpaca-py",
+   "stars": 1541,
+   "license": "Apache-2.0",
+   "pushed_at": "2026-10-02",
+   "archived": false,
+   "desc": "The Official Python SDK for Alpaca API",
+   "lang": "Python"
+  },
+  {
+   "repo": "goldspanlabs/optopsy",
+   "stars": 1487,
+   "license": "AGPL-3.0",
+   "pushed_at": "2026-06-30",
+   "archived": false,
+   "desc": "A nimble options research and backtesting library for Python",
+   "lang": "Python"
+  },
+  {
+   "repo": "Lumiwealth/lumibot",
+   "stars": 2103,
+   "license": "GPL-3.0",
+   "pushed_at": "2026-10-03",
+   "archived": false,
+   "desc": "AI agents that actually place the trade. 12 brokers, real backtests, stocks options future",
+   "lang": "Python"
+  },
+  {
+   "repo": "sirnfs/OptionSuite",
+   "stars": 299,
+   "license": "MIT",
+   "pushed_at": "2026-06-01",
+   "archived": false,
+   "desc": "Option and stock backtester / live trader",
+   "lang": "Python"
+  },
+  {
+   "repo": "cutemarkets/cutebacktests",
+   "stars": 173,
+   "license": "MIT",
+   "pushed_at": "2026-05-30",
+   "archived": false,
+   "desc": "Backtesting framework for modern option strategies",
+   "lang": "Python"
+  },
+  {
+   "repo": "ynouri/pysabr",
+   "stars": 626,
+   "license": "MIT",
+   "pushed_at": "2022-04-21",
+   "archived": false,
+   "desc": "SABR model Python implementation",
+   "lang": "Jupyter Notebook"
+  },
+  {
+   "repo": "bashtage/arch",
+   "stars": 1586,
+   "license": "NOASSERTION",
+   "pushed_at": "2026-09-27",
+   "archived": false,
+   "desc": "ARCH models in Python",
+   "lang": "Python"
+  },
+  {
+   "repo": "OpenGamma/Strata",
+   "stars": 971,
+   "license": "Apache-2.0",
+   "pushed_at": "2026-10-01",
+   "archived": false,
+   "desc": " Open source analytics and market risk library from OpenGamma",
+   "lang": "Java"
+  },
+  {
+   "repo": "domokane/FinancePy",
+   "stars": 3170,
+   "license": "GPL-3.0",
+   "pushed_at": "2026-10-04",
+   "archived": false,
+   "desc": "A Python Finance Library that focuses on the pricing and risk-management of Financial Deri",
+   "lang": "Python"
+  },
+  {
+   "repo": "ArturSepp/VanillaOptionPricers",
+   "stars": 14,
+   "license": "MIT",
+   "pushed_at": "2026-10-03",
+   "archived": false,
+   "desc": "Numba-vectorised Black-Scholes-Merton and Bachelier prices, Greeks, and implied-volatility",
+   "lang": "Python"
+  }
+ ],
+ "tool_notes": {
+  "use": "py_vollib (MIT) for IV/greeks; write own SVI and chain replayer in polars; alpaca-py (Apache-2.0) for snapshots",
+  "reference_only": [
+   "optopsy (AGPL)",
+   "thetagang (AGPL)",
+   "lumibot (GPL)",
+   "optionlab (GPL)"
+  ],
+  "read_only_readme": "optopsy only; others not code-reviewed"
+ },
+ "phases": [
+  {
+   "phase": 0,
+   "name": "own quote history",
+   "effort": "0.5 day",
+   "data": "Alpaca chain/snapshots (Indicative), Cboe VIX family",
+   "ends_with": ">=20 trading days completeness stats and cross-check vs DoltHub/OptionsDX",
+   "stop": "median relative spread difference >30% => shape-only use",
+   "needs": "owner approval for background budget"
+  },
+  {
+   "phase": 1,
+   "name": "free-data replay of defined-risk SPY spreads",
+   "effort": "1-2 weeks local CPU",
+   "data": "Kaggle SPY 2010-2023, OptionsDX free slices, DoltHub (patchy: 7/17 sampled days present), Cboe indexes",
+   "ends_with": "net Sharpe vs vol-matched SPY, alpha/beta, 2018/2020/2022 losses, margin path, power statement",
+   "stop": "alpha-vs-beta t<1 in >=3 subsamples, or 2020-03 drawdown >1.5x vol-matched equity"
+  },
+  {
+   "phase": 2,
+   "name": "surface, greeks, filters",
+   "effort": "3-4 weeks",
+   "data": "phase 1 + phase 0 snapshots",
+   "ends_with": "filter vs no-filter by event, placebo, simulated reference distribution",
+   "entry": "phase 1 stop line not triggered"
+  },
+  {
+   "phase": 3,
+   "name": "paper forward",
+   "effort": ">=60 trading days",
+   "data": "Alpaca paper L3 mleg SPY spreads",
+   "ends_with": "slippage vs mid, partial fills, assignments, margin path, account correlation",
+   "needs": "owner authorization to run a new strategy on the paper account"
+  }
+ ],
+ "not_do": [
+  "naked short options (unsupported)",
+  "0DTE selling as main line",
+  "short-VIX ETPs",
+  "conclusions from close/last-trade/theory prices",
+  "conclusions from Alpaca 2024-02+ data alone",
+  "SPX/index options planning",
+  "re-doing free-tier IV spread/skew signal (NO-GO 09-24)",
+  "high-frequency delta hedging before phase 2",
+  "live trading"
+ ],
+ "gaps": [
+  "Carr-Wu, Bakshi-Kapadia, Santa-Clara-Saretto, CJP: abstract only",
+  "Bondarenko and Vilkov originals not retrieved",
+  "AQR Pathetic Protection / Still Not Cheap: search summaries only",
+  "Algo Trader Plus price, paper multi-leg fill rules, own account options level, OptionsDX/Kaggle terms: pending",
+  "open-source libraries not code-reviewed except optopsy README",
+  "no option backtest was run"
+ ]
+}

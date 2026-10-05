@@ -1,0 +1,60 @@
+SOURCE: https://forum.alpaca.markets/t/missing-morning-session-in-historical-option-trades-2024-02-26-and-2024-03-15-opra/19028
+FETCHED_UTC: 2026-10-04T18:52Z
+HTTP: 200
+---
+
+ Missing morning session in historical option trades — 2024-02-26 and 2024-03-15 (OPRA) - Alpaca Market Data - Alpaca Community Forum
+ New to Alpaca? Create your Trading API account today! Sign Up Today
+ Missing morning session in historical option trades — 2024-02-26 and 2024-03-15 (OPRA)
+ Alpaca Market Data
+ YUHANG_WANG
+ June 6, 2026, 7:08pm
+ 1
+Hi team,
+I’ve been backfilling historical single-stock option trades via GET /v1beta1/options/trades (OPRA feed) and found two trading days where the morning session appears to be missing from the source data. The historical option data regularly opens (13:30 UTC EDT / 14:30 UTC EST); these two start hours late and have anomalously low volume:
+Date
+First trade (UTC)
+2/26/2024
+~15:13
+3/15/2024
+~15:52
+Reproducible example (NVDA $900 call, expiring 2024-03-15 — an ATM contract that traded heavily all day):
+GET https://data.alpaca.markets/v1beta1/options/trades
+?symbols=NVDA240315C00900000
+&start=2024-03-15T00:00:00Z
+&end=2024-03-16T00:00:00Z
+&limit=10000&sort=asc
+The first returned trade is at 2024-03-15T15:57:07Z; there are zero trades before ~15:57 UTC.
+A morning-window query (start=2024-03-15T13:30:00Z&end=2024-03-15T15:00:00Z) returns 0 trades.
+For comparison, the same contract / adjacent dates (e.g. 2024-03-14) return trades from 13:30 UTC as expected.
+Since the regular session opened at 13:30 UTC (EDT) and this was an actively traded ATM contract on a triple-witching expiration day, the absence of any morning prints looks like a gap in the historical trade data rather than genuine no-trade activity. The pattern is consistent across all contracts on those two dates, not just this one.
+ Related topics
+ Topic
+ Replies
+ Views
+ Activity
+ Incorrect historical Trades info using SDK
+ Alpaca Market Data
+ 5
+ 722
+ September 7, 2023
+ How Could There Be Trades at 1AM NY Time?
+ Alpaca Market Data
+ 0
+ 432
+ February 25, 2022
+ No mkt data after noon EST in historical mode
+ Alpaca Market Data
+ 1
+ 499
+ June 23, 2022
+ Please remove daily data on 2025-01-09 (non-trading day)
+ Alpaca Market Data
+ 2
+ 123
+ January 13, 2025
+ Getting 15-minute and 20-minute intervals when request 5-minute interval data
+ Alpaca Market Data
+ 1
+ 1155
+ April 25, 2022

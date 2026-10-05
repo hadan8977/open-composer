@@ -1,0 +1,2114 @@
+SOURCE: https://english.phbs.pku.edu.cn/uploadfile/2024/0530/20240530092144610.pdf
+FETCHED_UTC: 2026-10-05T04:37Z
+FORMAT: pdftotext, truncated 190KB
+---
+                               PHBS WORKING PAPER SERIES
+
+
+                            Volatility-Managed Volatility Trading
+
+                                         Aoxiang Yang
+                                        Peking University
+
+
+                                            June 2024
+
+                                    Working Paper 20240604
+
+                                             Abstract
+We develop volatility risk premium (VRP) timing strategies that involve trading two assets: a
+volatility asset and a risk-free asset. We first analyze a benchmark portfolio with a constant
+negative weight on volatility assets each month. Then, we show that a volatility-managed portfolio,
+which reduces selling of volatility assets during periods of heightened volatility, considerably
+enhances long-run performance. Our findings are robust across three types of volatility assets -
+variance swaps, VIX futures, and S&P 500 straddles - and in the presence of transaction costs. An
+ex-post study indicates that timing portfolios yield positive alpha and reduce exposure relative to
+constant-weight portfolios, mostly during volatility-spike periods rather than stable periods. Our
+findings help differentiate asset pricing theories on risk-return relations in the volatility asset
+market.
+
+
+
+JEL Classification: G0, G1, G3
+
+
+
+
+ Peking University HSBC Business School
+ University Town, Nanshan District
+ Shenzhen 518055, China
+             Volatility-Managed Volatility Trading
+
+                                        Aoxiang Yang†
+
+
+                                       March 19, 2024
+
+                                             Abstract
+
+         We develop volatility risk premium (VRP) timing strategies that involve
+     trading two assets: a volatility asset and a risk-free asset. We ﬁrst analyze a
+     benchmark portfolio with a constant negative weight on volatility assets each
+     month. Then, we show that a volatility-managed portfolio, which reduces sell-
+     ing of volatility assets during periods of heightened volatility, considerably
+     enhances long-run performance. Our ﬁndings are robust across three types of
+     volatility assets - variance swaps, VIX futures, and S&P 500 straddles - and in
+     the presence of transaction costs. An ex-post study indicates that timing portfo-
+     lios yield positive alpha and reduce exposure relative to constant-weight port-
+     folios, mostly during volatility-spike periods rather than stable periods. Our
+     ﬁndings help differentiate asset pricing theories on risk-return relations in the
+     volatility asset market.
+
+
+
+
+†
+    Aoxiang Yang is with Peking University. Email: aoxiang.yang@phbs.pku.edu.cn.
+
+
+
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+1 Introduction
+
+It’s well known that sellers of volatility assets earn positive premiums (see e.g., Carr and
+Madan (1998), Coval and Shumway (2001), Bakshi and Kapadia (2003), Ang, Hodrick,
+Xing, and Zhang (2006), Carr and Wu (2009), Bollerslev and Todorov (2011), Kelly, Pástor,
+and Veronesi (2016)). We in this paper ask the following questions: How do long-run
+investors harvest volatility risk premiums (VRP)? Is there a simple, efﬁcient way for long-
+run investors to time VRP?
+
+   To answer these questions, we consider portfolios similar to Moreira and Muir (2017)
+and make a modiﬁcation by replacing the stock market index with one of three volatility
+assets: a one-month variance swap contract, a one-month constant-maturity VIX futures
+portfolio, and a one-month constant-maturity S&P 500 ATM straddle portfolio. For each
+asset, we adhere to the longest period of available price data: 1990-2023 for variance
+swaps, 2004-2023 for VIX futures, and 1996-2022 for straddles. We source our data from
+standard resources such as CBOE and OptionMetrics. Each month t, a portfolio weight of
+
+
+                                           wti = −cft ,                                (1.1)
+
+
+is assigned to the volatility asset, and the remaining capital is allocated to risk-free as-
+sets. Here, c represents a positive scaling constant that is chosen to match the portfolio’s
+unconditional return standard deviation with that of the S&P 500 index. The term ft rep-
+resents a timing factor that is expected to demonstrate a positive relationship with the
+conditional one-month VRP. In other words, we sell more (less) volatility assets when
+conditional VRP is higher (lower).
+
+   Our benchmark portfolio puts a constant weight on the variance asset each month,
+i.e., ft = const. We discover that by setting the constant weight close to -7% for variance
+swaps, -22% for VIX futures, and -12% for straddles, our portfolio achieves a similar level
+
+
+
+                                                1
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+of return standard deviation as the S&P 500 index. Although the benchmark portfolio
+returns exhibit larger negative skewness, kurtosis, and maximum drawdowns than S&P
+500, these statistics remain at reasonable and acceptable levels. The benchmark portfo-
+lios exhibit signiﬁcantly better long-run performance relative to S&P 500, as indicated by
+higher Sharpe ratios, excess returns, and factor-model alphas.
+
+   Next, we show that the benchmark portfolio’s performance can be signiﬁcantly en-
+hanced by carefully selecting ft . In the same spirit of Moreira and Muir (2017), we set
+the weight proportional to the inverse of stock market volatility. Speciﬁcally, we consider
+three commonly used volatility measures in the literature: realized volatility (RV), option-
+implied volatility (VIX), and a GARCH(1,1) conditional one-month volatility forecast:
+
+                                    ft = 1/RVt ,
+
+                                    ft = 1/V IXt ,                                       (1.2)
+
+                                    ft = 1/GARCH(1, 1)t .
+
+   The choice of setting the weight equal to the inverse of volatility is motivated by recent
+literature (Bekaert and Hoerova (2014), Cheng (2019), Cheng (2020), Aït-Sahalia, Kara-
+man, and Mancini (2020), Lochstoer and Muir (2022), Yang (2022)), which emphasizes
+that in the data an increase in market volatility is typically associated with a statistically
+signiﬁcant decrease in the conditional one-month VRP. Cheng (2019) speciﬁcally refers
+to this negative relation as a "low-premium response puzzle" as established asset pric-
+ing theories with time-varying volatility, volatility-of-volatility, disaster risk, and jumps
+(Bollerslev, Tauchen, and Zhou (2009), Drechsler and Yaron (2011), Wachter (2013), Dew-
+Becker, Giglio, Le, and Rodriguez (2017)) all predict a positive relation.
+
+   We ﬁrst use OLS predictive regressions to conﬁrm that this negative relation robustly
+exists both in-sample and out-of-sample during the longest periods 1990-2023. We then
+follow Moreira and Muir (2017) to use the monthly time-series of three volatility measures
+
+
+
+                                                2
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+to sort the following month’s variance swap returns into ﬁve portfolios. We conﬁrm that,
+as we move from the "lowest volatility" portfolio to "highest volatility" portfolio, overall,
+average variance swap returns tend to weaken, standard deviation tends to rise, and
+Sharpe ratio tends to fall in magnitude.
+
+   We ﬁnd that all three volatility-managed portfolios deﬁned above improve perfor-
+mance. Speciﬁcally, for variance swaps, we ﬁnd that our timing portfolio, when com-
+pared to constant-weight portfolios, enhances the Sharpe ratio from 1.54 to a maximum
+of 1.76. Additionally, we observe an increase in excess return and Carhart (1997) 4-factor
+alpha, as well as a reduction in negative skewness, kurtosis, and maximum drawdowns.
+
+   While our ﬁndings are based on using VIX-squared as an approximation for variance
+swap prices (see, e.g., Carr and Madan (1998)), we demonstrate the robustness of our
+ﬁndings by utilizing actual quoted OTC variance swap price data obtained from Dew-
+Becker, Giglio, Le, and Rodriguez (2017). Furthermore, we show that our ﬁndings are not
+driven by speciﬁc historical periods, as the improved performance holds true even when
+considering the recent 15-year period.
+
+   For VIX futures, we consistently ﬁnd that our timing portfolio, compared to constant-
+weight portfolios, leads to an improvement in the Sharpe ratio from 0.61 to a maximum
+of 0.78. Furthermore, we observe an increase in excess return and Carhart (1997) 4-factor
+alpha, as well as a reduction in negative skewness, kurtosis, and maximum drawdowns.
+
+   In our previous consideration of variance swaps and VIX futures, we made the sim-
+plifying assumption that there is no transation cost such as bid-ask spreads and margin
+requirements. First, we show that introducing bid-ask spreads may reduce the perfor-
+mance of volatility-managed portfolios and constant-weight portfolios, but is unlikely to
+affect the relative performance between the two. Second, given that investors have access
+to the short VIX futures ETFs, the lack of margin requirements is not unreasonable. In
+the case of straddles, we account for margin requirements. Speciﬁcally, we assume that
+
+
+                                                3
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+the margin requirement for short selling an S&P 500 ATM straddle is equal to 100% of the
+selling proceeds plus 20% of the current S&P 500 level, as in Johnson (2017).
+
+   The inclusion of margin requirements typically results in a reduction in the magni-
+tude of returns and Sharpe ratios. Despite this fact, we consistently ﬁnd that our timing
+portfolios, compared to constant-weight portfolios, improve the Sharpe ratio from 0.51 to
+a maximum of 0.62. Additionally, we observe an increase in excess return and Carhart
+(1997) 4-factor alpha, as well as a drop in negative skewness, kurtosis, and maximum
+drawdowns.
+
+   Our volatility-managed portfolios work under a similar logic as that in Moreira and
+Muir (2017). In their study, the volatility managed portfolios yield signiﬁcant improve-
+ments relative to market buy-and-hold, primarily driven by the observed tendency for
+the one-month equity premium to decline following periods of increased volatility dur-
+ing economic downturns. Their strategy reduces the weight on the market index in such
+times, helping to mitigate further losses or expedite the recovery of values from economic
+downturns. As a result, the drawdowns experienced during recessions become smaller.
+Our analysis replaces equity premium with variance risk premium, and the stock market
+index with volatility assets.
+
+   So far, our timing portfolios have been volatility-managed. This approach offers sev-
+eral advantages. Firstly, it is straightforward to implement. Secondly, it is independent of
+speciﬁc econometric models and avoids potential model misspeciﬁcation. Johnson (2017)
+and Cheng (2019), among others, also ﬁnd that their respective timing strategies, based
+on ex-ante VRP measures, can improve performance relative to S&P 500 or unconditional
+constant-weight volatility portfolios. To differentiate our approach from existing liter-
+ature, we consider a fourth strategy that uses a VAR model of (RVt , V IXt ) to estimate
+ex-ante one-month VRP and then sets weight proportional to it:
+
+                                                     Et [RVt+1 ]
+                                 ft = V RPt ≡ 1 −                .                     (1.3)
+                                                      V IXt
+
+                                                4
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+   We do ﬁnd that such econometrics-based VRP measures typically help improve port-
+folio performance. However, this strategy also exhibits two disadvantages. Firstly, it
+typically underperforms compared to timing portfolios based on volatility measures, es-
+pecially the GARCH volatility forecasts, which consistently prove to be a robust timing
+factor relative to others. Secondly, it shows less robustness across different historical peri-
+ods and volatility assets.
+
+   Last but not least, we examine which market conditions have contributed the most
+to the performance improvements in our timing portfolios. To this end, we partition our
+data into two regimes: a high-volatility regime and a low-volatility regime. We classify
+a month t as belonging to the high-volatility (low-volatility) regime if realized volatility
+(RVt ) exceeds (falls below) the 80th percentile of its unconditional distribution, approxi-
+mately 20. Within each regime, we run various timing portfolio excess returns onto con-
+temporanous constant-weight portfolio excess returns.
+
+   Our exercise is similar to Moreira and Muir (2017) which decompose portfolio perfor-
+mance into expansions and recessions, and ﬁnd that volatility-managed portfolios reduce
+exposure to MKT more greatly in recessions. Our choice of low versus high-volatility
+regimes is motivated by Yang (2022) which shows that the negative volatility-VRP rela-
+tion puzzle is predominantly observed in high-volatility periods, not necessarily reces-
+sions. We ﬁnd that various timing portfolios produce positive alpha and help reduce
+beta/exposure only during high-volatility regimes, rather than in low-volatility regimes.
+
+   We further provide detailed regime-conditional predictability evidence in the Appendix.
+We ﬁnd that, aligning with the view in Yang (2022), only "persistent" or "structural" volatil-
+ity spikes predict negative realized VRPs in the next month, while transient volatility
+jumps and small volatility shocks in stable periods both predict positive VRPs. Our ﬁnd-
+ings thus help differentiate theories on the puzzling negative risk-return relations in the
+volatility asset market. Cheng (2019) suggests the puzzle is possibly driven by changes
+
+
+
+                                                5
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+in hedging demand induced by microstructure frictions or government’s implicit guaran-
+tees. Lochstoer and Muir (2022) explain the puzzle with extrapolative volatility expecta-
+tions. Yang (2022) attributes the puzzle to investors’ slow learning about structural breaks.
+Our ﬁndings seem to support the channel of Yang (2022).
+
+   However, we note that the above analysis is conducted in an ex-post context. In an
+ex-post examination of portfolio performance, we ﬁnd that the enhancement is driven by
+periods of persistent large volatility spikes. But there does not necessarily exist an easy
+way to leverage this pattern to enhance ex-ante timing strategy performance, due to two
+fundamental challenges.
+
+   Firstly, ex-ante, it is difﬁcult to predict the arrival of a large volatility spike, which
+results in large negative realized VRPs. During low-volatility periods, where volatility
+and VRP exhibit small movement, these large negative realized VRPs stand out as outliers
+that can swiftly attenuate away the positive relations between volatility and next-month
+realized VRPs (that should have been seen). In fact, this is the main reason why we
+did not observe an increasing pattern of VRPs with volatility levels across the ﬁrst several
+portfolios when following Moreira and Muir (2017) to sort portfolios based on the current
+month’s volatility levels. Indeed, this unpredictability is also precisely the reason why
+selling volatility on average earns positive premiums.
+
+   Secondly, even if a volatility spike has occurred, it is hard to determine upfront whether
+the spike observed in the current month is a transient jump that will revert in the next
+month (resulting in a positive realized VRP) or a persistent structural break that will en-
+dure for an extended period (resulting in a negative realized VRP). This distinction can
+only be made ex-post. Therefore, in practice, we prefer to adopt simpler timing strategies.
+
+   Literature. Our research is related to three literatures. First, it is related to the factor
+timing literature (Moreira and Muir (2017), Cederburg, ODoherty, Wang, and Yan (2020),
+Barroso and Detzel (2021), Haddad, Kozak, and Santosh (2020)). A difference is that we
+
+
+                                                6
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+time variance risk premiums rather than premiums such as equity and value premiums,
+etc. Another important difference is that Moreira and Muir (2017)’s volatility managed
+portfolio works when the timing factor is realized volatility, which negatively predicts
+next-month returns. Recent work by Martin (2017) shows that implied volatility instead
+tends to positively predict next-month returns. In contrast, the volatility-VRP relation
+is negative regardless of how to measure volatility, and thus our timing portfolios work
+more or less equally well whether the timing factor is realized, implied, or conditional
+volatility.
+
+    Other papers that consider VRP timing strategies include, for instance, Dörries, Korn,
+and Power (2024), Egloff, Leippold, and Wu (2010), Johnson (2017) and Cheng (2019).
+Our research differs in several aspects. Firstly, we are the ﬁrst to consider all three types of
+variance assets. Secondly, we are the ﬁrst to study (model-free) volatility-managed, rather
+than VRP-managed, portfolios. Lastly, we show our timing portfolios are robust in both
+older and recent subsamples. We also show our timing portfolios improve performance
+primarily in volatility-spike periods. These two ﬁndings are not inconsistent with each
+other. As both older and recent subsamples contain volatility spikes, they both generate
+performance improvement.
+
+    Second, our research relates to a literature that studies intertemporal risk-return rela-
+tions in volatility asset markets (Bekaert and Hoerova (2014), Cheng (2019), Cheng (2020),
+Aït-Sahalia, Karaman, and Mancini (2020), Lochstoer and Muir (2022), Yang (2022)). This
+literature has recently emphasized a puzzling negative volatility-VRP relation, inconsis-
+tent with leading asset pricing theories. Our timing strategies precisely exploit this puz-
+zle, and our ex-post regime-conditional performance analysis helps differentiate compet-
+ing theories on the puzzle.
+
+    Third, our research is related to the large volatility risk premium literature. Among
+others, Dew-Becker, Giglio, Le, and Rodriguez (2017) study variance swaps; Eraker and
+
+
+
+                                                 7
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Wu (2017) and Cheng (2019) study VIX futures; Carr and Madan (1998), Coval and Shumway
+(2001), Carr and Wu (2009), Eraker (2021), and Eraker and Yang (2022) study S&P 500
+straddles and options; Johnson (2017) and Lochstoer and Muir (2022) study all three as-
+sets. Ang, Hodrick, Xing, and Zhang (2006) and Bansal, Kiku, Shaliastovich, and Yaron
+(2014) estimate VRP in the cross-section of stock returns. Our constant-weight portfolio
+by construction has the same Sharpe ratio as the original volatility asset returns. We ﬁnd
+numbers consistent with those reported in the papers that originally study each particular
+asset, lending credibility to our results.
+
+
+
+2 Timing Strategy
+
+
+2.1 Equity Premium Timing
+
+
+To time equity premium, Moreira and Muir (2017) use a strategy consisting of two assets:
+the market index and a risk-free asset. Each month t, the weight in the market is
+
+                                                       c
+                                           wtmkt =        ,                               (2.1)
+                                                      RVt
+
+where c is a scaling positive constant whose value is set such that the portfolio has the
+same unconditional return variance as the market index. RVt is market return realized
+variance. Note that portfolio excess return (relative to risk-free rate) is equal to
+
+                          rt+1 − rtf = wtmkt rt+1
+                                              mkt
+                                                  + (1 − wtmkt )rtf − rtf
+                                               mkt
+                                     = wtmkt (rt+1 − rtf )                                (2.2)
+                                          c
+                                     =         mkt
+                                             (rt+1 − rtf ).
+                                         RVt
+
+Thus, portfolio Sharpe ratio E(rt+1 − rtf )/std(rt+1 − rtf ) is independent of the scaling con-
+stant c. A researcher cannot manipulate the Sharpe ratio. The authors provide evidence
+that this strategy generates a signiﬁcant alpha and a higher Sharpe ratio compared to the
+
+
+                                                  8
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+market index. The rationale behind the strategy is that during periods of increased real-
+ized volatility, particularly during economic downturns, monthly equity premiums tend
+to decrease. Consequently, reducing the weight assigned to the market index enhances
+the strategy’s performance.
+
+
+2.2 Variance Risk Premium Timing
+
+
+2.2.1   Motivating Evidence
+
+
+Recent literature, such as Cheng (2019) and Lochstoer and Muir (2022), has emphasized
+that an increase in market volatility typically also leads to a decrease in the conditional
+one-month Volatility Risk Premium (VRP). Cheng (2019) speciﬁcally refers to this nega-
+tive relation as a "low-premium response puzzle," as established asset pricing theories
+with time-varying volatility, volatility-of-volatility, disaster risk, and jumps (Bollerslev,
+Tauchen, and Zhou (2009), Drechsler and Yaron (2011), Wachter (2013), Dew-Becker, Giglio,
+Le, and Rodriguez (2017)) all predict a positive relation.
+
+   In Table 1, we provide additional conﬁrmation of the negative relationship between
+volatility and VRP using OLS predictive regressions. To ensure robustness, we use the
+longest available data sample and consider three different measures of market volatil-
+ity: realized volatility (RV), implied volatility (VIX), and a GARCH(1,1) conditional one-
+month volatility forecast. As shown, consistent with the literature, when volatility rises,
+the next-month realized returns on a variance swap tend to be more positive, that is, real-
+ized VRP falls.
+
+   Table 2 presents out-of-sample R-squared values obtained from OLS predictive regres-
+sions, following Welch and Goyal (2008). As seen, all three volatility measures exhibit
+a positive and signiﬁcant OOS R-squared, indicating their ability to predict next-month
+realized variance asset returns in a meaningful manner.
+
+
+
+                                                9
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+   Figures 1, 2, and 3 sort the time-series of variance swap returns ( RV t+1
+                                                                       V IX 2
+                                                                              −1) into ﬁve port-
+                                                                                t
+
+folios respectively based on previous month’s realized volatility (RVt ), implied volatility
+(V IXt ), and GARCH(1,1)’s one-month volatility forecast (GARCH(1, 1)t ). These exercises
+are similar to Moreira and Muir (2017) Figure 1. As seen, the message is consistent across
+different volatility measures. First, average variance swap returns tend to weaken as we
+move from the "lowest volatility" portfolio to "highest volatility" portfolio, conﬁrming
+an overall negative volatility-VRP relationship. Second, standard deviation tends to rise.
+Third, as a result, Sharpe ratio tends to fall in size. Lastly, the probability of a recession
+monotonically increases.
+
+   The above evidence all suggests that when volatility increases, VRP tends to fall.
+Equivalently speaking, volatility assets tend to be priced "too cheap" and thus exhibit
+more positive returns going forward. If follows that there might exist a potential oppor-
+tunity for timing VRP by reducing negative exposure on volatility assets at such times.
+In this paper, we consider three variance assets. In our benchmark analysis, we use a
+one-month variance swap contract. This allows us to consider the longest data sample
+1990-2023. Later on, we extend our analysis to include VIX futures and S&P 500 straddles
+as alternative variance assets. Note that the speciﬁc trading rule for each variance asset is
+different and can impact portfolio returns. We start by deﬁning our timing strategies.
+
+
+2.2.2   Timing Portfolio Deﬁnitions
+
+
+Similar to Moreira and Muir (2017), our strategy consists of two assets: a variance asset
+and a risk-free asset. In all three cases (variance swap, VIX futures, or straddle), we
+determine the weight in the variance asset, denoted as wti , at the end of each month t.
+Speciﬁcally, we set it as
+
+
+                                            wti = −cft ,                                   (2.3)
+
+
+
+
+                                                 10
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+where c is a positive scaling constant chosen in such a way that the portfolio has the same
+unconditional return variance as the stock market index. The variable ft represents a
+timing factor that ideally demonstrates a positive relationship with conditional V RPt =
+1 − EtV[RV t+1 ]
+        IX 2
+                 , which signiﬁes the relative expensiveness of variance assets. Thus, we sell
+         t
+
+more (less) variance assets in month t if V RPt is higher (lower).
+
+   Consider ﬁrst the case of variance swaps. When initiating a long position in a one-
+month variance swap contract in month t, we are obligated to pay a ﬁxed leg in exchange
+for realized variance RVt+1 in month t + 1. Carr and Madan (1998) show that the ﬁxed
+leg can be approximated by V IXt2 . Let Wt denote our initial capital at the end of month t.
+Our portfolio return realized in month t+1, in excess of the risk-free rate, is equal to
+
+                                             RVt+1 −V IXt2
+                                   Wt wtvs      V IXt2
+                                                           + Wt (1 + rtf )
+                    rt+1 − rtf =                                             − 1 − rtf
+                                                 Wt
+                                      ( RV         )
+                                           t+1
+                               = wtvs          − 1
+                                        V IXt2                                             (2.4)
+                               = wtvs rt+1
+                                       vs
+
+
+                               = −cft rt+1
+                                       vs
+                                           .
+
+The numerator in the ﬁrst line represents our month t+1 gross payoff. The ﬁrst term
+represents the payoff from our positions in variance swaps, with a notional value equal
+to a fraction wtvs of our capital Wt . A negative (positive) value of wtvs implies that we have
+short (long) positions. The second term means that our entire capital Wt can be allocated
+to the risk-free rate since variance swap positions do not require any upfront payment to
+initiate. The third equality follows from a deﬁnition of monthly variance swap return in
+terms of notional values:
+
+                                                   RVt+1
+                                         vs
+                                        rt+1 ≡            − 1.                             (2.5)
+                                                   V IXt2
+
+   Consider then the case of VIX futures. In futures trading, the margin requirements
+tend to be relatively small, so for the purpose of this analysis, we will ignore the margin
+
+
+                                                    11
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+requirements. In this case, our portfolio return realized in month t+1, in excess of the
+risk-free rate, is equal to
+
+                                          P vix
+                                            vix + Wt (1 − wt
+                                  Wt wtvix Pt+1                )(1 + rtf )
+                                                           vix
+                   rt+1 − rtf =            t
+                                                                             − 1 − rtf
+                                                       Wt
+                              = wtvix (1 + rt+1
+                                            vix
+                                                ) + (1 − wtvix )(1 + rtf ) − 1 − rtf         (2.6)
+                              = wtvix (rt+1
+                                        vix
+                                            − rtf )
+
+                              = −cft (rt+1
+                                       vix
+                                           − rtf ).
+
+The numerator in the ﬁrst line still represents our month t+1 gross payoff. The ﬁrst and
+second terms respectively indicate that we divide the total wealth Wt into VIX futures and
+risk-free assets according to the weight (wtvix , 1 − wtvix ). Note that the last term in equation
+(2.6) is slightly larger than the last term of equation (2.4) given the same variance asset
+return. The difference reﬂects the fact that when we short sell VIX futures, our margin
+account immediately receives cash inﬂows that can be allocated to risk-free assets. Note
+that the second line follows from a deﬁnition of monthly VIX futures return:
+
+                                                        vix
+                                                      Pt+1
+                                           vix
+                                          rt+1 ≡            − 1,                             (2.7)
+                                                      Ptvix
+
+where Ptvix represents the value of a one-month constant-maturity VIX futures portfolio
+or ETF.
+
+   Consider then the case of straddles. In options trading, particularly options short
+selling, margin requirements are typically substantial and cannot be ignored. The mar-
+gin requirement for options short selling is usually equal to 100% of the proceeds from
+short selling, plus a portion that is proportional to the level of the underlying asset price
+adjusted by the option’s moneyness. In Johnson (2017), a margin requirement equal to
+the short selling proceeds plus 20% of the current S&P 500 level is assumed when short
+selling an at-the-money (ATM) SPX straddle.
+
+   In this case, our portfolio return realized in month t+1, in excess of the risk-free rate,
+
+
+                                                      12
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+is equal to (for negative weight wtst )
+
+                                 P st                   P st
+                     Wt wtst 20%×SP
+                                t+1
+                                       − Wt wtst 20%×SP
+                                                     t
+                                                           (1 + rtf ) + Wt (1 + rtf )
+      rt+1 − rtf =                  Xt                  Xt
+                                                                                        − 1 − rtf
+                                                       Wt
+                         (                      Ptst                 )
+                = wtst       − rt+1
+                                st,short
+                                         −                     rtf                                  (2.8)
+                                    20% × SP Xt
+                      (                  Ptst       )
+                = −cft − rt+1
+                          st,short
+                                   −             rtf ,
+                                     20% × SP Xt
+
+which has a similar form as the last terms of equations (2.4) and (2.6), given the same
+variance asset return, apart from the risk-free rate term. The numerator in the ﬁrst line still
+presents our month t+1 gross payoff. The ﬁrst term indicates that we short sell straddles
+with a total margin requirement that is equal to a fraction wtst of our capital Wt . When wtst
+is negative, the ﬁrst term is negative, representing the payment to close short positions.
+The second term is positive, representing the additional interest earned on short selling
+proceeds. The third term represents interest earned on our capital Wt , which entirely can
+be allocated to the risk-free rate, noting that even the capital maintained as margin earns
+interest.
+
+   The key difference between equation (2.8) and equations (2.4) and (2.6) is the redeﬁ-
+nition of short returns. In the second line, we’ve followed Johnson (2017) to deﬁne the
+monthly short straddle return as
+
+                                                        Ptst − Pt+1
+                                                                 st
+                                         rst,short ≡                ,                               (2.9)
+                                                       20% × SP Xt
+
+which explicitly incorporates margin requirements into the calculation and represents a
+return from a short-seller’s perspective. Here, Ptst represents the value of a one-month
+constant-maturity S&P 500 ATM straddle portfolio.
+
+
+
+
+                                                       13
+
+                     Electronic copy available at: https://ssrn.com/abstract=4761614
+3 Portfolio Performance: Variance Swaps
+
+
+3.1 Longest OOS Periods: Jan 1992 - Nov 2023
+
+
+We now examine the empirical performance of the above deﬁned portfolios. We start
+with variance swaps as the variance asset, which allows us to have a relatively long data
+sample back to 1990. Table 3 provides a summary of the various ft we consider and their
+respective performance.
+
+   It is important to deﬁne a benchmark portfolio. In our benchmark portfolio, we main-
+tain a constant weight on variance swaps each month, ft = const. Dew-Becker, Giglio, Le,
+and Rodriguez (2017) show that one-month variance swaps exhibit signiﬁcantly higher re-
+turn volatility compared to S&P 500. In our sample, the return volatility is approximately
+66% per annum. Consequently, in order for the constant-weight portfolio to match the
+return variance of S&P 500, the weight assigned to the variance swap should be relatively
+small, close to -0.066 in our sample.
+
+   Consistent with Dew-Becker, Giglio, Le, and Rodriguez (2017), we ﬁnd that the mean
+return on variance swaps in our sample is -31% monthly. With an exposure of -0.066,
+the resulting mean portfolio return is roughly −0.066 × −31% = 2% monthly, or 24% an-
+nualized. As seen in Table 3, the benchmark constant-weight portfolio already delivers
+a substantial mean excess return (24% annually) and Sharpe ratio (1.54 annually). Al-
+though the portfolio returns exhibit larger negative skewness, kurtosis, and maximum
+drawdowns compared to the S&P 500, these statistics remain at reasonable and accept-
+able levels. In the long run, the constant-weight portfolio signiﬁcantly outperforms S&P
+500 (see Figure 5). Since in recent decades, S&P 500 outperforms Fama and French (2015)
+5 factors and momentum, it follows that the constant-weight portfolio also outperforms
+Fama-French 5 factors and momentum (not reported).
+
+   We also regress portfolio returns onto Carhart (1997) 4 factors. The MKT beta is 0.57,
+
+                                                14
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+which is less than 1. This implies that the strategy enhances returns while simultaneously
+reducing risk exposure to the stock market. Further, portfolio returns are also correlated
+with SMB and MOM.
+
+   To further enhance portfolio performance, we consider four different ft . The ﬁrst three
+strategies are not directly based on VRP, but rather based on different volatility measures.
+These measures include realized volatility, implied volatility, and a GARCH one-month
+volatility forecast. The analysis in the last section suggets that our exposure on variance
+swaps should decrease in volatility. Thus, we respectively set
+
+                                    ft = 1/RVt ,
+
+                                    ft = 1/V IXt ,                                     (3.1)
+
+                                    ft = 1/GARCH(1, 1)t .
+
+As shown, all of the three timing portfolios exhibit improved performance compared to
+the constant-weight portfolio. Speciﬁcally, the Sharpe ratio can be enhanced from 1.54 to
+a maximum of 1.76. The negative skewness, kurtosis, and maximum drawdowns all fall.
+The improved performance can be naturally attributed to two possibilities.
+
+   The ﬁrst possibility is purely mechanical. When there is higher (expected) volatil-
+ity, the expected payoff of variance swaps increases. By reducing negative exposure to
+variance swaps during such periods, performance is improved. However, this mechan-
+ical reason alone is obviously insufﬁcient for two key reasons. Firstly, the results hold
+even when using VIX as the timing factor, which is directly linked to the price, rather
+than the expected payoff, of variance swaps. If the mechanical reason were the main
+driver, we would expect to observe opposite results for VIX-timed portfolios, but this is
+not the case. Secondly, leading asset pricing models (such as Bollerslev, Tauchen, and
+Zhou (2009), Drechsler and Yaron (2011), Wachter (2013), Dew-Becker, Giglio, Le, and
+Rodriguez (2017)) all suggest that when volatility rises, the VRP should increase, with
+variance asset prices rising more than expected payoffs. To boost performance, we would
+
+                                                15
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+therefore need to increase our negative exposure to variance swaps, but instead, we ob-
+serve the opposite effect.
+
+   The second reason is that, as shown in Cheng (2019), among others, when volatility
+increases, VRP puzzlingly decreases: variance swap prices increase less than expected
+payoffs. By reducing negative exposure to variance swaps during these periods, perfor-
+mance is enhanced. Cheng (2019) shows that the negative volatility-VRP relation holds
+no matter which volatility measure to use. This is precisely consistent with what we ﬁnd:
+the timing portfolios improve performance more or less equally no matter which volatil-
+ity measure to use. We therefore believe that the second reason is the primary driver
+of improved performance. As seen from Table 3, various timing strategies further help
+reduce MKT beta, suggesting an even lower exposure to systematic market risk.
+
+   Johnson (2017) and Cheng (2019) develop VRP timing portfolios based on ex-ante VRP
+measures. As a comparison, we also introduce a strategy that directly incorporates a VRP
+measure as the timing factor. To estimate VRP, in each month, we estimate a VAR model
+with two variables (RVt , V IXt ) and ﬁve lags, utilizing all available historical realized and
+implied volatility data. The inclusion of implied volatility (V IXt ) as a model input is
+motivated by our belief that it contains information about the expected future realized
+volatility (Et [RVt+1 ]). We use volatility measures instead of variance measures as model
+inputs, as we believe VAR-type models better capture the dynamics of volatility, which
+can be more gradual compared to the sharp movements of variance. We ﬁnd that this
+VRP-based timing strategy also signiﬁcantly improves performance. As a comparison,
+we also report the performance of stock market buy-and-hold and equity premium timing
+strategies of Moreira and Muir (2017).
+
+   Figure 4 plots each month’s portfolio weight on variance swaps for each strategy, wtvs .
+Mechanically, our timing strategies enhance performance due to a positive correlation be-
+tween the month t weight wtvs and the subsequent month’s realized variance swap return
+
+
+
+                                                 16
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+RVt+1
+V IXt
+      − 1.   By comparing the middle and bottom panels of the ﬁgure, we can observe a
+certain degree of positive comovement between these two. Intuitively, when volatility
+spikes in month t, we reduce our exposure to variance swaps (increase wtvs ) immediately
+in month t. Variance swap return realized in month t is already positive and large due to
+the volatility spike. But since variance swap is typically underpriced in month t, when
+next month t+1 arrives, payoff is typically higher than the price, resulting in another large
+positive return, conﬁrming the proﬁtability of our strategy.
+
+   This predictive correlation is further directly conﬁrmed by Table 4. Additionally, Table
+5 presents the contemporaneous correlation between the weights adopted in different
+strategies. As shown, there is a notable level of similarity among them. The strategy
+based on VRP exhibits a relatively lower correlation with the strategies based on volatility
+measures.
+
+   Figure 5 displays the cumulative portfolio value for each strategy, with all portfolios
+starting with an initial value of $1 in January 1992. The ending value of each portfolio
+in November 2023 is also provided. As we can see, the cumulative effect over this 30-
+year period is huge, with the GARCH-timed portfolio, for instance, generating an almost
+three-times ending value than the constant-weight portfolio.
+
+   Additionally, Figure 5 illustrates the drawdowns for each strategy. Moreira and Muir
+(2017) demonstrate signiﬁcant improvements relative to market buy-and-hold, primarily
+due to the tendency of the equity premium to decline after a volatility spike occurs during
+recessions. Their strategy sharply reduces the weight on the market index in such times,
+helping to mitigate further losses or expedite the recovery of values from economic down-
+turns. As a result, drawdowns become smaller in recessions. Our logic is similar. After
+a volatility spike in recessions, VRP tends to decrease. Consequently, we signiﬁcantly di-
+minish the negative weight on variance swaps. This serves to prevent further losses or
+expedite the recovery of values from economic downturns. As a result, drawdowns also
+
+
+
+                                                 17
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+become smaller in recessions. These patterns are evident from Figure 5 when examining
+events such as the 2008 Global Financial Crisis.
+
+
+3.1.1   Where is the improved performance exactly generated?
+
+
+To better understand where the improved performance is exactly generated, we partition
+our data into two regimes: a high-volatility regime and a low-volatility regime. We clas-
+sify a month t as belonging to the high-volatility (low-volatility) regime if realized volatil-
+ity (RVt ) exceeds (falls below) the 80th percentile of its unconditional distribution, approx-
+imately 20. Table 6 performs regression analyses conditional on low-volatility (RVt < 20)
+and high-volatility (RVt > 20) regimes. Conditional on each regime, we regress timing
+portfolio excess returns onto contemporanous constant-weight portfolio excess returns:
+
+                           vs,ft−1
+                          rt         − rt−1
+                                        f
+                                            = α + β(rtvs,cw − rt−1
+                                                               f
+                                                                   ) + εt ,               (3.2)
+
+
+for ft = {1/RVt , 1/IVt , 1/GARCH(1, 1)t }. We can see two patterns. First, the timing port-
+folio’s alpha relative to constant-weight portfolio is mostly due to high-volatility regimes.
+Second, the timing portfolio’s exposure to constant-weight portfolio is much lower in
+high-volatility regimes. These two observations both suggest that our VRP timing port-
+folios perform better in high-volatility times than in low-volatility times. Our exercise
+is similar to Moreira and Muir (2017) which decompose portfolio performance into ex-
+pansions and recessions, and ﬁnd that volatility-managed portfolios reduce exposure to
+MKT more greatly in recessions. Our choice of low versus high-volatility regimes is mo-
+tivated by Yang (2022) which shows that the negative volatility-VRP relation puzzle is
+predominantly observed in high-volatility periods, not necessarily recessions.
+
+   We further provide detailed regime-conditional predictability evidence in the Appendix.
+We ﬁnd that, aligning with the view in Yang (2022), only "persistent" or "structural" volatil-
+ity spikes predict negative realized VRPs in the next month, while transient volatility
+
+
+                                                  18
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+jumps (that quickly revert in the next month) and small volatility shocks in stable peri-
+ods in general both predict positive VRPs. Our ﬁndings thus help differentiate theories
+on the puzzling negative risk-return relations in the volatility asset market. Cheng (2019)
+suggests the puzzle is possibly driven by changes in hedging demand induced by mi-
+crostructure frictions or government’s implicit guarantees. Lochstoer and Muir (2022)
+explain the puzzle with extrapolative volatility expectations. Yang (2022) attributes the
+puzzle to investors’ slow learning about structural breaks. Our ﬁndings support the chan-
+nel of Yang (2022).
+
+   Finally, we note that the above analysis in this section is conducted in an ex-post con-
+text. In an ex-post examination of portfolio performance, we ﬁnd that the enhancement
+is driven by periods of large volatility spikes. While one might be tempted to think that
+a regime-dependent timing strategy can be developed, ex-post ﬁndings do not automati-
+cally suggest a straightforward method to enhance ex-ante timing strategies, due to sev-
+eral fundamental challenges. We explain these challenges in the Appendix. Consequently,
+in practice, we prefer to adopt simple timing strategies.
+
+
+3.2 Shorter OOS Periods: Aug 2006 - Nov 2023
+
+
+It appears from Figure 5 that the outperformance of different timing strategies compared
+to the constant-weight portfolio is primarily driven by the ﬁrst half of our sample period.
+We conduct a robustness check by considering only the second half of our sample as out-
+of-sample test periods. Table 7 provides a summary of the performance for each strategy,
+while Figure 7 illustrates the cumulative portfolio value for each strategy. In this analysis,
+all portfolios start with an initial value of $1 in August 2006, with the ending value of
+each portfolio in November 2023 also displayed.
+
+   Remarkably, we ﬁnd that timing strategies based on VIX, GARCH volatility forecast
+and VRP estimated using the VAR model continue to signiﬁcantly enhance performance
+
+
+                                                19
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+compared to the constant-weight portfolio. From Figure 7, we can clearly see that during
+both the 2008 Crisis and the COVID-19 Crisis, our timing portfolio helped contain losses
+and accelerate value recovery relative to a ﬁxed-weight portfolio.
+
+   Lastly, it is worth noting that the GARCH volatility forecast represents a particularly
+robust and powerful timing factor for the VRP. Its superior ability to predict the VRP is
+particularly strong during recent 15 to 10 years. This remarkable performance prompts
+us to consider the underlying reasons behind its efﬁcacy. One possibility could be the
+changing dynamics of market volatility driven by breaks in macroeconomic factors, mar-
+ket structure, or trading patterns. GARCH is better able to capture structural breaks,
+which has rendered the relationship between volatility and VRP more favorable to the
+GARCH-based forecasting approach.
+
+
+3.3 Robustness: Using Actual Price Data
+
+
+Up until now, we have utilized VIX-squared as an approximation for the price of a vari-
+ance swap contract. However, recent literature, such as the work by Martin (2017), raises
+concerns about the accuracy of this approximation, particularly when volatility exhibits
+jump-like behaviors. To address this issue, we incorporate actual OTC quoted variance
+swap price data provided by Dew-Becker, Giglio, Le, and Rodriguez (2017). This limits
+our analysis to a relatively shorter period, from 1996 to 2013.
+
+   Firstly, we observe a high correlation of 98.7% between the realized return on a one-
+month variance swap, when based on (i) VIX-squared and (ii) the actual price data. The
+difference between the two is quite negligible. Secondly, when examining the out-of-
+sample test results in this scenario, as presented in Table 8 and Figures 8 and 9, we con-
+tinue to ﬁnd that various timing strategies demonstrate improvements compared to the
+constant-weight portfolio. For instance, Sharpe ratios can be enhanced from 1.26 to a
+maximum of 1.66. All of the other statistics also improve.
+
+
+                                                20
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+3.4 Transaction Costs
+
+
+Up to this point, we have not factored in transaction costs in our analysis. It is impor-
+tant to note that our portfolios are constructed by holding a one-month variance swap
+contract to maturity each month. Given the low trading frequency, transaction costs asso-
+ciated with frequent rebalancing are unlikely to have a substantial impact on our portfolio
+performance.
+
+   Furthermore, even if transaction costs were substantial, they would likely have a sim-
+ilar impact on both a constant-weight strategy and, say, a VIX-timed strategy. The key
+distinction between the two strategies lies in the weighting scheme, with the former main-
+taining constant weights while the latter adjusts the weights based on VIX each month.
+But because the average weights are similar across the two strategies (for instance, Table
+3 shows that average weights for all the strategies, including the constant-weight strategy,
+are close to -7%), whether the transaction costs are ﬁxed or proportional (such as bid-ask
+spread), they would likely affect the two portfolios similarly. To see this, assume that, for
+instance, the bid-ask spread implies that the shorting return on the original one-month
+variance swaps is reduced by 1% per month, from 31% to 30%. Then, the return on the
+constant-weight and VIX-timed portfolios will both reduce by 1% × 0.07 = 0.07% per
+month or 0.07% × 12 = 0.84% per annum. The transaction cost, therefore, does not affect
+the relative performance between these two portfolios.
+
+   Note a signiﬁcant difference between the volatility asset timing in the current paper
+and the stock market index timing in Moreira and Muir (2017). In Moreira and Muir
+(2017), the stock market index is an asset that can be held for a long term. Thus, the more
+frequently or drastically one adjusts the weight on the market index in the volatility-timed
+portfolios, the worse the volatility-timed portfolio will perform relative to market buy-
+and-hold. In contrast, volatility assets all have limited maturities.1 We need to rebalance
+
+   1
+       Indeed, any asset with a stationary price process cannot have unlimited maturity. Otherwise, investors
+
+
+                                                      21
+
+                       Electronic copy available at: https://ssrn.com/abstract=4761614
+whether our portfolio has constant or time-varying weights. Thus, transaction costs are
+unlikely to affect the relative performance between the two portfolios. This logic applies
+to variance swaps, as well as VIX futures and S&P 500 straddles that we consider below.
+
+    Considering these facts, we can reasonably expect that transaction costs, whether sig-
+niﬁcant or not, are unlikely to sharply dampen the relative performance of our timing
+strategies relative to the constant-weight benchmark. This relative performance is this pa-
+per’s focus. In the next, we consider exchange-traded volatility assets and explicitly take
+another form of transaction costs, the margin requirements, into account.
+
+
+
+4 Portfolio Performance: VIX Futures and S&P 500 Straddles
+
+We now consider using two exchange-traded assets, VIX futures and S&P 500 straddles,
+as the volatility asset. An important transaction cost in exchange trading is the margin
+requirement, which limits investors’ ability to take positions. For VIX futures, we do not
+consider margin requirements for two reasons. First, margin requirements for futures
+trading are typically small. Second, there exist ETFs such as SVIX which provides in-
+vestors a ﬁxed negative exposure to constant-maturity VIX futures at minimum fees. For
+straddles, we explicitly consider margin requirements.
+
+
+4.1 VIX Futures
+
+
+Unlike our previous exercise with one-month variance swap contracts, VIX futures and
+S&P 500 straddles do not have regular monthly maturities. To address this, the literature
+typically constructs portfolios on a daily basis using a front-month contract and a back-
+month contract, appropriately weighted to achieve an average maturity of one month.
+We ﬁrst obtain the daily returns provided by Johnson (2017) for the constant-maturity
+
+can immediately create an arbitrage strategy by buying low (slightly below the unconditional average) and
+selling high (slightly above the unconditional average) using limit orders.
+
+
+                                                   22
+
+                     Electronic copy available at: https://ssrn.com/abstract=4761614
+(synthetic) variance swap/VIX futures/S&P 500 ATM straddle positions with a target
+maturity of one month, denoted as rm,m+1/21 . We then roll over these strategies each
+month to convert the daily returns into monthly returns rm,m+1 :
+                                            21 (
+                                            ∏                       )
+                            1 + rm,m+1 =           1 + rm+ j−1 ,m+ j .                     (4.1)
+                                                            21    21
+                                            j=1
+
+
+   Figure 10 illustrates the time series of monthly returns on the three constant-maturity
+volatility investments. Table 9 displays the correlation between them. While these returns
+exhibit strong positive correlations, they are not perfectly correlated. Notably, the average
+negative returns are more pronounced for variance swaps compared to VIX futures and
+straddles.
+
+   To assess the most recent periods, particularly the Covid Crisis periods, we supple-
+ment the VIX futures and straddle returns obtained from Johnson (2017) with data pur-
+chased from CBOE and OptionMetrics. This allows us to extend our sample to the most
+recent time.
+
+   Table 10 presents a summary of our results for VIX futures. As shown, the constant-
+weight portfolio generates a Sharpe ratio of 0.61, which by construction is equal to the
+(negative) Sharpe ratio of the original VIX futures portfolios. Our ﬁndings therefore align
+closely with those in Eraker and Wu (2017). In their study, they report an annualized
+                                                      √
+return of -40% and an annualized standard deviation of 252 × 4% = 64% for one-month
+constant-maturity VIX futures portfolios, implying a Sharpe ratio of -0.63. Our timing
+portfolios, on the other hand, can enhance the Sharpe ratio to as high as 0.78. All the
+other statistics also improve. The most notable improvement is in the Carhart (1997) 4-
+factor alpha, from 3.1% (statistically insigniﬁcant) to 6.3% (statistically signiﬁcant).
+
+   Plus, as shown in Table 11, we continue to ﬁnd that the timing portfolios generate
+positive alpha and reduce exposure relative to constant-weight portfolios mostly in high-
+volatility regimes. In low-volatility regimes, the timing portfolios even increase rather
+
+
+                                                  23
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+than reduce exposure, evidence again consistent with "no low-premium response puzzle"
+in low-volatility periods. In sum, ex-post, our timing strategies simply work signiﬁcantly
+better in high-volatility periods.
+
+   Figures 11 and 12 plot the portfolio weights and cumulative portfolio values, respec-
+tively, for VIX futures-based portfolios. In this analysis, all portfolios start with an initial
+value of $1 in April 2004, with the ending value of each portfolio in November 2023 also
+displayed. Over this nearly 20-year period, the GARCH-timed portfolio, for instance,
+generates nearly twice the value of the constant-weight portfolio. From Figure 12, we can
+again clearly see that during both the 2008 Crisis and the COVID-19 Crisis, our timing
+portfolio helped contain losses and accelerate value recovery relative to a ﬁxed-weight
+portfolio. This explains the smaller drawdowns.
+
+   Cheng (2019) implements a "Cash or Short" timing strategy, where all portfolio capital
+is allocated to a short VIX futures contract (subject to margin constraints) each day if the
+estimated ex-ante VRP (Q minus P) is positive, and to a cash account otherwise. The
+portfolio is then scaled to having a similar unconditional return variance as S&P 500. He
+uses a test period from 2004 to 2015, and reports a Sharpe ratio of 0.87, an excess return
+of 16.6% (both annualized), and a maximum daily drawdown of -26.4%.
+
+   We replicate various timing strategies during the same period. Although our strategy
+involves monthly rebalancing instead of daily rebalancing given that there are VIX fu-
+tures ETFs directly available to investors, we ﬁnd that the results are highly comparable.
+For the VAR strategy, we observe a Sharpe ratio of 0.98, an excess return of 15% (both
+annualized), and a maximum monthly drawdown of -25.4%.
+
+   Interestingly, as shown in Figure 12, the VAR-VRP timing strategy shows poorer per-
+formance during the more recent 2016-2023 period. In contrast, the simpler timing strat-
+egy based on volatility measures, such as GARCH forecasts, performs markedly better
+in recent periods. This observation suggests that the simplicity of our volatility-based
+
+
+                                                 24
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+timing strategy may confer advantages in terms of effectiveness and robustness.
+
+
+4.2 S&P 500 ATM Straddles
+
+
+Table 12 presents a summary of our ﬁndings based on S&P 500 straddles. The constant-
+weight portfolio generates a Sharpe ratio of 0.51. Note that this Sharpe ratio may appear
+relatively small because it incorporates the inﬂuence of margin constraints. Our ﬁndings
+align with previous studies by Carr and Madan (1998), Coval and Shumway (2001), Er-
+aker (2021), and Eraker and Yang (2022), which all suggest that a reasonable range for the
+Sharpe ratio of S&P 500 near-ATM straddles is between -0.4 and -1.
+
+   As shown in the table, our timing portfolios have the ability to improve the Sharpe ra-
+tio from 0.51 to a maximum of 0.62. Although the improvement may be relatively smaller
+compared to the VIX futures case, it highlights the robustness of our timing portfolios,
+even after accounting for margin constraints.
+
+   Plus, Table 13 again shows that the timing portfolios generate positive alpha and re-
+duce exposure relative to constant-weight portfolios mostly in high-volatility regimes. In
+low-volatility regimes, the timing portfolios even increase rather than reduce exposure,
+evidence consistent with "no low-premium response puzzle" in low-volatility periods.
+
+   In Table 12, we report two average portfolio weights. First, the weight wt deﬁned
+in equation (2.8), which measures the fraction of month-t total capital that is deposited
+as margin. Because the margin requirement is usually higher than the market value of
+the straddles we can trade, wt does not measure our portfolio’s real exposure to percent
+                                                           t t         w P st
+price movement in straddles. Second, the modiﬁed weight 20%×SP Xt
+                                                                  measures the true
+exposure. As seen, the true exposure is much smaller, on average from -0.12 to -0.14.
+Figure 13 plots the time series of the two portfolio weights for various strategies.
+
+   Figure 14 plots cumulative portfolio values for various strategies. In this analysis,
+all portfolios start with an initial value of $1 in Jan 1996, with the ending value of each
+
+                                                25
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+portfolio in Dec 2022 also displayed. Over this 27-year period, the VIX-timed portfolio, for
+instance, generates nearly twice the value of the constant-weight portfolio. From Figure
+14, we can again clearly see that during both the 2008 Crisis and the COVID-19 Crisis, our
+timing portfolio helped contain losses and accelerate value recovery relative to a ﬁxed-
+weight portfolio, explaining the smaller drawdowns.
+
+   Johnson (2017) considers a strategy where each day, he buys (sells subject to margin
+requirements) one-month S&P 500 ATM straddles if "slope" (the second principal com-
+ponent) of VIX term structure falls within the lowest (highest) 20% of historical realized
+"slopes." Presumably, the effectiveness of this strategy may be inﬂuenced by the initial
+OOS time period, which impacts the historical distribution of realized "slopes." Differ-
+ently, our approach relies on simple volatility measures and exhibits robustness across
+various subsamples.
+
+
+
+5 Conclusion
+
+We develop timing strategies for the VRP that are analogous to equity premium timing
+strategies based on realized volatility, as in Moreira and Muir (2017). These strategies
+involve trading two assets: a variance asset and a risk-free asset. To begin, we examine
+a benchmark portfolio with a ﬁxed weight on the variance asset each month. While this
+simple strategy already delivers remarkable long-term returns, we show that the portfo-
+lio’s performance can be signiﬁcantly enhanced by incorporating various timing factors,
+including several volatility measures and an ex-ante VRP measure. We ﬁnd the simple
+volatility-managed strategies are particularly effective and robust. Our ﬁndings remain
+robust in both older and recent times and across three variance assets: variance swaps,
+VIX futures, and S&P 500 straddles. Our ﬁndings are unlikely affected by bid-ask spreads
+and hold after accounting for margin requirements.
+
+   Our portfolios improve performance by reducing negative exposure to the variance as-
+
+                                                26
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+sets once observing an increase in volatility. Essentially, we exploit the puzzle of the neg-
+ative volatility-VRP relationship, which has been highlighted in several previous studies
+such as Cheng (2019). Notably, we ﬁnd that, ex-post, various timing portfolios generate
+positive alpha and help reduce beta/exposure to constant-weight variance asset portfo-
+lio returns almost only during high-volatility regimes, not in low-volatility regimes. Our
+such ﬁndings are consistent with Yang (2022) which estimates a regime-switch model
+and ﬁnds that the puzzling negative volatility-VRP relation is mostly driven by volatility-
+spike periods.
+
+   However, we also note that the performance analysis is conducted in an ex-post con-
+text. Due to two fundamental challenges, ex-post ﬁndings do not automatically suggest
+a straightforward method to enhance ex-ante timing strategies. First, even in stable peri-
+ods, volatility spikes can arrive all of a sudden and are hard to predict. Second, volatility
+spikes might have complex nature, either jumps or structural breaks, that is hard to deter-
+mine ex-ante. We leave the exploration of regime-conditional timing strategies for future
+research.
+
+
+
+References
+
+Aït-Sahalia, Yacine, Mustafa Karaman, and Loriano Mancini, 2020, The term structure of
+  equity and variance risk premia, Journal of Econometrics 219, 204–230.
+
+Ang, Andrew, Robert J Hodrick, Yuhang Xing, and Xiaoyan Zhang, 2006, The cross-
+  section of volatility and expected returns, The journal of ﬁnance 61, 259–299.
+
+Bakshi, Gurdip, and Nikunj Kapadia, 2003, Delta-hedged gains and the negative market
+  volatility risk premium, The Review of Financial Studies 16, 527–566.
+
+Bansal, Ravi, Dana Kiku, Ivan Shaliastovich, and Amir Yaron, 2014, Volatility, the macroe-
+  conomy, and asset prices, The Journal of Finance 69, 2471–2511.
+
+                                                27
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+Barroso, Pedro, and Andrew Detzel, 2021, Do limits to arbitrage explain the beneﬁts of
+  volatility-managed portfolios?, Journal of Financial Economics 140, 744–767.
+
+Bekaert, Geert, and Marie Hoerova, 2014, The VIX, the variance premium and stock mar-
+  ket volatility, Journal of econometrics 183, 181–192.
+
+Bollerslev, Tim, George Tauchen, and Hao Zhou, 2009, Expected stock returns and vari-
+  ance risk premia, The Review of Financial Studies 22, 4463–4492.
+
+Bollerslev, Tim, and Viktor Todorov, 2011, Tails, fears, and risk premia, The Journal of
+  ﬁnance 66, 2165–2211.
+
+Carhart, Mark M, 1997, On persistence in mutual fund performance, The Journal of ﬁnance
+  52, 57–82.
+
+Carr, Peter, and Dilip Madan, 1998, Towards a theory of volatility trading, Volatility: New
+  estimation techniques for pricing derivatives 29, 417–427.
+
+Carr, Peter, and Liuren Wu, 2009, Variance risk premiums, The Review of Financial Studies
+  22, 1311–1341.
+
+Cederburg, Scott, Michael S ODoherty, Feifei Wang, and Xuemin Sterling Yan, 2020, On
+  the performance of volatility-managed portfolios, Journal of ﬁnancial Economics 138, 95–
+  117.
+
+Cheng, Ing-Haw, 2019, The VIX premium, The Review of Financial Studies 32, 180–227.
+
+Cheng, Ing-Haw, 2020, Volatility markets underreacted to the early stages of the COVID-
+  19 pandemic, The Review of Asset Pricing Studies 10, 635–668.
+
+Coval, Joshua D, and Tyler Shumway, 2001, Expected option returns, The journal of Finance
+  56, 983–1009.
+
+
+
+
+                                                 28
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Dew-Becker, Ian, Stefano Giglio, Anh Le, and Marius Rodriguez, 2017, The price of vari-
+  ance risk, Journal of Financial Economics 123, 225–250.
+
+Dörries, Julian, Olaf Korn, and Gabriel J Power, 2024, How Should the Long-Term In-
+  vestor Harvest Variance Risk Premiums?, The Journal of Portfolio Management.
+
+Drechsler, Itamar, and Amir Yaron, 2011, What’s vol got to do with it, The Review of Finan-
+  cial Studies 24, 1–45.
+
+Egloff, Daniel, Markus Leippold, and Liuren Wu, 2010, The term structure of variance
+  swap rates and optimal variance swap investments, Journal of Financial and Quantitative
+  Analysis 45, 1279–1310.
+
+Eraker, Bjorn, 2021, The volatility premium, The Quarterly Journal of Finance 11, 2150014.
+
+Eraker, Bjørn, and Yue Wu, 2017, Explaining the negative returns to volatility claims: An
+  equilibrium approach, Journal of Financial Economics 125, 72–98.
+
+Eraker, Bjørn, and Aoxiang Yang, 2022, The price of higher order catastrophe insurance:
+  the case of VIX options, The Journal of Finance 77, 3289–3337.
+
+Fama, Eugene F, and Kenneth R French, 2015, A ﬁve-factor asset pricing model, Journal of
+  ﬁnancial economics 116, 1–22.
+
+Haddad, Valentin, Serhiy Kozak, and Shrihari Santosh, 2020, Factor timing, The Review of
+  Financial Studies 33, 1980–2018.
+
+Johnson, Travis L, 2017, Risk premia and the vix term structure, Journal of Financial and
+  Quantitative Analysis 52, 2461–2490.
+
+Kelly, Bryan, L’uboš Pástor, and Pietro Veronesi, 2016, The price of political uncertainty:
+  Theory and evidence from the option market, The Journal of Finance 71, 2417–2480.
+
+
+
+
+                                                 29
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Lochstoer, Lars A, and Tyler Muir, 2022, Volatility expectations and returns, The Journal of
+  Finance 77, 1055–1096.
+
+Martin, Ian, 2017, What is the Expected Return on the Market?, The Quarterly Journal of
+  Economics 132, 367–433.
+
+Moreira, Alan, and Tyler Muir, 2017, Volatility-managed portfolios, The Journal of Finance
+  72, 1611–1644.
+
+Wachter, Jessica A, 2013, Can time-varying risk of rare disasters explain aggregate stock
+  market volatility?, The Journal of Finance 68, 987–1035.
+
+Welch, Ivo, and Amit Goyal, 2008, A comprehensive look at the empirical performance of
+  equity premium prediction, The Review of Financial Studies 21, 1455–1508.
+
+Yang, Aoxiang, 2022, Understanding negative risk-return trade-offs, Available at SSRN.
+
+
+
+
+                                                 30
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Appendix A        Regime-Conditional Predictive Regressions
+
+We present further evidence regarding regime-conditional predictability. Figure 15 illus-
+trates the coefﬁcients and t-statistics from the unconditional OLS predictive regressions
+using the whole sample. We draw upon three variance asset returns (variance swaps, VIX
+futures, and straddles) and two volatility measures: RV and IV. As observed, the negative
+or weak relationship between month-t volatility and month-t+1 realized VRP is mainly
+driven by the occurrence of large negative realized VRP in month-t+1, which is typically
+associated with large volatility spikes in month t. In other words, the puzzling negative
+predictive relation is driven by a bunch of "outliers" located in the lower right corner of
+the graph.
+
+   In Figures 16 and 17, we plot the predictive regression coefﬁcients and t-statistics con-
+ditional on the absence of such large spikes in month t as well as month t+1. Notably,
+once we isolate away the inﬂuence of these large spikes, all the predictive relationships
+exhibit statistically positive signs. We conclude that, in long-lasting stable periods, small
+volatility shocks positively predict realized VRP in the next month.
+
+   It is important to note that in Figure 17, we didn’t condition on the level of volatility
+in month t, yet we still observe no puzzle. This means that volatility spikes occurring
+only in month-t but not persisting into month-t+1 do not predict negative realized VRP
+in month t+1. In other words, if a large volatility spike takes place in month-t but quickly
+diminishes in month-t+1, it typically does not generate a puzzling negative realized VRP
+in month t+1. A negative predictive relation between month t volatility and month t+1
+realized VRPs only shows up only when "a large volatility spike occurs in month-t and
+persists into month-t+1." This evidence is highly consistent with the view in Yang (2022)
+that only "persistent" or "structural" volatility spikes predict negative VRPs, while a tran-
+sitory volatility jump does not.
+
+
+
+                                                31
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+   The above evidence of course corroborates our own ﬁndings that volatility-managed
+variance asset portfolios exhibit much stronger performance during high-volatility regimes
+(see Tables 6, 11 and 13). The enhanced performance of our timing portfolios relative to
+the original variance assets is essentially driven by a small bunch of "outling" periods.
+This is the case for all three variance assets.
+
+   Finally, we note that the above analysis is conducted in an ex-post context. In an ex-
+post examination of portfolio performance, we ﬁnd that the enhancement is driven by
+periods of large volatility spikes, particularly persistent large spikes. While one might be
+tempted to think that a regime-dependent timing strategy can be developed, ex-post ﬁnd-
+ings do not automatically suggest a straightforward method to enhance ex-ante timing
+strategies, due to two fundamental challenges.
+
+   Firstly, ex-ante, it is difﬁcult to predict random occurrence of a large volatility spike,
+which results in large negative realized VRPs. During low-volatility periods, where volatil-
+ity and risk premia exhibit small movement, these substantial negative realized VRPs
+stand out as outliers that can swiftly attenuate away the positive relations between volatil-
+ity and next-month realized VRPs (that should have been seen in stable periods). In fact,
+this is the main reason why we did not observe an increasing pattern of VRPs with volatil-
+ity levels across the ﬁrst several portfolios when following Moreira and Muir (2017) to sort
+portfolios based on the current month’s volatility levels (see Figures 1, 2, and 3). The pos-
+itive relations between VRPs and volatility levels are attenuated away due to the occur-
+rence of random rare large volatility spikes in the subsequent month, which the portfolio
+sorting method does not account for.
+
+   Secondly, even if a volatility spike has occurred, it is hard to determine upfront whether
+the spike observed in the current month is a transient jump that will revert in the next
+month (resulting in a positive VRP response) or a persistent structural break that will en-
+dure for an extended period (resulting in a negative VRP response). This distinction can
+
+
+
+                                                  32
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+only be made ex-post.
+
+   Thus, we conclude that although we observe that ex-post portfolio performance is
+predominantly driven by persistent large volatility spikes, this does not necessarily im-
+ply that there is an easy way to leverage this pattern to enhance ex-ante timing strategy
+performance. Thus, in practice, we prefer to adopt simpler timing strategies.
+
+
+
+
+                                               33
+
+                 Electronic copy available at: https://ssrn.com/abstract=4761614
+               Table 1. Motivating evidence: in-sample predictive regressions
+
+The table displays in-sample OLS predictive regression coefﬁcients and R-squared. LHS
+is next-month realized return on a one-month variance swap (annualized in percentage).
+RHS is a market volatility measure: realized volatility, implied volatility, and GARCH(1,1)
+one-month volatility forecast (annualized in percentage). Sample period is monthly Jan
+1990 - Nov 2023. t-stat is based on Newey-West standard errors with 3 lags.
+
+                               RVt+1
+                               V IXt2
+                                      − 1 = const + βXt + εt+1
+                     Xt =          RVt         IVt          GARCH(1, 1)t
+                     β             9.82        9.79            16.63
+                     t-stat       (2.00)      (1.42)           (2.47)
+                     R2           1.4%        0.86%            2.21%
+
+
+
+
+                                                34
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+                       Table 2. Motivating evidence: OOS R-squared.
+
+The table displays OOS OLS predictive regression R-squared. We keep the longest OOS
+periods, Mar 1990 - Nov 2023. We follow Welch and Goyal (2008) to compute OOS R-
+squared as
+                                        ∑T −1 vs
+                                              (rt+1 − µ̂t )2
+                           ROOS = 1 − ∑t=0
+                             2
+                                          T −1 vs
+                                                              ,                 (A.1)
+                                          t=0 (rt+1 − r̄t )
+                                                            2
+
+where µ̂t is the ﬁltered value of the expected variance swap return using data only up
+                                                  vs
+until month t to estimate OLS parameters α̂, β̂: rt+1 = α̂ + β̂Xt + εt+1 . The denominator
+  vs
+r̄t is the historical mean of variance swap returns up until month t.
+
+                     Xt =         RVt          IVt          GARCH(1, 1)t
+                                 3.26%        2.63%            4.61%
+
+
+
+
+                                                35
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+                 Table 3. Out-of-sample strategy performance: longest periods.
+
+In-sample: Jan 1990 - Dec 1991. Out-of-sample: Jan 1992 - Nov 2023. All variables
+are annualized. RVt is realized volatility, V IXt is implied volatility, GARCH(1, 1)t is
+GARCH(1,1)’s forecast of next-month stock market return volatility. Each month-end t,
+GARCH(1,1) is ﬁtted to historical daily stock market return since 1986. Results are robust
+to using other starting time, such as 1990, 1970 etc. 1 − EtV[RV t+1 ]
+                                                               IXt
+                                                                       is conditional volatility
+risk premium in returns. To obtain Et [RVt+1 ], each month t, a VAR of (RVt , V IXt ) with
+5 lags is ﬁtted to historical monthly data since 1990. Results are robust to different lags.
+t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                           VRP timing                                 EP timing
+ ft                    const      1
+                                 RVt
+                                           1
+                                         V IXt
+                                                     1
+                                                 GARCH(1,1)t
+                                                               1 − EtV[RV t+1 ]
+                                                                        IXt
+                                                                                  buy-hold RV    1
+                                                                                                   t
+ excess return         0.239    0.248 0.253     0.273              0.268            0.075    0.090
+                       (7.40)   (7.57) (7.90)  (8.44)              (8.08)          (2.75)    (3.21)
+ std                   0.154    0.154 0.154     0.154              0.154            0.154    0.154
+ S.R.                   1.54     1.61 1.63       1.76               1.74             0.48      0.58
+ skewness              -4.40    -4.13 -4.06     -3.74              -2.81            -0.76     -0.83
+ kurtosis              28.94    34.36 28.19     24.08              18.48             4.55    16.68
+ max. drawdown         -0.35    -0.42 -0.34     -0.32              -0.31            -0.19     -0.35
+ average weight wt     -0.07    -0.06 -0.07     -0.07              -0.07               1       1.11
+                                     Fama-French 3 + Mom
+ α                     0.184    0.202 0.206     0.222              0.219                      0.033
+                       (5.93)   (6.45) (6.75)  (7.53)              (7.17)                    (1.37)
+ βM KT                  0.57     0.46 0.48       0.51               0.49                      0.67
+                       (5.81)   (6.27) (6.08)  (6.95)              (7.18)                    (8.67)
+ βHM L                  0.13     0.11 0.07       0.10               0.05                      0.04
+                       (1.31)   (1.60) (1.07)  (1.32)              (0.63)                    (0.70)
+ βSM B                  0.16     0.09 0.10       0.12               0.14                      -0.04
+                       (2.71)   (1.47) (1.89)  (2.10)              (2.24)                    (-0.61)
+ βM OM                  0.12     0.14 0.13       0.15               0.17                      0.14
+                       (3.43)   (3.40) (3.33)  (3.86)              (4.81)                    (3.70)
+ R2                     0.33     0.21 0.23       0.26               0.25                      0.40
+
+
+
+
+                                                 36
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+                               Table 4. Predictive correlation.
+
+The table displays the correlation between portfolio weight and next-month variance
+swap realized return. Test period is Jan 1992 - Nov 2023.
+
+                                   wtvar       wtgarch      wtiv       wtrv
+                   RVt+1
+                   V IXt2
+                          −1       0.12         0.13        0.07       0.08
+
+
+
+
+                                              37
+
+                Electronic copy available at: https://ssrn.com/abstract=4761614
+                            Table 5. Correlation between weights.
+
+The table displays the correlation between portfolio weights for different strategies. Test
+period is Jan 1992 - Nov 2023.
+
+                                   wtvar       wtgarch      wtiv       wtrv
+                      wtvar        1.00         0.39        0.18       0.24
+                      wtgarch      0.39         1.00        0.78       0.84
+                      wtiv         0.18         0.78        1.00       0.82
+                      wtrv         0.24         0.84        0.82       1.00
+
+
+
+
+                                                38
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+                      Table 6. Conditional regressions: longest periods.
+
+Test period is Jan 1992 - Nov 2023. All variables are annualized. We deﬁne month t as
+low-volatility (high-volatility) regime if RVt < 20 (RVt > 20). Conditional on the two
+regimes respectively, we run ft -timing portfolio excess returns onto ft = const portfolio
+excess returns. t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                              VRP timing
+                 ft        const     1
+                                    RVt
+                                              1
+                                            V IXt
+                                                         1
+                                                     GARCH(1,1)t
+                                                                   1 − EtV[RV t+1 ]
+                                                                            IXt
+                                     Low-volatility regime
+                 α                  0.03   0.01        0.03             0.04
+                                   (0.59) (0.31)      (1.49)           (1.55)
+                 βrt+1
+                   vs,cw            1.01   1.07        1.08             0.96
+                                   (7.60) (12.99)    (20.42)          (11.87)
+                 R2                 0.81   0.92        0.96             0.81
+                                    High-volatility regime
+                 α                  0.01   0.02        0.03             0.07
+                                   (0.43) (1.86)      (1.95)           (1.57)
+                 βrt+1
+                   vs,cw            0.43   0.51        0.54             0.65
+                                   (7.75) (14.68)     (9.99)           (5.59)
+                 R2                 0.93   0.94        0.92             0.68
+
+
+
+
+                                                39
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+                Table 7. Out-of-sample strategy performance: recent periods.
+
+In-sample: Jan 1990 - July 2006. Out-of-sample: Aug 2006 - Nov 2023. All variables
+are annualized. RVt is realized volatility, V IXt is implied volatility, GARCH(1, 1)t is
+GARCH(1,1)’s forecast of next-month stock market return volatility. Each month-end t,
+GARCH(1,1) is ﬁtted to historical daily stock market return since 1986. Results are robust
+to using other starting time, such as 1990, 1970 etc. 1 − EtV[RV t+1 ]
+                                                               IXt
+                                                                       is conditional volatility
+risk premium in returns. To obtain Et [RVt+1 ], each month t, a VAR of (RVt , V IXt ) with
+5 lags is ﬁtted to historical monthly data since 1990. Results are robust to different lags.
+t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                           VRP timing                                    EP timing
+ft                    const       1
+                                 RVt
+                                            1
+                                          V IXt
+                                                       1
+                                                   GARCH(1,1)t
+                                                                 1 − EtV[RV t+1 ]
+                                                                          IXt
+                                                                                     buy-hold RV   1
+                                                                                                     t
+excess return         0.144      0.145 0.154      0.168              0.155             0.085    0.083
+                      (3.17)     (3.35) (3.57)    (3.82)             (3.43)           (2.15)    (2.03)
+std                   0.163      0.163 0.163      0.163              0.163             0.163    0.163
+S.R.                   0.87       0.87    0.94     1.02               0.94             0.52      0.50
+skewness              -3.90      -4.21 -3.75      -3.58               -3.40            -0.73     -2.09
+kurtosis              21.05      28.98 21.44      19.47              20.10             4.41     24.19
+max. drawdown         -0.30      -0.38 -0.29      -0.29               -0.30            -0.19     -0.36
+average weight wt     -0.06      -0.05 -0.06      -0.06               -0.05              1       1.08
+                                      Fama-French 3 + Mom
+α                      0.090     0.099 0.104      0.118              0.106                       0.029
+                       (2.23)    (2.41) (2.57)    (3.00)             (2.58)                      (0.74)
+βM KT                   0.64      0.52    0.56     0.57               0.55                        0.63
+                       (5.00)    (4.97) (5.12)    (5.51)             (5.33)                      (5.48)
+βHM L                  -0.01     -0.05 -0.08      -0.05               -0.04                      -0.03
+                      (-0.04)   (-0.37) (-0.71)  (-0.42)            (-0.28)                     (-0.32)
+βSM B                   0.08      0.07    0.01     0.06               0.08                        0.01
+                       (0.83)    (0.53) (0.13)    (0.56)             (0.66)                      (0.08)
+βM OM                   0.10      0.13    0.12     0.13               0.17                        0.13
+                       (1.92)    (2.00) (2.00)    (2.22)             (3.04)                      (2.00)
+R2                      0.38      0.24    0.28     0.30               0.27                        0.35
+
+
+
+
+                                                  40
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+             Table 8. Out-of-sample strategy performance: using actual price data
+
+Data is based on monthly one-month variance swap prices provided in Dew-Becker,
+Giglio, Le, and Rodriguez (2017). In-sample: Jan 1990 - Dec 1995. Out-of-sample: Jan 1996
+- Sep 2013. All variables are annualized. RVt is realized volatility, V IXt is implied volatil-
+ity, GARCH(1, 1)t is GARCH(1,1)’s forecast of next-month stock market return volatility.
+Each month-end t, GARCH(1,1) is ﬁtted to historical daily stock market return since 1986.
+Results are robust to using other starting time, such as 1990, 1970 etc. 1 − EtV[RV t+1 ]
+                                                                                  IXt
+                                                                                          is con-
+ditional volatility risk premium in returns. To obtain Et [RVt+1 ], each month t, a VAR of
+(RVt , V IXt ) with 5 lags is ﬁtted to historical monthly data since 1990. Results are robust
+to different lags. t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                           VRP timing                                  EP timing
+ ft                    const      1
+                                 RVt
+                                           1
+                                         V IXt
+                                                     1
+                                                 GARCH(1,1)t
+                                                                1 − EtV[RV t+1 ]
+                                                                         IXt
+                                                                                   buy-hold RV    1
+                                                                                                    t
+ excess return         0.210    0.263 0.232      0.246              0.278            0.052    0.082
+                       (4.24)   (5.36) (4.81)    (5.07)             (5.53)          (1.33)    (2.07)
+ std                   0.165    0.165 0.165      0.165              0.165            0.165    0.165
+ S.R.                   1.26     1.58    1.39      1.48              1.66             0.32      0.50
+ skewness               -5.43    -3.42 -5.12      -4.78             -2.81            -0.87     -0.23
+ kurtosis              46.94    25.12 46.64      41.38              19.89             4.33      6.51
+ max. drawdown         -0.45     -0.37 -0.45      -0.43             -0.35            -0.19     -0.21
+ average weight wt      -0.07    -0.08 -0.07      -0.08             -0.08               1       1.18
+                                      Fama-French 3 + Mom
+ α                     0.170    0.220 0.192      0.205              0.237                      0.038
+                      (4.15)    (5.73) (4.98)    (5.39)             (6.17)                    (1.21)
+ βM KT                 0.54      0.52    0.50      0.52              0.53                      0.76
+                      (4.06)    (5.73) (4.51)    (5.18)             (6.65)                    (7.87)
+ βHM L                 -0.02      0.05 -0.00       0.00             -0.08                      -0.01
+                      (-0.16)   (0.45) (-0.01)   (0.03)            (-0.73)                    (-0.10)
+ βSM B                 0.12      0.08    0.11      0.09              0.10                      -0.05
+                      (1.73)    (1.04) (1.52)    (1.16)             (1.17)                    (-0.67)
+ βM OM                 0.13      0.17    0.15      0.16              0.19                      0.13
+                      (3.66)    (4.50) (4.26)    (4.57)             (5.14)                    (3.47)
+ R2                    0.30      0.27    0.26      0.27              0.30                      0.53
+
+
+
+
+                                                 41
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+           Table 9. Correlation between constant-maturity variance asset returns.
+
+The table displays the correlation between three constant-maturity variance asset returns.
+Data is monthly Apr 2004 - June 2019.
+
+                                          rtvs        rtvix    −rtst,short
+                         rtvs            1.00         0.69      0.87
+                         rtvix           0.69         1.00      0.74
+                         −rtst,short     0.87         0.74      1.00
+
+
+
+
+                                                 42
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+                  Table 10. Out-of-sample strategy performance: VIX futures.
+
+Data is based on one-month constant-maturity VIX futures returns provided in Johnson
+(2017), augmented with the most recent data obtained from CBOE. We roll-over daily re-
+turns into monthly returns. In-sample: Jan 1990 - Mar 2004. Out-of-sample: Apr 2004 -
+Nov 2023. All variables are annualized. RVt is realized volatility. V IXt is implied volatil-
+ity. GARCH(1, 1)t is GARCH(1,1)’s forecast of next-month stock market return volatility.
+Each month-end t, GARCH(1,1) is ﬁtted to historical daily stock market return since 1986.
+Results are robust to using other starting time, such as 1990, 1970 etc. 1 − EtV[RV t+1 ]
+                                                                                  IXt
+                                                                                          is con-
+ditional volatility risk premium in returns. To obtain Et [RVt+1 ], each month t, a VAR of
+(RVt , V IXt ) with 5 lags is ﬁtted to historical monthly data since 1990. Results are robust
+to different lags. t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                           VRP timing                                 EP timing
+ ft                    const      1
+                                 RVt
+                                           1
+                                         V IXt
+                                                     1
+                                                 GARCH(1,1)t
+                                                               1 − EtV[RV t+1 ]
+                                                                        IXt
+                                                                                  buy-hold RV   1
+                                                                                                  t
+ excess return         0.095    0.106 0.112      0.123             0.107            0.080    0.078
+                       (2.52)   (2.80) (2.96)    (3.20)            (2.74)          (2.27)    (2.18)
+ std                   0.156    0.156 0.156      0.156             0.156            0.156    0.156
+ S.R.                   0.61     0.68    0.72     0.78              0.68            0.51      0.50
+ skewness               -2.86    -1.96 -2.03      -1.59             -1.67           -0.73     -2.00
+ kurtosis              16.49     9.65    9.91     6.76              9.98            4.69     23.81
+ max. drawdown         -0.28    -0.25 -0.26      -0.18              -0.25           -0.19     -0.36
+ average weight wt      -0.22    -0.25 -0.26      -0.26             -0.23             1       1.09
+                                      Fama-French 3 + Mom
+ α                     0.031    0.052 0.052      0.063             0.051                      0.025
+                       (1.12)   (1.57) (1.66)    (2.04)           (1.44)                      (0.74)
+ βM KT                  0.78     0.65    0.72     0.72             0.66                        0.63
+                       (8.59)   (7.75) (8.86)    (9.31)           (7.53)                      (5.72)
+ βHM L                  0.11     0.04 -0.01       0.05             0.03                       -0.06
+                       (0.94)   (0.38) (-0.12)   (0.49)           (0.20)                     (-0.60)
+ βSM B                  0.03     0.05    0.03     0.03             -0.07                       0.07
+                       (0.94)   (0.45) (0.38)    (0.28)           (-0.58)                     (0.55)
+ βM OM                  0.07     0.11    0.11     0.11             0.14                        0.14
+                       (1.51)   (1.92) (2.16)    (2.10)           (2.56)                      (2.44)
+ R2                     0.61     0.40    0.49     0.49             0.35                        0.37
+
+
+
+
+                                                 43
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+                            Table 11. Conditional regressions: VIX futures.
+
+Test period is Apr 2004 - Nov 2023. All variables are annualized. We deﬁne month t as
+low-volatility (high-volatility) regime if RVt < 20 (RVt > 20). Conditional on the two
+regimes respectively, we run ft -timing portfolio excess returns onto ft = const portfolio
+excess returns. t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                                 VRP timing
+                 ft           const      1
+                                        RVt
+                                                  1
+                                                V IXt
+                                                            1
+                                                        GARCH(1,1)t
+                                                                      1 − EtV[RV t+1 ]
+                                                                               IXt
+                                        Low-volatility regime
+                 α                     -0.01   -0.00        0.00          -0.01
+                                      (-0.47) (-0.26)      (0.30)        (-0.64)
+                 βrvix,cw               1.20    1.20        1.22           1.09
+                      t+1
+                                      (17.85) (16.11)     (38.75)        (13.11)
+                 R2                     0.88    0.93        0.96           0.80
+                                        High-volatility regime
+                 α                      0.02    0.03        0.04           0.08
+                                       (1.00) (1.87)       (2.13)         (1.41)
+                 βrvix,cw               0.43    0.55        0.52           0.49
+                      t+1
+                                       (5.19) (24.02)      (7.29)         (3.55)
+                 R2                     0.89    0.96        0.91           0.55
+
+
+
+
+                                                  44
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+            Table 12. Out-of-sample strategy performance: S&P 500 ATM straddles.
+
+Data is based on (short) one-month constant-maturity ATM S&P 500 straddle returns pro-
+vided in Johnson (2017), augmented with the most recent data obtained from Option-
+Metrics. We roll-over daily returns into monthly returns. In-sample: Jan 1990 - Dec 1995.
+Out-of-sample: Jan 1996 - Dec 2022. All variables are annualized. RVt is realized volatility.
+V IXt is implied volatility. GARCH(1, 1)t is GARCH(1,1)’s forecast of next-month stock
+market return volatility. Each month-end t, GARCH(1,1) is ﬁtted to historical daily stock
+market return since 1986. Results are robust to using other starting time, such as 1990,
+1970 etc. 1 − EtV[RV t+1 ]
+                   IXt
+                           is conditional volatility risk premium in returns. To obtain Et [RVt+1 ],
+each month t, a VAR of (RVt , V IXt ) with 5 lags is ﬁtted to historical monthly data since
+1990. Results are robust to different lags. t-stat (in parenthesis) is based on Newey-West
+s.e. with 3 lags.
+
+                                                VRP timing                                  EP timing
+ft                        const         1
+                                       RVt
+                                                1
+                                              V IXt
+                                                           1
+                                                       GARCH(1,1)t
+                                                                     1 − EtV[RV t+1 ]
+                                                                              IXt
+                                                                                        buy-hold RV   1
+                                                                                                        t
+excess return             0.092 0.101 0.112    0.107                     0.101            0.067    0.069
+                          (2.25) (2.48) (2.75) (2.64)                    (2.58)          (2.13) (2.17)
+std                       0.162 0.162 0.162    0.162                     0.162            0.162    0.162
+S.R.                       0.51 0.55 0.62       0.58                       0.55           0.41      0.43
+skewness                   -4.07 -2.72 -3.01    -3.36                     -2.90           -0.77    -1.77
+kurtosis                  28.61 13.96 17.32    21.70                     21.37             4.27    23.04
+max. drawdown              -0.39 -0.28 -0.34    -0.35                     -0.38           -0.19    -0.39
+average weight wt          -0.60 -0.78 -0.77    -0.73                     -0.62              1      1.06
+                  wt Ptst
+average weight 20%×SP Xt -0.12 -0.13 -0.14      -0.13                     -0.12
+                                 Fama-French 3 + Mom
+α                         0.049 0.057 0.067    0.064                     0.061                     0.020
+                          (1.20) (1.57) (1.79) (1.73)                    (1.74)                   (0.70)
+βM KT                      0.35 0.32 0.34       0.31                      0.27                     0.66
+                          (2.48) (3.57) (3.06) (3.29)                    (3.24)                   (7.84)
+βHM L                      0.11 0.12 0.07       0.09                      0.06                     0.02
+                          (0.90) (1.17) (0.80) (0.96)                    (0.60)                   (0.28)
+βSM B                      0.29 0.26 0.27       0.27                      0.29                     -0.01
+                          (3.68) (3.53) (3.57) (3.42)                    (2.41)                   (-0.18)
+βM OM                      0.04 0.07 0.08       0.07                      0.09                     0.12
+                          (0.92) (1.51) (1.75) (1.61)                    (2.11)                   (2.92)
+R2                         0.19 0.15 0.16       0.14                      0.12                     0.40
+
+
+
+
+                                                  45
+
+                    Electronic copy available at: https://ssrn.com/abstract=4761614
+                Table 13. Conditional regressions: S&P 500 ATM straddles.
+
+Test period is Jan 1996 - Dec 2022. All variables are annualized. We deﬁne month t as
+low-volatility (high-volatility) regime if RVt < 20 (RVt > 20). Conditional on the two
+regimes respectively, we run ft -timing portfolio excess returns onto ft = const portfolio
+excess returns. t-stat (in parenthesis) is based on Newey-West s.e. with 3 lags.
+
+                                               VRP timing
+                 ft         const      1
+                                      RVt
+                                                1
+                                              V IXt
+                                                          1
+                                                      GARCH(1,1)t
+                                                                    1 − EtV[RV t+1 ]
+                                                                             IXt
+                                       Low-volatility regime
+                 α                    0.01    0.01       -0.00           -0.00
+                                     (0.31) (1.27)      (-0.01)        (-0.06)
+                 βrst,cw              1.21    1.19        1.25           1.13
+                      t+1
+                                    (12.88) (25.67)     (19.46)         (8.16)
+                 R2                   0.89    0.94        0.97           0.84
+                                       High-volatility regime
+                 α                    0.02    0.03        0.04           0.06
+                                     (0.78) (1.86)       (1.71)         (1.43)
+                 βrst,cw              0.51    0.66        0.55           0.50
+                      t+1
+                                     (5.12) (16.35)      (5.87)         (3.17)
+                 R2                   0.87    0.95        0.87           0.56
+
+
+
+
+                                                 46
+
+                  Electronic copy available at: https://ssrn.com/abstract=4761614
+                   Average Return (monthly)                          Standard Deviation (monthly)
+            0                                                 100
+
+                                                               80
+           -10
+
+                                                               60
+       %
+
+
+
+
+                                                          %
+           -20
+                                                               40
+
+           -30
+                                                               20
+
+           -40                                                  0
+                   1       2      3        4   5                      1       2      3        4      5
+                               portfolio                                          portfolio
+
+                   Sharpe Ratio (annualized)                              Probability of Recession
+            0                                                 0.25
+
+         -0.5                                                  0.2
+            -1
+                                                              0.15
+         -1.5
+                                                               0.1
+            -2
+
+         -2.5                                                 0.05
+
+            -3                                                  0
+                   1       2      3        4   5                      1       2      3        4      5
+                               portfolio                                          portfolio
+
+
+
+Figure 1. Sorts on previous month’s realized volatility. Sample is monthly Jan 1990 - Nov 2023.
+We use the monthly time-series of realized volatility to sort the following month’s variance swap
+returns into ﬁve portfolios. Portfolio "1" ("5") looks at the properties of returns over the month fol-
+lowing the lowest (highest) 20% of realized volatility months. We show (monthly) average returns,
+(monthly) standard deviation of returns, (annualized) Sharpe ratio of returns, and probability of
+NBER recessions by computing the average of an NBER recession dummy.
+
+
+
+
+                                                     47
+
+                       Electronic copy available at: https://ssrn.com/abstract=4761614
+                       Average Return (monthly)                       Standard Deviation (monthly)
+             0                                                 100
+
+                                                                80
+            -10
+
+                                                                60
+        %
+
+
+
+
+                                                           %
+            -20
+                                                                40
+
+            -30
+                                                                20
+
+            -40                                                  0
+                   1        2      3        4     5                   1       2      3        4      5
+                                portfolio                                         portfolio
+
+                    Sharpe Ratio (annualized)                             Probability of Recession
+             0                                                 0.25
+
+         -0.5                                                   0.2
+             -1
+                                                               0.15
+         -1.5
+                                                                0.1
+             -2
+
+         -2.5                                                  0.05
+
+             -3                                                  0
+                   1        2      3        4     5                   1       2      3        4      5
+                                portfolio                                         portfolio
+
+
+
+Figure 2. Sorts on previous month’s implied volatility. Sample is monthly Jan 1990 - Nov 2023.
+We use the monthly time-series of implied volatility to sort the following month’s variance swap
+returns into ﬁve portfolios. Portfolio "1" ("5") looks at the properties of returns over the month fol-
+lowing the lowest (highest) 20% of realized volatility months. We show (monthly) average returns,
+(monthly) standard deviation of returns, (annualized) Sharpe ratio of returns, and probability of
+NBER recessions by computing the average of an NBER recession dummy.
+
+
+
+
+                                                      48
+
+                       Electronic copy available at: https://ssrn.com/abstract=4761614
+                      Average Return (monthly)                        Standard Deviation (monthly)
+            0                                                  100
+
+                                                                80
+           -10
+
+                                                                60
+       %
+
+
+
+
+                                                           %
+           -20
+                                                                40
+
+           -30
+                                                                20
+
+           -40                                                   0
+                  1        2      3        4      5                   1       2      3        4      5
+                               portfolio                                          portfolio
+
+                      Sharpe Ratio (annualized)                           Probability of Recession
+            0                                                  0.25
+
+                                                                0.2
+            -1
+
+                                                               0.15
+            -2
+                                                                0.1
+
+            -3
+                                                               0.05
+
+            -4                                                   0
+                  1        2      3        4      5                   1       2      3        4      5
+                               portfolio                                          portfolio
+
+
+
+Figure 3. Sorts on previous month’s GARCH 1-month volatility forecast. Sample is monthly Jan
+1990 - Nov 2023. We use the monthly time-series of GARCH(1,1)’s 1-month volatility forecast to
+sort the following month’s variance swap returns into ﬁve portfolios. Portfolio "1" ("5") looks at
+the properties of returns over the month following the lowest (highest) 20% of realized volatility
+months. We show (monthly) average returns, (monthly) standard deviation of returns, (annual-
+ized) Sharpe ratio of returns, and probability of NBER recessions by computing the average of an
+NBER recession dummy.
+
+
+
+
+                                                      49
+
+                      Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 4. Portfolio weight on variance swaps: longest periods. Test period is Jan 1992 - Nov 2023.
+The top panel plots implied and realized volatility. The middle panel plots next-month realized
+return on a one-month variance swap. The bottom panel plots portfolio weight on the variance
+swap for each strategy.
+
+
+
+
+                                                 50
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 5. Cumulative portfolio values: longest periods. Starting value is $1 on Jan 1992 for each
+strategy. Test period is Jan 1992 - Nov 2023. The top panel plots cumulative portfolio value for
+each strategy. Ending value for each strategy is attached. The bottom panel plots drawdowns for
+each strategy.
+
+
+
+
+                                                 51
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 6. Portfolio weight on variance swaps: recent periods. Test period is Aug 2006 - Nov 2023.
+The top panel plots implied and realized volatility. The middle panel plots next-month realized
+return on a one-month variance swap. The bottom panel plots portfolio weight on the variance
+swap for each strategy.
+
+
+
+
+                                                 52
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 7. Cumulative portfolio values: recent periods. Starting value is $1 on Aug 2006 for each
+strategy. Test period is Aug 2006 - Nov 2023. The top panel plots cumulative portfolio value for
+each strategy. Ending value for each strategy is attached. The bottom panel plots drawdowns for
+each strategy.
+
+
+
+
+                                                 53
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 8. Portfolio weight on variance swaps: using actual price data. Test period is Jan 1996 -
+Sep 2013. The top panel plots implied and realized volatility. The middle panel plots next-month
+realized return on a one-month variance swap using data provided in Dew-Becker, Giglio, Le, and
+Rodriguez (2017). The bottom panel plots portfolio weight on the variance swap for each strategy.
+
+
+
+
+                                                 54
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 9. Cumulative portfolio values: using actual price data. Data is based on variance swap
+price data provided in Dew-Becker, Giglio, Le, and Rodriguez (2017). Starting value is $1 on
+Jan 1996 for each strategy. Test period is Jan 1996 - Sep 2013. The top panel plots cumulative
+portfolio value for each strategy. Ending value for each strategy is attached. The bottom panel
+plots drawdowns for each strategy.
+
+
+
+
+                                                 55
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 10. A comparison of three variance asset returns. We ﬁrst get daily returns for a one-
+month constant-maturity variance-swap/VIX-futures/S&P 500 ATM straddle position provided
+by Johnson (2017). Within each month, we implement a roll-over strategy to generate the total
+return for that speciﬁc month. We then plot the obtained monthly return. For straddles, we use
+(negative) short returns provided by Johnson (2017), which assumes a margin requirement equal
+to 20% of current S&P 500 level, since our timing porfolios prescribe short selling variance assets.
+We augment the VIX futures and straddle returns from Johnson (2017) with the most recent time
+data obtained from CBOE and OptionMetrics.
+
+
+
+
+                                                  56
+
+                    Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 11. Portfolio weight on VIX futures. We ﬁrst get daily returns for a one-month constant-
+maturity VIX futures position provided by Johnson (2017). Within each month, we implement a
+roll-over strategy to generate the total return for that speciﬁc month. We augment the data from
+Johnson (2017) with the most recent time data obtained from CBOE. Test period is Apr 2004 - Nov
+2023. The top panel plots implied and realized volatility. The middle panel plots next-month
+realized return on a constant-maturity one-month VIX futures. The bottom panel plots portfolio
+weight on VIX futures for each strategy.
+
+
+
+
+                                                 57
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 12. Cumulative portfolio values: VIX futures. Starting value is $1 on Apr 2004 for each
+strategy. Test period is Apr 2004 - Nov 2023. The top panel plots cumulative portfolio value for
+each strategy. Ending value for each portfolio is attached. The bottom panel plots drawdowns for
+each strategy.
+
+
+
+
+                                                 58
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 13. Portfolio weight on S&P 500 ATM straddles. We ﬁrst get daily returns for a one-month
+constant-maturity S&P 500 ATM straddle (short) position provided by Johnson (2017). Within each
+month, we implement a roll-over strategy to generate the total return for that speciﬁc month. We
+use short returns as provided by Johnson (2017), which assumes a margin requirement equal to
+20% of current S&P 500 level. We augment the data from Johnson (2017) with the most recent time
+data obtained from OptionMetrics. Test period is Jan 1996 - Dec 2022. The top panel plots implied
+and realized volatility. The second panel plots next-month realized return on a constant-maturity
+one-month S&P 500 ATM straddle. The third and fourth panel respectively plots portfolio weight
+on the straddle for each strategy in terms of deposited margin and straddles’ market values.
+
+
+
+
+                                                 59
+
+                   Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 14. Cumulative portfolio values: S&P 500 ATM straddles. Starting value is $1 on Jan 1996
+for each strategy. Test period is Jan 1996 - Dec 2022. The top panel plots cumulative portfolio value
+for each strategy. Ending value for each portfolio is attached. The bottom panel plots drawdowns
+for each strategy.
+
+
+
+
+                                                  60
+
+                    Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 15. Predictive regressions: unconditional. We run predictive regressions of next-month
+(negative) variance swap returns, (negative) constant-maturity VIX futures portfolio returns, and
+(negative) constant-maturity straddle portfolio returns onto this month’s realized volatility (RV)
+and implied volatility (VIX). We use full-sample. t-stat is heteroscedasticity robust. Data is as in
+the main text.
+
+
+
+
+                                                  61
+
+                    Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 16. Predictive regressions: conditional on low-volatility regime throughout. We run pre-
+dictive regressions of next-month (negative) variance swap returns, (negative) constant-maturity
+VIX futures portfolio returns, and (negative) constant-maturity straddle portfolio returns onto this
+month’s realized volatility (RV) and implied volatility (VIX). We condition on both this and next
+month’s RV<20. t-stat is heteroscedasticity robust. Data is as in the main text.
+
+
+
+
+                                                  62
+
+                    Electronic copy available at: https://ssrn.com/abstract=4761614
+Figure 17. Predictive regressions: conditional on low-volatility regime next month. We run pre-
+dictive regressions of next-month (negative) variance swap returns, (negative) constant-maturity
+VIX futures portfolio returns, and (negative) constant-maturity straddle portfolio returns onto this
+month’s realized volatility (RV) and implied volatility (VIX). We condition on next month’s RV<20.
+t-stat is heteroscedasticity robust. Data is as in the main text.
+
+
+
+
+                                                  63
+
+                    Electronic copy available at: https://ssrn.com/abstract=4761614
+

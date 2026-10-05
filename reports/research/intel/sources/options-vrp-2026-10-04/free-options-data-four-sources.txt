@@ -1,0 +1,259 @@
+SOURCE: https://davidariasfinance.com/scripts/free-options-data/
+FETCHED_UTC: 2026-10-04T18:54Z
+HTTP: 200
+---
+
+ Free Historical Option Chain Data, Four Sources | David Arias, CFA
+Four free sources for option chains, and how to pull them
+Yahoo hands you today's chain and nothing behind it. These four give you the history, for nothing, each with a real limit you should know before you build on it. Signup steps, runnable Python, and the output I got when I ran every block on 7 August 2026.
+Get exclusive models, prompts and code
+ One short email when there's something new. Finance models, code walkthroughs, agentic prompts. No spam.
+ Subscribe
+ Built with
+Check my last vol and greeks video
+The reason I needed this data in the first place. Volatility trading and the greeks that sit past delta and gamma, worked on a live NVDA option chain rather than a toy example. Every number on screen came off a real chain, which is exactly the problem the four sources below solve.
+Vanna, volga, zomma, color and speed on a real NVDA chain. The full write up is here.
+Watch my video on machine learning for trade automation
+Ninety four firm characteristics feed a neural network with three hidden layers, trained on
+ expanding windows so that validation never sees the future. Predictions rank every stock, then the
+ top decile is bought and the bottom decile sold. Model selection runs on the information coefficient
+ rather than mean squared error, which holds up better on limited data.
+ Method comes from Gu, Kelly and Xiu (2020),
+ Empirical Asset Pricing via Machine Learning, rebuilt here on free data instead of the 30,000
+ stocks and 920 features of the original. Last step connects the book to the Interactive Brokers API
+ through a Python script, so the strategy places its own long short orders rather than printing a
+ backtest. Code and notebook are on GitHub.
+Full build, from the 94 characteristics through training to a live order
+ sent to Interactive Brokers. Subtitles in English, Portuguese and Spanish.
+Equity data is solved. You want ten years of SPY closes, one line of yfinance and you have it. Options are not solved. The moment you want the chain as it looked on a past date, the free tooling everybody uses simply stops working, and most people discover this halfway through building a backtest.
+Here is the exact shape of the problem. This runs fine and returns nothing you can use for history.
+ Copy
+import yfinance as yf
+spy = yf.Ticker("SPY")
+print(len(spy.options), spy.options[:3])
+# 29 ('2026-08-10', '2026-08-11', '2026-08-12')
+chain = spy.option_chain(spy.options[2])
+print(chain.calls.columns.tolist())
+# ['contractSymbol', 'lastTradeDate', 'strike', 'lastPrice', 'bid', 'ask', 'change',
+# 'percentChange', 'volume', 'openInterest', 'impliedVolatility', 'inTheMoney',
+# 'contractSize', 'currency']
+Twenty nine expiries, greeks absent, implied vol present, and no argument anywhere that takes a quote date. The object is a live snapshot of the book right now. Ask again tomorrow and today is gone, permanently, because nothing is stored. That is why anyone doing serious options work either pays for a vendor feed or runs a cron job that snapshots the chain every evening and waits a year for a usable sample.
+The four sources below skip that wait. I ordered them by how much friction stands between you and data on disk, so the first one needs no account at all and the last one needs a checkout.
+ The four, at a glance. Checked against each live source on 8 August 2026.
+SourceCoverageGreeks and IVAccountThe catch
+DoltHub2,321 US symbols, 2019 to yesterdayyesnonebulk pull needs the dolt CLI
+CboeVIX daily, 1990 to yesterdaynot applicablenoneindex only, chains sit behind DataShop
+KaggleSPY EOD, 2010 to 2023yes, precomputedfree, API tokenone ticker, stops in 2023
+OptionsDX10 tickers, 2010 to 2023, EOD to minutelyyesfree, then checkoutone year per order, some variants paid
+1. DoltHub, the whole US market with no signup
+Dolt is a SQL database with git semantics. Branches, commits, diffs, all of it, on tables instead of files. The repo post-no-preference/options is a community maintained mirror of the US options market kept on that engine, and it is public. There is a serious consequence hiding in that sentence. Because a Dolt repo speaks SQL over HTTP, you can query the entire options market from a laptop with nothing installed except requests.
+Step by step
+Open dolthub.com/repositories/post-no-preference/options and look at the two tables, option_chain and volatility_history.
+Note the branch name. It is master, not main. Point the API at main and every query fails with branch not found, which is the single most common way people give up on this source.
+Query it straight away at https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master?q=<your SQL>. No key, no header, no account.
+Only if you want the whole thing offline, install the dolt CLI and run dolt clone post-no-preference/options. After that a dolt pull brings each new day in. Expect tens of gigabytes.
+Pull a real chain and build the smile
+This is the script I would actually keep. It wraps the API in one function, pulls the SPY September expiry as it stood on 7 August 2026, and reads the 25 delta skew straight off the returned greeks. Every column below comes from the source, nothing is being estimated here.
+ Copy
+import requests
+import pandas as pd
+API = "https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master"
+NUM = ["strike", "bid", "ask", "vol", "delta", "gamma", "vega"]
+def dolt(sql: str) -> pd.DataFrame:
+ """Run SQL against the public DoltHub repo. No auth, no rate limit key."""
+ r = requests.get(API, params={"q": sql}, timeout=60)
+ r.raise_for_status()
+ j = r.json()
+ if j["query_execution_status"] != "Success":
+ raise RuntimeError(j["query_execution_message"])
+ return pd.DataFrame(j["rows"])
+def chain(symbol: str, date: str, expiry: str) -> pd.DataFrame:
+ df = dolt(f"""
+ SELECT date, expiration, strike, call_put, bid, ask, vol, delta, gamma, vega
+ FROM option_chain
+ WHERE act_symbol = '{symbol}' AND date = '{date}' AND expiration = '{expiry}'
+ ORDER BY strike, call_put
+ """)
+ df[NUM] = df[NUM].astype(float)
+ return df
+df = chain("SPY", "2026-08-07", "2026-09-18")
+calls, puts = df[df.call_put == "Call"], df[df.call_put == "Put"]
+def nearest(frame, col, target):
+ return frame.loc[(frame[col] - target).abs().idxmin()]
+atm = nearest(calls, "delta", 0.50)
+c25 = nearest(calls, "delta", 0.25)
+p25 = nearest(puts, "delta", -0.25)
+print(f"{len(df)} quotes, {len(calls)} calls and {len(puts)} puts")
+print(f"ATM strike {atm.strike:.0f} IV {atm.vol:.2%}")
+print(f"25d call strike {c25.strike:.0f} IV {c25.vol:.2%}")
+print(f"25d put strike {p25.strike:.0f} IV {p25.vol:.2%}")
+print(f"25 delta skew: {(p25.vol - c25.vol) * 100:.2f} vol points")
+ Output. SPY, quote date 7 August 2026, September 18 expiry, 54 quotes returned.
+PointStrikeDeltaImplied vol
+25 delta put750-0.262615.22%
+At the money call7730.525413.38%
+25 delta call7960.259912.14%
+Three numbers and the smile is already there. The downside strike carries 3.08 vol points more than the equivalent upside strike, which is the equity skew doing exactly what it always does, put protection bid and call upside offered. You did not install anything, you did not sign anything, and you can loop that function over a date range to get the skew as a time series.
+The catch, said plainly
+Heavy aggregates over the full table time out on the public endpoint. A COUNT(DISTINCT act_symbol) across option_chain returns context deadline exceeded, and that is the API protecting itself rather than a bug in your SQL. Work per symbol and per date, the way the primary key is laid out, and it is fast. If you need to sweep the whole market, that is what the clone is for. The lighter volatility_history table does answer those questions, and it is where the coverage numbers on this page come from: 2,321 distinct symbols, most recent date 7 August 2026.
+2. Cboe, the VIX history nobody needs to pay for
+Cboe publishes the full VIX series from its own CDN as a plain CSV. This is the exchange that computes the index, so this file is the primary source, not a redistribution. It goes back to 2 January 1990 and updates daily. One URL, no account, no key.
+Step by step
+The file lives at https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv. Open it in a browser once to confirm it is four columns, DATE, OPEN, HIGH, LOW, CLOSE.
+Swap VIX for another index ticker in that path to get its history. The same pattern serves the other Cboe volatility indices.
+For anything beyond index levels, look at cboe.com/us/options/market_statistics, which carries volume by symbol. Full historical chains are a DataShop product and they are not free.
+Where does today sit in 36 years of fear
+The useful question is almost never the VIX level. It is the percentile, because a 15 handle means something different in 2017 than it does after a shock. This block answers it in about ten lines, straight from the URL, no local file.
+ Copy
+import pandas as pd
+URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
+vix = pd.read_csv(URL, parse_dates=["DATE"]).set_index("DATE").sort_index()
+close = vix["CLOSE"]
+last = close.iloc[-1]
+five = close[close.index >= close.index[-1] - pd.Timedelta(days=1825)]
+print(f"{len(close)} sessions, {close.index[0]:%Y-%m-%d} to {close.index[-1]:%Y-%m-%d}")
+print(f"last close {last:.2f}")
+print(f"percentile, 1990+ {(close < last).mean():.1%}")
+print(f"percentile, 5y {(five < last).mean():.1%}")
+print(f"mean {close.mean():.2f}, median {close.median():.2f}")
+print(f"sessions above 30 {(close > 30).mean():.2%}")
+print(close.nlargest(5).round(2))
+ Output. 9,246 sessions, 2 January 1990 to 7 August 2026.
+MeasureValue
+Last close14.90
+Percentile since 199031.3%
+Percentile, last 5 years20.2%
+Mean, median19.44, 17.61
+Sessions closing above 307.95%
+Highest close ever82.69 on 16 Mar 2020
+Two percentiles that disagree, which is the whole point of computing both. Against the full 36 year record 14.90 sits at the 31st percentile, unremarkable. Against the last five years it is the 20th, quietly low. The 2008 and 2020 tails drag the long sample's distribution right, so the long lookback flatters the present. And 7.95% of all sessions closed above 30, so a regime most people file under rare is really one trading day in thirteen.
+Worth keeping in view when you size a short vol trade off a backtest that happens to start in 2012.
+3. Kaggle, fourteen years of SPY in one download
+The dataset is dudesurfin/spy-options-eod-volatility-surface-2010-2023, and full credit to whoever put it together, because assembling fourteen clean years of chains is not a weekend job. End of day SPY, one parquet file per year, roughly 600 MB total, greeks and implied vol already computed by the publisher. This is the set I trained the IV surface network on, and it is the fastest path to a real volatility surface that exists for free.
+The layout is wide rather than long. One row per quote date, expiry and strike, carrying both sides at once, with bracketed column names that survive as [C_IV], [P_IV], [UNDERLYING_LAST] and so on. Strip the brackets on load or every column reference in your code becomes ugly.
+Step by step
+Create a free Kaggle account, then go to Settings, API, and click Create New Token. That downloads kaggle.json.
+Put it at ~/.kaggle/kaggle.json on Linux or macOS, or C:\Users\<you>\.kaggle\kaggle.json on Windows.
+pip install kagglehub pandas pyarrow. The pyarrow part is not optional, pandas cannot read parquet without an engine.
+Download with the snippet below. It caches, so a second run is instant and does not re-pull 600 MB.
+ Copy
+import kagglehub
+path = kagglehub.dataset_download(
+ "dudesurfin/spy-options-eod-volatility-surface-2010-2023"
+)
+print(path) # local cache dir holding spy_eod_2010.parquet ... spy_eod_2023.parquet
+# CLI equivalent, if you prefer:
+# kaggle datasets download -d dudesurfin/spy-options-eod-volatility-surface-2010-2023
+You do not have to touch the API at all if you would rather not. Open the dataset page, hit Download, and you get the whole thing as one zip. Or expand the Data Explorer on the right and pull individual files, which is what I would do first. There are 14 of them, spy_eod_2010.parquet through spy_eod_2023.parquet, one per year. Grab a single year, check the columns are what you expect, then decide whether you want the other 13. No point pulling 600 MB to find out the schema does not suit you.
+The term structure through a real shock
+Any surface plot will look impressive here, so instead let me use the data for something you cannot do with a live feed at all. February 2018, the week short volatility blew up and XIV was wound down. This pulls the at the money implied vol on the four sessions around it, which is a question only historical chains can answer.
+ Copy
+import pandas as pd
+from pathlib import Path
+df = pd.read_parquet(Path(path) / "spy_eod_2018.parquet")
+df.columns = [c.strip().strip("[]") for c in df.columns] # the bracket tax
+for c in ["UNDERLYING_LAST", "STRIKE", "DTE", "C_IV", "P_IV"]:
+ df[c] = pd.to_numeric(df[c], errors="coerce")
+def atm_iv(day: str, lo: int, hi: int) -> pd.Series:
+ """At the money implied vol for the expiry closest to the middle of [lo, hi] days."""
+ d = df[df.QUOTE_DATE.astype(str).str.startswith(day)].copy()
+ w = d[d.DTE.between(lo, hi)]
+ w = w[w.DTE == w.DTE.iloc[(w.DTE - (lo + hi) / 2).abs().argsort().iloc[0]]]
+ return w.loc[(w.STRIKE - w.UNDERLYING_LAST).abs().idxmin()]
+for day in ["2018-02-02", "2018-02-05", "2018-02-06", "2018-02-09"]:
+ r30, r60 = atm_iv(day, 20, 40), atm_iv(day, 50, 70)
+ print(f"{day} spot {r30.UNDERLYING_LAST:7.2f} "
+ f"30d call IV {r30.C_IV:6.2%} 60d call IV {r60.C_IV:6.2%}")
+ Output. SPY at the money implied vol across the February 2018 volatility shock.
+SessionSpot30d call IV60d call IV30d put IV
+Fri 2 Feb275.5214.99%14.61%13.18%
+Mon 5 Feb263.9333.94%30.23%18.31%
+Tue 6 Feb269.1721.53%18.80%20.53%
+Fri 9 Feb261.7022.25%19.66%21.84%
+Thirty day at the money vol went from 15 to 34 in one session and gave most of it back the next day, while the sixty day point moved far less. That is the term structure inverting under stress and then repairing, and it is the single clearest picture of why short dated volatility is a different asset from long dated volatility.
+Now look at the last column on Monday. Call IV says 33.94% and put IV says 18.31% at essentially the same strike. That is not a market view, it is a data artifact. On a violently trending day the two sides of an end of day snapshot are stamped against an underlying that has already moved, and put call parity breaks in the file. Treat it as the standing warning for every free EOD source: take the out of the money side of each strike, drop quotes with a wide relative spread, and never trust a single row on a day the market gapped.
+4. OptionsDX, when you need a ticker other than SPY
+OptionsDX sells historical chains and gives a slice of them away. Ten tickers are listed, SPY, SPX, VIX, QQQ, TSLA, AAPL, NVDA, UVXY, SLV and BTC on Deribit, each covering 2010 to 2023, at five quote frequencies from end of day down to minutely. The product description is specific about what is inside, all expirations and strikes, greeks, implied volatility, bid, ask, last, and the underlying price.
+Two things to be straight about. Every product on the shop is priced as a range starting at zero, so some year and frequency combinations are free and others are not. Check the price after you pick, not before. And the order is one year at a time, delivered as monthly CSVs, so fourteen years of SPY is fourteen separate trips through checkout.
+Step by step
+Register at optionsdx.com/shop, free account.
+Pick a product, then choose a Year and a Quote Frequency. End of day is the cheap end. Minutely is the expensive one.
+Confirm the price on the variant you selected, then check out. A zero price still goes through the cart.
+Download the zip. Inside are monthly CSVs, saved with a .txt extension, comma separated, with bracketed headers.
+A loader that survives their schema changing
+Do not hardcode column names against a vendor file you re-download every year. This loader normalises whatever headers arrive, finds the IV and greek columns by pattern, and melts the wide format into one row per option quote with the liquidity filters already applied. It is the same shape I use on the Kaggle parquet, because both arrive wide with a call block and a put block per strike.
+ Copy
+import glob
+import numpy as np
+import pandas as pd
+DTE_MIN, DTE_MAX = 7, 365 # skip 0 DTE noise and the sparse LEAPS tail
+IV_MIN, IV_MAX = 0.03, 2.00 # kill negatives and the 40.0 blow-ups
+MAX_REL_SPREAD = 0.50 # drop a quote if (ask - bid) / mid exceeds this
+def load_optionsdx(pattern: str) -> pd.DataFrame:
+ """Read every monthly file matching `pattern` into one long, filtered frame."""
+ frames = [pd.read_csv(f, skipinitialspace=True) for f in sorted(glob.glob(pattern))]
+ df = pd.concat(frames, ignore_index=True)
+ df.columns = [c.strip().strip("[]").upper() for c in df.columns]
+ base = pd.DataFrame({
+ "date": pd.to_datetime(df["QUOTE_DATE"]),
+ "expiry": pd.to_datetime(df["EXPIRE_DATE"]),
+ "dte": pd.to_numeric(df["DTE"], errors="coerce"),
+ "spot": pd.to_numeric(df["UNDERLYING_LAST"], errors="coerce"),
+ "strike": pd.to_numeric(df["STRIKE"], errors="coerce"),
+ })
+ out = []
+ for prefix, kind in (("C", "call"), ("P", "put")):
+ bid = pd.to_numeric(df[f"{prefix}_BID"], errors="coerce")
+ ask = pd.to_numeric(df[f"{prefix}_ASK"], errors="coerce")
+ mid = (bid + ask) / 2.0
+ side = base.assign(
+ type=kind,
+ mid=mid,
+ iv=pd.to_numeric(df[f"{prefix}_IV"], errors="coerce"),
+ delta=pd.to_numeric(df.get(f"{prefix}_DELTA"), errors="coerce"),
+ rel_spread=(ask - bid) / mid.replace(0, np.nan),
+ )
+ # keep only the out of the money side, where the IV is cleanest
+ otm = side.strike > side.spot if kind == "call" else side.strike < side.spot
+ out.append(side[otm])
+ q = pd.concat(out, ignore_index=True)
+ q = q[q.dte.between(DTE_MIN, DTE_MAX)
+ & q.iv.between(IV_MIN, IV_MAX)
+ & q.rel_spread.le(MAX_REL_SPREAD)
+ & q.mid.gt(0)]
+ q["log_m"] = np.log(q.strike / q.spot)
+ q["tau"] = q.dte / 365.0
+ return q.reset_index(drop=True)
+quotes = load_optionsdx("spy_eod_2023*.txt")
+print(quotes.shape)
+print(quotes.groupby("type").iv.describe()[["count", "mean", "50%"]])
+To check it holds up I pointed it at a full year of SPY end of day in the same wide layout, swapping read_csv for read_parquet and changing nothing else. 548,099 quotes survive the filters, and the split is the reason you keep both sides rather than averaging them.
+ Surviving out of the money quotes, one full year of SPY end of day, after all four filters
+SideQuotesMean IVMedian IV
+Calls, above spot181,88013.89%13.58%
+Puts, below spot366,21926.79%24.00%
+Twice as many put quotes as call quotes survive, and they carry roughly double the implied vol. That is the skew again, now as a population rather than three strikes, and it is the reason a surface fit that ignores option type will underfit the downside where all the interesting risk sits.
+Four filters carry almost all the value here. Out of the money only, because a deep in the money quote is mostly intrinsic value and its implied vol is numerically unstable. Relative spread capped, because a quote nobody would trade is not a price. Implied vol bounded, because free files contain rows where the solver failed and left a 40.0 sitting in the column. Days to expiry bounded, because the zero DTE rows behave like a different instrument.
+Skip those four and your surface fit will spend its capacity learning the junk rather than the smile. I have made that mistake, and the giveaway is a model whose worst errors all sit in the deep wings.
+Which one for which job
+ What I would reach for, by task
+If you want toUseBecause
+Track skew on one name over timeDoltHubgreeks in the table, query by symbol and date, no install
+Fit a volatility surface todayKagglefourteen clean years, IV precomputed, one download
+Screen the whole marketDoltHub cloned2,321 symbols locally, the public API will time out
+Study a specific name other than SPYOptionsDXten tickers, and intraday if the variant is free
+Put a vol level in contextCboe36 years of VIX from the exchange that computes it
+Get today's chainyfinancestill the fastest snapshot, just store it yourself
+The honest summary is that none of this replaces a paid feed. Coverage stops in 2023 on two of the four, the crypto book is a different market from equity options, and nobody is offering you free tick data on a single name of your choosing. What you do get is enough to build a surface, measure a skew, test a variance premium idea, and find out whether the strategy is worth paying for data before you pay for data.
+One habit to steal regardless of which source you pick. Start a nightly snapshot of the chains you care about today, even if you never look at it. Options history is the one dataset you cannot buy back cheaply, and a year from now the cron job you set up tonight is the only sample nobody else has.
+ The volatility surface network trained on the Kaggle set: two neural nets learn the SPY IV surface
+ The greeks that live on these chains: vanna, volga, color, zomma and speed
+Get the next one before it goes public
+ Datasets I find, models I build and the code behind them. One short email, no spam.
+ Subscribe
+ Built with
+ On X
+Follow me on X, my models are there
+ I post the models as I build them, the changes I make to them, and the results that did
+ not work. Shorter than these write ups, and there are a lot more of them.
+ Follow me on X

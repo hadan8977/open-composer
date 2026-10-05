@@ -1,0 +1,7 @@
+SOURCE: https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master (public SQL API, read-only SELECT ... WHERE act_symbol='SPY' AND date='<d>' LIMIT n)
+FETCHED_UTC: 2026-10-04T~22:00Z (probe run by T-85 executor)
+Result per date (rows returned >0 = present):
+2026-10-02 present; 2026-09-30 present; 2026-08-14 present; 2025-04-08 present; 2024-07-15 present; 2022-06-01 present; 2020-03-16 present
+2024-08-02 ABSENT; 2024-08-05 ABSENT; 2024-08-06 ABSENT; 2024-08-07 ABSENT; 2024-02-15 ABSENT; 2023-06-01 ABSENT; 2021-06-01 ABSENT; 2019-06-03 ABSENT; 2019-03-04 ABSENT; 2019-03-01 ABSENT
+Summary: 7 of 17 sampled weekdays present; the 2024-08 yen-unwind shock days are absent. Aggregate queries (min/max/count over option_chain) time out (context deadline exceeded) so coverage is sampled, not enumerated.
+Columns seen: date, expiration, strike, call_put, bid, ask, vol (+ delta, gamma, vega per third-party description).
