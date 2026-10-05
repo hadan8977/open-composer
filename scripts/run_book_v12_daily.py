@@ -126,6 +126,7 @@ def run_plans(root: Path, decision: date | None, *, submit: bool) -> int:
         if not target_path(root, account, decision).exists():
             log.error("no target file for %s on %s", account, decision)
             return EXIT_REFUSED
+    failed_accounts: list[str] = []
     for account in BOOK_ACCOUNTS:
         base = [*oc_command(), "book-paper"]
         steps = [[*base, "plan", "--account", account, "--decision-date", decision.isoformat()]]
@@ -148,7 +149,14 @@ def run_plans(root: Path, decision: date | None, *, submit: bool) -> int:
                 log.info("  %s", line)
             if proc.returncode != 0:
                 log.error("`%s` failed with exit %s", " ".join(cmd[-5:]), proc.returncode)
-                return EXIT_COMMAND
+                # skip this account's later steps (no submit after a failed plan), but still
+                # run the other account: one rejected order on quant1 must not leave quant2
+                # unsubmitted (T-20261005-20)
+                failed_accounts.append(account)
+                break
+    if failed_accounts:
+        log.error("plan/submit failed for: %s", ", ".join(failed_accounts))
+        return EXIT_COMMAND
     return 0
 
 

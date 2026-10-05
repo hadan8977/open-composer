@@ -1,4 +1,4 @@
-"""One-share closing-auction (time_in_force=cls) probe on a v1.2 book paper account.
+"""One-share auction-order probe (time_in_force=cls, or opg/day) on a v1.2 book paper account.
 
 T-20261005-02 / data pitfall #55: the v1.2 engine submits ``MarketOrderRequest(...,
 time_in_force=TimeInForce.CLS)`` (``open_composer/book_paper/plan.py``), and Alpaca's order docs
@@ -10,11 +10,15 @@ Modes (one per call; every call appends one JSON line to
 ``reports/paper/book/<account>/probes/<execution date>-cls-probe.jsonl``):
 
 * ``account``: read-only account and asset facts (status, shorting, multiplier, ETB flags).
-* ``submit --execute``: one ``cls`` market order of ``--qty`` (must be 1) shares; with
-  ``--require-position Q`` only when the account holds exactly Q shares (closing a probe).
-  Refused unless New York time is on a weekday between 09:30 and 15:45 (Alpaca rejects CLS
-  15:50-19:00 ET).
+* ``submit --execute``: one market order of ``--qty`` (must be 1) shares with ``--tif``
+  (default ``cls``); with ``--require-position Q`` only when the account holds exactly Q shares
+  (closing a probe).  Refused outside the New York weekday window for that time in force:
+  ``cls`` 09:30-15:45 (Alpaca rejects CLS 15:50-19:00 ET); ``opg`` 04:00-09:25 (Alpaca rejects
+  OPG 09:28-19:00 ET); ``day`` 09:35-15:45 (used to close an ``opg`` probe the same morning).
 * ``status``: the broker's view of the probe order (status, fill, timestamps).
+
+T-20261005-30 added ``--tif opg|day``: the opening-auction probe runs on 10-06, before the v1.2
+books hold positions.  ``cls`` probe ids and log names are unchanged.
 
 No secrets are printed: only the broker's order/account fields listed below.
 """
@@ -35,7 +39,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 NEW_YORK = ZoneInfo("America/New_York")
-OPEN_ET, LAST_ET = time(9, 30), time(15, 45)
+WINDOWS_ET = {
+    "cls": (time(9, 30), time(15, 45)),
+    "opg": (time(4, 0), time(9, 25)),
+    "day": (time(9, 35), time(15, 45)),
+}
 ACCOUNT_FIELDS = (
     "status",
     "trading_blocked",
@@ -77,17 +85,18 @@ def _fields(obj: Any, names: tuple[str, ...]) -> dict[str, Any]:
     return {n: _text(getattr(obj, n, None)) for n in names}
 
 
-def probe_id(account: str, day: str, side: str, symbol: str) -> str:
-    return f"probe-cls-{account}-{day}-{side}-{symbol}".lower()
+def probe_id(account: str, day: str, side: str, symbol: str, tif: str = "cls") -> str:
+    return f"probe-{tif}-{account}-{day}-{side}-{symbol}".lower()
 
 
-def in_window(now: datetime) -> bool:
+def in_window(now: datetime, tif: str = "cls") -> bool:
     et = now.astimezone(NEW_YORK)
-    return et.weekday() < 5 and OPEN_ET <= et.time() <= LAST_ET
+    first, last = WINDOWS_ET[tif]
+    return et.weekday() < 5 and first <= et.time() <= last
 
 
-def log_path(root: Path, account: str, day: str) -> Path:
-    return root / "reports/paper/book" / account / "probes" / f"{day}-cls-probe.jsonl"
+def log_path(root: Path, account: str, day: str, tif: str = "cls") -> Path:
+    return root / "reports/paper/book" / account / "probes" / f"{day}-{tif}-probe.jsonl"
 
 
 def append(path: Path, record: dict[str, Any]) -> None:
@@ -104,16 +113,18 @@ def run(
     root: Path = ROOT,
 ) -> int:
     day = now.astimezone(NEW_YORK).date().isoformat()
-    cid = probe_id(args.account, args.day or day, args.side, args.symbol)
+    tif = getattr(args, "tif", "cls")
+    cid = probe_id(args.account, args.day or day, args.side, args.symbol, tif)
     rec: dict[str, Any] = {
         "logged_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "mode": args.mode,
         "account": args.account,
         "symbol": args.symbol,
         "side": args.side,
+        "time_in_force": tif,
         "client_order_id": cid,
     }
-    path = log_path(root, args.account, args.day or day)
+    path = log_path(root, args.account, args.day or day, tif)
     if args.mode == "submit":
         if not args.execute:
             rec["result"] = "dry: pass --execute to send"
@@ -122,8 +133,11 @@ def run(
             return 0
         if args.qty != 1:
             raise SystemExit("probe qty must be 1")
-        if not in_window(now):
-            rec["result"] = "refused: outside 09:30-15:45 New York on a weekday"
+        if not in_window(now, tif):
+            first, last = WINDOWS_ET[tif]
+            rec["result"] = (
+                f"refused: outside {first:%H:%M}-{last:%H:%M} New York on a weekday for {tif}"
+            )
             append(path, rec)
             print(json.dumps(rec))
             return 2
@@ -153,7 +167,9 @@ def run(
             symbol=args.symbol,
             qty=args.qty,
             side=OrderSide.BUY if args.side == "buy" else OrderSide.SELL,
-            time_in_force=TimeInForce.CLS,
+            time_in_force={"cls": TimeInForce.CLS, "opg": TimeInForce.OPG, "day": TimeInForce.DAY}[
+                tif
+            ],
             client_order_id=cid,
         )
         try:
@@ -183,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--symbol", required=True)
     ap.add_argument("--side", choices=["buy", "sell"], default="buy")
     ap.add_argument("--qty", type=int, default=1)
+    ap.add_argument("--tif", choices=sorted(WINDOWS_ET), default="cls")
     ap.add_argument("--day", default=None, help="probe day (New York) for status lookups")
     ap.add_argument("--execute", action="store_true")
     ap.add_argument(

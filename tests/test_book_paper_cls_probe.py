@@ -116,3 +116,42 @@ def test_close_requires_the_probe_position(tmp_path: Path, monkeypatch) -> None:
     client.get_open_position = lambda symbol: SimpleNamespace(qty="1")
     rc = probe.run(args, client_factory=lambda a: client, now=IN_WINDOW, root=tmp_path)
     assert rc == 0 and len(client.sent) == 1
+
+
+def test_cls_ids_and_log_names_unchanged_by_the_tif_option() -> None:
+    assert probe.probe_id("quant2", "2026-10-05", "sell", "AAPL") == (
+        "probe-cls-quant2-2026-10-05-sell-aapl"
+    )
+    assert probe.log_path(Path("/r"), "quant1", "2026-10-05").name == "2026-10-05-cls-probe.jsonl"
+
+
+def test_opg_window_is_before_the_open_and_day_window_after() -> None:
+    pre_open = datetime(2026, 10, 6, 12, 45, tzinfo=UTC)  # 08:45 New York
+    after_open = datetime(2026, 10, 6, 13, 45, tzinfo=UTC)  # 09:45 New York
+    assert probe.in_window(pre_open, "opg") and not probe.in_window(after_open, "opg")
+    assert probe.in_window(after_open, "day") and not probe.in_window(pre_open, "day")
+    assert not probe.in_window(pre_open, "cls")
+
+
+def test_opg_submit_uses_its_own_id_and_log(tmp_path: Path, monkeypatch) -> None:
+    import open_composer.adapters.broker.alpaca_paper as ap
+
+    monkeypatch.setattr(ap, "_require_verified_paper_client", lambda c: None)
+    client = FakeClient()
+    pre_open = datetime(2026, 10, 6, 12, 45, tzinfo=UTC)
+    args = _args("submit", execute=True, symbol="QQQ", tif="opg")
+    rc = probe.run(args, client_factory=lambda a: client, now=pre_open, root=tmp_path)
+    assert rc == 0
+    sent = client.sent[0]
+    assert str(getattr(sent.time_in_force, "value", sent.time_in_force)) == "opg"
+    assert sent.client_order_id == "probe-opg-quant1-2026-10-06-buy-qqq"
+    log = probe.log_path(tmp_path, "quant1", "2026-10-06", "opg")
+    assert json.loads(log.read_text().splitlines()[0])["time_in_force"] == "opg"
+
+
+def test_opg_submit_after_the_open_is_refused(tmp_path: Path) -> None:
+    client = FakeClient()
+    after_open = datetime(2026, 10, 6, 13, 45, tzinfo=UTC)
+    args = _args("submit", execute=True, symbol="QQQ", tif="opg")
+    rc = probe.run(args, client_factory=lambda a: client, now=after_open, root=tmp_path)
+    assert rc == 2 and client.sent == []

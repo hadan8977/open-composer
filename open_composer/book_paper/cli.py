@@ -143,7 +143,7 @@ def book_paper_submit(
     """Send the plan as market-on-close orders (requires --submit and the CLS window)."""
     from open_composer.book_paper.plan import (
         BookEngineError,
-        orders_receipt_path,
+        next_orders_receipt_path,
         submit_plan,
         write_json_atomic,
         write_plan_file,
@@ -151,19 +151,25 @@ def book_paper_submit(
 
     if not submit:
         raise typer.BadParameter("pass --submit to send orders; `plan` is the dry-run")
+    now = datetime.now(UTC)
     try:
         root, client, _target, plan = _build(account, decision_date, None, min_notional)
         write_plan_file(root, plan)
-        report = submit_plan(
-            client, plan, now=datetime.now(UTC), kill_switch_check=_kill_switch_check(root)
-        )
+        report = submit_plan(client, plan, now=now, kill_switch_check=_kill_switch_check(root))
     except (BookAccountError, BookEngineError) as exc:
         raise _fail(exc) from exc
-    path = write_json_atomic(orders_receipt_path(root, account, plan.execution_date), report)
+    receipt = next_orders_receipt_path(root, account, plan.execution_date, now)
+    path = write_json_atomic(receipt, report)
     console.print(
         f"sent={len(report['sent'])} skipped_existing={len(report['skipped_existing'])} "
-        f"failed={len(report['failed'])} receipt={path}"
+        f"not_sent={len(report['failed'])} receipt={path}"
     )
+    if report["failed"]:
+        # a rejected order must not look like a successful run: the cron log gets an error
+        # marker for the health check and the exit code is non-zero (T-20261005-20, E1)
+        sample = "; ".join(f"{f['symbol']}: {f['error']}" for f in report["failed"][:5])
+        console.print(f"ERROR: {len(report['failed'])} order(s) were not accepted ({sample})")
+        raise typer.Exit(code=2)
 
 
 @book_paper_app.command("reconcile")

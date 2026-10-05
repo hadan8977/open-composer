@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
@@ -833,7 +834,12 @@ def submit_plan(
             result = client.submit_order(request)
         except Exception as exc:
             failed.append(
-                {"symbol": order["symbol"], "client_order_id": cid, "error": exc.__class__.__name__}
+                {
+                    "symbol": order["symbol"],
+                    "client_order_id": cid,
+                    "error": exc.__class__.__name__,
+                    "message": broker_error_text(exc),
+                }
             )
             continue
         sent.append(
@@ -866,6 +872,29 @@ def orders_receipt_path(root: Path, account: str, execution_date: date) -> Path:
     return book_dir(root, account) / "orders" / f"{execution_date.isoformat()}.json"
 
 
+def next_orders_receipt_path(root: Path, account: str, execution_date: date, now: datetime) -> Path:
+    """The first submission writes ``orders/<date>.json``; a re-run never overwrites it.
+
+    A re-run finds the first run's orders at the broker and skips them, so its receipt has
+    nothing sent; writing it over the first receipt would erase the record of what was sent
+    (T-20261005-20, E3).
+    """
+    first = orders_receipt_path(root, account, execution_date)
+    if not first.exists():
+        return first
+    stamp = now.astimezone(UTC).strftime("%H%M%S")
+    return first.with_name(f"{execution_date.isoformat()}.rerun-{stamp}.json")
+
+
+_TOKEN_LIKE = re.compile(r"[A-Za-z0-9_\-]{32,}")
+
+
+def broker_error_text(exc: BaseException, limit: int = 300) -> str:
+    """Broker error text for receipts: one line, token-like strings masked, truncated."""
+    text = " ".join(str(exc).split())
+    return _TOKEN_LIKE.sub("<masked>", text)[:limit]
+
+
 def write_json_atomic(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -875,9 +904,27 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> Path:
 
 
 def write_plan_file(root: Path, plan: OrderPlan) -> Path:
-    return write_json_atomic(
-        plan_path(root, plan.payload["account"], plan.execution_date), plan.to_dict()
-    )
+    """Write the plan file without ever replacing a submitted plan.
+
+    Reconcile reads this file after the close. A rebuilt plan with the same orders keeps the
+    existing file (only ``created_at_utc`` differs). A different plan for an execution date
+    that already has an orders receipt is refused (T-20261005-20, E3).
+    """
+    account = plan.payload["account"]
+    path = plan_path(root, account, plan.execution_date)
+    if path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            existing = None
+        if isinstance(existing, dict) and existing.get("orders") == plan.payload.get("orders"):
+            return path
+        if orders_receipt_path(root, account, plan.execution_date).exists():
+            raise BookEngineError(
+                f"plan for {plan.execution_date.isoformat()} already has an orders receipt; "
+                "refusing to overwrite the submitted plan"
+            )
+    return write_json_atomic(path, plan.to_dict())
 
 
 def load_plan_file(path: Path) -> OrderPlan:

@@ -30,12 +30,15 @@ from open_composer.book_paper.plan import (
     AccountState,
     BookEngineError,
     OrderLookup,
+    OrderPlan,
     RiskLimits,
+    broker_error_text,
     build_plan,
     client_order_id,
     freshness_ok,
     load_plan_file,
     make_asset_lookup,
+    next_orders_receipt_path,
     orders_receipt_path,
     read_account_state,
     require_submission_window,
@@ -586,7 +589,79 @@ def test_failed_order_is_reported_and_others_continue() -> None:
     client.submit_order = flaky
     report = submit_plan(client, plan_for(client=client), now=NOW)
     assert [f["symbol"] for f in report["failed"]] == ["L1"]
+    assert report["failed"][0]["message"] == "rejected"  # the broker's reason, not only the type
     assert len(report["sent"]) == 10
+
+
+def test_broker_error_text_is_one_line_masked_and_truncated() -> None:
+    token = "PK" + "A" * 38
+    text = broker_error_text(RuntimeError(f"forbidden\n key {token} for this account"))
+    assert "\n" not in text and token not in text and "<masked>" in text
+    assert len(broker_error_text(RuntimeError("word " * 200))) == 300
+
+
+def test_rerun_receipt_never_overwrites_the_first(tmp_path: Path) -> None:
+    first = next_orders_receipt_path(tmp_path, "quant1", EXECUTION, NOW)
+    assert first == orders_receipt_path(tmp_path, "quant1", EXECUTION)
+    write_json_atomic(first, {"sent": [{"symbol": "L1"}]})
+    rerun = next_orders_receipt_path(tmp_path, "quant1", EXECUTION, NOW)
+    assert rerun != first and rerun.name.startswith(f"{EXECUTION.isoformat()}.rerun-")
+    assert json.loads(first.read_text())["sent"] == [{"symbol": "L1"}]
+
+
+def test_plan_file_kept_for_same_orders_and_never_replaced_after_submission(
+    tmp_path: Path,
+) -> None:
+    plan = plan_for()
+    path = write_plan_file(tmp_path, plan)
+    original = path.read_text()
+    rebuilt = OrderPlan({**plan.payload, "created_at_utc": "2026-09-18T18:45:00Z"})
+    assert write_plan_file(tmp_path, rebuilt) == path and path.read_text() == original
+    changed = OrderPlan({**plan.payload, "orders": plan.payload["orders"][:-1]})
+    write_plan_file(tmp_path, changed)  # no receipt yet: a pre-submission re-plan may replace it
+    assert json.loads(path.read_text())["orders"] == changed.payload["orders"]
+    account = plan.payload["account"]
+    write_json_atomic(orders_receipt_path(tmp_path, account, plan.execution_date), {"sent": []})
+    with pytest.raises(BookEngineError, match="already has an orders receipt"):
+        write_plan_file(tmp_path, plan)
+    assert json.loads(path.read_text())["orders"] == changed.payload["orders"]
+
+
+def test_cli_submit_fails_loudly_when_an_order_is_not_accepted(monkeypatch, tmp_path) -> None:
+    from typer.testing import CliRunner
+
+    from open_composer.book_paper import cli as bp_cli
+    from open_composer.book_paper import plan as bp_plan
+
+    client = all_etb_client()
+    plan = plan_for(client=client)
+    account = plan.payload["account"]
+    monkeypatch.setattr(bp_cli, "_build", lambda *a: (tmp_path, client, None, plan))
+    monkeypatch.setattr(bp_cli, "_kill_switch_check", lambda root: lambda: None)
+    rejected = {
+        "submitted_at_utc": "2026-09-18T18:00:00Z",
+        "plan_sha256": plan.payload["plan_sha256"],
+        "sent": [],
+        "skipped_existing": [],
+        "failed": [
+            {"symbol": "L1", "client_order_id": "c1", "error": "APIError", "message": "no cls"}
+        ],
+    }
+    monkeypatch.setattr(bp_plan, "submit_plan", lambda *a, **k: rejected)
+    runner = CliRunner()
+    args = ["submit", "--account", account, "--submit"]
+    result = runner.invoke(bp_cli.book_paper_app, args)
+    assert result.exit_code == 2, result.output
+    assert "ERROR: 1 order(s) were not accepted" in result.output
+    receipt = orders_receipt_path(tmp_path, account, plan.execution_date)
+    assert json.loads(receipt.read_text())["failed"][0]["message"] == "no cls"
+    # a clean run exits 0 and prints nothing the cron health check reads as an error
+    clean = {**rejected, "failed": [], "sent": [{"symbol": "L1"}]}
+    monkeypatch.setattr(bp_plan, "submit_plan", lambda *a, **k: clean)
+    ok = runner.invoke(bp_cli.book_paper_app, args)
+    assert ok.exit_code == 0, ok.output
+    assert not re.search(r"(?i)\b(traceback|error|exception|failed|fatal)\b", ok.output)
+    assert json.loads(receipt.read_text())["failed"][0]["message"] == "no cls"  # first kept
 
 
 # --------------------------------------------------------------------------------------
