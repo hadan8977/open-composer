@@ -1742,7 +1742,7 @@
   - 2026-10-04 12:06 UTC 执行轮（Sonnet，子代理耗时约 115 分钟）：第 A 阶段跑完，`stage_a.json` `mechanical_status_stage_a`=stage_b_authorized，survivors=[m0m2, m0m3]；contract sha 不变，permutation_check 通过（lgbm_perm 近期 -0.519/压力 -0.019，m3_perm 0.037/-0.572，限 1.22/0.93）；embargo_ok_all 与覆盖按简报核对通过（2019 起每日成员中位 2175）。偏移中位简化毛夏普（近期/压力-ML）：m0 1.735/0.521，m2 2.114/0.513，m3 2.362/0.213，m0m2 2.008/0.582，m0m3 2.247/0.536（压力窗领先幅度 +0.061、+0.015，很小）。Modal $0.6645。产物 reports/research/iterations/t20261004_book_v14_ml/{build.json,stage_a.json,stage_a.md,model-meta/}。子代理偏差：首次 smoke 写错目录已修；最终窗口止于 2026-09-09 决策日（r5 需要 C[p+6]）；stage_a 的 Modal 成本从 0.6563 手工改为 0.6645，其余数字不变；22 个信号库列缺失用常数填，rank 后变并列平均秩。待主审。
   - 2026-10-04 16:48 UTC 16:20 主审轮（Opus）审核：合同哈希一致（af7714…），打乱检查通过（lgbm_perm 近期 −0.519/压力 −0.019，m3_perm 0.037/−0.572，限 1.22/0.93），embargo_ok_all 为真，2019 起每年最少 1998 名成员。偏移中位简化毛夏普（近期/压力-ML，括号里是赢 M0 的偏移数）：M0 1.735/0.521；M2 2.114（5/5）/0.513（1/5）；M3 2.362（5/5）/0.213（0/5）；M0M2 2.008（5/5）/0.582（4/5）；M0M3 2.247（5/5）/0.536（4/5）。闸门是两窗都高于 M0，m0m2、m0m3 机械通过；但压力期只领先 +0.061/+0.016，第 B 阶段 E1 要求净 +0.10，混合分数的周自相关 0.968/0.967 低于 M0 的 0.983（换手更高），主审估计压力期 E1 通过约 10%。纯 ML 只在近期赢：2024 年后的模型训练了 306–407 周，2019–2023 的只有 55–256 周，增量来自样本长度还是市场状态，本合同不区分。M3 暴露诊断（本轮，年度截面秩相关中位数）：2025 年对规模、动量、低 beta、低特质波动、价值、毛利、季节性都在 ±0.05 以内，对 sue_eps −0.18、空头成交比 +0.15，近期与 M0 的相关 0.001，是分散的非线性信号；M2 主要是低 beta（约 0.6）、低特质波动（0.54–0.67）和大市值（0.3–0.45）。实现偏差认可：信号库列的缺失本来就以常数存储，与 M0 同输入，不是前视；最后一个决策日 09-09（r5 需要 C[p+6]）。T-54 若发现 sue_series 实质泄漏，M0 和 ML 两边都要重算。
 ### T-20261004-03 组合线 v1.4 候选 第 B 阶段：第 A 阶段留下的候选走 v1.2 策略层，对比 M0（E1/E2/E4/E5、选择、ml_contribution_pass）
-- status: ready（10-04 16:48 UTC 16:20 主审轮：identity 和 passes 改到 Modal，命令见简报末节"主审补充"；13:53 本机版因 swap 争抢没有产出）
+- status: blocked（identity 门没过，待主审决定；见 notes 末行）
 - priority: 1
 - not_before: T-20261004-02 状态以 done 开头，并且 `t20261004_book_v14_ml/stage_a.json` 的 `mechanical_status_stage_a` 为 `stage_b_authorized`（不必等主审审核第 A 阶段；不是这个值时由下一主审轮取消本任务）
 - brief: reports/research/control/briefs/T-20261004-03.md
@@ -1750,12 +1750,14 @@
 - plan: 简报 T-20261004-03。第 C 阶段（账户层、20 种子安慰剂、族 19 定档）由下一主审轮看过本阶段后另写简报。
 - done_when: `t20261004_book_v14_ml/{identity.json,results.json,report.md,trial-ledger.json}` 已提交，`mechanical_status` 为两个值之一，新测试通过；结果标"待主审"。
 - notes:
+  - 2026-10-05 04:09 UTC 执行轮 2c717355 开始（sonnet-high 子代理前台）
   - 2026-10-04 07:35 UTC 07:07 主审轮（Opus）登记并写简报。同一执行轮在 T-02 完成后可以接着跑本任务（不并行，重任务一次一个）。
   - 2026-10-04 12:06 UTC 执行轮：T-02 已 done 且 stage_b_authorized，但 T-02 子代理用了约 115 分钟，已到软上限，T-03 留给下一执行轮（22:07 UTC；注意不在 21:30–00:30 跑本地重步骤，可能要到 04:07 轮）。
   - 2026-10-04 12:17 UTC 执行轮开始（子代理 sonnet-high 前台，mem 1.5G）
   - 2026-10-04 13:52 UTC 执行轮：子代理写完 `scripts/book_v14_ml_eval.py`（identity/passes/evaluate 三阶段，passes 和 evaluate 未测）和 `tests/test_book_v14_ml_eval.py`（6 个合成测试通过，ruff 干净），提交 2690810。3 决策冒烟的 identity：5 个偏移 (a) 对 R6、(b) m0 对 (a) 最大差 0，pass true（不是完整序列的 1e-12 门）。完整 identity 12:24 起跑，机器 swap 约 5.7 GB、I/O 等待 60–90%（别的会话占 0.5–1.1 GB），86 分钟只拿到约 3.5 CPU 分钟，13:51 被杀，没写出任何偏移。**没有 Stage B 数字**：未写 identity.json、S_*_o*.parquet、results.json、report.md、trial-ledger.json。断点：机器安静后依次 `scripts/run_capped.sh --mem 1.5G -- uv run python scripts/book_v14_ml_eval.py --stage identity`（会写 S_B0r_o<k>.parquet）、`--stage passes`（跳过已有文件，可续跑）、`--stage evaluate`；之后用 `git add -f` + pathspec 提交 identity.json/results.json/report.md/trial-ledger.json。预计无争抢时约 20 个 pass、每个约 1 分钟。待主审（含：是否等机器空闲再跑，或把 identity 改到 Modal）。
   - 2026-10-04 16:48 UTC 16:20 主审轮：机器仍满载（负载 13、可用内存 0.57 GB、交互会话的 PIT 审计进程占 1.3 GB），第 B 阶段的 identity 和 passes 改到 Modal（预算检查 90 分钟，4 核 8 GiB，约 $0.3），evaluate 在本机只读 parquet。判定规则、窗口、候选都不变。T-20261004-04 的第 B 阶段复用本任务的 B0r，所以先做本任务。
 
+  - 2026-10-05 05:10 UTC 执行轮 2c717355（子代理 sonnet-high，提交 657d58b）：Modal 上 identity 未过（`identity.json` pass=false，容差 1e-12 不动）。源 (b) PredictionSource(m0) 对 R6 逐位一致（≤1e-12）；路径 (a) AlphaSource M0 在偏移 0、4 通过，偏移 1/2/3 在 10/5/5 个标签行超过 1e-12（1–2 个周度决策块），最大 hedge_size 差 4.54e-07、gross 差 9.9e-08（来自 `identity.json`）。子代理在本机重跑偏移 2 的 2021-11-05 块，a 和 b 都与 R6 逐位一致，疑为 Modal CPU/BLAS 浮点差，不是逻辑错。未跑 passes/evaluate，无 results.json、report.md、trial-ledger.json、mechanical_status。`S_B0r_o*.parquet` 在 `data/research/book_v14/stage_b_out/`，来自未过门的运行，不要给 T-04 用。Modal 花费约 $0.011（本月 billed $1.18、projected $2.32/$25）。modal_run.py 实际命令加了 `--data data/research/vix` 和只同步 equity_book 的子目录；`scripts/book_v14_ml_eval.py` 加了 `--workers`、`--mirror-dir`、`--deadline-min`（进程池，循环不变，7 个测试通过，ruff 干净），子代理注明覆盖了之前一次已提交的版本。需主审决定：(1) identity 的 (a) 路径改在本机重跑（本机 CPU 对该块逐位复现）；或 (2) 给 Modal 浮点差定一个容差（冻结值 1e-12 我没动）。之后 passes 在 Modal 约 2 分钟，evaluate 本机。待主审。
 ### T-20261004-04 组合线 v1.5 候选：用 12 个月因子动量给 M0 的输入择时（只留过去一年多空收益为正的输入或主题），第 A、B 阶段
 - status: ready
 - priority: 1
@@ -1856,15 +1858,17 @@
 
 
 ### T-20261004-70 实盘快速通道 A1：拼接前向记录（09-01 起，分段标注；前向 z、跟踪差、哈希链）
-- status: ready（定时执行轮可取）
+- status: partial（核心已交付，v1.2 F1/F2 与 T-43 的 09-15 之后影子段缺；待主审）
 - priority: 1
 - not_before: 无
 - brief: reports/research/control/briefs/T-20261004-70.md
 - goal: 机主 10-04：模拟盘测试从 09-01 算，加两周真实模拟盘。评判标准 v2.1 的 L1 要每个候选（S1–S3、C2、v1.2 F1/F2、T-43 组合）有分段标注的日净收益记录：设计时看过、样本外影子、模拟盘。
 - done_when: `reports/research/program/forward-record-2026-10-06/` 的 record.csv、summary.json、hash_chain.jsonl、README.md 已提交，标"待主审"。**10-06 22:00 UTC 前**。
 - notes:
+  - 2026-10-05 04:09 UTC 执行轮 2c717355 开始（sonnet-high 子代理前台）
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。计划 `docs/plan-owner-feedback-2026-10-04.zh.md` A1。设计时看过的段不算样本外证据。
 
+  - 2026-10-05 05:56 UTC 执行轮 2c717355（子代理 sonnet-high，提交 ebee03d）：`reports/research/program/forward-record-2026-10-06/` 的 record.csv（122 行）、summary.json、hash_chain.jsonl（90 行，子代理独立重算 0 断链）、README.md（含四档衰减规则草案，阈值全部"待主审校准"）已提交；脚本 `scripts/forward_record_t70.py` + `tests/test_forward_record_t70.py` 测试通过。S1–S3、C2 三段齐全（累计收益 设计时看过/影子/模拟盘：S1 +0.91%/+0.28%/+1.55%；S2 +0.52%/+0.71%/+3.50%；S3 −1.48%/−0.15%/+1.70%；C2（冻结 09-25）+0.48%/−0.67%/+0.39%；数字取自 summary.json，子代理报告，我抽查了文件结构，未逐项重算）。F1/F2/T-43 只有 09-01..09-15 设计时看过段（F1 +0.27%、F2 −1.42%、T-43 −1.55%）。v1.2 影子重跑（读 live 根，写 /tmp）因机器负载 8–15、本进程只拿到 6 CPU 分钟/90 分钟，没跑完，已停；续跑命令：`scripts/run_capped.sh --mem 1.0G -- uv run python scripts/forward_record_t70.py book`，完成后 `uv run python scripts/forward_record_t70.py assemble /tmp/t70_notes.md`（备注文件 /tmp 下，丢了就重写）。发现：(1) S3 九月差是数据翻转（修复后 SIP 档案持 SHY、模拟盘持 UPRO，T-55 §1），不是执行；(2) S2/S3 的波动叠加 09-24 才进模拟盘（预注册 09-22），09-21..09-23 的跟踪差是规则差，严格说 S2/S3 影子日 09-18 也算看过；(3) 每个 sleeve 的 `reports/execution/*-target-weights.json` 每天被覆盖，哈希链只覆盖最新状态，要每日存档需改模拟盘管线（未动）；(4) 预修复档案只到 09-17，修复前 S3 信号的跟踪差分解没做。本机负载高，10-06 22:00 前续跑 F1/F2/T-43 需要在安静时段。待主审。
 ### T-20261004-71 实盘快速通道 A3：v1.2 在实盘资金下的容量（集中版预注册）
 - status: running（2026-10-05 05:51 UTC 交互会话改范围：不再等资金数，按资金档位算，10-07 00:00 UTC 前交付；独立 Paseo 代理，Sonnet 5.5 high，协调码 R1005-T71）
 - priority: 1
