@@ -2061,7 +2061,7 @@
   - 2026-10-05 06:07 UTC 交互会话审核：63 条（swiftward 实际 35 条、Deflow 16 条、新增 12 条）；已防住 13、部分 27、没防住 6、不适用 17。首单前必须修：E1 拒单只记异常类名、提交命令仍退出 0（plan.py submit_plan、cli.py submit，交互会话已对代码核实）；E2 收盘竞价被拒时没有后备（决策）；E3 重跑覆盖第一次的回执和计划文件（已核实）。E1、E3 由交互会话修，E2 写进开始清单。
 
 ### T-20261005-31 ETF 四条子策略补登试验数并算 DSR（L1 试点提议的前提，10-08 前）
-- status: ready（定时执行轮可取）
+- status: done（执行轮 2026-10-05 22:08–22:30 UTC；待主审）
 - priority: 1
 - not_before: 无（本机轻量；和 T-20261005-01 不冲突，但重跑回测时同一时间只跑一个）
 - goal: 标准 v2.1 的 L1 要求"已是 P1 档"（DSR ≥ 0.70）。S1、S2、S3、C2 从没登记过试验数，证明不了。第二版计划第 5 节第 3 条推荐 10-15 提议 S3 加 C2 的试点；过不了 DSR 的不进提议（第三轮复核第 1 条）。
@@ -2070,6 +2070,7 @@
 - brief: reports/research/control/briefs/T-20261005-31.md
 - notes:
   - 2026-10-05 06:47 UTC 交互会话（Opus）登记。来源：第二版计划 D7 第 9 节；第三轮复核 review-3.md 第 1 条。
+- notes: 2026-10-05 22:30 UTC 执行轮（sonnet-high 子代理 R1005-T31，35 次调用）：交付 `reports/research/program/etf-dsr-2026-10-08/{results.json,report.md,compute.py}`。主结果 N=n_high，近期窗 2024-01-08..2026-09-17，字段核对齐全（四条都有 dsr_recent，试验族每项带来源）。S1 n 104/278 DSR 近期 0.6995、全期 0.831、跌破 0.70 的 N=276、passes_p1_dsr=false（差 0.0005，n_low 下 0.768）；S2 106/294 0.836/0.908、N=3371、true；S3 120/317 0.815/0.916、N=2270、true（5 倍 N 仍 0.722）；C2 25/47 0.566/0.342、N=24、false（n_low 下 0.691）。子代理自述最不确定：不能重跑的变体对相关取 0.5（S1–S3 占 86–88% 的对，C2 31%），S1 对此敏感（0.3→0.8 为 0.673→0.760）；S3 的 N 是下界（H-20260923-09 无变体清单，H-20260928-13 manifest 为空）。我未改任何策略、标准或门槛。待主审。
 
 ### T-20261005-32 P2 阶段 1：半导体和 AI 主题风险预算（上限版和对冲版），结果直接作为试点的集中度上限
 - status: ready（定时执行轮可取；合同 10-05 07:53 冻结）
@@ -2173,7 +2174,7 @@
   - 2026-10-05 06:52 UTC 交互会话（Opus）登记。
 
 ### T-20261005-39 日报和看板第一批改动：期望对照前向、v1.2 每日动作（A 批）；风险和暴露、统计信封（B 批）
-- status: ready（定时执行轮可取）
+- status: partial（A 批 done，B、C 批未做；执行轮 2026-10-05 22:08–22:30 UTC；待主审）
 - priority: 1
 - not_before: 无（A 批 10-07 00:50 UTC 前，B 批 10-08 00:50 UTC 前）
 - goal: 机主 10-04 第 1 条（报告没有主次、太简易）。第二版计划第 4 节。首屏三件事的改版等 T-20261005-36 (b) 的调研，不在本任务里。
@@ -2182,6 +2183,7 @@
 - brief: reports/research/control/briefs/T-20261005-39.md
 - notes:
   - 2026-10-05 06:52 UTC 交互会话（Opus）登记。
+- notes: 2026-10-05 22:30 UTC 执行轮（sonnet-high 子代理 R1005-T39，30 次调用，只做 A 批）：(1) 日报第三节新增“前向对预期”表（S1/S2/S3/C2/V12F1/V12F2：前向会话数、z、夏普、概率夏普、95% 所需会话数、进度；C2 只有 5 个会话写“样本不足”，V12F1/F2 记录里无前向会话写“缺”）；(2) 日报第二节新增 v1.2 每日动作表（10-07 起；现在写“未开始”，填充路径只靠单测覆盖，真实数据未验）。新建 `open_composer/reports/owner_forward.py`、`tests/test_owner_forward.py`、`reports/research/program/report-v3-2026-10-08/preview-daily-A.md`；改 `open_composer/reports/owner_digest.py`（DigestData +2 字段）、`docs/owner-reporting.zh.md`（第 4 节 +2 条）。ruff 过，tests/test_owner_forward.py + owner_digest 相关测试 29 过；未跑全量 pytest 和 oc repo check --strict。偏离：summary.json 没有概率夏普和最短记录长度，子代理用 Bailey–López de Prado 公式补算（夏普取自 JSON，S1 4.54）。S1 概率夏普 86%/所需 24 会话/进度 45%；S2 94%/12/92%；S3 61%/353/3%。B 批（风险和暴露、统计信封，10-08 00:50 前）和 C 批（首屏改版，10-08 12:00 前）仍为 ready 待取。待主审。
 
 ### T-20261005-40 项目笔记的骨架和生成脚本（六个旗舰项目）
 - status: ready（定时执行轮可取）

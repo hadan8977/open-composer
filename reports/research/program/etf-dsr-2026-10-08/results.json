@@ -1,0 +1,643 @@
+{
+  "task": "T-20261005-31",
+  "code": "R1005-T31",
+  "config": "config/evaluation-standard-v2.json",
+  "dsr_impl": "open_composer/research/scorecard_v2.py::dsr",
+  "p1_dsr_min": 0.7,
+  "windows": {
+    "recent": "2024-01-08..panel end",
+    "full": "2017-01-03..panel end"
+  },
+  "panel": [
+    "2016-01-04",
+    "2026-09-17"
+  ],
+  "series_basis": "excess over BIL, net 10 bp per side, next-open fills",
+  "o00_parity_max_abs_diff": {
+    "S1": 0.0,
+    "S2": 6.938893903907228e-18,
+    "S3": 1.3877787807814457e-17
+  },
+  "results": [
+    {
+      "sleeve": "S1",
+      "strategy_id": "us_etf_sector_rotation_252_top2_weekly",
+      "trial_family": [
+        {
+          "label": "H-20260918-05 grid: 64 rotation cells (4 menus x lookback{63,126,252,blend} x top_n{1,2} x {monthly,weekly}) + 40 levered-trend cells",
+          "n": 104,
+          "source": "reports/research/iterations/h20260918_05_recent_menu/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260918-06 ETF pool: 96 cells (8 score x leverage families)",
+          "n": 96,
+          "source": "reports/research/iterations/h20260918_06_etf_pool/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "Giants sweep 2026-09-22: 24 cells (F1 TQQQ RSI hedge, F2, F4, F5, F6 industry trend, F7)",
+          "n": 24,
+          "source": "reports/research/iterations/giants_sweep_20260922/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260922-04 RSI-branch rotation: 16 cells",
+          "n": 16,
+          "source": "reports/research/iterations/h20260922_04_rsi_branch/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260927-01 sleeve combination: 7 candidates",
+          "n": 7,
+          "source": "reports/research/iterations/h20260927_01_sleeve_combination/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260928-40 equity ETF menus: 24 candidates",
+          "n": 24,
+          "source": "reports/research/iterations/h20260928_40_equity_etf_menus/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260922-05 path A, S1 vol-target cells 0.086/0.114 (tested, not adopted)",
+          "n": 2,
+          "source": "reports/research/iterations/h20260922_05_salvage/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260928-23 S1 weekly rebalance-day offsets O00..O04 (descriptive)",
+          "n": 5,
+          "source": "reports/research/iterations/h20260928_23_s1_rebalance_timing/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        }
+      ],
+      "n_low": 104,
+      "n_high": 278,
+      "n_used": 278,
+      "n_used_rule": "upper bound (n_high) for the main result; n_low shown in sensitivity",
+      "dsr_recent": 0.6994608057192313,
+      "recent_detail": {
+        "window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "sessions": 676,
+        "sr_annual_excess_over_BIL": 1.3085726729997214,
+        "psr0": 0.981861340324724,
+        "skew": -0.4219997541941727,
+        "kurtosis": 7.735143151501729,
+        "sr0_annual_expected_max_null": 0.9818051045029518,
+        "n_eff": 133.9711034798122,
+        "mean_pairwise_corr": 0.519959915235335,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.6380982239543764,
+        "share_of_pairs_with_assumed_corr_0.5": 0.8554658078591278,
+        "n_rerun_variants": 106,
+        "var_sr_annual": 0.1391656612221865,
+        "rerun_sr_median": 1.0713900417125535,
+        "rerun_sr_max": 1.7160526581202766,
+        "sensitivity_N": {
+          "0.5x": 0.7481194030241634,
+          "1x": 0.6994608057192313,
+          "2x": 0.6506819455490555,
+          "5x": 0.5872354383186607,
+          "n_low": 0.7682358184600113
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.6729593388268168,
+          "corr=0.5": 0.6965994239802151,
+          "corr=0.8": 0.7604462768017906
+        },
+        "n_at_dsr_070": 276
+      },
+      "mean_pairwise_corr": 0.519959915235335,
+      "mean_pairwise_corr_is_assumption": true,
+      "var_sr_annual": 0.1391656612221865,
+      "n_eff": 133.9711034798122,
+      "sensitivity": {
+        "0.5x": 0.7481194030241634,
+        "1x": 0.6994608057192313,
+        "2x": 0.6506819455490555,
+        "5x": 0.5872354383186607,
+        "n_low": 0.7682358184600113
+      },
+      "n_at_dsr_070": 276,
+      "passes_p1_dsr": false,
+      "dsr_full": 0.8311890949941391,
+      "full_detail": {
+        "window": [
+          "2017-01-03",
+          "2026-09-17"
+        ],
+        "sessions": 2440,
+        "sr_annual_excess_over_BIL": 0.7577677222805188,
+        "psr0": 0.9894414719635152,
+        "skew": -0.7981322097922458,
+        "kurtosis": 13.50288165221134,
+        "sr0_annual_expected_max_null": 0.44265904448777943,
+        "n_eff": 135.02007116357484,
+        "mean_pairwise_corr": 0.5161730282903435,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.6118975935782742,
+        "share_of_pairs_with_assumed_corr_0.5": 0.8554658078591278,
+        "n_rerun_variants": 106,
+        "var_sr_annual": 0.028232162875755695,
+        "rerun_sr_median": 0.723083096657289,
+        "rerun_sr_max": 1.006736168125394,
+        "sensitivity_N": {
+          "0.5x": 0.8607302218057757,
+          "1x": 0.8311890949941391,
+          "2x": 0.8003110684540984,
+          "5x": 0.7580411954644946,
+          "n_low": 0.8726022843296669
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.8149276968095189,
+          "corr=0.5": 0.8297566654115516,
+          "corr=0.8": 0.8683456403357072
+        },
+        "n_at_dsr_070": 4741
+      },
+      "notes": [
+        "series = mean of 5 rebalance offsets (signal day +0..+4 sessions), 10 bp per side, next-open fills, minus BIL daily return; O00 reproduces salvage.run_cell (max abs diff 0.00e+00).",
+        "rerun variants (measured var_sr / corr): the 104-cell H-20260918-05 grid (rotation cells 5-offset blended, trend cells single) plus the listed overlay cells; all other family members are not rerun and enter N with an assumed pairwise corr 0.5."
+      ]
+    },
+    {
+      "sleeve": "S2",
+      "strategy_id": "us_etf_growth_rotation_blend_top2_monthly",
+      "trial_family": [
+        {
+          "label": "H-20260918-05 grid: 64 rotation cells (4 menus x lookback{63,126,252,blend} x top_n{1,2} x {monthly,weekly}) + 40 levered-trend cells",
+          "n": 104,
+          "source": "reports/research/iterations/h20260918_05_recent_menu/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260922-05 path A, S2 vol-target cells 0.117/0.156 (0.156 adopted)",
+          "n": 2,
+          "source": "reports/research/iterations/h20260922_05_salvage/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260918-06 ETF pool: 96 cells (8 score x leverage families)",
+          "n": 96,
+          "source": "reports/research/iterations/h20260918_06_etf_pool/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "Giants sweep 2026-09-22: 24 cells (F1 TQQQ RSI hedge, F2, F4, F5, F6 industry trend, F7)",
+          "n": 24,
+          "source": "reports/research/iterations/giants_sweep_20260922/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260922-04 RSI-branch rotation: 16 cells",
+          "n": 16,
+          "source": "reports/research/iterations/h20260922_04_rsi_branch/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260927-01 sleeve combination: 7 candidates",
+          "n": 7,
+          "source": "reports/research/iterations/h20260927_01_sleeve_combination/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260928-40 equity ETF menus: 24 candidates",
+          "n": 24,
+          "source": "reports/research/iterations/h20260928_40_equity_etf_menus/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260928-23 S2 monthly rebalance-day offsets O00..O20 (descriptive)",
+          "n": 21,
+          "source": "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        }
+      ],
+      "n_low": 106,
+      "n_high": 294,
+      "n_used": 294,
+      "n_used_rule": "upper bound (n_high) for the main result; n_low shown in sensitivity",
+      "dsr_recent": 0.8363926594882256,
+      "recent_detail": {
+        "window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "sessions": 676,
+        "sr_annual_excess_over_BIL": 1.6471411518629944,
+        "psr0": 0.9955306188037871,
+        "skew": -0.47378489025045256,
+        "kurtosis": 6.225462374586896,
+        "sr0_annual_expected_max_null": 1.0298763196166896,
+        "n_eff": 142.07389827244813,
+        "mean_pairwise_corr": 0.5185191185240678,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.6433309890296719,
+        "share_of_pairs_with_assumed_corr_0.5": 0.870794734275963,
+        "n_rerun_variants": 106,
+        "var_sr_annual": 0.15083252483636153,
+        "rerun_sr_median": 1.0713900417125535,
+        "rerun_sr_max": 1.9144228307063418,
+        "sensitivity_N": {
+          "0.5x": 0.8706106931346252,
+          "1x": 0.8363926594882256,
+          "2x": 0.7996601108834918,
+          "5x": 0.7482820095827758,
+          "n_low": 0.8857003018896131
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.8168907242030556,
+          "corr=0.5": 0.8344581564615673,
+          "corr=0.8": 0.8790367140902039
+        },
+        "n_at_dsr_070": 3371
+      },
+      "mean_pairwise_corr": 0.5185191185240678,
+      "mean_pairwise_corr_is_assumption": true,
+      "var_sr_annual": 0.15083252483636153,
+      "n_eff": 142.07389827244813,
+      "sensitivity": {
+        "0.5x": 0.8706106931346252,
+        "1x": 0.8363926594882256,
+        "2x": 0.7996601108834918,
+        "5x": 0.7482820095827758,
+        "n_low": 0.8857003018896131
+      },
+      "n_at_dsr_070": 3371,
+      "passes_p1_dsr": true,
+      "dsr_full": 0.9080473272499694,
+      "full_detail": {
+        "window": [
+          "2017-01-03",
+          "2026-09-17"
+        ],
+        "sessions": 2440,
+        "sr_annual_excess_over_BIL": 0.8892409036654906,
+        "psr0": 0.9967346962951378,
+        "skew": -0.5479022343796458,
+        "kurtosis": 5.917907168286877,
+        "sr0_annual_expected_max_null": 0.45479249019774626,
+        "n_eff": 143.10768938666934,
+        "mean_pairwise_corr": 0.5149908212059067,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.6160232992200546,
+        "share_of_pairs_with_assumed_corr_0.5": 0.870794734275963,
+        "n_rerun_variants": 106,
+        "var_sr_annual": 0.029359467060479705,
+        "rerun_sr_median": 0.723083096657289,
+        "rerun_sr_max": 1.03393795751115,
+        "sensitivity_N": {
+          "0.5x": 0.927285907381265,
+          "1x": 0.9080473272499694,
+          "2x": 0.8869465065262876,
+          "5x": 0.8565364072756584,
+          "n_low": 0.9356594509590728
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.897129020074459,
+          "corr=0.5": 0.9071612958874911,
+          "corr=0.8": 0.9321539872517939
+        },
+        "n_at_dsr_070": 83185
+      },
+      "notes": [
+        "series = mean of 5 rebalance offsets (signal day +0..+4 sessions), 10 bp per side, next-open fills, minus BIL daily return; O00 reproduces salvage.run_cell (max abs diff 6.94e-18).",
+        "rerun variants (measured var_sr / corr): the 104-cell H-20260918-05 grid (rotation cells 5-offset blended, trend cells single) plus the listed overlay cells; all other family members are not rerun and enter N with an assumed pairwise corr 0.5."
+      ]
+    },
+    {
+      "sleeve": "S3",
+      "strategy_id": "us_etf_levered_rotation_63_top2_monthly",
+      "trial_family": [
+        {
+          "label": "H-20260918-05 grid: 64 rotation cells (4 menus x lookback{63,126,252,blend} x top_n{1,2} x {monthly,weekly}) + 40 levered-trend cells",
+          "n": 104,
+          "source": "reports/research/iterations/h20260918_05_recent_menu/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260922-02 S3 vol-target/brake grid: 3 targets x 2 brakes x 2 lookbacks",
+          "n": 12,
+          "source": "reports/research/iterations/h20260922_02_s3_voltarget/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260922-05 path B dip-boost cells: boost target {0.55,0.60} x hold {5,10}",
+          "n": 4,
+          "source": "reports/research/iterations/h20260922_05_salvage/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260918-06 ETF pool: 96 cells (8 score x leverage families)",
+          "n": 96,
+          "source": "reports/research/iterations/h20260918_06_etf_pool/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "Giants sweep 2026-09-22: 24 cells (F1 TQQQ RSI hedge, F2, F4, F5, F6 industry trend, F7)",
+          "n": 24,
+          "source": "reports/research/iterations/giants_sweep_20260922/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260922-04 RSI-branch rotation: 16 cells",
+          "n": 16,
+          "source": "reports/research/iterations/h20260922_04_rsi_branch/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260923-10 levered lanes: 5 candidates",
+          "n": 5,
+          "source": "reports/research/iterations/h20260923_10_levered_lanes/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260923-11 S3 bear guard: 5 candidates",
+          "n": 5,
+          "source": "reports/research/iterations/h20260923_11_s3_bear_guard/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260923-12 S3 defense-first: 3 candidates",
+          "n": 3,
+          "source": "reports/research/iterations/h20260923_12_s3_defense_first/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260927-01 sleeve combination: 7 candidates",
+          "n": 7,
+          "source": "reports/research/iterations/h20260927_01_sleeve_combination/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260928-01 S3 rebalance tranching / offsets: 22 candidates",
+          "n": 22,
+          "source": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        },
+        {
+          "label": "H-20260928-04 S3 alt-diversifier batch 1: 19 candidates",
+          "n": 19,
+          "source": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        }
+      ],
+      "n_low": 120,
+      "n_high": 317,
+      "n_used": 317,
+      "n_used_rule": "upper bound (n_high) for the main result; n_low shown in sensitivity",
+      "dsr_recent": 0.8151243310644242,
+      "recent_detail": {
+        "window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "sessions": 676,
+        "sr_annual_excess_over_BIL": 1.5989428073031202,
+        "psr0": 0.9946302682136939,
+        "skew": -0.395376697509987,
+        "kurtosis": 5.906401852283058,
+        "sr0_annual_expected_max_null": 1.0367638056267754,
+        "n_eff": 153.57656446553352,
+        "mean_pairwise_corr": 0.5171627706786914,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.6460439232437889,
+        "share_of_pairs_with_assumed_corr_0.5": 0.8824821307351356,
+        "n_rerun_variants": 109,
+        "var_sr_annual": 0.1498750480029058,
+        "rerun_sr_median": 1.0884847972658165,
+        "rerun_sr_max": 1.7160526581202766,
+        "sensitivity_N": {
+          "0.5x": 0.8521112201939068,
+          "1x": 0.8151243310644242,
+          "2x": 0.7758846972483251,
+          "5x": 0.7216802132581894,
+          "n_low": 0.8661682992021531
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.7943913060584451,
+          "corr=0.5": 0.8132011323550604,
+          "corr=0.8": 0.8614507584516471
+        },
+        "n_at_dsr_070": 2270
+      },
+      "mean_pairwise_corr": 0.5171627706786914,
+      "mean_pairwise_corr_is_assumption": true,
+      "var_sr_annual": 0.1498750480029058,
+      "n_eff": 153.57656446553352,
+      "sensitivity": {
+        "0.5x": 0.8521112201939068,
+        "1x": 0.8151243310644242,
+        "2x": 0.7758846972483251,
+        "5x": 0.7216802132581894,
+        "n_low": 0.8661682992021531
+      },
+      "n_at_dsr_070": 2270,
+      "passes_p1_dsr": true,
+      "dsr_full": 0.9163326361901432,
+      "full_detail": {
+        "window": [
+          "2017-01-03",
+          "2026-09-17"
+        ],
+        "sessions": 2440,
+        "sr_annual_excess_over_BIL": 0.9193874360447706,
+        "psr0": 0.9974808983600408,
+        "skew": -0.6080070016255138,
+        "kurtosis": 6.8198153667095145,
+        "sr0_annual_expected_max_null": 0.46673253464976394,
+        "n_eff": 154.5565065610676,
+        "mean_pairwise_corr": 0.5140616880978873,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.6196557441506595,
+        "share_of_pairs_with_assumed_corr_0.5": 0.8824821307351356,
+        "n_rerun_variants": 109,
+        "var_sr_annual": 0.030325895830259717,
+        "rerun_sr_median": 0.7299985661734995,
+        "rerun_sr_max": 1.006736168125394,
+        "sensitivity_N": {
+          "0.5x": 0.9342907709128979,
+          "1x": 0.9163326361901432,
+          "2x": 0.8964736630332527,
+          "5x": 0.8676019254080672,
+          "n_low": 0.9409285386238817
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.9061291346817708,
+          "corr=0.5": 0.9155541262176654,
+          "corr=0.8": 0.9388624601604231
+        },
+        "n_at_dsr_070": 131456
+      },
+      "notes": [
+        "series = mean of 5 rebalance offsets (signal day +0..+4 sessions), 10 bp per side, next-open fills, minus BIL daily return; O00 reproduces salvage.run_cell (max abs diff 1.39e-17).",
+        "rerun variants (measured var_sr / corr): the 104-cell H-20260918-05 grid (rotation cells 5-offset blended, trend cells single) plus the listed overlay cells; all other family members are not rerun and enter N with an assumed pairwise corr 0.5.",
+        "S3 counts are a floor: variants mentioned only in reports or notes of the 2023-2025 salvage designs (H-20260923-09 attribution has no manifest, H-20260928-13 manifest is empty) are not countable and are covered by the 2x and 5x sensitivity rows."
+      ]
+    },
+    {
+      "sleeve": "C2",
+      "strategy_id": "us_etf_eom_sector_blend_monthly",
+      "trial_family": [
+        {
+          "label": "H-20260928-05 batch 2: 7 candidates (EOM_REVERSAL_SPY = E0 and FRONT_RUN_SECTOR_TOP2 = S0 are counted once, in the next line)",
+          "n": 5,
+          "source": "reports/research/iterations/h20260928_05_registry_etf_batch2/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260928-20 recent-regime optimisation: 20 candidates (E0..E7, S0..S_ABSFILTER, C1, C2)",
+          "n": 20,
+          "source": "reports/research/iterations/h20260928_20_recent_regime_opt/candidate-manifest.json",
+          "in_n_low": true,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260928-42 opex week calendar: 8 candidates (its 12 PLACEBO_* controls are not search trials and are excluded from N and from the variance/correlation)",
+          "n": 8,
+          "source": "reports/research/iterations/h20260928_42_opex_week/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260930-10 industry seasonality: 6 candidates",
+          "n": 6,
+          "source": "reports/research/iterations/h20260930_10_industry_seasonality/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": true
+        },
+        {
+          "label": "H-20260930-01 rebalancing front-run: 8 candidates (no returns file -> not rerun)",
+          "n": 8,
+          "source": "reports/research/iterations/h20260930_01_rebalancing_front_run/candidate-manifest.json",
+          "in_n_low": false,
+          "rerun_for_stats": false
+        }
+      ],
+      "n_low": 25,
+      "n_high": 47,
+      "n_used": 47,
+      "n_used_rule": "upper bound (n_high) for the main result; n_low shown in sensitivity",
+      "dsr_recent": 0.5664162468126823,
+      "recent_detail": {
+        "window": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "sessions": 676,
+        "sr_annual_excess_over_BIL": 1.591905503820328,
+        "psr0": 0.9957711358118682,
+        "skew": 0.39025274546196986,
+        "kurtosis": 8.193493357496278,
+        "sr0_annual_expected_max_null": 1.4907908647554153,
+        "n_eff": 26.75740642968033,
+        "mean_pairwise_corr": 0.44005638196347113,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.41255188785764146,
+        "share_of_pairs_with_assumed_corr_0.5": 0.3145235892691952,
+        "n_rerun_variants": 39,
+        "var_sr_annual": 0.5415438547631839,
+        "rerun_sr_median": 1.0528574159634445,
+        "rerun_sr_max": 2.460282676080002,
+        "sensitivity_N": {
+          "0.5x": 0.7032462427278814,
+          "1x": 0.5664162468126823,
+          "2x": 0.43432160615216775,
+          "5x": 0.28625071439987126,
+          "n_low": 0.6912690116820841
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.5234727912755762,
+          "corr=0.5": 0.5883504236278841,
+          "corr=0.8": 0.7593996350154212
+        },
+        "n_at_dsr_070": 24
+      },
+      "mean_pairwise_corr": 0.44005638196347113,
+      "mean_pairwise_corr_is_assumption": true,
+      "var_sr_annual": 0.5415438547631839,
+      "n_eff": 26.75740642968033,
+      "sensitivity": {
+        "0.5x": 0.7032462427278814,
+        "1x": 0.5664162468126823,
+        "2x": 0.43432160615216775,
+        "5x": 0.28625071439987126,
+        "n_low": 0.6912690116820841
+      },
+      "n_at_dsr_070": 24,
+      "passes_p1_dsr": false,
+      "dsr_full": 0.3416719457181701,
+      "full_detail": {
+        "window": [
+          "2017-01-03",
+          "2026-09-17"
+        ],
+        "sessions": 2440,
+        "sr_annual_excess_over_BIL": 0.747774095242365,
+        "psr0": 0.9891985025741261,
+        "skew": -0.42511339605665727,
+        "kurtosis": 10.826261328697159,
+        "sr0_annual_expected_max_null": 0.880548838948504,
+        "n_eff": 25.00817914330291,
+        "mean_pairwise_corr": 0.4780830621021106,
+        "mean_pairwise_corr_is_assumption": true,
+        "corr_measured_on_rerun_variants": 0.4680267073311492,
+        "share_of_pairs_with_assumed_corr_0.5": 0.3145235892691952,
+        "n_rerun_variants": 39,
+        "var_sr_annual": 0.1943682045325576,
+        "rerun_sr_median": 0.565688445296,
+        "rerun_sr_max": 0.9212362509405471,
+        "sensitivity_N": {
+          "0.5x": 0.501262799452266,
+          "1x": 0.3416719457181701,
+          "2x": 0.21740396493499275,
+          "5x": 0.109678708035433,
+          "n_low": 0.4859175198990628
+        },
+        "sensitivity_corr_at_n_used": {
+          "corr=0.3": 0.28530955537409497,
+          "corr=0.5": 0.3504222122084421,
+          "corr=0.8": 0.5600481622402919
+        },
+        "n_at_dsr_070": 11
+      },
+      "notes": [
+        "C2 is calendar-anchored (one version, no rebalance-day offsets): the single series is C2__o00__net10 of reports/research/screens/h20260928_20_recent_opt/returns.parquet (10 bp per side, next-open fills), minus BIL.",
+        "rerun variants = every o00 net10 column of the screen return files for batch 2 (5 non-duplicate candidates), the 20 recent-regime variants, the opex-week (non-placebo) and industry-seasonality screens; H-20260930-01 (8) has no returns file and enters N with assumed corr 0.5."
+      ]
+    }
+  ]
+}

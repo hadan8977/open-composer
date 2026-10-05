@@ -18,6 +18,15 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from open_composer.reports.owner_forward import (
+    BookAction,
+    ForwardRow,
+    collect_book_actions,
+    load_forward_rows,
+    render_book_actions,
+    render_forward,
+)
+
 BEIJING = ZoneInfo("Asia/Shanghai")
 WEEKDAYS = "一二三四五六日"
 CURRENT_VIEW = Path("docs/current-view.zh.md")
@@ -199,6 +208,8 @@ class DigestData:
     live_track: dict[str, Any] | None = None
     contributions: dict[str, tuple[tuple[str, float], ...]] = field(default_factory=dict)
     errors: tuple[str, ...] = ()
+    forward: tuple[list[ForwardRow], dict[str, Any]] | None = None
+    book_actions: tuple[BookAction, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -712,8 +723,10 @@ def render_digest(data: DigestData) -> str:
     out.extend(_render_paper(data))
     out.extend(["", "## 二、股票组合 v1.2（quant1 / quant2）", ""])
     out.extend(_render_book(data))
+    out.extend(["", *render_book_actions(list(data.book_actions))])
     out.extend(["", "## 三、离实盘多远", ""])
     out.extend(_render_live_track(data))
+    out.extend(["", "### 前向对预期", "", *render_forward(data.forward)])
     out.extend(["", f"## 四、自动轮汇报（{period}）", ""])
     out.extend(_render_rounds(data))
     out.extend(["", f"## 五、研究进展（{period}）", ""])
@@ -1131,6 +1144,16 @@ def collect_digest(root: Path, now: datetime, kind: str) -> DigestData:
         errors.append(f"持仓贡献计算失败（{type(exc).__name__}）")
     round_reports = collect_round_reports(root, window_start)
     live_track = _read_json(root / LIVE_TRACK)
+    forward = None
+    try:
+        forward = load_forward_rows(root)
+    except Exception as exc:
+        errors.append(f"前向对预期计算失败（{type(exc).__name__}）")
+    book_actions: tuple[BookAction, ...] = ()
+    try:
+        book_actions = tuple(collect_book_actions(root))
+    except Exception as exc:
+        errors.append(f"v1.2 每日动作读取失败（{type(exc).__name__}）")
     return DigestData(
         now=now,
         window_start=window_start,
@@ -1155,4 +1178,6 @@ def collect_digest(root: Path, now: datetime, kind: str) -> DigestData:
         live_track=live_track,
         contributions=contributions,
         errors=tuple(errors),
+        forward=forward,
+        book_actions=book_actions,
     )
