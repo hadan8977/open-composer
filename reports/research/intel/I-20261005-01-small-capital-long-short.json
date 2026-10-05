@@ -1,0 +1,376 @@
+{
+ "id": "I-20261005-01",
+ "task": "T-20261005-36a",
+ "coordinator": "R1005-T36A",
+ "generated_utc": "2026-10-05T07:21Z",
+ "evidence_tiers": {
+  "0": "无",
+  "1": "只有回测",
+  "2": "样本外或发表后",
+  "3": "机构自述实盘使用",
+  "4": "可核验或独立复现"
+ },
+ "recommended_contract": [
+  {
+   "id": "R1",
+   "method": "concentrated_two_step",
+   "desc": "每边按|目标权重|取前K(<=200 @ $50k)，各边总额按原值缩放，空头整股取整、多头碎股，取整后按实现beta用SPY/SMH对冲，净美元偏离用多头缩放",
+   "judge": [
+    "同波动夏普保留率>=0.80 (提议)",
+    "对连续目标日收益年化跟踪误差<=0.25x策略波动 (提议)",
+    "空头敞口比>=0.90",
+    "相对L1<=30%",
+    "净美元偏离<=5%净值"
+   ],
+   "placebo": "同K随机选名"
+  },
+  {
+   "id": "R2",
+   "method": "joint_selection_lot_milp",
+   "desc": "同K下选名+整手联合MILP(线性L1目标,二进制基数,HiGHS)",
+   "judge": [
+    "相对R1的同波动夏普增量",
+    "敞口比增量",
+    "单日求解<=120s,超时取可行解并记gap"
+   ]
+  },
+  {
+   "id": "R3",
+   "method": "lower_bound_baselines",
+   "desc": "丢空头腿+SPY对冲；F2仅做指数相对少配的可行性计数(需免费PIT指数权重，未确认)",
+   "judge": [
+    "同R1两个主指标",
+    "F2:空头名字落在指数成分内且超过指数权重的比例"
+   ]
+  }
+ ],
+ "methods": [
+  {
+   "id": "M1",
+   "name": "cardinality+minimum lot MIP",
+   "sources": [
+    {
+     "authors": "Mansini & Speranza",
+     "year": 1999,
+     "venue": "EJOR 114(2) 219-233",
+     "doi_or_url": "https://iaorifors.com/paper/28192",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/iaor-mansini-speranza-1999.txt",
+     "read": "摘要"
+    }
+   ],
+   "core": "带最小交易手数的组合选择；找可行解NP完全；用松弛MILP的解构造子问题",
+   "reported_effect": "米兰交易所真实数据测试；摘要无数字",
+   "open_source": [],
+   "applicability": "手数思想适用（我们只有空头需整股）",
+   "evidence_tier": 1
+  },
+  {
+   "id": "M2",
+   "name": "local relaxation for cardinality constrained QP",
+   "sources": [
+    {
+     "authors": "Murray & Shek",
+     "year": 2012,
+     "venue": "Comput Optim Appl",
+     "doi_or_url": "10.1007/s10589-012-9471-1",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/murray-shek-2012.txt",
+     "read": "全文"
+    }
+   ],
+   "core": "收益投影到低维后聚类，局部QP选名；允许卖空，sum x=0为美元中性",
+   "reported_effect": "3000选15: 成功截断36s -12.084; CPLEX 25200s -12.304; 局部松弛7200s -12.765; 3000选100 CPLEX 35h追不上；实验未测整手",
+   "open_source": [],
+   "applicability": "稠密协方差精确法不可行；我们线性L1目标绕开",
+   "evidence_tier": 1
+  },
+  {
+   "id": "M3",
+   "name": "scalable sparse portfolio selection (outer approximation)",
+   "sources": [
+    {
+     "authors": "Bertsimas & Cory-Wright",
+     "year": 2022,
+     "venue": "INFORMS J. Computing 34(3) 1489-1511",
+     "doi_or_url": "arXiv:1811.00138",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/bertsimas-cory-wright-1811.00138.txt",
+     "read": "部分全文"
+    }
+   ],
+   "core": "岭正则后凸二元优化，外逼近+暖启动",
+   "reported_effect": "S&P500 n=500,k=10-200: 0.01-5s量级 vs CPLEX MISOCP数十-数百s(单线程,限时600s); 摘要称到3200只可证最优",
+   "open_source": [
+    {
+     "repo": "ryancorywright/SparsePortfolioSelection.jl",
+     "license": "NOASSERTION",
+     "stars": 11,
+     "pushed_at": "2021-03-22",
+     "fetched": "2026-10-05"
+    }
+   ],
+   "applicability": "需低秩协方差+岭项；仅借二进制基数+暖启动思路",
+   "evidence_tier": 1
+  },
+  {
+   "id": "M4",
+   "name": "two-step continuous then round (greedy / integer program)",
+   "sources": [
+    {
+     "authors": "PyPortfolioOpt DiscreteAllocation docs",
+     "year": 2026,
+     "venue": "readthedocs",
+     "doi_or_url": "https://pyportfolioopt.readthedocs.io/en/latest/Postprocessing.html",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/pypfopt-postprocessing.txt",
+     "read": "文档全文"
+    }
+   ],
+   "core": "贪心：先向下取整再按偏离补买；或min r+||wT-x*p||_1；多空拆开分别取整",
+   "reported_effect": "例:$1万剩余$12.15,RMSE 0.038；无精确法vs贪心差距数字；\"慢100-1000倍\"仅见搜索摘要未引用",
+   "open_source": [
+    {
+     "repo": "PyPortfolio/PyPortfolioOpt",
+     "license": "MIT",
+     "stars": 6073,
+     "pushed_at": "2026-07-07",
+     "fetched": "2026-10-05"
+    }
+   ],
+   "applicability": "取整规则可参照；不解决每只不足一股",
+   "evidence_tier": 1
+  },
+  {
+   "id": "M5",
+   "name": "transfer coefficient",
+   "sources": [
+    {
+     "authors": "Clarke, de Silva, Thorley",
+     "year": 2002,
+     "venue": "FAJ 58(5) 48-66",
+     "doi_or_url": "10.2469/faj.v58.n5.2468",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/cfa-clarke2002-abstract.txt",
+     "read": "摘要+Institutional Investor 2002报道全文"
+    }
+   ],
+   "core": "IR=TC*IC*sqrt(BR)；TC=风险调整权重与信号相关",
+   "reported_effect": "换手限50%:0.73；+禁空+市值中性:0.3 (报道转述，原文未读)",
+   "open_source": [],
+   "applicability": "概念适用；无逐名字信号分，权重相关探针无区分力(>=0.999)",
+   "evidence_tier": 3
+  },
+  {
+   "id": "M6",
+   "name": "long-short extension / index-relative underweight",
+   "sources": [
+    {
+     "authors": "Clarke, de Silva, Sapra, Thorley",
+     "year": 2008,
+     "venue": "FAJ 64(1) 16-30",
+     "doi_or_url": "https://rpc.cfainstitute.org/en/research/financial-analysts-journal/2008/longshort-extensions-how-much-is-enough",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/ideas-clarke-2008-long-short-extensions.txt",
+     "read": "摘要"
+    },
+    {
+     "authors": "NEPC (Forde)",
+     "year": 2025,
+     "venue": "咨询报告 2025-04",
+     "doi_or_url": "https://nepc.com/wp-content/uploads/2025/04/Extension-Strategies-Come-Into-Their-Own.pdf",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/nepc-extension-strategies-2025.txt",
+     "read": "全文"
+    }
+   ],
+   "core": "放宽仅多头约束；多头少配以指数权重为界",
+   "reported_effect": "eVestment中位数扩展策略滚动三年收益高于中位数多头(图)；非小资金证据",
+   "open_source": [],
+   "applicability": "仅F2；F1市场中性不适用",
+   "evidence_tier": 2
+  },
+  {
+   "id": "M7",
+   "name": "drop the short leg",
+   "sources": [
+    {
+     "authors": "Blitz, Baltussen, van Vliet",
+     "year": 2020,
+     "venue": "FAJ 76(4) 73-99",
+     "doi_or_url": "https://ideas.repec.org/a/taf/ufajxx/v76y2020i4p73-99.html",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/ideas-blitz-2020-drop-shorts.txt",
+     "read": "摘要"
+    }
+   ],
+   "core": "因子溢价大部分来自多头腿，空头腿被多头腿包含",
+   "reported_effect": "摘要无数字",
+   "open_source": [],
+   "applicability": "R3下界对照；与T-71\"阿尔法在空头腿\"方向相反，需实测",
+   "evidence_tier": 2
+  },
+  {
+   "id": "M8",
+   "name": "sparse index tracking",
+   "sources": [
+    {
+     "authors": "Benidis, Feng, Palomar",
+     "year": 2018,
+     "venue": "IEEE TSP 66(1) 155-170",
+     "doi_or_url": "https://palomar.home.ece.ust.hk/papers/2018/BenidisFengPalomar-TSP2018%20-%20index_tracking.pdf",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/benidis-feng-palomar-tsp2018.txt",
+     "read": "摘要+引言"
+    }
+   ],
+   "core": "MM算法同时选名与配比",
+   "reported_effect": "摘要:效果持平或更好,运行时间低多个数量级",
+   "open_source": [
+    {
+     "repo": "dppalomar/sparseIndexTracking",
+     "license": "GPL-3.0",
+     "stars": 59,
+     "pushed_at": "2023-05-28",
+     "fetched": "2026-10-05"
+    }
+   ],
+   "applicability": "仅长仓指数跟踪；GPL不并入",
+   "evidence_tier": 1
+  },
+  {
+   "id": "M9",
+   "name": "direct indexing small-account claim (vendor)",
+   "sources": [
+    {
+     "authors": "Smartleaf",
+     "year": null,
+     "venue": "The Wealth Advisor",
+     "doi_or_url": "https://www.thewealthadvisor.com/article/smartleaf-asset-management-yes-direct-indexes-make-sense-investors-worth-less-1m-and-over",
+     "snapshot": "reports/research/intel/sources/small-capital-ls-2026-10-07/smartleaf-direct-index-small-accounts.txt",
+     "read": "全文"
+    }
+   ],
+   "core": "整股取整致小权重为0；自述大盘股账户低于约$5万才成问题",
+   "reported_effect": "厂商自述；150-300只/50-150bp仅见搜索摘要",
+   "open_source": [],
+   "applicability": "量级与T-71一致；不当证据",
+   "evidence_tier": 3
+  },
+  {
+   "id": "M10",
+   "name": "public small-capital practice",
+   "sources": [],
+   "core": "未找到可核验的公开小资金整股多空实盘记录",
+   "reported_effect": "Quantopian讲座/QuantConnect样例仅见标题或摘要；ReplicateETFSheets(MIT,5星,2023-11-09)、Sparse-Index-Tracker(MIT,8星,2026-07-15)为玩具项目",
+   "open_source": [],
+   "applicability": "无",
+   "evidence_tier": 0
+  }
+ ],
+ "solvers": {
+  "cvxpy_table": "HiGHS/CBC/GLPK_MI/SCIPY混合整数仅线性；SCIP支持二次/二阶锥混合整数",
+  "local_installed": [
+   "CLARABEL",
+   "SCS",
+   "SCIPY",
+   "HIGHS",
+   "OSQP"
+  ],
+  "local_cvxpy": "1.9.3",
+  "not_installed": [
+   "SCIP",
+   "CBC"
+  ],
+  "mittelmann_miplib2017_2026_07_07": {
+   "limit": "2h",
+   "cpu": "Ryzen 9 5900X 12 threads",
+   "solved_of_240": {
+    "COPT": 219,
+    "HiGHS_parallel": 192,
+    "HiGHS_1_15_0": 158,
+    "SCIP": 136
+   },
+   "scaled_geomean": {
+    "COPT": 1,
+    "HiGHS": 7.55,
+    "SCIP": 9.93
+   }
+  },
+  "probe": {
+   "note": "临时探针，空头腿无基数版，未预注册，脚本未保存(代码在md附录)",
+   "target": "reports/paper/book/quant1/targets/2026-10-02.json",
+   "short_names": 709,
+   "solver": "scipy 1.17.1 milp (HiGHS)",
+   "rows": [
+    {
+     "capital": 50000,
+     "round": {
+      "exposure": 0.73,
+      "l1": 0.497,
+      "zero_names": 419
+     },
+     "milp": {
+      "exposure": 0.98,
+      "l1": 0.54,
+      "zero_names": 352,
+      "seconds": 2.8,
+      "gap": 6.3e-05
+     }
+    },
+    {
+     "capital": 100000,
+     "round": {
+      "exposure": 0.893,
+      "l1": 0.315,
+      "zero_names": 287
+     },
+     "milp": {
+      "exposure": 0.98,
+      "l1": 0.323,
+      "zero_names": 258,
+      "seconds": 1.2,
+      "gap": 8.8e-05
+     }
+    }
+   ],
+   "weight_correlation_probe": "F1 $50k/$100k: full-round and top100/200/300 concentrated vs full target weight correlation 0.999-1.000 -> uninformative as TC gate",
+   "pending": "cardinality-constrained lot MILP on 1784 names, K~200: 待测"
+  }
+ },
+ "execution": {
+  "facts": [
+   "碎股仅DAY单；OPG/CLS对碎股为No（orders doc表；fractional doc）",
+   "整股OPG/CLS标Yes*，表注要联系销售：账户权限待核",
+   "同一张单整股+碎股：碎股按整股成交价成交；<1股按NBBO(买ask/卖bid)——Alpaca staff 2025-03-24",
+   "NYSE MOC/LOC 15:50前可录入/修改/撤销，之后只允许对冲显著失衡的反向单且不可改撤；Nasdaq同为15:50(仅搜索摘要)；Alpaca CLS截止时间待核",
+   "模拟盘MOO按普通市价单在开盘报价成交；实盘按上市交易所开盘竞价价——Alpaca staff 2024-08-21",
+   "模拟盘：不检查NBBO深度、10%概率随机部分成交、不收借券费"
+  ],
+  "recommendation": "小资金版整本用day单同时点执行，价格口径用实际成交价；竞价腿留到目标规模阶段（建议，非文献结论）",
+  "prior_art": "未找到有人公开做过整股竞价+碎股当日单拆分（证据档0）"
+ },
+ "judging": {
+  "sourced": [
+   "Ledoit & Wolf 2008 JEF 15(5) 850-859: 学生化时间序列bootstrap检验夏普之差",
+   "Clarke et al 2002 TC"
+  ],
+  "proposed_thresholds": {
+   "sharpe_retention_same_vol": ">=0.80 + LW 90% CI",
+   "tracking_error": "<=0.25x strategy vol",
+   "v2": "空头敞口比>=0.90; L1<=30%; 净美元偏离<=5%; 持仓<=20日成交额1%",
+   "turnover": "<=1.2x full",
+   "placebo": "同K随机选名"
+  },
+  "no_public_standard": true
+ },
+ "not_do": [
+  "稠密协方差精确MIQP",
+  "随机取整/进化算法(Chen,Zhou,Das 2021 arXiv:1909.08748 只读摘要)",
+  "权重相关当TC门槛",
+  "默认ECOS_BB",
+  "引用厂商阈值当证据",
+  "\"精确法慢100-1000倍\"当事实",
+  "模拟盘验证竞价腿成交价"
+ ],
+ "uncertain": [
+  "带基数整手MILP求解时间待测",
+  "R1/R2保住多少夏普未测",
+  "F2指数相对少配覆盖率需PIT指数权重",
+  "阈值为提议值",
+  "OPG/CLS权限与CLS截止待核",
+  "多篇仅读摘要",
+  "搜索摘要数字未打开原页"
+ ]
+}

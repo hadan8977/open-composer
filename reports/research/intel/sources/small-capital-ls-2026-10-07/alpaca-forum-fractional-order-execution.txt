@@ -1,0 +1,79 @@
+
+ Fractional order execution - Alpaca Trading - Alpaca Community Forum
+ = 40rem)" rel="stylesheet" data-target="discourse-ai_desktop" />
+ = 40rem)" rel="stylesheet" data-target="discourse-events_desktop" />
+ = 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop" />
+ = 40rem)" rel="stylesheet" data-target="poll_desktop" />
+ New to Alpaca? Create your Trading API account today! Sign Up Today
+ Alpaca Community Forum
+ Fractional order execution
+ Alpaca Trading
+ miaohaha
+ March 24, 2025, 7:34pm
+ 1
+When issuing a fractional order, does it affect execution speed due to being routed to other exchanges? For example, if I buy 100.00 shares of SPY vs. 100.23 shares of SPY, will the presence of the fractional component prevent the 100 share portion from being routed to an exchange that can trade the round lot quickly?
+Does the answer to the above change if using Alpaca Elite? Also, if using Elite to avoid PFOF, does the presence of the fractional component cause leakage to market makers who may front-run the 100 share portion?
+ 1 Like
+ Dan_Whitnable_Alpaca
+ March 24, 2025, 9:35pm
+ 2
+ @miaohaha The fractional portion of orders are always filled/executed directly by Alpaca. The whole share portion (if any) is routed to an execution partner. If the quantity is less than 1 share the fill price is the current NBBO quote (ie the current ask price if a buy and the current bid if a sell). If the quantity is greater than 1 share the fill price for the whole share is the execution partners fill price. The fractional share is filled (by Alpaca) at that same price.
+“Does it affect execution speed due to being routed to other exchanges?”
+No, if it’s more than 1 share it fills at the same speed as a whole share order would. If it’s less than 1 share it fills a bit faster since the order is not sent to another execution partner.
+"Will the presence of the fractional component prevent the 100 share portion from being routed to an exchange that can trade the round lot quickly?"
+No
+“Does the answer to the above change if using Alpaca Elite?”
+No. The process is the same. The whole portion is routed per the Smart Routing rules and Alpaca matches that fill price for any fractional portion.
+“Does the presence of the fractional component cause leakage to market makers who may front-run the 100 share portion”
+No. The trading partners are unaware the order was a fractional order. All they see is the whole number of shares.
+Does that answer your questions?
+ miaohaha
+ March 25, 2025, 1:57am
+ 3
+ Yes, thank you, that helps a lot!
+ miaohaha
+ March 25, 2025, 2:05am
+ 4
+ Oh, one followup question @Dan_Whitnable_Alpaca :
+If I place a fractionable limit order for somewhere in-between the bid-ask spread (e.g. limit buy at mid price and not the NBBO ask):
+For > 1 share, I’m assuming IF the whole component gets filled (someone takes my bid), Alpaca will match the fill price for the fractional component
+For < 1 share, my understanding is that it will never fill unless NBBO quote equals my order limit price at some point in time
+Correct?
+ Dan_Whitnable_Alpaca
+ March 25, 2025, 10:49pm
+ 5
+ @miaohaha If I place a fractionable limit order for somewhere in-between the bid-ask spread (e.g. limit buy at mid price and not the NBBO ask):
+For > 1 share, I’m assuming IF the whole component gets filled (someone takes my bid), Alpaca will match the fill price for the fractional component
+Yes, whatever the whole share fills at so will the fractional amount.
+For < 1 share, my understanding is that it will never fill unless NBBO quote equals my order limit price at some point in time.
+Correct.
+ Related topics
+ Topic
+ Replies
+ Views
+ Activity
+ Why are Stop Loss and Take Profit not allowed with market orders?
+ Alpaca Trading
+ 4
+ 1156
+ July 8, 2024
+ Bracket Order with Fractional Shares
+ Alpaca Trading
+ 1
+ 425
+ July 1, 2024
+ Cannot place a trade with fractional quantities of shares
+ Alpaca Account Troubleshooting
+ 10
+ 1493
+ January 3, 2022
+ Seeking Advice on Avoiding Fractional Holdings
+ Getting Started with Alpaca
+ 4
+ 147
+ August 1, 2024
+ 💰For The Love Of God: PLEASE - Fraction Sized Orders On Short Positions & This!
+ Feature Requests
+ 2
+ 488
+ January 10, 2023

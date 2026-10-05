@@ -1,0 +1,150 @@
+
+ OPG orders not filled at open price (live trading) - Alpaca Trading - Alpaca Community Forum
+ = 40rem)" rel="stylesheet" data-target="discourse-ai_desktop" />
+ = 40rem)" rel="stylesheet" data-target="discourse-events_desktop" />
+ = 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop" />
+ = 40rem)" rel="stylesheet" data-target="poll_desktop" />
+ New to Alpaca? Create your Trading API account today! Sign Up Today
+ Alpaca Community Forum
+ OPG orders not filled at open price (live trading)
+ Alpaca Trading
+ Joffrey
+ July 19, 2024, 4:57pm
+ 1
+ Hi,
+I just started using OPG orders and I am wondering why some of them don’t fill at the auction open price, for exemple today :
+BUY 1 UBER stock (OPG) filled at 66.56$ when I search the opening Price on Google I see it opened at 66.78 today (order ID : 78b64017-17ac-40d3-acf9-cdfdb8f2bf92)
+BUY 1 ORCL stock (OPG) filled at 138.52$ for an opening Price of 138.35$ (order ID : 5317278c-458c-484d-9cab-457e8ce8033c)
+Those orders are submitted a few hours before open.
+Where do those differences in price come from ? I would expect OPG orders which are market on open orders to be filled at exactly opening Price for live trading.
+Regards.
+ Market on Open order gives me a worse price than daily open
+ Dan_Whitnable_Alpaca
+ July 20, 2024, 1:10am
+ 2
+ @Joffrey It appears your orders filled correctly at the listing exchange open auction price. You can fetch all the opening auction prices from any/all exchanges posting opening data by using auctions endpoint. as below.
+the curl --request GET \
+ --url 'https://data.alpaca.markets/v2/stocks/auctions?symbols=UBER%2CORCL&start=2024-07-19T00%3A00%3A00Z&limit=1000&feed=sip&sort=asc' \
+ --header 'APCA-API-KEY-ID: xxxxx' \
+ --header 'APCA-API-SECRET-KEY: xxxxx' \
+ --header 'accept: application/json'
+See the response below.
+The first thing to understand is bar data should be excluding any trades with a trade condition Q ‘Market Center Official Open’. It’s a bit counterintuitive but that is really a duplicate transaction for information only. The trades with trade condition O ‘Market Center Opening Trade’ are actual trades. Notice the open price of UBER was $66.56 and the open price of ORCL was $138.52 and both executed on their primary listing exchange of the New York Stock Exchange -exchange code N.
+There can be multiple opening auctions. UBER for example participated in an open auction on the NASDAQ Int Exchange - exchange code T. There it traded at $66.78. However a couple of things, that isn’t the listing exchange, moreover the size of that auction was only 359 shares. But it was the ‘first’ trade which is why data providers will use that as the ‘open’. The primary exchange auction traded a short time later with a volume of 614454 shares which is where your order executed.
+A similar situation occurred with ORCL. Physically, the first trade executed at $138.35 on some exchange so that is considered the open of the bar. However, the opening auction on the New York Stock Exchange -exchange code N happened later so it wasn’t listed as the ‘open’. The open is strictly the first valid trade of the day and doesn’t always correspond to an opening auction price which is where OPG orders fill and get the auction price.
+{
+ "auctions": {
+ "UBER": [
+ {"o": [
+ {
+ "c": "O",
+ "p": 66.78,
+ "s": 359,
+ "t": "2024-07-19T13:30:00.163833088Z",
+ "x": "T"
+ },
+ {
+ "c": "Q",
+ "p": 66.78,
+ "s": 359,
+ "t": "2024-07-19T13:30:00.163860224Z",
+ "x": "T"
+ },
+ {
+ "c": "Q",
+ "p": 66.78,
+ "s": 178,
+ "t": "2024-07-19T13:30:00.394840064Z",
+ "x": "P"
+ },
+ {
+ "c": "Q",
+ "p": 66.56,
+ "s": 614454,
+ "t": "2024-07-19T13:30:01.025048064Z",
+ "x": "N"
+ },
+ {
+ "c": "O",
+ "p": 66.56,
+ "s": 614454,
+ "t": "2024-07-19T13:30:01.025048064Z",
+ "x": "N"
+ }
+ ]
+ }
+ ],
+ "ORCL": [
+ "o": [
+ {
+ "c": "Q",
+ "p": 138.36,
+ "s": 20,
+ "t": "2024-07-19T13:30:00.745796864Z",
+ "x": "P"
+ },
+ {
+ "c": "Q",
+ "p": 138.38,
+ "s": 20,
+ "t": "2024-07-19T13:30:00.746343936Z",
+ "x": "T"
+ },
+ {
+ "c": "O",
+ "p": 138.52,
+ "s": 378823,
+ "t": "2024-07-19T13:31:47.666527744Z",
+ "x": "N"
+ },
+ {
+ "c": "Q",
+ "p": 138.52,
+ "s": 378823,
+ "t": "2024-07-19T13:31:47.666530816Z",
+ "x": "N"
+ }
+Look at the auctions endpoint to get the price an OPG order will fill at. Hope that makes sense.
+ Joffrey
+ July 20, 2024, 6:38am
+ 3
+ Hi,
+Thank you for your response, I understand that the exchange my trades are filled in isn’t Always the first exchange to open altough the delay is very small.
+I noticed by looking at about 10 SELL OPG orders that I Always get the close price listed on internet, is that a coincidence ?
+Regards.
+ Dan_Whitnable_Alpaca
+ July 21, 2024, 4:31pm
+ 4
+ @Joffrey An Alpaca OPG (ie Market On Open) order will fill at the opening auction price on the primary exchange where the security is listed. The open price presented by data providers is typically the first valid (ie non-excluded) trade of the day. Often this corresponds to the opening auction price but it isn’t guaranteed. So your executions weren’t unexpected but they were a bit of a coincidence.
+For more information how the auctions work, check out the following links. Each exchange has a bit different rules. NASDAQ calls their auctions Opening and Closing Crosses. The NYSE calls their auction the Core Open Auction.
+Note this is only true for live account order execution. OPG orders in paper trading are simulated as regular market orders and simply fill at the opening quote. OPG orders will not necessarily fill at the auction price in paper trading.
+ Related topics
+ Topic
+ Replies
+ Views
+ Activity
+ Time in Force - OPG - Filled Price != Open Price
+ Alpaca Products Discussion
+ 0
+ 578
+ June 24, 2020
+ Order filled price at opg is different from the published open price
+ Alpaca Trading
+ 0
+ 366
+ July 10, 2022
+ OPG orders being canceled with no context
+ Random
+ 7
+ 503
+ January 14, 2022
+ Frustration with the execution of Pre-Market Orders
+ Alpaca Trading
+ 13
+ 551
+ March 9, 2024
+ Accurate OPG and CLS prices for Paper trading
+ Feature Requests
+ 10
+ 2228
+ October 18, 2021

@@ -1,0 +1,1192 @@
+IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018                                                                                155
+
+
+
+
+      Sparse Portfolios for High-Dimensional Financial
+                       Index Tracking
+                             Konstantinos Benidis              , Yiyong Feng, and Daniel P. Palomar, Fellow, IEEE
+
+
+   Abstract—Index tracking is a popular passive portfolio manage-                    therefore reasonable returns can be obtained without the active
+ment strategy that aims at constructing a portfolio that replicates                  management’s risk. These reasons have prompted the investor’s
+or tracks the performance of a financial index. The tracking error                   interest into more passive management strategies.
+can be minimized by purchasing all the assets of the index in ap-                        Index tracking, also known as index replication, is one of
+propriate amounts. However, to avoid small and illiquid positions
+                                                                                     the most popular passive portfolio management strategies. It
+and large transaction costs, it is desired that the tracking portfolio
+consists of a small number of assets, i.e., a sparse portfolio. The
+                                                                                     refers to the problem of reproducing the performance of a mar-
+optimal asset selection and capital allocation can be formulated                     ket index. Although index tracking is driven from the financial
+as a combinatorial problem. A commonly used approach is to use                       industry, it is in fact a pure signal processing problem: an 2 -
+mixed-integer programming (MIP) to solve small sized problems.                       norm regression of the financial historical data subject to some
+Nevertheless, MIP solvers can fail for high-dimensional problems                     portfolio constraints. Further, the sparse index tracking problem
+while the running time can be prohibiting for practical use. In                      (that we will introduce shortly) is similar to many sparsity for-
+this paper, we propose efficient and fast index tracking algorithms                  mulations in the signal processing area, such as the “lasso” [2],
+that automatically perform asset selection and capital allocation                    in the sense that it is a regression problem with some sparsity
+under a set of general convex constraints. A special consideration                   requirements.
+is given to the case of the nonconvex holding constraints and to the                     There are two main approaches to the index tracking problem:
+downside risk tracking measure. Furthermore, we derive special-
+ized algorithms with closed-form updates for particular sets of con-
+                                                                                     the static and the dynamic. In the static approach, we construct
+straints. Numerical simulations show that the proposed algorithms                    and hold the tracking portfolio during the time horizon of in-
+match or outperform existing methods in terms of performance,                        terest. On the contrary, in the dynamic setting the portfolio is
+while their running time is lower by many orders of magnitude.                       readjusted in a more ad-hoc manner following a trading strategy.
+                                                                                     For both approaches it is essential the design of an appropriate
+   Index Terms—Index tracking, sparsity, majorization-minimi                         tracking portfolio regardless of the underlying strategy. In this
+zation.                                                                              paper, it is not our scope to provide a trading strategy but rather
+                                                                                     the tools for constructing efficient tracking portfolios. Therefore,
+                             I. INTRODUCTION                                         we consider fixed holding periods. Nevertheless, the application
+      UND managers follow two basic investment strategies,                           of the proposed algorithms in a dynamic approach is straight-
+F     namely: active and passive. In active management
+strategies, the fund managers assume that the markets are not
+                                                                                     forward since the only change is the readjustment decision and
+                                                                                     not the design process.
+perfectly efficient and through their expertise and superior                             The most straightforward way to construct an efficient index
+prediction methods they hope to add value by choosing high                           tracking portfolio is to buy appropriate quantities of all the assets
+performing assets. On the contrary, the passive management                           that compose the index, a technique known as full replication,
+strategies are based on the assumption that the market cannot be                     given that the true index construction weights are available.
+beaten in the long run. The passive managers have less flexibility                   Following this approach, a perfect tracking can be achieved.
+and their role is to conform to a closely defined set of criteria.                   However, there are some important drawbacks. First, a portfolio
+   Analysis of historical data has shown that the majority of the                    consisting of all the assets incorporates too many small and
+actively managed funds do not outperform the market in the long                      illiquid stocks. This translates into higher risk to investors since
+run [1]. Further, the stock markets have historically risen and                      an illiquid stock is hard to sell if we are looking to exit and
+                                                                                     we might have to sell it for less than the current market price.
+                                                                                     Further, allocating capital to all the assets increases significantly
+   Manuscript received February 14, 2017; revised June 6, 2017 and July 30,
+2017; accepted September 10, 2017. Date of publication October 11, 2017; date
+                                                                                     the transaction costs.
+of current version November 13, 2017. The associate editor coordinating the              Another popular way to engage in index tracking is to pur-
+review of this manuscript and approving it for publication was Prof. Byonghyo        chase an exchange traded fund (ETF). An ETF is like a stock
+Shim. This work was supported by the Hong Kong RGC 16208917 research                 but its value tracks closely a given index. It is constructed either
+Grant. (Corresponding author: Konstantinos Benidis.)                                 by using derivative products (synthetic ETF) or the underly-
+   K. Benidis and D. P. Palomar are with the Department of Electronic and
+Computer Engineering, Hong Kong University of Science and Technology,                ing components of the index (physical ETF). Many physical
+Hong Kong (e-mail: kbenidis@connect.ust.hk; palomar@ust.hk).                         ETFs use full replication of the index they are tracking, e.g.
+   Y. Feng was with the Department of Electronic and Computer Engineering,           the Standard and Poor’s Depositary Receipts (Bloomberg ticker
+Hong Kong University of Science and Technology, Hong Kong. He is now with            SPY) based on the S&P 500 and the Nasdaq 100 Trust Shares
+the Three Stones Capital Limited, Hong Kong (e-mail: yiyong@connect.ust.hk).
+   Color versions of one or more of the figures in this paper are available online
+                                                                                     (Bloomberg ticker QQQ) based on the Nasdaq 100. However,
+at http://ieeexplore.ieee.org.                                                       there are also many ETFs using a sparse construction, where rep-
+   Digital Object Identifier 10.1109/TSP.2017.2762286                                resentative sampling, with 80–95% of the underlying securities
+
+                          1053-587X © 2017 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                              See http://www.ieee.org/publications standards/publications/rights/index.html for more information.
+156                                                                          IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+being used, or aggressive sampling, with only a tiny percentage                                              II. RELATED WORK
+being used [3]–[6].                                                               We first provide some basic definitions that we will use
+   There are several challenges that we face when we engage
+                                                                               throughout the paper. Assume that an index is composed of
+in index tracking. First, due to the price changes of the assets,              N assets. We denote by rb = [r1b , . . . , rTb ] ∈ RT and X =
+the relative quantities of the holding portfolio will change daily
+and, after a period of time, they may diverge significantly from               [r1 , . . . , rT ] ∈ RT ×N the returns of the index and the N as-
+their designed value. In order to compensate for these changes                 sets in the past T days, respectively, with rt ∈ RN denoting the
+we need to rebalance our portfolio frequently in order to recover              returns of the N assets at the t-th day1 . Further, b ∈ RN   + de-
+the initial design. Further, when we construct a portfolio with                notes the normalized benchmark index weights such that b > 0,
+the goal of tracking a financial index, we use the historical data             b 1 = 1 and Xb = rb .
+of the assets that compose the index in order to find a portfolio                 A commonly used tracking measure is the empirical tracking
+that meets some criteria. However, since the dynamics of the                   error (ETE) which measures how closely the tracking portfolio
+market and the composition of an index constantly change, it is                replicates the index [7]–[10]. It is defined as:
+not wise to use data from the distant past but rather only from a                                                      1         
+recent period. This signifies the importance of holding a tracking                                     ETE(w) =          Xw − rb 2 ,                            (1)
+                                                                                                                       T           2
+portfolio for a limited amount of time since it can become obso-
+lete if it does not take into account all of these changes. These              where w denotes the portfolio we wish to design that must
+reasons make necessary the redesign of a tracking portfolio after              satisfy w ≥ 0 and w 1 = 1, among other possible constraints.
+a period of time.                                                                 Note that (1) assumes a constant w in the corresponding T
+   The above challenges lead to a natural trade-off between the                days, which implicitly means that the portfolio is rebalanced
+tracking efficiency and the transaction costs. By rebalancing                  on a daily basis. During the design process, this is a necessary
+or redesigning frequently our portfolio we can achieve a better                approximation (that we will make in all the following formu-
+tracking but we increase the transaction costs, especially when                lations) in order to have a tractable problem. However, in the
+the portfolio consists of a large number of assets as in full                  out-of-sample evaluation of the derived portfolios we should
+replication. A natural way to deal with these problem is to use                always take into account the portfolio changes for a proper per-
+a small number of assets to (approximately) replicate an index.                formance assessment (see Section VII).
+This leads to the construction of a sparse index tracking portfolio               The first approach of sparse index tracking is to decompose
+[7], [8], which is the main focus of this paper.                               the task into two steps, namely stock selection, where we select a
+   The rest of the paper is organized as follows. Section II                   subset of the assets, and capital allocation, where we distribute
+reviews the related work and the different problem formula-                    the capital among the selected assets. Various stock selection
+tions. Section III presents the solution of the sparse index track-            methods have been proposed. A widely used method, especially
+ing problem considering a set of general convex constraints.                   for a market capitalization weighted index, is to select the largest
+Closed-form update algorithms are further proposed for partic-                 K < N assets according to their market capitalization [11].
+ular constraint sets. Section IV deals with the non-convex hold-               Another approach is to select the assets that have similar return
+ing constraints, proposing general and particular algorithms.                  performances as the index, i.e., the K most correlated assets to
+Section V presents possible constraints and different tracking                 the index [12], [13]. Finally, a selection based on cointegration
+error functions. Section VI provides a convergence analysis and                has been proposed where the idea is to select K assets so that
+an acceleration scheme that increases the convergence rate of                  there exists a linear combination of their log-prices cointegrated
+the proposed algorithms. Section VII presents numerical experi-                well with the value of the index [13], [14].
+ments on real and synthetic data. Finally, the paper is concluded                 Once a subset of K assets has been selected we need to assign
+in Section VIII.                                                               the capital in a proper manner. A naive allocation is to distribute
+   Notation: The sequence of nonnegative integers is denoted by                the capital among the selected assets proportional to the origi-
+N. The real field is denoted by R, while Rm (Rm           + ) denotes the      nal weights with their summation equal to 1. This requires that
+set of (nonnegative) real vectors of size m, and Rn ×m (Rn+×m )                the benchmark portfolio weight vector b and all its changes
+the set of (nonnegative) real matrices of size n × m. Vectors                  (the benchmark weight vector is consistently rebalanced by the
+are denoted by bold lower case letters and matrices by bold                    indices providers) are known exactly, which could be very ex-
+capital letters i.e., x and X, respectively. A general entry of a              pensive. For example, in 2006 the index sponsors S&P, Dow
+vector x is denoted by x, its i-th entry by xi , the i-th column               Jones, MSCI, and FTSE earned total revenues of $1.66 billion
+of matrix X by xi , and the (i-th, j-th) element of a matrix by                from the ETF providers and therefore the ETF provides were
+xij . A vector of zeros is denoted by 0 and a vector of ones by                even thinking of cutting these costs by setting up their own mar-
+1, while I denotes the identity matrix. Their dimension will be                ket indices2 . Although this naive allocation is easy and fast, it is
+implicit from the context. The superscript (·) denotes the trans-             not optimized. Further, in many cases the index weight vector
+pose of a matrix. (x)+ = max(x, 0) where the max operator is                   b is not available. To this end, we can use the following opti-
+performed elementwise. x  y denotes the Hadamard product                      mized allocation that does not make any use of the index weight
+of x and y. Diag(x) is a diagonal matrix formed with x at its
+principal diagonal, and diag(X) is a column vector consisting
+of all the diagonal elements of X. x0 denotes the number of
+nonzero elements of a vector x ∈ Rm . S  0 means that the                                                                                                  p t −p t −1
+                                                                                                  t of an index or an asset at time t is defined as r t =
+                                                                                 1 The return r
+                                                                                                                                                               p t −1 ,
+symmetric matrix S is positive semidefinite, while λ(S)         max is its     where p t and p t −1 denote the price at time t and t − 1, respectively.
+maximum eigenvalue. card(A) denotes the cardinality of the set                   2 See “ETF providers float idea of setting up their own market indices”,
+A. x[i:j ] = [xi , xi+1 , . . . , xj ] , with i ≤ j integers.                 published in Financial Times on 2017-05-24.
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                                             157
+
+
+
+vector b [11]:                                                                   commercial solvers (e.g., Gurobi, CPLEX) can be used [10].
+                                 1               
+                                   X(w  s) − rb 2
+                                                                                 However, they are appropriate only for small or medium sized
+                  minimize                         2                             problems since it is hard to find an optimal solution within
+                      w          T                                               practical time limits when the dimension becomes large. We
+                 subject to (w  s) 1 = 1,                                      revisit problem (4) in Section IV.
+                            w ≥ 0,                                        (2)       In other works, a common approach is to approximate the
+                                                                                 0 -“norm” with the non-convex p -“norm”, where p < 1, and
+where si is 1 if the i-th stock is selected and 0 otherwise, with                use a heuristic algorithm to solve the optimization problem [7],
+s 1 = K. This is effectively the minimization of the tracking                   [16]. In [17], the authors approximate the 0 -“norm” with a non-
+error using only the selected assets. To make the solution more                  convex function that becomes convex in the limit. Thus, they
+robust, one can remove a few assets each time and apply this                     propose a gradual non-convexity method. In [18], the authors
+idea iteratively several times to achieve enough sparsity [7].                   consider a general formulation and propose an algorithm that
+   The previous methods allocate the capital in two steps (i.e.,                 determines whether or not to rebalance a given portfolio. In
+asset selection and capital optimization) and it is not clear how                [19], a mean-variance analysis or the index tracking portfolios
+optimal the resulting tracking portfolio is. Another approach                    is provided based on the classical Markowitz mean-variance
+that unifies these two steps is to directly penalize the cardinality             framework [20], while in [21], Brodie et al. consider the problem
+of the tracking portfolio [7], [15]:                                             of portfolio selection within the Markowitz framework including
+                           1             
+                             Xw − rb 2 + λw0
+                                                                                 an 1 -penalty. In [22], Takeda et al. formulate an MIP problem.
+              minimize                     2                                     Since it is hard to solve it in practice due to the prohibiting
+                  w        T
+                                                                                 running time, they propose a greedy algorithm. Finally, genetic
+               subject to w 1 = 1,                                              algorithms [8], [10], [11], [23], [24] and differential evolution
+                          w ≥ 0,                                          (3)    [9], [23], [25] heuristics have been proposed. However, these
+                                                                                 methods are not able to guarantee optimality of the solution
+where λ ≥ 0 is a parameter that controls the sparsity of the                     and, in general, they have inferior performance compared to an
+portfolio, i.e., we get sparser solutions for larger values of λ.                MIP solver [10].
+With this formulation, we jointly perform an asset selection and                    In all the problem formulations presented in this section we
+allocation of the capital to the selected assets. Notice that this               have included only a minimum set of constraints for illustration
+problem is highly non-convex due to the 0 -“norm” term3 . We                    purposes. In the rest of the paper we will use a general constraint
+revisit this problem in Section III, where we will rely on the MM                set that will include all the possible convex constraints, i.e., w ∈
+method to iteratively upperbound (3), while the major difficulty                 W, where W is convex. We will further assume that {w|w ≥
+will be to find the right surrogate function.                                    0, w 1 = 1} ⊆ W. When we need to include a non-convex
+   All the constraints we have imposed in the problem formula-                   constraint we will indicate it separately.
+tion (3) are convex. In practice, the constraints that are usually
+considered in the index tracking problem can be written in a
+convex form. However, there is one exception. It is common                                           III. SPARSE INDEX TRACKING
+for the fund managers to impose some holding constraints to                         In this section we focus on problem (3), i.e., the joint asset
+avoid extreme positions or brokerage fees for very small orders,                 selection and capital allocation problem. First, we approximate
+which translates into non-convex constraints. In that case the                   the 0 -“norm” by a continuous and differentiable function, albeit
+optimization problem takes the following form:                                   still non-convex. Then, we use the majorization-minimization
+                            1           
+                              Xw − rb 2 + λs 1
+                                                                                 framework to derive an algorithm based on the first-order Taylor
+                minimize                   2                                     expansion. Finally, we propose a specialized iterative closed-
+                   w ,s     T
+                                                                                 form update algorithm for a particular set of constraints.
+                subject to w 1 = 1,
+                           l  s ≤ w ≤ u  s,                                    A. 0 Approximate Function
+                               s ∈ {0, 1} , N
+                                                                          (4)       A popular convex approximation of the 0 -“norm” that pro-
+                                                                                 motes sparsity is the 1 -norm (as indicated by the blue dashed
+where si = I{w i > 0} plays the role of the indicator function,
+                                                                                 line in Fig. 1), i.e., the least absolute shrinkage and selection
+but here s is a variable and not fixed as in (2), and l, u ∈ RN +,               operator (LASSO) technique [2]. Unfortunately, this approxi-
+with 0 ≤ l ≤ u, are the lower and upper holding constraints,                     mation does not work in index tracking since we require (among
+respectively, for the selected stocks. For clarity of presentation,              other constraints) the weights to be nonnegative and their sum-
+we will consider the simple case l = l · 1 and u = u · 1, with                   mation to be equal to one. Thus, the 1 -norm trivially becomes:
+0 ≤ l ≤ u, however, our approach holds for the general case.                     w1 = |w| 1 = w 1 = 1, which is a constant.
+   Many approaches have been proposed to deal with problem                          Instead of the 1 -norm, we can approximate the 0 -“norm”
+(4). A practical heuristic is to solve the problem without the                   (to be exact the indicator function) by the following function4 :
+binary variable s (as in (1)), then select the assets with weights
+larger than a certain threshold, and finally reoptimize the weights                                                 log(1 + |w|/p)
+with s fixed (as in (2)). Another approach is to use mixed-                                             ρp (w) =                   ,                        (5)
+                                                                                                                     log(1 + 1/p)
+integer programming (MIP). Problem (4) is indeed an MIP and
+  3 Although  with p < 1 is not a norm, it is a common abuse of notation to
+                p                                                                  4 More precisely, (5) approximates the indicator function and then we can use
+call it as such. To highlight this difference we will use quotation marks when            N
+we are dealing with an p with p < 1, i.e., p -“norm”.                          w0 =           I
+                                                                                             i = 1 {w i = 0 }
+                                                                                                              .
+158                                                                                  IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+                                                                                       where X is a closed set. We say that the function f (x) is
+                                                                                                                         (k )
+                                                                                       majorized at a given point   x(k ) (with k denoting iteration) by
+                                                                                       the surrogate function g x|x            if the following properties are
+                                                                                       satisfied (in words if it is a tight  upper  bound):
+                                                                                          r f x(k )  = g x(k ) |x(k ) ,
+                                                                                          r f (x) ≤ g x|x(k )  , ∀x ∈ X ,
+                                                                                          r ∇f x(k )  = ∇g x(k ) |x(k ) .
+                                                                                       Then, x is iteratively updated as:
+                                                                                                                                          
+                                                                                                         x(k +1) = arg min g x|x(k ) .                     (8)
+                                                                                                                                   x∈X
+
+                                                                                          With this scheme, it is easy to prove that the objective value
+                                                                                       is decreased monotonically at each iteration, i.e., f (x(k +1) ) ≤
+Fig. 1. Approximation of the indicator function with ρp , 1 (w) and ρp , 0 . 2 (w)     g(x(k +1) |x(k ) ) ≤ g(x(k ) |x(k ) ) ≤ f (x(k ) ).
+with p = 10 −3 .                                                                          In practice, the main difficulty in the derivation of an MM
+                                                                                       algorithms is to find an appropriate surrogate function such that
+where 0 < p        1 is a parameter and ρp (w) → I{w =0} as p → 0.                     the minimizer of g(x|x(k ) ) can be easily found or even have
+This function was also used in [26] to replace the 1 -norm that                       a closed-form solution. This is not a trivial task since there
+led to the well known iteratively reweighted 1 -norm minimiza-                        is no systematic way of constructing surrogate functions and
+tion algorithm, and in [27], [28] for sparse eigenvector extrac-                       the derivation depends highly on the structure and the special
+tion.                                                                                  characteristics of each problem [30].
+   In practice, ρp (w) is a good approximation of the 0 -“norm”
+when |w| ∈ [0, 1]. In many cases we are interested in approx-                          C. First-Order Taylor Approximation
+imating the 0 -“norm” in other intervals, e.g., in the interval
+[0, u] where u ≤ 1 is an upper bound of the index weights, or in                          Since ρp,γ (w) is separable5 we just need to find a majoriza-
+the interval [0, l], where l is a lower bound of the index weights.                    tion function for the univariate case, i.e., ρp,γ (w). Here, fol-
+The use of the latter will become clear in Section IV where we                         lowing [26], an upper bound is provided for ρp,γ (w) at each
+introduce the non-convex lower holding constraints. To this end,                       iteration point w(k ) by its first-order Taylor expansion.
+we use a modified version of the function ρp (w) defined as:                               Lemma 1: The function ρp,γ (w), with w ≥ 0, is majorized
+                                                                                       at w(k ) by gp,γ (w, w(k ) ) = dp,γ (w(k ) )w + cp,γ (w(k ) ), where
+                                      log(1 + |w|/p)
+                      ρp,γ (w) =                     ,                        (6)                                                         1
+                                       log(1 + γ/p)                                                              dp,γ (w(k ) ) =                                         (9)
+                                                                                                                                    κ1 (p + w(k ) )
+where γ > 0. Notice that ρp (w) = ρp,1 (w). The function
+ρp,γ (w) is a good approximation of the indicator function in                          and
+                                                                                                                                 
+the interval [0, γ] as shown in Fig. 1.                                                                          log 1 + w(k ) /p          w(k )
+                                                                                                       (k )
+   For the multivariate case, it is convenient to define:                                    cp,γ (w          )=                    −                 ,                (10)
+                                                                                                                       κ1             κ1 (p + w(k ) )
+               ρp,γ (w) = [ρp,γ (w1 ), . . . , ρp,γ (wN )] .
+                                                                                       with κ1 = log(1 + γ/p).
+Now, we can approximate problem (3) as follows:                                           Proof: The function ρp,γ (w) is concave for w ≥ 0. Thus, an
+                                                                                       upper bound of the function is its first-order Taylor approxima-
+                       1         
+                         Xw − rb 2 + λ1 ρp,u (w)                                    tion at any point w0 ≥ 0 [15], [26]:
+            minimize               2
+                 w     T
+            subject to w ∈ W.                                                                       log(1 + w/p)
+                                                                              (7)      ρp,γ (w) =
+                                                                                                    log(1 + γ/p)
+Here, we have set γ = u, where u is an upper bound of the                                                        
+weights specified in W. If there is not an upper bound constraint                                         1                             1
+                                                                                                  ≤                log (1 + w0 /p) +        (w − w0)
+then implicitly u = 1.                                                                              log(1 + γ/p)                     p + w0
+   This problem is not convex since the function ρp,u (w) is
+                                                                                                  = dp,γ w + bp,γ ,
+concave (for w ≥ 0). To deal with the non-convexity we will use
+the majorization-minorization (MM) framework that is briefly                           where dp,γ and bp,γ are given by (9) and (10), respectively. 
+introduced for completeness.                                                             In the following, it is convenient to define:
+                                                                                                                                                          
+                                                                                                                            (k )                   (k )
+B. Majorization-Minimization                                                                           d(k )
+                                                                                                        p,γ = dp,γ (w1 ), . . . , dp,γ (wN )                  ,        (11)
+  The majorization-minimization algorithm is a way to handle                                                                                              
+                                                                                                                            (k )                  (k )
+optimization problems that are too difficult to face directly [29],                                    c(k )
+                                                                                                        p,γ = cp,γ (w1 ), . . . , cp,γ (wN )                  .        (12)
+[30]. Consider a general optimization problem
+                            minimize        f (x)
+                                 x
+                                                                                                                                    p , γ (w i ) of ρp , γ (w), as defined in
+                                                                                          5 Here, separable means that each entry ρ
+                            subject to x ∈ X ,                                         (III-A), is a function only of w i .
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                       159
+
+
+
+                                                                         Proof: See Appendix A.                                       
+ Algorithm 1: LAIT - Linear Approximation for Index
+                                                                         We refer to the iterative procedure of Proposition 1 as AS1 (q)
+ Tracking problem (7).                                                 (Active-Set for u = 1).
+  1: Set k = 0, choose w(0) ∈ W                                          Proposition 2 [ASu (q)]: The optimal solution of the opti-
+  2: repeat:                                                           mization problem (15) with u < 1 is
+  3:
+                     (k )
+          Compute dp,u according to (11) and (9)                                                                   +
+                                                                                                      1
+  4:      Solve (13) and set the optimal solution as w(k +1)                       w = min − (μ1 + q), u1
+                                                                                      
+                                                                                                                           ,       (19)
+                                                                                                      2
+  5:      k ←k+1
+  6: until convergence                                                 with
+                                                                                            
+  7: return w(k )                                                                                i∈B2 qi + 2 − card(B1 )2u
+                                                                                     μ=−                                        ,   (20)
+                                                                                                       card(B2 )
+  Now, discarding the constant terms, at the (k + 1)-th iteration      and
+we can solve the following convex optimization problem:                                                   
+                                                                                       B1 = i μ + qi ≤ −2u ,                        (21)
+                       1           
+                         Xw − rb 2 + λd(k     )                                                             
+           minimize                   2       p,u w                                    B2 = i − 2u < μ + qi < 0 ,                   (22)
+               w       T
+           subject to w ∈ W,                                 (13)      where B1 and B2 can be determined in O(N log(N )) steps.
+where we have again set γ = u.                                             Proof: See Appendix B.                                      
+   Algorithm 1 summarizes the above iterative procedure. We               We refer to the iterative procedure of Proposition 2 as ASu (q)
+refer to it as LAIT.                                                   (Active-Set for general u < 1). For simplicity we have con-
+                                                                       sidered the simple case where u = u1, however the extension
+D. Specialized Algorithms                                              to a general u is trivial and the differences are mentioned in
+                                                                       Appendix B.
+   In the previous section we derived an iterative algorithm that         Notice that if we set u = 1, AS1 and ASu do not become
+works for a general convex constraint set W. One step of the           the same algorithm although they will return the same optimal
+algorithm is to solve (13) which is convex and therefore it can        solution. Further, a good practice would be to use a smart ini-
+be done by any standard solver. Nevertheless, since the problem        tialization of the sets B1 and B2 based on the solution of AS1 .
+has to be solved several times during the MM procedure, the            A more extensive discussion about the iterative algorithms of
+computational cost can be significant.                                 Propositions 1 and 2 can be found in Appendix A and B, respec-
+   Interestingly, for specific constraint sets we can derive al-       tively. We will illustrate the benefit of AS1 and ASu (with and
+gorithms that have a closed-form update and therefore do not           without initialization) for solving (15) in the numerical results
+require a solver. In particular, we consider the following convex      of Section VII.
+set parametrized by u:                                                    Now, let us return to the optimization problem (13). By ex-
+                                                                      panding the norm of the objective function and dropping the
+              Wu = w w 1 = 1, 0 ≤ w ≤ u1 ,                  (14)
+                                                                       constants we can rewrite the optimization problem as follows:
+that is, we require the weights to be nonnegative, to have an                                                                 
+upper bounds u, and their summation to be equal to one.                                   1                   (k )  2  b
+                                                                             minimize       w X Xw + λdp,u − X r                   w
+   First, we state two results that will be useful in the derivation             w       T                            T
+of the closed-form update algorithms. Consider an optimization              subject to w ∈ Wu .                                      (23)
+problem of the following form:
+                                                                       In order to get a closed-form update algorithm as in (15), we
+                    minimize     w  w + q w                          need to majorize the quadratic term and decouple the variables.
+                        w
+                                                                           Lemma 2 [32, Lemma 1]: Let L be a real symmetric ma-
+                   subject to w ∈ Wu ,                         (15)    trix and M another real symmetric matrix such that M  L.
+where q ∈ RN . The following propositions provide a waterfill-         Then, for any point w(k ) ∈ RN , the quadratic function w Lw is
+                                                                                                                                     
+ing structured solution of (15), considering two special cases         majorized at w(k ) by w Mw + 2w (L − M) w(k ) + w(k )
+i.e., u = 1 and u < 1, respectively [31].                              (M − L) w(k ) .
+    Proposition 1 [AS1 (q)]: The optimal solution of the opti-            Based on Lemma 2, if we set L1 = T1 X X, and M1 =
+mization problem (15) with u = 1 is                                      (L 1 )
+                                                                       λmax     I, then M1  L1 holds and the quadratic term of (23)
+                                         +
+                             1                                         can be majorized at w(k ) by:
+                   w = − (μ1 + q)
+                     
+                                             ,            (16)
+                             2                                         w L1 w ≤ w M1 w + 2w (L1 − M1 ) w(k ) + const
+with                                                                                                           
+                                                                                 (L 1 ) 
+                                                                               = λmax                   (L 1 )
+                                                                                        w w + 2w L1 − λmax    I w(k ) + const
+                                 i∈A qi + 2
+                      μ=−                     ,                (17)
+                                card(A)                                Now, after dropping the constant terms, the new optimization
+and                                                                    problem at the (k + 1)-th iteration becomes:
+                                                                                                                  (k ) 
+                      A = i μ + qi < 0 ,                       (18)                      minimize      w  w + q1           w
+                                                                                             w
+where A can be determined in O(log(N )) steps.                                          subject to     w ∈ Wu ,                     (24)
+160                                                                   IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+
+ Algorithm 2: SLAIT - Specialized LAIT for (7) with W =
+ Wu .
+  1: Set k = 0, choose w(0) ∈ Wu
+                (L 1 )
+  2: Compute λmax
+  3: repeat:
+                       (k )
+  4:      Compute q1 according to (25), (11) and (9)
+  5:      Solve (24) with AS1|u (q1 ) from Propositions 1, 2
+          and set the optimal solution as w(k +1)
+  6:      k ←k+1
+  7: until convergence
+  8: return w(k )
+
+
+                                                                         Fig. 2.   Penalty functions fl (w) and f˜p , l (w) for l = 0.01 and p = 10 −4 .
+where
+                                                                    the problem can be reformulated as follows:
+  (k )     1                 (L 1 )   (k )     (k )   2  b
+ q1 =              2 L1 − λmax I w + λdp,u − X r                                             1          
+           (L 1 )
+          λmax                                        T                         minimize      Xw − rb 2 + λ1 ρp,u (w)
+                                                                                    w       T             2
+                                                             (25)
+is a constant depending on w(k ) . The optimization problem                     subject to w ∈ W,
+(24) is now in the form of (15) and can be solved via AS1|u (q1 ),
+                                                                                                  l  I {w > 0} ≤ w ≤ u  I {w > 0} .               (26)
+where AS1|u (·) means AS1 (·) or ASu (·).
+   Algorithm 2 summarizes the overall iterative procedure to            Here, we have used the notation I {w > 0} = [I{w 1 > 0} ,
+solve (7) with W = Wu . We refer to it as SLAIT.                        . . . , I{w N > 0} ] . Notice that the upper bound constraint w ≤
+                                                                        u  I {w > 0} is equivalent to w ≤ u and therefore it can be
+                                                                        included in W.
+E. Computational Complexity                                                 In the special case where l = 0, this problem becomes equiv-
+   In this section we study the computational complexity of the         alent to (7) and the algorithms proposed in Section III can be
+proposed algorithms LAIT and SLAIT.                                     used to solve it. Thus, we assume that l > 0.
+   First we consider the LAIT algorithm. In every iteration we
+                                (k )
+need to compute the vector dp,u which can be done in O(N )              A. Penalization of Constraint Violations
+operations. Then, in the general case, we need to solve a quadrat-         The lower bound constraint of (26) is non-convex and hard to
+ically constrained quadratic program (QCQP) (depending on the           deal with directly. Thus, instead of this constraint we can include
+constraints it may reduce to a quadratic program (QP)). These           an additional term in the objective that penalizes all the non-
+problems can be reformulated as second order cone programs              zero wi ’s that are less than l. Since the lower bound constraint
+(SOCP) with complexity O(N 3.5 log(1/δ)) per iteration, using           is separable for each wi we can use a penalty function that
+the NT direction [33], where δ is the accepted duality gap. Thus,       penalizes each wi independently. A suitable penalty function
+keeping onlythe higher order terms, LAIT has an overall com-          for a general entry w is the following:
+plexity of O Niter N 3.5 log(1/δ) , where Niter is the number of                                                      +
+iterations.                                                                              fl (w) = I{0< w < l} · l − w .                (27)
+   In the case of the SLAIT algorithm we do not need to call
+a solver. First, we need to compute L1 and λmax (L 1 )
+                                                       in O(N 2 T )     Again, we can approximate the indicator function with ρp,γ (w),
+           2
+and O(N ) operations, respectively. Then, in every iteration we         given in (6). Since we are interested for the interval [0, l] we
+                     (k )                                               select γ = l. We define the approximate penalty function as:
+need to compute dp,u (O(N )), perform a matrix-vector mul-
+                                                                                            f˜p,l (w) = (ρp,l (w) · l − w)+ .
+                   2
+tiplication (O(N )) and finally some vector additions (O(N ))                                                                                       (28)
+                      (k )
+in order to obtain q1 . The last step is to find the next iterate
+point which can be efficiently computed by the proposed algo-           In Fig. 2 we illustrate fl (w) and f˜p,l (w) for l = 0.01.
+rithms AS1 or ASu in O(log(N )) or O(N log(N )) steps, where               Now, we include the additional penalty term in the objective
+the complexity of each step is O(N ). Thus, again keeping the           and the new optimization problem becomes:
+higher
+    order terms, the overall complexity of the algorithm is                            1            
+                                                                                          Xw − rb 2 + λ1 ρp,u (w) + ν  f̃p,l (w)
+O N 2 T + Niter N 2 log(N ) .                                              minimize
+                                                                               w        T               2
+                                                                           subject to w ∈ W,                                       (29)
+ IV. SPARSE INDEX TRACKING WITH HOLDING CONSTRAINTS                     where ν is a parameter vector that controls the penalization
+   In this section we revisit problem (4) assuming a general            of the weights that violate the lower bound, and f̃p,l (w) =
+set of convex constraints W and the non-convex holding con-             [f˜p,l (w1 ), . . . , f˜p,l (wN )] . This problem is not convex since
+straints that we indicate separately. Again, we approximate the         ρp,u (w) is concave and f˜p,l (w) is neither convex nor concave
+0 -“norm” by the continuous differentiable function ρp,γ . Now,        as shown in Fig. 2.
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                                                     161
+
+
+
+
+ Algorithm 3: LAITH - Linear Approximation for the Index
+ Tracking problem with Holding constraints (29).
+  1: Set k = 0, choose w(0) ∈ W
+  2: repeat:
+                     (k ) (k )
+  3:      Compute dp,l , dp,u according to (11) and (9)
+                         (k )
+  4:      Compute cp,l according to (12) and (10)
+  5:      Solve (31) and set the optimal solution as w(k +1)
+  6:      k ←k+1
+  7: until convergence
+  8: return w(k )
+
+
+   Let us first focus on the third term of the objective, i.e., the    Fig. 3. Penalty function f˜p , l (w), linear (h p , l (w)) and smooth linear
+function f˜p,l (w). Again, since the function is separable we need     (h̃ p , , l (w)) upper bounds of f˜p , l (w), and quadratic upper bound qp , , l (w),
+to deal with the univariate case only.                                 for l = 0.01, = 10 −3 and p = 10 −4 .
+   Lemma 3: The function f˜p,l (w) is majorized at w(k ) ∈ [0, u]
+by the convex function
+                                                                       This term is separable and therefore we need to focus only in
+                                                            +      the univariate case, i.e., in the function hp,l (w, w(k ) ) as defined
+ hp,l (w, w(k ) ) = dp,l (w(k ) ) · l − 1 w + cp,l (w(k ) ) · l ,      in Lemma 3. However, hp,l (w, w(k ) ) is not smooth due to the
+                                                                (30)   max operator. Thus, a smooth majorization function cannot be
+where dp,l (w(k ) ) and cp,l (w(k ) ) are given by (9) and (10), re-   defined at the point where hp,l (w, w(k ) ) is not smooth due to the
+spectively.                                                            non-differentiability of hp,l (w, w(k ) ) [34]. To this end, we will
+   Proof: From Lemma 1 we have that ρp,l (w) ≤ dp,l (w(k ) )           use a smooth approximation of the function (x)+ defined as:
+w + cp,l (w(k ) ) for w ≥ 0. Thus, for f˜p,l (w) we get:
+                                                                                                                  √
+                                                                                                         x+           x2 + 2
+ f˜p,l (w) = max (ρp,l (w) · l − w, 0)                                                                                       ,
+                                                                                                                    2
+           ≤ max (dp,l (w(k ) )w + cp,l (w(k ) )) · l − w, 0
+                                                                       where 0 <         1 controls the approximation. Applying this re-
+                                                                   sult in hp,l (w, w(k ) ), we can define its smooth version as:
+           = max dp,l (w(k ) ) · l − 1 w + cp,l (w(k ) ) · l, 0 .
+                                                                                                                               
+                                                                                        (k )        α(k ) w + β (k ) +
+                                                                                                                   (α(k ) w + β (k ) )2 + 2
+This function is convex since it is the maximum
+                                                  of two convex
+                                                                       h̃p, ,l (w, w          )=                                             ,
+(actually affine) functions, i.e., f1 = dp,l (w(k ) ) · l − 1 w +                                                   2
+                                                                                                                                            (32)
+cp,l (w(k ) ) · l and f2 = 0.                                         where α(k ) = dp,l (w(k ) ) · l − 1, and β (k ) = cp,l (w(k ) ) · l.
+   The second term of (29) can be majorized with the linear
+                                                                          Lemma 4: The function h̃p, ,l (w, w(k ) ) is majorized at w(k)
+majorization function presented in Lemma 1. The optimization
+problem at the (k + 1)-th iteration becomes:                           by the quadratic convex function qp, ,l (w, w(k ) ) = ap, ,l (w(k ) )
+                                                                       w2 + bp, ,l (w(k ) )w + cp, ,l (w(k ) ), where
+                   1         
+                     Xw − rb 2 + λd(k )
+  minimize                     2      p,u w
+       w           T                                                                                                 (α(k ) )2
+                                                     +                                     ap, ,l (w(k ) ) =               ,                                  (33)
+                                 (k )           (k )                                                                   2κ2
+                   + ν  Diag dp,l  l − 1 w + cp,l  l
+                                                                                                                     α(k ) β (k )   α(k )
+  subject to      w ∈ W,                                       (31)                            bp, ,l (w(k ) ) =                  +       ,                       (34)
+                                                                                                                        κ2           2
+           (k )   (k )                      (k )
+where dp,u , dp,l are given by (11), and cp,l by (12).                                                     (k )                                             2
+                                                                                                                  w ( k ) )(α ( k ) w ( k ) +2β ( k ) )+2(β ( k ) + 2 )
+   Algorithm 3 summarizes the above iterative procedure. We            and        cp, ,l (w(k ) ) = (α                                    2κ 2                          +
+                                                                       β(k )
+refer to it as LAITH.                                                         is an optimization irrelevant constant, with κ2 =
+                                                                        
+                                                                        2
+                                                                       2 (α(k ) w(k ) + β (k ) )2 + 2 .
+B. Specialized Algorithms                                                  Proof: See Appendix C.                                       
+                                                                          In Fig. 3 we illustrate this majorization procedure with all the
+   As in the case presented in Section III-D, if we restrict the
+                                                                       intermediate steps.
+constraint set W for problem (31) we can derive algorithms that
+                                                                          For notational convenience we define:
+have a closed-form update and therefore do not require a solver.
+Here, we consider the same set Wu given by (14).                                        (k )                      (k )                       (k )
+   To get a closed-form update algorithm we need to majorize the                     ap, ,l = [ap, ,l (w1 ), . . . , ap, ,l (wN )] ,
+objective of (31) and transform it into an appropriate form. Let                        (k )                      (k )                      (k )
+us begin with the majorization of the third term of the objective.                   bp, ,l = [bp, ,l (w1 ), . . . , bp, ,l (wN )] .
+162                                                                     IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+                                                                                                       TABLE I
+ Algorithm 4: SLAITH - Specialized LAITH for (29) with                                  COMPLEXITY OF THE PROPOSED ALGORITHMS
+ W = Wu .
+  1: Set k = 0, choose w(0) ∈ Wu
+                (L 2 )
+  2: Compute λmax
+  3: repeat:
+                       (k )
+  4:      Compute q2 according to (37), (11) and (9)
+  5:      Solve (36) with AS1|u (q2 ) from Propositions 1, 2
+          and set the optimal solution as w(k +1)                         multiplications but these are lower order operations that do not
+  6:      k ←k+1                                                          affect the complexity order.
+  7: until convergence                                                       In Table I we summarize the complexity of all algorithms.
+  8: return w(k )
+                                                                                                   V. EXTENSIONS
+
+Now, using the quadratic majorizer of Lemma 4 and expanding                   In this section we provide a digression on different design
+the norm, we can rewrite the optimization problem as follows:             choices that can be made for the index tracking problem.
+                                                                             Throughout the paper we have considered the index tracking
+                       1                                              problem with a set of general convex constraints W. We have
+                                          (k )
+     minimize w         X X + Diag ap, ,l  ν        w                   analyzed some special cases of W, i.e., the set Wu defined in
+        w             T
+                                                                       (14) and the non-convex holding constraints, providing specific
+                        (k )   2  b        (k )                          algorithms. However, the list of possible constraints that a fund
+                 + λdp,u − X r + bp, ,l  ν            w                  manager may impose on the index tracking problem is not long,
+                               T
+                                                                          making the specialized algorithms very useful in practice.
+      subject to w ∈ Wu .                                        (35)         Apart from the constraints mentioned already, i.e., budget
+   Again, in order to get a closed-form update algorithm we need          (w 1 = 1), no short selling (w ≥ 0) and the non-convex hold-
+to majorize the quadratic term of the objective and decouple the          ing constraints, we may wish to mitigate the weights for some
+variables. Following similar arguments as in Section III-D, we            groups of stocks (e.g., sectors), or respect the index sector repar-
+                               (k )                    (L 2 )             tition for the selected subset of stocks. These are all linear
+set L2 = T1 X X + Diag(ap, ,l  ν), and M2 = λmax            I. The      constraints that do not need any special consideration. Finally,
+new optimization problem at the (k + 1)-th iteration becomes:             there is one more commonly used convex constraint, namely
+                                               (k ) 
+                                                                          the turnover constraint: w̄ − w1 ≤ C. Here, w̄ refers to the
+                         minimize   w  w + q2          w                 tracking portfolio in the previous time period, and C is an upper
+                            w
+                                                                          bound on the total change in the portfolio between two consecu-
+                         subject to w ∈ Wu ,                     (36)     tive periods [10], [18]. The purpose of the turnover constraint is
+                                                                          to control the transaction costs when we rebalance our portfolio.
+where
+                                            
+                                                                          Nevertheless, this constraint is more meaningful in a dynamic
+        (k )         1               (L 2 )                               tracking setting and it does not add any difficulty into the prob-
+      q2       =    (L )
+                          2  L 2 − λ max    I   w(k ) + λd(k
+                                                          p,u
+                                                             )
+                   λmax2                                                  lem since it is already convex.
+                                                                             Another design choice that a fund manager has to make is
+                                        2  b    (k )                     the selection of an appropriate tracking measure. We have con-
+                                    −     X r + bp, ,l  ν       (37)
+                                        T                                 sidered the empirical tracking error, defined in (1), which is
+                                                                          a commonly used measure for static index tracking. However,
+is a constant depending on w(k ) . The optimization problem               there are many other choices that come naturally for the index
+(36) is in the form of (15) and can be solved via AS1|u (q2 ) from        tracking problem [18]. For example, another common measure
+Propositions 1 and 2.                                                     is the downside risk (DR) relative to an index which is defined
+   Algorithm 4 summarizes the overall iterative procedure to              as:
+solve (31) with W = Wu . We refer to it as SLAITH.                                                     1                 2
+                                                                                            DR(w) = (rb − Xw)+ 2 ,                      (38)
+                                                                                                       T
+C. Computational Complexity
+                                                                          that is, we are interested in minimizing the tracking error only
+   In this section we study the computational complexity of               when the index beats our portfolio. The downside risk is a convex
+the proposed algorithms LAITH and SLAITH. The analysis is                 function and therefore we can easily replace the ETE term in
+very similar to the computational complexity analysis of the              problems (7) and (29) and all the derivations for the general
+LAIT and SLAIT algorithms in Section III-E. Therefore we                  algorithms will still hold.
+will highlight only the differences.                                          Interestingly, if we consider the set Wu , specialized algo-
+   The overall complexity
+                           of LAITH is the same as the complex-         rithms can be derived for the DR too, as described next.
+ity of LAIT, i.e., O Niter N 3.5 log(1/δ) , since in each iteration            Lemma 5: The function DR(w) is majorized at w(k ) by the
+                      (k )   (k )     (k )                                                                                  2
+we need to compute dp,l , dp,u and cp,l in O(N ), and then solve          quadratic convex function T1 rb − Xw − y(k ) 2 , where
+an SOCP.                                                                                                              +
+   Similarly, the complexity of SLAITH is the same as the                                   y(k ) = − Xw(k ) − rb        .              (39)
+complexity of SLAIT, i.e., O N 2 T + Niter N 2 log(N ) . It
+requires some more vector computations and vector-vector                     Proof: See Appendix D.                                         
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                     163
+
+
+
+   Now, we can follow the same procedure as in the ETE case,         non-increasing. Since the constraint sets in our problems are
+i.e., expand the 2 -norm and majorize the quadratic term based      compact, the sequence of objective values is bounded. Thus, it is
+on Lemma 2. In the case where we do not include the holding          guaranteed to converge to a finite value. In this section, we will
+constraints, the optimization problem at the (k + 1)-th iteration    analyze the convergence property of the sequence (x(k ) )k ∈N
+can be written in the form of (15), with                             generated by the algorithms.
+                                                                     A unified convergence proof can be established given that
+        (k )     1               (L 1 )
+       q3 = (L ) 2 L1 − λmax            I w(k ) + λd(k )
+                                                     p,u             all the optimization problems satisfy a minimum set of condi-
+                   3
+               λmax                                                  tions. In particular, we require that all the conditions presented
+                                                                    in Section III-B and (8) hold, that the objective function f is
+                                  2  (k )
+                                + X (y − r ) .     b
+                                                             (40)    continuous and bounded below, and the constraint set is convex.
+                                  T                                  These conditions are met by all the optimization problems we
+Therefore it can be solved efficiently by the proposed SLAIT         focused on. Further, consider the following assumptions [30,
+algorithm where we need to compute q3 instead of q1 . If we          Section II.C]:
+include the holding constraints, the problem at the (k + 1)-th          1) The sublevel set lev≤f (x 0 ) f := {x ∈ X |f (x) ≤ f (x0 )}
+iteration can be written in the form of (15), with                          is compact given that f (x0 ) < +∞.
+                                                                     2) f (x) and g(x|x(k ) ) are continuously differentiable with
+        (k )    1                 (L 2 )
+       q4 = (L ) 2 L2 − λmax             I w(k ) + λd(k
+                                                     p,u
+                                                        )
+                                                                            respect to x.
+              λmax4                                                     3) For all x(k ) generated by the algorithm, there exists γ ≥ 0
+                                                     
+                     2                       (k )                           such that ∀x ∈ X , we have
+                  + X (y(k ) − rb ) + bp, ,l  ν ,       (41)
+                     T
+                                                                           (∇g(x|x(k) ) −∇g(x(k) |x(k) ))(x − x(k)) ≤ γx − x(k) 2 .
+and we can use the proposed algorithm SLAITH where we need
+to compute q4 instead of q2 .
+    Other possible tracking measures are the Value-at-Risk (VaR)        Given this minimum set of requirements and assumptions,
+relative to an index [35], and the conditional Value-at-Risk         the following are guaranteed:
+(CVaR) relative to an index [36]. If the returns follow an el-          1) The sequence of points (x(k ) )k ∈N produced by the MM
+liptical distribution, VaR and CVaR are convex functions and                algorithms converges.
+in fact admit a closed-form expression [37]. In the case of non-        2) The objective value f is non-increasing and converges to
+elliptical distributions, CVaR remains convex (although VaR                 a limit f  , where f  is a stationary value.
+does not), and can be approximated by sampling the distribu-            Therefore, it is guaranteed that all the algorithms presented
+tion [36]. In general, CVaR is preferred more in practice since      in this paper converge to a stationary point.
+it is a coherent measure of risk while VaR is not [38]. Both VaR
+(for elliptical distributions) and CVaR (for any distribution) can
+be used in our framework and replace the ETE defined in (1).         B. Acceleration
+CVaR can be included also as a convex constraint instead of
+replacing ETE in the objective [39].                                    The derivation of all the proposed algorithms is based on
+    Apart from the various performance measures, we can select       the majorization-minorization framework. In order to obtain
+a different penalty function. In all the presented formulations      surrogate functions that can be easily solved in closed-form
+we have used the 2 -norm to penalize the differences in the         many terms of the original functions were majorized twice.
+portfolio and the index. However, in order to be more robust to      This can possibly lead to loose bounds which translates to a
+outliers we could use the Huber penalty function defined as (for     significantly large number of iterations for the MM algorithms
+the scalar case):                                                    to convergence. Thus, in this section we describe an acceleration
+                        2                                           scheme, called SQUAREM, that can improve significantly the
+                          x ,              |x| ≤ M,                  convergence speed of the proposed algorithms.
+              φ(x) =                                          (42)      SQUAREM was originally proposed in [40] to accelerate EM
+                          M (2|x| − M ), |x| > M,
+                                                                     algorithms. The general idea is to evaluate the next two points
+where M > 0 is a parameter. We can majorize this function            of an iterative algorithm, compute a step-length η, and combine
+at a point x0 with a quadratic function of the form a0 x2 +          them to produce a point that decreases the objective value more
+b0 , where (a0 , b0 ) = (1, 0) for |x0 | ≤ M , and (a0 , b0 ) =      than the two single steps. Since MM is a generalization of EM
+(M/|x0 |, M (|x0 | − M )) for |x0 | > M . The proof is straight-     and the update rule of MM is just a fixed-point iteration like EM,
+forward and omitted. With this quadratic bound, we can use the       we can easily apply the SQUAREM acceleration method to MM
+Huber penalty instead of the 2 -norm with some minor mod-           algorithms with minor modifications. Without loss of generality
+ifications in the derived algorithms. Similar arguments can be       we will present the accelerated version only of Algorithm 2
+made for the 1 -norm and many more penalty functions.               (SLAIT). The accelerated version of Algorithm 4 follows in a
+                                                                     similar manner.
+      VI. CONVERGENCE ANALYSIS AND ACCELERATION                         We denote by FSLAIT (·) the fixed-point iteration map of
+                                                                     the SLAIT algorithm, i.e., w(k +1) = FSLAIT (w(k ) ), and by
+A. Convergence
+                                                                     SLAIT(w(k ) ) the value of the objective function of (7) at the
+   All the algorithms presented in this paper are based on the       k-th iteration. The general SQUAREM method can cause two
+majorization-minimization framework. Given the sequence of           possible problems to the MM algorithms. First, the updated
+points (x(k ) )k ∈N generated by the algorithm, we know that         point may violate the constraints. To solve this issue we can
+the sequence of objective values evaluated at these points is        project to the feasible set which is equivalent to solving the
+164                                                                                   IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+                                                                                                                          TABLE II
+ Algorithm 5: Accelerated SLAIT.                                                                                      INDEX INFORMATION
+   1: Set k = 0, choose w(0) ∈ Wu
+   2: repeat:
+   3:      w1 = FSLAIT (w(k ) )
+   4:      w2 = FSLAIT (w1 )
+   5:      r = w1 − w(k )
+   6:      v = w2 − w1 − r
+                                         r2
+   7:      Compute the step-length η = − v2                                                              VII. NUMERICAL EXPERIMENTS
+  8:      w = w(k ) − 2ηr + η 2 v                                                          In this section we evaluate the performance of the pro-
+  9:      w = AS1|u (−2w) (projection)                                                  posed algorithms using historical data of the indices S&P 500
+ 10:      while SLAIT(w) > SLAIT(w(k ) )                                                (Bloomberg ticker SPX:IND) and Russell 2000 (Bloomberg
+ 11:         η ← (η − 1)/2                                                              ticker RTY:IND). For both indices we use a rolling window
+ 12:         w = w(k ) − 2ηr + η 2 v                                                    where a training period Ttr is used to derive the optimal track-
+ 13:         w = AS1|u (−2w) (projection)                                               ing portfolio and a testing period Ttst to approximate the index
+ 14:      end while                                                                     movement with the derived portfolio. The details of each index,
+ 15:      w(k +1) = w                                                                   i.e., the window sizes Ttr and Ttst , and the total data period T
+ 16:      k ←k+1                                                                        are presented in Table II.
+ 17: until convergence                                                                     All the experiments were performed on a PC with a 3.20 GHz
+ 18: return w(k )                                                                       i5-4570 CPU and 8 GB RAM.
+
+                                                                                        A. Sparse Index Tracking
+following optimization problem:
+                                                                                           In this first experiment we compare the performance of the
+                           minimize         z − w22                                   proposed algorithms LAIT and SLAIT. The solution of the opti-
+                                z                                                       mization problem (3) given by the Gurobi solver for MIP prob-
+                          subject to z ∈ Wu ,                                (43)       lems, denoted as MIPGur , serves as the principal benchmark7 .
+                                                                                        We further compare the proposed methods with the Hybrid Half-
+where w is the updated point and z the projected. By expand-                            Thresholding algorithm [16], denoted as HHT, and the Diversity
+ing the norm, the objective can be rewritten as z z − 2w z.                           Method [7], denoted as DM1/2 , where the p -“norm” approxi-
+This problem is in the form of (15) and can be solved effi-
+                                                                                        mation is used, with p = 1/2.
+ciently by AS1|u (−2w) from Propositions 1 and 2. The second
+                                                                                           All the optimization steps of LAIT are evaluated using the
+problem is that the acceleration may violate the descend prop-
+                                                                                        MOSEK solver (SLAIT does not require a solver). For the MIP
+erty of the MM algorithm. Thus, a backtracking step is adopted
+                                                                                        we chose the Gurobi solver since it is known for its good perfor-
+halving the distance of the step-length η and −1. As η → −1,
+                                                                                        mance in mixed integer problems. The HHT algorithm (requires
+SLAIT(w(k +1) ) ≤ SLAIT(w(k ) ) is guaranteed to hold6 . The                            the minimization of a QP) is implemented using the function
+accelerated SLAIT is summarized in Algorithm 5.                                         “quadprog” of Matlab which is also used by the authors of [16].
+                                                                                        The p -“norm” approximation of the diversity method is evalu-
+C. Sequential Decreasing Scheme                                                         ated using the build-in function “fmincon” of Matlab. We keep
+   Throughout the paper we have used the function ρp as a proxy                         the minimum constraint set Wu as defined in (14) for all algo-
+of the 0 -“norm”. The approximation is controlled by the pa-                           rithms, with u = 0.05. Finally, for practical reasons we have set
+rameter p and in particular, as p → 0 we get ρp → 0 . However,                         the maximum running time of all algorithms to 1200 seconds.
+by setting a small value to p it is likely that the algorithm will                         Initially, we use the first Ttr days to design the portfolios, while
+get stuck to a local minimum [26]. To solve this issue we start                         we evaluate their performance in the next Ttr days. In the end of
+with a large value of p, i.e., a “loose” approximation, and solve                       this testing period we need to redesign our portfolios. For this,
+the corresponding optimization problem. Then, we sequentially                           we roll the training window and use the last Ttr days to design,
+decrease p, i.e., we “tighten” the approximation, and solve the                         and the next Ttst to evaluate the new portfolios. This scheme is
+problem again using the previous solution as an initial point. In                       shown pictorially in Fig. 4. The total number of testing days is
+practice we are interested only in the last, most “tight” problem.                      T − Ttr , i.e., we remove from the total data period T the initial
+   A similar approach is followed for the penalty term presented                        window that we use only for training. Note that the portfolios
+in (28) and the parameter ν. We start with a small value of                             we design at the beginning of each testing period do not remain
+ν and solve the corresponding optimization problem. If there                            constant during the testing period but they constantly change due
+are constraint violations we increase the value of ν and solve                          to the price changes. To this end, for notational convenience we
+the problem again using the previous solutions as an initial                            stack the tracking portfolios of all the testing days in a matrix8
+                                                                                                 N ×(T −T tr )
+value. The algorithms terminate when there are no constraint                            W ∈ R+                 .
+violations.
+                                                                                           7 The MIP solution is optimal if the algorithm runs until full convergence.
+
+   6 If η = −1 then w (k + 1 ) = F
+                                                    (k )
+                                                                                       However, in practice one has to stop the MIP after a certain amount of time so
+                                   SLAIT F SLAIT (w     ) , i.e., it becomes equiv-     the final solution may be suboptimal as seen later in the numerical results.
+alent to just taking two normal steps in the non-accelerated algorithm. Thus, the          8 The use of a matrix is just to present (44) in a compact form. It is possible
+non-increasing objective value is guaranteed by the MM properties.                      to denote the portfolio at the t-th day as w t and use an appropriate summation.
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                                              165
+
+
+
+                                                                                     C. Downside Risk
+                                                                                        In all the simulations up to this point, the proposed algorithms
+                                                                                     and all the benchmarks minimize the empirical tracking error
+                                                                                     (ETE), defined in (1). However, as shown in Section V, we
+                                                                                     can use any convex tracking error in the proposed algorithms.
+                                                                                     In particular, we examined in details the downside risk (DR)
+                                                                                     measure, defined in (38). The goal of DR is to replicate the index
+       Fig. 4.   Illustration of the rolling training and testing windows.           while avoiding too large drawdowns. Therefore, the tracking
+                                                                                     error of the DR portfolio becomes worse but the drawdowns
+                                                                                     are less severe (a crucial attribute especially for high leverage
+  First, we measure how close the proposed algorithms can                            positions) which results to higher returns overall. To this end,
+replicate a given index. To this end, for a given sparsity level                     the DR portfolio cannot be compared in a fair manner with
+we compute the magnitude of the daily tracking error (MDTE)                          the benchmarks that are designed to only replicate an index.
+defined as:                                                                          Nevertheless, it is interesting to analyze the impact the different
+                          1  diag(XW) − rb  ,
+                                                                                    tracking measures have in the behavior of the designed portfolio.
+            MDTE =                                2
+                                                            (44)                     Therefore we examine the returns of portfolios with different
+                      T − Ttr
+                                                                                     tracking measures, taking into account the associated transaction
+where X ∈ R(T −T tr )×N and rb ∈ RT −T tr . All the tracking er-                     costs.
+ror result are presented in basis points (bps)9 . Apart from the                        First, we consider the following common transaction costs
+tracking error, we further compute the average10 running time                        model11 that applies in U.S. markets: the cost per transaction is
+of each algorithm for the different sparsity levels.                                 $0.005 · n, where n is the number of shares we buy or sell, with
+   In Figs. 5(a) and 6(a) we compare the tracking error of all the                   minimum cost $1 and maximum cost 0.5% of trade volume.
+algorithms using the daily returns of the S&P 500 and Russell                        Note that this cost applies for each transaction separately and
+2000, respectively. We observe that the proposed algorithms out-                     each transaction is associated with the purchase or sell of only
+perform significantly the HHT and DM1/2 algorithms in terms                          one asset. This shows the great advantage of sparse portfolios
+of tracking error. Compared to MIPGur , the proposed algorithms                      in terms of transaction costs. Finally, since the costs depend on
+perform slightly better for small cardinalities and have effec-                      our budget, we assume a budget of $1 million.
+tively the same MDTE for larger cardinalities.                                          We use the index S&P 500 for the period given in Table II
+   The average running time of the algorithms is presented in                        (excluding again the first training window). We construct two
+Figs. 5(b) and 6(b) for the two indices, respectively. We ob-                        tracking portfolios using the proposed SLAIT algorithm. In the
+serve that all the algorithms apart from MIPGur need only a few                      first we use the ETE measure and in the second the DR mea-
+seconds to converge. On the other hand, the MIPGur algorithm                         sure. Each portfolio consist of only 40 assets. We consider a
+consumes always all the allowed running time.                                        rebalancing frequency of 3 months and a redesign frequency
+                                                                                     of 6 months. The training window of the portfolios is again
+B. Sparse Index Tracking with Holding Constraints                                    Ttr = 252 days. However, the testing window is up to the next
+                                                                                     rebalancing or redesign, therefore is set to 3 months.
+   Now, we consider the case where we have the non-convex                               Fig. 9 illustrates the wealth of the portfolios that use different
+holding constraints and we compare the algorithms LAITH and                          tracking measures. We have included a portfolio constructed by
+SLAITH. The solution of the optimization problem (4) given by                        the algorithm MIPGur for reference. Further, we illustrate the
+the Gurobi solver for MIP problems, denoted as MIPGur-h , serves                     performance of a portfolio replicating exactly the index S&P
+as the main benchmark. The algorithms HHT and DM1/2 are                              500 (full-replication), without transaction costs. The vertical
+not considered here since they are not suitable for non-convex                       dashed red lines correspond to the rebalancing dates and the
+constraints. Again, we keep the minimal constraint set Wu as                         black ones to the redesign dates.
+defined in (14), with u = 0.05. For MIPGur-h we further include                         It is clear that the constructed portfolios are consistent to
+the non-convex lower bound constraint with l = 0.001. The                            their objective. We observe that the SLAIT-ETE portfolio stays
+proposed algorithms take into account this constraints through                       close to the full-replication portfolio (although we have sub-
+the penalty term in the objective.                                                   tracted the transaction costs). The same holds for the MIPGur
+   The comparison of the algorithms in terms of tracking error                       portfolio, although overall it seems to diverge more than the
+using the daily returns of the S&P 500 and Russell 2000 is                           SLAIT-ETE portfolio (however, there are some periods that is
+given in Figs. 7(a) and 8(a), respectively. In this case, it is clear                closer to the full-replication portfolio). This result is consistent
+that the proposed algorithms outperform the MIPGur-h algorithm                       to the one in Fig. 5(a), where for 40 assets we observe that
+in terms of tracking error. This is due to the fact that now the                     the MIPGur portfolio has a slightly larger daily tracking error.
+problem is more complex and an MIP solver needs substantially                        Finally, the SLAIT-DR portfolio outperforms significantly the
+more time than 1200 seconds to reach to a good solution. In                          full-replication portfolio as we would expect.
+Figs. 7(b) and 8(b) we illustrate the average running time of                           Notice that the SLAIT-DR portfolio has a very large tracking
+the algorithms. Again, LAITH and SLAITH converge orders of                           error compared to SLAIT-ETE. However, it has a much lower
+magnitude faster than MIPGur-h .                                                     downside risk. In the end, the tracking measures are just proxies
+                                                                                     for the real objective of a tracking portfolio, i.e., the return. It is
+  9 One basis point is equal to 0.01%.
+  10 For a fixed sparsity level, we need to design  T −T tr  portfolios, one for      11 https://www.interactivebrokers.com/en/index.php?f=commission&p=
+                                                      T tst
+each testing window. The time averaging is over these portfolios.                    stocks
+166                                                                   IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+
+        Fig. 5.     S&P 500: Comparison of the proposed algorithms LAIT, SLAIT with the benchmarks MIPGur , HHT and DM1 / 2 .
+
+
+
+
+      Fig. 6.     Russell 2000: Comparison of the proposed algorithms LAIT, SLAIT with the benchmarks MIPGur , HHT and DM1 / 2 .
+
+
+
+
+                  Fig. 7.    S&P 500: Comparison of the proposed algorithms LAITH, SLAITH with the benchmark MIPGur-h .
+
+
+
+
+                Fig. 8.     Russell 2000: Comparison of the proposed algorithms LAITH, SLAITH with the benchmark MIPGur-h .
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                                       167
+
+
+
+                                                                                                           VIII. CONCLUSIONS
+                                                                                       Index tracking, in all of its forms, requires efficient algorithms
+                                                                                    for the construction of tracking portfolios. This is a challenging
+                                                                                    task since the need for sparsity to reduce the costs, the require-
+                                                                                    ment for low tracking error, and the practical constraint for low
+                                                                                    running time are in general opposing goals and hard to combine.
+                                                                                    In this paper we have derived fast and efficient algorithms for the
+                                                                                    high-dimensional sparse index tracking problem. The proposed
+                                                                                    algorithms consider a general convex set of constraints. We have
+                                                                                    further derived special algorithms that include the non-convex
+                                                                                    holding constraints. A general consideration was given in differ-
+                                                                                    ent tracking measures and especially in the downside risk. Nu-
+                                                                                    merical experiments have shown the superiority of the proposed
+                                                                                    algorithms since they combine two key attributes: they match
+Fig. 9. Comparison of the out-of-sample returns of tracking portfolios. Each        or outperform (especially in the case of holding constraints)
+portfolio is composed by 40 assets apart from the full-replication portfolio. The   existing benchmarks in terms of tracking error and require a
+vertical black dashed lines denote the redesign (and rebalancing) dates whereas
+the red ones denote only rebalancing.                                               minimal running time to converge. These attributes, combined
+                                                                                    with the flexibility in tracking measures and constraints, make
+                                                                                    the proposed algorithms very attractive for practical use.
+
+                                                                                                             APPENDIX A
+                                                                                                        PROOF OF PROPOSITION 1
+                                                                                       In the case where u = 1 we can drop the constraint w ≤ u
+                                                                                    since it becomes implicit from the other two constraints, i.e.,
+                                                                                    w 1 = 1 and w ≥ 0. Further, without loss of generality,
+                                                                                    throughout this proof we will assume that q is sorted in as-
+                                                                                    cending order, i.e., qi ≤ qj for i < j.
+                                                                                       With this simplification, the Lagrangian of (15) is:
+                                                                                         L(w, μ, ν) = w w + q w + μ(w 1 − 1) − ν  w.
+                                                                                    From the derivative of the Lagrangian we get:
+Fig. 10. Average running time of AS1 and ASu . Comparison with the algo-                                         1
+rithms MOSEK1 and MOSEKu that correspond to a direct implementation of                                    wi =     (νi − μ − qi ).                  (45)
+(15) using the MOSEK solver for the cases where u = 1 and u < 1, respec-                                         2
+tively. Each curve is an average of 500 random trials.
+                                                                                    We identify three cases:
+                                                                                      a) μ + qi > 0: It must hold that νi ≥ μ + qi > 0 since wi ≥
+                                                                                         0 (primal feasibility). Further, if νi > 0 then necessarily
+obvious that in a real investment, the DR measure is in general                          wi = 0 (complementary slackness).
+more attractive.                                                                      b) μ + qi < 0: It must hold that wi > 0 since νi ≥ 0 (dual
+                                                                                         feasibility). Further, since wi > 0, it holds that νi = 0
+                                                                                         (complementary slackness) and therefore wi = −(μ +
+D. Computational Complexity of AS1|u                                                     qi )/2 (from (45)).
+   For the specialized algorithms SLAIT and SLAITH we have                            c) μ + qi = 0: The only solution is wi = νi = 0 (comple-
+presented two closed-form update algorithms, i.e., AS1 and                               mentary slackness).
+ASu , that solve the inner optimization problems (24) and (36)                      We can state this result more compactly as follows:
+of the general form (15). Here, we compare the performance of                            
+these algorithms in terms of average running time with a direct                             0,               if μ + qi ≥ 0,                   (46a)
+implementation of (15) using the MOSEK solver.                                      wi =
+                                                                                            −(μ + qi )/2, if μ + qi < 0.                      (46b)
+   For a given problem dimension N , we randomly generate 500
+vectors q ∈ RN . To test AS1 we consider the constraint set Wu                      Thus, for a given μ, only the wi ’s corresponding to the smaller
+with u = 1, while for ASu we set u = 20/N . We sequentially                         qi ’s are not zero. Also, if wi > 0, then wj > 0 for all j < i.
+increase the problem dimension from N = 100 to N = 2000 to                              Now, we need to find the optimal value of the dual vari-
+examine the scalability of the algorithms.                                          able μ. Assume we know that Kopt weights are positive, i.e.,
+   Fig. 10 illustrates the average running time of AS1 and                          w[1:K opt ] > 0 and w[K opt +1:N ] = 0. From w 1 = 1 (primal fea-
+ASu (with and without initialization) compared to the MOSEK
+                                                                                    sibility), substituting w given by (46a) and (46a) we get:
+solver. It is clear that the proposed algorithms are more than one
+order of magnitude faster. Further, they scale well with dimen-                                                       
+                                                                                                                      K opt
+                                                                                                   
+sion since their average running time increased less than half                                  w 1=1         =⇒ −            (μ + qi )/2 = 1.
+order of magnitude for N = 100 to N = 2000.                                                                           i=1
+168                                                                                        IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+With some trivial term rearrangements we get the value of μ:                                 can do a binary search to identify K1 weights with maximum
+                            K opt                                                           value and K2 positive weights with a value less than the upper
+                                   qi + 2                                                    bound, where K = K1 + K2 . Unfortunately, if the conditions
+                     μ = − i=1            .               (47)
+                                Kopt                                                         (49a)–(49c) are not satisfied for the derived K1 and K2 we
+   Therefore, a straightforward way to find the optimal solution                             cannot determine if we need to increase or decrease the total
+is to start with K = 1 non-zero weights, compute μ from (47)                                 number of non-zero weights K. This leads to one linear search
+and check the conditions (46a) and (46b). If they hold then                                  with a binary search in each step with a combined complexity
+K = Kopt , else we need to increase K.                                                       O(N log(N )).
+   However, it is not hard to prove that if K < Kopt , then μ +                                 A better approach is to set K = Kopt , where Kopt is the
+qK +1 < 0 which violates (46a). Similarly if K > Kopt , then                                 number of positive weights in the case where u = 1 (see
+μ + qK > 0 which condition (46b)12 . Thus, by knowing if K                                   Appendix A), since by imposing an upper bound constraint
+should be increased or decreased we can do a binary search to                                there will be at least Kopt weights that are not zero.
+find Kopt that terminates in at most log(N ) steps.                                             An interesting point is that K2,opt cannot be zero since it
+                                                                                             is the denominator in (50). We know that K1,opt + K2,opt >
+                               APPENDIX B                                                    0 must hold, i.e., there is at least one non-zero weight, since
+                          PROOF OF PROPOSITION 2                                             w 1 = 1. However, for K2,opt = 0 we get μ = +∞ and from
+                                                                                             the conditions (49a)–(49c) we see that all the weights should be
+   Without loss of generality, we will assume that c = q + 2u
+                                                                                             zero. Therefore, this observation shows that it is not possible all
+is ordered in ascending order for a general upper bound u, i.e.,
+                                                                                             the non-zero weights to be equal to their upper bound ui (since
+ci ≤ cj for i < j. Since this proof follows similar steps to the
+                                                                                             then K2,opt = 0). Although theory shows that we cannot get a
+proof of Proposition 1 we will skip the details.
+                                                                                             solution that all the non-zero weights are equal to their upper
+   The Lagrangian of (15) is:
+                                                                                             bounds, in practice this could happen if we have a group of some
+         L(w, μ, ν 1 , ν 2 ) = w w + q w + μ(1 w − 1)                                     extremely negative ci ’s while the rest of ci ’s are much larger. In
+                                                                                             this case, due to roundoff errors and finite precision, a solution
+                                     − ν       
+                                        1 w + ν 2 (w − u).                                   where all the non-zero weights are equal to their upper bounds
+From the derivative of the Lagrangian we get:                                                is possible and it needs a special consideration.
+                      1                                                                         Finally, in the special case where u = u1, μ becomes:
+                        (ν1,i − ν2,i − μ − qi ).
+                      wi =                                                        (48)
+                      2                                                                                          K 1,opt +K 2 , opt
+                                                                                                                    i=K 1,opt +1       qi − 2K1,opt u + 2
+Considering the different cases we get the following:                                                     μ=−                                               .   (51)
+     ⎧                                                                                                                             K2,opt
+     ⎨ 0,
+     ⎪                   if μ + ci ≥ 2ui ,                                      (49a)
+wi = −(μ + qi )/2, if 0 < μ + ci < 2ui ,                                        (49b)        Further, note that in this case, sorting according to c is equivalent
+     ⎪
+     ⎩                                                                                       to sorting according to q.
+       ui ,              if μ + ci < 0.                                         (49c)
+These conditions state the following: for a given μ, a subset of
+                                                                                                                        APPENDIX C
+wi ’s that correspond to the smallest ci ’s will take the maximum
+                                                                                                                     PROOF OF LEMMA 4
+possible value ui . Another subset of wi ’s with small enough ci ’s                                                                  √
+will take some non-zero value less than ui . Finally, the wi ’s that                            Consider the concave function f (x) = x for x ∈ [0, u].
+correspond to the larger ci ’s will be zero.                                                 An upper bound of a concave function at any point x0 is its
+   Now, we need to determine the value of μ. Assume we                                       first-order Taylor approximation, i.e.,
+know that K1,opt weights are equal to ui and K2,opt weights
+are positive and less than ui , i.e., w[1:K 1 , opt ] = u[1:K 1 , opt ] ,                                    √   √      1
+                                                                                                              x ≤ x0 +       (x − x0 ).
+0 < w[K 1 , opt +1:K 1 , opt +K 2 , opt ] < u[K 1 , opt +1:K 1 , opt +K 2 , opt ]    and                              2 (x0 )
+w[K 2 , opt +1:N ] = 0. Then, from w 1 = 1 (primal feasibility),
+the value of μ is:                                                                           By setting x = (αw + β)2 + 2 we get the following bound:
+                     K 1,opt +K 2 , opt                K 1 , opt                                  
+                           i=K 1,opt +1 qi − 2            i=1 ui + 2                                    (αw + β)2 + 2
+              μ=−                                                                 . (50)
+                                             K2,opt
+                                                                                                                              α2 (w2 − w02 ) + 2αβ(w − w0 )
+   In order to evaluate μ we need to determine K1,opt and K2,opt .                              ≤       (αw0 + β)2 + 2 +            
+                                                                                                                                   2 ((αw0 + β)2 + 2 )
+In a similar manner as in the proof of Proposition 1, we can
+start with K = 1 non-zero weights and sequentially increase its                                     α2 w2 + 2αβw
+                                                                                                =                   + const.
+value until we find the optimal one. For a given value of K we                                   2 ((αw0 + β)2 + 2 )
+  12 Start from K = 1. If K < K
+                                      opt it should hold that μ + q 2 ≥ 0 (else                 By majorizing the square root term of h̃p, ,l (w, w(k ) ) fol-
+K opt = 1). Use this condition for K = 2 and proceed in the same way. It
+can be easily seen that if K < K opt , (46b) always holds however (46a) cannot               lowing the aforementioned approach, the result of Lemma 4 is
+hold. The intuition for the case K > K opt is the same.                                      straightforward.
+BENIDIS et al.: SPARSE PORTFOLIOS FOR HIGH-DIMENSIONAL FINANCIAL INDEX TRACKING                                                                           169
+
+
+
+                                                                                Thus, DR(z) is majorized as follows:
+
+                                                                                            1 2        1                 1          2
+                                                                                               T           T
+                                                                                                              (zi − yi )2 = z − y(k ) 2 .
+                                                                                                                     (k )
+                                                                              DR(w) =             z̃i ≤
+                                                                                            T i=1       T i=1              T
+
+                                                                             Substituting back z = rb − Xw, we get
+
+                                                                                                             1                 
+                                                                                                               rb − Xw − y(k ) 2 .
+                                                                                               DR(w) ≤                           2
+                                                                                                             T
+
+                                                                             where y(k ) = −(−z(k ) )+ = −(Xw(k ) − rb )+ .
+
+
+Fig. 11. Majorization cases of z̃ 2 : a) z (k ) = 0.05 > 0 and b) z (k ) =                                      REFERENCES
+−0.05 ≤ 0.
+                                                                              [1] B. M. Barber and T. Odean, “Trading is hazardous to your wealth: The
+                                                                                  common stock investment performance of individual investors,” J. Fi-
+                                                                                  nance, vol. 55, no. 2, pp. 773–806, 2000.
+                               APPENDIX D                                     [2] R. Tibshirani, “Regression shrinkage and selection via the lasso,” J. Roy.
+                            PROOF OF LEMMA 5                                      Statist. Soc. Ser. B, Methodol., vol. 58, pp. 267–288, 1996.
+                                                                              [3] S. L. Fuller, “The evolution of actively managed exchange-traded funds,”
+  For convenience set z = rb − Xw. Then:                                          Rev. Securities Commodities Regul., vol. 41, no. 8, pp. 89–96, 2008.
+                                                                              [4] M. Kosev and T. Williams, “Exchange-traded funds,” RBA Bull., pp. 51–
+                        1        1 2
+                                      T                                           59, Mar. 2011.
+                             + 2
+                DR(w) =    (z) 2 =      z̃ ,                                  [5] A. A. Santos, “Beating the market with small portfolios: Evidence from
+                        T          T i=1 i                                        brazil,” EconomiA, vol. 16, no. 1, pp. 22–31, 2015.
+                                                                              [6] K. Naumenko and O. Chystiakova, “An empirical study on the differences
+                                                                                  between synthetic and physical ETFs,” Int. J. Econ. Finance, vol. 7, no. 3,
+where                                                                             2015, Art. no. 24.
+                                                                             [7] R. Jansen and R. Van Dijk, “Optimal benchmark tracking with small
+                                    zi ,          if zi > 0,                      portfolios,” J. Portfolio Manage., vol. 28, no. 2, pp. 33–39, 2002.
+                        z̃i =                                                 [8] J. E. Beasley, N. Meade, and T.-J. Chang, “An evolutionary heuristic for
+                                    0,            if zi ≤ 0.                      the index tracking problem,” Eur. J. Oper. Res., vol. 148, no. 3, pp. 621–
+                                                                                  643, 2003.
+                                                                              [9] D. Maringer and O. Oyewumi, “Index tracking with constrained portfo-
+   Now, we can majorize each z̃i2 term to get an upper bound                      lios,” Intell. Syst. Accounting, Finance Manage., vol. 15, nos. 1/2, pp. 57–
+for DR(z). We need to consider two cases, i.e., majorization on                   71, 2007.
+         (k )                        (k )                                    [10] A. Scozzari, F. Tardella, S. Paterlini, and T. Krink, “Exact and heuristic
+a point zi > 0 and on a point zi ≤ 0.                                             approaches for the index tracking problem with UCITS constraints,” Ann.
+                      (k )              (k )
+   1) For a point zi > 0, f1 (zi |zi ) = zi2 is an upper bound                    Oper. Res., vol. 205, no. 1, pp. 235–250, 2013.
+                           (k ) (k )       (k )          (k )                [11] K. J. Oh, T. Y. Kim, and S. Min, “Using genetic algorithm to support
+      of z̃i2 , with f1 (zi |zi ) = (zi )2 = (z̃ i )2 .                           portfolio optimization for index fund management,” Expert Syst. Appl.,
+                      (k )             (k )                (k )
+   2) For a point zi ≤ 0, f2 (zi |zi ) = (zi − zi )2 is an up-                    vol. 28, no. 2, pp. 371–379, 2005.
+                                       (k )    (k )       (k  ) (k )
+                                                                             [12] C. Dose and S. Cincotti, “Clustering of financial time series with appli-
+      per bound of z̃i2 , with f2 (zi |zi ) = (zi − zi )2 =                       cation to index and enhanced index tracking portfolio,” Physica A, Stat.
+                (k )                                                              Mech. Appl., vol. 355, no. 1, pp. 145–151, 2005.
+      0 = (z̃ i )2 .                                                         [13] D. Bianchi and A. Gargano, “High-dimensional index tracking with coin-
+   For both cases the proofs are straightforward and they are                     tegrated assets using an hybrid genetic algorithm,” vol. 1785908, 2011.
+easily shown pictorially. Fig. 11 illustrates these two cases.                    [Online]. Available: http://ssrn. com/abstract
+                                                    (k )                     [14] C. Alexander, “Optimal hedging using cointegration,” Phil. Trans. R. Soc.
+   Now, we can majorize z̃i2 at any point zi as follows:                          London A, Math., Phys. Eng. Sci., vol. 357, no. 1758, pp. 2039–2058,
+                                                                                  1999.
+                                        (k )              (k )              [15] Y. Feng and D. P. Palomar, “A signal processing perspective on financial
+                            f1 (zi |zi ),            if zi        > 0,
+               z̃i2 ≤                (k )                (k )
+                                                                                  engineering,” Found. Trends Signal Process., vol. 9, nos. 1/2, pp. 1–231,
+                                                                                  Aug. 2016.
+                            f2 (zi |zi ),            if zi ≤ 0,              [16] F. Xu, Z. Xu, and H. Xue, “Sparse index tracking based on L 1 / 2 model
+                                                             (k )                and algorithm,” arXiv:1506.05867, 2015.
+                            (zi − 0)2 ,                if zi         > 0,    [17] T. F. Coleman, Y. Li, and J. Henniger, “Minimizing tracking error while
+                  =                      (k )                 (k )                restricting the number of assets,” J. Risk, vol. 8, no. 4, pp. 33–55, 2006.
+                            (zi − zi )2 ,              if zi         ≤ 0,    [18] A. A. Gaivoronski, S. Krylov, and N. Van der Wijst, “Optimal portfolio
+                                                                                  selection and dynamic benchmark tracking,” Eur. J. Oper. Res., vol. 163,
+                                  (k )
+                  = (zi − yi )2 ,                                                 no. 1, pp. 115–131, 2005.
+                                                                             [19] R. Roll, “A mean/variance analysis of tracking error,” J. Portfolio Manage.,
+                                                                                  vol. 18, no. 4, pp. 13–22, 1992.
+where                                                                        [20] H. Markowitz, “Portfolio selection*,” J. Finance, vol. 7, no. 1, pp. 77–91,
+                                                      (k )
+                                                                                  1952.
+                    (k )          0,               if zi      > 0,           [21] J. Brodie, I. Daubechies, C. De Mol , D. Giannone, and I. Loris, “Sparse
+                   yi =             (k )               (k )
+                                                                                  and stable Markowitz portfolios,” Proc. Nat. Acad. Sci., vol. 106, no. 30,
+                                  zi ,             if zi      ≤ 0,                pp. 12267–12272, 2009.
+                                                                             [22] A. Takeda, M. Niranjan, J.-Y. Gotoh, and Y. Kawahara, “Simultaneous
+                                           (k )                                   pursuit of out-of-sample performance and sparsity in index tracking port-
+                            = −(−zi )+ .                                          folios,” Comput. Manage. Sci., vol. 10, no. 1, pp. 21–49, 2013.
+170                                                                                 IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 66, NO. 1, JANUARY 1, 2018
+
+
+
+[23] K. Andriosopoulos, M. Doumpos, N. C. Papapostolou, and P. K.                                                Yiyong Feng received the B.E. degree in electronic
+     Pouliasis, “Portfolio optimization and index tracking for the shipping                                      and information engineering from the Huazhong Uni-
+     stock and freight markets using evolutionary algorithms,” Transp. Res.                                      versity of Science and Technology, Wuhan, China, in
+     Part E, Logist. Transp. Rev., vol. 52, pp. 16–34, 2013.                                                     2010, and the Ph.D. degree from the Department of
+[24] T.-J. Chang, N. Meade, J. E. Beasley, and Y. M. Sharaiha, “Heuristics                                       Electronic and Computer Engineering at the Hong
+     for cardinality constrained portfolio optimisation,” Comput. Oper. Res.,                                    Kong University of Science and Technology, Hong
+     vol. 27, no. 13, pp. 1271–1302, 2000.                                                                       Kong, under the supervision of Prof. D. P. Palomar
+[25] R. Ruiz-Torrubiano and A. Suárez, “A hybrid optimization approach to                                       in August 2015. He was also with the systematic
+     index tracking,” Ann. Oper. Res., vol. 166, no. 1, pp. 57–71, 2009.                                         market-making group at Credit Suisse, Hong Kong
+[26] E. J. Candes, M. B. Wakin, and S. P. Boyd, “Enhancing sparsity by                                           from March 2013 to August 2013 and from Septem-
+     reweighted 1 minimization,” J. Fourier Anal. Appl., vol. 14, nos. 5/6,                                     ber 2015 to March 2016. From April 2016 to May
+     pp. 877–905, Dec. 2008.                                                          2016, he was a Research Associate in the Department of Electronic and Com-
+[27] J. Song, P. Babu, and D. P. Palomar, “Sparse generalized eigenvalue prob-        puter Engineering, Hong Kong University of Science and Technology. Since
+     lem via smooth optimization,” IEEE Trans. Signal Process., vol. 63, no. 7,       June 2016, he has been a Research Analyst with Three Stones Capital Lim-
+     pp. 1627–1642, Apr. 2015.                                                        ited, Hong Kong. His research interests include convex optimization, nonlinear
+[28] K. Benidis, Y. Sun, P. Babu, and D. P. Palomar, “Orthogonal sparse PCA           programming, and robust optimization, with applications in signal processing,
+     and covariance estimation via Procrustes reformulation,” IEEE Trans.             financial engineering, and machine learning.
+     Signal Process., vol. 64, no. 23, pp. 6211–6226, Dec. 2016.
+[29] D. R. Hunter and K. Lange, “A tutorial on MM algorithms,” Amer. Statist.,
+     vol. 58, no. 1, pp. 30–37, Feb. 2004.
+[30] Y. Sun, P. Babu, and D. P. Palomar, “Majorization-minimization algo-
+     rithms in signal processing, communications, and machine learning,”
+     IEEE Trans. Signal Process., vol. 65, no. 3, pp. 794–816, Feb. 2016.
+[31] D. P. Palomar and J. R. Fonollosa, “Practical algorithms for a family
+     of waterfilling solutions,” IEEE Trans. Signal Process., vol. 53, no. 2,
+     pp. 686–695, Feb. 2005.
+[32] J. Song, P. Babu, and D. P. Palomar, “Optimization methods for design-
+     ing sequences with low autocorrelation sidelobes,” IEEE Trans. Signal
+     Process., vol. 63, no. 15, pp. 3998–4009, Aug. 2015.
+[33] Y. E. Nesterov and M. J. Todd, “Self-scaled barriers and interior-point
+     methods for convex programming,” Math. Oper. Res., vol. 22, no. 1,
+     pp. 1–42, 1997.                                                                                             Daniel P. Palomar (S’99–M’03–SM’08–F’12) re-
+[34] M. A. Figueiredo, J. M. Bioucas-Dias , and R. D. Nowak, “Majorization–                                      ceived the Electrical Engineering and Ph.D. degrees
+     minimization algorithms for wavelet-based image restoration,” IEEE                                          from the Technical University of Catalonia (UPC),
+     Trans. Image Process., vol. 16, no. 12, pp. 2980–2991, Dec. 2007.                                           Barcelona, Spain, in 1998 and 2003, respectively.
+[35] A. A. Gaivoronski and G. Pflug, “Value-at-risk in portfolio optimization:                                   He is a Professor in the Department of Electronic
+     properties and computational approach,” J. Risk, vol. 7, no. 2, pp. 1–31,                                   and Computer Engineering at the Hong Kong Uni-
+     2005.                                                                                                       versity of Science and Technology (HKUST), Hong
+[36] R. T. Rockafellar and S. Uryasev, “Optimization of conditional value-at-                                    Kong, which he joined in 2006. Since 2013, he has
+     risk,” J. Risk, vol. 2, pp. 21–42, 2000.                                                                    been a Fellow of the Institute for Advance Study
+[37] Z. M. Landsman and E. A. Valdez, “Tail conditional expectations for                                         at HKUST. He had previously held several research
+     elliptical distributions,” North Am. Actuarial J., vol. 7, no. 4, pp. 55–71,                                appointments, namely, at King’s College London,
+     2003.                                                                            London, U.K.; Stanford University, Stanford, CA, USA; Telecommunications
+[38] P. Artzner, F. Delbaen, J.-M. Eber, and D. Heath, “Coherent measures of          Technological Center of Catalonia, Barcelona, Spain; Royal Institute of Tech-
+     risk,” Math. Finance, vol. 9, no. 3, pp. 203–228, 1999.                          nology (KTH), Stockholm, Sweden; University of Rome La Sapienza, Rome,
+[39] M. Wang, C. Xu, F. Xu, and H. Xue, “A mixed 0–1 LP for index tracking            Italy; and Princeton University, Princeton, NJ, USA. His current research in-
+     problem with CVaR risk constraints,” Ann. Oper. Res., vol. 196, no. 1,           terests include applications of convex optimization theory, game theory, and
+     pp. 591–609, 2012.                                                               variational inequality theory to financial systems, big data systems, and com-
+[40] R. Varadhan and C. Roland, “Simple and globally convergent methods               munication systems. He received the 2004/2006 Fulbright Research Fellowship,
+     for accelerating the convergence of any EM algorithm,” Scand. J. Statist.,       the 2004 and 2015 (coauthor) Young Author Best Paper Awards by the IEEE
+     vol. 35, no. 2, pp. 335–353, 2008.                                               Signal Processing Society, the 2015–2016 HKUST Excellence Research Award,
+                                                                                      the 2002/2003 best Ph.D. prize in Information Technologies and Communica-
+                                                                                      tions by the UPC, the 2002/2003 Rosina Ribalta first prize for the Best Doctoral
+                          Konstantinos Benidis received the M.Eng. degree             Thesis in Information Technologies and Communications by the Epson Foun-
+                          from the School of Electrical and Computer Engi-            dation, and the 2004 prize for the best Doctoral Thesis in Advanced Mobile
+                          neering, National Technical University of Athens,           Communications by the Vodafone Foundation and COIT. He has been a Guest
+                          Athens, Greece, in 2011, and the M.Sc. degree in            Editor of the IEEE JOURNAL OF SELECTED TOPICS IN SIGNAL PROCESSING 2016
+                          information and communication technologies from             Special Issue on Financial Signal Processing and Machine Learning for Elec-
+                          the Polytechnic University of Catalonia, Barcelona,         tronic Trading, an Associate Editor of IEEE TRANSACTIONS ON INFORMATION
+                          Spain, in 2013. He is currently working toward the          THEORY, and IEEE TRANSACTIONS ON SIGNAL PROCESSING, a Guest Editor
+                          Ph.D. degree in the Department of Electronic and            of the IEEE SIGNAL PROCESSING MAGAZINE 2010 Special Issue on Convex
+                          Computer Engineering at the Hong Kong University            Optimization for Signal Processing, the IEEE JOURNAL ON SELECTED AREAS
+                          of Science and Technology, Hong Kong. His research          IN COMMUNICATIONS 2008 Special Issue on Game Theory in Communication
+                          interests include convex optimization and efficient al-     Systems, and the IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS
+gorithms, with applications in signal processing, financial engineering, and ma-      2007 Special Issue on Optimization of MIMO Transceivers for Realistic Com-
+chine learning.                                                                       munication Networks.
+

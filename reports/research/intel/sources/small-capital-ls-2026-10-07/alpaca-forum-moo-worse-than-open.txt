@@ -1,0 +1,64 @@
+
+ Market on Open order gives me a worse price than daily open - Alpaca Trading - Alpaca Community Forum
+ = 40rem)" rel="stylesheet" data-target="discourse-ai_desktop" />
+ = 40rem)" rel="stylesheet" data-target="discourse-events_desktop" />
+ = 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop" />
+ = 40rem)" rel="stylesheet" data-target="poll_desktop" />
+ New to Alpaca? Create your Trading API account today! Sign Up Today
+ Alpaca Community Forum
+ Market on Open order gives me a worse price than daily open
+ Alpaca Trading
+ PatL
+ August 21, 2024, 4:24am
+ 1
+ Hi! I’ve been happy with alpaca data and trading services in general. Today I tried market on open order with real trading account, specifically on symbol “PACB”, however, I’m really confused at the execution price I got:
+Execution price: 1.5900 (SELL)
+Open price from alpaca daily data: 1.61
+Open price in yahoo finance: 1.59 (Pacific Biosciences of California, Inc. (PACB) Stock Price, News, Quote & History - Yahoo Finance)
+Open price in google: 1.61
+Apparantly, if the “real” open price is 1.61, then the market on open order doesn’t give me a fair price as promised? which price should I trust in general?
+Thank you.
+ Dan_Whitnable_Alpaca
+ August 21, 2024, 1:49pm
+ 2
+ @PatL If you are trading in an Alpaca paper account, Market On Open (MOO) orders are simulated as regular market orders and execute at the opening quote (ie buy orders fill at the ask and sell orders fill at the bid). While the paper trade environment generally simulates live trading quite well this is one notable difference. In live trading MOO orders fill at the listing exchange opening auction price.
+Was this a paper or live trade execution?
+ PatL
+ August 21, 2024, 2:09pm
+ 3
+ Hi @Dan_Whitnable_Alpaca thanks for looking into it, I am aware paper account isn’t real moo order. So I use real money account.
+ PatL
+ August 21, 2024, 3:31pm
+ 4
+ Found a similar post OPG orders not filled at open price (live trading)
+I think this answers my question.
+ Related topics
+ Topic
+ Replies
+ Views
+ Activity
+ Opening and closing market prices in paper trading
+ Alpaca Trading
+ 2
+ 623
+ January 25, 2023
+ Accuracy of MOO Orders on Paper Account
+ Getting Started with Alpaca
+ 2
+ 606
+ July 30, 2021
+ Order filled price at opg is different from the published open price
+ Alpaca Trading
+ 0
+ 366
+ July 10, 2022
+ Accurate OPG and CLS prices for Paper trading
+ Feature Requests
+ 10
+ 2228
+ October 18, 2021
+ Frustration with the execution of Pre-Market Orders
+ Alpaca Trading
+ 13
+ 551
+ March 9, 2024

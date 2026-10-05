@@ -1,0 +1,714 @@
+                                                            Journal of Empirical Finance 15 (2008) 850–859
+
+
+
+                                                            Contents lists available at ScienceDirect
+
+
+                                                     Journal of Empirical Finance
+                                           j o u r n a l h o m e p a g e : w w w. e l s ev i e r. c o m / l o c a t e / j e m p f i n
+
+
+
+
+Robust performance hypothesis testing with the Sharpe ratio
+Oliver Ledoit a,1, Michael Wolf b,⁎,2
+a
+    Equity Proprietary Trading, Credit Suisse, London E14 4QJ, UK
+b
+    Institute for Empirical Research in Economics, University of Zurich, Switzerland
+
+
+
+
+a r t i c l e            i n f o                           a b s t r a c t
+
+Article history:                                           Applied researchers often test for the difference of the Sharpe ratios of two investment
+Received 7 May 2007                                        strategies. A very popular tool to this end is the test of Jobson and Korkie [Jobson, J.D. and Korkie,
+Received in revised form 16 March 2008                     B.M. (1981). Performance hypothesis testing with the Sharpe and Treynor measures. Journal of
+Accepted 18 March 2008
+                                                           Finance, 36:889–908], which has been corrected by Memmel [Memmel, C. (2003). Performance
+Available online 26 March 2008
+                                                           hypothesis testing with the Sharpe ratio. Finance Letters, 1:21–23]. Unfortunately, this test is not
+                                                           valid when returns have tails heavier than the normal distribution or are of time series nature.
+JEL classiﬁcation:
+                                                           Instead, we propose the use of robust inference methods. In particular, we suggest to construct a
+C12
+                                                           studentized time series bootstrap conﬁdence interval for the difference of the Sharpe ratios and
+C14
+C22                                                        to declare the two ratios different if zero is not contained in the obtained interval. This approach
+                                                           has the advantage that one can simply resample from the observed data as opposed to some
+Keywords:                                                  null-restricted data. A simulation study demonstrates the improved ﬁnite sample performance
+Bootstrap                                                  compared to existing methods. In addition, two applications to real data are provided.
+HAC inference                                                                                                           © 2008 Elsevier B.V. All rights reserved.
+Sharpe ratio
+
+
+
+
+1. Introduction
+
+    Many applications of ﬁnancial performance analysis are concerned with the comparison of the Sharpe ratios of two investment
+strategies (such as stocks, portfolios, mutual funds, hedge funds, or technical trading rules). Since the true quantities are not
+observable, the Sharpe ratios have to be estimated from historical return data and the comparison has to be based on statistical
+inference, such as hypothesis tests or conﬁdence intervals.
+    It appears that the status quo in the applied literature is the test of Jobson and Korkie (1981) and its corrected version by Memmel
+(2003); for example, see DeMiguel et al. (in press), DeMiguel and Nogales (2007), and Gasbarro et al. (2007), among others.
+Unfortunately, this test is not valid when returns have tails heavier than the normal distribution or are of time series nature. The former
+is a quite common, and by now well-known, property of ﬁnancial returns. As far as the latter is concerned, serial correlation of the
+actual returns is, arguably, only a minor concern for stocks and mutual funds, but it is certainly relevant to hedge funds; for example, see
+Brooks and Kat (2002) and Malkiel and Saha (2005). However, even stocks and mutual funds often exhibit correlation of the squared
+returns, that is, volatility clustering; for example, see Campbell et al. (1997, Chapter 12) and Alexander (2001, Chapter 4).
+    In this paper, we discuss inference methods that are more generally valid. One possibility is to compute a HAC standard error3
+for the difference of the estimated Sharpe ratios by the methods of Andrews (1991) and Andrews and Monahan (1992), say. Such an
+approach works asymptotically but does not always have satisfactory properties in ﬁnite samples. As an improved alternative, we
+suggest a studentized time series bootstrap.
+
+
+ ⁎ Corresponding author.
+   E-mail address: mwolf@iew.uzh.ch (M. Wolf).
+ 1
+   The views expressed herein are those of the author and do not necessarily reﬂect or represent those of Credit Suisse.
+ 2
+   The research has been supported by the University Research Priority Program "Finance and Financial Markets'', University of Zurich, and by the Spanish
+Ministry of Science and Technology and FEDER, grant MTM2006-05650.
+ 3
+   In this paper, a standard error of an estimator denotes an estimate of the true standard deviation of the estimator.
+
+0927-5398/$ – see front matter © 2008 Elsevier B.V. All rights reserved.
+doi:10.1016/j.jempﬁn.2008.03.002
+                                                                                                                 O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859   851
+
+
+It has been argued that for certain applications the Sharpe ratio is not the most appropriate performance measure; e.g., when the
+returns are far from normally distributed or autocorrelated (which happens for many hedge funds) or during bear markets. On the
+other hand, there is recent evidence that the Sharpe ratio can result in almost identical fund rankings compared to alternative
+performance measures; e.g., see Eling and Schuhnacher (2007). We do not enter this debate. Instead, we believe that the task of
+choosing the appropriate performance measure is up to the ﬁnance practitioner, not the statistician. Our aim is to provide a reliable
+inference method in case the comparison of two Sharpe ratios is deemed of interest.
+
+2. The problem
+
+   We use the same notation as Jobson and Korkie (1981) and Memmel (2003). There are two investment strategies i and n whose
+excess returns over a given benchmark at time t are rti and rtn, respectively. Typically, the benchmark is the risk-free rate but it
+could also be something else, such as a stock index.4 A total of T return pairs (r1i, r1n)′,…, (rTi, rTn)′ are observed. It is assumed that
+these observations constitute a strictly stationary time series so that, in particular, the bivariate return distribution does not change
+over time. This distribution has mean vector µ and covariance matrix Σ given by
+           ! "                ! 2         "
+             Ai                 ri rin
+       A¼           and R ¼             2   :
+             An                 rin rn
+
+   The usual sample means and sample variances of the observed returns are denoted by µ̂ i, µ̂ n and σ̂ 2i , σ̂ 2n, respectively.
+The difference between the two Sharpe ratios is given by
+                     A A
+      D ¼ Shi " Shn ¼ i " n
+                     ri rn
+and its estimator is
+             ˆ      ˆ                                         Â i Â n
+        D̂ ¼ Sh i " Shn ¼                                         " :
+                                                              r̂i r n
+
+    Furthermore, let u=(µi, µn, σi2, σn2)′ and û =(µ̂i, µ̂n, σ̂i2, σ̂i2)′. Memmel (2003) computes a standard error for Δ̂ based on the relation
+        pffiffiffi$ % d
+         T û "u Y N ð0; XÞ;
+
+         d
+where Y denotes convergence in distribution, and an application of the delta method. However, just like Jobson and Korkie (1981), he uses
+a formula for Ω that crucially relies on i.i.d. return data from a bivariate normal distribution, namely he assumes
+            0 2                      1
+              ri rin      0      0
+            B rin r2      0      0 C
+      X¼B            n               C:
+            @ 0     0 2r4 2r2 A                                            i                   in
+                                  0                0             2r2in                 2r4n
+
+    This formula is no longer valid if the distribution is non-normal or if the observations are correlated over time. To give just two
+examples, consider data that are i.i.d. but not necessarily normal. First, the entry in the lower right corner ofΩ is given by E[(r1n −µn)4] −σi4
+instead of by 2σn4. Second, the asymptotic covariance between µ n and σ n2, say, is in general not equal to zero.5 To give another example,
+                                                                                                            P         $             %
+consider data from a stationary time series. Then the entry in the upper left corner is given by r2i þ 2 l    t¼1 Cov r1i ; rð1þt Þi instead of by
+simply σ i2.
+
+3. Solutions
+
+   We ﬁnd it somewhat more convenient to work with the uncentered second moments. So let γi =E(r1i2) and γn =E(r1n                     2
+                                                                                                                                         ). Their sample
+counterparts are denoted by γ̂i and γ̂n, respectively. Furthermore, let υ=(μi, μn, γi, γn)′ and υ̂=(μ̂i, μ̂n, γ̂i, γ̂n)′. This allows us to write
+                                                            $ %
+        D ¼ f ðυÞ                    and              D̂ ¼ f υ̂                                                                                                                        ð1Þ
+with
+
+                                   a                                           b
+        f ða; b; c; dÞ ¼ pffiffiffiffiffiffiffiffiffiffiffiffiffi " pffiffiffiffiffiffiffiffiffiffiffiffiffi :                                                                         ð2Þ
+                          c " a2                                     d " b2
+
+
+    We assume that
+        pffiffiffi$ % d
+         T υ̂ "υ Y N ð0; ΨÞ;                                                                                                                                                           ð3Þ
+
+
+
+  4
+    Strictly speaking, when the benchmark is a stock index, say, rather than the risk-free rate, one should speak of the Information ratio rather than the Sharpe
+ratio.
+  5
+    For example, consider data from a Poisson distribution, in which case µ̂ and σ̂ 2 estimate the same parameter.
+852                                                                                                                                   O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859
+
+
+where Ψ is an unknown symmetric positive semi-deﬁnite matrix. This relation holds under mild regularity conditions.
+                                                                                4          4
+For example, when the data are assumed i.i.d., it is sufﬁcient to have both E(r1i ) and E(r1n) ﬁnite. In the time series case it is
+sufﬁcient to have ﬁnite 4 + δ moments, where δ is some small positive constant, together with an appropriate mixing condition;
+for example, see Andrews (1991). The delta method then implies
+         pffiffiffi& ' d
+          T D̂"D Y Nð0; jVf ðtÞΨjf ðtÞÞ                                                                                                                                                                     ð4Þ
+
+with
+                                                                                                                                          !
+                                                                                                      c     1      a        1    b         d
+         jVf ða; b; c; dÞ ¼                                                              ;"              ;"               ;                :
+                                                                            ðc " a2 Þ
+                                                                                     1:5
+                                                                                            ðd " b2 Þ
+                                                                                                     1:5    2 ðc " a2 Þ1:5 2 ðd " b2 Þ1:5
+
+      Now, if a consistent estimator Ψ̂; of Ψ is available, then a standard error for Δ̂ is given by
+                  sffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffi
+          & '                               $ %                                                   $ %
+                   jVf υ̂ Ψ̂jf υ̂
+         s D̂ ¼                                                                                                         :                                                                                   ð5Þ
+                                                                 T
+
+
+3.1. HAC inference
+
+      As is well-known, the limiting covariance matrix in Eq. (3) is given by
+                     T   T
+                  1X    X                                                                                                                   $                                          %
+         Ψ ¼ lim            E½ ys yVt ';                                                                                          with yVt ¼ rti " A1 ; rtn " An ; rti2 " gi ; rtn
+                                                                                                                                                                                2
+                                                                                                                                                                                   " gn :
+              T"l T
+                    s¼1 t¼1
+
+
+      By change of variables, the limit can be alternatively expressed as
+
+                                                                                                                                T"1
+                                                                                                                                X
+         Ψ ¼ lim ΨT ;                                      with ΨT ¼                                                                    CT ð jÞ;    where
+              TYl
+                                                                                                                               j¼"Tþ1
+
+
+                   8 X
+                   >  1  T      (         )
+                   <           E yt yV
+                                     t "j                                                                                               for j z 0
+         CT ð jÞ ¼    T  t¼jþ1
+                                                                                                                                                    :
+                   > 1 XT
+                   :
+                                 (         )
+                               E ytþj y tV                                                                                              for j b 0
+                     T  t¼"jþ1
+
+
+
+   The standard method to come up with a consistent estimator Ψ̂= Ψ̂T is to use heteroskedasticity and autocorrelation robust
+(HAC) kernel estimation; for example, see Andrews (1991) and Andrews and Monahan (1992). In practice this involves choosing a
+real-valued kernel function k(·) and a bandwidth ST. The kernel k(·) typically satisﬁes the three conditions k(0) = 1, k(·) is
+continuous at 0, and limx → ± ∞ k(x) = 0. The kernel estimate for Ψ is then given by
+
+                                       XT"1   ! "
+                                  T            j
+         Ψ̂¼ Ψ̂T ¼                          k     ĈT ð jÞ;                                                                                    where
+                                T " 4 j¼"Tþ1 ST
+
+                    8 X
+                    >  1  T
+                    <          ŷ yV
+                                  ˆ
+                          t¼jþ1 t t"j
+                                       for j z 0           $                                       %
+         ĈT ð jÞ ¼    T                                ˆ ¼ r " Â ; r " Â ; r 2 " ĝ ; r 2 " ĝ :
+                                                 ; with yV
+                      1 XT                               t   ti   1 tn     n ti       i tn       n
+                    >
+                    :           ŷ yV
+                         t¼"jþ1 tþj t
+                                     ˆ for j b 0
+                      T
+
+    The factor T/(T − 4) is a small-sample degrees of freedom adjustment that is introduced to offset the effect of the estimation of
+the 4-vector υ in the computation of the Γ̂ T (j), that is, the use of the ŷt rather than the yt.
+    An important feature of a kernel k(·) is its characteristic exponent 1 ≤ q ≤ ∞, determined by the smoothness of the kernel at the
+origin. Note that the bigger q, the smaller is the asymptotic bias of a kernel variance estimator; on the other hand, only kernels with
+q ≤ 2 yield estimates that are guaranteed to be positive semi-deﬁnite in ﬁnite samples. Most of the commonly used kernels have
+q = 2, such as the Parzen, Tukey–Hanning, and Quadratic-Spectral (QS) kernels, but exceptions do exist. For example, the Bartlett
+kernel has q = 1 and the Truncated kernel has q = ∞. For a broader discussion on this issue, see Andrews (1991) again.
+    Once a particular kernel k(·) has been chosen for application, one must pick the bandwidth ST. Several automatic methods, based
+on various asymptotic optimality criteria, are available to this end; for example, see Andrews (1991) and Newey and West (1994).
+    Finally, given the kernel estimator Ψ̂, the standard error s(Δ̂ ) is obtained as in Eq. (5) and then combined with the asymptotic
+normality of Eq. (4) to make HAC inference as follows.
+                                              O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859                       853
+
+
+     A two-sided p-value for the null hypothesis H0: Δ = 0 is given by
+               0         1
+               @   j D̂j A
+        p̂ ¼ 2U " & '
+                  s D̂
+
+where Φ (·) denotes the c.d.f. of the standard normal distribution. Alternatively, a 1 − α conﬁdence interval for Δ is given by
+                    & '
+         D̂Fz1"a=2 s D̂
+
+where zλ denotes the λ quantile of the standard normal distribution, that is, Φ(zλ) = λ.
+   It is, however, well-known that such HAC inference is often liberal when sample sizes are small to moderate. This means
+hypothesis tests tend to reject a true null hypothesis too often compared to the nominal signiﬁcance level and conﬁdence intervals
+tend to undercover; for example, see Andrews (1991), Andrews and Monahan (1992), and Romano and Wolf (2006).
+
+Remark 3.1. Lo (2002) discusses inference for a single Sharpe ratio. The method he presents in the section titled “IID Returns”
+corresponds to Jobson and Korkie (1981) and Memmel (2003), since it actually assumes i.i.d. normal data. The method he presents
+in the section titled “Non-IID Returns” corresponds to the HAC inference of this subsection.
+    Opdyke (2007) discusses both inferences for a single Sharpe ratio and for the difference of two Sharpe ratios. He ﬁrst considers
+the case of general i.i.d. data (i.e., not necessarily normal) and corrects the formulae for the limiting variances of Lo (2002, Section
+“IID Returns”) and of Memmel (2003), respectively, which assume normality. He also considers the case of general stationary data
+(i.e., time series). However, his formulae for the time series case are incorrect, since they are equivalent to the formulae for the i.i.d.
+case. For example, the limiting variance in Eq. (6), for the case of general stationary data, is equivalent to the limiting variance in
+Eq. (3), for general i.i.d. data. The problem is that in the case of general stationary data, simple and easily-implemented formulae do
+not exist.
+
+3.2. Bootstrap inference
+
+     There is an extensive literature demonstrating the improved inference accuracy of the studentized bootstrap over ‘standard’
+inference based on asymptotic normality; see Hall (1992) for i.i.d. data and Lahiri (2003) for time series data. Very general results
+are available for parameters of interests which are smooth functions of means. Our parameter of interest, Δ, ﬁts this bill; see Eqs.
+(1) and (2).
+     Arguably, the regularity conditions used by Lahiri (2003, Section 6.5) in the time series case are rather strong (and too strong for
+most ﬁnancial applications); for example, they assume 35 + δ ﬁnite moments (where δ is some small number) and certain
+restrictions on the dependence structure.6 However, it should be pointed out that these conditions are sufﬁcient only to prove the
+very complex underlying mathematics and not necessary. Even when these conditions do not hold, the studentized bootstrap
+typically continues to outperform ‘standard’ inference; e.g., see Section 4. To avoid any confusion, it should also be pointed that
+these strong regularity conditions are only needed to prove the superiority of the studentized bootstrap. In terms of ﬁrst-order
+consistency it does not really need stronger sufﬁcient conditions than ‘standard’ inference.
+     We propose to test H0: Δ = 0 by inverting a bootstrap conﬁdence interval. That is, one constructs a two-sided bootstrap
+conﬁdence interval with nominal level 1 − α for Δ. If this interval does not contain zero, then H0 is rejected at nominal level α. The
+advantage of this ‘indirect’ approach is that one can simply resample from the observed data. If one wanted to carry out a ‘direct’
+bootstrap test, one would have to resample from a probability distribution that satisﬁed the constraint of the null hypothesis, that
+is, from some modiﬁed data where the two empirical Sharpe ratios were exactly equal; e.g., see Politis et al. (1999, Section 1.8).
+     In particular, we propose to construct a symmetric studentized bootstrap conﬁdence interval. To this end the two-sided
+distribution function of the studentized statistic is approximated via the bootstrap as follows:
+          0        1 0            1
+           j D̂"Djj   j D̂⁎ " D̂j
+         L@ & ' AcL@ & ' A:                                                                                                             ð6Þ
+             s D̂       s D̂⁎
+
+    In this notation, Δ is true difference between the Sharpe ratios, Δ̂ is the estimated difference computed from the original data,
+s(Δ̂ ) is a standard error for Δ̂ (also computed from the original data), Δ̂ ⁎ is the estimated difference computed from bootstrap
+data, and s(Δ̂ ⁎) is a standard error for Δ̂ ⁎ (also computed from bootstrap data). Finally, L(X) denotes the distribution of the random
+variable X.
+               * be a λ quantile of L(|Δ̂ ⁎ − Δ̂ |/s(Δ̂ ⁎)), a bootstrap 1 − α conﬁdence interval for Δ is then given by
+    Letting z|·|,λ
+              ⁎       $ %
+         D̂Fzj(j;1"a s D̂ :                                                                                                           ð7Þ
+                                                                                    ⁎ − α will typically be somewhat larger than z1 − α/2
+    The point is that when data are heavy-tailed or of time series nature, then z|·|,1
+for small to moderate samples, resulting in more conservative inference compared to the HAC methods of the previous subsection.
+    We are left to specify (i) how the bootstrap data are to be generated and (ii) how the standard errors s(Δ̂ ) and s(Δ̂ ⁎) are to be
+computed. For this, it is useful to distinguish between i.i.d. data and time series data. The ﬁrst case, i.i.d. data, is included mainly for
+
+ 6
+     The conditions are too lengthy to be reproduced here.
+854                                                           O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859
+
+
+completeness of the exposition. It is well-known that ﬁnancial returns are generally not i.i.d. Even when the autocorrelation of the
+returns is negligible (which often happens with the stock and mutual fund returns), there usually exists autocorrelation of the
+squared returns, that is, volatility clustering. We therefore recommend to always use the bootstrap method for time series data in
+practice.
+
+3.2.1. I.I.D. data
+    To generate bootstrap data, one simply uses Efron's (1979) bootstrap, resampling individual pairs from the observed pairs (rti,
+rtn)′, t = 1,…, T, with replacement. The standard error s(Δ̂ ) is computed as in Eq. (5). Since the data are i.i.d., one takes for Ψ̂ here
+simply the sample covariance matrix of the vectors (rti, rtn, rti2, rtn                                                                     2
+                                                                                                                                              )′, t = 1,…, T. The standard error s(Δ̂ ⁎) is computed in exactly the
+same fashion but from the bootstrap data instead of the original data. To be more speciﬁc, denote the tth return pair of the
+bootstrap sample by (rti⁎, rtn                                                         ⁎)′. Then one takes for Ψ̂ ⁎ the sample covariance matrix of the vectors (rti⁎, rtn⁎, rti⁎2, rtn⁎2)′, t = 1,…, T.
+Furthermore, the estimator of υ = (μi, μn, γi, γn)′ based on the bootstrap data is denoted by υ̂ ⁎ = (μ̂ ⁎i , μ̂ n⁎, γ̂⁎i , γ̂n⁎)′. Finally, the
+bootstrap standard error for Δ̂ ⁎ is given by
+                   sffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffi
+           $ %       jVf ðυ̂⁎Þ Ψ̂⁎jf ðυ̂⁎Þ
+         s D̂⁎ ¼                                                                                                                          :                                                                      ð8Þ
+                                                                          T
+
+
+3.2.2. Time series data
+    The application of the studentized bootstrap is somewhat more involved when the data are of time series nature. To generate
+bootstrap data, we use the circular block bootstrap of Politis and Romano (1992), resampling now blocks of pairs from the observed
+pairs (rti, rtn)′, t = 1,…, T, with replacement.7 These blocks have a ﬁxed size b ≥ 1. The standard error s(Δ̂ ) is computed as in Eq. (5).
+The estimator Ψ̂ is obtained via kernel estimation; in particular we propose the prewhitened QS kernel of Andrews and Monahan
+(1992).8 The standard error s(Δ̂ ⁎) is the ‘natural’ standard error computed from the bootstrap data, making use of the special block
+dependence structure; see Götze and Künsch (1996) for details. To be more speciﬁc, let l = ⌊n/b⌋, where ⌊·⌋ denotes the integer part.
+Again, the estimator of υ = (μi, μn, γi, γn)′ based on the bootstrap data is denoted by υ̂ ⁎ = (μ̂ ⁎i , μ̂ n⁎, γ̂ ⁎i , γ̂ n⁎)′. Then deﬁne
+                &                                              '                                                                      1 X        b
+                               ⁎ " Â⁎; r ⁎2 " ĝ⁎; r ⁎2 " ĝ⁎
+           yt⁎ ¼ rti⁎ " Âi⁎; rtn                                t ¼ 1; N ; T                                                    fj ¼ pffiffiffi   yð⁎j"1Þbþt        t ¼ 1; N ; l
+                                     n ti        i   tn      n
+                                                                                                                                       b t¼1
+
+and
+                        l
+                    1X
+          Ψ̂ ⁎ ¼          f f Vj :
+                    l j¼1 j
+
+    With this more general deﬁnition9 of Ψ̂⁎, the bootstrap standard error for Δ̂ ⁎ is again given by formula (8).
+    An application of the studentized circular block bootstrap requires a choice of the block size b. To this end, we suggest to use a
+calibration method, a concept dating back to Loh (1987). One can think of the actual coverage level 1 − λ of a block bootstrap
+conﬁdence interval as a function of the block size b, conditional on the underlying probability mechanism P which generated the
+bivariate time series of returns, the nominal conﬁdence level 1 − α, and the sample size T. The idea is now to adjust the ‘input’ b in
+order to obtain the actual coverage level close to the desired one. Hence, one can consider the block size calibration function g:
+b → 1 − λ. If g(·) were known, one could construct an ‘optimal’ conﬁdence interval by ﬁnding b that minimizes |g(b) − (1 − α)| and
+then use b̃ as the block size of the time series bootstrap; note that |g(b) − (1 − α)| = 0 may not always have a solution.
+    Of course, the function g(·) depends on the underlying probability mechanism P and is therefore unknown. We now propose a
+bootstrap method to estimate it. The idea is that in principle we could simulate g(·) if P were known by generating data of size T
+according to P and by computing conﬁdence intervals for Δ for a number of different block sizes b. This process is then repeated
+many times and for a given b, one estimates g(b) as the fraction of the corresponding intervals that contain the true parameter. The
+method we propose is identical except that P is replaced by an estimate P̂ and that the true parameter Δ is replaced by the ‘pseudo’
+parameter Δ̂ .
+
+Algorithm 3.1 (Choice of the block size).
+
+1. Fit a semi-parametric model P̂ to the observed data (r1i, r1n)′,…, (rTi, rTn)′.
+2. Fix a selection of reasonable block sizes b.
+3. Generate K pseudo sequences (r1i ⁎ , r1n
+                                         ⁎ )′k…, (rTi
+                                                    ⁎ , rTn
+                                                         ⁎ )′, k = 1,…, K, according to P̂ . For each sequence, k = 1,…, K, and for each b,
+   compute a conﬁdence interval CIk,b with nominal level 1 − α for Δ̂ .
+4. Compute g (b) = #{Δ̂ ∈ CIk,b}/K.
+5. Find the value b that minimizes |ĝ (b) − (1 − α)|.
+
+
+ 7
+   The motivation for using the circular block bootstrap instead of the moving blocks bootstrap of Künsch (1989) is to avoid the ‘edge effects’ of the latter; see
+Romano and Wolf (2006, Section 4).
+ 8
+   We have found that the prewhitened Parzen kernel, which is deﬁned analogously, yields very similar performance.
+ 9                                                                                                                             ⁎, rti⁎2, rtn
+   Note that for the special case b = 1, this deﬁnition results in the sample covariance matrix of the bootstrap data (rti⁎, rtn           ⁎2)′, t = 1,…, T, used for i.i.d. data.
+                                               O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859                                        855
+
+
+Of course, the question remains which semi-parametric model to ﬁt to the observed return data. When using monthly data, we
+recommend to simply use a VAR model in conjunction with time series bootstrapping the residuals.10 If the data are sampled at
+ﬁner intervals, such as daily data, one might want to use a bivariate GARCH model instead.
+    Next, one might ask what is a selection of reasonable block sizes? The answer is any selection that contains a b with ĝ (b) very
+close to 1 − α. If nothing else, this can always be determined by trial and error. In our experience, ĝ(·) is typically monotonically
+decreasing in b.
+    So if one starts with blow = 1 and a bup ‘sufﬁciently’ large, one is left to specify some suitable grid between those two values. In
+our experience, again, for a sample size of T = 120, the choices blow = 1 and bup = 10 usually sufﬁce. In that case the ﬁnal selection
+{1, 2, 4, 6, 8, 10} should be ﬁne, as ĝ(·) does not tend to decrease very fast in b.
+    Finally, how large should K be chosen in application to real data? The answer is as large as possible, given the computational
+resources. K = 5000 will certainly sufﬁce for all practical purposes, while K = 1000 should be the lower limit.
+
+Remark 3.2. As outlined above, a two-sided test for H0: Δ = 0 at signiﬁcance level α can be carried out by constructing a bootstrap
+conﬁdence interval with conﬁdence level 1 − α. The test rejects if zero is not contained in the interval. At times, it might be more
+desirable to obtain a p-value. In principle, such a p-value could be computed by ‘trial and error’ as the smallest α for which the
+corresponding 1 − α conﬁdence interval does not contain zero. However, such a procedure is rather cumbersome. Fortunately, there
+exists a shortcut that allows for an equivalent ‘direct’ computation of such a p-value. Denote the original studentized test statistic
+by d, that is,
+
+             j D̂j
+          d¼ $ %
+            s D̂
+
+and denote the centered studentized statistic computed from the mth bootstrap sample by d ⁎,m, m = 1,…, M, that is,
+
+                      ;m
+             ⁎;m  j D̂⁎ " D̂j
+          d˜     ¼ & ;m ' ;
+                    s D̂⁎
+
+where M is the number of bootstrap resamples. Then the p-value is computed as
+                 n      o
+                     ;m
+                  d˜⁎ zd þ 1
+          PV ¼                    :                                                                                                                       ð9Þ
+                      Mþ1
+
+Remark 3.3. As far as we know, there have been two previous proposals to use bootstrap inference for Sharpe ratios, but both are
+somewhat limited.
+    Vinod and Morey (1999) discuss inference for the difference of two Sharpe ratios. However, they only employ Efron's (1979) i.i.d.
+bootstrap, so their approach would not work for time series data. Moreover, the way they studentize in the bootstrap world is
+incorrect, as they use a common standard error for all bootstrap statistics (instead, one must compute an individual standard error
+from each bootstrap data set, as described before).
+    Scherer (2004) discusses inference for a single Sharpe ratio, but his approach could be easily extended to inference for a
+difference of two Sharpe ratios. Unlike us, he employs a non-studentized bootstrap for both i.i.d. and time series data. The problem
+is that a non-studentized bootstrap does not provide improved inference accuracy compared to ‘standard’ inference based on
+asymptotic normality; again see Hall (1992) and Lahiri (2003). Scherer (2004) addresses this problem for i.i.d. data by employing a
+double bootstrap (which also provides improved inference accuracy; Hall, 1992), but he does not address it for time series data.
+Moreover, his time series bootstrap is of parametric nature, based on an AR(1) model with i.i.d. errors, and would therefore not be
+valid in general.
+    Incidentally, the asymptotically valid approaches detailed in this paper, HAC inference and the studentized bootstrap, can be
+easily modiﬁed to make inference for a single Sharpe ratio. The details are straightforward and left to the reader.
+
+4. Simulation study
+
+    The purpose of this section is to shed some light on the ﬁnite sample performance of the various methods via some (necessarily
+limited) simulations. We compute empirical rejection probabilities under the null, based on 5000 simulations per scenario. The
+nominal levels considered are α = 0.01, 0.5, 0.1. All bootstrap p-values are computed as in Eq. (9), employing M = 499. The sample
+size is T = 120 always.11
+
+
+
+
+10
+   At this point we opt for the stationary bootstrap of Politis and Romano (1994), since it is quite insensitive to the choice of the average block size. The
+motivation for time series bootstrapping the residuals is to account for some possible ‘left over’ non-linear dependence not captured by the linear VAR model.
+ 11
+      Many empirical applications use ten years of monthly data.
+856                                            O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859
+
+
+4.1. Competing methods
+
+      The following methods are included in the study:
+• (JKM) The test of Jobson and Korkie (1981), using the corrected version of Memmel (2003).
+• (HAC) The HAC test of Subsection 3.1 based on the QS kernel with automatic bandwidth selection of Andrews (1991).
+• (HACPW) The HAC test of Subsection 3.1 based on the prewhitened QS kernel with automatic bandwidth selection of Andrews and
+  Monahan (1992).
+• (Boot-IID) The bootstrap method of Subsubsection 3.2.1.
+• (Boot-TS) The bootstrap method of Subsubsection 3.2.2. We use Algorithm 3.1 to pick a data-dependent block size from the input
+  block sizes b ∈ {1, 2, 4, 6, 8, 10}. The semi-parametric model used is a VAR(1) model in conjunction with bootstrapping the
+  residuals. For the latter we employ the stationary bootstrap of Politis and Romano (1994) with an average block size of 5.
+
+4.2. Data generating processes
+
+   In all scenarios, we want the null hypothesis of equal Sharpe ratios to be true. This is easiest achieved if the two marginal return
+processes are identical.
+   It is natural to start with i.i.d. bivariate normal data with equal mean 1 and equal variance 1. The within-pair correlation is
+chosen as ρ = 0.5, which seems a reasonable number for many applications. This DGP is denoted by Normal-IID.
+   We then relax the strict i.i.d. normal assumption in various dimensions.
+   First, we keep the i.i.d. assumption but allow for heavy tails. To this end, we use bivariate t6 data, shifted to have equal mean 1
+and standardized to have common variance 1. The within-pair correlation is ρ = 0.5 again. This DGP is denoted by t6-IID.
+   Next, we consider an uncorrelated process but with correlations in the squared returns, as is typical for stock returns. The
+standard way to model this is via a bivariate GARCH(1,1) model. In particular, we use the bivariate diagonal-vech model dating back
+to Bollerslev et al. (1988). Let r̃ti = rti − μi, r̃tn = rtn − μn, and denote by Ωt − 1 the conditioning information available at time t − 1. Then
+the diagonal-vech model is deﬁned by
+          $           %     $          %       $                %
+         E r̃ ti jXt"1 ¼ 0 E r˜tn jXt"1 ¼ 0 Cov r˜ti r̃ tn jXt"1 ¼ htin
+                                                                  ¼ cin þ ain r̃ ðt"1Þi r˜ðt"1Þn þbin hðt"1Þin :
+
+  In other words, the conditional (co)variances depend only on their own lags and the lags of the corresponding (cross) products.
+We use the following coefﬁcient matrices:
+              !                 "        !                  "        !             "
+                  0:15   0:13                0:075 0:050                 0:90 0:89
+         C¼                         A¼                          B¼                   :
+                  0:13   0:15                0:050 0:075                 0:90 0:89
+
+    These matrices are inspired by the bivariate estimation results based on weekly returns on a broad U.S. market index and a
+broad U.K. market index.12 However, all three diagonals are forced to be equal to get identical individual return processes; see
+Ledoit et al. (2003, Table 2).
+    The ﬁrst variant of the GARCH model uses i.i.d. bivariate standard normal innovations to recursively generate the series r̃t = (r̃ti, r̃tn)′.
+At the end, we add a global mean, that is, rt =r̃t +μ, where μ is chosen as μ = (16.5/52, 16.5/52)′. Again this choice is inspired by the
+previously mentioned estimation results, forcing μi =μn to get identical individual return processes; see Ledoit et al. (2003, Table 1). This
+DGP is denoted by Normal-GARCH.
+    The second variant of the GARCH model uses i.i.d. bivariate t6 innovations instead (standardized to have common variance
+equal to 1, and covariance equal to 0).13 Everything else is equal. This DGP is denoted by t6-GARCH.
+    Finally, we also consider correlated processes. To this end, we return to the two i.i.d. DGPs Normal-IID and t6-IID, respectively,
+but add some mild autocorrelation to the individual return series via an AR(1) structure with AR coefﬁcient / = 0.2.14 This then
+corresponds to a VAR(1) model with bivariate normal or (standardized) t6 innovations. The resulting two DGPs are denoted by
+Normal-VAR and t6-VAR, respectively.
+
+5. Results
+
+      The results are presented in Table 1 and summarized as follows:
+• JKM works well for i.i.d. bivariate normal data but is not robust against fat tails or time series effects, where it becomes liberal.
+• HAC inference, while asymptotically consistent, is often liberal in ﬁnite samples. This ﬁnding is consistent with many previous
+  studies; e.g., see Romano and Wolf (2006) and the references therein.
+
+
+ 12
+     We use estimation results based on weekly returns, since generally there are very few GARCH effects at monthly or longer return horizons. With weekly data,
+T = 120 corresponds to a data window of slightly over two years.
+ 13
+     There is ample evidence that the innovations of GARCH processes tend to have tails heavier than the normal distribution; e.g., see Kuester et al. (2006) and
+the references therein.
+ 14
+     For example, a ﬁrst-order autocorrelation around 0.2 is quite typical for monthly hedge fund returns.
+                                               O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859                                            857
+
+
+Table 1
+Empirical rejection probabilities (in percent) for various data generating processes (DGPs) and inference methods; see Section 4 for a description
+
+DGP                                    JKM                          HAC                       HACPW                       Boot-IID                        Boot-TS
+Nominal level α = 1%
+Normal-IID                              1.2                          1.2                         1.2                            1.1                          1.0
+t6-IID                                  3.5                          1.9                         2.1                            1.4                          1.3
+Normal-GARCH                            1.7                          1.8                         1.8                            1.5                          1.1
+t6-GARCH                                1.8                          2.0                         2.0                            1.6                          1.2
+Normal-VAR                              2.5                          2.2                         1.8                            2.7                          1.2
+t6-VAR                                  6.4                          2.6                         2.2                            1.8                          1.1
+
+Nominal level α = 5%
+Normal-IID                              5.0                          5.3                         5.4                            4.9                          4.8
+t6-IID                                 10.7                          6.7                         6.9                            5.2                          5.0
+Normal-GARCH                            7.2                          7.1                         7.2                            6.0                          5.5
+t6-GARCH                                7.4                          7.7                         7.5                            6.9                          5.7
+Normal-VAR                              9.5                          6.9                         6.1                            8.5                          5.0
+t6-VAR                                 14.5                          7.9                         7.3                            7.3                          5.1
+
+Nominal level α = 10%
+Normal-IID                             10.3                         10.3                        10.7                         10.1                            9.6
+t6-IID                                 17.9                         12.4                        12.5                         10.3                            9.9
+Normal-GARCH                           12.8                         12.5                        12.3                         12.4                           10.5
+t6-GARCH                               13.7                         13.3                        13.1                         13.1                           11.1
+Normal-VAR                             15.6                         12.4                        10.8                         15.6                            9.7
+t6-VAR                                 22.5                         13.3                        12.0                         13.3                            9.8
+
+For each DGP, the null hypothesis of equal Sharpe ratios is true and so the empirical rejection probabilities should be compared to the nominal level of the test,
+given by α. We consider three values of α, namely α = 1%, 5% and 10%. All empirical rejection probabilities are computed from 5000 repetitions of the underlying
+DGP, and the same set of repetitions is shared by all inference methods.
+
+
+Table 2
+Summary sample statistics for monthly log returns in excess of the risk-free rate: mean, standard deviation, Sharpe ratio, and ﬁrst-order autocorrelation
+                                                         _
+Fund                                                     r                                s                                ˆ
+                                                                                                                           Sh                                 Φ̂
+Fidelity                                               0.511                            4.760                            0.108                              −0.010
+Fidelity Aggressive Growth                             0.098                            9.161                            0.011                               0.090
+Coast Enhanced Income                                  0.245                            0.168                            1.461                               0.152
+JMG Capital Partners                                   1.228                            1.211                            1.014                               0.435
+
+
+
+
+• Boot-IID works well for i.i.d. data but is liberal for time series data.
+• Boot-TS works well both for i.i.d. and time series data.
+
+Remark 4.1. We also included HAC and HACPW based on the (prewhitened) Parzen kernel instead of the (prewhitened) QS kernel.
+The results were virtually identical and are therefore not reported. Since the Parzen kernel has a ﬁnite support while the QS kernel
+does not, it is somewhat more convenient to implement; e.g., see Andrews (1991).
+
+6. Empirical applications
+
+    As a brief illustration, we consider two applications to investment funds. In each case, we want to test the null hypothesis of
+equality of the Sharpe ratios of the two funds being compared.
+    The ﬁrst application deals with mutual funds. The selected funds are Fidelity (FFIDX), a ‘large blend’ fund, and Fidelity
+Aggressive Growth (FDEGX), a ‘mid-cap growth’ fund. The data were obtained from Yahoo! Finance.15
+    The second application deals with hedge funds. The selected funds are Coast Enhanced Income and JMG Capital Partners. The
+data were obtained from the CISDM database; see Romano et al. (2008, Section 9).
+    In both applications, we use monthly log returns in excess of the risk-free rate. The return period is 01/1994 until 12/2003, so
+T = 120. Table 2 provides some relevant summary statistics. Note that all returns are in percentages and that none of the statistics
+are annualized.
+    Table 3 presents the corresponding p-values of the ﬁve methods previously considered in the simulation study. Boot-TS uses a
+data-dependent choice of block size based on Algorithm 3.1. The semi-parametric model is a VAR(1) model in conjunction with
+bootstrapping the residuals. For the latter we employ the stationary bootstrap of Politis and Romano (1994) with an average block
+
+
+
+
+15
+     We use close prices adjusted for dividends and stock splits.
+858                                              O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859
+
+
+Table 3
+p-values (in percent) for various inference methods; see Section 4 for a description
+
+Data                                  JKM                         HAC                          HACPW                           Boot-IID                        Boot-TS
+Mutual funds                          3.9                          6.3                           6.7                             4.4                              9.2
+Hedge funds                           1.0                         14.7                          25.4                             5.8                             29.4
+
+The data set ‘mutual funds’ corresponds to the top two funds of Table 2; the data set ‘hedge funds’ corresponds to the bottom two funds of Table 2. All p-values are
+for the two-sided test of equal Sharpe ratios.
+
+
+
+size of 5. The nominal conﬁdence level is 1 − α = 0.95 and the set of input block sizes is {1, 2, 4, 6, 8, 10}. The two estimated calibration
+functions, based on K = 5000 pseudo sequences, are displayed in Fig. 1. As a result, the estimated optimal block sizes are b̃ = 4 for the
+mutual funds application and b̃ = 6 for the hedge funds application.
+    The bootstrap p-values are computed as in Eq. (9), employing M = 4999. In both applications, JKM results in a rejection of the
+null at signiﬁcance level α = 0.05, while HAC, HACPW, and Boot-TS do not. Not surprisingly, given the noticeable autocorrelation of
+hedge fund returns, the differences are more pronounced for the second application. Boot-IID results in a rejection for the mutual
+funds data but not for the hedge fund data. However, as discussed previously, we recommend to always use Boot-TS with ﬁnancial
+return data.
+
+7. Conclusion
+
+    Testing for the equality of the Sharpe ratios of two investment strategies is an important tool for performance analysis. The
+current status quo method in the applied literature appears to be the test of Memmel (2003), which is a corrected version of the
+original proposal of Jobson and Korkie (1981). Unfortunately, this test is not robust against tails heavier than the normal
+distribution and time series characteristics. Since both effects are quite common with ﬁnancial returns, the test should not be used.
+    We have discussed alternative inference methods which are robust. HAC inference uses kernel estimators to cone up with
+consistent standard errors. The resulting inference works well with large samples but is often liberal for small to moderate sample
+sizes. In such applications, it is preferable to use a studentized time series bootstrap. Arguably, this procedure is quite complex to
+implement, but corresponding programming code is freely available at http://www.iew.uzh.ch/chairs/wolf/team/wolf/publications
+en.html.
+    Finally, both the HAC inference and the studentized bootstrap detailed in this paper could be modiﬁed to make inference for
+(the difference of) various reﬁnements to the Sharpe ratio recently proposed in the literature–e.g., see Ferruz and Vicente (2005)
+and Israelsen (2003, 2005)–as well as many other performance measures, such as the Information ratio, Jensen's alpha, or the
+Treynor ratio, to name just a few.
+
+
+
+
+Fig. 1. Estimated calibration functions for the two empirical applications. The nominal level is 1 − α = 0.95. The resulting estimated optimal block sizes are b = 4 for
+the mutual funds application and b = 6 for the hedge funds application.
+                                                  O. Ledoit, M. Wolf / Journal of Empirical Finance 15 (2008) 850–859                                                 859
+
+
+Acknowledgment
+
+    We are grateful for two helpful reports from anonymous referees which have led to an improved presentation of the paper.
+
+
+References
+
+Alexander, C., 2001. Market Models: A Guide To Financial Data Analysis. John Wiley & Sons Ltd., Chichester.
+Andrews, D.W.K., 1991. Heteroskedasticity and autocorrelation consistent covariance matrix estimation. Econometrica 59, 817–858.
+Andrews, D.W.K., Monahan, J.C., 1992. An improved heteroskedasticity and autocorrelation consistent covariance matrix estimator. Econometrica 60, 953–966.
+Bollerslev, T., Engle, R.F., Wooldridge, J.M., 1988. Modelling the coherence in short-run nominal exchange rates: a multivariate generalized ARCH model. Review of
+    Economics and Statistics 72, 498–505.
+Brooks, C., Kat, H., 2002. The statistical properties of hedge fund index returns and their inplications for investors. Journal of Alternative Investments 5, 26–44 (Fall).
+Campbell, J.Y., Lo, A.W., MacKinlay, A.C., 1997. The Econometrics of Financial Markets. Princeton University Press, New Jersey.
+DeMiguel, V., Nogales, F.J., 2007. Portfolio selection with robust estimation. Working paper. SSRN. Available at http://ssrn.con/abstract=0911596.
+DeMiguel, V., Garlappi, L., Uppal, R., in press. Optimal versus naive diversiﬁcation: How inefﬁcient is the 1/N portfolio strategy? Review of Financial Studies.
+Efron, B., 1979. Bootstrap methods: another look at the jackknife. Annals of Statistics 7, 1–26.
+Eling, M., Schuhnacher, F., 2007. Does the choice of performance measure inﬂuence the evaluation of hedge funds? Journal of Banking & Finance 31, 2632–2647.
+Ferruz, L., Vicente, L., 2005. Style portfolio performance: evidence from the Spanish equity funds. Journal of Asset Management 5, 397–409.
+Gasbarro, D., Wong, W.K., Zumwalt, J.K., 2007. Stochastic dominance of iShares. European Journal of Finance 13 (1), 89–101.
+Götze, F., Künsch, H.R., 1996. Second order correctness of the blockwise bootstrap for stationary observations. Annals of Statistics 24, 1914–1933.
+Hall, P., 1992. The Bootstrap and Edgeworth Expansion. Springer, New York.
+Israelsen, C.L., 2003. Sharpening the Sharpe ratio. Financial Planning 33 (1), 49–51.
+Israelsen, C.L., 2005. A reﬁnement to the Sharpe ratio and Information ratio. Journal of Asset Management 5, 423–427.
+Jobson, J.D., Korkie, B.M., 1981. Performance hypothesis testing with the Sharpe and Treynor measures. Journal of Finance 36, 889–908.
+Kuester, K., Mittnik, S., Paolella, M.S., 2006. Value-at-risk prediction: a comparison of alternative strategies. Journal of Financial Econometrics 4, 53–89.
+Künsch, H.R., 1989. The jackknife and the bootstrap for general stationary observations. Annals of Statistics 17, 1217–1241.
+Lahiri, S.N., 2003. Resampling Methods for Dependent Data. Springer, New York.
+Ledoit, O., Santa-Clara, P., Wolf, M., 2003. Flexible multivariate GARCH modeling with an application to international stock markets. Review of Economics and
+    Statistics 85 (3), 735–747.
+Lo, A.W., 2002. The statistics of Sharpe ratios. Financial Analysts Journal 58 (4), 36–52.
+Loh, W.Y., 1987. Calibrating conﬁdence coefﬁcients. Journal of the American Statistical Association 82, 155–162.
+Malkiel, B.G., Saha, A., 2005. Hedge funds: risk and return. Financial Analysts Journal 61 (6), 80–88.
+Memmel, C., 2003. Performance hypothesis testing with the Sharpe ratio. Finance Letters 1, 21–23.
+Newey, W.K., West, K.D., 1994. Automatic lag selection in covariance matrix estimation. Review of Economic Studies 61, 631–653.
+Opdyke, J.D., 2007. Comparing Sharpe ratios: so where are the p-values? Journal of Asset Management 8 (5), 308–336.
+Politis, D.N., Romano, J.P., 1992. A circular block-resampling procedure for stationary data. In: LePage, R., Billard, L. (Eds.), Exploring the Limits of Bootstrap. John
+    Wiley, New York, pp. 263–270.
+Politis, D.N., Romano, J.P., 1994. The stationary bootstrap. Journal of the American Statistical Association 89, 1303–1313.
+Politis, D.N., Romano, J.P., Wolf, M., 1999. Subsampling. Springer, New York.
+Romano, J.P., Wolf, M., 2006. Improved nonparametric conﬁdence intervals in time series regressions. Journal of Nonparametric Statistics 18 (2), 199–214.
+Romano, J.P., Shaikh, A.M., Wolf, M., 2008. Formalized data snooping based on generalized error rates. Econometric Theory 24 (2), 404–447.
+Scherer, B., 2004. An alternative route to hypothesis testing. Journal of Asset Management 5 (1), 5–12.
+Vinod, H.D., Morey, M.R.,1999. Conﬁdence intervals and hypothesis testing for the Sharpe and Treynor performance measures: a bootstrap approach. In: Abu-Mostafa, Y.S.,
+    LeBaron, B., Lo, A., Weigend, A.S. (Eds.), Computational Finance 1999. The MIT Press, Cambridge, pp. 25–39.
+

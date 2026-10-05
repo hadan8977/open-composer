@@ -1,0 +1,1366 @@
+                                          Utilizing Dependence among Variables in Evolutionary
+                                           Algorithms for Mixed-Integer Programming: A Case
+                                             Study on Multi-Objective Constrained Portfolio
+                                                              Optimization
+arXiv:1909.08748v3 [cs.CE] 21 Jan 2021
+
+
+
+
+                                                            Yi Chena , Aimin Zhoua,∗, Swagatam Dasb
+                                             a
+                                               Shanghai Key Laboratory of Multidimensional Information Processing, and the
+                                         Department of Computer Science and Technology, East China Normal University, 3663
+                                                            North Zhongshan Road, Shanghai 200062, China
+                                         b
+                                           Electronics and Communication Sciences Unit, Indian Statistical Institute, 203, B. T.
+                                                                     Road, Kolkata-700 108, India
+
+
+
+
+                                         Abstract
+                                         Several real-world applications could be modeled as Mixed-Integer Non-
+                                         Linear Programming (MINLP) problems, and some prominent examples in-
+                                         clude portfolio optimization, remote sensing technology, and so on. Most of
+                                         the models for these applications are non-convex and always involve some
+                                         conflicting objectives. The mathematical and heuristic methods have their
+                                         advantages in solving this category of problems. In this work, we turn to
+                                         Multi-Objective Evolutionary Algorithms (MOEAs) for finding elegant solu-
+                                         tions for such problems. In this framework, we investigate a multi-objective
+                                         constrained portfolio optimization problem, which can be cast as a classical
+                                         financial problem and can also be naturally modeled as an MINLP problem.
+                                         Consequently, we point out one challenge, faced by a direct coding scheme
+                                         for MOEAs, to this problem. It is that the dependence among variables, like
+                                         the selection and weights for one same asset, will likely make the search dif-
+                                         ficult. We thus, propose a Compressed Coding Scheme (CCS), compressing
+                                         the two dependent variables into one variable to utilize the dependence and
+                                         thereby meeting this challenge. Subsequently, we carry out a detailed empir-
+
+                                            ∗
+                                              Corresponding author, amzhou@cs.ecnu.edu.cn. This work is supported by the Sci-
+                                         ence and Technology Commission of Shanghai Municipality (No. 19511120600) and the
+                                         National Nature Science Foundation of China (Nos. 61773296, 61673180).
+
+
+
+                                         Preprint submitted to Swarm and Evolutionary Computation            22nd January 2021
+ical study on two sets of instances. The first part consists of 5 instances from
+OR-Library, which is solvable for the general mathematical optimizer, like
+CPLEX, while the remaining 15 instances from NGINX are addressed only
+by MOEAs. The two benchmarks, involving the number of assets from 31 to
+2235, consistently indicate that CCS is not only efficient but also robust for
+dealing with the constrained multi-objective portfolio optimization.
+Keywords: Evolutionary computations, multi-objective constrained
+portfolio optimization, mixed-integer programming, coding scheme
+
+
+1. Introduction
+    A Mixed-Integer Non-Linear Programming (MINLP) model manifests it-
+self in several real-world applications, ranging from the portfolio optimiz-
+ation [1], path planning [2], remote sensing technology [3] to image classi-
+fication [4]. For example, in the first two specific applications mentioned
+above, the selection (integer) and weight (continuous) of the assets, and the
+number (integer) and angle (continuous) of the rotations of an aircraft are
+mixed-integer variables that should be dealt with simultaneously.
+    Without loss of generality, the majority of the discussion in this work is
+about the constrained portfolio optimization, because it could be naturally
+modeled as an MINLP problem and it is one of the well-known financial
+problems [5, 6]. To be specific, a portfolio optimization problem considers
+an optimal weight of the limited fund in a series of risky assets, namely,
+securities, bonds, stocks, and derivatives. In practice, investors attempt to
+acquire the best-expected return at a given risk level or minimize the risk in
+an acceptable return range. In general, the expected return could be directly
+assessed by the profit. However, in terms of measuring the risk, there are
+different methods based on different assumptions of the markets, e.g., the
+Mean-Variance (MV) [7], the Value-at-Risk (VaR) [8], and the Conditional
+Value-at-Risk (CVaR) [9]. The MV model, playing a significant role in the
+progress of modern portfolio optimization, is studied as the basic model in
+this paper.
+    In the literature, some exact algorithms have been designed and used
+to solve the constrained portfolio optimization problems [10]. Nonetheless,
+challenges emerge when the problems involve non-convex quadratic models
+or the total number of combinations of assets are large [11, 12]. On the other
+hand, population-based Evolutionary Algorithms (EAs) can also tackle these
+
+                                       2
+problems [13, 14]. Generally, the accuracy of the EAs will be worse than that
+of the mathematical methods, but EAs do possess a better versatility and
+can be applied to both convex and non-convex problems. We turn to EAs in
+this paper.
+    There are many variations of portfolio problems based on the MV model.
+Concerning the objective function, they could be roughly divided into three
+categories as follows:
+
+  (i) weighted formulation: it combines the two objectives (risk and return)
+      by using a weighting parameter and regards it as the final objective.
+      To the best of our knowledge, it plays a dominant role in the single
+      objective MV model for portfolio optimization [13, 15, 16].
+
+ (ii) transforming objective functions: it transforms one of the objectives
+      into an equality or inequality constraint and considers the other as the
+      final objective [17], or integrates the considered objectives into one with
+      some criteria [18].
+
+(iii) multi-objective models: generally, they regard the risk and return as
+      two main aspects, and aim to find a set of trade-off solutions [19, 20,
+      21]. Furthermore, they can involve more than two objectives when
+      considering more issues [22].
+
+     Following the above work, this paper considers an extended MV model
+that incorporates four real-world constraints [20]: (i) cardinality constraint:
+it restricts the number of assets in the portfolio result. (ii) floor and ceiling
+constraint: it determines the minimal and maximal quantities of every asset.
+(iii) pre-assignment constraint: it considers the preference of investors. (iv)
+round lot constraint: it demands the holding quantities of assets should be
+multiple of the minimal round lot. This constrained portfolio optimization
+has two layers of optimization [23]. In the first level, it aims to find the
+best selection (combination) of available assets, which contains 0-1 integer
+variables, i.e., an asset is chosen or not. In the second level, it aims to find
+an optimal weight of a finite fund, which contains continuous variables, i.e.,
+the proportion of the fund assigned to each asset. Hence, the extended MV
+model can be converted into an MINLP problem and it has been proved to be
+NP-hard [24, 25]. How to deal with 0-1 integer and continuous variables has
+become a key issue when using an EA. It is natural to adopt a binary vector
+to specify the selection of the assets and a real-valued vector to indicate the
+
+                                       3
+investment proportions. This kind of direct representation (coding scheme)
+is the most popular strategy with EAs [26, 27]. However, the direct coding
+scheme also leads to challenges to algorithm design, and more specifically,
+(1) it is hard to reuse existing search operators in EAs since they are usually
+designed either for continuous or discrete variables, and (2) the dependence,
+among the selection and weight, of the variables probably slow down the
+search.
+    Facing these challenges, in this paper, we propose a Compressed Coding
+Scheme (CCS), with which merely one real-valued vector is employed to
+represent the selection and weight simultaneously. In this way, not only the
+reusing of the existing search operators is simplified, but also the dependence
+can be utilized for a more effective search. In fact, some prior works have
+already mentioned the use of a real-valued vector to represent both discrete
+and continuous variables simultaneously [28, 29]. However, to the best of
+our knowledge, this article is the first to discuss this coding scheme in-depth,
+and also, it points out the above two advantages for the first time. Last
+but not least, some tailored search operators are proposed to enhance the
+performance of this coding scheme for this constrained portfolio optimization
+problem.
+    Further, it has been pointed out as a matter of fact that the objectives,
+viz. the expected return and risk of portfolios always conflict with each
+other [30]. In such problems, the target is to find a set of solutions that
+could represent the best possible trade-off among the objectives, instead of
+identifying an optimal solution. Hence, CCS is integrated into three existing
+state-of-the-art Multi-objective Evolutionary Algorithms (MOEAs), i.e., De-
+composition based Multi-objective Evolutionary Algorithm (MOEA/D) [31],
+Non-dominated Sorting Genetic Algorithm (NSGA-II) [32], and ϕ Metric
+Selection Evolutionary Multi-objective Algorithm (SMS-EMOA) [33]. In a
+series of instances, we have conducted several simulation studies, and our
+experimental results suggest that MOEAs with CCS exhibit higher efficiency
+and robustness in searching for optimal solutions. These solutions are su-
+perior for their better diversities and shorter distances to the Pareto Front
+(PF).
+    The structure of this article is presented as follows. Section 2 intro-
+duces the formulation of the constrained multi-objective portfolio optimiza-
+tion problem. In Section 3, the direct and compressed coding schemes are
+presented. In Section 4, some reproduction operators and a repairing method
+are introduced. Then, a complete algorithm framework, including CCS and
+
+                                       4
+a multi-objective selection method, is presented. Thereafter, some simula-
+tion experiments are presented in Section 5. Finally, Section 6 outlines the
+conclusions of this paper and presents some future research directions.
+
+2. Mathematical Model
+   Before the definition of the constrained portfolio optimization model, we
+give the following notations.
+N      the number of available assets
+K      the number of assets in a portfolio, i.e., the cardinality
+L      the number of assets in the pre-assignment set
+wi     the proportion of capital invested in the i-th asset
+ρij    the correlation coefficient of the i-th and j-th assets
+σi     the standard deviation of i-th asset
+σij    the covariance of i-th and j-th assets
+µi     the expected return of the i-th asset
+υi     the minimum trading lot of the i-th asset
+i     the lower limit on the investment of the i-th asset
+δi     the upper limit on the investment of the i-th asset
+yi     the multiplier of the minimum trading lot in the i-th asset
+σij = ρij σi σj
+     (
+       1, if the i-th (i = 1, ..., N ) asset is chosen,
+si =
+       0, otherwise,
+     (
+       1, if the i-th asset is in the pre-assigned set,
+zi =
+       0, otherwise.
+    This paper considers the following bi-objective model [34], which includes
+maximizing the return and minimizing the risk simultaneously. Meanwhile,
+it meets the four practical constraints [20] mentioned above, namely, cardin-
+ality, quantity, pre-assignment, and round lot constraints.
+
+            N X
+            X N
+min f1 =              wi wj σij ,                                         (1)
+            i=1 j=1
+
+
+
+                                       5
+                N
+                X
+max f2 =              w i µi ,                                                 (2)
+                i=1
+                  N
+                  X
+subject to               wi = 1,            0 ≤ wi ≤ 1,                        (3)
+                  i=1
+N
+X
+      si = K,                                                                  (4)
+i=1
+
+i si ≤ wi ≤ δi si ,             i = 1, ..., N,                                (5)
+si ≥ zi ,       i = 1, ..., N,                                                 (6)
+wi = yi τ,        i = 1, ..., N,         yi ∈ Z+ ,                             (7)
+si ∈ {0, 1},     i = 1, ..., N,                                                 (8)
+where Eqs. (1) and (2) are two respective objectives, minimizing the risk
+and maximizing the return, in the portfolio optimization that conflict with
+each other. Eq. (3) requires that all the capital should be invested in a valid
+portfolio. Eq. (4) is the cardinality constraint (i.e., K assets are selected),
+and Eq. (5) is the floor and ceiling constraint, which restricts the investment
+proportion being allocated in the i-th asset should lie in [i , δi ]. In addition,
+Eq. (6) represents that the i-th asset must be included in a portfolio (zi = 1),
+when it is of interest for the investor. It is a pre-assignment constraint.
+Thereafter, Eq. (7) defines the round lot constraint. The round lot size τ is
+set to be a same constant, with which 1 is divisible, since it will be really
+hard to handle a flexible one. In that case, it will be beyond the scope of
+the discussion about coding schemes in this work. Finally, Eq. (8), which is
+the discrete constraint, implies that both the si and zi must be binary
+
+3. Coding Schemes
+   The decision variables in the model presented in the last section include
+si ∈ {0, 1} and wi ∈ [0, 1] for i = 1, ..., N . When using EAs to deal
+with such mixed variables, the solution representation or coding scheme be-
+comes vital. This section firstly introduces a popular Direct Coding Scheme
+(DCS) [20, 35]. We point out that there will be an explicit dependence
+among variables. Then, a new coding scheme, called Compressed Coding
+Scheme (CCS), is introduced for EAs to utilize the dependence via grouping
+dependent variables.
+
+                                                     6
+3.1. Direct Coding Scheme (DCS) [20]
+    In DCS, a solution is represented by a vector as follows:
+                               
+c = c1 , c2 , ..., cN , ..., c2N ,                                                       (9)
+
+where ci ∈ {0, 1}, i = 1, ..., N and ci ∈ [0, 1], i = N + 1, ..., 2N . It is clear
+that a solution includes two parts, i.e., the selection vector (c1 , · · · , cN ) and
+the weight vector (c1+N , · · · , c2N ) respectively. Fig. 1 illustrates this coding
+scheme.
+                              'LVFUHWHVSDFHLQ         &RQWLQXRXVVSDFHLQ
+                            SRUWIROLR VHOHFWLRQ       SRUWIROLR DOORFDWLRQ
+
+                                   V                                Z
+
+
+                                                                Z
+                                        V
+
+
+
+Figure 1: An illustration of DCS in portfolio optimization. Principally, there are two search
+spaces in a constrained portfolio optimization problem (discrete space and continuous space
+respectively). With DCS, an EA finds the selection and weight of the assets directly in
+the actual solution spaces. In the discrete space, s1 or s2 is a point that presents the
+combinations of assets for selection, such as {2, 4} with binary vector {0, 1, 0, 1, 0}. In
+the continuous space, w1 or w2 is a point that presents the weights of allocation, like
+real-valued vector{0.23, 0.77}.
+
+
+    As for the decoding process, a solution is converted into the selection
+of assets si as in Eq. (10) and the weight of the assets as in Eq. (11). An
+example of decoding is presented in Fig. 2.
+     (
+       1, if ci = 1
+si =                 ,     i = 1, 2, ..., N                             (10)
+       0, otherwise
+
+        si ci+N
+w i = PN           ,         i = 1, 2, ..., N.                                          (11)
+       j=1 sj cj+N
+
+
+    The dependence among variables in EA is not trivial. Some works [36,
+37, 38] have demonstrated that the dependence probably makes it difficult
+for EAs to search for the optimal solutions. This dependence will also occur
+on DCS since there is a non-linear relationship among wi , ci (selection) and
+
+                                                   7
+Figure 2: An example of decoding with DCS. The length of this solution is twice of the
+amount of available assets. Suppose N = 5 and K = 2 here, the decoding process can be
+divided into three steps. Step 1: The binary vector {0, 1, 0, 1, 0} indicates the selection of
+assets is s2 = 1 and s4 = 1. Step 2: According to the selection s, the weight vector in the
+solutions is {0.00, 0.28, 0.00, 0.96, 0.00}. Step 3: Finally, the portfolio w is normalized as
+{0.00, 0.23, 0.00, 0.77, 0.00}.
+
+
+cN +i (weight), as shown in Eqs. 10 and 11. Further, Fig. 3 shows the risk
+landscapes for two portfolios with different assets. Apparently, different com-
+binations of assets make up different risk landscapes. For example, lowest
+risk of the portfolio1 at w1 = w2 = 0 and w3 = 1. On the contrary, lowest
+risk of the portfolio2 at w1 = w2 = 0.5 and w3 = 0. It is similar to the
+return landscapes of portfolios. These denote there is dependence among the
+selections and weights since good selections and weights are paired. This is
+hardly considered for designing EAs for portfolio problems. Contrarily, in
+the next subsection, we propose CCS for using only one real-valued vector to
+represent both selection and weight simultaneously. It is expected that EAs
+can utilize the dependence among variables when they are artificially grouped
+together. Note that the description about DCS in this subsection is a canon-
+ical one, involving one binary vector and one real-valued vector. Concerning
+the experimental study latter, a DCS, which utilizes two real-valued vectors,
+is also employed for reducing the gap between DCS and CCS. Therefore, we
+can make a fair comparison between them.
+
+3.2. Compressed Coding Scheme (CCS)
+    This section introduces a new coding scheme, CCS, for the EAs on the
+portfolio problem. The basic idea is to use a real-valued vector with length
+
+
+
+
+                                              8
+              (a) 3-D risk for portfolio1            (b) Heatmap risk for portfolio1
+
+
+
+
+              (c) 3-D risk for portfolio2            (d) Heatmap risk for portfolio2
+
+
+Figure 3: The risk landscapes of two portfolios, portfolio1 and portfolio2. Each portfolio
+consists 3 different assets, of which the weights are w1, w2 and w3 respectively, where
+w3 = 1 − w1 − w2.
+
+
+
+
+                                            9
+N to represent a solution, which is defined in Eq. (12).
+                    
+c = c1 , c2 , ..., cN ,                                                                (12)
+
+where ci ∈ [0, 1], and i = 1, 2, ..., N . The length of the solution is as the same
+as the number of assets. Fig. 4 shows that CCS represents the selection and
+weight based on one string of real numbers in [0, 1]N for a multi-mapping,
+where one vector c is able to represent both selection and weight tasks sim-
+ultaneously.
+                                                     'LVFUHWHVSDFHLQ
+                                                   SRUWIROLR VHOHFWLRQ
+
+                                                            V
+
+
+                                6HDUFKLQ>@1                 V
+
+
+                                   F                &RQWLQXRXVVSDFHLQ
+                                                   SRUWIROLR DOORFDWLRQ
+
+                                         F                    Z
+
+
+
+                                                          Z
+
+
+
+
+Figure 4: The illustration of CCS in portfolio optimization. Principally, there are two
+search spaces in a constrained portfolio optimization problem (discrete space and con-
+tinuous space respectively). In the discrete space, s1 or s2 is a point that presents the
+combinations of assets for selection, such as {2, 4}. In the continuous space, w1 or w2 is a
+point that presents the weights of allocation, like {0.23, 0.77}.
+
+    The elements of a vector are utilized to represent not only the selection
+but also the weight. More specifically, the L pre-assigned assets are selected.
+Meanwhile, among the assets which are not pre-assigned, the K − L assets
+with highest values are selected. Then the K elements of the vector are
+applied again to represent the weight. The decoding process works as follows.
+Firstly, a solution is converted into the selection of assets s1 , ..., sN where
+si = 1 if the i-th asset is pre-selected or ci corresponds to the K − L highest
+values except for the pre-selected assets. Then the weight of the assets is
+given in Eq. (13). An example of decoding is presented in Fig. 5.
+        s i ci
+w i = PN         ,       i = 1, 2, ..., N.                                             (13)
+       j=1 sj cj
+
+
+
+
+                                                   10
+Figure 5: The example of decoding with CCS. In contrary to the decoding mentioned
+above, the length of this solution is as the same as the number of available assets and this
+solution is actually used twice. Suppose N = 5 and K = 2 here, the decoding process
+can be divided into three steps. Step 1: The values of c2 and c4 are higher than other
+genes, so the selection of assets is represented as s2 = 1 and s4 = 1. Step 2: Since
+the solution is utilized twice, the strings, which will interact with each other, are {0.00,
+1.00, 0.00, 1.00, 0.00} and {0.81, 0.91, 0.13, 0.91, 0.63} respectively. So far, the weight
+before normalization is {0.00, 0.91, 0.00, 0.91, 0.00}. Step 3: Finally, the portfolio w is
+normalized as {0.00, 0.50, 0.00, 0.50, 0.00}.
+
+
+4. CCS based Algorithm Framework
+    This section introduces how to deal with the constrained portfolio optim-
+ization with CCS based EAs. Firstly, three search operators are presented.
+Then, a repairing method is proposed to make all solutions feasible. Finally,
+a complete algorithm framework is given.
+
+4.1. Search Operators
+    By using CCS, all solutions are represented as real-valued vectors. There-
+fore, the search operators for continuous variables can be directly employed
+here. As suggested in [20], this work firstly adopts a differential evolution
+(DE) strategy [39] and a polynomial mutation [40], which never use prior
+knowledge.
+
+O1      ci = c3i + F × (c1i − c2i )
+        c0i = polymt(ci , ηm , pm )
+
+where c1, c2 and c3 are three solutions randomly selected from the popula-
+tion, F is a scaling factor in DE, polymt(ci , ηm , pm ) is a polynomial mutation
+function on ci with an index parameter ηm and a mutation probability pm ,
+and c0 is the new solution.
+
+                                            11
+    Concerning the properties of the problems and CCS, we also propose two
+new search operators. Firstly, it is observed that the gene values will reserve
+lots of large but similar values when the number of assets is large since using
+the rank method for selection. The following search operator utilizes this
+heuristic information.
+O2      c0i = ci r(1,2)
+where r(1, 2) is a random number in [1, 2]. This operator only changes the
+investment proportion, but keeps the combination of assets, because the rank
+of values for genes is not changed. Further, this operator may also increase
+the variance of values in the solution vector, which can let the smallest weight
+close to 0 [41].
+    Secondly, a tailored operator that utilizes the known information of the
+portfolio optimization problem is proposed.
+O3      Swap the values of ci and cj : ci     cj , where the asset i is randomly
+        chosen from the selected assets and the asset j is chosen by randomly
+        using one of the following strategies
+
+     • Randomly choose another asset from the selected assets
+     • Choose an asset which has the lowest correlation coefficient (ρjj ) value
+     • Choose an asset which has the highest return (µj ) value
+     • Choose an asset which has the least correlation P
+       with those K − 1 assets already chosen (arg minj k∈selection/{i} ρkj )
+
+4.2. Constraints Handling Method
+      New candidate solutions are repaired by slightly altering a method from [20]
+if the quantity and round lot constraints are violated. The procedure works
+as follows.
+ 1.  All weights for selected assets that are smaller than the value of
+  i /υi υi are adjusted by setting wi := i /υi υi (the floor and round lot con-
+straints).
+      2. The weights are rounded Pdown   as wi =wi -(wi mod υi ).
+                                   K
+      3. Alterations for making i wi = 1 (the sum to one constraint).
+
+      • If
+           PK
+              i wi > 1, decreasing the maximum multiples τ for the largest
+         weight while meeting the floor and ceil constraints.
+
+                                       12
+     • If K
+          P
+            i wi < 1, increasing the maximum multiples τ for the smallest
+        weight while meeting the floor and ceil constraints.
+     4. If K
+          P
+             i wi 6= 1 then go to step 3, else the repairing process ends.
+
+4.3. Algorithm Framework
+    This subsection introduces an algorithm framework for dealing with the
+constrained portfolio optimization problems, including CCS, the search op-
+erators, and the constraint handling method. The detailed pseudo-code of
+the algorithm framework is presented in Algorithm 1.
+
+ Algorithm 1: Algorithm Framework
+   // initialization
+ 1 Sample the initial population P randomly in [0, 1]N .
+ 2 foreach c ∈ P do
+       // decode and repair
+ 3     Decode c and repair it for w if the constraints are violated.
+       // evaluation
+ 4     Evaluate c with w.
+ 5 end
+ 6 while stopping criteria is not met do
+ 7     Set P 0 = ∅.
+ 8     foreach c ∈ P do
+           // decode and repair
+ 9         Decode c0 and repair it for w0 if the constraints are violated.
+           // evaluation
+10         Evaluate c0 with w0 .
+11         Set P 0 = P 0 ∪ {c0 }.
+12     end
+       // selection
+13     Select N P solutions to constitute the next population P from P and P 0 .
+14 end
+
+
+
+
+     In line 1, the first generation population P is randomly initialized in
+[0, 1]N , where N is the number of available assets and N P is the population
+size. For the fitness evaluation, each solution c in P is decoded by the
+decoding scheme to a portfolio w (lines 2-4). The main iteration of the
+algorithm is described in lines 6-14. While the stopping criteria are not
+met [42], the new candidate solution is generated with a search operator
+(line 9). The fitness of each new individual is assessed (line 10), and the new
+population P 0 is combined with P for comparison (line 11). Finally, the best
+
+                                          13
+individuals are selected by an MOEA selection strategy in each iteration as
+the next population P .
+
+5. Experiment Study
+    This section is devoted to the empirical study of the proposed CCS and
+the new algorithm framework. This section is divided into three parts.
+Firstly, the instances, the MOEAs, and the corresponding parameters are
+introduced. Secondly, the quality indicators adopted in this paper are presen-
+ted. Finally, the MOEAs with CCS (CCS/MOEAs), MODEwAwL [20], and
+the MOEAs with DCS (DCS/MOEAs) are compared. Two categories of DCS
+are employed here. First, a canonical one, MODEwAwL, with one binary
+vector and one real-valued vector. Second, DCS with two real-valued vectors
+for DCS/MOEAs. The real-valued DCS is employed for urging the difference
+between CCS and DCS as small as possible. Because in this manner, DCS
+can directly use almost the same decoding, search operators, and repairing
+as CCS. For example, in this DCS, the first vector is mapped to the selec-
+tion as CCS does and the second vector is mapped to weights as in Eq. 13.
+Thereafter, operators for generating offsprings are the same as in Section 4.1,
+except the swap of values will take place not only on the selection (first) vec-
+tor but also on the corresponding weight (second) vector. This means ci+N
+will swap with cj+N when ci swaps with cj . Then the same constraints
+handling method as in Section 4.2 is also adopted. Besides, a mathematical
+programming solver is used to solve the instances from OR-Library.
+
+5.1. Experimental Settings
+    Two benchmarks are employed in this paper. The first one, OR-Library,
+contains 5 classic instances [13], and the second one, NGINX, includes 15
+instances established recently by the historical stock data from the Yahoo
+Finance website1 . Table 1 presents the details of each data set, D1-D5 from
+OR-Library and D6-D20 from NGINX. In addition, two constraint sets [20]
+are considered as follows:
+
+  1
+     OR-Library     is   from     http://people.brunel.ac.uk/~mastjjb/jeb/orlib/
+portinfo.html,       NGINX     is    from   http://satt.diegm.uniud.it/projects/
+portfolio-selection/ (available at September 1st, 2018). We pack them together,
+named as Portfolio-Instances on https://github.com/CYLOL2019. Further, the demos
+for seven algorithms, named as SEC-CCS, can also be found there.
+
+
+                                      14
+  (i) Cardinality K = 10, floor i = 0.01, ceiling δi = 1.0, pre-assignment
+      z30 = 1 and round lot τ = 0.008.
+ (ii) Cardinality K = 15, floor i = 0.01, ceiling δi = 1.0, pre-assignment
+      z5 = 1 and round lot τ = 0.008.
+   Note that if not specified, the simulated experiments in this work are
+constructed with the first constraint set.
+   The majority of the MOEAs is based on three main frameworks, namely,
+the decomposition-based framework, the Pareto domination based frame-
+work, and the indicator-based framework [43]. Therefore, three widely-used
+MOEAs, namely, MOEA/D [31], NSGA-II [32], and SMS-EMOA [33], cor-
+responding to the three frameworks, are utilized in this study.
+Decomposition based Multi-objective Evolutionary Algorithm (MOEA/D) [31].
+MOEA/D is based on the decomposition framework. It converts the mul-
+tiobjective problems into scalar optimization problems with aggregation func-
+tions. Meanwhile, the whole population is optimized simultaneously when
+each subproblem uses its neighborhood information.
+Non-dominated Sorting Genetic Algorithm (NSGA-II) [32]. NSGA-II is a
+popular Pareto domination based MOEA. It uses the Pareto domination
+relationship and the crowding distance to differentiate solutions. Thus it can
+select promising solutions for the next generation.
+Multiobjective selection based on dominated hypervolume (SMS-EMOA) [33].
+SMS-EMOA is designed as a steady-state MOEA. It uses the Pareto domina-
+tion relationship and the hypervolume indicator to select promising solutions
+for the next generation.
+    In the subsection of the comparison study, DCS and CCS are incorpor-
+ated into three MOEAs respectively, and a Learning-Guided Multi-Objective
+Evolutionary Algorithm (MODEwAwL) [20], a canonical DCS algorithm, is
+also implemented. The algorithms’ parameters are shown in Table 2.
+5.2. Quality Indicators
+    Two performance metrics, which are well-known and frequently applied,
+are introduced in this paper. They are Inverted Generational Distance
+(IGD) [44], and Inverted Hypervolume (IH) [45]. Overall, the IGD and IH
+are general metrics for multi-objective problems, and they cover considera-
+tion of both proximity and diversity.
+
+
+                                     15
+              Table 1: Twenty benchmark instances considered in this study
+ Instance     Origin           Name          #Assets     Instance   Origin            Name            #Assets
+ D1         Hong Kong     Hang Seng          31          D11        UK         FTSE ACT250            128
+ D2         Germany       DAX100             85          D12        USA        NASDAQ Bank            380
+ D3         UK            FTSE 100           89          D13        USA        NASDAQ Biotech         130
+ D4         US            S&P 500            98          D14        USA        NASDQ Computer         417
+ D5         Japan         Nikkei             225         D15        USA        NASDQ Financial00      91
+ D6         Korea         KOSPI Composite    562         D16        USA        NASDQ Industrial       808
+ D7         USA           AMEX Composite     1893        D17        USA        NASDQ Telecom          139
+ D8         USA           NASDAQ             2235        D18        USA        NYSE US100             94
+ D9         Australia     All ordinaries     264         D19        USA        NYSE World             170
+ D10        Italy         MIBTEL             167         D20        USA        S&P 500                469
+
+
+
+                        Table 2: The parameter setting for all algorithms.
+        Common parameters                           Parameters only for MOEA/D
+        Population size (N P )               100    Neighborhood size                               10
+        Number of generations                1000   All solutions as the neighbors probability pδ   0.1
+        Scaling factor F                     0.5    Replacement size Tr                             2
+        Crossover probability CR             0.9
+        Index parameter ηm                   20
+        Polynomial mutation probability pm    1
+                                             NP
+
+
+
+
+Inverted Generational Distance (IGD) [44]. IGD, also known as D-metric [46,
+31], evaluates the distances between every solution and the true PF. It is given
+as follows.
+         P|Q|
+                di
+IGD = i=1 ,
+            |Q|
+
+where Q is a set of the representatives of the true PF, and di is the shortest
+Euclidean distance between the i-th point of the representatives and the solu-
+tions obtained by the optimization algorithms. Note that the true PFs for
+some instances in NGINX are undiscovered. This is because the number of
+available assets for them is too large. So the best known unconstrained effi-
+cient frontiers (UCEFs), provided together with the considered instances, are
+adopted instead of the true PFs. Hence all researchers can make consistent
+comparisons with the consensus references.
+
+Inverted Hypervolume(IH). IH is the inverted version of Hypervolume (HV) [45].
+HV, also known as the size of dominated space, is a quality indicator that
+rewards the convergence toward the PF as well as the distribution of the
+representative points along the front. It normalizes the objective space and
+measures the volume of space, which is bounded by the obtained efficient
+solutions and a preference point r. For each obtained solution i ∈ Q, a
+hypercube hci from solution i, and the reference point r is measured. Gen-
+erally, higher values of HV are preferable. However, to apply a consistent
+
+                                                    16
+              Table 3: Performance of 7 algorithms on OR-Library concerning IGD.
+      Algo.          A             B             C               D            E             F             G
+     Mean        1.61e-02[6]   6.90e-03[2]   9.68e-02[7]    7.20e-03[3]   1.43e-02[5]   5.79e-03[1]   1.23e-02[4]
+ D1
+      Std         4.99e-03      5.45e-04      4.25e-02       8.58e-04      1.96e-02      7.25e-04      2.33e-03
+     Mean        1.11e-02[5]   1.03e-02[4]   2.98e-02[7]    8.76e-03[3]   6.02e-03[2]   4.70e-03[1]   2.08e-02[6]
+ D2
+      Std         2.44e-03      2.28e-03      9.45e-03       7.24e-04      3.20e-03      2.72e-04      7.71e-03
+     Mean        1.19e-02[5]   7.66e-03[2]   4.26e-02[7]    9.63e-03[4]   8.20e-03[3]   5.31e-03[1]   2.43e-02[6]
+ D3
+      Std         7.16e-03      1.15e-03      1.82e-02       2.71e-03      4.01e-03      1.27e-03      7.30e-03
+     Mean        1.91e-02[5]   7.01e-03[2]   3.83e-02[7]    1.13e-02[4]   1.07e-02[3]   6.22e-03[1]   2.86e-02[6]
+ D4
+      Std         9.71e-03      6.97e-04      9.06e-03       2.06e-03      7.80e-03      3.58e-03      7.07e-03
+     Mean        8.95e-02[5]   1.25e-02[3]   9.16e-02[6]    9.71e-03[1]   1.28e-01[7]   1.16e-02[2]   4.04e-02[4]
+ D5
+      Std         2.60e-02      2.35e-03      1.71e-02       3.26e-03      5.20e-02      5.96e-03      7.70e-03
+ MeanRank            5.2           2.6           6.8            3.0           4.0           1.2           5.2
+        +/-/=1                      0/4/1 (A&B)                    0/5/0 (C&D)               0/5/0 (E&F)
+  +/-/=2       2/3/0             0/5/0       5/0/0              0/5/0       2/3/0         0/5/0          -
+
+
+              Table 4: Performance of 7 algorithms on OR-Library concerning IH.
+      Algo.          A             B             C               D            E             F             G
+     Mean        3.09e-02[6]   7.85e-03[2]   2.54e-01[7]    9.33e-03[3]   2.34e-02[5]   4.94e-03[1]   1.48e-02[4]
+ D1
+      Std         1.07e-02      8.01e-04      9.51e-02       1.21e-03      4.55e-02      8.75e-04      2.34e-03
+     Mean        1.65e-02[5]   1.33e-02[4]   6.25e-02[7]    1.22e-02[3]   7.14e-03[2]   3.78e-03[1]   3.02e-02[6]
+ D2
+      Std         4.51e-03      3.82e-03      3.38e-02       1.79e-03      4.15e-03      8.88e-04      1.99e-02
+     Mean        2.09e-02[5]   1.12e-02[2]   8.24e-02[7]    1.57e-02[4]   1.35e-02[3]   7.47e-03[1]   3.65e-02[6]
+ D3
+      Std         1.34e-02      2.86e-03      3.57e-02       5.17e-03      6.99e-03      2.52e-03      1.39e-02
+     Mean        3.38e-02[5]   1.15e-02[2]   7.67e-02[7]    1.68e-02[4]   1.65e-02[3]   8.53e-03[1]   4.59e-02[6]
+ D4
+      Std         2.09e-02      2.12e-03      3.07e-02       3.26e-03      9.89e-03      6.14e-03      1.60e-02
+     Mean        2.03e-01[5]   1.77e-02[2]   2.05e-01[6]    1.76e-02[1]   2.77e-01[7]   2.44e-02[3]   5.30e-02[4]
+ D5
+      Std         5.05e-02      3.46e-03      5.22e-02       7.74e-03      1.19e-01      1.74e-02      9.86e-03
+ MeanRank            5.2           2.4           6.8            3.0           4.0           1.4           5.2
+        +/-/=1                      0/5/0 (A&B)                    0/5/0 (C&D)               0/5/0 (E&F)
+  +/-/=2       2/3/0             0/5/0       5/0/0              0/5/0       2/3/0         0/5/0          -
+
+
+
+
+comparison as IGD, IH is defined by
+                         |Q|
+IH = volume(∪i=1 (hcr − hci )),
+where hcr is the hypercube among the reference point and representatives.
+Hence, lower values are better concerning this definition. In addition, the
+reference point is set to [1.2, 1.2] while all the solutions are normalized for
+minimizing f1 and −f2 .
+
+5.3. Exact Method
+    In the field of optimization, heuristic and exact methods are two equally
+significant components. Hence it is worth making a comparison between
+these two kinds of methods. Admittedly, there are probably many exact
+methods for these problems, nonetheless, we can not cover all of them due
+to space constraints. AUGMECON2 [47], a state-of-the-art multi-objective
+programming approach, integrated with CPLEX is implemented here. AUG-
+MECON [48], the basis for AUGMECON2, proposes an effective method to
+make a better payoff table, which accelerates the search by avoiding the pro-
+duction of weakly Pareto optimal solutions. Then a faster search approach
+
+                                                           17
+                     10 -3                                                                                                           10 -3
+            11                                                                                                             10
+
+
+            10
+                                                                                                                           9
+
+
+            9
+                                                                                                                           8
+
+            8
+                                                                                                                           7
+
+            7
+   Return
+
+
+
+
+                                                                                                                  Return
+                                                                                                                           6
+            6
+
+                                                                                                                           5
+            5
+
+                                                                                                                           4
+            4
+
+
+                                                                                                                           3
+            3                                                                               CCS/MOEA/D
+                                                                                            AUG2&CPLEX
+            2                                                                                                              2
+             0.5             1       1.5       2                   2.5                  3         3.5        4                  0             0.5        1                  1.5   2      2.5
+                                                   Risk                                                 10 -3                                                        Risk             10 -3
+
+                                               (a) D1                                                                                                        (b) D2
+                    10 -3                                                                                                           10 -3
+            8                                                                                                              9
+
+
+
+                                                                                                                           8
+            7
+
+                                                                                                                           7
+
+            6
+                                                                                                                           6
+                                                                                                                  Return
+   Return
+
+
+
+
+            5                                                                                                              5
+
+
+
+                                                                                                                           4
+            4
+
+                                                                                                                           3
+
+            3
+                                                                                                                           2
+
+
+
+            2                                                                                                              1
+                2                4         6        8                          10            12              14                0              0.5        1                  1.5   2      2.5
+                                                   Risk                                                 10 -4                                                        Risk             10 -3
+
+                                               (c) D3                                                                                                        (d) D4
+                                                                       10 -3
+                                                              4
+
+
+                                                            3.5
+
+
+                                                              3
+
+
+                                                            2.5
+
+
+                                                              2
+                                                   Return
+
+
+
+
+                                                            1.5
+
+
+                                                              1
+
+
+                                                            0.5
+
+
+                                                              0
+
+
+                                                            -0.5
+                                                                   2                4         6          8                           10      12     14          16
+                                                                                                                  Risk                                       10 -4
+
+                                                                                                        (e) D5
+
+
+Figure 6: The efficient fronts obtained by AUGMECON2&CPLEX and CCS/MOEA/D
+on OR-Library. The efficient fronts of CCS/MOEA/D are the best ones concerning IGD.
+
+
+
+
+                                                                                                          18
+is provided by AUGMECON2, it utilizes a jumping strategy on the gridded
+objective values to accelerate the iterative search. This integrated method is
+only compared with CCS/MOEA/D, since the running times and perform-
+ance of them are similar at the macro level. Mere data sets from OR-library,
+D1-D5, are used here because the results obtained from the exact method
+are similar on small scale problems, no more than 225 assets. Meanwhile,
+we can not get solutions after executing the exact method in some instances,
+containing more than 225 assets, from NGINX for 7 days.
+     Note that the number of the grid is set to 100, the same as the population
+size of the MOEAs. The results are shown in Fig. 6. For all these 5 instances,
+the exact method can always get the Pareto optima. This is most obvious
+in Fig. 6(b), the red points with the highest return and lowest risk are
+obviously far from the blues ones, and most of the blue points with risk more
+than 1e-3 are dominated by the red points. Moreover, the running times of
+the exact method on all instances are from 10 seconds to 1 minute, while they
+are from 5 to 15 minutes for the MOEAs based on the number of available
+assets. The exact method is apparently faster than the MOEA. Nonetheless,
+distributions of the blue points are better than the red ones. For example,
+in Fig. 6(b), blue points distribute uniformly while the red ones scattering
+with high risk, which is due to the uniform gridding strategy for objective
+values.
+     These results imply the superiorities of the exact method are (i) faster,
+and (ii) higher accuracy, while the MOEAs, CCS/MOEA/D here, are more
+general since they (i) can get uniform solutions without special settings and
+(ii) can solve large portfolio problems, like instances involving more than 225
+assets.
+
+5.4. Comparison Study among MOEAs
+    The comparison study among MOEAs aims to answer the following ques-
+tions.
+
+   • What is the performance of MOEAs with CCS?
+
+   • What is the contribution of CCS?
+
+To answer the first question, CCS/MOEAs are compared with a state-of-the-
+art algorithm, i.e., MODEwAwl. To answer the second question, CCS/MOEAs
+are compared to DCS/MOEAs [28].
+
+
+                                      19
+                            D1                                                                 D2                                                                D3
+      0.16
+
+
+                                                                                                                                       0.1
+      0.14                                                         0.06
+
+
+
+      0.12
+                                                                   0.05                                                               0.08
+
+
+       0.1
+                                                                   0.04
+                                                                                                                                      0.06
+IGD
+
+
+
+
+                                                             IGD
+
+
+
+
+                                                                                                                                IGD
+      0.08
+
+                                                                   0.03
+      0.06
+                                                                                                                                      0.04
+
+                                                                   0.02
+      0.04
+
+                                                                                                                                      0.02
+      0.02                                                         0.01
+
+
+        0                                                                                                                               0
+             A      B   C    D               E       F   G                A       B       C     D               E       F   G                A       B       C   D    E   F   G
+
+
+
+
+                            D1                                                                 D2                                                                D3
+
+      0.35                                                          0.2                                                                0.2
+
+
+                                                                   0.18                                                               0.18
+       0.3
+                                                                   0.16                                                               0.16
+
+      0.25                                                                                                                            0.14
+                                                                   0.14
+
+
+                                                                   0.12                                                               0.12
+       0.2
+IH
+
+
+
+
+                                                                                                                                IH
+                                                             IH
+
+
+
+
+                                                                    0.1                                                                0.1
+
+      0.15
+                                                                   0.08                                                               0.08
+
+
+       0.1                                                         0.06                                                               0.06
+
+
+                                                                   0.04                                                               0.04
+      0.05
+                                                                   0.02                                                               0.02
+
+        0                                                            0                                                                  0
+             A      B   C    D               E       F   G                A       B       C     D               E       F   G                A       B       C   D    E   F   G
+
+
+
+
+                                                             D4                                                                 D5
+
+
+
+                                                                                                      0.2
+                                  0.06
+
+
+
+
+                                  0.05
+                                                                                                     0.15
+
+
+                                  0.04
+                            IGD
+
+
+
+
+                                                                                               IGD
+
+
+
+
+                                                                                                      0.1
+                                  0.03
+
+
+
+
+                                  0.02
+                                                                                                     0.05
+
+
+                                  0.01
+
+
+                                                                                                       0
+                                         A       B       C    D               E       F   G                 A       B       C    D               E       F   G
+
+
+
+
+                                                             D4                                                                 D5
+
+                                  0.16                                                                0.5
+
+
+                                                                                                     0.45
+                                  0.14
+                                                                                                      0.4
+
+                                  0.12
+                                                                                                     0.35
+
+                                   0.1                                                                0.3
+                            IH
+
+
+
+
+                                                                                               IH
+
+
+
+
+                                  0.08                                                               0.25
+
+
+                                                                                                      0.2
+                                  0.06
+                                                                                                     0.15
+
+                                  0.04
+                                                                                                      0.1
+
+                                  0.02                                                               0.05
+
+
+                                    0                                                                  0
+
+                                         A       B       C    D               E       F   G                 A       B       C    D               E       F   G
+
+
+
+
+                 Figure 7: Performance of 7 algorithms in terms of IGD and IH on OR-Library.
+
+
+
+
+                                                                                              20
+    All seven algorithms are executed for 20 independent runs. As for the
+performance tables and figures, first, symbols A-G denote the algorithms
+DCS/MOEA/D, CCS/MOEA/D, DCS/NSGA-II, CCS/NSGA-II, DCS/SMS,
+CCS/SMS and MODEwAwL respectively. Second, the rank and mean rank
+of each algorithm on all instances are listed, especially, lower rank means
+better performance. Third, the best result of each instance is remarked in
+gray. Finally, the symbol “+/-/=” indicates better, worse, and equal per-
+formance relationship between paired algorithms in terms of Wilcoxon rank-
+sum test2 [49] while the symbols with superscript 1 and 2 correspond to a
+one-paired and a six-paired comparison respectively.
+    Firstly, the comparisons are made on OR-Library, meanwhile, the rep-
+resentatives of the true PFs are obtained by the mathematic method with
+1000 grids. As for CCS/MOEAs and MODEwAwL, in terms of IGD, Table 3
+shows that all the best mean ranks are reached by the CCS/MOEAs, and
+MODEwAwL is statistically worse than the three CCS/MOEAs concerning
+Wilcoxon rank-sum test, all of them are ‘0/5/0’. Regarding the CCS/MOEAs
+and the DCS/MOEAs, it shows that all the CCS/MOEAs are better than the
+corresponding DCS/MOEAs. For example, CCS/MOEA/D is better than
+DCS/MOEA/D on all 5 instances concerning the mean IGD. Furthermore,
+the mean rank of CCS/MOEA/D is 2.6 while it is 5.2 for DCS/MOEA/D.
+As for the Wilcoxon rank-sum test, CCS/MOEA/D is statistically better
+than DCS/MOEA/D on 4 and similar on 1 dataset. In Table 4, it shows the
+results in terms of IH, the results are consistent with Table 3. To be specific,
+CCS/MOEAs are the top three algorithms out of seven concerning the mean
+rank, they are also statistically better than MODEwAwL, and none of the
+CCS/MOEAs is worse than the corresponding DCS/MOEAs.
+    Furthermore, the results about IGD and IH of all the seven algorithms on
+OR-Library are presented in Fig. 7. CCS/MOEAs (red boxes) are better than
+the corresponding DCS/MOEAs (blue boxes), and they are also better than
+MODEwAwL in terms of both IGD and IH. Moreover, all the CCS/MOEAs
+perform similarly while the performance of the DCS/MOEAs fluctuates with
+different datasets.
+    To conclude, the results above consistently indicate two significant points.
+(i) The CCS/MOEAs outperform the DCS/MOEAs and MODEwAwL on the
+given instances in the quality of the obtained results, and (ii) furthermore,
+
+  2
+      Wilcoxon-rank-sum test at a 5%significant level is adopted in this paper
+
+
+                                            21
+           Table 5: Performance of 7 algorithms on NGINX concerning IGD.
+                 Algo.       A          B        C           D       E           F      G
+               MeanRank     4.1        2.6      6.7         3.3     4.5         3.1    3.7
+                         1
+                    +/-/=              0/6/9 (A&B)         0/13/2 (C&D)        0/6/9 (E&F)
+                +/-/=2     6/3/6      5/5/5   14/0/1       6/6/3   5/4/6       2/6/7    -
+
+
+           Table 6: Performance of 7 algorithms on NGINX concerning IH.
+                Algo.       A           B         C           D        E          F      G
+              MeanRank     4.7         3.0       6.9         3.4      3.9        1.5    4.7
+                        1
+                   +/-/=               0/7/8 (A&B)          0/15/0 (C&D)       0/14/1 (E&F)
+               +/-/=2     5/6/4      3/11/1    15/0/0      3/10/2    5/9/1     1/11/3    -
+
+
+
+
+CCS/MOEAs are more robust because the MOEAs perform similarly when
+using CCS.
+
+5.5. More Experiment Instances
+    So far, we have only presented the results on OR-Libary with the first
+constraint set. Furthermore, we provide more simulation experiments for this
+paper. We only analyze the statistical results here and the detailed tables
+are placed in the Appendix due to the space limit. In Table 5, in terms of
+IGD, the performance of the CCS/MOEAs is not so outstanding as above.
+Although all of the CCS ones do not perform worse than the DCS ones,
+MODEwAwL performs similarly to CCS/MOEA/D and CCS/NSGA-II con-
+cerning both mean ranks and Wilcoxon rank-sum test. In Table 6, the table
+about IH, the CCS/MOEAs still works better than DCS/MOEAs and MOD-
+EwAwL in most instances. It is worth noting that the CCS/MOEAs can not
+outperform MODEwAwL on all the problems since it is almost impossible
+for a heuristic algorithm to outperform all other heuristics. For example on
+D7 and D12, details presenting in the Appendix, MODEwAwL does the best
+in terms of IGD and IH.
+    Further, as for the global statistics, Table 7 shows that the mean and vari-
+ance values of the CCS/MOEAs are better than those of the DCS/MOEAs in
+
+Table 7: The statistical results of the mean rank of The CCS/MOEAs and DCS/MOEAs.
+To simplify, the mean and variance values involve both IGD and IH of the corresponding
+three MOEAs.
+                              First Five Instances                   Last Fifteen Instances
+             Algs.     1st Constraints    2nd Constraints      1st Constraints    2nd Constraints
+                       Mean      Var      Mean      Var        Mean      Var      Mean      Var
+          CCS/MOEAs     2.27       0.89    2.60     0.64        3.00    0.13       3.10       0.28
+          DCS/MOEAs     5.33       1.97    4.80     4.12        5.17    2.41       4.37       3.45
+
+
+
+
+                                                  22
+all the cases. The lower mean values suggest that the CCS/MOEAs outper-
+form the DCS/MOEAs on searching the optimal solutions of the constrained
+portfolio optimization. On the other hand, the lower variance values imply
+that the CCS/MOEAs are more robust. Besides, the statistical results of
+MOEAwAwL are not listed, because they are worse than all CCS/MOEAs
+in most cases.
+     Besides, we conduct some experiments with different population sizes,
+N P = 250 and 500, since heavier runs of EAs may lead to better solu-
+tions [46]. The details are presented in the Appendix. There are two import-
+ant results, (i) the CCS ones still outperform the DCS ones, and (ii) there is
+still room for improvement concerning IGD and IH.
+     To summarize, the comparison study approves CCS can provide better
+and robust solutions.
+
+6. Conclusions
+    This paper studies a portfolio optimization problem, which can be modeled
+as an MINLP problem. In the literature, a variety of work has been done on
+how to deal with either multi-objective optimization problems or constrained
+optimization problems while mixed-variable optimization has not attracted
+much attention for EAs. It is not the first time using a real-valued vector
+to represent the mixed variables simultaneously in the constrained portfolio
+problems, but the difference between DCS and CCS is firstly discussed. It is
+pointed out that CCS is expected to utilize the dependence among variables
+during the search of EAs. Moreover, two tailored reproduction operators
+are proposed while the constrained portfolio optimization is a specific prob-
+lem, which could be solved more efficiently with the prior information of
+the problem. Then the coding scheme, the search operators, and the con-
+straint handling strategy are integrated into three major categories of multi-
+objective evolutionary algorithms. These new algorithms are conducted on
+20 benchmark problems with different asset numbers. The comparison study
+among a state-of-the-art algorithm and the MOEAs has demonstrated that
+the new coding scheme, CCS, is promising for dealing with the constrained
+portfolio optimization.
+    In this paper, CCS is only applied to constrained portfolio optimization.
+There are still a variety of other problems with mixed variables worth explor-
+ing. Meanwhile, a more challenging problem, discussing why and how does
+the dependence among variables affect the search of EAs, is also expectant.
+
+                                     23
+References
+ [1] E. de Klerk, D. Kuhn, K. Postek, Distributionally robust optimization
+     with polynomial densities: theory, models and algorithms, Mathematical
+     Programming (2019) 1–32.
+ [2] P. Yang, K. Tang, J. A. Lozano, X. Cao, Path planning for single un-
+     manned aerial vehicle by separately evolving waypoints, IEEE Transac-
+     tions on Robotics 31 (5) (2015) 1130–1146.
+ [3] C. G. Valicka, D. Garcia, A. Staid, J.-P. Watson, G. Hackebeil, S. Rath-
+     inam, L. Ntaimo, Mixed-integer programming models for optimal con-
+     stellation scheduling given cloud cover uncertainty, European Journal of
+     Operational Research 275 (2) (2019) 431–445.
+ [4] C. Liu, A. Zhou, G. Zhang, Automatic clustering method based on evol-
+     utionary optimisation, IET Computer Vision 7 (4) (2013) 258–271.
+ [5] O. Ertenlice, C. B. Kalayci, A survey of swarm intelligence for portfo-
+     lio optimization: Algorithms and applications, Swarm and evolutionary
+     computation 39 (2018) 36–52.
+ [6] P. N. Kolm, R. Tütüncü, F. J. Fabozzi, 60 years of portfolio optim-
+     ization: Practical challenges and current trends, European Journal of
+     Operational Research 234 (2) (2014) 356–371.
+ [7] P. M. van Staden, D.-M. Dang, P. A. Forsyth, The surprising robustness
+     of dynamic mean-variance portfolio optimization to model misspecifica-
+     tion errors, European Journal of Operational Research (2020).
+ [8] X. Meng, J. W. Taylor, Estimating value-at-risk and expected shortfall
+     using the intraday low and range data, European Journal of Operational
+     Research 280 (1) (2020) 191–202.
+ [9] R. T. Rockafellar, S. Uryasev, et al., Optimization of conditional value-
+     at-risk, Journal of risk 2 (2000) 21–42.
+[10] D. Bertsimas, R. Shioda, Algorithm for cardinality-constrained quad-
+     ratic optimization, Computational Optimization and Applications 43 (1)
+     (2009) 1–22.
+[11] J. Estrada, Mean-semivariance optimization: A heuristic approach,
+     Journal of Applied Finance (Formerly Financial Practice and Educa-
+     tion) 18 (1) (2008).
+[12] D. X. Shaw, S. Liu, L. Kopman, Lagrangian relaxation procedure for
+     cardinality-constrained portfolio optimization, Optimisation Methods &
+     Software 23 (3) (2008) 411–420.
+[13] T.-J. Chang, N. Meade, J. E. Beasley, Y. M. Sharaiha, Heuristics for
+
+                                     24
+     cardinality constrained portfolio optimisation, Computers & Operations
+     Research 27 (13) (2000) 1271–1302.
+[14] C. B. Kalayci, O. Polat, M. A. Akbay, An efficient hybrid metaheuristic
+     algorithm for cardinality constrained portfolio optimization, Swarm and
+     Evolutionary Computation 54 (2020) 100662.
+[15] L. D. Gaspero, G. D. Tollo, A. Roli, A. Schaerf, Hybrid metaheurist-
+     ics for constrained portfolio selection problems, Quantitative Finance
+     11 (10) (2011) 1473–1487.
+[16] M. V. Jahan, M.-R. Akbarzadeh-Totonchi, From local search to global
+     conclusions: migrating spin glass-based distributed portfolio selection,
+     IEEE Transactions on Evolutionary Computation 14 (4) (2010) 591–601.
+[17] A. Schaerf, Local search techniques for constrained portfolio selection
+     problems, Computational Economics 20 (3) (2002) 177–190.
+[18] A. R. Pouya, M. Solimanpur, M. J. Rezaee, Solving multi-objective
+     portfolio optimization problem using invasive weed optimization, Swarm
+     and Evolutionary Computation 28 (2016) 42–57.
+[19] J. Branke, B. Scheckenbach, M. Stein, K. Deb, H. Schmeck, Portfo-
+     lio optimization with an envelope-based multi-objective evolutionary
+     algorithm, European Journal of Operational Research 199 (3) (2009)
+     684–693.
+[20] K. Lwin, R. Qu, G. Kendall, A learning-guided multi-objective evolu-
+     tionary algorithm for constrained portfolio optimization, Applied Soft
+     Computing 24 (2014) 757–772.
+[21] S. K. Mishra, G. Panda, R. Majhi, A comparative performance assess-
+     ment of a set of multiobjective algorithms for constrained portfolio assets
+     selection, Swarm and Evolutionary Computation 16 (2014) 38–51.
+[22] R. Saborido, A. B. Ruiz, J. D. Bermúdez, E. Vercher, M. Luque, Evol-
+     utionary multi-objective optimization algorithms for fuzzy portfolio se-
+     lection, Applied Soft Computing 39 (2016) 48–63.
+[23] X. Li, Y.-H. Huang, S.-C. Fang, Y. Zhang, An alternative efficient rep-
+     resentation for the project portfolio selection problem, European Journal
+     of Operational Research 281 (1) (2020) 100–113.
+[24] J. Gao, D. Li, Optimal cardinality constrained portfolio selection, Op-
+     erations research 61 (3) (2013) 745–761.
+[25] A. M. Newman, M. Weiss, A survey of linear and mixed-integer optim-
+     ization tutorials, INFORMS Transactions on Education 14 (1) (2013)
+     26–38.
+[26] N. A. Canakgoz, J. E. Beasley, Mixed-integer programming approaches
+
+                                      25
+     for index tracking and enhanced indexation, European Journal of Oper-
+     ational Research 196 (1) (2009) 384–399.
+[27] K. T. Lwin, R. Qu, B. L. MacCarthy, Mean-VaR portfolio optimization:
+     A nonparametric approach, European Journal of Operational Research
+     260 (2) (2017) 751–766.
+[28] Y. Chen, A. Zhou, R. Zhou, P. He, Y. Zhao, L. Dong, An evolution-
+     ary algorithm with a new coding scheme for multi-objective portfolio
+     optimization, in: Asia-Pacific Conference on Simulated Evolution and
+     Learning, Springer, 2017, pp. 97–109.
+[29] J. Li, J. Xu, Multi-objective portfolio selection model with fuzzy random
+     returns and a compromise approach-based genetic algorithm, Informa-
+     tion Sciences 220 (2013) 507–521.
+[30] A. Ponsich, A. L. Jaimes, C. A. C. Coello, A survey on multiobjective
+     evolutionary algorithms for the solution of the portfolio optimization
+     problem and other finance and economics applications, IEEE Transac-
+     tions on Evolutionary Computation 17 (3) (2013) 321–344.
+[31] Q. Zhang, H. Li, MOEA/D: A multiobjective evolutionary algorithm
+     based on decomposition, IEEE Transactions on Evolutionary Computa-
+     tion 11 (6) (2007) 712–731.
+[32] K. Deb, A. Pratap, S. Agarwal, T. Meyarivan, A fast and elitist multiob-
+     jective genetic algorithm: NSGA-II, IEEE Transactions on Evolutionary
+     Computation 6 (2) (2002) 182–197.
+[33] N. Beume, B. Naujoks, M. Emmerich, SMS-EMOA: Multiobjective se-
+     lection based on dominated hypervolume multiobjective selection based
+     on dominated hypervolume, European Journal of Operational Research
+     181 (3) (2007) 1653–1669.
+[34] D. Bienstock, Computational study of a family of mixed-integer quad-
+     ratic programming problems, Mathematical Programming 74 (2) (1996)
+     121–140.
+[35] J. C. Bean, Genetic algorithms and random keys for sequencing and
+     optimization, ORSA Journal on Computing 6 (2) (1994) 154–160.
+[36] M. N. Omidvar, M. Yang, Y. Mei, X. Li, X. Yao, Dg2: A faster and
+     more accurate differential grouping for large-scale black-box optimiza-
+     tion, IEEE Transactions on Evolutionary Computation 21 (6) (2017)
+     929–942.
+[37] R. Salomon, Re-evaluating genetic algorithm performance under co-
+     ordinate rotation of benchmark functions. a survey of some theoretical
+     and practical aspects of genetic algorithms, BioSystems 39 (3) (1996)
+
+                                     26
+     263–278.
+[38] Z. Yang, K. Tang, X. Yao, Large scale evolutionary optimization us-
+     ing cooperative coevolution, Information Sciences 178 (15) (2008) 2985–
+     2999.
+[39] R. Storn, K. Price, Differential evolution–a simple and efficient heur-
+     istic for global optimization over continuous spaces, Journal of Global
+     Optimization 11 (4) (1997) 341–359.
+[40] K. Deb, D. Deb, Analysing mutation schemes for real-parameter genetic
+     algorithms, International Journal of Artificial Intelligence and Soft Com-
+     puting 4 (1) (2014) 1–28.
+[41] Y. Chen, A. Zhou, L. Dou, An evolutionary algorithm with a new op-
+     erator and an adaptive strategy for large-scale portfolio problems, in:
+     Proceedings of the Genetic and Evolutionary Computation Conference
+     Companion, ACM, 2018, pp. 247–248.
+[42] Y. Liu, A. Zhou, H. Zhang, Termination detection strategies in evolu-
+     tionary algorithms: a survey, in: Proceedings of the Genetic and Evol-
+     utionary Computation Conference, ACM, 2018, pp. 1063–1070.
+[43] A. Zhou, B.-Y. Qu, H. Li, S.-Z. Zhao, P. N. Suganthan, Q. Zhang,
+     Multiobjective evolutionary algorithms: A survey of the state of the
+     art, Swarm and Evolutionary Computation 1 (1) (2011) 32–49.
+[44] M. R. Sierra, C. A. C. Coello, Improving PSO-based multi-objective op-
+     timization using crowding, mutation and -dominance, in: International
+     Conference on Evolutionary Multi-Criterion Optimization, Springer,
+     2005, pp. 505–519.
+[45] E. Zitzler, L. Thiele, Multiobjective evolutionary algorithms: a compar-
+     ative case study and the strength pareto approach, IEEE Transactions
+     on Evolutionary Computation 3 (4) (1999) 257–271.
+[46] G. Mavrotas, K. Florios, J. R. Figueira, An improved version of a
+     core based algorithm for the multi-objective multi-dimensional knapsack
+     problem: A computational study and comparison with meta-heuristics,
+     Applied Mathematics and Computation 270 (2015) 25–43.
+[47] G. Mavrotas, K. Florios, An improved version of the augmented ε-
+     constraint method (augmecon2) for finding the exact pareto set in
+     multi-objective integer programming problems, Applied Mathematics
+     and Computation 219 (18) (2013) 9652–9669.
+[48] G. Mavrotas, Effective implementation of the ε-constraint method in
+     multi-objective mathematical programming problems, Applied mathem-
+     atics and computation 213 (2) (2009) 455–465.
+
+                                      27
+[49] S. H. Hurlbert, Pseudoreplication and the design of ecological field ex-
+     periments, Ecological monographs 54 (2) (1984) 187–211.
+
+
+
+
+                                     28
+
