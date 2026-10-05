@@ -1,0 +1,889 @@
+{
+ "id": "I-20261004-07",
+ "generated_utc": "2026-10-05T04:34:10Z",
+ "task": "T-20261004-82",
+ "coordinator_code": "R1004-T82",
+ "tier_definitions": {
+  "1": "无",
+  "2": "只有回测",
+  "3": "样本外或发表后",
+  "4": "机构自述实盘",
+  "5": "可核验或独立复现"
+ },
+ "verdict_classes": {
+  "1": "第 1 类：主流且样本外强，直接采用",
+  "2": "第 2 类：有部分样本外证据，值得深做",
+  "3": "第 3 类：弱或炒作，不做"
+ },
+ "evidence_table": [
+  {
+   "id": "F1a",
+   "family": "1 湍流/多重分形/粗糙波动率",
+   "method": "HAR-RV 及半方差/跳扩展",
+   "best_impl": "Corsi 2009 HAR-RV（日/周/月三个已实现波动分量的线性回归）；Log-HAR；HAR-RS/-J/-CJ",
+   "evidence": "独立评估一再把它当作最难打败的基线：Bennedsen 等 2022 的对比集；2026 年 TSFM 论文（50 个资产、9 个零样本基础模型对 8 个计量模型）结论是计量基准仍有竞争力，只有最小的 TTM 以微弱优势胜 Log-HAR；Horvath 等 2026 在外汇上 HAR-RV 的样本外 R² 为 0.224",
+   "tier": 5,
+   "verdict": 1,
+   "verdict_text": "直接采用，作波动预测基线",
+   "module": "波动预测层，接在 open_composer/research/equity_book/risk.py 的因子方差和特异方差之外；需要 SIP 分钟线算日内已实现波动",
+   "caveat": "预测精度不等于夏普。波动预测换成夏普要过同波动配对检验（见 F1d）",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/wu__corsi2009_har_rv.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2607.05291_tsfm_realized_vol_vs_econometric.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2607.17865_how_fast_do_signatures_learn.md",
+    "sources/physics-geometry-2026-10-04/arxiv__1610.00332_bennedsen_decoupling.md"
+   ]
+  },
+  {
+   "id": "F1b",
+   "family": "1 湍流/多重分形/粗糙波动率",
+   "method": "马尔可夫切换多重分形 MSM",
+   "best_impl": "Calvet–Fisher 2004（NBER w9839）：4 个参数、1000 多个状态的极大似然版本；Lux–Morales-Arias 2010 的 GMM 版本",
+   "evidence": "外汇日度数据：日、周频只比 GARCH(1,1) 略好，10–50 天上有明显增益（NBER w9839 摘要）。Lux–Morales-Arias 的蒙特卡洛：不论真实过程是哪种，MSM 预测波动最好（k=8 个乘子，模拟，不是真实数据）。股票上的独立比较没有打开原文，搜索摘要说 RV-ARFIMA 在平静期最好、MSM 在动荡期更好，原油上没有统一赢家",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "有部分证据；对我们的 21 个交易日预测期正好相关，但优先级最低",
+   "module": "只在 HAR+签名的波动预测做出来、而且证明波动预测质量对账户有用之后，才补一个 21 天对照",
+   "caveat": "外汇数据，不是股票；增益主要在中长期限",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/nber__w9839_calvet_fisher_forecast_multifractal.md",
+    "sources/physics-geometry-2026-10-04/ifw__kwp1582_lux_moralesarias_relative_forecasting.md",
+    "sources/physics-geometry-2026-10-04/arxiv__condmat0005400_bacry_delour_muzy_mrw.md"
+   ]
+  },
+  {
+   "id": "F1c",
+   "family": "1 湍流/多重分形/粗糙波动率",
+   "method": "粗糙波动率 RFSV 与分数阶模型",
+   "best_impl": "Gatheral–Jaisson–Rosenbaum（H≈0.1，改进已实现波动预测）；Bennedsen–Lunde–Pakkanen 2022 JFEC（Cauchy、Power-BSS 模型）",
+   "evidence": "Bennedsen 等：在 2013–2014 平静期的样本外窗口里，他们的模型多数情形损失最小，但 MCS 在日频上区分力弱，RFSV 在 1 天步长上最好。反面：Cont–Das 2022 认为已实现波动呈现的粗糙性主要来自估计误差，即使瞬时波动是布朗运动式的也会表现出 H<0.5。2025 嵌套因子模型：指数波动 H≈0.11，个股残差 H≈0（多重分形）",
+   "tier": 3,
+   "verdict": 3,
+   "verdict_text": "对股票组合弱；只在期权线开工时再看",
+   "module": "无",
+   "caveat": "收益只在日内到 1 天的预测期；21 天预测期上 Log-HAR 与基础模型打平（F1a 证据）",
+   "snapshots": [
+    "sources/methods-2026-10-04/arxiv__1410.3394_volatility_is_rough.md",
+    "sources/physics-geometry-2026-10-04/arxiv__1610.00332_bennedsen_decoupling.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2203.13820_rough_vol_fact_or_artefact.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2505.02678_nested_factor_multifractal.md"
+   ]
+  },
+  {
+   "id": "F1d",
+   "family": "1 湍流/多重分形/粗糙波动率",
+   "method": "波动管理组合（把波动预测变成夏普）",
+   "best_impl": "Moreira–Muir 2017（未打开原文）；Barroso–Santa-Clara 动量风险管理（只读到二手转述）；Bongaerts 等条件波动目标（搜索摘要）",
+   "evidence": "Cederburg–O'Doherty–Wang–Yan（JFE 2020）：103 个策略，夏普差为正的只有 53 个，持续波动但无风险收益关系的零假设下平均应有 66 个（自助法 p=0.01）；可实时执行的样本外版本一般夏普和确定性等价收益低于不管理的原组合，原因是回归的结构不稳。正面：动量策略的风险管理（Barroso–Santa-Clara）据称把夏普近乎翻倍并消除崩盘（Nucera 2017 的转述）；Harvey 等：只对权益和信用类风险资产有效",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "只在动量式、有崩盘风险的子策略上值得做；泛泛的波动管理归第 3 类",
+   "module": "v1.2 组合里的动量暴露的崩盘叠加层；任何版本都按同波动配对夏普检验，不接受只降波动的改进（机主 09-28 规则）",
+   "caveat": "Barroso–Santa-Clara、Moreira–Muir 原文未打开，二手摘要级",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/lehigh__cowy_volmanaged_oos.md",
+    "sources/physics-geometry-2026-10-04/garp__risk_managed_momentum.md"
+   ]
+  },
+  {
+   "id": "F2a",
+   "family": "2 流体力学/动力系统",
+   "method": "动态模态分解 DMD 交易",
+   "best_impl": "Mann–Kutz 2016（Quantitative Finance）；2023 图嵌入 DMD（Algorithmic Finance，只看到摘要，原文 403）",
+   "evidence": "每个行业取 10 只股票、每笔成本 8 美元、忽略滑点；窗口 (m,ℓ) 的\"热点\"和行业都是事后挑的：家居建筑行业最优窗口 (11,5) 十年年化 21.48%，命中率约 52.5%，同一行业别的窗口 18.6–19.2%；没有热点的行业表现差。没有找到独立复现或样本外检验",
+   "tier": 2,
+   "verdict": 3,
+   "verdict_text": "弱；DMD 本质是低秩线性回归，先看它是否打得过滚动 VAR/岭回归",
+   "module": "无",
+   "caveat": "样本选择和窗口选择都在样本内",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__1508.04487_mann_kutz_dmd.md"
+   ]
+  },
+  {
+   "id": "F2b",
+   "family": "2 流体力学/动力系统",
+   "method": "Koopman 算子深度预测器",
+   "best_impl": "SKOLR（ICML 2025）、Koopman Neural Forecaster",
+   "evidence": "只有通用时间序列基准，两次搜索都没找到金融收益的样本外证据",
+   "tier": 1,
+   "verdict": 3,
+   "verdict_text": "弱；对收益预测没有证据",
+   "module": "无",
+   "caveat": "只看到搜索摘要",
+   "snapshots": []
+  },
+  {
+   "id": "F2c",
+   "family": "2 流体力学/动力系统",
+   "method": "储层计算/回声状态网络 ESN",
+   "best_impl": "Ballarin–Capra–Dellaportas 2025（arXiv 2504.19623，v2 2026-09）",
+   "evidence": "1290 只美股，10 分钟到收盘五个期限，滚动岭回归，一个日历年（约 16000 个观测）：均方误差最多降 0.87%（10 分钟），到收盘几乎消失；均值方差组合毛夏普 ESN 1.529、等权 1.422、线性 -1.181、岭 -1.044、随机森林 0.166；计入交易成本后被动等权可以胜过主动组合",
+   "tier": 3,
+   "verdict": 3,
+   "verdict_text": "目前弱；日内引擎立项后可作低成本预测器重访",
+   "module": "无（日内线）",
+   "caveat": "毛收益；只有一年",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2504.19623_esn_intraday_multihorizon.md"
+   ]
+  },
+  {
+   "id": "F3a",
+   "family": "3 拓扑数据分析",
+   "method": "持续同调做危机/状态识别",
+   "best_impl": "Gidea–Katz 2018（Physica A）；Guritanu 等 2025 的严格因果版本（MDPI 原文 403，只有搜索摘要）",
+   "evidence": "Gidea–Katz：4 个美股指数，只检验 2000、2008 两次危机，景观范数在危机前上升。后续：Guritanu 等（摘要级）1999–2021 四个指数，固定因果参数（α=β=3.1，s=57，t=16）F1≈0.50，平均提前约 34 天，四次经典危机预警两次；Song–Li 2025：提前 0–5 天、样本内外灵敏度约 60%；2026 年零模型论文：景观 L1 范数与随机波动强共动，作者把\"是否有预测价值\"列为未解问题",
+   "tier": 3,
+   "verdict": 3,
+   "verdict_text": "弱；先证明它胜过\"平均相关+已实现波动+VIX\"，否则就是波动的代理",
+   "module": "无；若通过，作为压力期风险开关的一个输入",
+   "caveat": "事件个数很少，阈值在同样的危机上定；WIG20 \"持续熵是否只是波动代理\"一文被网站拦截，只有标题",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__1703.04385_gidea_katz_fulltext.md",
+    "sources/methods-2026-10-04/repec__song_li_2025_physica_a_tda_crypto.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2602.00383_null_validated_topological_signatures.md",
+    "sources/physics-geometry-2026-10-04/frontiers__fams2022940133_tda_crashes_recent.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2203.05603_ph_turbulence_index.md"
+   ]
+  },
+  {
+   "id": "F3b",
+   "family": "3 拓扑数据分析",
+   "method": "拓扑特征做收益或波动预测、拓扑组合",
+   "best_impl": "Souto 2023 JFDS（拓扑尾部相关，只拿到摘要）；2026 年拓扑风险组合（arXiv 2601.03974）",
+   "evidence": "Souto：加入持续同调信息使非线性和神经网络模型在动荡期更好地预测已实现波动（摘要）；拓扑组合：近十年标普 500 回测胜过 7 个组合模型（摘要，回测，无成本和样本外细节）。没有收益预测的样本外结果",
+   "tier": 2,
+   "verdict": 3,
+   "verdict_text": "弱；Souto 式的做法并入签名/HAR 的波动预测程序，作为一个特征族",
+   "module": "无",
+   "caveat": "摘要级",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/hbo__souto_topological_tail_dependence.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2601.03974_tda_portfolio_sp500.md"
+   ]
+  },
+  {
+   "id": "F4a",
+   "family": "4 路径签名",
+   "method": "签名回归预测已实现波动",
+   "best_impl": "Horvath 等 2026（arXiv 2607.17865）：Signature-LASSO 选特征、Signature-OLS 重估",
+   "evidence": "12 个美元货币对 1 分钟中间价 2013–2023，按时间前 80% 估计、后 20% 样本外；每天把累计收益路径做时间增强的领先–滞后变换，取 3 阶签名，拼接最近 22 个交易日共 858 个候选特征。样本外 R² 0.361，HAR-RV 0.224，HAR-RS 0.237；RMSE 0.749 对 0.827；12 个货币对全胜，平均 RMSE 比最强非签名基线低 7.9%。入选特征以高阶领先–滞后项为主",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "值得深做；第一个复现目标",
+   "module": "波动预测层（与 F1a 同一接口），也可作 M2 的一个特征族",
+   "caveat": "同一研究组、未被独立复现；外汇、24 小时报价；HAR 基线只用标量摘要，没有喂同样的日内路径信息，对比不完全公平",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2607.17865_how_fast_do_signatures_learn.md"
+   ]
+  },
+  {
+   "id": "F4b",
+   "family": "4 路径签名",
+   "method": "签名交易/组合框架",
+   "best_impl": "Futter–Horvath–Wiese 2023（arXiv 2308.15135）",
+   "evidence": "理论加合成数据和市场数据例子（动量、配对），没有扣成本的样本外夏普",
+   "tier": 2,
+   "verdict": 3,
+   "verdict_text": "对收益没有证据，不做",
+   "module": "无",
+   "caveat": "示例性质",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2308.15135_futter_horvath_wiese_fulltext.md"
+   ]
+  },
+  {
+   "id": "F4c",
+   "family": "4 路径签名",
+   "method": "签名做分类和异常检测；Oxford-Man 与 Man 的使用",
+   "best_impl": "Gyurko–Lyons–Kontkowski–Field 2014（Oxford-Man 研究所与 Man Group Plc 的员工合著）；Akyildirim 等 2022（ETH）",
+   "evidence": "Gyurko 等：WTI 原油期货 30 分钟桶和母单市场冲击的分类，LASSO 线性回归，留出样本外；Akyildirim 等：加密货币拉高出货识别，无监督 F1 最高 88%。这是分类和微观结构，不是收益预测。没有找到 Man AHL 自述在生产中使用签名的文字，只有合著者单位这一层关系",
+   "tier": 3,
+   "verdict": 3,
+   "verdict_text": "用于微观结构分类可以，用于收益不做",
+   "module": "无",
+   "caveat": "\"业界谁在用\"这一问没有证据支持到第 4 档",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__1307.7244_gyurko_signature_financial_stream.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2201.02441_signature_market_anomaly.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2006.00873_generalised_signature_method.md"
+   ]
+  },
+  {
+   "id": "F5a",
+   "family": "5 统计力学/随机矩阵/组合",
+   "method": "协方差非线性收缩与随机矩阵清洗",
+   "best_impl": "Ledoit–Wolf 2017 RFS（非线性收缩）；Zhao–Ledoit–Jiang 2023 JFEC（DCC-NL）；Bun–Bouchaud–Potters 综述（作者为 CFM 员工）",
+   "evidence": "Ledoit–Wolf：回测里非线性收缩优于线性收缩。Zhao–Ledoit–Jiang：N=1000 时全局最小方差组合的样本外年化标准差，样本协方差 13.54%，DCC-NL 8.16%，约束总敞口越紧收益越小，且多种交易成本假设下合适的收缩总是优于任意设定的敞口约束。反面：2023 年一篇 arXiv 预印本比较最小方差组合，高斯图模型（直接估精度矩阵）优于收缩和随机矩阵方法。CFM 在生产里使用的自述：打开的原文里没有找到",
+   "tier": 5,
+   "verdict": 1,
+   "verdict_text": "直接采用，作风险模型的对照与替换候选",
+   "module": "open_composer/research/equity_book/risk.py 的因子协方差/残差相关；pro-equity-2026-10-01 记录 sklearn 没有非线性收缩，自写约 40 行 QIS",
+   "caveat": "增益在风险（标准差），夏普上不保证；v1.2 已是结构化因子模型加收缩，增量可能有限",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/uzh__rfs2017_ledoit_wolf_markowitz_meets_goldilocks.md",
+    "sources/physics-geometry-2026-10-04/uzh__jfec2023_zhao_ledoit_jiang_gross_exposure_shrinkage.md",
+    "sources/physics-geometry-2026-10-04/arxiv__1610.08104_bun_bouchaud_potters_fulltext.md",
+    "sources/physics-geometry-2026-10-04/arxiv__physics0507111_potters_bouchaud_laloux_fulltext.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2305.11298_precision_vs_shrinkage.md"
+   ]
+  },
+  {
+   "id": "F5b",
+   "family": "5 统计力学/随机矩阵/组合",
+   "method": "层次风险平价 HRP",
+   "best_impl": "López de Prado 2016（原文未打开）；skfolio 的实现",
+   "evidence": "巴西市场样本外全面比较：HRP 一般不是最好，部分指标与其他方法持平，跑赢市场指数；Cotton 2024：HRP 与最小方差由一个连续参数连起来（Schur 补配置）；2026 年一篇论文指出 HRP 和 Schur 配置都对收益信号视而不见，只解最小方差",
+   "tier": 3,
+   "verdict": 3,
+   "verdict_text": "对我们的多空因子组合不做；组合已用带风险模型的优化器",
+   "module": "无",
+   "caveat": "LdP 原文的\"样本外更好\"主张是二手",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/fgv__rbfin_hrp_brazil_oos.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2411.05807_schur_complementary_allocation.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2604.23833_beyond_deprado_cotton.md"
+   ]
+  },
+  {
+   "id": "F6",
+   "family": "6 信息几何/最优传输",
+   "method": "Wasserstein k-means 状态聚类",
+   "best_impl": "Horvath–Issa–Muguruza（J. Computational Finance 2024）",
+   "evidence": "用类内/类间最大均值差异分数比较聚类方法，说明自己远胜对手；没有交易或样本外收益评估",
+   "tier": 2,
+   "verdict": 3,
+   "verdict_text": "弱；只能当诊断，不是信号",
+   "module": "无",
+   "caveat": "评价指标是聚类质量，不是赚钱",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2110.11848_horvath_wasserstein_regimes.md"
+   ]
+  },
+  {
+   "id": "F7a",
+   "family": "7 流形与潜在因子",
+   "method": "IPCA 与条件自编码器",
+   "best_impl": "Kelly–Pruitt–Su 2019（只有搜索摘要）；Gu–Kelly–Xiu 2021 JoE 自编码器资产定价；Gu–Kelly–Xiu 2020 RFS 机器学习（打开了 NBER 版本）",
+   "evidence": "GKX 2020：神经网络价值加权多空十分位样本外夏普 1.35，用神经网络预测给标普 500 择时夏普 0.77 对买入持有 0.51（毛）。自编码器论文：样本外定价误差远小于其他因子模型（搜索摘要）。反面：Fieberg 等说 IPCA 分不清\"特征即协方差\"还是\"特征即收益\"；Avramov–Cheng–Metzker（搜索摘要）：利润集中在微盘和高套利限制状态，计入合理成本后恶化",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "已在 v1.4 的 M3/M2 里；见 F7b",
+   "module": "open_composer/research/equity_book/ml_composite.py",
+   "caveat": "毛收益；微盘集中",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/nber__w25398_gu_kelly_xiu_autoencoder.md"
+   ]
+  },
+  {
+   "id": "F7b",
+   "family": "7 流形与潜在因子",
+   "method": "AIPT/DKKM 随机特征 SDF",
+   "best_impl": "Didisheim–Ke–Kelly–Malamud（NBER w33012，2024）",
+   "evidence": "130 个特征、T=360 个月；最大模型 P=360,000（复杂度 c=P/T=1000）样本外切点夏普 3.7，对比 FF6 的 0.8 和 Hou 五因子的 1.2；同一信息集下 FF6 简单版 0.74，高复杂度版 1.93–2.50；定价误差比 FF6 低 54.8%。无岭惩罚时在 c≈1 夏普崩到 0（双重上升），有岭惩罚则 c>1 之后持续上升。大/超大盘上夏普约 1.6–1.8（毛）。反面：Nagel（NBER w34104）证明此类模型退化为按波动择时的动量；Cartea 等 2025：特征带噪声时复杂度会损害样本外；Kelly–Malamud 2025 回应（搜索摘要）",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "值得深做；我们的 M3 已在跑，缺的不是 P 而是信息集宽度和复杂度曲线",
+   "module": "M3（ml_composite.py）",
+   "caveat": "毛收益；微盘影响大；Nagel 的\"就是动量择时\"反驳没被推翻",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/nber__w33012_didisheim_aipt.md",
+    "sources/methods-2026-10-04/nber__w34104_nagel_seemingly_virtuous_complexity.md",
+    "sources/methods-2026-10-04/nber__w30217_kelly_malamud_zhou_virtue_of_complexity.md"
+   ]
+  },
+  {
+   "id": "F7c",
+   "family": "7 流形与潜在因子",
+   "method": "扩散映射、UMAP 状态嵌入",
+   "best_impl": "无成熟的交易实现",
+   "evidence": "搜索只见到可视化聚类、压力测试里扩散映射的平均绝对误差比 PCA 低最多 55%（摘要级）；没有样本外交易结果",
+   "tier": 2,
+   "verdict": 3,
+   "verdict_text": "弱",
+   "module": "无",
+   "caveat": "只有搜索摘要",
+   "snapshots": []
+  },
+  {
+   "id": "F8a",
+   "family": "8 深度序列与同时预测未来特征",
+   "method": "Jane Street 的思路及其学术对应",
+   "best_impl": "Jane Street 2026 实习项目（预测收益和未来输入特征，检验树搜索推演加自蒸馏是否胜过直接预测）；多期限辅助任务 TCTS（ICML 2021）；Kaggle Jane Street 市场预测冠军方案的自编码器加多目标 MLP",
+   "evidence": "Jane Street 页面写明\"深度学习是量化交易的未来\"并列出噪声、状态频繁变化两个难点（机构自述，第 4 档，但没有方法细节）；实习项目只写了\"测试是否胜过\"，结果没有公布。TCTS：沪深 300 300 只股票，2016–2020 测试，一期任务 RankIC：GRU 0.049、LightGBM 0.038、GAT 0.052、普通多任务（3 个期限）0.061、TCTS 0.067–0.075；辅助任务并非越多越好（10 个期限的普通多任务 0.052）。Kaggle：冠军用自编码器特征加多目标 MLP（Numerai 论坛转述）",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "多期限辅助目标值得深做；\"未来特征预测\"本身没有公开结果，不能当证据",
+   "module": "M2（GBDT 集成）和一个小神经网络的预注册变体",
+   "caveat": "TCTS 在 A 股、毛指标（RankIC），没有成本；Jane Street 的项目是研究课题而非结论",
+   "snapshots": [
+    "sources/methods-2026-10-04/janestreet__machine-learning.md",
+    "sources/methods-2026-10-04/janestreet__wrought-2026.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2007.05290_tcts_wu_etal_icml2021.md",
+    "sources/physics-geometry-2026-10-04/numerai__forum4338_ae_multitask_mlp_janestreet.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2302.10175_spatio_temporal_momentum.md"
+   ]
+  },
+  {
+   "id": "F8b",
+   "family": "8 深度序列与同时预测未来特征",
+   "method": "现成时间序列基础模型零样本（Chronos、TimesFM、Moirai）",
+   "best_impl": "Chronos、TimesFM、Moirai",
+   "evidence": "Rahimikia–Ni–Wang 2025：美股日度超额收益，Chronos(large) 样本外 R² -1.37%、TimesFM(500M) -2.80%，CatBoost -0.10%、线性 -0.47%；2026 年五只流动股票的对比：相对随机游走的增益小而稀，单侧 DM 检验只在 10 个任务里拒绝 2 个；已实现波动上也没有统一增益。项目的方向登记表已把它登记为 evidence_too_weak",
+   "tier": 5,
+   "verdict": 3,
+   "verdict_text": "不做",
+   "module": "无",
+   "caveat": "",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2511.18578_rahimikia_fintext_tsfm.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2606.27100_pretrained_tsfm_financial_return.md",
+    "sources/physics-geometry-2026-10-04/arxiv__2607.05291_tsfm_realized_vol_vs_econometric.md"
+   ]
+  },
+  {
+   "id": "F8c",
+   "family": "8 深度序列与同时预测未来特征",
+   "method": "金融数据上从零预训练的序列模型",
+   "best_impl": "FinText-TSFM（Rahimikia–Ni–Wang 2025，613 个预训练模型；代码仓库未找到）",
+   "evidence": "搜索摘要称预训练用了 89 个市场、超过 20 亿观测、613 个模型（快照正文没有这些数字，待核对）；快照里：测试集超过 1800 万个日度超额收益、约 1 万只美股；摘要说在金融数据上预训练的模型取得\"显著的预测和经济增益\"，数据越大、合成数据增广和调参都更好。但组合是每天调仓的零成本等权十分位多空，同文中 CatBoost 毛夏普 6.79，不可信到净值上",
+   "tier": 3,
+   "verdict": 2,
+   "verdict_text": "有部分证据，但最低有效深度（20 亿观测、算力）超出现在的预算，先不做",
+   "module": "无（阶段 4 才考虑）",
+   "caveat": "毛收益；算力需求未核对",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2511.18578_rahimikia_fintext_tsfm.md"
+   ]
+  },
+  {
+   "id": "F8d",
+   "family": "8 深度序列与同时预测未来特征",
+   "method": "Kronos K 线基础模型",
+   "best_impl": "Kronos（AAAI 2026；120 亿 K 线、45 个交易所）",
+   "evidence": "作者自测：RankIC 比最强 TSFM 高 93%，波动预测 MAE 低 9%，A 股只做多 top-k 的投资模拟年化超额和信息比率最高；快照里没有找到成本说明。独立证据只有一个个人在 Hugging Face 上的印度股票微调记录：信息系数 -0.0114，12-1 动量 +0.0376，十分位价差 0.139% 低于约 10bp 的往返成本（第 2 档，单人）。GitHub 上有商业用户自述在跑日志但没有结果。项目方向登记表已是 evidence_too_weak",
+   "tier": 2,
+   "verdict": 3,
+   "verdict_text": "不做",
+   "module": "无",
+   "caveat": "",
+   "snapshots": [
+    "sources/physics-geometry-2026-10-04/arxiv__2508.02739_kronos_html.md",
+    "sources/physics-geometry-2026-10-04/hf__sahil007123_kronos_nse_1d_no_alpha.md",
+    "sources/physics-geometry-2026-10-04/github__kronos_issue273.md"
+   ]
+  }
+ ],
+ "min_effective_depth": [
+  {
+   "method": "AIPT/DKKM（M3）",
+   "documented": "复杂度 c=P/T：c<1 时夏普随复杂度升；c≈1 无岭惩罚时崩到 0；c>1 有岭惩罚时一路升到 c=1000（P=360,000，T=360 个月，130 个特征）。信息集固定时，FF6 的 5 个特征从 0.74 升到 1.93–2.50",
+   "ours": "M3：P=4000，23 个输入，周频训练，T=55 周（2019）到 407 周（2026），所以 c 约 73 到 10，已在 c≫1 区",
+   "inference": "（我的推断）P 可能不是瓶颈；信息集宽度（23 对 130）和训练长度是。先画 P∈{500,4000,32000} 的复杂度曲线，看 4000 是否已在平台上",
+   "first_target": "R1"
+  },
+  {
+   "method": "路径签名做波动预测",
+   "documented": "时间增强的领先–滞后路径，3 阶截断，每天 39 项（3+9+27，已代码核对），拼最近 22 个交易日 858 个候选特征，LASSO 选入后 OLS；入选以高阶领先–滞后项为主",
+   "ours": "SIP 有分钟线，可构造同样的日内路径",
+   "inference": "（我的推断）1–2 阶的领先–滞后项只对应二次变差、半方差一类标量，被 HAR-RS 吸收；增益要靠 3 阶和跨多日的拼接。所以测 1–2 阶得到\"没有增益\"不能当作否定",
+   "first_target": "R2"
+  },
+  {
+   "method": "多期限辅助目标",
+   "documented": "辅助期限集 T3/T5/T10；普通多任务在 T3 最好（0.061），T10 反而降到 0.052；需要调度器才在 T5 达到 0.075。GRU 隐层 32、输入序列 60 天、沪深 300",
+   "ours": "M2 现在是 21 个交易日单一标签",
+   "inference": "（我的推断）先做普通多任务（便宜），再决定要不要调度器；增益靠\"期限相近的任务\"，不是任务越多越好",
+   "first_target": "R3"
+  },
+  {
+   "method": "TDA 状态识别",
+   "documented": "滑动窗口把 4 个指数日收益变成 4 维点云，算 1 维持续同调的景观 L1/L2 范数；因果规则 α=β=3.1，s=57，t=16；F1≈0.50，只预警 4 次危机中的 2 次",
+   "ours": "4 个指数点云太少",
+   "inference": "（我的推断）公平的检验至少要有多资产点云（行业 ETF 或几十只股票）、事前冻结的因果规则、与\"平均相关+已实现波动+VIX\"比，并覆盖 2020 和 2022 这两个文献里失败的场景。深度不是缺的东西，缺的是胜过简单基线的证据",
+   "first_target": "R4"
+  },
+  {
+   "method": "协方差收缩",
+   "documented": "N 与样本长度同量级时增益最大（N=1000）；约束总敞口越紧收缩的增益越小",
+   "ours": "U3000 面板，结构化因子模型加收缩",
+   "inference": "（我的推断）v1.2 的风险模型已吃掉大部分收益；增量要用预测/实现波动比和最小方差组合的样本外标准差来量",
+   "first_target": "R5"
+  },
+  {
+   "method": "金融预训练序列模型",
+   "documented": "（搜索摘要，待核对）20 亿观测、89 个市场；现成预训练模型不行，从金融数据重新预训练才行（快照确认）",
+   "ours": "Modal 每月 25 美元以内，T4 GPU 超出要机主批准",
+   "inference": "（待核对）训练算力需求论文里没有读到，不能估美元数",
+   "first_target": "无（阶段 4）"
+  },
+  {
+   "method": "MSM",
+   "documented": "Calvet–Fisher：4 个参数、1000 多个状态（k 个乘子，2^k 个状态）；Lux 蒙特卡洛只用 k=8",
+   "ours": "",
+   "inference": "（我的推断）k 小时估计便宜，深度要求不高，但证据只在外汇的 10–50 天",
+   "first_target": "无"
+  }
+ ],
+ "repro_targets": [
+  {
+   "id": "R1",
+   "paper": "Didisheim–Ke–Kelly–Malamud，NBER w33012，复杂度曲线与 FF6 对比图（文中图 2 和图 4）",
+   "target": "样本外切点夏普随 c 单调上升（有岭）、c≈1 无岭时崩溃；FF6 简单版 0.74，P=360,000（c=1000）版 1.93–2.50；整体 3.7",
+   "data": "论文用的 130 个特征可得性待核对；免费近似：Xiu 的 datashare.zip（特征数和年份待核对，HTTP 200，约 1.5 GB）或 JKP 因子数据（jkpfactors.com，HTTP 200）",
+   "compute": "对偶形式的岭（T×T），随机傅里叶特征分块现算；本机内存 3.9 GB 吃紧，倾向 Modal CPU；美元数待核对，发射前必须过 scripts/modal_budget.py check",
+   "success": "曲线形状复现（单调与双重上升），夏普水平在 0.5 倍以内；再把 M3 搬到流动股票并扣成本"
+  },
+  {
+   "id": "R2",
+   "paper": "Horvath 等，arXiv 2607.17865，第 6.1 节表 2",
+   "target": "12 个货币对次日对数已实现波动：Signature-OLS 样本外 R² 0.361、RMSE 0.749；HAR-RV 0.224、0.827；12/12 全胜",
+   "data": "HistData 的 1 分钟外汇数据（免费，使用条款和可下载性待核对）；我们的版本：SIP 分钟线，约 100 只流动股票",
+   "compute": "858 个特征乘约 2800 天乘 12 个货币对，LASSO 加 OLS，本机即可",
+   "success": "外汇上 R² 差距（0.36 对 0.22）复现到 ±0.05；股票上签名模型相对一个喂了同样日内路径信息的强 HAR 仍有增益才算有效"
+  },
+  {
+   "id": "R3",
+   "paper": "Wu 等，Temporally Correlated Task Scheduling for Sequence Learning，ICML 2021，表 3",
+   "target": "沪深 300，测试 2016-01 到 2020-08，一期任务 RankIC：GRU 0.049，普通多任务 T3 0.061，TCTS T5 0.075，LightGBM 0.038",
+   "data": "Qlib 社区数据（可得性待核对）；代码 qlib/examples/benchmarks/TCTS（MIT，49,132 星）",
+   "compute": "2 层 GRU、隐层 32，CPU 可跑",
+   "success": "普通多任务相对单任务 GRU 的 RankIC 增量方向与量级（+0.012）复现；再搬到 U3000 周频 M2 的预注册变体，用同波动配对 t 判"
+  },
+  {
+   "id": "R4",
+   "paper": "Gidea–Katz 2018 加 Guritanu 等 2025（Computers 14(10):408）",
+   "target": "标普 500、道琼斯、纳斯达克、罗素 2000 日收益，窗口滑动，景观 L1/L2 范数在 2000、2008 前上升；因果规则 α=β=3.1，s=57，t=16，F1≈0.50，平均提前约 34 天",
+   "data": "四个指数日收益 1999–2021，需要 Stooq/Yahoo/FRED 之类（Alpaca SIP 的起始年份待核对）",
+   "compute": "ripser，本机几分钟",
+   "success": "复现两次危机的上升形态与 F1；然后在同样规则下加入基线（平均相关、已实现波动、VIX），并检验 2020 和 2022"
+  },
+  {
+   "id": "R5",
+   "paper": "Zhao–Ledoit–Jiang，JFEC 2023，N=1000 全局最小方差组合",
+   "target": "样本外年化标准差：样本协方差 13.54%，DCC-NL 8.16%",
+   "data": "我们自己的 U3000 日度面板",
+   "compute": "本机；QIS 约 40 行自写",
+   "success": "方向与量级复现；再量 v1.2 风险模型的预测对实现波动比，看收缩能否改进"
+  },
+  {
+   "id": "R6",
+   "paper": "（可选校准）Cederburg 等 JFE 2020 的自助法；Barroso–Santa-Clara 动量缩放",
+   "target": "103 个策略中 53 个夏普差为正，自助法零假设期望 66，p=0.01",
+   "data": "Ken French 数据库日频因子（免费）",
+   "compute": "本机几分钟",
+   "success": "复现\"泛泛的波动管理不稳\"和\"动量缩放有效\"这两个相反的结论，用来校准我们的同波动配对检验"
+  }
+ ],
+ "oss_table": [
+  {
+   "name": "Kronos",
+   "repo": "shiyu-coder/Kronos",
+   "stars": 39912,
+   "license": "MIT",
+   "last_push": "2026-04-13",
+   "use": "不用（F8d）"
+  },
+  {
+   "name": "giotto-tda",
+   "repo": "giotto-ai/giotto-tda",
+   "stars": 1007,
+   "license": "NOASSERTION",
+   "last_push": "2024-06-18",
+   "use": "R4 可选，已 2 年多未更新"
+  },
+  {
+   "name": "ripser.py",
+   "repo": "scikit-tda/ripser.py",
+   "stars": 342,
+   "license": "NOASSERTION",
+   "last_push": "2026-09-12",
+   "use": "R4 首选"
+  },
+  {
+   "name": "persim",
+   "repo": "scikit-tda/persim",
+   "stars": 143,
+   "license": "MIT",
+   "last_push": "2026-08-27",
+   "use": "R4，景观/图像"
+  },
+  {
+   "name": "giotto-ph",
+   "repo": "giotto-ai/giotto-ph",
+   "stars": 59,
+   "license": "NOASSERTION",
+   "last_push": "2024-05-30",
+   "use": "备选"
+  },
+  {
+   "name": "GUDHI",
+   "repo": "GUDHI/gudhi-devel",
+   "stars": 329,
+   "license": "MIT",
+   "last_push": "2026-09-30",
+   "use": "备选，景观"
+  },
+  {
+   "name": "signatory",
+   "repo": "patrick-kidger/signatory",
+   "stars": 312,
+   "license": "Apache-2.0",
+   "last_push": "2024-01-11",
+   "use": "GPU 签名；多年未更新"
+  },
+  {
+   "name": "iisignature",
+   "repo": "bottler/iisignature",
+   "stars": 123,
+   "license": "MIT",
+   "last_push": "2026-06-03",
+   "use": "R2 首选（CPU）"
+  },
+  {
+   "name": "esig",
+   "repo": "datasig-ac-uk/esig",
+   "stars": 55,
+   "license": "GPL-3.0",
+   "last_push": "2024-12-17",
+   "use": "GPL，避免"
+  },
+  {
+   "name": "pysiglib",
+   "repo": "daniil-shmelev/pysiglib",
+   "stars": 27,
+   "license": "Apache-2.0",
+   "last_push": "2026-09-27",
+   "use": "新，星少，备选"
+  },
+  {
+   "name": "Chronos",
+   "repo": "amazon-science/chronos-forecasting",
+   "stars": 5974,
+   "license": "Apache-2.0",
+   "last_push": "2026-09-17",
+   "use": "不用"
+  },
+  {
+   "name": "TimesFM",
+   "repo": "google-research/timesfm",
+   "stars": 34103,
+   "license": "Apache-2.0",
+   "last_push": "2026-09-29",
+   "use": "不用"
+  },
+  {
+   "name": "Moirai/uni2ts",
+   "repo": "SalesforceAIResearch/uni2ts",
+   "stars": 1604,
+   "license": "Apache-2.0",
+   "last_push": "2026-06-02",
+   "use": "不用"
+  },
+  {
+   "name": "granite-tsfm（含 TTM）",
+   "repo": "ibm-granite/granite-tsfm",
+   "stars": 907,
+   "license": "Apache-2.0",
+   "last_push": "2026-10-02",
+   "use": "TTM 在波动预测上唯一微弱胜 Log-HAR，F1a 之后可作对照"
+  },
+  {
+   "name": "PyDMD",
+   "repo": "PyDMD/PyDMD",
+   "stars": 1262,
+   "license": "MIT",
+   "last_push": "2026-10-03",
+   "use": "只用于一次性对照"
+  },
+  {
+   "name": "pykoopman",
+   "repo": "dynamicslab/pykoopman",
+   "stars": 456,
+   "license": "MIT",
+   "last_push": "2026-01-22",
+   "use": "不用"
+  },
+  {
+   "name": "skfolio",
+   "repo": "skfolio/skfolio",
+   "stars": 2458,
+   "license": "BSD-3-Clause",
+   "last_push": "2026-10-03",
+   "use": "R5；已在 pro-equity 调研里采用"
+  },
+  {
+   "name": "Riskfolio-Lib",
+   "repo": "dcajasn/Riskfolio-Lib",
+   "stars": 4533,
+   "license": "BSD-3-Clause",
+   "last_push": "2026-10-04",
+   "use": "备选"
+  },
+  {
+   "name": "arch",
+   "repo": "bashtage/arch",
+   "stars": 1586,
+   "license": "NOASSERTION",
+   "last_push": "2026-09-27",
+   "use": "GARCH 基线"
+  },
+  {
+   "name": "Qlib",
+   "repo": "microsoft/qlib",
+   "stars": 49132,
+   "license": "MIT",
+   "last_push": "2026-09-22",
+   "use": "R3 的 TCTS 基准在其 examples"
+  },
+  {
+   "name": "ipca",
+   "repo": "bkelly-lab/ipca",
+   "stars": 266,
+   "license": "MIT",
+   "last_push": "2022-08-15",
+   "use": "多年未更新"
+  },
+  {
+   "name": "MFDFA",
+   "repo": "LRydin/MFDFA",
+   "stars": 165,
+   "license": "MIT",
+   "last_push": "2022-08-15",
+   "use": "不用"
+  },
+  {
+   "name": "mlfinlab",
+   "repo": "hudson-and-thames/mlfinlab",
+   "stars": 4935,
+   "license": "NOASSERTION",
+   "last_push": "2023-10-02",
+   "use": "商业许可，不用"
+  },
+  {
+   "name": "neuralforecast",
+   "repo": "Nixtla/neuralforecast",
+   "stars": 4277,
+   "license": "Apache-2.0",
+   "last_push": "2026-09-24",
+   "use": "备选"
+  }
+ ],
+ "github_snapshot": "sources/physics-geometry-2026-10-04/github_api__repo_stats.json",
+ "roadmap": [
+  {
+   "stage": 0,
+   "window": "10-05 至 10-08",
+   "where": "本机",
+   "title": "复现校准",
+   "work": "R6、R5、R4：先证明我们的实现能复现已发表的数字，再改到我们的品种和成本",
+   "evidence": "每项复现到容差内：方向一致且效应量不低于原文的一半（这个容差是我的判断，不是数据）；复现不出来先查实现，不下方向结论",
+   "stop": "单项 5 个工作日内复现不出来就停；R4 若加基线后拓扑特征没有增量，TDA 线关闭并写死因"
+  },
+  {
+   "stage": 1,
+   "window": "10-08 至 10-14",
+   "where": "本机",
+   "title": "签名波动预测与多期限辅助目标",
+   "work": "R2（外汇复现，再股票 RV）；R3（普通多任务，再预注册 M2 变体）",
+   "evidence": "R2：样本外 R²/QLIKE 相对喂了同样日内信息的强 HAR 有增量，DM/MCS 通过，至少含一个压力期；R3：简化毛夏普和 RankIC 同时改进，同波动配对 t≥2 才进下一步。预注册每个候选，记录\"在多深度上测的\"",
+   "stop": "R2 在股票上输给强 HAR 就把签名降为特征族备选；R3 的普通多任务无增益就不上调度器"
+  },
+  {
+   "stage": 2,
+   "window": "10-14 至 10-20",
+   "where": "Modal CPU（先过预算检查）",
+   "title": "M3 复杂度曲线与信息集",
+   "work": "R1：P∈{500, 4000, 32000}，信息集 23 个输入对加宽；流动股票子集上看夏普",
+   "evidence": "复杂度曲线上 4000 是否已在平台；加宽信息集后 M3 在两个窗口是否仍胜 M0；毛、净两套",
+   "stop": "曲线在 4000 之前已平且加宽无增益，M3 不再追深度；Nagel 式的\"只是动量择时\"检验（同输入的动量择时基线）不过也停"
+  },
+  {
+   "stage": 3,
+   "window": "阶段 1–2 通过后",
+   "where": "本机",
+   "title": "接入组合",
+   "work": "RV 预测进风险模型（预测对实现波动比，最小方差组合标准差）；动量崩盘叠加层",
+   "evidence": "走现行评价标准 docs/evaluation-standard.zh.md 的门槛，不改标准；波动管理一律同波动配对夏普",
+   "stop": "只降波动不升同波动夏普的改动一律不收"
+  },
+  {
+   "stage": 4,
+   "window": "条件触发",
+   "where": "需要机主批准算力",
+   "title": "金融预训练序列模型、日内 ESN",
+   "work": "从金融数据重新预训练的小序列模型；日内线的 ESN",
+   "evidence": "触发条件：阶段 1 或 2 里至少一项证明\"深度换来样本外增益\"，并且日内引擎立项；先核对论文的算力需求再估预算",
+   "stop": "未触发则不做"
+  }
+ ],
+ "not_doing": [
+  {
+   "item": "现成基础模型零样本预测收益（Chronos、TimesFM、Moirai）",
+   "reason": "独立评估多次为负（F8b）",
+   "reopen_if": "有人在我们的成本口径下复现出正的样本外 IC"
+  },
+  {
+   "item": "Kronos",
+   "reason": "无独立证据，唯一外部记录不赚钱（F8d）",
+   "reopen_if": "有第三方扣成本的样本外结果"
+  },
+  {
+   "item": "DMD/Koopman 做交易信号",
+   "reason": "样本和窗口事后挑选，无独立复现（F2a、F2b）",
+   "reopen_if": "出现独立的样本外交易结果"
+  },
+  {
+   "item": "TDA 作 alpha 来源或主攻方向",
+   "reason": "只有少数危机的事后识别，很可能是波动代理（F3）",
+   "reopen_if": "R4 加基线后仍有增量"
+  },
+  {
+   "item": "Wasserstein 聚类当信号",
+   "reason": "只有聚类质量指标（F6）",
+   "reopen_if": "有样本外交易评估"
+  },
+  {
+   "item": "HRP",
+   "reason": "对收益信号视而不见，样本外不稳定占优（F5b）",
+   "reopen_if": "无"
+  },
+  {
+   "item": "粗糙波动率/MSM 用于股票组合",
+   "reason": "收益在日内到 1 天、外汇（F1b、F1c）",
+   "reopen_if": "期权线开工"
+  },
+  {
+   "item": "泛泛的波动管理",
+   "reason": "103 个策略里 53 个为正，样本外劣于原组合（F1d）",
+   "reopen_if": "只在动量子策略上按 F1d 做"
+  },
+  {
+   "item": "扩散映射、UMAP",
+   "reason": "没有交易样本外（F7c）",
+   "reopen_if": "无"
+  },
+  {
+   "item": "拿毛夏普当目标",
+   "reason": "DKKM 3.7、FinText 的 CatBoost 6.79、Kronos 都是毛口径，微盘或零成本",
+   "reopen_if": "无；所有目标按扣成本后的同波动口径定"
+  }
+ ],
+ "gaps": [
+  "原文被 403 或付费墙拦住，只有搜索摘要，已标\"摘要级\"：Moreira–Muir 2017、Barroso–Santa-Clara、Bongaerts 等、Harvey 等、Patton–Sheppard、Guritanu 等 2025、WIG20 持续熵一文、Avramov–Cheng–Metzker、Fieberg 等的 IPCA 批评、Gu–Kelly–Xiu 自编码器论文、Kelly–Malamud 2025 回应、López de Prado 2016、Raffinot、图 DMD 2023、SKOLR/KNF。摘录见 websearch_excerpts_blocked_sources.md",
+  "没有跑任何复现，本任务只做调研；R1–R6 的数据可得性和算力美元数都标了\"待核对\"",
+  "股票上 MSM 与 HAR 的直接样本外对比没有找到可打开的原文",
+  "\"业界谁在用\"：Man AHL 使用签名、CFM 在生产里使用随机矩阵清洗，两条都只有作者单位这一层关系，没有找到机构自述；Jane Street 只有\"深度学习是未来\"的总体表述",
+  "Kronos 论文的成本口径只用关键词搜索了正文快照，附录没有逐段读",
+  "GitHub 数据来自未认证 API，pyRMT 等 4 个仓库名返回 Not Found，可能是名字猜错而非不存在",
+  "各档证据的评级和\"先验\"是我的判断，不是数据"
+ ],
+ "blocked_source_excerpts": [
+  {
+   "claim": "Guritanu 等 2025 的因果 TDA 预警（MDPI 403）",
+   "url": "https://www.mdpi.com/2073-431X/14/10/408",
+   "excerpt": "On four major U.S. equity indices (S&P 500, NASDAQ, DJIA, Russell 2000) over 1999–2021, the method, at a fixed strictly causal operating point (α=β=3.1,s=57,t=16), attains a balanced precision–recall (F1≈0.50) with an average lead time of about 34 days. It anticipates two of the four canonical crises and issues a contemporaneous signal for the 2008 global financial crisis. / Citation: ... Guritanu, Barbierato, and Gatti, published in Computers, vol. 14, no. 10, p. 408 (September 2025). DOI: 10.3390/computers14100408"
+  },
+  {
+   "claim": "Gidea–Katz 方法在较新事件上的表现（出处未指明，搜索摘要）",
+   "url": "（搜索结果综述，未打开具体页面）",
+   "excerpt": "the persistence landscape norm shows a weaker rise in norm for the trade war and fails to see the increasing norm for the COVID-19 pandemic and 2022 market decline."
+  },
+  {
+   "claim": "WIG20：持续熵是否只是波动代理（Cloudflare 拦截）",
+   "url": "https://journals.ue.wroc.pl/eada/article/view/1745",
+   "excerpt": "只有搜索结果标题：Is Persistent Entropy Simply a Volatility Proxy? Evidence from the WIG20 Index。页面和 PDF 都被拦截，没有读到任何内容，不能引为结论。"
+  },
+  {
+   "claim": "Barroso–Santa-Clara 动量风险管理",
+   "url": "https://ciencia.ucp.pt/en/publications/momentum-has-its-moments/",
+   "excerpt": "the risk of momentum is highly variable over time and predictable, and managing this risk virtually eliminates crashes and nearly doubles the Sharpe ratio of the momentum strategy."
+  },
+  {
+   "claim": "Bongaerts–Kang–van Dijk 条件波动目标",
+   "url": "https://alphaarchitect.com/conditional-volatility-targeting/",
+   "excerpt": "Conventional volatility targeting fails to consistently improve performance in global equity markets and can lead to markedly greater drawdowns. ... conditional volatility targeting ... consistently enhances Sharpe ratios and reduces drawdowns and tail risks, with low turnover and leverage."
+  },
+  {
+   "claim": "Harvey 等 波动目标",
+   "url": "https://alphaarchitect.com/volatility-targeting-improves-risk-adjusted-returns/",
+   "excerpt": "volatility-managed equity portfolios realize higher Sharpe ratios than portfolios with a constant notional exposure. However, this result only holds for \"risk assets\", such as equity and credit ... for bonds, currencies, and commodities the impact of volatility targeting on the Sharpe ratio is negligible."
+  },
+  {
+   "claim": "Patton–Sheppard 2015 好波动坏波动",
+   "url": "https://scholars.duke.edu/publication/1082826",
+   "excerpt": "Models exploiting these findings lead to significantly better out-of-sample forecast performance. The paper was published in the Review of Economics and Statistics in 2015."
+  },
+  {
+   "claim": "Avramov–Cheng–Metzker 机器学习对经济约束（SSRN 被拦）",
+   "url": "https://papers.ssrn.com/abstract=3450322",
+   "excerpt": "investments based on deep learning signals extract profitability from difficult-to-arbitrage stocks and during high limits-to-arbitrage market states. However, excluding microcaps, distressed stocks, or episodes of high market volatility considerably attenuates profitability, and machine learning-based performance further deteriorates in the presence of reasonable trading costs due to high turnover and extreme positions in the tangency portfolio implied by the pricing kernel."
+  },
+  {
+   "claim": "Fieberg 等对 IPCA 的批评",
+   "url": "https://www.cesifo.org/en/publikationen/2020/working-paper/are-characteristics-covariances-or-characteristics",
+   "excerpt": "IPCA cannot reliably distinguish between whether covariances or characteristics explain asset returns, finding a covariance-based explanation when estimating too many factors (\"alpha-eating\") and a characteristic-based explanation when estimating too few factors (\"beta-eating\")."
+  },
+  {
+   "claim": "Gu–Kelly–Xiu 自编码器资产定价",
+   "url": "https://papers.ssrn.com/abstract=3335536",
+   "excerpt": "Their autoencoder asset pricing model delivers out-of-sample pricing errors that are far smaller (and generally insignificant) compared to other leading factor models."
+  },
+  {
+   "claim": "Kelly–Malamud 2025 回应",
+   "url": "https://papers.ssrn.com/abstract=5346842",
+   "excerpt": "The paper responds to recent challenges to the \"virtue of complexity\" ... These challenges ultimately have little bearing on the theoretical arguments or empirical findings of KMZ. ... introduces and demonstrates the virtue of ensemble complexity."
+  },
+  {
+   "claim": "López de Prado 2016 HRP 原始主张（二手）",
+   "url": "https://en.wikipedia.org/wiki/Hierarchical_Risk_Parity",
+   "excerpt": "López de Prado (2016) shows that HRP achieves lower out-of-sample volatility and higher risk-adjusted return than inverse-variance allocations."
+  },
+  {
+   "claim": "Raffinot 层次聚类配置",
+   "url": "https://papers.ssrn.com/abstract=2840729",
+   "excerpt": "The empirical results indicate that hierarchical clustering based portfolios are robust, truly diversified and achieve statistically better risk-adjusted performances than commonly used portfolio optimization techniques."
+  },
+  {
+   "claim": "MSM 在股票上的独立比较（搜索摘要，未打开原文）",
+   "url": "（搜索结果综述）",
+   "excerpt": "Lux et al. found that the RV-ARFIMA model performs the best over the RV-MSM model and other volatility models, especially in tranquil periods, while the RV-MSM model performs much better during turmoil periods. / ... based on multiple loss functions and the superior predictive ability test, the empirical results indicate that none of the volatility models can uniformly outperform other models across all loss functions."
+  },
+  {
+   "claim": "图嵌入 DMD（Algorithmic Finance 2023）",
+   "url": "https://content.iospress.com/articles/algorithmic-finance/af220432",
+   "excerpt": "The article presents an algorithmic trading strategy based upon a graph version of the dynamic mode decomposition (DMD) model. ... Graph embedded dynamic mode decomposition for stock price prediction, first published online on June 6, 2023, in the journal Algorithmic Finance."
+  },
+  {
+   "claim": "Koopman 预测器（SKOLR、KNF）",
+   "url": "https://icml.cc/virtual/2025/poster/44949",
+   "excerpt": "SKOLR integrates a learnable spectral decomposition of the input signal with a multilayer perceptron (MLP) as the measurement functions ... numerical experiments on various forecasting benchmarks. / 搜索结果里没有金融收益的样本外结果。"
+  },
+  {
+   "claim": "FinText 预训练规模",
+   "url": "https://arxiv.org/abs/2511.18578",
+   "excerpt": "Models were pre-trained on large-scale financial time series datasets including daily excess returns across 89 markets with over 2 billion observations, with benchmarking across U.S. and seven international markets using over 18 million out-of-sample forecasts spanning 22 years (2001–2023) ... a comprehensive suite of 613 pre-trained models called FinText-TSFM"
+  },
+  {
+   "claim": "Kronos 作者自述数字（搜索摘要，arXiv HTML 快照里也有同类表述）",
+   "url": "https://arxiv.org/abs/2508.02739",
+   "excerpt": "Kronos boosts price series forecasting RankIC by 93% over the leading TSFM and 87% over the best non-pre-trained baseline. It also achieves a 9% lower MAE in volatility forecasting and a 22% improvement in generative fidelity for synthetic K-line sequences."
+  },
+  {
+   "claim": "TDA 在对冲基金/资管的生产使用",
+   "url": "（搜索结果综述）",
+   "excerpt": "the search results do not reveal specific publicly disclosed hedge fund or asset manager clients that have named TDA/persistent homology as central to their production trading signals."
+  },
+  {
+   "claim": "CFM 与随机矩阵（新闻稿式描述）",
+   "url": "https://www.risk.net/2479713",
+   "excerpt": "Bouchaud and Potters spent nearly two decades applying random matrix theory to solve correlation matrix estimation problems, with the \"miracle\" solution coming after Olivier Ledoit and Sandrine Péché published a key mathematical result in 2011.（搜索摘要，原页面未逐段核对）"
+  },
+  {
+   "claim": "扩散映射压力测试",
+   "url": "（搜索结果综述）",
+   "excerpt": "Diffusion map methods have been applied to stress testing of equity portfolios using financial and macroeconomic factors, outperforming PCA benchmarks with reductions in mean absolute error of up to 55%."
+  }
+ ]
+}

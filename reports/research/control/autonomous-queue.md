@@ -1965,7 +1965,7 @@
   - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
 
 ### T-20261004-82 调研（第二版计划输入）：物理、几何、拓扑、深度序列模型做到什么程度才见效
-- status: running（独立 Paseo 代理 1520faa1，Sonnet 5.5 high，协调码 R1004-T82）
+- status: done（2026-10-05 04:36 UTC 交互会话审核：接受。值得深做的三项：随机特征 SDF 的复杂度曲线，签名预测波动（样本外 R² 0.361 对 HAR-RV 0.224，已对快照核实），多期限辅助目标（RankIC 0.049→0.075，已核实）。动态模态分解、Koopman、拓扑作 alpha 暂不投入，附重开条件。10-04 22:30 会话额度中断，10-05 04:35 恢复后完成）
 - priority: 1
 - brief: reports/research/control/briefs/T-20261004-82.md
 - done_when: `reports/research/intel/I-20261004-07-physics-geometry-deep-models-depth.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
