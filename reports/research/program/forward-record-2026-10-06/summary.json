@@ -4,6 +4,8 @@
  "last_session_in_record": "2026-10-02",
  "engine_note": "S1/S2/S3: run_h20260927_01_sleeve_combination.sleeve_returns (frozen overlay engine), net 10 bp per unit turnover, close signal -> next open fill; C2: screen_lane offset 0, same cost; panel = shadow_forward.load_forward_panel (no HOLD_END cap).",
  "consistency_checks": {
+  "F1_rerun_vs_stored_max_abs_diff": 0.0013163694041344925,
+  "F2_rerun_vs_stored_max_abs_diff": 0.0031738771219571786,
   "T43_path_vs_stored_program_returns": {
    "overlap_days": 2250,
    "last_overlap_date": "2026-09-15",
@@ -13,7 +15,7 @@
   "T43_path_prerepair_C2_vs_stored_program_returns_max_abs_diff": 0.0,
   "T43_note": "stored T-43 program_returns used the pre-repair C2 file (T-55: repaired C2 differs by up to 1.005% on 2019-01-02); this record uses the repaired C2 series.",
   "F_book_last_stored_date": "2026-09-15",
-  "F_book_last_date_used": "2026-09-15"
+  "F_book_last_date_used": "2026-09-30"
  },
  "candidates": {
   "S1": {
@@ -1734,23 +1736,23 @@
      "design_seen": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": 0.002746979628587498,
-       "ann_vol": 0.05177688399156311,
-       "sharpe": 0.6585022998580667,
-       "sharpe_meaningful": false,
+       "days": 21,
+       "cum_return": 0.0015563041758936969,
+       "ann_vol": 0.04675933587636453,
+       "sharpe": -0.31395227978905516,
+       "sharpe_meaningful": true,
        "max_dd": -0.010398147275567093
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "oos_shadow": {
@@ -1794,23 +1796,23 @@
      "total": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": 0.002746979628587498,
-       "ann_vol": 0.05177688399156311,
-       "sharpe": 0.6585022998580667,
-       "sharpe_meaningful": false,
+       "days": 21,
+       "cum_return": 0.0015563041758936969,
+       "ann_vol": 0.04675933587636453,
+       "sharpe": -0.31395227978905516,
+       "sharpe_meaningful": true,
        "max_dd": -0.010398147275567093
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "forward_oos_plus_paper": {
@@ -1859,7 +1861,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 2250,
+      "n_base": 2261,
       "z": null
      },
      "backtest_recent": {
@@ -1868,7 +1870,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 674,
+      "n_base": 685,
       "z": null
      },
      "backtest_full_shadow_only": {
@@ -1877,7 +1879,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 2250,
+      "n_base": 2261,
       "z": null
      },
      "backtest_recent_shadow_only": {
@@ -1886,7 +1888,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 674,
+      "n_base": 685,
       "z": null
      },
      "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
@@ -1918,22 +1920,25 @@
       }
      },
      "oos_shadow": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": -0.0011874136515823697,
+       "ann_vol": 0.04405315731379057,
+       "sharpe": -1.395240577341251,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.0053073745505207715
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      },
      "paper": {
@@ -1958,61 +1963,67 @@
      "total": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": 0.002746979628587498,
-       "ann_vol": 0.05177688399156311,
-       "sharpe": 0.6585022998580667,
-       "sharpe_meaningful": false,
+       "days": 21,
+       "cum_return": 0.0015563041758936969,
+       "ann_vol": 0.04675933587636453,
+       "sharpe": -0.31395227978905516,
+       "sharpe_meaningful": true,
        "max_dd": -0.010398147275567093
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "forward_oos_plus_paper": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": -0.0011874136515823697,
+       "ann_vol": 0.04405315731379057,
+       "sharpe": -1.395240577341251,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.0053073745505207715
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      },
      "forward_shadow_engine_only": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": -0.0011874136515823697,
+       "ann_vol": 0.04405315731379057,
+       "sharpe": -1.395240577341251,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.0053073745505207715
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      }
     },
@@ -2022,36 +2033,48 @@
        "2017-10-02",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 2250,
-      "z": null
+      "forward_mean_daily": -0.00010450202821400775,
+      "base_mean_daily": 0.00020072461438138826,
+      "base_std_daily": 0.0030441937718954193,
+      "z": -0.3325419882448979
      },
      "backtest_recent": {
       "window": [
        "2024-01-08",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 674,
-      "z": null
+      "forward_mean_daily": -0.00010450202821400775,
+      "base_mean_daily": 0.00037779792120904544,
+      "base_std_daily": 0.003245100876619819,
+      "z": -0.4929301212694031
      },
      "backtest_full_shadow_only": {
       "window": [
        "2017-10-02",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 2250,
-      "z": null
+      "forward_mean_daily": -0.00010450202821400775,
+      "base_mean_daily": 0.00020072461438138826,
+      "base_std_daily": 0.0030441937718954193,
+      "z": -0.3325419882448979
      },
      "backtest_recent_shadow_only": {
       "window": [
        "2024-01-08",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 674,
-      "z": null
+      "forward_mean_daily": -0.00010450202821400775,
+      "base_mean_daily": 0.00037779792120904544,
+      "base_std_daily": 0.003245100876619819,
+      "z": -0.4929301212694031
      },
      "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
     }
@@ -2079,23 +2102,23 @@
      "design_seen": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": -0.014229615448717259,
-       "ann_vol": 0.11327976176705691,
-       "sharpe": -3.4765408492137393,
-       "sharpe_meaningful": false,
-       "max_dd": -0.02463313593511507
+       "days": 21,
+       "cum_return": -0.006431008160834306,
+       "ann_vol": 0.1173041551743208,
+       "sharpe": -0.9035099729455843,
+       "sharpe_meaningful": true,
+       "max_dd": -0.030492136031269435
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "oos_shadow": {
@@ -2139,23 +2162,23 @@
      "total": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": -0.014229615448717259,
-       "ann_vol": 0.11327976176705691,
-       "sharpe": -3.4765408492137393,
-       "sharpe_meaningful": false,
-       "max_dd": -0.02463313593511507
+       "days": 21,
+       "cum_return": -0.006431008160834306,
+       "ann_vol": 0.1173041551743208,
+       "sharpe": -0.9035099729455843,
+       "sharpe_meaningful": true,
+       "max_dd": -0.030492136031269435
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "forward_oos_plus_paper": {
@@ -2204,7 +2227,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 2250,
+      "n_base": 2261,
       "z": null
      },
      "backtest_recent": {
@@ -2213,7 +2236,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 674,
+      "n_base": 685,
       "z": null
      },
      "backtest_full_shadow_only": {
@@ -2222,7 +2245,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 2250,
+      "n_base": 2261,
       "z": null
      },
      "backtest_recent_shadow_only": {
@@ -2231,7 +2254,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 674,
+      "n_base": 685,
       "z": null
      },
      "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
@@ -2263,22 +2286,25 @@
       }
      },
      "oos_shadow": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.00791118034189342,
+       "ann_vol": 0.12393268720196444,
+       "sharpe": 1.2629892064351662,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.015582532229545643
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      },
      "paper": {
@@ -2303,61 +2329,67 @@
      "total": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": -0.014229615448717259,
-       "ann_vol": 0.11327976176705691,
-       "sharpe": -3.4765408492137393,
-       "sharpe_meaningful": false,
-       "max_dd": -0.02463313593511507
+       "days": 21,
+       "cum_return": -0.006431008160834306,
+       "ann_vol": 0.1173041551743208,
+       "sharpe": -0.9035099729455843,
+       "sharpe_meaningful": true,
+       "max_dd": -0.030492136031269435
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "forward_oos_plus_paper": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.00791118034189342,
+       "ann_vol": 0.12393268720196444,
+       "sharpe": 1.2629892064351662,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.015582532229545643
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      },
      "forward_shadow_engine_only": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.00791118034189342,
+       "ann_vol": 0.12393268720196444,
+       "sharpe": 1.2629892064351662,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.015582532229545643
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      }
     },
@@ -2367,36 +2399,48 @@
        "2017-10-02",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 2250,
-      "z": null
+      "forward_mean_daily": 0.0007441788079455918,
+      "base_mean_daily": 0.0006836046764921918,
+      "base_std_daily": 0.01197384249530439,
+      "z": 0.01677837887974374
      },
      "backtest_recent": {
       "window": [
        "2024-01-08",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 674,
-      "z": null
+      "forward_mean_daily": 0.0007441788079455918,
+      "base_mean_daily": 0.0009634404014598401,
+      "base_std_daily": 0.010170598379981797,
+      "z": -0.07150104737726219
      },
      "backtest_full_shadow_only": {
       "window": [
        "2017-10-02",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 2250,
-      "z": null
+      "forward_mean_daily": 0.0007441788079455918,
+      "base_mean_daily": 0.0006836046764921918,
+      "base_std_daily": 0.01197384249530439,
+      "z": 0.01677837887974374
      },
      "backtest_recent_shadow_only": {
       "window": [
        "2024-01-08",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 674,
-      "z": null
+      "forward_mean_daily": 0.0007441788079455918,
+      "base_mean_daily": 0.0009634404014598401,
+      "base_std_daily": 0.010170598379981797,
+      "z": -0.07150104737726219
      },
      "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
     }
@@ -2424,23 +2468,23 @@
      "design_seen": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": -0.015457825176323658,
-       "ann_vol": 0.06635155372812672,
-       "sharpe": -6.5168415200439425,
-       "sharpe_meaningful": false,
-       "max_dd": -0.015457825176323658
+       "days": 21,
+       "cum_return": -0.01187936794151978,
+       "ann_vol": 0.06563758382116201,
+       "sharpe": -2.711430485832087,
+       "sharpe_meaningful": true,
+       "max_dd": -0.017405043756936855
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "oos_shadow": {
@@ -2484,23 +2528,23 @@
      "total": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": -0.015457825176323658,
-       "ann_vol": 0.06635155372812672,
-       "sharpe": -6.5168415200439425,
-       "sharpe_meaningful": false,
-       "max_dd": -0.015457825176323658
+       "days": 21,
+       "cum_return": -0.01187936794151978,
+       "ann_vol": 0.06563758382116201,
+       "sharpe": -2.711430485832087,
+       "sharpe_meaningful": true,
+       "max_dd": -0.017405043756936855
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "forward_oos_plus_paper": {
@@ -2549,7 +2593,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 2250,
+      "n_base": 2261,
       "z": null
      },
      "backtest_recent": {
@@ -2558,7 +2602,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 674,
+      "n_base": 685,
       "z": null
      },
      "backtest_full_shadow_only": {
@@ -2567,7 +2611,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 2250,
+      "n_base": 2261,
       "z": null
      },
      "backtest_recent_shadow_only": {
@@ -2576,7 +2620,7 @@
        "2026-10-01"
       ],
       "n_forward": 0,
-      "n_base": 674,
+      "n_base": 685,
       "z": null
      },
      "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
@@ -2608,22 +2652,25 @@
       }
      },
      "oos_shadow": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.0036346408780758566,
+       "ann_vol": 0.06468921864009129,
+       "sharpe": 0.8231212512389179,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.00745178968210336
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      },
      "paper": {
@@ -2648,61 +2695,67 @@
      "total": {
       "range": [
        "2026-09-01",
-       "2026-09-15"
+       "2026-09-30"
       ],
       "strategy": {
-       "days": 10,
-       "cum_return": -0.015457825176323658,
-       "ann_vol": 0.06635155372812672,
-       "sharpe": -6.5168415200439425,
-       "sharpe_meaningful": false,
-       "max_dd": -0.015457825176323658
+       "days": 21,
+       "cum_return": -0.01187936794151978,
+       "ann_vol": 0.06563758382116201,
+       "sharpe": -2.711430485832087,
+       "sharpe_meaningful": true,
+       "max_dd": -0.017405043756936855
       },
       "spy": {
-       "days": 10,
-       "cum_return": -0.012598836829380011,
-       "ann_vol": 0.1027832016762219,
-       "sharpe": -3.44234330495616,
-       "sharpe_meaningful": false,
-       "max_dd": -0.0204084278768234
+       "days": 21,
+       "cum_return": -0.003293471868261233,
+       "ann_vol": 0.10811547918952534,
+       "sharpe": -0.6366877456998304,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
       }
      },
      "forward_oos_plus_paper": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.0036346408780758566,
+       "ann_vol": 0.06468921864009129,
+       "sharpe": 0.8231212512389179,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.00745178968210336
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      },
      "forward_shadow_engine_only": {
-      "range": null,
+      "range": [
+       "2026-09-16",
+       "2026-09-30"
+      ],
       "strategy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.0036346408780758566,
+       "ann_vol": 0.06468921864009129,
+       "sharpe": 0.8231212512389179,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.00745178968210336
       },
       "spy": {
-       "days": 0,
-       "cum_return": null,
-       "ann_vol": null,
-       "sharpe": null,
+       "days": 11,
+       "cum_return": 0.009424097629415984,
+       "ann_vol": 0.11521196947242855,
+       "sharpe": 1.649636825339823,
        "sharpe_meaningful": false,
-       "max_dd": null
+       "max_dd": -0.014053005817711628
       }
      }
     },
@@ -2712,36 +2765,48 @@
        "2017-10-02",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 2250,
-      "z": null
+      "forward_mean_daily": 0.0003374132428583481,
+      "base_mean_daily": 0.0012917258166364215,
+      "base_std_daily": 0.018631873280372187,
+      "z": -0.16987539000034454
      },
      "backtest_recent": {
       "window": [
        "2024-01-08",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 674,
-      "z": null
+      "forward_mean_daily": 0.0003374132428583481,
+      "base_mean_daily": 0.0024600395038674398,
+      "base_std_daily": 0.019205507067550788,
+      "z": -0.366559177696313
      },
      "backtest_full_shadow_only": {
       "window": [
        "2017-10-02",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 2250,
-      "z": null
+      "forward_mean_daily": 0.0003374132428583481,
+      "base_mean_daily": 0.0012917258166364215,
+      "base_std_daily": 0.018631873280372187,
+      "z": -0.16987539000034454
      },
      "backtest_recent_shadow_only": {
       "window": [
        "2024-01-08",
        "2026-09-15"
       ],
-      "n_forward": 0,
+      "n_forward": 11,
       "n_base": 674,
-      "z": null
+      "forward_mean_daily": 0.0003374132428583481,
+      "base_mean_daily": 0.0024600395038674398,
+      "base_std_daily": 0.019205507067550788,
+      "z": -0.366559177696313
      },
      "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
     }
