@@ -1,0 +1,176 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "program_allocation_v2",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261004-58",
+      "source_urls": [
+        "http://www.thierry-roncalli.com/download/erc.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261005_p4_alloc_v2",
+  "objective": "Program allocation v2 (P4): choose a walk-forward, forecast-free allocation of the paper sleeves that beats the ETF pilot P0 (0.642 S3 + 0.358 C2) at the same volatility, or else the tightest single-sleeve risk-share cap whose recent Sharpe cost is within 0.10 and that helps in stress; size it per capital tier and account type under the ~30% drawdown budget, minimum sleeve capital and Alpaca margin rules, and report DSR-deflated drawdown quantiles.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "maillard_roncalli_teiletche_2010_erc",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "http://www.thierry-roncalli.com/download/erc.pdf"
+    },
+    {
+      "claim_id": "demiguel_garlappi_uppal_2009_1overN",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://ideas.repec.org/a/oup/rfinst/v22y2009i5p1915-1953.html"
+    },
+    {
+      "claim_id": "palomar_2025_risk_parity_chapter",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://bookdown.org/palomar/portfoliooptimizationbook/11.2-from-dollar-to-risk-diversification.html"
+    },
+    {
+      "claim_id": "alpaca_margin_rules_2026_10_05",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "finra_rn_09_53_leveraged_etf_margin",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://www.finra.org/rules-guidance/notices/09-53"
+    },
+    {
+      "claim_id": "bailey_lopez_de_prado_2014_dsr",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://www.davidhbailey.com/dhbpapers/deflated-sharpe.pdf"
+    },
+    {
+      "claim_id": "magdon_ismail_2004_max_drawdown",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://www.cs.rpi.edu/~magdon/ps/journal/drawdown_journal.pdf"
+    },
+    {
+      "claim_id": "kaminski_lo_2014_stop_loss",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://www.sciencedirect.com/science/article/pii/S1386418113000293"
+    },
+    {
+      "claim_id": "roncalli_weisang_2012_factor_risk_contributions",
+      "source_card_path": "reports/harness/source_cards/t20261005_p4_alloc_v2.jsonl",
+      "source_url": "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261005_p4_alloc_v2.yaml",
+  "sources": [
+    {
+      "claim_id": "maillard_roncalli_teiletche_2010_erc",
+      "core_claim": "Maillard, Roncalli and Teiletche (Journal of Portfolio Management 36(4), 2010): the equally-weighted risk contribution (ERC) portfolio equalises Euler risk contributions; its volatility lies between the minimum-variance and the 1/N portfolios; empirical applications confirm the ranking; ERC is presented as a trade-off in absolute risk, risk budgeting and diversification.",
+      "credibility": "high",
+      "project_applicability": "Defines the ERC rule and the capped risk-budget rule (CAP2) via the same risk-budgeting problem; no expected-return input.",
+      "published_or_updated_at": "2010-06-01",
+      "reflection": "Asset-class and equity-index illustrations; says nothing about combining levered ETF momentum sleeves or about Sharpe gains.",
+      "source_type": "paper",
+      "url": "http://www.thierry-roncalli.com/download/erc.pdf"
+    },
+    {
+      "claim_id": "demiguel_garlappi_uppal_2009_1overN",
+      "core_claim": "DeMiguel, Garlappi and Uppal (RFS 22(5), 2009), abstract: of 14 optimised models across seven datasets none is consistently better than 1/N in Sharpe ratio, certainty-equivalent return or turnover; the estimation window needed for sample mean-variance to beat 1/N is about 3000 months for 25 assets.",
+      "credibility": "high",
+      "project_applicability": "No rule in this contract estimates expected returns from data; weights come from trailing covariance only (CAP2, ERC, IV) or are static (P0, 1/N report-only).",
+      "published_or_updated_at": "2009-05-01",
+      "reflection": "Abstract only (full text paywalled; LBS repository has no full text). Asset universes are equity portfolios, not strategy sleeves.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/oup/rfinst/v22y2009i5p1915-1953.html"
+    },
+    {
+      "claim_id": "palomar_2025_risk_parity_chapter",
+      "core_claim": "Palomar, Portfolio Optimization: Theory and Application (Cambridge 2025), ch. 11: risk parity allocates risk rather than dollars; 1/N diversifies capital but one asset can dominate risk; convex formulations (Spinu) solve the risk-budgeting problem; cites Chaves-Hsu-Li-Shakernia 2011 (risk parity beats min-variance and mean-variance but not consistently 1/N).",
+      "credibility": "high",
+      "project_applicability": "Solver choice (convex risk-budgeting formulation) and the 1/N report-only benchmark.",
+      "published_or_updated_at": "2025-01-01",
+      "reflection": "Academic textbook (not a journal paper); Textbook; illustrations on equities; Chaves et al. 2011 cited, not read in full.",
+      "source_type": "paper",
+      "url": "https://bookdown.org/palomar/portfoliooptimizationbook/11.2-from-dollar-to-risk-diversification.html"
+    },
+    {
+      "claim_id": "alpaca_margin_rules_2026_10_05",
+      "core_claim": "Alpaca: 50% initial margin (Reg T); overnight maintenance 30% for long positions above $6, 50% for 2x and 75% for 3x leveraged ETFs; debit interest 6.50%/yr non-elite charged on overnight debit /360; a single security above 70% of equity market value with a margin balance >= $100,000 gets 50% maintenance.",
+      "credibility": "high",
+      "project_applicability": "Margin-account feasibility filter (S3 0.75, other ETF sleeves 0.30), debit 0.065*365/360 per year, gross <= 2.0.",
+      "published_or_updated_at": "2026-10-05",
+      "reflection": "Page content as fetched 2026-10-05; Alpaca may change rates; live accounts may differ from paper.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "finra_rn_09_53_leveraged_etf_margin",
+      "core_claim": "FINRA Regulatory Notice 09-53 (effective 2009-12-01): maintenance margin for leveraged ETFs rises by the leverage factor (long 25% x leverage, short 30% x leverage, capped at 100%).",
+      "credibility": "high",
+      "project_applicability": "Confirms the 0.75 maintenance used for S3's 3x ETFs (T-43 marked it \u5f85\u6838\u5bf9; now verified).",
+      "published_or_updated_at": "2009-08-01",
+      "reflection": "Industry minimum; brokers may set higher house requirements.",
+      "source_type": "regulatory_docs",
+      "url": "https://www.finra.org/rules-guidance/notices/09-53"
+    },
+    {
+      "claim_id": "bailey_lopez_de_prado_2014_dsr",
+      "core_claim": "Bailey and Lopez de Prado (JPM 40(5), 2014): the Deflated Sharpe Ratio corrects for selection bias under multiple testing and for non-normal returns; the benchmark SR0 is the expected maximum Sharpe of N independent trials.",
+      "credibility": "high",
+      "project_applicability": "Haircut h_i = max(0, SR_i - SR0_i)/SR_i for the deflated-mean drawdown simulation; DSR of the selected deployable with N = 8.",
+      "published_or_updated_at": "2014-09-01",
+      "reflection": "Needs a trial count; ETF sleeve counts come from T-20261005-31.",
+      "source_type": "paper",
+      "url": "https://www.davidhbailey.com/dhbpapers/deflated-sharpe.pdf"
+    },
+    {
+      "claim_id": "magdon_ismail_2004_max_drawdown",
+      "core_claim": "Magdon-Ismail, Atiya, Pratap and Abu-Mostafa (J. Applied Probability 41, 2004): the expected maximum drawdown of Brownian motion grows logarithmically in time for positive drift, linearly for negative drift and as sqrt(T) for zero drift.",
+      "credibility": "high",
+      "project_applicability": "Drawdown quantiles depend on the assumed edge; the contract simulates three edges (deflated recent, stress-window mean, zero).",
+      "published_or_updated_at": "2004-03-01",
+      "reflection": "Brownian motion; the contract uses a stationary block bootstrap to keep fat tails and volatility clustering.",
+      "source_type": "paper",
+      "url": "https://www.cs.rpi.edu/~magdon/ps/journal/drawdown_journal.pdf"
+    },
+    {
+      "claim_id": "kaminski_lo_2014_stop_loss",
+      "core_claim": "Kaminski and Lo (Journal of Financial Markets 18, 2014): stop-loss rules add value only when returns are not a random walk (momentum or regime switching); under a random walk they reduce expected return.",
+      "credibility": "high",
+      "project_applicability": "Drawdown quantiles are reported as halve and stop thresholds in the tail (95%, 99%), not as a tight stop.",
+      "published_or_updated_at": "2014-02-01",
+      "reflection": "Single-asset analysis.",
+      "source_type": "paper",
+      "url": "https://www.sciencedirect.com/science/article/pii/S1386418113000293"
+    },
+    {
+      "claim_id": "roncalli_weisang_2012_factor_risk_contributions",
+      "core_claim": "Roncalli and Weisang (MPRA 44017, 2012): Euler risk contributions hold for assets and factors; asset-level risk budgets can leave factor risk unbalanced (ERC over 7 equity + 3 bond indices puts 70% of risk in equities).",
+      "credibility": "high",
+      "project_applicability": "Sleeve risk share = Euler contribution; the account-level semiconductor share is reported because sleeve-level ERC can still concentrate theme risk (S2 and S3 both hold semis).",
+      "published_or_updated_at": "2012-09-15",
+      "reflection": "Theory; no cost evidence.",
+      "source_type": "paper",
+      "url": "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf"
+    }
+  ],
+  "spec_hash": "85bed8321e03442a0a607d5e141b316d286608cdba88a5062470599b0b827afc",
+  "strategy_name": "t20261005_p4_alloc_v2",
+  "topic_coverage": [
+    "risk_budgeting_equal_risk_contribution",
+    "estimation_error_naive_diversification",
+    "risk_parity_solvers_and_heuristics",
+    "broker_margin_leveraged_etf_rules",
+    "regulatory_leveraged_etf_margin",
+    "multiple_testing_deflated_sharpe",
+    "drawdown_distribution_and_stop_rules",
+    "factor_risk_contribution_theme",
+    "local_sleeve_combination_refutation"
+  ]
+}

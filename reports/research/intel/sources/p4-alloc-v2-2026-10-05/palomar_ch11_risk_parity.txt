@@ -1,0 +1,504 @@
+ 
+ 11.2 From Dollar to Risk Diversification | Portfolio Optimization 
+ Portfolio Optimization 
+ by Daniel P. Palomar 
+ Frontmatter 
+ Preface 
+ 1 Introduction 
+ 1.1 What is Portfolio Optimization? 
+ 1.2 The Big Picture 
+ 1.3 Outline of the Book 
+ 1.4 Comparison with Existing Books 
+ 1.5 Reading Guidelines 
+ 1.6 Notation 
+ 1.7 Website for the Book 
+ 1.8 Code Examples 
+ I Financial Data 
+ 2 Financial Data: Stylized Facts 
+ 2.1 Stylized Facts 
+ 2.2 Prices and Returns 
+ 2.3 Non-Gaussianity: Asymmetry and Heavy Tails 
+ 2.3.1 Asymmetry or Skewness 
+ 2.3.2 Heavy-Tailness or Kurtosis 
+ 2.3.3 Statistical Tests 
+ 2.4 Temporal Structure 
+ 2.4.1 Linear Structure in Returns 
+ 2.4.2 Nonlinear Structure in Returns 
+ 2.5 Asset Structure 
+ 2.6 Summary 
+ Exercises 
+ 3 Financial Data: I.I.D. Modeling 
+ 3.1 I.I.D. Model 
+ 3.2 Sample Estimators 
+ 3.3 Location Estimators 
+ 3.3.1 Least Squares Estimator 
+ 3.3.2 Median Estimator 
+ 3.3.3 Spatial Median Estimator 
+ 3.3.4 Numerical Experiments 
+ 3.4 Gaussian ML Estimators 
+ 3.4.1 Preliminaries on ML Estimation 
+ 3.4.2 Gaussian ML Estimation 
+ 3.4.3 Numerical Experiments 
+ 3.5 Heavy-Tailed ML Estimators 
+ 3.5.1 The Failure of Gaussian ML Estimators 
+ 3.5.2 Heavy-Tailed ML Estimation 
+ 3.5.3 Robust Estimators 
+ 3.5.4 Numerical Experiments 
+ 3.6 Prior Information: Shrinkage, Factor Models, and Black–Litterman 
+ 3.6.1 Shrinkage 
+ 3.6.2 Factor Models 
+ 3.6.3 Black–Litterman Model 
+ 3.7 Summary 
+ Exercises 
+ 4 Financial Data: Time Series Modeling 
+ 4.1 Temporal Structure 
+ 4.2 Kalman Filter 
+ 4.2.1 State-Space Model 
+ 4.2.2 Kalman Filtering and Smoothing 
+ 4.3 Mean Modeling 
+ 4.3.1 Moving Average (MA) 
+ 4.3.2 EWMA 
+ 4.3.3 ARMA Modeling 
+ 4.3.4 Seasonality Decomposition 
+ 4.3.5 Kalman Modeling 
+ 4.3.6 Extension to the Multivariate Case 
+ 4.4 Volatility/Variance Modeling 
+ 4.4.1 Moving Average (MA) 
+ 4.4.2 EWMA 
+ 4.4.3 GARCH Modeling 
+ 4.4.4 Stochastic Volatility Modeling 
+ 4.4.5 Kalman Modeling 
+ 4.4.6 Extension to the Multivariate Case 
+ 4.5 Summary 
+ Exercises 
+ Mean Modeling 
+ Volatility Envelope Modeling 
+ 5 Financial Data: Graphs 
+ 5.1 Graphs 
+ 5.1.1 Terminology 
+ 5.1.2 Graph Matrices 
+ 5.2 Learning Graphs 
+ 5.2.1 Learning Graphs from Similarity Measures 
+ 5.2.2 Learning Graphs from Smooth Signals 
+ 5.2.3 Learning Graphs from Graphical Model Networks 
+ 5.2.4 Numerical Experiments 
+ 5.3 Learning Structured Graphs 
+ 5.3.1 \(k\) -Component Graphs 
+ 5.3.2 Bipartite Graphs 
+ 5.3.3 Numerical Experiments 
+ 5.4 Learning Heavy-Tailed Graphs 
+ 5.4.1 From Gaussian to Heavy-Tailed Graphs 
+ 5.4.2 Numerical Experiments 
+ 5.5 Learning Time-Varying Graphs 
+ 5.6 Summary 
+ Exercises 
+ II Portfolio Optimization 
+ 6 Portfolio Basics 
+ 6.1 Fundamentals 
+ 6.1.1 Data Modeling 
+ 6.1.2 Portfolio Return and Net Asset Value (NAV) 
+ 6.1.3 Cumulative Return 
+ 6.1.4 Transaction Costs 
+ 6.1.5 Portfolio Rebalancing 
+ 6.2 Portfolio Constraints 
+ 6.2.1 Long-Only or No-Shorting Constraint 
+ 6.2.2 Capital Budget Constraint 
+ 6.2.3 Holding Constraints 
+ 6.2.4 Cardinality Constraint 
+ 6.2.5 Turnover Constraint 
+ 6.2.6 Market-Neutral constraint 
+ 6.2.7 Dollar-Neutral Constraint 
+ 6.2.8 Diversification Constraint 
+ 6.2.9 Leverage Constraint 
+ 6.2.10 Margin Requirements 
+ 6.3 Performance Measures 
+ 6.3.1 Expected Return 
+ 6.3.2 Volatility 
+ 6.3.3 Volatility-Adjusted Returns 
+ 6.3.4 Sharpe Ratio (SR) 
+ 6.3.5 Information Ratio (IR) 
+ 6.3.6 Downside Risk and Semi-Variance 
+ 6.3.7 Gain–Loss Ratio (GLR) 
+ 6.3.8 Sortino Ratio 
+ 6.3.9 Value-at-Risk (VaR) 
+ 6.3.10 Conditional Value-at-Risk (CVaR) 
+ 6.3.11 Drawdown 
+ 6.3.12 Calmar Ratio and Sterling Ratio 
+ 6.4 Heuristic Portfolios 
+ 6.4.1 Buy and Hold Portfolio 
+ 6.4.2 Global Maximum Return Portfolio (GMRP) 
+ 6.4.3 \(1/N\) Portfolio 
+ 6.4.4 Quintile Portfolio 
+ 6.4.5 Numerical Experiments 
+ 6.5 Risk-Based Portfolios 
+ 6.5.1 Global Minimum Variance Portfolio (GMVP) 
+ 6.5.2 Inverse Volatility Portfolio (IVolP) 
+ 6.5.3 Risk Parity Portfolio (RPP) 
+ 6.5.4 Most Diversified Portfolio (MDivP) 
+ 6.5.5 Maximum Decorrelation Portfolio (MDecP) 
+ 6.5.6 Numerical Experiments 
+ 6.6 Summary 
+ Exercises 
+ 7 Modern Portfolio Theory 
+ 7.1 Mean–Variance Portfolio (MVP) 
+ 7.1.1 Return–Risk Trade-Off 
+ 7.1.2 MVP Formulation 
+ 7.1.3 MVP as a Regression 
+ 7.1.4 MVP with Practical Constraints 
+ 7.1.5 Improving the MVP with Heuristics 
+ 7.2 Maximum Sharpe Ratio Portfolio 
+ 7.2.1 Bisection Method 
+ 7.2.2 Dinkelbach Method 
+ 7.2.3 Schaible Transform Method 
+ 7.3 Utility-Based Portfolios 
+ 7.3.1 Kelly Criterion Portfolio 
+ 7.3.2 Expected Utility Theory 
+ 7.4 Universal Algorithm 
+ 7.5 Drawbacks 
+ 7.5.1 Noisy Estimation of the Expected Returns 
+ 7.5.2 Variance or Volatility as Measure of Risk 
+ 7.5.3 Single-Number Measure of Risk 
+ 7.6 Summary 
+ Exercises 
+ 8 Portfolio Backtesting 
+ 8.1 A Typical Backtest 
+ 8.2 The Seven Sins of Quantitative Investing 
+ 8.2.1 Sin #1: Survivorship Bias 
+ 8.2.2 Sin #2: Look-Ahead Bias 
+ 8.2.3 Sin #3: Storytelling Bias 
+ 8.2.4 Sin #4: Overfitting and Data Snooping Bias 
+ 8.2.5 Sin #5: Turnover and Transaction Cost 
+ 8.2.6 Sin #6: Outliers 
+ 8.2.7 Sin #7: Asymmetric Pattern and Shorting Cost 
+ 8.3 The Dangers of Backtesting 
+ 8.3.1 Backtest Overfitting 
+ 8.3.2 \(p\) -Hacking 
+ 8.3.3 Backtests Are Not Experiments 
+ 8.3.4 The Paradox of Flawless Backtests 
+ 8.3.5 Limitations of Backtesting Insights 
+ 8.3.6 What is the Point of Backtesting Then? 
+ 8.3.7 Recommendations to Avoid Overfitting 
+ 8.3.8 Mathematical Tools to Combat Overfitting 
+ 8.4 Backtesting with Historical Market Data 
+ 8.4.1 Vanilla Backtest 
+ 8.4.2 Walk-Forward Backtest 
+ 8.4.3 \(k\) -Fold Cross-Validation Backtest 
+ 8.4.4 Multiple Randomized Backtests 
+ 8.5 Backtesting with Synthetic Data 
+ 8.5.1 I.I.D. Assumption 
+ 8.5.2 Temporal Structure 
+ 8.5.3 Stress Tests 
+ 8.6 Summary 
+ Exercises 
+ 9 High-Order Portfolios 
+ 9.1 Introduction 
+ 9.1.1 High-Order Portfolios 
+ 9.1.2 Historical Perspective 
+ 9.2 High-Order Moments 
+ 9.2.1 Nonparametric Case 
+ 9.2.2 Structured Moments 
+ 9.2.3 Parametric Case 
+ 9.2.4 L-Moments 
+ 9.3 Portfolio Formulations 
+ 9.3.1 MVSK Portfolios 
+ 9.3.2 Making Portfolios Efficient 
+ 9.3.3 Portfolio Tilting 
+ 9.3.4 Polynomial Goal Programming MVSK Portfolio 
+ 9.3.5 L-Moment Portfolios 
+ 9.4 Algorithms 
+ 9.4.1 Via the SCA Framework 
+ 9.4.2 Via the MM Framework 
+ 9.4.3 Numerical Experiments 
+ 9.5 Summary 
+ Exercises 
+ 10 Portfolios with Alternative Risk Measures 
+ 10.1 Introduction 
+ 10.2 Alternative Risk Measures 
+ 10.2.1 Downside Risk 
+ 10.2.2 Tail Measures: VaR, CVaR, and EVaR 
+ 10.2.3 Drawdown 
+ 10.3 Downside Risk Portfolios 
+ 10.3.1 Formulation 
+ 10.3.2 Semi-variance Portfolios 
+ 10.3.3 Numerical Experiments 
+ 10.4 Tail-Based Portfolios 
+ 10.4.1 Formulation for CVaR Portfolios 
+ 10.4.2 Formulation for EVaR Portfolios 
+ 10.4.3 Formulation for the Worst-Case Portfolio 
+ 10.4.4 Numerical Experiments 
+ 10.5 Drawdown Portfolios 
+ 10.5.1 Formulation for the Max-DD Portfolio 
+ 10.5.2 Formulation for the Ave-DD Portfolio 
+ 10.5.3 Formulation for the CVaR-DD Portfolio 
+ 10.5.4 Numerical Experiments 
+ 10.6 Summary 
+ Exercises 
+ 11 Risk Parity Portfolios 
+ 11.1 Introduction 
+ 11.2 From Dollar to Risk Diversification 
+ 11.3 Risk Contributions 
+ 11.3.1 Volatility Risk Contributions 
+ 11.4 Problem Formulation 
+ 11.4.1 Formulation with Shorting 
+ 11.4.2 Formulation with Group Risk Parity 
+ 11.4.3 Formulation with Risk Factors 
+ 11.5 Naive Diagonal Formulation 
+ 11.5.1 Illustrative Example 
+ 11.6 Vanilla Convex Formulations 
+ 11.6.1 Direct Resolution via Root Finding 
+ 11.6.2 Formulations 
+ 11.6.3 Algorithms 
+ 11.6.4 Numerical Experiments 
+ 11.7 General Nonconvex Formulations 
+ 11.7.1 Formulations 
+ 11.7.2 Algorithms 
+ 11.7.3 Numerical Experiments 
+ 11.8 Summary 
+ Exercises 
+ 12 Graph-Based Portfolios 
+ 12.1 Introduction 
+ 12.1.1 Graphs and Distance Matrices 
+ 12.2 Hierarchical Clustering and Dendrograms 
+ 12.2.1 Basic Procedure 
+ 12.2.2 Number of Clusters 
+ 12.2.3 Quasi-diagonalization of Correlation Matrix 
+ 12.3 Hierarchical Clustering-Based Portfolios 
+ 12.3.1 Hierarchical \(1/N\) Portfolio 
+ 12.3.2 Hierarchical Risk Parity (HRP) Portfolio 
+ 12.3.3 Hierarchical Equal Risk Contribution (HERC) Portfolio 
+ 12.3.4 From Portfolio Risk Minimization to Hierarchical Portfolios 
+ 12.4 Numerical Experiments 
+ 12.4.1 Splitting: Bisection vs. Dendrogram 
+ 12.4.2 Graph Estimation: Simple vs. Sophisticated 
+ 12.4.3 Final Comparison 
+ 12.5 Summary 
+ Exercises 
+ 13 Index Tracking Portfolios 
+ 13.1 Active vs. Passive Strategies 
+ 13.1.1 Beating the Market 
+ 13.1.2 What is a Financial Index? 
+ 13.1.3 Index Tracking 
+ 13.2 Sparse Regression 
+ 13.2.1 Problem Formulation 
+ 13.2.2 Methods for Sparse Regression 
+ 13.2.3 Preliminaries on MM 
+ 13.2.4 Iterative Reweighted \(\ell_1\) -Norm Minimization 
+ 13.3 Sparse Index Tracking 
+ 13.3.1 Tracking Error 
+ 13.3.2 Problem Formulation 
+ 13.3.3 Methods for Sparse Index Tracking 
+ 13.3.4 Numerical Experiments 
+ 13.4 Enhanced Index Tracking 
+ 13.4.1 Alternative Tracking Error Measures 
+ 13.4.2 Robust Tracking Error Measures 
+ 13.4.3 Holding Constraints 
+ 13.4.4 Group Sparsity 
+ 13.4.5 Numerical Experiments 
+ 13.5 Automatic Sparsity Control 
+ 13.5.1 False Discovery Rate (FDR) 
+ 13.5.2 FDR for Index Tracking 
+ 13.5.3 Numerical Experiments 
+ 13.6 Summary 
+ Exercises 
+ 14 Robust Portfolios 
+ 14.1 Introduction 
+ 14.2 Robust Portfolio Optimization 
+ 14.2.1 Robust Optimization 
+ 14.2.2 Robust Worst-Case Portfolios 
+ 14.2.3 Numerical Experiments 
+ 14.3 Portfolio Resampling 
+ 14.3.1 Resampling Methods 
+ 14.3.2 Portfolio Resampling 
+ 14.3.3 Numerical Experiments 
+ 14.4 Summary 
+ Exercises 
+ 15 Pairs Trading Portfolios 
+ 15.1 Mean Reversion 
+ 15.2 Cointegration and Correlation 
+ 15.2.1 Cointegration 
+ 15.2.2 Correlation 
+ 15.2.3 Correlation vs. Cointegration 
+ 15.3 Pairs Trading 
+ 15.3.1 Spread 
+ 15.3.2 Prices vs. Log-Prices 
+ 15.3.3 Is Pairs Trading Profitable? 
+ 15.3.4 Design of Pairs Trading 
+ 15.4 Discovering Cointegrated Pairs 
+ 15.4.1 Prescreening 
+ 15.4.2 Cointegration Tests 
+ 15.4.3 Cointegration of More Than Two Time Series 
+ 15.4.4 Are Cointegrated Pairs Persistent? 
+ 15.4.5 Numerical Experiments 
+ 15.5 Trading the Spread 
+ 15.5.1 Trading Strategies 
+ 15.5.2 Optimizing the Threshold 
+ 15.5.3 Numerical Experiments 
+ 15.6 Kalman Filtering for Pairs Trading 
+ 15.6.1 Spread Modeling via Least Squares 
+ 15.6.2 Primer on the Kalman Filter 
+ 15.6.3 Spread Modeling via Kalman 
+ 15.6.4 Numerical Experiments 
+ 15.7 Statistical Arbitrage 
+ 15.7.1 Least Squares 
+ 15.7.2 VECM 
+ 15.7.3 Optimum Mean-Reverting Portfolio 
+ 15.7.4 Numerical Experiments 
+ 15.8 Summary 
+ Exercises 
+ 16 Deep Learning Portfolios 
+ 16.1 Machine Learning 
+ 16.1.1 Black-Box Modeling 
+ 16.1.2 Measuring Performance 
+ 16.1.3 Learning the Model 
+ 16.1.4 Types of ML Models 
+ 16.1.5 Applications of ML in Finance 
+ 16.2 Deep Learning 
+ 16.2.1 Historical Snapshot 
+ 16.2.2 Perceptron and Sigmoid Neuron 
+ 16.2.3 Neural Networks 
+ 16.2.4 Learning via Backpropagation 
+ 16.2.5 Deep Learning Architectures 
+ 16.2.6 Applications of Deep Learning in Finance 
+ 16.3 Deep Learning for Portfolio Design 
+ 16.3.1 Challenges 
+ 16.3.2 Standard Time Series Forecasting 
+ 16.3.3 Portfolio-Based Time Series Forecasting 
+ 16.3.4 End-to-End Portfolio Design 
+ 16.4 Deep Learning Portfolio Case Studies 
+ 16.4.1 LSTM for Financial Time Series Forecasting 
+ 16.4.2 Financial Time Series Forecasting Integrated with Portfolio Optimization 
+ 16.4.3 End-to-End NN-Based Portfolio 
+ 16.4.4 End-to-End DL-Based Portfolio 
+ 16.4.5 End-to-End Deep Reinforcement Learning Portfolio 
+ 16.5 Summary 
+ Exercises 
+ Machine Learning 
+ Deep Learning 
+ Machine Learning for Finance 
+ Deep Learning for Finance 
+ Appendices 
+ A Convex Optimization Theory 
+ A.1 Optimization Problems 
+ A.1.1 Definitions 
+ A.1.2 Solving Optimization Problems 
+ A.1.3 Illustrative Example 
+ A.2 Convex Sets 
+ A.2.1 Definitions 
+ A.2.2 Elementary Convex Sets 
+ A.2.3 Operations that Preserve Convexity 
+ A.3 Convex Functions 
+ A.3.1 Elementary Convex and Concave Functions 
+ A.3.2 Epigraph 
+ A.3.3 Characterization of Convex Functions 
+ A.3.4 Operations that Preserve Convexity 
+ A.3.5 Quasi-convex Functions 
+ A.4 Convex Optimization Problems 
+ A.4.1 Optimality Characterization 
+ A.4.2 Equivalent Reformulations 
+ A.4.3 Approximate Reformulations 
+ A.4.4 Quasi-convex Optimization 
+ A.5 Taxonomy of Convex Problems 
+ A.5.1 Linear Programming 
+ A.5.2 Linear-Fractional Programming 
+ A.5.3 Quadratic Programming 
+ A.5.4 Second-Order Cone Programming 
+ A.5.5 Semidefinite Programming 
+ A.5.6 Conic Programming 
+ A.5.7 Fractional Programming 
+ A.5.8 Geometric Programming 
+ A.6 Lagrange Duality 
+ A.6.1 Lagrangian 
+ A.6.2 Lagrange Dual Problem 
+ A.6.3 Weak and Strong Duality 
+ A.6.4 Optimality Conditions 
+ A.7 Multi-objective Optimization 
+ A.7.1 Generalized Inequalities 
+ A.7.2 Vector Optimization 
+ A.7.3 Pareto Optimality 
+ A.7.4 Multi-objective Optimization 
+ A.7.5 Scalarization 
+ A.8 Summary 
+ Exercises 
+ B Optimization Algorithms 
+ B.1 Solvers 
+ B.1.1 Some Popular Solvers 
+ B.1.2 Complexity of Interior-Point Methods 
+ B.1.3 Interface with Solvers 
+ B.1.4 Modeling Frameworks 
+ B.2 Gradient Methods 
+ B.2.1 Descent Methods 
+ B.2.2 Line Search 
+ B.2.3 Gradient Descent Method 
+ B.2.4 Newton’s Method 
+ B.2.5 Convergence 
+ B.3 Projected Gradient Methods 
+ B.3.1 Projected Gradient Descent Method 
+ B.3.2 Constrained Newton’s Method 
+ B.3.3 Convergence 
+ B.4 Interior-Point Methods 
+ B.4.1 Eliminating Equality Constraints 
+ B.4.2 Indicator Function 
+ B.4.3 Logarithmic Barrier 
+ B.4.4 Central Path 
+ B.4.5 Barrier Method 
+ B.4.6 Convergence 
+ B.4.7 Feasibility and Phase I Methods 
+ B.4.8 Primal-Dual Interior-Point Methods 
+ B.5 Fractional Programming Methods 
+ B.5.1 Bisection Method 
+ B.5.2 Dinkelback Method 
+ B.5.3 Charnes–Cooper–Schaible Transform 
+ B.6 Block Coordinate Descent (BCD) 
+ B.6.1 Convergence 
+ B.6.2 Parallel Updates 
+ B.6.3 Illustrative Examples 
+ B.7 Majorization–Minimization (MM) 
+ B.7.1 Convergence 
+ B.7.2 Accelerated MM 
+ B.7.3 Illustrative Examples 
+ B.7.4 Block MM 
+ B.8 Successive Convex Approximation (SCA) 
+ B.8.1 Gradient Descent Method as SCA 
+ B.8.2 Newton’s Method as SCA 
+ B.8.3 Parallel SCA 
+ B.8.4 Convergence 
+ B.8.5 Illustrative Examples 
+ B.8.6 MM vs. SCA 
+ B.9 Alternating Direction Method of Multipliers (ADMM) 
+ B.9.1 Convergence 
+ B.9.2 Illustrative Examples 
+ B.10 Numerical Comparison 
+ B.11 Summary 
+ Exercises 
+ References 
+ Portfolio Optimization 
+\(
+\newcommand{\bm}[1]{\boldsymbol{#1}}
+\newcommand{\textm}[1]{\textsf{#1}}
+\newcommand{\textnormal}[1]{\textsf{#1}}
+\def\T{{\mkern-2mu\raise-1mu\mathsf{T}}}
+\newcommand{\R}{\mathbb{R}} % real numbers
+\newcommand{\E}{{\rm I\kern-.2em E}}
+\newcommand{\w}{\bm{w}} % bold w
+\newcommand{\bmu}{\bm{\mu}} % bold mu
+\newcommand{\bSigma}{\bm{\Sigma}} % bold mu
+\newcommand{\bigO}{O} %\mathcal{O}
+\renewcommand{\d}[1]{\operatorname{d}\!{#1}}
+\)
+ 11.2 From Dollar to Risk Diversification 
+Risk parity is an approach to investment management that focuses on allocation of risk rather than allocation of dollars or capital. In other words, it departs from the concept of dollar diversification to risk diversification. The underlying idea is to design the asset allocation so that each asset (or asset class) contributes the same risk level to the overall portfolio. This typically produces better out-of-sample risk control and can be more resistant to market downturns than traditional portfolios. 
+ Historically, risk parity starts from the observation that traditional asset allocations, such as the market portfolio or the 60/40 portfolio in stocks/bonds, are insufficiently diversified in terms of risk contribution ( Asness et al., 2012 ) . From a risk perspective, the 60/40 portfolio is mainly equity portfolio since stocks are much more volatile than bonds and dominate the risk of the entire portfolio. 
+ Some of the theoretical components were developed in the 1950s and 1960s, but the first risk parity fund, called the “All Weather” fund, was pioneered by Bridgewater Associates in 1996. An early analysis in terms of partial derivatives to identify “hot spots” can be found in Litterman ( 1996 ) . The term “risk parity” was coined in 2005 by Edward Qian 50 ( Qian, 2005 ) and, in recent years, it has been adopted by the asset management industry as a way of risk management. Risk parity gained significantly in popularity after the global financial crisis in 2008 ( Asness et al., 2012 ; Maillard et al., 2010 ) . Nevertheless, some portfolio managers have expressed skepticism about its practical application and effectiveness in all types of market conditions, especially bull markets ( R. M. Anderson et al., 2012 ; Chaves et al., 2011 ) . 
+ The risk parity portfolio has received significant attention from both practitioner and academic communities, producing a large number of publications and some textbooks such as Qian ( 2016 ) for a high-level and practical perspective and Roncalli ( 2013b ) for a more mathematical treatment. 
+ Figure  11.1 illustrates the difference between dollar diversification and risk diversification. The \(1/N\) portfolio by definition perfectly diversifies the capital allocation (i.e., portfolio weights) but does not show a good risk diversification profile (in fact, a single asset exhibits a high risk contribution). On the other hand, the risk parity portfolio precisely focuses on the diversification of the risk profile. 
+Figure 11.1: Illustration of portfolio allocation and risk allocation for the \(1/N\) portfolio and risk parity portfolio.
+ References 
+Anderson, R. M., Bianchi, S. W., and Goldberg, L. R. (2012). Will my risk parity strategy outperform? Financial Analysts Journal , 68 (6), 75–93.
+Asness, C. S., Frazzini, A., and Pedersen, L. H. (2012). Leverage aversion and risk parity. Financial Analysts Journal , 68 (1), 47–59.
+Chaves, D. B., Hsu, J. C., Li, F., and Shakernia, O. (2011). Risk parity portfolio vs. Other asset allocation heuristic portfolios. Journal of Investing , 20 (1), 108–118.
+Litterman, R. (1996). Hot spots and hedges. Journal of Portfolio Management , 22 , 52–75.
+Maillard, S., Roncalli, T., and Teiletche, J. (2010). The properties of equally weighted risk contribution portfolios. Journal of Portfolio Management , 36 (4), 60–70.
+Qian, E. (2005). Risk parity portfolios: Efficient portfolios through true diversification. PanAgora Asset Management .
+Qian, E. (2016). Risk Parity Fundamentals . CRC Press.
+Roncalli, T. (2013b). Introduction to Risk Parity and Budgeting . Chapman & Hall/CRC.
+ Dr. Edward Qian is the Chief Investment Officer and Head of Research of the Multi Asset Group at PanAgora Asset Management. ↩︎ 
