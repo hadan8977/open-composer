@@ -1973,12 +1973,13 @@
   - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
 
 ### T-20261004-83 调研（第二版计划输入）：2026-08 以来的 vibe trading 新项目潮（整类）
-- status: running（独立 Paseo 代理 df7e0aec，Sonnet 5.5 high，协调码 R1004-T83）
+- status: done（2026-10-05 05:15 UTC 交互会话审核通过并提交）
 - priority: 1
 - brief: reports/research/control/briefs/T-20261004-83.md
 - done_when: `reports/research/intel/I-20261004-08-vibe-trading-wave-since-2026-08.{md,json}` 和快照目录，10-05 02:00 UTC 前；交互会话审核后提交。
 - notes:
   - 2026-10-04 18:35 UTC 交互会话（Opus）派出。机主 10-04 晚：便宜测试会漏掉需要一定深度才见效的方向；要先调研别人怎么做。
+  - 2026-10-05 05:15 UTC 交互会话审核，交付物已在 a11bf0e 提交（md、json、46 个快照）。复查：GitHub 搜索接口重取，"alpaca agent" 2026 窗口 767、"trading agent" 2025 窗口 603，和交付物一致；DXRG 摘要（arXiv 2609.05663）核对了金库数、无方向性优势、胜率 41% 对 50%、机械出场 +39.0 bps；17 条规则和调度偏移的数字只来自转述，计划里标"先读原文"。老项目 8 月以来的新增星数没测到（stargazers 接口要认证，本机没有 gh 和令牌）。已并入计划第 3.5 节 P5。
 
 ### T-20261004-84 第二版计划：按"最低有效深度"重做，调研支撑、多轮复核后执行
 - status: running（交互会话 Opus 主持）
