@@ -1,0 +1,154 @@
+{
+ "schema_version": 1,
+ "iter_id": "t20261005_p2_s1_theme_budget",
+ "reviewed_at": "2026-10-05T07:45:34Z",
+ "decision": "proceed",
+ "objective": "Price a forecast-free semiconductor theme risk budget for the ETF pilot (S3 0.642 + C2 0.358 per plan v2 D7.1, proposal due 10-15): cap each sleeve's ex-ante theme risk share at 0.40/0.30/0.20/0.10 by substitution (CAP) or theme-neutral hedges (H1 margin, H2 cash), measure the same-volatility recent Sharpe cost and the stress and theme-shock benefit, and select the tightest level within a 0.10 cost as the pilot concentration limit (owner 10-04: remove the overly obvious semiconductor correlation; plan v2 section 3.2 stage 1).",
+ "target_regime_and_horizon": "US ETF sleeves, daily data 2016-01..2026-10-02 (last archive session). Decision on the recent window 2024-01-08..last session; stress 2017-10-02..2023-08-31 and three SMH shocks (2024-07, 2025-04, 2026-07) measure the benefit. Monthly S3 (5 offsets), calendar-anchored C2. Risk policy, horizon = the pilot's life (reviewed monthly).",
+ "existing_solution_comparison": "Professional practice manages industry or theme exposure as factor risk with limits and stress tests (MSCI Barra USE4; MSCI thematic stress tests; Roncalli-Weisang factor risk contributions) and adds transient factors when the base model misses a fast theme (Tzikas et al. 2026, Stanford/BlackRock). Nobody publishes the cost of a semiconductor budget on a levered ETF momentum sleeve; our own S3 attribution (H-20260923-09) shows SOXL + USD are 58.5-69.4% of S3's weight and drive its Sharpe, and no local experiment ever capped or hedged the theme (bear guards and defense-first were timing rules, refuted 09-23).",
+ "remaining_evidence_gap": "(1) The same-volatility recent Sharpe cost of each cap level and version on the pilot; (2) whether caps reduce the three SMH shock losses and stress ES; (3) whether hedges fit Alpaca margin or cash-account rules at the needed size; (4) the theme share of each sleeve's recent P&L (standard 5a: single theme above half); (5) whether a sector placebo cap costs the same (semis-specific dependence).",
+ "negative_experiments_checked": "Registry and cards: H-20260923-09 s3 attribution (levered semis position; leave-SOXL-out Sharpe 2.28 -> 0.96), H-20260923-11 s3 bear guard (refuted: SMA and credit gates, no gain beyond same-exposure vol target), H-20260923-12 s3 defense first (refuted), H-20260918-01 risk-controlled momentum vs SPMO (refuted), I-20261004-06 (local S3 regime gates all refuted; recommends a theme budget first). None budgeted or hedged theme risk; this stage is a risk policy and cannot refute P2 (owner depth rule 10-04).",
+ "cost_and_execution_assumptions": "Signal at close d, effective at the open of d+1 (frozen sleeve engines and legs); 10 bp per side on all traded notional (frozen contract), 2x check 20 bp and 100 bp/yr borrow; borrow 0 on easy-to-borrow ETFs (Alpaca 10-04; SMH and SOXX ETB in the 10-01 asset snapshot; live use must check easy_to_borrow daily, fall back to CAP if hard to borrow); debit and same-vol re-levering at 6.5%/yr; Alpaca margin rules for H1 feasibility; H2 funded only from sleeve cash with actual SOXS and UPRO returns.",
+ "stop_condition": "Measurement of a risk policy: the stage ends when the preregistered outputs exist. Mechanical status: pilot_limit_selected (tightest level within cost and with benefit), cost_ok_no_benefit_monitor_only, or no_level_within_cost (S3 enters the pilot only at pilot size per plan v2 3.2; T-58 carries the theme as one risk unit; the stress-validated theme rule moves to P2 Stage 2). If an identity check fails, stop before computing any capped number.",
+ "cheapest_decisive_test": {
+  "action": "Brief T-20261005-32: build TRS, substitution and hedge machinery on the frozen sleeve engines (identity <= 1e-12 for S3 offsets, <= 1e-10 for C2), freeze replay dates in build.json, then evaluate 12 configurations on the pilot plus report-only objects, placebos, 2x cost and feasibility, and write the mechanical status.",
+  "pass_condition": "A version has an eligible level if its same-volatility recent excess Sharpe change >= -0.10 and (mean same-vol R1-R3 peak-to-trough return improves >= 1.0 pp or stress same-vol ES97.5 falls >= 5% relative); the tightest eligible level (CAP preferred, then H2F, then H1F unless a hedge is eligible at a strictly tighter level) becomes the pilot limit.",
+  "falsification_condition": "No level of any version within the 0.10 cost: no sleeve-level cap is adopted automatically; S3 is theme-dependent and enters the pilot only at pilot size; T-58 budgets the theme at the account level. This does not refute P2 or the regime layer.",
+  "max_compute_minutes": 60
+ },
+ "queries": [
+  {
+   "query": "factor risk budgeting risk contribution cap thematic concentration portfolio \"risk contribution\" sector factor limit Roncalli",
+   "searched_at": "2026-10-05T07:29:00Z",
+   "opened_urls": [
+    "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf"
+   ],
+   "note": "07:07 lead round; PDF text extracted and saved (Theorem 2 factor risk contribution)."
+  },
+  {
+   "query": "Alpaca margin requirements leveraged ETF 3x maintenance 75% short selling easy to borrow fee docs",
+   "searched_at": "2026-10-05T07:29:30Z",
+   "opened_urls": [
+    "https://docs.alpaca.markets/docs/margin-and-short-selling"
+   ],
+   "note": "Live fetch failed (DNS EAI_AGAIN); the 2026-10-04 18:38 UTC snapshot of the same page was read instead."
+  },
+  {
+   "query": "T-80/T-81 deep research (2026-10-04): broker margin rules, theme crowding, risk models, LETF regime, July 2026 semiconductor drawdown",
+   "searched_at": "2026-10-04T18:38:00Z",
+   "opened_urls": [
+    "https://docs.alpaca.markets/docs/margin-and-short-selling",
+    "https://www.top1000funds.com/wp-content/uploads/2011/09/USE4_Methodology_Notes_August_2011.pdf",
+    "https://arxiv.org/pdf/2605.12977",
+    "https://www.msci.com/research-and-insights/blog-post/the-pressure-of-the-crowd-stress-testing-thematic-indexes",
+    "https://arxiv.org/abs/2504.20116",
+    "https://atranicapital.substack.com/p/what-happened-to-semiconductors-in"
+   ],
+   "note": "Snapshots saved by the T-80 (Alpaca margin page, 18:38 UTC) and T-81 (18:43-18:46 UTC) research agents, both accepted by the interactive session 10-04 18:57; re-read by this round for the quotes in the source cards."
+  }
+ ],
+ "sources": [
+  {
+   "claim_id": "roncalli_weisang_2012_factor_risk_contributions",
+   "market_and_period": "theory with multi-asset illustrations (equity and bond indices), no specific market period",
+   "limitations": "Theory; no semiconductor or cost evidence.",
+   "independent_replication": "Standard result (Euler allocation; also Menchero-Davis x-sigma-rho); not an empirical claim.",
+   "url": "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2012-09-15",
+   "snapshot_path": "reports/research/intel/sources/p2-s1-theme-budget-2026-10-05/roncalli-weisang-2012-risk-parity-risk-factors-mpra44017.txt",
+   "sha256": "3210ae86952ef62eb29dea59bc0a4ab249d3090a8eac2db588a470d7b4eb5d04",
+   "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+   "fetched_at": "2026-10-05T07:31:00Z",
+   "claim": "Roncalli and Weisang (Risk Parity Portfolios with Risk Factors, MPRA 44017, 2012): the Euler decomposition holds in factor coordinates; Theorem 2 gives the volatility risk contribution of factor j as (A'x)_j (A+ Sigma x)_j / sigma(x); budgets set on assets can leave factor risk unbalanced (7 equity + 3 bond indices -> equity is 70% of ERC risk).",
+   "core_claim": "if the universe includes 7 equity indices and 3 bond indices, the equity risk of the ERC portfolio represents then 70% of the portfolio’s total risk, a solution very unbalanced between equity and bond risks.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "TRS = Euler contribution of the orthogonalised SMH factor to sleeve variance is the capped quantity."
+  },
+  {
+   "claim_id": "msci_use4_industry_factor_risk_model",
+   "market_and_period": "US equity risk model methodology, estimation universe and history as of August 2011",
+   "limitations": "Methodology note; the quoted line describes the factor structure lineage.",
+   "independent_replication": "Industry practice (also BlackRock fundamental model per T-81, search summary only).",
+   "url": "https://www.top1000funds.com/wp-content/uploads/2011/09/USE4_Methodology_Notes_August_2011.pdf",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "2011-08-31",
+   "snapshot_path": "reports/research/intel/sources/regime-cycle-2026-10-04/msci-use4-methodology.txt",
+   "sha256": "a8f502556fc5b098f6c7b1945db5a58310b5a30a33671083e73400399a51547e",
+   "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+   "fetched_at": "2026-10-04T18:43:39Z",
+   "claim": "MSCI Barra USE4 models equity returns with industry and style factors plus specific risk; industry exposure is risk in the factor covariance, not a forecast.",
+   "core_claim": "using countries, industries, and styles as explanatory factors, as described by Grinold, Rudd, and Stefek",
+   "credibility": "industry_standard",
+   "applicability": "A theme is managed as a factor risk unit with a budget; motivates the cap rather than cycle timing."
+  },
+  {
+   "claim_id": "tzikas_et_al_2026_transient_factors_missed",
+   "market_and_period": "US equities with a commercial short-term risk model, recent years (preprint 2026-05)",
+   "limitations": "Preprint; statistical factors, not a named ETF theme.",
+   "independent_replication": "None known.",
+   "url": "https://arxiv.org/pdf/2605.12977",
+   "source_type": "paper",
+   "published_or_updated_at": "2026-05-12",
+   "snapshot_path": "reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__transient-statistical-factors-risk-model-2605.12977.txt",
+   "sha256": "e89dbb85de94ae3ccf010c002359504f059cfdd2ebf581514e57af4359ce6682",
+   "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+   "fetched_at": "2026-10-04T18:43:37Z",
+   "claim": "Stanford and BlackRock authors: commercial risk models may miss changing regimes and transient factors; adding transient statistical factors captures the missed structure.",
+   "core_claim": "while these models are typically of high quality, they may fail to capture important information, e.g., changing market regimes and transient factors.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Use a dedicated rolling theme factor (126 sessions) rather than a static industry map."
+  },
+  {
+   "claim_id": "msci_2021_thematic_index_stress_tests",
+   "market_and_period": "MSCI thematic indexes, 2020 to Q1 2021",
+   "limitations": "2021 blog; different theme.",
+   "independent_replication": "None.",
+   "url": "https://www.msci.com/research-and-insights/blog-post/the-pressure-of-the-crowd-stress-testing-thematic-indexes",
+   "source_type": "industry_standard",
+   "published_or_updated_at": "2021-05-01",
+   "snapshot_path": "reports/research/intel/sources/regime-cycle-2026-10-04/msci-pressure-of-the-crowd-thematic-indexes.txt",
+   "sha256": "6959d6b6a2ccfd2610172aa6485860235061cbfcc371f9f0bfbb2cdaa4a60677",
+   "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+   "fetched_at": "2026-10-04T18:43:36Z",
+   "claim": "MSCI stress-tests thematic indexes with its crowding model and scenarios; crowding helped explain the efficient-energy theme's 2021 underperformance.",
+   "core_claim": "Crowding in the efficient-energy theme rose throughout 2020 and stayed moderately high through Q1 2021. Its underperformance since March can be explained, in part, by its crowding characteristics.",
+   "credibility": "industry_standard",
+   "applicability": "Benefit is measured with theme-shock replays and stress-window ES, not only full-sample Sharpe."
+  },
+  {
+   "claim_id": "alpaca_margin_short_rules_2026_10_04",
+   "market_and_period": "Alpaca Securities US accounts, rules as published 2026-10-04",
+   "limitations": "Fetched 10-04; the docs host did not resolve from this box on 10-05; rates can change.",
+   "independent_replication": "Broker primary documentation.",
+   "url": "https://docs.alpaca.markets/docs/margin-and-short-selling",
+   "source_type": "broker_official_docs",
+   "published_or_updated_at": "2026-10-04",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/alpaca-margin-short-docs.txt",
+   "sha256": "2e4f9ae3987c3ed7cd80124130b4aa5f0dff40691c1a878ac90b38e939b0e8f7",
+   "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+   "fetched_at": "2026-10-04T18:38:00Z",
+   "claim": "Alpaca: 50% initial margin; overnight maintenance 30% long above $6, 50% long 2x leveraged ETF, 75% long 3x leveraged ETF, short >= $5 greater of $5/share or 30%; $0 borrow fees on easy-to-borrow shares; margin interest 6.50% for non-elite users.",
+   "core_claim": "LONG 2x Leveraged ETF 50% of EOD market value LONG 3x Leveraged ETF 75% of EOD market value",
+   "credibility": "primary_broker_documentation",
+   "applicability": "H1 feasibility rules, 0 bp main borrow, 6.5% debit and re-levering cost."
+  },
+  {
+   "claim_id": "letf_compounding_regime_dependence_2504_20116",
+   "market_and_period": "theory plus about 20 years of SPY and QQQ data (abstract)",
+   "limitations": "Abstract-level read.",
+   "independent_replication": "Consistent with standard LETF compounding algebra.",
+   "url": "https://arxiv.org/abs/2504.20116",
+   "source_type": "paper",
+   "published_or_updated_at": "2025-04-28",
+   "snapshot_path": "reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__letf-compounding-regime-2504.20116.txt",
+   "sha256": "4873ba0ee7852d6d5298e776da577a97eec323501fdd19adb9212e56eb4a6770",
+   "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+   "fetched_at": "2026-10-04T18:46:28Z",
+   "claim": "Hsieh et al.: leveraged ETF performance depends on return autocorrelation and dynamics, not only volatility drag.",
+   "core_claim": "We show that this view is incomplete: LETF performance depends fundamentally on return autocorrelation and return dynamics.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "The cash-account hedge is evaluated with actual SOXS returns (path-dependent decay), never -3 x SMH."
+  }
+ ]
+}

@@ -1,0 +1,160 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "theme_risk_budget_p2_s1",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261005-32",
+      "source_urls": [
+        "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261005_p2_s1_theme_budget",
+  "objective": "P2 Stage 1 (risk policy): cap the semiconductor theme share of each ETF sleeve's ex-ante variance at four levels by substitution (CAP) or a theme-neutral hedge (H1 margin, H2 cash), measure on the ETF pilot (S3 0.642 + C2 0.358) the same-volatility recent Sharpe cost and the stress and theme-shock benefit, and select the tightest level within a 0.10 Sharpe cost as the pilot concentration limit.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "roncalli_weisang_2012_factor_risk_contributions",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf"
+    },
+    {
+      "claim_id": "msci_use4_industry_factor_risk_model",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://www.top1000funds.com/wp-content/uploads/2011/09/USE4_Methodology_Notes_August_2011.pdf"
+    },
+    {
+      "claim_id": "tzikas_et_al_2026_transient_factors_missed",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://arxiv.org/pdf/2605.12977"
+    },
+    {
+      "claim_id": "msci_2021_thematic_index_stress_tests",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://www.msci.com/research-and-insights/blog-post/the-pressure-of-the-crowd-stress-testing-thematic-indexes"
+    },
+    {
+      "claim_id": "alpaca_margin_short_rules_2026_10_04",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "letf_compounding_regime_dependence_2504_20116",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://arxiv.org/abs/2504.20116"
+    },
+    {
+      "claim_id": "atranica_2026_july_semis_drawdown_crowding",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "https://atranicapital.substack.com/p/what-happened-to-semiconductors-in"
+    },
+    {
+      "claim_id": "local_s3_attribution_levered_semis_position",
+      "source_card_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl",
+      "source_url": "local:reports/research/hypotheses/H-20260923-09-s3-attribution.md"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261005_p2_s1_theme_budget.yaml",
+  "sources": [
+    {
+      "claim_id": "roncalli_weisang_2012_factor_risk_contributions",
+      "core_claim": "Roncalli and Weisang, Risk Parity Portfolios with Risk Factors (MPRA 44017): Euler decomposition holds in factor coordinates; Theorem 2: when the risk measure is volatility the risk contribution of factor j is RC(F_j) = (A'x)_j (A+ Sigma x)_j / sigma(x); risk budgets set on assets can leave factor risk contributions unbalanced.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Defines the theme risk share TRS as the Euler contribution of the orthogonalised SMH factor to sleeve variance, the quantity the cap limits.",
+      "published_or_updated_at": "2012-09-15",
+      "reflection": "Theory and illustrations; no evidence on semiconductors or on the Sharpe cost of a cap. Snapshot reports/research/intel/sources/p2-s1-theme-budget-2026-10-05/roncalli-weisang-2012-risk-parity-risk-factors-mpra44017.txt.",
+      "source_type": "working_paper",
+      "url": "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf"
+    },
+    {
+      "claim_id": "msci_use4_industry_factor_risk_model",
+      "core_claim": "MSCI Barra USE4 explains US equity returns with industry factors, style factors and specific risk; industry exposures are managed as factor risk in the same covariance.",
+      "credibility": "industry_standard",
+      "project_applicability": "Professional practice: an industry or theme is a risk unit with its own factor; supports budgeting the semiconductor theme as a factor rather than predicting the cycle.",
+      "published_or_updated_at": "2011-08-31",
+      "reflection": "Methodology note, no performance claim. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/msci-use4-methodology.txt (fetched 2026-10-04 18:43 UTC).",
+      "source_type": "industry_documentation",
+      "url": "https://www.top1000funds.com/wp-content/uploads/2011/09/USE4_Methodology_Notes_August_2011.pdf"
+    },
+    {
+      "claim_id": "tzikas_et_al_2026_transient_factors_missed",
+      "core_claim": "Tzikas, Candes, Hastie, Boyd, Kochenderfer, Kahn (Stanford and BlackRock): commercial risk models are of high quality but may fail to capture changing regimes and transient factors; adding transient statistical factors captures structure the original model misses.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "A fixed industry model can under-measure a fast-rising theme such as AI semiconductors; justifies a dedicated rolling theme factor with a 126-session window.",
+      "published_or_updated_at": "2026-05-12",
+      "reflection": "Preprint; the authors' factors are statistical, ours is a named ETF factor. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__transient-statistical-factors-risk-model-2605.12977.txt.",
+      "source_type": "arxiv",
+      "url": "https://arxiv.org/pdf/2605.12977"
+    },
+    {
+      "claim_id": "msci_2021_thematic_index_stress_tests",
+      "core_claim": "MSCI stress-tests thematic indexes with its crowding model and scenarios; crowding helped explain the efficient-energy theme's underperformance from March 2021.",
+      "credibility": "industry_standard",
+      "project_applicability": "Practice of managing a theme with exposure limits and stress replays; motivates the three SMH shock replays as the benefit measure.",
+      "published_or_updated_at": "2021-05-01",
+      "reflection": "Blog-level research, 2021, not semiconductors. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/msci-pressure-of-the-crowd-thematic-indexes.txt.",
+      "source_type": "industry_research",
+      "url": "https://www.msci.com/research-and-insights/blog-post/the-pressure-of-the-crowd-stress-testing-thematic-indexes"
+    },
+    {
+      "claim_id": "alpaca_margin_short_rules_2026_10_04",
+      "core_claim": "Alpaca: 50% initial margin (Reg T); overnight maintenance 30% long above $6, 50% long 2x leveraged ETF, 75% long 3x leveraged ETF, short at or above $5 the greater of $5/share or 30%; $0 locate and borrow fees on easy-to-borrow shares; margin interest 6.50% a year for non-elite users.",
+      "credibility": "primary_broker_documentation",
+      "project_applicability": "Sets the H1 feasibility rules, the 0 bp borrow main case and the 6.5% debit and re-levering cost.",
+      "published_or_updated_at": "2026-10-04",
+      "reflection": "Fetched 2026-10-04 (docs host unreachable from this box on 10-05); rates can change. Snapshot reports/research/intel/sources/mid-frequency-2026-10-04/alpaca-margin-short-docs.txt.",
+      "source_type": "broker_documentation",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "letf_compounding_regime_dependence_2504_20116",
+      "core_claim": "Hsieh et al., Compounding Effects in Leveraged ETFs: LETF performance depends on return autocorrelation and dynamics, not only volatility drag; trending markets help and mean reversion hurts.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "The cash-account hedge uses SOXS, a -3x daily-reset fund; its decay is path-dependent, so the backtest must use actual SOXS returns, not -3 x SMH.",
+      "published_or_updated_at": "2025-04-28",
+      "reflection": "Abstract-level read. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__letf-compounding-regime-2504.20116.txt.",
+      "source_type": "arxiv",
+      "url": "https://arxiv.org/abs/2504.20116"
+    },
+    {
+      "claim_id": "atranica_2026_july_semis_drawdown_crowding",
+      "core_claim": "The PHLX Semiconductor Index lost about 21% in July 2026, its worst month since October 2008, while the S&P 500 total return slipped 0.1%; the move is attributed to crowding and leverage, with long global semiconductors named the most crowded trade by 73-82% of BofA survey respondents in May-July.",
+      "credibility": "practitioner_commentary",
+      "project_applicability": "Defines the R3 replay and shows that theme risk materialised without a fundamental turn, so a forecast-free exposure limit is the relevant control.",
+      "published_or_updated_at": "2026-08-01",
+      "reflection": "Practitioner commentary; survey figures second-hand (BofA original not read). Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/atranica-what-happened-to-semis-in-july.txt.",
+      "source_type": "practitioner_blog",
+      "url": "https://atranicapital.substack.com/p/what-happened-to-semiconductors-in"
+    },
+    {
+      "claim_id": "local_s3_attribution_levered_semis_position",
+      "core_claim": "H-20260923-09: the live S3 is a vol-targeted levered semiconductor position; SOXL + USD average 58.5% of weight in the anchor window and 69.4% in the holdout; leaving SOXL out drops the holdout Sharpe from 2.28 to 0.96.",
+      "credibility": "local_preregistered_experiment",
+      "project_applicability": "Sets the prior: a semiconductor cap is likely to cost recent Sharpe; the contract must define what happens when no level is within the cost tolerance.",
+      "published_or_updated_at": "2026-09-23",
+      "reflection": "Local, design-seen windows. File reports/research/hypotheses/H-20260923-09-s3-attribution.md (sha256 ffc92669...).",
+      "source_type": "internal_measurement",
+      "url": "local:reports/research/hypotheses/H-20260923-09-s3-attribution.md"
+    }
+  ],
+  "spec_hash": "b068d4a69b8b2dc51cff71e45ff3f208b28eff5f39497706de7a3ae8b18474af",
+  "strategy_name": "t20261005_p2_s1_theme_budget",
+  "topic_coverage": [
+    "factor_risk_contribution_budgeting",
+    "industry_theme_factor_risk_models",
+    "transient_theme_factors",
+    "thematic_stress_testing",
+    "leveraged_etf_hedge_decay",
+    "broker_margin_feasibility",
+    "semiconductor_crowding_drawdowns",
+    "local_s3_theme_attribution"
+  ]
+}

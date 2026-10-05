@@ -1,0 +1,299 @@
+{
+  "iter_id": "t20261005_p2_s1_theme_budget",
+  "strategy_name": "t20261005_p2_s1_theme_budget",
+  "representative_spec_path": "strategy_specs/drafts/t20261005_p2_s1_theme_budget.yaml",
+  "path_name": "theme_risk_budget_p2_s1",
+  "hypothesis_id": "T-20261005-32",
+  "objective": "P2 Stage 1 (risk policy): cap the semiconductor theme share of each ETF sleeve's ex-ante variance at four levels by substitution (CAP) or a theme-neutral hedge (H1 margin, H2 cash), measure on the ETF pilot (S3 0.642 + C2 0.358) the same-volatility recent Sharpe cost and the stress and theme-shock benefit, and select the tightest level within a 0.10 Sharpe cost as the pilot concentration limit.",
+  "benchmark_family": [
+    "identity_s3_offsets_and_c2_o00_uncapped",
+    "original_pilot_same_engine_same_vol",
+    "same_volatility_rescaling_with_debit",
+    "eight_sector_placebo_themes_cap_and_hedge",
+    "replays_r1_r2_r3_smh_shocks",
+    "two_x_cost_and_100bp_borrow",
+    "alpaca_margin_and_cash_account_feasibility",
+    "s3_21_offset_robustness"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "P2S1_CAP_40",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "substitution: on each sleeve update day, if TRS(w) > c move fraction s of every holding with b_th,i > 0 into its same-leverage substitute (TQQQ, SOXL, TECL -> UPRO; USD -> SSO; SMH, SOXX, XLK, QQQ, SPMO and any 1x holding -> SPY), s = smallest value on the grid 0, 0.01, ..., 1 with TRS(w(s)) <= c (s = 1 and flagged if none); the S3 vol scale is then computed on the capped book's own gross returns (frozen engine)",
+        "theme_risk_share_cap": 0.4
+      }
+    },
+    {
+      "candidate_id": "P2S1_CAP_30",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "substitution: on each sleeve update day, if TRS(w) > c move fraction s of every holding with b_th,i > 0 into its same-leverage substitute (TQQQ, SOXL, TECL -> UPRO; USD -> SSO; SMH, SOXX, XLK, QQQ, SPMO and any 1x holding -> SPY), s = smallest value on the grid 0, 0.01, ..., 1 with TRS(w(s)) <= c (s = 1 and flagged if none); the S3 vol scale is then computed on the capped book's own gross returns (frozen engine)",
+        "theme_risk_share_cap": 0.3
+      }
+    },
+    {
+      "candidate_id": "P2S1_CAP_20",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "substitution: on each sleeve update day, if TRS(w) > c move fraction s of every holding with b_th,i > 0 into its same-leverage substitute (TQQQ, SOXL, TECL -> UPRO; USD -> SSO; SMH, SOXX, XLK, QQQ, SPMO and any 1x holding -> SPY), s = smallest value on the grid 0, 0.01, ..., 1 with TRS(w(s)) <= c (s = 1 and flagged if none); the S3 vol scale is then computed on the capped book's own gross returns (frozen engine)",
+        "theme_risk_share_cap": 0.2
+      }
+    },
+    {
+      "candidate_id": "P2S1_CAP_10",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "substitution: on each sleeve update day, if TRS(w) > c move fraction s of every holding with b_th,i > 0 into its same-leverage substitute (TQQQ, SOXL, TECL -> UPRO; USD -> SSO; SMH, SOXX, XLK, QQQ, SPMO and any 1x holding -> SPY), s = smallest value on the grid 0, 0.01, ..., 1 with TRS(w(s)) <= c (s = 1 and flagged if none); the S3 vol scale is then computed on the capped book's own gross returns (frozen engine)",
+        "theme_risk_share_cap": 0.1
+      }
+    },
+    {
+      "candidate_id": "P2S1_H1F_40",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "margin-account hedge: on each update day, given the sleeve's effective weights after its vol scale, overlay -h units of f (short h SMH, long h beta SPY) with h >= 0 solving TRS = c in closed form (h = 0 if TRS <= c); SPY leg funded from SHY first, rest is debit at 6.5%; if Alpaca margin rules fail (initial 50% of gross > equity, or maintenance 30% long, 50% 2x, 75% 3x, 30% short > 0.9 equity) h is cut to the largest feasible value",
+        "theme_risk_share_cap": 0.4
+      }
+    },
+    {
+      "candidate_id": "P2S1_H1F_30",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "margin-account hedge: on each update day, given the sleeve's effective weights after its vol scale, overlay -h units of f (short h SMH, long h beta SPY) with h >= 0 solving TRS = c in closed form (h = 0 if TRS <= c); SPY leg funded from SHY first, rest is debit at 6.5%; if Alpaca margin rules fail (initial 50% of gross > equity, or maintenance 30% long, 50% 2x, 75% 3x, 30% short > 0.9 equity) h is cut to the largest feasible value",
+        "theme_risk_share_cap": 0.3
+      }
+    },
+    {
+      "candidate_id": "P2S1_H1F_20",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "margin-account hedge: on each update day, given the sleeve's effective weights after its vol scale, overlay -h units of f (short h SMH, long h beta SPY) with h >= 0 solving TRS = c in closed form (h = 0 if TRS <= c); SPY leg funded from SHY first, rest is debit at 6.5%; if Alpaca margin rules fail (initial 50% of gross > equity, or maintenance 30% long, 50% 2x, 75% 3x, 30% short > 0.9 equity) h is cut to the largest feasible value",
+        "theme_risk_share_cap": 0.2
+      }
+    },
+    {
+      "candidate_id": "P2S1_H1F_10",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "margin-account hedge: on each update day, given the sleeve's effective weights after its vol scale, overlay -h units of f (short h SMH, long h beta SPY) with h >= 0 solving TRS = c in closed form (h = 0 if TRS <= c); SPY leg funded from SHY first, rest is debit at 6.5%; if Alpaca margin rules fail (initial 50% of gross > equity, or maintenance 30% long, 50% 2x, 75% 3x, 30% short > 0.9 equity) h is cut to the largest feasible value",
+        "theme_risk_share_cap": 0.1
+      }
+    },
+    {
+      "candidate_id": "P2S1_H2F_40",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "cash-account hedge: overlay n SOXS + u UPRO (n, u >= 0) whose W-loadings give -h on f and 0 on SPY (2x2 solve), h as in H1; funded only from the sleeve's cash (SHY/BIL); if n + u > cash, both scaled down to fit; actual SOXS and UPRO returns (daily reset decay and fees included)",
+        "theme_risk_share_cap": 0.4
+      }
+    },
+    {
+      "candidate_id": "P2S1_H2F_30",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "cash-account hedge: overlay n SOXS + u UPRO (n, u >= 0) whose W-loadings give -h on f and 0 on SPY (2x2 solve), h as in H1; funded only from the sleeve's cash (SHY/BIL); if n + u > cash, both scaled down to fit; actual SOXS and UPRO returns (daily reset decay and fees included)",
+        "theme_risk_share_cap": 0.3
+      }
+    },
+    {
+      "candidate_id": "P2S1_H2F_20",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "cash-account hedge: overlay n SOXS + u UPRO (n, u >= 0) whose W-loadings give -h on f and 0 on SPY (2x2 solve), h as in H1; funded only from the sleeve's cash (SHY/BIL); if n + u > cash, both scaled down to fit; actual SOXS and UPRO returns (daily reset decay and fees included)",
+        "theme_risk_share_cap": 0.2
+      }
+    },
+    {
+      "candidate_id": "P2S1_H2F_10",
+      "parameters": {
+        "decision_object": "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days",
+        "theme_factor": "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns",
+        "theme_risk_share": "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0",
+        "sleeves": "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY",
+        "windows": "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation",
+        "execution_and_cost": "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing",
+        "same_vol": "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe",
+        "version": "cash-account hedge: overlay n SOXS + u UPRO (n, u >= 0) whose W-loadings give -h on f and 0 on SPY (2x2 solve), h as in H1; funded only from the sleeve's cash (SHY/BIL); if n + u > cash, both scaled down to fit; actual SOXS and UPRO returns (daily reset decay and fees included)",
+        "theme_risk_share_cap": 0.1
+      }
+    }
+  ],
+  "cost_table": {
+    "base_cost_bps": 10,
+    "stress_cost_bps": 20,
+    "judged_cost": "10 bp per side on traded notional (frozen-contract convention); borrow 0 on easy-to-borrow ETFs; debit and re-levering at 6.5%/yr",
+    "two_x_cost_check": "20 bp per side and 100 bp/yr borrow on short notional on the same weight paths"
+  },
+  "sources": [
+    {
+      "claim_id": "roncalli_weisang_2012_factor_risk_contributions",
+      "url": "https://mpra.ub.uni-muenchen.de/44017/1/MPRA_paper_44017.pdf",
+      "published_or_updated_at": "2012-09-15",
+      "source_type": "working_paper",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Roncalli and Weisang, Risk Parity Portfolios with Risk Factors (MPRA 44017): Euler decomposition holds in factor coordinates; Theorem 2: when the risk measure is volatility the risk contribution of factor j is RC(F_j) = (A'x)_j (A+ Sigma x)_j / sigma(x); risk budgets set on assets can leave factor risk contributions unbalanced.",
+      "project_applicability": "Defines the theme risk share TRS as the Euler contribution of the orthogonalised SMH factor to sleeve variance, the quantity the cap limits.",
+      "reflection": "Theory and illustrations; no evidence on semiconductors or on the Sharpe cost of a cap. Snapshot reports/research/intel/sources/p2-s1-theme-budget-2026-10-05/roncalli-weisang-2012-risk-parity-risk-factors-mpra44017.txt."
+    },
+    {
+      "claim_id": "msci_use4_industry_factor_risk_model",
+      "url": "https://www.top1000funds.com/wp-content/uploads/2011/09/USE4_Methodology_Notes_August_2011.pdf",
+      "published_or_updated_at": "2011-08-31",
+      "source_type": "industry_documentation",
+      "credibility": "industry_standard",
+      "core_claim": "MSCI Barra USE4 explains US equity returns with industry factors, style factors and specific risk; industry exposures are managed as factor risk in the same covariance.",
+      "project_applicability": "Professional practice: an industry or theme is a risk unit with its own factor; supports budgeting the semiconductor theme as a factor rather than predicting the cycle.",
+      "reflection": "Methodology note, no performance claim. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/msci-use4-methodology.txt (fetched 2026-10-04 18:43 UTC)."
+    },
+    {
+      "claim_id": "tzikas_et_al_2026_transient_factors_missed",
+      "url": "https://arxiv.org/pdf/2605.12977",
+      "published_or_updated_at": "2026-05-12",
+      "source_type": "arxiv",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Tzikas, Candes, Hastie, Boyd, Kochenderfer, Kahn (Stanford and BlackRock): commercial risk models are of high quality but may fail to capture changing regimes and transient factors; adding transient statistical factors captures structure the original model misses.",
+      "project_applicability": "A fixed industry model can under-measure a fast-rising theme such as AI semiconductors; justifies a dedicated rolling theme factor with a 126-session window.",
+      "reflection": "Preprint; the authors' factors are statistical, ours is a named ETF factor. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__transient-statistical-factors-risk-model-2605.12977.txt."
+    },
+    {
+      "claim_id": "msci_2021_thematic_index_stress_tests",
+      "url": "https://www.msci.com/research-and-insights/blog-post/the-pressure-of-the-crowd-stress-testing-thematic-indexes",
+      "published_or_updated_at": "2021-05-01",
+      "source_type": "industry_research",
+      "credibility": "industry_standard",
+      "core_claim": "MSCI stress-tests thematic indexes with its crowding model and scenarios; crowding helped explain the efficient-energy theme's underperformance from March 2021.",
+      "project_applicability": "Practice of managing a theme with exposure limits and stress replays; motivates the three SMH shock replays as the benefit measure.",
+      "reflection": "Blog-level research, 2021, not semiconductors. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/msci-pressure-of-the-crowd-thematic-indexes.txt."
+    },
+    {
+      "claim_id": "alpaca_margin_short_rules_2026_10_04",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling",
+      "published_or_updated_at": "2026-10-04",
+      "source_type": "broker_documentation",
+      "credibility": "primary_broker_documentation",
+      "core_claim": "Alpaca: 50% initial margin (Reg T); overnight maintenance 30% long above $6, 50% long 2x leveraged ETF, 75% long 3x leveraged ETF, short at or above $5 the greater of $5/share or 30%; $0 locate and borrow fees on easy-to-borrow shares; margin interest 6.50% a year for non-elite users.",
+      "project_applicability": "Sets the H1 feasibility rules, the 0 bp borrow main case and the 6.5% debit and re-levering cost.",
+      "reflection": "Fetched 2026-10-04 (docs host unreachable from this box on 10-05); rates can change. Snapshot reports/research/intel/sources/mid-frequency-2026-10-04/alpaca-margin-short-docs.txt."
+    },
+    {
+      "claim_id": "letf_compounding_regime_dependence_2504_20116",
+      "url": "https://arxiv.org/abs/2504.20116",
+      "published_or_updated_at": "2025-04-28",
+      "source_type": "arxiv",
+      "credibility": "peer_reviewed_or_working_paper",
+      "core_claim": "Hsieh et al., Compounding Effects in Leveraged ETFs: LETF performance depends on return autocorrelation and dynamics, not only volatility drag; trending markets help and mean reversion hurts.",
+      "project_applicability": "The cash-account hedge uses SOXS, a -3x daily-reset fund; its decay is path-dependent, so the backtest must use actual SOXS returns, not -3 x SMH.",
+      "reflection": "Abstract-level read. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__letf-compounding-regime-2504.20116.txt."
+    },
+    {
+      "claim_id": "atranica_2026_july_semis_drawdown_crowding",
+      "url": "https://atranicapital.substack.com/p/what-happened-to-semiconductors-in",
+      "published_or_updated_at": "2026-08-01",
+      "source_type": "practitioner_blog",
+      "credibility": "practitioner_commentary",
+      "core_claim": "The PHLX Semiconductor Index lost about 21% in July 2026, its worst month since October 2008, while the S&P 500 total return slipped 0.1%; the move is attributed to crowding and leverage, with long global semiconductors named the most crowded trade by 73-82% of BofA survey respondents in May-July.",
+      "project_applicability": "Defines the R3 replay and shows that theme risk materialised without a fundamental turn, so a forecast-free exposure limit is the relevant control.",
+      "reflection": "Practitioner commentary; survey figures second-hand (BofA original not read). Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/atranica-what-happened-to-semis-in-july.txt."
+    },
+    {
+      "claim_id": "local_s3_attribution_levered_semis_position",
+      "url": "local:reports/research/hypotheses/H-20260923-09-s3-attribution.md",
+      "published_or_updated_at": "2026-09-23",
+      "source_type": "internal_measurement",
+      "credibility": "local_preregistered_experiment",
+      "core_claim": "H-20260923-09: the live S3 is a vol-targeted levered semiconductor position; SOXL + USD average 58.5% of weight in the anchor window and 69.4% in the holdout; leaving SOXL out drops the holdout Sharpe from 2.28 to 0.96.",
+      "project_applicability": "Sets the prior: a semiconductor cap is likely to cost recent Sharpe; the contract must define what happens when no level is within the cost tolerance.",
+      "reflection": "Local, design-seen windows. File reports/research/hypotheses/H-20260923-09-s3-attribution.md (sha256 ffc92669...)."
+    }
+  ],
+  "topic_coverage": [
+    "factor_risk_contribution_budgeting",
+    "industry_theme_factor_risk_models",
+    "transient_theme_factors",
+    "thematic_stress_testing",
+    "leveraged_etf_hedge_decay",
+    "broker_margin_feasibility",
+    "semiconductor_crowding_drawdowns",
+    "local_s3_theme_attribution"
+  ],
+  "hypothesis": {
+    "statement": "A forecast-free semiconductor theme risk budget on the ETF sleeves lowers stress-period and theme-shock losses of the S3 + C2 pilot; at a loose enough level it costs at most 0.10 of same-volatility recent Sharpe.",
+    "failure_mode": "S3's recent edge is the semiconductor theme itself (H-20260923-09: SOXL + USD 58.5-69.4% of weight), so every level that binds removes the edge; or the hedge versions are infeasible at the needed size under Alpaca margin or cash-account rules.",
+    "measurement": "Per object, configuration and window: excess Sharpe raw and same-vol, annualised return and vol, max drawdown, ES97.5, k, TRS before and after, binding rate, substitution fraction or hedge size, turnover and cost, feasibility rates; replays R1-R3; paired stationary block bootstrap of the recent Sharpe change; theme share of recent P&L; 8 sector placebos.",
+    "stop_pivot": "Measurement stage; mechanical status from the frozen rule: pilot_limit_selected, cost_ok_no_benefit_monitor_only or no_level_within_cost (then S3 goes to the pilot only at pilot size per plan v2 3.2, T-58 carries the theme as one risk unit, and the stress-validated theme rule moves to P2 Stage 2). It cannot refute P2."
+  },
+  "decision": {
+    "path": "theme_risk_budget_p2_s1",
+    "decision": "pending",
+    "reason": "Preregistered 2026-10-05 by the 07:07 UTC lead round before any theme exposure, risk share, capped or hedged return was computed; executed by brief T-20261005-32.",
+    "next_iteration_suggestion": "P2 Stage 2 regime layer (10-08..10-13) on top of the selected budget; T-58 allocation v2 uses the per-sleeve capped series."
+  },
+  "source_cards_path": "reports/harness/source_cards/t20261005_p2_s1_theme_budget.jsonl"
+}

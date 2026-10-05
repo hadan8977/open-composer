@@ -1,0 +1,70 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261005_p2_s1_theme_budget/candidate-manifest.json",
+  "candidate_manifest_sha256": "dbeede7507694e0bcd835ab503949ad0681415099f69b6cc8c48c92d517eb542",
+  "cost_table_path": "reports/research/iterations/t20261005_p2_s1_theme_budget/cost-table.json",
+  "created_at": "2026-10-05T07:53:29.188785+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261005_p2_s1_theme_budget/data-feasibility.json",
+  "data_feasibility_sha256": "a2c4d336d382339786259b8315b9aafa8b2149186c32280bb4c67730dedc09b0",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261005_p2_s1_theme_budget",
+  "paths": [
+    {
+      "benchmark_family": [
+        "identity_s3_offsets_and_c2_o00_uncapped",
+        "original_pilot_same_engine_same_vol",
+        "same_volatility_rescaling_with_debit",
+        "eight_sector_placebo_themes_cap_and_hedge",
+        "replays_r1_r2_r3_smh_shocks",
+        "two_x_cost_and_100bp_borrow",
+        "alpaca_margin_and_cash_account_feasibility",
+        "s3_21_offset_robustness"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "T-20261005-32"
+      ],
+      "name": "theme_risk_budget_p2_s1",
+      "parameters": {
+        "decision_object": [
+          "ETF pilot = 0.642 S3 + 0.358 C2 (plan v2 D7.1, normalized T-43 weights, no borrowing), fixed weights reset daily (same aggregation for every configuration); sleeve-level caps: each sleeve applies the rule to its own holdings on its own update days"
+        ],
+        "execution_and_cost": [
+          "signal at close d, effective at the open of d+1 (salvage legs); 10 bp per side on all traded notional, 2x check 20 bp; borrow 0 (Alpaca ETB, 2026-10-04 snapshot), 2x check 100 bp/yr on short notional; debit interest 6.5%/yr; short proceeds earn nothing"
+        ],
+        "same_vol": [
+          "k = sd(original)/sd(config) per window; same-vol excess = k (r - rf) - max(k-1,0)(0.065/252 - rf); judged on excess-over-BIL annualised Sharpe"
+        ],
+        "sleeves": [
+          "S3: tranche.s3_weights at offsets 0,4,8,12,16 (5-offset blend, judged) with the frozen vol target 0.40, dip boost 0.60 for 10 sessions; C2: screen_lane.weights_frame of C2 (h20260928_20_recent_opt, freq D, calendar-anchored, one version); cash SHY"
+        ],
+        "theme_factor": [
+          "on the 126 sessions W ending at the signal close d: beta = cov(r_SMH, r_SPY)/var(r_SPY), f_t = r_SMH,t - beta r_SPY,t (orthogonal to SPY on W); close-to-close SIP daily returns"
+        ],
+        "theme_risk_share": [
+          "p_t = sum_i w_i r_i,t on W at the sleeve's current risky weights (SHY, BIL = cash, zero risk); OLS p = a + b_m r_SPY + b_th f + e on W; TRS = b_th^2 var_W(f) / var_W(p) (Euler factor share, Roncalli-Weisang 2012 Th. 2); all-cash -> 0"
+        ],
+        "theme_risk_share_cap": [
+          0.4,
+          0.3,
+          0.2,
+          0.1
+        ],
+        "version": [
+          "substitution: on each sleeve update day, if TRS(w) > c move fraction s of every holding with b_th,i > 0 into its same-leverage substitute (TQQQ, SOXL, TECL -> UPRO; USD -> SSO; SMH, SOXX, XLK, QQQ, SPMO and any 1x holding -> SPY), s = smallest value on the grid 0, 0.01, ..., 1 with TRS(w(s)) <= c (s = 1 and flagged if none); the S3 vol scale is then computed on the capped book's own gross returns (frozen engine)",
+          "margin-account hedge: on each update day, given the sleeve's effective weights after its vol scale, overlay -h units of f (short h SMH, long h beta SPY) with h >= 0 solving TRS = c in closed form (h = 0 if TRS <= c); SPY leg funded from SHY first, rest is debit at 6.5%; if Alpaca margin rules fail (initial 50% of gross > equity, or maintenance 30% long, 50% 2x, 75% 3x, 30% short > 0.9 equity) h is cut to the largest feasible value",
+          "cash-account hedge: overlay n SOXS + u UPRO (n, u >= 0) whose W-loadings give -h on f and 0 on SPY (2x2 solve), h as in H1; funded only from the sleeve's cash (SHY/BIL); if n + u > cash, both scaled down to fit; actual SOXS and UPRO returns (daily reset decay and fees included)"
+        ],
+        "windows": [
+          "recent 2024-01-08..last archive session (decision); stress 2017-10-02..2023-08-31; full 2017-10-02..last session; replays R1 (SMH peak in 2024-06-01..07-31, trough by 08-31), R2 (peak 2025-01-01..03-31, trough by 04-30), R3 (peak 2026-06-01..07-31, trough by 08-31), dates frozen in build.json from SMH closes before evaluation"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261005_p2_s1_theme_budget.yaml",
+  "spec_hash": "b068d4a69b8b2dc51cff71e45ff3f208b28eff5f39497706de7a3ae8b18474af",
+  "strategy_name": "t20261005_p2_s1_theme_budget",
+  "total_candidate_budget": 12,
+  "trial_ledger_paths": []
+}
