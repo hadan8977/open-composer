@@ -1870,7 +1870,7 @@
 
   - 2026-10-05 05:56 UTC 执行轮 2c717355（子代理 sonnet-high，提交 ebee03d）：`reports/research/program/forward-record-2026-10-06/` 的 record.csv（122 行）、summary.json、hash_chain.jsonl（90 行，子代理独立重算 0 断链）、README.md（含四档衰减规则草案，阈值全部"待主审校准"）已提交；脚本 `scripts/forward_record_t70.py` + `tests/test_forward_record_t70.py` 测试通过。S1–S3、C2 三段齐全（累计收益 设计时看过/影子/模拟盘：S1 +0.91%/+0.28%/+1.55%；S2 +0.52%/+0.71%/+3.50%；S3 −1.48%/−0.15%/+1.70%；C2（冻结 09-25）+0.48%/−0.67%/+0.39%；数字取自 summary.json，子代理报告，我抽查了文件结构，未逐项重算）。F1/F2/T-43 只有 09-01..09-15 设计时看过段（F1 +0.27%、F2 −1.42%、T-43 −1.55%）。v1.2 影子重跑（读 live 根，写 /tmp）因机器负载 8–15、本进程只拿到 6 CPU 分钟/90 分钟，没跑完，已停；续跑命令：`scripts/run_capped.sh --mem 1.0G -- uv run python scripts/forward_record_t70.py book`，完成后 `uv run python scripts/forward_record_t70.py assemble /tmp/t70_notes.md`（备注文件 /tmp 下，丢了就重写）。发现：(1) S3 九月差是数据翻转（修复后 SIP 档案持 SHY、模拟盘持 UPRO，T-55 §1），不是执行；(2) S2/S3 的波动叠加 09-24 才进模拟盘（预注册 09-22），09-21..09-23 的跟踪差是规则差，严格说 S2/S3 影子日 09-18 也算看过；(3) 每个 sleeve 的 `reports/execution/*-target-weights.json` 每天被覆盖，哈希链只覆盖最新状态，要每日存档需改模拟盘管线（未动）；(4) 预修复档案只到 09-17，修复前 S3 信号的跟踪差分解没做。本机负载高，10-06 22:00 前续跑 F1/F2/T-43 需要在安静时段。待主审。
 ### T-20261004-71 实盘快速通道 A3：v1.2 在实盘资金下的容量（集中版预注册）
-- status: running（2026-10-05 05:51 UTC 交互会话改范围：不再等资金数，按资金档位算，10-07 00:00 UTC 前交付；独立 Paseo 代理，Sonnet 5.5 high，协调码 R1005-T71）
+- status: done（2026-10-05 06:07 UTC 交互会话审核通过并提交）
 - priority: 1
 - not_before: 无（改范围后不再等机主）
 - brief: reports/research/control/briefs/T-20261004-71.md
@@ -1879,6 +1879,7 @@
 - notes:
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
   - 2026-10-05 05:51 UTC 交互会话：按第二版计划 D5 第 5 节第 2 条和独立复核 review-1 第 0.2 节改范围，简报顶部新增一节；原第 2 步改成小资金构造，另开任务（10-08 至 10-14）。
+  - 2026-10-05 06:07 UTC 交互会话审核：交付 `reports/research/program/capacity-live-2026-10-07/`。推荐起步 5 万美元、只上 ETF 子策略；ETF 四条从 1 万起可行（敞口比最低 0.942）；v1.2 的 F1、F2 子仓要约 25 万、50 万美元才过 V2。我用代码复算了 F1、F2 的整股表和按 T-43 权重折算后的账户表（账户 100 万时 F1 子仓 2.5 万，74.9% 的空头取整为 0）。PDT、碎股规则来自网页摘要，逐字核对待做。并入计划 D6 第 5 节。
 
 ### T-20261004-72 实盘快速通道 A4：实盘就绪清单和实盘下单路径
 - status: blocked（等机主授权"实盘下单路径"范围变更并提供实盘账户和密钥；授权前只写清单文档，不写实盘写入代码）
@@ -2034,10 +2035,11 @@
   - 2026-10-05 01:35 UTC 01:07 主审轮（Opus）登记：设计 P1 阶段 0 的成交口径时发现，收盘竞价单在本账户从没实测过。
 
 ### T-20261005-20 v1.2 首单前：对照外部的通道失败清单（swiftward 34 条、Deflow）只读审模拟盘下单路径
-- status: running（2026-10-05 05:17 UTC 交互会话派出独立 Paseo 代理，Sonnet 5.5 high，协调码 R1005-CHA）
+- status: done（2026-10-05 06:07 UTC 交互会话审核通过并提交）
 - priority: 1
 - not_before: 无；10-07 18:45 UTC v1.2 首次提交前要用上结论
 - brief: reports/research/control/briefs/T-20261005-20.md
 - done_when: `reports/research/program/channel-audit-2026-10-06/audit.{md,json}`，10-05 12:00 UTC 前；交互会话审核后提交。首单前必须修的条目另开任务。
 - notes:
   - 2026-10-05 05:17 UTC 交互会话（Opus）登记。来源：第二版计划第 3.5 节 P5 的第一项（T-83 调研 I-20261004-08 第 6 节第 2 项）。只读审计，不改代码，不调券商接口。
+  - 2026-10-05 06:07 UTC 交互会话审核：63 条（swiftward 实际 35 条、Deflow 16 条、新增 12 条）；已防住 13、部分 27、没防住 6、不适用 17。首单前必须修：E1 拒单只记异常类名、提交命令仍退出 0（plan.py submit_plan、cli.py submit，交互会话已对代码核实）；E2 收盘竞价被拒时没有后备（决策）；E3 重跑覆盖第一次的回执和计划文件（已核实）。E1、E3 由交互会话修，E2 写进开始清单。
