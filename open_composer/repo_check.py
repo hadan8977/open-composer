@@ -23,6 +23,7 @@ CURRENT_DOCS = {
     "docs/equity-book-design.zh.md",
     "docs/evaluation-standard.zh.md",
     "docs/owner-reporting.zh.md",
+    "docs/owner-rules-register.zh.md",
     "docs/plan-owner-feedback-2026-10-04.zh.md",
     "docs/plan-v2-requirements-2026-10-04.zh.md",
     "docs/plan-v2-2026-10-05.zh.md",

@@ -16,7 +16,10 @@
     "stress_21d_loss_sigma_warn": 4.0,
     "stress_63d_loss_sigma_warn": 3.0,
     "recent_break_z_veto": -3.0,
-    "max_participation_adv": 0.01
+    "max_participation_adv": 0.01,
+    "whole_share_short_exposure_ratio_ge": 0.9,
+    "whole_share_rel_l1_error_le": 0.3,
+    "whole_share_net_dev_le": 0.05
   },
   "dsr": {
     "n_eff_rule": "1 + (N-1)(1-mean_pairwise_corr)",
@@ -91,5 +94,6 @@
     "net": "quarter-fixed random ranks from hash(seed, quarter, symbol); real composite order statistics assigned by those ranks at every rebalance; entrants inserted by hash (v2.0.2)",
     "since": "2026-10-02 06:39 UTC"
   },
-  "v2_1_note": "owner 2026-10-04: forward record counted from 2026-09-01 with labelled segments (design-seen / out-of-sample shadow / paper fills); >= 10 real paper sessions; L1 pilot needs P1 plus the balanced-window and logic review; scaling (L2) needs P2"
+  "v2_1_note": "owner 2026-10-04: forward record counted from 2026-09-01 with labelled segments (design-seen / out-of-sample shadow / paper fills); >= 10 real paper sessions; L1 pilot needs P1 plus the balanced-window and logic review; scaling (L2) needs P2",
+  "v2_whole_share_note": "2026-10-05 06:22 UTC: V2 整股可行性的量化，来自 T-20261004-71（capacity-live-2026-10-07）：空头整股取整后的实现敞口 ÷ 目标 ≥ 0.90；相对 L1 误差 ≤ 0.30；净美元偏离 ≤ 净值的 5%（引擎 RiskLimits.max_abs_net）。按子策略分到的资金算，不按账户总资金。这是可行性门槛，不是业绩门槛。"
 }
