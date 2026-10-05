@@ -1,0 +1,954 @@
+                                      Turnover-Adjusted Information Ratio
+
+                                        Feng Zhang, Xi Wang and Honggao Cao1
+                                               Wells Fargo & Company
+                                                   March 31, 2021
+
+                                                          Abstract
+
+    In this paper, we study the behavior of information ratio (IR) as determined by the fundamental law of
+    active investment management. We extend the classic relationship between IR and its two determinants
+    (i.e., information coefficient and investment “breadth”) by explicitly and simultaneously taking into
+    account the volatility of IC and the cost from portfolio turnover. Through mathematical derivations and
+    simulations, we show that – for both mean-variance and quintile portfolios – a turnover-adjusted IR is
+    always lower than an IR that ignores the cost from turnover; more importantly, we find that, contrary to
+    the implication from the fundamental law but consistent with available empirical evidence, investment
+    managers may improve their investment performance or IR by limiting/optimizing trade or portfolio
+    turnover.
+
+
+Keywords: information ratio, information coefficient, portfolio turnover, signal decay, the fundamental law of
+active management
+
+
+
+1. Introduction
+
+An investment manager’s performance is often evaluated by two interrelated metrics. The first is about the
+efficacy of the stock2 selection model (or alpha model) that the manager uses to support her investment choices.
+In this, the ability of the model to distinguish between good and bad stocks, or between stocks with positive
+(higher) and negative (lower) excess return, is measured as information coefficient (IC). Determined cross-
+sectionally at a given point of time across the stocks in a targeted investment universe, IC is the correlation
+between the predicted excess returns and the subsequently realized excess returns of the stocks. The higher IC,
+the more powerful the alpha model.
+
+The manager uses the alpha model to execute her investment strategies across time, taking into account market
+and non-market-related constraints, while also complementing the model-based investment decisions with
+qualitative judgment and discretions. The performance of the resulting investment portfolio is measured across
+time as the ratio between the portfolio excess return and volatility of the excess returns. This second measure is
+termed Information Ratio (IR). Figure 1 illustrates the mechanical relationship between IC and IR.
+
+The relationship between IC and IR has been well studied. The best known relationship has been expressed as an
+element in the Fundamental Law of Active Investment Management [1]. According to this “law”, IR is connected
+to IC through a term called “breadth” (BR), which is the number of independent forecasts of exceptional returns
+made by the manager each year. Specifically, the law states:
+
+         𝐼𝑅 = 𝐼𝐶 ∗ √𝐵𝑅                                                                                      (1)
+
+In this classic, theoretical relationship, the performance of an investment portfolio depends on not only the
+power of the stock selection model used to support the investment strategies, but also the extent of portfolio
+“turnover”, as independent forecasts typically imply investment actions or portfolio calibrations, which in turn
+
+
+1 Opinions expressed in this paper do not necessarily reflect those of Wells Fargo & CO. Correspondence should be addressed
+to Honggao Cao at honggao.cao@wellsfargo.com.
+2 In this paper, we use a generic term “stocks” to indicate securities covered in an alpha model, and the terms “stock” and
+
+“security” are used interchangeably.
+
+                                                           1
+involve moving investments into and/or out of the portfolio. In order to win in the investment management
+game, the portfolio manager must play often ( [2]), suggests the fundamental law. However, empirical studies
+have found that portfolio turnover is either irrelevant to portfolio performance ( [3]) or even negatively related
+to it ( [4] and [5]): the more one plays, the worse the resulting performance.
+
+                                       Figure 1. Relationship between IC and IR
+
+
+
+
+The disconnect between the theory and the reality is at least partly caused by two limitations in the IC-IR
+relationship as expressed in Equation (1). The first is an assumption of a constant IC over time. But the
+information coefficient has shown to be volatile ( [6] and [7]); the efficacy of a stock selection model may change
+over time. Using a constant IC to measure portfolio performance fails to account for the potential negative
+impact of IC volatility. The second limitation is that the IC-IR relationship does not consider transaction cost
+associated with portfolio turnover. Because transaction cost eats into investment returns, portfolio turnover can
+negatively affect portfolio performance ( [8]).
+
+In an attempt to address the first limitation, Qian and Hua ( [6]) introduced a modified version of the
+fundamental law by directly recognizing the randomness of IC, which they referred to as “strategy risk”. In their
+alternative formulation, IR is found to be the ratio of the expected value of IC relative to the IC volatility:
+               𝜇𝐼𝐶
+        𝐼𝑅 =                                                                                       (2)
+               𝑉𝐼𝐶
+
+Here, 𝜇𝐼𝐶 is the expected value of IC, and 𝑉𝐼𝐶 is the standard deviation of IC.
+
+The Qian-Hua formulation was subsequently expanded by Ding and Martin ( [7]), who considered the forecast
+error of conditional IC and provided a more general form of fundamental law of active investment management:
+                       𝜇𝐼𝐶
+        𝐼𝑅 =                                                                                       (3)
+                  2 +(1−𝜇 2 −𝑉 2 )/𝑁
+               √𝑉𝐼𝐶      𝐼𝐶 𝐼𝐶
+
+
+Here, 𝑁 is the number of stocks in the investment universe. Clearly, Equation (3) can be seen as a general form of
+Equation (2), which sets the upper bound of IR.
+
+For the second limitation, the impact of portfolio turnover (or transaction cost) was studied by linking portfolio
+turnover with the deterioration of the information (or the signal) that is conveyed in the alpha model. In
+particular, building on the results by Qian, Sorensen and Hua ( [9] ), Ding, Martin and Yang ( [10]) showed that
+portfolio turnover for a mean variance portfolio is driven a so-called “alpha signal decay”, which was defined as
+one minus the autocorrelation of the alpha signal. The turnover rate (TR) for such a portfolio can be found as:
+
+                                                       2
+                     1                     1
+         𝑇𝑅 = 𝐸𝑐𝑠 ( ) ∗ 𝑇𝐸 ∗                               ∗ √𝑑𝑒𝑐𝑎𝑦                                           (4)
+                     𝜎𝑖               2 +(1−𝜇 2 −𝑉 2 )/𝑁
+                                 √𝜋√𝑉𝐼𝐶      𝐼𝐶 𝐼𝐶
+
+
+Here, 𝐸𝑐𝑠 is a functional denoting cross-sectional arithmetic average; 𝜎𝑖 is the security-specific volatility; 𝑇𝐸 is the
+                                                                                                          1
+target portfolio tracking error; and 𝑑𝑒𝑐𝑎𝑦 is the alpha signal decay as defined previously. 𝐸𝑐𝑠 ( ) is the cross-
+                                                                                                         𝜎𝑖
+sectional expectation of inverse specific volatility.
+
+Because portfolio turnover is closely tied to “the breadth” term in the classic IC-IR relationship, the explicit link
+between portfolio turnover and alpha signal decay as seen in Equation (4) introduces the signal decay as another
+important factor into the IC-IR relationship.
+
+The above two lines of research around the limitations in the classic IC-IR relationship, however, are not directly
+connected. No attempt has been made to combine the separate research efforts, or to develop an integrated
+understanding of information ratio that explicitly and simultaneously takes into account IC volatility and
+portfolio turnover (or signal decay).
+
+In addition, all the aforementioned studies are conducted for mean-variance portfolios, which are typically
+constructed by maximizing the expected portfolio return while subject to constraints on the portfolio risk. No
+attempt has been made to cover another type of commonly used portfolios ( [11]): the quintile portfolios. In
+contrast to a mean-variance portfolio, a quintile portfolio is constructed by equally longs the top 20% (and
+shorts the bottom 20%) of stocks based on a stock ranking model. Quintile portfolio returns are often used as a
+metric in evaluating stock ranking model performance ( [12] [13]).
+
+In this paper, we attempt to fill the above research gap. Specifically, we first extend the general form of the
+fundamental law of active investment management as described in Equation (3), and derive a turnover-adjusted
+information ratio for the mean-variance portfolios that explicitly accounts for signal decay. We then expand our
+research into quintile portfolios and formulate the relationship between IC and IR for such portfolios. Our
+alternative version of IR results may be leveraged to help the performance evaluation of both the mean-variance
+and quintile portfolio-based investment strategies. Finally, we also consider the impact of portfolio turnover as
+part of alpha signal construction, adding lagged signals into the construction process.
+
+Through mathematical derivations and simulations, we show that portfolio managers can limit trading/turnover
+to improve IR, contrary to the implication embedded in the classic IC-IR relationship, that portfolio managers
+must play often to win in the investment management game.
+
+
+
+2. Turnover-Adjusted Information Ratio for Mean-Variance Portfolios
+
+Theoretical value
+
+Consider a mean-variance investment strategy with a target tracking error, 𝑇𝐸. For this strategy, the risk-
+adjusted excess return may be expressed as a function of IC and alpha signal ( [10]):
+                𝑟
+         𝑦𝑖,𝑡 = 𝑖,𝑡 = 𝐼𝐶𝑡 ∗ 𝑥𝑖,𝑡 + 𝜀𝑖,𝑡                                                                       (5)
+                𝜎𝑖
+
+Here, 𝑦𝑖,𝑡 is the risk adjusted return, which has standard deviation of 1 and mean of zero; 𝑟𝑖,𝑡 is the excess return
+of a security 𝑖 at time 𝑡; 𝜎𝑖 is the security-specific volatility; 𝑥𝑖,𝑡 is the alpha signal for 𝑖 at 𝑡 (predicted for time 𝑡) ,
+which is standardized to have a mean of zero and a standard deviation of one; and 𝜀𝑖,𝑡 is the random error,
+orthogonal to 𝑥𝑖,𝑡 .
+
+
+
+
+                                                               3
+The risk-adjusted return is assumed to follow a standard normal distribution; this assumption is appropriate as
+short term security returns in an investment universe are often found to be approximately normally distributed
+( [14] ). The alpha signal 𝑥𝑖,𝑡 also follows a standard normal distribution, because practitioners typically
+normalize the returns when deriving the signals.
+
+Information coefficient 𝐼𝐶𝑡 is the cross-sectional correlation between the predictor 𝑥𝑖,𝑡 and the risk-adjusted
+                 𝑟
+excess return, 𝑖,𝑡. The time series of 𝐼𝐶𝑡 is assumed to be a stationary process ( [15]) and have a mean of 𝜇𝐼𝐶 and
+                 𝜎𝑖
+a standard deviation of 𝑉𝐼𝐶 as in Equation (2).
+
+For this mean-variance portfolio, the portfolio active weight can be shown as ( [10] ):
+                            𝑇𝐸                𝑥𝑖,𝑡
+        𝑤𝑖,𝑡 =                           ∗                                                              (6)
+                    2 +(1−𝜇 2 −𝑉 2 )/𝑁       𝑁∗𝜎𝑖
+                 √𝑉𝐼𝐶      𝐼𝐶 𝐼𝐶
+
+
+Portfolio turnover depends on |𝑤𝑖,𝑡−1 − 𝑤𝑖,𝑡−2 |, which is proportional to |𝑥𝑖,𝑡−1 -𝑥𝑖,𝑡−2 |, or the absolute value of the
+change in portfolio active weight before and after a portfolio rebalancing. Because the alpha signal 𝑥𝑖,𝑡 is a
+standard normal variable, the expected value of |𝑥𝑖,𝑡−1 -𝑥𝑖,𝑡−2 | is a function of alpha signal decay, which is 1 minus
+the autocorrelation of the signal. Formally, the portfolio turnover rate can be shown as in Equation (4).
+
+Given Equation (6) and the assumption that the alpha signal follows a standard normal distribution, the
+expected excess return of the mean-variance portfolio can then be written as:
+                             𝜇𝐼𝐶
+        𝐸(𝑅) =                               ∗ 𝑇𝐸                                                       (7)
+                        2 +(1−𝜇 2 −𝑉 2 )/𝑁
+                     √𝑉𝐼𝐶      𝐼𝐶 𝐼𝐶
+
+
+In addition, the active risk of the portfolio is found to be the target tracking error, 𝑇𝐸( [10]) .
+
+                                                                                                                     1
+Assuming that transaction cost (𝑇𝑐𝑜𝑠𝑡), the cross-sectional expectation of the inverse specific volatility (𝐸𝑐𝑠 ( ))
+                                                                                                                     𝜎𝑖
+and alpha signal decay are all constant over time, not contributing to the portfolio expected active risk, the
+turnover-adjusted IR is then:
+
+                                    1     𝑑𝑒𝑐𝑎𝑦
+                 𝜇𝐼𝐶 −2∗𝑇𝑐𝑜𝑠𝑡∗𝐸𝑐𝑠 ( )∗√
+                                    𝜎𝑖      𝜋
+        𝐼𝑅′ =                                                                                           (8)
+                         2 +(1−𝜇 2 −𝑉 2 )/𝑁
+                      √𝑉𝐼𝐶      𝐼𝐶 𝐼𝐶
+
+
+A constant transaction cost is a reasonable and practical assumption. The constant alpha signal decay
+assumption will be further discussed in the paper later. For the assumption on cross-sectional specific volatility,
+evidence has shown that cross-sectional average specific volatility is roughly stable through time, fluctuations
+observed has been shown to be an episodic phenomenon ( [16]).
+
+Notice that the turnover-adjusted IR (or 𝐼𝑅′ ) from Equation (8) is lower than the IR from Equation (3) due to
+the drag of transaction cost. When transaction cost is high enough, it is possible that the turnover-adjusted IR
+(𝐼𝑅′ ) becomes negative.
+
+Simulation
+
+The above theoretical result for turnover-adjusted IR may be verified. A simulation exercise is conducted to
+demonstrate this.
+
+The following procedures are used for the simulation:
+
+
+
+
+                                                         4
+    1.  Simulate a normally distributed data series for information coefficient (𝐼𝐶𝑡 ). This data series
+        covers 600 time periods (for 𝑡 =1, 2, …, 600), with both the mean and the standard deviation of
+        the 𝐼𝐶𝑡 set at 0.05.
+    2. Simulate a log-normally distributed data set for security-specific volatilities (𝜎𝑖 ). This data set
+        covers a cross-section of 5000 securities (for i = 1, 2 … 5000), and forms the target investment
+        universe. These same security-specific volatilities will be used across time t.
+     2a. Based on the security-specific volatility data, construct a transformed data series for inverse
+                   1
+         volatility .
+                   𝜎𝑖
+    3. Simulate alpha signal (𝑥𝑖,𝑡 ) for each of the securities in the target investment universe. This is
+        done for each of the 600 time periods via the following scheme.
+     3a. For 𝑡=0, simulate a standard normal data set of the alpha signal for each of the 5000 securities.
+     3b. For 𝑡=1 t0 600, simulate the alpha signal data set with period-to-period autocorrelations (1 −
+        𝑑𝑒𝑐𝑎𝑦) ranging from 0.6 t0 0.95 with a 0.05 interval. The signal at 𝑡 + 1 is generated based on
+        the Equation 𝑥𝑖,𝑡+1 = (1 − decay) ∗ 𝑥𝑖,𝑡 + 𝜁𝑖,𝑡 . Here, 𝜁𝑖,𝑡 is drawn from a random normal
+        distribution with mean of zero and variance of 1 − (1 − 𝑑𝑒𝑐𝑎𝑦)2 .
+    4. For each time period from 𝑡=1 t0 600 and each security from 𝑖 =1 to 5000, generate the realized
+        returns 𝑟𝑖,𝑡 using the simulated alpha signal 𝑥𝑖,𝑡 , 𝐼𝐶𝑡 and specific volatility 𝜎𝑖 , based on Equation
+        (5).
+    5. For each time period and each security, compute the security weight 𝑤𝑖,𝑡 in a mean-variance
+        portfolio based on Equation (6), assuming that the target tracking error (𝑇𝐸) is 5%.
+    6. For each time period from 𝑡=1 t0 600, calculate the simulated portfolio return as ∑5000      𝑖=1 𝑤𝑖,𝑡 ∗ 𝑟𝑖,𝑡 ,
+                                               5000
+        the portfolio turnover rate as 0.5 ∗ 𝑖=1 𝑎𝑏𝑠(𝑤𝑖,𝑡 − 𝑤𝑖,𝑡−1 ), and the portfolio return after
+                                             ∑
+       transaction fee as ∑5000                        5000
+                            𝑖=1 𝑤𝑖,𝑡 ∗ 𝑟𝑖,𝑡 − 𝑇𝑐𝑜𝑠𝑡 ∗ ∑𝑖=1 𝑎𝑏𝑠(𝑤𝑖,𝑡 − 𝑤𝑖,𝑡−1 ), assuming a transaction cost
+       of 1%.
+    7. Calculate the simulated 𝐼𝑅, 𝐼𝑅′ and mean 𝑇𝑅 based on the portfolio returns, turnover rates and
+       other relevant quantities across the 600 time periods.
+    8. Repeat steps 1 to 7 for 1000 times, calculate the mean values of 𝐼𝑅, 𝐼𝑅 ′ and 𝑇𝑅 and compare
+       them with the theoretical values in Equations (3), (8) and (4).
+
+The results from this simulation are shown in Table 1 below. They clearly indicate that for a mean-variance
+portfolio, all the three theoretical measures of interest, including our turnover-adjusted information ratio (𝐼𝑅′ ),
+can be properly recovered through simulation. The results also confirm that turnover-adjusted IR (or 𝐼𝑅′ ) is
+always lower than the unadjusted IR, due to transaction cost.
+
+                          Table 1. Theoretical and simulated portfolio Information Ratio
+
+
+                                            Theoretical values                               Simulated values
+
+ Autocorrelation        Decay         IR               𝑰𝑹′                 TR                  IR        𝑰𝑹′              TR
+
+                0.6       0.4          0.962            0.666            0.741              0.964         0.668         0.741
+               0.65      0.35          0.962            0.685           0.693               0.964         0.687         0.693
+                0.7       0.3          0.962            0.706            0.641              0.964         0.707         0.641
+               0.75      0.25          0.962            0.728           0.586               0.963         0.729         0.586
+                0.8       0.2          0.962            0.753            0.524              0.964         0.754         0.524
+               0.85       0.15         0.962             0.781           0.454              0.962          0.781        0.454
+                0.9        0.1         0.962            0.814            0.370              0.962         0.814         0.370
+               0.95      0.05          0.962            0.858           0.262               0.962         0.857         0.262
+
+
+                                                          5
+3. Turnover-Adjusted Information Ratio for Quintile Portfolios
+
+We now extend our discussion to the quintile portfolios. Here we focus on a long-short quintile portfolio. In this
+investment strategy, the portfolio is constructed by longing the top 20% and shorting the bottom 20% of
+securities from a target investment universe, based on the alpha signal 𝑥𝑖,𝑡 . Securities whose alpha signals are in
+the middle 60% of the distribution is not shorted or longed. The security weight in the portfolio is 5/N for each
+longed security and -5/N for each shorted security, where N is the number of the securities in the target
+investment universe. Long only quintile portfolios would follow a similar logic in portfolio construction as well
+as security weighting.
+
+Theoretical value
+
+As shown in Appendix A, the IR for a quintile portfolio with the turnover effect ignored (or the “turnover-
+neutral” IR) can be written as:
+
+                                 2.8∗𝜇𝐼𝐶 ∗𝐸𝑐𝑠 (𝜎𝑖 )
+         𝐼𝑅 =                                         2            2
+                                                                                                      (9)
+                √7.84∗𝜎2 ∗𝐸 2 (𝜎 )+𝐸𝑐𝑠 (𝜎2 )∗10−7.8∗𝑉𝐼𝐶 −7.8∗𝜇𝐼𝐶
+                       𝐼𝐶 𝑐𝑠 𝑖           𝑖            𝑁
+
+Equation (9) is very similar to Equation (3) in structure. In general, the turnover-neutral IR for a quintile
+portfolio is always lower than its counterpart for a mean variance portfolio; see appendix A for the comparison
+between Equations (3) and (9). It can also be shown that when N or the number of securities in the investment
+universe is large enough, both Equation (9) and Equation (3) will be effectively reduced to Equation (2).
+
+The turnover rate (TR) for a quintile portfolio can be determined via the cumulative density function of a joint
+normal distribution by considering the fact that both the alpha signals at time 𝑡 − 1 and at time 𝑡 are normally
+distributed. For each security in the investment universe, there are 3 scenarios where one will need to buy the
+security.
+
+    1.   The security is previously shorted but needs to be longed. In this case, the previous-period alpha
+         signal 𝑥𝑖,𝑡−1 is in the bottom 20% while the current-period alpha signal 𝑥𝑖,𝑡 is in the top 20%. The
+         probability of this situation is denoted as P1, which can be calculated using cumulative density function
+         of the joint normal distribution of the alpha signals. In order to achieve a security weight of 5/N in the
+         portfolio, one needs to increase the weight of the security by 2 *(5/N).
+
+    2. The security is previously not shorted or longed but needs to be longed. In this case, the previous-period
+       alpha signal 𝑥𝑖,𝑡−1 is in the middle 60% while the current-period alpha signal 𝑥𝑖,𝑡 is at the top 20%. The
+       probability of this situation is denoted as P2. In order to achieve a security weight of 5/N in the
+       portfolio, one needs to increase the weight of the security by (5/N).
+
+    3. The security is previously shorted but needs to be dropped in the portfolio. In this case, the previous-
+       period alpha signal 𝑥𝑖,𝑡−1 is in the bottom 20% while the current-period alpha signal 𝑥𝑖,𝑡 is in the middle
+       60%. The probability of this situation is denoted as P3. In order to achieve a security weight of 0 in the
+       portfolio, one needs to increase the weight of the security by (5/N).
+
+Let the autocorrelation between the alpha signal 𝑥𝑖,𝑡−1 and 𝑥𝑖,𝑡 be ρ. The joint cumulative density function (CDF)
+for the alpha signals for the two periods is then given by:
+
+                                                          𝑢𝑝𝑡−1        𝑢𝑝𝑡
+         𝑃(𝑙𝑜 𝑡−1 < 𝑥𝑡−1 < 𝑢𝑝𝑡−1 , 𝑙𝑜 𝑡 < 𝑥𝑡 < 𝑢𝑝𝑡 ) = ∫𝑙𝑜𝑡−1 ∫𝑙𝑜𝑡 𝑓(𝑥𝑡−1 , 𝑥𝑡 , ρ) 𝑑𝑥𝑡−1 𝑑𝑥      (10)
+
+Since each long (short) security has a weight of 5/N (-5/N), the turnover rate for the portfolio is
+                5
+         𝑇𝑅 =       ∗ 𝑁 ∗ (2 ∗ 𝑃1 + 𝑃2 + 𝑃3) = 5 ∗ (2 ∗ 𝑃1 + 𝑃2 + 𝑃3)                             (11)
+                𝑁
+
+
+
+                                                           6
+The turnover rate as a function of decay (1 − ρ) is plotted in Figure 2.
+
+                          Figure 2. Turnover rate as a function of decay for quintile portfolio
+
+
+
+
+The turnover-adjusted IR for the quintile portfolio is:
+
+                          2.8∗𝜇𝐼𝐶 ∗𝐸𝑐𝑠 (𝜎𝑖 )−2∗𝑇𝑐𝑜𝑠𝑡∗𝑇𝑅
+        𝐼𝑅′ =                                                                                               (12)
+                                                       2             2
+                √7.84∗𝑉 2 ∗𝐸 2 (𝜎 )+𝐸𝑐𝑠 (𝜎 2 )∗10−7.8∗𝑉𝐼𝐶 −7.8∗𝜇𝐼𝐶
+                       𝐼𝐶 𝑐𝑠 𝑖            𝑖            𝑁
+
+
+
+Simulation
+
+To demonstrate the relevance of the turnover-adjusted IR for quintile portfolios, we conduct a simulation
+exercise, mimicking the simulation procedures as described in section 2. The only difference in this exercise is
+that the security weight is now the weight for a quintile portfolio (e.g., 5/N, -5/N, or 0).
+
+The simulation results are shown in Table 2 below. Again, they clearly indicate that for a quintile portfolio, all
+the three theoretical measures of interest, including our turnover-adjusted information ratio, can be properly
+recovered through simulation.
+
+             Table 2. Theoretical and simulated portfolio Information Ratio for quintile portfolio
+
+                                                            Theoretical values                 Simulated values
+
+        Autocorrelation            Decay                   IR            𝑰𝑹′            TR      IR    𝑰𝑹′           TR
+                           0.6         0.4                 0.948             0.680    1.008   0.950    0.681      1.008
+                          0.65        0.35                 0.948             0.698    0.942   0.952    0.701      0.942
+                           0.7         0.3                 0.948              0.717   0.871   0.948    0.716      0.871
+                          0.75        0.25                 0.948             0.737    0.794   0.948    0.737      0.794
+                           0.8         0.2                 0.948             0.759    0.710   0.949    0.760      0.710
+                          0.85        0.15                 0.948             0.785    0.614   0.949    0.786      0.614
+                           0.9         0.1                 0.948             0.815    0.501   0.951    0.817      0.501
+                          0.95        0.05                 0.948             0.854    0.354   0.948    0.854      0.354
+
+
+
+4. Turnover-Adjusted Information Ratios: Mean-Variance versus Quintile Portfolios
+
+To compare the turnover-adjusted IR between mean-variance portfolios and quintile portfolios, we calculate the
+turnover-adjusted IRs at different decay factor levels for both types of portfolios. In this comparison, we assume
+𝑇𝑐𝑜𝑠𝑡=1%, 𝜇𝐼𝐶 =0.05, 𝑉𝐼𝐶 =0.05, and 𝑁=5000. In addition, we assumed that log(σi ) has a normal distribution with
+mean -0.722 and standard deviation of 0.306. Figure 3 displays the turnover-adjusted IR as a function of decay
+for the two types of portfolios. It shows that the mean-variance portfolio has a slightly larger turnover-adjusted
+
+
+
+                                                                         7
+IR when decay is small (<0.09 in this case); and the quintile portfolio has a higher turnover-adjusted IR when
+decay is large.
+
+                               Figure 3. Turnover-adjusted IR as a function of decay
+
+
+
+
+5. Signal decay in Turnover-adjusted Information Ratio
+
+As discussed previously, signal decay is defined as one minus the signal autocorrelation. Signals from different
+alpha models can have different decay rates. Momentum factors can decay very quickly. Portfolios based on such
+factors tend to have high turnover. Valuation factors generally decay slowly; valuation-based portfolios tend to
+have low turnover. Table 3 below collects the signal decays for some factors/models based on publicly available
+data. It shows that most factors/models decay slowly (decay<=0.1) with the exception of momentum factors.
+
+                             Table 3. Alpha signal decay for Selected Industry Studies
+
+                                     Average Signal              Investment               Study           Model
+    Factor/Model
+                                     IC           decay          Universe                 period          frequency
+    9-month momentum                 0.073        0.32           Russell 3000             1987-2004       Quarterly
+    E/P                              0.043        0.06           Russell 3000             1987-2004       Quarterly
+    B/P                              0.029        0.06           Russell 3000             1979-2018       Monthly
+    C/P                              0.032        0.07           Russell 3000             1979-2018       Monthly
+    D/P                              0.029        0.03           Russell 3000             1979-2018       Monthly
+    E/P                              0.031        0.07           Russell 3000             1979-2018       Monthly
+    FE/P                             0.034        0.06           Russell 3000             1979-2018       Monthly
+    S/P                              0.020        0.03           Russell 3000             1979-2018       Monthly
+    MOM                              0.025        0.13           Russell 3000             1979-2018       Monthly
+    SHORT                            0.036        0.07           Russell 3000             1979-2018       Monthly
+    Growth Benchmark Model           0.024        0.09           Russell 3000 Growth      2018            Monthly
+    Value Benchmark Model            0.017        0.08           Russell 3000 Value       2018            Monthly
+    Quality Model                    0.040        0.10           Russell 3000             2018            Monthly
+    Price Momentum Model             0.009        0.39           Russell 3000             2018            Monthly
+    Growth Benchmark Model           0.011        0.08           Russell 3000 Growth      2016            Monthly
+    Value Benchmark Model            0.017        0.08           Russell 3000 Value       2016            Monthly
+    Quality Model                    0.005        0.10           Russell 3000             2016            Monthly
+    Price Momentum Model             -0.001       0.38           Russell 3000             2016            Monthly
+   Note: Data from [9], [10] [17] [18] Signal decays from [17] [18] are based on rank correlation; B/P = book to price, C/P =
+   cash flow to price, D/P = dividend yield to price, E/P =earnings to price, FE/P = forward earnings to price, S/P = sales to
+   price, MOM = cumulative 11-month return from t-12 to t-2, SHORT = short as a percent of total shares float
+
+
+
+
+                                                           8
+In our derivation of the turnover-adjusted information ratios (i.e., in Equations (8) and (12)), we assumed that
+signal decay is constant overtime. The signal decay of S&P stock selection models ( [17] [18]) from two different
+years are very close (with the differences less than 0.01 between 2016 and 2018), suggesting that our assumption
+of constant signal decay is generally valid.
+
+
+6. Integrated signals
+
+Combining lagged signals with the current signal to form an integrated alpha signal has been used as a method
+to improve the IR for investment strategies that are conscious of turnover. This is possible because an integrated
+signal, while less predictive for the current return, may reduce signal decay ( [9]), which in turn may reduce
+transaction cost. In fact, researchers have found that constructing a portfolio with the consideration of
+transaction cost is equivalent to constructing the portfolio using a weighted average of current and past alpha
+signals ( [19]).
+
+Integrated signals through one lag
+
+To show how the integrated alpha signals may affect our turnover-adjusted IR, we first consider the case where
+the integrated signal for a security at time t is just a weighted average of the current signal and the lag one signal.
+That is,
+
+         𝐴𝑡 = 𝑤1 ∗ 𝑥𝑡 + 𝑤2 ∗ 𝑥𝑡−1                                                                                        (13)
+
+Here, 𝐴𝑡 is the integrated alpha signal, 𝑥𝑡 is the current alpha signal at time t, and 𝑤1 + 𝑤2 =1. Let the
+information coefficient of the current signal 𝑥𝑡 be 𝐼𝐶𝑥,𝑡 . The mean and standard deviation of 𝐼𝐶𝑥,𝑡 are denoted by
+𝜇𝐼𝐶 and 𝑉𝐼𝐶 , respectively. The current signal and the lagged signal 𝑥𝑡−1 are correlated, and the correlation
+coefficient is 𝜌. As a result, the IC of the lagged signal is 𝜌*𝐼𝐶𝑥,𝑡 . Finally, the IC for lagged signal is assumed to
+decay at the same rate as the current signal.
+
+With this setup, the integrated signal 𝐴𝑡 has an IC as a function of 𝑤1 , 𝑤2 𝐼𝐶𝑥,𝑡 and 𝜌, as follows:
+
+                   𝐶𝑜𝑣(𝑦𝑡 ,𝐴𝑡 )            𝑤1 +𝑤2 ∗𝜌
+         𝐼𝐶𝐴,𝑡 =                  =                          *𝐼𝐶𝑥,𝑡                                                      (14)
+                   √𝑉𝑎𝑟(𝐴𝑡 )          √𝑤12 +2∗𝑤1∗𝑤2 ∗𝜌+𝑤22
+
+
+Here, 𝑦𝑡 is the risk-adjusted return as defined in Equation (5) earlier.
+                                                                      𝑤1 +𝑤2 ∗𝜌
+The IC of the integrated signal has a mean of                                         *𝜇𝐼𝐶 and a standard deviation of
+                                                               √𝑤12 +2∗𝑤1∗𝑤2 ∗𝜌+𝑤22
+     𝑤1 +𝑤2 ∗𝜌
+                       * 𝑉𝐼𝐶 . Both the mean and the standard deviation are scaled by the discount factor of
+√𝑤12 +2∗𝑤1∗𝑤2 ∗𝜌+𝑤22
+     𝑤1 +𝑤2 ∗𝜌
+                       .
+√𝑤12 +2∗𝑤1∗𝑤2 ∗𝜌+𝑤22
+
+
+The autocorrelation for the integrated alpha signal is given by
+
+                 𝑤12 ∗𝜌+𝑤1∗𝑤2 ∗𝜌2 +𝑤1∗𝑤2 +𝑤22 ∗𝜌
+         𝜌𝐴 =                                                                                                            (15)
+                           𝑤12 +2∗𝑤1∗𝑤2 ∗𝜌+𝑤22
+
+The relationship between 𝑤1 and the turnover-adjusted IR for both mean-variance portfolios and quintile
+portfolios is plotted in Figure 4. In this plot, we assume 𝜇𝐼𝐶 =0.05, 𝑉𝐼𝐶 =0.1, 𝑁=5000, and 𝜌=0.9; we also assume
+that log(σi ) has a normal distribution with mean -0.722 and standard deviation of 0.306. For the turnover cost,
+we choose two alternatives: 𝑇𝑐𝑜𝑠𝑡 = 1% and 3%.
+
+
+
+                                                                         9
+      Figure 4. Turnover-adjusted IR of integrated alpha signal as function of weight in current signal
+
+ 𝑇𝑐𝑜𝑠𝑡    Mean-variane portfolio                                      Quintile portfolio
+
+ 1%
+
+
+
+
+ 3%
+
+
+
+
+The following observations can be made from the plot. First, there exists an optimal 𝑤1 that can maximize the
+turnover-adjusted IR for both mean-variance portfolios and quintile portfolios. Second, in consistence with our
+expectation, higher transaction costs would require more weighting on the lagged signal in order to achieve the
+optimal IR. Finally, the impact of transaction cost on optimal weight is relatively small.
+
+Integrated signal through multiple lags
+
+We next extend the discussions above to consider an integrated alpha signal that is formed through multiple
+lags. We use an exponentially weighted moving average approach ( [19]) to combine the current signal and the
+lags. That is,
+
+         𝐴𝑡 = ∑𝑗=0(1 − 𝜆) ∗ 𝜆𝑗 ∗ 𝑥𝑡−𝑗                                                                   (16)
+
+Here 𝜆 is a weighting factor with values between 0 and 1. The weights on concurrent signal equals 1 − 𝜆. A
+smaller 𝜆 would weight recent signals more heavily. We maintain the assumption that the IC for lagged signal
+decays at the same rate as the current signal, and further assume that the alpha signals follow an AR(1) process.3
+
+With the above structure, the autocorrelation for the integrated alpha signal is ( [19]):
+
+                𝜆+𝜌
+         𝜌𝐴 =                                                                                           (17)
+                1+𝜆∗𝜌
+
+
+
+
+3 Actual alpha signal IC and autocorrelation might decay faster than AR(1). This does not impact our main conclusion that
+
+integrating lagged signal(s) could improve turnover-adjusted IR, although the optimal weighting on current signal vs lagged
+signals might be smaller than implied from maximizing Equation (20).
+
+                                                         10
+The variance of the integrated signal is ( [20]):
+
+                          (1−𝜆)(1+𝜆∗𝜌)
+         𝑉𝑎𝑟(𝐴𝑡 ) =                                                                                               (18)
+                          (1+𝜆)(1−𝜆∗𝜌)
+
+As a result, the IC for the integrated signal 𝐴𝑡 can be determined as in Equation (19):
+
+                     𝐶𝑜𝑣(𝑦𝑡 ,𝐴𝑡 )       1−𝜆              1                     1−𝜆2
+         𝐼𝐶𝐴,𝑡 =                    =           ∗               ∗ 𝐼𝐶𝑥,𝑡 = √              ∗ 𝐼𝐶𝑥,𝑡                  (19)
+                     √𝑉𝑎𝑟(𝐴𝑡 )          1−𝜆∗𝜌       √𝑉𝑎𝑟(𝐴𝑡 )                 1−𝜆2 ∗𝜌2
+
+
+For the mean-variance portfolios, the turnover-adjusted IR that is derived from the integrated signal is:
+
+                                                    1        1−𝜌   1−𝜆∗𝜌
+                         𝜇𝐼𝐶 −2∗𝑇𝑐𝑜𝑠𝑡∗𝐸𝑐𝑠 ( )∗√                  ∗√
+                 ′                                  𝜎𝑖        𝜋     1+𝜆
+         𝐼𝑅𝐴,𝑡       =                                                                                                   (20)
+                                          𝜇2 +𝑉2
+                                       2 − 𝐼𝐶
+                                                      2 2
+                                               𝐼𝐶 +1−𝜆 ∗𝜌
+                                    √𝑉𝐼𝐶
+                                             𝑁     𝑁(1−𝜆2 )
+
+
+The turnover-adjusted IR for the quintile portfolios can be calculated as a function of the integrated signal
+similarly.
+
+According to Equation 20, there exists a 𝜆 between 0 and 1 that maximizes the turnover-adjusted IR (see
+Appendix B for more details). In addition, if 𝜆 get close to 1, the average IC of the integrated alpha signal will
+approach zero, driving the turnover-adjusted IR towards zero. If 𝜆 get close to 1, portfolios constructed based on
+the integrated alpha signal would become passive portfolios that basically just follow the benchmarks. This
+indicates that a portfolio manager can always avoid negative IR if the performance of an alpha model is known.
+In an extreme situation where cost of trading is larger than the potential profit, portfolio managers may just
+need to sit tight and follow the benchmarks.
+
+The relationship between 𝜆 and turnover-adjusted IR is plotted in Figure 4. In this plot, we again assume
+𝜇𝐼𝐶 =0.05, 𝑉𝐼𝐶 =0.1, 𝑁=5000, and 𝜌=0.9; we also assume that log(σi ) has a normal distribution with mean -0.722 and
+standard deviation of 0.306. The results in Figure 5 are consistent with expectation: higher transaction costs
+would require more weighting on lagged signals in order to achieve optimal IR. In addition, optimal 𝜆𝑠 exist for
+both mean-variance and quintile portfolios that maximize the turnover-adjusted IRs.
+
+                     Figure 5 Turnover-adjusted IR of composite signal as function of decay factor
+
+ 𝑇𝑐𝑜𝑠𝑡    Mean-variane portfolio                                                             Quintile portfolio
+
+ 1%,
+
+
+
+
+                                                                              11
+ 3%,
+
+
+
+
+When explaining the classic, fundamental law of active management, Grinold and Kahn [2] conclude that "you
+(portfolio managers) must play often and play well to win at the investment management game. It takes only a
+modest amount of skills to win as long as that skill is deployed frequently and across a large number of stocks."
+However, our results above suggest that portfolio managers can limit trading/turnover to improve IR. By
+integrating lagged signal(s) into the current alpha signal, the turnover-adjusted IR can be improved through
+decreased turnover.
+
+
+
+6. Conclusion
+
+In this paper, we have extended the general form of fundamental law of active investment management to
+include the effect of portfolio turnover for both mean-variance portfolios and quintile portfolios. This alternative
+version of information ratio (IR) takes into account the mean IC, IC volatility and alpha signal decay in an
+integrated manner. It may be leveraged to help portfolio managers assess their alpha models and investment
+strategies.
+
+We have also studied the impact of portfolio turnover as part of alpha signal construction, where the lagged
+signals are added in the construction process. We have shown that adding lagged alpha signal can improve the
+turnover-adjusted IR by limiting portfolio turnover. Our finding that portfolio managers can limit
+trading/turnover to improve IR is in contrary to the implication embedded in the classic IC-IR relationship, that
+portfolio managers must play often to win in the investment management game.
+
+Our analysis demonstrates that if the performance of an alpha model is known and stable, negative IR can
+always be avoided by limiting turnover. Observed negative IRs may be a result of undetected model performance
+deterioration, causing excessive trading in an attempt to chase the signals that have already deteriorated or
+disappeared.
+
+
+
+Appendices
+
+A. IR for Quintile portfolios
+
+In the main text, we provided the theoretical information coefficient formula for quintile portfolios. In this
+appendix, we show how the theoretical information ratio for quintile portfolios is derived.
+
+A quintile portfolio is constructed by equally longs the top 20% (and shorts the bottom 20%) of stocks based on
+a stock ranking model. The return of a quintile portfolio is the equal-weighted return to the top 20% of stocks
+minus the equal-weighted return to the bottom 20% of stocks.
+
+
+                                                     12
+                                                                                                    𝑟
+As noted in the main text, the risk adjusted excess return 𝑖𝑡 can be expressed as a function of IC and alpha
+                                                                                                    𝜎𝑖
+signal.
+              𝑟𝑖,𝑡
+                     = 𝐼𝐶𝑡 ∗ 𝑥𝑖,𝑡 + 𝜀𝑖,𝑡                                                                                                                                                    (A1)
+              𝜎𝑖
+
+          𝑟                  𝑟
+Here, ( 𝑖,𝑡) = 0, 𝜎( 𝑖,𝑡) = 1, 𝐸(𝑥𝑖,𝑡 ) = 0 and 𝜎(𝑥𝑖,𝑡 ) = 1 by the “normalization” of the returns, and 𝜀𝑖,𝑡 is a vector of
+          𝜎𝑖                  𝜎𝑖
+random errors, which is orthogonal to 𝑥𝑡 . In this setup, the regression coefficient, 𝐼𝐶𝑡 , is the information
+coefficient (IC) at time 𝑡 of the stock selection model. 𝐼𝐶𝑡 is assumed to follow normal distribution with mean
+𝜇𝐼𝐶 and volatility 𝑉𝐼𝐶 . The stock-specific volatility 𝜎𝑖 is assumed to be the same across different time periods for
+a given security.
+
+We can rewrite Equation A1 as Equation A2.
+
+              𝑟𝑖,𝑡 = 𝜎𝑖 𝐼𝐶𝑡 𝑥𝑖,𝑡 + 𝜎𝑖 𝜀𝑖,𝑡                                                                                                                                                                (A2)
+
+Based on the characteristics of truncated normal distribution, the expected return of quintile portfolio (quintile
+spread) is:
+
+                                                                 𝜙(𝑛𝑜𝑟𝑚𝑎𝑙.𝑖𝑛𝑣𝑒𝑟𝑠𝑒(0.8)                                                            −𝜙(𝑛𝑜𝑟𝑚𝑎𝑙.𝑖𝑛𝑣𝑒𝑟𝑠𝑒(0.2)
+              𝐸(𝑄𝑢𝑖𝑛𝑡𝑖𝑙𝑒 𝑆𝑝𝑟𝑒𝑎𝑑) = 𝐸(𝐼𝐶𝑡 ) ∗ (                                                       ) ∗ 𝐸𝑐𝑠 (𝜎𝑖 ) − 𝐸(𝐼𝐶𝑡 ) ∗ (                                                                    ) ∗ 𝐸𝑐𝑠 (𝜎𝑟𝑖 )
+                                                                              1−0.8                                                                                 0.2
+
+                                                                                                                                                                                                          (A3)
+
+              𝐸(𝑄𝑢𝑖𝑛𝑡𝑖𝑙𝑒 𝑆𝑝𝑟𝑒𝑎𝑑) ≈ 2.8 ∗ 𝜇𝐼𝐶 ∗ 𝐸𝑐𝑠 (𝜎𝑖 )                                                                                                                                                  (A4)
+
+Here, 𝜙 is the probability density function of the standard normal distribution.
+
+The variance of quintile spread can be written as:
+
+              𝑉𝑎𝑟(𝑄𝑢𝑖𝑛𝑡𝑖𝑙𝑒 𝑆𝑝𝑟𝑒𝑎𝑑) = 𝑉𝑎𝑟 (𝑎𝑣𝑔(𝑟𝑖,𝑡 |𝑥𝑖,𝑡 > 80 𝑝𝑒𝑟𝑐𝑒𝑛𝑡𝑖𝑙𝑒) − 𝑎𝑣𝑔(𝑟𝑖,𝑡 |𝑥𝑖,𝑡 < 20 𝑝𝑒𝑟𝑐𝑒𝑛𝑡𝑖𝑙𝑒))
+
+                                                    ≈ 𝑉𝑎𝑟 (𝐼𝐶𝑡 ∗ 𝜎
+                                                                 ̅̅̅̅̅̅
+                                                                   𝑖 𝑥𝑖,𝑡 𝑥 ≥𝑄                     + ̅̅̅̅̅̅
+                                                                                                     𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 ) + 𝑉𝐴𝑅 (𝐼𝐶𝑡 ∗ 𝜎
+                                                                                                                                 ̅̅̅̅̅̅
+                                                                                                                                   𝑖 𝑥𝑖,𝑡 𝑥 ≤𝑄                                               + ̅̅̅̅̅̅
+                                                                                                                                                                                               𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 )
+                                                                                     𝑖,𝑡     0.8                 𝑖,𝑡     0.8                                              𝑖,𝑡         0.2                   𝑖,𝑡   0.2
+
+
+
+                                                       −2 ∗ Cov(𝐼𝐶𝑡 ∗ ̅̅̅̅̅̅
+                                                                      𝜎𝑖 𝑥𝑖,𝑡 𝑥 ≥𝑄                        + ̅̅̅̅̅̅
+                                                                                                            𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 , 𝐼𝐶𝑡 ∗ ̅̅̅̅̅̅
+                                                                                                                                 𝜎𝑖 𝑥𝑖,𝑡 𝑥 ≤𝑄                               + ̅̅̅̅̅̅
+                                                                                                                                                                              𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 )
+                                                                                             𝑖,𝑡    0.8                   𝑖,𝑡     0.8                        𝑖,𝑡    0.2                             𝑖,𝑡   0.2
+
+
+                                                                                                                                                                                                          (A5)
+
+Here, the ̅̅̅̅
+          𝜎𝑖 𝑋𝑥≥𝑄0.8 is the cross-sectional mean of 𝜎𝑖 ∗ 𝑥𝑖,𝑡 given 𝑥𝑖,𝑡 at the top 20%, and ̅̅̅̅̅̅
+                                                                                             𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄                                                                                         is the cross-
+                                                                                                                                                                                𝑖,𝑡         0.8
+sectional mean of 𝜎𝑖 ∗ 𝜀𝑖,𝑡 given 𝑥𝑖,𝑡 at the top 20%. Since 𝜀𝑖,𝑡 is independent from 𝑥𝑖,𝑡 , E( ̅̅̅̅̅̅
+                                                                                                𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 )=0.
+                                                                                                                                                                                      𝑖,𝑡     0.8
+
+
+              𝑉𝑎𝑟(𝐼𝐶𝑡 ∗ ̅̅̅̅̅        ̅̅̅̅̅̅̅̅
+                        𝜎𝑟 𝑋𝑥≥𝑄0.8 + 𝜎    0.8     2     2                                      2    2                              2      2                            2
+                                                                                                                                                                                                          (A6)
+                                       𝑟 𝜀𝑡 ) = 𝑉𝐼𝐶 ∗ 𝜎̅̅̅̅̅̅̅
+                                                       𝜎𝑖 𝑥𝑖,𝑡                             + 𝑉𝐼𝐶 ∗ 𝑢̅̅̅̅̅̅̅
+                                                                                                    𝜎𝑖 𝑥𝑖,𝑡                     + 𝜇𝐼𝐶 ∗ 𝜎̅̅̅̅̅̅̅
+                                                                                                                                         𝜎𝑖 𝑥𝑖,𝑡                   + 𝜎̅̅̅̅̅̅̅
+                                                                                                                                                                      𝜎𝑖 𝜀𝑖,𝑡
+                                                                            𝑥𝑖,𝑡 ≥𝑄0.8                          𝑥𝑖,𝑡 ≥𝑄0.8                         𝑥𝑖,𝑡 ≥𝑄0.8                          𝑥𝑖,𝑡 ≥𝑄0.8
+
+
+
+
+                                                       2
+                        𝜎𝑟𝑖 𝑋𝑥≤𝑄0.2 + ̅̅̅̅̅̅̅̅
+              𝑉𝑎𝑟(𝐼𝐶𝑡 ∗ ̅̅̅̅̅         𝜎𝑟 𝜀𝑡0.2 ) = 𝑉𝐼𝐶 ∗ 𝜎2̅̅̅̅̅̅̅̅
+                                                           𝜎𝑖 𝑥𝑖,𝑡                 + 𝑉2𝐼𝐶 ∗ 𝑢2̅̅̅̅̅̅̅̅
+                                                                                              𝜎𝑖 𝑥𝑖,𝑡                  + 𝜇2𝐼𝐶 ∗ 𝜎2̅̅̅̅̅̅̅̅
+                                                                                                                                  𝜎𝑖 𝑥𝑖,𝑡                 + 𝜎2𝜎̅̅̅̅̅̅̅̅
+                                                                                                                                                                 𝑖 𝜀𝑖,𝑡
+                                                                                                                                                                                                          (A7)
+                                                                      𝑥𝑖,𝑡 ≤𝑄0.2                          𝑥𝑖,𝑡 ≤𝑄0.2                         𝑥𝑖,𝑡 ≤𝑄0.2                   𝑥𝑖,𝑡≤𝑄0.2
+
+
+
+
+          Cov(𝐼𝐶𝑡 ∗ ̅̅̅̅̅̅
+                    𝜎𝑖 𝑥𝑖,𝑡 𝑥 ≥𝑄                  + ̅̅̅̅̅̅
+                                                    𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 , 𝐼𝐶𝑡 ∗ ̅̅̅̅̅̅
+                                                                         𝜎𝑖 𝑥𝑖,𝑡 𝑥 ≤𝑄                      + ̅̅̅̅̅̅
+                                                                                                             𝜎𝑖 𝜀𝑖,𝑡 𝑥 ≥𝑄 )
+                                     𝑖,𝑡    0.8            𝑖,𝑡   0.8                         𝑖,𝑡    0.2                   𝑖,𝑡     0.2
+
+
+              = E(IC𝑡2 ∗ ̅̅̅̅̅̅
+                         𝜎𝑖 𝑥𝑖,𝑡 𝑥 ≥𝑄             ∗𝜎
+                                                   ̅̅̅̅̅̅                    ̅̅̅̅̅                   ̅̅̅̅̅
+                                                     𝑖 𝑥𝑖,𝑡 𝑥 ≤𝑄 ) − E(ICt ∗ σr X x≥Q0.8 ) ∗ E(ICt ∗ σr Xx≤Q0.2 )
+                                      𝑖,𝑡   0.8            𝑖,𝑡   0.2
+
+
+
+
+                                                                                           13
+        = 𝐸(IC𝑡2 )E (𝜎
+                     ̅̅̅̅̅̅
+                       𝑖 𝑥𝑖,𝑡 𝑥 ≥𝑄 ) E (𝜎
+                                        ̅̅̅̅̅̅             2     2
+                                          𝑖 𝑥𝑖,𝑡 𝑥 ≤𝑄 ) + 𝜇𝐼𝐶 ∗ 𝑢̅̅̅̅̅̅̅
+                                                                 𝜎𝑖 𝑥𝑖,𝑡
+                                       𝑖,𝑡     0.8                     𝑖,𝑡     0.2                              𝑥𝑖,𝑡 ≥𝑄0.8
+
+             2      2)                                           2
+        = −(𝜇𝐼𝐶 + 𝑉𝐼𝐶  ∗ 𝑢2̅̅̅̅̅̅̅
+                           𝜎𝑖 𝑥𝑖,𝑡                            + 𝜇𝐼𝐶 ∗ 𝑢2̅̅̅̅̅̅̅
+                                                                        𝜎𝑖 𝑥𝑖,𝑡
+                                                𝑥𝑖,𝑡 ≥𝑄0.8                                 𝑥𝑖,𝑡 ≥𝑄0.8
+
+
+             2
+        = −𝑉𝐼𝐶       ̅̅̅̅̅
+               ∗ μ2 (σ r X x≥Q0.8 )
+
+             2           2 (𝜎 )
+        = −𝑉𝐼𝐶 ∗ 1.96 ∗ 𝐸𝐶𝑆  𝑖                                                                                                                                            (A8)
+
+
+
+           2                          2                          ∑ 𝜎𝑖2         2                         0.22∗∑ 𝜎𝑖2          0.22∗𝐸𝑐𝑠 (𝜎𝑖2 )
+         𝜎̅̅̅̅̅̅̅̅
+          𝜎𝑖 𝑥𝑖,𝑡                 = 𝜎̅̅̅̅̅̅̅
+                                     𝜎𝑖 𝜀𝑖,𝑡                =              ∗ 𝜎̅̅̅̅̅
+                                                                              𝑥𝑖,𝑡                   ≈                =                                                   (A9)
+                     𝑥𝑖,𝑡 ≥𝑄0.8                𝑥𝑖,𝑡 ≤𝑄0.2         𝑛2                  𝑥𝑖,𝑡 ≤𝑄0.2               𝑛2                  𝑛
+
+                                                                 ∑ 𝜎𝑖2                           2
+                                                                                             (1−𝜎𝐼𝐶 −𝐼𝐶 2 )∗𝐸𝑐𝑠 (𝜎𝑖2 )
+           2
+         𝜎̅̅̅̅̅̅̅
+          𝜎𝑖 𝜀𝑖,𝑡
+                                      2
+                                  = 𝜎̅̅̅̅̅̅̅
+                                     𝜎𝑖 𝜀𝑖,𝑡                 =               ∗ 𝜎𝜀2𝑖,𝑡 =                                                                                   (A10)
+                     𝑥𝑖,𝑡 ≥𝑄0.8                𝑥𝑖,𝑡 ≤𝑄0.2         𝑛2                                       𝑛
+
+                                                                   ∑ 𝜎𝑖                                               𝜙(𝑛𝑜𝑟𝑚𝑎𝑙.𝑖𝑛𝑣𝑒𝑟𝑠𝑒(0.8)
+         𝜇̅̅̅̅̅̅̅̅
+          𝜎𝑖 𝑥𝑖,𝑡                 = −𝜇̅̅̅̅̅̅̅̅
+                                      𝜎𝑖 𝑥𝑖,𝑡                 =              𝜇̅̅̅̅̅
+                                                                              𝑥𝑖,𝑡                 = 𝐸𝑐𝑠 (𝜎𝑖 ) (                               ) ≈ 1.4 ∗ 𝐸𝑐𝑠 (𝜎𝑖 )    (A11)
+                     𝑥𝑖,𝑡 ≥𝑄0.8                  𝑥𝑖,𝑡 ≤𝑄0.2         𝑛                 𝑥𝑖,𝑡 ≥𝑄0.8                                   1−0.8
+
+
+
+
+Apply Equations of A6 to A11 to A7 and n=5/N,
+                                                                                                                               2
+                                                              2                                                       10−7.8∗𝑉𝐼𝐶 −7.8∗𝐼𝐶 2
+                                          2
+         Var (Quintile Spread) = 7.84 ∗ 𝑉𝐼𝐶    2 (𝜎 )
+                                            ∗ 𝐸𝐶𝑆  𝑖 + 𝐸𝑐𝑠 (𝜎𝑖 ) ∗                                                                                                        (A12)
+                                                                                                                                   𝑁
+
+
+
+The information ration for quintile portfolio is:
+                                       2.8∗𝐼𝐶∗𝐸𝑐𝑠 (𝜎𝑖 )
+        IR =                                                                                                                                                          (A13)
+                                                                       2               2
+                √7.84∗𝑉 2 ∗𝐸 2 (𝜎 )+𝐸𝑐𝑠 (𝜎 2 )∗10−7.8∗𝑉𝐼𝐶 −7.8∗𝐼𝐶
+                       𝐼𝐶 𝑐𝑠 𝑖            𝑖                            𝑁
+
+
+Equation A13 can be written as
+                                     IC
+       IR =                                                                                                                                                          (A14)
+                     Ecs (𝜎2            2
+                           𝑖 ) 10−7.8∗VIC −7.8∗IC
+                                                  2
+               √V2
+                 IC + E2 (𝜎 ) ∗
+                       cs 𝑖          7.84∗N
+
+
+                                             10−7.8∗V2
+                                                     IC −7.8∗IC
+                                                                2                  7.84−7.84∗V2
+                                                                                              IC −7.84∗IC
+                                                                                                          2
+Since Ecs (𝜎𝑖2 )>=Ecs
+                   2 (𝜎 ),
+                       𝑖 and                                                   >                                      , Equation A14 is smaller than Equation (3),
+                                                      7.84∗N                                     7.84∗N
+meaning information ratio for quintile portfolio is always lower than mean-variance portfolio given the same
+investment universe and same alpha signal.
+
+B: Optimal turnover-adjusted IR with respect to 𝜆
+
+In the main text, we state that a 𝜆 between 0 and 1 can maximize the turnover-adjusted information ratios. To
+prove that Equation (20) has a maximum value for some λ between 0 and 1, we formulate the first derivative of
+                                                                                                                    𝜇 2 +𝑉𝐼𝐶
+                                                                                                                           2
+                                                                                                                                                                      1
+                                                             2
+Equation (20). To facilitate the derivation, we define k = 𝑉𝐼𝐶 − 𝐼𝐶                                                             , x = λ, and 𝑚 = 2 ∗ 𝑇𝑐𝑜𝑠𝑡 ∗ 𝐸𝑐𝑠 ( ) /√𝜋 .
+                                                                                                                       𝑁                                             𝜎𝑖
+
+The first order derivative of Equation (20) equals:
+           𝑚(1+𝑝)√1−𝑝                                                        𝑥(1−𝑝2 )  1             𝑚√1−𝑝√1−𝑥𝑝
+                                  √1−𝑥 2 𝑝2 +𝑘(𝑁−𝑁𝑥 2 )−                                 2)3/2 (𝜇𝐼𝐶 −          )
+        2(1+𝑥)√1+𝑥√1−𝑥𝑝                                                   2   2 2 √𝑁(1−𝑥                √1+𝑥
+                                                                 √1+𝑘(𝑁−𝑁𝑥 )−𝑥 𝑝
+                                                                                      2                                                                              (A15)
+                                                                             2 2
+                                                                 √1−𝑥 𝑝2 +𝑘
+                                                                   𝑁−𝑁𝑥
+
+
+The sign of the derivative is thus determined by the numerator.
+
+
+                                                                                                14
+          𝑚(1+𝑝)√1−𝑝                                         𝑥(1−𝑝2 )             1                  𝑚√1−𝑝√1−𝑥𝑝
+                        √1 − 𝑥 2 𝑝2 + 𝑘(𝑁 − 𝑁𝑥 2 ) −                                        (𝜇𝐼𝐶 −                )   (A16)
+        2(1+𝑥)√1+𝑥√1−𝑥𝑝                                √1+𝑘(𝑁−𝑁𝑥 2 )−𝑥 2 𝑝2 √𝑁(1−𝑥 2 )3/2               √1+𝑥
+
+When 𝑥 → 0, the derivative is positive as the second part of the Equation A2 approaches zero and the first part is
+positive; when 𝑥 → 1, the derivative is negative as the second part of A2 would explode to infinity due to the (1 −
+𝑥 2 )3/2 part in the denominator. According to the mean value theorem, there thus exists a maximum value of
+Equation (20) for λ between 0 and 1.
+
+
+
+References
+
+
+[1] R. Grinold, "The fundamental law of active management," The Journal of Portfolio Management, vol. 5 ,
+     no. 3, pp. 30-37, 1989.
+[2] R. C. Grinold and R. N. Kahn, Active Portfolio Management. 2nd ed., New York: McGraw-Hill, 2000.
+[3] Z. Kakushadze and I. Tulchinsky, Performance v. Turnover: A Story by 4,000 Alphas, SSRN Electronic
+     Journal, 2015.
+[4] S. Sharkansky, Mutual Fund Performance and the Consequences of Fees, Trading Costs and Taxes,
+     Personal Fund, 2019.
+[5] C. Champagne, A. Karoui and S. Patel, "Portfolio turnover activity and mutual fund performance,"
+     Managerial Finance, vol. 4, no. 3, pp. 326-356, 2018.
+[6] E. Qian and R. Huaa, "Acitive Risk and Information Ratio," Journal of Investment Management, vol. 2,
+     no. 3, p. 1–15, 2004.
+[7] Z. Ding and R. D. Martin, "The Fundamental Law of Active Management: Redux," Journal of Empirical
+     Finance, vol. 43, pp. 91-114, 2017.
+[8] R. Edelen, R. Evans and G. Kadlec, "Shedding Light on “Invisible” Costs: Trading Costs and Mutual Fund
+     Performance," Financial Analysts Journal , vol. 69, no. 1, pp. 33-44, 2013.
+[9] E. Qian, E. H. Sorensen and R. Hua, "Information Horizon, Portfolio Turnover, and Optimal Alpha
+     Models," The Journal of Portfolio Management, vol. 34, no. 1, pp. 27-40, 2007.
+[10] Z. Ding, R. D. Martin and C. Yang, "Portfolio turnover when IC is time-varying," Journal of Asset
+     Management, 2020.
+[11] S&P Dow Jones Indices, "S&P Factor-Based Quintile Indices Methodology," S&P Global, 2020.
+[12] A. Rana and D. J. Sandberg, "U.S. Stock Selection Model Performance Review-2018," S&P Global:
+     Quantamental Research, 2019.
+[13] JPMorgan Asset Management, "Spotlight on: Long/short hedged portfolios," J.P. Morgan Asset
+     Management, 2012.
+[14] F. M. Aparicio and J. Estrada, "Empirical distributions of stock returns: European securities markets,
+     1990-95," The European Journal of Finance, vol. 7, no. 1, pp. 1-21, 2001.
+[15] P. Kaloyan, "Is the information coefficient really a random normally distributed variable," 2019.
+[16] M. W. Brandt, J. R. Graham and A. Kumar, "The Idiosyncratic Volatility Puzzle: Time Trend or Speculative
+     Episodes?," The Review of Financial Studies, vol. 23, no. 2, pp. 863-899, 2009.
+[17] T. Oyeniyi and L. Ma, "U.S. Stock Selection Model Performance Review 2016 – The Year of “Risky” Value,"
+     S&P Market Intelligence , 2017.
+[18] A. Rana and D. J. Sandberg, "U.S. Stock Selection Model Performance Review-2018," S&P Market
+     Intelligence, 2019.
+[19] X. Gerard, R. Guido and P. Wesselius, "Integrated Alpha Modeling," Advanced Risk & Portfolio
+     Management Paper, 2012.
+
+
+
+                                                        15
+[20] M. Vermaat, F. v. d. Meulen and R. Does, "Asymptotic behavior of the variance of the EWMA statistic for
+    autoregressive processes," Statistics & Probability Letters, vol. 78, no. 12, pp. 1673-1682, 2008.
+[21] B. Herskovic, B. T. Kelly, H. N. Lustig and S. V. Nieuwerburgh, "The Common Factor in Idiosyncratic
+    Volatility: Quantitative asset pricing implications," Journal of Financial Economics, vol. 119, no. 2, pp.
+    249-283, 2016.
+
+
+
+
+                                                    16
+

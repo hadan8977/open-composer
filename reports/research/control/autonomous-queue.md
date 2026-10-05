@@ -2004,3 +2004,24 @@
 - done_when: `reports/research/intel/I-20261004-10-options-vrp-depth.{md,json}` 和快照目录，10-05 03:00 UTC 前；交互会话审核后提交。
 - notes:
   - 2026-10-04 18:46 UTC 交互会话（Opus）派出。机主 09-29 的范围包括期权 1–3 级；我们还没有期权策略，属于主动补充。
+
+### T-20261005-01 P1 中频股票引擎 阶段 0：快信号的衰减曲线、交易速度与净夏普、对 v1.2 的增量（测量，只用于提速）
+- status: ready
+- priority: 1
+- not_before: 无（本机重步骤不在 21:30–00:30 UTC 跑；不和其他超过 1 GB 的任务并行；排在 T-20261004-70、T-75 之后取即可，目标 10-05 16:07 执行轮前后跑完）
+- goal: 把"频率怎么定"变成数据：快因子库 53 个、新快信号 7 个、合成 3 个，在 U3000 分流动性档上的日 IC 衰减（滞后 1–22）、半衰期、持续性，以及 7 种交易速度在实测收盘价差下的净夏普；决定哪些输入和速度进入第 2 阶段（v1.2 构造里的快腿）。机主 10-04：便宜测试只提速，不能否定；本任务不能关闭 P1。
+- plan: 合同 `reports/research/iterations/t20261005_p1_s0_decay/`（hypotheses.md 第 0–10 节，01:30 冻结；direction-check 和 pre-backtest 都 ok）。先做恒等检验（复现 regimes/signal_ls_daily 三列，误差 ≤ 1e-9），再测量；ON5、ID5 的符号先由压力期定；晋级规则见合同第 5 节。本机，run_capped 1.8G，不用 Modal。
+- done_when: `t20261005_p1_s0_decay/{results.json,report.md,trial-ledger.json}` 已提交（git add -f），mechanical_status 为三个值之一，新测试通过；结果标"待主审"。
+- brief: reports/research/control/briefs/T-20261005-01.md
+- notes:
+  - 2026-10-05 01:33 UTC 01:07 主审轮（Opus）登记。第二版计划草稿 P1 阶段 0，即第一版计划 C2（10-09 前出第一批结果）。10-06 01:07 主审轮审核，并按结果写第 2 阶段合同（快腿进 v1.2 构造）或转阶段 1（学习式残差信号）。
+
+### T-20261005-02 v1.2 首单前核实：收盘竞价单（time_in_force=cls）在 quant1/quant2 模拟账户能否被接受并成交（数据坑 #55）
+- status: ready（交互会话取：要在模拟账户真实挂 1 股收盘竞价单，定时轮按手册不能下单）
+- priority: 1
+- not_before: 无；**10-07 18:45 UTC 首次提交前**完成（v1.2 开始清单第 71 行）
+- goal: v1.2 的下单引擎默认用收盘竞价单（`open_composer/book_paper/plan.py` 第 1098 行 `tif = "cls" if mode == "close"`；T-20261001-16 规格），修正案 A1 的主口径也是 t+1 收盘竞价成交。Alpaca 订单文档的 TIF 表里 CLS、OPG 都标 Yes*，注明"标星的要联系销售"（快照 `reports/research/intel/sources/mid-frequency-2026-10-04/alpaca-orders-docs.txt`）；数据坑 #55（`docs/data-layer-pitfalls-and-capabilities.zh.md`）记着"OPG/CLS 可能要 Elite 权限，6 月以来出场单取消或过期与此吻合，待本账户实测"。开始清单只做了限价单撤单测试，没有测过收盘竞价单。万一被拒或被撤，10-07 首单会整批失败。
+- plan: 交互会话在 10-05 或 10-06 美东 15:50 前，在 quant1 用 `oc book-paper` 的同一下单路径挂 1 股 SPY 收盘竞价市价单（或按开始清单的撤单测试方式），记录订单状态流转（accepted/new → filled 或 rejected/canceled 及原因）、成交价与当日官方收盘价之差；quant2 同样做一次（若它承担空头，加 1 股 ETB 名字的卖空 CLS）。结果写进数据坑 #55 和开始清单。被拒：首单改用引擎已有的 `--mode market`（DAY 市价单；限价收盘单在文档里同样标 Yes*，不能当退路），并评估对 A1 收盘成交口径的影响，写修正说明；实盘那边把"联系 Alpaca 销售开通 CLS"加进 T-72 的清单，作为机主要做的事。
+- done_when: 数据坑 #55 改成已核实（附订单 ID 和状态），开始清单写明首单用的订单类型。
+- notes:
+  - 2026-10-05 01:35 UTC 01:07 主审轮（Opus）登记：设计 P1 阶段 0 的成交口径时发现，收盘竞价单在本账户从没实测过。

@@ -1,0 +1,83 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261005_p1_s0_decay/candidate-manifest.json",
+  "candidate_manifest_sha256": "1cb7117a741cd14054aee53a3cc58665e189ebba39f27e852bcf283c541c048a",
+  "cost_table_path": "reports/research/iterations/t20261005_p1_s0_decay/cost-table.json",
+  "created_at": "2026-10-05T01:26:50.343692+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261005_p1_s0_decay/data-feasibility.json",
+  "data_feasibility_sha256": "e2b0750a999f27cc7fa09b6c4030660412b503bfb7e0b5d2a73ddeed5a0fe05d",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261005_p1_s0_decay",
+  "paths": [
+    {
+      "benchmark_family": [
+        "identity_reproduction_of_regimes_signal_ls_daily_three_columns",
+        "m0_composite_and_nine_themes_same_engine_context",
+        "kappa_1_full_daily_rebalance_vs_partial_trade_same_signal",
+        "moo_open_fill_vs_moc_close_fill_same_signal",
+        "within_date_permutation_placebo_20_seeds_composites_best_speed",
+        "vol_matched_blend_with_m0_composite_signal_level",
+        "two_x_cost_same_weight_paths",
+        "dsr_21_trial_composites_and_193_trial_program_disclosure"
+      ],
+      "candidate_count": 10,
+      "hypothesis_refs": [
+        "T-20261005-01"
+      ],
+      "name": "fast_signal_decay_p1_s0",
+      "parameters": {
+        "data_source": [
+          "signals store + new signals",
+          "prices",
+          "prices + signals store ind_code",
+          "data/research/equity_book/risk/residuals_<year>.parquet",
+          "data/features/daily_broad"
+        ],
+        "definition": [
+          "equal-weight mean of the 60 fast inputs (19 a101_*, 32 g191_*, rev_21_ind, on252 from data/research/equity_book/signals; REV5, IREV5, RREV5, RREV21, ON5, ID5, VSHK new), each re-ranked to rank-normal within U3000 at t, missing -> 0",
+          "walk-forward IC-IR weighted composite of the 60 fast inputs (19 a101_*, 32 g191_*, rev_21_ind, on252 from data/research/equity_book/signals; REV5, IREV5, RREV5, RREV21, ON5, ID5, VSHK new), each re-ranked to rank-normal within U3000 at t, missing -> 0; weight_k(t) = mean / sd of the lag-2 daily IC of input k over the trailing 252 IC observations with signal date s <= t - 2 (realized by close t), 0 if fewer than 200 finite; c = sum w_k z_k / sum |w_k|",
+          "as FC_WF252 with a trailing 63 IC observations (>= 50 finite)",
+          "-(close_t / close_(t-5) - 1) from data/research/equity_book/prices",
+          "-(r5_i - mean of r5 over U3000 names in the same ind_code at t), r5 = close_t / close_(t-5) - 1 (same group-mean code as rev_21_ind in scripts/build_equity_book_signals.py)",
+          "-(sum of risk-model daily residuals resid over sessions t-4..t), >= 4 of 5 finite",
+          "-(sum of risk-model daily residuals over sessions t-20..t), >= 17 of 21 finite",
+          "mean over sessions t-4..t of open_d / close_(d-1) - 1",
+          "mean over sessions t-4..t of close_d / open_d - 1",
+          "dollar_adv_21_over_63 at t (coarse proxy of the one-day-to-one-week volume shock)"
+        ],
+        "execution_and_cost": [
+          "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only"
+        ],
+        "ic": [
+          "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill"
+        ],
+        "sign": [
+          "library signals keep their stored sign; new signals as preregistered",
+          "learned walk-forward (signs may flip)",
+          "reversal (negative past return), fixed",
+          "reversal, fixed",
+          "sign of the stress-window mean CIC(2..6), fixed before the recent window is read",
+          "positive (high volume -> higher return), fixed"
+        ],
+        "speed_grid": [
+          "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets"
+        ],
+        "target_return": [
+          "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)"
+        ],
+        "universe": [
+          "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross"
+        ],
+        "windows": [
+          "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261005_p1_s0_decay.yaml",
+  "spec_hash": "ac96eb9ed0c390441fe33e9982389aa84d7656238f90c603bc33c2e96899b0fe",
+  "strategy_name": "t20261005_p1_s0_decay",
+  "total_candidate_budget": 10,
+  "trial_ledger_paths": []
+}

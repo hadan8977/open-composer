@@ -1,0 +1,312 @@
+{
+ "iter_id": "t20261005_p1_s0_decay",
+ "strategy_name": "t20261005_p1_s0_decay",
+ "representative_spec_path": "strategy_specs/drafts/t20261005_p1_s0_decay.yaml",
+ "path_name": "fast_signal_decay_p1_s0",
+ "hypothesis_id": "T-20261005-01",
+ "objective": "P1 mid-frequency engine Stage 0 (measurement, promotion-only): for the 53 fast signals already in the equity-book signal store, seven new daily fast signals and three fast composites, measure on U3000 by liquidity bucket the daily industry- and beta-neutral rank-IC decay (lags 1..22), persistence, half-life and net Sharpe versus trading speed at a close fill with cost model v1, and promote to the Stage 2 book-level test the objects whose recent-window implementable information is significant.",
+ "benchmark_family": [
+  "identity_reproduction_of_regimes_signal_ls_daily_three_columns",
+  "m0_composite_and_nine_themes_same_engine_context",
+  "kappa_1_full_daily_rebalance_vs_partial_trade_same_signal",
+  "moo_open_fill_vs_moc_close_fill_same_signal",
+  "within_date_permutation_placebo_20_seeds_composites_best_speed",
+  "vol_matched_blend_with_m0_composite_signal_level",
+  "two_x_cost_same_weight_paths",
+  "dsr_21_trial_composites_and_193_trial_program_disclosure"
+ ],
+ "candidates": [
+  {
+   "candidate_id": "P1S0_FC_EW",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "equal-weight mean of the 60 fast inputs (19 a101_*, 32 g191_*, rev_21_ind, on252 from data/research/equity_book/signals; REV5, IREV5, RREV5, RREV21, ON5, ID5, VSHK new), each re-ranked to rank-normal within U3000 at t, missing -> 0",
+    "sign": "library signals keep their stored sign; new signals as preregistered",
+    "data_source": "signals store + new signals"
+   }
+  },
+  {
+   "candidate_id": "P1S0_FC_WF252",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "walk-forward IC-IR weighted composite of the 60 fast inputs (19 a101_*, 32 g191_*, rev_21_ind, on252 from data/research/equity_book/signals; REV5, IREV5, RREV5, RREV21, ON5, ID5, VSHK new), each re-ranked to rank-normal within U3000 at t, missing -> 0; weight_k(t) = mean / sd of the lag-2 daily IC of input k over the trailing 252 IC observations with signal date s <= t - 2 (realized by close t), 0 if fewer than 200 finite; c = sum w_k z_k / sum |w_k|",
+    "sign": "learned walk-forward (signs may flip)",
+    "data_source": "signals store + new signals"
+   }
+  },
+  {
+   "candidate_id": "P1S0_FC_WF63",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "as FC_WF252 with a trailing 63 IC observations (>= 50 finite)",
+    "sign": "learned walk-forward (signs may flip)",
+    "data_source": "signals store + new signals"
+   }
+  },
+  {
+   "candidate_id": "P1S0_REV5",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "-(close_t / close_(t-5) - 1) from data/research/equity_book/prices",
+    "sign": "reversal (negative past return), fixed",
+    "data_source": "prices"
+   }
+  },
+  {
+   "candidate_id": "P1S0_IREV5",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "-(r5_i - mean of r5 over U3000 names in the same ind_code at t), r5 = close_t / close_(t-5) - 1 (same group-mean code as rev_21_ind in scripts/build_equity_book_signals.py)",
+    "sign": "reversal, fixed",
+    "data_source": "prices + signals store ind_code"
+   }
+  },
+  {
+   "candidate_id": "P1S0_RREV5",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "-(sum of risk-model daily residuals resid over sessions t-4..t), >= 4 of 5 finite",
+    "sign": "reversal, fixed",
+    "data_source": "data/research/equity_book/risk/residuals_<year>.parquet"
+   }
+  },
+  {
+   "candidate_id": "P1S0_RREV21",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "-(sum of risk-model daily residuals over sessions t-20..t), >= 17 of 21 finite",
+    "sign": "reversal, fixed",
+    "data_source": "data/research/equity_book/risk/residuals_<year>.parquet"
+   }
+  },
+  {
+   "candidate_id": "P1S0_ON5",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "mean over sessions t-4..t of open_d / close_(d-1) - 1",
+    "sign": "sign of the stress-window mean CIC(2..6), fixed before the recent window is read",
+    "data_source": "prices"
+   }
+  },
+  {
+   "candidate_id": "P1S0_ID5",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "mean over sessions t-4..t of close_d / open_d - 1",
+    "sign": "sign of the stress-window mean CIC(2..6), fixed before the recent window is read",
+    "data_source": "prices"
+   }
+  },
+  {
+   "candidate_id": "P1S0_VSHK",
+   "parameters": {
+    "universe": "U3000 members at the signal date t (signals store rows); buckets by panel adv_rank at t: L1 <= 500, L2 501-1000, L3 1001-3000, L12 <= 1000 (primary decision bucket); shorts limited to the easy-to-borrow proxy borrow.short_eligible (rule v1), short leg rescaled to the long leg's gross",
+    "target_return": "single-session stock return beta-hedged with panel beta_252_spy at t (NaN -> 1, clipped -0.5..3) and demeaned within (date, ind_code); close-to-close for lags j = 1..22 after the signal close t, lag 1 also split into overnight (close t -> open t+1) and intraday (open t+1 -> close t+1); no delisting return (names drop out, counted)",
+    "ic": "daily Spearman rank IC within bucket between the score at close t and the target return at t+j (>= 50 names), mean and Newey-West t (10 lags) per window; implementable cumulative IC CIC(2..6) for a close t+1 fill",
+    "speed_grid": "weights w* = (score - bucket mean) industry-demeaned and scaled to gross 2; GP partial trade w_t = (1 - kappa) w_(t-1) + kappa w*_t for kappa in {1, 0.5, 0.25, 0.1, 0.05}; full rebalance every 5 or 21 sessions reported as the median over all offsets",
+    "execution_and_cost": "main: decision at close t, fill at close t+1 (MOC), position earns close t+1 -> close t+2 onward; cost per traded name = |dw| x (costs.half_spread_bp(prior close, dollar_adv_21, vol_21, year, 'close') + impact_bp at E = $1M + 0.5 bp fees), missing inputs 40 bp; borrow 25 bp a year on short notional; variant MOO (fill at open t+1, 'open' snapshot) for kappa 1 and the best kappa only",
+    "windows": "recent 2024-01-08..2026-09-15 (decides), stress 2017-10-02..2023-08-31 (diagnostic and sign source for ON5/ID5), owner_B 2026-07-01..2026-09-15 (reported); nothing after 2026-09-17 is read",
+    "definition": "dollar_adv_21_over_63 at t (coarse proxy of the one-day-to-one-week volume shock)",
+    "sign": "positive (high volume -> higher return), fixed",
+    "data_source": "data/features/daily_broad"
+   }
+  }
+ ],
+ "cost_table": {
+  "base_cost_bps": "model",
+  "judged_cost": "cost model v1 (open_composer/research/equity_book/cost_model_v1.json via costs.half_spread_bp and costs.impact_bp): close snapshot half-spread per name and year + square-root impact at E = $1M + 0.5 bp fees per side; borrow 25 bp a year on short notional",
+  "stress_cost_bps": "2x model",
+  "fixed_comparison": "same object at kappa 1 (full daily rebalance) and the regimes flat-8-bp open-fill convention (identity path)",
+  "two_x_cost_check": "2x trading costs on the same weight paths, reported for every object at every speed (not a selection input)"
+ },
+ "sources": [
+  {
+   "claim_id": "dlsa_2021_sharpe_half_life_seven_days",
+   "url": "https://arxiv.org/pdf/2106.04028",
+   "published_or_updated_at": "2021-06-08",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Guijarro-Ordonez, Pelger and Zanotti (Deep Learning Statistical Arbitrage, arXiv 2106.04028): on about 550 liquid US stocks, out of sample 2002-2016, the Sharpe ratio of the learned residual stat-arb policy has a half-life of about seven trading days over the holding period, is still above one at a 22-day holding period with a 1-day objective, and reaches about 1.5 when the multi-day holding period is optimized directly (Figure 12).",
+   "project_applicability": "Sets the trading-speed grid (kappa 1..0.05, full rebalance every 5 or 21 sessions) and the lag range 1..22 of the decay curve; Stage 1 of P1 replicates this model.",
+   "reflection": "Authors' backtest, ends 2016, 5 bp per transaction plus 1 bp short fee; learned signal, not the linear library signals measured here."
+  },
+  {
+   "claim_id": "da_liu_schaumburg_2014_residual_reversal_three_times",
+   "url": "https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr513.pdf",
+   "published_or_updated_at": "2011-09-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Da, Liu and Schaumburg (NY Fed Staff Report 513; Management Science 2014): the standard short-term reversal profit decomposes into across-industry momentum, within-industry expected-return variation, under-reaction to within-industry cash-flow news and a residual; only the residual is significant and positive, and a strategy built to capture it earns a risk-adjusted return three times the standard reversal over 1982-2009.",
+   "project_applicability": "Motivates IREV5 (within-industry reversal) and RREV5/RREV21 (risk-model residual reversal) next to raw REV5.",
+   "reflection": "Monthly reversal, 1982-2009, gross of costs; our test is daily on 2017-2026 U3000 with measured close costs."
+  },
+  {
+   "claim_id": "gervais_kaniel_mingelgrin_2001_high_volume_premium",
+   "url": "https://rodneywhitecenter.wharton.upenn.edu/wp-content/uploads/2014/04/9901.pdf",
+   "published_or_updated_at": "2001-06-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Gervais, Kaniel and Mingelgrin (The High-Volume Return Premium, JF 2001): stocks with unusually high (low) trading volume over a day to a week tend to appreciate (depreciate) over the following month; the effect is stronger when the volume shock is not accompanied by an extreme return.",
+   "project_applicability": "Defines VSHK with a positive sign; our proxy is the 21-day over 63-day dollar-volume ratio (coarser than the paper's one-day to one-week shock).",
+   "reflection": "NYSE stocks 1963-1996, gross; our volume proxy is coarser than the paper's measure."
+  },
+  {
+   "claim_id": "garleanu_pedersen_2013_partial_trading_aim_portfolio",
+   "url": "https://pages.stern.nyu.edu/~lpederse/papers/DynamicTrading.pdf",
+   "published_or_updated_at": "2013-12-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Garleanu and Pedersen (Dynamic Trading with Predictable Returns and Transaction Costs, JF 2013): with costly trading and signals of different decay speeds, the optimal portfolio trades partially toward an aim portfolio that weights slower-decaying predictors more.",
+   "project_applicability": "The speed grid uses the GP partial-trade form w_t = (1 - kappa) w_(t-1) + kappa w*_t; the decay curves give the alpha decay that GP needs for Stage 2.",
+   "reflection": "Our Stage 0 uses one kappa per signal, not the full GP aim portfolio across signals."
+  },
+  {
+   "claim_id": "novy_marx_velikov_2016_buy_hold_spread",
+   "url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf",
+   "published_or_updated_at": "2016-01-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Novy-Marx and Velikov (A Taxonomy of Anomalies and Their Trading Costs, RFS 2016): for most anomalies a buy/hold spread is the most effective cost mitigation; for very high turnover strategies a combination of techniques does better.",
+   "project_applicability": "Stage 0 measures the partial-trade (kappa) family only; the buy/hold band is a Stage 2 construction variant, named here so it is not forgotten.",
+   "reflection": "Monthly anomalies with effective-spread estimates, 1963-2013."
+  },
+  {
+   "claim_id": "lou_polk_skouras_2019_overnight_intraday_tug_of_war",
+   "url": "https://conference.nber.org/conf_papers/f78239/f78239.pdf",
+   "published_or_updated_at": "2019-01-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Lou, Polk and Skouras (A Tug of War: Overnight Versus Intraday Expected Returns, JFE 2019): momentum profits accrue overnight and partly reverse intraday, while other anomaly returns accrue intraday, so overnight and intraday components of past returns carry different information.",
+   "project_applicability": "Motivates ON5 and ID5 as separate inputs; the paper gives no clear sign for a 5-day component predicting total close-to-close returns, so their signs are fixed on the stress window before the recent window judges them.",
+   "reflection": "Monthly portfolios, 1993-2013; our components are 5-day means on 2017-2026."
+  },
+  {
+   "claim_id": "avellaneda_lee_2010_residual_mean_reversion",
+   "url": "https://math.nyu.edu/faculty/avellane/AvellanedaLeeStatArb071108.pdf",
+   "published_or_updated_at": "2010-07-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Avellaneda and Lee (Statistical Arbitrage in the US Equities Market, Quantitative Finance 2010): residuals of stock returns on PCA or sector-ETF factors are traded as mean-reverting processes; after transaction costs PCA-based strategies have an average annual Sharpe ratio of 1.44 over 1997-2007 but only 0.9 over 2003-2007, and ETF-based strategies 1.1 with a similar degradation after 2002.",
+   "project_applicability": "RREV5/RREV21 use the project's risk-model residuals (industry + style factors) as the residual definition; the OU-threshold rule itself is a Stage 1 baseline, not measured here.",
+   "reflection": "1997-2007; thresholds and costs differ from ours."
+  },
+  {
+   "claim_id": "attention_factors_2025_cost_in_objective",
+   "url": "https://arxiv.org/pdf/2510.11616",
+   "published_or_updated_at": "2025-10-13",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Attention Factors for statistical arbitrage (arXiv 2510.11616): with 5 bp per transaction, the parametric (OU-style) residual model falls to negative net Sharpe because of turnover, a simple PCA factor model reaches about 1.5 net, and the end-to-end model with costs in the objective reaches about 2.3 net (authors' backtest, 500 US stocks to 2021).",
+   "project_applicability": "Shallow single-signal or threshold rules fail on costs; Stage 0 therefore measures speed curves and composites, and P1 Stage 1 puts costs into the objective.",
+   "reflection": "Authors' own backtest ending 2021; flat 5 bp costs."
+  },
+  {
+   "claim_id": "frazzini_israel_moskowitz_2012_reversal_cost_constrained",
+   "url": "https://conference.nber.org/conf_papers/f68262/f68262.pdf",
+   "published_or_updated_at": "2012-12-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Frazzini, Israel and Moskowitz (Trading Costs of Asset Pricing Anomalies, NBER draft 2012, AQR live executions): size, value and momentum survive costs at fund sizes of tens of billions, while short-term reversal does not survive at sizes above about $9 billion in the US.",
+   "project_applicability": "Reversal is cost-constrained at institutional size but our book is small (E = $1M for impact), so the binding cost is the spread; Stage 0 uses the measured close half-spread by stock and year.",
+   "reflection": "Institutional execution 1998-2011; capacity, not small-account economics."
+  },
+  {
+   "claim_id": "local_regimes_2026_10_01_fast_alpha_daily_net",
+   "url": "local:reports/research/program/regimes-2026-10-01/results.json",
+   "published_or_updated_at": "2026-10-01",
+   "source_type": "internal_measurement",
+   "credibility": "internal_measurement",
+   "core_claim": "Project regimes study (2026-10-01): daily open-to-open, full daily rebalance, industry- and beta-neutral long-short returns of the fast library signals have recent-window gross Sharpe up to 2.64 (g191_gtja190; a101_alpha016 1.56) but annual turnover of about 70-260 times gross, so at a flat 8 bp per side most are deeply negative net (a101_alpha016 -4.15); m0_composite is 1.81 gross, 1.53 net.",
+   "project_applicability": "The fast library carries daily information that the monthly-horizon T-24 screen could not see; costs at full daily rebalance kill it, so Stage 0 measures decay and trading speed with measured close costs instead of re-testing single signals.",
+   "reflection": "Flat 8 bp, open execution, full rebalance, all U3000; diagnostic, not a selection input."
+  },
+  {
+   "claim_id": "blitz_huij_lansdorp_verbeek_2013_residual_reversal_net",
+   "url": "https://repub.eur.nl/pub/40707",
+   "published_or_updated_at": "2013-08-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Blitz, Huij, Lansdorp and Verbeek (Short-term residual reversal, Journal of Financial Markets 16(3) 2013, 477-504; abstract from the Erasmus repository record): a reversal strategy on Fama-French residual returns avoids the dynamic factor exposures of conventional reversal and earns twice its risk-adjusted return; it is significant net of trading costs even for large caps after 1990.",
+   "project_applicability": "Second independent source for RREV5/RREV21; supports measuring residual reversal on the liquid L12 bucket with net costs.",
+   "reflection": "Abstract only (full text not opened: EFMA draft unreachable, SSRN not fetched); monthly horizon, sample ends about 2010."
+  },
+  {
+   "claim_id": "ding_martin_yang_2021_turnover_adjusted_ir",
+   "url": "https://arxiv.org/pdf/2105.10306",
+   "published_or_updated_at": "2021-05-21",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Turnover-Adjusted Information Ratio (arXiv 2105.10306): extending the fundamental law with IC volatility and turnover cost, the turnover-adjusted IR is always below the cost-free IR, and managers can raise IR by limiting or optimizing turnover, against the naive implication of the fundamental law.",
+   "project_applicability": "Frames Stage 0's output: decay and persistence set turnover, so net Sharpe is read along the speed curve, not at full rebalance.",
+   "reflection": "Derivations and simulations; no market sample."
+  }
+ ],
+ "topic_coverage": [
+  "signal_half_life_and_holding_period",
+  "short_term_reversal_decomposition",
+  "residual_reversal_stat_arb",
+  "volume_shock_return_premium",
+  "overnight_intraday_return_components",
+  "optimal_partial_trading_speed",
+  "cost_mitigation_buy_hold_spread",
+  "anomaly_trading_costs_capacity",
+  "local_fast_alpha_daily_measurement"
+ ],
+ "hypothesis": {
+  "statement": "Fast price-volume signals on liquid US stocks carry daily information whose IC decays over several sessions (the DLSA Sharpe half-life is about seven sessions), so trading them partially (kappa < 1) at the close with measured spreads keeps a positive net Sharpe that full daily rebalancing at the open with a flat 8 bp loses; a multi-signal composite has more information per unit of turnover than any single signal.",
+  "failure_mode": "The library signals' daily information is too short-lived (most IC at lag 1, which a close t+1 fill cannot capture) or too small relative to the measured close spread even at slow speeds, or it is already contained in m0_composite.",
+  "measurement": "IC decay lags 1..22 (lag 1 split overnight/intraday), persistence, half-life, net Sharpe for 7 speeds at MOC with the close-snapshot cost model, MOO variant, by bucket and window; composites with placebo, blend with M0 and DSR. Results in results.json, report.md, trial-ledger.json.",
+  "stop_pivot": "Measurement only: nothing here closes P1 (owner rule 2026-10-04: cheap tests only promote). Objects meeting the preregistered information rule enter the Stage 2 contract; if none does, the record says 'not yet at depth' and P1 proceeds to Stage 1 (learned residual signal with costs in the objective) as planned in I-20261004-05."
+ },
+ "decision": {
+  "path": "fast_signal_decay_p1_s0",
+  "decision": "pending",
+  "reason": "Preregistered 2026-10-05 by the 01:07 UTC lead round before any decay curve, close-fill cost or partial-trading number was computed for a fast signal; executed by brief T-20261005-01."
+ },
+ "source_cards_path": "reports/harness/source_cards/t20261005_p1_s0_decay.jsonl"
+}
