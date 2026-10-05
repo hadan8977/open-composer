@@ -2017,7 +2017,7 @@
   - 2026-10-05 01:33 UTC 01:07 主审轮（Opus）登记。第二版计划草稿 P1 阶段 0，即第一版计划 C2（10-09 前出第一批结果）。10-06 01:07 主审轮审核，并按结果写第 2 阶段合同（快腿进 v1.2 构造）或转阶段 1（学习式残差信号）。
 
 ### T-20261005-02 v1.2 首单前核实：收盘竞价单（time_in_force=cls）在 quant1/quant2 模拟账户能否被接受并成交（数据坑 #55）
-- status: ready（交互会话取：要在模拟账户真实挂 1 股收盘竞价单，定时轮按手册不能下单）
+- status: running（交互会话 2026-10-05 01:42 UTC：探针脚本 `scripts/book_paper_cls_probe.py` 已就绪，与引擎同一个客户端工厂、同一种 MarketOrderRequest(time_in_force=CLS)，6 个测试通过。只读核对两户：ACTIVE、未封锁、可卖空、乘数 4、权益各 $1,000,000，AAPL 易借。按日期限定的单次 cron 已装：10-05 18:50 UTC quant1 买 1 股 SPY、quant2 卖空 1 股 AAPL，都是 CLS，避开 18:30 的彩排；20:15/22:15 查状态。10-06 18:50 只在持仓正好是 +1/−1 时用 CLS 平掉，同样查状态。日志 `logs/cls_probe.log`，记录在 `reports/paper/book/<账户>/probes/`；定时轮不要取）
 - priority: 1
 - not_before: 无；**10-07 18:45 UTC 首次提交前**完成（v1.2 开始清单第 71 行）
 - goal: v1.2 的下单引擎默认用收盘竞价单（`open_composer/book_paper/plan.py` 第 1098 行 `tif = "cls" if mode == "close"`；T-20261001-16 规格），修正案 A1 的主口径也是 t+1 收盘竞价成交。Alpaca 订单文档的 TIF 表里 CLS、OPG 都标 Yes*，注明"标星的要联系销售"（快照 `reports/research/intel/sources/mid-frequency-2026-10-04/alpaca-orders-docs.txt`）；数据坑 #55（`docs/data-layer-pitfalls-and-capabilities.zh.md`）记着"OPG/CLS 可能要 Elite 权限，6 月以来出场单取消或过期与此吻合，待本账户实测"。开始清单只做了限价单撤单测试，没有测过收盘竞价单。万一被拒或被撤，10-07 首单会整批失败。
