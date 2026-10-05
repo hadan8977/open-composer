@@ -1,0 +1,258 @@
+<!-- source: https://raw.githubusercontent.com/zhu1090093659/dsh-trading/HEAD/README.md ; fetched 2026-10-04T18:45Z ; original bytes truncated: False -->
+# dsh-trading — AI Trading Terminal for Crypto & Stocks
+
+> **当前状态与交接**：见 [docs/current-state.md](docs/current-state.md)（已验收项、必须知道的 fail-closed 不变量、未完成与硬停、验证命令、文档地图）。
+
+**English** | [简体中文](README_zh.md)
+
+**DSH Trading (dsh-trading)** is an AI trading terminal built on DeepSeek Harness (DSH) for cryptocurrency, US equities, China A-shares and Hong Kong stocks. It brings market data, technical analysis, AI-assisted investment research and human-approved order execution into one modular workspace. Orders default to dry-run simulation; live trading requires explicit opt-in and approval.
+
+[Quick start](#quick-start) · [Features](#features) · [Supported markets](#one-terminal-every-market) · [FAQ](#faq) · [Documentation](#documentation)
+
+![dsh-trading — Your next trading terminal, and your AI Agent](docs/banners/banner-en.jpg)
+
+> **Your next trading terminal can also be your AI agent.**
+> *No chumps for the slaughter, just everyday traders.*
+
+<div align="center">
+
+[![DSH Baseline](https://img.shields.io/badge/DSH%20Baseline-0.2.0--rc.2-blue.svg)](https://github.com/deepseek-ai)
+[![Markets](https://img.shields.io/badge/Markets-Crypto%20%7C%20US%20%7C%20CN%20%7C%20HK-green.svg)](#one-terminal-every-market)
+[![Connectors](https://img.shields.io/badge/Connectors-19%2B-orange.svg)](docs/guides/connectors-guide.md)
+[![License](https://img.shields.io/badge/License-PolyForm%20NC%201.0.0-lightgrey.svg)](LICENSE)
+
+</div>
+
+## Features
+
+- **Multi-market research:** follow crypto and stocks in one watchlist, with quotes, news, announcements and fundamentals from configured providers.
+- **Technical analysis:** candlestick charts, MA / EMA / MACD / RSI indicators, order books and crypto derivatives data.
+- **AI trading agents:** coordinate research, trading plans and risk review; name a symbol and the agent pulls its quotes, news, disclosures and fundamentals with native tools.
+- **Strategy backtesting:** evaluate historical trading signals with `strategy_backtest` alongside the bundled strategy playbooks; past performance does not predict future returns.
+- **Controlled execution:** dry-run by default, optional paper trading through supported connectors, and human approval for live orders.
+
+First, a question for you:
+
+Of the money you've lost trading, how much of it was lost before you had truly thought it through?
+
+You chase a rally and become the exit liquidity. You buy the dip, and it keeps dipping. You cut the loss, and it bounces the moment you're out; you hold, and it grinds you into the deep red. (Veterans don't always dodge these either.)
+
+Where does the problem lie? Not in luck. In discipline.
+
+The market opens every day, and bulls and bears fight it out every day. The most dependable weapon a retail trader holds was never better information — it's discipline. A seasoned hunter waits nine-tenths of the time and strikes in the remaining tenth; most traders do the exact opposite — nine-tenths acting, one-tenth regretting.
+
+That is why dsh-trading exists: an **agent-native trading terminal** built on [DeepSeek Harness (DSH)](https://github.com/deepseek-ai). A professional trading workflow, paired with an AI agent in sync with the market: quotes, news, and capital flow are all in its view; research follows institutional-grade playbooks; and before a real order goes out, every single one passes an approval gate that only your hand can click.
+
+Crypto, US equities, China A-shares, Hong Kong stocks. One terminal. One agent. Nineteen-plus connectors. Zero vendor lock-in — every key stays on your machine.
+
+![dsh-trading terminal — watchlist, chart stage with indicators, order book and derivatives panel](docs/screenshots/terminal-overview.png)
+
+---
+
+## What does agent-native mean?
+
+What do most "AI trading tools" look like? A chat box glued to the side of the chart.
+
+Glued on, not grown in.
+
+dsh-trading turns that relationship upside down: **the agent is a first-class citizen of the terminal, and the terminal is the agent's body.** Four things separate it from every chatbot you've used:
+
+1. **Quotes, news, capital flow — the agent has it all.** Live quotes, the current candle, the chart series' time range with a fetch locator (so the agent pulls the same routed data itself and analyzes it in code), the computed readings of your active indicators, derivatives snapshots, plus announcements, news and a bounded fundamentals summary — all native tools the agent drives for the symbol you're watching. Missing sources are explicit; the agent is guided to verify original disclosures and fill gaps with native research tools. No more screenshot-copy-paste ritual.
+
+2. **The agent can trade, but the gate is in your hands.** Market data, order books, derivatives positioning, news, and order placement are all native tools. Yet every order defaults to **dry-run simulation**; live routing requires an explicit `liveTrading: true` opt-in, and then each order still passes through interactive human approval. In headless environments it fails closed. One rule: no move without the gate. Nothing executes behind your back.
+
+3. **The agent trained for this.** Domain knowledge ships as bundled skills, not model improvisation: pre-trade risk checklists for every market ([crypto](.agents/skills/crypto-risk-checklist/SKILL.md) · [US](.agents/skills/us-risk-checklist/SKILL.md) · [CN](.agents/skills/cn-risk-checklist/SKILL.md) · [HK](.agents/skills/hk-risk-checklist/SKILL.md)), a five-step [crypto instrument analysis framework](.agents/skills/crypto-instrument-analysis/SKILL.md), a full [company analysis playbook](.agents/skills/company-analysis/SKILL.md), and a [trading journal discipline](.agents/skills/trading-notes-setup/SKILL.md) that dual-tracks "what the agent did" versus "what you did" — append-only and auditable.
+
+The risk checklist runs before every entry — a discipline most veterans never sustain in ten years (usually undone by "just this once").
+
+4. **One master leading a role-based team.** `master` (大师) is the all-capable multi-agent team lead: it grounds every trade question in the unified holdings ledger (`holdings_list` / `holdings_stage`) and per-market balance tools, pulls the user knowledge base first, then decomposes the task and delegates specialist work to persona-pinned subagents — instrument analysis to the researcher (`researcher_subagent`), trading-plan drafting to the trader (`trader_subagent`), plan review to the risk reviewer (`risk_reviewer_subagent`) — dispatching project skills by task type (analysis frameworks, market risk checklists, strategy paradigms with `strategy_backtest`, dynamic packages for one-off cross-instrument aggregation) before cross-checking and integrating a single conclusion. Cross-market overviews and order execution it can do itself, still dry-run by default behind the approval gate; delegates deliver analysis text only — execution stays with the master behind the gate. Beneath it: `trader` (交易员) for trading plans and gated execution, `instrument-researcher` (标的分析研究员) for disclosures, fundamentals and valuation, `risk-reviewer` (风险审查员) for exposure, stress scenarios and rejection conditions. Every role prioritizes project knowledge, news/announcements and fundamentals tools. Research and risk retain read-only quotes/candles but mount no order/cancel connectors; subagents inherit the session toolset with a persona pinning their duties — shared host tools remain visible, so role scoping is not a separate security sandbox.
+
+The base installer generates these four roles from enabled market bundles, including partial-market installations; the deployment default for new sessions is 大师 (master) — overridable per user in settings. Unmodified managed legacy market presets move to a sibling `.legacy-backup` root; custom, unstamped or extended directories remain untouched. No user preset data is deleted.
+
+## The terminal itself must be real software first
+
+A shoddy terminal makes even the smartest agent an armchair general.
+
+- **Center-stage charting.** Lightweight Charts v5 with multi-timeframe switching (5m to weekly); MA / EMA / BOLL / MACD / RSI / KDJ / SuperTrend, all visually editable; strategy signal markers, knowledge-event pins, and drag-to-measure range statistics.
+- **Real market depth.** Live order book with buy/sell pressure bars, tick-by-tick trades, and a derivatives cockpit — open interest, funding rates with settlement countdown, long/short ratio, taker flow. Quote and fund-flow data are native tools the agent queries on demand.
+- **Cross-market watchlist.** Crypto perps next to AAPL next to 牧原股份, with sparklines and real-time quotes. Your whole risk universe in one dock.
+
+### The operations surface is built in
+
+- **Usage statistics.** DSH's built-in *Performance & Usage* settings surface each session's live token stream and spend, resolved host-side so credentials never reach the browser.
+- **Plugin manager.** The Plugins section gains a manager tab: install from an npm spec or a git URL, flip next-start enablement, check and apply verified updates (gated on each package's declared minimum DSH version), roll back conflicting installs, and hand failures to a repair conversation. Writes are loopback-only and ride the official CLI; the desktop build ships a `dsh` shim so this works without a global install.
+- **Per-model capability declarations.** Every custom `llm-pi-ai` provider card carries a capability area: declare image input and reasoning efforts per model (including the exact wire value each level sends), or archive a provider to take its route down without touching its stored keys.
+
+## One terminal, every market
+
+| Market | Connectors |
+|---|---|
+| **Crypto** | Binance, OKX (Paper/Live), Bybit, CCXT (100+ exchanges) |
+| **US Equities** | Yahoo Finance, Alpaca (Paper/Live), FMP, Finnhub, Polygon.io, Interactive Brokers |
+| **China A-Shares** | Tencent Finance, Eastmoney, Tushare Pro, AkShare, MiniQMT broker gateway |
+| **Hong Kong** | Tencent HK, Longbridge OpenAPI, Futu OpenD, Tiger OpenAPI |
+
+**Hot-swappable data planes.** Not happy with a data source? Swap it. Settings → Trading routes any market to any installed provider: the quote panel re-routes on save, agent sessions pick it up on their next turn — no restarts, no config archaeology.
+
+![Provider routing — per-market exchange selection with BYOK credential slots](docs/screenshots/provider-routing.png)
+
+## Safety and privacy: discipline welded in, not preached
+
+The formula of trading has always been: **study + waiting + decisiveness + patience = survival.**
+
+The tool cannot wait for you, and it cannot be patient for you. But it can hold the gate in between:
+
+1. **Dry-run by default.** Every order/cancel tool simulates unless you explicitly flip `liveTrading: true`.
+2. **A human reviews every live order.** DSH's approval layer intercepts live routing; headless mode fails closed.
+3. **BYOK.** API keys live in your environment variables or local config. Nothing is bundled, relayed, or uploaded.
+4. **No data re-distribution.** Market data is fetched for you, under each provider's ToS; nothing is cached for resale or sharing.
+
+Without your signature, not a single cent moves.
+
+## Quick start
+
+### Install
+
+Trading runs in its own DSH home (`~/.dsh-trading`) so it never mixes with your main dsh web home (`~/.dsh`); every dsh-trading package resolves data paths through `$DSH_HOME`.
+
+```sh
+# Install into a dedicated DSH profile (pick your markets)
+export DSH_HOME=~/.dsh-trading
+dsh plugin --profile trading-web add @dshtrading/base @dshtrading/crypto @dshtrading/us
+# …or all four markets
+dsh plugin --profile trading-web add @dshtrading/base @dshtrading/crypto @dshtrading/us @dshtrading/cn @dshtrading/hk
+
+# Serve the browser UI in this profile (once): add the in-box web host layer
+# right after the dsh core layer in the profile manifest
+node -e "const f=(process.env.DSH_HOME||require('os').homedir()+'/.dsh')+'/profiles/trading-web/package.json',fs=require('fs'),m=JSON.parse(fs.readFileSync(f,'utf8'));m.dsh.profile.bundles.includes('@deepseek-ai/dsh-web-app')||m.dsh.profile.bundles.splice(1,0,'@deepseek-ai/dsh-web-app');fs.writeFileSync(f,JSON.stringify(m,null,2)+'\n')"
+```
+
+### Run
+
+```sh
+# From a repository checkout: install the wrapper once, then launch
+cp scripts/home/dsh-trading ~/.local/bin/ && chmod +x ~/.local/bin/dsh-trading
+dsh-trading --profile trading-web        # serves on port 8888 by default
+
+# Installed from npm only? The wrapper sets DSH_HOME and the 8888 default:
+DSH_HOME=~/.dsh-trading dsh --profile trading-web --port 8888
+```
+
+Three profiles ship for different jobs:
+
+| Profile | Surface | Bundles |
+|---|---|---|
+| `trading-web` | Browser GUI (recommended) | dsh-base + dsh-web-app + base + crypto + us + cn + hk + futures |
+| `trading-dev` | Headless, single market | dsh-base + dsh-headless + base + crypto |
+| `trading-all` | Headless, all markets | dsh-base + dsh-headless + base + all + cn + crypto + hk + us |
+
+Open the printed URL: watchlist left, chart center, your agent right. New conversation → pick a market preset → first ask it what it sees.
+
+### From source
+
+```sh
+pnpm install && pnpm build && pnpm test   # Node per engines (^22.19.0 || >=24.0.0), pnpm 11
+./scripts/refresh-trading-web-profile.sh  # rebuild the profile's file: package copies
+```
+
+See [docs/ops/running.md](docs/ops/running.md) for the full run, profile and refresh contract.
+
+## The architecture at a glance
+
+A layered [Cordis](https://github.com/cordisjs) microkernel ecosystem where markets compose instead of collide:
+
+```
+@dshtrading/base          ← core: account/order/quote contracts, approval gate, GUI shell
+├── @dshtrading/crypto    ← Binance / OKX / Bybit / CCXT + skills + preset
+├── @dshtrading/us        ← Yahoo / Alpaca / FMP / Finnhub / Polygon / IBKR + skills + preset
+├── @dshtrading/cn        ← Tencent / Eastmoney / Tushare / AkShare / MiniQMT + skills + preset
+└── @dshtrading/hk        ← Tencent HK / Longbridge / Futu / Tiger + skills + preset
+```
+
+Six invariants lock the ecosystem down: insert-only bundle patches · knowledge lives in skills, not code · dual-track order gates · shared code earns its place in base (≥2 markets) · zero data re-distribution · the GUI shell is replaceable, the data contracts are not.
+
+### What is already shipped (and off by default)
+
+The roadmap pieces below exist in this repository today. **None of them changes the defaults above**: orders stay dry-run, live routing still needs an explicit `liveTrading: true` plus human approval, and nothing runs unless you configure it.
+
+- **`trading-bot` profile** — a three-process layout (bot surface / trading core / edge gateway) installed into the trading home (`~/.dsh-trading`), separate from the DSH web host. The core owns the mandate, the risk gate and the journal; its **order port has no venue implementation yet**, so no order can leave the machine.
+- **Out-of-band channel (A0)** — the edge gateway serves six endpoints (`ping` / `status` / `kill` / `pause` / `resume` / `ack`) registered *before* the business surface, so they answer even when the market and agent layers are down (covered by an end-to-end drill). Device tokens are paired with a one-time code and scoped `read` / `command` / `control`; **pairing never grants `control`**.
+- **Live-trading authority plane** — live switches are not on the agent-writable path: a human-signed grant (Ed25519) is the only thing that can enable live routing, and the agent side never reads the signing material.
+- **Web cockpit** — a standalone SPA served by the bot edge, rendering server-driven cards from a self-hosted `/v1` surface (versioned, scope-gated), plus an unknown-card fallback so an older client never silently drops a newer card.
+- **Desktop attach mode** — a machine configured with a bot URL stops starting a local host and attaches instead; the decision is **configuration-driven and never probes ports** (a probe once handed off to an unrelated instance).
+
+Not shipped yet: the mobile client (the iOS-native observation app lives in `apps/ios-native` with the contract surface and device-pairing flow; device verification and distribution are outstanding — the earlier Expo/RN app was retired and removed on 2026-10-02) and any venue-side protective orders. Until the latter exists, `halt` degrades to `reduce_only` by design.
+
+> Wording note: the FAQ answer below ("not an unattended live-trading bot") still stands. The public narrative changes only together with the shadow → paper → small-live acceptance, which is gated on a human in the loop.
+## Data sources & terms
+
+| Market | Default source | Boundary |
+|---|---|---|
+| US | Yahoo Finance / Alpaca | Yahoo public endpoint (individual use); Alpaca official Paper/Live APIs |
+| CN | Tencent Finance / Eastmoney / HiThink (Fuyao) | Public endpoints; HiThink REST API for A-share daily K / fundamentals & auction data; live execution via local MiniQMT gateway |
+| Futures (CN) | HiThink (Fuyao) | HiThink REST API for daily K / intraday points / varieties & ticker tables; data-plane only, no execution face |
+| HK | Tencent HK / Longbridge | Public endpoint; licensed broker OpenAPI/Gateway for execution |
+| Crypto | Binance / OKX | Official APIs; OKX paper trading with your own keys |
+| Crypto fundamentals | CoinCap | Public REST, individual use only — no redistribution, no bulk scraping |
+
+## FAQ
+
+### Is dsh-trading an autonomous trading bot?
+
+It is an AI-assisted trading terminal, not an unattended live-trading bot. Order tools default to dry-run. Live execution requires `liveTrading: true` and interactive approval; headless sessions fail closed. Dry-run simulation is distinct from exchange or broker paper trading.
+
+### Which exchanges, brokers and market data APIs can I connect?
+
+Connectors include Binance, OKX, Bybit and CCXT for crypto; Yahoo Finance, Alpaca and Interactive Brokers for US stocks; Tencent Finance, Eastmoney and MiniQMT for China A-shares; and Longbridge, Futu and Tiger for Hong Kong stocks. Data coverage, trading support, credentials and local gateway requirements vary by connector. See the [connector configuration guide](docs/guides/connectors-guide.md).
+
+### Do I need API keys to use the terminal?
+
+Some public market data sources work without keys. Authenticated data services, broker or exchange accounts, and your selected AI provider may require separate credentials and fees. You supply your own keys (BYOK); provider terms and account permissions still apply.
+
+### Is dsh-trading free for commercial use?
+
+No. The [PolyForm Noncommercial 1.0.0 license](LICENSE) permits noncommercial use; commercial use requires prior written authorization. The software does not provide investment advice or guarantee trading returns.
+
+## Documentation
+
+- [Documentation Index](docs/README.md)
+- [Running, profiles & development](docs/ops/running.md)
+- [Connectors onboarding & configuration](docs/guides/connectors-guide.md)
+- [New connector playbook](docs/guides/connector-playbook.md)
+- [Skills architecture](docs/guides/skills-guide.md)
+- [Symbol vocabulary](docs/guides/symbol-vocabulary.md)
+- [Exchange routing & data plane](docs/guides/exchange-routing.md)
+- [Analysis & quant roadmap](docs/roadmap/analysis-roadmap.md)
+- [Architecture decision log](spikes/REVIEW-LOG.md)
+- [中文介绍](README_zh.md)
+
+## Friendly Links
+
+- [dsh-web](https://github.com/zhu1090093659/dsh-web)
+- [LINUX DO](https://linux.do)
+
+## Community
+
+**QQ group: DSH Trading 交流群（群号 `319737695`）** — questions, feedback, and everything dsh-trading. Scan with QQ to join:
+
+<div align="center">
+
+<img src="docs/assets/dsh-trading-qq.png" alt="dsh-trading QQ group QR code — group 319737695" width="280" />
+
+</div>
+
+---
+
+## One last word
+
+Tools are dead things; discipline is alive. The finest terminal cannot press buy for you, and it should not — but it can make sure that every time your hand does move, the thinking has already happened.
+
+Go experience it. Go make the mistakes. Go review your trades. The road is long — onwards, together.
+
+**This project is software, not investment advice. Markets carry risk — trade with care.**
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE) — free for personal study, research, and noncommercial use. **Commercial use requires prior written authorization**: open a GitHub issue or contact <chunlinzhu666@gmail.com>.
+
+> 本项目采用 [PolyForm Noncommercial 1.0.0](LICENSE) 许可：非商业用途免费；商业用途须事先取得书面授权（[chunlinzhu666@gmail.com](mailto:chunlinzhu666@gmail.com) 或 GitHub Issue）。

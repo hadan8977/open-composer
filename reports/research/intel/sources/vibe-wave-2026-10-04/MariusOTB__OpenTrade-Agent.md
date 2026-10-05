@@ -1,0 +1,111 @@
+<!-- source: https://raw.githubusercontent.com/MariusOTB/OpenTrade-Agent/HEAD/README.md ; fetched 2026-10-04T18:45Z ; original bytes truncated: False -->
+<div align="center">
+  <img src="assets/logo.svg" width="360" alt="OpenTrade-agent" />
+  <p><strong>The open-source trading harness for Claude Code / Codex agents.</strong></p>
+
+  <p>
+    <a href="https://github.com/MariusOTB/OpenTrade-Agent/stargazers"><img src="https://img.shields.io/github/stars/MariusOTB/OpenTrade-Agent?style=flat&logo=github" alt="GitHub stars" /></a>
+    <a href="https://github.com/MariusOTB/OpenTrade-Agent/releases"><img src="https://img.shields.io/github/v/release/MariusOTB/OpenTrade-Agent?style=flat&logo=github" alt="Latest release" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Elastic%20License%202.0-blue?style=flat" alt="License" /></a>
+  </p>
+
+  <img src="assets/demo.png" width="820" alt="OpenTrade-agent app — agent sidebar, live terminal, and portfolio panel" />
+</div>
+
+OpenTrade-agent is a macOS app that enables agents to trade and react to the market autonomously. Agents execute trades in your [Robinhood Agentic Trading](https://robinhood.com/us/en/agentic-trading/) account through the official MCP. Set guardrails, monitors, and schedules so agents can trade 24/7 - all on your machine.
+
+## Features
+
+<table>
+<tr>
+<td width="50%" valign="middle">
+
+### Monitor real-time events
+
+Agents can schedule themselves periodically or on arbitrary events via background scripts.
+
+</td>
+<td width="50%">
+  <img src="assets/readme/monitor-events.jpg" alt="The Monitor tab listing an agent's active timers and event monitors, including the shell command that wakes it on a new RSS post" width="100%" />
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Orchestrate multiple agents
+
+Delegate strategies and your portfolio to any number of agents.
+
+</td>
+<td width="50%">
+  <img src="assets/readme/orchestrate-agents.jpg" alt="The agent sidebar with nine agents, each running its own strategy, next to the selected agent's terminal" width="100%" />
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Trading guardrails
+
+Manual/auto order approvals, background turn limits for agents, and per-agent order accounting.
+
+</td>
+<td width="50%">
+  <img src="assets/readme/guardrails.jpg" alt="A pending buy order awaiting approval, above a history of past decisions and an order that expired undecided" width="100%" />
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Background sessions
+
+Agents continue to get notified and work in the background, even if the app is closed.
+
+</td>
+<td width="50%">
+  <img src="assets/readme/background-sessions.jpg" alt="The OpenTrade-agent menu bar tray reporting three of nine agents working, with each agent's status listed" width="100%" />
+</td>
+</tr>
+</table>
+
+## Install
+
+Download the latest `OpenTrade-agent-<version>-arm64.dmg` from
+[Releases](https://github.com/MariusOTB/OpenTrade-Agent/releases), open it, and drag OpenTrade-agent to
+Applications. Requires an Apple Silicon Mac. The app auto-updates from GitHub Releases.
+
+OpenTrade-agent supports both Claude Code and Codex agents, so please install and sign into `claude`
+and/or `codex` CLI. An authenticated MCP connection to Robinhood via your agent is required, see
+the [Robinhood MCP](https://robinhood.com/us/en/support/articles/agentic-trading-overview/#ConnectyourAIagent)
+instructions.
+
+## Build from source
+
+```bash
+bun install                 # from repo root (bun workspaces)
+bun run --cwd app rebuild   # rebuild native modules for the Electron ABI (once)
+bun run --cwd app dev       # launch with HMR
+```
+
+## Contributing
+
+Contributions are welcome — bug reports, fixes, and features alike. Open a pull request and
+we'll take a look.
+
+## Disclaimer
+
+OpenTrade-agent is experimental software provided **as-is and without warranty of any kind**.
+It is **not financial, investment, or trading advice**. The software runs autonomous
+agents that can place and cancel real orders against a funded brokerage account; **you
+are solely responsible for configuring, supervising, and bearing the financial
+consequences of your agents.** Trading involves substantial risk of loss.
+
+OpenTrade-agent is based on [OpenTrade](https://github.com/OpenTradeOSS/OpenTrade) by Exla Corp. It is **not affiliated with, endorsed by,
+or sponsored by Robinhood Markets, Inc., Anthropic, or OpenAI.** "Robinhood," "Claude,"
+"Claude Code," and "Codex" are trademarks of their respective owners. You are responsible
+for complying with the terms of service of any broker or API you connect to.
+
+## License
+
+[Elastic License 2.0](LICENSE) — source-available. You may use, copy, modify, and
+redistribute the software, but you may not provide it to third parties as a hosted or
+managed service. See [LICENSE](LICENSE) and third-party attributions in [NOTICE](NOTICE).

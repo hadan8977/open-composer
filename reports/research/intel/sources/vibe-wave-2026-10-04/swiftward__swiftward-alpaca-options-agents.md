@@ -1,0 +1,309 @@
+<!-- source: https://raw.githubusercontent.com/swiftward/swiftward-alpaca-options-agents/HEAD/README.md ; fetched 2026-10-04T18:55Z ; original bytes truncated: False -->
+# swiftward-alpaca-options-agents
+
+**Declarative AI Trading with Governance, Risk and Compliance**
+
+The agent chooses the trade. It sits alone on a private network, and every call it
+makes is allowed or refused by a risk engine it cannot edit: orders by that engine,
+thinking by a model gateway, everything else by a proxy with a list of hosts.
+
+It learns from its own record: every session reads what the earlier ones did,
+including the refusals they were given. Its behaviour is a declaration the harness
+executes, and every number in it comes from analysis of 646 trading days of option
+prices committed in the repository.
+
+Every published number recomputes from one command. **+2.59% against SPY's +0.76%.**
+
+```mermaid
+flowchart LR
+  S["model session<br/>chooses the trade"] -->|"read_envelope"| E["risk engine<br/>what may I lose"]
+  S -->|"place_option_order"| G["risk engine<br/>allows or refuses,<br/>and names the rule"]
+  S -->|"thinking"| Y["model gateway"]
+  S -->|"anything else"| X["proxy<br/>hosts on a list"]
+  G --> M["Alpaca MCP server<br/>holds the only broker key"]
+  M --> A["the account"]
+  S --> R[("the record<br/>intents, calls, refusals")]
+  R --> P["the page<br/>read-only"]
+```
+
+The session holds a risk-engine address and a token and no broker key, so the path
+above is the only one its orders have. `docs/architecture.md` walks it in full.
+
+[![The live page: equity $102,588.74, +2.59% since the $100,000 start, SPY +0.76% over the same window](docs/page.png)](https://alpaca.swiftward.dev)
+
+## What is here
+
+- **A live account, not a simulation.** **$102,588.74** from $100,000 over the organiser's four sessions, **+2.59%** against SPY's **+0.76%**, on the published account `PA3BXFR0ZVYC`.
+- **Limits the agent discovers.** It calls `read_envelope` while it works and sizes to what comes back; a ceiling tightened mid-day reaches its next turn with nothing restarted.
+- **A risk engine it cannot edit.** Its orders go through a service that allows or refuses and names the rule it refused by, and the refusal lands in the record beside the call it stopped.
+- **Behaviour in a declaration, not in code.** The windows it wakes in, the playbooks it may load and every number it trades on are one file the harness executes, and a test refuses a number that does not say where it came from.
+- **646 trading days behind the thresholds.** The delta ceiling, the exit and the crossing cap each come from a measurement over committed option prices - and one of those measurements deleted a rule we had been trading.
+- **25 published numbers recompute from one command**, with no credentials and no network.
+- **A stand that displaces the real book.** It takes the live option chain, moves one number along the curve and reprices every contract by its own implied volatility, so the agent meets a fall that never happened at prices that are otherwise real.
+- **Every rule that can refuse a trade has a test that goes red when the rule is removed** - each one checked that way, rule disabled and test watched to fail.
+- **Defined-risk structures only.** One multi-leg order per structure, with the worst case computed from its own strikes before it is sent.
+
+## Mistakes this avoids
+
+- **A backtest where a live result belongs.** Here: a figure on a named account, whose id is published so anyone can open it.
+- **A number the reader cannot recompute.** Here: `make claims` recomputes 25 of 25, with no credentials and no network.
+- **A return with no market beside it.** Here: SPY over the same four sessions, from the same feed the agent reads.
+- **Risk limits in the prompt, enforced by the model's attention.** Here: the agent asks a service for them while it works, and that service refuses the order.
+- **Sizing from the premium collected.** Here: size comes from the worst case at expiry, computed from the strikes in the order's own contracts.
+- **A naked short leg, from sending a structure as two orders.** Here: one `place_option_order` with `order_class=mleg`, and a test that goes red if a leg stops declaring whether it opens or closes.
+- **A guard that only observes.** Here: the engine refuses the order and names the rule, and the execution ladder re-checks what is resting in the book.
+- **A safety story with nothing in it that ever fired.** Here: the refusals are published, each beside the call it stopped.
+
+Thirty-four of them, each with what this does instead and the file to check, are in
+[`docs/failures-this-avoids.md`](docs/failures-this-avoids.md).
+
+## How it works
+
+What it trades: defined-risk option structures on Alpaca - credit spreads out of the
+money, backspreads for the day the market moves hard, and two event bets - four
+trading days a week with nobody at a keyboard.
+
+**Three ceilings bound a loss:** what one position may lose, what everything betting
+the same way may lose together, what the whole book may lose.
+
+None of the three is in the prompt or in the agent's file. It asks for them while it
+works and sizes to the answer, and a ceiling tightened mid-day reaches its next turn
+with nothing restarted.
+
+They live where it cannot reach them. The agent holds a risk-engine address and a
+token, and no broker key; the engine at that address refuses an order that breaches a
+ceiling, names the rule it broke, and the refusal lands in the record beside the call
+it stopped. What holds that route is the address and the credential rather than the
+network - `docs/architecture.md` says where a deployment moving real money would put
+the wall instead.
+
+Its own trading numbers are in its declaration, where an operator reads and changes
+them.
+
+**A window may name the occasion, never the trade.** A company reports on Wednesday,
+a macro number lands on Friday - a calendar is not a judgement. Whether there is a
+trade at all, which structure, which strikes, how large, whether to sit the window
+out: all of it is the session's. Nothing in the declaration says what to buy or sell.
+
+| | |
+|---|---|
+| **submitted account** | `PA3BXFR0ZVYC`, Alpaca paper - simulated funds, real market data, no real money |
+| **result** | **$102,588.74, up 2.59%** from $100,000, at the close of Thursday 3 September - the equity the organiser measures. Behind the strategy itself: 646 trading days of option prices committed here, and one command that recomputes what they say |
+| **the market over the same window** | SPY **+0.76%**, open of 31 August to close of 3 September |
+| **the rule this is measured by** | the organiser: "evaluation based on portfolio's total equity as of EOD Thursday Sep 3rd". The broker keeps that close in `last_equity`, its own reference defining the field as "Equity as of previous trading day at 16:00:00 ET". Read on Friday, that is Thursday: $102,588.74. All four readings of this account, each with the rule behind it, are in `docs/write-up.md` |
+| **the window** | 4 trading days: 31 August, 1, 2 and 3 September. The organiser's window, and every entry has the same four: "Monday, August 31 at 9:30 a.m. ET to Friday, September 4 at 9:30 a.m. ET" |
+| **check it yourself** | the figure is settled at the broker: open the account by the id above, or [alpaca.swiftward.dev](https://alpaca.swiftward.dev), which reads it live through the same process the agent trades through. The account keeps trading past the measured window, so the live figure moves and the page says which reading is settled. `make account-claims PAGE=...` checks the trading against these documents, with no credential of ours |
+| **what is here** | as much test code as code, and every rule in this repository that can refuse a trade has a test that goes red when the rule is removed; 25 of 25 published numbers recompute with no credentials and no network |
+| **the risk engine** | a service of its own on the path every order takes. Its rules are declarations, each carrying how much of itself it tells the agent, and an operator changes one while the agent runs. It is what refuses an order, and every refusal it wrote is in this repository's record beside the call it stopped ([`docs/architecture.md`](docs/architecture.md)) |
+
+Built for the Alpaca AI Trading Agents Hackathon, 28 August - 4 September 2026. The
+figure is neither a backtest nor a projection: open the page, or open the account,
+and it is the same book.
+
+Beside the result stands what does not move with a good week - the worst case
+computed before each order, limits arriving from somewhere the model cannot edit, and
+published numbers recomputing on a stranger's machine. All three are checkable here
+in minutes.
+
+Twenty-five published numbers recompute from data committed here, with no credentials and no network. Which twenty-five, and which are modelled or come from the account record instead, is in `research/README.md`:
+
+```
+$ make claims
+PASS  the history covers 646 trading days                        646     646
+PASS  1 days to expiry pays 10.72 a trade                      10.72   10.72
+PASS  closing at 0.35 of the credit returns 6722                 6722    6722
+...
+25 claims, 0 failed
+```
+
+**Watch it work: [alpaca.swiftward.dev](https://alpaca.swiftward.dev)** - the read
+side, serving the submitted account through the same process the agent trades
+through: the account, every position, and every order with its legs. `/live` is the
+page that moves. It serves the record too - every turn with what woke it, every
+intent before its order, every tool call with its arguments and answer. The deck is [`slides.pdf`](typescript/web/public/slides.pdf), served by the page itself at https://alpaca.swiftward.dev/slides.pdf, and the video is
+[three minutes on YouTube](https://youtu.be/AWgiXKl8ysI). Point a second command at the live page and it checks the
+trading against what these documents say, with no credential of ours:
+
+```
+make account-claims PAGE=<the page's address>
+```
+
+Where to go from here:
+
+- **[`docs/algorithm.md`](docs/algorithm.md)** - how a trade is decided, end to end, and what each control can and cannot stop. Start here.
+- **[`docs/capabilities.md`](docs/capabilities.md)** - every capability, where it lives, and what shows it works.
+- **[`docs/failures-this-avoids.md`](docs/failures-this-avoids.md)** - the ways an options agent goes wrong, and what this one does instead.
+- **[`testbed/`](testbed/README.md)** - the stand that plays the agent conditions the market will not produce on request: thirteen trials, eleven on a staged book and two that displace the real one.
+- **[`docs/architecture.md`](docs/architecture.md)** - how the pieces fit together, and how to check every claim it makes.
+- **[`research/README.md`](research/README.md)** - which published numbers recompute, which are modelled, and which come from the account.
+- **[`docs/api.md`](docs/api.md)** - the five read routes anyone can query without a credential, and what each answers. A copy of all five is committed at [`docs/account-evidence/`](docs/account-evidence/README.md) and checked by `make account-claims DIR=docs/account-evidence`, with no network.
+
+## What it is
+
+**The agent is a file.** One declaration holds every session with the reason it
+exists and the window it may run in, the playbooks it may load, and every number it
+trades on. Each number carries where it came from - `MEASURED`, `FROM THE RULES` or
+`PROVISIONAL` - and a test refuses an unmarked one. Edit it with the market open and
+the next session reads it: no restart, no deploy, no image. Nothing in it says what
+to buy or sell.
+
+**A new technique is a file, not a release.** A playbook is a `SKILL.md` whose front
+matter names the numbers it needs; a declaration grants it by name. An agent whose
+declaration is missing one of those numbers refuses to start, so a technique cannot
+arrive half-configured. Adding a way to trade is writing a file and naming it.
+
+**How it learns is a file.** A measurement changes a number, the number lives in the
+declaration, and the declaration says which measurement produced it. The defence rule
+was deleted because 672 trades said it lost to doing nothing; the delta ceiling moved
+from 0.45 to 0.30 on a grid over 646 days; the backspread placement was rewritten
+when the sweep behind it turned out to have chosen its own sample. Each is a diff you
+can read and a number you can recompute.
+
+**The agent is in two cages, both enumerable.** The logical one is the ceilings it
+reads and cannot edit. The physical one is the network: it sits alone with no route
+of its own to the internet and exactly three ways out, each a service that records
+what went through it - the risk engine for orders and market data, the model gateway
+for its thinking, a forward proxy for the rest, which answers only for the hosts in
+`docker/egress/filter.txt`. Widening that list is a commit, not a decision a session
+can make, and everything the agent can reach is a service named in `compose.yaml`.
+
+**It runs on one server, and any server will do.** The whole stack is a compose file:
+agent, broker server, record, page, migrations, egress proxy. `make local-up` builds
+it from this checkout, `make prod-up` runs it from published images. No managed
+service, no vendor console.
+
+**Three things wake it, and it remembers all of them.** The schedule; a person
+writing in the chat; and a wake-up the session set itself - `wake me at 15:45`, `wake
+me when SPY trades under 760` - which survives a restart. One conversation runs
+across all three, so the session that closes a position remembers opening it. A
+window may name a cheaper model: the one that only reads the news does.
+
+**Its limits are read, not told.** The three ceilings that bound a loss are in no
+prompt and no file of the agent's. It asks for them while it works, and the risk
+engine its orders pass through refuses one that breaches them, naming the rule. Each
+rule carries how much of itself it discloses: a boundary hands over the number,
+existence says only that a rule is there. Tell a session the cap and it splits one
+order into four; tell it a rule exists and there is nothing to route around.
+
+**Declared, then guaranteed rather than hoped for.** Anything in the rule this agent
+trades by can be declared differently. What does not change is which half is code: a
+window fires when due and is dead outside its room, two sessions never hold the
+account together, a wake-up survives a restart, a skill missing a number refuses to
+start, a decided order is walked and cancelled by the declared stride and patience, a
+winner is bought back at the declared share every thirty seconds with no turn and no
+model, and a resting order breaching a ceiling is cancelled. `docs/algorithm.md` sets
+the three columns side by side.
+
+**The model decides what to trade and nothing else.** Pricing six hundred structures
+and walking a limit price a cent at a time are arithmetic on a clock - they are code.
+Reading the news, judging whether two positions are really one bet, sitting an hour
+out: judgement, and the session's. The line is drawn on one question, and
+`docs/algorithm.md` opens by naming it.
+
+**The crossing is charged before anything is ranked.** Every pairing pays the cost of
+getting in before it is compared with any other - half the bid-ask of both legs,
+because an order goes out at the midpoint and is walked toward the book, and half is
+what it concedes in expectation, 0.0229 on average over this project's own 34 fills.
+Over 646 trading days the same rule with and without that charge differ by more than
+the whole strategy earns, and the research behind every threshold charges the full
+crossing, so the published expectancy is a floor. What survives is ranked by one
+measure weighing what a structure pays against how often it survives - and it keeps
+working on expiry day, where the broker computes no delta and most of the money is.
+
+**Filling it is arithmetic, and arithmetic is not the model's job.** The session
+names the structure, the size and the worst price it accepts. A ladder walks the
+limit toward the book - a cent a step, or the distance left divided by the steps
+before patience ends, whichever the declaration says - stops at the price the session
+named, and cancels what the book will not take. Before every concession it re-prices
+the structure from that pass's quotes and refuses a give that breaks the rule the
+entry was made on.
+
+**The thresholds are measurements, and the awkward ones are published.** 646 trading
+days of option prices are committed here. One result says the obvious defence -
+closing when the price reaches the strike you sold - is worse than doing nothing, by
+0.62 a trade, and explains why; the agent trades the exit that measured better
+instead. The number behind that better exit is modelled rather than traded, and
+`research/README.md` lists which of our published numbers are measured, which are
+modelled, and which come from the account, so nobody has to guess which they are
+reading. `make claims` recomputes twenty-five of them on your machine in a minute.
+
+**The instrument that questions it is separate from it.** A stand beside the agent
+takes the REAL option book and moves one number along a curve, repricing every
+contract by its own live implied volatility - at zero displacement it equals the live
+market to the cent. Any tool it serves can also be taken away mid-session, because a
+tool that goes quiet while the market moves leaves no trace. Thirteen trials have
+gone through it, and what they caught is written down, including the defects that
+were ours.
+
+## How it is built
+
+**One binary, four roles.** Go, and one program that runs as the harness holding the
+clock, the read side serving the page, the session's own tools, or the service that
+answers what a caller may do. A deployment picks which by naming the roles.
+
+**One chain per account.** Harness, gateway endpoint, Alpaca MCP server, database,
+page and credential carry the same agent's name, so a row in the record, a refusal
+and a container in `docker ps` read as the same agent. Adding an account adds a
+chain, not a setting.
+
+**The gate is one command.** `make check` runs the style check, an English-only check
+over every file, the tests, the race detector and both builds. Beside it `make
+test-db` runs the record against a real Postgres and `make test-broker` holds the
+shapes Alpaca answers in against the real server. Three GitHub workflows carry it:
+the gate on every push, the deploy, the published images.
+
+**Tests as an instrument.** Every rule here that can refuse a trade has a test that
+goes red when the rule is removed, and each was checked that way - rule disabled,
+test watched to fail, rule restored. The test stand is a separate Go module, outside
+the workspace so it can never share a build with what it questions, and it runs
+inside the same gate.
+
+**Measured where it mattered.** Opening an MCP session costs 2.68 seconds and a call
+on an open one 0.85, and a sweep asks about 290 things - so one session is opened and
+kept, turning a seventeen-minute pass into four. The screener walks the universe in
+parallel, the profit watch is a thirty-second loop rather than a model turn, and the
+record is Postgres, one database per account, migrated before anything reads it.
+
+**Everything is written down.** `docs/algorithm.md` takes the trading apart end to
+end, `docs/capabilities.md` maps every capability to the code and the test behind it,
+`docs/architecture.md` shows how to check every claim it makes, and
+`research/README.md` says which published numbers recompute, which are modelled, and
+which come from the account.
+
+## Layout
+
+| Path | What is in it |
+|---|---|
+| `golang/apps/app` | one binary, four roles: `harness` holds the clock, `api` serves the read side and the built page, `mcp` carries the session's own tools, `envelope` answers what a caller may do |
+| `golang/internal` | the packages behind it |
+| `typescript/web` | the demo page: what the agent did, what it meant to do, where it was stopped |
+| `docker` | one Dockerfile per service, including the egress proxy and its allowlist |
+| `postgres/migrations` | schema, applied by the `migrate` service before anything reads it |
+| `agent` | what the agent itself reads: its instructions, its skills and the declaration of when it wakes |
+| `docs` | the capability index (`capabilities.md`), the submission write-up (`write-up.md`), the architecture and how the stack is deployed |
+| `AGENTS.md` | how work is done in this repository, for a person or an agent editing it |
+
+## Running it
+
+```
+cp .env.example .env     # fill in the keys
+make local-up            # the whole stack, built from this checkout, agents included
+```
+
+`make prod-up` runs the same stack from published images. Both bring the agents up; a bare `docker compose up` does not, because the agents sit behind a compose profile.
+
+Before a trading day, and it is worth doing while the market is closed:
+
+```
+make rehearse            # send a trading day's reads and print what was refused
+```
+
+It goes down the road the screener uses - each agent's own entry point, its own
+credential, the same batch size, every caller at once. Reads work at the weekend,
+so it answers on a Sunday the question a Monday would ask. What it exists for is
+the failure a green test suite cannot see: a limit somewhere on the call path
+sized for one caller, met by four.
+
+## Licence
+
+MIT. See `LICENSE`.
