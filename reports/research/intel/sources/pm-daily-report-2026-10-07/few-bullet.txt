@@ -1,0 +1,190 @@
+                          Bullet Graph Design Specification
+                                    Last Revision: October 10, 2013
+
+
+
+
+Overview
+The bullet graph was developed to replace the meters and gauges that are often used on
+dashboards. Its linear and no-frills design provides a rich display of data in a small space, which
+is essential on a dashboard. Like most meters and gauges, bullet graphs feature a single
+quantitative measure (for example, year-to-date revenue) along with complementary measures
+to enrich the meaning of the featured measure. Specifically, bullet graphs support the
+comparison of the featured measure to one or more related measures (for example, a target or
+the same measure at some point in the past, such as a year ago) and relate the featured
+measure to defined quantitative ranges that declare its qualitative state (for example, good,
+satisfactory, and poor). Its linear design not only gives it a small footprint, but also supports
+more efficient reading than radial meters.
+
+The bullet graph consists of five primary components:
+    •    Text label
+    •    A quantitative scale along a single linear axis
+    •    The featured measure
+    •    One or two comparative measures (optional)
+    •    From two to five ranges along the quantitative scale to declare the featured measure’s
+         qualitative state (optional)
+
+
+
+
+                              A standard bullet graph with each of its parts labeled.
+
+
+
+
+Perceptual Edge                       Copyright © Stephen Few 2006-2013                   Page 1 of 5
+                   Two examples of multiple bullet graphs: one arranged horizontally and one vertically
+
+
+The Text Label
+This portion of the bullet graph identifies the measure.
+Formatting Defaults:
+    •    Position. To the left of horizontally-oriented graphs and above vertically-oriented graphs
+    •    Color, orientation, and size. 100% black, horizontally oriented, and large enough to be
+         easily read
+
+The Quantitative Scale
+This portion of the bullet graph looks and functions just like the quantitative scale on a two-
+dimensional XY graph. It consists of tick marks and text labels that identify equal intervals of
+measure along the bottom or top of the graph when oriented horizontally or along the left or right
+of the graph when oriented vertically. The tick marks may be positioned along either the inside
+or outside edge of the plot area. The quantitative range usually begins at zero, but may begin
+with a negative number if appropriate, and may also begin at a value greater than zero if it is
+useful to narrow the range of the scale to support a finer focus on the details.
+Formatting Defaults:
+    •    Position. On the bottom axis for a horizontally-oriented graph and on the left for a
+         vertically-oriented graph. Tick marks should be located along the outside edge of the plot
+         area.
+    •    Range of values. Begins at zero, or less if the quantitative range includes negative
+         numbers
+    •    Tick mark color and stroke. Light gray with a thin stroke.
+    •    Text label color, orientation, and size. 100% black, horizontally oriented, with a font that
+         is small enough to fit along the scale without diminishing legibility
+
+The Featured Measure
+This portion of the bullet graph displays the primary data and should therefore be visually
+prominent. Usually, it should be encoded as a bar, like the bar on a bar graph. The one
+exception is when the quantitative scale begins at a value greater than zero; in such a case, the
+featured measure should be encoded as a symbol such as a dot or X.
+
+
+
+
+Perceptual Edge                           Copyright © Stephen Few 2006-2013                               Page 2 of 5
+Formatting Defaults:
+    •    Position. Centered in the plot area with the endpoint aligned with its value along the
+         quantitative scale
+    •    Color and stroke. 100% black with a heavy stroke weight
+    •    Thickness. Approximately 1/3rd the thickness of its container.
+    •    Border. None
+
+
+
+
+                         This example encodes the featured measure as an X, because the quantitative
+                         scale begins at a value that is greater than zero.
+
+
+The Comparative Measure(s)
+These objects should be less visually dominant than the featured measure, but easy to see in
+relation to the featured measure. It should always be encoded as a short line that runs
+perpendicular to the orientation of the graph. Whenever the featured measure intersects a
+comparative measure, the comparative measure should usually appear behind the featured
+measure.
+Formatting Defaults:
+    •    Position. Centered in the plot area and aligned with its value along the quantitative scale
+    •    Color and Stroke. 100% black with a stroke that is clearly visible but less dominant than
+         the featured measure. When a second comparative measure is included, it should be
+         75% black.
+
+
+
+
+                         This example includes two comparative measures.
+
+
+The Qualitative Ranges
+These ranges not only communicate the qualitative state of the featured measure but also the
+degree to which it resides within that state. For instance, if the measure extends into a range
+that represents “good”, the distance that it travels into this range indicates how good it is. The
+number of qualitative ranges should be limited to a maximum of five and ideally to three. More
+than five qualitative states would require a level of perceptual reasoning that is not efficient
+enough for a dashboard. The range should be encoded as rectangles of fill color behind the
+measures laid out end-to-end, which combine to define the entire plot area of the graph.
+Formatting Defaults:
+    •    Color. Rather than using distinct hues, which might not be distinguishable by those who
+         are colorblind, encode these ranges as distinct intensities from dark to light of a single
+         hue. Use the darker color intensities for the poor states and the lighter color intensities
+         for the favorable states. Use these intensities for the following numbers of ranges:
+              § Two: 35% and 10% black
+              § Three: 40%, 25%, and 10% black
+              § Four: 50%, 35%, 20%, and 10% black
+              § Five: 50%, 35%, 20%, 10%, and 3% black
+    •    Border. None
+
+
+
+Perceptual Edge                        Copyright © Stephen Few 2006-2013                               Page 3 of 5
+Alternative Designs
+There are occasions when alternatives to the standard design of bullet graphs work more
+effectively. Two situations are common:
+    1. Both positive and negative values might need to be displayed in the bullet graph
+    2. When a series of related bullet graphs includes some values that are considered good
+       when they are high and some that are considered good when they are low, this
+       distinction should be apparent
+When a bullet graph needs to express both positive and negative values, such as one that is
+used to display profits that could go negative, in the case of losses, the following design can
+handle this quite well:
+
+
+
+                       This example is designed to display both positive and negative values.
+
+When a bullet graph is being used to display a value that should be interpreted differently than
+others that are shown, such as expenses, which are best when low rather than high, this
+difference can be represented in both of the following ways.
+
+
+
+
+                      In this example, the sequence of the background fill colors for expenses has
+                      been reversed, but the bar runs in the usual direction.
+
+
+
+
+                      In this example, the sequence of the background fill colors has been reversed
+                      and both the direction in which the bar extends and the quantitative scale have
+                      been reversed. The bar begins at zero and grows from left to right to express
+                      negative values, which makes sense because expenses are funds that are lost
+                      and in that sense negative.
+
+Besides expenses, another example of this is the display of defects in a manufacturing process,
+which we want to remain below some defined threshold.
+
+
+
+
+Perceptual Edge                        Copyright © Stephen Few 2006-2013                                Page 4 of 5
+Optional Features
+Whenever you compare a current measure to a future target (for example, revenue as of
+January 15 compared to a Quarter 1 target), you can easily see how far you are from the target,
+but it’s not always so easy to tell if you are on track to meet or surpass that future target, which
+could still be weeks or even months away. This is true whether you are using a bullet graph or
+any other graphical means to display this information. This shortcoming in the usefulness of the
+comparison can be ameliorated by adding a projection of where you’ll be at the end of the
+period of time that is relevant to the target. This provides a rich display that tells you not only
+how far along you are on the path to the future target, but also how well you’re doing today in
+relation to that target.
+
+
+
+
+                  This example splits the revenue measure into two segments: the actual measure as of
+                  today, and the projected measure of revenue based on current performance.
+
+
+
+
+Perceptual Edge                          Copyright © Stephen Few 2006-2013                              Page 5 of 5
+
