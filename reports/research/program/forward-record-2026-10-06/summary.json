@@ -1,0 +1,2758 @@
+{
+ "task": "T-20261004-70",
+ "track_start": "2026-09-01",
+ "last_session_in_record": "2026-10-02",
+ "engine_note": "S1/S2/S3: run_h20260927_01_sleeve_combination.sleeve_returns (frozen overlay engine), net 10 bp per unit turnover, close signal -> next open fill; C2: screen_lane offset 0, same cost; panel = shadow_forward.load_forward_panel (no HOLD_END cap).",
+ "consistency_checks": {
+  "T43_path_vs_stored_program_returns": {
+   "overlap_days": 2250,
+   "last_overlap_date": "2026-09-15",
+   "max_abs_diff": 0.003366501620563067,
+   "max_abs_diff_since_2026_01_01": 0.0004993097034602378
+  },
+  "T43_path_prerepair_C2_vs_stored_program_returns_max_abs_diff": 0.0,
+  "T43_note": "stored T-43 program_returns used the pre-repair C2 file (T-55: repaired C2 differs by up to 1.005% on 2019-01-02); this record uses the repaired C2 series.",
+  "F_book_last_stored_date": "2026-09-15",
+  "F_book_last_date_used": "2026-09-15"
+ },
+ "candidates": {
+  "S1": {
+   "label": "S1 sector rotation (us_etf_sector_rotation_252_top2_weekly)",
+   "freeze": {
+    "file": "strategy_specs/drafts/us_etf_sector_rotation_252_top2_weekly.yaml",
+    "first_commit_utc": "2026-09-18 13:49:34",
+    "commit": "84db4ef",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": []
+   },
+   "data_boundary_of_backtest": "2026-09-17",
+   "paper": {
+    "first_session": "2026-09-21",
+    "last_session": "2026-10-02",
+    "start_budget": 15000.0,
+    "first_day_return_basis": "first sleeve NAV against the sleeve budget"
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-09-17",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-17"
+      ],
+      "strategy": {
+       "days": 12,
+       "cum_return": 0.00907759471298597,
+       "ann_vol": 0.14523425667267417,
+       "sharpe": 1.143100666277464,
+       "sharpe_meaningful": false,
+       "max_dd": -0.019831785811050495
+      },
+      "spy": {
+       "days": 12,
+       "cum_return": -0.005802783767888786,
+       "ann_vol": 0.11105407590070115,
+       "sharpe": -1.3733021431320982,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "oos_shadow": {
+      "range": [
+       "2026-09-18",
+       "2026-09-18"
+      ],
+      "strategy": {
+       "days": 1,
+       "cum_return": 0.0027708482775139487,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      },
+      "spy": {
+       "days": 1,
+       "cum_return": 0.0012882701686582898,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      }
+     },
+     "paper": {
+      "range": [
+       "2026-09-21",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.015517999200000077,
+       "ann_vol": 0.08873244999775581,
+       "sharpe": 4.0124318883707595,
+       "sharpe_meaningful": false,
+       "max_dd": -0.008738468925955534
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": 0.010437317018734626,
+       "ann_vol": 0.10999887322088588,
+       "sharpe": 2.0962978098652223,
+       "sharpe_meaningful": false,
+       "max_dd": -0.014053005817711628
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 23,
+       "cum_return": 0.02757584927563328,
+       "ann_vol": 0.11761393501276649,
+       "sharpe": 2.2908522799911424,
+       "sharpe_meaningful": true,
+       "max_dd": -0.019831785811050495
+      },
+      "spy": {
+       "days": 23,
+       "cum_return": 0.005868130431941454,
+       "ann_vol": 0.10617710605073633,
+       "sharpe": 0.3067170680020966,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.018331845498867683,
+       "ann_vol": 0.0843798952768256,
+       "sharpe": 4.53505874546953,
+       "sharpe_meaningful": false,
+       "max_dd": -0.008738468925955534
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.021844086616819247,
+       "ann_vol": 0.0855958933083093,
+       "sharpe": 5.404823517992962,
+       "sharpe_meaningful": false,
+       "max_dd": -0.008845427007193818
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.0016655708188571387,
+      "base_mean_daily": 0.0006271804861478132,
+      "base_std_daily": 0.012381835831543139,
+      "z": 0.27814543548991016
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.0016655708188571387,
+      "base_mean_daily": 0.0010463051130392479,
+      "base_std_daily": 0.01001672536907761,
+      "z": 0.20504425508889457
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.001979514838968915,
+      "base_mean_daily": 0.0006271804861478132,
+      "base_std_daily": 0.012381835831543139,
+      "z": 0.3622391461522638
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.001979514838968915,
+      "base_mean_daily": 0.0010463051130392479,
+      "base_std_daily": 0.01001672536907761,
+      "z": 0.30899384754761583
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "tracking_difference": {
+    "definition": "paper sleeve NAV return minus same-day shadow engine return",
+    "all_paper_days": {
+     "days": 10,
+     "mean": -0.0003453384221229538,
+     "std": 0.0009309765544625127,
+     "worst3": [
+      {
+       "date": "2026-09-21",
+       "diff": -0.0029385870060253394
+      },
+      {
+       "date": "2026-10-01",
+       "diff": -0.0003606690780234567
+      },
+      {
+       "date": "2026-09-23",
+       "diff": -0.0002540847071907937
+      }
+     ]
+    },
+    "daily": [
+     {
+      "date": "2026-09-21",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.00016200080000006167,
+      "shadow_return": 0.0027765862060252777,
+      "diff": -0.0029385870060253394,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 2,
+      "fill_slippage_cost_bp_of_nav": 26.4894304469766,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.24872659233574246,
+      "residual_bp": -2.6477130209410547,
+      "t55_flip": false,
+      "reason": "fill price: 2 orders, 14,847 USD, adverse slippage vs official open -26.5 bp of NAV; timing: executed 13:31-13:34 UTC (day_market after the open) while the shadow earns the official open; whole-share rounding / idle cash 0.90% of equity: estimate -0.2 bp; residual -2.6 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-22",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.001566920509042391,
+      "shadow_return": -0.0017777238110322502,
+      "diff": 0.0002108033019898592,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.15924849899226776,
+      "residual_bp": 1.9487845209063241,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.90% of equity: estimate +0.2 bp; residual +1.9 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-23",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.0021483805021467184,
+      "shadow_return": 0.002402465209337512,
+      "diff": -0.0002540847071907937,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.2152128334524527,
+      "residual_bp": -2.3256342384554842,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.90% of equity: estimate -0.2 bp; residual -2.3 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-24",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.0001406081737789222,
+      "shadow_return": 0.0003261487120191364,
+      "diff": -0.00018554053824021421,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.02921640162267402,
+      "residual_bp": -1.8261889807794682,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.90% of equity: estimate -0.0 bp; residual -1.8 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-25",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.00027451385417409657,
+      "shadow_return": -0.0004643292633487728,
+      "diff": 0.0001898154091746762,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.012109384165277855,
+      "residual_bp": 1.8860447075814841,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.26% of equity: estimate +0.0 bp; residual +1.9 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-28",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.004058855406022688,
+      "shadow_return": -0.003895854661906617,
+      "diff": -0.0001630007441160708,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.10160117932881645,
+      "residual_bp": -1.7316086204895245,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.26% of equity: estimate +0.1 bp; residual -1.7 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-29",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.00442538577767515,
+      "shadow_return": -0.004506693903150338,
+      "diff": 8.130812547518795e-05,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.11753144179407705,
+      "residual_bp": 0.6955498129578025,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.26% of equity: estimate +0.1 bp; residual +0.7 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-30",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.002964939641570963,
+      "shadow_return": 0.0028965796576400638,
+      "diff": 6.835998393089904e-05,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.07554078238946997,
+      "residual_bp": 0.7591406216984603,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.26% of equity: estimate -0.1 bp; residual +0.8 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-10-01",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.014713185382286165,
+      "shadow_return": 0.015073854460309621,
+      "diff": -0.0003606690780234567,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.39311563780176456,
+      "residual_bp": -3.2135751424328025,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.26% of equity: estimate -0.4 bp; residual -3.2 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-10-02",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.006070993377046197,
+      "shadow_return": 0.006172782345250483,
+      "diff": -0.00010178896820428607,
+      "shadow_book": "XLE:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.15710779959291876,
+      "residual_bp": -0.8607818824499419,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.25% of equity: estimate -0.2 bp; residual -0.9 bp (holdings/data/mark differences)"
+     }
+    ]
+   }
+  },
+  "S2": {
+   "label": "S2 growth rotation (us_etf_growth_rotation_blend_top2_monthly)",
+   "freeze": {
+    "file": "strategy_specs/drafts/us_etf_growth_rotation_blend_top2_monthly.yaml",
+    "first_commit_utc": "2026-09-18 13:49:34",
+    "commit": "84db4ef",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": []
+   },
+   "data_boundary_of_backtest": "2026-09-17",
+   "paper": {
+    "first_session": "2026-09-21",
+    "last_session": "2026-10-02",
+    "start_budget": 15000.0,
+    "first_day_return_basis": "first sleeve NAV against the sleeve budget"
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-09-17",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-17"
+      ],
+      "strategy": {
+       "days": 12,
+       "cum_return": 0.005214146557675381,
+       "ann_vol": 0.1363470376862248,
+       "sharpe": 0.6156833352293658,
+       "sharpe_meaningful": false,
+       "max_dd": -0.021830941365974077
+      },
+      "spy": {
+       "days": 12,
+       "cum_return": -0.005802783767888786,
+       "ann_vol": 0.11105407590070115,
+       "sharpe": -1.3733021431320982,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "oos_shadow": {
+      "range": [
+       "2026-09-18",
+       "2026-09-18"
+      ],
+      "strategy": {
+       "days": 1,
+       "cum_return": 0.007066599738257517,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      },
+      "spy": {
+       "days": 1,
+       "cum_return": 0.0012882701686582898,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      }
+     },
+     "paper": {
+      "range": [
+       "2026-09-21",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.034995333333333045,
+       "ann_vol": 0.10627575865895728,
+       "sharpe": 7.920909125844524,
+       "sharpe_meaningful": false,
+       "max_dd": -0.010529158547953665
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": 0.010437317018734626,
+       "ann_vol": 0.10999887322088588,
+       "sharpe": 2.0962978098652223,
+       "sharpe_meaningful": false,
+       "max_dd": -0.014053005817711628
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 23,
+       "cum_return": 0.04774398417425951,
+       "ann_vol": 0.12156422761542666,
+       "sharpe": 3.9935754641665646,
+       "sharpe_meaningful": true,
+       "max_dd": -0.021830941365974077
+      },
+      "spy": {
+       "days": 23,
+       "cum_return": 0.005868130431941454,
+       "ann_vol": 0.10617710605073633,
+       "sharpe": 0.3067170680020966,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.04230923108496443,
+       "ann_vol": 0.10228453975354146,
+       "sharpe": 9.030980318899022,
+       "sharpe_meaningful": false,
+       "max_dd": -0.010529158547953332
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.04999637670670909,
+       "ann_vol": 0.10828929173521214,
+       "sharpe": 10.096573719773572,
+       "sharpe_meaningful": false,
+       "max_dd": -0.006616240477871238
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.0037930895800645857,
+      "base_mean_daily": 0.0006664943544177612,
+      "base_std_daily": 0.010704812286889293,
+      "z": 0.9686992127351383
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.0037930895800645857,
+      "base_mean_daily": 0.00140488060075522,
+      "base_std_daily": 0.010696939661836867,
+      "z": 0.7404728226696062
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.004466046721594732,
+      "base_mean_daily": 0.0006664943544177612,
+      "base_std_daily": 0.010704812286889293,
+      "z": 1.1771985566404177
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.004466046721594732,
+      "base_mean_daily": 0.00140488060075522,
+      "base_std_daily": 0.010696939661836867,
+      "z": 0.9491256158052389
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "tracking_difference": {
+    "definition": "paper sleeve NAV return minus same-day shadow engine return",
+    "all_paper_days": {
+     "days": 10,
+     "mean": -0.000740252855683162,
+     "std": 0.0023828158407336957,
+     "worst3": [
+      {
+       "date": "2026-09-21",
+       "diff": -0.005864041840311494
+      },
+      {
+       "date": "2026-09-24",
+       "diff": -0.003805405522463565
+      },
+      {
+       "date": "2026-09-29",
+       "diff": -0.0002680740403016848
+      }
+     ]
+    },
+    "daily": [
+     {
+      "date": "2026-09-21",
+      "pre_renewal_paper_rule": true,
+      "paper_return": 0.012081333333333388,
+      "shadow_return": 0.017945375173644883,
+      "diff": -0.005864041840311494,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 1,
+      "fill_slippage_cost_bp_of_nav": 1.6905663392885624,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -3.63465628767005,
+      "residual_bp": -53.31519577615633,
+      "t55_flip": false,
+      "reason": "fill price: 1 orders, 7,567 USD, adverse slippage vs official open -1.7 bp of NAV; timing: executed 13:30-13:30 UTC (day_market after the open) while the shadow earns the official open; whole-share rounding / idle cash 2.03% of equity: estimate -3.6 bp; residual -53.3 bp (holdings/data/mark differences); paper ran the pre-renewal rule without the volatility overlay until the 09-23 renewal (overlay trades filled 09-24, spec commit 97c992c 2026-09-23 07:35 UTC); the shadow engine applies the frozen overlay from the start"
+     },
+     {
+      "date": "2026-09-22",
+      "pre_renewal_paper_rule": true,
+      "paper_return": 0.009787750918569316,
+      "shadow_return": 0.007050551375473656,
+      "diff": 0.0027371995430956596,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -1.4280186755884403,
+      "residual_bp": 28.800014106545035,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 2.03% of equity: estimate -1.4 bp; residual +28.8 bp (holdings/data/mark differences); paper ran the pre-renewal rule without the volatility overlay until the 09-23 renewal (overlay trades filled 09-24, spec commit 97c992c 2026-09-23 07:35 UTC); the shadow engine applies the frozen overlay from the start"
+     },
+     {
+      "date": "2026-09-23",
+      "pre_renewal_paper_rule": true,
+      "paper_return": -0.005130526731903506,
+      "shadow_return": -0.004985790744287132,
+      "diff": -0.0001447359876163741,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.35478886936347165,
+      "residual_bp": -1.8021487455272127,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.71% of equity: estimate +0.4 bp; residual -1.8 bp (holdings/data/mark differences); paper ran the pre-renewal rule without the volatility overlay until the 09-23 renewal (overlay trades filled 09-24, spec commit 97c992c 2026-09-23 07:35 UTC); the shadow engine applies the frozen overlay from the start"
+     },
+     {
+      "date": "2026-09-24",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.005106496817291251,
+      "shadow_return": -0.0013010912948276856,
+      "diff": -0.003805405522463565,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 3,
+      "fill_slippage_cost_bp_of_nav": 19.831344646577545,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.09258565653993792,
+      "residual_bp": -18.31529623459804,
+      "t55_flip": false,
+      "reason": "fill price: 3 orders, 15,215 USD, adverse slippage vs official open -19.8 bp of NAV; timing: executed 13:30-13:33 UTC (day_market after the open) while the shadow earns the official open; whole-share rounding / idle cash 0.71% of equity: estimate +0.1 bp; residual -18.3 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-25",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.005148524247888142,
+      "shadow_return": 0.00536679350338763,
+      "diff": -0.000218269255499488,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.381901025701063,
+      "residual_bp": -1.8007915292938166,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.71% of equity: estimate -0.4 bp; residual -1.8 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-28",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.005442123346053318,
+      "shadow_return": -0.005674308640766042,
+      "diff": 0.00023218529471272405,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.40378380287691074,
+      "residual_bp": 1.9180691442503297,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.71% of equity: estimate +0.4 bp; residual +1.9 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-29",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.0029792199572795663,
+      "shadow_return": 0.003247293997581251,
+      "diff": -0.0002680740403016848,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.23107744086788135,
+      "residual_bp": -2.4496629621489667,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.71% of equity: estimate -0.2 bp; residual -2.4 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-09-30",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.0027054758278617363,
+      "shadow_return": 0.002786731591062331,
+      "diff": -8.125576320059487e-05,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.12762394491183832,
+      "residual_bp": -0.6849336870941103,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.46% of equity: estimate -0.1 bp; residual -0.7 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-10-01",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.007942444156737949,
+      "shadow_return": 0.007840889845131038,
+      "diff": 0.00010155431160691064,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 3,
+      "fill_slippage_cost_bp_of_nav": 0.6163792540250485,
+      "shadow_modeled_cost_bp": 2.605480238771518,
+      "rounding_estimate_bp": -0.3324530098382982,
+      "residual_bp": -0.6411048588390651,
+      "t55_flip": false,
+      "reason": "fill price: 3 orders, 4,069 USD, adverse slippage vs official open -0.6 bp of NAV; timing: executed 13:30-13:33 UTC (day_market after the open) while the shadow earns the official open; shadow turnover 0.26 charges 2.6 bp that paper does not pay explicitly; whole-share rounding / idle cash 0.42% of equity: estimate -0.3 bp; residual -0.6 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-10-02",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.009691784096030887,
+      "shadow_return": 0.0097834693928846,
+      "diff": -9.168529685371282e-05,
+      "shadow_book": "SMH:0.50,XLK:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.41481820438340766,
+      "residual_bp": -0.5020347641537206,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.42% of equity: estimate -0.4 bp; residual -0.5 bp (holdings/data/mark differences)"
+     }
+    ],
+    "pre_renewal_paper_rule_days": {
+     "days": 3,
+     "mean": -0.0010905260949440696,
+     "std": 0.004377925025539856,
+     "worst3": [
+      {
+       "date": "2026-09-21",
+       "diff": -0.005864041840311494
+      },
+      {
+       "date": "2026-09-23",
+       "diff": -0.0001447359876163741
+      },
+      {
+       "date": "2026-09-22",
+       "diff": 0.0027371995430956596
+      }
+     ]
+    },
+    "post_renewal_days": {
+     "days": 7,
+     "mean": -0.000590135753142773,
+     "std": 0.0014284039392164077,
+     "worst3": [
+      {
+       "date": "2026-09-24",
+       "diff": -0.003805405522463565
+      },
+      {
+       "date": "2026-09-29",
+       "diff": -0.0002680740403016848
+      },
+      {
+       "date": "2026-09-25",
+       "diff": -0.000218269255499488
+      }
+     ]
+    }
+   }
+  },
+  "S3": {
+   "label": "S3 levered rotation (us_etf_levered_rotation_63_top2_monthly)",
+   "freeze": {
+    "file": "strategy_specs/drafts/us_etf_levered_rotation_63_top2_monthly.yaml",
+    "first_commit_utc": "2026-09-18 13:49:34",
+    "commit": "84db4ef",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": []
+   },
+   "data_boundary_of_backtest": "2026-09-17",
+   "paper": {
+    "first_session": "2026-09-21",
+    "last_session": "2026-10-02",
+    "start_budget": 15000.0,
+    "first_day_return_basis": "first sleeve NAV against the sleeve budget"
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-09-17",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-17"
+      ],
+      "strategy": {
+       "days": 12,
+       "cum_return": -0.014795927147522092,
+       "ann_vol": 0.05600923214459927,
+       "sharpe": -6.203192242285162,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01625303055783278
+      },
+      "spy": {
+       "days": 12,
+       "cum_return": -0.005802783767888786,
+       "ann_vol": 0.11105407590070115,
+       "sharpe": -1.3733021431320982,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "oos_shadow": {
+      "range": [
+       "2026-09-18",
+       "2026-09-18"
+      ],
+      "strategy": {
+       "days": 1,
+       "cum_return": -0.0014797767094829606,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0014797767094829606
+      },
+      "spy": {
+       "days": 1,
+       "cum_return": 0.0012882701686582898,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      }
+     },
+     "paper": {
+      "range": [
+       "2026-09-21",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.016986667066666516,
+       "ann_vol": 0.2602579965428827,
+       "sharpe": 1.6075623129777628,
+       "sharpe_meaningful": false,
+       "max_dd": -0.04300194930097434
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": 0.010437317018734626,
+       "ann_vol": 0.10999887322088588,
+       "sharpe": 2.0962978098652223,
+       "sharpe_meaningful": false,
+       "max_dd": -0.014053005817711628
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 23,
+       "cum_return": 0.0004567598327975819,
+       "ann_vol": 0.17287327369212266,
+       "sharpe": -0.10444784248254685,
+       "sharpe_meaningful": true,
+       "max_dd": -0.04300194930097423
+      },
+      "spy": {
+       "days": 23,
+       "cum_return": 0.005868130431941454,
+       "ann_vol": 0.10617710605073633,
+       "sharpe": 0.3067170680020966,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.015481753882886418,
+       "ann_vol": 0.24740289963986165,
+       "sharpe": 1.3792245601206927,
+       "sharpe_meaningful": false,
+       "max_dd": -0.04300194930097434
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.02778133854992637,
+       "ann_vol": 0.12432238883919386,
+       "sharpe": 4.8066632746573745,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0033290243517710705
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.0015076455902053815,
+      "base_mean_daily": 0.0017892160702329383,
+      "base_std_daily": 0.027280477655272688,
+      "z": -0.03423193853466751
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.0015076455902053815,
+      "base_mean_daily": 0.0035210489577233803,
+      "base_std_daily": 0.028841598141796994,
+      "z": -0.23153028791487007
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.002521691653148114,
+      "base_mean_daily": 0.0017892160702329383,
+      "base_std_daily": 0.027280477655272688,
+      "z": 0.08905073830908374
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.002521691653148114,
+      "base_mean_daily": 0.0035210489577233803,
+      "base_std_daily": 0.028841598141796994,
+      "z": -0.11492058083888719
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "tracking_difference": {
+    "definition": "paper sleeve NAV return minus same-day shadow engine return",
+    "all_paper_days": {
+     "days": 10,
+     "mean": -0.0011154506692370061,
+     "std": 0.013071453331927942,
+     "worst3": [
+      {
+       "date": "2026-09-23",
+       "diff": -0.01966935802052916
+      },
+      {
+       "date": "2026-09-28",
+       "diff": -0.017015593068380186
+      },
+      {
+       "date": "2026-09-30",
+       "diff": -0.0056750470772982675
+      }
+     ]
+    },
+    "daily": [
+     {
+      "date": "2026-09-21",
+      "pre_renewal_paper_rule": true,
+      "paper_return": 0.026000000400000056,
+      "shadow_return": 0.0006174971484785852,
+      "diff": 0.02538250325152147,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 1,
+      "fill_slippage_cost_bp_of_nav": 15.243452675782862,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.05074591566196956,
+      "residual_bp": 269.1192311066595,
+      "t55_flip": true,
+      "reason": "fill price: 1 orders, 14,836 USD, adverse slippage vs official open -15.2 bp of NAV; timing: executed 13:32-13:32 UTC (day_market after the open) while the shadow earns the official open; whole-share rounding / idle cash 0.82% of equity: estimate -0.1 bp; residual +269.1 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error; paper ran the pre-renewal rule without the volatility overlay until the 09-23 renewal (overlay trades filled 09-24, spec commit 97c992c 2026-09-23 07:35 UTC); the shadow engine applies the frozen overlay from the start"
+     },
+     {
+      "date": "2026-09-22",
+      "pre_renewal_paper_rule": true,
+      "paper_return": -0.0003859649121302766,
+      "shadow_return": 0.00037011144592025147,
+      "diff": -0.0007560763580505281,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.030415758625725924,
+      "residual_bp": -7.5303478218795545,
+      "t55_flip": true,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.82% of equity: estimate -0.0 bp; residual -7.5 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error; paper ran the pre-renewal rule without the volatility overlay until the 09-23 renewal (overlay trades filled 09-24, spec commit 97c992c 2026-09-23 07:35 UTC); the shadow engine applies the frozen overlay from the start"
+     },
+     {
+      "date": "2026-09-23",
+      "pre_renewal_paper_rule": true,
+      "paper_return": -0.022137199144255604,
+      "shadow_return": -0.002467841123726444,
+      "diff": -0.01966935802052916,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.042726555988782756,
+      "residual_bp": -196.7363067612804,
+      "t55_flip": true,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.17% of equity: estimate +0.0 bp; residual -196.7 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error; paper ran the pre-renewal rule without the volatility overlay until the 09-23 renewal (overlay trades filled 09-24, spec commit 97c992c 2026-09-23 07:35 UTC); the shadow engine applies the frozen overlay from the start"
+     },
+     {
+      "date": "2026-09-24",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.005377737891297585,
+      "shadow_return": -0.0003700950038824091,
+      "diff": -0.005007642887415176,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 2,
+      "fill_slippage_cost_bp_of_nav": 5.995449800324999,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.006407578167217281,
+      "residual_bp": -44.08738665199398,
+      "t55_flip": true,
+      "reason": "fill price: 2 orders, 6,048 USD, adverse slippage vs official open -6.0 bp of NAV; timing: executed 13:33-13:33 UTC (day_market after the open) while the shadow earns the official open; whole-share rounding / idle cash 0.17% of equity: estimate +0.0 bp; residual -44.1 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error"
+     },
+     {
+      "date": "2026-09-25",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.011973186473484665,
+      "shadow_return": 0.001483695082310943,
+      "diff": 0.010489491391173722,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.025687707525076143,
+      "residual_bp": 104.9206016192623,
+      "t55_flip": true,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.17% of equity: estimate -0.0 bp; residual +104.9 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error"
+     },
+     {
+      "date": "2026-09-28",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.018250862673765855,
+      "shadow_return": -0.0012352696053856693,
+      "diff": -0.017015593068380186,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": 0.021386634434576682,
+      "residual_bp": -170.17731731823645,
+      "t55_flip": true,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.17% of equity: estimate +0.0 bp; residual -170.2 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error"
+     },
+     {
+      "date": "2026-09-29",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.004070526186687129,
+      "shadow_return": 0.0006182150909062045,
+      "diff": -0.0046887412775933335,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.010703363940555818,
+      "residual_bp": -46.87670941199278,
+      "t55_flip": true,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 0.17% of equity: estimate -0.0 bp; residual -46.9 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error"
+     },
+     {
+      "date": "2026-09-30",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.0051800452397094965,
+      "shadow_return": 0.000495001837588771,
+      "diff": -0.0056750470772982675,
+      "shadow_book": "SHY:1.00",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -0.057778632096856526,
+      "residual_bp": -56.69269214088582,
+      "t55_flip": true,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 1.17% of equity: estimate -0.1 bp; residual -56.7 bp (holdings/data/mark differences); T-55 data flip: shadow on the repaired SIP archive holds SHY, the paper sleeve holds UPRO (chosen on the pre-repair archive); not an execution error"
+     },
+     {
+      "date": "2026-10-01",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.010437120621486606,
+      "shadow_return": 0.004159165255447352,
+      "diff": 0.0062779553660392545,
+      "shadow_book": "TECL:0.50,UPRO:0.50",
+      "n_fills": 3,
+      "fill_slippage_cost_bp_of_nav": 8.411184879645853,
+      "shadow_modeled_cost_bp": 20.0,
+      "rounding_estimate_bp": -0.46002094267551497,
+      "residual_bp": 51.65075948271391,
+      "t55_flip": false,
+      "reason": "fill price: 3 orders, 14,714 USD, adverse slippage vs official open -8.4 bp of NAV; timing: executed 13:30-13:32 UTC (day_market after the open) while the shadow earns the official open; shadow turnover 2.00 charges 20.0 bp that paper does not pay explicitly; whole-share rounding / idle cash 1.11% of equity: estimate -0.5 bp; residual +51.7 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-10-02",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.025055906754616775,
+      "shadow_return": 0.025547904766454632,
+      "diff": -0.0004919980118378575,
+      "shadow_book": "TECL:0.50,UPRO:0.50",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -2.825704320994732,
+      "residual_bp": -2.094275797383843,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 1.11% of equity: estimate -2.8 bp; residual -2.1 bp (holdings/data/mark differences)"
+     }
+    ],
+    "pre_renewal_paper_rule_days": {
+     "days": 3,
+     "mean": 0.0016523562909805944,
+     "std": 0.02262228905057384,
+     "worst3": [
+      {
+       "date": "2026-09-23",
+       "diff": -0.01966935802052916
+      },
+      {
+       "date": "2026-09-22",
+       "diff": -0.0007560763580505281
+      },
+      {
+       "date": "2026-09-21",
+       "diff": 0.02538250325152147
+      }
+     ]
+    },
+    "post_renewal_days": {
+     "days": 7,
+     "mean": -0.002301653652187406,
+     "std": 0.00895729030249564,
+     "worst3": [
+      {
+       "date": "2026-09-28",
+       "diff": -0.017015593068380186
+      },
+      {
+       "date": "2026-09-30",
+       "diff": -0.0056750470772982675
+      },
+      {
+       "date": "2026-09-24",
+       "diff": -0.005007642887415176
+      }
+     ]
+    },
+    "t55_flip_days": {
+     "days": 8,
+     "mean": -0.002117558005821432,
+     "std": 0.014514431886663516,
+     "worst3": [
+      {
+       "date": "2026-09-23",
+       "diff": -0.01966935802052916
+      },
+      {
+       "date": "2026-09-28",
+       "diff": -0.017015593068380186
+      },
+      {
+       "date": "2026-09-30",
+       "diff": -0.0056750470772982675
+      }
+     ]
+    },
+    "other_days": {
+     "days": 2,
+     "mean": 0.0028929786771006985,
+     "std": 0.004787079941813679,
+     "worst3": [
+      {
+       "date": "2026-10-02",
+       "diff": -0.0004919980118378575
+      },
+      {
+       "date": "2026-10-01",
+       "diff": 0.0062779553660392545
+      }
+     ]
+    }
+   }
+  },
+  "C2": {
+   "label": "C2 month-end + sector seasonality (us_etf_eom_sector_blend_monthly)",
+   "freeze": {
+    "file": "scripts/screen_batches/h20260928_20_recent_opt.py",
+    "first_commit_utc": "2026-09-28 06:43:15",
+    "commit": "9b15143",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": [
+     {
+      "file": "strategy_specs/drafts/us_etf_eom_sector_blend_monthly.yaml",
+      "first_commit_utc": "2026-09-30 03:48:41",
+      "commit": "5ba58f1"
+     }
+    ]
+   },
+   "data_boundary_of_backtest": "2026-09-17",
+   "paper": {
+    "first_session": "2026-10-01",
+    "last_session": "2026-10-02",
+    "start_budget": 15000.0,
+    "first_day_return_basis": "first sleeve NAV against the sleeve budget"
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-09-25",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-25"
+      ],
+      "strategy": {
+       "days": 18,
+       "cum_return": 0.004773049125352813,
+       "ann_vol": 0.11818558226555906,
+       "sharpe": 0.31103674813484583,
+       "sharpe_meaningful": false,
+       "max_dd": -0.025172048723631324
+      },
+      "spy": {
+       "days": 18,
+       "cum_return": 0.008102986342547025,
+       "ann_vol": 0.11297862575630677,
+       "sharpe": 0.7337995654046415,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "oos_shadow": {
+      "range": [
+       "2026-09-28",
+       "2026-09-30"
+      ],
+      "strategy": {
+       "days": 3,
+       "cum_return": -0.006714665550298871,
+       "ann_vol": 0.07769274519922428,
+       "sharpe": -7.516403079306034,
+       "sharpe_meaningful": false,
+       "max_dd": -0.007594884371996069
+      },
+      "spy": {
+       "days": 3,
+       "cum_return": -0.011304855124132929,
+       "ann_vol": 0.05037658178019317,
+       "sharpe": -19.08740047213408,
+       "sharpe_meaningful": false,
+       "max_dd": -0.011304855124132929
+      }
+     },
+     "paper": {
+      "range": [
+       "2026-10-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 2,
+       "cum_return": 0.0038993328000000993,
+       "ann_vol": 0.06861672433850291,
+       "sharpe": 6.057317217727506,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0011040005333333713
+      },
+      "spy": {
+       "days": 2,
+       "cum_return": 0.009191875483524292,
+       "ann_vol": 0.06299546687659004,
+       "sharpe": 16.934006670971364,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 23,
+       "cum_return": 0.0019179709665233524,
+       "ann_vol": 0.10876385376446594,
+       "sharpe": -0.09814568136245942,
+       "sharpe_meaningful": true,
+       "max_dd": -0.025172048723631324
+      },
+      "spy": {
+       "days": 23,
+       "cum_return": 0.005868130431941454,
+       "ann_vol": 0.10617710605073633,
+       "sharpe": 0.3067170680020966,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": [
+       "2026-09-28",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 5,
+       "cum_return": -0.0028415154659201525,
+       "ann_vol": 0.07430283260350119,
+       "sharpe": -2.4428007264539486,
+       "sharpe_meaningful": false,
+       "max_dd": -0.007811253089283543
+      },
+      "spy": {
+       "days": 5,
+       "cum_return": -0.0022168924612689933,
+       "ann_vol": 0.0869221914055494,
+       "sharpe": -1.7173807997998516,
+       "sharpe_meaningful": false,
+       "max_dd": -0.011304855124132929
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": [
+       "2026-09-28",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 5,
+       "cum_return": -0.001963330014606246,
+       "ann_vol": 0.07561648097688224,
+       "sharpe": -1.8090276795745621,
+       "sharpe_meaningful": false,
+       "max_dd": -0.007594884371996069
+      },
+      "spy": {
+       "days": 5,
+       "cum_return": -0.0022168924612689933,
+       "ann_vol": 0.0869221914055494,
+       "sharpe": -1.7173807997998516,
+       "sharpe_meaningful": false,
+       "max_dd": -0.011304855124132929
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-25"
+      ],
+      "n_forward": 5,
+      "n_base": 2258,
+      "forward_mean_daily": -0.0005601711228705953,
+      "base_mean_daily": 0.0004926477564488046,
+      "base_std_daily": 0.008703676286560493,
+      "z": -0.27048048487148474
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-25"
+      ],
+      "n_forward": 5,
+      "n_base": 682,
+      "forward_mean_daily": -0.0005601711228705953,
+      "base_mean_daily": 0.0007885704345655503,
+      "base_std_daily": 0.0060675820093548235,
+      "z": -0.4970477204686092
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-25"
+      ],
+      "n_forward": 5,
+      "n_base": 2258,
+      "forward_mean_daily": -0.0003838833960433994,
+      "base_mean_daily": 0.0004926477564488046,
+      "base_std_daily": 0.008703676286560493,
+      "z": -0.22519027326363789
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-25"
+      ],
+      "n_forward": 5,
+      "n_base": 682,
+      "forward_mean_daily": -0.0003838833960433994,
+      "base_mean_daily": 0.0007885704345655503,
+      "base_std_daily": 0.0060675820093548235,
+      "z": -0.43208092806650067
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "alt_boundary_backtest_data": {
+    "last_seen_session": "2026-09-17",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-17"
+      ],
+      "strategy": {
+       "days": 12,
+       "cum_return": -0.0015997339589821635,
+       "ann_vol": 0.11796047689361588,
+       "sharpe": -0.5291737314142496,
+       "sharpe_meaningful": false,
+       "max_dd": -0.025172048723631324
+      },
+      "spy": {
+       "days": 12,
+       "cum_return": -0.005802783767888786,
+       "ann_vol": 0.11105407590070115,
+       "sharpe": -1.3733021431320982,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "oos_shadow": {
+      "range": [
+       "2026-09-18",
+       "2026-09-30"
+      ],
+      "strategy": {
+       "days": 9,
+       "cum_return": -0.00037453104452644936,
+       "ann_vol": 0.11213178523328747,
+       "sharpe": -0.3475158780826061,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015144587341392568
+      },
+      "spy": {
+       "days": 9,
+       "cum_return": 0.002523957881452654,
+       "ann_vol": 0.11031750989909365,
+       "sharpe": 0.3860109682757102,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     },
+     "paper": {
+      "range": [
+       "2026-10-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 2,
+       "cum_return": 0.0038993328000000993,
+       "ann_vol": 0.06861672433850291,
+       "sharpe": 6.057317217727506,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0011040005333333713
+      },
+      "spy": {
+       "days": 2,
+       "cum_return": 0.009191875483524292,
+       "ann_vol": 0.06299546687659004,
+       "sharpe": 16.934006670971364,
+       "sharpe_meaningful": false,
+       "max_dd": 0.0
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 23,
+       "cum_return": 0.0019179709665233524,
+       "ann_vol": 0.10876385376446594,
+       "sharpe": -0.09814568136245942,
+       "sharpe_meaningful": true,
+       "max_dd": -0.025172048723631324
+      },
+      "spy": {
+       "days": 23,
+       "cum_return": 0.005868130431941454,
+       "ann_vol": 0.10617710605073633,
+       "sharpe": 0.3067170680020966,
+       "sharpe_meaningful": true,
+       "max_dd": -0.02472609400324155
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.003523341334287,
+       "ann_vol": 0.10339247572255761,
+       "sharpe": 0.44169598070999533,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015359310037794227
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": [
+       "2026-09-18",
+       "2026-10-02"
+      ],
+      "strategy": {
+       "days": 11,
+       "cum_return": 0.004407132238222866,
+       "ann_vol": 0.1035903945369927,
+       "sharpe": 0.6375062043224131,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015144587341392568
+      },
+      "spy": {
+       "days": 11,
+       "cum_return": 0.011739033271549015,
+       "ann_vol": 0.1043597944386294,
+       "sharpe": 2.2455106345813176,
+       "sharpe_meaningful": false,
+       "max_dd": -0.01405300581771185
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.00033902991749204525,
+      "base_mean_daily": 0.0004910605902995716,
+      "base_std_daily": 0.008706820571616772,
+      "z": -0.05791192022166847
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.00033902991749204525,
+      "base_mean_daily": 0.0007859095438860058,
+      "base_std_daily": 0.0060542834921823805,
+      "z": -0.24480717645891178
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 2252,
+      "forward_mean_daily": 0.0004191607024134979,
+      "base_mean_daily": 0.0004910605902995716,
+      "base_std_daily": 0.008706820571616772,
+      "z": -0.027388292732721982
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-17"
+      ],
+      "n_forward": 11,
+      "n_base": 676,
+      "forward_mean_daily": 0.0004191607024134979,
+      "base_mean_daily": 0.0007859095438860058,
+      "base_std_daily": 0.0060542834921823805,
+      "z": -0.20091036388244504
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "tracking_difference": {
+    "definition": "paper sleeve NAV return minus same-day shadow engine return",
+    "all_paper_days": {
+     "days": 2,
+     "mean": -0.0004407193170679895,
+     "std": 0.00018154008576330564,
+     "worst3": [
+      {
+       "date": "2026-10-01",
+       "diff": -0.0005690875427684103
+      },
+      {
+       "date": "2026-10-02",
+       "diff": -0.00031235109136756867
+      }
+     ]
+    },
+    "daily": [
+     {
+      "date": "2026-10-01",
+      "pre_renewal_paper_rule": false,
+      "paper_return": -0.0011040005333333713,
+      "shadow_return": -0.000534912990564961,
+      "diff": -0.0005690875427684103,
+      "shadow_book": "",
+      "n_fills": 3,
+      "fill_slippage_cost_bp_of_nav": -9.400868424530852,
+      "shadow_modeled_cost_bp": 10.0,
+      "rounding_estimate_bp": 0.24291825336196404,
+      "residual_bp": -25.334662105576918,
+      "t55_flip": false,
+      "reason": "fill price: 3 orders, 14,286 USD, adverse slippage vs official open +9.4 bp of NAV; timing: executed 13:30-13:33 UTC (day_market after the open) while the shadow earns the official open; shadow turnover 1.00 charges 10.0 bp that paper does not pay explicitly; whole-share rounding / idle cash 4.54% of equity: estimate +0.2 bp; residual -25.3 bp (holdings/data/mark differences)"
+     },
+     {
+      "date": "2026-10-02",
+      "pre_renewal_paper_rule": false,
+      "paper_return": 0.005008863120890217,
+      "shadow_return": 0.0053212142122577855,
+      "diff": -0.00031235109136756867,
+      "shadow_book": "",
+      "n_fills": 0,
+      "fill_slippage_cost_bp_of_nav": 0.0,
+      "shadow_modeled_cost_bp": 0.0,
+      "rounding_estimate_bp": -2.4165052728319223,
+      "residual_bp": -0.7070056408437644,
+      "t55_flip": false,
+      "reason": "no orders that day (fill price / timing: none); whole-share rounding / idle cash 4.54% of equity: estimate -2.4 bp; residual -0.7 bp (holdings/data/mark differences)"
+     }
+    ]
+   }
+  },
+  "V12F1": {
+   "label": "v1.2 F1 market-neutral long-short (quant1)",
+   "freeze": {
+    "file": "reports/research/iterations/t20261002_book_v12/hypotheses.md",
+    "first_commit_utc": "2026-10-02 05:35:51",
+    "commit": "9dcb7d5",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": []
+   },
+   "data_boundary_of_backtest": "2026-09-15",
+   "paper": {
+    "first_session": null,
+    "last_session": null,
+    "start_budget": null,
+    "first_day_return_basis": null
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-10-01",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.002746979628587498,
+       "ann_vol": 0.05177688399156311,
+       "sharpe": 0.6585022998580667,
+       "sharpe_meaningful": false,
+       "max_dd": -0.010398147275567093
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "oos_shadow": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.002746979628587498,
+       "ann_vol": 0.05177688399156311,
+       "sharpe": 0.6585022998580667,
+       "sharpe_meaningful": false,
+       "max_dd": -0.010398147275567093
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "alt_boundary_backtest_data": {
+    "last_seen_session": "2026-09-15",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.002746979628587498,
+       "ann_vol": 0.05177688399156311,
+       "sharpe": 0.6585022998580667,
+       "sharpe_meaningful": false,
+       "max_dd": -0.010398147275567093
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "oos_shadow": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": 0.002746979628587498,
+       "ann_vol": 0.05177688399156311,
+       "sharpe": 0.6585022998580667,
+       "sharpe_meaningful": false,
+       "max_dd": -0.010398147275567093
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   }
+  },
+  "V12F2": {
+   "label": "v1.2 F2 SPY + overlay (quant2)",
+   "freeze": {
+    "file": "reports/research/iterations/t20261002_book_v12/hypotheses.md",
+    "first_commit_utc": "2026-10-02 05:35:51",
+    "commit": "9dcb7d5",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": []
+   },
+   "data_boundary_of_backtest": "2026-09-15",
+   "paper": {
+    "first_session": null,
+    "last_session": null,
+    "start_budget": null,
+    "first_day_return_basis": null
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-10-01",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.014229615448717259,
+       "ann_vol": 0.11327976176705691,
+       "sharpe": -3.4765408492137393,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02463313593511507
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "oos_shadow": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.014229615448717259,
+       "ann_vol": 0.11327976176705691,
+       "sharpe": -3.4765408492137393,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02463313593511507
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "alt_boundary_backtest_data": {
+    "last_seen_session": "2026-09-15",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.014229615448717259,
+       "ann_vol": 0.11327976176705691,
+       "sharpe": -3.4765408492137393,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02463313593511507
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "oos_shadow": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.014229615448717259,
+       "ann_vol": 0.11327976176705691,
+       "sharpe": -3.4765408492137393,
+       "sharpe_meaningful": false,
+       "max_dd": -0.02463313593511507
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   }
+  },
+  "T43": {
+   "label": "T-43 program (S3 0.60, C2 0.335, F2 0.12, F1 0.025, borrowed 0.08)",
+   "freeze": {
+    "file": "reports/research/program/allocation-dd30-2026-10-02/prereg.md",
+    "first_commit_utc": "2026-10-02 13:14:40",
+    "commit": "469ae13",
+    "rule": "last session closed (20:00 UTC) at or before the first commit of the frozen rule file",
+    "other_files": []
+   },
+   "data_boundary_of_backtest": "2026-09-15",
+   "paper": {
+    "first_session": null,
+    "last_session": null,
+    "start_budget": null,
+    "first_day_return_basis": null
+   },
+   "primary_boundary_commit": {
+    "last_seen_session": "2026-10-01",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.015457825176323658,
+       "ann_vol": 0.06635155372812672,
+       "sharpe": -6.5168415200439425,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015457825176323658
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "oos_shadow": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.015457825176323658,
+       "ann_vol": 0.06635155372812672,
+       "sharpe": -6.5168415200439425,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015457825176323658
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-10-01"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   },
+   "alt_boundary_backtest_data": {
+    "last_seen_session": "2026-09-15",
+    "segments": {
+     "design_seen": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.015457825176323658,
+       "ann_vol": 0.06635155372812672,
+       "sharpe": -6.5168415200439425,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015457825176323658
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "oos_shadow": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "total": {
+      "range": [
+       "2026-09-01",
+       "2026-09-15"
+      ],
+      "strategy": {
+       "days": 10,
+       "cum_return": -0.015457825176323658,
+       "ann_vol": 0.06635155372812672,
+       "sharpe": -6.5168415200439425,
+       "sharpe_meaningful": false,
+       "max_dd": -0.015457825176323658
+      },
+      "spy": {
+       "days": 10,
+       "cum_return": -0.012598836829380011,
+       "ann_vol": 0.1027832016762219,
+       "sharpe": -3.44234330495616,
+       "sharpe_meaningful": false,
+       "max_dd": -0.0204084278768234
+      }
+     },
+     "forward_oos_plus_paper": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     },
+     "forward_shadow_engine_only": {
+      "range": null,
+      "strategy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      },
+      "spy": {
+       "days": 0,
+       "cum_return": null,
+       "ann_vol": null,
+       "sharpe": null,
+       "sharpe_meaningful": false,
+       "max_dd": null
+      }
+     }
+    },
+    "z": {
+     "backtest_full": {
+      "window": [
+       "2017-10-02",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent": {
+      "window": [
+       "2024-01-08",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "backtest_full_shadow_only": {
+      "window": [
+       "2017-10-02",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 2250,
+      "z": null
+     },
+     "backtest_recent_shadow_only": {
+      "window": [
+       "2024-01-08",
+       "2026-09-15"
+      ],
+      "n_forward": 0,
+      "n_base": 674,
+      "z": null
+     },
+     "note": "z = (mean forward daily return - mean backtest daily return) / (backtest daily std / sqrt(n_forward)); sample std; the shadow-only variants use the shadow engine on the same days. Daily returns are not iid; with n_forward below about 20 a z is descriptive only."
+    }
+   }
+  }
+ },
+ "calibration_pending": "all thresholds in the decay rule draft are 待主审校准",
+ "hash_chain": {
+  "lines": 90,
+  "verified_on_write": true,
+  "head": "f9cfe4698b7c4ab4c1feab9f2c70d078c1531f9b838b472decb3e73e6e811f3e",
+  "formula": "chain_hash = sha256('|'.join([prev_hash, date, candidate, path, sha256]))"
+ }
+}
