@@ -110,7 +110,7 @@
 | 52 | Nautilus 从未产生 parity 证据 | ❌ | `backtest_engine.py:69-73` 守卫 `len(universe)==1`；`reports/parity/` 0 文件；readiness 却有 `nautilus_backend` 检查名 |
 | 53 | 告警从未送达 | ❌💥 | `reports/notifications/log.jsonl` 24 条，Telegram 23/23 skipped（disabled）；无邮件通道 |
 | 54 | TCA 门槛完整但零观测 | ❌ | `paper_tca.py` 唯一报告 `valid_observation_count: 0`；成交回执未自动转成 observation |
-| 55 | 开盘/收盘竞价单可能需要 Elite 权限 | ❌ 待核实 | Alpaca 学习文章称 OPG/CLS 仅 Elite Smart Router 可用；canary 只允许 `opg_limit`/`loo_limit`；6 月以来所有出场单取消/过期与此吻合，需在本账户实测 |
+| 55 | 开盘/收盘竞价单可能需要 Elite 权限 | ⚠️ 模拟盘已核实 | Alpaca 学习文章称 OPG/CLS 仅 Elite Smart Router 可用；canary 只允许 `opg_limit`/`loo_limit`；6 月以来所有出场单取消/过期与此吻合，需在本账户实测 |。**2026-10-05 本账户实测（T-20261005-02）**：两户都接受 `cls` 市价单，18:50 UTC 提交后状态为 pending_new。quant1 买 1 股 SPY 在 19:59:59.53Z 成交，价格 $774.78；quant2 卖空 1 股 AAPL（sell_to_open）在 20:01:13Z 过期，成交 0。Alpaca 员工 2026-06-24 在论坛 19155 帖说明：模拟盘把 cls 单当作收盘时的市价单，按当时报价成交，不是竞价价；还会随机制造部分成交，没成交的剩余在收盘后几秒内过期。帖里的例子：SGOV 99/99、IEF 274/277、GLD 40/71、TQQQ 30/492，实盘则全部成交。员工还写明，实盘一般要开通 Elite 智能路由才能用 MOC。结论：模拟盘接受 cls 单，但成交不完整、不可靠；实盘的 MOC 要 Elite。 |
 | 56 | PDT 规则已取消，执行假设未更新 | ⚠️ | SEC 2026-04-14 批准、2026-06-04 生效（FINRA Notice 26-10）；分钟级往返不再受 4 次/5 日限制，但仍需保证金账户。这是环境变化，不是缺陷 |
 | 57 | `llm_contribution_pass` 在中心 readiness 路径硬编码 `None` | ❌ | `paper_readiness.py:1401`；AGENTS.md 与 repo check 都把它列为必需门 |
 | 58 | 日线 Abdi-Ranaldo 价差在大盘股上高估 20–60 倍 | ❌💥 | `ml30.spread_estimate_from_ohlc`（21 日日线 AR）在 2024+ 的 P500 上中位数 36 bp、AAPL 26 bp，实际一个跳价 0.43 bp。量到的是日内波动噪声，不是价差。T-13 按它算的成本作废（修正案 A1，2026-09-30）。dv21 ≥ $20M 的股票一律用 Alpaca NBBO 实测 |

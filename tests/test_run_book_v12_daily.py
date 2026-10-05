@@ -51,3 +51,19 @@ def test_run_plans_returns_zero_when_all_steps_pass(monkeypatch, tmp_path) -> No
     )
     monkeypatch.setattr(driver, "target_path", lambda root, account, day: Path(__file__))
     assert driver.run_plans(tmp_path, date(2026, 10, 6), submit=True) == 0
+
+
+def test_run_plans_forwards_the_tif_mode_to_submit(monkeypatch, tmp_path) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(driver.subprocess, "run", fake_run)
+    monkeypatch.setattr(driver, "target_path", lambda root, account, day: Path(__file__))
+    rc = driver.run_plans(tmp_path, date(2026, 10, 6), submit=True, tif_mode="market")
+    assert rc == 0
+    submits = [c for c in calls if "submit" in c]
+    assert len(submits) == 2
+    assert all(c[c.index("--tif-mode") + 1] == "market" for c in submits)

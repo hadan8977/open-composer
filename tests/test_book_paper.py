@@ -1056,3 +1056,13 @@ def test_submit_paces_orders_when_asked(monkeypatch) -> None:
     report = submit_plan(client, plan, now=NOW, pace_seconds=0.34)
     assert len(report["sent"]) == len(plan.orders)
     assert naps == [0.34] * (len(plan.orders) - 1)  # no pause before the first order
+
+
+def test_submit_market_mode_sends_day_orders_and_rejects_unknown_modes() -> None:
+    client = all_etb_client()
+    plan = plan_for(client=client)
+    report = submit_plan(client, plan, now=NOW, tif_mode="market")
+    assert report["time_in_force"] == "day"
+    assert all(str(r.time_in_force.value).lower() == "day" for r in client.submitted)
+    with pytest.raises(BookEngineError):
+        submit_plan(all_etb_client(), plan_for(client=all_etb_client()), now=NOW, tif_mode="opg")

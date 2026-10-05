@@ -115,7 +115,7 @@ def oc_command() -> list[str]:
     return [str(venv)] if venv.exists() else ["oc"]
 
 
-def run_plans(root: Path, decision: date | None, *, submit: bool) -> int:
+def run_plans(root: Path, decision: date | None, *, submit: bool, tif_mode: str = "close") -> int:
     if decision is None:
         newest = latest_target_path(root, BOOK_ACCOUNTS[0])
         if newest is None:
@@ -140,6 +140,8 @@ def run_plans(root: Path, decision: date | None, *, submit: bool) -> int:
                     "--decision-date",
                     decision.isoformat(),
                     "--submit",
+                    "--tif-mode",
+                    tif_mode,
                 ]
             )
         for cmd in steps:
@@ -221,6 +223,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--execution-date", default=None, help="--reconcile; default: today (New York)")
     ap.add_argument("--sip-root", default=None, help="--reconcile; default: <root>/data/sip")
     ap.add_argument("--decision-date", default=None)
+    ap.add_argument(
+        "--tif-mode",
+        choices=["close", "market"],
+        default="close",
+        help="--submit: close = CLS (contract), market = DAY market orders",
+    )
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
     ap.add_argument("--root", default=str(ROOT), help="project root (tests)")
@@ -250,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
                 else datetime.now(UTC).astimezone(NEW_YORK).date()
             )
             return run_reconcile(root, day, sip_root=Path(args.sip_root) if args.sip_root else None)
-        return run_plans(root, decision, submit=args.submit)
+        return run_plans(root, decision, submit=args.submit, tif_mode=args.tif_mode)
 
 
 if __name__ == "__main__":

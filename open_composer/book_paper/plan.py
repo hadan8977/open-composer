@@ -756,6 +756,9 @@ def _risk_checks(
 # --------------------------------------------------------------------------------------
 
 
+SUBMIT_TIF_MODES = ("close", "market")
+
+
 def require_submission_window(now: datetime, execution_date: date) -> None:
     """Refuse before 09:30 ET on the execution date and at or after close - 15 min (15:45 ET)."""
     if now.tzinfo is None:
@@ -787,12 +790,20 @@ def submit_plan(
     now: datetime,
     kill_switch_check: Callable[[], None] | None = None,
     pace_seconds: float = 0.0,
+    tif_mode: str = "close",
 ) -> dict[str, Any]:
     """Send the plan's CLS market orders.  Needs an unblocked plan and a verified paper client.
 
     ``pace_seconds`` spaces consecutive submissions (the CLI passes ``SUBMIT_PACE_SECONDS``): the
     first v1.2 day builds the whole book (1,502 + 1,295 orders in the 10-05 dry run) and Alpaca
-    allows about 200 requests a minute per key; alpaca-py only retries a 429 three times."""
+    allows about 200 requests a minute per key; alpaca-py only retries a 429 three times.
+
+    ``tif_mode``: ``close`` (default, the contract's closing-auction CLS market orders) or
+    ``market`` (DAY market orders; T-20261005-02: paper accepts CLS but fills it like a market
+    order at the closing quote with random partial fills whose remainder expires seconds after
+    the close -- the 10-05 one-share short expired unfilled)."""
+    if tif_mode not in SUBMIT_TIF_MODES:
+        raise BookEngineError(f"tif_mode must be one of {SUBMIT_TIF_MODES}, got {tif_mode!r}")
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import MarketOrderRequest
 
@@ -832,7 +843,7 @@ def submit_plan(
             symbol=order["symbol"],
             qty=order["qty"],
             side=OrderSide.BUY if order["side"] == "buy" else OrderSide.SELL,
-            time_in_force=TimeInForce.CLS,
+            time_in_force=TimeInForce.CLS if tif_mode == "close" else TimeInForce.DAY,
             client_order_id=cid,
         )
         if pace_seconds > 0 and (sent or failed):
@@ -862,6 +873,7 @@ def submit_plan(
     return {
         "submitted_at_utc": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "plan_sha256": plan.payload["plan_sha256"],
+        "time_in_force": "cls" if tif_mode == "close" else "day",
         "sent": sent,
         "skipped_existing": skipped,
         "failed": failed,

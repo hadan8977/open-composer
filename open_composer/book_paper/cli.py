@@ -140,9 +140,14 @@ def book_paper_submit(
     account: str = ACCOUNT_OPTION,
     decision_date: str | None = typer.Option(None, "--decision-date"),
     min_notional: float = typer.Option(100.0, "--min-notional"),
-    submit: bool = typer.Option(False, "--submit", help="required to send CLS orders"),
+    submit: bool = typer.Option(False, "--submit", help="required to send orders"),
+    tif_mode: str = typer.Option(
+        "close",
+        "--tif-mode",
+        help="close: closing-auction CLS market orders (contract); market: DAY market orders",
+    ),
 ) -> None:
-    """Send the plan as market-on-close orders (requires --submit and the CLS window)."""
+    """Send the plan as market orders, CLS by default (requires --submit and the window)."""
     from open_composer.book_paper.plan import (
         BookEngineError,
         next_orders_receipt_path,
@@ -163,6 +168,7 @@ def book_paper_submit(
             now=now,
             kill_switch_check=_kill_switch_check(root),
             pace_seconds=SUBMIT_PACE_SECONDS,
+            tif_mode=tif_mode,
         )
     except (BookAccountError, BookEngineError) as exc:
         raise _fail(exc) from exc
