@@ -1,0 +1,801 @@
+{
+ "id": "I-20261006-01",
+ "task": "T-20261006-12",
+ "generated_by": "Sonnet 5.5 high (executor), reviewed by: pending lead",
+ "date": "2026-10-06",
+ "question": "在我们的条件下，哪些高频/日内策略现在最有希望扣成本后赚钱，先做哪 3-5 个",
+ "bottom_line": "没有一个候选有硬证据显示扣成本后赚钱。按\"成本最低 + 通道最近 + 决定性测试最便宜\"排序：A（SPY/QQQ 噪声带）与 B（流动性限定的 Stocks-in-Play ORB）可在 10-10 前以小仓位上模拟盘，目的是测成交与滑点、不是赚钱预期；C（收盘窗口横截面）先用本地 SIP 2023-2026 真样本外测 1-2 天再上；D 与 E 是近乎免费的测试。前向观察检不出小边际（A 需 350-17,000 天、C 需 1,300+ 天），只能检验\"实盘成交与重放回测是否吻合\"。",
+ "execution_conditions": {
+  "alpaca_paper_fills": "按 NBBO 撮合；非可成交限价单不成交；可成交时 10% 的概率随机部分成交；不检查订单数量与报价深度，所以大单也能全成交（偏乐观）；括号单不支持盘前盘后；模拟盘不进入开盘竞价（本地 50 单 OPG 过期 45）",
+  "sources_conditions": [
+   {
+    "url": "https://docs.alpaca.markets/us/docs/paper-trading",
+    "date": "current",
+    "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/alpaca-paper-trading-docs.md",
+    "grade": "official"
+   },
+   {
+    "url": "https://docs.alpaca.markets/us/docs/orders-at-alpaca",
+    "date": "current",
+    "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/alpaca-orders-docs.md",
+    "grade": "official"
+   }
+  ],
+  "rate_limits": "交易 API 200 次/分钟/账户（二手来源，官方页未找到）；免费行情 200 次/分钟、实时仅 IEX、websocket 30 个标的、单连接",
+  "iex_vs_sip": "免费实时只有 IEX（2026-07 市占约 4.4%，约占交易所成交量 8%）；SIP 历史需要滞后 15 分钟。对分钟级信号：价格对 SPY/QQQ 可用，对不活跃个股稀疏；成交量只是约 4% 的样本，相对成交量需 IEX 自身的历史做分母，并与 SIP 排序做相关性核对（未做）",
+  "fees": "卖出 SEC 费 $20.60/百万（0.206 bp，2026-04-04 起）；FINRA TAF $0/股（Alpaca 费率表模板，需复核）；CAT $0.000003/股；佣金 0；易借股票做空免借券费；保证金利率 6.25%（日内平仓不产生）；加密 taker 25 bp/maker 15 bp 每边（第 1 档）",
+  "fee_sources": [
+   {
+    "url": "https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf",
+    "date": "2026-10-01 template",
+    "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/alpaca-fee-schedule.md",
+    "grade": "official"
+   },
+   {
+    "url": "https://www.sec.gov/rules-regulations/fee-rate-advisories/2026-2",
+    "date": "2026-02-27",
+    "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/sec-section31-fee-2026.md",
+    "grade": "official"
+   }
+  ]
+ },
+ "candidates": [
+  {
+   "name": "A. SPY/QQQ(+IWM) 噪声带日内动量（Zarattini-Aziz-Barbon 2024，含 VIX 校准带与 Concretum 2026 版本）",
+   "mechanism": "市场层面日内动量：价格突破按过去 14 日同一分钟平均波动算出的噪声带，说明出现持续的买卖失衡，顺势进场、用带或 VWAP 做跟踪止损，收盘前平仓；根源是期权做市商和杠杆 ETF 的 gamma 对冲（Baltussen-Da-Lammers-Martens 2021）。",
+   "evidence_grade": "发表后样本内 + 作者自述（无独立复现，无可核验实盘）；本地同一规则复现只有 2.2%/年",
+   "latest_evidence_date": "2026-09-25",
+   "sources": [
+    {
+     "url": "https://alexandria.unisg.ch/server/api/core/bitstreams/a99aba00-f967-49b3-aceb-f544dc386e0b/content",
+     "date": "2024-11-27",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/btm-beat-the-market-paper.md",
+     "grade": "author-reported"
+    },
+    {
+     "url": "https://academicweb.nd.edu/~zda/intramom.pdf",
+     "date": "2021-10",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/baltussen-da-lammers-martens-2021.md",
+     "grade": "peer-reviewed"
+    },
+    {
+     "url": "https://concretumgroup.substack.com/p/can-vix-improve-intraday-trend-following",
+     "date": "2026-07-22",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-vix-intraday-2026-07.md",
+     "grade": "author-reported (paywalled)"
+    },
+    {
+     "url": "https://concretumgroup.substack.com/p/intraday-trend-following-with-0dte",
+     "date": "2026-09-25",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-0dte-2026-09.md",
+     "grade": "author-reported (paywalled)"
+    },
+    {
+     "url": "https://concretumgroup.com/backtesting-7-years-of-free-data-beat-the-market-an-effective-intraday-momentum-strategy-for-the-sp500-etf-spy/",
+     "date": "2024-06",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-btm-python-alpaca.md",
+     "grade": "author-reported"
+    }
+   ],
+   "gross_edge_bp_per_trade": "论文：无条件日均 12 bp（波动率定量、杠杆上限 4 倍，1.8 笔/天，每股均盈 $0.09，约 3-5 bp/笔）；基础版 Sharpe 0.61、6.2%/年。本地同规则 2016-2026：+2.2%/年、Sharpe 0.30，约 0.9 bp/天、每次换仓约 0.3-0.5 bp。两者差一个数量级，原因未查清。",
+   "our_cost_bp_per_trade": "约 0.4-0.8 bp/笔往返（半价差 0.08-0.09 bp x2 + 滑点约 0.02-0.2 bp/边 + 卖出 SEC 费 0.206 bp + FINRA TAF $0 + 佣金 0）",
+   "cost_source": "SPY/QQQ 价差约 1 美分（giovannibrusco 复现；本地 D4 样本最流动档 15:45 中位半价差 1.33 bp，ETF 没被采样）；Concretum 在 IBKR 实测 1,000 笔、$5000 万市价单，平均滑点 $0.001（约 0.02 bp/边），Alpaca 模拟盘按 NBBO 成交无排队；费率见 alpaca-fee-schedule 与 sec-section31-fee-2026。",
+   "gross_to_cost_ratio": "论文口径约 6-10；本地口径约 1 或更低",
+   "capacity": "SPY/QQQ 日成交额 $200-400 亿，我们的规模（模拟盘 $10 万级，实盘 $2 万）无容量问题",
+   "data_needed": "1 分钟价格；SPY/QQQ 在 IEX 上成交密集，IEX 实时行情可用；VIX 版需要 VIX 实时值（免费源待核对）",
+   "iex_realtime_sufficient": "yes for SPY/QQQ price bars (IEX ~4% of volume but frequent prints); volume features unknown",
+   "alpaca_paper_feasible": "yes：每分钟调度、市价单+跟踪止损，paper_intraday.py 需扩展成\"按分钟监控 + 平仓\"；每日 4-10 笔，远低于 200 次/分钟上限",
+   "live_20k_feasible": "技术上要自动化（每分钟监控，1.8 笔/天）；手动不现实；接嘉信 API 可行；$2 万 1 倍杠杆即可，无 PDT 门槛（2026-06-04 取消）",
+   "cheapest_decisive_test": "本地 SPY/QQQ/IWM 分钟线：先复现论文基础版数字（2016-2026 Sharpe 0.61 对 0.30 的差距到底来自什么：样本、定量规则、跳空锚定），再加论文的波动率定量 + 4 倍上限，再加 VIX 校准带；成本用 0.5 bp 往返，报告日期中性（不同开盘偏移）",
+   "depth_points": [
+    "标的：SPY → SPY+QQQ → +IWM+11 个行业 ETF",
+    "出场：反向带 / 当前带 / VWAP 三种，各自完整版本（本地只比较了两种退出语义）",
+    "定量：固定仓位 / 波动率定量 / 加 4 倍上限",
+    "样本：2016-2026 / 加 2008-2015（本地无分钟线则标缺）",
+    "带宽：14 日 / 加 VIX 校准"
+   ],
+   "forward_sessions_needed": "论文效应 12 bp/天、日波动 90 bp：单侧 5% 显著性、功效 80% 需约 350 个交易日；本地效应 0.9 bp/天需约 17,000 天。前向记录检不出边际，只能检验\"实盘成交与重放回测是否吻合\"（20 个交易日足够估计滑点）",
+   "prior_local_work": {
+    "paths": [
+     "reports/research/hypotheses/H-20260922-07-spy-intraday-momentum.md",
+     "reports/research/iterations/h20260922_07_intraday_momentum/report.md",
+     "dir:single_etf_intraday_momentum_cost_adjusted"
+    ],
+    "verdict": "refuted（2.2%/年，夏普 0.30，留出窗 682 天；VWAP 止损净负贡献；随机方向安慰剂 80% 种子打赢）",
+    "missing_depth": [
+     "未复现原文数字（本地 Sharpe 0.30 对原文基础版 0.61，差距未解释）",
+     "只做了 SPY、两种退出语义，没有 QQQ/IWM/行业 ETF 的规模曲线",
+     "论文的波动率定量+4 倍上限版本、VIX 校准带（2026-07 新信息）未测",
+     "功效不足：0.9 bp/天的效应需要上万天才能与零区分"
+    ]
+   },
+   "rank": 1,
+   "rank_reason": "成本最低（往返不足 1 bp，模拟盘乐观偏差影响最小）、通道最近、10-10 前能上；但期望收益没有硬证据（本地 Sharpe 0.30、作者自述不可核验），所以只用极小仓位做\"成交与重放对照\"，不是赚钱预期。",
+   "forward_plan": {
+    "position_cap": "模拟盘：1 倍杠杆、单笔名义不超过 $20,000（对齐机主实盘规模），不用 4 倍；SPY 与 QQQ 各一份独立记账",
+    "stop_rules": "单日亏损超过名义 1% 当日停；连续 20 个交易日实际滑点均值 > 假设的 2 倍（1 bp/笔）停；40 个交易日累计净值低于重放回测 -3 个标准误停；任何日内订单被拒或遗漏 > 5% 停",
+    "backtest_comparison": "每晚用 SIP 分钟线对当日重放同一规则，逐笔比较：信号时刻、成交价对重放价的差（bp）、出场时刻；成交与重放吻合度比较盈亏重要"
+   }
+  },
+  {
+   "name": "B. Stocks-in-Play 开盘区间突破，限定流动性、多空都做（Zarattini-Barbon-Aziz 2024）",
+   "mechanism": "开盘后 5 分钟收阳则做多/收阴则做空；只交易开盘相对成交量 >=100% 的前 20 只（异常关注）；止损在 ATR14 的 10%，不设止盈，收盘平仓。机制：新信息导致的不平衡在开盘后继续被消化。",
+   "evidence_grade": "发表后样本内 + 作者自述 + 部分第三方复现（QuantConnect 仅 2016 年、千只流动股）；2026-07 作者自己承认脱离\"异常放量\"的 SPY 朴素版几乎不赚钱",
+   "latest_evidence_date": "2026-07-08",
+   "sources": [
+    {
+     "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+     "date": "2024-03 (rev. 2025-04)",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/zba-stocks-in-play-paper.md",
+     "grade": "author-reported"
+    },
+    {
+     "url": "https://www.quantconnect.com/research/18444/opening-range-breakout-for-stocks-in-play/",
+     "date": "undated",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/quantconnect-orb-stocks-in-play.md",
+     "grade": "third-party (partial)"
+    },
+    {
+     "url": "https://github.com/giovannibrusco/zarattini-2023-orb-qqq",
+     "date": "undated",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/github-giovannibrusco-orb-qqq.md",
+     "grade": "third-party (QQQ version)"
+    },
+    {
+     "url": "https://concretumgroup.substack.com/p/improving-the-opening-range-breakout",
+     "date": "2026-07-08",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-orb-spy-2026-07.md",
+     "grade": "author-reported"
+    }
+   ],
+   "gross_edge_bp_per_trade": "论文：每笔 +0.08R（相对成交量 >100%，只扣佣金，不含价差和滑点）。本地（R 约 100 bp，由 0.20R=20 bp 反推）：保守止损成交 -0.29R（约 -29 bp）、止损晚一根成交 +0.42R（约 +42 bp，2026 窗 +0.60R）。符号随止损成交假设翻转，所以是否有毛边际在本地数据上无法判定。",
+   "our_cost_bp_per_trade": "开盘窗口往返约 9-13 bp（最流动档）到 28-40 bp（第 5 档以后）+ 止损市价单的额外滑点（未测）+ 卖出 SEC 费 0.2 bp；本地旧测试按每边 10 bp 平价",
+   "cost_source": "本地 D4 实测 SIP NBBO 半价差，09:35-09:45 窗口：第 0 档中位 4.56/均值 6.44 bp，第 4 档 14.25/20.0，第 9 档 31.19/42.53（reports/research/program/cost-model-v1-2026-10-01/report.md）；每边 = 半价差。stocks-in-play 在异常放量时价差可能更窄或更宽，未测。",
+   "gross_to_cost_ratio": "约 0.5-1（论文 +0.08R 约 8 bp 对往返 9-13 bp）；止损晚一根的乐观口径可到 3 以上",
+   "capacity": "每天 20 只、每只按 1% 风险定仓，名义 $2,000-5,000 级，无容量问题；跳到 1000+ 只池时价差上升",
+   "data_needed": "09:35 前 5 分钟 K 线、前 14 日平均成交量、ATR14；相对成交量需要成交量：IEX 只占约 4% 的成交量，必须用 IEX 自己的 14 日均量做分母",
+   "iex_realtime_sufficient": "partial：价格可用；相对成交量排序靠 IEX 量，与 SIP 排序的相关性未知（最便宜的核对：300 只 x 20 天拉 IEX 分钟线与本地 SIP 排序做秩相关）",
+   "alpaca_paper_feasible": "yes：paper_intraday.py 已有开盘区间 + bracket 单 + 收盘前平仓 + 授权与上限检查；需要加\"多股票扫描 + 前 20 名排序\"。限制：bracket 不支持盘前盘后；止损单触发后按 NBBO 市价成交，这正好给出实测止损滑点",
+   "live_20k_feasible": "需要自动化（09:35 扫描排序、挂 20 个括号单）；手动不现实；$2 万 1 倍杠杆能做约 10 只；做空要嘉信有券",
+   "cheapest_decisive_test": "先跑本地从未跑过的设计窗口 2016-2022（论文自己的区间）核对保真度；再按流动性分桶（前 100/300/1000 只）做规模曲线，成本用 D4 实测的分档半价差而非平价 10 bp；止损成交做三种（同根保守、晚一根、下一报价）并写明哪种最接近 Alpaca 模拟盘实际行为",
+   "depth_points": [
+    "股票池：前 100 → 300 → 1000 → 全部（相对成交量前 20 只固定）",
+    "选股数：5 / 20 / 50",
+    "开盘区间：5 / 15 / 30 分钟",
+    "成本：D4 实测分档半价差 x 0.5 / 1 / 2",
+    "止损成交语义：三种",
+    "方向：只多 / 只空 / 多空"
+   ],
+   "forward_sessions_needed": "0.08R/笔、单笔标准差约 1.2R：5% 单侧、功效 80% 约 1,400 笔，每天 20 笔约 70 个交易日（计入同日相关性约 140 天）；净边际 0.05R 时需约 180-360 天。所以 20 个交易日只能用来估计止损滑点和成交偏差，不能确认边际",
+   "prior_local_work": {
+    "paths": [
+     "reports/research/iterations/h20260923_13_orb_stocks_in_play/report.md",
+     "dir:orb_stocks_in_play_relative_volume",
+     "dir:orb_etf_opening_range_breakout"
+    ],
+    "verdict": "refuted（只多 SIP01/SIP02 选择窗 -27.1%/-19.7%/年，输给随机流动股对照；成果取决于止损成交语义：晚一根 -2.2%/-7.6%，2026 窗 +23%/+2.4%）",
+    "missing_depth": [
+     "未复现原文：设计窗口 2016-2022（论文区间）从未跑，无法区分\"复现不忠实\"和\"效应衰减\"",
+     "无规模曲线：前 20 固定，没有流动性分桶；平价 10 bp 成本对流动股偏高、对低价高 ATR 股偏低",
+     "只做多（论文是多空合并，从未公布只多拆分）；多空 SIP03 只当保真诊断",
+     "标的池来自当前在市股票（幸存者偏差）",
+     "止损成交语义未解决，两种语义符号相反"
+    ]
+   },
+   "rank": 2,
+   "rank_reason": "通道已建好、10-10 前可上；模拟盘按 NBBO 成交的市价止损恰好能回答本地最大的未解问题（止损滑点）。毛边际与成本同量级，所以只作为\"测量\"，小仓位、限期。",
+   "forward_plan": {
+    "position_cap": "每天最多 10 只，单只名义 $2,000，单日名义 $20,000，1 倍杠杆；多空各一半（做空仅易借股票）",
+    "stop_rules": "单日亏损 > 账本名义 1% 当日停；累计 -10R 停；40 个交易日后若平均每笔实际成本 > 论文口径 + 假设成本的 2 倍则停；开盘 5 分钟 IEX 数据缺失 > 20% 的日子不交易并记录",
+    "backtest_comparison": "每晚用 SIP 分钟线重放同一选股与止损（三种止损语义），比较入场价差、止损实际成交价、每笔 R；报告用 R 和 bp 两种单位"
+   }
+  },
+  {
+   "name": "C. 收盘窗口横截面：日终反转（Baltussen-Da-Soebhag 2025）+ 同时段延续 + 最后半小时动量，从 ETF 到个股的规模曲线",
+   "mechanism": "个股全天表现差则在最后 30 分钟反弹（散户逆向买入、卖空者收盘前降风险），表现好则回吐；同时段延续（HKS 2010）与市场最后半小时动量（Gao 2018、Baltussen 2021）共用 15:30-16:00 这一窗口。入场 15:30 附近、出场收盘（或 15:58 市价）。",
+   "evidence_grade": "发表后样本内（1993-2019，t>10）；无 2020 年以后的样本外；作者明说\"成本后多数投资者可能无法利用\"",
+   "latest_evidence_date": "2025-04",
+   "sources": [
+    {
+     "url": "https://academicweb.nd.edu/~zda/EOD.pdf",
+     "date": "2025-04",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/baltussen-da-soebhag-eod-2025.md",
+     "grade": "working paper"
+    },
+    {
+     "url": "https://ar5iv.arxiv.org/html/1005.3535",
+     "date": "2010",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/heston-korajczyk-sadka-2010.md",
+     "grade": "peer-reviewed"
+    },
+    {
+     "url": "https://academicweb.nd.edu/~zda/intramom.pdf",
+     "date": "2021-10",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/baltussen-da-lammers-martens-2021.md",
+     "grade": "peer-reviewed"
+    }
+   ],
+   "gross_edge_bp_per_trade": "多空价值加权 3.78 bp/天、等权 6.86 bp/天（1993-2019）；最小 20% 的公司 14.71 bp/天、最大 20% 3.41 bp/天；只做多输家一档（五分位 L）3.55 bp/天原始收益。本地同时段延续：交易价口径 17.1 bp/天，但可成交口径为负（见 prior_local_work）",
+   "our_cost_bp_per_trade": "个股多空 4 条腿合计约 4-12 bp/天（15:45 半价差第 0 档中位 1.33/均值 2.02 bp，第 4 档 3.12/4.32，全池均值 5.14；出场用收盘竞价或 15:58 市价）+ 卖出 SEC 费 0.2 bp；ETF 版 <1 bp",
+   "cost_source": "本地 D4 实测 SIP NBBO（15:45 快照）；T-20260930-15 实测报价：入选股半价差 6.6-6.9 bp 且成交价到可成交价的差距均值 25 bp（P1500 池）。Alpaca 模拟盘的收盘竞价单可靠性未知（T-30 探针），所以出场用 15:58 市价替代。",
+   "gross_to_cost_ratio": "个股多空约 0.3-1.5；ETF 版未知（毛边际可能被稀释）",
+   "capacity": "个股前 500 名：每天数十只、名义 $1,000-5,000 级；容量不受限",
+   "data_needed": "15:30 之前全天分钟线；信号 15:30 算出，需要全池（1000+ 只）实时价：用 IEX 多标的 REST 快照（每次 100+ 只，200 次/分钟上限够用）",
+   "iex_realtime_sufficient": "partial：价格够用于收益排序；流动性较差的股票 IEX 报价稀疏，会污染分位排序（未测）",
+   "alpaca_paper_feasible": "yes（先测再上）：15:30 市价篮子 + 15:58 平仓；cls 单在模拟盘是否撮合待核对（模拟盘 OPG 实测 50 单过期 45）",
+   "live_20k_feasible": "多空篮子 20+ 只对 $2 万偏碎；只做多输家 5-10 只可行，手动勉强（每天一次 15:30 下单、15:58 平仓）",
+   "cheapest_decisive_test": "本地 SIP 分钟线 2023-2026（作者样本止于 2019，所以这是真样本外），只读 15:00-16:00 一小段：算 ROD（开盘到 15:00）与最后半小时的横截面关系，同时算 HKS 15:30 同时段延续；成本用 D4 分档半价差；价格口径统一为未复权成交价，避开 T-13 已查出的分红调整差异",
+   "depth_points": [
+    "股票池：11 个行业 ETF → 前 100 → 500 → 1000 → 3000",
+    "选股：十分位 / 最极端 5% / 只做多输家",
+    "持有：15:30-收盘 / 15:30-15:58 / 15:00-收盘",
+    "成本：D4 分档半价差 x 0.5 / 1 / 2",
+    "样本：2023-2026 / 加 2016-2022 sip-hist"
+   ],
+   "forward_sessions_needed": "多空 3.78 bp/天、日波动约 29 bp（由原文 t 值反推）：毛边际约 370 天；净 2 bp 约 1,300 天；净 1 bp 约 5,300 天。前向只能做影子对账（15:30 价差与重放吻合度），不能确认边际",
+   "prior_local_work": {
+    "paths": [
+     "reports/research/iterations/t20260930_13_intraday_periodicity/report.md",
+     "reports/research/iterations/t20260930_13_intraday_periodicity/quote-check.md",
+     "dir:end_of_day_reversal (parked)",
+     "dir:intraday_same_slot_periodicity (refuted)"
+    ],
+    "verdict": "同时段延续：交易价口径 17.1 bp/天（t 15.7，安慰剂 100% 打赢）但 T-15 实测可成交口径 -13.65 bp（30 个种子日），关闭；日终反转：从未测试（挂起，阻塞理由\"需要 Modal 分钟面板\"已过时——本地 SIP 分钟线 2023-2026 与 sip-hist 2016-2022 都在）",
+    "missing_depth": [
+     "池只有 P1500/P500 两档，没有最流动的前 100-200 只，也没有 ETF 档（价差伤害最小的地方）",
+     "价格口径：分红调整差异造成的假边际已发现，需要统一未复权口径重测",
+     "日终反转原文（Baltussen-Da-Soebhag）从未复现",
+     "未到深度：不是否定"
+    ]
+   },
+   "rank": 3,
+   "rank_reason": "有近年论文（2025-04）和真样本外窗口，最便宜的决定性测试只要读一小时分钟线、1-2 天；收盘窗口的价差最窄（15:45 中位半价差只有开盘的约 1/4）。毛边际小，所以排在 A、B 之后：需要先测再上，预计 10-13 前后才能上模拟盘。",
+   "forward_plan": {
+    "position_cap": "先影子（只记信号与 15:30/15:58 报价，不下单）10 个交易日；通过本地测试后模拟盘每天 5 多 5 空、单只 $1,500、1 倍杠杆",
+    "stop_rules": "本地 2023-2026 的毛边际低于 1.5x 实测成本则不上；上线后 30 个交易日平均净 < 0 且成交滑点 > 假设 2 倍则停",
+    "backtest_comparison": "每晚重放：15:30 中间价 vs 实际成交价、15:58 平仓价 vs 收盘价，逐笔对账"
+   }
+  },
+  {
+   "name": "D. 隔夜收益预测开盘后半小时反转 / 指数与大盘 ETF 缺口回补（含 Concretum 缺口腿）",
+   "mechanism": "隔夜大幅跳空后，开盘后第一个半小时部分回吐（隔夜收益与随后日内收益符号相反）。Lou-Polk-Skouras 2019 只说明隔夜与日内利润的符号相反，是否蕴含开盘半小时反转未验证。",
+   "evidence_grade": "弱：\"隔夜收益预测开盘半小时反转\"这一说法只来自 CXO Advisory 搜索摘要（页面未打开）；Lou-Polk-Skouras 只证明隔夜与日内利润符号相反；无独立复现；本地旧结论是代理信号",
+   "latest_evidence_date": "unknown（CXO 摘要无日期；Lou-Polk-Skouras 2019；Baltussen 2025-04 把日内切成五段但主结论是最后半小时）",
+   "sources": [
+    {
+     "url": "https://researchonline.lse.ac.uk/id/eprint/119010",
+     "date": "2019",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/lou-polk-skouras-2019.md",
+     "grade": "peer-reviewed"
+    },
+    {
+     "url": "https://academicweb.nd.edu/~zda/EOD.pdf",
+     "date": "2025-04",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/baltussen-da-soebhag-eod-2025.md",
+     "grade": "working paper"
+    },
+    {
+     "url": "https://concretumgroup.com/backtesting-7-years-of-free-data-beat-the-market-an-effective-intraday-momentum-strategy-for-the-sp500-etf-spy/",
+     "date": "2024-06",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-btm-python-alpaca.md",
+     "grade": "author-reported"
+    }
+   ],
+   "gross_edge_bp_per_trade": "unknown（本轮没有找到可核验的逐笔数字；Concretum 自述 SPY 缺口回补+日内动量组合 2018-2024 夏普 1.95，使用 Alpaca SIP 数据）",
+   "our_cost_bp_per_trade": "ETF：<1 bp；个股：开盘窗口往返 9-13 bp 起，是全天最贵的时段",
+   "cost_source": "本地 D4（开盘窗口）；ETF 价差约 1 美分",
+   "gross_to_cost_ratio": "unknown",
+   "capacity": "ETF 无限制；个股受开盘价差约束",
+   "data_needed": "前收盘、开盘后 30 分钟分钟线；IEX 够用于 ETF",
+   "iex_realtime_sufficient": "yes for ETFs; partial for stocks",
+   "alpaca_paper_feasible": "yes（09:31 入场市价，10:00 平仓）",
+   "live_20k_feasible": "可手动（每天 2 笔）",
+   "cheapest_decisive_test": "本地 SPY/QQQ 分钟线：隔夜收益分位 → 09:30-10:00 收益（两三行代码），成本 0.5 bp；个股用 Monday-afternoon 的字面信号（12:00 对开盘）同步做，因为本地已有分钟线",
+   "depth_points": [
+    "标的：SPY → 行业 ETF → 前 100 → 500 只",
+    "窗口：09:30-10:00 / 10:00-10:30 / 到 12:00",
+    "信号：隔夜收益 / 缺口分位 / 缺口 x 前一日波动"
+   ],
+   "forward_sessions_needed": "未知效应量；按 SPY 日波动 90 bp 与 3 bp/天估计需约 5,600 天，前向无用，只靠本地多年数据",
+   "prior_local_work": {
+    "paths": [
+     "dir:monday_afternoon_reversal_index_timing",
+     "dir:intraday_reversal_reit_pwb (parked)",
+     "dir:cross_sectional_gap_fade"
+    ],
+    "verdict": "周一午后反转用的是收盘对开盘代理，不是论文的 12:00 对开盘字面信号；\"隔夜收益预测开盘半小时\"挂起未测",
+    "missing_depth": [
+     "字面信号未实现（本地分钟线现在可以做）",
+     "未复现原文",
+     "无规模曲线"
+    ]
+   },
+   "rank": 4,
+   "rank_reason": "决定性测试几乎免费，但没有可核验的毛边际数字；开盘时段价差最贵，所以只做 ETF 层面，先测再说。",
+   "forward_plan": {
+    "position_cap": "通过本地测试之前不上；之后同 A",
+    "stop_rules": "同 A",
+    "backtest_comparison": "同 A"
+   }
+  },
+  {
+   "name": "E. ETF 隔夜/日内分解（用竞价单），与本调研相邻，由 T-20261005-36 负责",
+   "mechanism": "隔夜持有 SPY/QQQ/IWM，用收盘和开盘竞价成交；之前按每边 10/20 bp 判死，实际竞价成交成本可能低于 1 bp。",
+   "evidence_grade": "只有回测 + 描述性计算（本地）；Alpha Architect 认为扣成本后统计稳健性低；NSPY 产品 2023-07 退市",
+   "latest_evidence_date": "2026-10-05",
+   "sources": [
+    {
+     "url": "reports/research/program/cost-model-v1-2026-10-01/report.md",
+     "date": "2026-10-01",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/local-cost-model-v1.md",
+     "grade": "measured"
+    }
+   ],
+   "gross_edge_bp_per_trade": "SPY 收盘到次日开盘 +5.91 bp/夜（t_nw5 2.50，2024-2026，683 夜，T-35 诊断 f）",
+   "our_cost_bp_per_trade": "竞价单理想 <1 bp；模拟盘开盘竞价单 50 单中 45 单过期，所以模拟盘无法验证开盘腿",
+   "cost_source": "reports/research/intel/I-20261005-04-crypto-extended-overnight.md；t20260930_11 报告",
+   "gross_to_cost_ratio": "约 6（理想竞价口径），unknown（模拟盘无法验证）",
+   "capacity": "无限制",
+   "data_needed": "日线与官方开收盘价",
+   "iex_realtime_sufficient": "n/a（日频）",
+   "alpaca_paper_feasible": "部分：收盘腿可测，开盘腿（opg）模拟盘不撮合竞价",
+   "live_20k_feasible": "yes（手动，MOC/MOO）",
+   "cheapest_decisive_test": "T-36 已预注册 SPY/QQQ/IWM 隔夜，对 vol 匹配的 S3+SHY，成本曲线 0.5/1/2/3 bp",
+   "depth_points": [
+    "标的 3 个 ETF",
+    "成本 0.5/1/2/3 bp",
+    "窗口 2024-2026 / 2016-2023"
+   ],
+   "forward_sessions_needed": "5.9 bp/夜、日波动约 90 bp：约 1,400 夜，前向无用",
+   "prior_local_work": {
+    "paths": [
+     "dir:overnight_intraday_gap_retail_pwb",
+     "reports/research/iterations/t20260929_35_overnight_persistence/report.md"
+    ],
+    "verdict": "ETF 隔夜按每边 10/20 bp 判死（夏普 -3.99/-2.45）；单股隔夜持续性关闭",
+    "missing_depth": [
+     "成本合同错配：ETF 实际竞价成本 <1 bp，当时按 10/20 bp",
+     "三个成本点未覆盖 0.5-3 bp"
+    ]
+   },
+   "rank": 5,
+   "rank_reason": "不是高频；因为成本曲线是现成的决定性测试，且由别的任务负责，所以只占位。",
+   "forward_plan": {
+    "position_cap": "由 T-36 决定",
+    "stop_rules": "由 T-36 决定",
+    "backtest_comparison": "由 T-36 决定"
+   }
+  },
+  {
+   "name": "F. 杠杆 ETF 收盘再平衡资金流 / gamma 条件化的最后半小时",
+   "mechanism": "杠杆 ETF 与期权做市商的收盘前对冲推动最后半小时趋势并在次日反转。",
+   "evidence_grade": "发表后（美国证据\"影响不显著/方法有缺陷\"的综述 vs 2026 年韩国市场强证据）",
+   "latest_evidence_date": "2026-08-29",
+   "sources": [
+    {
+     "url": "https://arxiv.org/pdf/2608.03703",
+     "date": "2026-08-29",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/zhao-preying-on-letf-2026.md",
+     "grade": "preprint (Korea)"
+    },
+    {
+     "url": "https://pure.psu.edu/en/publications/the-market-impact-of-leveraged-etfs-a-survey-of-the-literature/",
+     "date": "2024",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/lenkey-letf-survey-2024.md",
+     "grade": "survey (search summary)"
+    }
+   ],
+   "gross_edge_bp_per_trade": "unknown（美国综述称经济意义不显著；韩国 2026 年次日反转约 75%，不可迁移）",
+   "our_cost_bp_per_trade": "同 A（<1 bp，ETF）",
+   "cost_source": "同 A",
+   "alpaca_paper_feasible": "yes（作为 A 的条件变量）",
+   "live_20k_feasible": "同 A",
+   "cheapest_decisive_test": "在 A 的本地测试里加一个条件：按当日收益幅度分档看最后半小时动量是否更强",
+   "depth_points": "unknown",
+   "forward_sessions_needed": "unknown",
+   "prior_local_work": {
+    "paths": [],
+    "verdict": "none",
+    "missing_depth": [
+     "未测"
+    ]
+   },
+   "rank": "6（并入 A 的深度点，不单列）",
+   "rank_reason": "把\"杠杆 ETF 规模 x 当日涨跌幅\"当作 A 的条件变量测一次即可；美国证据弱，不单独开线"
+  },
+  {
+   "name": "G. 分钟级配对 / 统计套利 / VWAP 均值回归 / 成交量异常",
+   "mechanism": "相近标的价差回归、偏离 VWAP 回归、异常放量后反应。",
+   "evidence_grade": "无可核验证据（仅零售教程、学生论文、日频图聚类统计套利；外部严谨 OOS 研究显示扣成本后不存活）",
+   "latest_evidence_date": "2025-07",
+   "sources": [
+    {
+     "url": "https://github.com/kttalley/orb-bot",
+     "date": "2026-10-06",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/github-orb-bots.md",
+     "grade": "retail, no record"
+    }
+   ],
+   "gross_edge_bp_per_trade": "unknown",
+   "our_cost_bp_per_trade": "近乎相同 ETF 对的价差 0.1-0.3 bp，但毛边际亚 bp 需要亚秒级；个股对 4 条腿成本 >= 6-20 bp",
+   "cost_source": "local-cost-model-v1",
+   "alpaca_paper_feasible": "unknown",
+   "live_20k_feasible": "unknown",
+   "cheapest_decisive_test": "unknown",
+   "depth_points": "unknown",
+   "forward_sessions_needed": "unknown",
+   "prior_local_work": {
+    "paths": [
+     "dir:sector_residual_reversal_statarb_decay",
+     "dir:etf_constituent_lead_lag_reversion"
+    ],
+    "verdict": "not_executable / refuted（5-10 天窗口；日内版未测）",
+    "missing_depth": [
+     "日内版（会话内回归，每边 <2 bp）未测"
+    ]
+   },
+   "rank": "unranked",
+   "rank_reason": "没有找到任何净成本后的分钟级公开证据；本地外部研究 dir:sector_residual_reversal_statarb_decay 判不可执行（做空腿）；先不分配算力"
+  },
+  {
+   "name": "H. 机器学习 / 大模型做日内信号",
+   "mechanism": "用梯度提升、序列模型或多智能体 LLM 预测分钟到小时级方向。",
+   "evidence_grade": "无可核验证据：公开项目多为预测准确率，无扣成本后的收益；2025-09 起的 QuantHarness 只做 1 小时与 4 小时；一份 2026 年 MNQ 5 分钟 GBM/LSTM 研究（搜索摘要，未打开）称样本外准确率 50.0-50.9% 低于 51.8% 基准",
+   "latest_evidence_date": "2026-07-27",
+   "sources": [
+    {
+     "url": "https://arxiv.org/abs/2509.09995",
+     "date": "2025-09-12 (rev 2026-07-27)",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/quantharness-2025.md",
+     "grade": "preprint"
+    }
+   ],
+   "gross_edge_bp_per_trade": "unknown",
+   "our_cost_bp_per_trade": "unknown",
+   "cost_source": "unknown",
+   "alpaca_paper_feasible": "可在本地数据上训练，不依赖券商",
+   "live_20k_feasible": "unknown",
+   "cheapest_decisive_test": "unknown",
+   "depth_points": "unknown",
+   "forward_sessions_needed": "unknown",
+   "prior_local_work": {
+    "paths": [
+     "reports/research/iterations/mom_minute_r1/decision-record.md",
+     "dir:minute_bar_momentum_multipath",
+     "dir:multiscale_intraday_event_r5"
+    ],
+    "verdict": "partial / refuted",
+    "missing_depth": [
+     "数据为 IEX 非 SIP",
+     "R2 留出窗 102 个交易日功效不足",
+     "R5 无 PIT 事件包，事件路径未执行"
+    ]
+   },
+   "rank": "unranked（研究线，不是 10-10 候选）",
+   "rank_reason": "先要有能扣成本的信号再谈模型；本地 R3 的 ML 挑战者 3 折只赢 1 折；留作 C 的特征提升，不单独开线"
+  },
+  {
+   "name": "I. 加密货币 24 小时日内",
+   "mechanism": "比特币等的时段季节性、日内动量。",
+   "evidence_grade": "无净成本证据（2018-19 年研究称无持续模式；Quantpedia 每日 2 小时持有策略未验证费后表现）",
+   "latest_evidence_date": "2019",
+   "sources": [
+    {
+     "url": "https://docs.alpaca.markets/us/docs/crypto-fees",
+     "date": "current",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/alpaca-crypto-fees.md",
+     "grade": "official"
+    },
+    {
+     "url": "https://quantpedia.com/strategies/intraday-seasonality-in-bitcoin",
+     "date": "2018-19",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/bitcoin-intraday-search.md",
+     "grade": "search summary"
+    }
+   ],
+   "gross_edge_bp_per_trade": "unknown",
+   "our_cost_bp_per_trade": "往返 30 bp（挂单 maker 15 bp x2）到 50 bp（市价 taker 25 bp x2），第 1 档（30 天成交 <$10 万）；Alpaca 加密只做多（I-20261005-04）",
+   "cost_source": "alpaca-crypto-fees",
+   "alpaca_paper_feasible": "技术上可，但每笔需要 >50 bp 毛边际",
+   "live_20k_feasible": "unknown",
+   "cheapest_decisive_test": "unknown",
+   "depth_points": "unknown",
+   "forward_sessions_needed": "unknown",
+   "prior_local_work": {
+    "paths": [
+     "reports/research/intel/I-20261005-04-crypto-extended-overnight.md"
+    ],
+    "verdict": "日频同族不过 K1；日内未测",
+    "missing_depth": [
+     "日内版从未测，但成本使其无意义"
+    ]
+   },
+   "rank": "unranked（做不了）",
+   "rank_reason": "日内毛边际远低于 30-50 bp 往返成本；本地已测 13 个日频同族候选全不过"
+  },
+  {
+   "name": "J. 做市 / 延迟套利 / 订单簿失衡 / 需要期货的版本（NQ 确认过滤器）",
+   "mechanism": "提供流动性或抢先于慢报价；NQ 期货 09:25 确认 ORB 入场。",
+   "evidence_grade": "实践者证据：需要托管、深度行情、微秒延迟",
+   "latest_evidence_date": "2026-09-18",
+   "sources": [
+    {
+     "url": "https://github.com/giovannibrusco/zarattini-2023-orb-qqq",
+     "date": "undated",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/github-giovannibrusco-orb-qqq.md",
+     "grade": "third-party"
+    }
+   ],
+   "gross_edge_bp_per_trade": "n/a",
+   "our_cost_bp_per_trade": "n/a",
+   "cost_source": "n/a",
+   "alpaca_paper_feasible": "no",
+   "live_20k_feasible": "no",
+   "cheapest_decisive_test": "unknown",
+   "depth_points": "unknown",
+   "forward_sessions_needed": "unknown",
+   "prior_local_work": {
+    "paths": [
+     "dir:true_hft_market_making",
+     "dir:orb_futures_confirmation_filter"
+    ],
+    "verdict": "not_executable",
+    "missing_depth": [
+     "不适用：条件不满足而非深度不足"
+    ]
+   },
+   "rank": "unranked（做不了）",
+   "rank_reason": "Alpaca 不提供期货；免费行情只有 IEX 且最多 30 个订阅；调度粒度是分钟；NQ 过滤器的唯一代理（QQQ 盘前 K 线）是安慰剂（t 1.27）"
+  },
+  {
+   "name": "K. SPX 0DTE 日内期权版（Concretum 2026-09）",
+   "mechanism": "用 0DTE 期权替换 SPY 的日内趋势暴露，获得凸性。",
+   "evidence_grade": "作者自述，付费墙；样本 2007-2026-08，SPY 突破模型 CAGR 20.8%、夏普 1.20（期权版细节不可见）",
+   "latest_evidence_date": "2026-09-25",
+   "sources": [
+    {
+     "url": "https://concretumgroup.substack.com/p/intraday-trend-following-with-0dte",
+     "date": "2026-09-25",
+     "snapshot": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-0dte-2026-09.md",
+     "grade": "author-reported (paywalled)"
+    }
+   ],
+   "gross_edge_bp_per_trade": "unknown",
+   "our_cost_bp_per_trade": "期权 ORF $0.015/张 + 价差；免费 Basic 计划只有指示性期权报价",
+   "cost_source": "alpaca-fee-schedule",
+   "alpaca_paper_feasible": "部分：Level 3 多腿单可下，但多腿不支持括号单，需要 OPRA 付费数据才能定价决策",
+   "live_20k_feasible": "unknown",
+   "cheapest_decisive_test": "unknown",
+   "depth_points": "unknown",
+   "forward_sessions_needed": "unknown",
+   "prior_local_work": {
+    "paths": [
+     "reports/research/intel/I-20260924-01-alpaca-options-feasibility.md",
+     "reports/research/intel/I-20261004-10-options-vrp-depth.md"
+    ],
+    "verdict": "unknown",
+    "missing_depth": [
+     "未测"
+    ]
+   },
+   "rank": "unranked（暂不做）",
+   "rank_reason": "机主不买数据；先把 A 的标的版测清楚再考虑"
+  }
+ ],
+ "prior_tests": [
+  {
+   "id": "h20260923_13_orb_stocks_in_play",
+   "path": "reports/research/iterations/h20260923_13_orb_stocks_in_play/",
+   "tested": "多股票 ORB：只多 SIP01/SIP02、多空 SIP03 保真诊断；随机方向 RD 与随机流动股 RL 对照各 10 种子",
+   "versions": "3 个候选 x 2 种止损成交 x 5 档成本；设计窗口 2016-2022 未跑",
+   "cost_basis": "每边 5/10/20 bp 平价 + 佣金；做空含借券",
+   "death": "选择窗 -27.1%/-19.7%/年，输给 RL 对照；结果取决于止损成交语义（晚一根时 -2.2%/-7.6%，2026 窗 +23%/+2.4%）",
+   "missing": [
+    "1 复现原文（设计窗口 2016-2022 未跑）",
+    "3 规模曲线（前 20 固定，无流动性分桶）",
+    "2 忠实度部分：标的池来自当前在市股票"
+   ]
+  },
+  {
+   "id": "dir:orb_etf_opening_range_breakout",
+   "path": "reports/research/hypotheses/H-20260918-02-intraday-orb-and-intraday-momentum-etf.md",
+   "tested": "QQQ/SPY/TQQQ/SPXL 开盘区间突破，含入场时刻移位与随机方向安慰剂",
+   "versions": "数个 ETF x 入场时刻",
+   "cost_basis": "每边 10/20 bp 平价（对 ETF 偏高）",
+   "death": "随机方向安慰剂拿到 92.7-92.9% 的收益；10:05/10:35 入场不输 9:35：残差是日内 beta",
+   "missing": [
+    "3 规模曲线较窄",
+    "与 Concretum 2026-07 自我修正（SPY 朴素版 CAGR 1.0%）一致，可认为 ETF 单标的版本已到足够深度"
+   ]
+  },
+  {
+   "id": "dir:spy_noise_band_intraday",
+   "path": "reports/research/hypotheses/H-20260922-07-spy-intraday-momentum.md",
+   "tested": "噪声带 + VWAP 跟踪止损，两种退出语义",
+   "versions": "2 个",
+   "cost_basis": "论文口径 $0.0045/股，每边 0.06-0.25 bp",
+   "death": "2.2%/年、夏普 0.30，留出窗 682 天；VWAP 止损净负贡献；随机方向安慰剂 80% 种子打赢",
+   "missing": [
+    "1 复现原文（本地 0.30 vs 论文基础版 0.61，差距未解释；无 2007-2015 分钟线）",
+    "2 波动率定量 + 4 倍上限、VIX 校准带未实现",
+    "3 只有 SPY，无规模曲线",
+    "5 功效：0.9 bp/天需要约 17,000 天"
+   ]
+  },
+  {
+   "id": "dir:single_etf_intraday_momentum_cost_adjusted",
+   "path": "goal_first_w5_qqq_momentum / goal-first Q3",
+   "tested": "SPY/QQQ 日内动量，18 个参数组合",
+   "versions": "18（有效 N=3）",
+   "cost_basis": "成本调整，口径见档案",
+   "death": "无净成本后信号，0/36 候选可晋级",
+   "missing": [
+    "1 复现",
+    "3 规模曲线"
+   ]
+  },
+  {
+   "id": "dir:minute_bar_momentum_multipath",
+   "path": "reports/research/iterations/mom_minute_r1..r4/",
+   "tested": "QQQ 信号/TQQQ 暴露 30 分钟与 1 小时动量；ML 挑战者；6 策略虚拟组合",
+   "versions": "R1 28 组合（已撤回）；R2 9 组合；R3 两个 ML；R4 6 策略",
+   "cost_basis": "Wave 9.2 基础成本及 2 倍",
+   "death": "partial：R2 通过留出窗但落后 12-1 动量与 TQQQ 持有；R3 只赢 1/3 折",
+   "missing": [
+    "数据只有 IEX，没有 SIP",
+    "5 功效：留出窗只有 102 个交易日",
+    "3 深度点"
+   ]
+  },
+  {
+   "id": "dir:multiscale_intraday_event_r5",
+   "path": "reports/research/iterations/mom_multiscale_event_r5/",
+   "tested": "九个 30 分钟市场/行业/个股候选 + 文件/新闻/电话会事件叠加",
+   "versions": "9 + 4（事件路径跳过）",
+   "cost_basis": "每边 5/10/20 bp",
+   "death": "没有候选过全部冻结门槛，安慰剂未通过；事件路径无 PIT 历史包而未执行",
+   "missing": [
+    "数据：需要独立的合并行情对账",
+    "3 深度点",
+    "事件路径从未执行（不是否定）"
+   ]
+  },
+  {
+   "id": "dir:nasdaq_long_short_event_router_1m",
+   "path": "h20260929_36_router_sip",
+   "tested": "纳指多空事件路由，1 分钟，SIP",
+   "versions": "冻结路由，1 个",
+   "cost_basis": "每边 10/20 bp",
+   "death": "188 笔，R0 夏普 -0.126；打败 200 次随机的 89%",
+   "missing": [
+    "5 功效：188 笔",
+    "3 空头排序与多头同名单",
+    "成本未用实测"
+   ]
+  },
+  {
+   "id": "dir:cross_sectional_gap_fade",
+   "path": "reports/research/iterations/t20260929_32_gap_fade_ls/ 与 t20260930_11_gap_fade_auction/",
+   "tested": "隔夜缺口横截面回补，多空，ADV 四档，官方竞价价",
+   "versions": "8 组合 + 400 行竞价抽样",
+   "cost_basis": "AR 价差 + 分档借券；竞价 E_off 7.09 bp 对 8 bp 门槛",
+   "death": "方向真实（安慰剂 100% 种子输），但 1 天往返无法承担成本；E_off 90% 区间 [-2.1, 16.0] 跨过门槛",
+   "missing": [
+    "5 功效：门槛落在区间内，E_bar 标准误 6.4 bp 未计入，报告自称\"不是有统计力度的证伪\"",
+    "3 只测了 1 天往返；多天持有未测",
+    "档位只有 T1-T3"
+   ]
+  },
+  {
+   "id": "dir:smallcap_gap_down_fade_auction_execution",
+   "path": "reports/research/iterations/t20260930_12_smallcap_gap_auction/",
+   "tested": "$5-20M 日成交额小盘缺口多头，开盘竞价买入收盘竞价卖出",
+   "versions": "12 格 x 3 种数据口径",
+   "cost_basis": "未扣成本（毛边际测试）",
+   "death": "-5.4 bp/天（t -1.03）；仅 35% 的池行在 09:11 前有盘前报价",
+   "missing": [
+    "数据面：免费 IEX 没有小盘盘前实时价，买 SIP 也救不了（X0 同样失败）",
+    "K5 非判定格 +11.4 bp（t 1.46）未到门槛，属探索"
+   ]
+  },
+  {
+   "id": "dir:intraday_same_slot_periodicity",
+   "path": "reports/research/iterations/t20260930_13_intraday_periodicity/",
+   "tested": "HKS 同时段延续，收盘与开盘半小时，一腿走竞价",
+   "versions": "12 候选（2 判定格）",
+   "cost_basis": "1 倍/2 倍实测价差 + 冻结 10/20 bp；A2 可成交报价口径",
+   "death": "交易价毛边际 17.1 bp/天（t 15.7）但可成交口径 -13.65 bp（30 个种子日）；分红调整基准差异造成约 1% 假边际",
+   "missing": [
+    "3 池只有 P1500/P500，没有最流动前 100-200 只与 ETF",
+    "1 未复现 HKS 原文窗口（2001-2005）",
+    "价格口径需统一重测"
+   ]
+  },
+  {
+   "id": "dir:overnight_intraday_gap_retail_pwb",
+   "path": "overnight_only_spy/qqq",
+   "tested": "SPY/QQQ 只做隔夜",
+   "versions": "2",
+   "cost_basis": "每边 10/20 bp（对 ETF 竞价成交偏高）",
+   "death": "夏普 -3.99/-2.45",
+   "missing": [
+    "成本合同错配（ETF 竞价成本 <1 bp）",
+    "3 成本曲线 0.5/1/2/3 bp 未做（T-36 已预注册）"
+   ]
+  },
+  {
+   "id": "dir:monday_afternoon_reversal_index_timing",
+   "path": "monday_afternoon_spy/qqq",
+   "tested": "周一收盘对开盘代理的指数周度择时",
+   "versions": "2",
+   "cost_basis": "10/20 bp",
+   "death": "SPY 夏普 0.51、压力 -0.07",
+   "missing": [
+    "2 忠实度：论文用 12:00 对开盘，本地用代理；现在分钟线可以做字面信号",
+    "论文是截面多空，本地改成单指数"
+   ]
+  },
+  {
+   "id": "dir:end_of_day_reversal + dir:signed_jump_variation + dir:intraday_reversal_reit_pwb",
+   "path": "registry only",
+   "tested": "无",
+   "versions": "0",
+   "cost_basis": "-",
+   "death": "挂起：理由\"需要 Modal 分钟面板\"（29G 原始分钟档）",
+   "missing": [
+    "全部：从未检验；阻塞已过时，只读 15:00-16:00 或 09:30-10:00 小段即可"
+   ]
+  },
+  {
+   "id": "dir:high_freq_news_return_underreaction_drift",
+   "path": "registry only",
+   "tested": "高频新闻方向反应漂移，2024-2026 美股前 3000",
+   "versions": "3 张预注册卡",
+   "cost_basis": "IC 检验，无成本",
+   "death": "秩 IC -0.005（t -0.9），20,448 事件",
+   "missing": [
+    "新闻时间戳质量（reopen_if：通讯社早时间戳）"
+   ]
+  },
+  {
+   "id": "dir:etf_constituent_lead_lag_reversion",
+   "path": "T-20260929-37",
+   "tested": "ETF 暴跌日成分股落后者，持有 5/10 天",
+   "versions": "5 本",
+   "cost_basis": "低换手",
+   "death": "0/5 过 K1/K2/watch_recent",
+   "missing": [
+    "日内（分钟）版未测：reopen_if 写明每边 <2 bp 时可重开"
+   ]
+  },
+  {
+   "id": "dir:true_hft_market_making + dir:sector_residual_reversal_statarb_decay + dir:closing_auction_imbalance_signal + dir:extended_hours_earnings_post_announcement_drift + dir:cn_sellside_hf_factors + dir:realized_skewness_weekly",
+   "path": "registry only",
+   "tested": "无本地检验",
+   "versions": "0",
+   "cost_basis": "-",
+   "death": "不可执行（做市）/ 做空腿（统计套利）/ 无免费失衡数据 / 盘后价差 58 bp / 仅 A 股证据 / 已衰减",
+   "missing": [
+    "做市与统计套利：条件不满足而非深度不足；其余证据太弱未分配算力"
+   ]
+  }
+ ],
+ "not_doable": [
+  "做市 / 延迟套利 / 订单簿失衡：无深度行情、无托管、调度只到分钟",
+  "NQ 期货确认过滤器：Alpaca 无期货；QQQ 盘前 K 线代理是安慰剂（t 1.27）",
+  "加密日内：往返 30-50 bp，且 Alpaca 加密只做多",
+  "开盘竞价腿在模拟盘：不进竞价，无法验证",
+  "小盘盘前信号：免费 IEX 无小盘盘前实时价，买 SIP 也不救（X0 失败）",
+  "0DTE/多腿期权日内：多腿不支持括号单，OPRA 实时数据要付费，机主不买数据"
+ ],
+ "unresolved": [
+  "A：本地 Sharpe 0.30 与论文基础版 0.61 的差距原因",
+  "A/B/C 的 SPY 与 mega-cap 半价差未实测（D4 最流动档中位 adv_rank 152，ETF 与前 100 没采样）",
+  "B：IEX 相对成交量排序与 SIP 排序的相关性",
+  "B：Alpaca 模拟盘止损单实际成交行为",
+  "Alpaca 交易 API 200 次/分钟的官方出处；FINRA TAF 费率（Alpaca 模板写 $0）",
+  "C：模拟盘 cls 单是否撮合",
+  "Concretum 2026-07/09 的 SPY 日内结果全在付费墙内，无法核对样本和成本",
+  "reddit 渠道 0 结果，QuantConnect 论坛与 X 未覆盖；没有找到任何带可核验实盘记录的日内公开账户"
+ ]
+}
