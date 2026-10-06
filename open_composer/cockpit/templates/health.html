@@ -104,7 +104,7 @@
 {% if loop.first %}<div class="section">Log tails</div>{% endif %}
 <details class="more">
   <summary><span class="mono">{{ job.name }}</span></summary>
-  <pre class="card md mono" style="white-space: pre-wrap; overflow-wrap: anywhere;">{{ job.logs[0].tail_snippet }}</pre>
+  <pre class="card md mono"{% if job.logs[0].tail_has_cjk %} lang="zh"{% endif %} style="white-space: pre-wrap; overflow-wrap: anywhere;">{{ job.logs[0].tail_snippet }}</pre>
 </details>
 {% endfor %}
 {% endblock %}

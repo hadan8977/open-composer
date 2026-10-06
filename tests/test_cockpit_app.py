@@ -495,3 +495,22 @@ def test_create_app_warm_false_never_starts_the_thread() -> None:
     create_app(warm=False)
     assert APP_MODULE._WARM_THREAD_STARTED is False
     assert not any(t.name == APP_MODULE._WARM_THREAD_NAME for t in threading.enumerate())
+
+
+def test_log_tail_quoting_chinese_is_marked_as_content() -> None:
+    from open_composer.cockpit.data.health import CronLogStatus
+
+    def status(tail: str | None) -> CronLogStatus:
+        return CronLogStatus(
+            path="logs/owner_report.log",
+            exists=True,
+            mtime=None,
+            size_bytes=1,
+            has_error_marker=False,
+            tail_snippet=tail,
+            status="ok",
+        )
+
+    assert status("2026-10-06T00:50:05Z [Open Composer] 日报 10-06（周二）").tail_has_cjk
+    assert not status("sent to 1 recipient(s)").tail_has_cjk
+    assert not status(None).tail_has_cjk

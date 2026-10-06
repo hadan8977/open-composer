@@ -44,6 +44,7 @@ Status = Literal["ok", "warn", "stale", "unknown"]
 # -- this is a `seek()` from the end, never a full read of a log that could be
 # many MB after months of cron runs.
 _LOG_TAIL_BYTES = 8_000
+_CJK_RE = re.compile(r"[\u3400-\u9fff\uf900-\ufaff]")
 
 _ERROR_MARKER_RE = re.compile(r"(?i)\b(traceback|error|exception|failed|fatal)\b")
 
@@ -74,6 +75,12 @@ class CronLogStatus:
     has_error_marker: bool
     tail_snippet: str | None  # already secret_scrub'd; last _LOG_TAIL_BYTES, best-effort decode
     status: Status
+
+    @property
+    def tail_has_cjk(self) -> bool:
+        """The tail quotes Chinese text (the owner report log prints each e-mail's subject).
+        The template then marks it ``lang="zh"``: verbatim log content, not English UI chrome."""
+        return bool(self.tail_snippet and _CJK_RE.search(self.tail_snippet))
 
 
 @dataclass(frozen=True)
