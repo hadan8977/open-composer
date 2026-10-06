@@ -287,6 +287,36 @@ def test_double_shifted_acceptance_matches_edgar_examples() -> None:
         assert got.tz_localize(None) == pd.Timestamp(want)
 
 
+def test_true_utc_acceptance_on_fixed_table_row() -> None:
+    # fixed-table rows (acceptance_source=edgar_index): value is the true UTC instant
+    cases = [
+        ("2025-03-19T11:10:04Z", "2025-03-19 07:10:04"),  # EDT
+        ("2025-06-25T20:03:10Z", "2025-06-25 16:03:10"),  # EDT
+        ("2025-02-21T00:08:00Z", "2025-02-20 19:08:00"),  # EST
+        ("2025-01-30T11:45:25Z", "2025-01-30 06:45:25"),  # EST
+    ]
+    out = pm.eastern_from_true_utc(pd.Series([c[0] for c in cases]))
+    for got, (_, want) in zip(out, cases, strict=True):
+        assert got.tz_localize(None) == pd.Timestamp(want)
+
+
+def test_match_corrected_reads_fixed_table_as_true_utc() -> None:
+    events = pd.DataFrame({"ticker": ["AAA"], "slug_date": [date(2026, 10, 6)]})
+    earnings = pd.DataFrame(
+        {
+            "ticker": ["AAA"],
+            "cik": ["1"],
+            "accession": ["a1"],
+            "acceptance_utc": ["2026-10-06T20:05:00Z"],  # 16:05 EDT
+            "items": ["2.02"],
+        }
+    )
+    out = pm.match_announcements(events, earnings)
+    assert out.loc[0, "acceptance_et"].tz_localize(None) == pd.Timestamp("2026-10-06 16:05:00")
+    old = pm.match_announcements(events, earnings, mode="double_shifted")
+    assert old.loc[0, "acceptance_et"].tz_localize(None) != pd.Timestamp("2026-10-06 16:05:00")
+
+
 def test_parse_accepted_and_fetch_with_cache_and_retry() -> None:
     page = '<div class="infoHead">Accepted</div> <div class="info">2025-03-19 07:10:04</div>'
     assert pm.parse_accepted(page) == et_ts("2025-03-19 07:10:04")

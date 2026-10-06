@@ -250,6 +250,16 @@ def eastern_wall_clock(acceptance: pd.Series) -> pd.Series:
     return wall.dt.tz_localize(ET, ambiguous=False, nonexistent="shift_forward")
 
 
+def eastern_from_true_utc(acceptance: pd.Series) -> pd.Series:
+    """Eastern time of ``acceptance_utc`` read as a true UTC instant.
+
+    Valid for the earnings_events table rebuilt by T-20261004-52 (EDGAR index time, column
+    ``acceptance_source``). Use ``eastern_from_double_shifted`` only for the pre-fix backup in
+    ``data/live/backup-features-20261004/earnings_events``.
+    """
+    return pd.to_datetime(acceptance, utc=True).dt.tz_convert(ET)
+
+
 def eastern_from_double_shifted(acceptance: pd.Series) -> pd.Series:
     """Recover the true Eastern acceptance time from ``acceptance_utc`` in the 8-K table.
 
@@ -288,10 +298,16 @@ def match_announcements(
     """Nearest 8-K item 2.02 within +/-2 calendar days of the slug date, by ticker.
 
     ``mode="literal"`` reads the table value as Eastern wall-clock (the frozen wording);
-    ``mode="corrected"`` undoes the double shift found against EDGAR.
+    ``mode="corrected"`` (default) reads the fixed table's ``acceptance_utc`` as true UTC;
+    ``mode="double_shifted"`` undoes the old double shift (pre-fix backup table only).
     """
+    converters = {
+        "literal": eastern_wall_clock,
+        "corrected": eastern_from_true_utc,
+        "double_shifted": eastern_from_double_shifted,
+    }
     items = earnings[earnings["items"].astype(str).str.contains(r"(?:^|,)2\.02(?:,|$)")].copy()
-    convert = eastern_wall_clock if mode == "literal" else eastern_from_double_shifted
+    convert = converters[mode]
     items["acceptance_et"] = convert(items["acceptance_utc"])
     items["acc_date"] = items["acceptance_et"].dt.tz_localize(None).dt.normalize()
     by_ticker = {k: g for k, g in items.groupby("ticker")}
