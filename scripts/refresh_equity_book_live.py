@@ -35,6 +35,13 @@ those symbols: split-type or row-count-changing records detected after the build
 partition this day replaced, for that year.  Backups are taken once per day, so a repeated run
 keeps the pre-day files and their build times.
 
+Value columns built from a price table's levels (``values_follow``: ``short_interest`` divides by
+``dollar_adv_63 / close`` of ``daily``) inherit that table's two zones: the gate stops at the strict
+cut (the vendor revises the latest sessions' volume; on 2026-10-05, 2,650 of 2,696 symbols moved by
+a median 2.4e-7 on 10-02), and symbols with any restatement after the price partition was built are
+left out of the changed share (a dividend re-basing moves every adjusted close; the price gate
+compares returns only).
+
 The script uses no broker interface.  ``fetch`` commands of the news/SEC/FINRA collectors talk to
 their public or keyed sources; ``--no-fetch`` skips them.
 """
@@ -115,6 +122,9 @@ class Table:
     link_prior_years: bool = False  # prior-year partitions are *copied* into the staging dir
     monthly: bool = False  # append-only by month_end (see run_monthly_table)
     keys_follow_prices: bool = False  # re-based symbols may add/drop keys (see rebased_symbols)
+    values_follow: str = (
+        ""  # price table whose levels feed value columns (two-zone, see module doc)
+    )
     enabled: bool = True
     note: str = ""
 
@@ -351,6 +361,7 @@ UPSTREAM: tuple[Table, ...] = (
             (*PY, "scripts/collect_finra_short_interest.py", "--stage", "parse"),
         ),
         link_prior_years=True,
+        values_follow="daily",
     ),
     Table(
         "news_attention",
@@ -800,33 +811,51 @@ def restatement_years(records: Sequence[dict], current_year: int) -> list[int]:
     return [y for y in years if y < current_year]
 
 
-def rebased_symbols(
+def _restatements_after(
     partitions: Sequence[tuple[int, datetime]], path: Path | None = None
-) -> list[str]:
-    """Symbols whose price history in a replaced partition changed after it was built.
+) -> list[dict]:
+    """Restatement records detected after the build time of a partition whose year they rewrite.
 
-    ``partitions``: (year, build time) of the partitions being replaced.  A restatement record
-    counts when it was detected after that build time, rewrote that year, and is split-type
-    (``max_rel_diff >= SPLIT_REL_DIFF``) or changed the symbol's row count; small re-basings
-    (dividends) move values, not keys, so they stay out."""
+    ``partitions``: (year, build time) of the partitions being replaced."""
     path = path or SIP_DAILY / "_restatements.jsonl"
     if not partitions or not path.exists():
         return []
-    out: set[str] = set()
+    out = []
     for raw in path.read_text().splitlines():
         try:
             rec = json.loads(raw)
             seen = datetime.fromisoformat(rec["detected_at"])
+            years = {int(y) for y in rec.get("years_rewritten") or []}
         except (ValueError, KeyError, TypeError):
             continue
         seen = seen if seen.tzinfo else seen.replace(tzinfo=UTC)
-        split = float(rec.get("max_rel_diff") or 0.0) >= SPLIT_REL_DIFF
-        if not (split or rec.get("rows_before") != rec.get("rows_after")):
-            continue
-        years = {int(y) for y in rec.get("years_rewritten") or []}
         if any(year in years and seen > built for year, built in partitions):
-            out.add(str(rec["symbol"]))
-    return sorted(out)
+            out.append(rec)
+    return out
+
+
+def rebased_symbols(
+    partitions: Sequence[tuple[int, datetime]], path: Path | None = None
+) -> list[str]:
+    """Symbols whose price history in a replaced partition changed after it was built, by a
+    split-type factor (``max_rel_diff >= SPLIT_REL_DIFF``) or in its row count: the ones that can
+    add or drop keys.  Small re-basings (dividends) move values, not keys, so they stay out."""
+    return sorted(
+        {
+            str(rec["symbol"])
+            for rec in _restatements_after(partitions, path)
+            if float(rec.get("max_rel_diff") or 0.0) >= SPLIT_REL_DIFF
+            or rec.get("rows_before") != rec.get("rows_after")
+        }
+    )
+
+
+def restated_symbols(
+    partitions: Sequence[tuple[int, datetime]], path: Path | None = None
+) -> list[str]:
+    """Symbols with any restatement of a replaced partition after it was built (dividend
+    re-basings included): every adjusted level of theirs may have moved."""
+    return sorted({str(rec["symbol"]) for rec in _restatements_after(partitions, path)})
 
 
 def replaced_partitions(day: date, table: str = "daily_broad") -> list[tuple[int, datetime]]:
@@ -933,6 +962,7 @@ def check_command(
     out: Path,
     allow_new: Path | None = None,
     allow_old: Path | None = None,
+    exclude: Path | None = None,
 ) -> list[str]:
     """``check_feature_invariance.py`` argv for one table (two-zone rule for price tables)."""
     cmd = [
@@ -955,6 +985,8 @@ def check_command(
         cmd += ["--allow-only-new", str(allow_new)]
     if allow_old is not None:
         cmd += ["--allow-only-old", str(allow_old)]
+    if exclude is not None and table.check != "price":
+        cmd += ["--exclude-symbols", str(exclude)]
     if table.check == "price":
         cmd += [
             "--columns",
@@ -1187,6 +1219,13 @@ def run_upstream_table(
     if table.check != "none" and had_old and new.exists():
         old_dates = _dates_of(backup, table.date_col)
         cut = strict_cut(old_dates) if table.check == "price" else max(old_dates)
+        if table.values_follow and cut is not None:
+            zone = strict_cut(old_dates)
+            if zone is not None and zone < cut:
+                log.info(
+                    "%s: gate stops at %s (two zones of %s)", table.name, zone, table.values_follow
+                )
+                cut = zone
         if cut is not None and member_cut is not None and member_cut < cut:
             log.info(
                 "%s: gate stops at %s (new month end re-members later rows)", table.name, member_cut
@@ -1214,11 +1253,23 @@ def run_upstream_table(
                         len(entrants),
                         len(rebased),
                     )
+            exclude = None
+            if table.values_follow:
+                restated = restated_symbols(replaced_partitions(day, table.values_follow))
+                if restated:
+                    exclude = report.with_name(f"exclude_{table.name}.txt")
+                    exclude.write_text("\n".join(restated) + "\n")
+                    log.info(
+                        "%s: %d symbols restated in %s left out of the changed share",
+                        table.name,
+                        len(restated),
+                        table.values_follow,
+                    )
             rc = run_command(
                 Step(
                     f"up:{table.name}",
                     "check",
-                    check_command(table, backup, new, cut, report, allow_new, allow_old),
+                    check_command(table, backup, new, cut, report, allow_new, allow_old, exclude),
                 ),
                 runner,
             )

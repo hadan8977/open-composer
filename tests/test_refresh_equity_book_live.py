@@ -515,6 +515,7 @@ def _restatement_log(path: Path) -> Path:
         _restatement("E", "2026-10-05T22:00:04+00:00", 7.0, [2026]),
         _restatement("F", "2026-10-02T04:13:19.1+00:00", 9.0, [2026]),  # 2026 rebuilt after it
         _restatement("G", "2026-10-05T22:00:04+00:00", 9.0, [2019]),  # year not replaced
+        _restatement("H", "2026-10-05T22:00:04+00:00", 0.004, [2025, 2026]),  # dividend re-basing
         "not json",
     ]
     path.write_text("\n".join(lines) + "\n")
@@ -526,6 +527,8 @@ def test_rebased_symbols_follow_partition_build_times(tmp_path: Path) -> None:
     parts = [(2022, BUILT_2022), (2026, BUILT_2026)]
     assert rf.rebased_symbols(parts, log) == ["A", "C", "E"]
     assert rf.rebased_symbols([(2026, BUILT_2026)], log) == ["E"]
+    assert rf.restated_symbols(parts, log) == ["A", "B", "C", "E", "H"]
+    assert rf.restated_symbols([(2026, BUILT_2026)], log) == ["E", "H"]
     assert rf.rebased_symbols([], log) == []
     assert rf.rebased_symbols(parts, tmp_path / "missing.jsonl") == []
 
@@ -627,3 +630,40 @@ def test_backup_is_taken_once_per_day(tmp_path: Path, monkeypatch) -> None:
     assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
     assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
     assert rf._backup_path(table, 2026, day).read_bytes() == first
+
+
+def test_price_level_columns_use_two_zones_and_leave_restated_symbols_out(
+    tmp_path: Path, monkeypatch
+) -> None:
+    feat = _rebased_setup(tmp_path, monkeypatch)
+    day = date(2026, 10, 5)
+    daily = tmp_path / "backup/2026-10-05/daily/2026.parquet"
+    daily.parent.mkdir(parents=True)
+    daily.write_bytes(b"x")
+    os.utime(daily, (BUILT_2026.timestamp(), BUILT_2026.timestamp()))
+    days = ["2026-09-24", "2026-09-25", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01"]
+    seen: dict[str, list[str]] = {}
+    for name in ("short_interest", "insider_broad"):
+        out = feat / name / "2026.parquet"
+        out.parent.mkdir(parents=True)
+        _nsi_frame([("A", d) for d in [*days, "2026-10-02"]]).to_parquet(out)
+        table = rf.table_by_name(name)
+
+        def runner(argv, _name=name, **_kw):
+            if "check_feature_invariance.py" in " ".join(argv):
+                seen[_name] = list(argv)
+            else:
+                _nsi_frame([("A", d) for d in [*days, "2026-10-02", "2026-10-05"]]).to_parquet(
+                    feat / "_tmp" / _name / "2026.parquet"
+                )
+            return subprocess.CompletedProcess(argv, 0, "", "")
+
+        steps = [s for s in rf.build_plan(day, tables=[table], stages=[]) if s.kind == "run"]
+        assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
+    si = seen["short_interest"]
+    assert si[si.index("--cut") + 1] == "2026-09-29"  # last date minus 3 sessions
+    assert Path(si[si.index("--exclude-symbols") + 1]).read_text().split() == ["E", "H"]
+    plain = seen["insider_broad"]
+    assert plain[plain.index("--cut") + 1] == "2026-10-02"
+    assert "--exclude-symbols" not in plain
+    assert [t.name for t in rf.UPSTREAM if t.values_follow] == ["short_interest"]
