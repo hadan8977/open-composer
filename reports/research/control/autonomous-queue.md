@@ -2388,7 +2388,7 @@
   - 2026-10-06 17:14 UTC 代理交付，交互会话初审：11 张卡、16 条旧检验的缺深度判断、29 个来源快照；没有跑回测、没有下单。结论：没有一个候选有硬证据显示扣成本后赚钱；公开毛边际每笔 3–12 bp，往返成本 ETF 不足 1 bp、开盘个股 9–40 bp；前向几周只能核对成交，确认边际要几百到上万个交易日。排序（按成本最低、通道最近）：噪声带日内动量（SPY、QQQ）；限定流动性的多股票开盘区间突破；收盘窗口反转和同时段延续，旧的停放理由已过时，最值得做深。待核对：日内交易次数限制 2026-06-04 取消的说法（并入 T-17）、SPY 和前 100 大盘股的半价差实测、IEX 和 SIP 的相对成交量排序是否一致。10-07 据此写 T-14、T-15 的简报。
 
 ### T-20261006-13 策略库总清单：151 一书、OSAP、QuantConnect 全量登记，按事先写定的规则选第一批约 50 个
-- status: running（独立 Paseo 代理 54fdcbb5，Sonnet 5.5 high，任务代码即协调码）
+- status: done（交互会话初审通过；第一批的批量合同由 13:07 主审轮在 T-18 写）
 - priority: 1
 - not_before: 无
 - brief: reports/research/control/briefs/T-20261006-13.md
@@ -2397,6 +2397,7 @@
 - done_when: `reports/research/strategy-library/{catalog.json,catalog.md,selection-rule.md,first-batch.json,build_stats.py}` 交付，审核后提交；10-08 前。
 - notes:
   - 2026-10-06 17:10 UTC 交互会话（Opus）登记并派代理。
+  - 2026-10-06 17:19 UTC 代理交付，交互会话初审：catalog.json 共 694 行（151 一书 175、OSAP 331、QuantConnect 83、登记簿补充 105）；能交易 446，本地数据齐 215，一天内能补 255；能交易、数据齐、从没单独测过 97（含一天内能补 131）；测过但没到深度 68；旧否定都没有深度台账。第一批 50 个：美股 42、ETF 8；月频 27、日内 8、事件 8、日频 7；32 个机制族，每族最多 3 个；25 个能进股票多空组合的现成流程，8 个能用批量筛选模板，17 个要新代码。选择规则在看过第一版名单后改过一次（两处定义错误：登记簿 id 写错，停放和证据太弱被当成测过），第一版名单留档 first-batch.v1-superseded.json，selection-rule.md 第 7 节有记录；没有看过任何回测结果。build_stats.py 能逐字重现 catalog.md（md5 相同）。书的全文和网页打包移到仓库外 ~/.local/share/open-composer/source-snapshots/strategy-library-2026-10-06/，manifest 有 sha256。要补的数据：SEC companyfacts 解析出会计科目（一次解锁多条 OSAP 因子）、宏观公告日历；分析师、13F、专利类没有数据，不进筛选。待核对：多腿期权在 Alpaca 只有买入价差有明文，需一次模拟盘探测。
 
 ### T-20261006-14 通用日内策略运行器：把开盘区间突破的模拟下单通道扩成多策略
 - status: blocked（等 T-12 定前几名的接口需求；交互会话 10-07 写简报）
