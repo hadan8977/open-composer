@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import smtplib
 import ssl
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
@@ -76,8 +76,14 @@ def load_mail_config(path: Path | None = None) -> MailConfig:
 
 
 def build_message(
-    config: MailConfig, subject: str, text: str, html: str | None = None
+    config: MailConfig,
+    subject: str,
+    text: str,
+    html: str | None = None,
+    attachments: Sequence[tuple[str, str]] = (),
 ) -> EmailMessage:
+    """Plain text (+ optional HTML alternative); ``attachments`` are
+    ``(filename, utf-8 text)`` pairs sent as ``text/markdown`` files."""
     message = EmailMessage()
     message["From"] = config.sender
     message["To"] = ", ".join(config.recipients)
@@ -87,6 +93,10 @@ def build_message(
     message.set_content(text)
     if html:
         message.add_alternative(html, subtype="html")
+    for filename, body in attachments:
+        message.add_attachment(
+            body.encode("utf-8"), maintype="text", subtype="markdown", filename=filename
+        )
     return message
 
 

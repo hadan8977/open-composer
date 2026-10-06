@@ -13,6 +13,11 @@ from open_composer.notifications.email_smtp import (
     send_message,
 )
 from open_composer.reports import owner_digest as od
+from open_composer.reports.owner_style import (
+    apply_business_names,
+    lint_errors,
+    lint_owner_text,
+)
 
 VIEW = """# 当前判断（常设页）
 
@@ -299,8 +304,8 @@ def test_sleeve_ledger_reads_only_dedicated_ledgers(tmp_path: Path) -> None:
     assert od.load_sleeve_ledger(tmp_path, "missing") == {}
 
 
-def test_render_daily_has_fixed_sections_and_numbers() -> None:
-    text = od.render_digest(_data())
+def test_internal_log_keeps_the_old_sections_and_numbers() -> None:
+    text = od.render_internal_log(_data())
     for heading in (
         "## 需要你处理",
         "## 一、模拟盘",
@@ -318,15 +323,17 @@ def test_render_daily_has_fixed_sections_and_numbers() -> None:
     assert "提交 5 次（研究 3、队列 2）" in text
     subject = od.digest_subject(_data())
     assert subject.startswith("[Open Composer] 日报 10-05（周一）")
-    assert subject.endswith("待处理 0")
+    assert subject.endswith("需要你决定 0")
 
 
 def test_render_weekly_embeds_the_written_report_or_says_it_is_missing() -> None:
     written = od.render_digest(_data(kind="weekly", weekly_text="# 周报 2026-W41\n\n结论。\n"))
     assert written.startswith("# 周报 2026-W41")
-    assert "# 附：一周数据" in written
+    assert "## 附：一周数据（自动生成）" in written
+    assert "见邮件附件" in written
     missing = od.render_digest(_data(kind="weekly"))
-    assert "本周判断未写" in missing
+    assert "本周的文字总结没有写成" in missing
+    assert "本周判断未写" in od.render_internal_log(_data(kind="weekly"))
 
 
 def test_markdown_to_html_renders_tables_and_nested_lists() -> None:
@@ -431,7 +438,122 @@ def test_a_bullet_ending_in_a_colon_takes_its_first_nested_bullet() -> None:
 
 def test_weekly_lists_section_titles_only_and_caps_the_task_list() -> None:
     many = tuple(od.TaskLine(f"T-202610{i:02d}-01", f"任务 {i}", "done") for i in range(40))
-    text = od.render_digest(_data(kind="weekly", done_tasks=many))
+    text = od.render_internal_log(_data(kind="weekly", done_tasks=many))
     assert "live 目录验收（T-22）" not in text  # bullets are daily-only
     assert "v1.2 live 数据验收" in text
     assert "……另 10 项" in text
+
+
+# ---------------------------------------------------------------------------
+# Owner-facing body (2026-10-06 rewrite)
+# ---------------------------------------------------------------------------
+
+OWNER_TRACK = {
+    **LIVE_TRACK,
+    "owner_decisions": [
+        {"item": "实盘资金是否按约 2 万美元设计", "due": "2026-10-10", "default": "按 2 万美元"},
+    ],
+    "owner_asks": [
+        {
+            "asked": "2026-10-06",
+            "topic": "必须做高频策略",
+            "answer": "先调研再做（T-20261006-12）",
+            "next": "10-10 前上模拟盘",
+            "due": "2026-10-10",
+            "status": "进行中",
+        }
+    ],
+}
+
+
+def _named_sleeves() -> tuple[od.SleeveRow, ...]:
+    row = _sleeve(
+        "S3 · Levered rotation",
+        [(day, 15000.0 + 20.0 * i) for i, day in enumerate(SESSIONS)],
+        start=SESSIONS[0],
+    )
+    return (od.SleeveRow(**{**row.__dict__, "name": "us_etf_levered_rotation_63_top2_monthly"}),)
+
+
+def test_daily_body_is_the_written_report_plus_the_attachment_pointer() -> None:
+    written = "# Open Composer 日报 · 10-07\n\n## 一、结论\n\n1. S3 今天涨了。\n"
+    text = od.render_digest(_data(daily_text=written, daily_path="reports/owner/daily/x.zh.md"))
+    assert text.startswith("# Open Composer 日报 · 10-07")
+    assert "杠杆轮动 今天涨了" in text  # fixed codes get their business name
+    assert "## 附：证据（不必读）" in text and "见邮件附件" in text
+    assert "## 四、自动轮汇报" not in text
+
+
+def test_daily_fallback_has_business_names_and_passes_the_lint() -> None:
+    data = _data(sleeves=_named_sleeves(), live_track=OWNER_TRACK)
+    text = od.render_digest(data)
+    assert "今天的文字总结没有按时写成" in text
+    assert "| 杠杆轮动 |" in text and "能源（XLE）50%" in text
+    assert "市场中性账户" in text and "还没有开始交易" in text
+    assert "| 实盘资金是否按约 2 万美元设计 | 10-10 | 按 2 万美元 |" in text
+    assert "先调研再做" in text and "T-20261006-12" not in text
+    assert lint_errors(text) == []
+
+
+def test_problem_items_leave_out_quota_gate_and_probe_noise() -> None:
+    health = _data().health
+    noisy = _data(
+        health=od.HealthInfo(
+            **{
+                **health.__dict__,
+                "cron_problems": (
+                    "round_limit_gate.py（日志末尾有报错）",
+                    "book_paper_cls_probe.py（日志末尾有报错）",
+                ),
+                "gate_paused": ("38928f29",),
+                "gate_limits": ("five_hour",),
+            }
+        )
+    )
+    assert od.problem_items(noisy) == []
+    real = _data(
+        health=od.HealthInfo(
+            **{**health.__dict__, "cron_problems": ("run_daily_paper_cycle.py（日志末尾有报错）",)}
+        )
+    )
+    assert od.problem_items(real) == ["交易或行情相关的定时任务有 1 个报错，正在处理，明细见附件。"]
+
+
+def test_lint_flags_codes_paths_and_long_brackets_but_not_the_appendix() -> None:
+    text = (
+        "# 日报\n\n- T75 和 T-20261005-31 完成，S3 的权重按 v1.2 定。\n"
+        "- 见 `reports/x.md`"
+        "（这是一段超过三十个字的括号说明，只有我们自己需要知道的内部处理细节）。\n"
+        "\n## 附：证据\n\n- `reports/research/intel/I-20261004-03-x.md`，T-20261005-31\n"
+    )
+    findings = lint_owner_text(text)
+    errors = {(f.kind, f.text) for f in findings if f.level == "error"}
+    assert ("任务编号", "T75") in errors
+    assert ("任务或档案编号", "T-20261005-31") in errors
+    assert ("策略或计划代号", "S3") in errors and ("版本代号", "v1.2") in errors
+    assert any(kind == "代码或路径" for kind, _ in errors)
+    assert any(f.kind == "括号里的长说明" for f in findings)
+    assert all(f.line <= 4 for f in findings)  # nothing from the appendix
+
+
+def test_apply_business_names_stops_at_the_appendix() -> None:
+    text = "S1、C2 和 v1.2 F1；quant2\n## 附：证据\nS1 路径\n"
+    out = apply_business_names(text)
+    assert out.splitlines()[0] == "行业轮动、月末效应 和 股票多空（市场中性）；SPY 增强账户"
+    assert out.splitlines()[-1] == "S1 路径"
+    assert "XS1" in apply_business_names("XS1") and "S10" in apply_business_names("S10")
+
+
+def test_build_message_attaches_markdown(tmp_path: Path) -> None:
+    env = tmp_path / "mail.env"
+    env.write_text(
+        "SMTP_HOST=smtp.example.com\nSMTP_PORT=587\nSMTP_USER=a@example.com\n"
+        "SMTP_PASSWORD=pw\nMAIL_FROM=a@example.com\nMAIL_TO=a@example.com\n",
+        encoding="utf-8",
+    )
+    config = load_mail_config(env)
+    message = build_message(config, "s", "正文", "<p>正文</p>", [("运行记录.md", "# 记录\n")])
+    parts = list(message.iter_attachments())
+    assert len(parts) == 1
+    assert parts[0].get_filename() == "运行记录.md"
+    assert parts[0].get_content_type() == "text/markdown"

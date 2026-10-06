@@ -1951,6 +1951,7 @@
 - done_when: 预注册冻结，执行轮跑完，主审给出保留或否定；否定的写进 directions.jsonl。**10-14 前**。
 - notes:
   - 2026-10-04 18:17 UTC 交互会话（Opus）登记。
+  - 2026-10-06 17:10 UTC 交互会话（Opus）：G1（拓扑和相关结构）由 T-20261006-20 取代，G2（路径签名）并入 T-20261006-19，G3（随机矩阵）作为风险模型基线在 T-19 采用。本任务保持 hold，不再单独执行。
 
 ### T-20261004-78 调研：顶级量化机构的公开分享和竞赛冠军方案（机主上传的 Jane Street AI 手册的延伸）
 - status: running（独立 Paseo 代理 394eace8，Sonnet 5.5 high，协调码 R1004-T78）
@@ -2247,6 +2248,7 @@
   - 2026-10-05 06:52 UTC 交互会话（Opus）登记。
 - notes: 2026-10-05 22:30 UTC 执行轮（sonnet-high 子代理 R1005-T39，30 次调用，只做 A 批）：(1) 日报第三节新增“前向对预期”表（S1/S2/S3/C2/V12F1/V12F2：前向会话数、z、夏普、概率夏普、95% 所需会话数、进度；C2 只有 5 个会话写“样本不足”，V12F1/F2 记录里无前向会话写“缺”）；(2) 日报第二节新增 v1.2 每日动作表（10-07 起；现在写“未开始”，填充路径只靠单测覆盖，真实数据未验）。新建 `open_composer/reports/owner_forward.py`、`tests/test_owner_forward.py`、`reports/research/program/report-v3-2026-10-08/preview-daily-A.md`；改 `open_composer/reports/owner_digest.py`（DigestData +2 字段）、`docs/owner-reporting.zh.md`（第 4 节 +2 条）。ruff 过，tests/test_owner_forward.py + owner_digest 相关测试 29 过；未跑全量 pytest 和 oc repo check --strict。偏离：summary.json 没有概率夏普和最短记录长度，子代理用 Bailey–López de Prado 公式补算（夏普取自 JSON，S1 4.54）。S1 概率夏普 86%/所需 24 会话/进度 45%；S2 94%/12/92%；S3 61%/353/3%。B 批（风险和暴露、统计信封，10-08 00:50 前）和 C 批（首屏改版，10-08 12:00 前）仍为 ready 待取。待主审。
 - notes: 2026-10-06 01:22 UTC 01:07 主审轮（Opus）审核 A 批：v1.2 每日动作表接受；前向对预期表有方法缺陷，已在本轮修正。缺陷：概率夏普和"95% 所需会话"用前向 11 天的观测夏普算（S2 年化 9.03 → 只需 12 个会话、进度 92%），而 T-70 的 summary.json 自己把这段标为 sharpe_meaningful=false，简报也写了"不重算口径、不补数"；11 天的年化夏普标准误约 4.8，这个进度会让机主以为 S2 快被证实了。10-06 00:50 的日报已经带着这张表发出（logs/owner-report/daily-2026-10-06.md 第 79 行），本轮汇报里更正。修正（owner_forward.py、tests/test_owner_forward.py、docs/owner-reporting.zh.md 第 55 行）：所需会话改按回测近期夏普（summary.json backtest_recent 的均值和标准差，正态矩，是下限）算，现为 S1 250、S2 159、S3 184、C2 163，进度 3–7%；记录标为不具意义时不给夏普和概率夏普。测试 31 个通过。T-38（L2 草案）会把所需会话换成按 DSR 打折的先验，届时这一列改读 T-38。B、C 批仍 ready。preview-daily-A.md 是修正前的预览，不再代表现行输出。
+  - 2026-10-06 17:10 UTC 交互会话（Opus）：机主 10-06 要求日报彻底重构，本任务 C 部分的首屏方案作废，由 T-20261006-11 取代（撰写稿正文 + 逐轮记录附件 + 内部代号检查）。A、B 批的数据表保留在附件和撰写稿里使用。
 
 ### T-20261005-40 项目笔记的骨架和生成脚本（六个旗舰项目）
 - status: ready（定时执行轮可取）
@@ -2356,3 +2358,121 @@
 - done_when: 主审轮写好简报并加 brief 字段后，由执行轮按简报交付。
 - notes:
   - 2026-10-06 14:15 UTC 10-06 13:07 主审轮（Opus，P6）登记。依赖 T-20261005-33 的 cron 已装；没装就顺延，并在汇报里写明少了多少天。
+
+### T-20261006-11 机主日报重构：业务语言、正面回答问题、逐轮记录改附件（交互会话）
+- status: done
+- priority: 1
+- not_before: 无
+- goal: 机主 10-06 16:36 UTC 读完邮件日报后说看不懂，要求彻底重构：分清交易和研究；不写内部代号、括号细节和流水账；正面回答 10-04 的三个问题（建模、深度调研、流形拓扑）；不只做 ETF；必须做高频。
+- plan:
+  - 10-06 新格式日报 `reports/owner/daily/2026-10-06.zh.md`，已发邮件；
+  - 程序：`open_composer/reports/owner_style.py`（业务名称、内部代号检查），`owner_digest.py`（正文 = 撰写稿或简版，逐轮记录、任务清单、运行状态改为附件），`scripts/owner_report.py tables|lint`；
+  - Paseo 定时任务 `oc-owner-daily-writer`（1ffac9be，周一到周六 00:10 UTC，Opus 5.5 high）写当天日报；
+  - 规范 `docs/owner-reporting.zh.md` 第 0 节、第 7 节；手册第 4A 节第 7、9 条，第 7 节第 7 步（主审轮只在三种情况发到机主对话）；
+  - live-track 加 `owner_asks`（机主问题登记），`owner_decisions` 改成业务语言并带默认。
+- done_when: 10-07 00:50 UTC 的邮件正文是撰写稿，检查错误为 0；交互会话 10-07 核对。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）完成并提交。
+
+### T-20261006-12 高频和日内策略调研：现在最有希望扣成本赚钱的 3–5 个，10-10 前上模拟盘的路径
+- status: running（独立 Paseo 代理 bd966afb，Sonnet 5.5 high，任务代码即协调码）
+- priority: 1
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-12.md
+- goal: 机主 10-06："你必须做一点高频交易策略……模拟盘既然能支持，你就得先做出来。"实盘约 2 万美元、手动或嘉信 API，和先在模拟盘做出来无关。
+- plan: 见简报。交互会话审核后据此写 T-14、T-15 的简报，定 T-16 上哪 1–2 个。
+- done_when: `reports/research/intel/I-20261006-01-intraday-hft-survey.{md,json}` 和来源快照交付，交互会话审核后提交；10-08 前。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记并派代理。
+
+### T-20261006-13 策略库总清单：151 一书、OSAP、QuantConnect 全量登记，按事先写定的规则选第一批约 50 个
+- status: running（独立 Paseo 代理 54fdcbb5，Sonnet 5.5 high，任务代码即协调码）
+- priority: 1
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-13.md
+- goal: 机主 10-06："交易方法有成百上千种，为什么不做呢？不要给自己设限。"把 Alpaca 能交易、我们有数据的策略全部登记，标出以前测过没有、到没到深度。
+- plan: 见简报。不跑回测。第一批的批量筛选是 T-18。
+- done_when: `reports/research/strategy-library/{catalog.json,catalog.md,selection-rule.md,first-batch.json,build_stats.py}` 交付，审核后提交；10-08 前。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记并派代理。
+
+### T-20261006-14 通用日内策略运行器：把开盘区间突破的模拟下单通道扩成多策略
+- status: blocked（等 T-12 定前几名的接口需求；交互会话 10-07 写简报）
+- priority: 1
+- not_before: 2026-10-07 12:00 UTC
+- goal: 10-10 前让 1–2 个日内策略在模拟盘自动运行。需要：信号插件接口、多标的、一天多次进出、按策略的仓位上限和每日亏损上限、收盘前全部平仓、单独账本、和回测同口径的成交记录。
+- plan: 复用 `open_composer/paper_intraday.py`，授权、上限、紧急停止、bracket 单、平仓、对账都已有，不另起炉灶。只在模拟盘。
+- done_when: 干跑和测试通过，10-09 22:00 UTC 前。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-15 日内方向按深度规则重审，补做 Reversal Trend 的 1 分钟和 1 小时版
+- status: blocked（等 T-12 列出旧检验各缺哪几条深度条件）
+- priority: 1
+- not_before: 2026-10-07 12:00 UTC
+- goal: 方向登记簿里日内类 18 个方向，判否 11 个，部分成立 1 个，多是单一版本的便宜测试。按第二版计划的五条深度规则重开最值得的几个：多版本、成本曲线、机器学习变体。机主 9 月要的 Reversal Trend 1 分钟和 1 小时版，当时只测了日线版，这次补上。
+- plan: 交互会话或主审轮按 T-12 的结果写合同（direction-check、iteration validate 都要过），数据用本地 SIP 分钟线 `data/sip/minute/`（2023–2026）。近期窗口决定，长历史只诊断。
+- done_when: 第一批结果 10-10 22:00 UTC 前提交并审核。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-16 第一批 1–2 个高频或日内策略上模拟盘，做前向观察
+- status: blocked（等 T-14、T-15）
+- priority: 1
+- not_before: 2026-10-09 13:30 UTC
+- goal: 机主 10-06 要求在模拟盘做高频。10-10 前上 1–2 个，小仓位，单独记账，用前向数据检验能不能赚钱。
+- plan:
+  - 账户默认用主模拟账户的闲置资金（约 4.6 万美元，和 ETF 策略分开记账）；机主 10-08 前可以改成新开的模拟账户。
+  - 授权文件由交互会话写，引用机主 10-06 16:36 UTC 的原话；仓位上限、每日亏损上限、停止条件写进授权。
+  - 每天和回测同口径对照，进日报第二部分。
+- done_when: 第一笔模拟单成交并对账，日报列入。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-17 嘉信 API 能力和日内交易次数限制核实，按 2 万美元重算实盘方案
+- status: ready（交互会话 10-07 写简报后派执行；简报前定时轮不要取）
+- priority: 2
+- not_before: 2026-10-07 06:00 UTC
+- goal: 机主 10-06：实盘约 2 万美元，手动或接嘉信 API，不接 Alpaca。要查清：
+  - 嘉信 Trader API 支持的订单类型、碎股、做空、期权、调用频率上限和申请流程；
+  - 2.5 万美元以下保证金账户的日内交易次数限制在 2026 年怎么改的，嘉信是否已执行；
+  - 现金账户的结算限制；
+  - 对 ETF 轮动手动下单、小资金选股和高频各意味着什么。
+- plan: 只用官方文档和监管原文。小资金版合同 t20261006_p1_v12_small 按 2 万美元档重算可行性。
+- done_when: `I-20261006-03` 交付；live-track 和第二版计划第 5、6 节更新；10-10 前。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-18 策略库第一批约 50 个的批量筛选
+- status: blocked（等 T-13 的 first-batch.json 和选择规则）
+- priority: 1
+- not_before: 2026-10-08 12:00 UTC
+- goal: 10-15 前按统一口径扣成本跑完第一批约 50 个，近期窗口决定，长历史只诊断，按试验总数打折。排名靠前的进深度检验，过关的上模拟盘。
+- plan: 复用 `scripts/screen_lane.py`、`scripts/screen_batch.py`。主审轮写一份批量合同，逐个预注册进 manifest。批量大的上 Modal，先过 `scripts/modal_budget.py check`。
+- done_when: 结果和排名 10-15 22:00 UTC 前提交，主审轮审核。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-19 复杂建模项目提前到 10-12：随机特征复杂度曲线、多期限联合训练、路径签名预测波动
+- status: blocked（等主审轮写合同；原定 11 月，机主 10-06 后提前）
+- priority: 2
+- not_before: 2026-10-10 13:00 UTC
+- goal: 兑现日报对机主"建模"问题的回答：
+  - 随机特征模型的复杂度曲线，特征从少到多，看收益是否持续上升；
+  - 多个预测期限联合训练；
+  - 路径签名预测波动，论文样本外 0.36 对传统 0.22，用来改进仓位控制。
+  随机矩阵去噪和粗糙波动率作为风险模型和期权的对照基线直接采用。
+- plan: 13:07 主审轮（10-12 起加入复杂建模）写合同，至少三个深度点，功效先算；Modal 上跑，10 月剩余约 23.8 美元，先过 `scripts/modal_budget.py check`。复用 T-20261004-02 的随机特征和梯度提升树代码，T-20261004-77 的旧简报只作参考（那是便宜测试版）。
+- done_when: 合同 10-12 前冻结，第一批结果 10-19 前。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-20 拓扑方法作为市场状态输入（市场状态项目阶段 2c）：10-09 写好方案，10-13 前和跳跃模型的结果一起出
+- status: blocked（等 07:07 主审轮写合同）
+- priority: 2
+- not_before: 2026-10-08 07:00 UTC
+- goal: 兑现日报对机主"流形拓扑"问题的回答：检验拓扑特征（持续同调的相关结构度量）在简单的相关性和波动率指标之外，对市场状态判断有没有增量；用打乱时间顺序的数据做对照。
+- plan: 要先装拓扑计算库（如 ripser 或 giotto-tda），装之前查依赖和内存。合同按五条深度规则：至少三个深度点，例如窗口长度和股票池大小。与 T-20261006-03、-04 的跳跃模型共用状态评价口径。T-20261004-77 的 G1 部分由本任务取代。
+- done_when: 合同 10-09 冻结，结果 10-13 22:00 UTC 前。
+- notes:
+  - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
