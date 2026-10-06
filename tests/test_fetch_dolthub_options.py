@@ -190,3 +190,74 @@ def test_chain_job_samples_known_days_and_checkpoints(tmp_path: Path) -> None:
     fdo.Runner(client2, cp2, tmp_path).job_chain(["SPY"], max_units=None, flush_units=10)
     assert len(script2.urls) == 1  # only the remaining day
     assert len(json.loads((tmp_path / "cp.json").read_text())["done"]["chain"]) == 3
+
+
+def test_volhist_weekdays_only_skips_weekend_cells_and_includes_end(tmp_path: Path) -> None:
+    from datetime import date
+
+    row = {"date": "2024-06-14", "act_symbol": "SPY", "iv_current": "0.2"}
+    client, script, _ = make_client([ok([row])] * 10)
+    cp = fdo.Checkpoint.load(tmp_path / "cp.json", every=200)
+    # Fri 2024-06-14 .. Tue 2024-06-18: Fri, Mon, Tue fetched; Sat, Sun skipped
+    fdo.Runner(client, cp, tmp_path).job_volhist(
+        None, date(2024, 6, 14), date(2024, 6, 18), 1, weekdays_only=True
+    )
+    assert len(script.urls) == 3
+    names = sorted(p.name for p in (tmp_path / "volatility_history").glob("all_*.parquet"))
+    assert names == ["all_2024-06-14.parquet", "all_2024-06-17.parquet", "all_2024-06-18.parquet"]
+    client2, script2, _ = make_client([ok([row])] * 10)
+    cp2 = fdo.Checkpoint.load(tmp_path / "cp2.json", every=200)
+    fdo.Runner(client2, cp2, tmp_path / "other").job_volhist(
+        None, date(2024, 6, 14), date(2024, 6, 16), 1
+    )
+    assert len(script2.urls) == 3  # default keeps weekends
+
+
+def test_volhist_workers_fetch_all_windows_and_resume(tmp_path: Path) -> None:
+    import threading
+    from datetime import date
+
+    lock = threading.Lock()
+    urls: list[str] = []
+
+    def opener(url: str, timeout: float) -> tuple[int, str]:
+        with lock:
+            urls.append(url)
+        return ok([{"date": "2024-06-14", "act_symbol": "SPY", "iv_current": "0.2"}])
+
+    def build() -> tuple[object, object]:
+        client = fdo.Client(opener=opener, sleep=lambda s: None, log=lambda m: None)
+        return client, fdo.Checkpoint.load(tmp_path / "cp.json", every=200)
+
+    client, cp = build()
+    fdo.Runner(client, cp, tmp_path).job_volhist(
+        None, date(2024, 6, 10), date(2024, 6, 16), 1, weekdays_only=True, workers=3
+    )
+    assert len(urls) == 5  # Mon..Fri, weekend cells skipped
+    assert cp.request_count == 5 and client.requests_made == 5
+    assert len(list((tmp_path / "volatility_history").glob("all_*.parquet"))) == 5
+    client2, cp2 = build()
+    fdo.Runner(client2, cp2, tmp_path).job_volhist(
+        None, date(2024, 6, 10), date(2024, 6, 16), 1, weekdays_only=True, workers=3
+    )
+    assert len(urls) == 5  # everything already in the checkpoint
+
+
+def test_main_passes_workers_and_newest_first(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    seen: dict[str, object] = {}
+
+    def fake(self, symbols, start, end, window, weekdays_only=False, workers=1, newest_first=False):
+        seen.update(workers=workers, newest_first=newest_first, weekdays_only=weekdays_only)
+
+    monkeypatch.setattr(fdo.Runner, "job_volhist", fake)
+    code = fdo.main(
+        [
+            "--jobs", "volhist", "--volhist-all", "--volhist-window-days", "1",
+            "--weekdays-only", "--workers", "4", "--newest-first",
+            "--start", "2024-06-10", "--end", "2024-06-12", "--cache", str(tmp_path),
+        ]
+    )  # fmt: skip
+    assert code == 0
+    assert seen == {"workers": 4, "newest_first": True, "weekdays_only": True}

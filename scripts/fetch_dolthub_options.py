@@ -70,7 +70,8 @@ CHAIN_COLUMNS = (
     "date, act_symbol, expiration, strike, call_put, bid, ask, vol, delta, gamma, theta, vega, rho"
 )
 VOLHIST_COLUMNS = (
-    "date, act_symbol, hv_current, iv_current, iv_week_ago, iv_month_ago, iv_year_high, iv_year_low"
+    "date, act_symbol, hv_current, hv_week_ago, hv_month_ago, "
+    "iv_current, iv_week_ago, iv_month_ago, iv_year_high, iv_year_low"
 )
 
 
@@ -337,6 +338,8 @@ def to_frame(rows: list[dict[str, str]], numeric: Iterable[str]) -> Any:
 CHAIN_NUMERIC = ("strike", "bid", "ask", "vol", "delta", "gamma", "theta", "vega", "rho")
 VOLHIST_NUMERIC = (
     "hv_current",
+    "hv_week_ago",
+    "hv_month_ago",
     "iv_current",
     "iv_week_ago",
     "iv_month_ago",
@@ -443,26 +446,91 @@ class Runner:
             write_shard()
 
     def job_volhist(
-        self, symbols: list[str] | None, start: date, end: date, window_days: int
+        self,
+        symbols: list[str] | None,
+        start: date,
+        end: date,
+        window_days: int,
+        weekdays_only: bool = False,
+        workers: int = 1,
+        newest_first: bool = False,
     ) -> None:
+        """Pull ``volatility_history`` in day windows; ``workers`` > 1 runs windows concurrently."""
         out = self.cache / "volatility_history"
         out.mkdir(parents=True, exist_ok=True)
         tag = "all" if not symbols else "-".join(symbols)
+        skip_weekends = weekdays_only and window_days == 1
+        windows: list[tuple[date, date]] = []
         lo = start
-        while lo < end:
+        while lo <= end:
             hi = min(lo + timedelta(days=window_days), end + timedelta(days=1))
+            if not (skip_weekends and lo.weekday() >= 5):
+                windows.append((lo, hi))
+            lo = hi
+        windows = [
+            w for w in windows if not self.cp.is_done("volhist", f"{tag}:{w[0].isoformat()}")
+        ]
+        if newest_first:
+            windows.reverse()
+
+        def record(lo: date, rows: list[dict[str, str]]) -> None:
             unit = f"{tag}:{lo.isoformat()}"
-            if not self.cp.is_done("volhist", unit):
+            frame = to_frame(rows, VOLHIST_NUMERIC)
+            frame.to_parquet(out / f"{tag}_{lo.isoformat()}.parquet", index=False)
+            self.cp.mark("volhist", unit)
+            self.cp.stats[f"volhist_rows:{unit}"] = len(frame)
+            self.cp.flush()
+            self.client.log(f"volhist {unit}: {len(frame)} rows")
+
+        if workers <= 1:
+            for lo, hi in windows:
                 if self.out_of_time():
                     return
-                rows = self.client.paged(volhist_sql(lo, hi, symbols), VOLHIST_ORDER)
-                frame = to_frame(rows, VOLHIST_NUMERIC)
-                frame.to_parquet(out / f"{tag}_{lo.isoformat()}.parquet", index=False)
-                self.cp.mark("volhist", unit)
-                self.cp.stats[f"volhist_rows:{unit}"] = len(frame)
-                self.cp.flush()
-                self.client.log(f"volhist {unit}: {len(frame)} rows")
-            lo = hi
+                record(lo, self.client.paged(volhist_sql(lo, hi, symbols), VOLHIST_ORDER))
+            return
+
+        from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+
+        template = self.client
+
+        def fetch(lo: date, hi: date) -> tuple[date, list[dict[str, str]], Client]:
+            worker = Client(
+                max_retries=template.max_retries,
+                base_delay=template.base_delay,
+                max_delay=template.max_delay,
+                timeout=template.timeout,
+                min_interval=template.min_interval,
+                opener=template.opener,
+                sleep=template.sleep,
+                log=template.log,
+            )
+            return lo, worker.paged(volhist_sql(lo, hi, symbols), VOLHIST_ORDER), worker
+
+        def absorb(done_futures: set) -> None:
+            for fut in done_futures:
+                lo, rows, worker = fut.result()
+                self.cp.request_count += worker.requests_made
+                template.requests_made += worker.requests_made
+                template.retries += worker.retries
+                template.latencies.extend(worker.latencies)
+                for k, v in worker.statuses.items():
+                    template.statuses[k] = template.statuses.get(k, 0) + v
+                record(lo, rows)
+
+        pending: set = set()
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            try:
+                for lo, hi in windows:
+                    if self.out_of_time():
+                        break
+                    while len(pending) >= workers:
+                        finished, pending = wait(pending, return_when=FIRST_COMPLETED)
+                        absorb(finished)
+                    pending.add(pool.submit(fetch, lo, hi))
+            finally:
+                if pending:
+                    finished, _ = wait(pending)
+                    absorb(finished)
 
 
 def session_days(start: date, end: date) -> list[str]:
@@ -488,6 +556,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--volhist-all", action="store_true")
     p.add_argument("--volhist-window-days", type=int, default=60)
+    p.add_argument("--workers", type=int, default=1, help="volhist: concurrent day windows")
+    p.add_argument("--newest-first", action="store_true", help="volhist: latest windows first")
+    p.add_argument(
+        "--weekdays-only",
+        action="store_true",
+        help="volhist: skip Saturday/Sunday day-cells (only with --volhist-window-days 1)",
+    )
     p.add_argument("--agg-batch-dates", type=int, default=60)
     p.add_argument("--max-minutes", type=float, default=None)
     p.add_argument("--min-interval", type=float, default=0.0)
@@ -524,7 +599,15 @@ def main(argv: list[str] | None = None) -> int:
             runner.job_chain(symbols, args.max_chain_units, args.chain_flush_units, only or None)
         if "volhist" in jobs:
             vh_symbols = None if args.volhist_all else symbols
-            runner.job_volhist(vh_symbols, start, end, args.volhist_window_days)
+            runner.job_volhist(
+                vh_symbols,
+                start,
+                end,
+                args.volhist_window_days,
+                args.weekdays_only,
+                args.workers,
+                args.newest_first,
+            )
     finally:
         lat = sorted(client.latencies)
         if lat:
