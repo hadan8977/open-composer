@@ -281,3 +281,72 @@ def test_channel_check_and_summary(tmp_path: Path) -> None:
     summary = registry_summary(tmp_path)
     assert summary["channel_count"] == 1
     assert summary["channels_by_level"] == {"0": 1}
+
+
+def _audit(**overrides) -> dict:
+    audit = {
+        "audited_at": "2026-10-06",
+        "label": "under_depth",
+        "p1": {"c1": "Y", "c2": "Y", "c3": "N", "c4": "Y", "c5": "N"},
+        "original_verdict": "+2.2%/yr at the paper's own frictions",
+        "min_detectable_effect": "weekly IC 0.110",
+        "observed": "weekly IC 0.019",
+        "missing_depth_points": ["third data-scale point"],
+        "audit_file": "reports/research/program/power-reaudit-2026-10-08/audit.json",
+    }
+    audit.update(overrides)
+    return audit
+
+
+def test_depth_audit_appends_without_changing_the_original_fields(tmp_path: Path) -> None:
+    original = _refuted()
+    revised = dict(original, updated="2026-10-06", depth_audit=_audit())
+    _write(tmp_path, "directions.jsonl", [original, revised])
+    assert validate_registry(tmp_path) == []
+    current = load_directions(tmp_path)["dir:spy_noise_band_intraday"]
+    assert current.status == "refuted"
+    assert current.verdict == original["verdict"]
+    assert current.depth_audit is not None and current.depth_audit.label == "under_depth"
+    assert registry_summary(tmp_path)["depth_audit"] == {"under_depth": 1}
+    hit = check_direction(tmp_path, "noise band intraday momentum")[0]
+    assert "under-depth audit" in hit.verdict and original["verdict"] in hit.verdict
+
+
+def test_depth_audit_rules(tmp_path: Path) -> None:
+    bad_code = _audit(p1={"c1": "yes"})
+    no_points = _audit(missing_depth_points=[])
+    _write(
+        tmp_path,
+        "directions.jsonl",
+        [
+            _refuted(depth_audit=bad_code),
+            _refuted(id="dir:other_closed", depth_audit=no_points),
+        ],
+    )
+    problems = "\n".join(validate_registry(tmp_path))
+    assert "p1 codes must be Y/N/A/?" in problems
+    assert "under_depth audit needs missing_depth_points" in problems
+
+
+def test_external_negative_evidence_is_a_validated_optional_list(tmp_path: Path) -> None:
+    ext = {
+        "url": "https://github.com/example/repo",
+        "snapshot_path": "reports/research/intel/sources/example/findings.md",
+        "fetched_at": "2026-10-06T17:07Z",
+        "author_reported_result": "0 of 232 cells promoted",
+        "caveats": "self-reported, no third-party replication",
+    }
+    _write(
+        tmp_path,
+        "directions.jsonl",
+        [_direction(status="evidence_too_weak", external_negative_evidence=[ext], verdict="v")],
+    )
+    problems = validate_registry(tmp_path)
+    assert not any("external_negative_evidence" in p for p in problems)
+    assert load_directions(tmp_path)["dir:precious_metals_levered_trend"].external_negative_evidence
+    _write(
+        tmp_path,
+        "directions.jsonl",
+        [_direction(external_negative_evidence=[dict(ext, fetched_at="not-a-date")])],
+    )
+    assert any("external_negative_evidence" in p for p in validate_registry(tmp_path))

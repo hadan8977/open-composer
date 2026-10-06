@@ -109,6 +109,60 @@ class DirectionSource(BaseModel):
         return value
 
 
+class DepthAudit(BaseModel):
+    """Append-only power / depth re-audit of a closed direction (plan v2 P-1).
+
+    The original ``status``/``verdict`` are kept as written; this block records
+    whether the five P-1 conditions held for that verdict. ``label`` is the
+    mechanical outcome (``under_depth`` = "未到深度"; ``p1_met`` = all five hold or
+    are not applicable). ``p1`` maps ``c1..c5`` to ``Y`` (met), ``N`` (not met),
+    ``A`` (not applicable) or ``?`` (cannot be established from the record)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    audited_at: str
+    label: Literal["under_depth", "p1_met", "p1_not_applicable"]
+    p1: dict[str, str] = Field(default_factory=dict)
+    original_verdict: str = ""
+    min_detectable_effect: str = ""
+    observed: str = ""
+    missing_depth_points: list[str] = Field(default_factory=list)
+    audit_file: str = ""
+
+    @field_validator("audited_at")
+    @classmethod
+    def _iso_audited(cls, value: str) -> str:
+        date.fromisoformat(value)
+        return value
+
+    @field_validator("p1")
+    @classmethod
+    def _p1_codes(cls, value: dict[str, str]) -> dict[str, str]:
+        bad = {k: v for k, v in value.items() if v not in {"Y", "N", "A", "?"}}
+        if bad:
+            raise ValueError(f"p1 codes must be Y/N/A/?: {bad}")
+        return value
+
+
+class ExternalNegative(BaseModel):
+    """A negative result reported by someone else, kept with its snapshot so
+    it can be checked before the same ground is reopened. Not our own test."""
+
+    model_config = ConfigDict(extra="allow")
+
+    url: str = Field(min_length=4)
+    snapshot_path: str = Field(min_length=3)
+    fetched_at: str
+    author_reported_result: str = Field(min_length=3)
+    caveats: str = ""
+
+    @field_validator("fetched_at")
+    @classmethod
+    def _iso_fetched(cls, value: str) -> str:
+        date.fromisoformat(value[:10])
+        return value
+
+
 class Direction(BaseModel):
     """One candidate direction. ``family_key`` names the economic mechanism
     (e.g. ``levered_sector_trend``) so two sources describing the same thing
@@ -133,6 +187,8 @@ class Direction(BaseModel):
     reopen_if: str = ""
     duplicate_of: str | None = None
     found_by: list[str] = Field(default_factory=list)
+    depth_audit: DepthAudit | None = None
+    external_negative_evidence: list[ExternalNegative] = Field(default_factory=list)
 
     @field_validator("updated")
     @classmethod
@@ -344,6 +400,9 @@ def validate_registry(root: Path) -> list[str]:
                 problems.append(f"{where}: duplicate needs duplicate_of")
             elif direction.duplicate_of not in current:
                 problems.append(f"{where}: duplicate_of {direction.duplicate_of} is unknown")
+        if direction.depth_audit and direction.depth_audit.label == "under_depth":
+            if not direction.depth_audit.missing_depth_points:
+                problems.append(f"{where}: under_depth audit needs missing_depth_points")
         if direction.status != "harvested" and not direction.sources and not direction.evidence:
             problems.append(f"{where}: needs at least one source or evidence link")
     search_ids: Counter[str] = Counter()
@@ -407,6 +466,13 @@ def _direction_text(direction: Direction) -> str:
     return " ".join(parts)
 
 
+def _verdict_with_audit(direction: Direction) -> str:
+    audit = direction.depth_audit
+    if audit is None or audit.label != "under_depth":
+        return direction.verdict
+    return f"(under-depth audit {audit.audited_at}: not P-1 grade) {direction.verdict}"
+
+
 def _score(query: set[str], text: str) -> float:
     if not query:
         return 0.0
@@ -428,7 +494,7 @@ def check_direction(root: Path, terms: str, *, limit: int = 10) -> list[Directio
                     ref=direction.id,
                     title=direction.name,
                     status=direction.status,
-                    verdict=direction.verdict,
+                    verdict=_verdict_with_audit(direction),
                     score=score,
                 )
             )
@@ -510,6 +576,9 @@ def registry_summary(root: Path) -> dict[str, Any]:
     return {
         "direction_count": len(directions),
         "by_status": dict(Counter(d.status for d in directions.values())),
+        "depth_audit": dict(
+            Counter(d.depth_audit.label for d in directions.values() if d.depth_audit)
+        ),
         "by_category": {key: dict(value) for key, value in sorted(by_category.items())},
         "search_count": len(log),
         "searches_by_channel": dict(Counter(entry.channel for entry in log)),

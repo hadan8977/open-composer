@@ -1,0 +1,4268 @@
+{
+ "task": "T-20261005-35",
+ "audited_at": "2026-10-06",
+ "scope": "all directions whose last registry row has status=refuted (not evidence_too_weak / not_executable: those were never tested)",
+ "method": "see compute.py docstring; numbers come from the registry verdict text, which copies the cited report; key figures spot-checked against results.json",
+ "conventions": {
+  "K": 2.487,
+  "z95": 1.645,
+  "anchor_years": 2.691,
+  "stress_years": 7.329
+ },
+ "self_test": {
+  "plan_detection_table_reproduced": true,
+  "computed": {
+   "0.5": 13,
+   "1.0": 38,
+   "1.5": 70,
+   "2.0": 91
+  },
+  "pm_earnings_mde_from_t": 0.1107,
+  "pm_earnings_mde_reported": 0.11007,
+  "anchor_years": 2.691,
+  "stress_years": 7.329
+ },
+ "k2_sharpe_difference_mde": [
+  {
+   "window": "anchor",
+   "years": 2.69,
+   "rho": 0.5,
+   "se": 0.61,
+   "mde_80": 1.516
+  },
+  {
+   "window": "anchor",
+   "years": 2.69,
+   "rho": 0.8,
+   "se": 0.386,
+   "mde_80": 0.959
+  },
+  {
+   "window": "stress",
+   "years": 7.33,
+   "rho": 0.5,
+   "se": 0.369,
+   "mde_80": 0.919
+  },
+  {
+   "window": "stress",
+   "years": 7.33,
+   "rho": 0.8,
+   "se": 0.234,
+   "mde_80": 0.581
+  },
+  {
+   "window": "pooled",
+   "years": 10.02,
+   "rho": 0.5,
+   "se": 0.316,
+   "mde_80": 0.786
+  },
+  {
+   "window": "pooled",
+   "years": 10.02,
+   "rho": 0.8,
+   "se": 0.2,
+   "mde_80": 0.497
+  }
+ ],
+ "counts": {
+  "audited": 111,
+  "under_depth": 107,
+  "p1_met": 3,
+  "p1_not_applicable": 1,
+  "only_c3_missing": 1,
+  "reopen_candidates_pending_lead_review": 30,
+  "mde_computed": 52,
+  "mde_not_computable": 59,
+  "by_gap_class": {
+   "sizing": 6,
+   "internal": 14,
+   "fidelity": 25,
+   "power": 42,
+   "met": 3,
+   "contract": 6,
+   "depth": 6,
+   "budget": 1,
+   "repro": 2,
+   "data": 5,
+   "data_acceptance": 1
+  }
+ },
+ "entries": [
+  {
+   "id": "dir:s1_sector_rotation_voltarget",
+   "original_status": "refuted",
+   "original_verdict": "vol target is a return tax on S1",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "sizing",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "原报告无检验统计量，无法计算 MDE；目标波动率只测单点，需 >=3 个目标水平",
+   "source_report": "reports/research/hypotheses/H-20260922-05-voltarget-transfer-and-dip-boost.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:drawdown_brake_overlay",
+   "original_status": "refuted",
+   "original_verdict": "no increment over the vol target",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "sizing",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "H-20260922-02 12 个格子是参数点不是深度点；无统计量，无法计算",
+   "source_report": "reports/research/hypotheses/H-20260922-02-s3-voltarget-drawdown-brake.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:levered_menu_expansion",
+   "original_status": "refuted",
+   "original_verdict": "breadth is not the source; expanding dilutes the only return source",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "归因分析（H-20260923-09），无检验统计量，无法计算",
+   "source_report": "reports/research/hypotheses/H-20260923-09-s3-attribution.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:s3_rank_optimization",
+   "original_status": "refuted",
+   "original_verdict": "not worth it",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "?",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "判定仅一句话 'not worth it'，原报告无数字，无法计算",
+   "source_report": "reports/research/hypotheses/H-20260923-09-s3-attribution.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:composer_rsi_branch_uvxy",
+   "original_status": "refuted",
+   "original_verdict": "platform triple-digit returns = leverage + survivorship + bull window 2026-09-23: the new batch reproduces the identical pattern at even more extreme magnitudes (up to 8 figures of cumulative %, on windows well under 12 months by Composer's own 'OOS Start Date' field) -- consistent with, not contrary to, the original verdict. None of the seven new items meets the reopen bar (>=12 months of indepen",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "平台收益声明未用 composer-trade-py 的 value_history 与回测对比，未取实盘记录",
+   "source_report": "reports/research/hypotheses/H-20260922-04-rsi-branch-rotation.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:giants_sweep_published_etf_rules",
+   "original_status": "refuted",
+   "original_verdict": "all fail under our frozen protocol; only the vol-target mechanism survived. The new code release does not meet this row's own reopen_if bar (needs a post-publication live record inside 2023-2025, not a code repo) -- NOT reopening. Logged so the code repo URL is on file if we ever do revisit with a live-record trigger, and so nobody re-discovers 'Zarattini Antonacci industry trends' as if it were n",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "原报告无逐规则检验统计量；各规则只测单规格",
+   "source_report": "reports/research/iterations/giants_sweep_20260922/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:earnings_8k_tone_next_day",
+   "original_status": "refuted",
+   "original_verdict": "priced at the open; the paper's tradable object is the call transcript (owner declined to buy)",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "论文的可交易对象是电话会逐字稿（机主未购买），这里测的是 8-K 文本，对象不同",
+   "source_report": "reports/research/hypotheses/H-20260922-01-earnings-text-tone-next-day.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:spy_noise_band_intraday",
+   "original_status": "refuted",
+   "original_verdict": "gross edge ~3.6%/yr, below the risk-free rate after costs",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "毛边际约 3.6%/年低于无风险；无统计量，无法计算；缺成本/退出规格曲线",
+   "source_report": "reports/research/hypotheses/H-20260922-07-spy-intraday-momentum.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:cross_sectional_gap_fade",
+   "original_status": "refuted",
+   "original_verdict": "Signal direction is real (placebo sign-flip loses to the real book 100% of 20 seeds in both windows) but a 1-day round-trip, 100%-daily-turnover book cannot absorb realistic per-stock frictions: decomposed gross short-leg edge +11.5bp/day vs realistic 2x-per-side cost+borrow of -38.5bp/day. Restricting to the only genuinely-shortable tier (>$100M ADV) does not help (Sharpe -3.62 to -5.28) -- the c",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "Y",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": true,
+   "new_label": "满足P-1（机械判定）",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [],
+   "gap_class": "met",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [],
+   "what_is_missing_specifically": "8 个组合（4 档 ADV x 2 种账本）x 2 个窗口 + 拍卖执行复核；毛边际 +11.5 bp/日 对成本 -38.5 bp/日是直接测量，不是功效问题；拍卖口径 E_off 7.09 bp（90% CI -2.1..16.0）与 8 bp 门槛相交，该子项另见 smallcap_gap_down_fade",
+   "source_report": "reports/research/hypotheses/H-20260922-08-cross-sectional-gap-fade.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:levered_industry_trend_second_bet",
+   "original_status": "refuted",
+   "original_verdict": "H-20260923-10: no lane passes under the frozen S3 machine. NUGT/JNUG pass G1/G4 with corr 0.2 to S3 but fail the 2026 holdout (Sharpe 0.53/0.57) and the generic-leverage pool placebo (39-44%); FAS, DPST, DFEN fail every gate.",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "NUGT/JNUG 2026 留出窗仅约 0.7 年；报告无 t 值；对象是 5 个行业 ETF 的单一规则",
+   "source_report": "reports/research/hypotheses/H-20260923-10-levered-lanes.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:insider_form4_confirmation_gate",
+   "original_status": "refuted",
+   "original_verdict": "structural mismatch: insider buying hits only 1.9% of momentum top-50 holding-weeks vs 5.8% of the top-500 pool (0.32x) -- momentum winners are where insiders sell, not buy. The one gate that looked promising (gate_A_veto) is a near-term-only artifact, not confirmed by two independent placebos.",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "结构性错配（内部人买入落在动量前 50 的比例 1.9% 对池子 5.8%）；无统计量",
+   "source_report": "reports/research/hypotheses/H-20260916-01-insider-form4-confirmation-gate.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:news_attention_features",
+   "original_status": "refuted",
+   "original_verdict": "coverage is not the bottleneck (97.4% of momentum holdings have news in 20 days, vs 98.2% pool) -- the count/novelty signal carries no tradable cross-sectional information on these names. Stage 2 (LLM content/event-type scoring) is a distinct untested question, not covered by this refutation, and awaits the user's configured non-Claude model.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "只做了阶段 1（计数/新颖度）；阶段 2 LLM 内容打分未测，文献的池子/频率（小盘、月频、长持）未对应",
+   "source_report": "reports/research/hypotheses/H-20260916-02-news-attention-features.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:meta_labeling_position_tiers",
+   "original_status": "refuted",
+   "original_verdict": "tiering by predicted rank equals proportional de-leveraging, not a filter; hit stop conditions (2) placebo>=50% and (4) CAGR loss >3pp",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "sizing",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "分层等价于按比例降杠杆；停止条件命中，无统计量",
+   "source_report": "reports/research/hypotheses/H-20260916-03-meta-labeling-position-tiers.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:event_13d_drift",
+   "original_status": "refuted",
+   "original_verdict": "the money is real but priced in before our earliest entry point (next open); hit stop conditions (1) and (2)",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "?",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4"
+   ],
+   "gap_class": "contract",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "用完事先写定的迭代预算"
+   ],
+   "what_is_missing_specifically": "漂移已在最早可入场点（次日开盘）之前定价；是入场合同问题，不是功效问题；缺预算记录",
+   "source_report": "reports/research/hypotheses/H-20260916-05-13d-activist-event-drift.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:pead_xbrl_8k_llm",
+   "original_status": "refuted",
+   "original_verdict": "refuted: t_dates 1.064 < 3, beats_redated False, book_positive_20bp False in both windows (full and 2024+ both -0.14%/yr since 8-K coverage bounds both to 2024-2026). Moving visible_at to the 8-K announcement time did not recover a tradable effect; the exact reopen condition the filing-date card named for itself is exhausted for classic SUE on this data.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "t_dates 1.064；8-K 覆盖把样本限制在 2024-2026（约 2.7 年），无法检出文献量级的 SUE 漂移；需把 8-K 2.02 时间戳回补到 2016+",
+   "source_report": "reports/research/iterations/h20260928_14_sue_8k_timestamp/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:short_interest_avoidance_gate",
+   "original_status": "refuted",
+   "original_verdict": "dropping/halving the most-shorted momentum names hurts, not helps, vol-matched excess return; a random-removal placebo of the same size loses less than the real rule",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "随机去除安慰剂损失更少；无统计量；短利息历史样本较短",
+   "source_report": "reports/research/hypotheses/H-20260916-07-finra-short-interest-avoid-list.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:short_interest_ratio_crowding_factor",
+   "original_status": "refuted",
+   "original_verdict": "decomposition placebos kill it: shuffling short-share numerators across symbols on the same day (keeping each symbol's own denominator) reproduces 81%/65% of the real effect at 21d/5d; ranking on 1/63-day-ADV alone (no short data at all) reproduces 86%/52% -- per this project's own >=50%-replication-by-a-placebo-equals-stop rule, the value in this ratio is the ADV denominator, not the short-intere",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算"
+   ],
+   "what_is_missing_specifically": "分解安慰剂：打乱分子仍复现 81%/65%，纯 1/ADV 复现 86%/52%——价值在分母（流动性）不在短利息；分解已直接说明机制",
+   "source_report": "reports/research/hypotheses/H-20260916-07-finra-short-interest-avoid-list.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:insider_cluster_buy_top500",
+   "original_status": "refuted",
+   "original_verdict": "admitted to the signal library as an event feature; far too small alone for the strategy bar, so it only matters inside a combined ranking model; the top-500 weekly independent-strategy scope is refuted (0.15% CAR at 20d, t=0.78, book excess 0.005%/yr at 20 bp, negative since 2024)",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "car",
+    "unit": "20d excess %",
+    "observed": 0.15,
+    "t": 0.78,
+    "se": 0.19231,
+    "mde_80": 0.47827,
+    "upper95_one_sided": 0.46635
+   },
+   "observed": {
+    "observed": 0.15,
+    "t": 0.78,
+    "upper95_one_sided": 0.46635
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "20 日超额 +0.15% t 0.78；原文声称量级未登记；缺角色/美元加权/10b5-1 三种变体深度",
+   "source_report": "reports/research/signal-cards/library-v1-summary.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:insider_buy_independent_broad_universe",
+   "original_status": "refuted",
+   "original_verdict": "closed. Every variant loses to SPY on a vol-matched basis; the literature's 'zero-cost fixes' (role filter, 10b5-1 exclusion) subtract value here (10b5-1 exclusion only touches 1.6-4.0% of buys and is underpowered regardless); the earlier +82bp/month t=3.1 headline was significant only against a very weak same-band benchmark (2.7% annualized), not against SPY. Short leg untested and not executable",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "原报告自述 10b5-1 排除只触及 1.6-4.0% 买入且功效不足；10b5-1 标志史仅 42 个月（2023-04 起）；短腿未测",
+   "source_report": "reports/research/hypotheses/H-20260917-01-insider-independent-broad-universe.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:ml_ranking_broad_universe_custom",
+   "original_status": "refuted",
+   "original_verdict": "T-20260928-10 Stage-1 kill test on Modal, 2026-09-28 (stress window 2016-05-02..2023-08-31, walk-forward validation RankIC, fixed LightGBM hyperparameters). First run was invalid for the preregistered universe: rows with any missing feature were dropped, and the short-interest layer (~17% coverage) cut the sample to the liquid tercile only. Rerun keeping rows with missing features (LightGBM handle",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "N",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "depth",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "RankIC lift vs B0 (single-IC MDE; paired SE <= sqrt2 x)",
+    "observed": 0.018,
+    "t": 2.52,
+    "se": 0.00714,
+    "mde_80": 0.01776,
+    "upper95_one_sided": 0.02975,
+    "claimed": 0.01,
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed": 0.018,
+    "t": 2.52,
+    "upper95_one_sided": 0.02975
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "只做阶段 1 杀伤测试，阶段 2 未用；缺数据规模/容量三点曲线；单个 RankIC 的 MDE 已高于所需提升 0.010",
+   "source_report": "reports/research/hypotheses/H-20260917-02-broad-universe-ml-ranking.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:momentum_risk_control_vs_spmo",
+   "original_status": "refuted",
+   "original_verdict": "vol targeting slides along the same risk-return line (30.3/19.0=1.59 vs SPMO's 1.77); it cannot fix a Sharpe gap. Trend-gate improvement is statistically indistinguishable from a random calendar shift. Independent replication, different implementation, same core conclusion: monthly/periodic vol-targeting or trend-gating does not fix a Sharpe gap against a passive benchmark on its own -- corroborat",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "sizing",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "波动率目标沿同一风险收益线滑动；无统计量；owner 规则：减仓不算夏普改善",
+   "source_report": "reports/research/hypotheses/H-20260918-01-risk-controlled-momentum-vs-spmo.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:orb_etf_opening_range_breakout",
+   "original_status": "refuted",
+   "original_verdict": "random-direction placebo captured 92.7-92.9% of real return (QQQ/SPY); shifting entry to 10:05/10:35 matched or beat 9:35; random-day long-only matched real results -- the residual is intraday beta, not an opening-range signal. Published Sharpes (2.81 individual stocks, 1.13-1.19 ETF) rely on zero slippage + 4x leverage assumptions we do not make.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c4"
+   ],
+   "gap_class": "contract",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算"
+   ],
+   "what_is_missing_specifically": "随机方向安慰剂拿到 92.7-92.9% 收益（残差是日内 beta）；论文夏普依赖零滑点+4 倍杠杆，非我们合同",
+   "source_report": "reports/research/hypotheses/H-20260918-02-intraday-orb-and-intraday-momentum-etf.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:levered_single_asset_sma_trend_gate",
+   "original_status": "refuted",
+   "original_verdict": "calendar-shift placebo (gate signal shifted 1-20 sessions, per seed) beat the real gate in 100% of seeds in the holdout window; the 92.9% CAGR is 2-3x semiconductor/index beta, not market timing. Entire 40-cell leveraged-trend family voided, consistent with the independent finding on the stock-picking book (dir:momentum_risk_control_vs_spmo). 2026-09-23: all three add to, rather than overturn, the",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1"
+   ],
+   "gap_class": "contract",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "日历平移安慰剂 100% 种子胜过真信号；40 格族整体作废；无 t 值",
+   "source_report": "reports/research/hypotheses/H-20260918-05-recent-window-etf-menu.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:pooled_etf_relative_strength_no_menu",
+   "original_status": "refuted",
+   "original_verdict": "removing the curated menu makes results worse via two opposite degenerations: dividing by volatility selects T-bill funds (holdout Sharpe 2.91 but 6.7% CAGR / -0.6% DD -- a money-market account, not a strategy); not dividing by volatility selects the highest-leverage products available (single-stock 2x/3x ETFs, 92-100% annualized vol, -58% to -75% DD). Root cause: cross-sectional momentum needs a ",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算"
+   ],
+   "what_is_missing_specifically": "机制退化分析（T-bill 基金 / 单股杠杆产品）；非功效问题",
+   "source_report": "reports/research/hypotheses/H-20260918-06-pooled-etf-relative-strength.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:mechanical_volband_beta_grouping",
+   "original_status": "refuted",
+   "original_verdict": "refuted as an onboarding candidate (0/16 families clear the bar), but produced a reusable positive finding: adding corr(SPY)>=0.70 improved holdout Sharpe in 8/8 matched pairs (median 0.587->1.188) while hurting select-window Sharpe in 6/8 -- the opposite signature of overfitting. Neither the vol-band nor the correlation filter excludes 3x leveraged or inverse-vol products (TECL/SPXL/TQQQ/FAS/SVXY",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "0/16 族过线，但 corr>=0.70 过滤在 8/8 配对改善留出夏普——重开前缺相关上限+杠杆排除规则的测试",
+   "source_report": "reports/research/hypotheses/H-20260919-01-mechanical-grouping-vol-and-beta.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:reversal_trend_hourly_selection_alpha",
+   "original_status": "refuted",
+   "original_verdict": "not viable as a selection alpha; kept only as a one-off entry-timing A/B, not a standalone signal",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "只测了 1 小时棒；用户原始要求的 1 分钟版本代码未写",
+   "source_report": "docs/current-view.zh.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:gtja191_alpha_formulas",
+   "original_status": "refuted",
+   "original_verdict": "a Chinese sell-side daily formulaic factor library ported faithfully, decayed to zero in the recent US window; one formula (gtja017) numerically degenerates (rank**delta blowing up to 1e68-1e307) and was excluded from all downstream grids",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "忠实移植但在近期美股衰减为零；无按公式的检验统计量；gtja017 数值发散被排除",
+   "source_report": "reports/research/control/step13-recent-high-return-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:lightgbm_price_volume_recipe_v1_closed",
+   "original_status": "refuted",
+   "original_verdict": "the price-volume feature set on this universe/frequency is exhausted; every ML unit tried on it (including meta-labeling and LightGBM regression/ranking variants) has lost to the rule twin",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "depth",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "'特征集已耗尽' 的笔记式结论；无规模曲线；后续 ml_* 条目另有数字",
+   "source_report": "reports/research/hypotheses/trial-families.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:finra_daily_short_volume_bjz",
+   "original_status": "refuted",
+   "original_verdict": "standalone FINRA daily short-volume z-score has no usable signal: IC 0.002 at 5 days (t=1.1); the long-only top-30 book on the low-short-volume side loses 14%/yr to the universe at 20 bp",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": 0.002,
+    "t": 1.1,
+    "se": 0.00182,
+    "mde_80": 0.00452,
+    "upper95_one_sided": 0.00499
+   },
+   "observed": {
+    "observed": 0.002,
+    "t": 1.1,
+    "upper95_one_sided": 0.00499
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "5 日 IC 0.002 t 1.1；原文声称量级未登记，无法判 c5",
+   "source_report": "reports/research/signal-cards/library-v1-summary.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:activist_13d_long_horizon_hold",
+   "original_status": "refuted",
+   "original_verdict": "Tested as a13d_item4_h6/h12/h24 (Schedule 13D item4-filtered new filings, calendar-time hold 126/252/504 sessions, top-500 broad universe): anchor Sharpe 0.15/0.33/0.49, stress Sharpe 0.21/0.10/0.04 at 10bp, all far below the K1 bar (>=1.19/>=0.65); K2 edges all negative (-0.195 to -0.279 anchor/stress range). Neither K1 nor K2 clears at any hold length. See reports/research/iterations/h20260928_0",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "Y",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.285,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.805,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.285,
+    "upper95_one_sided": 0.805
+   },
+   "missing_depth_points": [
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "3 个持有期（126/252/504 日），锚定窗口夏普最高 0.49、压力窗口 0.21；钱在入场前已被定价（next-open 不可得）",
+   "source_report": "reports/research/iterations/h20260928_06_registry_stock_batch3/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:orb_stocks_in_play_relative_volume",
+   "original_status": "refuted",
+   "original_verdict": "long-only Stocks-in-Play ORB (SIP01/SIP02, 1x cap, 10 bp) fails every frozen gate: SIP01 select 2023-09..2025-12 -27.1%/yr (Sharpe -8.4), 2026 -18.2%/yr; SIP02 -19.7% / -23.4%; both lose to their random-liquid control. The result hinges on intrabar stop sequencing (lenient one_bar_late fills give SIP01 -2.2% select / +23.0% 2026, and the paper-style long-short at commission-only reaches Sharpe 3.7",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.3,
+    "observed_pooled": -8.4,
+    "se": 0.659,
+    "mde_80": 1.64,
+    "upper95_one_sided": -7.315,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -8.4,
+    "upper95_one_sided": -7.315
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "盘内止损顺序（one_bar_late 宽松成交使 SIP01 select -2.2% / 2026 +23.0%）与原文 tick 成交不可分；原文多空佣金口径夏普 3.75 未复现",
+   "source_report": "reports/research/iterations/h20260923_13_orb_stocks_in_play/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:monday_afternoon_reversal_index_timing",
+   "original_status": "refuted",
+   "original_verdict": "Tested as monday_afternoon_spy/qqq (single-index weekly timing: hold the asset Tuesday-open through Friday if Monday's own close-vs-open was positive, else cash -- our own disclosed proxy for the paper's intraday 12:00-vs-open split): SPY anchor Sharpe 0.51 / stress -0.07; QQQ anchor 0.63 / stress -0.03 at 10bp (need K1 >=1.19/>=0.65). K2 edges negative both assets/windows. Neither clears. This re",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.147,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.667,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.147,
+    "upper95_one_sided": 0.667
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "用 close-vs-open 代替论文 12:00-vs-open；横截面因子本身没测；SIP 分钟线（2023+）已用于别处，字面信号现在可测",
+   "source_report": "reports/research/iterations/h20260928_06_registry_stock_batch3/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:llm_hypothesis_code_backtest_loop",
+   "original_status": "refuted",
+   "original_verdict": "Refuted for this scope: one 2-round hypothesis-code-IC-feedback batch did not beat an already-strong professionally-curated zoo (led by Alpha158) on our own data/costs. Not a blanket refutation of LLM-authored factor code -- the batch winner (F10) was individually a reasonable, positive-sign quality signal (TEST ICIR 0.197), and Round 2 improved on Round 1 own SELECT ICIR (0.272 vs 0.215), so the ",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "N",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "budget",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "只跑 2 轮、12 个候选；赢家 TEST ICIR 0.197 为正号；预算（>2 轮/>12 候选）远未用尽",
+   "source_report": "reports/research/hypotheses/H-20260928-15-claude-factor-batch.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:text_to_pit_feature_extraction",
+   "original_status": "refuted",
+   "original_verdict": "stop for this construction (8-K risk_score, 50 tickers, 8 quarters, single DeepSeek prompt): real IC is negative but not distinguishable from placebo noise at n=8 quarters (opposite-signed placebo within 75% of real magnitude). Zoo-integration IC lift not attempted (existing liquid-500 ranking pipeline not quick to adapt to a disjoint 50-ticker sample within pilot budget) -- standalone IC only, di",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "8-K risk_score 代替 10-K Item 1A，50 只股票 x 8 个季度；真实 IC 为负但与安慰剂不可分（8 个季度几乎无功效）",
+   "source_report": "reports/research/iterations/h20260928_17_filing_risk_labels/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:vix_term_structure_short_vol",
+   "original_status": "refuted",
+   "original_verdict": "Refuted under this project's frozen K1/K2 contract. All 10 primary VVRP_* candidates (3 realized-vol-window variants x 2 remainder-leg variants of the full 2-signal combo, plus signal-1-only and signal-2-only, each x2 legs) failed K1 decisively: best anchor-window judged Sharpe was 0.42 (VVRP_SIG1ONLY_SHY) against a 1.19 bar, best stress-window Sharpe was 0.90 (VVRP_SIG2ONLY_SHY) but its own ancho",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.771,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.291,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.771,
+    "upper95_one_sided": 1.291
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "无 VX 期货曲线，用已实现波动代理；锚定最优 0.42、压力最优 0.90（取各窗口最大值，偏乐观）；静态 50/50 SMH/QQQ 对照 1.20/0.89 反超",
+   "source_report": "reports/research/iterations/h20260929_10_vix_vrp_etp/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:equity_momentum_concentrated_pwb",
+   "original_status": "refuted",
+   "original_verdict": "Tested as momentum_concentrated_k37 (momentum_252_21 top-37, monthly, top-500 broad universe): anchor Sharpe 1.03 (need >=1.19), stress Sharpe 0.51 (need >=0.65) at 10bp -- K1 fails. K2 diversifier edge vs vol-matched S3+SHY: -0.143 anchor / -0.071 stress (need >=0.05 both) -- K2 fails. See reports/research/iterations/h20260928_06_registry_stock_batch3/results.json.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.65,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.169,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.65,
+    "upper95_one_sided": 1.169
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "k=37/252-21 取自摘要，原论文全文细则未取得；单规格",
+   "source_report": "reports/research/iterations/h20260928_06_registry_stock_batch3/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:dual_class_share_arbitrage_pwb",
+   "original_status": "refuted",
+   "original_verdict": "T-20260929-37 (h20260929_37_ls_short_unlocked): 0/6 dual-class share-pair z-score candidates (10 US pairs excl. BRK, long cheaper class / short richer class, dollar-neutral per pair, monthly 21 offsets and weekly 5 offsets) reach K1, K2 or watch_recent after 10 bp per side and ADV-tier borrow. Gross Sharpe is positive (anchor 0.50-1.05, stress 0.53-1.31) but net anchor is -0.942..-0.015 and net st",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2"
+   ],
+   "gap_class": "contract",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.093,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.613,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": 0.093,
+    "upper95_one_sided": 0.613
+   },
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "毛夏普锚定 0.50-1.05 为正，成本（冻结 10/20 bp）是约束；GOOG/GOOGL 等腿的实测价差约 2 bp 以下；缺实测报价成本合同",
+   "source_report": "reports/research/iterations/h20260929_37_ls_short_unlocked/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:overnight_intraday_gap_retail_pwb",
+   "original_status": "refuted",
+   "original_verdict": "Tested as overnight_only_spy/qqq (static long-overnight/flat-intraday daily round trip, 2x the 10/20bp per-side cost since it is a genuine daily buy-then-flatten round trip): anchor Sharpe -3.99/-2.45, stress Sharpe -3.59/-2.97 -- decisively refuted, confirming the source literature's own caveat (alphactor: bid-ask alone costs ~1%/yr; gouravsalottra: costs destroy nearly all of a 240-combination g",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": true,
+   "new_label": "满足P-1（机械判定）",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [],
+   "gap_class": "met",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": -3.697,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": -3.178,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -3.697,
+    "upper95_one_sided": -3.178
+   },
+   "missing_depth_points": [],
+   "what_is_missing_specifically": "夏普 -3.99/-3.59，远低于任何声称；成本对日往返是机制性约束，文献自己也警告",
+   "source_report": "reports/research/harvest/raw/2026-09-23/exa_end_of_day_overnight_01c1a3.jsonl",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:covered_call_cef_income_pwb",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-05 batch2 (iteration h20260928_05_registry_etf_batch2): XYLD_COVERED_CALL_PROXY (buy-and-hold XYLD as the live proxy for the defunct BEP S&P 500 covered-call CEF) fails K1 (anchor Sharpe 0.8903 < 1.1882 bar; stress 0.4704 < 0.6447 bar) and K2 (anchor edge +0.1237 clears the 0.05 bar alone but stress edge -0.0835 fails, so K2 fails overall). The proxy's live Sharpe is well below both Sim",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.583,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.103,
+    "target": 1.36,
+    "target_basis": "claimed",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": 0.583,
+    "upper95_one_sided": 1.103
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "用 XYLD 代替已消失的 BEP 封闭基金；与 Simon (2008) 夏普 1.36 不同口径",
+   "source_report": "reports/research/iterations/h20260928_05_registry_etf_batch2/candidate-manifest.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:skewness_preference_52wk_high_pwb",
+   "original_status": "refuted",
+   "original_verdict": "Tested as skew_52wk_high_k95 (dist_from_252d_high top-95, monthly, long leg = nearest the 52-week high): anchor Sharpe 0.82, stress Sharpe 0.54 at 10bp (need >=1.19/>=0.65) -- K1 fails. K2 edge -0.008 anchor / -0.014 stress (need >=0.05) -- K2 fails. See reports/research/iterations/h20260928_06_registry_stock_batch3/results.json.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.615,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.135,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.615,
+    "upper95_one_sided": 1.135
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "Blau 等 95 多/100 空的十分位切点未取得，用 k=95 近似",
+   "source_report": "reports/research/iterations/h20260928_06_registry_stock_batch3/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:letf_published_rules_live_tracked",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-05 batch2 (iteration h20260928_05_registry_etf_batch2): HFEA_UPRO_TMF (55/45 UPRO/TMF, monthly-approximated quarterly rebalance) fails both K1 (anchor Sharpe 0.5387 < 1.1882 bar; stress 0.4549 < 0.6447 bar) and K2 (anchor edge -0.4169, stress edge +0.0151, both below the 0.05 bar in the window that fails). 9Sig remains not lane-testable (quarterly cumulative growth-target rebalance, uns",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.477,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.997,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.477,
+    "upper95_one_sided": 0.997
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "HFEA 按月近似季度再平衡；9Sig 不可测；LRS 未重开",
+   "source_report": "reports/research/harvest/raw/2026-09-23/reddit_live_98aadb.jsonl",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:turn_of_month_equity_seasonality",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-05 batch2 (iteration h20260928_05_registry_etf_batch2): TOM_SPY (buy SPY close of last trading day of month, sell close of 4th trading day of next month) fails both K1 (anchor Sharpe -0.6876 < 1.1882 bar; stress -0.1036 < 0.6447 bar, both negative) and K2 (anchor edge -0.7068, stress edge -0.3602, both far below the 0.05 bar). The turn-of-month effect does not clear the owner's relaxed ",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1"
+   ],
+   "gap_class": "repro",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": -0.26,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.259,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -0.26,
+    "upper95_one_sided": 0.259
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）"
+   ],
+   "what_is_missing_specifically": "SPY 单规则，夏普为负、其上界低于条栏；规则无规模维度（c3=A）；历史存在的五个来源并存是 c1 的缺口，故标 N",
+   "source_report": "reports/research/harvest/raw/2026-09-23/exa_turn_of_the_month_623e35.jsonl",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:pre_fomc_announcement_drift",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-05 batch2 (iteration h20260928_05_registry_etf_batch2): both FOMC_DRIFT_SPY (anchor Sharpe -0.8449, stress -1.0922) and FOMC_DRIFT_TQQQ (anchor 0.3125, stress -0.0339) fail K1 (bar 1.1882 anchor / 0.6447 stress) and K2 (anchor edge -0.5998 / -0.4218, stress edge -0.7083 / -0.1558, all below the 0.05 bar), as expected from the source's own reported Sharpe (~0.5-0.6) already being below t",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "N",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c4"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": -1.026,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": -0.506,
+    "target": 0.55,
+    "target_basis": "claimed",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -1.026,
+    "upper95_one_sided": -0.506
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "用完事先写定的迭代预算"
+   ],
+   "what_is_missing_specifically": "SPY 变体为负，但每年约 8 次 FOMC，锚定窗口只有约 20 个事件；TQQQ 变体 0.31/-0.03；原文夏普 0.5-0.6 在该长度下检出概率低",
+   "source_report": "reports/research/harvest/raw/2026-09-23/exa_turn_of_the_month_623e35.jsonl",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:sectoral_intramonth_momentum",
+   "original_status": "refuted",
+   "original_verdict": "T-20260929-37: Quantpedia article opened 2026-09-29 and the rule rebuilt as described (9 Sector SPDRs, 252d ranking at month end, D+1 momentum, D+2/D+3 reversed, D-10..D-5 momentum; long top-k/short bottom-k or long top-k/short SPY, k 2 and 3). 0/5 candidates reach K1, K2 or watch_recent: calendar composites net anchor -1.664..-1.039 and stress -2.123..-0.712 (gross Sharpe only 0.26/0.37 for long-",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.34,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.86,
+    "target": 0.55,
+    "target_basis": "claimed",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.34,
+    "upper95_one_sided": 0.86
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "毛夏普 0.26/0.37 对原文 0.55；毛 0.55 在 ~10 年窗口的 SE 0.32 内不能排除；换手 141.7 单位/年使成本成为主因",
+   "source_report": "reports/research/iterations/h20260929_37_ls_short_unlocked/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:volatility_gated_momentum_aegis",
+   "original_status": "refuted",
+   "original_verdict": "arXiv:2604.09060 (Chakraborty & Singh, Apr 2026) confirmed real; independently verified against the secondary blog's mechanism description. Tested step 1 only (volatility-adjusted momentum = momentum_252_21/vol_63, top-50, monthly) as vam_momentum_k50, a disclosed partial proxy dropping steps 2-3 (minimax-correlation diversification, SLSQP Sortino allocation) as portfolio-construction work outside",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.672,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.192,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.672,
+    "upper95_one_sided": 1.192
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "只做步骤 1（vol 调整动量 top-50），略去极小极大相关多样化与 SLSQP Sortino 配置；是部分代理",
+   "source_report": "reports/research/harvest/raw/2026-09-23/exa_volatility_managed_or_crash_675869.jsonl",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:s3_bear_regime_guard",
+   "original_status": "refuted",
+   "original_verdict": "no gate passes (a) +10pt DD and (b) +0.10 Sharpe with (c) exposure match and (d) 18/20 circular shifts; keep the 25% exit",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "sizing",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "无门通过 +10pt 回撤且 +0.10 夏普，含 18/20 循环平移；无统计量",
+   "source_report": "reports/research/hypotheses/H-20260923-11-s3-bear-guard.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:s3_defense_first_remainder",
+   "original_status": "refuted",
+   "original_verdict": "neither reaches +0.10 Sharpe over SHY (+0.07, +0.05); most of the lift is diversification (EW +0.03), the ranking helps mainly in 2022 and does not reduce the 2018-2019 drawdown; keep SHY",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "sizing",
+   "min_detectable_effect": {
+    "type": "sharpe_edge",
+    "windows": [
+     {
+      "years": 7.33,
+      "observed_edge": 0.07,
+      "rho": 0.8,
+      "se": 0.234,
+      "mde_80": 0.581
+     }
+    ],
+    "bar": 0.1,
+    "c5_auto": "N"
+   },
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "提升 +0.07/+0.05 对门槛 +0.10；窗口 2016-2023 内夏普差的 MDE 远高于 0.10（相关系数 0.8 为假设）",
+   "source_report": "reports/research/hypotheses/H-20260923-12-s3-defense-first.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:wikipedia_pageview_attention_signal",
+   "original_status": "refuted",
+   "original_verdict": "weekly RankIC of VC7_28 (log of 7-day views over the prior 28-day mean) vs next-week SPY-excess open-to-open return, 467 current S&P 500 series, close signal and next-open fill, median over 5 weekday offsets: 2024-01-08 onward IC -0.0030 (Newey-West t -0.53), real IC below the 95th percentile (+0.0058) of 500 title-shuffle placebos (81% of placebos at or above real); 2016-07..2023-12 IC +0.0050 (t",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "data",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": -0.003,
+    "t": -0.53,
+    "se": 0.00566,
+    "mde_80": 0.01408,
+    "upper95_one_sided": 0.00631
+   },
+   "observed": {
+    "observed": -0.003,
+    "t": -0.53,
+    "upper95_one_sided": 0.00631
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "467 个当前标普成分序列（无退市）；锚定 IC -0.0030 NW t -0.53；2016-2023 IC +0.0050 t 1.40 带幸存者偏差",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-19.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:sec_fails_to_deliver_signal",
+   "original_status": "refuted",
+   "original_verdict": "2026-09-29 T-20260929-72 (h20260929_72_sec_ftd): refuted at the IC gate; short-selling-information cell (fails-to-deliver) closed. 176 of 186 half-month SEC files 2019-01..2026-09 downloaded (10 HTTP 404 gaps), PIT-lagged by publication (a-file after month end, b-file after the 16th of next month). ADV top 1500, price>=5, RankIC of -signal: FTDSH 2024+ IC 0.0003 (NW t 0.05) at 20d, 0.0050 (0.51) a",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "data",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": 0.0003,
+    "t": 0.05,
+    "se": 0.006,
+    "mde_80": 0.01492,
+    "upper95_one_sided": 0.01017
+   },
+   "observed": {
+    "observed": 0.0003,
+    "t": 0.05,
+    "upper95_one_sided": 0.01017
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "代码映射只覆盖文件行的 29.7%，其中 26.0% 被 20% 价格规则剔除；2024+ IC 0.0003 t 0.05 (20 日)",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-19.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:etf_constituent_lead_lag_reversion",
+   "original_status": "refuted",
+   "original_verdict": "T-20260929-37: 0/5 low-turnover ETF-crash constituent-laggard books (long k of the 10 fixed 2016 top holdings with the lowest same-day return minus ETF return, short the ETF, ETF close in its trailing-252d worst decile, hold 5 or 10 sessions, entry delay 0/1/2) reach K1, K2 or watch_recent. XLK versions net anchor -1.954..-0.551 (gross -1.33..-0.09: the ETF itself rebounds after crash days, mirror",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.04,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.56,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": 0.04,
+    "upper95_one_sided": 0.56
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "原仓库的日换手账本未测，测的是低换手变体；LL_SOXX_K3_H5 锚定 0.758 但压力 -0.223",
+   "source_report": "reports/research/iterations/h20260929_37_ls_short_unlocked/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:high_freq_news_return_underreaction_drift",
+   "original_status": "refuted",
+   "original_verdict": "the signed intraday news reaction does not predict continuation in the 2024-2026 US top-3000 universe: raw rank IC -0.005 (t -0.9), 5-day-sum IC -0.003 (t -2.5, reversal sign), p90 event CAR -0.29% at 5d (t -1.9, 20,448 events); all three preregistered cards rejected; does not lift the ML-ranker prior",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": -0.005,
+    "t": -0.9,
+    "se": 0.00556,
+    "mde_80": 0.01382,
+    "upper95_one_sided": 0.00414
+   },
+   "observed": {
+    "observed": -0.005,
+    "t": -0.9,
+    "upper95_one_sided": 0.00414
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "原文声称量级未登记；时间戳更早的新闻源（PR wire）未用",
+   "source_report": "reports/research/signal-cards/news-hf-v1-summary.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:composite_momentum_quality_v1",
+   "original_status": "refuted",
+   "original_verdict": "no composite beats momentum alone on Sharpe (the preregistered reference test); the avoid-side signals trade return for drawdown one-for-one or worse in a long-only top-30 book; none meets G1 (>=50%/yr with DD >= -35%)",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "无复合优于单动量；无统计量",
+   "source_report": "reports/research/signal-cards/composites-v1-summary.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:etf_dip_reversion_ibs_connors",
+   "original_status": "refuted",
+   "original_verdict": "Re-judgment appended 2026-09-29 (T-20260929-01 part B): H-20260924-01's 6 published ETF dip-reversion rules (D1-D6), re-tested on SPY/QQQ 1x with next-open fill under this project's K1/K2 screening-lane contract (S3-relative Sharpe bar, materially different from H-20260924-01's own absolute giants-sweep G1/G1' bar). 0/12 candidates clear K1 or K2. Best cell is DIP_D1_SPY (anchor Sharpe 1.127, 95% ",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 1.127,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 2.13,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 1.127,
+    "upper95_one_sided": 2.13
+   },
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "最优 DIP_D1_SPY 锚定 1.127 为 K1 条的 95%；阶段 B（15:50 ET 代理 + MOC 时点）未实现；锚定窗口 MDE 高于条",
+   "source_report": "reports/research/iterations/h20260929_01_dip_rejudge/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:pead_xbrl_sue_filing_date",
+   "original_status": "refuted",
+   "original_verdict": "CAR +0.71% over 20d (t 3.6; 2024+ +0.82%) but it does not beat the redated placebo (the same stocks drift similarly on random dates), and the calendar-time book is -3.9%/yr full, +1.5% 2024+ at 20 bp; the SUE rank among recent reporters is not predictive (IC 0.016, t 1.2); filing date lags the press release, so this measures post-filing drift",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": 0.016,
+    "t": 1.2,
+    "se": 0.01333,
+    "mde_80": 0.03316,
+    "upper95_one_sided": 0.03793
+   },
+   "observed": {
+    "observed": 0.016,
+    "t": 1.2,
+    "upper95_one_sided": 0.03793
+   },
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "按申报日而非公告日，已由 8-K 版本取代；CAR +0.71% t 3.6 但不胜过重定日期安慰剂",
+   "source_report": "reports/research/signal-cards/fundamentals-v1-summary.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:composite_momentum_roe_v2",
+   "original_status": "refuted",
+   "original_verdict": "ROE makes the momentum book defensive, not better: T1 top-30 20-session book at 20 bp, full window, C4 17.0%/yr, Sharpe 0.73, DD -36.8% vs same-universe momentum 29.0%/yr, Sharpe 0.82, DD -49.8%; in 2024-2026 C4 trails badly (by year 18.7%, 9.0%, -1.9% vs 35.3%, 49.3%, 31.7%); C5 (+insider) is the same; fails the higher-Sharpe-and-shallower-DD rule",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "ROE 使动量账本防御而非更好；无统计量",
+   "source_report": "reports/research/signal-cards/composites-v2-summary.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:momentum_daily_crash_guard",
+   "original_status": "refuted",
+   "original_verdict": "0/5 pass (H-20260924-02). The Daniel-Moskowitz bear/panic state and a -7% single-day market stop never trigger in 2024-2026 (identical to the unguarded book). Daily Barroso-Santa-Clara scaling reaches DD -27.4% but CAGR 37.0%, Sharpe 0.98, holdout Sharpe 0.74, placebo 70%: it slides along the same return-for-drawdown line, as the rebalance-cadence version did. A book drawdown stop whipsaws (CAGR 3",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "Daniel-Moskowitz 熊/恐慌状态与 -7% 单日停止在 2024-2026 从未触发，该机制在此窗口零功效；需含崩溃的窗口做崩溃诊断",
+   "source_report": "reports/research/iterations/h20260924_02_momentum_crash_guard/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:paper_sleeve_combination",
+   "original_status": "refuted",
+   "original_verdict": "refuted 0/3 on the preregistered rule: every mix passes G1/G1' at 10 and 20 bp and has a shallower stress drawdown than its control, but none adds >=0.10 Sharpe over S3 scaled to the same volatility in BOTH the anchor and the stress window (M1 +0.086/-0.001, M2 +0.018/+0.023, M3 +0.294/-0.047). S2 and S3 move together (daily corr 0.83 stress, 0.79 anchor). Practical reading: lowering S3's allocati",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe_edge",
+    "windows": [
+     {
+      "years": 2.69,
+      "observed_edge": 0.086,
+      "rho": 0.79,
+      "se": 0.395,
+      "mde_80": 0.982
+     },
+     {
+      "years": 7.33,
+      "observed_edge": -0.001,
+      "rho": 0.83,
+      "se": 0.215,
+      "mde_80": 0.536
+     }
+    ],
+    "bar": 0.1,
+    "c5_auto": "N"
+   },
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "混合相对同波动 S3 的夏普增量 +0.086/-0.001 对门槛 0.10；该长度下夏普差的 MDE 约 1.1/0.7，无法检出 0.10",
+   "source_report": "reports/research/iterations/h20260927_01_sleeve_combination/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:s3_rebalance_timing_luck_tranching",
+   "original_status": "refuted",
+   "original_verdict": "refuted 0/4: four-tranche T4 vs live month-end O00, anchor 87.0%/1.52/-35.2% vs 116.3%/1.82/-32.3%, stress DD -52.0% vs -48.0%. T4 sits at the 21-offset median (anchor 85.8%/1.49/-35.4%); it fails because month-end is the luckiest of 21 dates in both select and anchor windows. Only 10/21 offsets pass G1/G1' in the anchor window; all 21 pass in 2026 (contaminated). Date-neutral S3 expectation 2024-",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": true,
+   "blocking_conditions_other_than_c3": [],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "月底是 21 个偏移中最幸运的一个——该结论本身是功效/偏移度量，不是对策略的否定",
+   "source_report": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:chart_image_cnn_jkx_replication",
+   "original_status": "refuted",
+   "original_verdict": "REFUTED (kill test run 2026-09-28 on Modal, full spec, not a stage-1 pilot). Fixed OOS-rendering timeout bug first (train/oos split into separate Modal functions with checkpointing to the oc-data volume + chunked parallel rendering; see scripts/modal_cnn_chart.py and reports/research/iterations/cnn_chart_i20r5_2026-09-28/report.md). Train 2016-03-01..2019-12-31 (n=413,128/177,055), GPU T4, best_va",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "depth",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "单个 I20/R5 模型、训练期 2016-2019（原文 1993-2000）、n=413,128；无训练规模/容量/窗口三点曲线；NW t -1.176；缺 I60 变体",
+   "source_report": "reports/research/intel/I-20260923-09-gpu-methods-evidence.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:regime_trust_uncertainty_gate_momentum_ranker",
+   "original_status": "refuted",
+   "original_verdict": "0/3 candidates pass stage 1 (H-20260928-31, 2026-09-28): U1/U2 book-level regime-trust gates score AUROC 0.522 for flagging future above-median drawdown days (coin-flip), make anchor-window drawdown worse not better vs a ~0 placebo median, and miss the owner's Sharpe-vs-vol-matched-control rule by +0.05/-0.22 (need >=0.10); U3's individual-name exclusion loses to its own random-quintile-drop place",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "AUROC 0.522；无 t 值，无法计算",
+   "source_report": "reports/research/iterations/h20260928_14b_uncertainty_gate/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:managed_futures_etf_hold_batch1_2026",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-04 batch1 (iteration h20260928_04_s3_alt_div_batch1): none of the 5 managed-futures ETFs (F1_DBMF, F1_KMLM, F1_CTA, F1_WTMF, F1_FMF) clears K1 or K2. Best K1 anchor Sharpe is F1_DBMF at 0.8157 (bar 1.1882); best K2 anchor edge is F1_CTA +0.2035 but its stress edge is -0.4641 (bar 0.05 both windows). F1_CTA (1.46yr) has under 2 years of stress coverage but already fails on anchor Sharpe ",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.816,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.818,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.816,
+    "upper95_one_sided": 1.818
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "最优 DBMF 锚定 0.8157；F1_CTA 仅 1.46 年；单窗口",
+   "source_report": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/candidate-manifest.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:keller_antonacci_faber_taa_batch1_2026",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-04 batch1 (iteration h20260928_04_s3_alt_div_batch1): none of the 9 tactical-allocation rules (F2_VAA_G4, F2_DAA_G12, F2_PAA, F2_HAA, F2_GPM, F2_GEM, F2_GTAA, F2_ADM, F2_BAA_BAL) clears K1 or K2. Best K1 anchor Sharpe is F2_GEM at 0.9570 (bar 1.1882); F2_HAA (0.6487) and F2_BAA_BAL (0.7098) clear the stress leg alone but fail anchor. Best K2 anchor edge is F2_GTAA +0.1450 but its stress",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.732,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.251,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.732,
+    "upper95_one_sided": 1.251
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "9 条规则各单规格；最优 GEM 锚定 0.957",
+   "source_report": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/candidate-manifest.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:alt_diversifier_etf_hold_batch1_2026",
+   "original_status": "refuted",
+   "original_verdict": "H-20260928-04 batch1 (iteration h20260928_04_s3_alt_div_batch1): none of the 5 other alt-diversifier ETFs (F3_RPAR, F3_UPAR, F3_NTSX, F3_QAI, F3_TRTY) clears K1 or K2. Best K1 anchor Sharpe is F3_TRTY at 0.9203 (bar 1.1882); F3_UPAR's stress Sharpe is -1.0243 (2022 rate shock hit both its bond and equity legs). Best K2 anchor edge is F3_TRTY +0.1359 but its stress edge is -0.3651 (bar 0.05 both wi",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.92,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.923,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.92,
+    "upper95_one_sided": 1.923
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "F3_UPAR 仅 1.62 年；单窗口",
+   "source_report": "reports/research/iterations/h20260928_04_s3_alt_div_batch1/candidate-manifest.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:step10_beta_exposure_vol_managed_router",
+   "original_status": "refuted",
+   "original_verdict": "0/24 candidates clear the frozen contract (config/promotion/unlevered-family-paper-tier-gates.json). After fixing a benchmark_vm_capture_ratio measurement bug (geometric-mean capture, not compounded), 24/24 pass the capture gates, but cagr_excess_vol_matched_benchmark (>=5pp, best +0.99pp) and sharpe_excess_bil (>1.0, best 0.59) still fail 24/24: de-risking lowers exposure and drawdown but does no",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "0/24；冻结门含 sharpe_excess_bil>1.0 与 CAGR 超额>=5pp；无 t 值，无法计算",
+   "source_report": "reports/research/control/step10-w1-beta-exposure-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:step10_cross_asset_trend_tsmom_etf",
+   "original_status": "refuted",
+   "original_verdict": "0/12 candidates clear the frozen contract. After the same capture-ratio fix, 9/12 pass benchmark_vm_capture_ratio (new values 0.98-1.06 vs the pre-fix 0.32-0.71), but cagr_excess_vol_matched_benchmark (>=5pp, best +1.33pp) and sharpe_excess_bil (>1.0, best 0.65) still fail 12/12. Best candidate (lookback=6, top_n=5, equal): CAGR 11.08%, drawdown less than SPY in 2022/2020/2018Q4 crisis windows, bu",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "0/12；最佳 CAGR 超额 +1.33pp、sharpe_excess_bil 0.65；无 t 值",
+   "source_report": "reports/research/control/step10-w1-cross-asset-trend-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:step10_xsmom_pit_liquidity_liquid500",
+   "original_status": "refuted",
+   "original_verdict": "0/4 candidates clear the frozen contract, and this is the only one of the three Step-10 families where the capture gate itself also fails: benchmark_vm_capture_ratio improved from 0.09-0.19 (legacy compounded definition) to 0.97-0.999 (corrected geometric-mean definition) after the same measurement fix, but all four candidates remain just under the 1.0 threshold. cagr_excess_vol_matched_benchmark ",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "0/4；已做幸存者偏差复测（非实质）；无 t 值",
+   "source_report": "reports/research/control/step10-w2-cross-sectional-liquid500-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:step10_sleeve_combination_beta_crossasset",
+   "original_status": "refuted",
+   "original_verdict": "Combination does not clear the frozen contract (6/8 gates pass) but improves on both parents on the two binding gates: sharpe_excess_bil rises to 0.743 (from 0.589/0.648) and cagr_excess_vol_matched_benchmark rises to +2.44pp (from +0.99pp/+1.33pp) -- the first time in this wave that combining sub-threshold sleeves moved the needle, though still short of the >1.0 / >=5pp thresholds. A third candid",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "组合改善 sharpe_excess_bil 至 0.743、CAGR 超额 +2.44pp 但未过门；第三个袖子因相关性排除",
+   "source_report": "reports/research/control/step10-w3-combination-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:core_satellite_momentum_sector_etf_r7",
+   "original_status": "refuted",
+   "original_verdict": "No candidate selected; workflow_pass=false, research_pass=false. Raw audit-only diagnostics: D01 29.01% return/Sharpe 1.16, D05 40.15%/Sharpe 0.89 (10bps), but DSR probability 0.578 failed the 0.95 gate and D02's Sharpe 0.361 failed a 100-replicate within-date permutation control (p95 0.530). Contract-validity problems (StrategySpec does not encode the evaluated multi-symbol target-weight behavior",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "StrategySpec 未编码多标的目标权重行为、折叠成本边界未冻结 —— 合同无效；DSR 0.578",
+   "source_report": "reports/research/control/us_core_satellite_momentum_r7-memory.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:dynamic_theme_semantic_chain_momentum",
+   "original_status": "refuted",
+   "original_verdict": "17 rounds (R8, 2026-08-01, through R24, 2026-08-10), none cleared its own preregistered development gate. R8: the generic fixed-ETF LightGBM theme ranker had no usable alpha (M02 survival gate poorly calibrated, retained worse paths) -- rejected fixed-ETF ranking specifically, not dynamic membership discovery. R19D01: reached the CAGR/drawdown/Sharpe/MAR/TQQQ-capture/turnover/PBO gates but failed ",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "Y",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c4",
+    "c5"
+   ],
+   "gap_class": "depth",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "17 轮（R8-R24）均未过开发门；DSR 0.035；终止指令已下；模态未变（价格变换）",
+   "source_report": "reports/research/iterations/mom_pit_semantic_theme_r24/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:etf_structural_family_daily_r9",
+   "original_status": "refuted",
+   "original_verdict": "Stop; research_pass=false, no selected candidate. R9D04's primary Sharpe was 0.967 against a frozen raw-BIL-Sharpe hurdle of 9.38 (flagged in the record itself as a methodologically dubious hurdle -- a zero-risk-free cash proxy's raw Sharpe used as the maximum risky-strategy bar -- but frozen before results, so not reinterpreted after seeing them); cumulative DSR probability 0.208 < the required 0",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "冻结的 BIL 原始夏普 9.38 作为风险策略门槛——原记录自己也标为方法上有疑；R9D04 夏普 0.967",
+   "source_report": "reports/research/iterations/mom_etf_structural_family_r9/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:multiscale_intraday_event_r5",
+   "original_status": "refuted",
+   "original_verdict": "Deterministic intraday path: stop -- no candidate cleared every frozen cost/fold/benchmark/drawdown/placebo gate; placebo pass was False. Filing/news path: stop historical execution (continue data acquisition only) -- no immutable historical news/text archive exists, so LLM outputs cannot be backfilled without manufacturing historical alpha. Conference-calls/AI path: stop. Paper simulation: stop (",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "data",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "无不可变的历史新闻/文本档案，LLM 输出无法回填；确定性路径安慰剂未过",
+   "source_report": "reports/research/iterations/mom_multiscale_event_r5/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:multiscale_low_turnover_etf_r6",
+   "original_status": "refuted",
+   "original_verdict": "Daily core path: stop selection, preserve all returns only as invalid-contract audit evidence -- D01-D04 violate the 40% single-symbol cap and D02-D05 use non-self-financing multi-asset accounting, so R6 has no contract-valid historical result at all (a methodology/contract failure, not an economic one). Intraday overlay path: stop interpreting D06's reported return/Sharpe as intraday lift (it con",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "D01-D04 违反 40% 单标的上限、D02-D05 非自融资记账：无合同有效的历史结果",
+   "source_report": "reports/research/iterations/mom_multiscale_low_turnover_r6/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:robust_momentum_deterministic_ml_r4",
+   "original_status": "refuted",
+   "original_verdict": "P1: stop -- no accepted diagnostic candidates; all evidence is current-universe (survivorship-biased) diagnostic only and cannot set research_pass. P2: stop -- no accepted diagnostic candidates and the shuffled-label control failed (pass=false), so no model is serialized or authorized. P3: continue controls (future-feature rejection passed, shuffled-label failed as expected/required). Overall: piv",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "?",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "data",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "全部为当前宇宙（幸存者偏差）诊断；缺 PIT 成分、退市收益、公司行动谱系",
+   "source_report": "reports/research/iterations/mom_robust_momentum_r4/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:spy_dual_trend_core_r8",
+   "original_status": "refuted",
+   "original_verdict": "Stop R8D01; do not tune, promote, or forward-observe. The immutable SIP evaluation passed implementation, positive-return, drawdown, cost-stress, and four-of-four-positive-fold checks, but failed the matched 40/60 SPY-cash Sharpe gate (result Sharpe 0.737 vs the matched-benchmark Sharpe 0.887), the cumulative-N=8002 DSR gate (DSR probability 0.075), and the frozen SIP/IEX transition-mismatch gate.",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "夏普 0.737 对匹配 40/60 SPY-现金 0.887；DSR 0.075；SIP/IEX 转换门失败；净 40.46%",
+   "source_report": "reports/research/iterations/mom_spy_dual_trend_core_r8/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:nasdaq_long_short_event_router_1m",
+   "original_status": "refuted",
+   "original_verdict": "Refuted on consolidated SIP 1-minute data (h20260929_36_router_sip, frozen route, no parameter change, 2024-01-08..2026-09-28, 188 trades): R0 10 bp per side Sharpe -0.126 (K1 needs >= 1.19), 20 bp CAGR -14.15 percent, combo edge vs S3 offset 0 -0.614 (K2 needs >= +0.05), beats 89 percent of 200 random-pick placebos (G3 needs 90). At the original draft cost (2.5 bp per side) SIP gives CAGR +9.44 p",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.72,
+    "observed_pooled": -0.126,
+    "se": 0.606,
+    "mde_80": 1.508,
+    "upper95_one_sided": 0.871,
+    "target": 0.33,
+    "target_basis": "claimed",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": -0.126,
+    "upper95_one_sided": 0.871
+   },
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "做空腿从未触发（top_n=1 时空头榜与多头榜相同）——测的是仅多头的开盘抄底；压力窗口 2016-2023 无分钟数据（待办）",
+   "source_report": "reports/research/control/nasdaq_long_short_event_router_1m_sweep_002-memory.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:multiasset_ml_ranking_vs_12_1_baseline",
+   "original_status": "refuted",
+   "original_verdict": "No ML or AI candidate beat the frozen 12-1 baseline in any of the four rounds. R1: the 252-day weekly top-2 route passed 3/4 folds and the OOS-IR gate (but carries ~40% historical max drawdown, exploratory); the 12-1 top-5 route passed the internal fold gate but its current-universe history is survivorship-biased. R1 (ML): LightGBM and HistGradientBoosting passed 3/4 development folds but both los",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "depth",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "R1-R3、R7 四轮；特征/标签变化不是规模曲线；4 折",
+   "source_report": "reports/research/iterations/mom_multiasset_ml_r1/decision-record.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:tqqq_post_drawdown_reentry_router",
+   "original_status": "refuted",
+   "original_verdict": "Not promotion-eligible. 2026-07-10 subjective pivot: judged too conservative for the project's aggressive-momentum goal, project moved to mom_minute_r1. 2026-09-02/03 quantitative re-verification on clean SIP data confirmed the same conclusion: 8 gates pass 7, but promotion_eligible=False because qqq_capture_ratio fails; removing the defensive-overlay wrapper and evaluating the base post_drawdown_",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "判定依赖 qqq_capture_ratio（登记册 step10 条目记录该复合式度量对 beta<1 策略不可通过且 09-04 后修正）；本条 09-02/03 复核是否按修正口径重算待核对",
+   "source_report": "reports/research/control/strategy-iteration-progress-2026-07-01.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:pdr_router_ml_gate",
+   "original_status": "refuted",
+   "original_verdict": "Both iterations: ml_gate_beats_fixed_route=False, archived as negative results, not promoted. Step 7.R (label: forward 10-day TQQQ return > +2%): walk-forward wins 2/6 vs required >=4/6; Sharpe 0.931 vs required >=1.1; the model released during crash rebounds and the 2022 slow bear market, where staying in GLD was the route's main protection -- crisis protection materially degraded (q4_2018 -16.0%",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "walk-forward 2/6、1/6 胜；6 折；无 t 值",
+   "source_report": "reports/research/control/strategy-iteration-progress-2026-07-01.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:single_etf_intraday_momentum_cost_adjusted",
+   "original_status": "refuted",
+   "original_verdict": "Computationally feasible (581MB peak, ~15 minutes) but no signal net of cost: best SPY/QQQ combination has negative Sharpe-excess-BIL for both benchmarks; the 18 parameter combinations cluster into an effective N=3, and 0/36 candidate combinations were promotion-eligible.",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "18 组合有效 N=3，无净夏普；无 t 值",
+   "source_report": "reports/research/control/goal-first-2026-09-02-progress.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:ml_ranking_liquid500_recent_vs_momentum_rule",
+   "original_status": "refuted",
+   "original_verdict": "No Track-M cell clears all_gates_pass, against a 2024-01-02..2026-09-09 rule baseline of 33.7% annualized. Screening: 480 tests (5 libraries x 240 factors x 2 labels), 80 pass FDR (Alpha158 29, Alpha101 10, Alpha191 5, OSAP 2, Reversal Trend 0); the top-40-by-recent-ICIR screened set gives the best validation IC of any set tried (0.035, clean shuffled-label placebo 0.004) but only translates to 17",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "depth",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "480 项筛选 + 若干模型格；无规模/容量曲线；比较是 CAGR，无 t 值",
+   "source_report": "reports/research/control/step13-recent-high-return-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:reversal_trend_user_indicator",
+   "original_status": "refuted",
+   "original_verdict": "Daily event study: judged 'informative: no' in both full-sample and recent windows (fBear/fRecS showed a positive, i.e. reversal, forward excess but did not clear the preregistered gate). Hourly-bar 18-cell grid: 0/18 cells pass all_gates_pass/promotion_eligible. Per-gate: cagr_recent_net (>=0.30) fails 18/18, best 0.2625; cagr_excess_vol_matched_spy (>=0) fails 18/18, best -0.87%; sharpe_excess_b",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "18 格 0/18；1 分钟版本代码未写（用户原始要求）",
+   "source_report": "reports/research/control/step13-recent-high-return-2026-09.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:baseline_chain_b0_b1_b2_market_neutral_vs_long",
+   "original_status": "refuted",
+   "original_verdict": "No configuration clears config/promotion/unlevered-family-paper-tier-gates.json (8 gates). Long-only gate counts: B0 3/8, B1 (12-1 momentum) 4/8 -- the best of the chain -- B2 (ridge) 3/8. B1 beats B0 on 3 of 4 metrics (excess CAGR, MAR, capture_vm -- the only config to cross the 1.0 capture threshold) but at a materially worse drawdown (-58.3% vs -41.3%). B2 does NOT beat B1 under the plan's own ",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "Y",
+    "c3": "Y",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "internal",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "B0-B3 四级模型容量阶梯（深度点已有）；B1 4/8 门；功效/置信区间未报",
+   "source_report": "reports/research/control/step11-2026-09-06-progress.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:owner_chatgpt_systematic_investing_news_momentum_2026",
+   "original_status": "refuted",
+   "original_verdict": "Refuted for this scope. See reports/research/iterations/h20260928_22_llm_news_momentum_filter/results.json and report.md.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "data",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "缺 PIT 市值权重特征；新闻密度不足，论文最优的回看/标题上限无法匹配",
+   "source_report": "reports/research/iterations/h20260928_22_llm_news_momentum_filter/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:owner_azevedo_hoegner_ml_anomalies_2023",
+   "original_status": "refuted",
+   "original_verdict": "Owner's claim (traditional ~0.9, ML ~1.3-1.4) verified almost exactly (GLM OOS Sharpe 1.3868 vs baseline ~0.92-1.05). Same mechanism our own dir:ml_ranking_liquid500_recent_vs_momentum_rule and dir:baseline_chain_b0_b1_b2_market_neutral_vs_long already tested directly on 2018-2026 US-equity data (screen a public factor library, train ridge/LightGBM rankers, compare to a momentum baseline) -- and i",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c4",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "类比判定：未直接测该论文的 GLM/ML 方案；登记册自述依据是同机制的本地测试",
+   "source_report": "reports/research/intel/I-20260928-03-owner-six-directions.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:lgbm_price_volume_ranking_small_caps",
+   "original_status": "refuted",
+   "original_verdict": "2026-10-01 lead review of T-20260930-19 (stage 2 of the model-family sweep): the stage-1 cells XGB/LGBM/CAT_WX_H63 as long-only monthly books (V1 top 50 of the pool, V2 top 50 of the least liquid tercile), 21 offsets, flat 10/20 bp: no book passes K1 (anchor flat10 offset-median Sharpe 0.163/-0.172, 0.333/0.267, 0.239/0.422 vs 1.19) or K2 (anchor -0.389..-0.664; stress +0.003..+0.192); DSR(30) 0.0",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "Y",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.333,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.336,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.333,
+    "upper95_one_sided": 1.336
+   },
+   "missing_depth_points": [
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "多模型族 x 2 池子 x 21 偏移 x 2 窗口，深度点充足；最优锚定 0.333 对 1.19；DSR(30) 0.009-0.083；锚定窗口 MDE 高于条",
+   "source_report": "reports/research/iterations/t20260928_10_ml_killtest/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:factor_style_etf_momentum_rotation",
+   "original_status": "refuted",
+   "original_verdict": "T-20260928-40 batch screen: 12 FACTOR-menu candidates (MTUM/QUAL/USMV/VLUE/SIZE, same rotation_cell engine as S1-S3, lookback {63,126,252} x top_n {1,2} x rebalance {monthly,weekly}) -- 0 K1, 0 K2. 5 reach the anchor-only watch_recent bar (best FACTOR_L252_N1_WK: anchor Sharpe 1.437 vs bar 1.1882, DSR 0.643) but all fail the K1 stress bar (best stress Sharpe only 0.405 vs bar 0.6447). K2 fails for",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.682,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.202,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.682,
+    "upper95_one_sided": 1.202
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "5 个候选过锚定-only 条但过不了压力；锚定 1.437 的 SE 约 0.6",
+   "source_report": "reports/research/iterations/h20260928_40_equity_etf_menus/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:narrow_industry_etf_momentum_rotation",
+   "original_status": "refuted",
+   "original_verdict": "T-20260928-40 batch screen: 12 INDUSTRY-menu candidates (SMH/XBI/KRE/ITB/IGV/XOP/XRT/IHI, same rotation_cell engine as S1-S3, same grid) -- 0 K1, 0 K2, 0 watch_recent. Best candidate (INDUSTRY_L252_N1_WK) reaches only anchor Sharpe 0.987, below even the anchor-only watch_recent bar of 1.1882; INDUSTRY_L63_N1_MO's anchor Sharpe is negative (-0.09). The hypothesized higher-dispersion advantage of na",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.987,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.99,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.987,
+    "upper95_one_sided": 1.99
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "12 个候选 0 过；最优锚定 0.987",
+   "source_report": "reports/research/iterations/h20260928_40_equity_etf_menus/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:option_expiration_week_calendar_effect",
+   "original_status": "refuted",
+   "original_verdict": "Batch-screened 8 primary option-expiration-week candidates (OPEX_{SPY,QQQ,DIA,IWM}_{WEEK,WEEKMON}) plus 12 internal non-expiration-week placebo controls via scripts/screen_batch.py --batch h20260928_42_opex_week --iteration h20260928_42_opex_week. All 8 primary candidates have NEGATIVE anchor-window date-neutral Sharpe (best OPEX_IWM_WEEKMON -0.176, vs the K1/watch_recent bar of 1.1882) and negati",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1"
+   ],
+   "gap_class": "repro",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": -0.019,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.5,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -0.019,
+    "upper95_one_sided": 0.5
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）"
+   ],
+   "what_is_missing_specifically": "8 个主候选夏普均为负/近零，且 2 周安慰剂更好；规则无规模维度",
+   "source_report": "reports/research/screens/h20260928_42_opex_week/leaderboard.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:congressional_political_trade_replica_etf_rotation",
+   "original_status": "refuted",
+   "original_verdict": "0/24 candidates kept or watch_recent (12 POLITICAL + 12 PLACEBO_BIGTECH). Judged on select (2023-09-18..2025-12-31) and anchor (2024-01-08..2026-09-17) windows only -- NANC/GOP launched 2023-02-07 and have zero coverage of the 2016-2023 stress window, so this batch could structurally reach watch_recent at best, never a full keep. No POLITICAL candidate reaches even the anchor-only watch_recent bar",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.901,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.904,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.901,
+    "upper95_one_sided": 1.904
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "NANC/GOP 2023-02 才上市，无压力窗口；24 个候选最优锚定 0.9015",
+   "source_report": "reports/research/iterations/h20260928_43_political_etf_rotation/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:etf_pair_relative_strength_switch",
+   "original_status": "refuted",
+   "original_verdict": "Refuted for this scope. 18 candidates tested (12 PAIR_* relative-strength switches across QQQ/SPY, SMH/QQQ, XLE/XOP, KRE/XLF, IWM/SPY, ARKK/QQQ x lookback {63,126}, monthly rebalance, reusing rotation_cell unedited at menu size 2, plus 6 STATIC5050_* static-50/50-blend placebo controls). Exactly one candidate, PAIR_SMHQQQ_L63_MO, clears full K1 on its own numbers (anchor Sharpe 1.2848 >= 1.1882 ba",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.907,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.426,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.907,
+    "upper95_one_sided": 1.426
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "SMH/QQQ 候选过 K1 本身，被静态 50/50 对照（压力 0.8882）降级；分辨 0.77 与 0.89 需要远超 7 年",
+   "source_report": "reports/research/iterations/h20260928_44_etf_pair_switch/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:letf_close_rebalancing_flow_reversal",
+   "original_status": "refuted",
+   "original_verdict": "Refuted for this scope. 15 candidates tested (12 primary LETF_{SPY,QQQ,SMH}_D{2,3}_H{1,3} magnitude-conditioned down-day-then-reversal candidates + 3 internal LETF_{SPY,QQQ,SMH}_RAND placebo controls). 0/12 primary candidates clear K1 (best anchor Sharpe 0.796, LETF_SMH_D2_H1, vs the 1.1882 bar; every stress-window Sharpe also below its 0.6447 bar) or K2 (every diversifier edge vs S3 negative in b",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.796,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.799,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.796,
+    "upper95_one_sided": 1.799
+   },
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "真信号胜过随机日安慰剂（SMH 0.796 对 -0.237）——机制方向为真，经济量级小",
+   "source_report": "reports/research/iterations/h20260929_01_letf_flow_reversal/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:pre_holiday_effect_small_cap_tier",
+   "original_status": "refuted",
+   "original_verdict": "T-20260929-02 (iteration h20260929_02_pre_holiday_etf): batch-screened 12 primary PREHOL_{IWM,IJR,IWC,VB,SPY,QQQ}_H{1,2} candidates (buy the last trading day before a federal-market-holiday closure, hold 1 or 2 sessions, else SHY) plus 6 per-ticker frequency-matched RAND placebos via scripts/screen_batch.py --batch h20260929_02_pre_holiday_etf --iteration h20260929_02_pre_holiday_etf. 0/12 primary",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": -0.532,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": -0.012,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -0.532,
+    "upper95_one_sided": -0.012
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现"
+   ],
+   "what_is_missing_specifically": "用 ETF（IWM/IJR 等）代替 Ko & Yang 的 CRSP 十分位个股；夏普为负且劣于随机安慰剂",
+   "source_report": "reports/research/screens/h20260929_02_pre_holiday_etf/leaderboard.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:merger_arbitrage_target_announcement_drift",
+   "original_status": "refuted",
+   "original_verdict": "refuted as a fixed-horizon long-only signal: 1,484 EDGAR-identified target announcements 2016-2026 (576 in the tradable signal_card universe), next-open entry, 20d CAR -0.75% (t -2.36; t3 -0.62%, t -1.33), 60d -1.33% (t -1.59); 20bp book -16.2%/yr (2024+ -21.9%/yr); all four card flags fail at both horizons and both variants (beats_redated is true only because the real CAR is below every placebo).",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "N",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2"
+   ],
+   "gap_class": "contract",
+   "min_detectable_effect": {
+    "type": "car",
+    "unit": "20d CAR %",
+    "observed": -0.75,
+    "t": -2.36,
+    "se": 0.3178,
+    "mde_80": 0.79036,
+    "upper95_one_sided": -0.22722
+   },
+   "observed": {
+    "observed": -0.75,
+    "t": -2.36,
+    "upper95_one_sided": -0.22722
+   },
+   "missing_depth_points": [
+    "忠实实现"
+   ],
+   "what_is_missing_specifically": "溢价在入场前已被定价（-5..-1 日 +5.7%、0 日 +17%）；持有至交割/价格-报价比版本因无免费数据未测",
+   "source_report": "reports/research/signal-cards/ma_target_all.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:insider_cluster_buy_top500_weekly_independent",
+   "original_status": "refuted",
+   "original_verdict": "refuted: Signal card insider_cluster_buy_top500_weekly (exact H-20260916-08 design: buyers_60d>=2 on the last session of each week, PIT top-500 by dollar ADV, next-open entry, 20-session hold; 9,352 events, 381 stocks, 2016-01-29..2026-09-16): 20d excess +0.15% (t=0.78 across event dates, hit 47.7%, 2024+ -0.73%), 60d -1.11% (t=-4.5); calendar-time book at 20 bp excess vs the universe +0.005%/yr, ",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "car",
+    "unit": "20d excess %",
+    "observed": 0.15,
+    "t": 0.78,
+    "se": 0.19231,
+    "mde_80": 0.47827,
+    "upper95_one_sided": 0.46635
+   },
+   "observed": {
+    "observed": 0.15,
+    "t": 0.78,
+    "upper95_one_sided": 0.46635
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "同 insider_cluster_buy_top500（9,352 事件）；原文声称量级未登记",
+   "source_report": "reports/research/signal-cards/insider_cluster_buy_top500_weekly.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:ipo_lockup_expiration_drift",
+   "original_status": "refuted",
+   "original_verdict": "13 preregistered candidates (h20260929_21_ipo_lockup_expiry), TEST 2024-01-08..2026-09-17: best by TEST Sharpe (L1L5_adv1500_pos, short-into-lockup, ADV<=1500 tier, momentum-filtered) TEST Sharpe 0.419 vs 1.19 threshold, diversifier_edge_vs_s3_test -0.274 vs +0.05 threshold (both fail); placebo gate fails (date_shift_plus60 t=-0.59, random_date t=0.66, both |t|<2; only date_shift_minus60 t=2.22 al",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.419,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.422,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.419,
+    "upper95_one_sided": 1.422
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "事件表 20 样本核查 6/20 非普通股或错配（30%，过滤前上界）；180 日近似代替合同解禁日",
+   "source_report": "reports/research/iterations/h20260929_21_ipo_lockup_expiry/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:news_vs_nonews_drop_reversal",
+   "original_status": "refuted",
+   "original_verdict": "Refuted for all 12 candidates in TEST 2024-01-08..2026-09-17: best calendar Sharpe 0.67 (bar 1.19), every S3 diversifier edge negative (best -0.57, bar +0.05), long-leg hit rate 42.9-45.1% (below 50%), neither placebo beaten at t>=2 by any candidate, DSR <=0.178 (long) / <0.0002 (short).",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 0.67,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 1.673,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.67,
+    "upper95_one_sided": 1.673
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "12 个候选；仅 8-K 2.02 条目新闻；DSR <= 0.178",
+   "source_report": "reports/research/iterations/h20260929_20_news_nonews_drop_reversal/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:crypto_weekend_to_monday_equity_transmission",
+   "original_status": "refuted",
+   "original_verdict": "Step 1 (h20260929_50_crypto_weekend_monday, 2026-09-29) refuted: the published weekend-crypto effect replicates in the Friday-close -> Monday-open gap (W<0 minus W>=0, QQQ: -51 to -62 bp, Welch t -3.0 to -4.6 in 2022-06+ and 2024-01-08+, 3 signals; SPY -36 to -45 bp, t -2.7 to -4.4; placebo share 0.99-1.00) but it is priced before a Monday-open fill. After the open there is no effect in the paper'",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "contract",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "周末效应在周五收盘-周一开盘复现（QQQ -51..-62 bp, t -3.0..-4.6）但开盘前已定价；Alpaca 周日 20:00 ET 夜盘填单未测",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-13.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:small_cap_background_drift_short_basket",
+   "original_status": "refuted",
+   "original_verdict": "Refuted at ETF level (T-20260929-51, step 1 gate failed, step 2 not run): SSD_IWM_M252 anchor median Sharpe after 10 bp and 0.5%/yr borrow = 0.390 (gate 0.6), stress 0.554, DSR 0.19 (9 trials); no candidate reaches K1/K2/watch_recent; unhedged short IWM -0.886 so the spread is small caps trailing SPY, not short alpha; beta-adjusted IWM drift -0.53%/month in the anchor vs the paper's -0.92% for sma",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "N",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c4"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.51,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 1.03,
+    "target": 1.35,
+    "target_basis": "claimed",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": 0.51,
+    "upper95_one_sided": 1.03
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "用完事先写定的迭代预算"
+   ],
+   "what_is_missing_specifically": "只做 ETF 层（步骤 1），步骤 2 个股篮子因无借券费历史未做；原文个股夏普 1.35 不可用免费 ETB 对冲复现",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-13.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:ml_multiquarter_sue_history",
+   "original_status": "refuted",
+   "original_verdict": "refuted: ENET_TOP50 anchor median-offset net-10bp Sharpe 0.60 (K1 bar 1.1882), stress 2019-2023 0.38 (0.6447), K2 edge -0.11/-0.29, DSR 0.32; below SUE1_TOP50 0.88, MOM12_1_TOP50 1.10 and label-shuffle placebo 0.68; monthly RankIC 2019-2023 -0.0055 (t -0.21), 2024+ -0.0089 (t -0.33); 4 of 8 yearly models all-zero. Source: reports/research/iterations/h20260929_11_multiq_sue/results.json and reports",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 10.02,
+    "observed_pooled": 0.439,
+    "se": 0.316,
+    "mde_80": 0.786,
+    "upper95_one_sided": 0.959,
+    "target": 0.6447,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 0.439,
+    "upper95_one_sided": 0.959
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "ENET_TOP50 劣于 SUE1 0.88、MOM 1.10、标签打乱 0.68；4/8 年度模型全零",
+   "source_report": "reports/research/iterations/h20260929_11_multiq_sue/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:dolthub_free_options_eod_chain_data",
+   "original_status": "refuted",
+   "original_verdict": "T-20260929-60 acceptance (2026-09-29, results.json in reports/research/iterations/h20260929_60_dolthub_options_acceptance): FAIL under the preregistered criteria. Exact coverage of option_chain vs SIP sessions since 2019-02-09 is 0.54-0.62 (SPY 0.614, AAPL 0.620, NVDA 0.617, TSLA 0.539; need 0.85) and since 2024 0.875-0.879 (need 0.90); QQQ has no rows; IWM/SMH/TQQQ absent on probe dates. Gaps are",
+   "p1_conditions": {
+    "c1": "A",
+    "c2": "A",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "A"
+   },
+   "p1_met": false,
+   "new_label": "P-1不适用（数据源验收失败，不是对方向的检验）",
+   "p1_not_applicable": true,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [],
+   "gap_class": "data_acceptance",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [],
+   "what_is_missing_specifically": "这是数据源验收失败（覆盖 0.54-0.62 对 0.85），不是对方向的功效检验；仅 2024-09-04 起稠密",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-16.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:net_share_issuance_pontiff_woodgate_recent",
+   "original_status": "refuted",
+   "original_verdict": "2026-09-29 T-20260929-70 (h20260929_70_net_share_issuance): refuted at the IC gate. NSI252 (low issuance long, ADV top 1500, price>=5, cleaned PIT cover-page shares) full-sample IC +0.019 at 20d (Newey-West t 2.06) and +0.033 at 60d (t 2.13) but 2024+ IC +0.0106 (NW t 0.81) at 20d and +0.0048 (t 0.25) at 60d; the full-sample edge sits in 2020-2023 (2021 0.109, 2022 0.052), 2024 0.009, 2025 -0.012.",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": 0.0106,
+    "t": 0.81,
+    "se": 0.01309,
+    "mde_80": 0.03255,
+    "upper95_one_sided": 0.03213,
+    "claimed": 0.019,
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed": 0.0106,
+    "t": 0.81,
+    "upper95_one_sided": 0.03213
+   },
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "全样本 IC +0.019 (t 2.06) 在 2020-2023；2024+ 窗口的 MDE 高于该全样本效应，无法确认其衰减",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-19.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:ipo_quiet_period_expiry_and_post_pop_drift",
+   "original_status": "refuted",
+   "original_verdict": "Refuted 2026-09-30 (T-20260929-81, h20260929_81_ipo_aftermarket): IPO aftermarket calendar windows closed. 399 eligible 424B4-confirmed non-de-SPAC IPOs (first close >= $5, median first-10-session dollar volume >= $5M). A (long QP-3 signal to QP+2/+5, QQQ/IWM-adjusted, tiered cost): pooled net -1.40% (t -2.21) and -0.77% (t -0.98), 2024+ n 88 net -3.84%/-3.09%; QP-2 control and random-date placebo",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "car",
+    "unit": "net %",
+    "observed": -1.4,
+    "t": -2.21,
+    "se": 0.63348,
+    "mde_80": 1.57548,
+    "upper95_one_sided": -0.35792
+   },
+   "observed": {
+    "observed": -1.4,
+    "t": -2.21,
+    "upper95_one_sided": -0.35792
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "399 个 IPO；A 腿净 -1.40% t -2.21；B 空腿 2024+ 仅 n=13",
+   "source_report": "reports/research/intel/gap-search-2026-09-29-22.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:pension_rebalancing_front_run_equity_leg",
+   "original_status": "refuted",
+   "original_verdict": "Refuted at the regression gate (h20260930_01_rebalancing_front_run, results.json): SPY open-to-close Threshold coefficient -0.520, HC3 t -2.84 full sample (2016-01..2026-09) and t -2.68 stress 2016-05..2023-08, but t -0.84 in 2024-01-08..2026-09-29 (needs <= -2.0); overnight leg weaker (full t -1.82). SPY-IEF diagnostic anchor t -1.15. Regression-implied gross 1.36 bp/day vs 2.47 bp/day cost at 10",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "SPY ID coef, anchor 2024-01-08+; claimed = own full-sample -0.520 (results.json regression_table)",
+    "observed": -0.4,
+    "t": -0.84,
+    "se": 0.47619,
+    "mde_80": 1.18429,
+    "upper95_one_sided": 0.38333,
+    "claimed": 0.52,
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed": -0.4,
+    "t": -0.84,
+    "upper95_one_sided": 0.38333
+   },
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "2024+ 系数 -0.400（HC3 SE 0.476，t -0.84）与全样本 -0.520（t -2.84）同号同量级——并未反驳；2.7 年窗口的 MDE 1.18 高于 0.52，只是看不见",
+   "source_report": "reports/research/intel/gap-search-2026-09-30-01.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:tax_loss_selling_year_end_rebound",
+   "original_status": "refuted",
+   "original_verdict": "Refuted ('tax-loss rebound closed'): 0/6 candidates pass the five frozen conditions. Best (YTD <= -30%, ADV top 1,500, exit Jan 15) net excess vs equal-weight pool +0.94% mean, year-clustered t 0.69, 7/10 years positive, Dec-2024 -0.25% / Dec-2025 +1.99%; the Jan-31 exits are negative (-0.15..-0.67%). No candidate reaches +1.5% or t >= 2; IWM-hedged best +1.31% (t 1.02). The Nov-15..Dec-15 diagnos",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "car",
+    "unit": "%",
+    "observed": 0.94,
+    "t": 0.69,
+    "se": 1.36232,
+    "mde_80": 3.38809,
+    "upper95_one_sided": 3.18101,
+    "claimed": 1.5,
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed": 0.94,
+    "t": 0.69,
+    "upper95_one_sided": 3.18101
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "年度聚类 t 0.69（仅 10 个年份）；MDE 高于冻结的 +1.5% 门槛",
+   "source_report": "reports/research/intel/gap-search-2026-09-30-01.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:smallcap_gap_down_fade_auction_execution",
+   "original_status": "refuted",
+   "original_verdict": "Refuted (closed_unstable). Decision cell X15_K10_EW anchor 2024-01-08..2026-09-29 gross -5.4 bp/day (t -1.03), same-pool random-K placebo beat 0.40, short window 2023-02..2024-01 -4.2 bp; X0_K10_EW -4.8 bp (t -0.94), beat 0.53, short +0.1 bp. Even the look-ahead control (official open used for both selection and entry, K10 EW) is -4.0 bp in the anchor. Cause: C1's +42.5 bp was a conditional subset",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c2"
+   ],
+   "gap_class": "fidelity",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "bp/day",
+    "observed": -5.4,
+    "t": -1.03,
+    "se": 5.24272,
+    "mde_80": 13.03864,
+    "upper95_one_sided": 3.22427,
+    "claimed": 42.5,
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed": -5.4,
+    "t": -1.03,
+    "upper95_one_sided": 3.22427
+   },
+   "missing_depth_points": [
+    "忠实实现",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "C1 的 +42.5 bp 是前视条件子集；盘前 SIP 棒只覆盖池子 35%；缺实时 SIP 盘前数据；未测极端缺口规则（事后设计）",
+   "source_report": "reports/research/iterations/t20260930_11_gap_fade_auction/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:front_running_industry_etf_seasonality",
+   "original_status": "refuted",
+   "original_verdict": "Refuted at stage 1 (h20260930_10): anchor 10bp Sharpe 0.52-1.12 (best I_K2_Y5; 1.18 on the lane window to 09-17), 1-year-score cells indistinguishable from random-shift placebo (beat 0.20-0.45), 5-year cells 0.05; daily corr with S0 0.65-0.75; C2 combination edge negative in all 6 cells in both windows (anchor -0.18..-0.48, stress -0.09..-0.31). DSR n6 <= 0.74.",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 2.69,
+    "observed_pooled": 1.12,
+    "se": 0.61,
+    "mde_80": 1.516,
+    "upper95_one_sided": 2.123,
+    "target": 1.1882,
+    "target_basis": "K1 bar (stress 0.6447 if both windows else anchor 1.1882)",
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed_pooled": 1.12,
+    "upper95_one_sided": 2.123
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "6 格；缺 20 年同月均值（KLN 原文口径）的更长价格史",
+   "source_report": "reports/research/iterations/h20260930_10_industry_seasonality/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:overnight_return_persistence_auction",
+   "original_status": "refuted",
+   "original_verdict": "1-month and 1-week formulations refuted in T-20260929-35 (ON21_P1500_LS +2.56 bp/night, NW t 0.66 in 2024-01-08..2026-09-29; stress 2016-05..2023-08 +4.8 bp, t 2.98; ON5 -4.6 bp): too weak to pay 2 bp/side auction costs. The report-only one-year formulation (ON252) was strong in both windows (P500 LS +17.0 bp/night t 3.26, stress +7.6 t 3.30; P1500 +12.0 / +8.6) but those numbers are contaminated,",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "Y",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "bp/night delta_lo20",
+    "observed": -5.88,
+    "t": -2.7,
+    "se": 2.17778,
+    "mde_80": 5.41613,
+    "upper95_one_sided": -2.29756,
+    "claimed": 4.0,
+    "c5_auto": "N"
+   },
+   "observed": {
+    "observed": -5.88,
+    "t": -2.7,
+    "upper95_one_sided": -2.29756
+   },
+   "missing_depth_points": [
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "门 A 在未见股票通过（+13.69 bp/夜 t 5.19）；门 B 官方开盘拍卖价 20 个种子日 1,958 对，delta -5.88 对门槛 -4，SE 2.18 的 MDE 5.4 高于 4；缺上市交易所开盘集合竞价价源",
+   "source_report": "reports/research/iterations/t20260929_35_overnight_persistence/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:intraday_same_slot_periodicity",
+   "original_status": "refuted",
+   "original_verdict": "Refuted for trading (T-20260930-13 with amendments A1/A2 and the T-20260930-15 NBBO check): the trade-price gross edge (close 17.1 bp/day, t 15.7; open 14.6 bp) is mostly a data artifact from a daily-versus-minute dividend-adjustment basis mismatch (about 1% for payers such as NKE, RF, KEY, TSN); excluding the 23 affected names the 30-day sample gross is 2.3 bp and executable long-leg returns are ",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "A",
+    "c4": "Y",
+    "c5": "A"
+   },
+   "p1_met": true,
+   "new_label": "满足P-1（机械判定）",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [],
+   "gap_class": "met",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [],
+   "what_is_missing_specifically": "毛边际 17.1 bp 主要是日线/分钟线股息复权基准错配；剔除后 2.3 bp，实测报价后净 -16.1 bp；成本是直接测量",
+   "source_report": "reports/research/iterations/t20260930_13_intraday_periodicity/results.json",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:dash_for_cash_settlement_timing",
+   "original_status": "refuted",
+   "original_verdict": "Refuted 2026-10-01 (lead review, 07:07 round). T-20261001-01: DFC_U / DFC_C fail the E0 replacement rule (only the 2026 clause passes), K1 (anchor Sharpe -0.50 / -0.10 vs 1.19) and K2 (-0.55/-0.25, -0.35/-0.08); placebo beat in the selection window 0.03 / 0.14. T-20261001-02: M1 fails (D1 losers pre-window -7.66 bp/day, NW t -0.86 vs the -2.0 bar). The T+1 shift replicates only at the single-day l",
+   "p1_conditions": {
+    "c1": "Y",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "?"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": "无法计算：原结果缺必要数字（无检验统计量或样本长度）",
+   "observed": "见 original_verdict",
+   "missing_depth_points": [
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "M3 单日位移复现 (theta 125.7 bp, t 3.05)；M1 pre-window D1 -7.66 bp NW t -0.86（SE 约 8.9 bp，MDE 约 22 bp）；6 日窗口缺独立机构流数据",
+   "source_report": "reports/research/iterations/t20261001_01_dash_for_cash_settlement/hypotheses.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": false
+  },
+  {
+   "id": "dir:prediction_market_earnings_beat_odds",
+   "original_status": "refuted",
+   "original_verdict": "refuted 2026-10-04 (T-20261004-51) for effects of the size detectable here: 620 events, 30 weeks, mean weekly IC +0.019, t 0.43 (stop rule t < 1.0), shuffle percentile 64.2, tercile spread gross -57 bp and net -97 bp per pair; A3 (P - P7) IC +0.054, t 1.25, Holm p 0.22; placebos null; before 2026-03 IC -0.014, from 2026-03 +0.069 (t 1.16). Minimum detectable weekly IC 0.110. The contract prices ar",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "N",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "N"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1",
+    "c2",
+    "c5"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "ic",
+    "unit": "IC",
+    "observed": 0.019139,
+    "t": 0.43,
+    "se": 0.04451,
+    "mde_80": 0.11069,
+    "upper95_one_sided": 0.09236
+   },
+   "observed": {
+    "observed": 0.019139,
+    "t": 0.43,
+    "upper95_one_sided": 0.09236
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "忠实实现",
+    "至少三个深度点的规模曲线",
+    "功效分析：检验能看到声称的效应"
+   ],
+   "what_is_missing_specifically": "620 事件/30 周，周 IC 0.019 t 0.43，最小可检出 0.110；原论文只读到二手报道（页面 403），行业调整版与结束时点代理未跑；单一通道（15:00 ET 的 P）；重开：约 450 个新事件或不同通道（公告日盘中赔率变化）",
+   "source_report": "reports/research/iterations/h20261004_pm_earnings_beat_odds/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  },
+  {
+   "id": "dir:prediction_market_policy_odds_leadlag_glw2026",
+   "original_status": "refuted",
+   "original_verdict": "refuted 2026-10-04 (T-20261004-53, mechanical stop rule, pending lead review) for the midterm setting over 2025-10-08..2026-10-02 (248 sessions, 0.98 years, 27 assets): H-M net Sharpe -1.20, NW t -1.24, gross Sharpe -0.91, real mean at the 16.7th percentile of 1000 circular shifts; paper-style pooled regression 5.0 bp per pp (t 0.91) against the paper's 13; day-2 coefficient -10.8 (t -1.95); Kalsh",
+   "p1_conditions": {
+    "c1": "N",
+    "c2": "Y",
+    "c3": "N",
+    "c4": "Y",
+    "c5": "Y"
+   },
+   "p1_met": false,
+   "new_label": "未到深度",
+   "p1_not_applicable": false,
+   "only_c3_missing": false,
+   "blocking_conditions_other_than_c3": [
+    "c1"
+   ],
+   "gap_class": "power",
+   "min_detectable_effect": {
+    "type": "sharpe",
+    "years": 0.98,
+    "observed_pooled": -1.2,
+    "se": 1.01,
+    "mde_80": 2.512,
+    "upper95_one_sided": 0.462,
+    "target": 1.95,
+    "target_basis": "claimed",
+    "c5_auto": "Y"
+   },
+   "observed": {
+    "observed_pooled": -1.2,
+    "upper95_one_sided": 0.462
+   },
+   "missing_depth_points": [
+    "复现原文结果（相对结论/曲线形状）",
+    "至少三个深度点的规模曲线"
+   ],
+   "what_is_missing_specifically": "窗口 0.98 年 27 个资产；回归 5.0 bp/pp (t 0.91) 对论文 13 bp/pp：MDE(5.5 x 2.486 = 13.7) 约等于论文效应；前向影子到 2026-11-04 在继续",
+   "source_report": "reports/research/iterations/h20261004_pm_midterm_odds_leadlag/report.md",
+   "source_report_exists": true,
+   "reopen_candidate_pending_lead_review": true
+  }
+ ]
+}
