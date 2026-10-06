@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import UTC, date, datetime
@@ -485,3 +486,144 @@ def test_new_entrant_symbols_and_allow_flag(tmp_path: Path) -> None:
     assert "--allow-only-new" not in rf.check_command(
         table, old, new, date(2026, 9, 29), tmp_path / "o.json"
     )
+
+
+def _restatement(symbol: str, at: str, diff: float, years: list[int], rows=(10, 10)) -> str:
+    rec = {
+        "detected_at": at,
+        "max_rel_diff": diff,
+        "mode": "repair",
+        "rows_before": rows[0],
+        "rows_after": rows[1],
+        "symbol": symbol,
+        "years_rewritten": years,
+    }
+    return json.dumps(rec)
+
+
+BUILT_2022 = datetime(2026, 9, 18, 7, 3, tzinfo=UTC)
+BUILT_2026 = datetime(2026, 10, 4, 15, 6, tzinfo=UTC)
+
+
+def _restatement_log(path: Path) -> Path:
+    lines = [
+        _restatement("A", "2026-10-02T04:13:19.1+00:00", 49.0, [2021, 2022, 2026]),
+        _restatement("A", "2026-10-02T04:13:19.1+00:00", 49.0, [2021, 2022, 2026]),
+        _restatement("B", "2026-10-02T04:13:19.1+00:00", 1e-5, [2022]),  # dividend-size
+        _restatement("C", "2026-10-02T04:13:19.1+00:00", 1e-5, [2023, 2022], rows=(10, 12)),
+        _restatement("D", "2026-09-01T00:00:00+00:00", 3.0, [2022]),  # before the build
+        _restatement("E", "2026-10-05T22:00:04+00:00", 7.0, [2026]),
+        _restatement("F", "2026-10-02T04:13:19.1+00:00", 9.0, [2026]),  # 2026 rebuilt after it
+        _restatement("G", "2026-10-05T22:00:04+00:00", 9.0, [2019]),  # year not replaced
+        "not json",
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    return path
+
+
+def test_rebased_symbols_follow_partition_build_times(tmp_path: Path) -> None:
+    log = _restatement_log(tmp_path / "_restatements.jsonl")
+    parts = [(2022, BUILT_2022), (2026, BUILT_2026)]
+    assert rf.rebased_symbols(parts, log) == ["A", "C", "E"]
+    assert rf.rebased_symbols([(2026, BUILT_2026)], log) == ["E"]
+    assert rf.rebased_symbols([], log) == []
+    assert rf.rebased_symbols(parts, tmp_path / "missing.jsonl") == []
+
+
+def test_replaced_partitions_read_the_backup_build_times(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(rf, "BACKUP_ROOT", tmp_path / "backup")
+    root = tmp_path / "backup/2026-10-05/daily_broad"
+    root.mkdir(parents=True)
+    for year, built in ((2022, BUILT_2022), (2026, BUILT_2026)):
+        (root / f"{year}.parquet").write_bytes(b"x")
+        os.utime(root / f"{year}.parquet", (built.timestamp(), built.timestamp()))
+    (root / "notes.txt").write_text("not a partition")
+    assert rf.replaced_partitions(date(2026, 10, 5)) == [(2022, BUILT_2022), (2026, BUILT_2026)]
+    assert rf.replaced_partitions(date(2026, 10, 6)) == []
+
+
+def _nsi_frame(rows: list[tuple[str, str]]) -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": [s for s, _ in rows],
+            "trade_date": pd.to_datetime([d for _, d in rows]),
+            "nsi252": 0.1,
+        }
+    )
+
+
+def _rebased_setup(tmp_path: Path, monkeypatch) -> Path:
+    feat = tmp_path / "features"
+    monkeypatch.setattr(rf, "FEATURES", feat)
+    monkeypatch.setattr(rf, "STAGE_ROOT", feat / "_tmp")
+    monkeypatch.setattr(rf, "BACKUP_ROOT", tmp_path / "backup")
+    monkeypatch.setattr(rf, "SIP_DAILY", tmp_path / "sip")
+    (tmp_path / "sip").mkdir()
+    _restatement_log(tmp_path / "sip/_restatements.jsonl")
+    part = tmp_path / "backup/2026-10-05/daily_broad/2022.parquet"
+    part.parent.mkdir(parents=True)
+    part.write_bytes(b"x")
+    os.utime(part, (BUILT_2022.timestamp(), BUILT_2022.timestamp()))
+    return feat
+
+
+def test_rebased_keys_are_allowed_only_for_price_following_tables(
+    tmp_path: Path, monkeypatch
+) -> None:
+    feat = _rebased_setup(tmp_path, monkeypatch)
+    day = date(2026, 10, 5)
+    seen: dict[str, list[str]] = {}
+    for name, rel in (("nsi", "nsi/nsi.parquet"), ("insider_broad", "insider_broad/2026.parquet")):
+        out = feat / rel
+        out.parent.mkdir(parents=True, exist_ok=True)
+        _nsi_frame([("A", "2026-01-05"), ("Z", "2026-01-05")]).to_parquet(out)
+        table = rf.table_by_name(name)
+        target = out if table.in_place else feat / "_tmp" / name / out.name
+
+        def runner(argv, _target=target, _name=name, **_kw):
+            if "check_feature_invariance.py" in " ".join(argv):
+                seen[_name] = list(argv)
+                return subprocess.CompletedProcess(argv, 0, "", "")
+            _nsi_frame([("A", "2026-02-02"), ("Z", "2026-01-05")]).to_parquet(_target)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+
+        steps = [s for s in rf.build_plan(day, tables=[table], stages=[]) if s.kind == "run"]
+        assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
+    nsi = seen["nsi"]
+    allow_new = Path(nsi[nsi.index("--allow-only-new") + 1]).read_text().split()
+    allow_old = Path(nsi[nsi.index("--allow-only-old") + 1]).read_text().split()
+    assert allow_new == allow_old == ["A", "C"]  # E rewrote 2026, which was not replaced here
+    assert "--allow-only-old" not in seen["insider_broad"]
+    assert "--allow-only-new" not in seen["insider_broad"]
+    assert rf.table_by_name("sec_fundamentals_daily").keys_follow_prices
+    assert not any(t.keys_follow_prices for t in rf.UPSTREAM if t.check == "price")
+
+
+def test_check_command_passes_the_allow_old_file() -> None:
+    table = rf.table_by_name("nsi")
+    cmd = rf.check_command(
+        table, Path("o"), Path("n"), date(2026, 10, 2), Path("r.json"), None, Path("old.txt")
+    )
+    assert cmd[cmd.index("--allow-only-old") + 1] == "old.txt"
+    assert "--allow-only-new" not in cmd
+
+
+def test_backup_is_taken_once_per_day(tmp_path: Path, monkeypatch) -> None:
+    feat = _rebased_setup(tmp_path, monkeypatch)
+    out = feat / "nsi/nsi.parquet"
+    out.parent.mkdir(parents=True)
+    _nsi_frame([("Z", "2026-01-05")]).to_parquet(out)
+    first = out.read_bytes()
+    table = rf.table_by_name("nsi")
+    day = date(2026, 10, 5)
+    versions = iter(["2026-01-06", "2026-01-07"])
+
+    def runner(argv, **_kw):
+        if "check_feature_invariance.py" not in " ".join(argv):
+            _nsi_frame([("Z", "2026-01-05"), ("Z", next(versions))]).to_parquet(out)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    steps = [s for s in rf.build_plan(day, tables=[table], stages=[]) if s.kind == "run"]
+    assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
+    assert rf.run_upstream_table(table, day, steps, runner) == rf.EXIT_OK
+    assert rf._backup_path(table, 2026, day).read_bytes() == first

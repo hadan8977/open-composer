@@ -26,6 +26,15 @@ for a symbol of the portfolio universe also rebuilds the earlier ``daily_broad``
 year range (the whole history of the symbol was re-based).  The cursor lives in
 ``data/live/refresh_state.json``.
 
+Re-based symbols in dependent tables (T-20261006-01): a replaced ``daily_broad`` partition brings
+every archive restatement since that partition was built (on 2026-10-05 the 2022-2025 partitions
+dated from 09-18 and carried the T-20261002-01 repair).  Tables whose rows follow the price history
+(``keys_follow_prices``: ``nsi`` drops pairs around split-like price breaks,
+``sec_fundamentals_daily`` takes its rows from ``daily_broad``) may add or drop keys of exactly
+those symbols: split-type or row-count-changing records detected after the build time of a
+partition this day replaced, for that year.  Backups are taken once per day, so a repeated run
+keeps the pre-day files and their build times.
+
 The script uses no broker interface.  ``fetch`` commands of the news/SEC/FINRA collectors talk to
 their public or keyed sources; ``--no-fetch`` skips them.
 """
@@ -105,6 +114,7 @@ class Table:
     check: str = "plain"
     link_prior_years: bool = False  # prior-year partitions are *copied* into the staging dir
     monthly: bool = False  # append-only by month_end (see run_monthly_table)
+    keys_follow_prices: bool = False  # re-based symbols may add/drop keys (see rebased_symbols)
     enabled: bool = True
     note: str = ""
 
@@ -230,6 +240,7 @@ UPSTREAM: tuple[Table, ...] = (
             "--force",
         ),
         in_place=True,
+        keys_follow_prices=True,
         note="sue_eps/sue_rev may change for late 10-Qs entering the quarterly ladder (pitfall #62)",
     ),
     Table(
@@ -239,6 +250,7 @@ UPSTREAM: tuple[Table, ...] = (
         "symbol,trade_date",
         build=(*PY, "scripts/build_nsi_signal.py"),
         in_place=True,
+        keys_follow_prices=True,
     ),
     Table(
         "insider_broad",
@@ -788,6 +800,45 @@ def restatement_years(records: Sequence[dict], current_year: int) -> list[int]:
     return [y for y in years if y < current_year]
 
 
+def rebased_symbols(
+    partitions: Sequence[tuple[int, datetime]], path: Path | None = None
+) -> list[str]:
+    """Symbols whose price history in a replaced partition changed after it was built.
+
+    ``partitions``: (year, build time) of the partitions being replaced.  A restatement record
+    counts when it was detected after that build time, rewrote that year, and is split-type
+    (``max_rel_diff >= SPLIT_REL_DIFF``) or changed the symbol's row count; small re-basings
+    (dividends) move values, not keys, so they stay out."""
+    path = path or SIP_DAILY / "_restatements.jsonl"
+    if not partitions or not path.exists():
+        return []
+    out: set[str] = set()
+    for raw in path.read_text().splitlines():
+        try:
+            rec = json.loads(raw)
+            seen = datetime.fromisoformat(rec["detected_at"])
+        except (ValueError, KeyError, TypeError):
+            continue
+        seen = seen if seen.tzinfo else seen.replace(tzinfo=UTC)
+        split = float(rec.get("max_rel_diff") or 0.0) >= SPLIT_REL_DIFF
+        if not (split or rec.get("rows_before") != rec.get("rows_after")):
+            continue
+        years = {int(y) for y in rec.get("years_rewritten") or []}
+        if any(year in years and seen > built for year, built in partitions):
+            out.add(str(rec["symbol"]))
+    return sorted(out)
+
+
+def replaced_partitions(day: date, table: str = "daily_broad") -> list[tuple[int, datetime]]:
+    """(year, build time) of the ``table`` partitions this day's refresh backed up before
+    replacing them (``shutil.copy2`` keeps the modification time of the old partition)."""
+    root = _backup_path(table_by_name(table), day.year, day).parent
+    return [
+        (int(p.stem), datetime.fromtimestamp(p.stat().st_mtime, UTC))
+        for p in sorted(root.glob("[0-9][0-9][0-9][0-9].parquet"))
+    ]
+
+
 # --------------------------------------------------------------------------
 # execution
 # --------------------------------------------------------------------------
@@ -875,7 +926,13 @@ def table_by_name(name: str) -> Table:
 
 
 def check_command(
-    table: Table, old: Path, new: Path, cut: date, out: Path, allow_new: Path | None = None
+    table: Table,
+    old: Path,
+    new: Path,
+    cut: date,
+    out: Path,
+    allow_new: Path | None = None,
+    allow_old: Path | None = None,
 ) -> list[str]:
     """``check_feature_invariance.py`` argv for one table (two-zone rule for price tables)."""
     cmd = [
@@ -896,6 +953,8 @@ def check_command(
     ]
     if allow_new is not None:
         cmd += ["--allow-only-new", str(allow_new)]
+    if allow_old is not None:
+        cmd += ["--allow-only-old", str(allow_old)]
     if table.check == "price":
         cmd += [
             "--columns",
@@ -969,6 +1028,16 @@ def _sha256(path: Path) -> str:
 
 def _backup_path(table: Table, year: int, day: date) -> Path:
     return BACKUP_ROOT / day.isoformat() / table.output.format(year=year)
+
+
+def _backup_once(src: Path, dst: Path) -> None:
+    """Copy ``src`` to ``dst`` unless this day's backup exists: a repeated run of the same day
+    keeps the files from before the day's first attempt (restore point and build times)."""
+    if dst.exists():
+        log.info("keeping the first backup of the day: %s", dst)
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
 
 
 def _dates_of(path: Path, column: str) -> list[date]:
@@ -1097,8 +1166,7 @@ def run_upstream_table(
     backup = _backup_path(table, year, day)
     had_old = out.exists()
     if had_old:
-        backup.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(out, backup)
+        _backup_once(out, backup)
     stage = STAGE_ROOT / table.name
     if not table.in_place:
         shutil.rmtree(stage, ignore_errors=True)
@@ -1127,20 +1195,30 @@ def run_upstream_table(
         if cut is not None:
             report = BACKUP_ROOT / day.isoformat() / f"check_{table.name}.json"
             report.parent.mkdir(parents=True, exist_ok=True)
-            allow_new = None
+            allow_new = allow_old = None
             if "symbol" in table.keys.split(","):
                 entrants = new_entrant_symbols(backup, new)
-                if entrants:
+                rebased = (
+                    rebased_symbols(replaced_partitions(day)) if table.keys_follow_prices else []
+                )
+                if entrants or rebased:
                     allow_new = report.with_name(f"allow_new_{table.name}.txt")
-                    allow_new.write_text("\n".join(entrants) + "\n")
+                    allow_new.write_text("\n".join(sorted({*entrants, *rebased})) + "\n")
+                if rebased:
+                    allow_old = report.with_name(f"allow_old_{table.name}.txt")
+                    allow_old.write_text("\n".join(rebased) + "\n")
+                if entrants or rebased:
                     log.info(
-                        "%s: %d new-entrant symbols allowed as new keys", table.name, len(entrants)
+                        "%s: keys allowed for %d new-entrant and %d re-based symbols",
+                        table.name,
+                        len(entrants),
+                        len(rebased),
                     )
             rc = run_command(
                 Step(
                     f"up:{table.name}",
                     "check",
-                    check_command(table, backup, new, cut, report, allow_new),
+                    check_command(table, backup, new, cut, report, allow_new, allow_old),
                 ),
                 runner,
             )
@@ -1160,9 +1238,7 @@ def run_upstream_table(
         for y in extra_years:
             older, staged = out.parent / f"{y}.parquet", stage / f"{y}.parquet"
             if staged.exists() and older.exists():
-                kept = _backup_path(table, y, day)
-                kept.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(older, kept)
+                _backup_once(older, _backup_path(table, y, day))
                 shutil.copy2(staged, older)
     shutil.rmtree(stage, ignore_errors=True)
     return EXIT_OK
