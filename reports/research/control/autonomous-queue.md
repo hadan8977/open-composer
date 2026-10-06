@@ -1822,7 +1822,7 @@
     - C2 以后的研究用 `returns.sip-repaired-20261002.parquet`；旧文件保留作历史记录。
     - S3 规则不改。"离边界近的月份按差距分配仓位或加缓冲"作为 S3 第二版或配置第二版的候选，由主审轮预注册后再测；不靠事后看结果改。
 ### T-20261004-56 数据：8-K 受理时间修复的下游（PM 建表器的二次撤销、sue_8k_visible 重建、T-14 gate_b 是否受影响）
-- status: ready（定时执行轮可取）
+- status: done（待主审）
 - priority: 3
 - not_before: 无（轻任务；不和别的重步骤并行）
 - brief: reports/research/control/briefs/T-20261004-56.md
@@ -1830,6 +1830,7 @@
 - done_when: `reports/research/program/earnings-events-timing-fix-2026-10-04/downstream.md` 和代码测试已提交，标"待主审"。
 - notes:
   - 2026-10-04 10:09 UTC 交互会话（Opus）登记。旧 bug 只会让时间变晚，不会前视：已有的正面结论仍成立，对时点敏感的负面结论可能是假阴性。
+  - 2026-10-06 22:07–22:20 UTC 执行轮（Sonnet 5.5）：提交 ab716c8。`build_pm_earnings_events.py` 改读真 UTC（+2 测试，25 个全过，未重跑 PM 管线）；`sue_8k_visible` 已备份（sha256 一致）并重建，11556→11605 行，95 行匹配行的 trade_date 变了（87 提前、8 推后），不是 T-52 预计的 268（268 是跨 16:00 ET 的全部 Item 2.02，只有 95 落在匹配的 SUE 行）；T-14 gate_b 不受影响（`run_t20260930_14_overnight_12m.py` 第 875–885 行只在 diag_stage 用 earnings_events，第 1326 行说明不进 gate；gate_b 来自第 191 行 `gate_b()`，结果 gate_a 真、gate_b 假，未建 rerun 目录）。过时时间列清单在 downstream.md §4。遗留：旧 sue_8k_visible 11556 行与在备份表上重建的 11571 行不同，原因未查；一行偏移 +60 天，疑似改配到另一份 8-K。产物 `reports/research/program/earnings-events-timing-fix-2026-10-04/`。待主审。
 
 
 ### T-20261004-57 数据：live 面板的回退市值改用 t−1 前 252 日分桶中位数（数据坑 #63 的构建器修法）
@@ -2251,7 +2252,7 @@
   - 2026-10-06 17:10 UTC 交互会话（Opus）：机主 10-06 要求日报彻底重构，本任务 C 部分的首屏方案作废，由 T-20261006-11 取代（撰写稿正文 + 逐轮记录附件 + 内部代号检查）。A、B 批的数据表保留在附件和撰写稿里使用。
 
 ### T-20261005-40 项目笔记的骨架和生成脚本（六个旗舰项目）
-- status: ready（定时执行轮可取）
+- status: done（待主审）
 - priority: 2
 - not_before: 无
 - goal: 自动轮按项目续做，执行轮从项目的实验清单里取下一个实验（第二版计划第 2 节第 1、2 条）。
@@ -2260,6 +2261,8 @@
 - brief: reports/research/control/briefs/T-20261005-40.md
 - notes:
   - 2026-10-05 06:52 UTC 交互会话（Opus）登记。
+  - 2026-10-06 22:07–22:19 UTC 执行轮（Sonnet 5.5）：六个目录、`scripts/program_pages.py`、`tests/test_program_pages.py` 已提交 d5f8377（26 个文件）；`program_pages.py check` 六项 ok；12 个测试通过，ruff 干净。子代理加了可选字段 `depends_on`；P5-E6、P4-E7–E10 因 not_before 或主审取标 planned。各项目下一个 ready 实验：P1 P1-E0（T-20261005-01）、P2 P2-E2a（T-20261006-03）、P4 P4-E6（T-20261005-37），P3、P5、P6 无 ready。待主审。
+
 
 ### T-20261005-41 ETF 子策略的开盘、收盘同信息比较（定试点的下单时点）
 - status: done（2026-10-06 07:38 UTC 07:07 主审轮审核：接受；试点按开盘成交，沿用现状）
