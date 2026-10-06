@@ -76,7 +76,7 @@ _MOM_CACHE: dict[int, pd.DataFrame] = {}
 
 
 def _mom12_1(close: pd.DataFrame) -> pd.DataFrame:
-    key = id(close)
+    key = lane.frame_key(close)
     if key not in _MOM_CACHE:
         pool_cols = [c for c in close.columns if c.startswith(PREFIX)]
         px = close[pool_cols]

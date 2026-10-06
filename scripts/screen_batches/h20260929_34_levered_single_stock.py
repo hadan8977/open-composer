@@ -212,9 +212,10 @@ def extend_panel(close: pd.DataFrame, open_: pd.DataFrame) -> tuple[pd.DataFrame
     return extra_close, extra_open
 
 
-# --- shared caches (keyed by id(close), matching h20260928_18_vix_putw.py's
-# own `_ALIGN_CACHE` convention -- `close` is the same object across every
-# weights_fn call within one screen_batch run) --------------------------
+# --- shared caches (keyed by lane.frame_key(close): `close` is the same object
+# across every weights_fn call within one screen_batch run; a bare id(close)
+# could be reused by a later frame once the first is freed, see
+# screen_lane.frame_key) --------------------------------------------------
 
 
 _RET1_CACHE: dict[int, pd.DataFrame] = {}
@@ -222,14 +223,14 @@ _MOM63_CACHE: dict[int, pd.DataFrame] = {}
 
 
 def _cached_ret1(close: pd.DataFrame) -> pd.DataFrame:
-    key = id(close)
+    key = lane.frame_key(close)
     if key not in _RET1_CACHE:
         _RET1_CACHE[key] = close.pct_change(fill_method=None)
     return _RET1_CACHE[key]
 
 
 def _cached_mom63(close: pd.DataFrame) -> pd.DataFrame:
-    key = id(close)
+    key = lane.frame_key(close)
     if key not in _MOM63_CACHE:
         _MOM63_CACHE[key] = close.pct_change(MOMENTUM_LOOKBACK, fill_method=None)
     return _MOM63_CACHE[key]

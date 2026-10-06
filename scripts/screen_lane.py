@@ -30,7 +30,9 @@ Usage for a future round
 
 from __future__ import annotations
 
+import itertools
 import sys
+import weakref
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -72,6 +74,28 @@ COST_BPS_STRESS = base.COST_BPS_STRESS  # 20.0
 
 DIVERSIFIER_SHARPE_EDGE_MIN = combo.SHARPE_EDGE_MIN  # 0.10
 DSR_HAC_LAG = 21  # matches DSR_HAC_LAG convention used across scripts/evaluate_*.py
+
+# Cache keys for per-panel computations in screen batches.  ``id(obj)`` alone is not a safe key:
+# CPython hands the address of a freed object to the next one, so a batch cache keyed by
+# ``id(close)`` could serve an earlier panel's series to a later panel.  2026-10-06: the crypto
+# batch's no-lookahead test failed for 5 of 40 hash seeds and passed for all of them with the
+# caches off.  Screen runs pass one live panel to every ``weights_fn`` call, so their results
+# were not affected; tests and multi-panel runs were.
+_FRAME_SERIAL: dict[int, int] = {}
+_SERIALS = itertools.count()
+
+
+def frame_key(obj: object) -> int:
+    """A cache key for ``obj`` that is never reused: a serial number per live object, dropped
+    (``weakref.finalize``) when the object is freed, so a new object at the same address gets a
+    new number."""
+    address = id(obj)
+    serial = _FRAME_SERIAL.get(address)
+    if serial is None:
+        serial = next(_SERIALS)
+        _FRAME_SERIAL[address] = serial
+        weakref.finalize(obj, _FRAME_SERIAL.pop, address, None)
+    return serial
 
 
 @dataclass(frozen=True)

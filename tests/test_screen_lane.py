@@ -314,3 +314,13 @@ def test_panel_extension_rejects_existing_columns() -> None:
     col = close.columns[0]
     with pytest.raises(ValueError, match="already in the panel"):
         lane.apply_panel_extension(close, open_, lambda c, o: (c[[col]], o[[col]]))
+
+
+def test_frame_key_is_stable_while_alive_and_never_reused() -> None:
+    a = pd.DataFrame({"x": [1.0, 2.0]})
+    key_a, address = lane.frame_key(a), id(a)
+    assert lane.frame_key(a) == key_a
+    del a  # refcount drops to zero: the finalizer releases the address
+    assert address not in lane._FRAME_SERIAL
+    frames = [pd.DataFrame({"x": [float(i)]}) for i in range(50)]
+    assert key_a not in {lane.frame_key(f) for f in frames}

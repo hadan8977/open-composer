@@ -136,7 +136,7 @@ _VOL_CACHE: dict[tuple[int, str], pd.Series] = {}
 
 
 def _sma_above(close: pd.DataFrame, sym: str, window: int) -> pd.Series:
-    key = (id(close), sym, window)
+    key = (lane.frame_key(close), sym, window)
     if key not in _SMA_CACHE:
         price = close[sym]
         sma = price.rolling(window, min_periods=window).mean()
@@ -145,7 +145,7 @@ def _sma_above(close: pd.DataFrame, sym: str, window: int) -> pd.Series:
 
 
 def _tsmom_positive(close: pd.DataFrame, sym: str, lookback: int) -> pd.Series:
-    key = (id(close), sym, lookback)
+    key = (lane.frame_key(close), sym, lookback)
     if key not in _TSMOM_CACHE:
         price = close[sym]
         ret = price / price.shift(lookback) - 1.0
@@ -157,7 +157,7 @@ def _donchian_fraction(close: pd.DataFrame, sym: str) -> pd.Series:
     """Fraction of `DONCHIAN_WINDOWS` channels in breakout-up state: price
     strictly above the highest close of the trailing `w` sessions *before*
     today (shift(1), so today's own price never enters its own channel)."""
-    key = (id(close), sym)
+    key = (lane.frame_key(close), sym)
     if key not in _DONCHIAN_FRAC_CACHE:
         price = close[sym]
         states = []
@@ -172,7 +172,7 @@ def _donchian_fraction(close: pd.DataFrame, sym: str) -> pd.Series:
 
 
 def _realized_vol_annualized(close: pd.DataFrame, sym: str, window: int) -> pd.Series:
-    key = (id(close), sym)
+    key = (lane.frame_key(close), sym)
     if key not in _VOL_CACHE:
         ret = close[sym].pct_change()
         _VOL_CACHE[key] = ret.rolling(window, min_periods=window).std(ddof=1) * np.sqrt(252.0)
@@ -183,7 +183,7 @@ def _xs_momentum_table(close: pd.DataFrame) -> pd.DataFrame:
     """`XS_LOOKBACK_SESSIONS`-session return for every symbol in
     `CRYPTO_SYMS`, one column per symbol, NaN before each symbol's own
     warmup."""
-    key = id(close)
+    key = lane.frame_key(close)
     if key not in _XS_MOM_CACHE:
         cols = {}
         for sym in CRYPTO_SYMS:

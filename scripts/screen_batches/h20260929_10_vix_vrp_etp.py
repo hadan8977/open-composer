@@ -118,7 +118,7 @@ _ALIGN_CACHE: dict[int, tuple[pd.Series, pd.Series]] = {}
 
 
 def _cached_aligned(index: pd.DatetimeIndex) -> tuple[pd.Series, pd.Series]:
-    key = id(index)
+    key = lane.frame_key(index)
     if key not in _ALIGN_CACHE:
         _ALIGN_CACHE[key] = _aligned_vix_vix3m(index)
     return _ALIGN_CACHE[key]

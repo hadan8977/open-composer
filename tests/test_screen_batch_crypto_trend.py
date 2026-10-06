@@ -7,6 +7,7 @@ made here.
 from __future__ import annotations
 
 import sys
+import zlib
 from datetime import UTC
 from pathlib import Path
 
@@ -103,7 +104,7 @@ def test_extend_panel_columns_do_not_clash_with_equity_panel(monkeypatch) -> Non
 )
 def test_weights_contract_and_no_lookahead(candidate_id: str) -> None:
     (candidate,) = [c for c in batch.CANDIDATES if c.id == candidate_id]
-    close = _synthetic_close(400, seed=hash(candidate_id) % 1000)
+    close = _synthetic_close(400, seed=zlib.crc32(candidate_id.encode()) % 1000)
     asof = close.index[250]
 
     weights_full = candidate.weights_fn(close, asof)
