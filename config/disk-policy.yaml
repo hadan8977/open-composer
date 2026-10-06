@@ -48,6 +48,7 @@ protected:
   - /root/codex-test/open-composer/data/live/equity_book       # live book data root
   - /root/codex-test/open-composer/data/sip/daily              # SIP daily archive
   - /root/codex-test/open-composer/data/sec                    # another session's work
+  - /root/codex-test/open-composer/data/options                # option chain recorder: irreplaceable daily snapshots (T-20261005-33)
   - /tmp/claude-0                                              # running agent task outputs
 
 caches:
@@ -140,6 +141,8 @@ hot:
   - data/cache
   - data/sec_ftd
   - data/sip-hist     # symlink into /mnt/gdrive since 2026-10-02
+  - data/options      # daily option-chain snapshots (T-20261005-33): cannot be re-downloaded; needs a
+                      # Drive backup (interactive session registers the sync task); never auto-deleted locally
 
 watch:
   # report only (sizes in reports/ops/disk-status.json); never cleaned by this tool.
