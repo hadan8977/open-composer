@@ -129,7 +129,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - 写完运行 `uv run python scripts/owner_report.py lint <文件>`，错误必须为 0。
    - 旧范例 `2026-W40.zh.md` 里的代号写法已不适用。
    - 数字从仓库文件取，用代码算，带路径。先写一页结论，最后写需要机主决定的事；没有就写"没有"。
-   - 周日 00:50 UTC 的 cron（`scripts/owner_report.py auto --send`）会把它和脚本生成的一周数据一起发到机主邮箱。不要自己发邮件。
+   - 周日 01:00 UTC 的 cron（`scripts/owner_report.py auto --send`）会把它和脚本生成的一周数据一起发到机主邮箱。不要自己发邮件。
    - 这一轮被闸门暂停或没跑成，周日照常发纯数据版。下一个主审轮补写，再用 `uv run python scripts/owner_report.py weekly --send --force` 补发。
 8. **按项目轮换主攻方向**（第二版计划 `docs/plan-v2-2026-10-05.zh.md` 第 2 节第 2 条，2026-10-05 起取代原来的 E1–E3 轮换）。审核做完后，本轮只把一个项目往前推一步，不四处试新方向。项目的阶段、日期和停止条件见计划第 3 节和第 9 节：
    - 01:07：P1 中频股票引擎，含 v1.2 和小资金版；P7 高频和日内（10-07 起，和 P1 交替，有待审结果的先审；计划 D8 第 2 条）；
@@ -271,7 +271,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
      - 需要机主决定的事；
      - 阶段性结论，例如某个策略升档、关线或上模拟盘。
 
-     消息按 `docs/owner-reporting.zh.md` 第 0 节写：业务名称，不写任务号和代号，不贴过程。其余进展由每天 00:10 UTC 的日报撰写步骤从逐轮记录里整理进日报。
+     消息按 `docs/owner-reporting.zh.md` 第 0 节写：业务名称，不写任务号和代号，不贴过程。其余进展由每天 00:05 UTC 的日报撰写步骤从逐轮记录里整理进日报。
    - **执行轮**平时不发：它的结果还没审核，由下一主审轮汇报。只有两种情况要发，消息以 `【执行轮提醒 MM-DD HH:MM UTC】` 开头：
      - 模拟盘值守发现异常；
      - 有需要机主决定的事。

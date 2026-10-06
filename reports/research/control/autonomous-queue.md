@@ -2373,6 +2373,7 @@
 - done_when: 10-07 00:50 UTC 的邮件正文是撰写稿，检查错误为 0；交互会话 10-07 核对。
 - notes:
   - 2026-10-06 17:10 UTC 交互会话（Opus）完成并提交。
+  - 2026-10-06 17:12 UTC 交互会话：时间改为 00:05 UTC 撰写（定时任务 1ffac9be），01:00 UTC 发信（crontab，原 00:50；备份在 ~/.local/state/open-composer/cron-backups/）。完成判定改为 10-07 01:00 UTC 的邮件。
 
 ### T-20261006-12 高频和日内策略调研：现在最有希望扣成本赚钱的 3–5 个，10-10 前上模拟盘的路径
 - status: running（独立 Paseo 代理 bd966afb，Sonnet 5.5 high，任务代码即协调码）

@@ -32,12 +32,12 @@
 
 ### 0.2 谁来写，怎么检查
 
-- **日报撰写步骤**：Paseo 定时任务 `oc-owner-daily-writer`，每周一到周六 00:10 UTC（北京 08:10），Opus 5.5。它读本节、上一期日报、上一期以来的逐轮记录、`docs/current-view.zh.md` 的新章节、`reports/owner/live-track.json`，并运行 `uv run python scripts/owner_report.py tables` 取交易表格。然后写 `reports/owner/daily/<UTC 日期>.zh.md`。
+- **日报撰写步骤**：Paseo 定时任务 `oc-owner-daily-writer`，每周一到周六 00:05 UTC（北京 08:05），Opus 5.5。它读本节、上一期日报、上一期以来的逐轮记录、`docs/current-view.zh.md` 的新章节、`reports/owner/live-track.json`，并运行 `uv run python scripts/owner_report.py tables` 取交易表格。然后写 `reports/owner/daily/<UTC 日期>.zh.md`。
   - 关键数字要回到结果文件核对，不照抄逐轮记录。
   - 只写上一期日报以后的新事；旧事有新进展才写。
   - 写完运行 `uv run python scripts/owner_report.py lint <文件>`，错误必须为 0，警告逐条看过再决定是否改。
   - 用 `git add -f` 提交，不改别的文件。
-- **00:50 UTC 的 cron** 把这个文件原样作为正文发出，代号会自动换成业务名称，再加一行附件说明。逐轮记录、任务清单和运行状态作为附件 `运行记录-<日期>.md` 一起发。
+- **01:00 UTC 的 cron**（北京 09:00）把这个文件原样作为正文发出，代号会自动换成业务名称，再加一行附件说明。逐轮记录、任务清单和运行状态作为附件 `运行记录-<日期>.md` 一起发。
 - 文件不存在时，比如撰写步骤没跑成，就发自动生成的简版：问题、交易表格、问题进展、待决定事项，开头写明"今天的文字总结没有按时写成"。下一期日报补上研究部分。
 - 周报：周六 19:07 的主审轮按同样的规则写 `reports/owner/weekly/<ISO 周>.zh.md`，并跑同样的检查。
 - 交互会话给机主写汇报时，也按本节的规则。
@@ -55,8 +55,8 @@
 
 | 层 | 时间 | 生成方式 | 内容 |
 |---|---|---|---|
-| 日报 | 每天 00:50 UTC（北京 08:50） | 00:10 UTC 撰写步骤写正文（第 0.2 节），`scripts/owner_report.py auto --send` 发出；逐轮记录作附件 | 第 0.1 节的固定结构 |
-| 周报 | 每周日 00:50 UTC，替代当天的日报 | 周六 19:07 主审轮写判断部分（`reports/owner/weekly/<ISO 周>.zh.md`），脚本附上一周数据 | 第 3 节的固定结构 |
+| 日报 | 每天 01:00 UTC（北京 09:00） | 00:05 UTC 撰写步骤写正文（第 0.2 节），`scripts/owner_report.py auto --send` 发出；逐轮记录作附件 | 第 0.1 节的固定结构 |
+| 周报 | 每周日 01:00 UTC，替代当天的日报 | 周六 19:07 主审轮写判断部分（`reports/owner/weekly/<ISO 周>.zh.md`），脚本附上一周数据 | 第 3 节的固定结构 |
 | 即时告警 | 发生时 | 现有的紧急停止和故障日志；日报汇总前一天的告警 | 本规范不新增即时通道 |
 
 周报文件缺失时（例如主审轮被额度闸门暂停），周日照常发脚本生成的一周数据，并在开头注明"本周判断未写"。
@@ -108,7 +108,7 @@
 - 发件和收件都是机主的 Gmail，走 SMTP 587 STARTTLS，用的是 himalaya 里现有的应用专用密码。
   - 配置在 `/root/.config/open-composer/report-mail.env`（权限 600，不进仓库），键为 `SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`MAIL_FROM`、`MAIL_TO`。`MAIL_TO` 可以写多个地址，用逗号分隔。
   - Gmail API 的两个旧令牌在 2026-10-04 都已失效（客户端被删、令牌过期），不要再用。
-- cron：`50 0 * * *` 运行 `scripts/owner_report.py auto --send`，周日自动发周报。日志在 `logs/owner_report.log`，生成的正文存在 `logs/owner-report/`。
+- cron：`0 1 * * *`（10-06 前是 00:50）运行 `scripts/owner_report.py auto --send`，周日自动发周报。日志在 `logs/owner_report.log`，生成的正文存在 `logs/owner-report/`。
 - 手动预览不发信：`uv run python scripts/owner_report.py daily`。手动发周报：`uv run python scripts/owner_report.py weekly --send`。
 - 改发送时间或收件人：改 crontab 那一行或配置文件，不用改代码。
 
