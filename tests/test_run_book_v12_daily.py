@@ -5,6 +5,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 import run_book_v12_daily as driver  # noqa: E402
@@ -67,3 +69,27 @@ def test_run_plans_forwards_the_tif_mode_to_submit(monkeypatch, tmp_path) -> Non
     submits = [c for c in calls if "submit" in c]
     assert len(submits) == 2
     assert all(c[c.index("--tif-mode") + 1] == "market" for c in submits)
+
+
+def test_run_plans_submits_only_the_named_accounts(monkeypatch, tmp_path) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(driver.subprocess, "run", fake_run)
+    monkeypatch.setattr(driver, "target_path", lambda root, account, day: Path(__file__))
+    rc = driver.run_plans(
+        tmp_path, date(2026, 10, 7), submit=True, tif_mode="market", accounts=("quant1",)
+    )
+    assert rc == 0
+    accounts = {c[c.index("--account") + 1] for c in calls}
+    assert accounts == {"quant1"}
+    assert [c[c.index("book-paper") + 1] for c in calls] == ["plan", "submit"]
+
+
+def test_main_rejects_unknown_accounts(capsys) -> None:
+    with pytest.raises(SystemExit):
+        driver.main(["--plan", "--accounts", "quant3"])
+    assert "--accounts must name book accounts" in capsys.readouterr().err

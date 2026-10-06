@@ -115,19 +115,29 @@ def oc_command() -> list[str]:
     return [str(venv)] if venv.exists() else ["oc"]
 
 
-def run_plans(root: Path, decision: date | None, *, submit: bool, tif_mode: str = "close") -> int:
+def run_plans(
+    root: Path,
+    decision: date | None,
+    *,
+    submit: bool,
+    tif_mode: str = "close",
+    accounts: tuple[str, ...] = BOOK_ACCOUNTS,
+) -> int:
+    """Plan (and with ``submit`` submit) each of ``accounts``.  10-06 (C1006-ACCT): only quant1
+    trades the v1.2 book; the submit cron passes ``--accounts quant1`` and quant2 keeps the
+    18:30 dry plan and the reconcile (no orders)."""
     if decision is None:
-        newest = latest_target_path(root, BOOK_ACCOUNTS[0])
+        newest = latest_target_path(root, accounts[0])
         if newest is None:
-            log.error("no target file for %s", BOOK_ACCOUNTS[0])
+            log.error("no target file for %s", accounts[0])
             return EXIT_REFUSED
         decision = load_target_file(newest).decision_date
-    for account in BOOK_ACCOUNTS:
+    for account in accounts:
         if not target_path(root, account, decision).exists():
             log.error("no target file for %s on %s", account, decision)
             return EXIT_REFUSED
     failed_accounts: list[str] = []
-    for account in BOOK_ACCOUNTS:
+    for account in accounts:
         base = [*oc_command(), "book-paper"]
         steps = [[*base, "plan", "--account", account, "--decision-date", decision.isoformat()]]
         if submit:
@@ -229,12 +239,21 @@ def main(argv: list[str] | None = None) -> int:
         default="close",
         help="--submit: close = CLS (contract), market = DAY market orders",
     )
+    ap.add_argument(
+        "--accounts",
+        default=",".join(BOOK_ACCOUNTS),
+        help="--plan/--submit: comma separated subset of the book accounts (default: all)",
+    )
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
     ap.add_argument("--root", default=str(ROOT), help="project root (tests)")
     ap.add_argument("--lock-file", default=str(LOCK_FILE))
     ap.add_argument("--log-file", default=str(LOG_FILE))
     args = ap.parse_args(argv)
+    accounts = tuple(a for a in args.accounts.split(",") if a)
+    unknown = [a for a in accounts if a not in BOOK_ACCOUNTS]
+    if not accounts or unknown:
+        ap.error(f"--accounts must name book accounts {BOOK_ACCOUNTS}, got {args.accounts!r}")
     if args.submit and not submit_enabled():
         print(f"refused: --submit needs {SUBMIT_ENV}=1 (set only by the owner-approved cron)")
         return EXIT_SUBMIT_OFF
@@ -258,7 +277,9 @@ def main(argv: list[str] | None = None) -> int:
                 else datetime.now(UTC).astimezone(NEW_YORK).date()
             )
             return run_reconcile(root, day, sip_root=Path(args.sip_root) if args.sip_root else None)
-        return run_plans(root, decision, submit=args.submit, tif_mode=args.tif_mode)
+        return run_plans(
+            root, decision, submit=args.submit, tif_mode=args.tif_mode, accounts=accounts
+        )
 
 
 if __name__ == "__main__":
