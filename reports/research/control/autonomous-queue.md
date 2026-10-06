@@ -2419,24 +2419,28 @@
   - 2026-10-06 17:19 UTC 代理交付，交互会话初审：catalog.json 共 694 行（151 一书 175、OSAP 331、QuantConnect 83、登记簿补充 105）；能交易 446，本地数据齐 215，一天内能补 255；能交易、数据齐、从没单独测过 97（含一天内能补 131）；测过但没到深度 68；旧否定都没有深度台账。第一批 50 个：美股 42、ETF 8；月频 27、日内 8、事件 8、日频 7；32 个机制族，每族最多 3 个；25 个能进股票多空组合的现成流程，8 个能用批量筛选模板，17 个要新代码。选择规则在看过第一版名单后改过一次（两处定义错误：登记簿 id 写错，停放和证据太弱被当成测过），第一版名单留档 first-batch.v1-superseded.json，selection-rule.md 第 7 节有记录；没有看过任何回测结果。build_stats.py 能逐字重现 catalog.md（md5 相同）。书的全文和网页打包移到仓库外 ~/.local/share/open-composer/source-snapshots/strategy-library-2026-10-06/，manifest 有 sha256。要补的数据：SEC companyfacts 解析出会计科目（一次解锁多条 OSAP 因子）、宏观公告日历；分析师、13F、专利类没有数据，不进筛选。待核对：多腿期权在 Alpaca 只有买入价差有明文，需一次模拟盘探测。
 
 ### T-20261006-14 通用日内策略运行器：把开盘区间突破的模拟下单通道扩成多策略
-- status: blocked（等 T-12 定前几名的接口需求；交互会话 10-07 写简报）
+- status: running（交互会话 2026-10-06 22:39 UTC 派独立代理）
 - priority: 1
-- not_before: 2026-10-07 12:00 UTC
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-14.md
 - goal: 10-10 前让 1–2 个日内策略在模拟盘自动运行。需要：信号插件接口、多标的、一天多次进出、按策略的仓位上限和每日亏损上限、收盘前全部平仓、单独账本、和回测同口径的成交记录。
 - plan: 复用 `open_composer/paper_intraday.py`，授权、上限、紧急停止、bracket 单、平仓、对账都已有，不另起炉灶。只在模拟盘。
 - done_when: 干跑和测试通过，10-09 22:00 UTC 前。
 - notes:
   - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+  - 2026-10-06 22:39 UTC 交互会话（Opus）：机主 10-06 晚要求加快、做深、高频作为重点，提前写简报并派 Paseo 独立代理（Sonnet 5.5 high）。范围：多策略同账户（虚拟子账户、净额合并、按比例分回）、下单前风控、IEX 实时 K 线并在收盘后用 SIP 重算、断点恢复和幂等；只做代码、干跑和测试，不下单。账户改为 quant2（10-07 起不跑股票组合，专做日内）。完成 10-09 18:00 UTC。
 
 ### T-20261006-15 日内方向按深度规则重审，补做 Reversal Trend 的 1 分钟和 1 小时版
-- status: blocked（等 T-12 列出旧检验各缺哪几条深度条件）
+- status: running（交互会话 2026-10-06 22:39 UTC 派独立代理）
 - priority: 1
-- not_before: 2026-10-07 12:00 UTC
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-15.md
 - goal: 方向登记簿里日内类 18 个方向，判否 11 个，部分成立 1 个，多是单一版本的便宜测试。按第二版计划的五条深度规则重开最值得的几个：多版本、成本曲线、机器学习变体。机主 9 月要的 Reversal Trend 1 分钟和 1 小时版，当时只测了日线版，这次补上。
 - plan: 交互会话或主审轮按 T-12 的结果写合同（direction-check、iteration validate 都要过），数据用本地 SIP 分钟线 `data/sip/minute/`（2023–2026）。近期窗口决定，长历史只诊断。
 - done_when: 第一批结果 10-10 22:00 UTC 前提交并审核。
 - notes:
   - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+  - 2026-10-06 22:39 UTC 交互会话（Opus）：机主 10-06 晚要求加快、做深、高频作为重点，提前写简报并派 Paseo 独立代理（Sonnet 5.5 high）。四组：噪声带日内动量（先复现原文）、大盘日内动量、多股票开盘区间突破（只做当天异动股）、Reversal Trend 1 分钟和 1 小时版；按五条深度规则，近期窗口 2024-01-08 起决定。ETF 两组 10-08 22:00 UTC 前交，供 10-10 上模拟盘；其余 10-10 22:00 UTC 前。
 
 ### T-20261006-16 第一批 1–2 个高频或日内策略上模拟盘，做前向观察
 - status: blocked（等 T-14、T-15）
@@ -2466,14 +2470,16 @@
   - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
 
 ### T-20261006-18 策略库第一批约 50 个的批量筛选
-- status: blocked（等 T-13 的 first-batch.json 和选择规则）
+- status: running（交互会话 2026-10-06 22:39 UTC 派独立代理）
 - priority: 1
-- not_before: 2026-10-08 12:00 UTC
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-18.md
 - goal: 10-15 前按统一口径扣成本跑完第一批约 50 个，近期窗口决定，长历史只诊断，按试验总数打折。排名靠前的进深度检验，过关的上模拟盘。
 - plan: 复用 `scripts/screen_lane.py`、`scripts/screen_batch.py`。主审轮写一份批量合同，逐个预注册进 manifest。批量大的上 Modal，先过 `scripts/modal_budget.py check`。
 - done_when: 结果和排名 10-15 22:00 UTC 前提交，主审轮审核。
 - notes:
   - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+  - 2026-10-06 22:39 UTC 交互会话（Opus）：机主 10-06 晚要求加快、做深、高频作为重点，不等主审轮写合同，交互会话写简报并派 Paseo 独立代理（Sonnet 5.5 high）。范围缩为不用新框架的 33 个（选股因子 25、ETF 和日历规则 8）；因子按单独、和现有组合的重叠、加进组合后夏普变化三层检验。engine=new 的 17 个：日内类并入 T-15、T-21，配对交易归统计套利后续，事件类另排。完成提前到 10-10 22:00 UTC。
 
 ### T-20261006-19 复杂建模项目提前到 10-12：随机特征复杂度曲线、多期限联合训练、路径签名预测波动
 - status: blocked（等主审轮写合同；原定 11 月，机主 10-06 后提前）
@@ -2498,3 +2504,25 @@
 - done_when: 合同 10-09 冻结，结果 10-13 22:00 UTC 前。
 - notes:
   - 2026-10-06 17:10 UTC 交互会话（Opus）登记。
+
+### T-20261006-21 日内多股票收益预测模型：5 分钟线、15 到 60 分钟期限、岭回归或 LASSO 和 LightGBM，扣成本后的夏普
+- status: running（交互会话 2026-10-06 22:39 UTC 派独立代理）
+- priority: 1
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-21.md
+- goal: 机主 10-06 晚：要高夏普，高频是重点，模型训练和择时要深度用进去。高夏普来自很多次独立的小押注；公开研究（Chinco-Clark-Joseph-Ye 2019、Aït-Sahalia 等 2022）显示分钟级横截面可预测，难点在成本。
+- plan: 前 100、300、600 只流动股票的 5 分钟线（`data/features/intraday5m/`，同时供 T-15 用）；期限 15、30、60 分钟；两种模型、三档交易过滤共 54 个变体，加三个简单基线（收盘前反转、同时段延续、30 分钟反转）；滚动训练，LightGBM 上 Modal（本任务不超过 6 美元）；近期窗口 2024-01-08 起决定。过关的写模拟盘规格，交给 T-14 的运行器，目标 10-13 前上 quant2。
+- done_when: 第一批结果 24 小时内写进 report.md；全部 10-08 23:00 UTC 前交，交互会话审核后提交。
+- notes:
+  - 2026-10-06 22:39 UTC 交互会话（Opus）登记并派 Paseo 独立代理（Sonnet 5.5 high）。
+
+### T-20261006-22 美股短周期统计套利：残差反转，持有 1 到 10 天，多空对冲
+- status: running（交互会话 2026-10-06 22:39 UTC 派独立代理）
+- priority: 1
+- not_before: 无
+- brief: reports/research/control/briefs/T-20261006-22.md
+- goal: 机主 10-06 晚：要高夏普，不要只测一两个想法。每天换仓、几千只股票的短周期反转，押注次数比月度因子多一到两个数量级；公开证据有 Avellaneda-Lee 2010、Blitz 等 2013、Nagel 2012、Medhat-Schmeling 2022、Lou-Polk-Skouras 2019；已知大盘股反转收益变小，成本决定成败。
+- plan: 股票池 500、1000、3000；回看 1、5、10、21 天；三种残差方法；四种条件（无、低换手、无新闻、按波动缩放）；持有 1、5、10 天；两种成交时点；加岭回归和 LightGBM 版本。复用 `open_composer/research/equity_book/`。过关的写子策略规格，目标 10-13 前在 quant1 的子策略里上模拟盘。
+- done_when: 第一批结果 24 小时内写进 report.md；全部 10-08 23:00 UTC 前交，交互会话审核后提交。
+- notes:
+  - 2026-10-06 22:39 UTC 交互会话（Opus）登记并派 Paseo 独立代理（Sonnet 5.5 high）。
