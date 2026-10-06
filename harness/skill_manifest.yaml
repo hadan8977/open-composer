@@ -27,6 +27,22 @@ skills:
       - reports/research/{strategy}-evidence-manifest.json
     skill_path: .agents/skills/strategy-research-orchestrator/SKILL.md
 
+  idea-to-paper:
+    description: >
+      Owner 2026-10-06: turns every owner idea, doubt or new requirement into
+      professional work -- intent, how institutions / mature individuals / good
+      projects solve it, judgment first, a family of variants run to minimum
+      effective depth, paper within 14 days, iteration, plain-language report.
+    triggers:
+      - owner states an idea, direction, doubt, complaint or new requirement
+      - a new research direction is opened
+      - owner asks why something is not being done
+    primary_outputs:
+      - reports/research/control/briefs/{task}.md
+      - reports/research/iterations/{iteration}/direction-review.json
+      - reports/research/intel/sources/{topic}/
+    skill_path: .agents/skills/idea-to-paper/SKILL.md
+
   source-researcher:
     description: >
       Performs mandatory web research for unstable external facts: broker API,
