@@ -2050,6 +2050,22 @@
     - **目标**：F1 sha256 d50d84be…，F2 79c46ce4…，1,784 个名字（多 1,091、空 693）。QRVO 10-05 没有收盘价被丢弃，SIP 最后一根 K 线是 10-02。
     - **跟进**：重建 2016–2021 排为 T-20261006-02。02:45 的全量 pytest 和刷新抢内存，22 分钟只跑到 8%，03:08 停掉；03:20 的一次性 cron 等刷新锁释放后重跑，日志在 `logs/full_pytest_20261006.log`。
 
+### T-20261006-06 cockpit：密钥擦除在 JSON 转义后不再幂等（多行日志里的 `key=xx,` 行尾），API 测试因此误报
+- status: ready（交互会话处理；不急，不影响模拟盘）
+- priority: 4
+- not_before: 无
+- goal: `tests/test_cockpit_api.py::test_secret_scrub_is_a_no_op_on_every_response` 10-06 在 `/api/health.json` 上失败。
+  - 失败原因：`/health` 的 "Log tails" 显示了全量 pytest 的日志，里面有测试源码 `key=len,` + 换行。
+  - 通用规则 `...key...[:=]\s*\S{6,}` 在原文里只匹配到 `len,` 四个字符，不脱敏；JSON 编码以后换行变成 `\n`，`len,\n` 凑够 6 个字符就被脱敏，于是"擦除是空操作"的不变式被打破。
+  - 这只会多脱敏，不会漏掉密钥：原文里 `token=` 换行后的值，原文擦除已经能匹配。
+  - 当时的触发源是两条已执行完的一次性 pytest cron，已从 crontab 删掉，`test_cockpit_api` 和 `test_cockpit_app` 已通过。但规则本身仍然脆弱，任何多行日志都可能再触发。
+- plan: 二选一，先写测试，并保证所有已有的擦除用例照旧：
+  (a) 日志尾部的值不跨行：在 health 里逐行擦除，然后对 JSON 编码后的形式再检查一次；
+  (b) 通用规则的值部分在 `\\n` 处截断，例如 `(?:(?!\\n)\S){6,}`。
+- done_when: 新测试覆盖 "原文 `key=len,` + 换行" 和 "原文 `token=` + 换行 + 长值仍被擦除"；`uv run pytest tests/test_cockpit_*.py` 通过；make verify 的非测试步骤通过。
+- notes:
+  - 2026-10-06 14:50 UTC 交互会话登记。同一天另一条 cockpit 失败（/health 日志尾部含中文）已在 e60bb55 修好。
+
 ### T-20261006-02 重建 daily_broad 2016–2021（修复前的分区，坑 #64 的接缝）
 - status: ready
 - priority: 3
