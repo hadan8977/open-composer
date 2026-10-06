@@ -4,6 +4,7 @@ import json
 import math
 from datetime import date
 from pathlib import Path
+from statistics import NormalDist
 
 import numpy as np
 
@@ -54,12 +55,18 @@ def test_recorded_sharpe_overrides_the_zero_rf_sharpe() -> None:
     assert lower["min_trl"] > plain["min_trl"]
 
 
-def _summary(n_forward: int, sharpe: float | None) -> dict:
+def _summary(n_forward: int, sharpe: float | None, meaningful: bool = True) -> dict:
     z = {
         "backtest_full": {"n_forward": n_forward, "z": 0.5},
-        "backtest_recent": {"n_forward": n_forward, "z": -0.25},
+        "backtest_recent": {
+            "n_forward": n_forward,
+            "z": -0.25,
+            "base_mean_daily": 0.001,
+            "base_std_daily": 0.01,
+        },
     }
-    segment = {"forward_oos_plus_paper": {"strategy": {"days": n_forward, "sharpe": sharpe}}}
+    strategy = {"days": n_forward, "sharpe": sharpe, "sharpe_meaningful": meaningful}
+    segment = {"forward_oos_plus_paper": {"strategy": strategy}}
     return {
         "candidates": {
             "S1": {"primary_boundary_commit": {"z": z, "segments": segment}},
@@ -91,9 +98,24 @@ def test_forward_rows_use_forward_segments_and_mark_missing() -> None:
     s1 = rows["S1"]
     assert s1.n_forward == 12 and s1.z_full == 0.5 and s1.z_recent == -0.25
     assert s1.sharpe_annual == 3.0  # the design_seen day (+50%) is not part of the forward sample
-    assert s1.min_trl is not None and s1.progress == 12 / s1.min_trl
+    assert s1.min_trl == of.expected_min_trl(0.001, 0.01) and s1.progress == 12 / s1.min_trl
     assert rows["V12F1"].n_forward == 0 and "缺" in rows["V12F1"].note
     assert rows["S2"].n_forward is None and "缺" in rows["S2"].note
+
+
+def test_expected_min_trl_uses_the_backtest_sharpe_with_normal_moments() -> None:
+    # daily Sharpe 0.1: 1 + (1 + 0.1**2 / 2) * (z_0.95 / 0.1) ** 2
+    z95 = NormalDist().inv_cdf(0.95)
+    assert math.isclose(of.expected_min_trl(0.001, 0.01), 1 + 1.005 * (z95 / 0.1) ** 2)
+    assert of.expected_min_trl(-0.001, 0.01) is None
+    assert of.expected_min_trl(None, 0.01) is None
+
+
+def test_forward_sharpe_hidden_until_the_record_flags_it_meaningful() -> None:
+    summary = _summary(12, 9.0, meaningful=False)
+    row = of.build_forward_rows(summary, _record("S1", RETURNS))[0]
+    assert row.sharpe_annual is None and row.psr is None and "样本不足" in row.note
+    assert row.min_trl == of.expected_min_trl(0.001, 0.01) and row.progress == 12 / row.min_trl
 
 
 def test_forward_rows_small_sample_is_flagged_not_estimated() -> None:

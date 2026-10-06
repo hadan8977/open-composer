@@ -1,0 +1,118 @@
+name: t20261006_p1_v12_small
+description: 'Equity book v1.2 small-capital construction (T-20261005-37), preregistered 2026-10-06 by the 01:07 lead round: the unchanged v1.2 primary book M0_U3000 (signals, weights, ETB shorts, EWMA SPY hedge, VIX halving, weekly 5 tranches, decision at close D) run in a $50,000 account (sensitivity $25,000 and $100,000) where Alpaca allows fractional longs only as DAY orders and shorts only in whole shares. Candidates: R1 keep the top-K names per side by absolute target value (K 50, 100, 200, 300, all) with side gross restored and the SPY hedge rescaled to the kept book beta; R1B the same with a 25% replacement hurdle (K 100, 200); R3 drop the short stock leg and hedge its beta with SPY. Whole book traded as DAY orders around 15:50 ET, backtest fill at the close of D+1 with the close cost model. Decision: Sharpe retention >= 0.80 of the full $1M account in the recent window, V2 feasibility, tracking error class, random-name placebo, 2x cost. Research only, no broker writes.'
+timeframe: daily
+universe:
+- SPY
+- IWM
+- IJR
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3000
+  max_position_weight: 0.0125
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3000
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.0125
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261006_p1_v12_small:small_capital_construction
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/research/equity_book/panel
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_book_alpha:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Signals come from themes_<year>.parquet via AlphaSource (scripts/run_book_v1_stage2.py), weights, hedge, VIX rule and costs from scripts/realism_ladder_book_ls.py (T-25 R6), the account layer from the T-20261002-26 simulator, all as preregistered in reports/research/iterations/t20261002_book_v12/hypotheses.md; the small-capital construction is preregistered in reports/research/iterations/t20261006_p1_v12_small/hypotheses.md.
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- events.sec_filings
+- events.sec_form4_insider
+- market.finra_short_interest
+- reference.sec_sic_industry
+research_design:
+  iter_id: t20261006_p1_v12_small
+  candidate_manifest_path: reports/research/iterations/t20261006_p1_v12_small/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261006_p1_v12_small/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261006_p1_v12_small.jsonl
+  source_card_claim_ids:
+  - alpaca_2026_fractional_day_only
+  - alpaca_2026_fractional_no_short
+  - alpaca_2026_paper_nbbo_matching
+  - alpaca_2026_short_min_equity_2000
+  - alpaca_2026_etb_zero_fee
+  - blitz_baltussen_vanvliet_2020_drop_shorts
+  - clarke_desilva_thorley_2002_constraints_transfer
+  parameter_space:
+    method:
+    - R1_top_k_per_side
+    - R1B_top_k_replacement_hurdle_25pct
+    - R3_drop_short_leg_spy_beta_hedge
+    k_per_side:
+    - 50
+    - 100
+    - 200
+    - 300
+    - all
+    form:
+    - F1
+    - F2
+  candidate_budget: 16
+  selection_objective: Keep the expected Sharpe of the unchanged v1.2 M0_U3000 account at $50,000. Per form, K* is the largest K whose simulated V2 feasibility passes at $50,000 (chosen by feasibility, not by Sharpe); the deployable is R3 when it keeps >= 0.80 of the full-account recent Sharpe and R1 at K* is not ahead by >= 0.10 (recent) and >= 0 (stress), otherwise R1 (or R1B when its recent Sharpe is at least R1's) at K* when it keeps >= 0.80; classes same_strategy / related_strategy / not_deployable as in hypotheses.md section 9.
+  candidate_budget_note: '16 selectable candidates at $50,000; the same R1 K grid at $25,000 and $100,000 (20 series) is report-only for the minimum-capital answer but counted in the 36-series DSR family. FULL = the existing v1.2 A1 account at $1M, not a trial. Placebos (random names, 20 seeds x 2 forms at K = 200) are not trials.'
+  anti_overfit_notes:
+  - Before this contract the lead round read only T-71 feasibility counts for one target day (top-K V2 pass at 25k/50k/100k) and the v1.2 account summary; no small-capital return series was computed.
+  - K grid, hurdle 25% and the 0.80 / 0.25 / 0.60 thresholds are fixed before any run; K* is chosen by feasibility only.
+  validation_plan:
+  - 'Stage A: identity I1 (orig path at $1M reproduces data/research/book_v12/A1_M0_U3000_F1/F2.parquet <= 1e-12) and I2 (new path with nothing dropped equals I1), then one pass over 2017-10..2026-09 for 76 simulated accounts, metrics, V2, retention, TE, P-RAND, DSR, 2x cost, mechanical classification'
+  - 'Stage B (only if the deployable is related_strategy): v1.2 within-date score-permutation placebo, 20 seeds, on the deployable config at $50,000'
+notes:
+  intent: Decide whether and how the v1.2 book can run at the owner's capital (about $50,000) on Alpaca, with fractional DAY-order longs and whole-share ETB shorts, without losing more than a fifth of its recent Sharpe.
+  hypothesis_id: T-20261005-37
+  previous_link: t20261002_book_v12
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

@@ -52,7 +52,7 @@
 - **"本周"**：上一个周五收盘到本周五收盘。研究和运营按周日 00:00 UTC 切周，和 Claude 周额度一致。
 - **回测数字**：一律标"回测"，写清窗口和成本，优先用不挑调仓日的中位数。
 - **短窗口**：前向不到 20 个会话时只做跟踪，不下结论。
-- **前向对预期**（T-20261005-39 A 批）：读 `reports/research/program/forward-record-2026-10-06/`。z 和夏普取自 `summary.json`（不重算）；概率夏普 = 该夏普对 0 的 PSR（Bailey–López de Prado 2012，偏度、峰度来自 `record.csv` 的前向日收益），95% 所需会话 = 最短记录长度，进度 = 前向会话 / 所需会话。前向会话少于 10 个不给估计；记录里没有的写"缺"。实现 `open_composer/reports/owner_forward.py`。
+- **前向对预期**（T-20261005-39 A 批）：读 `reports/research/program/forward-record-2026-10-06/`。z 和夏普取自 `summary.json`（不重算）；概率夏普 = 该夏普对 0 的 PSR（Bailey–López de Prado 2012，偏度、峰度来自 `record.csv` 的前向日收益），记录标为夏普不具意义（前向少于 20 天）时夏普和概率夏普都不给。95% 所需会话 = 假如前向夏普等于回测近期夏普（`summary.json` 的 backtest_recent 均值和标准差，未按试验数打折），达到 95% 信心的最短记录长度（正态矩），是下限；不能用前向夏普本身算（10-06 主审：11 天的年化夏普标准误约 4.8，曾得出 S2"只需 12 个会话"）。进度 = 前向会话 / 所需会话。记录里没有的写"缺"。实现 `open_composer/reports/owner_forward.py`。
 - **v1.2 每日动作**：2026-10-07 起，读 `reports/paper/book/<账户>/` 的 `plans/`（计划单数、成交额）、`orders/`（发出、未接受 = 回执里 failed）、`daily/`（成交、部分成交、未成交 + 缺失）；换手 = （买入 + 卖出金额）/ 权益基数；没有文件写"未开始"，此前的计划是彩排不计入。
 - **四个 pass 分开报**：`workflow_pass`、`research_pass`、`paper_ready_pass`、`ml_contribution_pass` / `llm_contribution_pass`。
 

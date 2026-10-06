@@ -1,0 +1,220 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "v12_small_capital_construction",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261006_p1_v12_small.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261005-37",
+      "source_urls": [
+        "https://docs.alpaca.markets/docs/fractional-trading.md"
+      ]
+    }
+  ],
+  "iter_id": "t20261006_p1_v12_small",
+  "objective": "v1.2 small-capital construction: can the unchanged v1.2 M0_U3000 book run in a $50,000 Alpaca account (fractional DAY-order longs, whole-share ETB shorts) and keep >= 0.80 of the full $1M account's recent Sharpe (F1 excess over BIL, F2 information ratio over SPY), with V2 feasibility, by concentrating to the top-K names per side (R1, R1B) or by dropping the short stock leg (R3)?",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "alpaca_2026_fractional_day_only",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/fractional-trading.md"
+    },
+    {
+      "claim_id": "alpaca_2026_fractional_no_short",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/fractional-trading.md"
+    },
+    {
+      "claim_id": "alpaca_2026_paper_nbbo_matching",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/paper-trading.md"
+    },
+    {
+      "claim_id": "alpaca_2026_short_min_equity_2000",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/margin-and-short-selling.md"
+    },
+    {
+      "claim_id": "alpaca_2026_etb_zero_fee",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://docs.alpaca.markets/docs/margin-and-short-selling.md"
+    },
+    {
+      "claim_id": "blitz_baltussen_vanvliet_2020_drop_shorts",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://ideas.repec.org/a/taf/ufajxx/v76y2020i4p73-99.html"
+    },
+    {
+      "claim_id": "clarke_desilva_thorley_2002_constraints_transfer",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://ideas.repec.org/a/taf/ufajxx/v58y2002i5p48-66.html"
+    },
+    {
+      "claim_id": "clarke_desilva_sapra_thorley_2008_extensions",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://rpc.cfainstitute.org/en/research/financial-analysts-journal/2008/longshort-extensions-how-much-is-enough"
+    },
+    {
+      "claim_id": "benidis_feng_palomar_2018_sparse_tracking",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://palomar.home.ece.ust.hk/papers/2018/BenidisFengPalomar-TSP2018%20-%20index_tracking.pdf"
+    },
+    {
+      "claim_id": "nepc_2025_extension_strategies",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://nepc.com/wp-content/uploads/2025/04/Extension-Strategies-Come-Into-Their-Own.pdf"
+    },
+    {
+      "claim_id": "pypfopt_discrete_allocation_long_short",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://pyportfolioopt.readthedocs.io/en/latest/Postprocessing.html"
+    },
+    {
+      "claim_id": "smartleaf_direct_index_small_accounts",
+      "source_card_path": "reports/harness/source_cards/t20261006_p1_v12_small.jsonl",
+      "source_url": "https://www.thewealthadvisor.com/article/smartleaf-asset-management-yes-direct-indexes-make-sense-investors-worth-less-1m-and-over"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261006_p1_v12_small.yaml",
+  "sources": [
+    {
+      "claim_id": "alpaca_2026_fractional_day_only",
+      "core_claim": "Alpaca fractional orders are supported for market, limit, stop and stop limit orders with time in force Day only, so fractional longs cannot use the opening or closing auction (opg/cls).",
+      "credibility": "high",
+      "project_applicability": "Forces the small-capital book to trade its fractional long leg with DAY orders; the contract therefore trades the whole book as DAY orders around 15:50 ET.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Documentation, not a fill study; says nothing about fill quality at 15:50.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/fractional-trading.md"
+    },
+    {
+      "claim_id": "alpaca_2026_fractional_no_short",
+      "core_claim": "Alpaca does not support short sales in fractional orders, so every short position must be a whole number of shares.",
+      "credibility": "high",
+      "project_applicability": "The reason the 1,784-name v1.2 short leg rounds to zero shares for most names at $50,000 (T-71) and the reason for the top-K concentration.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Documentation only.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/fractional-trading.md"
+    },
+    {
+      "claim_id": "alpaca_2026_paper_nbbo_matching",
+      "core_claim": "Alpaca paper trading matches every order against the current NBBO (the same page states random partial fills 10% of the time and no NBBO depth check), so paper cannot reproduce auction fills.",
+      "credibility": "high",
+      "project_applicability": "A 15:50 DAY-order book is executed the same way on paper and live (quote-based), unlike auction orders; the 10-15 paper account can test the chosen execution path.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Paper ignores depth and borrow fees; partial fills are random, not market-driven.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/paper-trading.md"
+    },
+    {
+      "claim_id": "alpaca_2026_short_min_equity_2000",
+      "core_claim": "Alpaca requires at least $2,000 of account equity to trade on margin or sell short.",
+      "credibility": "high",
+      "project_applicability": "Not binding at the $25,000-$100,000 tiers of this contract; recorded so the minimum-capital answer is complete.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Documentation only.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling.md"
+    },
+    {
+      "claim_id": "alpaca_2026_etb_zero_fee",
+      "core_claim": "Alpaca offers more than 5,000 easy-to-borrow securities approved for locates with zero fees, so ETB shorts carry no borrow fee.",
+      "credibility": "high",
+      "project_applicability": "Main borrow cost 0 bp for the ETB-restricted short leg (v1.2 convention), 25 bp sensitivity kept.",
+      "published_or_updated_at": "unknown",
+      "reflection": "ETB status changes daily; our ETB proxy (D7, precision 0.985) is not the broker list.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/docs/margin-and-short-selling.md"
+    },
+    {
+      "claim_id": "blitz_baltussen_vanvliet_2020_drop_shorts",
+      "core_claim": "Blitz, Baltussen and van Vliet (Financial Analysts Journal 76(4), 2020): most factor value comes from the long legs, long legs diversify more than short legs, and short-leg performance is generally subsumed by the long legs.",
+      "credibility": "medium",
+      "project_applicability": "Basis of candidate R3 (drop the short stock leg, hedge its beta with SPY); R1 must beat R3 to justify whole-share shorts at small capital.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Abstract only; factor portfolios, not our composite; ignores short-implementation costs that would favour R3 further.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/taf/ufajxx/v76y2020i4p73-99.html"
+    },
+    {
+      "claim_id": "clarke_desilva_thorley_2002_constraints_transfer",
+      "core_claim": "Clarke, de Silva and Thorley (Financial Analysts Journal 58(5), 2002): constraints on short positions and turnover are common and materially restrictive; the generalized fundamental law splits performance into forecast skill and constraint noise (transfer coefficient).",
+      "credibility": "medium",
+      "project_applicability": "Frames the expected Sharpe loss of the whole-share and concentration constraints; measured here with return-based retention and tracking error, not weight correlation (I-20261005-01 probe: weight correlation 0.999 is uninformative).",
+      "published_or_updated_at": "unknown",
+      "reflection": "Abstract only; the 0.73 / 0.3 transfer coefficients come from press coverage, not the paper text read here.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/taf/ufajxx/v58y2002i5p48-66.html"
+    },
+    {
+      "claim_id": "clarke_desilva_sapra_thorley_2008_extensions",
+      "core_claim": "Long-short extension (130/30-type) portfolios relax the long-only constraint; the benefit depends on how much shorting is allowed (FAJ 64(1), 2008, abstract).",
+      "credibility": "medium",
+      "project_applicability": "F2 is a SPY core plus overlay; index-relative underweights are the extension view of its short leg.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Index-relative underweights need point-in-time index weights we do not have; recorded as not done.",
+      "source_type": "paper",
+      "url": "https://rpc.cfainstitute.org/en/research/financial-analysts-journal/2008/longshort-extensions-how-much-is-enough"
+    },
+    {
+      "claim_id": "benidis_feng_palomar_2018_sparse_tracking",
+      "core_claim": "Sparse index tracking by majorization-minimization selects names and weights jointly with tracking comparable to or better than benchmarks at far lower run time (IEEE TSP 66(1), 2018, abstract and introduction).",
+      "credibility": "medium",
+      "project_applicability": "Named follow-up if R1 fails retention: a sparse tracking optimizer instead of a top-K cut.",
+      "published_or_updated_at": "unknown",
+      "reflection": "GPL R package; long-only index tracking; would need a re-implementation for long-short.",
+      "source_type": "paper",
+      "url": "https://palomar.home.ece.ust.hk/papers/2018/BenidisFengPalomar-TSP2018%20-%20index_tracking.pdf"
+    },
+    {
+      "claim_id": "nepc_2025_extension_strategies",
+      "core_claim": "Median extension strategies beat median long-only strategies on rolling three-year net returns in eVestment data (NEPC, April 2025).",
+      "credibility": "low",
+      "project_applicability": "Industry context for keeping a short leg; not small-account evidence.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Consultant survey, survivorship and selection unknown.",
+      "source_type": "practitioner_report",
+      "url": "https://nepc.com/wp-content/uploads/2025/04/Extension-Strategies-Come-Into-Their-Own.pdf"
+    },
+    {
+      "claim_id": "pypfopt_discrete_allocation_long_short",
+      "core_claim": "PyPortfolioOpt's DiscreteAllocation rounds continuous weights to whole shares greedily or by integer programming and splits long and short books before allocating.",
+      "credibility": "medium",
+      "project_applicability": "Same split as R1 (shorts rounded on their own); confirms the two-step approach is the common open-source practice.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Does not select names, so it does not solve sub-one-share short targets.",
+      "source_type": "provider_official_docs",
+      "url": "https://pyportfolioopt.readthedocs.io/en/latest/Postprocessing.html"
+    },
+    {
+      "claim_id": "smartleaf_direct_index_small_accounts",
+      "core_claim": "Whole-share rounding zeroes small weights and creates tracking error; the vendor says the problem binds below about $50,000 for US large-cap accounts.",
+      "credibility": "low",
+      "project_applicability": "Order of magnitude consistent with T-71; vendor claim, not used as evidence.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Long-only direct indexing, not long-short.",
+      "source_type": "vendor_article",
+      "url": "https://www.thewealthadvisor.com/article/smartleaf-asset-management-yes-direct-indexes-make-sense-investors-worth-less-1m-and-over"
+    }
+  ],
+  "spec_hash": "fdbef13c4d62155d0ce749839dacf93ae4f440fe2d03e68b469cade823b05120",
+  "strategy_name": "t20261006_p1_v12_small",
+  "topic_coverage": [
+    "small_account_whole_share_rounding_feasibility",
+    "cardinality_constrained_portfolio_concentration",
+    "long_leg_versus_short_leg_factor_value",
+    "constraint_cost_transfer_coefficient",
+    "broker_fractional_and_short_sale_rules",
+    "paper_simulator_fill_realism",
+    "sharpe_difference_inference_low_power",
+    "index_relative_underweight_extension"
+  ]
+}

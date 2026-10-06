@@ -37,9 +37,9 @@ class ForwardRow:
     n_forward: int | None  # forward sessions in the stitched record; None = no record
     z_full: float | None
     z_recent: float | None
-    sharpe_annual: float | None
+    sharpe_annual: float | None  # None until the record flags the forward Sharpe meaningful
     psr: float | None
-    min_trl: float | None  # sessions needed for PSR >= CONFIDENCE at the observed Sharpe
+    min_trl: float | None  # sessions needed for PSR >= CONFIDENCE at the backtest Sharpe
     progress: float | None  # n_forward / min_trl
     note: str  # why a field is missing, "" when complete
 
@@ -118,6 +118,23 @@ def sharpe_confidence(
     return out
 
 
+def expected_min_trl(mean_daily: Any, std_daily: Any) -> float | None:
+    """Sessions a forward record needs for PSR >= ``CONFIDENCE`` if it earns the backtest Sharpe.
+
+    The minimum track record length of ``sharpe_confidence`` evaluated at the backtest daily
+    Sharpe with normal moments (skew 0, kurtosis 3).  The observed forward Sharpe cannot be
+    plugged in: over 11 sessions its annual standard error is about 4.8 (T-20261005-39 review).
+    The backtest Sharpe is not discounted for the number of trials and includes the risk-free
+    rate, so the result is a lower bound on the length.
+    """
+    if not isinstance(mean_daily, int | float) or not isinstance(std_daily, int | float):
+        return None
+    if not std_daily > 1e-12 or not mean_daily > 0:
+        return None
+    sr_pp = mean_daily / std_daily
+    return 1.0 + _denominator(sr_pp, 0.0, 3.0) ** 2 * (_N.inv_cdf(CONFIDENCE) / sr_pp) ** 2
+
+
 # ---------------------------------------------------------------------------
 # forward record vs expectation
 # ---------------------------------------------------------------------------
@@ -151,32 +168,38 @@ def build_forward_rows(summary: dict[str, Any], record: list[dict[str, str]]) ->
         n_forward = (zblock.get("backtest_full") or {}).get("n_forward")
         z_full = _z_value(zblock, "backtest_full")
         z_recent = _z_value(zblock, "backtest_recent")
+        recent = zblock.get("backtest_recent") or {}
+        min_trl = expected_min_trl(recent.get("base_mean_daily"), recent.get("base_std_daily"))
         returns = _forward_returns(record, name)
         if not returns:
+            progress0 = 0.0 if min_trl else None
             rows.append(
-                ForwardRow(name, 0, z_full, z_recent, None, None, None, None, "缺：还没有前向会话")
+                ForwardRow(
+                    name, 0, z_full, z_recent, None, None, min_trl, progress0, "缺：还没有前向会话"
+                )
             )
             continue
         segment = ((entry.get("primary_boundary_commit") or {}).get("segments") or {}).get(
             "forward_oos_plus_paper", {}
         ).get("strategy") or {}
         recorded = segment.get("sharpe") if segment.get("days") == len(returns) else None
-        stats = sharpe_confidence(returns, recorded)
-        min_trl = stats["min_trl"]
+        # the record's own flag (forward_record_t70.MIN_SHARPE_DAYS = 20) decides, not this module
+        meaningful = recorded is not None and segment.get("sharpe_meaningful") is True
+        stats = sharpe_confidence(returns, recorded) if meaningful else {}
         progress = len(returns) / min_trl if min_trl else None
         note = ""
-        if len(returns) < MIN_SAMPLE:
-            note = f"样本不足（{len(returns)} < {MIN_SAMPLE}）"
+        if stats.get("psr") is None:
+            note = f"样本不足：前向 {len(returns)} 天，记录标为夏普不具意义（少于 20 天）"
         elif min_trl is None:
-            note = "夏普 ≤ 0，达不到 95% 信心"
+            note = "回测夏普缺或 ≤ 0，没有所需会话"
         rows.append(
             ForwardRow(
                 name,
                 len(returns),
                 z_full if n_forward == len(returns) else None,
                 z_recent if n_forward == len(returns) else None,
-                stats["sharpe_annual"],
-                stats["psr"],
+                stats.get("sharpe_annual"),
+                stats.get("psr"),
                 min_trl,
                 progress,
                 note,
@@ -234,10 +257,12 @@ def render_forward(loaded: tuple[list[ForwardRow], dict[str, Any]] | None) -> li
             "",
             "z = (前向日均收益 − 回测日均收益) / (回测日标准差 / √前向会话数)，取自 "
             f"`{meta['source']}/summary.json`；夏普取自 summary.json 的 "
-            "forward_oos_plus_paper（已扣无风险利率）；"
-            "概率夏普和 95% 所需会话由该夏普加 `record.csv` 前向日收益的偏度、峰度，"
-            "按 Bailey–López de Prado（2012）公式算出，基准夏普 0。"
-            f"少于 {MIN_SAMPLE} 个会话不给估计；日收益不是独立同分布，会话少于约 20 时只作描述。",
+            "forward_oos_plus_paper（已扣无风险利率），概率夏普由该夏普加 `record.csv` 前向日收益的"
+            "偏度、峰度按 Bailey–López de Prado（2012）算出，基准夏普 0；记录标为不具意义"
+            "（前向少于 20 天）时两项都不给：11 天的年化夏普标准误约 4.8。"
+            "95% 所需会话 = 假如前向夏普等于回测近期夏普，概率夏普达到 95% 要多少个会话"
+            "（最短记录长度，正态矩）；回测夏普没有按试验数打折、含无风险利率，所以这是下限。"
+            "进度 = 前向会话 ÷ 所需会话。",
         ]
     )
     return lines
