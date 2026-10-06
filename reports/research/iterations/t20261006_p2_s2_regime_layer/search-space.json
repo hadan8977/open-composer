@@ -1,0 +1,94 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261006_p2_s2_regime_layer/candidate-manifest.json",
+  "candidate_manifest_sha256": "8561dd02bc1d3158d26edcd1cb373c38e392ecf3f1f1b04206ac326bee3a41e9",
+  "cost_table_path": "reports/research/iterations/t20261006_p2_s2_regime_layer/cost-table.json",
+  "created_at": "2026-10-06T07:31:04.697485+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261006_p2_s2_regime_layer/data-feasibility.json",
+  "data_feasibility_sha256": "c0029837f20481b5acb580331d8a56c843db6b0f0b03ffda65d581c4ab088331",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261006_p2_s2_regime_layer",
+  "paths": [
+    {
+      "benchmark_family": [
+        "paper_table_4_reproduction_1990_2023",
+        "buy_and_hold_market",
+        "exposure_matched_volatility_target",
+        "ungated_sleeve",
+        "trend_x_vix_existing_rule",
+        "circular_shift_placebo_50_seeds",
+        "two_x_cost_20bp",
+        "zero_delay_sensitivity",
+        "jumpmodels_package_cross_check"
+      ],
+      "candidate_count": 9,
+      "hypothesis_refs": [
+        "T-20261006-03"
+      ],
+      "name": "regime_multiplier_p2_s2",
+      "parameters": {
+        "control_vt": [
+          "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)"
+        ],
+        "features": [
+          "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+          "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3) + EWM (halflife 10) of log VIX (FRED VIXCLS, a missing day carried at most 3 sessions)",
+          "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3) + EWM (halflife 10) of log VIX (FRED VIXCLS, a missing day carried at most 3 sessions) + VRP gap log(VIX/100) - log(RV21) with RV21 = sqrt(252 * mean squared market excess return over 21 sessions) + 21-session change of FRED BAA10Y in percentage points (missing day carried at most 3 sessions)",
+          "SMA200 trend and VIX tercile"
+        ],
+        "fit": [
+          "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher"
+        ],
+        "index_level": [
+          "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier"
+        ],
+        "jump_penalty": [
+          "CV over {0, 5, 15, 35, 50, 70, 100, 150}; cross-validated: at the first session of each month choose the value maximising the Sharpe of the index 0/1 strategy (one-day delay, 10 bp) over the trailing 2016 sessions (8 years) of that value's own online sequence; the choice applies from session t+2",
+          15,
+          50,
+          150,
+          "not applicable; smoothing k CV over {0, 2, 4, 8, 20}; cross-validated: at the first session of each month choose the value maximising the Sharpe of the index 0/1 strategy (one-day delay, 10 bp) over the trailing 2016 sessions (8 years) of that value's own online sequence; the choice applies from session t+2",
+          "none"
+        ],
+        "market_series": [
+          "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month"
+        ],
+        "model": [
+          "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+          "2-state Gaussian HMM, diagonal covariance, EM with 10 fixed-seed starts on the same refit schedule, states sorted by cumret; online state = argmax of the forward filtered probability; smoothing k: bear if the trailing k-session mean of the online bear indicator > 0.5 (k = 0 raw)",
+          "sklearn GaussianMixture, 2 components, covariance_type diag, n_init 10, fixed random_state, same refit schedule, states sorted by cumret; online state = argmax posterior of x_t (no persistence)",
+          "existing trend x VIX rule: market close vs its 200-session SMA, VIX vs the terciles of VIXCLS over 1990-01-02..2015-12-31; m = 0 if below the SMA and VIX above the upper tercile, 0.5 if exactly one holds, else 1; no fitting (market close = SPY SIP close from 2016, cumulative CRSP index before)"
+        ],
+        "multiplier_timing": [
+          "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only"
+        ],
+        "placebo": [
+          "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds"
+        ],
+        "role": [
+          "paper base specification and reproduction target",
+          "persistence axis, low",
+          "persistence axis, paper's typical value",
+          "persistence axis, high",
+          "input axis, 4 inputs; first test session 2010-01-04 (VIX starts 1990)",
+          "input axis, 6 inputs; first test session 2010-01-04",
+          "model axis, paper's HMM comparison",
+          "model axis, no persistence",
+          "model axis, the project's existing state split (scripts/analyze_equity_book_regimes.py)"
+        ],
+        "sleeves": [
+          "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional"
+        ],
+        "windows": [
+          "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261006_p2_s2_regime_layer.yaml",
+  "spec_hash": "502eb1066e1dec42c45345d4559ec3860ffcf8bd176748c976623217f48521b1",
+  "strategy_name": "t20261006_p2_s2_regime_layer",
+  "total_candidate_budget": 9,
+  "trial_ledger_paths": []
+}

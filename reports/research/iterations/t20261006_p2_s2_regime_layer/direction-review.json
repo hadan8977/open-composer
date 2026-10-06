@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "iter_id": "t20261006_p2_s2_regime_layer",
+  "reviewed_at": "2026-10-06T07:32:16Z",
+  "decision": "proceed",
+  "objective": "P2 Stage 2 (plan v2 section 3.2, 10-08..10-13): reproduce the statistical jump model regime strategy (Shu-Yu-Mulvey 2024, JAM 25(5)) on the US market 1990-2023, sweep nine specifications along inputs (3/4/6), persistence (penalty 15/50/150 and cross-validated) and model class (JM, HMM, GMM, existing trend x VIX), and test whether the daily regime multiplier raises the exposure-matched Sharpe of the pilot sleeve S3 (90% of pilot risk, stress Sharpe about 0.59) in the stress window without costing more than 0.10 of recent Sharpe; S1, S2 and C2 reported (owner 10-04: low stress-period Sharpe).",
+  "target_regime_and_horizon": "US equity market bull/bear regimes inferred daily with a one-day delay; applied as a 0/1 exposure multiplier to the four ETF paper sleeves. Decision on S3: stress window 2017-10-02..2023-08-31 decides, recent 2024-01-08..2026-09-17 must not be worse by more than 0.10; index level 1990-2023 (reproduction) and 2010-01..2026-07. Regime persistence: target <= 1-2 changes a year (paper at penalty 50-100). Shadow 8-12 weeks before any allocation change.",
+  "existing_solution_comparison": "Published: Shu-Yu-Mulvey 2024 jump-model 0/1 on S&P 500 1990-2023 lifts Sharpe 0.48 -> 0.68 and halves MDD with 10 bp and a one-day delay (HMM 0.54 at 141% turnover); the authors' library jumpmodels (Apache-2.0); Shu-Mulvey 2024 apply it to factor allocation. Independent: a 2025 CBS MSc thesis finds better but statistically insignificant gains on factor ETFs 2017-2025; an unverified GitHub replication (I-20260922-03) reports SPY 2008-2025 Sharpe 0.649 -> 0.922 with lower CAGR. None tests a gate on a levered ETF momentum rotation, and the paper never compares with volatility targeting, which Cederburg et al. 2020 show helps momentum out of sample; so the exposure-matched volatility target is the control that decides whether this is more than drawdown control.",
+  "remaining_evidence_gap": "(1) Does the paper reproduce on free CRSP value-weighted data? (2) Does the jump model beat an exposure-matched volatility target at index level (registry dir:jump_model_regime calls it drawdown control only)? (3) Does it raise S3's stress Sharpe beyond S3's own 0.40 volatility target and an exposure-matched tighter target, without a recent-window cost above 0.10? (4) At which depth point (inputs, persistence, model class) does any increment appear, and is it robust across penalty values?",
+  "negative_experiments_checked": "dir:jump_model_regime (parked; reopen if 'lower drawdown -> higher vol target' is tested with an exposure-matched control: this stage is that test). dir:s3_bear_regime_guard / H-20260923-11 (refuted: SMA200 and HYG/IEF gates on S3 2016-2023 did not beat exposure-matched vol-target controls or 18/20 circular shifts; reopen if a regime-transition model that is not a lagging price trend beats an exposure-matched vol target on 2016-2023: the jump model clusters downside-risk features with a persistence penalty, J4/J6 add VIX and credit data, fitted on 30+ years). dir:levered_single_asset_sma_trend_gate (refuted by calendar-shift placebo; placebo reused). H-20260928-31 uncertainty gate (refuted 0/3). I-20261004-06 (local regime gates all refuted; recommends this stage). All earlier tests were single specifications fitted on 2016-2023; under the owner's 10-04 depth rule they cannot refute the class.",
+  "cost_and_execution_assumptions": "Signal at close d, multiplier effective from session d+2; sleeves trade at the open through the frozen engines (T-41 compute.py); 10 bp per side on traded notional including multiplier changes, 20 bp check; cash leg = the sleeve's own cash ETF; index level in-market earns excess + rf, out earns rf, 10 bp per change; no extra leverage, no borrowing. Live inputs would be SPY (SIP), VIX (CBOE) and BAA10Y (FRED), all registered; French CRSP data only for historical fitting (live refits need it until SPY has 3000 SIP sessions, about 2027-11; recorded as a limitation).",
+  "stop_condition": "Stage 2a: if the reproduction gate fails, cross-check against jumpmodels; if the implementations agree, record 'not reproduced on CRSP data' and no JM/HMM/GMM spec can reach PASS_SHADOW (Stage 2b still runs as diagnosis). Stage 2b mechanical status for S3: shadow_candidate_selected, increment_not_robust or no_increment_all_depth_points (written as 'no increment at any depth point; underpowered to refute' unless the reproduction passed and power is adequate). Budget: these nine specifications; no new specification before the lead review.",
+  "cheapest_decisive_test": {
+    "action": "Brief T-20261006-03: build the long-history market, VIX and BAA10Y series; implement the jump model and a 2-state HMM with unit tests and a jumpmodels cross-check; run the 1990-2023 reproduction and the nine specifications at index level against exposure-matched volatility targets. Brief T-20261006-04 then applies the frozen daily multipliers to the sleeves with placebos.",
+    "pass_condition": "Reproduction: J3_CV minus buy-and-hold Sharpe >= +0.10, MDD better by >= 15 percentage points and <= 2 changes a year on 1990-2023. Sleeves: PASS_SHADOW conditions (a)-(f) of hypotheses.md section 5 on S3.",
+    "falsification_condition": "No specification at any depth point has a stress Sharpe above its exposure-matched volatility target with the recent difference >= -0.10: no increment for S3 (underpowered to refute unless power is adequate); the layer remains a monitoring read-out for T-58 and P2 moves to Stage 3.",
+    "max_compute_minutes": 180
+  },
+  "queries": [
+    {
+      "query": "statistical jump model regime switching out-of-sample replication 2025 leveraged ETF drawdown \"jump model\"",
+      "searched_at": "2026-10-06T07:26:00Z",
+      "opened_urls": [
+        "https://research.cbs.dk/en/studentProjects/regime-based-factor-rotation-leveraging-sparse-jump-models/",
+        "https://collaborate.princeton.edu/en/publications/downside-risk-reduction-using-regime-switching-signals-a-statisti/",
+        "https://arxiv.org/pdf/2402.05272"
+      ],
+      "note": "07:07 lead round; independent 2025 thesis (gains not significant) and the journal record (JAM 25(5):493-507, 2024) saved under reports/research/intel/sources/p2-s2-regime-layer-2026-10-06/. The paper itself (https://arxiv.org/pdf/2402.05272, in these results as arxiv.org/abs/2402.05272v3) was read from the 2026-10-04T18:36:16Z snapshot under reports/research/intel/sources/regime-cycle-2026-10-04/."
+    },
+    {
+      "query": "volatility targeting vs regime switching timing comparison equity Sharpe exposure-matched \"jump model\" OR \"hidden Markov\" 2024 2025",
+      "searched_at": "2026-10-06T07:26:30Z",
+      "opened_urls": [
+        "https://raw.githubusercontent.com/Yizhan-Oliver-Shu/jump-models/master/jumpmodels/jump.py",
+        "https://raw.githubusercontent.com/Yizhan-Oliver-Shu/jump-models/master/jumpmodels/base.py"
+      ],
+      "note": "No published comparison of jump-model gating against an exposure-matched volatility target was found; opened the reference implementation to fix the loss scale (0.5 squared distance), the online forward pass, k-means++ starts and cumret state sorting."
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "shu_yu_mulvey_2024_jam_jump_model_downside",
+      "market_and_period": "S&P 500, DAX and Nikkei 225 total return; test 1990-2023; 10 bp one way; one-day trading delay",
+      "limitations": "Bloomberg total-return data and GFD bills; no comparison with volatility targeting; selecting the penalty on validation Sharpe can overfit the validation window; equity indices, not levered ETF sleeves.",
+      "independent_replication": "An unverified GitHub replication (I-20260922-03) reports SPY 2008-2025 Sharpe 0.649 -> 0.922 with lower CAGR; a 2025 CBS thesis on factor ETFs finds better but insignificant gains.",
+      "url": "https://arxiv.org/pdf/2402.05272",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-09-01",
+      "snapshot_path": "reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__shu-yu-mulvey-2024-fulltext.txt",
+      "sha256": "9697023e73a960ca9dd3dbcf4513f776bdfe6e9617aeb8e59ea295140dc397ac",
+      "source_card_path": "reports/harness/source_cards/t20261006_p2_s2_regime_layer.jsonl",
+      "fetched_at": "2026-10-04T18:36:16Z",
+      "claim": "Shu, Yu and Mulvey (Downside Risk Reduction Using Regime-Switching Signals: A Statistical Jump Model Approach; arXiv 2402.05272, Journal of Asset Management 2024): an online 2-state jump model on downside deviation (halflife 10) and Sortino ratios (halflives 20, 60), refit every six months on 3000 days, jump penalty chosen monthly by the 0/1 strategy's 8-year validation Sharpe, lifts the S&P 500 Sharpe from 0.48 (buy and hold) to 0.68 (HMM 0.54) on 1990-2023 with 10 bp one-way costs and a one-day delay; MDD -55.2% -> -26.6%, turnover 44%, average exposure 80%.",
+      "core_claim": "Sharpe 0.48 0.54 0.68 0.30 0.35 0.44 0.12 0.19 0.31",
+      "credibility": "peer_reviewed_or_working_paper",
+      "applicability": "Reproduction target of Stage 2a and the base protocol for every jump-model specification; the reported Sharpe gain is the depth anchor (plan v2 P-1 item 1)."
+    },
+    {
+      "claim_id": "shu_yu_mulvey_2024_jam_publication_record",
+      "market_and_period": "publication metadata",
+      "limitations": "Metadata only.",
+      "independent_replication": "Not applicable (bibliographic record).",
+      "url": "https://collaborate.princeton.edu/en/publications/downside-risk-reduction-using-regime-switching-signals-a-statisti/",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-09-01",
+      "snapshot_path": "reports/research/intel/sources/p2-s2-regime-layer-2026-10-06/princeton-shu-yu-mulvey-2024-jam-record.html",
+      "sha256": "966e6dcc4d48a4a421bab0b904e81c5079aa9c706cb7e54f35f718851ea58097",
+      "source_card_path": "reports/harness/source_cards/t20261006_p2_s2_regime_layer.jsonl",
+      "fetched_at": "2026-10-06T07:27:12Z",
+      "claim": "Princeton research portal record: the jump-model paper is published in the Journal of Asset Management, volume 25, issue 5, pages 493-507 (2024), DOI 10.1057/s41260-024-00376-x.",
+      "core_claim": "Journal of Asset Management",
+      "credibility": "peer_reviewed_or_working_paper",
+      "applicability": "Resolves the open item 5 of I-20261004-06 (journal version exists); the paper is peer reviewed."
+    },
+    {
+      "claim_id": "paulsson_ristic_2025_cbs_sparse_jm_not_significant",
+      "market_and_period": "US equity-style factor ETFs, backtest 2017-2025",
+      "limitations": "Student thesis; abstract only; Black-Litterman allocation differs from a 0/1 gate.",
+      "independent_replication": "It is itself an independent application of the published method.",
+      "url": "https://research.cbs.dk/en/studentProjects/regime-based-factor-rotation-leveraging-sparse-jump-models/",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-06-01",
+      "snapshot_path": "reports/research/intel/sources/p2-s2-regime-layer-2026-10-06/cbs-paulsson-ristic-2025-sparse-jump-factor-rotation.html",
+      "sha256": "2bedc935f99f7b16a75075e272ec50f9364473df66660d71cb4c53d5b767c80c",
+      "source_card_path": "reports/harness/source_cards/t20261006_p2_s2_regime_layer.jsonl",
+      "fetched_at": "2026-10-06T07:27:12Z",
+      "claim": "Paulsson and Ristic (Copenhagen Business School MSc thesis, 2025, Regime-Based Factor Rotation Leveraging Sparse Jump Models): sparse jump models beat HMMs and plain jump models in simulation; regime-aware factor ETF strategies 2017-2025 delivered higher total returns, Sharpe ratios and lower drawdowns than benchmarks, but the observed performance gains lack statistical significance.",
+      "core_claim": "lack statistical significance",
+      "credibility": "student_thesis",
+      "applicability": "Independent recent application on ETFs: effects of this kind are small relative to sampling error in windows of about eight years, so the sleeve thresholds are policy thresholds and a non-pass reads 'underpowered' (power section)."
+    }
+  ]
+}

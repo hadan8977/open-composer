@@ -1,0 +1,138 @@
+name: t20261006_p2_s2_regime_layer
+description: 'P2 Stage 2 online regime layer, preregistered 2026-10-06 by the 07:07 lead round: a persistence-penalised statistical jump model (Shu-Yu-Mulvey 2024, JAM 25(5)) on market-level risk features, refit every six months on 3000 sessions, inferred online with a forward pass, used as a 0/1 exposure multiplier with a one-day delay. Stage 2a reproduces the paper on the US market 1990-2023 and sweeps nine specifications along three depth axes (inputs 3/4/6, jump penalty 15/50/150 plus cross-validated, model class JM/HMM/GMM/trend-x-VIX) at index level; Stage 2b applies the same daily multipliers to the paper sleeves S1, S2, S3 and C2 and judges S3 (the pilot sleeve) against an exposure-matched volatility target, the ungated sleeve and circular-shift placebos.'
+timeframe: daily
+universe:
+- SPY
+- SHY
+- BIL
+- TQQQ
+- SOXL
+- UPRO
+- USD
+- TECL
+- SSO
+- SMH
+- QQQ
+- XLK
+- XLV
+- XLF
+- XLE
+- XLI
+- XLY
+- XLP
+- XLU
+- XLB
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 20
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 20
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: t20261006_p2_s2_regime_layer:regime_multiplier
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  regime_multiplier:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The daily regime multiplier is computed by scripts/p2_s2_regime_layer.py from the market excess-return series (French daily Mkt-RF 1970-01-02..2015-12-31, SPY SIP total return minus RF from 2016-01-04), VIX (FRED VIXCLS) and Moody's Baa minus 10-year Treasury (FRED BAA10Y), with the jump model in open_composer/research/regime/jump_model.py; state at close d is applied from session d+2.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+- market.cboe_volatility_indices
+- macro.fred_series
+research_design:
+  iter_id: t20261006_p2_s2_regime_layer
+  candidate_manifest_path: reports/research/iterations/t20261006_p2_s2_regime_layer/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/t20261006_p2_s2_regime_layer/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/t20261006_p2_s2_regime_layer.jsonl
+  source_card_claim_ids:
+  - shu_yu_mulvey_2024_jam_jump_model_downside
+  - shu_mulvey_2024_dynamic_factor_allocation_jm
+  - jumpmodels_package_reference_implementation
+  - nystrup_dtu_regime_based_allocation
+  - cederburg_et_al_2020_volatility_managed_oos
+  - daniel_moskowitz_2016_momentum_crashes
+  - letf_compounding_regime_dependence_2504_20116
+  - paulsson_ristic_2025_cbs_sparse_jm_not_significant
+  - local_h20260923_11_s3_bear_guard_refuted
+  parameter_space:
+    model:
+    - JM
+    - HMM2
+    - GMM2
+    - TREND_X_VIX
+    features:
+    - F3_dd10_sortino20_sortino60
+    - F4_plus_log_vix
+    - F6_plus_vrp_gap_and_baa10y_change
+    jump_penalty:
+    - CV
+    - 15
+    - 50
+    - 150
+  candidate_budget: 9
+  selection_objective: 'Decision object S3 (5-offset blend 0,4,8,12,16 with the frozen vol target 0.40 and dip boost), multiplier from the market regime with a one-day delay, 10 bp per side. PASS_SHADOW needs (a) stress 2017-10-02..2023-08-31 Sharpe minus the exposure-matched volatility-target S3 >= +0.10 and recent 2024-01-08..2026-09-17 >= -0.10, (b) stress Sharpe minus ungated S3 >= +0.10, (c) circular-shift placebo percentile >= 0.80 on 2017-10-02..2026-09-17, (d) >= 4 of 5 offsets with stress difference to the volatility target > 0, (e) (a) also at 20 bp, (f) <= 3 multiplier changes per year, and for JM/HMM/GMM specs the Stage 2a replication gate. Among PASS_SHADOW specs the highest stress difference to the volatility target wins; ties within 0.02 go to fewer changes per year.'
+  candidate_budget_note: 'Axis sweep, not a factorial: J3_CV (paper base), J3_L15, J3_L50, J3_L150 (persistence axis), J4_CV, J6_CV (input axis), H2_CV, G2, TV (model axis). Report-only, not candidates: S1, S2, C2 and the index-level results, a 0.5 bear multiplier for J3_CV, the zero-delay sensitivity, crash-episode table.'
+  anti_overfit_notes:
+  - Frozen before any regime state, multiplier or gated return was computed on our data. Seen before writing are disclosed in hypotheses.md section 0 (the paper's tables, the registry verdicts, H-20260923-11, T-75, T-41).
+  - Hyperparameters (jump penalty, HMM smoothing) are selected only by the index-level 0/1 strategy's trailing eight-year validation Sharpe, never on the sleeves.
+  - The stress window is the decision window for the sleeve test; 2026-09-18 onward is not read.
+  validation_plan:
+  - 'Identity first: multiplier identically 1 reproduces the frozen sleeve engines (T-41 compute.py simulate_effective) within 1e-12; jump-model unit tests (synthetic two-regime recovery, truncation invariance of the online state, lambda 0 equals k-means assignment, lambda very large gives one state) and a cross-check against the jumpmodels package in an isolated environment.'
+  - 'Stage 2a reproduction gate on 1990-2023, then the nine specifications at index level with the exposure-matched volatility target, then Stage 2b on the sleeves with placebos, 20 bp and the zero-delay sensitivity.'
+  - 'Mechanical labels written by code from the frozen rule; the lead round reviews.'
+notes:
+  intent: Test at minimum effective depth whether a persistent online regime model raises the exposure-matched Sharpe of the levered pilot sleeve S3 (90% of the pilot's risk, stress Sharpe 0.59), as plan v2 section 3.2 Stage 2 requires before the owner's stress-period concern can be answered by a timing rule.
+  hypothesis_id: T-20261006-03
+  previous_link: t20261005_p2_s1_theme_budget
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: preregistered

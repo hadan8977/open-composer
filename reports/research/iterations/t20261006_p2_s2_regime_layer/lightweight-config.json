@@ -1,0 +1,295 @@
+{
+  "iter_id": "t20261006_p2_s2_regime_layer",
+  "strategy_name": "t20261006_p2_s2_regime_layer",
+  "representative_spec_path": "strategy_specs/drafts/t20261006_p2_s2_regime_layer.yaml",
+  "path_name": "regime_multiplier_p2_s2",
+  "hypothesis_id": "T-20261006-03",
+  "objective": "P2 Stage 2 (plan v2 section 3.2): reproduce the statistical jump model regime strategy (Shu-Yu-Mulvey 2024) on the US market 1990-2023, sweep nine specifications along inputs, persistence and model class, and test whether the daily regime multiplier raises the exposure-matched Sharpe of the pilot sleeve S3 in the stress window without costing more than 0.10 of recent Sharpe; S1, S2 and C2 are reported.",
+  "benchmark_family": [
+    "paper_table_4_reproduction_1990_2023",
+    "buy_and_hold_market",
+    "exposure_matched_volatility_target",
+    "ungated_sleeve",
+    "trend_x_vix_existing_rule",
+    "circular_shift_placebo_50_seeds",
+    "two_x_cost_20bp",
+    "zero_delay_sensitivity",
+    "jumpmodels_package_cross_check"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "P2S2_J3_CV",
+      "parameters": {
+        "model": "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+        "jump_penalty": "CV over {0, 5, 15, 35, 50, 70, 100, 150}; cross-validated: at the first session of each month choose the value maximising the Sharpe of the index 0/1 strategy (one-day delay, 10 bp) over the trailing 2016 sessions (8 years) of that value's own online sequence; the choice applies from session t+2",
+        "role": "paper base specification and reproduction target",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_J3_L15",
+      "parameters": {
+        "model": "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+        "jump_penalty": 15,
+        "role": "persistence axis, low",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_J3_L50",
+      "parameters": {
+        "model": "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+        "jump_penalty": 50,
+        "role": "persistence axis, paper's typical value",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_J3_L150",
+      "parameters": {
+        "model": "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+        "jump_penalty": 150,
+        "role": "persistence axis, high",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_J4_CV",
+      "parameters": {
+        "model": "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3) + EWM (halflife 10) of log VIX (FRED VIXCLS, a missing day carried at most 3 sessions)",
+        "jump_penalty": "CV over {0, 5, 15, 35, 50, 70, 100, 150}; cross-validated: at the first session of each month choose the value maximising the Sharpe of the index 0/1 strategy (one-day delay, 10 bp) over the trailing 2016 sessions (8 years) of that value's own online sequence; the choice applies from session t+2",
+        "role": "input axis, 4 inputs; first test session 2010-01-04 (VIX starts 1990)",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_J6_CV",
+      "parameters": {
+        "model": "statistical jump model, 2 states, loss 0.5 * squared Euclidean distance, jump penalty on every state change, coordinate descent with k-means++ starts (n_init 10, fixed seeds, max_iter 1000, tol 1e-8) as in the jumpmodels package; online inference = forward pass values[t] = loss[t] + min_j(values[t-1][j] + lambda * 1{j != k}) started 3000 sessions before each refit date with that refit's parameters and run forward to the next refit; state_t = argmin_k values[t]",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3) + EWM (halflife 10) of log VIX (FRED VIXCLS, a missing day carried at most 3 sessions) + VRP gap log(VIX/100) - log(RV21) with RV21 = sqrt(252 * mean squared market excess return over 21 sessions) + 21-session change of FRED BAA10Y in percentage points (missing day carried at most 3 sessions)",
+        "jump_penalty": "CV over {0, 5, 15, 35, 50, 70, 100, 150}; cross-validated: at the first session of each month choose the value maximising the Sharpe of the index 0/1 strategy (one-day delay, 10 bp) over the trailing 2016 sessions (8 years) of that value's own online sequence; the choice applies from session t+2",
+        "role": "input axis, 6 inputs; first test session 2010-01-04",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_H2_CV",
+      "parameters": {
+        "model": "2-state Gaussian HMM, diagonal covariance, EM with 10 fixed-seed starts on the same refit schedule, states sorted by cumret; online state = argmax of the forward filtered probability; smoothing k: bear if the trailing k-session mean of the online bear indicator > 0.5 (k = 0 raw)",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+        "jump_penalty": "not applicable; smoothing k CV over {0, 2, 4, 8, 20}; cross-validated: at the first session of each month choose the value maximising the Sharpe of the index 0/1 strategy (one-day delay, 10 bp) over the trailing 2016 sessions (8 years) of that value's own online sequence; the choice applies from session t+2",
+        "role": "model axis, paper's HMM comparison",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_G2",
+      "parameters": {
+        "model": "sklearn GaussianMixture, 2 components, covariance_type diag, n_init 10, fixed random_state, same refit schedule, states sorted by cumret; online state = argmax posterior of x_t (no persistence)",
+        "features": "F3: EWM downside deviation (halflife 10) and EWM Sortino ratios (halflives 20 and 60) of the market excess return, each EWM computed with the given halflife on daily data (Shu-Yu-Mulvey 2024 section 3.3)",
+        "jump_penalty": "none",
+        "role": "model axis, no persistence",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    },
+    {
+      "candidate_id": "P2S2_TV",
+      "parameters": {
+        "model": "existing trend x VIX rule: market close vs its 200-session SMA, VIX vs the terciles of VIXCLS over 1990-01-02..2015-12-31; m = 0 if below the SMA and VIX above the upper tercile, 0.5 if exactly one holds, else 1; no fitting (market close = SPY SIP close from 2016, cumulative CRSP index before)",
+        "features": "SMA200 trend and VIX tercile",
+        "jump_penalty": "none",
+        "role": "model axis, the project's existing state split (scripts/analyze_equity_book_regimes.py)",
+        "market_series": "daily excess return: French F-F_Research_Data_Factors_daily Mkt-RF (CRSP value-weighted) 1970-01-02..2015-12-31; SPY SIP adjusted close-to-close return minus RF from 2016-01-04; RF = French daily RF through its last date, then the mean daily RF of its last month",
+        "fit": "refit on the first session of January and July on the trailing 3000 sessions; each feature clipped at training mean +/- 3 sd, then z-scored with the training mean and sd (jumpmodels example pipeline); states sorted by cumulative market excess return in the training window (jumpmodels sort_by cumret), bull = higher",
+        "multiplier_timing": "state inferred at close d sets the multiplier from session d+2 (one-day delay, paper protocol); zero-delay (from d+1) is report-only",
+        "index_level": "0/1 strategy on the market series: in-market sessions earn excess + rf, out-of-market sessions earn rf; 10 bp per unit change of the multiplier",
+        "sleeves": "S1, S2 and S3 at offsets 0,4,8,12,16 (S3 with the frozen vol target 0.40 and dip boost 0.60 for 10 sessions), C2 at o00; frozen engines through reports/research/program/etf-open-close-2026-10-07/compute.py simulate_effective; risky weights times m, the remainder in the sleeve's own cash asset; 10 bp per side on traded notional",
+        "control_vt": "exposure-matched volatility target: m_VT = min(1, tau / sigma_hat), sigma_hat = EWM (halflife 21 sessions) annualised volatility of the ungated object's daily net return known at close d, applied with the same delay; tau by bisection so that mean(m_VT) equals mean(m_spec) within each window (per offset for sleeves)",
+        "placebo": "circular shift of the spec's daily multiplier over 2017-10-02..2026-09-17 by k drawn from {-756..-63} U {63..756}, 50 fixed seeds",
+        "windows": "index: reproduction 1990-01-02..2023-12-29, all specs 2010-01-04..2026-07-31; sleeves: stress 2017-10-02..2023-08-31 (decision), recent 2024-01-08..2026-09-17 (non-inferiority), owner B window 2026-07-01..2026-09-17 (report), full 2017-10-02..2026-09-17; nothing dated 2026-09-18 or later is read"
+      }
+    }
+  ],
+  "cost_table": {
+    "base_cost_bps": 10,
+    "stress_cost_bps": 20,
+    "judged_cost": "10 bp per side on traded notional, including every change of the multiplier (frozen-contract convention; paper uses 10 bp one way)",
+    "two_x_cost_check": "20 bp per side on the same multiplier paths"
+  },
+  "sources": [
+    {
+      "claim_id": "shu_yu_mulvey_2024_jam_jump_model_downside",
+      "url": "https://arxiv.org/abs/2402.05272",
+      "published_or_updated_at": "2024-09-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Journal of Asset Management 25(5):493-507 (2024), DOI 10.1057/s41260-024-00376-x. Online 2-state jump model on DD(hl10), Sortino(hl20, hl60), 3000-day training refit every six months, jump penalty chosen monthly by the 0/1 strategy's 8-year validation Sharpe, one-day delay, 10 bp: S&P 500 1990-2023 Sharpe 0.48 -> 0.68, MDD -55.2% -> -26.6%, turnover 44%, average exposure 80%; HMM 0.54, turnover 141%.",
+      "project_applicability": "Reproduction target (Stage 2a) and the base protocol for every JM specification.",
+      "reflection": "Authors' own data (Bloomberg total return, GFD 3-month bills); no comparison with volatility targeting; selecting the penalty on validation Sharpe can overfit the validation window. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__shu-yu-mulvey-2024-fulltext.txt; journal record reports/research/intel/sources/p2-s2-regime-layer-2026-10-06/princeton-shu-yu-mulvey-2024-jam-record.html."
+    },
+    {
+      "claim_id": "shu_mulvey_2024_dynamic_factor_allocation_jm",
+      "url": "https://arxiv.org/abs/2410.14841",
+      "published_or_updated_at": "2024-10-17",
+      "source_type": "arxiv",
+      "credibility": "medium",
+      "core_claim": "Sparse jump-model regimes per factor index drive a dynamic allocation across seven US long-only indices, test 2007-2024 with 5 bp, improving on the market and on equal weight.",
+      "project_applicability": "Out-of-sample use of the same persistence machinery on factor sleeves, the closest published analogue of gating our ETF sleeves.",
+      "reflection": "Same authors; sparse feature selection over about 20 features is beyond this stage's minimum depth. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__shu-mulvey-2024-dynamic-factor-allocation-jm.txt."
+    },
+    {
+      "claim_id": "jumpmodels_package_reference_implementation",
+      "url": "https://github.com/Yizhan-Oliver-Shu/jump-models",
+      "published_or_updated_at": "2025-01-12",
+      "source_type": "code",
+      "credibility": "medium",
+      "core_claim": "Authors' Apache-2.0 library: loss = 0.5 * squared Euclidean distance; DP values[t] = loss[t] + min(values[t-1] + penalty); online labels = argmin of forward values; k-means++ starts with n_init 10, max_iter 1000, tol 1e-8; states sorted by cumulative return.",
+      "project_applicability": "Faithful implementation (P-1 item 2) and the cross-check of our module.",
+      "reflection": "Not installed in the project environment; used read-only from snapshots and an isolated venv. Snapshots reports/research/intel/sources/p2-s2-regime-layer-2026-10-06/github-jumpmodels-jump.py.txt and github-jumpmodels-base.py.txt."
+    },
+    {
+      "claim_id": "nystrup_dtu_regime_based_allocation",
+      "url": "https://www2.imm.dtu.dk/pubdb/pubs/6808-full.html",
+      "published_or_updated_at": "2014-01-01",
+      "source_type": "thesis",
+      "credibility": "medium",
+      "core_claim": "Regime-based asset allocation with HMMs can beat static allocation when regimes are persistent and inferred online; the gain depends on persistence and on transaction costs.",
+      "project_applicability": "Background for the HMM point on the model axis and the role of persistence.",
+      "reflection": "Abstract-level reading only. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/dtu-nystrup-regime-based-asset-allocation-do-profitable-strategies-exist.txt."
+    },
+    {
+      "claim_id": "cederburg_et_al_2020_volatility_managed_oos",
+      "url": "https://www.lehigh.edu/~xuy219/research/COWY.pdf",
+      "published_or_updated_at": "2020-10-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Journal of Financial Economics 138 (2020) 95-117: out of sample, volatility-managed versions of most of 103 equity strategies do not beat the unmanaged ones, but momentum strategies improve.",
+      "project_applicability": "The exposure-matched volatility target is a non-trivial control for a momentum sleeve such as S3; the regime layer must beat it, not only buy-and-hold.",
+      "reflection": "US factor portfolios, monthly; not levered ETFs. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/cederburg-2020-volmanaged-jfe.txt."
+    },
+    {
+      "claim_id": "daniel_moskowitz_2016_momentum_crashes",
+      "url": "https://www.nber.org/system/files/working_papers/w20439/w20439.pdf",
+      "published_or_updated_at": "2016-11-01",
+      "source_type": "paper",
+      "credibility": "high",
+      "core_claim": "Momentum crashes are concentrated in panic states after bear markets with high volatility and are partly forecastable; a dynamic strategy using bear-state and volatility forecasts roughly doubles the momentum Sharpe ratio.",
+      "project_applicability": "Mechanism for state dependence of a momentum rotation such as S3 and for why a bear-and-volatility state can add to a pure volatility target.",
+      "reflection": "Cross-sectional stock momentum, not ETF rotation. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/daniel-moskowitz-2016-momentum-crashes.txt."
+    },
+    {
+      "claim_id": "letf_compounding_regime_dependence_2504_20116",
+      "url": "https://arxiv.org/abs/2504.20116",
+      "published_or_updated_at": "2025-04-28",
+      "source_type": "arxiv",
+      "credibility": "medium",
+      "core_claim": "Leveraged ETF compounding depends on return autocorrelation and regime: trends enhance returns, mean reversion and volatility clustering induce underperformance (about 20 years of SPY and QQQ data).",
+      "project_applicability": "Why removing levered exposure in choppy high-volatility bear regimes could raise S3's Sharpe by more than scaling it down.",
+      "reflection": "Abstract read; no trading rule tested. Snapshot reports/research/intel/sources/regime-cycle-2026-10-04/arxiv__letf-compounding-regime-2504.20116.txt."
+    },
+    {
+      "claim_id": "paulsson_ristic_2025_cbs_sparse_jm_not_significant",
+      "url": "https://research.cbs.dk/en/studentProjects/regime-based-factor-rotation-leveraging-sparse-jump-models/",
+      "published_or_updated_at": "2025-06-01",
+      "source_type": "thesis",
+      "credibility": "low",
+      "core_claim": "Copenhagen Business School MSc thesis (2025): regime-aware factor ETF strategies 2017-2025 delivered higher returns, Sharpe and lower drawdowns than benchmarks, but the observed performance gains lack statistical significance.",
+      "project_applicability": "Independent recent evidence that effects of this kind are small relative to sampling error in 8-year windows; the power section treats the sleeve thresholds as policy thresholds.",
+      "reflection": "Student thesis, abstract only. Snapshot reports/research/intel/sources/p2-s2-regime-layer-2026-10-06/cbs-paulsson-ristic-2025-sparse-jump-factor-rotation.html."
+    },
+    {
+      "claim_id": "local_h20260923_11_s3_bear_guard_refuted",
+      "url": "reports/research/hypotheses/H-20260923-11-s3-bear-guard.md",
+      "published_or_updated_at": "2026-09-23",
+      "source_type": "local_experiment",
+      "credibility": "medium",
+      "core_claim": "On 2016-01..2023-09 the SMA200 and credit-ratio gates on S3 did not beat exposure-matched volatility-target controls (Sharpe 0.78-0.81 vs gates 0.34-0.85) or 18 of 20 circular shifts; single specifications, lagging price trends.",
+      "project_applicability": "The control and placebo design this stage reuses; the new elements are persistence-penalised online clustering, 30+ years of fitting history and the depth sweep.",
+      "reflection": "Shallow single-spec test under the owner's 10-04 depth rule; it cannot refute the regime layer."
+    }
+  ],
+  "topic_coverage": [
+    "statistical_jump_models",
+    "hidden_markov_regimes",
+    "persistence_penalty_cross_validation",
+    "volatility_managed_portfolios",
+    "momentum_crash_state_dependence",
+    "leveraged_etf_compounding_regimes",
+    "exposure_matched_controls_and_placebos",
+    "local_s3_regime_gate_history"
+  ],
+  "hypothesis": {
+    "statement": "A persistence-penalised online jump model on market risk features identifies equity bear regimes early enough that removing S3's levered exposure in them raises S3's stress-period Sharpe by at least 0.10 over an exposure-matched volatility target, without costing more than 0.10 of recent Sharpe.",
+    "failure_mode": "S3's monthly momentum rotation and its 0.40 volatility target already shrink exposure in the same episodes, so the jump model adds only what a tighter volatility target adds; or the one-day delay and V-shaped rebounds (2020-04, 2025-04) make the gate re-enter late; or the paper does not reproduce on CRSP value-weighted data.",
+    "measurement": "Index level: Sharpe, return, volatility, MDD, Calmar, ES 5%, turnover, average exposure and changes per year for buy-and-hold, each spec and its exposure-matched volatility target (1990-2023; 2010-01..2026-07). Sleeves: per object, spec, offset and window the same metrics plus ES97.5, differences to the volatility target and to the ungated sleeve with paired stationary-bootstrap intervals, placebo percentiles, 20 bp, zero delay and a crash-episode table.",
+    "stop_pivot": "Mechanical status for S3: shadow_candidate_selected, increment_not_robust or no_increment_all_depth_points. The last reads 'no increment at any depth point; underpowered to refute' unless the reproduction passed and power is adequate (plan v2 P-1). Shadow = 8-12 weeks log-only before any allocation change."
+  },
+  "decision": {
+    "path": "regime_multiplier_p2_s2",
+    "decision": "pending",
+    "reason": "Preregistered 2026-10-06 by the 07:07 UTC lead round before any regime state, multiplier or gated return was computed on our data; executed by briefs T-20261006-03 (Stage 2a) and T-20261006-04 (Stage 2b).",
+    "next_iteration_suggestion": "Stage 3 cycle conditioner (from 10-21) and the topology input (Stage 2c) after this stage is reviewed; a shadow run if a spec passes."
+  },
+  "source_cards_path": "reports/harness/source_cards/t20261006_p2_s2_regime_layer.jsonl"
+}
