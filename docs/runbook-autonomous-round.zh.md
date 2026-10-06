@@ -128,6 +128,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - 写法先按 `docs/owner-reporting.zh.md` 第 0 节（机主 10-06：业务名称、不写代号、不写流水账、正面回答机主的问题），结构和口径按第 3–5 节。
    - 写完运行 `uv run python scripts/owner_report.py lint <文件>`，错误必须为 0。
    - 旧范例 `2026-W40.zh.md` 里的代号写法已不适用。
+   - 同时更新 `reports/owner/research-map.zh.md`（研究全景）：本周有新结论或状态变化的方向改写对应段落和第三部分的总数，同样跑 lint。
    - 数字从仓库文件取，用代码算，带路径。先写一页结论，最后写需要机主决定的事；没有就写"没有"。
    - 周日 01:00 UTC 的 cron（`scripts/owner_report.py auto --send`）会把它和脚本生成的一周数据一起发到机主邮箱。不要自己发邮件。
    - 这一轮被闸门暂停或没跑成，周日照常发纯数据版。下一个主审轮补写，再用 `uv run python scripts/owner_report.py weekly --send --force` 补发。
