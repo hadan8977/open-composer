@@ -1,0 +1,146 @@
+{
+  "program": "p5-research-factory",
+  "title": "P5 AI 原生研究工厂",
+  "source": "docs/plan-v2-2026-10-05.zh.md 第 3.5 节、第 9 节、D8；队列状态取自 2026-10-06",
+  "experiments": [
+    {
+      "id": "P5-E1",
+      "stage": "研究门补强",
+      "title": "跨项目试验总数、语义查重和族配额、盈亏平衡成本、门槛变更留痕（合同冻结时记标准文件哈希）",
+      "status": "running",
+      "depth_points": [],
+      "queue_task": "T-20261005-34",
+      "due_utc": "2026-10-09 22:00",
+      "stop_rule": "全量测试和 oc repo check --strict 通过；门槛文件变了却没有变更记录，validate 和 repo check 判失败",
+      "artifacts": [
+        "reports/research/program/gate-additions-2026-10-09/report.md"
+      ]
+    },
+    {
+      "id": "P5-E2",
+      "stage": "旧否定复查",
+      "title": "旧否定的功效复查（只追加）和外部负面证据登记",
+      "status": "running",
+      "depth_points": [],
+      "queue_task": "T-20261005-35",
+      "due_utc": "2026-10-08 12:00",
+      "stop_rule": "只追加“未到深度”记录，不改原行",
+      "artifacts": [
+        "reports/research/program/power-reaudit-2026-10-08/audit.json",
+        "reports/research/program/power-reaudit-2026-10-08/report.md"
+      ]
+    },
+    {
+      "id": "P5-E3",
+      "stage": "方法纪律",
+      "title": "DXRG 论文的 17 条方法纪律，对照评判标准逐条比对",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261005-42",
+      "due_utc": "2026-10-10 22:00",
+      "stop_rule": "缺的纪律补进评判标准或研究门",
+      "artifacts": [
+        "reports/research/program/dxrg-disciplines-2026-10-10.md"
+      ]
+    },
+    {
+      "id": "P5-E4",
+      "stage": "策略库",
+      "title": "策略库总清单：151 一书、OSAP、QuantConnect 全量登记，按事先写定的规则选第一批约 50 个",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261006-13",
+      "due_utc": "2026-10-08",
+      "stop_rule": "第一批的批量合同由主审轮在 T-20261006-18 写",
+      "artifacts": [
+        "reports/research/strategy-library/catalog.json",
+        "reports/research/strategy-library/catalog.md",
+        "reports/research/strategy-library/selection-rule.md",
+        "reports/research/strategy-library/first-batch.json"
+      ]
+    },
+    {
+      "id": "P5-E5",
+      "stage": "策略库",
+      "title": "策略库第一批约 50 个的批量筛选，其余 10 月底前跑完",
+      "status": "blocked",
+      "depth_points": [],
+      "queue_task": "T-20261006-18",
+      "due_utc": "2026-10-15 22:00",
+      "stop_rule": "只晋级不否定（P-1）；结果和排名交主审轮审核",
+      "artifacts": [],
+      "depends_on": [
+        "P5-E4"
+      ],
+      "notes": "队列写的前置是 first-batch.json 和选择规则；P5-E4 已 done，队列状态待主审轮改 ready"
+    },
+    {
+      "id": "P5-E6",
+      "stage": "LLM 读取层前置",
+      "title": "时间合同：三个时钟（received_at）、截断不变性测试、LLM 记忆检查进 llm_contribution_pass",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": "T-20261004-79",
+      "due_utc": "2026-10-16",
+      "stop_rule": "不早于 10-12（v1.2 模拟盘第一周不改 live 数据管线）；完成前 LLM 读取层不开跑",
+      "artifacts": [
+        "reports/research/program/time-contract-<日期>/report.md"
+      ],
+      "notes": "队列状态 ready，但 not_before 2026-10-12，到期前执行轮不取；产物路径里的日期待交付时填"
+    },
+    {
+      "id": "P5-E7",
+      "stage": "进化式信号搜索预注册",
+      "title": "预注册：功效计算、留出窗（锁箱登记里没打开过的股票日频窗口，没有则用冻结后 60 个交易日的前向影子）、预算写死",
+      "status": "planned",
+      "depth_points": [
+        "3 代约 30 次试验",
+        "10 代约 100 次试验",
+        "30 代约 300 次试验"
+      ],
+      "queue_task": null,
+      "due_utc": "2026-10-12",
+      "stop_rule": "预算写死：最多 30 代、300 次试验，token 每代不超过 2.5 单位、全程不超过 75 单位；用完标“预算用尽”，不标“否定”",
+      "artifacts": [],
+      "notes": "主审写；开跑前先测一次评估耗时，写总估算"
+    },
+    {
+      "id": "P5-E8",
+      "stage": "进化式信号搜索",
+      "title": "信号层搜索：每代内部按边际 IC 选，组合层边际净夏普只评最后冻结的不超过 5 个候选，同时报冻结冠军和事后最优",
+      "status": "planned",
+      "depth_points": [
+        "3 代约 30 次试验",
+        "10 代约 100 次试验",
+        "30 代约 300 次试验"
+      ],
+      "queue_task": null,
+      "due_utc": "2026-11-06",
+      "stop_rule": "跑完预注册最大深度后先写回执再打开留出窗，留出只开一次；预算用尽标“预算用尽”",
+      "artifacts": [],
+      "depends_on": [
+        "P5-E7"
+      ],
+      "notes": "10-24 至 11-06；这两周 P5 每周 token 上限 50"
+    },
+    {
+      "id": "P5-E9",
+      "stage": "LLM 读取层",
+      "title": "LLM 读取层模型比较：已配置的 DeepSeek 接口、9B 以上开源模型、Eikos 27B",
+      "status": "planned",
+      "depth_points": [
+        "DeepSeek 接口",
+        "9B 以上开源模型",
+        "Eikos 27B"
+      ],
+      "queue_task": null,
+      "due_utc": null,
+      "stop_rule": "判定写成 llm_contribution_pass，窗口只取模型训练截止日之后；27B 需 A100-80GB，开跑前出估算并过 scripts/modal_budget.py check",
+      "artifacts": [],
+      "depends_on": [
+        "P5-E6"
+      ],
+      "notes": "11 月，按 11 月 Modal 预算表先后；GRPO 训练作为带价格选项交机主，不批就写“未到深度，因预算未做”"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "program": "p2-regime-theme",
+  "title": "P2 状态与主题风险引擎",
+  "source": "docs/plan-v2-2026-10-05.zh.md 第 3.2 节、第 9 节、D8；队列状态取自 2026-10-06",
+  "experiments": [
+    {
+      "id": "P2-E1",
+      "stage": "1 主题风险预算",
+      "title": "半导体和 AI 主题风险预算：上限版和对冲版（四档 0.40/0.30/0.20/0.10 乘三版），结果直接作为试点的集中度上限",
+      "status": "done",
+      "depth_points": ["上限档 0.40", "上限档 0.30", "上限档 0.20", "上限档 0.10"],
+      "queue_task": "T-20261005-32",
+      "due_utc": "2026-10-07 18:00",
+      "stop_rule": "同波动口径，近期夏普降幅超过预先写定的 0.10 时仍用上限（风险政策），但在提议里写明代价",
+      "artifacts": ["reports/research/iterations/t20261005_p2_s1_theme_budget/"],
+      "notes": "执行轮 10-06 16:43 UTC 交付，结果待主审"
+    },
+    {
+      "id": "P2-E2a",
+      "stage": "2a 状态层：跳跃模型复现和指数层九个规格",
+      "title": "复现 Shu–Yu–Mulvey 2024 跳跃模型 0/1 策略（标普 1990–2023），再按输入数、持续性、模型类扫九个规格并冻结日度乘数",
+      "status": "ready",
+      "depth_points": [
+        "输入 3、4、6 个",
+        "持续性 λ 15、50、150 和交叉验证",
+        "模型类：JM、HMM、GMM、200 日线乘 VIX"
+      ],
+      "queue_task": "T-20261006-03",
+      "due_utc": "2026-10-09 22:00",
+      "stop_rule": "复现关口 R1–R3 不过时按合同标注；全部深度点都不胜过同敞口波动率目标才写“未见增量”，回撤、预期短缺、切换次数分开报",
+      "artifacts": [
+        "reports/research/iterations/t20261006_p2_s2_regime_layer/index_results.json",
+        "reports/research/iterations/t20261006_p2_s2_regime_layer/report-2a.md",
+        "reports/research/iterations/t20261006_p2_s2_regime_layer/data-provenance.json"
+      ]
+    },
+    {
+      "id": "P2-E2b",
+      "stage": "2b 状态层：状态乘数加到 S1–S3、C2",
+      "title": "带持续性的在线状态层能否在压力窗把 S3 的同敞口夏普提高 ≥ 0.10，同时近期窗代价不超过 0.10；对照同敞口波动率目标和 50 个循环平移安慰剂",
+      "status": "ready",
+      "depth_points": ["延迟 1 天，成本 10bp", "延迟 1 天，成本 20bp", "三种阶段状态"],
+      "queue_task": "T-20261006-04",
+      "due_utc": "2026-10-11 22:00",
+      "stop_rule": "过了进 8–12 周只记日志的影子；不过写“未见增量，功效不足以否定”，P2 转阶段 3",
+      "artifacts": [
+        "reports/research/iterations/t20261006_p2_s2_regime_layer/results.json",
+        "reports/research/iterations/t20261006_p2_s2_regime_layer/report.md",
+        "reports/research/iterations/t20261006_p2_s2_regime_layer/trial-ledger.json"
+      ],
+      "depends_on": ["P2-E2a"]
+    },
+    {
+      "id": "P2-E2c",
+      "stage": "2c 状态层：拓扑输入",
+      "title": "持续同调特征（Gidea–Katz 因果版）在平均相关加已实现波动之外对市场状态有没有增量，用打乱时间顺序的数据对照",
+      "status": "blocked",
+      "depth_points": ["窗口长度（至少三档）", "股票池大小（至少三档）"],
+      "queue_task": "T-20261006-20",
+      "due_utc": "2026-10-13 22:00",
+      "stop_rule": "全部深度点都不胜过“平均相关加已实现波动”才写“未见增量”；要先装拓扑计算库，装之前查依赖和内存",
+      "artifacts": [],
+      "notes": "等主审轮写合同（not_before 10-08 07:00 UTC）；取代 T-20261004-77 的 G1 部分"
+    },
+    {
+      "id": "P2-E3",
+      "stage": "3 周期条件器",
+      "title": "带发布日期的月度面板（韩国出口、台湾外销订单、台积电月营收、SIA、新订单和库存），PLS 或岭回归聚合，作为状态模型或主题乘数的条件输入",
+      "status": "planned",
+      "depth_points": ["输入 2 个", "输入 4 个", "输入 8 个"],
+      "queue_task": null,
+      "due_utc": "2026-10-21",
+      "stop_rule": "输入数 2、4、8 三个深度点上，前后两半样本都没有增量，才只留作监控面板",
+      "artifacts": [],
+      "depends_on": ["P2-E2b"]
+    },
+    {
+      "id": "P2-E4",
+      "stage": "4 拥挤度",
+      "title": "估值、成交量、波动、动量、空头仓位五个输入的个股拥挤得分，加 comomentum，作为监控面板",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": "2026-10-21",
+      "stop_rule": "不设停止条件：只有三次去杠杆事件，样本量做不了显著性检验，只做监控面板和事件描述",
+      "artifacts": []
+    },
+    {
+      "id": "P2-E5",
+      "stage": "预测市场线",
+      "title": "前向影子：Kalshi 宏观发布（H1）、中期选举控制权赔率（Trump trades）、Polymarket 财报赔率（作为 P1-E2a 的特征）",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": "2026-11-04",
+      "stop_rule": "Trump trades 前向影子到 11-04 后定；H1 攒够约 60 个发布日后重开；Polymarket 财报赔率改标“未到深度”，按边际贡献判",
+      "artifacts": [],
+      "notes": "由定时任务自动积累，没有单独的队列任务"
+    }
+  ]
+}

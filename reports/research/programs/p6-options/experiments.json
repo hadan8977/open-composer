@@ -1,0 +1,109 @@
+{
+  "program": "p6-options",
+  "title": "P6 期权",
+  "source": "docs/plan-v2-2026-10-05.zh.md 第 3.6 节、第 9 节；队列状态取自 2026-10-06",
+  "experiments": [
+    {
+      "id": "P6-E0",
+      "stage": "0 数据资产",
+      "title": "每晚存期权链快照（SPY、QQQ、IWM 加高流动标的，个股两个月度到期的整条链）和 VIX 期限结构，定时任务",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261005-33",
+      "due_utc": "2026-10-07 22:00",
+      "stop_rule": "只读、不花钱、不用模型 token；登记进 disk_guard 保留规则和 Drive 备份",
+      "artifacts": ["reports/research/program/options-recorder-2026-10-07/report.md"],
+      "notes": "10-06 14:21 UTC 已装两条 cron 和 Drive 同步任务"
+    },
+    {
+      "id": "P6-E1",
+      "stage": "1b 选股信号的数据门",
+      "title": "DoltHub volatility_history 全量拉取（2019-02-09 至 2026-09-17）和 F1–F4 检查",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261005-44",
+      "due_utc": "2026-10-07 22:00",
+      "stop_rule": "原口径 gate_pass=false 保留，修正案 A2 经独立复核后按决策宇宙通过",
+      "artifacts": [],
+      "notes": "产物 data-feasibility-measured.json 的路径见队列 T-20261005-44"
+    },
+    {
+      "id": "P6-E2",
+      "stage": "1b 选股信号的 IC 测量",
+      "title": "期权隐含选股信号的 IC：IVRV、DIV21、DIV5、IVZ3（只晋级、不否定）",
+      "status": "ready",
+      "depth_points": ["IVRV", "DIV21", "DIV5", "IVZ3"],
+      "queue_task": "T-20261005-45",
+      "due_utc": "2026-10-08 12:00",
+      "stop_rule": "可检出最小 IC 约 0.018 仍高于扣费后的 0.01–0.015，检验不出来只能写“未到深度”；只晋级不否定；报告开头照抄修正案 A2 的说明",
+      "artifacts": [
+        "reports/research/iterations/t20261005_p6_iv_signals/results.json",
+        "reports/research/iterations/t20261005_p6_iv_signals/report.md",
+        "reports/research/iterations/t20261005_p6_iv_signals/trial-ledger.json"
+      ],
+      "depends_on": ["P1-E0"],
+      "notes": "重任务；供 P1 阶段 2a 合同（约 10-12）使用"
+    },
+    {
+      "id": "P6-E3",
+      "stage": "0 数据资产关口",
+      "title": "期权快照满 20 个交易日的完整性核对和 DoltHub 同日对照",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": "T-20261006-05",
+      "due_utc": "2026-11-04",
+      "stop_rule": "指示性报价与对照源的相对价差，差异中位数超过 30%：只用于曲面形状，不当成交价",
+      "artifacts": [],
+      "notes": "简报待写：11-04 13:07 主审轮写；执行轮在有 brief 字段之前不要取"
+    },
+    {
+      "id": "P6-E4",
+      "stage": "1 诊断",
+      "title": "SPY 看跌信用价差和铁鹰的最大亏损和保证金路径诊断（2010–2023，合约级买卖价，成本三档，网格不超过 48 格）",
+      "status": "planned",
+      "depth_points": ["成本三档", "到期天数 × delta × 宽度 × 是否过滤，不超过 48 格"],
+      "queue_task": null,
+      "due_utc": "2026-11-30",
+      "stop_rule": "诊断性质，不设通过；2020-03 最大回撤超过同波动股票的 1.5 倍就不进阶段 2；明写“近期窗口没有合约级数据，无法判定”",
+      "artifacts": [],
+      "notes": "11 月，本机不超过 3 天"
+    },
+    {
+      "id": "P6-E5",
+      "stage": "1c 外部线索复核",
+      "title": "SPY 0DTE 看跌信用价差（作者自报）用 Alpaca 2024-02 起的期权分钟成交按作者规则重算，交代跳过日，尾部和保证金回放，对照 PUT 指数和同波动 SPY",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": "2026-11-30",
+      "stop_rule": "复核不出作者的方向，写“该外部声明在我们的数据上没有复现”；尾部超出回撤预算就不进后续阶段",
+      "artifacts": [],
+      "notes": "11 月，本机不超过 3 天；不以 0DTE 卖出为主线"
+    },
+    {
+      "id": "P6-E6",
+      "stage": "2 曲面和状态过滤",
+      "title": "SVI 曲面；VRP 定义为隐含波动减 HAR 预测；状态条件加安慰剂；用模拟分布检验显著性",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": "2026-12-31",
+      "stop_rule": "阶段 0 的前向数据（至少 60 个交易日）上不胜过同波动 SPY",
+      "artifacts": [],
+      "depends_on": ["P6-E3", "P2-E2b"],
+      "notes": "最早 12 月；状态条件用 P2 的状态层"
+    },
+    {
+      "id": "P6-E7",
+      "stage": "3 模拟盘前向",
+      "title": "L3 多腿单，模拟盘至少 60 个交易日",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": null,
+      "stop_rule": "在模拟盘跑新策略需要机主授权；阶段 2 之后",
+      "artifacts": [],
+      "depends_on": ["P6-E6"]
+    }
+  ]
+}

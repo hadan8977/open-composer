@@ -1,0 +1,132 @@
+{
+  "program": "p1-midfreq",
+  "title": "P1 中频股票引擎",
+  "source": "docs/plan-v2-2026-10-05.zh.md 第 3.1 节、第 9 节；队列状态取自 2026-10-06",
+  "experiments": [
+    {
+      "id": "P1-E0",
+      "stage": "0 测量",
+      "title": "快信号的 IC 衰减和半衰期、交易速度对净夏普、对 v1.2 的增量（只用于提速）",
+      "status": "ready",
+      "depth_points": ["持有期 1 日", "持有期 5 日", "持有期 10 日"],
+      "queue_task": "T-20261005-01",
+      "due_utc": "2026-10-06",
+      "stop_rule": "不设停止条件；结果只决定阶段 1、2 先做哪些信号以及持有期和调仓速度，不用来否定或降级（P-1）",
+      "artifacts": [
+        "reports/research/iterations/t20261005_p1_s0_decay/results.json",
+        "reports/research/iterations/t20261005_p1_s0_decay/report.md",
+        "reports/research/iterations/t20261005_p1_s0_decay/trial-ledger.json"
+      ]
+    },
+    {
+      "id": "P1-E1a",
+      "stage": "1 复现加外推（第一轮）",
+      "title": "自写 DLSA 式管线：500 只，残差 PCA 与 IPCA，模型 OU、学习式、Hankel-DMD，约 9 个规格，Modal",
+      "status": "planned",
+      "depth_points": [
+        "宇宙 500 只",
+        "残差模型：PCA、IPCA",
+        "预测模型：OU 阈值、学习式、Hankel-DMD",
+        "持有期：1、5、10 日"
+      ],
+      "queue_task": null,
+      "due_utc": "2026-10-20",
+      "stop_rule": "全部深度点上近期窗口净夏普都 ≤ 0，或学习式信号对 OU 基准都没有净增益；预算用完仍未到深度则标“未到深度，预算用尽”并停；Modal 用量按 10-07 计时后估算，超出 10 月余量的部分 10-08 前向机主申请",
+      "artifacts": [],
+      "depends_on": ["P1-E0"],
+      "notes": "还没有队列任务和合同；10-07 计时后由主审轮估算并写合同"
+    },
+    {
+      "id": "P1-E1b",
+      "stage": "1 复现加外推（第二轮）",
+      "title": "加宽到 1000 只并加条件自编码器，沿第一轮最好的方向；逐年报，2022–2026 只作外推报告",
+      "status": "planned",
+      "depth_points": ["宇宙 1000 只", "残差模型：条件自编码器（Gu–Kelly–Xiu 2021）"],
+      "queue_task": null,
+      "due_utc": "2026-10-31",
+      "stop_rule": "同 P1-E1a：全部深度点近期窗口净夏普都 ≤ 0，或学习式对 OU 基准都没有净增益；预算用尽标“未到深度，预算用尽”",
+      "artifacts": [],
+      "depends_on": ["P1-E1a"]
+    },
+    {
+      "id": "P1-E2a",
+      "stage": "2a 数值类事件和价量信号",
+      "title": "财报后漂移、Form 4、FINRA 空头、行业相对反转与动量、隔夜日内分解、成交量冲击、预测市场财报赔率特征，合成腿叠在 v1.2 上",
+      "status": "planned",
+      "depth_points": ["信号数 1 个", "信号数 5 个", "信号数 20 个"],
+      "queue_task": null,
+      "due_utc": "2026-10-20",
+      "stop_rule": "信号数 1、5、20 三个深度点上，加进 v1.2 后同波动下账户级净夏普都没有提升",
+      "artifacts": [],
+      "depends_on": ["P1-E0", "P6-E2"],
+      "notes": "10-13 至 10-20，本机；合同约 10-12，P6-E2 的期权隐含信号结果（10-08 前）作为输入之一"
+    },
+    {
+      "id": "P1-E2b",
+      "stage": "2b 文本信号",
+      "title": "新闻和分析师文本经 P5 的 LLM 读取层，多信号合成、3–10 日持有，只用模型训练截止日之后的窗口",
+      "status": "planned",
+      "depth_points": ["信号数 1 个", "信号数 5 个", "信号数 20 个"],
+      "queue_task": null,
+      "due_utc": "2026-10-20",
+      "stop_rule": "同 P1-E2a，且只在模型训练截止日之后的窗口判，判定写成 llm_contribution_pass；截止日后前向数据约 60 个交易日，第一次判定最早 2027 年 1 月",
+      "artifacts": [],
+      "depends_on": ["P5-E6"],
+      "notes": "最早 10-20；开跑前写调用预算（DeepSeek 5 小时滚动约 900 次调用，同时只跑一个打分器）"
+    },
+    {
+      "id": "P1-E3o",
+      "stage": "3 执行时点（前提）",
+      "title": "开盘竞价单（opg）在 quant1 和 quant2 模拟账户能否被接受并成交",
+      "status": "running",
+      "depth_points": [],
+      "queue_task": "T-20261005-30",
+      "due_utc": "2026-10-06 14:30",
+      "stop_rule": "被拒则 P1 阶段 3 只比较收盘和 15:50 当日单；两户在 14:30 UTC 前回到探针前的持仓",
+      "artifacts": [],
+      "notes": "交互会话在做，定时轮不要取"
+    },
+    {
+      "id": "P1-E3e",
+      "stage": "3 执行时点（ETF 部分）",
+      "title": "ETF 子策略的开盘、收盘同信息比较，定试点的下单时点",
+      "status": "done",
+      "depth_points": ["D+1 开盘", "D+1 收盘"],
+      "queue_task": "T-20261005-41",
+      "due_utc": "2026-10-07 22:00",
+      "stop_rule": "同信息比较里收盘或竞价没有净优势，就保留现状",
+      "artifacts": ["reports/research/program/etf-open-close-2026-10-07/"],
+      "notes": "10-06 07:07 主审轮审核：试点按开盘成交，沿用现状"
+    },
+    {
+      "id": "P1-E3",
+      "stage": "3 执行时点",
+      "title": "D+1 开盘市价、D+1 开盘竞价、D+1 收盘竞价或 15:50 限价、D+2 开盘的同信息比较，按每个信号的半衰期算净效果",
+      "status": "planned",
+      "depth_points": [
+        "D+1 开盘市价",
+        "D+1 开盘竞价",
+        "D+1 收盘竞价或 15:50 限价",
+        "D+2 开盘"
+      ],
+      "queue_task": null,
+      "due_utc": "2026-10-24",
+      "stop_rule": "同信息比较里收盘或竞价没有净优势，就保留现状；IEX 快照与 15 分钟后免费 SIP 算出的信号不一致就只用竞价单，不买数据",
+      "artifacts": [],
+      "depends_on": ["P1-E0", "P1-E3o"],
+      "notes": "10-21 至 10-24，本机"
+    },
+    {
+      "id": "P1-E4",
+      "stage": "4 影子和交易成本分析",
+      "title": "预期衰减曲线和模拟盘成交的交易成本分析，每个信号至少 60 个交易日再判",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": null,
+      "stop_rule": "实现价差持续大于模型的 1.5 倍",
+      "artifacts": [],
+      "notes": "持续项，没有截止日；信号上线后才开始计时"
+    }
+  ]
+}

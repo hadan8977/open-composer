@@ -1,0 +1,56 @@
+{
+  "program": "p3-complex-models",
+  "title": "P3 复杂建模工位",
+  "source": "docs/plan-v2-2026-10-05.zh.md 第 3.3 节、D8；队列 T-20261006-19（原定 11 月，提前到 10-12）",
+  "experiments": [
+    {
+      "id": "P3-E1",
+      "stage": "1 美股变体：随机特征复杂度曲线",
+      "title": "在 M3（DKKM 随机特征 SDF）上把信息集从 23 个加宽到 60、130 个特征，c 从 0.1 到 1000；能用 CPU 核技巧就不用 GPU",
+      "status": "blocked",
+      "depth_points": ["特征 23 个", "特征 60 个", "特征 130 个", "复杂度 c 从 0.1 到 1000"],
+      "queue_task": "T-20261006-19",
+      "due_utc": "2026-10-19",
+      "stop_rule": "曲线到最大深度仍不胜过同暴露基线，才写“未见增量”并保留重开条件；要否定前先复现原文；安慰剂用同数量的随机特征",
+      "artifacts": [],
+      "notes": "等主审轮写合同（不早于 10-10 13:00 UTC，合同 10-12 前冻结）；130 个特征的面板是否齐全先盘点；Modal 先过 scripts/modal_budget.py check"
+    },
+    {
+      "id": "P3-E2",
+      "stage": "1 美股变体：多期限辅助目标",
+      "title": "多期限辅助目标进 M2",
+      "status": "blocked",
+      "depth_points": ["辅助任务 1 个", "辅助任务 3 个", "辅助任务 5 个", "辅助任务 10 个"],
+      "queue_task": "T-20261006-19",
+      "due_utc": "2026-10-19",
+      "stop_rule": "曲线到最大深度仍不胜过同暴露基线，才写“未见增量”；任务不是越多越好（TCTS：10 个期限的普通多任务只有 0.052），所以曲线不假设单调",
+      "artifacts": [],
+      "notes": "同 T-20261006-19，等合同"
+    },
+    {
+      "id": "P3-E3",
+      "stage": "1 美股变体：路径签名预测波动",
+      "title": "SIP 分钟线上的美股和 ETF，签名预测已实现波动，对照 HAR-RV 基线，评价看 QLIKE",
+      "status": "blocked",
+      "depth_points": ["阶数 1、2、3", "窗口 5、22、66 日"],
+      "queue_task": "T-20261006-19",
+      "due_utc": "2026-10-19",
+      "stop_rule": "曲线到最大深度仍不胜过 HAR-RV 才写“未见增量”并保留重开条件；只取 1–2 阶的浅测不能用来否定",
+      "artifacts": [],
+      "notes": "同 T-20261006-19，等合同"
+    },
+    {
+      "id": "P3-E4",
+      "stage": "2 接入",
+      "title": "通过的方法接入 P1 的模型工位和 P2 的波动缩放",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": null,
+      "stop_rule": "按 P1、P2 的规则",
+      "artifacts": [],
+      "depends_on": ["P3-E1", "P3-E2", "P3-E3"],
+      "notes": "原定 11-14 起；P3 提前后日期待主审轮在合同里重排"
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "program": "p4-live-path",
+  "title": "P4 实盘快速通道与执行",
+  "source": "docs/plan-v2-2026-10-05.zh.md 第 5 节、第 9 节、D8；队列状态取自 2026-10-06",
+  "experiments": [
+    {
+      "id": "P4-E1",
+      "stage": "首单前核实",
+      "title": "收盘竞价单（cls）在 quant1、quant2 模拟账户能否被接受并成交",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261005-02",
+      "due_utc": "2026-10-05 22:15",
+      "stop_rule": "被拒或被撤：10-07 不下单，首单推迟，先写 15:50 当日限价单的后备代码和测试",
+      "artifacts": [],
+      "notes": "两户都接受 cls 单；quant2 空单随机部分成交后过期，不是拒单；首单用哪种单在 10-06 第二次彩排后决定"
+    },
+    {
+      "id": "P4-E2",
+      "stage": "首单前核实",
+      "title": "开盘竞价单（opg）在 quant1、quant2 模拟账户能否被接受并成交",
+      "status": "running",
+      "depth_points": [],
+      "queue_task": "T-20261005-30",
+      "due_utc": "2026-10-06 14:30",
+      "stop_rule": "被拒：P1 阶段 3 只比较收盘和 15:50 当日单；两户在 14:30 UTC 前回到探针前的持仓",
+      "artifacts": [],
+      "notes": "交互会话在做，定时轮不要取（同 P1-E3o）"
+    },
+    {
+      "id": "P4-E3",
+      "stage": "首单前核实",
+      "title": "对照外部的通道失败清单（swiftward 34 条、Deflow）只读审模拟盘下单路径",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261005-20",
+      "due_utc": "2026-10-05 12:00",
+      "stop_rule": "首单前必须修的条目另开任务；任一户有未接受的单按退出码停在该户",
+      "artifacts": [
+        "reports/research/program/channel-audit-2026-10-06/audit.md",
+        "reports/research/program/channel-audit-2026-10-06/audit.json"
+      ]
+    },
+    {
+      "id": "P4-E4",
+      "stage": "L1 试点前提",
+      "title": "ETF 四条子策略补登试验数并算 DSR",
+      "status": "done",
+      "depth_points": [],
+      "queue_task": "T-20261005-31",
+      "due_utc": "2026-10-08 00:00",
+      "stop_rule": "DSR < 0.70 的不进试点提议",
+      "artifacts": [
+        "reports/research/program/etf-dsr-2026-10-08/report.md"
+      ]
+    },
+    {
+      "id": "P4-E5",
+      "stage": "配置",
+      "title": "组合配置第二版：加最低资金约束、DSR 打折后的回撤分位数、主题上限",
+      "status": "done",
+      "depth_points": [
+        "资金档 5 万美元",
+        "资金档 10 万美元",
+        "资金档 25 万美元",
+        "资金档 100 万美元"
+      ],
+      "queue_task": "T-20261004-58",
+      "due_utc": "2026-10-08",
+      "stop_rule": "主审给出是否替换 T-43 权重的结论；分到的子仓低于过 V2 所需最低资金的子策略权重设 0 或换小资金版",
+      "artifacts": [],
+      "notes": "执行轮 10-06 17:02 UTC 完成，结果待主审"
+    },
+    {
+      "id": "P4-E6",
+      "stage": "v1.2 小资金版",
+      "title": "v1.2 小资金版构造：每边前 N 只，以及 F2 直接持有指数成分股、空头叠加改“少配”，Modal CPU",
+      "status": "ready",
+      "depth_points": [
+        "每边 100 只",
+        "每边 200 只",
+        "每边 300 只",
+        "资金档 2.5 万、5 万、10 万美元"
+      ],
+      "queue_task": "T-20261005-37",
+      "due_utc": "2026-10-14",
+      "stop_rule": "同波动夏普明显低于原构造：v1.2 只在账户足够大时上实盘；开跑前过 scripts/modal_budget.py check",
+      "artifacts": [
+        "reports/research/iterations/t20261006_p1_v12_small/results.json",
+        "reports/research/iterations/t20261006_p1_v12_small/report.md",
+        "reports/research/iterations/t20261006_p1_v12_small/trial-ledger.json"
+      ],
+      "notes": "合同 10-06 01:44 冻结；10-15 上 5 万美元模拟账户，第 10 个会话 10-28，提议最早 10-29"
+    },
+    {
+      "id": "P4-E7",
+      "stage": "前向记录",
+      "title": "拼接前向记录补齐（09-01 起，v1.2 和 T-43 的 09-15 之后影子段）",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": "T-20261004-70",
+      "due_utc": "2026-10-08 22:00",
+      "stop_rule": "只做一次延长，简报不变；按冻结规则 v1.2 影子段从 10-02 起",
+      "artifacts": [
+        "reports/research/program/forward-record-2026-10-06/record.csv",
+        "reports/research/program/forward-record-2026-10-06/summary.json",
+        "reports/research/program/forward-record-2026-10-06/hash_chain.jsonl"
+      ],
+      "notes": "预计 10-08 22:00 UTC 之后（not_before）才可取"
+    },
+    {
+      "id": "P4-E8",
+      "stage": "L2 加速",
+      "title": "评判标准 v2.2 草案：L2 的前向长度按信息量（最短记录长度）算",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": "T-20261005-38",
+      "due_utc": "2026-10-09 22:00",
+      "stop_rule": "规则只能用先验和回测的量来定，不能看当前前向结果再定；草案冻结时记哈希，写进门槛变更记录并在日报里告诉机主",
+      "artifacts": [],
+      "notes": "队列写明主审轮取，执行轮不取；主审轮取"
+    },
+    {
+      "id": "P4-E9",
+      "stage": "ETF 成本口径",
+      "title": "ETF 隔夜持有的成本口径复核（SPY、QQQ、IWM，每边 0.5–3bp 的成本曲线）",
+      "status": "planned",
+      "depth_points": [
+        "每边 0.5bp",
+        "每边 1.5bp",
+        "每边 3bp"
+      ],
+      "queue_task": "T-20261005-43",
+      "due_utc": "2026-10-09 22:00",
+      "stop_rule": "预算本机不超过 2 天，预期偏否；先写合同再交执行轮；主审轮判定并写死因或下一步",
+      "artifacts": [],
+      "notes": "队列写明主审轮先写合同再交执行轮；盈亏平衡成本只有 1.9–4.3bp；模拟盘测不出竞价成交价"
+    },
+    {
+      "id": "P4-E10",
+      "stage": "D8 实盘条件",
+      "title": "嘉信 API 能力和日内交易次数限制核实，按 2 万美元重算实盘方案",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": "T-20261006-17",
+      "due_utc": "2026-10-10",
+      "stop_rule": "交付后改写计划第 5、6 节和 live-track；交互会话 10-07 写简报前定时轮不要取",
+      "artifacts": [
+        "reports/research/intel/I-20261006-03"
+      ],
+      "notes": "队列写明交互会话 10-07 写简报后派执行，简报前定时轮不要取；产物名按队列写的 I-20261006-03，具体文件名交付后再填"
+    },
+    {
+      "id": "P4-E11",
+      "stage": "L1 试点提议",
+      "title": "ETF 试点提议：S3（加主题上限）加 C2，写明适用状态、失效信号、退出规则",
+      "status": "planned",
+      "depth_points": [],
+      "queue_task": null,
+      "due_utc": "2026-10-15",
+      "stop_rule": "DSR、执行验收或前向 z 不过的不提；机主想更快可 10-09 只提 S3；没有机主明确授权不上实盘",
+      "artifacts": [],
+      "depends_on": [
+        "P4-E4",
+        "P4-E5",
+        "P2-E1"
+      ],
+      "notes": "主审写；D8 把实盘条件改为约 2 万美元手动或嘉信 API，提议要按 P4-E10 的结果改写"
+    },
+    {
+      "id": "P4-E12",
+      "stage": "实盘就绪",
+      "title": "实盘就绪清单和实盘下单路径（失效即关闭清单）",
+      "status": "blocked",
+      "depth_points": [],
+      "queue_task": "T-20261004-72",
+      "due_utc": null,
+      "stop_rule": "授权前只写清单文档，不写实盘写入代码",
+      "artifacts": [],
+      "notes": "等机主授权“实盘下单路径”范围变更并提供实盘账户；D8 改了实盘条件，授权口径待 P4-E10 交付后重议"
+    }
+  ]
+}
