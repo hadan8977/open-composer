@@ -1,49 +1,85 @@
+# ruff: noqa: E501, E731
 import json
+
 R = json.load(open("results.json"))
 CAPS = [str(c) for c in R["capitals"]]
-fmt = lambda c: f"{int(c)//1000}k" if int(c) < 1_000_000 else f"{int(c)/1e6:g}M"
-pc = lambda x: f"{x*100:.1f}%"
+fmt = lambda c: f"{int(c) // 1000}k" if int(c) < 1_000_000 else f"{int(c) / 1e6:g}M"
+pc = lambda x: f"{x * 100:.1f}%"
+
 
 def etf_cell(k, C):
-    c = R["etf_sleeves"][k]["by_capital"][C]; f = c["whole_share_floor"]
+    c = R["etf_sleeves"][k]["by_capital"][C]
+    f = c["whole_share_floor"]
     return f"{'过' if c['v2_whole_share_pass'] else '否'}；整股敞口比 {f['exposure_ratio']:.3f}，零股名 {f['zero_names']}/{f['n_names']}，L1 {pc(f['rel_l1_error'])}"
+
 
 def stock_cell(form, C):
     m = R["stock_books"][form]["by_capital"][C]["mixed"]
-    v = m["v2"]; fails = [n for n, key in (("空头敞口", "short_ratio_ok"), ("L1", "rel_l1_ok"), ("净美元", "net_dollar_ok"), ("ADV", "adv_1pct_ok")) if not v[key]]
-    return (f"{'过' if v['pass'] else '否（' + '、'.join(fails) + '）'}；空头零股 {pc(m['short_zero_frac'])}，空头敞口比 {m['short_gross_ratio']:.2f}，"
-            f"多头零股 {pc(m['long_zero_frac'])}（碎股下多头敞口比 {m['long_gross_ratio']:.2f}），L1 {pc(m['rel_l1_error'])}，净美元偏离 {m['net_dollar_err_pct_equity']*100:+.1f}%")
+    v = m["v2"]
+    fails = [
+        n
+        for n, key in (
+            ("空头敞口", "short_ratio_ok"),
+            ("L1", "rel_l1_ok"),
+            ("净美元", "net_dollar_ok"),
+            ("ADV", "adv_1pct_ok"),
+        )
+        if not v[key]
+    ]
+    return (
+        f"{'过' if v['pass'] else '否（' + '、'.join(fails) + '）'}；空头零股 {pc(m['short_zero_frac'])}，空头敞口比 {m['short_gross_ratio']:.2f}，"
+        f"多头零股 {pc(m['long_zero_frac'])}（碎股下多头敞口比 {m['long_gross_ratio']:.2f}），L1 {pc(m['rel_l1_error'])}，净美元偏离 {m['net_dollar_err_pct_equity'] * 100:+.1f}%"
+    )
+
 
 head = "| 资金 | S1 | S2 | S3 | C2 | v1.2 F1 | v1.2 F2 | P1 腿（F1 股票腿代理） |\n|---|---|---|---|---|---|---|---|\n"
 rows = ""
 for C in CAPS:
-    rows += f"| ${fmt(C)} | " + " | ".join([etf_cell(k, C) for k in ("S1", "S2", "S3", "C2")] + [stock_cell("F1", C), stock_cell("F2", C), stock_cell("F1", C)]) + " |\n"
+    rows += (
+        f"| ${fmt(C)} | "
+        + " | ".join(
+            [etf_cell(k, C) for k in ("S1", "S2", "S3", "C2")]
+            + [stock_cell("F1", C), stock_cell("F2", C), stock_cell("F1", C)]
+        )
+        + " |\n"
+    )
 main_table = head + rows
 
 eng = "| 资金 | F1 引擎现状（整股两边，最小 $100）空头敞口比 / 多头敞口比 / L1 | F2 同 |\n|---|---|---|\n"
 for C in CAPS:
-    a = R["stock_books"]["F1"]["by_capital"][C]["engine"]; b = R["stock_books"]["F2"]["by_capital"][C]["engine"]
-    eng += f"| ${fmt(C)} | {max(a['short_gross_ratio'],0):.2f} / {a['long_gross_ratio']:.2f} / {pc(a['rel_l1_error'])} | {max(b['short_gross_ratio'],0):.2f} / {b['long_gross_ratio']:.2f} / {pc(b['rel_l1_error'])} |\n"
+    a = R["stock_books"]["F1"]["by_capital"][C]["engine"]
+    b = R["stock_books"]["F2"]["by_capital"][C]["engine"]
+    eng += f"| ${fmt(C)} | {max(a['short_gross_ratio'], 0):.2f} / {a['long_gross_ratio']:.2f} / {pc(a['rel_l1_error'])} | {max(b['short_gross_ratio'], 0):.2f} / {b['long_gross_ratio']:.2f} / {pc(b['rel_l1_error'])} |\n"
 
-rt = "| 资金 | " + " | ".join(f"前{n}/边" for n in (50, 100, 200, 300, 500)) + " |\n|---|---|---|---|---|---|\n"
+rt = (
+    "| 资金 | "
+    + " | ".join(f"前{n}/边" for n in (50, 100, 200, 300, 500))
+    + " |\n|---|---|---|---|---|---|\n"
+)
 for C in CAPS:
     cells = []
     for n in (50, 100, 200, 300, 500):
         x = R["small_n_feasibility"][f"top{n}_per_side"][C]
-        cells.append(f"{'过' if x['v2_pass'] else '否'}（空头零股 {pc(x['short_zero_frac'])}，敞口比 {x['short_gross_ratio']:.2f}）")
+        cells.append(
+            f"{'过' if x['v2_pass'] else '否'}（空头零股 {pc(x['short_zero_frac'])}，敞口比 {x['short_gross_ratio']:.2f}）"
+        )
     rt += f"| ${fmt(C)} | " + " | ".join(cells) + " |\n"
 
 pv = "| 总资金 | S3 子仓 | C2 子仓 | F2 子仓 | F1 子仓 |\n|---|---|---|---|---|\n"
 for C in CAPS:
     p = R["program_view"][C]
-    pv += (f"| ${fmt(C)} | ${p['S3']['sleeve_capital']:,.0f}：{'过' if p['S3']['etf_whole_share_pass'] else '否'} | ${p['C2']['sleeve_capital']:,.0f}：{'过' if p['C2']['etf_whole_share_pass'] else '否'} | "
-           f"${p['F2']['sleeve_capital']:,.0f}：{'过' if p['F2']['v2_pass'] else '否'}（空头零股 {pc(p['F2']['short_zero_frac'])}） | ${p['F1']['sleeve_capital']:,.0f}：{'过' if p['F1']['v2_pass'] else '否'}（空头零股 {pc(p['F1']['short_zero_frac'])}） |\n")
+    pv += (
+        f"| ${fmt(C)} | ${p['S3']['sleeve_capital']:,.0f}：{'过' if p['S3']['etf_whole_share_pass'] else '否'} | ${p['C2']['sleeve_capital']:,.0f}：{'过' if p['C2']['etf_whole_share_pass'] else '否'} | "
+        f"${p['F2']['sleeve_capital']:,.0f}：{'过' if p['F2']['v2_pass'] else '否'}（空头零股 {pc(p['F2']['short_zero_frac'])}） | ${p['F1']['sleeve_capital']:,.0f}：{'过' if p['F1']['v2_pass'] else '否'}（空头零股 {pc(p['F1']['short_zero_frac'])}） |\n"
+    )
 
 mg = "| 资金 | F1 Reg T 初始保证金 ÷ 净值 | F2 |\n|---|---|---|\n"
 for C in CAPS:
     mg += f"| ${fmt(C)} | {R['margin']['F1'][C]['reg_t_initial_over_equity']:.2f} | {R['margin']['F2'][C]['reg_t_initial_over_equity']:.2f} |\n"
 
-rb = R["raw_backtest"]; dr = R["deflated_return_range"]; di = R["dsr_inputs"]
+rb = R["raw_backtest"]
+dr = R["deflated_return_range"]
+di = R["dsr_inputs"]
 ret = "| 子策略 | 全期年化 | 锚定窗（2024-01..2026-09）年化 | 锚定窗波动 | DSR 折后预期（超额现金，年化） | 状态 |\n|---|---|---|---|---|---|\n"
 for k in ("S1", "S2"):
     ret += f"| {k} | {pc(rb[k]['full']['cagr'])} | {pc(rb[k]['anchor']['cagr'])} | {pc(rb[k]['anchor']['vol'])} | 待定 | 本任务自算（returns.parquet net10，未扣无风险利率）；试验数未知；**未折扣** |\n"
@@ -51,11 +87,13 @@ for k in ("S3", "C2"):
     ret += f"| {k} | {pc(rb[k]['full']['cagr'])} | {pc(rb[k]['anchor']['cagr'])} | {pc(rb[k]['anchor']['vol'])} | 待定 | allocation-dd30 engine_stats；试验数未知；**未折扣** |\n"
 for k in ("F1", "F2"):
     ret += f"| {k} | {pc(rb[k]['full']['cagr'])} | {pc(rb[k]['anchor']['cagr'])} | {pc(rb[k]['anchor']['vol'])} | {pc(dr[k]['deflated_excess_return_low'])} – {pc(dr[k]['deflated_excess_return_high'])}（原始锚定超额 {pc(dr[k]['raw_anchor_excess_return'])}） | 折扣用 v1.2 M0_U3000 的 DSR 输入，见下 |\n"
-ret += f"| P1 腿 | — | — | — | 待定（无记分卡；F1 数字仅作代理参考） | P1 尚无自己的回测与试验登记 |\n"
+ret += (
+    "| P1 腿 | — | — | — | 待定（无记分卡；F1 数字仅作代理参考） | P1 尚无自己的回测与试验登记 |\n"
+)
 
 report = f"""# T-20261004-71 / R1005-T71：资金档位与整股可实现性（写给机主）
 
-生成：{R['generated_at_utc']}（UTC）。脚本 `compute.py` / `build_report.py`，全部数字来自同目录 `results.json`。只读研究数据与目标文件，没有下单、没有调用任何券商交易接口。
+生成：{R["generated_at_utc"]}（UTC）。脚本 `compute.py` / `build_report.py`，全部数字来自同目录 `results.json`。只读研究数据与目标文件，没有下单、没有调用任何券商交易接口。
 
 ## 结论（先看这里）
 
@@ -114,8 +152,8 @@ report = f"""# T-20261004-71 / R1005-T71：资金档位与整股可实现性（�
 ## 四、按 DSR 打折后的预期年化收益区间
 
 输入与方法：
-- 有 DSR 输入的只有 v1.2：`reports/research/iterations/t20261002_book_v12/results.json` 的 M0_U3000：近期净夏普 {di['recent_net_sharpe']:.3f}（{di['recent_sessions']} 个会话）；家族 SR0 {di['family_sr0_annual']:.3f}（家族 DSR {di['family_dsr']:.3f}）；组合级 SR0 {di['program_sr0_annual']:.3f}（组合级 DSR {di['program_dsr']:.3f}）。
-- 折扣系数 = (SR − SR0) ÷ SR：家族口径 {di['haircut_factor_family']:.3f}（高端），组合口径 {di['haircut_factor_program']:.3f}（低端）。预期超额收益 ≈ 折扣系数 × 锚定窗夏普 × 锚定窗波动，数字来自 allocation-dd30 的 engine_stats。
+- 有 DSR 输入的只有 v1.2：`reports/research/iterations/t20261002_book_v12/results.json` 的 M0_U3000：近期净夏普 {di["recent_net_sharpe"]:.3f}（{di["recent_sessions"]} 个会话）；家族 SR0 {di["family_sr0_annual"]:.3f}（家族 DSR {di["family_dsr"]:.3f}）；组合级 SR0 {di["program_sr0_annual"]:.3f}（组合级 DSR {di["program_dsr"]:.3f}）。
+- 折扣系数 = (SR − SR0) ÷ SR：家族口径 {di["haircut_factor_family"]:.3f}（高端），组合口径 {di["haircut_factor_program"]:.3f}（低端）。预期超额收益 ≈ 折扣系数 × 锚定窗夏普 × 锚定窗波动，数字来自 allocation-dd30 的 engine_stats。
 - **假设**：把 M0_U3000 的折扣系数用到 F1、F2 两种形式上（它们是同一个账本的两种构造，没有各自的 SR0）；F2 含 SPY 核心仓，对总夏普一起打折，对 beta 部分偏保守。
 - 区间不含：取整损失（V2 不过的格不适用）、碎股放弃竞价的成本变化、真实滑点、借券（ETB 零费）。
 
@@ -158,13 +196,18 @@ open("report.md", "w").write(report)
 # append sources/recommendation to results.json
 R["rules_checked_at_utc"] = "2026-10-05T05:53Z..05:58Z"
 R["rules"] = {
- "fractional_short": "not supported (docs.alpaca.markets/docs/fractional-trading)",
- "fractional_tif": "Day only; no GTC, so no opg/cls auctions",
- "fractional_min_notional": "$1 for buy entry orders (alpaca.markets/support/can-we-submit-orders-smaller-than-1-usd-in-notional-value)",
- "engine_min_notional_100": "our own default, open_composer/book_paper/plan.py build_plan(min_notional=100.0); not an Alpaca limit",
- "short_min_equity": "$2,000 (margin-and-short-selling doc)",
- "pdt": "FINRA RN 26-10 (2026-04-20) effective 2026-06-04, phase-in to 2027-10-20; Alpaca removed $25k and API fields by 2026-07-06 (blog 2026-04-27)",
+    "fractional_short": "not supported (docs.alpaca.markets/docs/fractional-trading)",
+    "fractional_tif": "Day only; no GTC, so no opg/cls auctions",
+    "fractional_min_notional": "$1 for buy entry orders (alpaca.markets/support/can-we-submit-orders-smaller-than-1-usd-in-notional-value)",
+    "engine_min_notional_100": "our own default, open_composer/book_paper/plan.py build_plan(min_notional=100.0); not an Alpaca limit",
+    "short_min_equity": "$2,000 (margin-and-short-selling doc)",
+    "pdt": "FINRA RN 26-10 (2026-04-20) effective 2026-06-04, phase-in to 2027-10-20; Alpaca removed $25k and API fields by 2026-07-06 (blog 2026-04-27)",
 }
-R["recommendation"] = {"start_tier": 50000, "floor_tier": 25000, "etf_sleeves_as_is_from": 10000, "v12_as_is_from": 250000,
-                       "v12_small_capital": "concentrated top-N per side; rounding-feasible N: 100 @25k, 200 @50k, 300 @100k; performance cost untested (task 10-08..10-14)"}
+R["recommendation"] = {
+    "start_tier": 50000,
+    "floor_tier": 25000,
+    "etf_sleeves_as_is_from": 10000,
+    "v12_as_is_from": 250000,
+    "v12_small_capital": "concentrated top-N per side; rounding-feasible N: 100 @25k, 200 @50k, 300 @100k; performance cost untested (task 10-08..10-14)",
+}
 json.dump(R, open("results.json", "w"), indent=1, ensure_ascii=False)
