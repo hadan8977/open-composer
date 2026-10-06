@@ -2137,7 +2137,7 @@
   - 2026-10-05 07:24 UTC：同上，模拟盘的 opg 单按开盘报价成交，不是开盘竞价价；本探针只证明接不接受 opg 单。
 
 ### T-20261005-33 P6 阶段 0：每天自存期权链快照（数据资产，只读，不花钱）
-- status: done（2026-10-06 14:15 UTC 13:07 主审轮验收；cron 两条和 Drive 同步任务待交互会话安装）
+- status: done（2026-10-06 14:15 UTC 13:07 主审轮验收；2026-10-06 14:21 UTC 交互会话已装两条 cron 和 Drive 同步任务）
 - priority: 1
 - not_before: 无（真实运行要在美东交易时段，10-05 16:07 或 10-06 16:07 的执行轮最合适）
 - goal: Alpaca 的期权历史没有报价，晚一天开始就少一天自有的报价历史。存链快照、约 200 只个股的平值和 25-delta 隐含波动率、VIX 期限结构，作为 P6 和 P1 阶段 2a 期权选股信号的数据底座（第二版计划第 3.6 节用途 1）。
@@ -2149,6 +2149,7 @@
   - 2026-10-05 07:30 UTC 交互会话按 T-36c 改简报：个股部分从"平值和 25-delta 三个点"改成两个月度到期的整条链（现价 ±25%），另存派生点表。原因：隐含波动率价差要同一行权价的看涨和看跌，月度变化要两个到期日插值；数据过后补不回来。执行轮取任务时以简报现版本为准。
   - 2026-10-05 13:38 UTC 13:07 主审轮（Opus，P6 轮换）：简报第 7 步要执行轮装两条 cron，和手册第 0 节第 1 条（自动轮不改 crontab）冲突。简报末尾已加"主审修正"：执行轮只写好两条 cron 行（写进报告和本任务 notes），由交互会话安装，和 T-30、T-53 的做法一致；done_when 里的"cron 已装"改按"cron 行已写好、待交互会话安装"验收。**需要交互会话做**：装这两条 cron。
   - 2026-10-06 14:15 UTC 13:07 主审轮（Opus，P6）：派 sonnet-high 子代理 R1005-T33（型号 claude-sonnet-5-5，37+7 次调用）。交付 `scripts/record_option_chains.py`、`tests/test_record_option_chains.py`（17 个通过，ruff 干净）、`config/disk-policy.yaml`（protected、hot 各加 data/options）、`reports/research/program/options-recorder-2026-10-07/report.md`。主审加了两处：每行带 snapshot_ts_utc、分区 `_manifest.json` 记 run_kind，定时运行可整日替换手动数据、手动不覆盖定时；个股另取 DTE 在 [7,30) 内最大的前端到期（`expiry_role` front/m1/m2），30 天平值 IV 改为夹住 30 天的两个到期按总方差内插。第二次手动运行 14:08:56–14:13:37 UTC（美东 10:08，交易时段内）：663 次请求、0 次 429，链 30,015 行、个股链 30,348 行（front 200、m1 200、m2 196 只）、派生点 842 行（interp 839、none 3），VIX 期限结构 9,287 行（Cboe 全历史到 10-05），单日 4.037 MB（manifest）。三户（quant1、quant2、默认模拟账户）options_approved_level 和 options_trading_level 都是 3。名单 `data/options/universe/2026-10.json` 只含个股（核过无 ETF）。**cron 行已写好，待交互会话安装**（报告第 5 节，19:40 和 20:40 UTC 周一到周五；装上当天 15:40 ET 起每天自动存）；Drive 同步任务也待交互会话建。`data/options/` 没被 git 忽略，本轮在 .gitignore 加了一行。
+  - 2026-10-06 14:21 UTC 交互会话：报告第 5 节的两条 cron 原样装上（19:40、20:40 UTC 周一到周五；crontab 备份 `/tmp/lead/crontab.bak.20261006T142105Z`），今天 19:40 UTC（美东 15:40）第一次定时运行。用的是 `.env` 里主模拟账户的数据密钥，和 quant1/quant2 的下单密钥分开限速，不会和 19:30 起的 v1.2 下单抢额度。Drive 任务 `options-push`：push 类型，只增不删，每天 00:00 UTC，`data/options` → `datasets/options`，已手动先跑一次。文件名每个分区固定，所以定时运行替换手动运行的那天时，Drive 上会被覆盖；只有手动运行有、定时运行没有的代码，会在 Drive 上留旧文件，只影响 10-06 这一天。
 
 ### T-20261005-34 P5 研究门补强：跨项目试验总数、语义查重和族配额、盈亏平衡成本、门槛变更留痕
 - status: ready（定时执行轮可取）
