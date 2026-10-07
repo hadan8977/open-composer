@@ -1,0 +1,38 @@
+{
+ "schema": 1,
+ "task": "T-20261006-24",
+ "note": "Design values for the portfolio layer; advice only. null = reported, not enforced. beta_abs_max 0.2 for quant1 is the owner-brief value; the v1.2 optimizer itself caps net beta at 0.02, industry at 0.01 and each style at 0.25 per name set.",
+ "accounts": {
+  "quant1": {
+   "equity_source": "reports/paper/book/quant1/plans/latest equity_live",
+   "gross_max": 2.0, "gross_kind": "overnight, Reg T",
+   "beta_abs_max": 0.2,
+   "style_abs_max": {"size": 0.25, "value": 0.25, "momentum": 0.25, "resid_vol": 0.25},
+   "industry_net_abs_max": 0.05,
+   "theme_max_fraction_of_equity": null
+  },
+  "quant2": {
+   "equity_source": "reports/paper/book/quant2/plans/latest equity_live",
+   "gross_max": 4.0, "gross_kind": "intraday",
+   "beta_abs_max": null,
+   "style_abs_max": {"size": null, "value": null, "momentum": null, "resid_vol": null},
+   "industry_net_abs_max": null,
+   "theme_max_fraction_of_equity": null
+  },
+  "main": {
+   "equity_source": "reports/paper/account.json equity",
+   "gross_max": 2.0, "gross_kind": "overnight, Reg T",
+   "beta_abs_max": null,
+   "style_abs_max": {"size": null, "value": null, "momentum": null, "resid_vol": null},
+   "industry_net_abs_max": null,
+   "theme_max_fraction_of_equity": {"semiconductors": 0.30}
+  }
+ },
+ "observation_capital_share_max": 0.10,
+ "risk_share_cap_rule": "min(1, 1.5/N)",
+ "regression_window_days": 252,
+ "etf_leverage": {"TQQQ": 3, "SOXL": 3, "UPRO": 3, "TECL": 3, "USD": 2, "SQQQ": -3, "SOXS": -3, "SPXU": -3, "SSO": 2, "QLD": 2},
+ "themes": {
+  "semiconductors": {"SMH": 1, "SOXX": 1, "SOXL": 3, "USD": 2, "SOXS": -3, "NVDA": 1, "AMD": 1, "AVGO": 1, "TSM": 1}
+ }
+}

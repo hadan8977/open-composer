@@ -1,0 +1,226 @@
+{
+ "schema": 1,
+ "generated_at_utc": "2026-10-07T14:37Z",
+ "task": "T-20261006-24",
+ "recent_window": {
+  "start": "2024-01-08",
+  "end": "2026-09-15"
+ },
+ "stress_window": {
+  "start": "2017-10-02",
+  "end": "2023-08-31"
+ },
+ "accounts": {
+  "quant1": {
+   "margin": "Reg T overnight",
+   "max_gross_overnight": 2.0
+  },
+  "quant2": {
+   "margin": "intraday",
+   "max_gross_intraday": 4.0
+  },
+  "main": {
+   "margin": "Reg T",
+   "max_gross_overnight": 2.0
+  }
+ },
+ "sleeves": [
+  {
+   "id": "F1",
+   "account": "quant1",
+   "name": "v1.2 equity book, form F1",
+   "status": "P1",
+   "capital_usd": 1000000.0,
+   "capital_source": "reports/paper/book/quant1/plans/2026-10-06.json equity_basis (dry-run plan); roadmap says T-07 may change the base to about 300000 -> pending, coordinator decides",
+   "returns": {
+    "path": "data/research/account_review_2026_10/returns.parquet",
+    "column": "F1__net10",
+    "cost": "net 10 bp per side",
+    "note": "v1.2 realization-dated (lag 2); series 2017-10-04..2026-09-15; unit = fraction of book equity"
+   },
+   "holdings": {
+    "available": true,
+    "kind": "stock_positions",
+    "path": "reports/paper/book/quant1/targets",
+    "risk_model": "open_composer.research.equity_book.risk"
+   },
+   "authorization": {
+    "expires": "pending",
+    "note": "orders from 2026-10-07 15:20 ET on quant1 (cron stage 2); authorization file not located by this task"
+   },
+   "max_leverage_overnight": 2.0
+  },
+  {
+   "id": "noiseband_qqq_obs",
+   "account": "quant2",
+   "name": "QQQ noise band intraday (observation sleeve)",
+   "status": "observation",
+   "capital_usd": 100000.0,
+   "capital_source": "config/intraday/runner-quant2.yaml capital_usd (sleeve NAV, 10 percent of the account); shadow run 2026-10-09, paper orders from 2026-10-12",
+   "returns": {
+    "path": "reports/research/program/portfolio-layer-2026-10-07/series/noiseband_qqq_cap1.parquet",
+    "column": "noiseband_qqq_cap1_net1",
+    "cost": "0.15 bp per side modelled, net1; net2 = double",
+    "note": "rebuilt from stored arrays data/features/t15_work/ab_QQQ.npz as min(lev,1)*(G_k30_m1.0_ph0 - 1.0*C_k30_m1.0_ph0); reproduces the dossier sharpe 1.166303906847576 exactly (recent window to 2026-10-06); not a new backtest. net2 column = cost x2"
+   },
+   "holdings": {
+    "available": false,
+    "kind": "regression_on_returns",
+    "note": "intraday, flat by 15:55 ET; exposure = QQQ notional <= sleeve NAV, regression beta to SPY on the return series"
+   },
+   "authorization": {
+    "expires": "pending",
+    "note": "to be written by the coordinator before 2026-10-12 (runner config says so)"
+   },
+   "max_leverage_intraday": 4.0
+  },
+  {
+   "id": "S1",
+   "account": "main",
+   "name": "ETF sector rotation 252d top2 weekly",
+   "status": "P0",
+   "capital_usd": 15000.0,
+   "capital_source": "scripts/account_review_2026_10.py SLEEVE_CAPITAL (4 sleeves x 15000 on the main account; account equity 108302.72 at 2026-10-06)",
+   "returns": {
+    "path": "data/research/account_review_2026_10/returns.parquet",
+    "column": "S1__net10",
+    "cost": "net 10 bp per side",
+    "note": "2017-02..2026-10-02"
+   },
+   "holdings": {
+    "available": true,
+    "kind": "etf_positions",
+    "path": "reports/paper/positions.json"
+   },
+   "authorization": {
+    "expires": "2026-11-01",
+    "spec": "us_etf_sector_rotation_252_top2_weekly",
+    "sleeve_drawdown_exit": 0.12,
+    "note": "expires_at from reports/paper/rehearsal/<spec>-authorization.json"
+   }
+  },
+  {
+   "id": "S2",
+   "account": "main",
+   "name": "ETF growth rotation blend top2 monthly (vt16 overlay)",
+   "status": "P0",
+   "capital_usd": 15000.0,
+   "capital_source": "same as S1",
+   "returns": {
+    "path": "data/research/account_review_2026_10/returns.parquet",
+    "column": "S2__net10",
+    "cost": "net 10 bp per side",
+    "note": ""
+   },
+   "holdings": {
+    "available": true,
+    "kind": "etf_positions",
+    "path": "reports/paper/positions.json"
+   },
+   "authorization": {
+    "expires": "2026-11-01",
+    "spec": "us_etf_growth_rotation_blend_top2_monthly",
+    "sleeve_drawdown_exit": 0.15,
+    "note": "expires_at from reports/paper/rehearsal/<spec>-authorization.json"
+   }
+  },
+  {
+   "id": "S3",
+   "account": "main",
+   "name": "levered ETF rotation 63d top2 monthly (vt40 + dip boost)",
+   "status": "P1",
+   "capital_usd": 15000.0,
+   "capital_source": "same as S1",
+   "returns": {
+    "path": "data/research/account_review_2026_10/returns.parquet",
+    "column": "S3__net10",
+    "cost": "net 10 bp per side",
+    "note": "leveraged-ETF survivorship bias not handled (current-view)"
+   },
+   "holdings": {
+    "available": true,
+    "kind": "etf_positions",
+    "path": "reports/paper/positions.json"
+   },
+   "authorization": {
+    "expires": "2026-11-01",
+    "spec": "us_etf_levered_rotation_63_top2_monthly",
+    "sleeve_drawdown_exit": 0.25,
+    "note": "expires_at from reports/paper/rehearsal/<spec>-authorization.json"
+   }
+  },
+  {
+   "id": "C2",
+   "account": "main",
+   "name": "ETF end-of-month sector blend",
+   "status": "P0",
+   "capital_usd": 15000.0,
+   "capital_source": "same as S1",
+   "returns": {
+    "path": "data/research/account_review_2026_10/returns.parquet",
+    "column": "C2__net10",
+    "cost": "net 10 bp per side",
+    "note": "stored C2 differs from recompute after SIP restatement, max abs 0.010 (account-review header)"
+   },
+   "holdings": {
+    "available": true,
+    "kind": "etf_positions",
+    "path": "reports/paper/positions.json"
+   },
+   "authorization": {
+    "expires": "2026-11-01",
+    "spec": "us_etf_eom_sector_blend_monthly",
+    "sleeve_drawdown_exit": 0.12,
+    "note": "expires_at from reports/paper/rehearsal/<spec>-authorization.json"
+   }
+  },
+  {
+   "id": "multi_horizon_engine",
+   "account": "quant1",
+   "name": "multi-horizon stock selection engine (T-20261007-01)",
+   "status": "planned",
+   "capital_usd": 0.0,
+   "capital_source": "none yet",
+   "returns": null,
+   "missing": "no daily return series: iteration t20261007_01_cost_aware_engine has hypotheses/prereg only, no results",
+   "holdings": {
+    "available": false
+   },
+   "authorization": {
+    "expires": "pending"
+   }
+  },
+  {
+   "id": "intraday_model",
+   "account": "quant2",
+   "name": "intraday model (T-20261006-21)",
+   "status": "planned",
+   "capital_usd": 0.0,
+   "capital_source": "none yet",
+   "returns": null,
+   "missing": "no daily return series: iteration t20261006_21_intraday_ml has prereg only",
+   "holdings": {
+    "available": false
+   },
+   "authorization": {
+    "expires": "pending"
+   }
+  },
+  {
+   "id": "options",
+   "account": "main",
+   "name": "options sleeve (Levels 1-3)",
+   "status": "planned",
+   "capital_usd": 0.0,
+   "capital_source": "none yet",
+   "returns": null,
+   "missing": "no candidate with a net daily series; chain data acceptance failed coverage gate (queue T-60), recorder P6 started 2026-10-06",
+   "holdings": {
+    "available": false
+   },
+   "authorization": {
+    "expires": "pending"
+   }
+  }
+ ]
+}
