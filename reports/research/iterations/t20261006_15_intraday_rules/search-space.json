@@ -1,0 +1,179 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261006_15_intraday_rules/candidate-manifest.json",
+  "candidate_manifest_sha256": "53111b12785e829af567f43338f3b4d5931659183335016075faaf718df8857f",
+  "cost_table_path": "reports/research/iterations/t20261006_15_intraday_rules/cost-table.json",
+  "created_at": "2026-10-06T23:22:18.528964+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261006_15_intraday_rules/data-feasibility.json",
+  "data_feasibility_sha256": "dcb3c7e54e7fb98cd408a0ff86b67e9b4d1ad847f29ae6017a94f9d078282aea",
+  "evaluation_report_paths": [
+    "reports/research/iterations/t20261006_15_intraday_rules/results.json",
+    "reports/research/iterations/t20261006_15_intraday_rules/report.md"
+  ],
+  "iter_id": "t20261006_15_intraday_rules",
+  "paths": [
+    {
+      "benchmark_family": [
+        "random_direction_placebo_100_seeds",
+        "band_shift_30min_placebo",
+        "buy_and_hold_same_exposure",
+        "random_same_count_entry_placebo"
+      ],
+      "candidate_count": 17,
+      "hypothesis_refs": [
+        "T-20261006-15"
+      ],
+      "name": "intraday_rules_scale_curve",
+      "parameters": {
+        "A": {
+          "mult": [
+            0.5,
+            1.0,
+            1.5,
+            2.0
+          ],
+          "lookback": [
+            7,
+            14,
+            28
+          ],
+          "interval": [
+            5,
+            15,
+            30
+          ],
+          "stop": [
+            "band",
+            "vwap",
+            "both"
+          ],
+          "vt": [
+            0,
+            1
+          ],
+          "symbols": [
+            "SPY",
+            "QQQ",
+            "IWM",
+            "DIA",
+            "XLK",
+            "XLF",
+            "XLE",
+            "XLV",
+            "XLY",
+            "XLP",
+            "XLI",
+            "XLB",
+            "XLU",
+            "XLRE",
+            "XLC",
+            "TQQQ",
+            "SPXL"
+          ]
+        },
+        "B": {
+          "pred": [
+            "r1_intraday",
+            "r1_overnight",
+            "r1_plus_r12"
+          ],
+          "thresh": [
+            0.0,
+            0.5,
+            1.0
+          ],
+          "symbols": [
+            "SPY",
+            "QQQ",
+            "IWM",
+            "DIA",
+            "XLK",
+            "XLF",
+            "XLE",
+            "XLV",
+            "XLY",
+            "XLP",
+            "XLI",
+            "XLB",
+            "XLU",
+            "XLRE",
+            "XLC",
+            "TQQQ",
+            "SPXL"
+          ]
+        },
+        "C": {
+          "range": [
+            5,
+            15,
+            30
+          ],
+          "topk": [
+            20,
+            50,
+            100
+          ],
+          "stop": [
+            "opposite",
+            "atr10",
+            "atr5"
+          ],
+          "pool": [
+            100,
+            300,
+            600
+          ],
+          "fill": [
+            "stop_price",
+            "trigger_bar_close"
+          ]
+        },
+        "D": {
+          "tf": [
+            "1h",
+            "1m"
+          ],
+          "hold": {
+            "1h": [
+              6,
+              13,
+              26
+            ],
+            "1m": [
+              30,
+              90,
+              180
+            ]
+          },
+          "exit": [
+            "time_stop",
+            "time_stop_or_reverse",
+            "atr_trailing_2x"
+          ],
+          "signal": [
+            "primary_only",
+            "primary_and_reclaim"
+          ],
+          "side": [
+            "long_only",
+            "long_short"
+          ],
+          "universe": [
+            "QQQ",
+            "SPY",
+            "TOP50"
+          ]
+        }
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261006_15_intraday_rules.yaml",
+  "spec_hash": "b766b8d8581acec6e179970c4446a29881e8d7488da7c5f755d3400ba070d744",
+  "strategy_name": "t20261006_15_intraday_rules",
+  "total_candidate_budget": 17,
+  "trial_ledger_paths": [
+    "reports/research/iterations/t20261006_15_intraday_rules/trial-ledger.jsonl"
+  ],
+  "full_grid_trial_total": 4203
+}

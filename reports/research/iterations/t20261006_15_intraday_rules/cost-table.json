@@ -1,0 +1,6 @@
+{
+  "base_cost_bps": 0.4,
+  "stress_cost_bps": 0.8,
+  "note": "ETF per side: half spread = 0.5 x tick-cents/price (1 cent for SPY QQQ IWM DIA XLK XLF XLE XLV XLY XLP XLI XLU TQQQ, 2 cents for XLB XLRE XLC SPXL; unmeasured, to be checked with SIP NBBO) + 0.02 bp slippage; sells add SEC fee 0.206 bp; fills before 09:45 ET add 1.0 bp; reported at x0.5, x1, x2, x4. Stocks (groups C, D): equity_book costfn half_spread_bp with the 'open' snapshot for entries and 'close' for end-of-day exits, mean of both for stop exits, fees 0.5 bp per side, spread part at x0.5, x1, x2. Borrow: easy-to-borrow shorts only, intraday, no fee (Alpaca).",
+  "etf_one_way_formula": "0.5*tick_cents*0.01/price*1e4 + 0.02 + (0.206 if sell) + (1.0 if fill before 09:45)"
+}

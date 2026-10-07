@@ -1,0 +1,197 @@
+{
+  "cheapest_decisive_test": {
+    "action": "scripts/run_t20261006_15_intraday_rules.py: group A and B on the 17 ETF minute panels (all registered versions, depth curves over 1/2/4/15/17 symbols, cost x0.5/1/2/4), then C and D when data are ready; results.json.",
+    "pass_condition": "A version/portfolio passes P1 paper incubation only if recent-window net Sharpe is positive with DSR >= 0.7, net placebo percentile >= 0.9 and >= 3 of the robustness checks of config/evaluation-standard-v2.json hold.",
+    "falsification_condition": "A group is called not holding only if the reproduction, faithful-implementation, three-depth-point, budget and power conditions are all met and the best depth-point recent net Sharpe is <= 0 or its placebo percentile < 0.9; otherwise it is reported as not at depth.",
+    "max_compute_minutes": 240
+  },
+  "cost_and_execution_assumptions": "Signal on the close of minute bar t, fill at the open of bar t+1, flat at the close of the 15:59 bar (stand-in for a market-on-close). ETF cost per side = half spread (tick cents prior) + 0.02 bp slippage, sells + 0.206 bp SEC fee, fills before 09:45 ET + 1.0 bp, reported at x0.5, x1, x2, x4. Stocks use equity_book costfn (open snapshot for entries, close snapshot for exits, mean for stops), spread part x0.5, x1, x2. Stops are market orders. No borrow fee (easy-to-borrow intraday). Paper fills are NBBO-based and optimistic on size.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Published: ZAB 2024 (SPY Sharpe 1.33 with VWAP stop and volatility targeting, base 0.61), Gao et al. 2018 (SPY Sharpe 1.08 gross, 1993-2013), Baltussen et al. 2021 (futures out-of-sample R2 up to 2.9 percent), ZBA 2024 (Sharpe 2.81, commission only), QuantConnect 2016-only replication (2.40), Concretum 2026-07 (plain ORB SPY Sharpe 0.14). No source gives an independent live record net of spread. The 2026-10-06 survey I-20261006-01 found no candidate with hard net evidence. Reuse: published rules implemented as written; only data adaptation, cost, current validity and execution feasibility are new.",
+  "iter_id": "t20261006_15_intraday_rules",
+  "negative_experiments_checked": "Registry (oc research directions) last rows 2026-10-06 read: spy_noise_band_intraday refuted (gross about 3.6 percent a year, only SPY, every-minute rule, 0.30 vs 0.61 unexplained), single_etf_intraday_momentum_cost_adjusted refuted (effective N 3, one symbol set), orb_etf_opening_range_breakout (placebo 92.7-92.9 percent, kept as narrow), orb_stocks_in_play_relative_volume refuted (select window -27.1 percent a year, stop-fill dependent, design window 2016-2022 never run, fixed top 20, no liquidity buckets), cross_sectional_gap_fade refuted, minute_bar_momentum_multipath partial (IEX only), reversal_trend_user_indicator refuted at 18 hourly cells 2024+ long-only, reversal_trend_daily_signals partial. Differences: paper rule semantics (HH:00/HH:30), 4x3x3x3x2 versions across 17 symbols with depth curves, reproduction on 2016-2022, full pool depth for ORB, 1-minute Reversal Trend and long-short hourly.",
+  "objective": "T-20261006-15: do published intraday rules (noise band, market intraday momentum, stocks-in-play ORB, Reversal Trend) keep a net-of-cost edge in 2024-01-08..2026-10-06 once run at depth (reproduction, faithful rule, three or more scale points, full registered grids, power)?",
+  "queries": [
+    {
+      "query": "Zarattini Aziz Barbon Beat the Market intraday momentum noise area SPY VWAP",
+      "searched_at": "2026-10-06T23:22:18Z",
+      "opened_urls": [
+        "https://alexandria.unisg.ch/server/api/core/bitstreams/a99aba00-f967-49b3-aceb-f544dc386e0b/content",
+        "https://concretumgroup.substack.com/p/improving-the-opening-range-breakout"
+      ]
+    },
+    {
+      "query": "Gao Han Li Zhou market intraday momentum first half-hour last half-hour",
+      "searched_at": "2026-10-06T23:22:18Z",
+      "opened_urls": [
+        "https://c.mql5.com/forextsd/forum/173/intraday_momentum_-_the_first_half-hour_return_predicts_the_last_half-hour_return.pdf",
+        "https://academicweb.nd.edu/~zda/intramom.pdf"
+      ]
+    },
+    {
+      "query": "opening range breakout stocks in play relative volume replication stop fill",
+      "searched_at": "2026-10-06T23:22:18Z",
+      "opened_urls": [
+        "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+        "https://www.quantconnect.com/research/18444/opening-range-breakout-for-stocks-in-play/"
+      ]
+    },
+    {
+      "query": "Alpaca paper trading fill model orders bracket stop opening auction",
+      "searched_at": "2026-10-06T23:22:18Z",
+      "opened_urls": [
+        "https://docs.alpaca.markets/us/docs/orders-at-alpaca",
+        "https://docs.alpaca.markets/us/docs/paper-trading"
+      ]
+    },
+    {
+      "query": "IEX share of US equity volume 2026",
+      "searched_at": "2026-10-06T23:22:18Z",
+      "opened_urls": [
+        "https://www.rblt.com/market-structure-reports/us-securities-volumes-july-2026"
+      ]
+    }
+  ],
+  "remaining_evidence_gap": "Not measured: ETF NBBO half spreads (priors of 1-2 cents), stop-market slippage on stocks, IEX versus SIP agreement of signals (IEX history not on disk, so pending forward observation), paper fill behaviour at 09:35 and 15:30, and any intrabar ordering inside 1-minute bars. The local 2016-2022 minute archive is the published authors' period, so reproduction of their relative conclusions is possible but not of 2007-2015.",
+  "reviewed_at": "2026-10-06T23:22:18Z",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "Group A rule, parameters (VM 0.5-2, lookback 7/14/28, stop variants, vol target) and the paper cell.",
+      "claim": "Zarattini, Aziz and Barbon (SFI WP 24-97, 2024): SPY intraday momentum with a time-of-day Noise Area = max/min(open, previous close) x (1 +/- VM x sigma), sigma the mean absolute move from the open over the previous 14 days at the same minute; positions are set only at HH:00 and HH:30, stopped by the current band and the VWAP, flat at the close; with volatility targeting (2%, leverage cap 4) 2007-2024 gave 19.6 percent a year, Sharpe 1.33, 1.8 trades a day; the base opposite-band version gave Sharpe 0.61.",
+      "claim_id": "zab_2024_noise_area_intraday_momentum",
+      "fetched_at": "2026-10-06T23:22:08Z",
+      "independent_replication": "Local H-20260922-07 reproduced 2.2 percent a year and Sharpe 0.30 (persist entries each minute); a third-party automated replication reported 0.41. Not reproduced yet with the half-hourly rule; this iteration does it.",
+      "limitations": "Author-reported, no out-of-sample split; costs only $0.0045 per share; paper itself says the optimum is VM 1.5 and lookback 90, so 14/1 is not an ex-post optimum.",
+      "market_and_period": "SPY, 2007-05 to 2024-04, 1-minute IQFeed bars, commission $0.0035 + slippage $0.001 per share",
+      "published_or_updated_at": "2024-11-27",
+      "sha256": "5bed406569325f0aa45b92fcf7c09567db20cef2a6414536070db0d982c0b79a",
+      "snapshot_path": "reports/research/iterations/t20261006_15_intraday_rules/sources/btm_full.txt",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "paper",
+      "url": "https://alexandria.unisg.ch/server/api/core/bitstreams/a99aba00-f967-49b3-aceb-f544dc386e0b/content"
+    },
+    {
+      "applicability": "Group B predictors (first half-hour with and without overnight, plus the twelfth half-hour) and trading window 15:30-16:00.",
+      "claim": "Gao, Han, Li and Zhou (JFE 2018): the first half-hour return of SPY measured from the previous close predicts the last half-hour return (R2 1.6 percent, 2.6 percent with the twelfth half-hour; out-of-sample 1.2 and 1.8 percent), a sign-timing strategy earns 6.67 percent a year at 6.19 percent volatility, Sharpe 1.08, before costs, 1993-2013.",
+      "claim_id": "ghlz_2018_market_intraday_momentum",
+      "fetched_at": "2026-10-06T23:22:08Z",
+      "independent_replication": "Baltussen-Da-Lammers-Martens (JFE 2021) find the same last-30-minute pattern in 60+ futures 1974-2020.",
+      "limitations": "Gross of costs, sample ends 2013; effect said stronger on volatile and high-volume days.",
+      "market_and_period": "SPY and ten other ETFs, 1993-2013, 30-minute returns, gross of costs",
+      "published_or_updated_at": "2018-04-01",
+      "sha256": "2e53dc8e19e2a8c6baeb199f1f92f79664557f7e65e5bab21cd35a3985a1b5a5",
+      "snapshot_path": "reports/research/iterations/t20261006_15_intraday_rules/sources/ghlz_full.txt",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "paper",
+      "url": "https://c.mql5.com/forextsd/forum/173/intraday_momentum_-_the_first_half-hour_return_predicts_the_last_half-hour_return.pdf"
+    },
+    {
+      "applicability": "Group C rule, universe filters and stop sizes.",
+      "claim": "Zarattini, Barbon and Aziz (SSRN 4729284): 5-minute opening range breakout traded only on the top 20 stocks by relative volume, stop at 10 percent of ATR14, flat at close, 2016-2023 about 7,000 US stocks: IRR 41.6 percent, Sharpe 2.81 versus 3.2 percent and 0.48 without the relative-volume filter; 0.08R per trade, commission only.",
+      "claim_id": "zba_2024_stocks_in_play_orb",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "QuantConnect research (2016 only, 1,000 liquid stocks) reports Sharpe 2.40; its comments flag stop fills one bar late and a win rate near 17 percent.",
+      "limitations": "No spread or slippage; stop fills in the original are intrabar at the stop price; author-reported.",
+      "market_and_period": "US stocks 2016-2023, 5-minute bars, commission $0.0035 per share, no spread or slippage",
+      "published_or_updated_at": "2025-04-01",
+      "sha256": "73578f09a93051c4240dfb2813f0478616064bac9aa44e115e24b4f5609122ce",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/zba-stocks-in-play-paper.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "paper",
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf"
+    },
+    {
+      "applicability": "Mechanism and independent replication for groups A and B; says why leveraged ETFs are in the symbol axis.",
+      "claim": "Baltussen, Da, Lammers and Martens (JFE 2021): in 60+ futures 1974-2020 the return of the last 30 minutes is positively predicted by the return in the rest of the day; linked to gamma hedging of options market makers and leveraged ETFs; out-of-sample R2 up to about 2.9 percent for equity index futures.",
+      "claim_id": "bdlm_2021_intraday_momentum_futures",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "Gao et al. 2018 for SPY.",
+      "limitations": "Futures not ETFs; effect reverts over following days.",
+      "market_and_period": "60+ futures, 1974-2020",
+      "published_or_updated_at": "2021-10-01",
+      "sha256": "31fa0ac999416d4edda2a0287890921976a18a8f698a0116b495334a34413562",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/baltussen-da-lammers-martens-2021.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "paper",
+      "url": "https://academicweb.nd.edu/~zda/intramom.pdf"
+    },
+    {
+      "applicability": "Prior for group C without the relative-volume filter; why the filter and the cost are the decisive parts.",
+      "claim": "Concretum (2026-07-08): plain 5-minute opening range breakout on SPY, 2008-2025, has CAGR 1.0 percent and Sharpe 0.14; with enhancements CAGR 12.1 percent, Sharpe 0.84.",
+      "claim_id": "concretum_2026_orb_spy_selfcorrection",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "Local H-20260918-02 ETF ORB gave 92.7-92.9 percent placebo percentile (no edge).",
+      "limitations": "Paywalled body; author self-report.",
+      "market_and_period": "SPY 2008-2025",
+      "published_or_updated_at": "2026-07-08",
+      "sha256": "e4aeffff213c94ce90ea2d6b1ce4488d0721349ac9da434a812877f70d5b5bc4",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/concretum-orb-spy-2026-07.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://concretumgroup.substack.com/p/improving-the-opening-range-breakout"
+    },
+    {
+      "applicability": "Third-party fidelity check and the stop-fill semantics variants of group C.",
+      "claim": "QuantConnect research: 2016-only backtest of the stocks-in-play opening range breakout on the 1,000 most liquid US equities gives Sharpe 2.396; comments say stop orders fill on the next minute bar in backtests versus near-instantly live, and win rate is about 17 percent.",
+      "claim_id": "quantconnect_orb_stocks_in_play_replication",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "None independent.",
+      "limitations": "One year; fee and slippage model not stated.",
+      "market_and_period": "US equities 2016 only",
+      "published_or_updated_at": "unknown",
+      "sha256": "1b62f473ffa899e00c54507130ea42bc34094bb0a8126f38268df615be64cb8a",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/quantconnect-orb-stocks-in-play.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.quantconnect.com/research/18444/opening-range-breakout-for-stocks-in-play/"
+    },
+    {
+      "applicability": "Execution semantics for stops in groups A, C and D and the cls exit for group B.",
+      "claim": "Alpaca orders: bracket orders do not support extended hours; time in force includes opg and cls auction orders; stop orders convert to market orders when triggered.",
+      "claim_id": "alpaca_orders_semantics",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "None needed.",
+      "limitations": "Current page, undated.",
+      "market_and_period": "Alpaca equities",
+      "published_or_updated_at": "unknown",
+      "sha256": "7184bc802fc192d4a3ef3251c838a5a2c89867a936ec383ab36ec6235e4db191",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/alpaca-orders-docs.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/orders-at-alpaca"
+    },
+    {
+      "applicability": "Why paper fills are optimistic for size and why 20-40 sessions only test execution.",
+      "claim": "Alpaca paper trading matches orders against the NBBO, fills quantity is not checked against NBBO size, and partial fills of random size happen 10 percent of the time.",
+      "claim_id": "alpaca_paper_fill_model",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "Local probe 2026-10-06: opg orders expired, cls of 1 SPY filled.",
+      "limitations": "Page silent on auctions and extended hours.",
+      "market_and_period": "Alpaca paper",
+      "published_or_updated_at": "unknown",
+      "sha256": "de47df5266757de9d8e922eb1a7782ec0321e6e07ae0dc0b2cd1ce0a14ee05a7",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/alpaca-paper-trading-docs.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/paper-trading"
+    },
+    {
+      "applicability": "IEX versus SIP signal check for the paper feed.",
+      "claim": "IEX reached 4.43 percent of US equity volume in July 2026, so IEX minute volume is a sample of about 4 percent.",
+      "claim_id": "iex_market_share_2026_07",
+      "fetched_at": "2026-10-06T17:07:00Z",
+      "independent_replication": "None.",
+      "limitations": "Secondary; search summary used for the 8 percent exchange-share figure.",
+      "market_and_period": "US equities July 2026",
+      "published_or_updated_at": "2026-08-07",
+      "sha256": "66313dd208fdd5a19749e556426a92939c57024309008781a77f268a1349430c",
+      "snapshot_path": "reports/research/intel/sources/hft-intraday-2026-10-06/iex-market-share-rosenblatt.md",
+      "source_card_path": "reports/harness/source_cards/t20261006_15_intraday_rules.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.rblt.com/market-structure-reports/us-securities-volumes-july-2026"
+    }
+  ],
+  "stop_condition": "Per group, frozen in hypotheses.md: a rule is called 'not holding' only if reproduction, faithful implementation, at least three depth points, the full registered grid and power are all satisfied; otherwise 'not at depth' with the next step written. Budget: 4,203 registered versions, 4 compute-hours on this box plus at most 4 USD on Modal, 2026-10-10 22:00 UTC deadline. No change to versions, windows, gates or costs after results.",
+  "target_regime_and_horizon": "Decision window 2024-01-08 to the end of data (2026-10-06, 689 sessions), split into the 11 market phases of reports/research/program/regimes-2026-10-01 (P11 extended to data end); 2016-2023 is a diagnostic and reproduction window only (the published samples end 2023-2024, so 2016-2022 is the in-sample reproduction and 2023 onward the true out-of-sample). Holding periods: minutes to one session (A, B, C, D-1m); D-1h up to 26 hourly bars. Validity ends when the forward 63-session net mean falls below zero."
+}
