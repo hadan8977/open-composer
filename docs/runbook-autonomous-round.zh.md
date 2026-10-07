@@ -200,7 +200,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
   - 机主 2026-09-30：不再用 Sonnet 5。每轮结束前查一次子代理记录里的 `model` 字段，必须是 `claude-sonnet-5-5`；不是就在汇报里写明。
   - 如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`。
     - 参数：`provider: "claude/claude-sonnet-5-5"`（2026-10-07 起写明型号）、`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`、`notifyOnFinish: true`。
-    - 不准选列表里的 `claude-sonnet-5`（Sonnet 5）：10-06/07 有 6 个独立代理误选了它。建完用 `list_agents` 核对 `model` 字段，应为 `claude-sonnet-5-5`。
+    - 不准选列表里的 `claude-sonnet-5`：机主 10-07 更新 Paseo 后，它是上一代 Sonnet 5。更新前 10-06/07 有 6 个独立代理标的是它，抽查 T-20261007-03 的记录，实际应答的是 `claude-sonnet-5-5`。建完用 `list_agents` 核对 `model` 字段，应为 `claude-sonnet-5-5`。
     - 任务说明里要写进 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项。
   - 一轮最多 3 个，同一时间最多 2 个。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
   - 任务说明第一行写任务代码，例如 `任务代码 T-20260930-12`。之后给这个子代理的 SendMessage 都以同一代码开头，否则它会把消息当成注入拒绝（2026-09-29）。
