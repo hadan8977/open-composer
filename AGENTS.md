@@ -55,6 +55,7 @@
 ## Safety
 - Real-money broker write access is out of scope for this MVP.
 - Alpaca Paper orders require explicit command confirmation and active `paper_auto` specs.
+- Code that live paper jobs run (`open_composer/book_paper/`, `open_composer/paper_*`, `open_composer/intraday_runner/`, `open_composer/adapters/broker/`, and the cron entry scripts such as `scripts/run_book_v12_daily.py`, `scripts/run_intraday_runner.py`, `scripts/run_daily_paper_cycle.py`) is changed only in a separate git worktree on a branch and merged by the interactive session after review. Cron runs the shared working tree, so an edit there changes live orders at once (2026-10-07: an unreviewed submit-time check would have blocked the first v1.2 order).
 - LLM review is advisory and must be structured.
 - LLM/news/event/macro features must be point-in-time replay packets with visible_at, published_at, fetched_at, source, input hash, and prompt hash before they affect trading.
 - LLM/news/event/macro or other new-modality feature packets need evidence for single-modality baseline, marginal lift, and missing-modality robustness before promotion, paper readiness, or paper_auto use.
