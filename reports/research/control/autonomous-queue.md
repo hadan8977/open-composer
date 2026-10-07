@@ -2487,7 +2487,7 @@
     运行器 v1.1 由运行器作者在 worktree 分支 wip/t20261006-14-runner-v11 上做，10-08 18:00 UTC 交，10-09 13:00 UTC 影子运行开始前审核合并。插件全量重跑在 00:47 UTC 以后，等重任务时段结束。
 
 ### T-20261006-17 嘉信 API 能力和日内交易次数限制核实，按 2 万美元重算实盘方案
-- status: ready（简报已写，定时执行轮可取；10-09 12:00 UTC 前交）
+- status: running（交互会话 2026-10-07 19:48 UTC 派会话内子代理 sonnet-high 执行，定时轮不要取；10-09 12:00 UTC 前交）
 - priority: 1
 - not_before: 2026-10-07 06:00 UTC
 - brief: reports/research/control/briefs/T-20261006-17.md
