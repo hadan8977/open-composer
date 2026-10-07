@@ -1,4 +1,6 @@
-"""Daily driver of book v1.2 (T-20261002-28).  Not scheduled; the crontab lines are proposals.
+"""Daily driver of book v1.2 (T-20261002-28).  Scheduled from cron since 10-05 (start checklist,
+section 10); since 10-07 the plan, submit and reconcile lines pass ``--accounts quant1``
+(C1006-ACCT: quant2 left the book).
 
 Modes (exactly one):
 
@@ -6,17 +8,19 @@ Modes (exactly one):
   (default: the last session of the live equity-book root).  Exit 2: the data root is not fresh to
   D (or is missing); exit 3: the generator or the target writer refused.  Re-running for a decision
   date whose target files exist is a no-op (a logged target is never rewritten).
-* ``--plan``     on the execution date, 18:30-19:30 UTC: build the dry-run plans of both accounts
-  with ``oc book-paper plan`` (read-only broker calls; sends nothing).
+* ``--plan``     on the execution date, 18:30-19:30 UTC: build the dry-run plans of the accounts
+  (``--accounts``, default both) with ``oc book-paper plan`` (read-only broker calls; sends
+  nothing).
 * ``--submit``   the same plans, then ``oc book-paper submit --submit`` (closing-auction orders).
   Refuses (exit 4) unless the environment variable ``OC_BOOK_V12_SUBMIT=1`` is set, which only the
   owner-approved cron entry does.  This task never sets it and never runs this mode.
 * ``--reconcile`` after the evening SIP refresh (proposal: 22:45 UTC weekdays) of the execution date
   (``--execution-date``, default: today in New York): build ``reports/paper/book/prices/<D>.json``
   from the local SIP archives (``scripts/build_book_prices_file.py``; no network), then run
-  ``oc book-paper reconcile --prices-file`` for both accounts (read-only broker calls: orders and
-  positions).  A daily record that already exists is not rebuilt.  Exit 2: the archives hold no
-  bar of D yet (the cron retries later); exit 3: no plan file of D.
+  ``oc book-paper reconcile --prices-file`` for the accounts (``--accounts``, default both;
+  read-only broker calls: orders and positions).  A daily record that already exists is not
+  rebuilt.  Exit 2: the archives hold no bar of D yet (the cron retries later); exit 3: no plan
+  file of D.
 
 Exit codes: 0 ok, 2 data not fresh, 3 targets refused, 4 submit not enabled, 5 plan/submit/reconcile
 command failed, 6 another run holds the lock.  Log: ``logs/book_v12_daily.log``.  Lock:
@@ -178,10 +182,12 @@ def run_reconcile(
     *,
     sip_root: Path | None = None,
     runner: Callable[..., subprocess.CompletedProcess] | None = None,
+    accounts: tuple[str, ...] = BOOK_ACCOUNTS,
 ) -> int:
-    """Prices file of the date from the local SIP archives, then reconcile both accounts."""
+    """Prices file of the date from the local SIP archives, then reconcile each of ``accounts``
+    (the crons pass ``--accounts quant1``: quant2 has no v1.2 plan from 10-07, C1006-ACCT)."""
     runner = runner or subprocess.run  # looked up at call time (tests patch it)
-    todo = [a for a in BOOK_ACCOUNTS if not daily_path(root, a, execution_date).exists()]
+    todo = [a for a in accounts if not daily_path(root, a, execution_date).exists()]
     if not todo:
         log.info("daily records of %s already written: nothing to do", execution_date)
         return 0
@@ -242,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--accounts",
         default=",".join(BOOK_ACCOUNTS),
-        help="--plan/--submit: comma separated subset of the book accounts (default: all)",
+        help="--plan/--submit/--reconcile: comma separated book accounts (default: all)",
     )
     ap.add_argument("--variant", default=None, help="default: primary variant of results.json")
     ap.add_argument("--data-root", default=None, help=f"default: {LIVE_ROOT}")
@@ -276,7 +282,8 @@ def main(argv: list[str] | None = None) -> int:
                 if args.execution_date
                 else datetime.now(UTC).astimezone(NEW_YORK).date()
             )
-            return run_reconcile(root, day, sip_root=Path(args.sip_root) if args.sip_root else None)
+            sip_root = Path(args.sip_root) if args.sip_root else None
+            return run_reconcile(root, day, sip_root=sip_root, accounts=accounts)
         return run_plans(
             root, decision, submit=args.submit, tif_mode=args.tif_mode, accounts=accounts
         )

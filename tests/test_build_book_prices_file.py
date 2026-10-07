@@ -307,6 +307,24 @@ def test_driver_reconcile_builds_the_prices_file_then_reconciles(tmp_path, monke
     assert "OLDPOS" in payload["missing_official_close"]  # a name the archive does not hold
 
 
+def test_driver_reconcile_only_the_named_accounts(tmp_path, monkeypatch):
+    # from 10-07 (C1006-ACCT) quant2 has no v1.2 plan; the crons pass --accounts quant1
+    sip = make_sip(tmp_path, EDT_DAY)
+    write_inputs(tmp_path, EDT_DAY, date(2026, 9, 16), "quant1")
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        driver.subprocess,
+        "run",
+        lambda cmd, **kw: (
+            calls.append(list(cmd)) or SimpleNamespace(returncode=0, stdout="", stderr="")
+        ),
+    )
+    assert driver.main(driver_args(tmp_path, sip)) == driver.EXIT_REFUSED  # no quant2 plan
+    assert calls == []
+    assert driver.main([*driver_args(tmp_path, sip), "--accounts", "quant1"]) == 0
+    assert [c[c.index("--account") + 1] for c in calls] == ["quant1"]
+
+
 def test_driver_reconcile_exit_codes(tmp_path, monkeypatch):
     sip = make_sip(tmp_path, EDT_DAY)
     called: list[list[str]] = []
