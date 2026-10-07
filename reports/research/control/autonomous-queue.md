@@ -2107,7 +2107,7 @@
   - 2026-10-06 02:42 UTC 交互会话（Opus）登记，来源是 T-20261006-01 的排查。
 
 ### T-20261005-01 P1 中频股票引擎 阶段 0：快信号的衰减曲线、交易速度与净夏普、对 v1.2 的增量（测量，只用于提速）
-- status: ready
+- status: done（执行轮 2026-10-07 04:10–05:37 UTC，Modal 一次跑完；待主审）
 - priority: 1
 - not_before: 无（本机重步骤不在 21:30–00:30 UTC 跑；不和其他超过 1 GB 的任务并行；排在 T-20261004-70、T-75 之后取即可，目标 10-05 16:07 执行轮前后跑完）
 - goal: 把"频率怎么定"变成数据：快因子库 53 个、新快信号 7 个、合成 3 个，在 U3000 分流动性档上的日 IC 衰减（滞后 1–22）、半衰期、持续性，以及 7 种交易速度在实测收盘价差下的净夏普；决定哪些输入和速度进入第 2 阶段（v1.2 构造里的快腿）。机主 10-04：便宜测试只提速，不能否定；本任务不能关闭 P1。
@@ -2115,6 +2115,7 @@
 - done_when: `t20261005_p1_s0_decay/{results.json,report.md,trial-ledger.json}` 已提交（git add -f），mechanical_status 为三个值之一，新测试通过；结果标"待主审"。
 - brief: reports/research/control/briefs/T-20261005-01.md
 - notes:
+  - 2026-10-07 05:37 UTC 执行轮（Sonnet）按简报 addendum A 在 Modal 跑完（约 592 s，花费约 $0.06，本月 billed 1.6083）。提交 b009505：scripts/p1_stage0_decay.py、tests/test_p1_stage0_decay.py、t20261005_p1_s0_decay/{results.json,report.md,trial-ledger.json,identity.json}。验收：mechanical_status=measured_promotions；恒等 max abs diff 0.0（2250 天）；ON5、ID5 符号均 -1（压力期 CIC -0.0149、-0.0107，固定于 05:19:42Z，先于近期窗首次取数）；73 个对象、7 种速度+MOO、台账 70 行、data_checks 最大 trade_date 2026-09-17。单信号无一过 BH（最好 ON5 t 1.49、q 0.25）；合成：FC_EW information_ok 且 net_ok（CIC(2..6) t 3.12、κ* k0.1、净夏普 0.45、安慰剂名次 1/21），FC_WF252、FC_WF63 未过 information_ok；m0_composite κ* k0.05 近期净夏普 0.90。注意：所有对象 MDE 均 >0.01（REV5 0.036），全部标 underpowered；安慰剂逐日独立洗牌，门槛偏低。待主审。
   - 2026-10-06 16:08–16:27 UTC 执行轮（Sonnet）未取到：简报第 0 步要求可用内存 ≥ 2500 MB，实测 1809–1899 MB（本轮自身代理在内，交互和主审会话也占着），等了约 20 分钟未满足，退回 ready，没写任何产物。需要主审轮决定：放宽内存门槛，或在没有别的代理会话时跑。
   - 2026-10-05 01:33 UTC 01:07 主审轮（Opus）登记。第二版计划草稿 P1 阶段 0，即第一版计划 C2（10-09 前出第一批结果）。10-06 01:07 主审轮审核，并按结果写第 2 阶段合同（快腿进 v1.2 构造）或转阶段 1（学习式残差信号）。
 
