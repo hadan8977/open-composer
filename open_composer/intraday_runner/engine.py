@@ -105,6 +105,7 @@ class RunnerEngine:
         poll_attempts: int = 3,
         poll_interval_s: float = 1.0,
         opening: dict[str, Any] | None = None,
+        prev_close_provider: Any | None = None,
     ):
         self.config, self.root, self.session = config, Path(root), session
         self.broker, self.bars, self.history_provider = broker, bars, history_provider
@@ -132,11 +133,86 @@ class RunnerEngine:
                 self._signals[(event["strategy"], event["tick"])] = event
         _, close_ts = session_bounds(session)
         self.close_ts = close_ts
-        flat = pd.Timestamp(
-            datetime.combine(session, config.flatten_et, tzinfo=NEW_YORK)
-        ).tz_convert("UTC")
-        self.flatten_ts = min(flat, close_ts - pd.Timedelta(minutes=5))
+        self.flatten_ts_by = {s.name: self._flatten_ts(s) for s in config.strategies}
+        self.flatten_ts = min(self.flatten_ts_by.values())
         self._opening = opening or {}
+        self.prev_close_provider = prev_close_provider
+        self._prev_close: dict[str, float] = {}
+        self._prev_close_loaded = False
+        for event in self.log.read():
+            if event.get("type") == "prev_close":  # restart: keep the day's values
+                self._prev_close = {k: float(v) for k, v in event["values"].items()}
+                self._prev_close_loaded = True
+
+    def _flatten_ts(self, cfg: StrategyConfig) -> pd.Timestamp:
+        """Flatten time = the same number of minutes before the close as the configured ET
+        time is before 16:00, so half days flatten just as long before their 13:00 close."""
+        at = cfg.flatten_et or self.config.flatten_et
+        minutes_before = 16 * 60 - (at.hour * 60 + at.minute)
+        return self.close_ts - pd.Timedelta(minutes=minutes_before)
+
+    def flatten_open(self, decision_ts: pd.Timestamp) -> bool:
+        """A strategy past its flatten time that still holds a position (retry candidates)."""
+        return any(
+            decision_ts >= self.flatten_ts_by[cfg.name]
+            and not cfg.allow_overnight
+            and any(q for q in self.state.subs[cfg.name].positions.values())
+            for cfg in self.config.strategies
+        )
+
+    def load_prev_close(self, now: datetime | None = None) -> dict[str, float]:
+        """Official unadjusted close of the previous session for every configured symbol.
+        Fallback per missing symbol: last minute-bar close of that session (flagged)."""
+        if self._prev_close_loaded:
+            return self._prev_close
+        symbols = list(self.config.all_symbols)
+        values: dict[str, float] = {}
+        error = None
+        source = getattr(self.prev_close_provider, "source", "none")
+        if self.prev_close_provider is not None:
+            try:
+                values = {
+                    k: float(v)
+                    for k, v in self.prev_close_provider.fetch(symbols, self.session).items()
+                    if float(v) > 0
+                }
+            except Exception as exc:
+                error = f"{exc.__class__.__name__}: {str(exc)[:120]}"
+        missing = [s for s in symbols if s not in values]
+        fallback: dict[str, float] = {}
+        if missing and self.history_provider is not None:
+            try:
+                frame = load_history(self.history_provider, missing, self.session, 1)
+                if not frame.empty:
+                    last = frame.sort_values("timestamp").groupby("symbol").tail(1)
+                    fallback = {str(r.symbol): float(r.close) for r in last.itertuples()}
+            except Exception as exc:
+                error = (error or "") + f" fallback {exc.__class__.__name__}"
+        self._prev_close = {**fallback, **values}
+        self._prev_close_loaded = True
+        self.emit(
+            {
+                "type": "prev_close",
+                "source": source,
+                "values": self._prev_close,
+                "from_source": sorted(values),
+                "from_minute_fallback": sorted(fallback),
+                "unavailable": sorted(s for s in symbols if s not in self._prev_close),
+                "error": error,
+            },
+            now,
+        )
+        if missing:
+            self.emit(
+                {
+                    "type": "prev_close_fallback",
+                    "symbols": missing,
+                    "used_minute_close": sorted(fallback),
+                    "reason": error or "not returned by the daily-bar source",
+                },
+                now,
+            )
+        return self._prev_close
 
     # -- events ------------------------------------------------------------------------
     def emit(self, event: dict[str, Any], now: datetime | None = None) -> None:
@@ -184,6 +260,7 @@ class RunnerEngine:
         """Load prior-session history before the open (the archive scan takes ~30 s)."""
         for cfg in self.config.strategies:
             self._history_for(cfg, self.plugins[cfg.name])
+        self.load_prev_close()
 
     def _can_short(self, symbol: str) -> bool:
         if symbol not in self._asset_cache:
@@ -426,10 +503,15 @@ class RunnerEngine:
             tmp.replace(self.event_dir / "bars-live.parquet")
 
     # -- the tick ----------------------------------------------------------------------
-    def tick(self, decision_ts: pd.Timestamp, now: datetime, *, stale: bool = False) -> TickReport:
+    def tick(
+        self, decision_ts: pd.Timestamp, now: datetime, *, stale: bool = False, retry: int = 0
+    ) -> TickReport:
+        """``retry`` > 0: a flatten retry inside the same minute -- the order ids differ from
+        the minute's first attempt, everything else is the normal tick."""
         tick_id = decision_ts.isoformat()
         report = TickReport(tick=tick_id)
         self.start(now)
+        self.load_prev_close(now)
         reason = self.kill_check()
         self.sync_orders(now, allow_submit=not reason, cancel_open=True)
         if reason:
@@ -454,7 +536,6 @@ class RunnerEngine:
         self._update_halts(prices, tick_id, now)
         stop_mode = self.stop_file.exists()
         account_halted = "account:all" in self.state.halts
-        flatten_clock = decision_ts >= self.flatten_ts
         broker_pos = (
             self.broker.positions() if self.submit_orders else self.state.account_positions()
         )
@@ -466,6 +547,7 @@ class RunnerEngine:
         for cfg in self.config.strategies:
             halted = f"strategy:{cfg.name}" in self.state.halts
             sub = self.state.subs[cfg.name]
+            flatten_clock = decision_ts >= self.flatten_ts_by[cfg.name]
             flatten = (
                 halted or account_halted or stop_mode or (flatten_clock and not cfg.allow_overnight)
             )
@@ -502,7 +584,7 @@ class RunnerEngine:
         intents = self._risk_and_intents(
             wants, prices, blocked_symbols, tick_id, now, report, missing
         )
-        self._net_and_submit(intents, prices, broker_pos, decision_ts, tick_id, now, report)
+        self._net_and_submit(intents, prices, broker_pos, decision_ts, tick_id, now, report, retry)
         for name in done_strategies:
             self.emit({"type": "tick_done", "tick": tick_id, "strategy": name}, now)
         if _et_minutes(decision_ts) % 5 == 0:
@@ -628,6 +710,7 @@ class RunnerEngine:
             state=dict(self.state.plugin_state.get(cfg.name, {})),
             capital_usd=cfg.capital_usd,
             day_pnl_usd=sub.day_pnl(prices),
+            prev_close_raw={s: self._prev_close[s] for s in cfg.symbols if s in self._prev_close},
         )
         try:
             assert_point_in_time(ctx)
@@ -820,6 +903,7 @@ class RunnerEngine:
         tick_id: str,
         now: datetime,
         report: TickReport,
+        retry: int = 0,
     ) -> None:
         caps = self.config.account_caps
         acct = self.state.account_positions()
@@ -861,7 +945,7 @@ class RunnerEngine:
             if net == 0:
                 side = "buy"
             hhmm = decision_ts.tz_convert(NEW_YORK).strftime("%H%M")
-            purpose = f"{'f' if flatten else 't'}{hhmm}"
+            purpose = f"{'f' if flatten else 't'}{hhmm}{f'r{retry}' if retry else ''}"
             cid = _client_order_id(
                 f"runner-{self.config.account}",
                 self.session,

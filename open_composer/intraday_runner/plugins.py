@@ -50,6 +50,9 @@ class PluginContext:
     state: Mapping[str, Any]
     capital_usd: float
     day_pnl_usd: float
+    # official previous-session close, unadjusted (daily bar, raw, SIP); falls back to the last
+    # minute close of that session (flagged in the event log); only the strategy's own symbols
+    prev_close_raw: Mapping[str, float] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

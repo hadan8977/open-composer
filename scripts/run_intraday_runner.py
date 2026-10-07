@@ -54,8 +54,14 @@ def cmd_replay(args: argparse.Namespace) -> int:
     config = load_runner_config(Path(args.config))
     out_root = Path(args.out_root)
     session = date.fromisoformat(args.session)
+    prev_file = Path(args.prev_close_file) if args.prev_close_file else None
     result = replay_session(
-        config, session, out_root, slippage_bps=args.slippage_bps, degrade_live=not args.no_degrade
+        config,
+        session,
+        out_root,
+        slippage_bps=args.slippage_bps,
+        degrade_live=not args.no_degrade,
+        prev_close_file=prev_file,
     )
     restart = None
     if args.restart_check:
@@ -66,6 +72,7 @@ def cmd_replay(args: argparse.Namespace) -> int:
             out_root,
             slippage_bps=args.slippage_bps,
             degrade_live=not args.no_degrade,
+            prev_close_file=prev_file,
         )
         after = EventLog(again["engine"].event_dir / "events.jsonl").read()
 
@@ -199,6 +206,10 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--report")
             p.add_argument("--slippage-bps", type=float, default=1.0)
             p.add_argument("--no-degrade", action="store_true")
+            p.add_argument(
+                "--prev-close-file",
+                help="JSON {symbol: official unadjusted previous close}; default = last minute close",
+            )
             p.add_argument("--restart-check", action="store_true")
             p.set_defaults(func=cmd_replay)
         elif name == "run":

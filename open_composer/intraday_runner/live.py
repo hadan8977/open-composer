@@ -19,6 +19,7 @@ from typing import Any
 import pandas as pd
 
 from open_composer.intraday_runner.bars import (
+    AlpacaDailyCloseProvider,
     AlpacaMinuteProvider,
     ArchiveMinuteProvider,
     MinuteProvider,
@@ -36,6 +37,8 @@ from open_composer.intraday_runner.ratelimit import RateLimiter
 from open_composer.intraday_runner.reporting import finish_session
 from open_composer.market_calendar import NEW_YORK, us_equity_session_close
 
+FLATTEN_RETRY_SECONDS = 30.0  # market-order flatten is retried this often until flat
+FLATTEN_LAST_BEFORE_CLOSE_SECONDS = 30.0  # no attempt later than this before the close
 PRE_OPEN_START_MINUTES = 20
 POST_CLOSE_FINISH_MINUTES = 3
 
@@ -71,6 +74,7 @@ def build_engine(
     *,
     allow_paper_orders: bool,
     live_provider: MinuteProvider | None = None,
+    prev_close_provider: Any | None = None,
     now: datetime | None = None,
     limiter: RateLimiter | None = None,
     **kwargs: Any,
@@ -91,6 +95,13 @@ def build_engine(
         broker,
         bars,
         history_provider=ArchiveMinuteProvider(),
+        # injected live bars (tests, recorded feeds) stay offline: no daily-bar request
+        prev_close_provider=prev_close_provider
+        or (
+            AlpacaDailyCloseProvider(account=config.account, limiter=limiter)
+            if live_provider is None
+            else None
+        ),
         submit_orders=allow_paper_orders,
         mode="paper" if allow_paper_orders else "plan_only",
         auth_id=auth_id,
@@ -140,6 +151,7 @@ def run_live(
     once: bool = False,
     broker: Broker | None = None,
     live_provider: MinuteProvider | None = None,
+    prev_close_provider: Any | None = None,
     kill_check: Callable[[], str | None] | None = None,
     clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     sleep: Callable[[float], None] = _time.sleep,
@@ -176,6 +188,7 @@ def run_live(
             broker,
             allow_paper_orders=allow_paper_orders,
             live_provider=live_provider,
+            prev_close_provider=prev_close_provider,
             now=now,
             kill_check=kill_check,
             limiter=limiter,
@@ -186,6 +199,8 @@ def run_live(
         engine.preload()
         ticked = 0
         last: pd.Timestamp | None = None
+        last_retry: pd.Timestamp | None = None
+        retry_limit = close_ts - pd.Timedelta(seconds=FLATTEN_LAST_BEFORE_CLOSE_SECONDS)
         while True:
             now = clock()
             stamp = pd.Timestamp(now)
@@ -200,9 +215,29 @@ def run_live(
                 ticked += 1
                 if once:
                     return {"status": "ticked", "tick": boundary.isoformat(), "ticks": ticked}
+            elif (
+                boundary < close_ts
+                and boundary != last_retry
+                and stamp >= boundary + _retry_offset(config)
+                and stamp <= retry_limit
+                and engine.flatten_open(boundary)
+            ):
+                # still holding after the flatten attempt of this minute: market-flatten again
+                engine.tick(boundary, now, retry=1)
+                last_retry = boundary
+                ticked += 1
+                if once:
+                    return {"status": "ticked", "tick": boundary.isoformat(), "ticks": ticked}
             elif once:
                 return {"status": "not_due", "now": stamp.isoformat()}
             next_wake = boundary + pd.Timedelta(minutes=1, seconds=config.bar_delay_seconds)
+            retry_at = boundary + _retry_offset(config)
+            if (
+                boundary != last_retry
+                and stamp < retry_at <= min(next_wake, retry_limit)
+                and engine.flatten_open(boundary)
+            ):
+                next_wake = retry_at
             if stamp < open_ts - pd.Timedelta(minutes=PRE_OPEN_START_MINUTES):
                 return {"status": "too_early", "now": stamp.isoformat()}
             sleep(max(1.0, (next_wake - stamp).total_seconds()))
@@ -211,6 +246,10 @@ def run_live(
     finally:
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
         lock.close()
+
+
+def _retry_offset(config: RunnerConfig) -> pd.Timedelta:
+    return pd.Timedelta(seconds=config.bar_delay_seconds + FLATTEN_RETRY_SECONDS)
 
 
 def minutes_to(ts: pd.Timestamp, now: datetime) -> float:

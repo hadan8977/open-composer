@@ -20,6 +20,7 @@ from open_composer.intraday_runner.bars import (
     ArchiveMinuteProvider,
     FrameMinuteProvider,
     SessionBars,
+    StaticPrevClose,
     load_history,
     session_bounds,
 )
@@ -48,7 +49,12 @@ def replay_session(
     slippage_bps: float = 1.0,
     degrade_live: bool = True,
     kill_check=None,
+    prev_close_raw: dict[str, float] | None = None,
+    prev_close_file: Path | None = None,
 ) -> dict[str, Any]:
+    """``prev_close_raw`` / ``prev_close_file`` ({symbol: price}) give the official unadjusted
+    previous close; without them the engine falls back to the last minute close and flags it
+    (the local ``data/sip/daily`` files are split-adjusted and are not used)."""
     archive = ArchiveMinuteProvider(sip_root)
     open_ts, close_ts = session_bounds(session)
     load_history(archive, config.all_symbols, session, 20)  # one archive scan serves all reads
@@ -73,6 +79,9 @@ def replay_session(
         broker,
         bars,
         history_provider=archive,
+        prev_close_provider=StaticPrevClose(prev_close_raw, prev_close_file)
+        if (prev_close_raw or prev_close_file)
+        else None,
         mode="replay",
         auth_id="replay-no-authorization",
         kill_check=kill_check or (lambda: None),

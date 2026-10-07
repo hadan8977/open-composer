@@ -72,6 +72,9 @@ class StrategyConfig:
     # client-side stop on 1-minute closes vs the average cost (0 = off); no broker-side stops
     stop_loss_pct: float = 0.0
     stop_cooldown_minutes: int = 30
+    # per-strategy flatten time (ET); None = the session default.  15:45-15:59, same number of
+    # minutes before the close on half days
+    flatten_et: time | None = None
 
     @property
     def minutes(self) -> int:
@@ -124,6 +127,17 @@ def _positive(value: Any, label: str) -> float:
     return number
 
 
+FLATTEN_EARLIEST = time(15, 45)
+FLATTEN_LATEST = time(15, 59)
+
+
+def _flatten_time(value: Any, label: str) -> time:
+    parsed = _parse_et_time(str(value))
+    if not FLATTEN_EARLIEST <= parsed <= FLATTEN_LATEST:
+        raise RunnerConfigError(f"{label} must be between 15:45 and 15:59 ET")
+    return parsed
+
+
 def _strategy_from_raw(raw: dict[str, Any]) -> StrategyConfig:
     name = str(raw.get("name") or "").strip()
     if not name or "/" in name or "|" in name:
@@ -163,6 +177,9 @@ def _strategy_from_raw(raw: dict[str, Any]) -> StrategyConfig:
         resize_band=float(raw.get("resize_band", 0.05)),
         stop_loss_pct=float(raw.get("stop_loss_pct", 0.0)),
         stop_cooldown_minutes=int(raw.get("stop_cooldown_minutes", 30)),
+        flatten_et=_flatten_time(raw["flatten_et"], f"{name}.flatten_et")
+        if raw.get("flatten_et")
+        else None,
     )
 
 
@@ -202,7 +219,7 @@ def load_runner_config(path: Path) -> RunnerConfig:
         runner_name=name,
         account=account,
         live_feed=live_feed,
-        flatten_et=_parse_et_time(str(session.get("flatten_et", "15:55"))),
+        flatten_et=_flatten_time(session.get("flatten_et", "15:55"), "session.flatten_et"),
         bar_delay_seconds=float(session.get("bar_delay_seconds", 5)),
         max_tick_staleness_seconds=float(session.get("max_tick_staleness_seconds", 90)),
         order_ttl_seconds=float(session.get("order_ttl_seconds", 60)),
