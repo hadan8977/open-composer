@@ -1,0 +1,176 @@
+{
+  "cheapest_decisive_test": {
+    "action": "scripts/t0702_run.py: R events (positive control first) and J jump episodes on the 15 ETF minute panels, 24 variants, timing placebos, DSR; writes results.json.",
+    "pass_condition": "Selected spec (median of top three recent net Sharpe) has DSR >= 0.70, net placebo percentile >= 0.90, robustness >= 3 of the evaluation-standard checks, no veto (P1).",
+    "falsification_condition": "Not holding only if positive control (R) or at least 100 episodes at theta 3 (J), rules as written, three scale points, the budget used and power are all met and the selected net Sharpe <= 0 or placebo < 0.9; otherwise not at depth.",
+    "max_compute_minutes": 120
+  },
+  "cost_and_execution_assumptions": "Signal on the close of minute t, fill at the open of t+1; R fills at the release minute open. ETF cost per side = tick-based half spread + 0.02 bp, sells + 0.206 bp, before 09:45 ET + 1 bp, extended hours + 3 bp (6 bp sector SPDRs, unmeasured), reported at x1 and x2. 1x notional, no borrow cost on TLT/SPY/IWM shorts (liquid, easy to borrow). Paper fills are NBBO-based and optimistic in extended hours.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Fed Board FEDS 2026-010: Kalshi about equal to consensus except headline CPI and the policy rate. Li-Xie 2026: tariff odds surprises move the S&P 500 about 0.7 percent inside a 30-minute window. Tsang-Yang 2026: odds jumps may reverse or persist. Mohanty 2026: Kalshi changes predict crypto volatility, regime dependent. No source gives a net-of-cost ETF rule from odds; local priors are negative at daily frequency. Reuse: Kalshi candles and the implied-distribution code of T-20261002-44, T-15 cost model, t15 statistics.",
+  "iter_id": "t20261007_02_pm_event_study",
+  "negative_experiments_checked": "oc research directions rows prediction_market_macro_release_uncertainty_premium (parked: D 13.9 bp, p 0.41), prediction_market_earnings_beat_odds (refuted), prediction_market_policy_odds_leadlag_glw2026 (refuted, daily). Differences: minute-level returns after releases, positive control with realised surprise, one-hour jump episodes across eight themes, direction mapping fixed before returns, extended-hours costs, 24 counted trials. Not reopening the earnings or the daily midterm lead-lag.",
+  "objective": "T-20261007-02: do prediction-market odds (Kalshi pre-release expectations for macro releases; Polymarket one-hour odds jumps for policy, Fed, shutdown, recession and election themes) predict US ETF returns at 5-240 minute horizons net of costs, 2024-01-08..2026-10-06?",
+  "queries": [
+    {
+      "query": "Kalshi prediction market FOMC CPI odds predict stock market returns announcement intraday study",
+      "searched_at": "2026-10-07T04:49:22Z",
+      "opened_urls": [
+        "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf",
+        "https://arxiv.org/abs/2604.01431"
+      ]
+    },
+    {
+      "query": "Polymarket odds changes tariff election asset prices high-frequency event study paper 2025",
+      "searched_at": "2026-10-07T04:49:22Z",
+      "opened_urls": [
+        "https://ies.keio.ac.jp/upload/20260526macro_Yinxi-Xie_WP.pdf",
+        "https://arxiv.org/abs/2603.03152",
+        "https://arxiv.org/abs/2603.03136"
+      ]
+    },
+    {
+      "query": "Kalshi macro markets Federal Reserve study prediction markets forecasts CPI payrolls accuracy versus consensus",
+      "searched_at": "2026-10-07T04:49:22Z",
+      "opened_urls": [
+        "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf",
+        "https://github.com/WillBtK/macro_kalshi"
+      ]
+    },
+    {
+      "query": "Polymarket CLOB prices-history documentation and Kalshi candlesticks API",
+      "searched_at": "2026-10-07T04:49:22Z",
+      "opened_urls": [
+        "https://docs.polymarket.com/developers/CLOB/timeseries",
+        "https://docs.kalshi.com/api-reference/market/get-market-candlesticks"
+      ]
+    }
+  ],
+  "remaining_evidence_gap": "Not measured: ETF NBBO half spreads in extended hours (priors), true timing of odds jumps inside the hour (hourly prices only), stale hourly Kalshi candles in thin strikes, the live odds feed latency, IEX versus SIP consistency for the live signal, and Alpaca extended-hours order behaviour for TLT around 08:30.",
+  "reviewed_at": "2026-10-07T04:49:22Z",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "Why R may have little: Kalshi is about consensus except headline CPI and the policy rate; release classes and intraday reaction are the paper's own.",
+      "claim": "Diercks, Katz and Wright (FEDS 2026-010): Kalshi's fed-funds mode matched the realised rate the day before every FOMC meeting since 2022 (better than fed funds futures); for headline CPI Kalshi beats the Bloomberg consensus; for core CPI and unemployment it is about equal; intraday Kalshi probabilities react to releases.",
+      "claim_id": "feds_2026_010_kalshi_macro_markets",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "Fed Board paper, no independent replication seen.",
+      "limitations": "Forecast accuracy, not trading; no ETF returns.",
+      "market_and_period": "Kalshi macro series, 2022-2025, US",
+      "published_or_updated_at": "unknown",
+      "sha256": "5e4379df10ea48f827a36585eb60dea71f03cf6fe00ab6d9f62bc70596beb09b",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/feds2026010.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "paper",
+      "url": "https://www.federalreserve.gov/econres/feds/files/2026010pap.pdf"
+    },
+    {
+      "applicability": "Identification idea for J (odds change in a short window, ETF return right after) and the tariff theme sign (escalation negative for SPY).",
+      "claim": "Li and Xie (Keio WP 2026): trade policy surprises built from Polymarket tariff contracts over a 30-minute window [t-10, t+20] around each announcement (last trade before to first trade after); tariff surprises lower the S&P 500 (about 0.7 percent initial drop, persistent), lower Treasury convenience yields and raise recession probability.",
+      "claim_id": "li_xie_2026_trade_policy_surprises_polymarket",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "None independent.",
+      "limitations": "Daily and impulse-response frequency for returns, transaction-level odds; no tradable rule or costs.",
+      "market_and_period": "Polymarket tariff contracts and US Treasuries/S&P 500, Nov 2024 to 2025",
+      "published_or_updated_at": "2026-04-30",
+      "sha256": "23266507454331783e9a5ff0331edc8dbb142a9561591990b1814dd47e593e63",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/keio.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "paper",
+      "url": "https://ies.keio.ac.jp/upload/20260526macro_Yinxi-Xie_WP.pdf"
+    },
+    {
+      "applicability": "Continuation versus reversal cannot be assumed: J counts both modes as trials.",
+      "claim": "Tsang and Yang (arXiv 2603.03152 v4): in 2024 Polymarket election markets the debate jump largely reversed, the assassination-attempt repricing persisted and Biden's withdrawal moved little; the response tracks what the news reveals about linked outcomes and how much was anticipated.",
+      "claim_id": "tsang_yang_2026_political_shocks_price_discovery",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "Companion paper arXiv 2603.03136.",
+      "limitations": "Odds-side study, no ETF returns, one election.",
+      "market_and_period": "Polymarket 2024 presidential election, on-chain trades",
+      "published_or_updated_at": "2026-07-18",
+      "sha256": "dc0f24edf01b8e74b9604ba638d51ee5ef309db484445654c5dd12aed118249a",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/arxiv2603.03152_tsang_yang_political_shocks.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.03152"
+    },
+    {
+      "applicability": "Kalshi changes carry information about volatility, not direction; effect tied to the 2024-2025 cutting cycle.",
+      "claim": "Mohanty and Krishnamachari (arXiv 2604.01431): daily volume-weighted probability changes in Kalshi macro markets predict crypto realised volatility (KXFED t 3.63 in sample but regime dependent; recession and CPI channels deliver out-of-sample gains, MSFE ratio 0.979 and 0.959), surviving Benjamini-Hochberg at q 0.05.",
+      "claim_id": "mohanty_2026_kalshi_macro_crypto_volatility",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "None.",
+      "limitations": "Crypto, daily, volatility.",
+      "market_and_period": "Kalshi 10 series and 6 crypto assets, 2023-01 to 2026-03",
+      "published_or_updated_at": "2026-04-01",
+      "sha256": "9ad0586d107a7f989518bd80e37cb33f713680e465b345c5e6f7f166bafe475e",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/arxiv2604.01431.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2604.01431"
+    },
+    {
+      "applicability": "Data facts for Polymarket price series (what a quoted price is and its noise).",
+      "claim": "Tsang and Yang (arXiv 2603.03136 v3): complete on-chain ledger of Polymarket's 2024 presidential election; the widely quoted Trump YES price is studied as a forecast with trade-level microstructure.",
+      "claim_id": "tsang_yang_2026_anatomy_polymarket",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "Companion arXiv 2603.03152.",
+      "limitations": "One event family.",
+      "market_and_period": "Polymarket 2024 US presidential election",
+      "published_or_updated_at": "2026-09-14",
+      "sha256": "a356c552eea7e69ca224a4940d21fe28523c5ee217e3281354dda11999d57449",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/arxiv2603.03136_tsang_yang_anatomy.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.03136"
+    },
+    {
+      "applicability": "Fetch design: 14-day chunks at 60-minute fidelity, cached.",
+      "claim": "Polymarket CLOB prices-history: query by market (token) with startTs, endTs, interval or fidelity in minutes; returns history of (t, p). Probed 2026-10-07: hourly fidelity accepts windows up to about 14-15 days, 30 days returns 'interval is too long'; fine fidelity works for closed markets.",
+      "claim_id": "polymarket_clob_prices_history_docs",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "Probe in this iteration.",
+      "limitations": "Page does not state the window limit; the limit comes from our probe.",
+      "market_and_period": "Polymarket CLOB",
+      "published_or_updated_at": "unknown",
+      "sha256": "1cea5409434025ab72a2285ef11ea27271907d603d9305cc8b3751a1659abe4b",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/polymarket_docs_prices_history.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.polymarket.com/developers/CLOB/timeseries"
+    },
+    {
+      "applicability": "Source of the pre-release hourly implied distributions for R (fetch script from T-20261002-44).",
+      "claim": "Kalshi get-market-candlesticks returns OHLC of bid, ask and trade price per period (1, 60 or 1440 minutes); settled markets served by the historical endpoints.",
+      "claim_id": "kalshi_api_candlesticks_docs",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "Used in h20261002_pm_macro_uncertainty.",
+      "limitations": "Hourly resolution leaves stale candles in thin strikes (median age reported per event).",
+      "market_and_period": "Kalshi markets",
+      "published_or_updated_at": "unknown",
+      "sha256": "2964f6c0b3c775aa575049fbbd645a866472a72275aab348790e476ace400ded",
+      "snapshot_path": "reports/research/intel/sources/pm-event-study-2026-10-07/kalshi_docs_candlesticks.txt",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.kalshi.com/api-reference/market/get-market-candlesticks"
+    },
+    {
+      "applicability": "Same event source, different question (direction at minute horizons, not daily uncertainty premium).",
+      "claim": "Local test h20261002_pm_macro_uncertainty (Kalshi U_rel, 79 release days): D 13.9 bp, permutation p 0.41, not supported and not refuted; positive D rested on 2025. The MIT-licensed WillBtK/macro_kalshi scraper is the source of the middle-out cleaning used for the implied distribution.",
+      "claim_id": "local_pm_macro_uncertainty_negative",
+      "fetched_at": "2026-10-07T04:20:32Z",
+      "independent_replication": "None.",
+      "limitations": "Daily; 79 days.",
+      "market_and_period": "Kalshi CPI/payrolls/GDP/FOMC 2023-07..2026-09, QQQ close-to-close",
+      "published_or_updated_at": "2026-10-02",
+      "sha256": "980756fbd89682f3a5d7b6119017cd478068c22a4c49086e4022317dc024db05",
+      "snapshot_path": "reports/research/iterations/h20261002_pm_macro_uncertainty/report.md",
+      "source_card_path": "reports/harness/source_cards/t20261007_02_pm_event_study.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://github.com/WillBtK/macro_kalshi"
+    }
+  ],
+  "stop_condition": "Frozen in hypotheses.md: a part is called 'does not hold' only with reproduction (positive control), rules as written, three scale points, the registered budget used and enough power; otherwise 'not at depth' with the missing piece named. Budget: 24 trading variants, about 2 CPU hours on this box, 0 USD Modal. Deadline R 2026-10-09, all 2026-10-12 22:00 UTC. No change to rules, windows, gates or costs after results.",
+  "target_regime_and_horizon": "Decision window 2024-01-08 to 2026-10-06 (about 689 sessions); phases of reports/research/program/regimes-2026-10-01 for robustness; holding 5 minutes to 4 hours inside one session; validity ends when the forward 63-session net mean falls below zero. R from 2023-01 only for the crash diagnostic."
+}
