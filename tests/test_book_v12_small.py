@@ -128,3 +128,58 @@ def test_names_without_price_pass_through():
     for method, k in (("R1", 1), ("R3", None)):
         out, _ = sm.concentrate(virt, p, method, k)
         assert out[2] == 2.0 and out[4] == -1.0
+
+
+def test_bootstrap_and_te_ratio_identities():
+    rng = np.random.default_rng(1)
+    x = rng.normal(0.0005, 0.01, 300)
+    ci = sm.stationary_bootstrap_diff(x, x, draws=50)
+    assert ci["lo90"] == 0.0 and ci["hi90"] == 0.0
+    s = pd.Series(x, index=pd.bdate_range("2024-01-01", periods=300))
+    assert sm.te_ratio(s * 0.4, s) < 1e-12
+    assert sm.te_ratio(s * 0.4 + pd.Series(rng.normal(0, 0.005, 300), index=s.index), s) > 0.1
+    assert sm.percentile_among(1.0, [0.0, 2.0, 1.0, 0.5]) == 0.625
+
+
+def _cfg(sharpe, stress, ret, ret_s, te, v2, x2=0.1):
+    return {
+        "windows": {"recent": {"sharpe": sharpe}, "stress": {"sharpe": stress}},
+        "retention": {"recent": ret, "stress": ret_s},
+        "te_ratio": {"full": te},
+        "v2": {"v2_pass": v2},
+        "implementation": {"ann_excess_recent_2x_cost": x2},
+    }
+
+
+def test_decide_form_contract_order():
+    cfgs = {}
+    for k in ("50", "100", "200", "300", "all"):
+        cfgs[f"F1_R1_K{k}"] = _cfg(1.0, 0.5, 0.9, 0.7, 0.2, k in ("50", "100", "200"))
+    cfgs["F1_R1B_K200"] = _cfg(0.95, 0.5, 0.85, 0.7, 0.2, True)
+    cfgs["F1_R1B_K100"] = _cfg(0.95, 0.5, 0.85, 0.7, 0.2, True)
+    cfgs["F1_R3"] = _cfg(0.5, 0.2, 0.5, 0.3, 0.2, True)
+    for c in (25000, 100000):
+        for k in ("50", "100", "200", "300", "all"):
+            cfgs[f"F1_R1_K{k}_C{c}"] = _cfg(1.0, 0.5, 0.9, 0.7, 0.2, c == 100000)
+    res = {
+        "configs": cfgs,
+        "placebo": {"F1": {"recent_sharpes": [0.1] * 20}},
+        "dsr_family": {"dsr": {}},
+    }
+    d = sm.decide_form("F1", res)
+    t = d["tiers"]["50000"]
+    assert t["K_star"] == 200 and t["X"] == "F1_R1_K200"  # R1B sharpe below R1
+    assert t["deploy"] == "F1_R1_K200" and t["status"] == "same_strategy"
+    assert d["mechanical_status"] == "deployable_same" and d["min_capital_tier"] == 50000
+    assert d["tiers"]["25000"]["status"] == "infeasible"
+    # R3 preferred when it keeps 0.80 and X is less than 0.10 better
+    cfgs["F1_R3"] = _cfg(0.95, 0.5, 0.85, 0.7, 0.2, True)
+    assert sm.decide_form("F1", res)["tiers"]["50000"]["deploy"] == "F1_R3"
+    # high tracking error -> related, needs DSR and placebo
+    cfgs["F1_R1_K200"] = _cfg(1.0, 0.5, 0.9, 0.7, 0.4, True)
+    cfgs["F1_R3"] = _cfg(0.5, 0.2, 0.5, 0.3, 0.2, True)
+    r = sm.decide_form("F1", res)
+    assert r["mechanical_status"] == "not_deployable_at_50k"
+    res["dsr_family"]["dsr"]["F1_R1_K200"] = 0.8
+    r = sm.decide_form("F1", res)
+    assert r["mechanical_status"] == "deployable_related_pending_stage_b"

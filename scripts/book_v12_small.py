@@ -883,11 +883,41 @@ def decide_form(form: str, res: dict, capital_tiers=(25000.0, 50000.0, 100000.0)
     return {"mechanical_status": status, "min_capital_tier": first, "tiers": tiers}
 
 
-def evaluate() -> None:
+def evaluate_partial(table: dict[str, dict]) -> None:
+    """Per-config metrics of the parquets that exist (no decision); writes results.partial.json."""
+    have = [c for c in table if (OUT_DATA / f"{c}.parquet").exists()]
+    data = {c: pd.read_parquet(OUT_DATA / f"{c}.parquet") for c in have}
+    res: dict = {
+        "have": have,
+        "missing": [c for c in table if c not in have],
+        "configs": {},
+        "identity_full": {},
+    }
+    for f in ("F1", "F2"):
+        if all(f"{x}_{f}" in data for x in ("FULL", "ORIG", "I2")):
+            res["identity_full"][f] = {
+                "I1_worst": max(max_col_diff(data[f"FULL_{f}"], data[f"ORIG_{f}"]).values()),
+                "I2_worst": max(max_col_diff(data[f"ORIG_{f}"], data[f"I2_{f}"]).values()),
+            }
+    for c in have:
+        spec = table[c]
+        f = spec["form"]
+        is_ref = c.startswith(("FULL_", "ORIG_", "I2_"))
+        full = None if is_ref or f"FULL_{f}" not in data else data[f"FULL_{f}"]
+        m = config_metrics(data[c], f, bv.EQUITY if is_ref else spec["capital"], full)
+        m["spec"] = {k: v for k, v in spec.items() if k != "parent"}
+        res["configs"][c] = m
+    (OUT_REPORT / "results.partial.json").write_text(json.dumps(res, indent=1, default=float))
+    print("partial results for", len(have), "configs; missing", len(res["missing"]), flush=True)
+
+
+def evaluate(partial: bool = False) -> None:
     from open_composer.research import scorecard_v2 as sc
 
     table = config_table()
     missing = [c for c in table if not (OUT_DATA / f"{c}.parquet").exists()]
+    if missing and partial:
+        return evaluate_partial(table)
     if missing:
         raise SystemExit(f"missing config parquets: {missing}")
     data = {c: pd.read_parquet(OUT_DATA / f"{c}.parquet") for c in table}
@@ -1047,6 +1077,11 @@ def main() -> None:
     )
     ap.add_argument("--timing", action="store_true")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument(
+        "--partial",
+        action="store_true",
+        help="evaluate: per-config metrics of existing parquets only",
+    )
     a = ap.parse_args()
     if a.stage == "identity":
         res = run_identity(a.limit)
@@ -1058,7 +1093,7 @@ def main() -> None:
         ids = resolve_configs(a.configs, config_table())
         run_pass(ids, a.limit, a.timing, a.force)
         return
-    evaluate()
+    evaluate(a.partial)
 
 
 if __name__ == "__main__":
