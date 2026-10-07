@@ -20,7 +20,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import smtplib
+import ssl
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -51,6 +54,37 @@ from open_composer.reports.owner_style import (  # noqa: E402
 
 OUT_DIR = ROOT / "logs" / "owner-report"
 EXIT_LINT, EXIT_CONFIG, EXIT_SEND = 1, 2, 3
+
+# Transient transport errors get two more tries (10-07 01:00 UTC: Gmail closed the TLS
+# session mid-handshake, SSLEOFError, and the daily report was not sent). Authentication
+# and other SMTP response errors are not retried.
+SEND_RETRY_ERRORS: tuple[type[BaseException], ...] = (
+    ssl.SSLError,
+    smtplib.SMTPServerDisconnected,
+    smtplib.SMTPConnectError,
+    ConnectionError,
+    TimeoutError,
+)
+SEND_BACKOFF_SECONDS = (20.0, 60.0)
+
+
+def send_with_retry(config, message, *, sender=send_message, sleep=time.sleep) -> int:
+    """Send, retrying transient transport errors; returns the number of attempts used."""
+    attempts = len(SEND_BACKOFF_SECONDS) + 1
+    for attempt in range(1, attempts + 1):
+        try:
+            sender(config, message)
+            return attempt
+        except SEND_RETRY_ERRORS as exc:
+            if attempt == attempts:
+                raise
+            wait = SEND_BACKOFF_SECONDS[attempt - 1]
+            print(
+                f"send attempt {attempt} failed: {type(exc).__name__}; retrying in {wait:.0f}s",
+                file=sys.stderr,
+            )
+            sleep(wait)
+    raise AssertionError("unreachable")
 
 
 def resolve_kind(kind: str, now: datetime) -> str:
@@ -128,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     attachment = (f"运行记录-{stamp}.md", log_text)
     message = build_message(config, subject, text, markdown_to_html(text), [attachment])
     try:
-        send_message(config, message)
+        send_with_retry(config, message)
     except Exception as exc:  # report the class and message only; never the config
         print(f"send failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return EXIT_SEND
