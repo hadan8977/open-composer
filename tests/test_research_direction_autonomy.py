@@ -368,3 +368,34 @@ def test_partial_historical_directory_cannot_exempt_new_dossier(tmp_path: Path) 
         "direction_review_missing_or_invalid"
         in validate_iteration_dossier("test_direction", tmp_path).blocked
     )
+
+
+def test_a_rejection_lifted_by_a_later_success_does_not_block(tmp_path, monkeypatch) -> None:
+    # 2026-10-07: the weekly limit said "resets Oct 11" but the owner upgraded at 14:20; the
+    # round preflight kept skipping until the old reset time
+    from types import SimpleNamespace
+
+    from open_composer.cockpit.data import quota
+
+    at = datetime(2026, 10, 7, 8, 23, tzinfo=UTC)
+    resets = datetime(2099, 10, 11, tzinfo=UTC)
+    weekly = SimpleNamespace(
+        status="rejected", at=at, resets_at=resets, rate_limit_type="seven_day"
+    )
+    opus = SimpleNamespace(
+        status="rejected", at=at, resets_at=resets, rate_limit_type="seven_day_opus"
+    )
+    estimate = SimpleNamespace(
+        generated_at=datetime.now(UTC), fresh_total=1, by_role_model={"m": 1}, cache_read_total=0
+    )
+    monkeypatch.setattr(quota, "build_usage_estimate", lambda: estimate)
+    monkeypatch.setattr(quota, "find_all_throttle_events", lambda: (weekly,))
+    ledger = tmp_path / "usage-ledger.json"
+    assert autonomy.usage_snapshot(ledger)["retry_after"] == resets.isoformat()  # no ledger
+    ledger.write_text(json.dumps({"last_success": {"sonnet": "2026-10-07T14:21:00+00:00"}}))
+    snapshot = autonomy.usage_snapshot(ledger)
+    assert snapshot["retry_after"] is None and snapshot["lifted_rejections"] == 1
+    monkeypatch.setattr(quota, "find_all_throttle_events", lambda: (opus,))
+    assert autonomy.usage_snapshot(ledger)["retry_after"] == resets.isoformat()  # sonnet != opus
+    ledger.write_text(json.dumps({"last_success": {"opus": "2026-10-07T08:22:00+00:00"}}))
+    assert autonomy.usage_snapshot(ledger)["retry_after"] == resets.isoformat()  # before it

@@ -23,6 +23,9 @@ from open_composer.research.direction import validate_direction_review
 STATE_DIR = Path("reports/research/autonomy")
 CONFIG_PATH = Path("config/research-autonomy.json")
 QUEUE_PATH = Path("config/research-autonomy-queue.json")
+# Newest successful call per model family, kept by scripts/round_limit_gate.py (cron, every 5 min).
+GATE_LEDGER_PATH = Path(__file__).resolve().parents[2] / "logs/autonomous/usage-ledger.json"
+_MODEL_FAMILIES = ("opus", "sonnet", "haiku", "fable")  # as in scripts/round_limit_gate.py
 
 
 def _read_object(path: Path) -> dict[str, Any]:
@@ -67,7 +70,40 @@ def _claude_result_success(path: Path) -> bool:
     )
 
 
-def usage_snapshot() -> dict[str, Any]:
+def last_successes(path: Path = GATE_LEDGER_PATH) -> dict[str, datetime]:
+    """Newest successful call per model family from the round gate's ledger ({} if unreadable)."""
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8")).get("last_success") or {}
+    except (OSError, ValueError, AttributeError):
+        return {}
+    out: dict[str, datetime] = {}
+    for family, value in raw.items():
+        try:
+            moment = datetime.fromisoformat(str(value))
+        except ValueError:
+            continue
+        if moment.tzinfo is not None:
+            out[str(family)] = moment
+    return out
+
+
+def limit_lifted(event: Any, successes: dict[str, datetime]) -> bool:
+    """A rejection stops binding once a model it binds made a successful call after it (the
+    owner used a reset or upgraded the plan, as on 2026-10-07).  Same rule as
+    ``round_limit_gate.active_limits``: a model-specific limit (``seven_day_opus``) is lifted only
+    by that family; a general one by any family."""
+    at = getattr(event, "at", None)
+    if at is None:
+        return False
+    kind = str(getattr(event, "rate_limit_type", "") or "").lower()
+    named = [f for f in _MODEL_FAMILIES if f in kind]
+    return any(
+        ok > at + timedelta(seconds=1) and (not named or family in named)
+        for family, ok in successes.items()
+    )
+
+
+def usage_snapshot(ledger_path: Path = GATE_LEDGER_PATH) -> dict[str, Any]:
     # Reuse the already deployed quota reader. No OAuth probe and no percentage
     # estimate: transcript counts are a lower bound, not subscription capacity.
     from open_composer.cockpit.data.quota import (
@@ -76,14 +112,12 @@ def usage_snapshot() -> dict[str, Any]:
     )
 
     usage = build_usage_estimate()
-    events = find_all_throttle_events()
-    resets = [e.resets_at for e in events if e.status == "rejected" and e.resets_at]
+    successes = last_successes(ledger_path)
+    rejected = [e for e in find_all_throttle_events() if e.status == "rejected"]
+    binding = [e for e in rejected if not limit_lifted(e, successes)]
+    resets = [e.resets_at for e in binding if e.resets_at]
     unknown_reset = any(
-        e.status == "rejected"
-        and not e.resets_at
-        and e.at
-        and e.at > datetime.now(UTC) - timedelta(hours=5)
-        for e in events
+        not e.resets_at and e.at and e.at > datetime.now(UTC) - timedelta(hours=5) for e in binding
     )
     return {
         "observed_at": usage.generated_at.isoformat(),
@@ -92,6 +126,7 @@ def usage_snapshot() -> dict[str, Any]:
         and (usage.fresh_total + usage.cache_read_total > 0),
         "retry_after": max(resets).isoformat() if resets else None,
         "unknown_throttle_reset": unknown_reset,
+        "lifted_rejections": len(rejected) - len(binding),
         "basis": "local_transcript_lower_bound_not_subscription_percentage",
     }
 

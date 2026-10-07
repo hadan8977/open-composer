@@ -3,7 +3,7 @@
 机主 2026-09-27 批准自动研究轮；2026-09-28 改为每 3 小时一轮。**2026-09-30 起主审轮和执行轮交替**（机主：「用 opus xhigh/max 做好规划，其他的交给 sonnet5.5 high 来做也比较好，注意控制额度」）：
 
 - **主审轮**：UTC 01:07、07:07、13:07、19:07。Opus 5.5，思考强度 max。Paseo 定时任务 `oc-research-lead-round`。
-- **执行轮**：UTC 04:07、10:07、16:07、22:07。Sonnet 5.5，思考强度 high。Paseo 定时任务 `oc-research-exec-round`，模型填 `sonnet`：Paseo 按 `~/.claude/settings.json` 把它解析成 `claude-sonnet-5-5`（2026-09-30 实测）。
+- **执行轮**：UTC 04:07、10:07、16:07、22:07。Sonnet 5.5，思考强度 high。Paseo 定时任务 `oc-research-exec-round`，模型写明 `claude-sonnet-5-5`（2026-10-07 起）。机主更新 Paseo 后，模型列表里 Sonnet 5.5 和 Sonnet 5 并列；别名 `sonnet` 只有靠 `~/.claude/settings.json` 才会解析成 5.5。
 
 2026-09-29 机主决定不再查真实额度接口（第 6 节；**额度方案 A** 已被取代，不再是生效规则）。每轮由 Paseo 定时任务启动一个新代理。本手册就是那个代理的完整任务说明；定时任务的提示词只写轮次类型，让它读本文件照做。改流程时改本文件。改模型、思考强度或时间要重建定时任务：`paseo schedule update` 改不了思考强度，要先用 `paseo schedule create --thinking <id>` 新建，再暂停旧的。
 
@@ -199,8 +199,8 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
   - 定义文件已把模型固定为 `claude-sonnet-5-5`。**不要给 Agent 工具传 `model` 参数**：传了会覆盖固定的型号。
   - 机主 2026-09-30：不再用 Sonnet 5。每轮结束前查一次子代理记录里的 `model` 字段，必须是 `claude-sonnet-5-5`；不是就在汇报里写明。
   - 如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`。
-    - 参数：`provider: "claude/sonnet"`、`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`、`notifyOnFinish: true`。
-    - Paseo 把 `sonnet` 按 `~/.claude/settings.json` 解析成 `claude-sonnet-5-5`（2026-09-30 实测）。不准选列表里的 `claude-sonnet-5`。
+    - 参数：`provider: "claude/claude-sonnet-5-5"`（2026-10-07 起写明型号）、`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`、`notifyOnFinish: true`。
+    - 不准选列表里的 `claude-sonnet-5`（Sonnet 5）：10-06/07 有 6 个独立代理误选了它。建完用 `list_agents` 核对 `model` 字段，应为 `claude-sonnet-5-5`。
     - 任务说明里要写进 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项。
   - 一轮最多 3 个，同一时间最多 2 个。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
   - 任务说明第一行写任务代码，例如 `任务代码 T-20260930-12`。之后给这个子代理的 SendMessage 都以同一代码开头，否则它会把消息当成注入拒绝（2026-09-29）。
