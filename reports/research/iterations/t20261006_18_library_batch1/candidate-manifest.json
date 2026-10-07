@@ -1,0 +1,500 @@
+{
+  "candidate_count": 19,
+  "candidates": [
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "ReturnSkew",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "skewness of 21 daily returns, >=15 obs (OSAP: previous month)",
+        "first_batch_id": "osap-ReturnSkew",
+        "kind": "price",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "BetaTailRisk",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "Kelly-Jiang tail beta; tailEX from all local stocks with prior close >= 5, monthly beta over up to 120 months, min 60 (local history starts 2016-02)",
+        "first_batch_id": "osap-BetaTailRisk",
+        "kind": "price",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "GrAdExp",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "ln(adv_FY) - ln(adv_FY-1), both >= $0.1M, exclude lowest mcap decile",
+        "first_batch_id": "osap-GrAdExp",
+        "kind": "acct",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "RDAbility",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "mean slope of ln(sale growth) on ln(1+xrd/sale) lags 1..5 over 8 FYs, >=6 pairs, top tercile of xrd/sale, rd>0",
+        "first_batch_id": "osap-RDAbility",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "OrgCap",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "0.85*OrgCap + sga, init 4*sga, / assets; no GNP deflator, all fiscal year ends, history from 2009 (XBRL)",
+        "first_batch_id": "osap-OrgCap",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "IntMom",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "close[t-126]/close[t-252]-1",
+        "first_batch_id": "osap-IntMom",
+        "kind": "price",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "InvGrowth",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "FY inventory growth (no deflator: common factor in the cross-section), SIC 1-digit 4/6 and at/ppent<=0 dropped",
+        "first_batch_id": "osap-InvGrowth",
+        "kind": "acct",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "Cash",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "cash and short-term investments / total assets, latest quarter",
+        "first_batch_id": "osap-Cash",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "PctAcc",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "(ib - oancf)/|ib| annual, ib=0 -> 0.01; ib = income from continuing operations else net income",
+        "first_batch_id": "osap-PctAcc",
+        "kind": "acct",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "ChTax",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "4-quarter change in quarterly income tax expense / assets 4 quarters earlier",
+        "first_batch_id": "osap-ChTax",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "OPLeverage",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "(sga + cogs)/assets, latest FY, sga missing -> 0",
+        "first_batch_id": "osap-OPLeverage",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "ChEQ",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "book equity / book equity 1y earlier - 1 (latest quarter vs same quarter a year before), both > 0",
+        "first_batch_id": "osap-ChEQ",
+        "kind": "acct",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "roaq",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "quarterly net income / total assets of the previous quarter",
+        "first_batch_id": "osap-roaq",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "MomOffSeason06YrPlus",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "mean monthly return of the non-same calendar months, lags 61..120 months; needs >=30 months; local history starts 2016-02 so valid only from about 2025",
+        "first_batch_id": "osap-MomOffSeason06YrPlus",
+        "kind": "price",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "MomSeason06YrPlus",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "mean return of the same calendar month in years 6..10 back, >=3 of 5 years; valid from about 2025",
+        "first_batch_id": "osap-MomSeason06YrPlus",
+        "kind": "price",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "CompositeDebtIssuance",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "ln(dltt+dlc) - ln(same 5 years earlier); LongTermDebtNoncurrent (fallback LongTermDebt) + current debt",
+        "first_batch_id": "osap-CompositeDebtIssuance",
+        "kind": "acct",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "BPEBM",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "BP - EBM, dc and dvpa set to 0 (no XBRL equivalent), latest quarter balance sheet, mve = panel market cap",
+        "first_batch_id": "osap-BPEBM",
+        "kind": "acct",
+        "orientation_sign": -1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "EBM",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "enterprise book-to-market, dc and dvpa set to 0, latest quarter balance sheet, mve = panel market cap",
+        "first_batch_id": "osap-EBM",
+        "kind": "acct",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    },
+    {
+      "ablation": "none",
+      "benchmark_contract": "fixture",
+      "candidate_id": "SUE",
+      "cost_contract": "fixture",
+      "data_contract": "fixture",
+      "fallback": "BIL",
+      "feature_contract": "fixture",
+      "label_contract": "fixture",
+      "method": "library_factor_books_batch1",
+      "parameters": {
+        "definition": "book column sue_eps_raw (EPS seasonal-difference SUE, 8-quarter std); same definition as the book's earnings theme member, so overlap is expected",
+        "first_batch_id": "qc-standardized-unexpected-earnings",
+        "kind": "book",
+        "orientation_sign": 1,
+        "tier1": "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow",
+        "tier2": "monthly gross return regression on the nine theme books and M0; correlation with each theme",
+        "tier3": "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+      },
+      "path": "library_factor_books_batch1",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+      "validation_contract": "fixture"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "costs": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "data": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "features": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "labels": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    },
+    "validation": {
+      "fixture": {
+        "description": "single-mechanism lightweight path"
+      }
+    }
+  },
+  "generated_at": "2026-10-06T23:19:44.681020+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "t20261006_18_library_batch1",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/t20261006_18_library_batch1.yaml": "f81bb5f77c52f64eb4892750a207a386c4eaf06c0d1f106347061266b127e3bb"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261006_18_library_batch1/candidate-manifest.json",
+  "candidate_manifest_sha256": "7fa08b6b1482326652d4ba8094e584f310a3473dd77729cabaddbe0fec9aed70",
+  "cost_table_path": "reports/research/iterations/t20261006_18_library_batch1/cost-table.json",
+  "created_at": "2026-10-06T23:19:44.684270+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261006_18_library_batch1/data-feasibility.json",
+  "data_feasibility_sha256": "f9d5cae96258c9602154dddb2a49c6e443ef1ea8ff5030c55a55c3ef98900eea",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261006_18_library_batch1",
+  "paths": [
+    {
+      "benchmark_family": [
+        "cash_proxy_bil_excess_return",
+        "v12_m0_u3000_base_same_decisions_same_costs",
+        "within_date_score_permutation_placebo_gross",
+        "nine_theme_spanning_regression",
+        "dsr_family_all_trials_of_the_batch"
+      ],
+      "candidate_count": 19,
+      "hypothesis_refs": [
+        "T-20261006-18"
+      ],
+      "name": "library_factor_books_batch1",
+      "parameters": {
+        "definition": [
+          "skewness of 21 daily returns, >=15 obs (OSAP: previous month)",
+          "Kelly-Jiang tail beta; tailEX from all local stocks with prior close >= 5, monthly beta over up to 120 months, min 60 (local history starts 2016-02)",
+          "ln(adv_FY) - ln(adv_FY-1), both >= $0.1M, exclude lowest mcap decile",
+          "mean slope of ln(sale growth) on ln(1+xrd/sale) lags 1..5 over 8 FYs, >=6 pairs, top tercile of xrd/sale, rd>0",
+          "0.85*OrgCap + sga, init 4*sga, / assets; no GNP deflator, all fiscal year ends, history from 2009 (XBRL)",
+          "close[t-126]/close[t-252]-1",
+          "FY inventory growth (no deflator: common factor in the cross-section), SIC 1-digit 4/6 and at/ppent<=0 dropped",
+          "cash and short-term investments / total assets, latest quarter",
+          "(ib - oancf)/|ib| annual, ib=0 -> 0.01; ib = income from continuing operations else net income",
+          "4-quarter change in quarterly income tax expense / assets 4 quarters earlier",
+          "(sga + cogs)/assets, latest FY, sga missing -> 0",
+          "book equity / book equity 1y earlier - 1 (latest quarter vs same quarter a year before), both > 0",
+          "quarterly net income / total assets of the previous quarter",
+          "mean monthly return of the non-same calendar months, lags 61..120 months; needs >=30 months; local history starts 2016-02 so valid only from about 2025",
+          "mean return of the same calendar month in years 6..10 back, >=3 of 5 years; valid from about 2025",
+          "ln(dltt+dlc) - ln(same 5 years earlier); LongTermDebtNoncurrent (fallback LongTermDebt) + current debt",
+          "BP - EBM, dc and dvpa set to 0 (no XBRL equivalent), latest quarter balance sheet, mve = panel market cap",
+          "enterprise book-to-market, dc and dvpa set to 0, latest quarter balance sheet, mve = panel market cap",
+          "book column sue_eps_raw (EPS seasonal-difference SUE, 8-quarter std); same definition as the book's earnings theme member, so overlap is expected"
+        ],
+        "first_batch_id": [
+          "osap-ReturnSkew",
+          "osap-BetaTailRisk",
+          "osap-GrAdExp",
+          "osap-RDAbility",
+          "osap-OrgCap",
+          "osap-IntMom",
+          "osap-InvGrowth",
+          "osap-Cash",
+          "osap-PctAcc",
+          "osap-ChTax",
+          "osap-OPLeverage",
+          "osap-ChEQ",
+          "osap-roaq",
+          "osap-MomOffSeason06YrPlus",
+          "osap-MomSeason06YrPlus",
+          "osap-CompositeDebtIssuance",
+          "osap-BPEBM",
+          "osap-EBM",
+          "qc-standardized-unexpected-earnings"
+        ],
+        "kind": [
+          "price",
+          "acct",
+          "book"
+        ],
+        "orientation_sign": [
+          -1,
+          1
+        ],
+        "tier1": [
+          "month-end decision, close of t+1 fill, universes U3000 and P1000, processing raw and FF-industry demeaned, long 1 / short 1 rank-normal weights, easy-to-borrow shorts, EWMA SPY hedge, VIX halving, fitted costs, 25 bp borrow"
+        ],
+        "tier2": [
+          "monthly gross return regression on the nine theme books and M0; correlation with each theme"
+        ],
+        "tier3": [
+          "added to the v1.2 M0 composite as a tenth category at weight 0.5 / 1 / 2 of one theme (scale matched to the average theme dispersion) plus a merge into the closest theme; weekly 5 offsets; recent window 2024-01-08 decides"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+  "spec_hash": "f81bb5f77c52f64eb4892750a207a386c4eaf06c0d1f106347061266b127e3bb",
+  "strategy_name": "t20261006_18_library_batch1",
+  "total_candidate_budget": 19,
+  "trial_ledger_paths": []
+}

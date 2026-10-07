@@ -1,0 +1,211 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "library_factor_books_batch1",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/t20261006_18_library_batch1.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "T-20261006-18",
+      "source_urls": [
+        "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+      ]
+    }
+  ],
+  "iter_id": "t20261006_18_library_batch1",
+  "objective": "Library batch 1 (T-20261006-18): test 19 computable stock factors from the OSAP / QuantConnect strategy library (6 more are data-insufficient and listed) in three layers - alone, overlap with the nine v1.2 themes, and as a tenth category of the v1.2 composite at the same construction and costs - so that factors which raise the recent net Sharpe of the stock long/short book at equal volatility enter the next book version and factors with a standalone case can go to paper. Recent window 2024-01-08..2026-09-17 decides; 2017-10..2023-08 is a crash diagnostic.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "nrrz_2023_timing_the_factor_zoo",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://afajof.org/management/viewp.php?n=32508"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "alpaca_2026_high_yield_cash_non_pdt_only",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://alpaca.markets/blog/alpaca-launches-high-yield-cash-program-for-trading-api-users-enabling-growth-on-deposits/"
+    },
+    {
+      "claim_id": "hxz_2020_replicating_anomalies",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://www.nber.org/papers/23394"
+    },
+    {
+      "claim_id": "mclean_pontiff_2016_publication_decay",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://counterpointfunds.com/wp-content/uploads/2017/07/PredictabilityMcleanPontiff.pdf"
+    },
+    {
+      "claim_id": "osap_chen_zimmermann_open_source_asset_pricing",
+      "source_card_path": "reports/harness/source_cards/t20261006_18_library_batch1.jsonl",
+      "source_url": "https://www.openassetpricing.com/"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/t20261006_18_library_batch1.yaml",
+  "sources": [
+    {
+      "claim_id": "jkmp_2022_implementable_efficient_frontier",
+      "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Sets the realistic ceiling for a cost-aware book and supports one optimizer holding alpha, risk and costs (design section 8); M3 (random-feature ridge) follows this line.",
+      "published_or_updated_at": "2022-09-30",
+      "reflection": "2022 working-paper version (the RFS 2026 numbers may differ); price-impact costs only; a $10 billion large-cap investor, not a $1M U3000 book; the full model set needs about 75 GB, so we run a reduced version.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+    },
+    {
+      "claim_id": "aqr_2023_longshort_manager_sharpe_percentiles",
+      "core_claim": "AQR Alternative Thinking 2023 Issue 4, Exhibit A1 (Hedge Fund Research data, May 1996 - August 2023, net of fees, 87 systematic and 337 discretionary long/short equity funds including dead funds): systematic funds' Sharpe ratio is 0 / 0.2 / 0.51 / 0.87 / 1.18 at the 10th / 25th / median / 75th / 90th percentile, with median beta 0.08.",
+      "credibility": "manager_white_paper_with_hfr_data",
+      "project_applicability": "Calibrates the target: a book net Sharpe of 0.5-1.0 is the professional median to 75th percentile, and K1's 1.19 anchor bar sits at the systematic 90th percentile.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Manager-written note; fund returns are net of fees while our book has no fees but no institutional execution either; global funds, not US-only; exact publication date not printed in the snapshot.",
+      "source_type": "industry_standard",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---Key-Design-Choices-in-Long-Short-Equity.pdf"
+    },
+    {
+      "claim_id": "chen_velikov_2023_anomaly_net_returns",
+      "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Single anomalies are not worth trading alone after costs; only cost-aware combinations can clear the bar, which is why the book replaces standalone anomaly tests.",
+      "published_or_updated_at": "2023-05-01",
+      "reflection": "Spread costs only (no impact, no short-sale fees); anomaly portfolios as published; the date is the issue month.",
+      "source_type": "paper",
+      "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+    },
+    {
+      "claim_id": "fim_2018_trading_costs_square_root_impact",
+      "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports the impact term Y * sigma_daily * sqrt(Q/V) with Y = 0.5 in cost model v1 (design section 7) and the small impact at a $1M book.",
+      "published_or_updated_at": "2018-08-01",
+      "reflection": "Proprietary execution data, not replicable; algorithmic institutional execution, not market-on-open orders at the first print; month-level date.",
+      "source_type": "paper",
+      "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+    },
+    {
+      "claim_id": "jkp_2023_replication_153_factors_13_themes",
+      "core_claim": "Jensen, Kelly and Pedersen (JF 2023): on a new global data set of 153 factors across 93 countries, most asset pricing factors can be replicated, cluster into 13 themes and work out of sample.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports theme-level composites (M0 equal-weights themes) and the theme list of signal library v1.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Gross factor returns; replication is not net profitability (see Chen-Velikov); the snapshot does not print the issue date.",
+      "source_type": "paper",
+      "url": "https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_in_finance_publishersversion.pdf"
+    },
+    {
+      "claim_id": "nrrz_2023_timing_the_factor_zoo",
+      "core_claim": "Neuhierl, Randl, Reschenhofer and Zechner (Timing the factor zoo, 2023-03-15 version): over 300 factors and 39 predictors, timing improves almost all factor groups; past factor returns and volatility are the best single predictors; the median timed-vs-untimed improvement is about 2% a year and a timed multifactor portfolio earns about 20% more than its untimed counterpart.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supports the volatility-state timing variant M0V (gross and ex-ante vol target halved when VIX > 20.60).",
+      "published_or_updated_at": "2023-03-15",
+      "reflection": "Gross factor returns; PLS aggregation of many predictors does better than any single one; no transaction costs of timing; working-paper version.",
+      "source_type": "paper",
+      "url": "https://afajof.org/management/viewp.php?n=32508"
+    },
+    {
+      "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+      "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+      "credibility": "primary_broker_documentation",
+      "project_applicability": "Fixes the account layer of v1.2: total gross including the SPY hedge and the T-bill leg capped at 1.8x equity (Reg T 2x minus a 10% buffer), the Alpaca maintenance table for the end-of-day margin check, borrow 0 bp on easy-to-borrow shorts, debit interest 6.50% a year for F2.",
+      "published_or_updated_at": "unknown",
+      "reflection": "HTML page without a version date (published_or_updated_at unknown); rates and the ETB fee policy can change; paper accounts may not enforce every rule, so the simulation enforces them itself.",
+      "source_type": "broker_official_docs",
+      "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+    },
+    {
+      "claim_id": "alpaca_2026_high_yield_cash_non_pdt_only",
+      "core_claim": "Alpaca blog (last updated 2026-09-17): as of 2026-09-22 eligible Trading API users can earn up to 3.56% APY on uninvested USD balances through the High-Yield Cash program, which is only available to users classified as non-pattern day traders.",
+      "credibility": "primary_broker_documentation",
+      "project_applicability": "Sets the cash convention: the main estimate pays no interest on positive cash (paper pays none and it is unverified whether short-sale proceeds count as uninvested cash); a sensitivity credits BIL on positive cash excluding short proceeds; F1 holds a T-bill ETF leg instead of relying on cash interest.",
+      "published_or_updated_at": "2026-09-17",
+      "reflection": "Marketing blog; rate is variable; does not state whether short-sale proceeds or margin accounts with short positions qualify (to be verified with Alpaca before any live proposal).",
+      "source_type": "broker_official_docs",
+      "url": "https://alpaca.markets/blog/alpaca-launches-high-yield-cash-program-for-trading-api-users-enabling-growth-on-deposits/"
+    },
+    {
+      "claim_id": "hxz_2020_replicating_anomalies",
+      "core_claim": "Hou, Xue and Zhang (RFS 2020, NBER w23394): of 447 anomaly variables, 286 (64%) including 95 of 102 liquidity variables (93%) are insignificant at the 5% level once microcaps are tamed with NYSE breakpoints and value weights; at a t-value of 3, 85% are insignificant.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Single published anomalies must be treated as likely false until they survive our own cost-aware, multiple-testing-corrected tests; the batch therefore reports every factor in the same portfolio frame and counts every trial.",
+      "published_or_updated_at": "2017-03-01",
+      "reflection": "US stocks 1967-2014 era; our window is 2016-2026 and the universe is price >= 5 with a top-3000 liquidity filter, so most OSAP microcap anomalies are excluded by construction.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/23394"
+    },
+    {
+      "claim_id": "mclean_pontiff_2016_publication_decay",
+      "core_claim": "McLean and Pontiff (JF 2016): across 97 published predictors, portfolio returns are 26% lower out of sample and 58% lower after publication; declines are larger for predictors with higher in-sample returns, and returns remain higher among high idiosyncratic risk and low liquidity stocks.",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Candidates published 2007-2016 (this batch) are expected to be weaker in 2024-26 than in the original sample; the decision window is recent only and published t-values are not used as evidence.",
+      "published_or_updated_at": "2016-02-01",
+      "reflection": "Working-paper copy of the JF article; effect sizes are averages over 97 predictors, not per factor.",
+      "source_type": "paper",
+      "url": "https://counterpointfunds.com/wp-content/uploads/2017/07/PredictabilityMcleanPontiff.pdf"
+    },
+    {
+      "claim_id": "osap_chen_zimmermann_open_source_asset_pricing",
+      "core_claim": "Open Source Asset Pricing (Chen and Zimmermann, Critical Finance Review 2022) publishes signal definitions (SignalDoc.csv) and code replicating the academic cross-section, with a chart comparing published t-statistics to the replication; releases add signals every year (portfolios updated to end 2023 as of the August 2024 release).",
+      "credibility": "peer_reviewed_or_working_paper",
+      "project_applicability": "Supplies the 24 OSAP definitions used here (SignalDoc.csv, snapshot 2026-10-06); every factor in this batch is implemented against that text and deviations from it are listed.",
+      "published_or_updated_at": "2024-08-01",
+      "reflection": "Definitions are CRSP/Compustat based; our implementation uses SEC XBRL facts and Alpaca prices, so item coverage and timing differ (see hypotheses.md section 2).",
+      "source_type": "paper",
+      "url": "https://www.openassetpricing.com/"
+    }
+  ],
+  "spec_hash": "f81bb5f77c52f64eb4892750a207a386c4eaf06c0d1f106347061266b127e3bb",
+  "strategy_name": "t20261006_18_library_batch1",
+  "topic_coverage": [
+    "professional_longshort_net_sharpe_benchmarks",
+    "anomaly_net_of_cost_decay",
+    "trading_cost_square_root_impact",
+    "factor_replication_themes",
+    "factor_timing_volatility_state",
+    "broker_margin_rules_reg_t",
+    "broker_cash_interest_and_borrow_fees",
+    "easy_to_borrow_short_constraints",
+    "recent_regime_evaluation",
+    "published_anomaly_replication_and_decay",
+    "calendar_effect_etf_rules"
+  ],
+  "mechanism_family": "equity_factor_library_batch",
+  "mechanism_description": "Cross-sectional stock factors from the published OSAP / QuantConnect library, each added as a tenth category to the nine-theme v1.2 long/short stock composite; the test is the marginal net Sharpe of the weekly five-offset book at equal construction and costs on 2024-2026 US stocks, plus single-factor monthly books and spanning regressions on the nine theme books.",
+  "difference_from_existing": []
+}
