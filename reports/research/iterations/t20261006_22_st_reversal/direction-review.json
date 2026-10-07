@@ -1,0 +1,306 @@
+{
+ "schema_version": 1,
+ "iter_id": "t20261006_22_st_reversal",
+ "reviewed_at": "2026-10-06T23:43:45Z",
+ "decision": "proceed",
+ "objective": "Decide, within 48 hours, whether a daily residual-reversal book (industry and PCA residuals, three liquid universes, 5 and 21 day lookbacks, 1 and 5 day holds, 100 names per side, turnover/news/VIX conditions and ridge/LightGBM rankers as second-stage robustness) keeps a net Sharpe after measured costs in the 2024-2026 window and is uncorrelated enough with the existing stock long-short book to be a paper sub-strategy of the quant1 account.",
+ "target_regime_and_horizon": "US stocks and ETF hedge, top 500/1000/3000 by ADV, signals at the close of t from 5 or 21 sessions of residual returns, 1 or 5 session holds as overlapping batches, trade at the open of t+1 (close of t+1 as a robustness cell). Judged on 2024-01-08..2026-09-15 and by market phase; 2017-10..2023-08 only for crash veto and diagnostics; the regime in which it should work is high cross-sectional dispersion / elevated VIX (Nagel 2012), the failure signal is a negative 63-session z of the book and breakdown of the PCA residual explanatory share.",
+ "existing_solution_comparison": "Published residual-reversal stat-arb: Avellaneda-Lee PCA 1.44 net (1997-2007, 0.9 in 2003-07, 5 bp, cap above 1 bn), Blitz et al. monthly residual reversal net of costs among large caps after 1990, Da-Liu-Schaumburg monthly Sharpe 0.52 vs 0.14, DLSA about 1.5 on 550 stocks with a learned model (2002-2016), Attention Factors 2.3 net with costs in the objective (to 2021). Independent post-2019 evidence is negative: the equity-statarb repo (CRSP, daily sector residual) has OOS 2019-2024 gross 0.23, net -0.15 at 7 bp. Funds run this class at scale with execution infrastructure; our edge, if any, is the measured liquid-name spread model and a short-capable book at small size.",
+ "remaining_evidence_gap": "No published or open number for a daily residual-reversal book in 2024-2026 with measured spread/impact/borrow, a PCA residual versus beta/industry residual comparison on the same data, or the VIX/turnover/news conditions out of sample. Our own panel can supply exactly that.",
+ "negative_experiments_checked": "Registry rows read (last row each): sector_residual_reversal_statarb_decay (external negative, reopened because shorts are in scope and costs are measured), news_vs_nonews_drop_reversal (refuted: event study of >=5% drops in ADV top 1500, 12 candidates, best Sharpe 0.67; this book is a cross-sectional rank book, different estimator, the news condition is one cell group and the overlap is disclosed), no_news_price_shock_reversal_chan (harvested, monthly), etf_constituent_lead_lag_reversion and letf_close_rebalancing_flow_reversal (ETF-level, refuted, not reopened), deep_learning_stat_arb_residual (not executable then; this is its engine), end_of_day_reversal (parked, minute data, not touched), cross_sectional_gap_fade (closed one-day round trips, not touched); t20261005_p1_s0_decay (P1 Stage 0 measurement of REV5/RREV5 decay, overlapping objects, disclosed in contract.md section 0).",
+ "cost_and_execution_assumptions": "Decision at the close of t; trade at the open of t+1 (close of t+1 robustness only) through backtest.run_book; costfn.make_cost_fn (cost_model_v1 half spread by price/ADV/vol/year plus square-root impact at actual dollars of a 300,000 USD sub-account, 0.5 bp fees); borrow 25 bp a year (100 bp stress) on shorts in the easy-to-borrow proxy only; 0.5x/1x/2x cost scaling; ADV participation reported and flagged above 1%.",
+ "stop_condition": "Stage A (24 main cells, recent window) is the decisive cheap test: if no cell has gross Sharpe above 0.3 the family is closed at this depth; a negative verdict needs all five depth conditions (reproduction, faithful implementation, three-point scale curves, full preregistered budget, adequate power), otherwise the verdict is 'not at depth' with the missing item. Compute stop: 48 hours from 2026-10-06 22:41 UTC, Modal cap 4 USD.",
+ "cheapest_decisive_test": {
+  "action": "Stage A: full run_book engine over 2024-01-08..2026-09-15 for the 24 main cells (4 robustness and 2 model cells follow on the selected spec), gross, cost components and net per cell; first batch L=5, H=5, three universes, industry and PCA residuals within 24 hours.",
+  "pass_condition": "At least one cell reaches recent net Sharpe above 0 at 1x cost and the 2x-cost net is above half of it; then Stage B scoring with scorecard_v2 (DSR >= 0.70 with N = 24, net placebo >= 0.90, robustness >= 3, no veto) for P1.",
+  "falsification_condition": "Every cell has recent gross Sharpe < 0.3 or net Sharpe <= 0 at 1x cost with consistent sign across universes and executions, and the five depth conditions are met: then the family is not viable at this depth.",
+  "max_compute_minutes": 1440
+ },
+ "queries": [
+  {
+   "query": "Blitz Huij Lansdorp Verbeek Short-term residual reversal Journal of Financial Markets results transaction costs",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://repub.eur.nl/pub/40707"
+   ],
+   "note": "abstract page only; full text not reachable"
+  },
+  {
+   "query": "Avellaneda Lee Statistical arbitrage in the US equities market PCA ETF residual Sharpe decline after 2002",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://math.nyu.edu/~avellane/AvellanedaLeeStatArb071008.pdf"
+   ],
+   "note": "PDF saved, method and 5 bp cost read"
+  },
+  {
+   "query": "short-term reversal residual stat arb replication 2024 2025 Nagel Evaporating liquidity",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://www.nber.org/system/files/working_papers/w17653/w17653.pdf",
+    "https://academicweb.nd.edu/~zda/Reversal.pdf"
+   ],
+   "note": "both PDFs saved and quoted"
+  },
+  {
+   "query": "github statistical arbitrage PCA residual mean reversion equities backtest",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://github.com/andrewzhang615-star/equity-statarb"
+   ],
+   "note": "README read through the fetch tool (summary)"
+  },
+  {
+   "query": "github residual reversal strategy daily US equities CRSP short-term reversal backtest net of costs out-of-sample 2019-2024",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://github.com/andrewzhang615-star/equity-statarb"
+   ],
+   "note": "no further repo with OOS net numbers found"
+  },
+  {
+   "query": "Medhat Schmeling Short-term momentum turnover reversal",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://openaccess.city.ac.uk/id/eprint/31278/"
+   ],
+   "note": "search summary only (not opened in full)"
+  },
+  {
+   "query": "Lou Polk Skouras tug of war overnight intraday",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://researchonline.lse.ac.uk/id/eprint/87481"
+   ],
+   "note": "search summary; the NBER snapshot of the P1 dossier was reused"
+  },
+  {
+   "query": "short-term reversal anomaly 2024 2025 decline stat arb crowding",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/underreaction_STReversal.pdf"
+   ],
+   "note": "2024 working paper saved; press on 2025-26 quant crowding is secondary and not used as evidence"
+  },
+  {
+   "query": "Reused primary-source snapshots of the P1 Stage-0 dossier (T-20261005-01 / T-80, fetched 2026-10-04..05): DLSA, Da-Liu-Schaumburg NY Fed, Avellaneda-Lee 2010, Attention Factors, Frazzini-Israel-Moskowitz, Lou-Polk-Skouras, Blitz et al.",
+   "searched_at": "2026-10-06T23:43:45Z",
+   "opened_urls": [
+    "https://arxiv.org/pdf/2106.04028",
+    "https://arxiv.org/pdf/2510.11616",
+    "https://conference.nber.org/conf_papers/f68262/f68262.pdf",
+    "https://conference.nber.org/conf_papers/f78239/f78239.pdf",
+    "https://math.nyu.edu/faculty/avellane/AvellanedaLeeStatArb071108.pdf",
+    "https://repub.eur.nl/pub/40707",
+    "https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr513.pdf"
+   ],
+   "note": "snapshots and source cards copied unchanged from reports/research/intel/sources/mid-frequency-2026-10-04 and p1-s0-decay-2026-10-05"
+  }
+ ],
+ "sources": [
+  {
+   "claim_id": "dlsa_2021_sharpe_half_life_seven_days",
+   "url": "https://arxiv.org/pdf/2106.04028",
+   "source_type": "paper",
+   "published_or_updated_at": "2021-06-08",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/dlsa-arxiv.txt",
+   "sha256": "1743a75bd1d4598c56ad5245ed7ad0e269e4486a1164ff01897b0b3d0df22b09",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-04T18:36:00Z",
+   "claim": "Guijarro-Ordonez, Pelger and Zanotti (Deep Learning Statistical Arbitrage, arXiv 2106.04028): on about 550 liquid US stocks, out of sample 2002-2016, the Sharpe ratio of the learned residual stat-arb policy has a half-life of about seven trading days over the holding period, is still above one at a 22-day holding period with a 1-day objective, and reaches about 1.5 when the multi-day holding period is optimized directly (Figure 12).",
+   "core_claim": "The half-life in terms of Sharpe ratios is around seven trading days. In fact, the Sharpe ratio is still above one with a one month (22 business days) holding period",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Sets the trading-speed grid (kappa 1..0.05, full rebalance every 5 or 21 sessions) and the lag range 1..22 of the decay curve; Stage 1 of P1 replicates this model.",
+   "independent_replication": "One independent partial replication (bsiranosian blog); the only 2016-2024 replication (arXiv 2412.11432) was withdrawn.",
+   "limitations": "Authors' backtest, ends 2016, 5 bp per transaction plus 1 bp short fee; learned signal, not the linear library signals measured here.",
+   "market_and_period": "about 550 liquid US stocks, out of sample 2002-2016, daily"
+  },
+  {
+   "claim_id": "da_liu_schaumburg_2014_residual_reversal_three_times",
+   "url": "https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr513.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2011-09-01",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/nyfed-decomposing-short-term-reversal-sr513.txt",
+   "sha256": "8f4280cce4f7c429682816d89c864be0c81a44fff4fc189d0a152c7c5a1fe7a5",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-04T18:39:00Z",
+   "claim": "Da, Liu and Schaumburg (NY Fed Staff Report 513; Management Science 2014): the standard short-term reversal profit decomposes into across-industry momentum, within-industry expected-return variation, under-reaction to within-industry cash-flow news and a residual; only the residual is significant and positive, and a strategy built to capture it earns a risk-adjusted return three times the standard reversal over 1982-2009.",
+   "core_claim": "A simple short-term return reversal trading strategy designed to capture the residual component generates a highly significant risk-adjusted return three times the size of the standard reversal strategy during our 1982-2009 sampling period.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Motivates IREV5 (within-industry reversal) and RREV5/RREV21 (risk-model residual reversal) next to raw REV5.",
+   "independent_replication": "Blitz, Huij, Lansdorp and Verbeek (2013) report a similar gain for residual reversal on another construction (practitioner summary only, not read in full).",
+   "limitations": "Monthly reversal, 1982-2009, gross of costs; our test is daily on 2017-2026 U3000 with measured close costs.",
+   "market_and_period": "US stocks 1982-2009, monthly reversal"
+  },
+  {
+   "claim_id": "lou_polk_skouras_2019_overnight_intraday_tug_of_war",
+   "url": "https://conference.nber.org/conf_papers/f78239/f78239.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2019-01-01",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/lou-polk-skouras-nber.txt",
+   "sha256": "021a94ed9fec1e76e32e0512536a627f94de7bd2d4fcb141d9a4d15c9735f3ff",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-04T18:38:00Z",
+   "claim": "Lou, Polk and Skouras (A Tug of War: Overnight Versus Intraday Expected Returns, JFE 2019): momentum profits accrue overnight and partly reverse intraday, while other anomaly returns accrue intraday, so overnight and intraday components of past returns carry different information.",
+   "core_claim": "A Tug of War: Overnight Versus Intraday",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Motivates ON5 and ID5 as separate inputs; the paper gives no clear sign for a 5-day component predicting total close-to-close returns, so their signs are fixed on the stress window before the recent window judges them.",
+   "independent_replication": "Related: Akbas et al. 2022, Hendershott-Livdan-Rosch 2020 (not read here).",
+   "limitations": "Monthly portfolios, 1993-2013; our components are 5-day means on 2017-2026.",
+   "market_and_period": "US stocks 1993-2013"
+  },
+  {
+   "claim_id": "avellaneda_lee_2010_residual_mean_reversion",
+   "url": "https://math.nyu.edu/faculty/avellane/AvellanedaLeeStatArb071108.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2010-07-01",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/avellaneda-lee2010.txt",
+   "sha256": "c66a39fe207a509532b2893eb02d91092f9a7e406ee295c9287fc7d3e70ac264",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-04T18:36:00Z",
+   "claim": "Avellaneda and Lee (Statistical Arbitrage in the US Equities Market, Quantitative Finance 2010): residuals of stock returns on PCA or sector-ETF factors are traded as mean-reverting processes; after transaction costs PCA-based strategies have an average annual Sharpe ratio of 1.44 over 1997-2007 but only 0.9 over 2003-2007, and ETF-based strategies 1.1 with a similar degradation after 2002.",
+   "core_claim": "during 2003-2007, the average Sharpe ratio of PCA-based strategies was only 0.9",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "RREV5/RREV21 use the project's risk-model residuals (industry + style factors) as the residual definition; the OU-threshold rule itself is a Stage 1 baseline, not measured here.",
+   "independent_replication": "Widely replicated; recent net performance poor in Attention Factors' comparison.",
+   "limitations": "1997-2007; thresholds and costs differ from ours.",
+   "market_and_period": "US stocks 1997-2007, daily"
+  },
+  {
+   "claim_id": "attention_factors_2025_cost_in_objective",
+   "url": "https://arxiv.org/pdf/2510.11616",
+   "source_type": "paper",
+   "published_or_updated_at": "2025-10-13",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/attention-factors-stat-arb-2510.11616.txt",
+   "sha256": "1a99ffd575b5f2340c7e72533d47a3d6723864334e602d8568f5f9ce163cd181",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-04T18:39:00Z",
+   "claim": "Attention Factors for statistical arbitrage (arXiv 2510.11616): with 5 bp per transaction, the parametric (OU-style) residual model falls to negative net Sharpe because of turnover, a simple PCA factor model reaches about 1.5 net, and the end-to-end model with costs in the objective reaches about 2.3 net (authors' backtest, 500 US stocks to 2021).",
+   "core_claim": "unprecedented performance of 2.3 after trading costs",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Shallow single-signal or threshold rules fail on costs; Stage 0 therefore measures speed curves and composites, and P1 Stage 1 puts costs into the objective.",
+   "independent_replication": "None independent.",
+   "limitations": "Authors' own backtest ending 2021; flat 5 bp costs.",
+   "market_and_period": "500 US stocks 1998-2021, daily"
+  },
+  {
+   "claim_id": "frazzini_israel_moskowitz_2012_reversal_cost_constrained",
+   "url": "https://conference.nber.org/conf_papers/f68262/f68262.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2012-12-01",
+   "snapshot_path": "reports/research/intel/sources/mid-frequency-2026-10-04/fim-trading-costs-nber.txt",
+   "sha256": "5fd43767f9b36fcf895013fe764730cb7de4f40109b3de610bc54ce0b53fdd49",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-04T18:37:00Z",
+   "claim": "Frazzini, Israel and Moskowitz (Trading Costs of Asset Pricing Anomalies, NBER draft 2012, AQR live executions): size, value and momentum survive costs at fund sizes of tens of billions, while short-term reversal does not survive at sizes above about $9 billion in the US.",
+   "core_claim": "Short-term reversal strategies, on the other hand, do not survive transactions costs at sizes greater than $9 billion in the U.S.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Reversal is cost-constrained at institutional size but our book is small (E = $1M for impact), so the binding cost is the spread; Stage 0 uses the measured close half-spread by stock and year.",
+   "independent_replication": "Consistent with Novy-Marx-Velikov; final published version not read.",
+   "limitations": "Institutional execution 1998-2011; capacity, not small-account economics.",
+   "market_and_period": "AQR live executions 1998-2011, 19 markets"
+  },
+  {
+   "claim_id": "blitz_huij_lansdorp_verbeek_2013_residual_reversal_net",
+   "url": "https://repub.eur.nl/pub/40707",
+   "source_type": "paper",
+   "published_or_updated_at": "2013-08-01",
+   "snapshot_path": "reports/research/intel/sources/p1-s0-decay-2026-10-05/blitz-repub-40707.html",
+   "sha256": "7f057f8e867c24b00e8fa51963a4c0f495f2d7582f3de39d8b96a08c9334657c",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-05T01:24:35Z",
+   "claim": "Blitz, Huij, Lansdorp and Verbeek (Short-term residual reversal, Journal of Financial Markets 16(3) 2013, 477-504; abstract from the Erasmus repository record): a reversal strategy on Fama-French residual returns avoids the dynamic factor exposures of conventional reversal and earns twice its risk-adjusted return; it is significant net of trading costs even for large caps after 1990.",
+   "core_claim": "Residual reversal strategies generate statistically and economically significant profits net of trading costs, even when we restrict our sample to large-cap stocks over the post-1990 period.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Second independent source for RREV5/RREV21; supports measuring residual reversal on the liquid L12 bucket with net costs.",
+   "independent_replication": "Da-Liu-Schaumburg reach the same direction with a within-industry residual.",
+   "limitations": "Abstract only (full text not opened: EFMA draft unreachable, SSRN not fetched); monthly horizon, sample ends about 2010.",
+   "market_and_period": "US stocks to about 2010, monthly"
+  },
+  {
+   "claim_id": "avellaneda_lee_2010_pca_sharpe_decline_costs_5bp",
+   "url": "https://math.nyu.edu/~avellane/AvellanedaLeeStatArb071008.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2010-07-01",
+   "snapshot_path": "reports/research/intel/sources/st-reversal-2026-10-06/avellaneda-lee-statarb.txt",
+   "sha256": "de52ecfe8e5121bcec4316cc0ab4b0b7dedb6c77162ae5f9298874f218e37af8",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-06T23:43:29Z",
+   "claim": "Avellaneda and Lee (Quantitative Finance 2010, working-paper version): on US stocks above 1 bn market cap, 60-day residual window, ETF or PCA factors, entry at 1.25 sd and exit at 0.5 sd, 5 bp per trade slippage; PCA strategies have an average annual Sharpe of 1.44 over 1997-2007 and only 0.9 in 2003-2007; ETF strategies about 1.1; volume-adjusted (trading-time) signals reach 1.51 in 2003-2007.",
+   "core_claim": "Avellaneda and Lee (Quantitative Finance 2010, working-paper version): on US stocks above 1 bn market cap, 60-day residual window, ETF or PCA factors, entry at 1.25 sd and exit at 0.5 sd, 5 bp per trade slippage; PCA strategies have an average annual Sharpe of 1.44 over 1997-2007 and only 0.9 in 2003-2007; ETF strategies about 1.1; volume-adjusted (trading-time) signals reach 1.51 in 2003-2007.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Fixes the PCA residual recipe and gives the pre-/post-2003 decline as the prior.",
+   "independent_replication": "Khandani and Lo 2007 contrarian strategies reproduced in the same paper; no 2024+ replication found.",
+   "limitations": "Authors' backtest ending 2007, flat 5 bp, no borrow cost.",
+   "market_and_period": "US stocks above 1 bn market cap, 1996/2002-2007, daily"
+  },
+  {
+   "claim_id": "nagel_2012_reversal_is_liquidity_provision_vix",
+   "url": "https://www.nber.org/system/files/working_papers/w17653/w17653.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2011-12-01",
+   "snapshot_path": "reports/research/intel/sources/st-reversal-2026-10-06/nagel-evaporating-liquidity-w17653.txt",
+   "sha256": "e9e87233e5127bd15e937602a69d489b667df93b78cea861c8f075e76fdd4670",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-06T23:43:29Z",
+   "claim": "Nagel (NBER w17653, Review of Financial Studies 2012): short-term reversal returns proxy the return to liquidity provision; the expected return is strongly time-varying and highly predictable with the VIX index; conditional Sharpe ratios rise with VIX in turmoil such as 2007-09.",
+   "core_claim": "Nagel (NBER w17653, Review of Financial Studies 2012): short-term reversal returns proxy the return to liquidity provision; the expected return is strongly time-varying and highly predictable with the VIX index; conditional Sharpe ratios rise with VIX in turmoil such as 2007-09.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Basis of the VIX-scaled condition.",
+   "independent_replication": "Hameed-Kang-Viswanathan 2010 find reversal returns after market declines (cited in the paper).",
+   "limitations": "Sample ends 2009; no cost-net trading result.",
+   "market_and_period": "US stocks 1926-2009, daily and monthly reversal portfolios"
+  },
+  {
+   "claim_id": "da_liu_schaumburg_2014_management_science_large_stocks_recent",
+   "url": "https://academicweb.nd.edu/~zda/Reversal.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2014-03-01",
+   "snapshot_path": "reports/research/intel/sources/st-reversal-2026-10-06/da-liu-schaumburg-closer-look.txt",
+   "sha256": "fe7509e5a80406a31760da251460a3e6bfe88e1ff0a8aa10f647cb34ff41553b",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-06T23:43:29Z",
+   "claim": "Da, Liu and Schaumburg (Management Science 60(3), 2014): the part of a past return not explained by fundamental (cash-flow) news reverses; the monthly Sharpe of the residual-based reversal is 0.52 versus 0.14 for the standard one; the effect still exists among large stocks in more recent years once the industry momentum effect is controlled for.",
+   "core_claim": "Da, Liu and Schaumburg (Management Science 60(3), 2014): the part of a past return not explained by fundamental (cash-flow) news reverses; the monthly Sharpe of the residual-based reversal is 0.52 versus 0.14 for the standard one; the effect still exists among large stocks in more recent years once the industry momentum effect is controlled for.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Supports the industry/no-news residual and the large-stock prior.",
+   "independent_replication": "Blitz et al. 2013 reach the same direction with a Fama-French residual.",
+   "limitations": "Monthly, analyst-revision proxy for news, no daily costs.",
+   "market_and_period": "US stocks 1982-2009, monthly"
+  },
+  {
+   "claim_id": "farkas_neszveda_2024_laggard_reversal",
+   "url": "http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/underreaction_STReversal.pdf",
+   "source_type": "paper",
+   "published_or_updated_at": "2024-01-01",
+   "snapshot_path": "reports/research/intel/sources/st-reversal-2026-10-06/efma2024-underreaction.txt",
+   "sha256": "db132aba9dc43a486103a883188423329d329c4639f71557e4ce44a34e26dc64",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-06T23:43:29Z",
+   "claim": "Farkas and Neszveda (EFMA 2024 draft, January 2024): short-term reversals and industry momentum arise from stocks that under-react to industry information (Laggards); long-short strategies trading Laggards double the profitability of industry momentum and short-term reversal, while the same strategies on Leader stocks are typically not profitable.",
+   "core_claim": "Farkas and Neszveda (EFMA 2024 draft, January 2024): short-term reversals and industry momentum arise from stocks that under-react to industry information (Laggards); long-short strategies trading Laggards double the profitability of industry momentum and short-term reversal, while the same strategies on Leader stocks are typically not profitable.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Motivates the industry residual and an industry feature.",
+   "independent_replication": "None found.",
+   "limitations": "Working paper draft, post-2010 split not verified.",
+   "market_and_period": "US CRSP stocks, monthly, sample years not verified"
+  },
+  {
+   "claim_id": "equity_statarb_github_oos_2019_2024_negative",
+   "url": "https://github.com/andrewzhang615-star/equity-statarb",
+   "source_type": "platform_docs",
+   "published_or_updated_at": "2025-01-01",
+   "snapshot_path": "reports/research/intel/sources/st-reversal-2026-10-06/equity-statarb-github-summary.md",
+   "sha256": "ba7ef0c57786856f3b7614fc5c0b40f2ec5e20da6b5bd9e22313f1be7de6c293",
+   "source_card_path": "reports/harness/source_cards/t20261006_22_st_reversal.jsonl",
+   "fetched_at": "2026-10-06T23:43:29Z",
+   "claim": "Open-source test (CRSP daily 2000-2024, survivorship-free, one-day hold, 7 bp flat cost): leave-one-out sector-residual reversal has in-sample 2000-2018 gross Sharpe 0.90 and net 0.34, and out-of-sample 2019-2024 gross 0.23 and net -0.15 (breakeven 4.2 bp); the alpha sits in short positions and low-priced names; the PCA(15) variant had no gross edge 2019-2024 (-0.07).",
+   "core_claim": "Open-source test (CRSP daily 2000-2024, survivorship-free, one-day hold, 7 bp flat cost): leave-one-out sector-residual reversal has in-sample 2000-2018 gross Sharpe 0.90 and net 0.34, and out-of-sample 2019-2024 gross 0.23 and net -0.15 (breakeven 4.2 bp); the alpha sits in short positions and low-priced names; the PCA(15) variant had no gross edge 2019-2024 (-0.07).",
+   "credibility": "peer_reviewed_or_working_paper",
+   "applicability": "Strongest local prior against the family; shapes the cheapest test.",
+   "independent_replication": "Independent of the original papers; consistent with Avellaneda-Lee's own post-2003 decline.",
+   "limitations": "README summary through the fetch tool; code not read; single author; flat 7 bp cost.",
+   "market_and_period": "US CRSP daily 2000-2024, one-day hold"
+  }
+ ]
+}

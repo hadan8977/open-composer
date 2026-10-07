@@ -1,0 +1,100 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261006_22_st_reversal/candidate-manifest.json",
+  "candidate_manifest_sha256": "eeb67f881aa3b49aa593aef512335124c2ed62ee44587df9cf184e0220b96796",
+  "cost_table_path": "reports/research/iterations/t20261006_22_st_reversal/cost-table.json",
+  "created_at": "2026-10-06T23:43:42.501824+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261006_22_st_reversal/data-feasibility.json",
+  "data_feasibility_sha256": "1736129920a9ba3cf2a685bc0440b1471e49d5a4643ff2ad076ad5343d901da1",
+  "evaluation_report_paths": [
+    "reports/research/iterations/t20261006_22_st_reversal/results.json",
+    "reports/research/iterations/t20261006_22_st_reversal/report.md"
+  ],
+  "iter_id": "t20261006_22_st_reversal",
+  "paths": [
+    {
+      "benchmark_family": [
+        "equal_weight_universe",
+        "market_proxy_spy",
+        "cash_proxy_bil",
+        "placebo_random_rank_same_construction",
+        "existing_stock_long_short_book_v12"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "T-20261006-22"
+      ],
+      "name": "short_horizon_residual_reversal_statarb",
+      "parameters": {
+        "applies_to": [
+          "selected spec only (contract.md section 16 item 3), not used for selection",
+          "universe and H of the selected spec, second stage"
+        ],
+        "book": [
+          "contract.md sections 3, 5-8 as amended by section 16 (100 names per side, equal weight, 300,000 USD)"
+        ],
+        "cells": [
+          4
+        ],
+        "condition": [
+          "none"
+        ],
+        "definition": [
+          "contract.md sections 4, 7 and 16"
+        ],
+        "execution": [
+          "open of t+1"
+        ],
+        "features_labels_training": [
+          "contract.md section 10 as amended by section 16"
+        ],
+        "holding_H": [
+          [
+            1,
+            5
+          ]
+        ],
+        "kind": [
+          "main",
+          "robustness",
+          "model"
+        ],
+        "lookback_L": [
+          [
+            5,
+            21
+          ]
+        ],
+        "model": [
+          "ridge",
+          "lgbm"
+        ],
+        "residual": [
+          "ind",
+          "pca"
+        ],
+        "universe": [
+          "top 500 adv_rank at t",
+          "top 1000 adv_rank at t",
+          "top 3000 adv_rank at t"
+        ],
+        "variant": [
+          "lowturn",
+          "nonews",
+          "vixscale",
+          "exec_close"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261006_22_st_reversal.yaml",
+  "spec_hash": "6ea003d00d8aa80f977dbd91904b945995f799d082f65de8e8686a7db4aa2b7e",
+  "strategy_name": "t20261006_22_st_reversal",
+  "total_candidate_budget": 12,
+  "trial_ledger_paths": [
+    "reports/research/iterations/t20261006_22_st_reversal/trial-grid.json",
+    "reports/research/iterations/t20261006_22_st_reversal/artifacts/placebo.json",
+    "reports/research/iterations/t20261006_22_st_reversal/artifacts/selected.json"
+  ]
+}

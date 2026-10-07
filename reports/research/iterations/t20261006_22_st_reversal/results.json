@@ -1,0 +1,2554 @@
+{
+ "iter_id": "t20261006_22_st_reversal",
+ "contract": "reports/research/iterations/t20261006_22_st_reversal/contract.md (sections 0-15 frozen 2026-10-06T23:23Z, section 16 addendum 2 before any result)",
+ "windows": {
+  "recent": "2024-01-08..2026-09-15",
+  "stress_diagnostic": "2017-10-02..2023-08-31",
+  "forward_holdout_not_read": "2026-09-16..2026-09-30"
+ },
+ "trial_accounting": {
+  "registered_cells": 30,
+  "main_grid_cells_dsr_family": 24,
+  "robustness_cells": 4,
+  "model_cells": 2,
+  "withdrawn_cells_in_global_ledger_from_23:22Z_version": 15,
+  "extra_diagnostics_not_trials": [
+   "reproduction anchor ind L1 H1 U1000 (2017-2026)",
+   "borrow stress cells (2: 100 bp, shorts adv_rank<=1000) counted among the 4+1 robustness runs below"
+  ]
+ },
+ "engine": {
+  "run_book": "open_composer.research.equity_book.backtest",
+  "cost_fn": "costfn.make_cost_fn (cost_model_v1, open snapshot)",
+  "equity_usd": 300000,
+  "names_per_side": 100,
+  "side_gross": 0.5,
+  "borrow_bp_per_year": 25
+ },
+ "main_grid_24": {
+  "R_U1000_ind_L21_none_H1_open": {
+   "recent_net_sharpe": -0.9644933739725668,
+   "recent_net_sharpe_0.5x_cost": -0.18906201244916201,
+   "recent_net_sharpe_2x_cost": -2.5092499072371544,
+   "recent_gross_sharpe": 0.5875055386136062,
+   "recent_gross_ann_excess_return": 0.05999530505492969,
+   "recent_net_ann_excess_return": -0.09863008490118166,
+   "vol": 0.10226102901561977,
+   "max_drawdown": -0.21885427488347464,
+   "nw_t": -1.760118833118582,
+   "turnover_annual_traded_over_equity": 112.75330523766281,
+   "cost_share_of_gross": 1.5560272562817161,
+   "costs_annual": {
+    "cost_spread": 0.1415943689265321,
+    "cost_impact": 0.003153341810273584,
+    "cost_fees": 0.0056385647032949,
+    "cost_borrow": 0.0014779368986653624,
+    "cost_margin": 0.0067611776173450095
+   },
+   "beta_spy": 0.0205861287855032,
+   "avg_long_exposure": 0.602006964950608,
+   "avg_short_exposure": 0.5805371090065077,
+   "avg_names_long": 100.55044510385757,
+   "avg_names_short": 100.43471810089021,
+   "capacity": {
+    "traded_notional": 70007626.2190663,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.3290955001030516e-07
+   },
+   "engine_info": {
+    "delist_exits": 11,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 9,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 616,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.7440487614871601,
+    "gross_sharpe": 0.3159322009399074,
+    "net_sharpe_2x": -1.8041811017650038,
+    "turnover": 109.71724911932134,
+    "max_drawdown": -0.39885451951793927
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.18000438875373848,
+    "63": -0.19925346738220429
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.01241759587714194
+  },
+  "R_U1000_ind_L21_none_H5_open": {
+   "recent_net_sharpe": -0.5419840602930561,
+   "recent_net_sharpe_0.5x_cost": -0.11316349646716263,
+   "recent_net_sharpe_2x_cost": -1.398962054580158,
+   "recent_gross_sharpe": 0.3157375948124851,
+   "recent_gross_ann_excess_return": 0.029309175892903345,
+   "recent_net_ann_excess_return": -0.0503194599609314,
+   "vol": 0.09284306245782058,
+   "max_drawdown": -0.10722914667052186,
+   "nw_t": -0.9687909636803663,
+   "turnover_annual_traded_over_equity": 53.955611609050344,
+   "cost_share_of_gross": 1.1174941478319442,
+   "costs_annual": {
+    "cost_spread": 0.06836536208916569,
+    "cost_impact": 0.0007486696293311799,
+    "cost_fees": 0.002698169856777817,
+    "cost_borrow": 0.0014508870602373564,
+    "cost_margin": 0.006365547218324263
+   },
+   "beta_spy": -0.0008477685063736723,
+   "avg_long_exposure": 0.5926810917554401,
+   "avg_short_exposure": 0.5706569353815669,
+   "avg_names_long": 154.71810089020772,
+   "avg_names_short": 151.3026706231454,
+   "capacity": {
+    "traded_notional": 35696357.816096656,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 2.536572590104573e-07
+   },
+   "engine_info": {
+    "delist_exits": 15,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 67,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 591,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.33197576809284485,
+    "gross_sharpe": 0.24690850911806375,
+    "net_sharpe_2x": -0.9109120256706313,
+    "turnover": 52.24451123529573,
+    "max_drawdown": -0.21171231377840105
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.1490948725933211,
+    "63": -0.1664528511292992
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": -0.010118303093102918
+  },
+  "R_U1000_ind_L5_none_H1_open": {
+   "recent_net_sharpe": -2.017449702012538,
+   "recent_net_sharpe_0.5x_cost": -0.4744339745698205,
+   "recent_net_sharpe_2x_cost": -5.077054103610749,
+   "recent_gross_sharpe": 1.07233214246142,
+   "recent_gross_ann_excess_return": 0.10593057858626302,
+   "recent_net_ann_excess_return": -0.19972744969823975,
+   "vol": 0.09899996490569186,
+   "max_drawdown": -0.41572612431255995,
+   "nw_t": -3.5253084301723905,
+   "turnover_annual_traded_over_equity": 224.08676947849403,
+   "cost_share_of_gross": 2.066963228347433,
+   "costs_annual": {
+    "cost_spread": 0.2801728533521448,
+    "cost_impact": 0.006217028968131185,
+    "cost_fees": 0.011207026254745994,
+    "cost_borrow": 0.001536818231544124,
+    "cost_margin": 0.00652430147793635
+   },
+   "beta_spy": 0.030801597667416088,
+   "avg_long_exposure": 0.6005173833781531,
+   "avg_short_exposure": 0.604852936485621,
+   "avg_names_long": 100.51483679525222,
+   "avg_names_short": 100.45994065281899,
+   "capacity": {
+    "traded_notional": 124286905.07731111,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 8.234446513602498e-07
+   },
+   "engine_info": {
+    "delist_exits": 13,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 15,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 620,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.1697456587365243,
+    "gross_sharpe": 0.8378133053317129,
+    "net_sharpe_2x": -3.1775226687135736,
+    "turnover": 212.9802687099721,
+    "max_drawdown": -0.5382035181938505
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.1687792757457659,
+    "63": -0.19811968503120558
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.013335590839096231
+  },
+  "R_U1000_ind_L5_none_H5_open": {
+   "recent_net_sharpe": -1.0054971394006462,
+   "recent_net_sharpe_0.5x_cost": -0.015968957000520454,
+   "recent_net_sharpe_2x_cost": -2.9816632698179637,
+   "recent_gross_sharpe": 0.9736043379885477,
+   "recent_gross_ann_excess_return": 0.0690408860887301,
+   "recent_net_ann_excess_return": -0.07130547316538086,
+   "vol": 0.07091564000657864,
+   "max_drawdown": -0.16242756795295177,
+   "nw_t": -1.7853174350973837,
+   "turnover_annual_traded_over_equity": 101.54304810614653,
+   "cost_share_of_gross": 1.2645168004589782,
+   "costs_annual": {
+    "cost_spread": 0.12725475451113005,
+    "cost_impact": 0.0015544340914938014,
+    "cost_fees": 0.005078250475460824,
+    "cost_borrow": 0.00137165915882866,
+    "cost_margin": 0.005087261017197904
+   },
+   "beta_spy": -0.003834354782202126,
+   "avg_long_exposure": 0.5335576683706378,
+   "avg_short_exposure": 0.5389747346678523,
+   "avg_names_long": 198.44213649851633,
+   "avg_names_short": 196.20029673590506,
+   "capacity": {
+    "traded_notional": 67506725.32338622,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 6.111983309449402e-07
+   },
+   "engine_info": {
+    "delist_exits": 26,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 107,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 389,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.5035318217007405,
+    "gross_sharpe": 0.6219679738765006,
+    "net_sharpe_2x": -1.63054159787144,
+    "turnover": 95.78882695270872,
+    "max_drawdown": -0.26986548835635427
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.13871240677082242,
+    "63": -0.16244276181472672
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.031939232461092114
+  },
+  "R_U1000_pca_L21_none_H1_open": {
+   "recent_net_sharpe": -1.84254214489473,
+   "recent_net_sharpe_0.5x_cost": -0.8723072965317077,
+   "recent_net_sharpe_2x_cost": -3.7679701522299625,
+   "recent_gross_sharpe": 0.10071846894916855,
+   "recent_gross_ann_excess_return": 0.0074233435572604685,
+   "recent_net_ann_excess_return": -0.13612168405326477,
+   "vol": 0.07387710746830262,
+   "max_drawdown": -0.2645021727346808,
+   "nw_t": -3.0421591311281486,
+   "turnover_annual_traded_over_equity": 97.58393882981984,
+   "cost_share_of_gross": 2.907500705851153,
+   "costs_annual": {
+    "cost_spread": 0.13248886140298305,
+    "cost_impact": 0.002836505984526273,
+    "cost_fees": 0.004880123467757815,
+    "cost_borrow": 0.00136775327202185,
+    "cost_margin": 0.0019717834832356706
+   },
+   "beta_spy": 0.05305554674013535,
+   "avg_long_exposure": 0.5308248376350804,
+   "avg_short_exposure": 0.5357483108689589,
+   "avg_names_long": 100.45548961424332,
+   "avg_names_short": 100.52225519287833,
+   "capacity": {
+    "traded_notional": 63524427.89750894,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.1981143045566075e-07
+   },
+   "engine_info": {
+    "delist_exits": 14,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 14,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 542,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.9350139535441416,
+    "gross_sharpe": 0.2945690749278384,
+    "net_sharpe_2x": -2.163136152421632,
+    "turnover": 98.06744474750094,
+    "max_drawdown": -0.3779319708720589
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.17934844808886752,
+    "63": -0.19607001357442655
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": -0.005821829567592362
+  },
+  "R_U1000_pca_L21_none_H5_open": {
+   "recent_net_sharpe": -0.9752385141500642,
+   "recent_net_sharpe_0.5x_cost": -0.4604456059008646,
+   "recent_net_sharpe_2x_cost": -2.0045422084995743,
+   "recent_gross_sharpe": 0.0542216634595022,
+   "recent_gross_ann_excess_return": 0.003816705407754835,
+   "recent_net_ann_excess_return": -0.06862450230675315,
+   "vol": 0.07036689108464969,
+   "max_drawdown": -0.13969887721657037,
+   "nw_t": -1.6060313902219312,
+   "turnover_annual_traded_over_equity": 48.474467268583375,
+   "cost_share_of_gross": 1.5829316200380372,
+   "costs_annual": {
+    "cost_spread": 0.0661675430322729,
+    "cost_impact": 0.0006950132867614857,
+    "cost_fees": 0.0024239856777553866,
+    "cost_borrow": 0.0013470615174499987,
+    "cost_margin": 0.0018076042002686575
+   },
+   "beta_spy": 0.05789804027383498,
+   "avg_long_exposure": 0.5235249606190165,
+   "avg_short_exposure": 0.5288535267311577,
+   "avg_names_long": 150.9807121661721,
+   "avg_names_short": 149.85905044510386,
+   "capacity": {
+    "traded_notional": 34262222.371036105,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 2.4528386604917315e-07
+   },
+   "engine_info": {
+    "delist_exits": 22,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 88,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 473,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.4413440973899218,
+    "gross_sharpe": 0.234544148925626,
+    "net_sharpe_2x": -1.1173888316993996,
+    "turnover": 48.240673652135285,
+    "max_drawdown": -0.23702688395894056
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.1648424958646938,
+    "63": -0.17440647579715207
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": -0.02230488396766064
+  },
+  "R_U1000_pca_L5_none_H1_open": {
+   "recent_net_sharpe": -3.0690254875430054,
+   "recent_net_sharpe_0.5x_cost": -1.2825635278240612,
+   "recent_net_sharpe_2x_cost": -6.434608160793298,
+   "recent_gross_sharpe": 0.5319186153758687,
+   "recent_gross_ann_excess_return": 0.03503327499059591,
+   "recent_net_ann_excess_return": -0.2043677825995501,
+   "vol": 0.06659044815009421,
+   "max_drawdown": -0.35777015992057126,
+   "nw_t": -5.6221084601409155,
+   "turnover_annual_traded_over_equity": 162.30448183504421,
+   "cost_share_of_gross": 3.1098913157861015,
+   "costs_annual": {
+    "cost_spread": 0.22298120660830215,
+    "cost_impact": 0.005023073118404732,
+    "cost_fees": 0.008117547201569524,
+    "cost_borrow": 0.0014034841167503039,
+    "cost_margin": 0.0018757465451204635
+   },
+   "beta_spy": 0.04485837676748884,
+   "avg_long_exposure": 0.5276607416424498,
+   "avg_short_exposure": 0.5502509345112958,
+   "avg_names_long": 100.38427299703264,
+   "avg_names_short": 100.5593471810089,
+   "capacity": {
+    "traded_notional": 103661070.3536275,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.0811600432295793e-06
+   },
+   "engine_info": {
+    "delist_exits": 14,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 17,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 513,
+    "reg_t_violation_days": 576,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.2518901842094663,
+    "gross_sharpe": 0.9107684253686884,
+    "net_sharpe_2x": -3.3753055956968563,
+    "turnover": 163.01331299563216,
+    "max_drawdown": -0.4447470346310153
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.1712304980231718,
+    "63": -0.2020234460945668
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.044440833612696316
+  },
+  "R_U1000_pca_L5_none_H5_open": {
+   "recent_net_sharpe": -1.6876818319699503,
+   "recent_net_sharpe_0.5x_cost": -0.6071587868252611,
+   "recent_net_sharpe_2x_cost": -3.7729465184225144,
+   "recent_gross_sharpe": 0.4851202770173472,
+   "recent_gross_ann_excess_return": 0.02333543362337775,
+   "recent_net_ann_excess_return": -0.08191012953819757,
+   "vol": 0.04853410636209066,
+   "max_drawdown": -0.12276691541034401,
+   "nw_t": -2.958637674617683,
+   "turnover_annual_traded_over_equity": 71.51600639113127,
+   "cost_share_of_gross": 1.6121513663200255,
+   "costs_annual": {
+    "cost_spread": 0.09827690533357074,
+    "cost_impact": 0.0012741723948540595,
+    "cost_fees": 0.0035763308052659763,
+    "cost_borrow": 0.001163180859309241,
+    "cost_margin": 0.0009549737685753977
+   },
+   "beta_spy": 0.04809380944927861,
+   "avg_long_exposure": 0.42945914784246414,
+   "avg_short_exposure": 0.4576627175934748,
+   "avg_names_long": 183.70178041543028,
+   "avg_names_short": 184.2566765578635,
+   "capacity": {
+    "traded_notional": 51544615.91219489,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 6.298239466754115e-07
+   },
+   "engine_info": {
+    "delist_exits": 30,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 100,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 513,
+    "reg_t_violation_days": 90,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.336718406029228,
+    "gross_sharpe": 0.9385835828101868,
+    "net_sharpe_2x": -1.598440924951145,
+    "turnover": 69.70940932416627,
+    "max_drawdown": -0.18323349594856841
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.1125893780076962,
+    "63": -0.12650076015384093
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.057941879162258667
+  },
+  "R_U3000_ind_L21_none_H1_open": {
+   "recent_net_sharpe": -2.993153951922243,
+   "recent_net_sharpe_0.5x_cost": -1.4828114762321716,
+   "recent_net_sharpe_2x_cost": -5.993736601143922,
+   "recent_gross_sharpe": 0.029912484995860845,
+   "recent_gross_ann_excess_return": 0.0035550093365956,
+   "recent_net_ann_excess_return": -0.35603584020454687,
+   "vol": 0.11895005934322087,
+   "max_drawdown": -0.6000710826334936,
+   "nw_t": -4.925415728315888,
+   "turnover_annual_traded_over_equity": 119.96103449183887,
+   "cost_share_of_gross": 7.902703657864557,
+   "costs_annual": {
+    "cost_spread": 0.33540362290050413,
+    "cost_impact": 0.01085325026521062,
+    "cost_fees": 0.006000308703255097,
+    "cost_borrow": 0.0014450823864604729,
+    "cost_margin": 0.0058885852857135145
+   },
+   "beta_spy": 0.05027582398317863,
+   "avg_long_exposure": 0.5880675973090327,
+   "avg_short_exposure": 0.5674258230142367,
+   "avg_names_long": 100.56824925816024,
+   "avg_names_short": 100.42878338278932,
+   "capacity": {
+    "traded_notional": 53851466.455396466,
+    "share_above_1pct_adv": 0.0008766154156114024,
+    "median_participation": 5.446671880818089e-07
+   },
+   "engine_info": {
+    "delist_exits": 6,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 15,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 612,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.9923131531237885,
+    "gross_sharpe": 0.30454814418168374,
+    "net_sharpe_2x": -4.288636110891649,
+    "turnover": 119.60355782144751,
+    "max_drawdown": -0.8041567829417803
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.25220034060891106,
+    "63": -0.3113162908571213
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.020459874627333136
+  },
+  "R_U3000_ind_L21_none_H5_open": {
+   "recent_net_sharpe": -1.9284327494492919,
+   "recent_net_sharpe_0.5x_cost": -1.1166303925049181,
+   "recent_net_sharpe_2x_cost": -3.54873043269275,
+   "recent_gross_sharpe": -0.30432453054257524,
+   "recent_gross_ann_excess_return": -0.03439734177658573,
+   "recent_net_ann_excess_return": -0.21804751144439896,
+   "vol": 0.11306980318949024,
+   "max_drawdown": -0.41316860350137663,
+   "nw_t": -3.2080726444943046,
+   "turnover_annual_traded_over_equity": 58.322456344626225,
+   "cost_share_of_gross": 24.32483034352048,
+   "costs_annual": {
+    "cost_spread": 0.17079753858480737,
+    "cost_impact": 0.002982610789837425,
+    "cost_fees": 0.0029170419343364884,
+    "cost_borrow": 0.0014256125171773,
+    "cost_margin": 0.005527365841655374
+   },
+   "beta_spy": 0.03499234221800225,
+   "avg_long_exposure": 0.5817773871024923,
+   "avg_short_exposure": 0.5606933462049984,
+   "avg_names_long": 164.61721068249258,
+   "avg_names_short": 157.66320474777447,
+   "capacity": {
+    "traded_notional": 31501059.58500741,
+    "share_above_1pct_adv": 0.0001622544366406537,
+    "median_participation": 8.097008657909754e-07
+   },
+   "engine_info": {
+    "delist_exits": 15,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 66,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 592,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.1469100283532814,
+    "gross_sharpe": 0.10440188673279646,
+    "net_sharpe_2x": -2.39941166536182,
+    "turnover": 57.47770307657448,
+    "max_drawdown": -0.5643493283852439
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.22835213663308185,
+    "63": -0.2685982454491693
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.0046900878926800236
+  },
+  "R_U3000_ind_L5_none_H1_open": {
+   "recent_net_sharpe": -5.960572973416771,
+   "recent_net_sharpe_0.5x_cost": -2.9932184884874036,
+   "recent_net_sharpe_2x_cost": -11.804625184257345,
+   "recent_gross_sharpe": -0.015476651241288194,
+   "recent_gross_ann_excess_return": -0.0017510936588847085,
+   "recent_net_ann_excess_return": -0.6756005893623248,
+   "vol": 0.11334490700397402,
+   "max_drawdown": -0.8253106565360198,
+   "nw_t": -10.160952766647315,
+   "turnover_annual_traded_over_equity": 236.47910986781397,
+   "cost_share_of_gross": 16.76402928038645,
+   "costs_annual": {
+    "cost_spread": 0.6362767578798142,
+    "cost_impact": 0.01859641457064925,
+    "cost_fees": 0.011829044936579984,
+    "cost_borrow": 0.0014982217137107729,
+    "cost_margin": 0.005649056602684309
+   },
+   "beta_spy": 0.07213002513664031,
+   "avg_long_exposure": 0.5845033862208489,
+   "avg_short_exposure": 0.5898550321109225,
+   "avg_names_long": 100.50890207715133,
+   "avg_names_short": 100.46290801186943,
+   "capacity": {
+    "traded_notional": 77286534.72344929,
+    "share_above_1pct_adv": 0.00039704242499901044,
+    "median_participation": 1.6744767466048941e-06
+   },
+   "engine_info": {
+    "delist_exits": 12,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 19,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 632,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -3.3995939245221165,
+    "gross_sharpe": 0.739940820176705,
+    "net_sharpe_2x": -7.52934202680426,
+    "turnover": 230.55233460648938,
+    "max_drawdown": -0.9413193911008386
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.21222091114703845,
+    "63": -0.31016154833760046
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.033154876347120166
+  },
+  "R_U3000_ind_L5_none_H5_open": {
+   "recent_net_sharpe": -4.116197327485243,
+   "recent_net_sharpe_0.5x_cost": -2.2912595424200406,
+   "recent_net_sharpe_2x_cost": -7.766116072157429,
+   "recent_gross_sharpe": -0.46928696541001397,
+   "recent_gross_ann_excess_return": -0.03976161222089165,
+   "recent_net_ann_excess_return": -0.34801289422891524,
+   "vol": 0.08454718434053572,
+   "max_drawdown": -0.5740304656890024,
+   "nw_t": -6.871464112472264,
+   "turnover_annual_traded_over_equity": 105.99954465862656,
+   "cost_share_of_gross": 141.03511262478216,
+   "costs_annual": {
+    "cost_spread": 0.2922333008393044,
+    "cost_impact": 0.0049666465424596466,
+    "cost_fees": 0.005302046541073476,
+    "cost_borrow": 0.0014071124094477186,
+    "cost_margin": 0.0043421756757384775
+   },
+   "beta_spy": 0.02188912760260276,
+   "avg_long_exposure": 0.5462160845738868,
+   "avg_short_exposure": 0.5527175038629949,
+   "avg_names_long": 229.19436201780417,
+   "avg_names_short": 223.83827893175075,
+   "capacity": {
+    "traded_notional": 50048218.415055774,
+    "share_above_1pct_adv": 4.8054680399778075e-05,
+    "median_participation": 9.933182592387773e-07
+   },
+   "engine_info": {
+    "delist_exits": 23,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 125,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 487,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.7826817095303849,
+    "gross_sharpe": 0.481454126462321,
+    "net_sharpe_2x": -4.05188997039764,
+    "turnover": 101.91438280250833,
+    "max_drawdown": -0.6907416030038745
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.18554947749214779,
+    "63": -0.2400336474864474
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.03322028758166033
+  },
+  "R_U3000_pca_L21_none_H1_open": {
+   "recent_net_sharpe": -3.565533030745392,
+   "recent_net_sharpe_0.5x_cost": -1.9078350106939796,
+   "recent_net_sharpe_2x_cost": -6.8242132559547,
+   "recent_gross_sharpe": -0.23986033017998012,
+   "recent_gross_ann_excess_return": -0.022393312211473716,
+   "recent_net_ann_excess_return": -0.33441940618823107,
+   "vol": 0.093792261438767,
+   "max_drawdown": -0.5523129431203273,
+   "nw_t": -5.626512401816799,
+   "turnover_annual_traded_over_equity": 107.78498059998994,
+   "cost_share_of_gross": 15.95720213942489,
+   "costs_annual": {
+    "cost_spread": 0.2937366569667592,
+    "cost_impact": 0.009358848757057706,
+    "cost_fees": 0.005390907609795061,
+    "cost_borrow": 0.00136369790900201,
+    "cost_margin": 0.0021759827341438025
+   },
+   "beta_spy": 0.07672977884220629,
+   "avg_long_exposure": 0.5330726036849547,
+   "avg_short_exposure": 0.5344266571755177,
+   "avg_names_long": 100.486646884273,
+   "avg_names_short": 100.48813056379822,
+   "capacity": {
+    "traded_notional": 54394835.00217794,
+    "share_above_1pct_adv": 0.0004842033002958574,
+    "median_participation": 5.212242181976316e-07
+   },
+   "engine_info": {
+    "delist_exits": 11,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 18,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 551,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -2.2755808322535227,
+    "gross_sharpe": 0.16696146958229663,
+    "net_sharpe_2x": -4.7053431515418,
+    "turnover": 108.1866721236321,
+    "max_drawdown": -0.7789499743357648
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.24222546618108998,
+    "63": -0.2980354029858877
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.030686869721657312
+  },
+  "R_U3000_pca_L21_none_H5_open": {
+   "recent_net_sharpe": -2.0180284349804944,
+   "recent_net_sharpe_0.5x_cost": -1.1101072689590663,
+   "recent_net_sharpe_2x_cost": -3.8279803765695233,
+   "recent_gross_sharpe": -0.20107357664090195,
+   "recent_gross_ann_excess_return": -0.01787240262798525,
+   "recent_net_ann_excess_return": -0.17954016620794144,
+   "vol": 0.0889681052535203,
+   "max_drawdown": -0.33517590993148283,
+   "nw_t": -3.2305562117832496,
+   "turnover_annual_traded_over_equity": 53.66922272699654,
+   "cost_share_of_gross": 6.715215244003154,
+   "costs_annual": {
+    "cost_spread": 0.15304594191525467,
+    "cost_impact": 0.0025945465103209267,
+    "cost_fees": 0.002684139516668117,
+    "cost_borrow": 0.001350685079516591,
+    "cost_margin": 0.0019924505581962334
+   },
+   "beta_spy": 0.06986000946130655,
+   "avg_long_exposure": 0.5284573318816417,
+   "avg_short_exposure": 0.5302278051835676,
+   "avg_names_long": 161.90652818991097,
+   "avg_names_short": 155.43175074183975,
+   "capacity": {
+    "traded_notional": 33244835.012837175,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 8.775718137311663e-07
+   },
+   "engine_info": {
+    "delist_exits": 21,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 98,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 528,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.2827302047283182,
+    "gross_sharpe": 0.06545076376512882,
+    "net_sharpe_2x": -2.6349315544650884,
+    "turnover": 53.279904848205355,
+    "max_drawdown": -0.5207384376309867
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.22196420739510425,
+    "63": -0.25773674518313483
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.014588615689343679
+  },
+  "R_U3000_pca_L5_none_H1_open": {
+   "recent_net_sharpe": -6.306975984044575,
+   "recent_net_sharpe_0.5x_cost": -3.503066427095028,
+   "recent_net_sharpe_2x_cost": -11.112412033770207,
+   "recent_gross_sharpe": -0.5593354372210386,
+   "recent_gross_ann_excess_return": -0.0484669639156663,
+   "recent_net_ann_excess_return": -0.5629482963557625,
+   "vol": 0.08925803709732089,
+   "max_drawdown": -0.7547764234033421,
+   "nw_t": -10.991754999459445,
+   "turnover_annual_traded_over_equity": 174.47175975968207,
+   "cost_share_of_gross": NaN,
+   "costs_annual": {
+    "cost_spread": 0.4876976021378868,
+    "cost_impact": 0.014891630694266746,
+    "cost_fees": 0.008726879507680979,
+    "cost_borrow": 0.0013918048008590804,
+    "cost_margin": 0.0017734152994034146
+   },
+   "beta_spy": 0.07183841935121987,
+   "avg_long_exposure": 0.5261463302579189,
+   "avg_short_exposure": 0.5480037189891727,
+   "avg_names_long": 100.3813056379822,
+   "avg_names_short": 100.56973293768546,
+   "capacity": {
+    "traded_notional": 72789534.88852234,
+    "share_above_1pct_adv": 0.00042241359838750145,
+    "median_participation": 2.416851970593137e-06
+   },
+   "engine_info": {
+    "delist_exits": 14,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 16,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 513,
+    "reg_t_violation_days": 568,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -3.5232758056014966,
+    "gross_sharpe": 0.5812898219489057,
+    "net_sharpe_2x": -7.331702722944115,
+    "turnover": 176.05077047013276,
+    "max_drawdown": -0.8957052560673502
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.22278098588581507,
+    "63": -0.3057997030091566
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.05615284645769939
+  },
+  "R_U3000_pca_L5_none_H5_open": {
+   "recent_net_sharpe": -4.217799082168119,
+   "recent_net_sharpe_0.5x_cost": -2.5528492544138253,
+   "recent_net_sharpe_2x_cost": -7.268902413746145,
+   "recent_gross_sharpe": -0.8383852351320416,
+   "recent_gross_ann_excess_return": -0.05474529512030673,
+   "recent_net_ann_excess_return": -0.28025724713478894,
+   "vol": 0.0664463246529812,
+   "max_drawdown": -0.47657768879568685,
+   "nw_t": -7.324001807114005,
+   "turnover_annual_traded_over_equity": 75.48782054592411,
+   "cost_share_of_gross": NaN,
+   "costs_annual": {
+    "cost_spread": 0.21550604543695673,
+    "cost_impact": 0.004008601598013372,
+    "cost_fees": 0.0037752461983436313,
+    "cost_borrow": 0.001210350506037091,
+    "cost_margin": 0.0010117082751318746
+   },
+   "beta_spy": 0.05896502687177216,
+   "avg_long_exposure": 0.4502783878449799,
+   "avg_short_exposure": 0.476251853304695,
+   "avg_names_long": 209.95548961424333,
+   "avg_names_short": 205.87685459940653,
+   "capacity": {
+    "traded_notional": 43131927.65560008,
+    "share_above_1pct_adv": 3.207930048305302e-05,
+    "median_participation": 1.2227325164106784e-06
+   },
+   "engine_info": {
+    "delist_exits": 26,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 76,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 513,
+    "reg_t_violation_days": 222,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.8101947353919845,
+    "gross_sharpe": 0.5775079395928112,
+    "net_sharpe_2x": -4.108699821371863,
+    "turnover": 74.16082732349655,
+    "max_drawdown": -0.5498797738815918
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.12954088038232592,
+    "63": -0.18065740661039875
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.0696402819993789
+  },
+  "R_U500_ind_L21_none_H1_open": {
+   "recent_net_sharpe": -0.8449379898131225,
+   "recent_net_sharpe_0.5x_cost": -0.22727519273355581,
+   "recent_net_sharpe_2x_cost": -2.076753739086439,
+   "recent_gross_sharpe": 0.3910444836500513,
+   "recent_gross_ann_excess_return": 0.031853487399981076,
+   "recent_net_ann_excess_return": -0.06889438798650661,
+   "vol": 0.08153780374077416,
+   "max_drawdown": -0.15682965140661043,
+   "nw_t": -1.5249431277248788,
+   "turnover_annual_traded_over_equity": 95.8928617261193,
+   "cost_share_of_gross": 1.3651337736534088,
+   "costs_annual": {
+    "cost_spread": 0.08636899696013461,
+    "cost_impact": 0.0016649410046093724,
+    "cost_fees": 0.00479521936827866,
+    "cost_borrow": 0.0014730568055408714,
+    "cost_margin": 0.006445661247923141
+   },
+   "beta_spy": -0.003043451762660985,
+   "avg_long_exposure": 0.5969407065065065,
+   "avg_short_exposure": 0.5785519747676464,
+   "avg_names_long": 100.55637982195846,
+   "avg_names_short": 100.43026706231454,
+   "capacity": {
+    "traded_notional": 60671498.18977066,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 5.560646517374842e-08
+   },
+   "engine_info": {
+    "delist_exits": 5,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 8,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 626,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.6729353639543144,
+    "gross_sharpe": 0.15055610474172657,
+    "net_sharpe_2x": -1.4963428438116628,
+    "turnover": 90.86684655670011,
+    "max_drawdown": -0.3259606896021485
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.08758831903235198,
+    "63": -0.11695883754397285
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.014658593881080621
+  },
+  "R_U500_ind_L21_none_H5_open": {
+   "recent_net_sharpe": -0.5433088776671453,
+   "recent_net_sharpe_0.5x_cost": -0.19209401461598744,
+   "recent_net_sharpe_2x_cost": -1.2452295226590089,
+   "recent_gross_sharpe": 0.15920176449784182,
+   "recent_gross_ann_excess_return": 0.011799375713613124,
+   "recent_net_ann_excess_return": -0.04027568784855137,
+   "vol": 0.07413036948979511,
+   "max_drawdown": -0.09387741530711313,
+   "nw_t": -0.9919752851700567,
+   "turnover_annual_traded_over_equity": 46.12380830928263,
+   "cost_share_of_gross": 0.9688992664843251,
+   "costs_annual": {
+    "cost_spread": 0.04192265865260571,
+    "cost_impact": 0.00040098282393583815,
+    "cost_fees": 0.0023065211238098653,
+    "cost_borrow": 0.0014271757150318698,
+    "cost_margin": 0.006017725246780764
+   },
+   "beta_spy": -0.016162918577482078,
+   "avg_long_exposure": 0.5801960538741463,
+   "avg_short_exposure": 0.5613939206354974,
+   "avg_names_long": 138.9154302670623,
+   "avg_names_short": 137.90059347181008,
+   "capacity": {
+    "traded_notional": 30618383.9402859,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.0096849284704774e-07
+   },
+   "engine_info": {
+    "delist_exits": 8,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 41,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 543,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.3039409454544992,
+    "gross_sharpe": 0.1522645887882757,
+    "net_sharpe_2x": -0.7601156164843985,
+    "turnover": 44.10305865999788,
+    "max_drawdown": -0.20911639028906526
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.08527581582049581,
+    "63": -0.1075985954680786
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": -0.009455595598475487
+  },
+  "R_U500_ind_L5_none_H1_open": {
+   "recent_net_sharpe": -1.6238414531740994,
+   "recent_net_sharpe_0.5x_cost": -0.43778490687203614,
+   "recent_net_sharpe_2x_cost": -3.981663759575008,
+   "recent_gross_sharpe": 0.7503379470780884,
+   "recent_gross_ann_excess_return": 0.06105600761513859,
+   "recent_net_ann_excess_return": -0.13233625816158975,
+   "vol": 0.08149579991501879,
+   "max_drawdown": -0.28533149624286924,
+   "nw_t": -2.7672331733486755,
+   "turnover_annual_traded_over_equity": 191.9619662705851,
+   "cost_share_of_gross": 1.8775354821195767,
+   "costs_annual": {
+    "cost_spread": 0.17262793240115168,
+    "cost_impact": 0.0034930324149723326,
+    "cost_fees": 0.00959934396075998,
+    "cost_borrow": 0.0015178403178360824,
+    "cost_margin": 0.006154116682007554
+   },
+   "beta_spy": 0.011951150151280666,
+   "avg_long_exposure": 0.5939140434235973,
+   "avg_short_exposure": 0.5979383391706843,
+   "avg_names_long": 100.50890207715133,
+   "avg_names_short": 100.47626112759644,
+   "capacity": {
+    "traded_notional": 115425080.39407896,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.441918273828052e-07
+   },
+   "engine_info": {
+    "delist_exits": 9,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 9,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 625,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.7881927727391382,
+    "gross_sharpe": 0.8092110354839159,
+    "net_sharpe_2x": -2.384601184533779,
+    "turnover": 180.6968722787334,
+    "max_drawdown": -0.32436606566755155
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.0824424676125588,
+    "63": -0.11807837588819015
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.030088194150816205
+  },
+  "R_U500_ind_L5_none_H5_open": {
+   "recent_net_sharpe": -1.060961236716336,
+   "recent_net_sharpe_0.5x_cost": -0.2955621755749423,
+   "recent_net_sharpe_2x_cost": -2.590787965567744,
+   "recent_gross_sharpe": 0.46964218286630754,
+   "recent_gross_ann_excess_return": 0.02832777571408919,
+   "recent_net_ann_excess_return": -0.06397436685141447,
+   "vol": 0.060298495965238556,
+   "max_drawdown": -0.14316700739000532,
+   "nw_t": -1.8460585320165095,
+   "turnover_annual_traded_over_equity": 89.44335727221447,
+   "cost_share_of_gross": 1.3134416564635139,
+   "costs_annual": {
+    "cost_spread": 0.0809174154631215,
+    "cost_impact": 0.0008710062329501626,
+    "cost_fees": 0.004472864964996673,
+    "cost_borrow": 0.0012674241896129166,
+    "cost_margin": 0.004773431714823182
+   },
+   "beta_spy": -0.013873136461473323,
+   "avg_long_exposure": 0.4930531460648732,
+   "avg_short_exposure": 0.49814305204826964,
+   "avg_names_long": 155.48961424332344,
+   "avg_names_short": 154.00296735905044,
+   "capacity": {
+    "traded_notional": 59076766.7898289,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 4.1542626347515897e-07
+   },
+   "engine_info": {
+    "delist_exits": 10,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 54,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 243,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.2797314271983553,
+    "gross_sharpe": 0.6428497006841499,
+    "net_sharpe_2x": -1.2032528736339898,
+    "turnover": 84.84935921539721,
+    "max_drawdown": -0.19664715805968525
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.07280626276466107,
+    "63": -0.0899731773340301
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.036439016077626486
+  },
+  "R_U500_pca_L21_none_H1_open": {
+   "recent_net_sharpe": -1.6189000131548348,
+   "recent_net_sharpe_0.5x_cost": -0.8870143197446683,
+   "recent_net_sharpe_2x_cost": -3.074156561665259,
+   "recent_gross_sharpe": -0.15326811776391022,
+   "recent_gross_ann_excess_return": -0.009367318776028838,
+   "recent_net_ann_excess_return": -0.09915323203073723,
+   "vol": 0.06124728595036093,
+   "max_drawdown": -0.19941024492769688,
+   "nw_t": -2.6658320081834734,
+   "turnover_annual_traded_over_equity": 83.74410207380545,
+   "cost_share_of_gross": 2.755865880301083,
+   "costs_annual": {
+    "cost_spread": 0.08093322200454607,
+    "cost_impact": 0.001535806153354098,
+    "cost_fees": 0.0041879638578817425,
+    "cost_borrow": 0.0013825515255894729,
+    "cost_margin": 0.001746369713336817
+   },
+   "beta_spy": 0.05003200479069033,
+   "avg_long_exposure": 0.5270694634672094,
+   "avg_short_exposure": 0.5422881700025989,
+   "avg_names_long": 100.43323442136499,
+   "avg_names_short": 100.55489614243324,
+   "capacity": {
+    "traded_notional": 56182044.08286501,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 5.139889831617884e-08
+   },
+   "engine_info": {
+    "delist_exits": 6,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 7,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 579,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.8542799889186692,
+    "gross_sharpe": 0.10883502991849678,
+    "net_sharpe_2x": -1.8169987726861474,
+    "turnover": 82.95547156932344,
+    "max_drawdown": -0.2853795187323903
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.13173113709362483,
+    "63": -0.14518997844823145
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": -0.019557196944423077
+  },
+  "R_U500_pca_L21_none_H5_open": {
+   "recent_net_sharpe": -0.9399026769461385,
+   "recent_net_sharpe_0.5x_cost": -0.5413935176567577,
+   "recent_net_sharpe_2x_cost": -1.7364318498882467,
+   "recent_gross_sharpe": -0.14283544101712237,
+   "recent_gross_ann_excess_return": -0.008258791139872755,
+   "recent_net_ann_excess_return": -0.05434685575076562,
+   "vol": 0.05782179057872818,
+   "max_drawdown": -0.10643299885752211,
+   "nw_t": -1.6053701236835263,
+   "turnover_annual_traded_over_equity": 41.449815370130786,
+   "cost_share_of_gross": 1.3680669860582877,
+   "costs_annual": {
+    "cost_spread": 0.040640712266937266,
+    "cost_impact": 0.00038625622172223527,
+    "cost_fees": 0.002072794781238866,
+    "cost_borrow": 0.001345213814704239,
+    "cost_margin": 0.0016430875262902483
+   },
+   "beta_spy": 0.044796805638838505,
+   "avg_long_exposure": 0.5133283631307619,
+   "avg_short_exposure": 0.5283782879508938,
+   "avg_names_long": 136.25370919881306,
+   "avg_names_short": 136.83827893175075,
+   "capacity": {
+    "traded_notional": 29634657.76143293,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 9.499872462535121e-08
+   },
+   "engine_info": {
+    "delist_exits": 8,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 38,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 674,
+    "reg_t_violation_days": 442,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.40830352896509103,
+    "gross_sharpe": 0.12818620719252655,
+    "net_sharpe_2x": -0.9448214559037466,
+    "turnover": 41.15609530886179,
+    "max_drawdown": -0.14992654436298736
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.10478145595116672,
+    "63": -0.11472675625030926
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": -0.02702653225753235
+  },
+  "R_U500_pca_L5_none_H1_open": {
+   "recent_net_sharpe": -2.8739061454913917,
+   "recent_net_sharpe_0.5x_cost": -1.4886474832243706,
+   "recent_net_sharpe_2x_cost": -5.533485871509529,
+   "recent_gross_sharpe": -0.08684015486755528,
+   "recent_gross_ann_excess_return": -0.004653300476299241,
+   "recent_net_ann_excess_return": -0.15517472366116217,
+   "vol": 0.0539943602210537,
+   "max_drawdown": -0.29167149501577816,
+   "nw_t": -4.688644063079332,
+   "turnover_annual_traded_over_equity": 140.1794233849671,
+   "cost_share_of_gross": 4.036081890499093,
+   "costs_annual": {
+    "cost_spread": 0.1376523713509204,
+    "cost_impact": 0.0028520608203394184,
+    "cost_fees": 0.007010127454102456,
+    "cost_borrow": 0.0013988281450651573,
+    "cost_margin": 0.0016080354144371244
+   },
+   "beta_spy": 0.05763168739936529,
+   "avg_long_exposure": 0.5246186594595217,
+   "avg_short_exposure": 0.549170505859413,
+   "avg_names_long": 100.38278931750742,
+   "avg_names_short": 100.59198813056379,
+   "capacity": {
+    "traded_notional": 93661666.2891288,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.840067327144815e-07
+   },
+   "engine_info": {
+    "delist_exits": 7,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 6,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 513,
+    "reg_t_violation_days": 556,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -1.1808312183224647,
+    "gross_sharpe": 0.5733804391420295,
+    "net_sharpe_2x": -2.9156739480755167,
+    "turnover": 140.9585337687435,
+    "max_drawdown": -0.34780789095275433
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.1287149469495057,
+    "63": -0.1458362320035188
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.05453782486376221
+  },
+  "R_U500_pca_L5_none_H5_open": {
+   "recent_net_sharpe": -1.8483280774152806,
+   "recent_net_sharpe_0.5x_cost": -1.0121780297584195,
+   "recent_net_sharpe_2x_cost": -3.4797767721199917,
+   "recent_gross_sharpe": -0.16857830879099583,
+   "recent_gross_ann_excess_return": -0.006929294616042322,
+   "recent_net_ann_excess_return": -0.076470216286498,
+   "vol": 0.041372642238619604,
+   "max_drawdown": -0.1184896210470251,
+   "nw_t": -3.036929818389377,
+   "turnover_annual_traded_over_equity": 64.34098078000912,
+   "cost_share_of_gross": 1.9858648620640478,
+   "costs_annual": {
+    "cost_spread": 0.06353655536535076,
+    "cost_impact": 0.0007472877017595624,
+    "cost_fees": 0.003217332666712327,
+    "cost_borrow": 0.001087427824847927,
+    "cost_margin": 0.000952318111785342
+   },
+   "beta_spy": 0.04814419256888138,
+   "avg_long_exposure": 0.39882632145615515,
+   "avg_short_exposure": 0.4278933202460431,
+   "avg_names_long": 147.9406528189911,
+   "avg_names_short": 148.48367952522256,
+   "capacity": {
+    "traded_notional": 46515253.2338937,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 4.336378674017546e-07
+   },
+   "engine_info": {
+    "delist_exits": 9,
+    "delist_haircut_dollars": 0.0,
+    "frozen_halted_trades": 29,
+    "unknown_symbols": 0,
+    "nonfinite_weights": 0,
+    "n_rebalances": 513,
+    "reg_t_violation_days": 20,
+    "bankrupt": false
+   },
+   "stress": {
+    "net_sharpe": -0.2931259179035051,
+    "gross_sharpe": 0.7994516407939755,
+    "net_sharpe_2x": -1.3768558045777335,
+    "turnover": 62.975983878219836,
+    "max_drawdown": -0.12060317016465083
+   },
+   "stress_21d_63d_worst_loss": {
+    "21": -0.08041760299738188,
+    "63": -0.08891912753030373
+   },
+   "corr_with_existing_stock_book_v12_M0_U3000_F1": 0.02404915568402744
+  }
+ },
+ "selection": {
+  "cell_id": "R_U500_ind_L21_none_H5_open",
+  "universe": 500,
+  "resid": "ind",
+  "L": 21,
+  "H": 5,
+  "net": -0.5433088776671453,
+  "gross": 0.15920176449784182,
+  "top3": [
+   "R_U1000_ind_L21_none_H5_open",
+   "R_U500_ind_L21_none_H5_open",
+   "R_U500_ind_L21_none_H1_open"
+  ]
+ },
+ "robustness_on_selected_spec": {
+  "ROB_lowturn_open_b25_U500_ind_L21_H5": {
+   "recent_net_sharpe": -0.7837195948313797,
+   "recent_net_sharpe_0.5x_cost": -0.25071913582599803,
+   "recent_net_sharpe_2x_cost": -1.8411242549871816,
+   "recent_gross_sharpe": 0.2827342292169395,
+   "recent_gross_ann_excess_return": 0.0050812059171783715,
+   "recent_net_ann_excess_return": -0.014089147517242079,
+   "vol": 0.017977281173215294,
+   "max_drawdown": -0.015696188047992332,
+   "nw_t": -1.2908085189529734,
+   "turnover_annual_traded_over_equity": 17.385575897528163,
+   "cost_share_of_gross": 0.4076330847552625,
+   "costs_annual": {
+    "cost_spread": 0.01577483939259656,
+    "cost_impact": 0.00011267381785562593,
+    "cost_fees": 0.000869389140491557,
+    "cost_borrow": 0.0006377016212459576,
+    "cost_margin": 0.0017757494622313275
+   },
+   "beta_spy": -0.0027196543057630405,
+   "avg_long_exposure": 0.26311689067967664,
+   "avg_short_exposure": 0.25114315178164537,
+   "avg_names_long": 71.04451038575668,
+   "avg_names_short": 70.70326409495549,
+   "capacity": {
+    "traded_notional": 12816262.767539928,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.0696414958054447e-07
+   },
+   "engine_info": null
+  },
+  "ROB_none_close_b25_U500_ind_L21_H5": {
+   "recent_net_sharpe": -0.17739853337385983,
+   "recent_net_sharpe_0.5x_cost": -0.02863702180491557,
+   "recent_net_sharpe_2x_cost": -0.4748092938043025,
+   "recent_gross_sharpe": 0.12014803864230968,
+   "recent_gross_ann_excess_return": 0.008789294054783063,
+   "recent_net_ann_excess_return": -0.012979385325261288,
+   "vol": 0.07316512193428223,
+   "max_drawdown": -0.06511411712631576,
+   "nw_t": -0.32077545290494475,
+   "turnover_annual_traded_over_equity": 45.96406500823921,
+   "cost_share_of_gross": 0.4290532784001407,
+   "costs_annual": {
+    "cost_spread": 0.011626687812373757,
+    "cost_impact": 0.00040530845243341463,
+    "cost_fees": 0.002298551192094804,
+    "cost_borrow": 0.0014267946395824644,
+    "cost_margin": 0.0060113372835598625
+   },
+   "beta_spy": -0.02099453084021542,
+   "avg_long_exposure": 0.5800348198368002,
+   "avg_short_exposure": 0.5613208150277618,
+   "avg_names_long": 138.9154302670623,
+   "avg_names_short": 137.90059347181008,
+   "capacity": {
+    "traded_notional": 31578930.590266842,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.0115015087250695e-07
+   },
+   "engine_info": null
+  },
+  "ROB_none_open_b100_U500_ind_L21_H5": {
+   "recent_net_sharpe": -0.6011163527581749,
+   "recent_net_sharpe_0.5x_cost": -0.22099484479019904,
+   "recent_net_sharpe_2x_cost": -1.3608655334343007,
+   "recent_gross_sharpe": 0.15918811293344873,
+   "recent_gross_ann_excess_return": 0.01179820069152011,
+   "recent_net_ann_excess_return": -0.04455708180291048,
+   "vol": 0.07412388899164668,
+   "max_drawdown": -0.09954202633131615,
+   "nw_t": -1.0977231973883124,
+   "turnover_annual_traded_over_equity": 46.124678521596685,
+   "cost_share_of_gross": 1.0485591739659395,
+   "costs_annual": {
+    "cost_spread": 0.041922490202366915,
+    "cost_impact": 0.00039983868070333085,
+    "cost_fees": 0.002306525631520261,
+    "cost_borrow": 0.0057087028464971,
+    "cost_margin": 0.006017725133341314
+   },
+   "beta_spy": -0.016167252991430497,
+   "avg_long_exposure": 0.580196052629451,
+   "avg_short_exposure": 0.5613939194953307,
+   "avg_names_long": 138.9154302670623,
+   "avg_names_short": 137.90059347181008,
+   "capacity": {
+    "traded_notional": 30448030.31693128,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.0037693057968298e-07
+   },
+   "engine_info": null
+  },
+  "ROB_nonews_open_b25_U500_ind_L21_H5": {
+   "recent_net_sharpe": -1.3385696887122305,
+   "recent_net_sharpe_0.5x_cost": -0.5949319318908338,
+   "recent_net_sharpe_2x_cost": -2.823679810085246,
+   "recent_gross_sharpe": 0.148938860363774,
+   "recent_gross_ann_excess_return": 0.006690822381800716,
+   "recent_net_ann_excess_return": -0.06014386397634255,
+   "vol": 0.04493144024066756,
+   "max_drawdown": -0.07366953873684012,
+   "nw_t": -2.4015372894200615,
+   "turnover_annual_traded_over_equity": 57.76419684708311,
+   "cost_share_of_gross": 1.3741229219983877,
+   "costs_annual": {
+    "cost_spread": 0.059239805802117615,
+    "cost_impact": 0.0005375900107129768,
+    "cost_fees": 0.002888679641797807,
+    "cost_borrow": 0.001248522225872886,
+    "cost_margin": 0.002920088677643371
+   },
+   "beta_spy": -0.00722363814672817,
+   "avg_long_exposure": 0.4806071350582327,
+   "avg_short_exposure": 0.49008289277023825,
+   "avg_names_long": 155.33382789317508,
+   "avg_names_short": 159.82047477744808,
+   "capacity": {
+    "traded_notional": 41218873.39348113,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 2.3497931628254998e-07
+   },
+   "engine_info": null
+  },
+  "ROB_short1000_open_b25_U500_ind_L21_H5": {
+   "recent_net_sharpe": -0.5433088776671453,
+   "recent_net_sharpe_0.5x_cost": -0.19209401461598744,
+   "recent_net_sharpe_2x_cost": -1.2452295226590089,
+   "recent_gross_sharpe": 0.15920176449784182,
+   "recent_gross_ann_excess_return": 0.011799375713613124,
+   "recent_net_ann_excess_return": -0.04027568784855137,
+   "vol": 0.07413036948979511,
+   "max_drawdown": -0.09387741530711313,
+   "nw_t": -0.9919752851700567,
+   "turnover_annual_traded_over_equity": 46.12380830928263,
+   "cost_share_of_gross": 0.9688992664843251,
+   "costs_annual": {
+    "cost_spread": 0.04192265865260571,
+    "cost_impact": 0.00040098282393583815,
+    "cost_fees": 0.0023065211238098653,
+    "cost_borrow": 0.0014271757150318698,
+    "cost_margin": 0.006017725246780764
+   },
+   "beta_spy": -0.016162918577482078,
+   "avg_long_exposure": 0.5801960538741463,
+   "avg_short_exposure": 0.5613939206354974,
+   "avg_names_long": 138.9154302670623,
+   "avg_names_short": 137.90059347181008,
+   "capacity": {
+    "traded_notional": 30618383.9402859,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.0096849284704774e-07
+   },
+   "engine_info": null
+  },
+  "ROB_vixscale_open_b25_U500_ind_L21_H5": {
+   "recent_net_sharpe": -0.5096227901039047,
+   "recent_net_sharpe_0.5x_cost": -0.15980306533254587,
+   "recent_net_sharpe_2x_cost": -1.2092268106208537,
+   "recent_gross_sharpe": 0.18991372770255474,
+   "recent_gross_ann_excess_return": 0.016162095929102258,
+   "recent_net_ann_excess_return": -0.04335568871870397,
+   "vol": 0.08507407745612079,
+   "max_drawdown": -0.11209802396905733,
+   "nw_t": -0.9208127470887603,
+   "turnover_annual_traded_over_equity": 52.97513466899922,
+   "cost_share_of_gross": 1.024237779935693,
+   "costs_annual": {
+    "cost_spread": 0.0484846510698642,
+    "cost_impact": 0.0004886660831207294,
+    "cost_fees": 0.0026491945379874438,
+    "cost_borrow": 0.001580931957412535,
+    "cost_margin": 0.006314340999421879
+   },
+   "beta_spy": -0.019571362884057652,
+   "avg_long_exposure": 0.6290982927485119,
+   "avg_short_exposure": 0.622120142281908,
+   "avg_names_long": 139.06231454005933,
+   "avg_names_short": 138.00148367952522,
+   "capacity": {
+    "traded_notional": 34954498.79529142,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 1.6702231361400068e-07
+   },
+   "engine_info": null
+  }
+ },
+ "model_second_stage": {
+  "ridge_recent": {
+   "recent_net_sharpe": -0.25512617694403517,
+   "recent_net_sharpe_0.5x_cost": 0.3589827235440877,
+   "recent_net_sharpe_2x_cost": -1.482308577268988,
+   "recent_gross_sharpe": 0.9730513603873797,
+   "recent_gross_ann_excess_return": 0.07586779369847789,
+   "recent_net_ann_excess_return": -0.019892442189592283,
+   "vol": 0.07797099626494196,
+   "max_drawdown": -0.1553847830513374,
+   "nw_t": -0.4387343121990031,
+   "turnover_annual_traded_over_equity": 81.14990324132005,
+   "cost_share_of_gross": 0.8128014480995478,
+   "costs_annual": {
+    "cost_spread": 0.06701178764271347,
+    "cost_impact": 0.0006739241786559098,
+    "cost_fees": 0.004057862091702937,
+    "cost_borrow": 0.0011176728131026287,
+    "cost_margin": 0.0228989891618952
+   },
+   "beta_spy": -0.0036354311660194445,
+   "avg_long_exposure": 0.7771382345623842,
+   "avg_short_exposure": 0.43867828956796484,
+   "avg_names_long": 160.61424332344214,
+   "avg_names_short": 158.26854599406528,
+   "capacity": {
+    "traded_notional": 51307062.16199227,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 2.884867061143788e-07
+   },
+   "engine_info": null
+  },
+  "ridge_stress": {
+   "net_sharpe": -0.48319896231146275,
+   "gross_sharpe": 0.21417088484981756,
+   "turnover": 61.688259286195795
+  },
+  "lgbm_recent": {
+   "recent_net_sharpe": -0.08512094722980536,
+   "recent_net_sharpe_0.5x_cost": 0.6434674871818082,
+   "recent_net_sharpe_2x_cost": -1.5427676949771372,
+   "recent_gross_sharpe": 1.371294257410045,
+   "recent_gross_ann_excess_return": 0.07256258394823874,
+   "recent_net_ann_excess_return": -0.004500325835015672,
+   "vol": 0.05286978095845096,
+   "max_drawdown": -0.08032473362593939,
+   "nw_t": -0.1412673756947911,
+   "turnover_annual_traded_over_equity": 69.09560094343713,
+   "cost_share_of_gross": 0.6729807299438669,
+   "costs_annual": {
+    "cost_spread": 0.05997139518127687,
+    "cost_impact": 0.0006350253808834064,
+    "cost_fees": 0.003455245159081091,
+    "cost_borrow": 0.0011583181953504916,
+    "cost_margin": 0.011842925866662449
+   },
+   "beta_spy": 0.007787237418124963,
+   "avg_long_exposure": 0.6127184187683922,
+   "avg_short_exposure": 0.4543703698774872,
+   "avg_names_long": 159.10979228486647,
+   "avg_names_short": 148.7700296735905,
+   "capacity": {
+    "traded_notional": 46006480.38701275,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 2.1972711012742218e-07
+   },
+   "engine_info": null
+  },
+  "lgbm_stress": {
+   "net_sharpe": -0.24702769515423362,
+   "gross_sharpe": 0.3397442763487621,
+   "turnover": 52.78883818946546
+  }
+ },
+ "exploratory_cells_post_hoc_contract_section_17": {
+  "E1a_ridge_close": {
+   "recent_net_sharpe": 0.1716622295078895,
+   "recent_net_sharpe_0.5x_cost": 0.4786110462877563,
+   "recent_net_sharpe_2x_cost": -0.44198110336286,
+   "recent_gross_sharpe": 0.7855495243146101,
+   "recent_gross_ann_excess_return": 0.06131239705759793,
+   "recent_net_ann_excess_return": 0.013399461008610686,
+   "vol": 0.07805713025528924,
+   "max_drawdown": -0.11446395584948654,
+   "nw_t": 0.2990647834925742,
+   "turnover_annual_traded_over_equity": 81.44202639265845,
+   "cost_share_of_gross": 0.46400446536340184,
+   "costs_annual": {
+    "cost_spread": 0.019133472595015653,
+    "cost_impact": 0.0006973239943481503,
+    "cost_fees": 0.004073204612856231,
+    "cost_borrow": 0.001117991410869352,
+    "cost_margin": 0.02289094343589692
+   },
+   "beta_spy": -0.02569374668986404,
+   "avg_long_exposure": 0.7770757087886321,
+   "avg_short_exposure": 0.43883178854511473,
+   "avg_names_long": 160.61424332344214,
+   "avg_names_short": 158.26854599406528,
+   "capacity": {
+    "traded_notional": 53950425.36465704,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 3.057211702180172e-07
+   },
+   "engine_info": null,
+   "stress": {
+    "net_sharpe": -0.3462534889939924,
+    "gross_sharpe": 0.021224098980662964,
+    "turnover": 61.686951389570915
+   }
+  },
+  "E1b_lgbm_close": {
+   "recent_net_sharpe": 0.32685193818955743,
+   "recent_net_sharpe_0.5x_cost": 0.6511067009478378,
+   "recent_net_sharpe_2x_cost": -0.32191763031862186,
+   "recent_gross_sharpe": 0.9751676245149272,
+   "recent_gross_ann_excess_return": 0.051099637675716625,
+   "recent_net_ann_excess_return": 0.017119931355211913,
+   "vol": 0.05237824640122901,
+   "max_drawdown": -0.06034984794449172,
+   "nw_t": 0.5417881926948487,
+   "turnover_annual_traded_over_equity": 69.02225474298452,
+   "cost_share_of_gross": 0.36518908020265956,
+   "costs_annual": {
+    "cost_spread": 0.01689110811052049,
+    "cost_impact": 0.0006424651833137598,
+    "cost_fees": 0.0034520950042483175,
+    "cost_borrow": 0.001158473839421363,
+    "cost_margin": 0.011835564183001083
+   },
+   "beta_spy": 0.003600737648744771,
+   "avg_long_exposure": 0.6125738545658231,
+   "avg_short_exposure": 0.454462445843439,
+   "avg_names_long": 159.10979228486647,
+   "avg_names_short": 148.7700296735905,
+   "capacity": {
+    "traded_notional": 47181450.00581813,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 2.2447206143235779e-07
+   },
+   "engine_info": null,
+   "stress": {
+    "net_sharpe": -0.0610334598578257,
+    "gross_sharpe": 0.19924224666649656,
+    "turnover": 52.68358800043049
+   }
+  },
+  "E2a_lgbm_U1000": {
+   "recent_net_sharpe": -0.4591946935785202,
+   "recent_net_sharpe_0.5x_cost": 0.43030392201188905,
+   "recent_net_sharpe_2x_cost": -2.240340903663606,
+   "recent_gross_sharpe": 1.3181964711547765,
+   "recent_gross_ann_excess_return": 0.08803980084064178,
+   "recent_net_ann_excess_return": -0.030617064253703648,
+   "vol": 0.06667556198244323,
+   "max_drawdown": -0.13605817942826393,
+   "nw_t": -0.7678179922229016,
+   "turnover_annual_traded_over_equity": 81.3237093128409,
+   "cost_share_of_gross": 0.9128360620567593,
+   "costs_annual": {
+    "cost_spread": 0.09262553679878807,
+    "cost_impact": 0.001131476025865833,
+    "cost_fees": 0.004066736245805122,
+    "cost_borrow": 0.001179361496897859,
+    "cost_margin": 0.01965375452698724
+   },
+   "beta_spy": -0.0002814158473151458,
+   "avg_long_exposure": 0.7492256592607897,
+   "avg_short_exposure": 0.4627629622416908,
+   "avg_names_long": 203.95697329376856,
+   "avg_names_short": 175.93620178041542,
+   "capacity": {
+    "traded_notional": 53379404.51017411,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 3.2815104636514634e-07
+   },
+   "engine_info": null,
+   "stress": {
+    "net_sharpe": -0.4397697673355277,
+    "gross_sharpe": 0.3822134467687105,
+    "turnover": 62.79956195588543
+   }
+  },
+  "E2b_lgbm_U3000": {
+   "recent_net_sharpe": -0.8528262607382574,
+   "recent_net_sharpe_0.5x_cost": 0.4797583095780089,
+   "recent_net_sharpe_2x_cost": -3.5202002950293463,
+   "recent_gross_sharpe": 1.8101778884948418,
+   "recent_gross_ann_excess_return": 0.12899992833185572,
+   "recent_net_ann_excess_return": -0.06068266130360536,
+   "vol": 0.07115477571137974,
+   "max_drawdown": -0.1714529991445376,
+   "nw_t": -1.4177078256533584,
+   "turnover_annual_traded_over_equity": 82.71002761688786,
+   "cost_share_of_gross": 1.1095976812345942,
+   "costs_annual": {
+    "cost_spread": 0.1627528867626683,
+    "cost_impact": 0.0029102011337829624,
+    "cost_fees": 0.004136640738340561,
+    "cost_borrow": 0.0011977892547293222,
+    "cost_margin": 0.018685071745940945
+   },
+   "beta_spy": 0.013985891513581386,
+   "avg_long_exposure": 0.7492885914119221,
+   "avg_short_exposure": 0.47035661492814124,
+   "avg_names_long": 237.90652818991097,
+   "avg_names_short": 201.33976261127597,
+   "capacity": {
+    "traded_notional": 54508360.539420106,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 5.910011668692392e-07
+   },
+   "engine_info": null,
+   "stress": {
+    "net_sharpe": -1.1982278850921313,
+    "gross_sharpe": 0.6215886038600539,
+    "turnover": 70.66979538682868
+   }
+  },
+  "E3_lgbm_H10": {
+   "recent_net_sharpe": -0.4630602582793913,
+   "recent_net_sharpe_0.5x_cost": -0.021080643076797342,
+   "recent_net_sharpe_2x_cost": -1.3463037803816884,
+   "recent_gross_sharpe": 0.42088133730356414,
+   "recent_gross_ann_excess_return": 0.021320207123422388,
+   "recent_net_ann_excess_return": -0.023455728594951524,
+   "vol": 0.05065372848472631,
+   "max_drawdown": -0.08951441778713576,
+   "nw_t": -0.7686113037065958,
+   "turnover_annual_traded_over_equity": 26.904089475784346,
+   "cost_share_of_gross": 0.7077246297361118,
+   "costs_annual": {
+    "cost_spread": 0.025409671686545458,
+    "cost_impact": 0.00019043480925109077,
+    "cost_fees": 0.0013452899940324435,
+    "cost_borrow": 0.0011537636324599767,
+    "cost_margin": 0.016676775596084364
+   },
+   "beta_spy": 0.01594870117123737,
+   "avg_long_exposure": 0.704541297102493,
+   "avg_short_exposure": 0.45298741130118486,
+   "avg_names_long": 164.46884272997033,
+   "avg_names_short": 159.37091988130564,
+   "capacity": {
+    "traded_notional": 18781992.72653736,
+    "share_above_1pct_adv": 0.0,
+    "median_participation": 6.373433431595754e-08
+   },
+   "engine_info": null,
+   "stress": {
+    "net_sharpe": -0.4353175644000079,
+    "gross_sharpe": -0.08130516645999476,
+    "turnover": 25.17219281927754
+   }
+  }
+ },
+ "ml_contribution_standard_section_7": {
+  "ridge": {
+   "net_sharpe_model": -0.25512617694403517,
+   "net_sharpe_selected_rule": -0.5433088776671453,
+   "nw_t_of_net_difference_model_minus_rule": 0.3578234822951359,
+   "corr_model_vs_rule_net": 0.1948565591452127,
+   "dsr_model_n26": {
+    "dsr": 1.1504158602959613e-06,
+    "psr0": 0.33924698997807573,
+    "sr_annual": -0.25512617694403517,
+    "sr0_annual": 2.653011058586583,
+    "skew": 0.7065816829326644,
+    "kurtosis": 5.743248678686412,
+    "sessions": 674
+   }
+  },
+  "lgbm": {
+   "net_sharpe_model": -0.08512094722980536,
+   "net_sharpe_selected_rule": -0.5433088776671453,
+   "nw_t_of_net_difference_model_minus_rule": 0.7964787542555078,
+   "corr_model_vs_rule_net": 0.28769739601465083,
+   "dsr_model_n26": {
+    "dsr": 3.877553893749663e-06,
+    "psr0": 0.4447183612288219,
+    "sr_annual": -0.08512094722980536,
+    "sr0_annual": 2.653011058586583,
+    "skew": 0.23221769423796804,
+    "kurtosis": 4.596345148713297,
+    "sessions": 674
+   }
+  }
+ },
+ "reproduction_anchor_ind_L1_H1_U1000": {
+  "2017-10..2018-12": {
+   "n": 314,
+   "gross_sharpe": 2.1112944053134273,
+   "net_sharpe": -6.708459576795101
+  },
+  "2019-01..2023-08": {
+   "n": 1175,
+   "gross_sharpe": 0.626771571681653,
+   "net_sharpe": -3.8360731815689406
+  },
+  "2024-01..2026-09-15 (recent)": {
+   "n": 674,
+   "gross_sharpe": 0.47530440051321876,
+   "net_sharpe": -5.758131538832723
+  },
+  "2017-10..2023-08": {
+   "n": 1489,
+   "gross_sharpe": 0.7485536463879658,
+   "net_sharpe": -3.97825159288359
+  }
+ },
+ "placebo": {
+  "n_seeds": 100,
+  "net_placebo_mean": -0.5554963958853054,
+  "net_placebo_max": 1.0742581257721806,
+  "gross_placebo_mean": 0.13035865031785618,
+  "gross_placebo_max": 1.4286683446573731,
+  "real_net": -0.5433088776671453,
+  "real_gross": 0.15920176449784182,
+  "net_percentile": 0.53,
+  "gross_percentile": 0.54
+ },
+ "whole_share_v2": {
+  "n_sessions": 40,
+  "median_short_ratio": 1.001838721200028,
+  "min_short_ratio": 0.9951797586328445,
+  "median_rel_l1": 0.033146664068883724,
+  "max_rel_l1": 0.053193507806092,
+  "max_net_dev": 0.008472731025273291,
+  "median_participation": 6.323021575847523e-07,
+  "rows": [
+   {
+    "t": "2024-02-27",
+    "short_ratio": 0.9970621351070545,
+    "rel_l1": 0.03352430508061786,
+    "net_dev": 0.0031384218806028304,
+    "median_participation": 8.236503533525908e-07,
+    "n_names": 275
+   },
+   {
+    "t": "2024-02-28",
+    "short_ratio": 0.9998746135852955,
+    "rel_l1": 0.03387917041499084,
+    "net_dev": 0.0015887248786290488,
+    "median_participation": 8.922836169399307e-07,
+    "n_names": 269
+   },
+   {
+    "t": "2024-03-25",
+    "short_ratio": 1.0054826219018753,
+    "rel_l1": 0.03275103903893636,
+    "net_dev": 0.005015639930367506,
+    "median_participation": 7.601322589590202e-07,
+    "n_names": 271
+   },
+   {
+    "t": "2024-04-29",
+    "short_ratio": 1.0046351979910517,
+    "rel_l1": 0.029165006577111574,
+    "net_dev": 0.0006559429536014311,
+    "median_participation": 9.087047241231182e-07,
+    "n_names": 276
+   },
+   {
+    "t": "2024-07-05",
+    "short_ratio": 0.9993738005314944,
+    "rel_l1": 0.03879560124426177,
+    "net_dev": 0.0009025650148621328,
+    "median_participation": 9.348963206626555e-07,
+    "n_names": 281
+   },
+   {
+    "t": "2024-08-09",
+    "short_ratio": 0.9994663645290613,
+    "rel_l1": 0.025362891574885582,
+    "net_dev": 0.004020944966555932,
+    "median_participation": 9.011489144015228e-07,
+    "n_names": 259
+   },
+   {
+    "t": "2024-08-13",
+    "short_ratio": 0.9965600942953384,
+    "rel_l1": 0.027115821336385456,
+    "net_dev": 0.005415371905108962,
+    "median_participation": 7.673124897440809e-07,
+    "n_names": 261
+   },
+   {
+    "t": "2024-08-22",
+    "short_ratio": 0.9951797586328445,
+    "rel_l1": 0.03054585588703076,
+    "net_dev": 0.005086162131434915,
+    "median_participation": 1.011139685469227e-06,
+    "n_names": 274
+   },
+   {
+    "t": "2024-10-08",
+    "short_ratio": 1.0038966763891826,
+    "rel_l1": 0.02975742811096096,
+    "net_dev": 0.002262896991968155,
+    "median_participation": 9.339765627267398e-07,
+    "n_names": 275
+   },
+   {
+    "t": "2024-11-11",
+    "short_ratio": 1.0099079284112304,
+    "rel_l1": 0.03757744778148848,
+    "net_dev": 0.004550662738916738,
+    "median_participation": 8.282484731701199e-07,
+    "n_names": 281
+   },
+   {
+    "t": "2024-11-15",
+    "short_ratio": 1.0054457402948882,
+    "rel_l1": 0.03499354739095454,
+    "net_dev": 0.004838837716096496,
+    "median_participation": 8.078234708099424e-07,
+    "n_names": 270
+   },
+   {
+    "t": "2024-11-19",
+    "short_ratio": 0.9997144966405793,
+    "rel_l1": 0.033852662510491904,
+    "net_dev": 0.004319889801590276,
+    "median_participation": 7.469198936105467e-07,
+    "n_names": 264
+   },
+   {
+    "t": "2024-11-26",
+    "short_ratio": 0.9985592707252502,
+    "rel_l1": 0.03204991077835778,
+    "net_dev": 0.004504024984985639,
+    "median_participation": 7.824523684728867e-07,
+    "n_names": 255
+   },
+   {
+    "t": "2024-12-06",
+    "short_ratio": 1.00321127042114,
+    "rel_l1": 0.030888144193860885,
+    "net_dev": 0.0015400327494910744,
+    "median_participation": 8.225965833681237e-07,
+    "n_names": 274
+   },
+   {
+    "t": "2024-12-09",
+    "short_ratio": 0.9984261855452458,
+    "rel_l1": 0.0322418120309431,
+    "net_dev": 0.0031272797728997344,
+    "median_participation": 8.125478172615875e-07,
+    "n_names": 276
+   },
+   {
+    "t": "2025-01-10",
+    "short_ratio": 0.9979434060189459,
+    "rel_l1": 0.03743363946725589,
+    "net_dev": 0.0015444478710636242,
+    "median_participation": 7.753373420410402e-07,
+    "n_names": 287
+   },
+   {
+    "t": "2025-05-13",
+    "short_ratio": 1.0059164990646194,
+    "rel_l1": 0.031203054474337306,
+    "net_dev": 0.008472731025273291,
+    "median_participation": 6.328051452221996e-07,
+    "n_names": 290
+   },
+   {
+    "t": "2025-06-17",
+    "short_ratio": 0.9993288325938385,
+    "rel_l1": 0.034820901788781965,
+    "net_dev": 0.0011930015863540636,
+    "median_participation": 7.381895576295729e-07,
+    "n_names": 278
+   },
+   {
+    "t": "2025-07-21",
+    "short_ratio": 1.0080534951895657,
+    "rel_l1": 0.030641598887883585,
+    "net_dev": 0.002034264013854263,
+    "median_participation": 6.317991699473049e-07,
+    "n_names": 274
+   },
+   {
+    "t": "2025-07-29",
+    "short_ratio": 0.9981746801707775,
+    "rel_l1": 0.031064714373429912,
+    "net_dev": 0.004883398489020765,
+    "median_participation": 7.320308675748743e-07,
+    "n_names": 270
+   },
+   {
+    "t": "2025-08-25",
+    "short_ratio": 0.9972917802883965,
+    "rel_l1": 0.03407110750273627,
+    "net_dev": 0.002973035746005674,
+    "median_participation": 5.547168769041308e-07,
+    "n_names": 273
+   },
+   {
+    "t": "2025-09-19",
+    "short_ratio": 1.0004931831359862,
+    "rel_l1": 0.03247263340713572,
+    "net_dev": 8.971327438635247e-05,
+    "median_participation": 6.593826410735659e-07,
+    "n_names": 282
+   },
+   {
+    "t": "2025-11-18",
+    "short_ratio": 1.0053977653993507,
+    "rel_l1": 0.032769023057149585,
+    "net_dev": 0.003702998262770319,
+    "median_participation": 4.772949347353522e-07,
+    "n_names": 262
+   },
+   {
+    "t": "2025-11-19",
+    "short_ratio": 0.9996788757144521,
+    "rel_l1": 0.032148460709493516,
+    "net_dev": 0.00024080911577371202,
+    "median_participation": 4.668064978269473e-07,
+    "n_names": 262
+   },
+   {
+    "t": "2026-02-03",
+    "short_ratio": 1.0087928130978698,
+    "rel_l1": 0.03615754997596446,
+    "net_dev": 0.005165458997103148,
+    "median_participation": 4.529512004187e-07,
+    "n_names": 275
+   },
+   {
+    "t": "2026-02-17",
+    "short_ratio": 1.0046417520840694,
+    "rel_l1": 0.03145420887082955,
+    "net_dev": 0.004186216588001698,
+    "median_participation": 4.268020195861837e-07,
+    "n_names": 261
+   },
+   {
+    "t": "2026-03-03",
+    "short_ratio": 0.9999360282315701,
+    "rel_l1": 0.0324250265215608,
+    "net_dev": 0.000762979406217734,
+    "median_participation": 5.118743380441061e-07,
+    "n_names": 280
+   },
+   {
+    "t": "2026-03-16",
+    "short_ratio": 1.0031002617730675,
+    "rel_l1": 0.03805754253148695,
+    "net_dev": 0.0013258212192892218,
+    "median_participation": 5.363122116208552e-07,
+    "n_names": 286
+   },
+   {
+    "t": "2026-05-04",
+    "short_ratio": 1.0056715996356558,
+    "rel_l1": 0.02865827394997351,
+    "net_dev": 0.0016278946907942494,
+    "median_participation": 5.650816432972005e-07,
+    "n_names": 281
+   },
+   {
+    "t": "2026-05-20",
+    "short_ratio": 1.0017552431104004,
+    "rel_l1": 0.03919682707613191,
+    "net_dev": 0.00363430642841,
+    "median_participation": 5.481204521448063e-07,
+    "n_names": 266
+   },
+   {
+    "t": "2026-05-26",
+    "short_ratio": 1.0051065640871217,
+    "rel_l1": 0.04236710404597839,
+    "net_dev": 0.0003240043196688081,
+    "median_participation": 4.706132606734614e-07,
+    "n_names": 276
+   },
+   {
+    "t": "2026-06-03",
+    "short_ratio": 1.0043036418927904,
+    "rel_l1": 0.034200750883298874,
+    "net_dev": 0.003108989450508428,
+    "median_participation": 5.048470251616724e-07,
+    "n_names": 284
+   },
+   {
+    "t": "2026-06-05",
+    "short_ratio": 1.0019221992896554,
+    "rel_l1": 0.034491509678451014,
+    "net_dev": 0.0025092192907624606,
+    "median_participation": 5.406663570114248e-07,
+    "n_names": 271
+   },
+   {
+    "t": "2026-06-10",
+    "short_ratio": 1.0055226551117349,
+    "rel_l1": 0.045789068935259004,
+    "net_dev": 0.002584073926373336,
+    "median_participation": 4.901037440810941e-07,
+    "n_names": 290
+   },
+   {
+    "t": "2026-07-23",
+    "short_ratio": 1.0049274627900648,
+    "rel_l1": 0.02863750725617403,
+    "net_dev": 0.0028836523136659526,
+    "median_participation": 5.396407115313881e-07,
+    "n_names": 268
+   },
+   {
+    "t": "2026-08-03",
+    "short_ratio": 0.9985704024466202,
+    "rel_l1": 0.0321769067558409,
+    "net_dev": 0.0025761141953228313,
+    "median_participation": 6.112000004172459e-07,
+    "n_names": 289
+   },
+   {
+    "t": "2026-08-05",
+    "short_ratio": 0.999356625127064,
+    "rel_l1": 0.037923302422172116,
+    "net_dev": 0.0049699416422828895,
+    "median_participation": 5.734914101997787e-07,
+    "n_names": 296
+   },
+   {
+    "t": "2026-08-18",
+    "short_ratio": 1.0031663166682805,
+    "rel_l1": 0.053193507806092,
+    "net_dev": 0.0019794025545257416,
+    "median_participation": 4.889235733444813e-07,
+    "n_names": 286
+   },
+   {
+    "t": "2026-08-28",
+    "short_ratio": 1.0012379332267092,
+    "rel_l1": 0.04282819822187482,
+    "net_dev": 0.0019361047792310273,
+    "median_participation": 5.057728778839111e-07,
+    "n_names": 287
+   },
+   {
+    "t": "2026-08-31",
+    "short_ratio": 1.0020789243927857,
+    "rel_l1": 0.04329674887765207,
+    "net_dev": 0.0025565213121038688,
+    "median_participation": 6.229540941639468e-07,
+    "n_names": 303
+   }
+  ],
+  "v2_pass": true
+ },
+ "attribution_by_liquidity_tier": {
+  "by_tier_ann_pnl": {
+   "long": {
+    "adv1001-3000": 0.0680522612712848,
+    "adv501-1000": -0.0005103481415793952,
+    "adv<=500": 0.10387229256890733
+   },
+   "short": {
+    "adv1001-3000": -0.008339784961755676,
+    "adv501-1000": 0.001331229017525289,
+    "adv<=500": -0.1092883661957212
+   }
+  },
+  "note": "post-trade weights x next close-to-close return; trade-day open-to-close subtleties ignored; SPY hedge and T-bill excluded"
+ },
+ "identity_and_no_lookahead_checks": {
+  "store": "/root/repo/data/research/t22_streversal",
+  "pca_no_lookahead": {
+   "truncation": [
+    {
+     "refresh_pos": 462,
+     "t": 463,
+     "identical": true,
+     "n_finite": 2876
+    },
+    {
+     "refresh_pos": 462,
+     "t": 470,
+     "identical": true,
+     "n_finite": 2877
+    },
+    {
+     "refresh_pos": 1512,
+     "t": 1513,
+     "identical": true,
+     "n_finite": 2871
+    },
+    {
+     "refresh_pos": 1512,
+     "t": 1520,
+     "identical": true,
+     "n_finite": 2870
+    }
+   ],
+   "store_vs_recompute": [
+    {
+     "t": 463,
+     "max_abs_diff_vs_store": 1.1362135410308838e-07,
+     "n_compared": 2876
+    },
+    {
+     "t": 464,
+     "max_abs_diff_vs_store": 1.0477378964424133e-07,
+     "n_compared": 2876
+    }
+   ],
+   "pass": true
+  },
+  "signal_no_lookahead": {
+   "cases": [
+    {
+     "resid": "ind",
+     "L": 5,
+     "t": 1500,
+     "identical": true
+    },
+    {
+     "resid": "ind",
+     "L": 21,
+     "t": 1500,
+     "identical": true
+    },
+    {
+     "resid": "pca",
+     "L": 5,
+     "t": 1500,
+     "identical": true
+    },
+    {
+     "resid": "pca",
+     "L": 21,
+     "t": 1500,
+     "identical": true
+    }
+   ],
+   "pass": true
+  },
+  "engine_identity": {
+   "n_compared": 20,
+   "max_abs_diff": 2.0816681711721685e-16,
+   "pass": true
+  },
+  "all_pass": true
+ },
+ "power": {
+  "recent_sessions": 685,
+  "years": 2.7182539682539684,
+  "min_detectable_sharpe_single_test_5pct_80pct": 1.5081309660979783,
+  "min_detectable_sharpe_bonferroni_24": 2.2483487866663885,
+  "lo_se_at_sharpe_1.0": 0.7428491216379327,
+  "note": "iid null standard error 1/sqrt(years); Lo (2002) se at Sharpe s is sqrt((1 + s^2/2)/years)"
+ },
+ "scorecard_v2": {
+  "family": {
+   "n_variants": 24,
+   "n_trials": 24,
+   "mean_pairwise_corr": 0.5569971046557274,
+   "n_eff": 11.18906659291827,
+   "var_sr_annual": 2.5302975315154863,
+   "expected_max_null_sr_annual": 2.5937935857833643,
+   "recent_window": [
+    "2024-01-08",
+    "2026-09-15"
+   ],
+   "recent_sessions": 674
+  },
+  "selected_variant": {
+   "inputs": {
+    "main_excess": {
+     "sessions": 674,
+     "sharpe": -0.5786803978941687,
+     "se": 0.6606733216440335,
+     "ann_mean": -0.04289672330026098
+    },
+    "gross_excess_sharpe": 0.15894839671221755,
+    "recent_window": [
+     "2024-01-08",
+     "2026-09-15"
+    ],
+    "current_state": "up_mid",
+    "current_phase": "P11"
+   },
+   "dsr": {
+    "dsr": 1.2805767507506616e-07,
+    "psr0": 0.17361567510541687,
+    "sr_annual": -0.5786803978941687,
+    "sr0_annual": 2.5937935857833643,
+    "skew": 0.2809582057665849,
+    "kurtosis": 6.858116082077641,
+    "sessions": 674,
+    "n_eff": 11.18906659291827,
+    "var_sr_annual": 2.5302975315154863,
+    "n_trials": 24,
+    "expected_max_null_sr_annual": 2.5937935857833643
+   },
+   "signal": {
+    "status": "evaluated",
+    "t_iid": 1.1838331914848128,
+    "t_newey_west": 1.3240324703852302,
+    "mean_daily": 0.0002132802498421318,
+    "sessions": 674
+   },
+   "placebo": {
+    "net_pct": 0.51,
+    "gross_pct": 0.54,
+    "n_net": 100,
+    "n_gross": 100,
+    "status": "evaluated"
+   },
+   "vetoes": {
+    "V1": {
+     "triggered": false,
+     "attested": true
+    },
+    "V2": {
+     "triggered": false,
+     "attested": true
+    },
+    "V3": {
+     "annual_excess": -0.0975741126005382,
+     "threshold": 0.0,
+     "sessions": 674,
+     "triggered": true
+    },
+    "V4": {
+     "sessions": 1489,
+     "daily_sd": 0.005226337776052231,
+     "windows": {
+      "21": {
+       "worst_sum": -0.08838518062668035,
+       "worst_end": "2022-01-21",
+       "sigma": 0.023950088466166513,
+       "loss_in_sigma": 3.6903905700197783,
+       "veto_threshold": 5.0,
+       "warn_threshold": 4.0,
+       "veto": false,
+       "warn": false
+      },
+      "63": {
+       "worst_sum": -0.11234559427245122,
+       "worst_end": "2022-01-27",
+       "sigma": 0.04148277006916976,
+       "loss_in_sigma": 2.708247161053189,
+       "veto_threshold": 4.0,
+       "warn_threshold": 3.0,
+       "veto": false,
+       "warn": false
+      }
+     },
+     "triggered": false,
+     "warn": false
+    },
+    "V5": {
+     "z_min": 0.24334105539166578,
+     "windows": {
+      "last_63_sessions": {
+       "sessions": 63,
+       "sharpe": -0.028803306715437994,
+       "z": 0.24334105539166578
+      },
+      "current_phase": {
+       "sessions": 53,
+       "sharpe": 0.7487024209757428,
+       "z": 0.5424755280860444
+      }
+     },
+     "threshold": -3.0,
+     "triggered": false
+    }
+   },
+   "vetoes_triggered": [
+    "V3"
+   ],
+   "vetoes_unassessed": [],
+   "robustness": {
+    "a_cost2x": {
+     "value": null,
+     "cost2x_sharpe": -1.315695777498078,
+     "base_sharpe": -0.5786803978941687,
+     "threshold": 0.5,
+     "pass": false
+    },
+    "b_current_state": {
+     "state": "up_mid",
+     "state_date": "2026-09-15",
+     "sessions": 431,
+     "sharpe": -1.2880606290760355,
+     "pass": false
+    },
+    "c_single_phase": {
+     "value": null,
+     "total_pnl": -0.11473171231895198,
+     "phases": {
+      "P01": {
+       "pnl": -0.0033423209248992372,
+       "share": null
+      },
+      "P02": {
+       "pnl": 0.0007047981137642493,
+       "share": null
+      },
+      "P03": {
+       "pnl": -0.005974312484241871,
+       "share": null
+      },
+      "P04": {
+       "pnl": -0.06523204978343254,
+       "share": null
+      },
+      "P05": {
+       "pnl": 0.04909671064324332,
+       "share": null
+      },
+      "P06": {
+       "pnl": -0.046516107137667025,
+       "share": null
+      },
+      "P07": {
+       "pnl": -0.0548300590238027,
+       "share": null
+      },
+      "P08": {
+       "pnl": 0.010516924637421597,
+       "share": null
+      },
+      "P09": {
+       "pnl": -0.00294320785058171,
+       "share": null
+      },
+      "P10": {
+       "pnl": -0.01321752519624255,
+       "share": null
+      },
+      "P11": {
+       "pnl": 0.01700543668748653,
+       "share": null
+      }
+     },
+     "threshold": 0.5,
+     "pass": false,
+     "note": "total recent P&L must be positive; a non-positive total fails"
+    },
+    "d_offsets": {
+     "value": 0,
+     "offset_sharpes": {
+      "0": -0.6274829734036735,
+      "1": -0.6714001842868643,
+      "2": -0.4073938897244037,
+      "3": -0.4377385824460104,
+      "4": -0.6156966297923886
+     },
+     "threshold": 4,
+     "pass": false
+    },
+    "e_recent_consistency": {
+     "value": 0.24334105539166578,
+     "threshold": -2.0,
+     "pass": true
+    },
+    "f_gross_placebo": {
+     "value": 0.54,
+     "threshold": 0.95,
+     "pass": false,
+     "status": "evaluated"
+    }
+   },
+   "robustness_score": 1,
+   "tier": "none",
+   "tier_detail": {
+    "P1": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 1.2805767507506616e-07,
+       "threshold": 0.7,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": 0.51,
+       "threshold": 0.9,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 1,
+       "threshold": 3,
+       "met": false
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V3"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [],
+       "met": true
+      }
+     }
+    },
+    "P2": {
+     "met": false,
+     "conditions": {
+      "dsr_min": {
+       "metric": "dsr",
+       "value": 1.2805767507506616e-07,
+       "threshold": 0.8,
+       "met": false
+      },
+      "signal_t_min": {
+       "metric": "signal_t",
+       "value": 1.1838331914848128,
+       "threshold": 3.0,
+       "met": false
+      },
+      "placebo_net_pct_min": {
+       "metric": "placebo_net_pct",
+       "value": 0.51,
+       "threshold": 0.95,
+       "met": false
+      },
+      "placebo_gross_pct_min": {
+       "metric": "placebo_gross_pct",
+       "value": 0.54,
+       "threshold": 0.95,
+       "met": false
+      },
+      "robustness_min": {
+       "metric": "robustness_score",
+       "value": 1,
+       "threshold": 5,
+       "met": false
+      },
+      "no_veto_triggered": {
+       "triggered": [
+        "V3"
+       ],
+       "met": false
+      },
+      "vetoes_all_assessed": {
+       "unassessed": [],
+       "met": true
+      }
+     }
+    }
+   },
+   "forward": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L1": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "L2": {
+    "status": "not_evaluable",
+    "reason": "no forward record"
+   },
+   "pass_flags": {
+    "workflow_pass": true,
+    "research_pass": false,
+    "paper_ready_pass": false,
+    "ml_contribution_pass": "see contribution_test()",
+    "llm_contribution_pass": "see contribution_test()",
+    "forward_evidence": "separate; not part of research_pass"
+   },
+   "config_version": "v2.1"
+  }
+ }
+}
