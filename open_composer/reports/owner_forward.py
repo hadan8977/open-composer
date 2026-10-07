@@ -25,7 +25,7 @@ CONFIDENCE = 0.95
 TRADING_DAYS = 252
 BOOK_ACTIONS_START = date(2026, 10, 7)  # first order day; earlier plans are dry runs
 BOOK_ACTIONS_DAYS = 5
-BOOK_ACCOUNTS = ("quant1", "quant2")
+BOOK_ACCOUNTS = ("quant1",)  # 10-06 (C1006-ACCT): quant2 left the v1.2 book (intraday account)
 BOOK_DIR = Path("reports/paper/book")
 
 _N = NormalDist()

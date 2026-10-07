@@ -169,7 +169,7 @@ def test_book_actions_read_plan_receipts_and_daily(tmp_path: Path) -> None:
     _write(
         tmp_path / "reports/paper/book/quant2/plans/2026-10-07.json", {"summary": {"n_orders": 3}}
     )
-    rows = {a.account: a for a in of.collect_book_actions(tmp_path)}
+    rows = {a.account: a for a in of.collect_book_actions(tmp_path, accounts=("quant1", "quant2"))}
     one = rows["quant1"]
     assert one.day == date(2026, 10, 7) and one.state == "已对账"
     assert (one.n_planned, one.n_sent, one.n_rejected) == (10, 9, 2)

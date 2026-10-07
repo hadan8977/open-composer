@@ -55,7 +55,7 @@ DAILY_DIR = Path("reports/owner/daily")
 ROUND_DIR = Path("reports/owner/rounds")
 LIVE_TRACK = Path("reports/owner/live-track.json")
 REHEARSAL_DIR = Path("reports/paper/rehearsal")
-BOOK_ACCOUNTS = ("quant1", "quant2")
+BOOK_ACCOUNTS = ("quant1",)  # 10-06 (C1006-ACCT): quant2 left the v1.2 book (intraday account)
 AUTH_WARN_DAYS = 14.0
 DISK_WARN_PERCENT = 85.0
 ACCOUNT_STALE_HOURS = 30.0
@@ -549,8 +549,8 @@ def _render_paper(data: DigestData) -> list[str]:
 
 def _render_book(data: DigestData) -> list[str]:
     lines = [
-        "quant1 跑 F1（市场中性多空 + 短债），quant2 跑 F2（SPY 打底 + 0.3 倍多空叠加），"
-        "各 100 万美元模拟资金。",
+        "quant1 跑 F1（市场中性多空 + 短债），100 万美元模拟资金，10-07 首单，"
+        "10-12 前基数降到约 30 万；quant2 不跑 F2（机主 10-06 决定），10-09/10 起改做日内账户。",
         "",
         "| 账户 | 最新目标 | 最新计划 | 最新对账 | 净值 | 当日净盈亏 | 订单（成交 / 未成交） |",
         "|---|---|---|---|---|---|---|",
@@ -742,7 +742,7 @@ def render_internal_log(data: DigestData) -> str:
     out.extend([f"- {item}" for item in items] or ["- 没有。"])
     out.extend(["", "## 一、模拟盘（ETF 子策略）", ""])
     out.extend(_render_paper(data))
-    out.extend(["", "## 二、股票组合 v1.2（quant1 / quant2）", ""])
+    out.extend(["", "## 二、股票组合 v1.2（quant1）", ""])
     out.extend(_render_book(data))
     out.extend(["", *render_book_actions(list(data.book_actions))])
     out.extend(["", "## 三、离实盘多远", ""])
