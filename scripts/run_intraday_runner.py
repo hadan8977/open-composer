@@ -208,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--no-degrade", action="store_true")
             p.add_argument(
                 "--prev-close-file",
-                help="JSON {symbol: official unadjusted previous close}; default = last minute close",
+                help="JSON {symbol: unadjusted previous close}; default = last minute close",
             )
             p.add_argument("--restart-check", action="store_true")
             p.set_defaults(func=cmd_replay)
