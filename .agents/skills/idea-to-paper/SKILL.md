@@ -77,7 +77,8 @@ description: >
 ## 7. 预注册和执行
 
 - 档案：`uv run oc research iteration init`；写 `direction-review.json`；`uv run oc research direction-check <档案>`；`uv run oc research iteration validate <档案> --stage pre-backtest`。
-- 派独立 Paseo 代理（`claude/sonnet`，high），派之前在队列里标为运行中。
+- 派独立 Paseo 代理：`provider: "claude/claude-sonnet-5-5"`，high（机主 2026-10-07：用 Sonnet 5.5，不用 Sonnet 5），派之前在队列里标为运行中。
+  - 后台代理（定时轮加独立代理）全机同时最多 3 个（`config/memory-budget.json`）。派之前跑 `python3 scripts/memory_budget.py admit --kind agent`，退出码非 0 就先归档一个做完的代理；做完的代理立即归档。
 - 任务说明照 `reports/research/control/briefs/T-20261006-21.md` 的结构写：任务代码、目标、业界做法、预注册网格、数据、成本、交付、禁止、汇报、上限。
 - 主网格不超过约 30 个交易变体，大部分轴按文献固定；其余版本只作稳健性，单独计数；选规格取最高三个点的中位规格。
 - 合同冻结时，写进全局试验台账。
