@@ -2575,7 +2575,8 @@
   - 2026-10-06 23:41 UTC 交互会话（Opus）登记，来源复核 R1006-V3（`reports/research/program/plan-v3-reviews/review-1.md`）。
 
 ### T-20261006-24 多子策略账户的组合层：风险模型、子策略协方差、风险预算、暴露和保证金上限
-- status: ready（10-07 13:07 主审轮写简报，执行轮或独立代理做）
+- status: running（交互会话 2026-10-07 14:28 UTC 写简报并派独立代理；13:07 主审轮因周用量上限暂停没有跑）
+- brief: reports/research/control/briefs/T-20261006-24.md
 - priority: 1
 - not_before: 2026-10-07 13:00 UTC
 - goal: 机主要高夏普；第三版计划的研究目标是账户级夏普，但只有"单个子策略不超过 20%"，没有配置器（复核 R1006-V3（`reports/research/program/plan-v3-reviews/review-1.md`） S1）。v1.2 的收益大部分来自风格和对冲用的 SPY，正是缺风险模型的症状。
@@ -2588,6 +2589,7 @@
 - done_when: 10-12 前，quant1 加第二个子策略之前；有测试。
 - notes:
   - 2026-10-06 23:41 UTC 交互会话（Opus）登记，来源复核 R1006-V3（`reports/research/program/plan-v3-reviews/review-1.md`）。
+  - 2026-10-07 14:28 UTC 交互会话（Opus）：13:07 主审轮没有跑。08:23 UTC 碰到周用量上限，门控把两个定时轮都暂停了；机主 14:2x UTC 升级到 20 倍订阅，额度重置，交互会话 14:3x 恢复了两个定时轮。为不拖到 10-12，交互会话写简报并派独立代理（Sonnet 5.5 high）。复用 10-02 的 30% 回撤配置（allocation-dd30-2026-10-02）、regimes-2026-10-01、optimizer-v1、equity_book/risk.py。规则 A0–A4 最多 8 个，预注册 10-08 12:00，全部交付 10-10 12:00；只给建议和只读检查命令，不改生产配置。
 
 ### T-20261006-25 研究流程的检查点：方向的两周时钟和"未到深度"跟踪、过期清单进日报、模拟盘子策略的授权检查、想法记录
 - status: ready（10-07 07:07 主审轮写简报，执行轮做）
