@@ -138,6 +138,87 @@ class AlpacaMinuteProvider:
         return frame[(ts >= start) & (ts < end)].reset_index(drop=True)
 
 
+class AlpacaDailyCloseProvider:
+    """Previous-session official close, unadjusted: Alpaca daily bars with ``adjustment=raw`` and
+    ``feed=sip`` (history older than 15 minutes is allowed on the free plan).  ``fetch_raw``
+    is injectable (tests); the default reads the account's credentials by variable name.
+    The local ``data/sip/daily`` files are split-adjusted and must not be used for this."""
+
+    feed = "sip"
+    source = "alpaca_daily_raw_sip"
+
+    def __init__(
+        self,
+        *,
+        account: str | None = None,
+        fetch_raw: Callable[[list[str], pd.Timestamp, pd.Timestamp], pd.DataFrame] | None = None,
+        limiter: Any | None = None,
+    ):
+        self.account = account
+        self.limiter = limiter
+        self._fetch_raw = fetch_raw or self._default_fetch
+
+    def _default_fetch(self, symbols, start, end):
+        from alpaca.data.enums import Adjustment, DataFeed
+        from alpaca.data.historical import StockHistoricalDataClient
+        from alpaca.data.requests import StockBarsRequest
+        from alpaca.data.timeframe import TimeFrame
+
+        from open_composer.book_paper.accounts import load_account_credentials
+
+        creds = load_account_credentials(self.account or "quant2")
+        client = StockHistoricalDataClient(api_key=creds.key_id, secret_key=creds.secret_key)
+        request = StockBarsRequest(
+            symbol_or_symbols=list(symbols),
+            timeframe=TimeFrame.Day,
+            start=start.to_pydatetime(),
+            end=end.to_pydatetime(),
+            adjustment=Adjustment.RAW,
+            feed=DataFeed.SIP,
+        )
+        frame = client.get_stock_bars(request).df
+        return pd.DataFrame() if frame is None or frame.empty else frame.reset_index()
+
+    def fetch(self, symbols: Sequence[str], session: date) -> dict[str, float]:
+        """``{symbol: close of the previous session}`` for the symbols Alpaca returned."""
+        symbols = list(dict.fromkeys(symbols))
+        if not symbols:
+            return {}
+        previous = previous_us_equity_session(session)
+        start = pd.Timestamp(datetime.combine(previous, time(0, 0), tzinfo=NEW_YORK))
+        end = pd.Timestamp(datetime.combine(session, time(0, 0), tzinfo=NEW_YORK))
+        if self.limiter is not None:
+            self.limiter.acquire(1)
+        raw = self._fetch_raw(symbols, start.tz_convert("UTC"), end.tz_convert("UTC"))
+        if raw is None or raw.empty:
+            return {}
+        stamp = pd.to_datetime(raw["timestamp"], utc=True).dt.tz_convert(NEW_YORK)
+        # the daily bar is stamped at the session's start; keep exactly the previous session
+        rows = raw[stamp.dt.date == previous].assign(_ts=stamp[stamp.dt.date == previous])
+        out: dict[str, float] = {}
+        for symbol, group in rows.sort_values("_ts").groupby("symbol"):
+            close = float(group.iloc[-1]["close"])
+            if close > 0:
+                out[str(symbol)] = close
+        return out
+
+
+class StaticPrevClose:
+    """Replay / tests: previous closes from a mapping or a JSON file ``{symbol: price}``."""
+
+    source = "static"
+
+    def __init__(self, values: dict[str, float] | None = None, path: Path | None = None):
+        if path is not None:
+            import json
+
+            values = {**json.loads(Path(path).read_text(encoding="utf-8")), **(values or {})}
+        self.values = {str(k).upper(): float(v) for k, v in (values or {}).items()}
+
+    def fetch(self, symbols: Sequence[str], session: date) -> dict[str, float]:
+        return {s: self.values[s] for s in symbols if s in self.values}
+
+
 class SessionBars:
     """Minute bars of one session, visible only up to the current decision time."""
 
