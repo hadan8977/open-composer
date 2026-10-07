@@ -1,0 +1,425 @@
+{
+ "iter_id": "t20261007_01_cost_aware_engine",
+ "strategy_name": "t20261007_01_cost_aware_engine",
+ "representative_spec_path": "strategy_specs/drafts/t20261007_01_cost_aware_engine.yaml",
+ "path_name": "cost_aware_engine_book_v2",
+ "hypothesis_id": "T-20261007-01",
+ "objective": "Equity book cost-aware engine: does bringing the machine-learning slow score (m0m2), the fast composite FC_EW and cost-controlled trading speed into the same v1.2-construction book (score blend I1, trade timing I2, Garleanu-Pedersen aim book with partial adjustment I3; 3 points each, 23 preregistered points (20 plus the 3-point F axis with intraday daily features)) raise the recent-window (2024-01-08..2026-09-15) offset-median net Sharpe over B0 = M0_U3000 by at least 0.10, with at least 4 of 5 offsets improved, a fast-composite-only placebo beaten at the 90th percentile, a stress-period Sharpe no more than 0.20 below B0, and tier P1 or better?",
+ "benchmark_family": [
+  "b0_m0_u3000_v12_construction_same_run_recomputed",
+  "identity_new_engine_vs_old_b0_loops_1e-9",
+  "vol_matched_paired_daily_net_difference_newey_west_lag5",
+  "fast_composite_only_hash_rank_placebo_100_seeds",
+  "net_hash_rank_placebo_100_seeds_selected_candidate",
+  "two_x_cost_replay_same_paths",
+  "s2_i0_and_s3_i0_v14_stage_b_points_e1_e5",
+  "family_dsr_19_plus_own_trials"
+ ],
+ "candidates": [
+  {
+   "candidate_id": "S0_I1_w025",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I1 score blend z_s + w_f z_f",
+    "w_f": "0.25",
+    "fast": "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent 2024-01-08..2026-09-15 decides; stress diagnostic"
+   }
+  },
+  {
+   "candidate_id": "S0_I1_w050",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I1 score blend z_s + w_f z_f",
+    "w_f": "0.5",
+    "fast": "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent 2024-01-08..2026-09-15 decides; stress diagnostic"
+   }
+  },
+  {
+   "candidate_id": "S0_I1_w100",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I1 score blend z_s + w_f z_f",
+    "w_f": "1.0",
+    "fast": "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent 2024-01-08..2026-09-15 decides; stress diagnostic"
+   }
+  },
+  {
+   "candidate_id": "S0_I2_c000",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+    "c": "0.0",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides"
+   }
+  },
+  {
+   "candidate_id": "S0_I2_c050",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+    "c": "0.5",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides"
+   }
+  },
+  {
+   "candidate_id": "S0_I2_c100",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+    "c": "1.0",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides"
+   }
+  },
+  {
+   "candidate_id": "S0_I3_k005",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+    "kappa": "0.05",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S0_I3_k010",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+    "kappa": "0.1",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S0_I3_k020",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+    "kappa": "0.2",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S2_I1_w025",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I1 score blend z_s + w_f z_f",
+    "w_f": "0.25",
+    "fast": "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent 2024-01-08..2026-09-15 decides; stress diagnostic"
+   }
+  },
+  {
+   "candidate_id": "S2_I1_w050",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I1 score blend z_s + w_f z_f",
+    "w_f": "0.5",
+    "fast": "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent 2024-01-08..2026-09-15 decides; stress diagnostic"
+   }
+  },
+  {
+   "candidate_id": "S2_I1_w100",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I1 score blend z_s + w_f z_f",
+    "w_f": "1.0",
+    "fast": "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent 2024-01-08..2026-09-15 decides; stress diagnostic"
+   }
+  },
+  {
+   "candidate_id": "S2_I2_c000",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+    "c": "0.0",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides"
+   }
+  },
+  {
+   "candidate_id": "S2_I2_c050",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+    "c": "0.5",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides"
+   }
+  },
+  {
+   "candidate_id": "S2_I2_c100",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+    "c": "1.0",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides"
+   }
+  },
+  {
+   "candidate_id": "S2_I3_k005",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+    "kappa": "0.05",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S2_I3_k010",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+    "kappa": "0.1",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S2_I3_k020",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+    "kappa": "0.2",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786",
+    "fast": "FC_EW",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S2_I0",
+   "parameters": {
+    "slow": "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+    "mode": "I0 no fast signal (v1.4 Stage B point)",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp"
+   }
+  },
+  {
+   "candidate_id": "S3_I0",
+   "parameters": {
+    "slow": "m0m3 (v1.4 out-of-sample prediction column)",
+    "mode": "I0 no fast signal (v1.4 Stage B point)",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp"
+   }
+  },
+  {
+   "candidate_id": "S0_I3F_k005",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I3 daily aim book with FCX as the fast signal",
+    "kappa": "0.05",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421 (FC_EW's, reused)",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786 (FC_EW's, reused)",
+    "fast": "FCX = (60 FC_EW + sum_k s_k z_k)/67, 7 intraday daily features, stress-window signs in data/research/t0701_store/fcx_meta.json",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S0_I3F_k010",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I3 daily aim book with FCX as the fast signal",
+    "kappa": "0.1",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421 (FC_EW's, reused)",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786 (FC_EW's, reused)",
+    "fast": "FCX = (60 FC_EW + sum_k s_k z_k)/67, 7 intraday daily features, stress-window signs in data/research/t0701_store/fcx_meta.json",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  },
+  {
+   "candidate_id": "S0_I3F_k020",
+   "parameters": {
+    "slow": "M0 (equal-weight theme composite, AlphaSource)",
+    "mode": "I3 daily aim book with FCX as the fast signal",
+    "kappa": "0.2",
+    "b_slow": "0.014996",
+    "b_fast": "0.003421 (FC_EW's, reused)",
+    "half_life_slow": "252 (cap)",
+    "half_life_fast": "1.8786 (FC_EW's, reused)",
+    "fast": "FCX = (60 FC_EW + sum_k s_k z_k)/67, 7 intraday daily features, stress-window signs in data/research/t0701_store/fcx_meta.json",
+    "construction": "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp",
+    "windows": "recent decides; no offsets (daily book)"
+   }
+  }
+ ],
+ "cost_table": {
+  "base_cost_bps": "model",
+  "judged_cost": "cost model v1 at the close snapshot (make_cost_fn('close')): half-spread + square-root impact at E = $1M + fees 0.5 bp per side; borrow 25 bp on short notional as in T-25 R6; ETF branch for SPY; deferred trades use the execution day's attributes",
+  "stress_cost_bps": "2x model",
+  "fixed_comparison": "B0 = M0_U3000 recomputed in the same run through the same engine (identity with the old B0 loops at 1e-9)",
+  "two_x_cost_check": "2x trading costs on the same weight paths, reported for every candidate (not a selection input)"
+ },
+ "sources": [
+  {
+   "claim_id": "gp_2013_dynamic_trading_aim_partial_adjustment",
+   "url": "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf",
+   "published_or_updated_at": "2009-08-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Garleanu and Pedersen (NBER w15205, 2009; Journal of Finance 2013): with predictable returns and transaction costs the optimal policy trades partially towards an aim portfolio at a fixed rate a/lambda < 1 that falls with costs and rises with risk aversion (Proposition 2, eq. 7-10); the aim is an exponential average of current and expected future Markowitz portfolios, so predictors with slower alpha decay get more weight (Proposition 3). In their commodity-futures application (Table II, benchmark costs) the Markowitz portfolio has gross Sharpe 0.83 and net -9.84, the dynamic optimum 0.62 gross ",
+   "project_applicability": "Defines I3 (aim portfolio with decay-discounted signal weights, partial trade at rate kappa) and the persistence tilt v1.3 deferred.",
+   "reflection": "Commodity futures, quadratic costs; our weights, costs and signal set differ, only the form of the rule is borrowed."
+  },
+  {
+   "claim_id": "nmv_2016_buy_hold_spread_cost_mitigation",
+   "url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf",
+   "published_or_updated_at": "2015-08-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Novy-Marx and Velikov (A Taxonomy of Anomalies and Their Trading Costs, August 2015 version; RFS 2016), 1973-2012 with effective-spread costs: a buy/hold spread (a stricter rule to enter a position than to keep it, e.g. 10%/20% deciles) is the most effective cost-mitigation technique; for a UMD-like factor it earns 0.77%/month gross, 0.26% costs, 0.51% net, against 0.62 / 0.26 / 0.37 for staggered quarterly partial rebalancing and 0.66 / 0.35 / 0.31 for trading only a low-cost universe (Table 5): the same cost saving as lower-frequency staggered rebalancing while giving up less gross return.",
+   "project_applicability": "The buy/hold spread is the cost-mitigation reference (v1.3 N50); the engine keeps B0's full rebalance as the comparison and tests whether the fast composite beats a static damping.",
+   "reflection": "Anomaly portfolios, spread-only costs; the size of the benefit does not transfer."
+  },
+  {
+   "claim_id": "jkmp_2022_implementable_efficient_frontier",
+   "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf",
+   "published_or_updated_at": "2022-09-30",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+   "project_applicability": "Same aim-portfolio solution with ML forecasts and costs in the objective; justifies bringing the ML slow score and the fast composite into one cost-aware book.",
+   "reflection": "Different forecasts and cost model; no public code found."
+  },
+  {
+   "claim_id": "fim_2018_trading_costs_square_root_impact",
+   "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf",
+   "published_or_updated_at": "2018-08-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+   "project_applicability": "Square-root impact and spreads are what make partial adjustment and trade timing worth testing in a U3000 book; the cost model v1 uses the same functional form.",
+   "reflection": "Institutional execution, 1998-2016; we use quote-sampled spreads."
+  },
+  {
+   "claim_id": "bsw_2022_linear_forecasts_beat_ml_after_costs",
+   "url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf",
+   "published_or_updated_at": "2022-10-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Barroso, Saxena and Wang (Oct 2022, EFMA 2024) 'Calm Your Portfolio': in the 500 largest US stocks, mean-variance portfolios built from improved return forecasts (Fama-MacBeth, feed-forward neural network, conditional autoencoder, IPCA, nonparametric additive models) and improved covariance estimators do not beat the passive value-weighted portfolio after costs; with risk targeting plus turnover penalties all 32 transaction-cost-managed portfolios beat it, and the best net Sharpe ratios (1.10-1.20) come from the linear Fama-MacBeth forecasts with the daily sample covariance, not from the ML fo",
+   "project_applicability": "Warns that nonlinear forecasts turn over more and lose after costs; S2/S3 slow scores must be judged net, in the book.",
+   "reflection": "Different universe and horizon; reported for the cost caution."
+  },
+  {
+   "claim_id": "chen_velikov_2023_anomaly_net_returns",
+   "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf",
+   "published_or_updated_at": "2023-05-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+   "project_applicability": "Single anomalies do not survive costs; only combinations do, so the fast composite is judged inside the book against B0.",
+   "reflection": "Spread costs only."
+  },
+  {
+   "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+   "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling",
+   "published_or_updated_at": "unknown",
+   "source_type": "broker_official_docs",
+   "credibility": "official_docs",
+   "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+   "project_applicability": "Margin and short rules the construction (gross cap, easy-to-borrow shorts) already follows.",
+   "reflection": "Rules can change; checked 2026-10-02."
+  },
+  {
+   "claim_id": "supit_2020_timing_trades_with_short_term_signals",
+   "url": "https://thesis.eur.nl/pub/52353/Supit.pdf",
+   "published_or_updated_at": "2020-01-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Supit (Erasmus University thesis 2020, Robeco order data 2010-2018): price movement during a trade explains up to 60% of the variation of transaction costs; shifting the duration or timing of trades with machine-learning return-direction predictions (logistic regression, neural net, LSTM) improves per-trade costs by up to 32 bp, but delaying trades with the simpler predictors (optimist, lazy, linear) loses about 9 bp per trade (section 5.4.1), so the timing gain is not consistent across predictors.",
+   "project_applicability": "Closest published use of a short-term signal to schedule a decided target (I2).",
+   "reflection": "Execution-level, one broker's orders."
+  },
+  {
+   "claim_id": "fim_2012_combination_cost_synergy_optimised",
+   "url": "https://conference.nber.org/conf_papers/f68262/f68262.pdf",
+   "published_or_updated_at": "2012-12-01",
+   "source_type": "paper",
+   "credibility": "peer_reviewed_or_working_paper",
+   "core_claim": "Frazzini, Israel and Moskowitz (NBER conference paper 'Trading Costs', 2012 draft): with transaction-cost-aware optimisation the value-momentum combination's trading costs fall from 4.57 (5.54) to 1.11 (1.44) percent per year at 100 (200) million in NAV, turnover is cut by almost two thirds and price impact per trade by almost half, a larger reduction than for either strategy alone, so combining signals in one portfolio gives trading-cost synergies; short-term reversal alone stays unprofitable even optimised (10.82 to 6.17 percent per year).",
+   "project_applicability": "Combining signals in one portfolio lets trades offset; supports putting the fast composite into the same book rather than a separate leg.",
+   "reflection": "Optimiser and AUM differ."
+  }
+ ],
+ "topic_coverage": [
+  "gp_aim_portfolio_partial_adjustment_signal_decay",
+  "buy_hold_spread_cost_mitigation",
+  "square_root_impact_trading_costs",
+  "signal_combination_trade_cancellation",
+  "short_term_signal_trade_timing",
+  "ml_forecasts_after_costs",
+  "anomaly_net_of_cost_decay",
+  "broker_margin_short_rules"
+ ],
+ "hypothesis": {
+  "statement": "A fast composite that cannot carry its own leg (P1 stage 0: blending a separate fast leg with M0 lowers the recent Sharpe from 0.80 to 0.75) can still add net Sharpe inside the slow book, by entering the score (I1), by choosing the day on which each slow trade is made (I2), or through a decay-discounted aim book with partial adjustment (I3), and the machine-learning slow score m0m2 adds on top; the gain is at least 0.10 in recent-window net Sharpe over B0.",
+  "failure_mode": "The fast composite's lag-2 information is about a quarter of its lag-1 information and the slow score is already strong, so the score blend adds noise, trade timing costs more in drift than it saves, and the Garleanu-Pedersen aim gives the fast signal only 3-8% weight so I3 is just a damped slow book (which v1.3 already refuted); the 2.7-year recent window cannot resolve a 0.1-0.3 Sharpe difference (power 4-33%).",
+  "measurement": "Per point: offset-median and blended net Sharpe per window, delta vs B0 per offset, vol-matched paired Newey-West t, turnover, cost, beta, 2x cost; selected point (median of the top three of the 21 points with a fast element): five vetoes, family DSR, 100-seed net placebo, fast-composite-only placebo (G3), six robustness items, tier; diagnostics U1000, MOO, theme ablation, capital ladder.",
+  "stop_pivot": "All I1/I2/I3 points of the S0 route are <= 0 versus B0 and all S2-route points are <= 0 versus S2_I0 in the recent window: close the 'fast and slow in one book at close-to-close speed' line; the fast composite then belongs to intraday execution only."
+ },
+ "decision": {
+  "path": "cost_aware_engine_book_v2",
+  "decision": "pending",
+  "reason": "Preregistered 2026-10-07 by the T-20261007-01 execution agent before any candidate point was run (identity and timing only); contract in hypotheses.md.",
+  "next_iteration_suggestion": "Established: quant1 second sub-strategy after sub-ledger isolation (T-20261006-07), forward comparison against v1.2. Not established: close the line, keep the fast composite for intraday execution. Not deep enough: name the missing condition and how to fill it."
+ },
+ "source_cards_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl"
+}

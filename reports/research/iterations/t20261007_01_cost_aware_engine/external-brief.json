@@ -1,0 +1,177 @@
+{
+ "candidate_matrix_revisions": [
+  {
+   "decision": "keep",
+   "path": "cost_aware_engine_book_v2",
+   "reason": "initial preregistration"
+  }
+ ],
+ "current_source_card_paths": [
+  "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl"
+ ],
+ "hypothesis_links": [
+  {
+   "hypothesis_id": "T-20261007-01",
+   "source_urls": [
+    "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf"
+   ]
+  }
+ ],
+ "iter_id": "t20261007_01_cost_aware_engine",
+ "objective": "Equity book cost-aware engine: does bringing the machine-learning slow score (m0m2), the fast composite FC_EW and cost-controlled trading speed into the same v1.2-construction book (score blend I1, trade timing I2, Garleanu-Pedersen aim book with partial adjustment I3; 3 points each, 23 preregistered points (20 plus the 3-point F axis with intraday daily features)) raise the recent-window (2024-01-08..2026-09-15) offset-median net Sharpe over B0 = M0_U3000 by at least 0.10, with at least 4 of 5 offsets improved, a fast-composite-only placebo beaten at the 90th percentile, a stress-period Sharpe no more than 0.20 below B0, and tier P1 or better?",
+ "schema_version": 3,
+ "source_evidence_bindings": [
+  {
+   "claim_id": "gp_2013_dynamic_trading_aim_partial_adjustment",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf"
+  },
+  {
+   "claim_id": "nmv_2016_buy_hold_spread_cost_mitigation",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf"
+  },
+  {
+   "claim_id": "jkmp_2022_implementable_efficient_frontier",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+  },
+  {
+   "claim_id": "fim_2018_trading_costs_square_root_impact",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+  },
+  {
+   "claim_id": "bsw_2022_linear_forecasts_beat_ml_after_costs",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf"
+  },
+  {
+   "claim_id": "chen_velikov_2023_anomaly_net_returns",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+  },
+  {
+   "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+  },
+  {
+   "claim_id": "supit_2020_timing_trades_with_short_term_signals",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://thesis.eur.nl/pub/52353/Supit.pdf"
+  },
+  {
+   "claim_id": "fim_2012_combination_cost_synergy_optimised",
+   "source_card_path": "reports/harness/source_cards/t20261007_01_cost_aware_engine.jsonl",
+   "source_url": "https://conference.nber.org/conf_papers/f68262/f68262.pdf"
+  }
+ ],
+ "source_spec_path": "strategy_specs/drafts/t20261007_01_cost_aware_engine.yaml",
+ "sources": [
+  {
+   "claim_id": "gp_2013_dynamic_trading_aim_partial_adjustment",
+   "core_claim": "Garleanu and Pedersen (NBER w15205, 2009; Journal of Finance 2013): with predictable returns and transaction costs the optimal policy trades partially towards an aim portfolio at a fixed rate a/lambda < 1 that falls with costs and rises with risk aversion (Proposition 2, eq. 7-10); the aim is an exponential average of current and expected future Markowitz portfolios, so predictors with slower alpha decay get more weight (Proposition 3). In their commodity-futures application (Table II, benchmark costs) the Markowitz portfolio has gross Sharpe 0.83 and net -9.84, the dynamic optimum 0.62 gross ",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Defines I3 (aim portfolio with decay-discounted signal weights, partial trade at rate kappa) and the persistence tilt v1.3 deferred.",
+   "published_or_updated_at": "2009-08-01",
+   "reflection": "Commodity futures, quadratic costs; our weights, costs and signal set differ, only the form of the rule is borrowed.",
+   "source_type": "paper",
+   "url": "https://www.nber.org/system/files/working_papers/w15205/w15205.pdf"
+  },
+  {
+   "claim_id": "nmv_2016_buy_hold_spread_cost_mitigation",
+   "core_claim": "Novy-Marx and Velikov (A Taxonomy of Anomalies and Their Trading Costs, August 2015 version; RFS 2016), 1973-2012 with effective-spread costs: a buy/hold spread (a stricter rule to enter a position than to keep it, e.g. 10%/20% deciles) is the most effective cost-mitigation technique; for a UMD-like factor it earns 0.77%/month gross, 0.26% costs, 0.51% net, against 0.62 / 0.26 / 0.37 for staggered quarterly partial rebalancing and 0.66 / 0.35 / 0.31 for trading only a low-cost universe (Table 5): the same cost saving as lower-frequency staggered rebalancing while giving up less gross return.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "The buy/hold spread is the cost-mitigation reference (v1.3 N50); the engine keeps B0's full rebalance as the comparison and tests whether the fast composite beats a static damping.",
+   "published_or_updated_at": "2015-08-01",
+   "reflection": "Anomaly portfolios, spread-only costs; the size of the benefit does not transfer.",
+   "source_type": "paper",
+   "url": "https://mysimon.rochester.edu/novy-marx/research/ToAatTC.pdf"
+  },
+  {
+   "claim_id": "jkmp_2022_implementable_efficient_frontier",
+   "core_claim": "Jensen, Kelly, Malamud and Pedersen (SFI 22-63, 2022 version; RFS 2026): portfolios that put ML return forecasts, risk and trading costs into one objective keep positive out-of-sample net Sharpe ratios, reaching 1.38 for Portfolio-ML for an investor whose wealth reaches $10 billion by 2020, while cost-agnostic Markowitz portfolios fall to negative net returns.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Same aim-portfolio solution with ML forecasts and costs in the objective; justifies bringing the ML slow score and the fast composite into one cost-aware book.",
+   "published_or_updated_at": "2022-09-30",
+   "reflection": "Different forecasts and cost model; no public code found.",
+   "source_type": "paper",
+   "url": "https://research-api.cbs.dk/ws/portalfiles/portal/81132615/theis_ingerslev_jensen_et_al_machine_learning_and_the_implementable_efficient_frontier_publishersversion.pdf"
+  },
+  {
+   "claim_id": "fim_2018_trading_costs_square_root_impact",
+   "core_claim": "Frazzini, Israel and Moskowitz ('Trading Costs', SSRN 3229719, August 2018 draft): on 1.7 trillion dollars of live executions by a large institutional manager across 21 developed equity markets over 19 years, price impact is well approximated by a square-root function of trade size, and actual trading costs are an order of magnitude smaller than previous studies suggest.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Square-root impact and spreads are what make partial adjustment and trade timing worth testing in a U3000 book; the cost model v1 uses the same functional form.",
+   "published_or_updated_at": "2018-08-01",
+   "reflection": "Institutional execution, 1998-2016; we use quote-sampled spreads.",
+   "source_type": "paper",
+   "url": "https://spinup-000d1a-wp-offload-media.s3.amazonaws.com/faculty/wp-content/uploads/sites/3/2021/08/Trading-Cost.pdf"
+  },
+  {
+   "claim_id": "bsw_2022_linear_forecasts_beat_ml_after_costs",
+   "core_claim": "Barroso, Saxena and Wang (Oct 2022, EFMA 2024) 'Calm Your Portfolio': in the 500 largest US stocks, mean-variance portfolios built from improved return forecasts (Fama-MacBeth, feed-forward neural network, conditional autoencoder, IPCA, nonparametric additive models) and improved covariance estimators do not beat the passive value-weighted portfolio after costs; with risk targeting plus turnover penalties all 32 transaction-cost-managed portfolios beat it, and the best net Sharpe ratios (1.10-1.20) come from the linear Fama-MacBeth forecasts with the daily sample covariance, not from the ML fo",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Warns that nonlinear forecasts turn over more and lose after costs; S2/S3 slow scores must be judged net, in the book.",
+   "published_or_updated_at": "2022-10-01",
+   "reflection": "Different universe and horizon; reported for the cost caution.",
+   "source_type": "paper",
+   "url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/BarrosoSaxenaWang2022.pdf"
+  },
+  {
+   "claim_id": "chen_velikov_2023_anomaly_net_returns",
+   "core_claim": "Chen and Velikov (JFQA 58(3), May 2023): after effective bid-ask spreads, post-publication decay and restricting to the post-2005 trading-technology era, the average published anomaly is expected to earn just 4 bp per month net; the strongest anomalies net at best about 10 bp, and several methods for combining anomalies net around 20 bp.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Single anomalies do not survive costs; only combinations do, so the fast composite is judged inside the book against B0.",
+   "published_or_updated_at": "2023-05-01",
+   "reflection": "Spread costs only.",
+   "source_type": "paper",
+   "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/945133D5A3ECEEAF466AEE91551FD225/S0022109022000874a.pdf/zeroing-in-on-the-expected-returns-of-anomalies.pdf"
+  },
+  {
+   "claim_id": "alpaca_2026_regt_margin_short_selling_rules",
+   "core_claim": "Alpaca margin and short-selling documentation (fetched 2026-10-02): a Reg T margin account may hold up to 2x equity in marginable securities overnight and receives a margin call the next morning if initial (50%) and maintenance requirements are not met at the end of the day; maintenance is 30% for longs above $6 and the greater of $5.00/share or 30% for shorts at $5 or more; easy-to-borrow shares carry $0 locate and borrow fees for Trading API users while hard-to-borrow shorts need an approved locate; margin interest is 5.00% (elite) or 6.50% (non-elite) on the end-of-day debit balance.",
+   "credibility": "official_docs",
+   "project_applicability": "Margin and short rules the construction (gross cap, easy-to-borrow shorts) already follows.",
+   "published_or_updated_at": "unknown",
+   "reflection": "Rules can change; checked 2026-10-02.",
+   "source_type": "broker_official_docs",
+   "url": "https://docs.alpaca.markets/us/docs/margin-and-short-selling"
+  },
+  {
+   "claim_id": "supit_2020_timing_trades_with_short_term_signals",
+   "core_claim": "Supit (Erasmus University thesis 2020, Robeco order data 2010-2018): price movement during a trade explains up to 60% of the variation of transaction costs; shifting the duration or timing of trades with machine-learning return-direction predictions (logistic regression, neural net, LSTM) improves per-trade costs by up to 32 bp, but delaying trades with the simpler predictors (optimist, lazy, linear) loses about 9 bp per trade (section 5.4.1), so the timing gain is not consistent across predictors.",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Closest published use of a short-term signal to schedule a decided target (I2).",
+   "published_or_updated_at": "2020-01-01",
+   "reflection": "Execution-level, one broker's orders.",
+   "source_type": "paper",
+   "url": "https://thesis.eur.nl/pub/52353/Supit.pdf"
+  },
+  {
+   "claim_id": "fim_2012_combination_cost_synergy_optimised",
+   "core_claim": "Frazzini, Israel and Moskowitz (NBER conference paper 'Trading Costs', 2012 draft): with transaction-cost-aware optimisation the value-momentum combination's trading costs fall from 4.57 (5.54) to 1.11 (1.44) percent per year at 100 (200) million in NAV, turnover is cut by almost two thirds and price impact per trade by almost half, a larger reduction than for either strategy alone, so combining signals in one portfolio gives trading-cost synergies; short-term reversal alone stays unprofitable even optimised (10.82 to 6.17 percent per year).",
+   "credibility": "peer_reviewed_or_working_paper",
+   "project_applicability": "Combining signals in one portfolio lets trades offset; supports putting the fast composite into the same book rather than a separate leg.",
+   "published_or_updated_at": "2012-12-01",
+   "reflection": "Optimiser and AUM differ.",
+   "source_type": "paper",
+   "url": "https://conference.nber.org/conf_papers/f68262/f68262.pdf"
+  }
+ ],
+ "spec_hash": "e1c127fc2d77628a2f3ceeb54b61678d3924d57390ad654fb062eee95342c537",
+ "strategy_name": "t20261007_01_cost_aware_engine",
+ "topic_coverage": [
+  "gp_aim_portfolio_partial_adjustment_signal_decay",
+  "buy_hold_spread_cost_mitigation",
+  "square_root_impact_trading_costs",
+  "signal_combination_trade_cancellation",
+  "short_term_signal_trade_timing",
+  "ml_forecasts_after_costs",
+  "anomaly_net_of_cost_decay",
+  "broker_margin_short_rules"
+ ],
+ "mechanism_family": "cost_aware_slow_fast_book_engine",
+ "mechanism_description": "Equity long-short book v1.2 (U3000, industry-demeaned rank-normal weights, SPY hedge, weekly tranches) with three ways to put a fast composite and a machine-learning slow score into the same book: score blend, postponing slow trades by the fast score, and a Garleanu-Pedersen decay-discounted aim book with daily partial adjustment; judged against B0 by recent-window net Sharpe, offsets and a fast-composite placebo."
+}

@@ -1,0 +1,92 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/t20261007_01_cost_aware_engine/candidate-manifest.json",
+  "candidate_manifest_sha256": "4dc0d3cf4e4fd9496ba77ffa67d44dc06459c79d5042eeb5ace232485dc2899d",
+  "cost_table_path": "reports/research/iterations/t20261007_01_cost_aware_engine/cost-table.json",
+  "created_at": "2026-10-07T14:35:10.252784+00:00",
+  "data_feasibility_path": "reports/research/iterations/t20261007_01_cost_aware_engine/data-feasibility.json",
+  "data_feasibility_sha256": "83c4b6f2d7e960be67a72cb379a035053e3ba47e4587fd436d53700c477b0e43",
+  "evaluation_report_paths": [],
+  "iter_id": "t20261007_01_cost_aware_engine",
+  "paths": [
+    {
+      "benchmark_family": [
+        "b0_m0_u3000_v12_construction_same_run_recomputed",
+        "identity_new_engine_vs_old_b0_loops_1e-9",
+        "vol_matched_paired_daily_net_difference_newey_west_lag5",
+        "fast_composite_only_hash_rank_placebo_100_seeds",
+        "net_hash_rank_placebo_100_seeds_selected_candidate",
+        "two_x_cost_replay_same_paths",
+        "s2_i0_and_s3_i0_v14_stage_b_points_e1_e5",
+        "family_dsr_19_plus_own_trials"
+      ],
+      "candidate_count": 23,
+      "hypothesis_refs": [
+        "T-20261007-01"
+      ],
+      "name": "cost_aware_engine_book_v2",
+      "parameters": {
+        "b_fast": [
+          "0.003421",
+          "0.003421 (FC_EW's, reused)"
+        ],
+        "b_slow": [
+          "0.014996"
+        ],
+        "c": [
+          "0.0",
+          "0.5",
+          "1.0"
+        ],
+        "construction": [
+          "v1.2 / T-25 R6 construction unchanged: U3000, industry-demeaned rank-normal weights long 1 / short 1, easy-to-borrow shorts, EWMA SPY hedge, VIX > 20.60 halves, weekly 5 tranches (I3: daily), decision at close D, fill at close D+1, cost model v1 (close snapshot), borrow 25 bp"
+        ],
+        "fast": [
+          "FC_EW (60 fast inputs, rank-normal mean) re-ranked over U3000 members",
+          "FC_EW",
+          "FCX = (60 FC_EW + sum_k s_k z_k)/67, 7 intraday daily features, stress-window signs in data/research/t0701_store/fcx_meta.json"
+        ],
+        "half_life_fast": [
+          "1.8786",
+          "1.8786 (FC_EW's, reused)"
+        ],
+        "half_life_slow": [
+          "252 (cap)"
+        ],
+        "kappa": [
+          "0.05",
+          "0.1",
+          "0.2"
+        ],
+        "mode": [
+          "I1 score blend z_s + w_f z_f",
+          "I2 trade timing: postpone a trade while sign(delta) z_f < -c, at most 4 sessions",
+          "I3 daily aim book: w_t = (1-kappa) w_(t-1) + kappa aim_t, aim score sum b_k z_k / (1 + phi_k/kappa)",
+          "I0 no fast signal (v1.4 Stage B point)",
+          "I3 daily aim book with FCX as the fast signal"
+        ],
+        "slow": [
+          "M0 (equal-weight theme composite, AlphaSource)",
+          "m0m2 (v1.4 out-of-sample prediction column, PredictionSource)",
+          "m0m3 (v1.4 out-of-sample prediction column)"
+        ],
+        "w_f": [
+          "0.25",
+          "0.5",
+          "1.0"
+        ],
+        "windows": [
+          "recent 2024-01-08..2026-09-15 decides; stress diagnostic",
+          "recent decides",
+          "recent decides; no offsets (daily book)"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/t20261007_01_cost_aware_engine.yaml",
+  "spec_hash": "e1c127fc2d77628a2f3ceeb54b61678d3924d57390ad654fb062eee95342c537",
+  "strategy_name": "t20261007_01_cost_aware_engine",
+  "total_candidate_budget": 23,
+  "trial_ledger_paths": []
+}
