@@ -1,0 +1,52 @@
+# Dry-run configuration for the generic intraday runner (example plugins only).
+# Not an authorized run: the real quant2 config is written when T-20261006-15 / -21 deliver specs.
+runner_name: quant2-intraday-dryrun
+account: quant2
+live_feed: iex
+session:
+  flatten_et: "15:55"
+  bar_delay_seconds: 5
+  max_tick_staleness_seconds: 90
+  order_ttl_seconds: 60
+  max_resubmit_age_seconds: 120
+account_caps:
+  max_gross_notional_usd: 600000
+  max_daily_loss_usd: 15000
+  max_orders_per_day: 2000
+fees:
+  commission_per_share: 0.0
+  sec_fee_per_million_sold: 0.0
+  taf_per_share_sold: 0.0
+strategies:
+  - name: noise_spy_example
+    plugin: noise_band_example
+    params: {symbol: SPY, lookback_days: 14, band_mult: 1.0, notional_usd: 200000}
+    symbols: [SPY]
+    timeframe: 5m
+    capital_usd: 250000
+    caps: {max_notional_usd: 250000, max_symbol_notional_usd: 250000, max_daily_loss_usd: 5000, max_orders_per_day: 40}
+    assumed_cost_bps: 1.0
+  - name: timed_long_qqq
+    plugin: timed_trade
+    params: {symbol: QQQ, side: long, shares: 300, enter_et: "10:00", exit_et: "15:59"}
+    symbols: [QQQ]
+    timeframe: 1m
+    capital_usd: 200000
+    caps: {max_notional_usd: 200000, max_symbol_notional_usd: 200000, max_daily_loss_usd: 3000, max_orders_per_day: 10}
+    assumed_cost_bps: 1.0
+  - name: timed_short_qqq
+    plugin: timed_trade
+    params: {symbol: QQQ, side: short, shares: 200, enter_et: "10:30", exit_et: "11:30"}
+    symbols: [QQQ]
+    timeframe: 5m
+    capital_usd: 150000
+    caps: {max_notional_usd: 150000, max_symbol_notional_usd: 150000, max_daily_loss_usd: 3000, max_orders_per_day: 10}
+    assumed_cost_bps: 1.0
+  - name: timed_short_qqq_late
+    plugin: timed_trade
+    params: {symbol: QQQ, side: short, shares: 150, enter_et: "11:30", exit_et: "13:00"}
+    symbols: [QQQ]
+    timeframe: 5m
+    capital_usd: 150000
+    caps: {max_notional_usd: 150000, max_symbol_notional_usd: 150000, max_daily_loss_usd: 3000, max_orders_per_day: 10}
+    assumed_cost_bps: 1.0
